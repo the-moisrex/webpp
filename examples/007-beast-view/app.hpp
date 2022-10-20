@@ -38,7 +38,7 @@ namespace website {
               },
               (post and root) >>=
               [this](Context auto&& ctx) {
-                  stl::size_t body_size = ctx.request.body.size();
+                  stl::size_t body_size = ctx.request.headers.content_length();
                   return view_man.mustache("home-post", stl::pair{"request_body_size", body_size});
               },
               (get and root / "about") >>=

@@ -3,8 +3,10 @@
 #ifndef WEBPP_REQUEST_HEADERS_HPP
 #define WEBPP_REQUEST_HEADERS_HPP
 
+#include "../convert/casts.hpp"
 #include "../extensions/extension.hpp"
 #include "../std/format.hpp"
+#include "../std/optional.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
@@ -49,6 +51,38 @@ namespace webpp::http {
         }
 
 
+        /**
+         * Get an iterator pointing to the field value that holds the specified header name
+         */
+        [[nodiscard]] constexpr auto iter(name_type name) const noexcept {
+            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
+                return field.name == name;
+            });
+        }
+
+
+        /**
+         * Get the field value that holds the specified header name
+         */
+        [[nodiscard]] constexpr stl::optional<field_type> field(name_type name) const noexcept {
+            const auto res = iter(name);
+            return res == this->end() ? stl::nullopt : *res;
+        }
+
+
+        /**
+         * Get the value of a header
+         * Returns an empty string if there are no header with that name
+         */
+        [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
+            const auto res = iter(name);
+            return res == this->end() ? value_type{} : res->value;
+        }
+
+        [[nodiscard]] constexpr value_type operator[](name_type name) const noexcept {
+            return get(name);
+        }
+
         // todo: add all the features in the "http/headers" directory here
         /*
         template <Traits TraitsType = default_traits>
@@ -61,18 +95,12 @@ namespace webpp::http {
         */
 
 
-        constexpr auto get(name_type name) const noexcept {
-            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
-                return field.name == name;
-            });
-        }
-
-
-        constexpr value_type operator[](name_type name) const noexcept {
-            if (auto res = get(name); res != this->end()) {
-                return res;
-            }
-            return {}; // empty string if not found
+        /**
+         * Get the Content-Type as a size_t; if not specified, zero is returned.
+         */
+        [[nodiscard]] constexpr stl::size_t content_length() const noexcept {
+            // todo: this might not be as safe as you thought
+            return to_size_t(get("content-length"));
         }
     };
 

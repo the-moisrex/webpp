@@ -80,6 +80,7 @@ namespace webpp {
     WEBPP_TO_FUNCTION(uint16, uint16_t)
     WEBPP_TO_FUNCTION(uint32, uint32_t)
     WEBPP_TO_FUNCTION(uint64, uint64_t)
+    WEBPP_TO_FUNCTION(size_t, stl::size_t)
 
 #undef WEBPP_TO_FUNCTION
 

@@ -25,55 +25,34 @@ namespace webpp::http {
 
 
     template <typename REL, typename ServerType>
-    struct common_http_request : public enable_traits<typename ServerType::traits_type>, public REL {
-        using server_type                = ServerType;
-        using server_ref                 = stl::add_lvalue_reference_t<server_type>;
-        using root_extensions            = typename server_type::root_extensions;
-        using traits_type                = typename server_type::traits_type;
-        using etraits                    = enable_traits<traits_type>;
-        using string_type                = traits::general_string<traits_type>;
-        using string_view_type           = traits::string_view<traits_type>;
-        using char_type                  = traits::char_type<traits_type>;
-        using allocator_descriptors_type = traits::allocator_descriptors<traits_type>;
-        using local_allocator_type       = traits::local_allocator<traits_type, char_type>;
-        using request_extensions         = REL;
-        using headers_type = simple_request_headers<traits_type, root_extensions, local_allocator_type>;
+    struct common_http_request : public enable_traits_with<typename ServerType::traits_type, REL> {
+        using server_type           = ServerType;
+        using server_ref            = stl::add_lvalue_reference_t<server_type>;
+        using root_extensions       = typename server_type::root_extensions;
+        using traits_type           = typename server_type::traits_type;
+        using etraits               = enable_traits_with<traits_type, REL>;
+        using string_type           = traits::general_string<traits_type>;
+        using string_view_type      = traits::string_view<traits_type>;
+        using char_type             = traits::char_type<traits_type>;
+        using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using request_extensions    = REL;
+        using headers_type = simple_request_headers<traits_type, root_extensions, fields_allocator_type>;
         using body_type    = simple_request_body<traits_type, root_extensions>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");
         static_assert(HTTPRequestBody<body_type>, "Something is wrong with the request's body type.");
 
-        // todo: are we using the right object here?
-        using headers_object_type =
-          object::object<headers_type, alloc::general_features, allocator_descriptors_type>;
-        using body_object_type =
-          object::object<body_type, alloc::general_features, allocator_descriptors_type>;
-        using general_resource_type = typename headers_object_type::resource_type_field;
 
-        [[no_unique_address]] general_resource_type
-                            alloc_resource{};          // NOLINT(misc-non-private-member-variables-in-classes)
-        headers_object_type headers;                   // NOLINT(misc-non-private-member-variables-in-classes)
-        [[no_unique_address]] body_object_type body;   // NOLINT(misc-non-private-member-variables-in-classes)
-        server_ref                             server; // NOLINT(misc-non-private-member-variables-in-classes)
+        headers_type                    headers; // NOLINT(misc-non-private-member-variables-in-classes)
+        [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
+        server_ref                      server;  // NOLINT(misc-non-private-member-variables-in-classes)
 
         constexpr common_http_request(server_ref inp_server) noexcept
           : etraits{inp_server},
-            REL{},
-            headers{inp_server.alloc_pack, alloc_resource},
-            body{inp_server.alloc_pack, alloc_resource},
+            headers{inp_server},
+            body{inp_server},
             server{inp_server} {}
-
-
-        template <typename ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>,
-                                   common_http_request> && // not if it's copy/move ctor
-                     EnabledTraits<ET>)                    // it's traits' enabled object
-        constexpr common_http_request(ET&& et) noexcept
-          : etraits{et},
-            REL{},
-            headers{et.alloc_pack, alloc_resource},
-            body{et.alloc_pack, alloc_resource} {}
 
         constexpr common_http_request(common_http_request const&)                     = default;
         constexpr common_http_request(common_http_request&&) noexcept                 = default;

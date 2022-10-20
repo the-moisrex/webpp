@@ -126,9 +126,19 @@ namespace webpp::http {
         using response_type          = ResponseType;
         using basic_context_type     = basic_context<TraitsType, EList, RequestType, ResponseType>;
         using etraits                = enable_traits<traits_type>;
+        using request_ref            = request_type&;
 
       public:
-        using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
+        request_ref request;
+
+        // using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
+
+        constexpr basic_context(request_type& inp_req) noexcept
+          : enable_traits_with<TraitsType, EList>{inp_req},
+            request{inp_req} {}
+
+        template <Context CtxT>
+        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
@@ -262,7 +272,14 @@ namespace webpp::http {
           typename istl::unique_parameters<typename original_extension_pack_type::template appended<E...>>::
             template extensie_type<traits_type, context_descriptor_type, request_type>;
 
-        using final_context_parent::final_context_parent; // inherit parent constructors
+
+
+        constexpr final_context(request_type& inp_req) : final_context_parent{inp_req} {}
+
+
+        template <Context CtxT>
+        constexpr final_context(CtxT const& ctx) noexcept : EList{ctx} {}
+
         constexpr final_context(final_context const&) noexcept       = default;
         constexpr final_context(final_context&&) noexcept            = default;
         constexpr final_context& operator=(final_context const&)     = default;
