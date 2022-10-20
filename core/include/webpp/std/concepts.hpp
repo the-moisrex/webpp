@@ -15,9 +15,8 @@
 namespace webpp::istl {
     template <typename D>
     concept Destructible = requires(D u) {
-        { u.~D() }
-        noexcept;
-    };
+                               { u.~D() } noexcept;
+                           };
 
     template <typename T>
     concept MoveAssignable = stl::is_move_assignable_v<T>;
@@ -38,12 +37,7 @@ namespace webpp::istl {
      *   - instead of commenting the whole in-development concepts, fill them with this temporarily.
      */
     template <typename T>
-    concept All = requires {
-        typename T::yes;
-    }
-    || !requires {
-        typename T::yes;
-    };
+    concept All = requires { typename T::yes; } || !requires { typename T::yes; };
 
 
     /**
@@ -95,11 +89,11 @@ namespace webpp::istl {
      *           );
      *       };
      */
-#define requires_arg(...)                                                       \
-    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {              \
-        return (requires {                                                      \
-            { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
-        });                                                                     \
+#define requires_arg(...)                                                               \
+    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {                      \
+        return (requires {                                                              \
+                    { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
+                });                                                                     \
     }> {}
 
     /**
@@ -175,6 +169,31 @@ namespace webpp::istl {
 
     template <typename T>
     concept arithmetic = stl::is_arithmetic_v<T>;
+
+
+    namespace details {
+
+        template <typename First, typename... T>
+        struct is_one_of {
+            static constexpr bool value = (stl::same_as<First, T> || ...);
+        };
+
+    }; // namespace details
+
+    /**
+     * Same as "same_as" but check against multiple types.
+     * The last type that you specify will be the one that gets checked against the other type not the first
+     * type and the reason is that this way you can use this concept in the requires clauses.
+     *
+     * @code
+     *   requires (T val) {
+     *       { val.get() } -> one_of<int, double, float>;
+     *   }
+     * @endcode
+     */
+    template <typename... T>
+    concept one_of = (sizeof...(T) > 1) &&
+                     (istl::last_type<T...>::template rotate<details::is_one_of>::value);
 
 } // namespace webpp::istl
 

@@ -567,9 +567,9 @@ namespace webpp::istl {
      */
     template <typename T, template <typename> typename Replacer>
         requires requires {
-            typename Replacer<void>::type;
-            {Replacer<void>::value};
-        }
+                     typename Replacer<void>::type;
+                     { Replacer<void>::value };
+                 }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 
@@ -779,9 +779,11 @@ namespace webpp::istl {
             template <typename... L>
             using append = fake_tup<FT..., L...>;
 
-
             template <template <typename...> typename Tt, typename... Additionals>
             using replace_template = Tt<FT..., Additionals...>;
+
+            template <template <typename...> typename Tt, typename... Additionals>
+            using replace_template_prepend = Tt<Additionals..., FT...>;
 
             static constexpr stl::size_t size = sizeof...(FT);
         };
@@ -819,12 +821,16 @@ namespace webpp::istl {
         template <template <typename...> typename Tt>
         using remove = typename decltype((... | tag<T>{}))::rest::template replace_template<Tt>;
 
+        // put the last type first, and the rest is the rest
+        template <template <typename...> typename Tt>
+        using rotate = typename decltype((... | tag<T>{}))::rest::template replace_template_prepend<Tt, type>;
+
         // remove the last types ao there's only N types in the tuple
         template <template <typename...> typename Tt, stl::size_t N>
         using remove_limit =
           typename decltype((... | tag<T, fake_tup<>, N>{}))::all::template replace_template<Tt>;
 
-        // remove the last tyoe if
+        // remove the last type if
         template <template <typename...> typename Tt, template <typename> typename Condition>
         using remove_if =
           stl::conditional_t<Condition<type>::value,
@@ -844,7 +850,7 @@ namespace webpp::istl {
         using replace_if = stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T...>>;
 
 
-        // replace if exists, add if it doesnt
+        // replace if exists, add if it doesn't
         template <template <typename...> typename Tt,
                   template <typename>
                   typename Condition,

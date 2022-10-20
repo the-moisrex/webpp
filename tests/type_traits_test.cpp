@@ -2,10 +2,12 @@
 
 #include "../core/include/webpp/std/type_traits.hpp"
 
+#include "../core/include/webpp/std/concepts.hpp"
 #include "../core/include/webpp/std/optional.hpp"
 #include "../core/include/webpp/std/tuple.hpp"
 #include "common_pch.hpp"
 
+#include <cmath>
 #include <list>
 #include <map>
 #include <string>
@@ -190,7 +192,7 @@ TEST(TypeTraits, ITupleIteratorTest) {
         static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
         static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
         EXPECT_EQ(int_val, i);
-        double zero = fabs(double_val - d);
+        double zero = std::fabs(double_val - d);
         EXPECT_LE(zero, numeric_limits<double>::epsilon());
     }
 }
@@ -206,7 +208,15 @@ TEST(TypeTraits, ITupleIteratorTestWithTuple) {
         static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
         static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
         EXPECT_EQ(int_val, i);
-        double zero = fabs(double_val - d);
+        double zero = std::fabs(double_val - d);
         EXPECT_LE(zero, numeric_limits<double>::epsilon());
     }
+}
+
+
+TEST(TypeTraits, OneOfTest) {
+    EXPECT_TRUE(bool(one_of<int, double, int>));
+    EXPECT_FALSE(bool(one_of<float, double, int>));
+    EXPECT_FALSE(bool(one_of<float, short, unsigned, double, int>));
+    EXPECT_TRUE(bool(one_of<float, short, unsigned, int, double, int>));
 }
