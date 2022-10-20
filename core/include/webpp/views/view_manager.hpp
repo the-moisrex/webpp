@@ -91,8 +91,8 @@ namespace webpp::views {
           ET&&        et,
           stl::size_t cache_limit = 100) noexcept
           : etraits{et},
-            view_roots{alloc::allocator_for<view_roots_type>(*this)},
-            cached_views{et, cache_limit} {}
+            cached_views{et, cache_limit},
+            view_roots{alloc::allocator_for<view_roots_type>(*this)} {}
 
 
       private:
@@ -257,34 +257,36 @@ namespace webpp::views {
 
 
         template <typename VT>
-        [[nodiscard]] cache_value_type& get_view(path_type const& file) noexcept {
-            if (auto val = cached_views.get(file); val) {
-                return *val;
+        [[nodiscard]] auto get_view(path_type const& file) noexcept {
+            if (auto val = cached_views[file]; val) {
+                return val;
             }
-            cached_views.set(file,
-                             cache_value_type{.view         = view_types{stl::in_place_type<VT>, *this},
-                                              .file_content = alloc::general_alloc_for<string_type>(*this)});
-            return *cached_views.get(file);
+            cached_views.set(
+              file,
+              cache_value_type{.view         = view_types{stl::in_place_type<VT>, *this},
+                               .file_content = string_type{alloc::general_alloc_for<string_type>(*this)}});
+            return cached_views[file];
         }
 
 
         template <typename ViewType, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) noexcept {
-            using view_type          = ViewType;
-            cache_value_type& cached = get_view<view_type>(file);
-            if (cached.file_content.empty()) {
+            using view_type = ViewType;
+            auto cached     = get_view<view_type>(file);
+            if (cached->file_content.empty()) {
 
                 // get and set the code:
-                cached.file_content = read_file(file);
-                if (cached.file_content.empty()) {
+                cached->file_content = read_file(file);
+                if (cached->file_content.empty()) {
                     return; // empty string is returned.
                 }
-                stl::get<view_type>(cached.view).scheme(cached.file_content);
+                stl::get<view_type>(cached->view).scheme(cached->file_content);
+                cached.save();
             }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
             // parse it as a mustache file
-            stl::get<view_type>(cached.view).render(out, stl::forward<DataType>(data)...);
+            stl::get<view_type>(cached->view).render(out, stl::forward<DataType>(data)...);
         }
 
 
@@ -357,7 +359,7 @@ namespace webpp::views {
                     }
                     case 'j': {
                         if (ext == ".json") {
-                            // json_view_type& view = get_view<json_view_type>(file).view;
+                            // auto view = get_view<json_view_type>(file).view;
                             // view.scheme(file_content);
                             // view.render(out, data);
                         }

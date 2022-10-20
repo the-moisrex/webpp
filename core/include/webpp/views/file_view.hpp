@@ -22,14 +22,14 @@ namespace webpp::views {
         using data_type      = istl::nothing_type;
 
       private:
-        string_view_type data;
+        string_view_type data{};
 
       public:
         constexpr file_view() = default;
 
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
-        constexpr file_view(ET&& et) : data{et.alloc_pack.template general_allocator<char_type>()} {}
+        constexpr file_view([[maybe_unused]] ET&&) {}
 
         constexpr file_view(file_view const&)     = default;
         constexpr file_view(file_view&&) noexcept = default;

@@ -61,6 +61,11 @@ namespace webpp {
             constexpr key_type key() const noexcept {
                 return the_key;
             }
+
+            constexpr cache_result& save() {
+                c.set(the_key, this->value());
+                return *this;
+            }
         };
 
         // ctor
