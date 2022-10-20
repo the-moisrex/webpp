@@ -35,6 +35,7 @@
 #define WEBPP_MUSTACHE_VIEW_HPP
 
 
+#include "../convert/lexical_cast.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/splits.hpp"
 #include "../strings/trim.hpp"
@@ -108,12 +109,12 @@ namespace webpp::views {
                       { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
                   };
 
-                string_allocator_type string_allocator;
+                [[no_unique_address]] string_allocator_type string_allocator;
 
                 template <typename ET>
                 constexpr lambda_fixer(ET&& et, Func&& func) noexcept
                   : Func{stl::forward<Func>(func)},
-                    string_allocator{et.alloc_pack.template general_allocator<char_type>()} {}
+                    string_allocator{alloc::general_allocator<char_type>(et)} {}
 
                 constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
                     if constexpr (requires_renderer) {
@@ -150,22 +151,37 @@ namespace webpp::views {
               private:
                 string_type key_value;
 
+                template <typename T, EnabledTraits ET>
+                constexpr auto convert(T&& val, ET const& et) const noexcept {
+                    using value_type = stl::remove_cvref_t<T>;
+                    if constexpr (istl::one_of<string_type,
+                                               bool,
+                                               lambda_type,
+                                               partial_type,
+                                               list_type,
+                                               variant_type,
+                                               value_type>) {
+                        return stl::forward<T>(val);
+                    } else {
+                        return lexical::cast<string_type>(stl::forward<T>(val),
+                                                          alloc::general_alloc_for<string_type>(et));
+                    }
+                }
+
               public:
                 template <EnabledTraits ET, typename StrT, typename T>
                     requires(istl::StringifiableOf<string_type, StrT>)
                 constexpr variable(ET&& et, StrT&& input_key, T&& input_value)
-                  : variant_type{stl::forward<T>(input_value)},
-                    key_value{istl::stringify_of<string_type>(
-                      stl::forward<StrT>(input_key),
-                      et.alloc_pack.template general_allocator<char_type>())} {}
+                  : variant_type{convert(stl::forward<T>(input_value), et)},
+                    key_value{istl::stringify_of<string_type>(stl::forward<StrT>(input_key),
+                                                              alloc::general_allocator<char_type>(et))} {}
 
 
                 template <EnabledTraits ET, typename StrT, typename T>
                 constexpr variable(ET&& et, stl::pair<StrT, T> input)
-                  : variant_type{stl::move(input.second)},
-                    key_value{istl::stringify_of<string_type>(
-                      stl::move(input.first),
-                      et.alloc_pack.template general_allocator<char_type>())} {}
+                  : variant_type{convert(stl::move(input.second), et)},
+                    key_value{istl::stringify_of<string_type>(stl::move(input.first),
+                                                              alloc::general_allocator<char_type>(et))} {}
 
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {

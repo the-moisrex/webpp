@@ -30,19 +30,21 @@ namespace website {
 
         HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
             using extensions = extension_pack<string_response>;
-            router _router{extensions{},
-                           (get and root) >>=
-                           [this] {
-                               return view_man.view("home.html");
-                           },
-                           (post and root) >>=
-                           [this] {
-                               return view_man.mustache("home-post", stl::pair{"request_body_size", "20"});
-                           },
-                           (get and root / "about") >>=
-                           [this]() {
-                               return view_man.view("about.html");
-                           }};
+            router _router{
+              extensions{},
+              (get and root) >>=
+              [this] {
+                  return view_man.view("home.html");
+              },
+              (post and root) >>=
+              [this](Context auto&& ctx) {
+                  stl::size_t body_size = ctx.request.body.size();
+                  return view_man.mustache("home-post", stl::pair{"request_body_size", body_size});
+              },
+              (get and root / "about") >>=
+              [this]() {
+                  return view_man.view("about.html");
+              }};
 
             return _router(req);
         }
