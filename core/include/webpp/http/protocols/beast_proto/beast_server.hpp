@@ -166,16 +166,22 @@ namespace webpp::http::beast_proto {
                   if (!ec) [[likely]] {
                       async_write_response();
                   } else [[unlikely]] {
-                      this->logger.warning(log_cat, "Connection error.", ec);
-                      // todo: there's a connection error, we don't need to send shutdown for all types of connection errors
-                      // try sending shutdown signal
-                      stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-                      // don't need to log if it fails
 
-                      // if we don't reset here, the connection will hang if there are too many concurrent
-                      // connections for some reason.
-                      // fixme: are we hard-closing the connection without letting the shutdown signal to be sent?
-                      reset();
+                      // This means they closed the connection
+                      if(ec == boost::beast::http::error::end_of_stream) {
+                          // try sending shutdown signal
+                          // don't need to log if it fails
+                          stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                          reset();
+                      } else {
+
+                          this->logger.warning(log_cat, "Connection error.", ec);
+
+                          // if we don't reset here, the connection will hang if there are too many concurrent
+                          // connections for some reason.
+                          // fixme: are we hard-closing the connection without letting the shutdown signal to be sent?
+                          reset();
+                      }
                   }
               });
         }
