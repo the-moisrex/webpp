@@ -31,9 +31,9 @@ namespace webpp::http {
                            typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>,
         public HeaderEList {
 
-        using super =
-          stl::vector<HeaderFieldType,
-                      typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>;
+        using field_alloc_type =
+          typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>;
+        using super      = stl::vector<HeaderFieldType, field_alloc_type>;
         using elist_type = HeaderEList;
 
       public:
@@ -43,12 +43,10 @@ namespace webpp::http {
 
         using super::super;
 
-        // todo: fix this
-        constexpr request_headers(istl::StringViewifiable auto&& header_string, auto&&... args)
-          : super{stl::forward<decltype(args)>(args)...},
-            elist_type{} {
-            parse_header_string(istl::string_viewify(stl::forward<decltype(header_string)>(header_string)));
-        }
+        template <EnabledTraits ET>
+        constexpr request_headers(ET&& et)
+          : super{alloc::general_allocator<field_alloc_type>(et)},
+            elist_type{et} {}
 
 
         /**
