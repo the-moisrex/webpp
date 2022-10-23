@@ -21,9 +21,9 @@ namespace webpp::http::beast_proto {
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
+        using allocator_pack_type      = typename common_http_request_type::allocator_pack_type;
 
       private:
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
         using request_header_type = typename common_http_request_type::headers_type;
         using request_body_type   = typename common_http_request_type::body_type;
         using char_allocator_type =
