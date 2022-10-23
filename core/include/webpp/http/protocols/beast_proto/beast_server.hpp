@@ -128,18 +128,10 @@ namespace webpp::http::beast_proto {
 
       private:
         void make_beast_response() noexcept {
-            const beast_request_type& breq = parser->get();
+            beast_request_type& breq = parser->get();
 
             // setting the version
-            const auto major = static_cast<stl::uint16_t>(breq.version() / 10);
-            const auto minor = static_cast<stl::uint16_t>(breq.version() % 10);
-            req->version(http::version{major, minor});
-
-            // setting uri and method
-            req->uri(string_viewify(breq.target()));
-            req->method(string_viewify(breq.method_string()));
-
-            // setting the headers and body
+            req->set_beast_request(breq);
 
             HTTPResponse auto res = server.call_app(*req);
             bres.emplace();
@@ -168,7 +160,7 @@ namespace webpp::http::beast_proto {
                   } else [[unlikely]] {
 
                       // This means they closed the connection
-                      if(ec == boost::beast::http::error::end_of_stream) {
+                      if (ec == boost::beast::http::error::end_of_stream) {
                           // try sending shutdown signal
                           // don't need to log if it fails
                           stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);

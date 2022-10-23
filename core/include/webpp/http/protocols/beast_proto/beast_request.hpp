@@ -3,6 +3,7 @@
 #ifndef WEBPP_BEAST_REQUEST_HPP
 #define WEBPP_BEAST_REQUEST_HPP
 
+#include "../../../std/string.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
 #include "../../http_concepts.hpp"
@@ -34,17 +35,22 @@ namespace webpp::http::beast_proto {
         using beast_body_type   = string_body_of<string_type>;
 
         using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
-
+        using beast_request_ref  = beast_request_type&;
+        using beast_request_ptr  = beast_request_type*;
 
         using super = common_http_request_type;
 
-        string_view_type uri_str;
-        string_view_type method_str;
-        http::version    http_ver;
+        beast_request_ptr breq;
 
         template <typename StrT>
         constexpr string_view_type string_viewify(StrT&& str) const noexcept {
             return istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+        }
+
+        template <typename StrT>
+        constexpr string_view_type stringify(StrT&& str) const noexcept {
+            return istl::stringify_of<string_type>(stl::forward<StrT>(str),
+                                                   alloc::general_alloc_for<string_type>(*this));
         }
 
       public:
@@ -54,30 +60,24 @@ namespace webpp::http::beast_proto {
         beast_request(beast_request const&)     = delete; // no copying for now
         beast_request(beast_request&&) noexcept = default;
 
-        [[nodiscard]] string_view_type uri() const noexcept {
-            return string_viewify(uri_str);
+        [[nodiscard]] auto uri() const {
+            return stringify(breq->target());
         }
 
-        [[nodiscard]] string_view_type method() const noexcept {
-            return string_viewify(method_str);
+        [[nodiscard]] auto method() const {
+            return stringify(breq->method_string());
         }
 
         [[nodiscard]] http::version version() const noexcept {
-            return http_ver;
+            const auto major = static_cast<stl::uint16_t>(breq->version() / 10);
+            const auto minor = static_cast<stl::uint16_t>(breq->version() % 10);
+            return http::version{major, minor};
         }
 
         //////////////////////////////////////////
 
-        void uri(string_view_type str) noexcept {
-            uri_str = str;
-        }
-
-        void method(string_view_type str) noexcept {
-            method_str = str;
-        }
-
-        void version(http::version ver) noexcept {
-            http_ver = ver;
+        void set_beast_request(beast_request_ref req) noexcept {
+            breq = &req;
         }
     };
 
