@@ -7,11 +7,10 @@
 #include "../../../traits/traits.hpp"
 #include "../../http_concepts.hpp"
 #include "../../version.hpp"
+#include "beast_string_body.hpp"
 
 #include <boost/beast/http/fields.hpp>
 #include <boost/beast/http/message.hpp>
-#include <boost/beast/http/parser.hpp>
-#include <boost/beast/http/string_body.hpp>
 
 namespace webpp::http::beast_proto {
 
@@ -24,6 +23,19 @@ namespace webpp::http::beast_proto {
         using string_view_type         = traits::string_view<traits_type>;
 
       private:
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        using request_header_type = typename common_http_request_type::headers_type;
+        using request_body_type   = typename common_http_request_type::body_type;
+        using char_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
+        using fields_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
+        using beast_fields_type = boost::beast::http::basic_fields<fields_allocator_type>;
+        using beast_body_type   = string_body_of<string_type>;
+
+        using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
+
+
         using super = common_http_request_type;
 
         string_view_type uri_str;
