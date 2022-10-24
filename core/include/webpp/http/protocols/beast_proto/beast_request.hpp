@@ -23,6 +23,8 @@ namespace webpp::http::beast_proto {
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
         using allocator_pack_type      = typename common_http_request_type::allocator_pack_type;
+        using headers_type             = typename common_http_request_type::headers_type;
+        using field_type               = typename headers_type::field_type;
 
       private:
         using request_header_type = typename common_http_request_type::headers_type;
@@ -48,7 +50,7 @@ namespace webpp::http::beast_proto {
         }
 
         template <typename StrT>
-        constexpr string_view_type stringify(StrT&& str) const noexcept {
+        constexpr string_type stringify(StrT&& str) const noexcept {
             return istl::stringify_of<string_type>(stl::forward<StrT>(str),
                                                    alloc::general_alloc_for<string_type>(*this));
         }
@@ -57,8 +59,12 @@ namespace webpp::http::beast_proto {
         template <typename... Args>
         beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
 
-        beast_request(beast_request const&)     = delete; // no copying for now
-        beast_request(beast_request&&) noexcept = default;
+        beast_request(beast_request const&)                = delete; // no copying for now
+        beast_request(beast_request&&) noexcept            = default;
+        beast_request& operator=(beast_request&&) noexcept = delete;
+        beast_request& operator=(beast_request const&)     = delete; // no copying for now
+
+        ~beast_request() = default;
 
         [[nodiscard]] auto uri() const {
             return stringify(breq->target());
@@ -78,6 +84,17 @@ namespace webpp::http::beast_proto {
 
         void set_beast_request(beast_request_ref req) noexcept {
             breq = &req;
+            // todo: not very efficient, is it?
+            for (const auto& field : *breq) {
+                this->headers.emplace_back(string_viewify(field.name_string()),
+                                           string_viewify(field.value()));
+            }
+            // todo
+            if constexpr (requires {
+                              { this->body = *breq };
+                          }) {
+                this->body = *breq;
+            }
         }
     };
 

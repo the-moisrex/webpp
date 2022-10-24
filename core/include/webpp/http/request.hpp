@@ -4,7 +4,7 @@
 #include "../memory/object.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../version.hpp"
-#include "./headers.hpp"
+#include "./header_fields.hpp"
 #include "./http_concepts.hpp"
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
@@ -58,6 +58,7 @@ namespace webpp::http {
         constexpr common_http_request(common_http_request&&) noexcept                 = default;
         constexpr common_http_request& operator=(common_http_request const&) noexcept = default;
         constexpr common_http_request& operator=(common_http_request&&) noexcept      = default;
+        constexpr ~common_http_request()                                              = default;
 
 
         /**

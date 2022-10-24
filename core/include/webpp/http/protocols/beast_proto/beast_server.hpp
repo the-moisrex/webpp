@@ -97,6 +97,7 @@ namespace webpp::http::beast_proto {
         http_worker(http_worker&&) noexcept            = delete;
         http_worker& operator=(http_worker const&)     = delete;
         http_worker& operator=(http_worker&&) noexcept = delete;
+        ~http_worker()                                 = default;
 
         http_worker(server_ref in_server)
           : etraits{in_server},
@@ -260,6 +261,7 @@ namespace webpp::http::beast_proto {
         thread_worker(thread_worker&&) noexcept            = delete;
         thread_worker& operator=(thread_worker const&)     = delete;
         thread_worker& operator=(thread_worker&&) noexcept = delete;
+        ~thread_worker()                                   = default;
 
         thread_worker(server_type& input_server)
           : server(input_server),

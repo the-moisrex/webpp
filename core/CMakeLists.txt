@@ -149,7 +149,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp
-        ${LIB_INCLUDE_DIR}/webpp/http/headers.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/header_fields.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/response_headers.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/http_concepts.hpp
