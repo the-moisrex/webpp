@@ -171,7 +171,8 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator && requires {
+                if constexpr (!has_allocator &&
+                              requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -181,6 +182,16 @@ namespace webpp::http {
                 } else {
                     return response_type::with_body(stl::forward<Args>(args)...);
                 }
+            }
+
+            template <typename StrT, typename... Args>
+            constexpr string_type format(StrT&& format_str, Args&&... args) const {
+                // todo: it's possible to optimize this for constant expressions
+                string_type str{alloc::general_alloc_for<string_type>(*this)};
+                fmt::vformat_to(stl::back_inserter(str),
+                                istl::to_std_string_view(format_str),
+                                fmt::make_format_args(stl::forward<Args>(args)...));
+                return str;
             }
 
 

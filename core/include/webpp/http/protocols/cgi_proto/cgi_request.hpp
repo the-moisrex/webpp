@@ -21,20 +21,54 @@ namespace webpp::http {
         using server_type              = typename common_http_request_type::server_type;
 
       private:
-        using super = CommonHTTPRequest;
-
-      public:
+        using super            = CommonHTTPRequest;
+        using server_ref       = typename super::server_ref;
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
-        using char_type        = typename string_type::value_type;
+        using char_type        = traits::char_type<traits_type>;
 
-        using super::common_http_request;
+        string_type headers_holder;
 
-        constexpr cgi_request(cgi_request const&)                = default;
-        constexpr cgi_request(cgi_request&&) noexcept            = default;
-        constexpr cgi_request& operator=(cgi_request const&)     = default;
-        constexpr cgi_request& operator=(cgi_request&&) noexcept = default;
-        constexpr ~cgi_request()                                 = default;
+        string_view_type put_header_name(string_view_type name) {
+            headers_holder.append(name.data(), name.size());
+            stl::replace(headers_holder.end() - name.size(), headers_holder.end(), '_', '-');
+            return {headers_holder.data() + headers_holder.size() - name.size(), name.size()};
+        }
+
+        string_view_type put_header_value(string_view_type value) {
+            headers_holder.append(value.data(), value.size());
+            return {headers_holder.data() + headers_holder.size() - value.size(), value.size()};
+        }
+
+        void fill_headers() {
+            static constexpr string_view_type HTTP_prefix = "HTTP_";
+            for (auto it = ::environ; *it; it++) {
+                string_view_type hdr{*it};
+                if (ascii::starts_with(hdr, HTTP_prefix)) {
+                    hdr.remove_prefix(HTTP_prefix.size());
+                    auto const       equal_sign = hdr.find('=');
+                    string_view_type name       = hdr.substr(0, equal_sign);
+                    string_view_type value      = hdr.substr(equal_sign + 1);
+
+                    name  = put_header_name(name);
+                    value = put_header_value(value);
+                    this->headers.emplace_back(name, value);
+                }
+            }
+        }
+
+      public:
+        cgi_request(server_ref svr)
+          : super{svr},
+            headers_holder{alloc::general_alloc_for<string_type>(*this)} {
+            fill_headers();
+        }
+
+        cgi_request(cgi_request const&)                = default;
+        cgi_request(cgi_request&&) noexcept            = default;
+        cgi_request& operator=(cgi_request const&)     = default;
+        cgi_request& operator=(cgi_request&&) noexcept = default;
+        ~cgi_request()                                 = default;
 
         /**
          * Get the environment value safely
@@ -347,7 +381,7 @@ namespace webpp::http {
             static string_type body_cache{this->alloc_pack.template general_allocator<char_type>()};
             if (body_cache.empty()) {
                 if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
-                    // now we know how much content the user is going to send
+                    // now we know how much content the user is going to send,
                     // so we just create a buffer with that size
                     auto content_length = to_uint(content_length_str);
 

@@ -13,12 +13,27 @@ namespace website {
 
     struct app {
 
-        auto home(Context auto&& ctx) noexcept {
+        auto home(Context auto&& ctx) const noexcept {
             return ctx.string("Home page");
         }
 
-        auto about(Context auto&& ctx) {
+        auto about(Context auto&& ctx) const {
             return ctx.string("About page");
+        }
+
+
+        // how to run this function:
+        //   REQUEST_URI=/content-length HTTP_CONTENT_LENGTH=5 REQUEST_METHOD=POST ./cgi-application
+        auto get_len(Context auto&& ctx) const {
+            stl::size_t content_length = ctx.request.headers.content_length();
+            auto res = ctx.format("Content-Length: {}\n", content_length);
+            for (auto const& hdr : ctx.request.headers) {
+                res += hdr.name;
+                res += ": ";
+                res += hdr.value;
+                res += "\n";
+            }
+            return res;
         }
 
         auto operator()(auto&& req) {
@@ -31,6 +46,7 @@ namespace website {
                            [] {
                                return "main page";
                            },
+                           (post and root / "content-length") >>= mem_call(get_len),
                            (get and (root / "home")) >>= mem_call(home),
                            get & (root / "about") >>= mem_call(about),
                            root / "admin" >>= admin};
