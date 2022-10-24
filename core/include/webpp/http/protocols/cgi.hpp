@@ -95,7 +95,7 @@ namespace webpp::http {
 
         int operator()() noexcept {
             // we're putting the request on local allocator; yay us :)
-            static_assert(stl::constructible_from<request_type, cgi>);
+            static_assert(stl::constructible_from<request_type, cgi&>, "CGI Request type is not valid.");
             HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
             const auto header_str = res.headers.str();
@@ -117,7 +117,7 @@ namespace webpp::http {
             write(status_line.data(), static_cast<stl::streamsize>(status_line.size()));
 
             write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
-            write("\r\n", 2l);
+            write("\r\n", 2L);
             write(str.data(), static_cast<stl::streamsize>(str.size()));
             return EXIT_SUCCESS;
         }

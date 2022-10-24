@@ -18,6 +18,7 @@ namespace webpp::http {
     struct cgi_request : public CommonHTTPRequest {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
+        using server_type              = typename common_http_request_type::server_type;
 
       private:
         using super = CommonHTTPRequest;
@@ -33,12 +34,13 @@ namespace webpp::http {
         constexpr cgi_request(cgi_request&&) noexcept            = default;
         constexpr cgi_request& operator=(cgi_request const&)     = default;
         constexpr cgi_request& operator=(cgi_request&&) noexcept = default;
+        constexpr ~cgi_request()                                 = default;
 
         /**
          * Get the environment value safely
          */
-        [[nodiscard]] inline string_view_type env(char const* key) noexcept {
-            this->server.env(key);
+        [[nodiscard]] inline string_view_type env(char const* key) const noexcept {
+            return server_type::env(key);
         }
 
 
