@@ -54,7 +54,7 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr auto iter(name_type name) const noexcept {
             return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
-                return field.name == name;
+                return field.is_name(name);
             });
         }
 
