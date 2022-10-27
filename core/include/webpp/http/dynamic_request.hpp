@@ -19,6 +19,7 @@ namespace webpp::http {
     struct basic_dynamic_request : public CommonRequestType {
         using common_request_type = CommonRequestType;
         using traits_type         = typename common_request_type::traits_type;
+        using string_type         = traits::general_string<traits_type>;
 
       private:
         using super = common_request_type;
@@ -33,7 +34,20 @@ namespace webpp::http {
 
 
       public:
-        // get the HTTP version of the request
+        // Get the raw requested URI
+        // This value is not checked for security; this is raw
+        [[nodiscard]] string_type uri() const {
+            return call_req(uri);
+        }
+
+        // Get the request METHOD (GET/PUT/POST/...)
+        // This is unfiltered user input; don't store this value anywhere if you haven't checked the
+        // correctness of its value
+        [[nodiscard]] string_type method() const {
+            return call_req(method);
+        }
+
+        // Get the HTTP version of the request
         [[nodiscard]] http::version version() const noexcept {
             return call_req(version);
         }
