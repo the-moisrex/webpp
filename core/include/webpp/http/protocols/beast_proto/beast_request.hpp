@@ -6,6 +6,7 @@
 #include "../../../std/string.hpp"
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
+#include "../../dynamic_request.hpp"
 #include "../../http_concepts.hpp"
 #include "../../version.hpp"
 #include "beast_string_body.hpp"
@@ -17,7 +18,7 @@ namespace webpp::http::beast_proto {
 
 
     template <typename CommonHTTPRequest>
-    struct beast_request : public CommonHTTPRequest {
+    struct beast_request final : public CommonHTTPRequest, protected basic_dynamic_request {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
@@ -55,6 +56,26 @@ namespace webpp::http::beast_proto {
                                                    alloc::general_alloc_for<string_type>(*this));
         }
 
+      protected:
+        using pstring_type = typename dynamic_request::string_type;
+
+        // get the dynamic request object
+        inline dynamic_request const& dreq() const noexcept {
+            return static_cast<dynamic_request const&>(*this);
+        }
+
+        [[nodiscard]] pstring_type get_method() const override {
+            return dreq().stringify(method(), *this);
+        }
+
+        [[nodiscard]] pstring_type get_uri() const override {
+            return dreq().stringify(uri(), *this);
+        }
+
+        [[nodiscard]] http::version get_version() const noexcept override {
+            return version();
+        }
+
       public:
         template <typename... Args>
         beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
@@ -64,7 +85,7 @@ namespace webpp::http::beast_proto {
         beast_request& operator=(beast_request&&) noexcept = delete;
         beast_request& operator=(beast_request const&)     = delete; // no copying for now
 
-        ~beast_request() = default;
+        ~beast_request() final = default;
 
         [[nodiscard]] auto uri() const {
             return stringify(breq->target());

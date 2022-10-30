@@ -18,9 +18,9 @@
 namespace webpp::http {
 
     template <Application       App,
-              Traits            TraitsType = default_traits,
-              RootExtensionList REList     = empty_root_extension_lists>
-    struct cgi : public common_http_protocol<TraitsType, App, stl::remove_cvref_t<REList>> {
+              Traits            TraitsType     = default_traits,
+              RootExtensionList RootExtensions = empty_extension_pack>
+    struct cgi : public common_http_protocol<TraitsType, App, RootExtensions> {
         using traits_type            = TraitsType;
         using etraits                = enable_owner_traits<traits_type>;
         using application_type       = App;
@@ -29,9 +29,9 @@ namespace webpp::http {
         using string_type            = traits::general_string<traits_type>;
         using local_allocator_type   = traits::local_allocator<traits_type, char_type>;
         using general_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using common_protocol_type   = common_http_protocol<TraitsType, App, REList>;
+        using common_protocol_type   = common_http_protocol<TraitsType, App, RootExtensions>;
         using app_wrapper_type       = typename common_protocol_type::app_wrapper_type;
-        using root_extensions        = stl::remove_cvref_t<REList>;
+        using root_extensions        = RootExtensions;
         using request_type           = simple_request<cgi, cgi_request>;
 
         static_assert(HTTPRequest<request_type>,
@@ -42,7 +42,7 @@ namespace webpp::http {
                       "its response is not of a valid response type.");
 
       private:
-        using super = common_http_protocol<TraitsType, App, REList>;
+        using super = common_http_protocol<TraitsType, App, RootExtensions>;
 
         void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!

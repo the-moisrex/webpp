@@ -9,6 +9,7 @@
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../utils/functional.hpp"
+#include "../dynamic_request.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
 #include "route.hpp"
@@ -16,18 +17,46 @@
 #include <any>
 
 namespace webpp::http {
+
+
+    /**
+     * This is a dynamic server which holds a reference to the servers
+     */
+    template <Traits TraitsType, ExtensionList RootExtensions, typename... ServerTypes>
+    struct basic_dynamic_server {
+        using servers_variant   = stl::variant<ServerTypes*...>;
+        using traits_type       = TraitsType;
+        using root_extensions   = RootExtensions;
+        using string_view_type  = traits::string_view<traits_type>;
+        using supported_servers = stl::tuple<ServerTypes...>;
+
+      private:
+        servers_variant svrvar; // server variant
+
+#define call_svr(mem, ...)                                      \
+    stl::visit(                                                 \
+      [](auto* svr) noexcept(noexcept(svr->mem(__VA_ARGS__))) { \
+          return svr->mem(__VA_ARGS__);                         \
+      },                                                        \
+      svrvar)
+
+      public:
+        template <typename ServerType>
+            requires(istl::one_of<ServerTypes..., ServerType>)
+        basic_dynamic_server(ServerType& inp_server) : svrvar{&inp_server} {}
+
+        // Get the server name that's being used
+        [[nodiscard]] string_view_type server_name() const noexcept {
+            return call_svr(server_name);
+        }
+
+#undef call_svr
+    };
+
+
     template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router;
 
-
-    template <typename REL, typename ServerType>
-    struct dynamic_request_midlevel_extensie : public REL {
-        using REL::REL;
-
-        using server_type = ServerType;
-        using traits_type = typename server_type::traits_type;
-
-    };
 
     template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
     struct dynamic_route {
@@ -91,7 +120,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
         using routes_type      = stl::vector<route_type, vector_allocator>;
-        using request_type  = simple_request<basic_dynamic_router, dynamic_request_midlevel_extensie>;
+        using request_type     = simple_request<basic_dynamic_router, dynamic_request>;
         using context_type     = simple_context<request_type, extension_list>;
         using response_type    = simple_response_pack<traits_type, extension_list>;
 
@@ -114,7 +143,8 @@ namespace webpp::http {
         // take advantage of parallelism
 
 
-        constexpr basic_dynamic_router() noexcept requires(etraits::is_resource_owner)
+        constexpr basic_dynamic_router() noexcept
+            requires(etraits::is_resource_owner)
           : etraits{},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
@@ -153,13 +183,16 @@ namespace webpp::http {
             static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
                           "The specified member function is not from the specified object.");
 
-            return routify([callable = obj, method]<typename... Args> requires(
-              method_type::template is_same_args_v<Args...>)(
-              Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                return stl::invoke_result_t<return_type, Args...>(method,
-                                                                  callable,
-                                                                  stl::forward<Args>(args)...);
-            });
+            return routify(
+              [callable = obj, method]<typename... Args> requires(
+                method_type::template is_same_args_v<Args...>)(
+                Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                                                             return stl::invoke_result_t<return_type,
+                                                                                         Args...>(
+                                                               method,
+                                                               callable,
+                                                               stl::forward<Args>(args)...);
+                                                         });
         }
 
         /**

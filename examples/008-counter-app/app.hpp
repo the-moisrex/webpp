@@ -17,8 +17,8 @@ namespace website {
 
     struct app_impl;
 
-    struct app : stl::enable_traits<traits_type> {
-        using etraits = stl::enable_traits<traits_type>;
+    struct app : enable_traits<traits_type> {
+        using etraits = enable_traits<traits_type>;
         stl::unique_ptr<app_impl> the_app;
 
         app(etraits const& et);

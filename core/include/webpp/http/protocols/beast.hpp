@@ -13,12 +13,14 @@ namespace webpp::http {
     /**
      * Beast Server
      */
-    template <Application App, Traits TraitsType = default_traits, ExtensionList EList = empty_extension_pack>
-    struct beast : public common_http_protocol<TraitsType, App, EList> {
+    template <Application   App,
+              Traits        TraitsType     = default_traits,
+              ExtensionList RootExtensions = empty_extension_pack>
+    struct beast : public common_http_protocol<TraitsType, App, RootExtensions> {
         using application_type          = stl::remove_cvref_t<App>;
         using traits_type               = TraitsType;
-        using root_extensions           = EList;
-        using common_http_protocol_type = common_http_protocol<TraitsType, App, EList>;
+        using root_extensions           = RootExtensions;
+        using common_http_protocol_type = common_http_protocol<TraitsType, App, RootExtensions>;
         using etraits                   = typename common_http_protocol_type::etraits;
         using protocol_type             = beast<application_type, traits_type, root_extensions>;
         using duration                  = typename stl::chrono::steady_clock::duration;
@@ -46,7 +48,7 @@ namespace webpp::http {
         static constexpr auto log_cat = "Beast";
 
       private:
-        using super = common_http_protocol<TraitsType, App, EList>;
+        using super = common_http_protocol<TraitsType, App, RootExtensions>;
 
         friend http_worker_type;
         friend thread_worker_type;
@@ -185,6 +187,9 @@ namespace webpp::http {
             return u;
         }
 
+        [[nodiscard]] constexpr string_view_type server_name() const noexcept {
+            return "Beast";
+        }
 
         // run the server
         [[nodiscard]] int operator()() noexcept {

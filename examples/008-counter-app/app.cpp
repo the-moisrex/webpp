@@ -22,11 +22,11 @@ struct app_impl : public enable_traits<traits_type> {
 
 
     app_impl(etraits const& et) : etraits{et}, view_man{*this} {
-        view_man.view_roots.push_back("./public");
-        view_man.view_roots.push_back("./examples/007-beast-view/public");
-        view_man.view_roots.push_back("../examples/007-beast-view/public");
-        view_man.view_roots.push_back("../../examples/007-beast-view/public");
-        view_man.view_roots.push_back("../../../examples/007-beast-view/public");
+        view_man.view_roots.emplace_back("./public");
+        view_man.view_roots.emplace_back("./examples/007-beast-view/public");
+        view_man.view_roots.emplace_back("../examples/007-beast-view/public");
+        view_man.view_roots.emplace_back("../../examples/007-beast-view/public");
+        view_man.view_roots.emplace_back("../../../examples/007-beast-view/public");
 
         router.synced(true);
         setup_routes();

@@ -5,6 +5,7 @@
 
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
+#include "../../dynamic_request.hpp"
 #include "../../http_concepts.hpp"
 #include "../../request_headers.hpp"
 
@@ -15,7 +16,7 @@
 namespace webpp::http {
 
     template <typename CommonHTTPRequest>
-    struct cgi_request : public CommonHTTPRequest {
+    struct cgi_request : public CommonHTTPRequest, basic_dynamic_request {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using server_type              = typename common_http_request_type::server_type;
@@ -57,6 +58,26 @@ namespace webpp::http {
             }
         }
 
+      protected:
+        using pstring_type = typename dynamic_request::string_type;
+
+        // get the dynamic request object
+        inline dynamic_request const& dreq() const noexcept {
+            return static_cast<dynamic_request const&>(*this);
+        }
+
+        [[nodiscard]] pstring_type get_method() const override {
+            return dreq().stringify(method(), *this);
+        }
+
+        [[nodiscard]] pstring_type get_uri() const override {
+            return dreq().stringify(uri(), *this);
+        }
+
+        [[nodiscard]] http::version get_version() const noexcept override {
+            return version();
+        }
+
       public:
         cgi_request(server_ref svr)
           : super{svr},
@@ -68,7 +89,7 @@ namespace webpp::http {
         cgi_request(cgi_request&&) noexcept            = default;
         cgi_request& operator=(cgi_request const&)     = default;
         cgi_request& operator=(cgi_request&&) noexcept = default;
-        ~cgi_request()                                 = default;
+        ~cgi_request() final                           = default;
 
         /**
          * Get the environment value safely

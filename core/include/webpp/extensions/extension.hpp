@@ -443,7 +443,6 @@ namespace webpp {
 
 
     using empty_extension_pack       = extension_pack<>;
-    using empty_root_extension_lists = empty_extension_pack;
 
 
 
