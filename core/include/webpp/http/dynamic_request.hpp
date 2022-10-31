@@ -15,6 +15,8 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
     };
 
+    struct dynamic_request;
+
     /**
      * This request type can hold other HTTP request types.
      */
@@ -34,35 +36,55 @@ namespace webpp::http {
         [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
+        friend struct dynamic_request;
+
       public:
         virtual ~basic_dynamic_request() = 0;
     };
 
 
-    struct dynamic_request : basic_dynamic_request {
+    /**
+     * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
+     */
+    struct dynamic_request final {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
 
+      private:
+        basic_dynamic_request* req;
+
+      public:
+        dynamic_request(basic_dynamic_request* inp_req) noexcept : req{inp_req} {
+            [[assume(inp_req != nullptr)]];
+        }
+        dynamic_request(basic_dynamic_request& inp_req) noexcept : req{&inp_req} {}
+        dynamic_request(stl::nullptr_t)                             = delete;
+        dynamic_request(dynamic_request const&) noexcept            = default;
+        dynamic_request(dynamic_request&&) noexcept                 = default;
+        dynamic_request& operator=(dynamic_request const&) noexcept = default;
+        dynamic_request& operator=(dynamic_request&&) noexcept      = default;
+        ~dynamic_request()                                          = default;
 
         // Get the raw requested URI
         // This value is not checked for security; this is raw
         [[nodiscard]] string_type uri() const {
-            return this->get_uri();
+            return req->get_uri();
         }
 
         // Get the request METHOD (GET/PUT/POST/...)
         // This is unfiltered user input; don't store this value anywhere if you haven't checked the
         // correctness of its value
         [[nodiscard]] string_type method() const {
-            return this->get_method();
+            return req->get_method();
         }
 
         // Get the HTTP version of the request
         [[nodiscard]] http::version version() const noexcept {
-            return this->get_version();
+            return req->get_version();
         }
     };
+
 
 
 } // namespace webpp::http

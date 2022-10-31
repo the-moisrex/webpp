@@ -16,7 +16,7 @@
 namespace webpp::http {
 
     template <typename CommonHTTPRequest>
-    struct cgi_request : public CommonHTTPRequest, basic_dynamic_request {
+    struct cgi_request final : public CommonHTTPRequest, basic_dynamic_request {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using server_type              = typename common_http_request_type::server_type;
