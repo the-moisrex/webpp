@@ -12,9 +12,52 @@
 #include "../traits/traits.hpp"
 #include "./headers/accept_encoding.hpp"
 #include "header_fields.hpp"
+#include "http_concepts.hpp"
 
 namespace webpp::http {
 
+
+    namespace details {
+
+        /**
+         * @brief Vector of fields, used as a base for request headers
+         */
+        template <HTTPHeaderField HeaderFieldType, Allocator AllocType>
+        struct fields_vector {
+
+            static_assert(
+              HTTPRequestHeaderFieldsProvider<fields_vector>,
+              "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
+
+          private:
+            using field_alloc_type =
+              typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>;
+            using fields_type = stl::vector<HeaderFieldType, field_alloc_type>;
+
+            fields_type fields;
+
+          public:
+            using field_type = HeaderFieldType;
+            using name_type  = typename field_type::string_type;
+            using value_type = typename field_type::string_type;
+
+
+            template <EnabledTraits ET>
+            constexpr fields_vector(ET&& et) : fields{alloc::general_allocator<field_alloc_type>(et)} {}
+
+            [[nodiscard]] constexpr auto begin() const noexcept {
+                return fields.begin();
+            }
+
+            [[nodiscard]] constexpr auto end() const noexcept {
+                return fields.end();
+            }
+
+            void emplace(name_type name, value_type value) {
+                fields.emplace_back(stl::move(name), stl::move(value));
+            }
+        };
+    } // namespace details
 
     /**
      * Setting non-ascii characters in the value section of the headers should
@@ -25,28 +68,20 @@ namespace webpp::http {
      *
      * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
-    template <typename HeaderEList, HTTPHeaderField HeaderFieldType, Allocator AllocType>
-    class request_headers
-      : public stl::vector<HeaderFieldType,
-                           typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>>,
-        public HeaderEList {
+    template <typename HeaderEList, HTTPRequestHeaderFieldsProvider FieldsProviderType>
+    class request_headers : public HeaderEList, public FieldsProviderType {
 
-        using field_alloc_type =
-          typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>;
-        using super      = stl::vector<HeaderFieldType, field_alloc_type>;
-        using elist_type = HeaderEList;
+        using elist_type           = HeaderEList;
+        using fields_provider_type = FieldsProviderType;
 
       public:
-        using field_type = HeaderFieldType;
+        using field_type = typename fields_provider_type::field_type;
         using name_type  = typename field_type::string_type;
         using value_type = typename field_type::string_type;
 
-        using super::super;
-
         template <EnabledTraits ET>
-        constexpr request_headers(ET&& et)
-          : super{alloc::general_allocator<field_alloc_type>(et)},
-            elist_type{et} {}
+        constexpr request_headers(ET&& et) : fields_provider_type{et},
+                                             elist_type{et} {}
 
 
         /**
@@ -103,33 +138,22 @@ namespace webpp::http {
     };
 
 
-    struct request_header_field_descriptor {
-
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::request_header_field_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = header_field_view<traits::string_view<TraitsType>, EList>;
-    };
 
 
-
-    template <Allocator AllocType>
+    template <typename FieldsProvider>
     struct request_headers_descriptor {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_headers_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = request_headers<
-          EList,
-          typename RootExtensions::template extensie_type<TraitsType, request_header_field_descriptor>,
-          AllocType>;
+        using mid_level_extensie_type = request_headers<EList, FieldsProvider>;
+        // typename RootExtensions::template extensie_type<TraitsType, request_header_field_descriptor>,
     };
 
 
-    template <Traits TraitsType, typename RootExtensions, Allocator AllocType>
+    template <Traits TraitsType, typename RootExtensions, typename FieldsProvider>
     using simple_request_headers =
-      typename RootExtensions::template extensie_type<TraitsType, request_headers_descriptor<AllocType>>;
+      typename RootExtensions::template extensie_type<TraitsType, request_headers_descriptor<FieldsProvider>>;
 
 } // namespace webpp::http
 

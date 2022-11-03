@@ -35,6 +35,7 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeaderField = requires(T f) {
+        typename T::string_type;
         requires requires(typename T::string_type str) {
             { f.is_name(str) } -> stl::same_as<bool>;
         };
@@ -43,7 +44,22 @@ namespace webpp::http {
     };
 
 
-
+    /**
+     * @brief This kinda type will be used as a base for the HTTP Request Headers which is where the request
+     * is supposed to be stored in memory. Other request header types are to use these methods and types
+     * provided here.
+     */
+    template <typename T>
+    concept HTTPRequestHeaderFieldsProvider = requires(T obj) {
+        obj.begin();
+        obj.end();
+        typename T::field_type;
+        typename T::name_type;
+        typename T::value_type;
+        requires requires(typename T::name_type name, typename T::value_type value) {
+            obj.emplace(name, value);
+        };
+    };
 
 
     ////////////////////////////// Request //////////////////////////////

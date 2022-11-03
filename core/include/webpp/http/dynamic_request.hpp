@@ -5,15 +5,61 @@
 
 #include "../traits/default_traits.hpp"
 #include "./version.hpp"
+#include "http_concepts.hpp"
 
 
 namespace webpp::http {
 
 
-    struct basic_dynamic_headers {
-        using traits_type      = default_dynamic_traits;
-        using string_view_type = traits::string_view<traits_type>;
-    };
+    namespace details {
+
+        template <RootExtensionList RootExtensions>
+        struct field_iterator {};
+
+        template <RootExtensionList RootExtensions = empty_extension_pack>
+        struct dynamic_request_header_field_provider {
+            using traits_type     = default_dynamic_traits;
+            using root_extensions = RootExtensions;
+            using field_type =
+              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+
+          protected:
+            virtual auto get_begin() const noexcept = 0;
+            virtual auto get_end() const noexcept   = 0;
+        };
+
+        /**
+         * @brief Vector of fields, used as a base for request headers
+         */
+        template <RootExtensionList RootExtensions = empty_extension_pack>
+        struct dynamic_fields_provider {
+            using root_extensions = RootExtensions;
+
+            static_assert(
+              HTTPRequestHeaderFieldsProvider<dynamic_fields_provider>,
+              "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
+
+          private:
+            using field_provider_type = dynamic_request_header_field_provider<root_extensions>;
+            field_provider_type* provider;
+
+          public:
+            using field_type = typename field_provider_type ::field_type;
+            using name_type  = typename field_type::string_type;
+            using value_type = typename field_type::string_type;
+
+
+            constexpr dynamic_fields_provider(field_provider_type& inp_provider) : provider{&inp_provider} {}
+
+            [[nodiscard]] constexpr auto begin() const noexcept {
+                return provider->get_begin();
+            }
+
+            [[nodiscard]] constexpr auto end() const noexcept {
+                return provider->get_end();
+            }
+        };
+    } // namespace details
 
     struct dynamic_request;
 
