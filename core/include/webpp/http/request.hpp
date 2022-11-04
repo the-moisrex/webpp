@@ -36,8 +36,9 @@ namespace webpp::http {
         using char_type             = traits::char_type<traits_type>;
         using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using request_extensions    = REL;
-        using headers_type = simple_request_headers<traits_type, root_extensions, fields_allocator_type>;
-        using body_type    = simple_request_body<traits_type, root_extensions>;
+        using fields_provider       = details::fields_vector_provider<traits_type, root_extensions>;
+        using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using body_type             = simple_request_body<traits_type, root_extensions>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");

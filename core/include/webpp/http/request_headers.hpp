@@ -16,6 +16,20 @@
 
 namespace webpp::http {
 
+    template <RootExtensionList RootExtensions = empty_extension_pack>
+    struct dynamic_request_header_field_provider {
+        using traits_type     = default_dynamic_traits;
+        using root_extensions = RootExtensions;
+        using fields_type =
+          typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+        using iterator       = typename fields_type::iterator;
+        using const_iterator = typename fields_type::const_iterator;
+
+      protected:
+        virtual const_iterator get_begin() const noexcept = 0;
+        virtual const_iterator get_end() const noexcept   = 0;
+    };
+
 
     namespace details {
 
@@ -23,7 +37,7 @@ namespace webpp::http {
          * @brief Vector of fields, used as a base for request headers
          */
         template <Traits TraitsType, RootExtensionList RootExtensions = empty_extension_pack>
-        struct fields_vector {
+        struct fields_vector_provider : dynamic_request_header_field_provider<RootExtensions> {
             using root_extensions = RootExtensions;
             using traits_type     = TraitsType;
             using field_type =
@@ -32,7 +46,7 @@ namespace webpp::http {
             using value_type = typename field_type::string_type;
 
             static_assert(
-              HTTPRequestHeaderFieldsProvider<fields_vector>,
+              HTTPRequestHeaderFieldsProvider<fields_vector_provider>,
               "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
           private:
@@ -40,13 +54,26 @@ namespace webpp::http {
 
             fields_type fields;
 
+          protected:
+            using dynamic_fields_provider = dynamic_request_header_field_provider<root_extensions>;
+            using dynamic_field_type      = typename dynamic_fields_provider::fields_type;
+            using dynamic_const_iterator  = typename dynamic_fields_provider::const_iterator;
+
+            dynamic_const_iterator get_begin() const noexcept override {
+                return begin();
+            }
+
+            dynamic_const_iterator get_end() const noexcept override {
+                return begin();
+            }
+
           public:
             using iterator       = typename fields_type::iterator;
             using const_iterator = typename fields_type::const_iterator;
 
 
             template <EnabledTraits ET>
-            constexpr fields_vector(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
+            constexpr fields_vector_provider(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
 
             [[nodiscard]] constexpr const_iterator begin() const noexcept {
                 return fields.begin();
@@ -150,7 +177,6 @@ namespace webpp::http {
 
         template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = request_headers<EList, FieldsProvider>;
-        // typename RootExtensions::template extensie_type<TraitsType, request_header_field_descriptor>,
     };
 
 

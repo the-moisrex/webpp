@@ -13,23 +13,6 @@ namespace webpp::http {
 
     namespace details {
 
-        template <RootExtensionList RootExtensions>
-        struct field_iterator {};
-
-        template <RootExtensionList RootExtensions = empty_extension_pack>
-        struct dynamic_request_header_field_provider {
-            using traits_type     = default_dynamic_traits;
-            using root_extensions = RootExtensions;
-            using fields_type =
-              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-            using iterator       = typename fields_type::iterator;
-            using const_iterator = typename fields_type::const_iterator;
-
-          protected:
-            virtual const_iterator get_begin() const noexcept = 0;
-            virtual const_iterator get_end() const noexcept   = 0;
-        };
-
         /**
          * @brief Vector of fields, used as a base for request headers
          */
@@ -46,7 +29,7 @@ namespace webpp::http {
             field_provider_type* provider;
 
           public:
-            using field_type = typename field_provider_type ::field_type;
+            using field_type = typename field_provider_type::field_type;
             using name_type  = typename field_type::string_type;
             using value_type = typename field_type::string_type;
 
@@ -98,6 +81,9 @@ namespace webpp::http {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
+        using root_extensions  = empty_extension_pack;
+        using fields_provider  = details::fields_vector_provider<traits_type, root_extensions>;
+        using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
         basic_dynamic_request* req;
