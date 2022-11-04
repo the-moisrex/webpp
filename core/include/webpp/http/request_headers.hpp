@@ -22,34 +22,37 @@ namespace webpp::http {
         /**
          * @brief Vector of fields, used as a base for request headers
          */
-        template <HTTPHeaderField HeaderFieldType, Allocator AllocType>
+        template <Traits TraitsType, RootExtensionList RootExtensions = empty_extension_pack>
         struct fields_vector {
+            using root_extensions = RootExtensions;
+            using traits_type     = TraitsType;
+            using field_type =
+              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+            using name_type  = typename field_type::string_type;
+            using value_type = typename field_type::string_type;
 
             static_assert(
               HTTPRequestHeaderFieldsProvider<fields_vector>,
               "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
           private:
-            using field_alloc_type =
-              typename stl::allocator_traits<AllocType>::template rebind_alloc<HeaderFieldType>;
-            using fields_type = stl::vector<HeaderFieldType, field_alloc_type>;
+            using fields_type = stl::vector<field_type, traits::general_allocator<traits_type, field_type>>;
 
             fields_type fields;
 
           public:
-            using field_type = HeaderFieldType;
-            using name_type  = typename field_type::string_type;
-            using value_type = typename field_type::string_type;
+            using iterator       = typename fields_type::iterator;
+            using const_iterator = typename fields_type::const_iterator;
 
 
             template <EnabledTraits ET>
-            constexpr fields_vector(ET&& et) : fields{alloc::general_allocator<field_alloc_type>(et)} {}
+            constexpr fields_vector(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
 
-            [[nodiscard]] constexpr auto begin() const noexcept {
+            [[nodiscard]] constexpr const_iterator begin() const noexcept {
                 return fields.begin();
             }
 
-            [[nodiscard]] constexpr auto end() const noexcept {
+            [[nodiscard]] constexpr const_iterator end() const noexcept {
                 return fields.end();
             }
 

@@ -20,12 +20,14 @@ namespace webpp::http {
         struct dynamic_request_header_field_provider {
             using traits_type     = default_dynamic_traits;
             using root_extensions = RootExtensions;
-            using field_type =
+            using fields_type =
               typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+            using iterator       = typename fields_type::iterator;
+            using const_iterator = typename fields_type::const_iterator;
 
           protected:
-            virtual auto get_begin() const noexcept = 0;
-            virtual auto get_end() const noexcept   = 0;
+            virtual const_iterator get_begin() const noexcept = 0;
+            virtual const_iterator get_end() const noexcept   = 0;
         };
 
         /**
