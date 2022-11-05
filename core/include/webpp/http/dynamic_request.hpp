@@ -20,10 +20,6 @@ namespace webpp::http {
         struct dynamic_fields_provider {
             using root_extensions = RootExtensions;
 
-            static_assert(
-              HTTPRequestHeaderFieldsProvider<dynamic_fields_provider>,
-              "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
-
           private:
             using field_provider_type = dynamic_request_header_field_provider<root_extensions>;
             field_provider_type* provider;
@@ -70,7 +66,12 @@ namespace webpp::http {
         friend struct dynamic_request;
 
       public:
-        virtual ~basic_dynamic_request() = 0;
+        constexpr basic_dynamic_request() noexcept                              = default;
+        constexpr basic_dynamic_request(basic_dynamic_request const&) noexcept  = default;
+        constexpr basic_dynamic_request(basic_dynamic_request&&) noexcept       = default;
+        basic_dynamic_request& operator=(basic_dynamic_request&&) noexcept      = default;
+        basic_dynamic_request& operator=(basic_dynamic_request const&) noexcept = default;
+        virtual ~basic_dynamic_request()                                        = 0;
     };
 
 
@@ -82,7 +83,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
-        using fields_provider  = details::fields_vector_provider<traits_type, root_extensions>;
+        using fields_provider  = details::dynamic_fields_provider<root_extensions>;
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
