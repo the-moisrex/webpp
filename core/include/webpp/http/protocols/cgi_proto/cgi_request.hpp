@@ -75,7 +75,7 @@ namespace webpp::http {
         }
 
         [[nodiscard]] http::version get_version() const noexcept override {
-            return version();
+            return this->version();
         }
 
       public:

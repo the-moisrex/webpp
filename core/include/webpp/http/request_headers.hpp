@@ -7,6 +7,7 @@
 #include "../extensions/extension.hpp"
 #include "../std/format.hpp"
 #include "../std/optional.hpp"
+#include "../std/span.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
@@ -16,78 +17,60 @@
 
 namespace webpp::http {
 
-    template <RootExtensionList RootExtensions = empty_extension_pack>
-    struct dynamic_request_header_field_provider {
-        using traits_type     = default_dynamic_traits;
+    /**
+     * @brief Vector of fields, used as a base for request headers
+     */
+    template <Traits TraitsType, RootExtensionList RootExtensions = empty_extension_pack>
+    struct header_fields_provider {
         using root_extensions = RootExtensions;
-        using fields_type =
+        using traits_type     = TraitsType;
+        using field_type =
           typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-        using iterator       = typename fields_type::iterator;
-        using const_iterator = typename fields_type::const_iterator;
+        using name_type      = typename field_type::string_type;
+        using value_type     = typename field_type::string_type;
 
-      protected:
-        virtual const_iterator get_begin() const noexcept = 0;
-        virtual const_iterator get_end() const noexcept   = 0;
-    };
+        static_assert(
+          HTTPRequestHeaderFieldsProvider<header_fields_provider>,
+          "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
+      private:
+        using fields_type = stl::vector<field_type, traits::general_allocator<traits_type, field_type>>;
 
-    namespace details {
+        fields_type fields;
+
+      public:
+        template <EnabledTraits ET>
+        constexpr header_fields_provider(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
+
+        [[nodiscard]] constexpr auto begin() const noexcept {
+            return fields.begin();
+        }
+
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return fields.end();
+        }
+
+        void emplace(name_type name, value_type value) {
+            fields.emplace_back(stl::move(name), stl::move(value));
+        }
 
         /**
-         * @brief Vector of fields, used as a base for request headers
+         * Get a view of the underlying fields
          */
-        template <Traits TraitsType, RootExtensionList RootExtensions = empty_extension_pack>
-        struct fields_vector_provider : dynamic_request_header_field_provider<RootExtensions> {
-            using root_extensions = RootExtensions;
-            using traits_type     = TraitsType;
-            using field_type =
-              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-            using name_type  = typename field_type::string_type;
-            using value_type = typename field_type::string_type;
-
-            static_assert(
-              HTTPRequestHeaderFieldsProvider<fields_vector_provider>,
-              "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
-
-          private:
-            using fields_type = stl::vector<field_type, traits::general_allocator<traits_type, field_type>>;
-
-            fields_type fields;
-
-          protected:
-            using dynamic_fields_provider = dynamic_request_header_field_provider<root_extensions>;
-            using dynamic_field_type      = typename dynamic_fields_provider::fields_type;
-            using dynamic_const_iterator  = typename dynamic_fields_provider::const_iterator;
-
-            dynamic_const_iterator get_begin() const noexcept override {
-                return begin();
+        template <typename NewFieldsType = traits::string_view<default_dynamic_traits>>
+        [[nodiscard]] stl::span<stl::add_const_t<NewFieldsType>> as_view() const noexcept {
+            using new_field_type = stl::remove_const_t<NewFieldsType>;
+            if constexpr (stl::same_as<new_field_type, fields_type>) {
+                return stl::span{fields};
+            } else {
+                using new_fields_type =
+                  stl::vector<new_field_type, traits::general_allocator<traits_type, new_field_type>>;
+                static new_fields_type new_fields{fields.get_allocator()};
+                return stl::span{new_fields};
             }
+        }
+    };
 
-            dynamic_const_iterator get_end() const noexcept override {
-                return begin();
-            }
-
-          public:
-            using iterator       = typename fields_type::iterator;
-            using const_iterator = typename fields_type::const_iterator;
-
-
-            template <EnabledTraits ET>
-            constexpr fields_vector_provider(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
-
-            [[nodiscard]] constexpr const_iterator begin() const noexcept {
-                return fields.begin();
-            }
-
-            [[nodiscard]] constexpr const_iterator end() const noexcept {
-                return fields.end();
-            }
-
-            void emplace(name_type name, value_type value) {
-                fields.emplace_back(stl::move(name), stl::move(value));
-            }
-        };
-    } // namespace details
 
     /**
      * Setting non-ascii characters in the value section of the headers should

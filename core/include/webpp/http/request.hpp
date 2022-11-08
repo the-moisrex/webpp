@@ -36,7 +36,7 @@ namespace webpp::http {
         using char_type             = traits::char_type<traits_type>;
         using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using request_extensions    = REL;
-        using fields_provider       = details::fields_vector_provider<traits_type, root_extensions>;
+        using fields_provider       = details::header_fields_provider<traits_type, root_extensions>;
         using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
         using body_type             = simple_request_body<traits_type, root_extensions>;
 
@@ -84,6 +84,7 @@ namespace webpp::http {
         constexpr final_request(final_request&&) noexcept            = default;
         constexpr final_request& operator=(final_request const&)     = default;
         constexpr final_request& operator=(final_request&&) noexcept = default;
+        constexpr ~final_request()                                   = default;
     };
 
     template <template <typename...> typename MidLevelRequestType, typename ServerType>

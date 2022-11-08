@@ -11,36 +11,37 @@
 namespace webpp::http {
 
 
-    namespace details {
 
-        /**
-         * @brief Vector of fields, used as a base for request headers
-         */
-        template <RootExtensionList RootExtensions = empty_extension_pack>
-        struct dynamic_fields_provider {
-            using root_extensions = RootExtensions;
+    /**
+     * Will provide a std::span of the provided parent request header type;
+     * The data owner can be "header_fields_provider" but the protocols can have their own providers; but they
+     * have to make sure this dynamic provider works for their provider as well.
+     */
+    template <RootExtensionList RootExtensions = empty_extension_pack>
+    struct dynamic_header_fields_provider {
+        using root_extensions  = RootExtensions;
+        using traits_type      = default_dynamic_traits;
+        using string_view_type = traits::string_view<traits_type>;
+        using field_type =
+          typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+        using name_type   = typename field_type::string_type;
+        using value_type  = typename field_type::string_type;
+        using fields_type = stl::span<field_type>;
 
-          private:
-            using field_provider_type = dynamic_request_header_field_provider<root_extensions>;
-            field_provider_type* provider;
+      private:
+        fields_type view;
 
-          public:
-            using field_type = typename field_provider_type::field_type;
-            using name_type  = typename field_type::string_type;
-            using value_type = typename field_type::string_type;
+      public:
+        constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
 
+        [[nodiscard]] constexpr auto begin() const noexcept {
+            return view.begin();
+        }
 
-            constexpr dynamic_fields_provider(field_provider_type& inp_provider) : provider{&inp_provider} {}
-
-            [[nodiscard]] constexpr auto begin() const noexcept {
-                return provider->get_begin();
-            }
-
-            [[nodiscard]] constexpr auto end() const noexcept {
-                return provider->get_end();
-            }
-        };
-    } // namespace details
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return view.begin();
+        }
+    };
 
     struct dynamic_request;
 
@@ -83,7 +84,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
-        using fields_provider  = details::dynamic_fields_provider<root_extensions>;
+        using fields_provider  = details::dynamic_header_fields_provider<root_extensions>;
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
