@@ -26,8 +26,8 @@ namespace webpp::http {
         using traits_type     = TraitsType;
         using field_type =
           typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-        using name_type      = typename field_type::string_type;
-        using value_type     = typename field_type::string_type;
+        using name_type  = typename field_type::string_type;
+        using value_type = typename field_type::string_type;
 
         static_assert(
           HTTPRequestHeaderFieldsProvider<header_fields_provider>,
@@ -61,12 +61,21 @@ namespace webpp::http {
         [[nodiscard]] stl::span<stl::add_const_t<NewFieldsType>> as_view() const noexcept {
             using new_field_type = stl::remove_const_t<NewFieldsType>;
             if constexpr (stl::same_as<new_field_type, fields_type>) {
-                return stl::span{fields};
+                return {fields};
             } else {
                 using new_fields_type =
                   stl::vector<new_field_type, traits::general_allocator<traits_type, new_field_type>>;
+                using new_name_type  = typename new_fields_type::name_type;
+                using new_value_type = typename new_fields_type::value_type;
                 static new_fields_type new_fields{fields.get_allocator()};
-                return stl::span{new_fields};
+                if (new_fields.size() != fields.size()) {
+                    new_fields.reserve(fields.size());
+                    for (auto const& field : fields) {
+                        new_fields.emplace_back(istl::string_viewify_of<new_name_type>(field.name),
+                                                istl::string_viewify_of<new_value_type>(field.value));
+                    }
+                }
+                return {new_fields};
             }
         }
     };
