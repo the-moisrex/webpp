@@ -3,9 +3,12 @@
 #ifndef WEBPP_DYNAMIC_REQUEST_HPP
 #define WEBPP_DYNAMIC_REQUEST_HPP
 
+#include "../std/span.hpp"
 #include "../traits/default_traits.hpp"
-#include "./version.hpp"
+#include "header_fields.hpp"
 #include "http_concepts.hpp"
+#include "request_headers.hpp"
+#include "version.hpp"
 
 
 namespace webpp::http {

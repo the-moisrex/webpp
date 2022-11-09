@@ -36,7 +36,7 @@ namespace webpp::http {
         using char_type             = traits::char_type<traits_type>;
         using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using request_extensions    = REL;
-        using fields_provider       = details::header_fields_provider<traits_type, root_extensions>;
+        using fields_provider       = header_fields_provider<traits_type, root_extensions>;
         using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
         using body_type             = simple_request_body<traits_type, root_extensions>;
 
