@@ -84,7 +84,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
-        using fields_provider  = details::dynamic_header_fields_provider<root_extensions>;
+        using fields_provider  = dynamic_header_fields_provider<root_extensions>;
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:

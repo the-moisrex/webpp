@@ -98,8 +98,8 @@ namespace webpp::http {
 
       public:
         using field_type = typename fields_provider_type::field_type;
-        using name_type  = typename field_type::string_type;
-        using value_type = typename field_type::string_type;
+        using name_type  = typename field_type::name_type;
+        using value_type = typename field_type::value_type;
 
         template <EnabledTraits ET>
         constexpr request_headers(ET&& et) : fields_provider_type{et},

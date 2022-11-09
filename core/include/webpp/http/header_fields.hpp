@@ -17,37 +17,54 @@ namespace webpp::http {
      */
     template <typename StringType, typename EList>
     struct basic_header_field : public EList {
-        using string_type = StringType;
+        using string_type                = StringType;
+        using name_type                  = string_type;
+        using value_type                 = string_type;
+        static constexpr bool is_mutable = istl::String<string_type> && !istl::StringView<string_type>;
+
+      private:
         using super = EList;
 
-        string_type name;
-        string_type value;
+      public:
+        name_type  name;
+        value_type value;
 
 
-        constexpr basic_header_field(string_type&& _name, string_type&& _value) noexcept
+        constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(stl::move(_value)) {}
 
-        constexpr basic_header_field(string_type const& _name, string_type const& _value) noexcept
+        constexpr basic_header_field(name_type const& _name, value_type const& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(_name),
             value(_value) {}
 
-        constexpr basic_header_field(string_type&& _name, string_type const& _value) noexcept
+        constexpr basic_header_field(name_type&& _name, value_type const& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(_value) {}
 
-        constexpr basic_header_field(string_type const& _name, string_type&& _value) noexcept
+        constexpr basic_header_field(name_type const& _name, value_type&& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(_name),
             value(stl::move(_value)) {}
+
+        constexpr basic_header_field(name_type _name, value_type _value) noexcept
+            requires(!is_mutable)
+          : super{},
+            name(_name),
+            value(_value) {}
 
         constexpr basic_header_field(basic_header_field&&) noexcept       = default;
         constexpr basic_header_field(basic_header_field const&) noexcept  = default;
         basic_header_field& operator=(basic_header_field&&) noexcept      = default;
         basic_header_field& operator=(basic_header_field const&) noexcept = default;
+        constexpr ~basic_header_field()                                   = default;
 
 
         /**
