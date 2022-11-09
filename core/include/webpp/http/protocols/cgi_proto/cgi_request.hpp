@@ -16,7 +16,7 @@
 namespace webpp::http {
 
     template <typename CommonHTTPRequest>
-    struct cgi_request final : public CommonHTTPRequest, basic_dynamic_request {
+    struct cgi_request final : public CommonHTTPRequest, dynamic_request_interface {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using server_type              = typename common_http_request_type::server_type;
@@ -59,11 +59,11 @@ namespace webpp::http {
         }
 
       protected:
-        using pstring_type = typename dynamic_request::string_type;
+        using pstring_type = typename basic_dynamic_request::string_type;
 
         // get the dynamic request object
-        inline dynamic_request const& dreq() const noexcept {
-            return static_cast<dynamic_request const&>(*this);
+        inline basic_dynamic_request const& dreq() const noexcept {
+            return static_cast<basic_dynamic_request const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {

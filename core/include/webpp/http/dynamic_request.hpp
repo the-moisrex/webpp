@@ -46,12 +46,12 @@ namespace webpp::http {
         }
     };
 
-    struct dynamic_request;
+    struct basic_dynamic_request;
 
     /**
      * This request type can hold other HTTP request types.
      */
-    struct basic_dynamic_request {
+    struct dynamic_request_interface {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -67,22 +67,22 @@ namespace webpp::http {
         [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-        friend struct dynamic_request;
+        friend struct basic_dynamic_request;
 
       public:
-        constexpr basic_dynamic_request() noexcept                              = default;
-        constexpr basic_dynamic_request(basic_dynamic_request const&) noexcept  = default;
-        constexpr basic_dynamic_request(basic_dynamic_request&&) noexcept       = default;
-        basic_dynamic_request& operator=(basic_dynamic_request&&) noexcept      = default;
-        basic_dynamic_request& operator=(basic_dynamic_request const&) noexcept = default;
-        virtual ~basic_dynamic_request()                                        = 0;
+        constexpr dynamic_request_interface() noexcept                              = default;
+        constexpr dynamic_request_interface(dynamic_request_interface const&) noexcept  = default;
+        constexpr dynamic_request_interface(dynamic_request_interface&&) noexcept       = default;
+        dynamic_request_interface& operator=(dynamic_request_interface&&) noexcept      = default;
+        dynamic_request_interface& operator=(dynamic_request_interface const&) noexcept = default;
+        virtual ~dynamic_request_interface()                                        = 0;
     };
 
 
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
-    struct dynamic_request final {
+    struct basic_dynamic_request final {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -91,19 +91,19 @@ namespace webpp::http {
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
-        basic_dynamic_request* req;
+        dynamic_request_interface* req;
 
       public:
-        dynamic_request(basic_dynamic_request* inp_req) noexcept : req{inp_req} {
+        basic_dynamic_request(dynamic_request_interface* inp_req) noexcept : req{inp_req} {
             [[assume(inp_req != nullptr)]];
         }
-        dynamic_request(basic_dynamic_request& inp_req) noexcept : req{&inp_req} {}
-        dynamic_request(stl::nullptr_t)                             = delete;
-        dynamic_request(dynamic_request const&) noexcept            = default;
-        dynamic_request(dynamic_request&&) noexcept                 = default;
-        dynamic_request& operator=(dynamic_request const&) noexcept = default;
-        dynamic_request& operator=(dynamic_request&&) noexcept      = default;
-        ~dynamic_request()                                          = default;
+        basic_dynamic_request(dynamic_request_interface& inp_req) noexcept : req{&inp_req} {}
+        basic_dynamic_request(stl::nullptr_t)                             = delete;
+        basic_dynamic_request(basic_dynamic_request const&) noexcept            = default;
+        basic_dynamic_request(basic_dynamic_request&&) noexcept                 = default;
+        basic_dynamic_request& operator=(basic_dynamic_request const&) noexcept = default;
+        basic_dynamic_request& operator=(basic_dynamic_request&&) noexcept      = default;
+        ~basic_dynamic_request()                                          = default;
 
         // Get the raw requested URI
         // This value is not checked for security; this is raw

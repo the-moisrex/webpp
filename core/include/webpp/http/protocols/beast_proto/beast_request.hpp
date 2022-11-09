@@ -18,7 +18,7 @@ namespace webpp::http::beast_proto {
 
 
     template <typename CommonHTTPRequest>
-    struct beast_request final : public CommonHTTPRequest, protected basic_dynamic_request {
+    struct beast_request final : public CommonHTTPRequest, protected dynamic_request_interface {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
@@ -57,11 +57,11 @@ namespace webpp::http::beast_proto {
         }
 
       protected:
-        using pstring_type = typename dynamic_request::string_type;
+        using pstring_type = typename basic_dynamic_request::string_type;
 
         // get the dynamic request object
-        inline dynamic_request const& dreq() const noexcept {
-            return static_cast<dynamic_request const&>(*this);
+        inline basic_dynamic_request const& dreq() const noexcept {
+            return static_cast<basic_dynamic_request const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {
