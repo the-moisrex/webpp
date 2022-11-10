@@ -1,7 +1,7 @@
 // Created by moisrex on 10/10/22.
 
-#ifndef WEBPP_DYNAMIC_REQUEST_HPP
-#define WEBPP_DYNAMIC_REQUEST_HPP
+#ifndef WEBPP_REQUEST_VIEW_HPP
+#define WEBPP_REQUEST_VIEW_HPP
 
 #include "../std/span.hpp"
 #include "../traits/default_traits.hpp"
@@ -20,7 +20,7 @@ namespace webpp::http {
      * The data owner can be "header_fields_provider" but the protocols can have their own providers; but they
      * have to make sure this dynamic provider works for their provider as well.
      */
-    template <RootExtensionList RootExtensions = empty_extension_pack>
+    template <RootExtensionList RootExtensions>
     struct dynamic_header_fields_provider {
         using root_extensions  = RootExtensions;
         using traits_type      = default_dynamic_traits;
@@ -46,12 +46,12 @@ namespace webpp::http {
         }
     };
 
-    struct basic_dynamic_request;
+    struct basic_request_view;
 
     /**
      * This request type can hold other HTTP request types.
      */
-    struct dynamic_request_interface {
+    struct request_view_interface {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -67,22 +67,34 @@ namespace webpp::http {
         [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-        friend struct basic_dynamic_request;
+        friend struct basic_request_view;
 
       public:
-        constexpr dynamic_request_interface() noexcept                              = default;
-        constexpr dynamic_request_interface(dynamic_request_interface const&) noexcept  = default;
-        constexpr dynamic_request_interface(dynamic_request_interface&&) noexcept       = default;
-        dynamic_request_interface& operator=(dynamic_request_interface&&) noexcept      = default;
-        dynamic_request_interface& operator=(dynamic_request_interface const&) noexcept = default;
-        virtual ~dynamic_request_interface()                                        = 0;
+        constexpr request_view_interface() noexcept                               = default;
+        constexpr request_view_interface(request_view_interface const&) noexcept  = default;
+        constexpr request_view_interface(request_view_interface&&) noexcept       = default;
+        request_view_interface& operator=(request_view_interface&&) noexcept      = default;
+        request_view_interface& operator=(request_view_interface const&) noexcept = default;
+        virtual ~request_view_interface()                                         = 0;
     };
+
+
+    /**
+     * An HTTPRequest that meets the requirements of a "request view".
+     */
+    template <typename T>
+    concept HTTPRequestViewifiable =
+      stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
+      requires(T req) {
+          // an example is implemented in "header_fields_provider" in request_headers.hpp file
+          req.headers.template as_view<default_dynamic_traits>();
+      };
 
 
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
-    struct basic_dynamic_request final {
+    struct basic_request_view final {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -91,19 +103,22 @@ namespace webpp::http {
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
-        dynamic_request_interface* req;
+        request_view_interface* req;
 
       public:
-        basic_dynamic_request(dynamic_request_interface* inp_req) noexcept : req{inp_req} {
-            [[assume(inp_req != nullptr)]];
-        }
-        basic_dynamic_request(dynamic_request_interface& inp_req) noexcept : req{&inp_req} {}
-        basic_dynamic_request(stl::nullptr_t)                             = delete;
-        basic_dynamic_request(basic_dynamic_request const&) noexcept            = default;
-        basic_dynamic_request(basic_dynamic_request&&) noexcept                 = default;
-        basic_dynamic_request& operator=(basic_dynamic_request const&) noexcept = default;
-        basic_dynamic_request& operator=(basic_dynamic_request&&) noexcept      = default;
-        ~basic_dynamic_request()                                          = default;
+        const headers_type headers;
+
+        // An HTTP Request is passed down
+        template <HTTPRequestViewifiable ReqType>
+        basic_request_view(ReqType const& inp_req) noexcept
+          : req{static_cast<request_view_interface*>(&inp_req)},
+            headers{inp_req.headers.template as_view<traits_type>()} {}
+
+        basic_request_view(basic_request_view const&) noexcept            = default;
+        basic_request_view(basic_request_view&&) noexcept                 = default;
+        basic_request_view& operator=(basic_request_view const&) noexcept = default;
+        basic_request_view& operator=(basic_request_view&&) noexcept      = default;
+        ~basic_request_view()                                             = default;
 
         // Get the raw requested URI
         // This value is not checked for security; this is raw
@@ -126,6 +141,9 @@ namespace webpp::http {
 
 
 
+    using request_view = basic_request_view;
+
+
 } // namespace webpp::http
 
-#endif // WEBPP_DYNAMIC_REQUEST_HPP
+#endif // WEBPP_REQUEST_VIEW_HPP

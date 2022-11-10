@@ -9,8 +9,8 @@
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../utils/functional.hpp"
-#include "../dynamic_request.hpp"
 #include "../http_concepts.hpp"
+#include "../request_view.hpp"
 #include "../status_code.hpp"
 #include "route.hpp"
 
@@ -69,10 +69,6 @@ namespace webpp::http {
         using router_ref        = stl::add_lvalue_reference_t<router_type>;
 
         enum operator_type { none, and_op, or_op, xor_op };
-
-        static_assert(
-          HTTPResponse<response_type>,
-          "The response type must meet the HTTPResponse concepts because the protocols will use them.");
 
       private:
         route_type    route;
@@ -279,7 +275,7 @@ namespace webpp::http {
         /**
          * Get an empty sub-router
          */
-        constexpr subrouter_type subrouter() const noexcept {
+        [[nodiscard]] constexpr subrouter_type subrouter() const noexcept {
             return {};
         }
 
