@@ -14,82 +14,85 @@
 namespace webpp::http {
 
 
-
-    /**
-     * Will provide a std::span of the provided parent request header type;
-     * The data owner can be "header_fields_provider" but the protocols can have their own providers; but they
-     * have to make sure this dynamic provider works for their provider as well.
-     */
-    template <RootExtensionList RootExtensions>
-    struct dynamic_header_fields_provider {
-        using root_extensions  = RootExtensions;
-        using traits_type      = default_dynamic_traits;
-        using string_view_type = traits::string_view<traits_type>;
-        using field_type =
-          typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-        using name_type   = typename field_type::string_type;
-        using value_type  = typename field_type::string_type;
-        using fields_type = stl::span<field_type>;
-
-      private:
-        fields_type view;
-
-      public:
-        constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
-
-        [[nodiscard]] constexpr auto begin() const noexcept {
-            return view.begin();
-        }
-
-        [[nodiscard]] constexpr auto end() const noexcept {
-            return view.begin();
-        }
-    };
-
     struct basic_request_view;
 
-    /**
-     * This request type can hold other HTTP request types.
-     */
-    struct request_view_interface {
-        using traits_type      = default_dynamic_traits;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
+    namespace details {
 
-      protected:
-        template <typename StrT, EnabledTraits ET>
-        inline string_type stringify(StrT&& str, ET const& et) const {
-            return istl::stringify_of<string_type>(str, alloc::general_alloc_for<string_type>(et));
-        }
+        /**
+         * Will provide a std::span of the provided parent request header type;
+         * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
+         * they have to make sure this dynamic provider works for their provider as well.
+         */
+        template <RootExtensionList RootExtensions>
+        struct dynamic_header_fields_provider {
+            using root_extensions  = RootExtensions;
+            using traits_type      = default_dynamic_traits;
+            using string_view_type = traits::string_view<traits_type>;
+            using field_type =
+              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+            using name_type   = typename field_type::string_type;
+            using value_type  = typename field_type::string_type;
+            using fields_type = stl::span<field_type>;
 
-        [[nodiscard]] virtual string_type   get_uri() const              = 0;
-        [[nodiscard]] virtual string_type   get_method() const           = 0;
-        [[nodiscard]] virtual http::version get_version() const noexcept = 0;
+          private:
+            fields_type view;
+
+          public:
+            constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
+
+            [[nodiscard]] constexpr auto begin() const noexcept {
+                return view.begin();
+            }
+
+            [[nodiscard]] constexpr auto end() const noexcept {
+                return view.begin();
+            }
+        };
 
 
-        friend struct basic_request_view;
+        /**
+         * This request type can hold other HTTP request types.
+         */
+        struct request_view_interface {
+            using traits_type      = default_dynamic_traits;
+            using string_view_type = traits::string_view<traits_type>;
+            using string_type      = traits::general_string<traits_type>;
 
-      public:
-        constexpr request_view_interface() noexcept                               = default;
-        constexpr request_view_interface(request_view_interface const&) noexcept  = default;
-        constexpr request_view_interface(request_view_interface&&) noexcept       = default;
-        request_view_interface& operator=(request_view_interface&&) noexcept      = default;
-        request_view_interface& operator=(request_view_interface const&) noexcept = default;
-        virtual ~request_view_interface()                                         = 0;
-    };
+          protected:
+            template <typename StrT, EnabledTraits ET>
+            inline string_type stringify(StrT&& str, ET const& et) const {
+                return istl::stringify_of<string_type>(str, alloc::general_alloc_for<string_type>(et));
+            }
+
+            [[nodiscard]] virtual string_type   get_uri() const              = 0;
+            [[nodiscard]] virtual string_type   get_method() const           = 0;
+            [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-    /**
-     * An HTTPRequest that meets the requirements of a "request view".
-     */
-    template <typename T>
-    concept HTTPRequestViewifiable =
-      stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
-      requires(T req) {
-          // an example is implemented in "header_fields_provider" in request_headers.hpp file
-          req.headers.template as_view<default_dynamic_traits>();
-      };
+            friend struct http::basic_request_view;
 
+          public:
+            constexpr request_view_interface() noexcept                               = default;
+            constexpr request_view_interface(request_view_interface const&) noexcept  = default;
+            constexpr request_view_interface(request_view_interface&&) noexcept       = default;
+            request_view_interface& operator=(request_view_interface&&) noexcept      = default;
+            request_view_interface& operator=(request_view_interface const&) noexcept = default;
+            virtual ~request_view_interface()                                         = 0;
+        };
+
+
+        /**
+         * An HTTPRequest that meets the requirements of a "request view".
+         */
+        template <typename T>
+        concept HTTPRequestViewifiable =
+          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
+          requires(T req) {
+              // an example is implemented in "header_fields_provider" in request_headers.hpp file
+              req.headers.template as_view<default_dynamic_traits>();
+          };
+
+    } // namespace details
 
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
@@ -99,19 +102,19 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
-        using fields_provider  = dynamic_header_fields_provider<root_extensions>;
+        using fields_provider  = details::dynamic_header_fields_provider<root_extensions>;
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
-        request_view_interface* req;
+        details::request_view_interface* req;
 
       public:
         const headers_type headers;
 
         // An HTTP Request is passed down
-        template <HTTPRequestViewifiable ReqType>
+        template <details::HTTPRequestViewifiable ReqType>
         basic_request_view(ReqType const& inp_req) noexcept
-          : req{static_cast<request_view_interface*>(&inp_req)},
+          : req{static_cast<details::request_view_interface*>(&inp_req)},
             headers{inp_req.headers.template as_view<traits_type>()} {}
 
         basic_request_view(basic_request_view const&) noexcept            = default;
