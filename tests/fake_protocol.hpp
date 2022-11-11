@@ -217,9 +217,8 @@ namespace webpp {
         request_type req;
 
         template <typename... Args>
-        fake_proto(Args&&... args) noexcept
-          : super{stl::forward<Args>(args)...},
-            req{this->logger, this->get_allocator()} {}
+        fake_proto(Args&&... args) noexcept : super{stl::forward<Args>(args)...},
+                                              req{*this} {}
 
         constexpr bool is_ssl_available() noexcept {
             return false;

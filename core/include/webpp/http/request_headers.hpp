@@ -87,7 +87,7 @@ namespace webpp::http {
      * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
     template <typename HeaderEList, HTTPRequestHeaderFieldsProvider FieldsProviderType>
-    class request_headers : public HeaderEList, public FieldsProviderType {
+    class request_headers : public FieldsProviderType, public HeaderEList {
 
         using elist_type           = HeaderEList;
         using fields_provider_type = FieldsProviderType;

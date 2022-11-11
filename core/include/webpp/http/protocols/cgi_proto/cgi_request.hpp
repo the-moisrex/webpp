@@ -53,7 +53,7 @@ namespace webpp::http {
 
                     name  = put_header_name(name);
                     value = put_header_value(value);
-                    this->headers.emplace_back(name, value);
+                    this->headers.emplace(name, value);
                 }
             }
         }

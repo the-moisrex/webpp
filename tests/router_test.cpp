@@ -1,9 +1,9 @@
 #include "../core/include/webpp/http/routes/router.hpp"
 
-#include "../core/include/webpp/application/application_concepts.hpp"
 #include "../core/include/webpp/http/protocols/cgi.hpp"
 #include "../core/include/webpp/http/routes/path.hpp"
-#include "../core/include/webpp/utils/const_list.hpp"
+#include "../core/include/webpp/traits/enable_traits.hpp"
+#include "common_pch.hpp"
 #include "fake_protocol.hpp"
 
 
@@ -37,24 +37,24 @@ TEST(Router, RouteCreation) {
         return "About page\n";
     };
 
-    traits::allocator_pack_type<std_traits> alloc_pack;
+    enable_owner_traits<default_traits> et;
 
-    auto   req = request{alloc_pack};
-    router router1{extension_pack<string_response>{}, alloc_pack, about_page};
+    auto   req = request{et};
+    router router1{extension_pack<string_response>{},  about_page};
     auto   res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code, 200);
     EXPECT_EQ(res.body.str(), "About page\n");
 
-    router router2{extension_pack<string_response>{}, alloc_pack, [](Context auto&& ctx) noexcept {
+    router router2{extension_pack<string_response>{},  [](Context auto&& ctx) noexcept {
                        return ctx.string("testing");
                    }};
     auto   res2 = router2(req);
     EXPECT_EQ(res2.body.str(), "testing");
 
 
-    router router3{extension_pack<string_response>{}, alloc_pack, [](Context auto&& ctx) noexcept(false) {
+    router router3{extension_pack<string_response>{},  [](Context auto&& ctx) noexcept(false) {
                        return ctx.string("testing 2");
                    }};
     auto   res3 = router3(req);
