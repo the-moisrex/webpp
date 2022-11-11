@@ -417,9 +417,9 @@ namespace webpp::http {
     template <HTTPRequest ReqType,
               /* fixme: ExtensionList */ typename RootExtensions = empty_extension_pack>
         requires requires {
-                     typename RootExtensions::
-                       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
-                 }
+            typename RootExtensions::
+              template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
+        }
     using simple_context = typename RootExtensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 

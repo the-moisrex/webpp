@@ -18,7 +18,7 @@ namespace webpp::http::beast_proto {
 
 
     template <typename CommonHTTPRequest>
-    struct beast_request final : public CommonHTTPRequest, protected request_view_interface {
+    struct beast_request final : public CommonHTTPRequest, protected details::request_view_interface {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
@@ -111,9 +111,7 @@ namespace webpp::http::beast_proto {
                                            string_viewify(field.value()));
             }
             // todo
-            if constexpr (requires {
-                              { this->body = *breq };
-                          }) {
+            if constexpr (requires { {this->body = *breq}; }) {
                 this->body = *breq;
             }
         }

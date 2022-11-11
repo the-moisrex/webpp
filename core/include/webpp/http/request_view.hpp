@@ -86,11 +86,11 @@ namespace webpp::http {
          */
         template <typename T>
         concept HTTPRequestViewifiable =
-          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
-          requires(T req) {
-              // an example is implemented in "header_fields_provider" in request_headers.hpp file
-              req.headers.template as_view<default_dynamic_traits>();
-          };
+          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> && requires {
+            typename T::headers_type;
+            requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
+        };
+
 
     } // namespace details
 

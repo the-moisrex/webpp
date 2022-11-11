@@ -45,9 +45,9 @@ namespace webpp::http {
 
 
     /**
-     * @brief This kinda type will be used as a base for the HTTP Request Headers which is where the request
-     * is supposed to be stored in memory. Other request header types are to use these methods and types
-     * provided here.
+     * @brief The calsses that implement this concept are "HTTP request header fields provider" means they
+     * provide header fields to the other part of the HTTP header system.
+     * The thing about these classes are that they might not own the header fields they're selling.
      */
     template <typename T>
     concept HTTPRequestHeaderFieldsProvider = requires(T obj) {
@@ -56,9 +56,19 @@ namespace webpp::http {
         typename T::field_type;
         typename T::name_type;
         typename T::value_type;
-        requires requires(typename T::name_type name, typename T::value_type value) {
-            obj.emplace(name, value);
-        };
+    };
+
+    /**
+     * The class that implements this concept is a http request header fields provider which just provides
+     * and owns the http fields. The big thing about this is that it owns what it sells.
+     */
+    template <typename T>
+    concept HTTPRequestHeaderFieldsOwner = HTTPRequestHeaderFieldsProvider<T> &&
+      requires(T obj, typename T::name_type name, typename T::value_type value) {
+        obj.emplace(name, value);
+
+        // an example is implemented in "header_fields_provider" in request_headers.hpp file
+        obj.template as_view<default_dynamic_traits>();
     };
 
 

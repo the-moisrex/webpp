@@ -171,8 +171,7 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator &&
-                              requires {
+                if constexpr (!has_allocator && requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());

@@ -139,8 +139,7 @@ namespace webpp::http {
         // take advantage of parallelism
 
 
-        constexpr basic_dynamic_router() noexcept
-            requires(etraits::is_resource_owner)
+        constexpr basic_dynamic_router() noexcept requires(etraits::is_resource_owner)
           : etraits{},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
@@ -179,16 +178,13 @@ namespace webpp::http {
             static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
                           "The specified member function is not from the specified object.");
 
-            return routify(
-              [callable = obj, method]<typename... Args> requires(
-                method_type::template is_same_args_v<Args...>)(
-                Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                                                             return stl::invoke_result_t<return_type,
-                                                                                         Args...>(
-                                                               method,
-                                                               callable,
-                                                               stl::forward<Args>(args)...);
-                                                         });
+            return routify([callable = obj, method]<typename... Args> requires(
+              method_type::template is_same_args_v<Args...>)(
+              Args && ... args) constexpr noexcept(method_type::is_noexcept) {
+                return stl::invoke_result_t<return_type, Args...>(method,
+                                                                  callable,
+                                                                  stl::forward<Args>(args)...);
+            });
         }
 
         /**

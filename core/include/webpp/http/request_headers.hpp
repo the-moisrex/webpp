@@ -29,10 +29,6 @@ namespace webpp::http {
         using name_type  = typename field_type::string_type;
         using value_type = typename field_type::string_type;
 
-        static_assert(
-          HTTPRequestHeaderFieldsProvider<header_fields_provider>,
-          "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
-
       private:
         using fields_type = stl::vector<field_type, traits::general_allocator<traits_type, field_type>>;
 
@@ -95,6 +91,10 @@ namespace webpp::http {
 
         using elist_type           = HeaderEList;
         using fields_provider_type = FieldsProviderType;
+
+        static_assert(
+          HTTPRequestHeaderFieldsProvider<fields_provider_type>,
+          "Fields vector is supposed to satisfy the needs of the HTTPRequestHeaderFieldOwner concept.");
 
       public:
         using field_type = typename fields_provider_type::field_type;

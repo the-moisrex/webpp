@@ -442,7 +442,7 @@ namespace webpp {
     concept RootExtensionList = ExtensionList<T>;
 
 
-    using empty_extension_pack       = extension_pack<>;
+    using empty_extension_pack = extension_pack<>;
 
 
 
