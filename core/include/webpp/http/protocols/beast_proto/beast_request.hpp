@@ -59,17 +59,23 @@ namespace webpp::http::beast_proto {
       protected:
         using pstring_type = typename basic_request_view::string_type;
 
+        template <typename T>
+        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str),
+                                                    alloc::general_alloc_for<pstring_type>(*this));
+        }
+
         // get the dynamic request object
         inline basic_request_view const& dreq() const noexcept {
             return static_cast<basic_request_view const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {
-            return dreq().stringify(method(), *this);
+            return pstringify(method());
         }
 
         [[nodiscard]] pstring_type get_uri() const override {
-            return dreq().stringify(uri(), *this);
+            return pstringify(uri());
         }
 
         [[nodiscard]] http::version get_version() const noexcept override {
@@ -107,8 +113,8 @@ namespace webpp::http::beast_proto {
             breq = &req;
             // todo: not very efficient, is it?
             for (const auto& field : *breq) {
-                this->headers.emplace_back(string_viewify(field.name_string()),
-                                           string_viewify(field.value()));
+                this->headers.emplace(string_viewify(field.name_string()),
+                                      string_viewify(field.value()));
             }
             // todo
             if constexpr (requires { {this->body = *breq}; }) {
