@@ -61,17 +61,23 @@ namespace webpp::http {
       protected:
         using pstring_type = typename basic_request_view::string_type;
 
+        template <typename T>
+        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str),
+                                                    alloc::general_alloc_for<pstring_type>(*this));
+        }
+
         // get the dynamic request object
         inline basic_request_view const& dreq() const noexcept {
             return static_cast<basic_request_view const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {
-            return dreq().stringify(method(), *this);
+            return pstringify(this->method());
         }
 
         [[nodiscard]] pstring_type get_uri() const override {
-            return dreq().stringify(uri(), *this);
+            return pstringify(this->uri());
         }
 
         [[nodiscard]] http::version get_version() const noexcept override {
@@ -89,7 +95,7 @@ namespace webpp::http {
         cgi_request(cgi_request&&) noexcept            = default;
         cgi_request& operator=(cgi_request const&)     = default;
         cgi_request& operator=(cgi_request&&) noexcept = default;
-        ~cgi_request() final                           = default;
+        ~cgi_request() final {}
 
         /**
          * Get the environment value safely
@@ -138,6 +144,16 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type server_protocol() const noexcept {
             return env("SERVER_PROTOCOL");
+        }
+
+        /**
+         * @brief Get the HTTP version of the request
+         * If the server didn't specify any protocol, then this method has no way of knowing thus
+         * it'll return an unknown version.
+         */
+        [[nodiscard]] http::version version() const noexcept {
+            auto const protocol = server_protocol();
+            return http::version::from_server_protocol(protocol);
         }
 
         /**

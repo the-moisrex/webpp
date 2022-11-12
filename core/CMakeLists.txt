@@ -326,7 +326,7 @@ install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/i
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
 target_compile_features(${LIB_NAME} PUBLIC
-        cxx_std_20
+        cxx_std_23
         cxx_auto_type
         cxx_lambdas
         cxx_constexpr

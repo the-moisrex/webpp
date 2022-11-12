@@ -77,7 +77,7 @@ namespace webpp::http {
             constexpr request_view_interface(request_view_interface&&) noexcept       = default;
             request_view_interface& operator=(request_view_interface&&) noexcept      = default;
             request_view_interface& operator=(request_view_interface const&) noexcept = default;
-            virtual ~request_view_interface()                                         = 0;
+            virtual ~request_view_interface() {}
         };
 
 

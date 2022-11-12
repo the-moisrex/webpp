@@ -36,7 +36,7 @@ namespace webpp::http {
 
       public:
         template <EnabledTraits ET>
-        constexpr header_fields_provider(ET&& et) : fields{alloc::general_alloc_for<field_type>(et)} {}
+        constexpr header_fields_provider(ET&& et) : fields{alloc::general_alloc_for<fields_type>(et)} {}
 
         [[nodiscard]] constexpr auto begin() const noexcept {
             return fields.begin();

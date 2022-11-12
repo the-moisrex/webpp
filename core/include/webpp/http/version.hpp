@@ -51,6 +51,38 @@ namespace webpp::http {
             return static_cast<stl::uint16_t>(value & 0xffffu);
         }
 
+        // Get an unknown HTTP version
+        [[nodiscard]] static constexpr version unknown() noexcept {
+            return {};
+        }
+
+        [[nodiscard]] constexpr bool is_unknown() const noexcept {
+            return value == 0;
+        }
+
+        /**
+         * The string you get usually from SERVER_PROTOCOL env can be parsed with this method.
+         * Examples of input: “HTTP/1.0”, “HTTP/1.1”, or “HTTP/2.0”
+         */
+        [[nodiscard]] static constexpr version from_server_protocol(istl::StringView auto str) noexcept {
+            static constexpr auto http_string = "HTTP";
+            if (!str.starts_with(http_string)) {
+                return unknown();
+            }
+            str.remove_prefix(ascii::size(http_string));
+            if (str.starts_with("/")) {
+                return {str.substr(1)};
+            } else if (str.starts_with("S/")) {
+                return {str.substr(2)};
+            }
+            return unknown();
+        }
+
+
+        [[nodiscard]] static constexpr version from_string(istl::StringView auto str) noexcept {
+            return {str};
+        }
+
         // Overloaded operators:
 
         [[nodiscard]] constexpr bool operator==(const version& v) const noexcept {

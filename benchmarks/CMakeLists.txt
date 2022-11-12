@@ -76,7 +76,7 @@ set_target_properties(${exec_name} PROPERTIES
         )
 
 target_compile_features(${exec_name} PUBLIC
-        cxx_std_20
+        cxx_std_23
         cxx_auto_type
         cxx_lambdas
         cxx_constexpr
