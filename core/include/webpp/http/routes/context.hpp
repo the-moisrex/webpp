@@ -133,7 +133,7 @@ namespace webpp::http {
 
         // using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
 
-        constexpr basic_context(request_type& inp_req) noexcept
+        constexpr basic_context(request_ref inp_req) noexcept
           : enable_traits_with<TraitsType, EList>{inp_req},
             request{inp_req} {}
 

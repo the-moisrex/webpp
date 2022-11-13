@@ -66,7 +66,7 @@ namespace webpp::http::beast_proto {
         }
 
         // get the dynamic request object
-        inline basic_request_view const& dreq() const noexcept {
+        [[nodiscard]] inline basic_request_view const& dreq() const noexcept {
             return static_cast<basic_request_view const&>(*this);
         }
 
@@ -113,8 +113,7 @@ namespace webpp::http::beast_proto {
             breq = &req;
             // todo: not very efficient, is it?
             for (const auto& field : *breq) {
-                this->headers.emplace(string_viewify(field.name_string()),
-                                      string_viewify(field.value()));
+                this->headers.emplace(string_viewify(field.name_string()), string_viewify(field.value()));
             }
             // todo
             if constexpr (requires { {this->body = *breq}; }) {
