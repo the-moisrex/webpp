@@ -123,6 +123,14 @@ namespace webpp::http {
         basic_request_view& operator=(basic_request_view&&) noexcept      = default;
         ~basic_request_view()                                             = default;
 
+        // An HTTP Request is passed down
+        template <details::HTTPRequestViewifiable ReqType>
+        basic_request_view& operator=(ReqType const& inp_req) noexcept {
+            req     = static_cast<details::request_view_interface*>(&inp_req);
+            headers = inp_req.headers.template as_view<traits_type>();
+            return *this;
+        }
+
         // Get the raw requested URI
         // This value is not checked for security; this is raw
         [[nodiscard]] string_type uri() const {
