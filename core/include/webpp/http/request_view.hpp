@@ -38,6 +38,9 @@ namespace webpp::http {
             fields_type view;
 
           public:
+            template <HTTPRequestHeaderFieldsOwner ReqT>
+            constexpr dynamic_header_fields_provider(ReqT& inp_req) noexcept
+              : dynamic_header_fields_provider{inp_req.headers.template as_view<traits_type>()} {}
             constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
 
             [[nodiscard]] constexpr auto begin() const noexcept {
@@ -106,16 +109,17 @@ namespace webpp::http {
         using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
 
       private:
-        details::request_view_interface* req;
+        using interface_ptr = details::request_view_interface const*;
+        interface_ptr req   = nullptr;
 
       public:
-        const headers_type headers;
+        headers_type headers;
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
         basic_request_view(ReqType const& inp_req) noexcept
-          : req{static_cast<details::request_view_interface*>(&inp_req)},
-            headers{inp_req.headers.template as_view<traits_type>()} {}
+          : req{static_cast<interface_ptr>(&inp_req)},
+            headers{inp_req} {}
 
         basic_request_view(basic_request_view const&) noexcept            = default;
         basic_request_view(basic_request_view&&) noexcept                 = default;
@@ -126,7 +130,7 @@ namespace webpp::http {
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
         basic_request_view& operator=(ReqType const& inp_req) noexcept {
-            req     = static_cast<details::request_view_interface*>(&inp_req);
+            req     = static_cast<interface_ptr>(&inp_req);
             headers = inp_req.headers.template as_view<traits_type>();
             return *this;
         }

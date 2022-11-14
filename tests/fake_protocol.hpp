@@ -5,6 +5,7 @@
 #include "../core/include/webpp/http/app_wrapper.hpp"
 #include "../core/include/webpp/http/protocols/common/common_http_protocol.hpp"
 #include "../core/include/webpp/http/request.hpp"
+#include "../core/include/webpp/http/request_view.hpp"
 #include "../core/include/webpp/http/response.hpp"
 #include "../core/include/webpp/http/routes/router.hpp"
 #include "../core/include/webpp/std/string_view.hpp"
@@ -21,7 +22,7 @@ namespace webpp {
 
     // I'm not using "Protocol" here because it's most likely a non-complete-type when it's passed
     template <typename CommonHTTPRequest>
-    struct fake_proto_request : public CommonHTTPRequest {
+    struct fake_proto_request : public CommonHTTPRequest, http::details::request_view_interface {
         using super       = CommonHTTPRequest;
         using traits_type = typename super::traits_type;
         using string_type = traits::general_string<traits_type>;
@@ -29,6 +30,33 @@ namespace webpp {
 
         stl::map<string_type, string_type> data{};
 
+      protected:
+        using pstring_type = typename basic_request_view::string_type;
+
+        template <typename T>
+        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str),
+                                                    alloc::general_alloc_for<pstring_type>(*this));
+        }
+
+        // get the dynamic request object
+        inline basic_request_view const& dreq() const noexcept {
+            return static_cast<basic_request_view const&>(*this);
+        }
+
+        [[nodiscard]] pstring_type get_method() const override {
+            return pstringify(this->method());
+        }
+
+        [[nodiscard]] pstring_type get_uri() const override {
+            return pstringify(this->uri());
+        }
+
+        [[nodiscard]] http::version get_version() const noexcept override {
+            return this->version();
+        }
+
+      public:
         template <typename... Args>
         fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
         fake_proto_request(fake_proto_request const&)     = default;
@@ -74,6 +102,9 @@ namespace webpp {
             return get_data("SERVER_PROTOCOL");
         }
 
+        [[nodiscard]] http::version version() const noexcept {
+            return http::version::from_server_protocol(server_protocol());
+        }
 
         [[nodiscard]] string_view server_port() const noexcept {
             return get_data("SERVER_PORT");

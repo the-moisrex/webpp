@@ -101,9 +101,19 @@ namespace webpp::http {
         using name_type  = typename field_type::name_type;
         using value_type = typename field_type::value_type;
 
-        template <EnabledTraits ET>
-        constexpr request_headers(ET&& et) : fields_provider_type{et},
-                                             elist_type{et} {}
+        /**
+         * The Args template parameters here are reserved for any other field providers; and the
+         * enabled_traits argument is there for the extensions to work.
+         */
+        template <EnabledTraits ET, typename... Args>
+        constexpr request_headers(ET const& et, Args&&... args)
+          : fields_provider_type{et, stl::forward<Args>(args)...},
+            elist_type{et} {}
+
+        constexpr request_headers(request_headers const&)                = default;
+        constexpr request_headers(request_headers&&) noexcept            = default;
+        constexpr request_headers& operator=(request_headers const&)     = default;
+        constexpr request_headers& operator=(request_headers&&) noexcept = default;
 
 
         /**
