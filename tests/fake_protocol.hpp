@@ -35,6 +35,11 @@ namespace webpp {
         fake_proto_request(fake_proto_request&)           = default;
         fake_proto_request(fake_proto_request&&) noexcept = default;
 
+        void reload() {
+            for (auto const& [att, val] : data) {
+                this->headers.emplace(att, val);
+            }
+        }
 
         string_view get_data(auto&& str) noexcept {
             if (auto res = stl::find(data.begin(), data.end(), str)) {

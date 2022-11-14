@@ -24,6 +24,7 @@ TEST(HTTPRequestTest, Constructors) {
     req_t         req1{pt};
 
     // content-length
-    req1.data.emplace("CONTENT_LENGTH", "23");
+    req1.data.emplace("Content-Length", "23");
+    req1.reload();
     EXPECT_EQ(23, req1.headers.content_length());
 }
