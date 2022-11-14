@@ -10,9 +10,20 @@ using namespace webpp::http;
 
 
 
-TEST(HTTPRequestTest, HeaderType) {
-    using fake_protocol = fake_proto<default_traits, fake_app>;
-    using fake_req_type = simple_request<fake_protocol, fake_proto_request>;
-    EXPECT_TRUE(bool(HTTPRequest<fake_req_type>));
-    EXPECT_TRUE(bool(HTTPRequestHeaders<typename fake_req_type::headers_type>));
+using fake_protocol = fake_proto<default_traits, fake_app>;
+using req_t         = simple_request<fake_protocol, fake_proto_request>;
+TEST(HTTPRequestTest, ConceptTests) {
+    EXPECT_TRUE(bool(HTTPRequest<req_t>));
+    EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
+    EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
+    EXPECT_TRUE(bool(HTTPRequestBody<typename req_t::body_type>));
+}
+
+TEST(HTTPRequestTest, Constructors) {
+    fake_protocol pt;
+    req_t         req1{pt};
+
+    // content-length
+    req1.data.emplace("CONTENT_LENGTH", "23");
+    EXPECT_EQ(23, req1.headers.content_length());
 }
