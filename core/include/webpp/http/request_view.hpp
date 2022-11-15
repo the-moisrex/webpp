@@ -73,7 +73,7 @@ namespace webpp::http {
               typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
             using name_type   = typename field_type::string_type;
             using value_type  = typename field_type::string_type;
-            using fields_type = stl::span<field_type>;
+            using fields_type = stl::span<stl::add_const_t<field_type>>;
 
           private:
             fields_type view;
@@ -81,7 +81,7 @@ namespace webpp::http {
           public:
             template <HTTPRequestViewifiable ReqType>
             constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
-              : dynamic_header_fields_provider{inp_req.headers.template as_view<traits_type>()} {}
+              : dynamic_header_fields_provider{inp_req.headers.template as_view<field_type>()} {}
 
             constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
 

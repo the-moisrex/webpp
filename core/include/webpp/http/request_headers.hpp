@@ -54,7 +54,7 @@ namespace webpp::http {
         /**
          * Get a view of the underlying fields
          */
-        template <typename NewFieldsType = traits::string_view<default_dynamic_traits>>
+        template <typename NewFieldsType>
         [[nodiscard]] stl::span<stl::add_const_t<NewFieldsType>> as_view() const noexcept {
             using new_field_type = stl::remove_const_t<NewFieldsType>;
             if constexpr (stl::same_as<new_field_type, fields_type>) {
