@@ -19,41 +19,6 @@ namespace webpp::http {
     namespace details {
 
         /**
-         * Will provide a std::span of the provided parent request header type;
-         * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
-         * they have to make sure this dynamic provider works for their provider as well.
-         */
-        template <RootExtensionList RootExtensions>
-        struct dynamic_header_fields_provider {
-            using root_extensions  = RootExtensions;
-            using traits_type      = default_dynamic_traits;
-            using string_view_type = traits::string_view<traits_type>;
-            using field_type =
-              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-            using name_type   = typename field_type::string_type;
-            using value_type  = typename field_type::string_type;
-            using fields_type = stl::span<field_type>;
-
-          private:
-            fields_type view;
-
-          public:
-            template <HTTPRequestHeaderFieldsOwner ReqT>
-            constexpr dynamic_header_fields_provider(ReqT& inp_req) noexcept
-              : dynamic_header_fields_provider{inp_req.headers.template as_view<traits_type>()} {}
-            constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
-
-            [[nodiscard]] constexpr auto begin() const noexcept {
-                return view.begin();
-            }
-
-            [[nodiscard]] constexpr auto end() const noexcept {
-                return view.begin();
-            }
-        };
-
-
-        /**
          * This request type can hold other HTTP request types.
          */
         struct request_view_interface {
@@ -94,6 +59,40 @@ namespace webpp::http {
             requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
         };
 
+        /**
+         * Will provide a std::span of the provided parent request header type;
+         * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
+         * they have to make sure this dynamic provider works for their provider as well.
+         */
+        template <RootExtensionList RootExtensions>
+        struct dynamic_header_fields_provider {
+            using root_extensions  = RootExtensions;
+            using traits_type      = default_dynamic_traits;
+            using string_view_type = traits::string_view<traits_type>;
+            using field_type =
+              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
+            using name_type   = typename field_type::string_type;
+            using value_type  = typename field_type::string_type;
+            using fields_type = stl::span<field_type>;
+
+          private:
+            fields_type view;
+
+          public:
+            template <HTTPRequestViewifiable ReqType>
+            constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
+              : dynamic_header_fields_provider{inp_req.headers.template as_view<traits_type>()} {}
+
+            constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
+
+            [[nodiscard]] constexpr auto begin() const noexcept {
+                return view.begin();
+            }
+
+            [[nodiscard]] constexpr auto end() const noexcept {
+                return view.begin();
+            }
+        };
 
     } // namespace details
 

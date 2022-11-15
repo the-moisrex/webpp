@@ -5,6 +5,7 @@
 
 #include "../convert/casts.hpp"
 #include "../extensions/extension.hpp"
+#include "../extensions/extension_wrapper.hpp"
 #include "../std/format.hpp"
 #include "../std/optional.hpp"
 #include "../std/span.hpp"
@@ -87,9 +88,9 @@ namespace webpp::http {
      * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
     template <typename HeaderEList, HTTPRequestHeaderFieldsProvider FieldsProviderType>
-    class request_headers : public FieldsProviderType, public HeaderEList {
+    class request_headers : public FieldsProviderType, public extension_wrapper<HeaderEList> {
 
-        using elist_type           = HeaderEList;
+        using elist_type           = extension_wrapper<HeaderEList>;
         using fields_provider_type = FieldsProviderType;
 
         static_assert(

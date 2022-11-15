@@ -159,7 +159,6 @@ namespace webpp {
     };
 
 
-
     // I added these here because they are traits' related and also allocator pack related, but their intent
     // is to simplify the users of the traits not allocator packs directly
     namespace alloc {

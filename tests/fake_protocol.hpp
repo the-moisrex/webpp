@@ -1,5 +1,5 @@
-#ifndef WEBPP_FAKE_INTERFACE_H
-#define WEBPP_FAKE_INTERFACE_H
+#ifndef WEBPP_TEST_FAKE_PROTOCOL_HPP
+#define WEBPP_TEST_FAKE_PROTOCOL_HPP
 
 #include "../core/include/webpp/convert/casts.hpp"
 #include "../core/include/webpp/http/app_wrapper.hpp"
@@ -69,7 +69,7 @@ namespace webpp {
             }
         }
 
-        string_view get_data(auto&& str) noexcept {
+        string_view get_data(auto&& str) const noexcept {
             if (auto res = stl::find(data.begin(), data.end(), str)) {
                 return *res;
             } else {

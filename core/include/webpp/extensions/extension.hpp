@@ -446,15 +446,6 @@ namespace webpp {
 
 
 
-    /**
-     * This type is used to ease the pain of passing arguments to the constructors of the extensions
-     *
-     * The type E might not be just one extension and might be an series of extensions chained up in a virtual
-     * or non-virtual inheritance.
-     */
-    template <typename E>
-    using extension_wrapper = E;
-
     template <typename T>
     concept ExtensionDescriptor = requires {
         typename T::template related_extension_pack<empty_extension_pack>;
