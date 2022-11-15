@@ -28,7 +28,7 @@ namespace webpp::http {
 
           protected:
             template <typename StrT, EnabledTraits ET>
-            inline string_type stringify(StrT&& str, ET const& et) const {
+            inline string_type stringify(StrT&& str, ET&& et) const {
                 return istl::stringify_of<string_type>(str, alloc::general_alloc_for<string_type>(et));
             }
 

@@ -62,8 +62,8 @@ namespace webpp::http {
             } else {
                 using new_fields_type =
                   stl::vector<new_field_type, traits::general_allocator<traits_type, new_field_type>>;
-                using new_name_type  = typename new_fields_type::name_type;
-                using new_value_type = typename new_fields_type::value_type;
+                using new_name_type  = typename new_field_type::name_type;
+                using new_value_type = typename new_field_type::value_type;
                 static new_fields_type new_fields{fields.get_allocator()};
                 if (new_fields.size() != fields.size()) {
                     new_fields.reserve(fields.size());
@@ -107,7 +107,7 @@ namespace webpp::http {
          * enabled_traits argument is there for the extensions to work.
          */
         template <EnabledTraits ET, typename... Args>
-        constexpr request_headers(ET const& et, Args&&... args)
+        constexpr request_headers(ET&& et, Args&&... args)
           : fields_provider_type{et, stl::forward<Args>(args)...},
             elist_type{et} {}
 

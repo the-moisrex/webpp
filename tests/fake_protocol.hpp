@@ -70,8 +70,8 @@ namespace webpp {
         }
 
         string_view get_data(auto&& str) const noexcept {
-            if (auto res = stl::find(data.begin(), data.end(), str)) {
-                return *res;
+            if (auto res = data.find(str); res != data.end()) {
+                return res->second;
             } else {
                 return "";
             }
