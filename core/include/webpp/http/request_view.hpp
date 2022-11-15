@@ -90,7 +90,7 @@ namespace webpp::http {
             }
 
             [[nodiscard]] constexpr auto end() const noexcept {
-                return view.begin();
+                return view.end();
             }
         };
 

@@ -42,6 +42,8 @@ TEST(HTTPRequestTest, RequestViewTest) {
 
     request_view view{req1};
 
+    EXPECT_FALSE(view.headers.iter("content-length") == view.headers.end());
+    EXPECT_EQ("23", view.headers.get("content-length"));
     EXPECT_EQ(23, view.headers.content_length());
     EXPECT_EQ(http::http_1_1, view.version());
 }
