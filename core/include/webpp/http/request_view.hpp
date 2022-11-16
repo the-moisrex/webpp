@@ -18,6 +18,43 @@ namespace webpp::http {
 
     namespace details {
 
+
+
+        /**
+         * This is a dynamic server which holds a reference to the servers
+         */
+        template <Traits TraitsType, ExtensionList RootExtensions, typename... ServerTypes>
+        struct basic_dynamic_server {
+            using servers_variant   = stl::variant<ServerTypes*...>;
+            using traits_type       = TraitsType;
+            using root_extensions   = RootExtensions;
+            using string_view_type  = traits::string_view<traits_type>;
+            using supported_servers = stl::tuple<ServerTypes...>;
+
+          private:
+            servers_variant svrvar; // server variant
+
+#define call_svr(mem, ...)                                      \
+    stl::visit(                                                 \
+      [](auto* svr) noexcept(noexcept(svr->mem(__VA_ARGS__))) { \
+          return svr->mem(__VA_ARGS__);                         \
+      },                                                        \
+      svrvar)
+
+          public:
+            template <typename ServerType>
+                requires(istl::one_of<ServerTypes..., ServerType>)
+            basic_dynamic_server(ServerType& inp_server) : svrvar{&inp_server} {}
+
+            // Get the server name that's being used
+            [[nodiscard]] string_view_type server_name() const noexcept {
+                return call_svr(server_name);
+            }
+
+#undef call_svr
+        };
+
+
         /**
          * This request type can hold other HTTP request types.
          */
