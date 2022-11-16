@@ -67,6 +67,7 @@ namespace webpp::http {
         using route_allocator   = traits::general_allocator<traits_type, stl::byte>;
         using router_type       = basic_dynamic_router<ExtensionListType, TraitsEnabler>;
         using router_ref        = stl::add_lvalue_reference_t<router_type>;
+        using route_type        = istl::function<void(), route_allocator>;
 
         enum operator_type { none, and_op, or_op, xor_op };
 
@@ -90,7 +91,7 @@ namespace webpp::http {
         constexpr auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
             switch (op) {
                 case none: break;
-                case and_op:
+                case and_op: break;
             }
             return http::call_route(route, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
         }
@@ -116,8 +117,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
         using routes_type      = stl::vector<route_type, vector_allocator>;
-        using request_type     = simple_request<basic_dynamic_router, dynamic_request>;
-        using context_type     = simple_context<request_type, extension_list>;
+        using context_type     = simple_context<request_view, extension_list>;
         using response_type    = simple_response_pack<traits_type, extension_list>;
 
         static constexpr auto log_cat = "DRouter";
