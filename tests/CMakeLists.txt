@@ -1,5 +1,7 @@
 enable_testing()
 
+include(../cmake/coverage.cmake)
+
 file(GLOB TEST_SOURCES *_test.cpp)
 set(TEST_NAME ${PROJECT_NAME}-tests)
 
@@ -88,6 +90,9 @@ if (TRUE)
             cxx_raw_string_literals
             cxx_static_assert
             )
+
+
+        target_code_coverage("${name}")
 
   endforeach()
 
