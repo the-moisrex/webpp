@@ -47,7 +47,8 @@ if (TRUE)
     set(name "test-${identifier}")
     message(STATUS "Test available: ${identifier}")
 
-    add_executable(${name} ${source})
+    add_executable(${name})
+    target_sources(${name} PRIVATE ${source})
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
     if (TARGET gtest AND TARGET gtest_main)
             target_link_libraries(${name}
@@ -62,7 +63,9 @@ if (TRUE)
                     PRIVATE GTest::Main
                     )
     endif ()
-    add_test(${name} ${name})
+    add_test(
+        NAME ${identifier}
+        COMMAND $<TARGET_FILE:${name}>)
 
     if ("${identifier}" STREQUAL "sql")
             target_link_libraries(${name}
