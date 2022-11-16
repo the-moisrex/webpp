@@ -237,6 +237,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp.hpp
         )
 
+include(../cmake/common.cmake)
 
 if (VERBOSE)
     set(ALL_SOURCES_SHORT "")
@@ -254,8 +255,11 @@ if (SHARED_LIBRARY_EXECUTABLE)
 endif ()
 
 
-add_library(${LIB_NAME} STATIC ${ALL_SOURCES})
+add_library(${LIB_NAME} STATIC)
 add_library("${PROJECT_NAME}::${LIB_NAME}" ALIAS ${LIB_NAME})
+target_sources(${LIB_NAME} INTERFACE
+    FILE_SET HEADERS
+    FILES ${ALL_SOURCES})
 
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::asio
@@ -296,10 +300,12 @@ target_include_directories(${LIB_NAME} PUBLIC
 
 install(TARGETS ${LIB_NAME}
         EXPORT "${LIB_NAME}Config"
-        LIBRARY DESTINATION ${INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${INSTALL_BINDIR}
-        INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
+        FILE_SET HEADERS
+        DESTINATION include
+        # LIBRARY DESTINATION ${INSTALL_LIBDIR}
+        # ARCHIVE DESTINATION ${INSTALL_LIBDIR}
+        # RUNTIME DESTINATION ${INSTALL_BINDIR}
+        # INCLUDES DESTINATION ${INSTALL_INCLUDEDIR}
         )
 export(TARGETS ${LIB_NAME}
         NAMESPACE ${PROJECT_NAME}::${LIB_NAME}
@@ -325,22 +331,6 @@ install(CODE "install_headers(\"${LIB_INCLUDE_DIR}\" \"${CMAKE_INSTALL_PREFIX}/i
 
 
 #install(FILES ${LIB_HEADERS} DESTINATION include)
-target_compile_features(${LIB_NAME} PUBLIC
-        cxx_std_23
-        cxx_auto_type
-        cxx_lambdas
-        cxx_constexpr
-        cxx_variadic_templates
-        cxx_nullptr
-        cxx_attributes
-        cxx_decltype
-        cxx_generic_lambdas
-        cxx_inline_namespaces
-        cxx_lambda_init_captures
-        cxx_noexcept
-        cxx_range_for
-        cxx_raw_string_literals
-        cxx_static_assert
-        )
+setup_library(${LIB_NAME})
 
 ## todo: add write_basic_package_version_file and versioning stuff for exporting
