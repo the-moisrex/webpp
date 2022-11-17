@@ -12,6 +12,8 @@
 #include "../traits/enable_traits.hpp"
 #include "casts.hpp"
 
+#include <charconv>
+
 namespace webpp::lexical {
 
     /**
@@ -87,7 +89,7 @@ namespace webpp::lexical {
                 target_t    target;
                 auto* const data      = istl::string_data(source);
                 const auto  data_size = stl::size(source);
-                std::from_chars(data, data + data_size, target);
+                stl::from_chars(data, data + data_size, target);
                 return target;
             } else {
                 static_assert_false(src_t, "We don't know how to convert this type to floating type.");

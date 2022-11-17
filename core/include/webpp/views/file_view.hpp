@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTML_VIEW_HPP
 #define WEBPP_HTML_VIEW_HPP
 
+#include "../strings/append.hpp"
 #include "view_concepts.hpp"
 
 namespace webpp::views {
@@ -17,6 +18,7 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = traits::char_type<traits_type>;
+        using string_type      = traits::general_string<traits_type>; // to satisfy View concept
 
         using data_view_type = istl::nothing_type;
         using data_type      = istl::nothing_type;
@@ -47,9 +49,9 @@ namespace webpp::views {
             data = str;
         }
 
-        template <typename StrT>
-        void render(StrT& out) const noexcept {
-            out = data;
+        template <typename StrT, typename... DataType>
+        void render(StrT& out, [[maybe_unused]] DataType&&...) const {
+            append_to(out, data);
         }
     };
 
