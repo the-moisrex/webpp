@@ -42,8 +42,8 @@ namespace webpp {
     //    }
 
     template <typename ValueType>
-        requires(istl::String<ValueType> || istl::StringView<ValueType>)
-    constexpr auto append_to(istl::String auto& out, ValueType&& value) noexcept {
+        requires(istl::StringViewifiable<ValueType>)
+    constexpr void append_to(istl::String auto& out, ValueType&& value) {
         out.append(istl::string_data(value), ascii::size(value));
     }
 

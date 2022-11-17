@@ -41,6 +41,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/strings/parser_utils.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/splits.hpp
         ${LIB_INCLUDE_DIR}/webpp/strings/strings_concepts.hpp
+        ${LIB_INCLUDE_DIR}/webpp/strings/append.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/enable_traits.hpp

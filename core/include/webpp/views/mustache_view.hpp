@@ -152,7 +152,7 @@ namespace webpp::views {
                 string_type key_value;
 
                 template <typename T, EnabledTraits ET>
-                constexpr auto convert(T&& val, ET const& et) const {
+                constexpr auto convert(T&& val, ET&& et) const {
                     using value_type = stl::remove_cvref_t<T>;
                     if constexpr (istl::one_of<string_type,
                                                bool,

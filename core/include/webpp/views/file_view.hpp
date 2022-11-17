@@ -3,7 +3,7 @@
 #ifndef WEBPP_HTML_VIEW_HPP
 #define WEBPP_HTML_VIEW_HPP
 
-#include "../strings/append.hpp"
+#include "../std/string.hpp"
 #include "view_concepts.hpp"
 
 namespace webpp::views {
@@ -49,9 +49,14 @@ namespace webpp::views {
             data = str;
         }
 
-        template <typename StrT, typename... DataType>
-        void render(StrT& out, [[maybe_unused]] DataType&&...) const {
-            append_to(out, data);
+        template <typename... DataType>
+        void render(istl::String auto& out, [[maybe_unused]] DataType&&...) const {
+            out.append(data);
+        }
+
+        template <typename... DataType>
+        void render(istl::StringView auto& out, [[maybe_unused]] DataType&&...) const noexcept {
+            out = data;
         }
     };
 
