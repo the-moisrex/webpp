@@ -2,6 +2,7 @@
 #define WEBPP_HTTP_RESPONSE_H
 
 #include "../convert/casts.hpp"
+#include "../strings/append.hpp"
 #include "../traits/traits.hpp"
 #include "header_fields.hpp"
 #include "http_concepts.hpp"
