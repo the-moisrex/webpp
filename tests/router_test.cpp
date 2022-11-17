@@ -31,15 +31,16 @@ TEST(Router, RouterConcepts) {
 }
 
 TEST(Router, RouteCreation) {
-    using request = typename fake_proto<default_traits, fake_app_struct>::request_type;
+    using fake_protocol = fake_proto<default_traits, fake_app_struct>;
+    fake_protocol fp;
+    using request = typename fake_protocol::request_type;
 
     constexpr auto about_page = []() noexcept {
         return "About page\n";
     };
 
-    enable_owner_traits<default_traits> et;
 
-    auto   req = request{et};
+    auto   req = request{fp};
     router router1{extension_pack<string_response>{}, about_page};
     auto   res = router1(req);
     res.calculate_default_headers();
