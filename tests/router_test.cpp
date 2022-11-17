@@ -31,7 +31,7 @@ TEST(Router, RouterConcepts) {
 }
 
 TEST(Router, RouteCreation) {
-    using request = typename fake_proto<std_traits, fake_app_struct>::request_type;
+    using request = typename fake_proto<default_traits, fake_app_struct>::request_type;
 
     constexpr auto about_page = []() noexcept {
         return "About page\n";
@@ -86,10 +86,10 @@ TEST(Router, RouteCreation) {
 //        return basic_response("Hello");
 //    };
 //    constexpr auto v = method("GET");
-//    route<std_traits, fake_cgi, decltype(return_callback), decltype(v)>
+//    route<default_traits, fake_cgi, decltype(return_callback), decltype(v)>
 //    one{v};
 //
-//    basic_request<std_traits, fake_cgi> req;
+//    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //
 //    EXPECT_EQ(req.request_method(), "GET");
@@ -119,14 +119,14 @@ TEST(Router, RouteCreation) {
 //}
 //
 // TEST(Router, VectorForRouteList) {
-//    router_t<std_traits, fake_cgi,
-//             istl::vector<std_traits, dynamic_route<std_traits, fake_cgi>>>
+//    router_t<default_traits, fake_cgi,
+//             istl::vector<default_traits, dynamic_route<default_traits, fake_cgi>>>
 //      _route{};
 //    _route.on(method("GET"), []() noexcept {
 //        return "Hello world";
 //    });
 //
-//    basic_request<std_traits, fake_cgi> req;
+//    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res         = _route(req);
 //    auto           strview_res = res.body.str();
@@ -139,11 +139,11 @@ TEST(Router, RouteCreation) {
 //
 // TEST(Router, TupleForRouteList) {
 //    auto _router =
-//      router_t<std_traits, fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
+//      router_t<default_traits, fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
 //          return "Hello world";
 //      });
 //
-//    basic_request<std_traits, fake_cgi> req;
+//    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res = _router(req);
 //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
@@ -164,7 +164,7 @@ TEST(Router, RouteCreation) {
 //        return "Hello world";
 //    });
 //
-//    basic_request<std_traits, fake_cgi> req;
+//    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res = _router(req);
 //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
@@ -186,15 +186,15 @@ TEST(Router, RouteCreation) {
 //}
 //
 // TEST(Router, DynamicRoute) {
-//    dynamic_route<std_traits, fake_cgi> droute;
+//    dynamic_route<default_traits, fake_cgi> droute;
 //    droute = []() {
 //        return basic_response("Hello world");
 //    };
 //
-//    basic_request<std_traits, fake_cgi> req;
+//    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //
-//    basic_response<std_traits> res;
+//    basic_response<default_traits> res;
 //    droute(req, res);
 //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
 //}

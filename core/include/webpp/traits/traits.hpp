@@ -181,6 +181,11 @@ namespace webpp {
     };
 
 
+    template <typename TraitsType, typename T>
+    concept EnabledTraitsOf = EnabledTraits<T> && requires {
+        requires stl::same_as<typename T::traits_type, TraitsType>;
+    };
+
     /**
      * Middle man type aliases.
      *   Seriously pro tip in C++20 concepts:

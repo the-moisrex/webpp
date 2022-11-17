@@ -65,7 +65,7 @@ namespace webpp::http {
          * Examples of input: “HTTP/1.0”, “HTTP/1.1”, or “HTTP/2.0”
          */
         [[nodiscard]] static constexpr version from_server_protocol(istl::StringView auto str) noexcept {
-            static constexpr auto http_string = "HTTP";
+            constexpr auto http_string = "HTTP"; // todo: make static when C++23 support is good
             if (!str.starts_with(http_string)) {
                 return unknown();
             }

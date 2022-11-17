@@ -4,6 +4,7 @@
 #define WEBPP_ROUTES_CONTEXT_H
 
 #include "../../extensions/extension.hpp"
+#include "../../extensions/extension_wrapper.hpp"
 #include "../../memory/object.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../bodies/string.hpp"
@@ -117,15 +118,14 @@ namespace webpp::http {
      *
      */
     template <Traits TraitsType, typename EList, HTTPRequest RequestType, HTTPResponse ResponseType>
-    struct basic_context : public enable_traits_with<TraitsType, EList> {
+    struct basic_context : public enable_traits_with<TraitsType, extension_wrapper<EList>> {
         using traits_type            = TraitsType;
         using mother_extensions_type = EList;
-        using extension_wrapper_type = EList;
-        using basic_context_parent   = enable_traits_with<traits_type, extension_wrapper_type>;
+        using extension_wrapper_type = extension_wrapper<EList>;
+        using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
         using request_type           = RequestType;
         using response_type          = ResponseType;
         using basic_context_type     = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using etraits                = enable_traits<traits_type>;
         using request_ref            = request_type&;
 
       public:
@@ -133,9 +133,7 @@ namespace webpp::http {
 
         // using enable_traits_with<TraitsType, EList>::enable_traits_with; // inherit the ctors from parent
 
-        constexpr basic_context(request_ref inp_req) noexcept
-          : enable_traits_with<TraitsType, EList>{inp_req},
-            request{inp_req} {}
+        constexpr basic_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
 
         template <Context CtxT>
         constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}

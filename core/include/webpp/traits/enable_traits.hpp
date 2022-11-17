@@ -154,6 +154,7 @@ namespace webpp {
     };
 
     template <Traits TraitsType, EnabledTraits T>
+        requires(EnabledTraitsOf<TraitsType, T>)
     struct enable_traits_with<TraitsType, T> : public T {
         using T::T;
     };
