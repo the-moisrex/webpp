@@ -63,32 +63,5 @@
             "noTestsAction": "error",
             "stopOnFailure": false
         }
-    }],
-    "packagePresets": [{
-        "name": "default",
-        "configurePreset": "default",
-        "generators": [
-            "TGZ"
-        ]
-    }],
-    "workflowPresets": [{
-        "name": "default",
-        "steps": [{
-                "type": "configure",
-                "name": "default"
-            },
-            {
-                "type": "build",
-                "name": "default"
-            },
-            {
-                "type": "test",
-                "name": "default"
-            },
-            {
-                "type": "package",
-                "name": "default"
-            }
-        ]
     }]
 }
