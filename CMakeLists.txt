@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7...3.24.2)
+cmake_minimum_required(VERSION 3.23...3.24.3)
 
 project(webpp
         VERSION 1.0.0

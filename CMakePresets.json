@@ -1,0 +1,94 @@
+{
+    "version": 5,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 3
+    },
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "Debug Default",
+            "description": "Default build using Ninja generator",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "clang",
+            "inherits": "default",
+            "displayName": "Clang debug",
+            "description": "Clang build using Ninja generator",
+            "binaryDir": "${sourceDir}/build-clang",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "Clang",
+                "CMAKE_C_COMPILER": "Clang"
+            }
+        },
+        {
+            "name": "default-release",
+            "inherits": "default",
+            "displayName": "Default Release",
+            "description": "Default release build using Ninja generator",
+            "binaryDir": "${sourceDir}/build-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "clang-release",
+            "inherits": "clang",
+            "displayName": "Clang Release",
+            "description": "Clang release build using Ninja generator",
+            "binaryDir": "${sourceDir}/build-clang-release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [{
+        "name": "webpp",
+        "targets": "webpp",
+        "configurePreset": "default"
+    }],
+    "testPresets": [{
+        "name": "default",
+        "configurePreset": "default",
+        "output": {
+            "outputOnFailure": true
+        },
+        "execution": {
+            "noTestsAction": "error",
+            "stopOnFailure": false
+        }
+    }],
+    "packagePresets": [{
+        "name": "default",
+        "configurePreset": "default",
+        "generators": [
+            "TGZ"
+        ]
+    }],
+    "workflowPresets": [{
+        "name": "default",
+        "steps": [{
+                "type": "configure",
+                "name": "default"
+            },
+            {
+                "type": "build",
+                "name": "default"
+            },
+            {
+                "type": "test",
+                "name": "default"
+            },
+            {
+                "type": "package",
+                "name": "default"
+            }
+        ]
+    }]
+}

@@ -25,3 +25,4 @@ webpp.kdev4
 .ccls
 .gdbinit
 .clangd
+CMakeUserPresets.json
