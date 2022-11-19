@@ -5,8 +5,7 @@
         "minor": 24,
         "patch": 3
     },
-    "configurePresets": [
-        {
+    "configurePresets": [{
             "name": "default",
             "displayName": "Debug Default",
             "description": "Default build using Ninja generator",
@@ -51,6 +50,52 @@
     "buildPresets": [{
         "name": "webpp",
         "targets": "webpp",
+        "configurePreset": "default"
+    }, {
+        "name": "tests",
+        "targets": [
+            "test-bodies",
+            "test-cache",
+            "test-charset",
+            "test-concurrency",
+            "test-configs",
+            "test-const-list",
+            "test-context",
+            "test-convert",
+            "test-cookies",
+            "test-crypto",
+            "test-dynamic-router",
+            "test-errors",
+            "test-extensions",
+            "test-find-str",
+            "test-functional",
+            "test-header-accept-encoding",
+            "test-http-parser",
+            "test-ipv4",
+            "test-ipv6",
+            "test-istring",
+            "test-json",
+            "test-logger",
+            "test-memory",
+            "test-properties",
+            "test-request",
+            "test-response",
+            "test-router",
+            "test-routes",
+            "test-server",
+            "test-sql",
+            "test-string",
+            "test-traits",
+            "test-type-traits",
+            "test-unicode",
+            "test-uri-string",
+            "test-uri",
+            "test-ustring",
+            "test-utils-casts",
+            "test-utils-strings",
+            "test-validations",
+            "test-views"
+        ],
         "configurePreset": "default"
     }],
     "testPresets": [{
