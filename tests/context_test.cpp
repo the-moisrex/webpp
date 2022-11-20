@@ -15,6 +15,7 @@ namespace fake {
 } // namespace fake
 
 using request_type = typename fake_proto<std_traits, fake::app>::request_type;
+static_assert(HTTPRequest<request_type>, "fake_request should be a http request");
 using context_type = simple_context<request_type>;
 
 struct fake_mommy {

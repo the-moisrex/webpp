@@ -14,6 +14,7 @@
 
 namespace webpp::http {
 
+    struct context_descriptor;
 
     /**
      *
@@ -232,17 +233,16 @@ namespace webpp::http {
         // todo: add all the features of returning a response each body type should have at least one method here
     };
 
-    template <typename ContextDescriptorType, typename EList>
+    template <typename EList>
     struct final_context final : public EList {
-        using base_type               = EList;
-        using traits_type             = typename base_type::traits_type;
-        using root_extensions         = typename base_type::root_extensions;
-        using mother_extensions_type  = typename root_extensions::template mother_extensions<traits_type>;
-        using final_context_parent    = EList;
-        using context_descriptor_type = ContextDescriptorType;
-        using request_type            = typename base_type::request_type;
-        using basic_context_type      = typename final_context_parent::basic_context_type;
-        using etraits                 = typename final_context_parent::etraits;
+        using base_type              = EList;
+        using traits_type            = typename base_type::traits_type;
+        using root_extensions        = typename base_type::root_extensions;
+        using mother_extensions_type = typename root_extensions::template mother_extensions<traits_type>;
+        using final_context_parent   = EList;
+        using request_type           = typename base_type::request_type;
+        using basic_context_type     = typename final_context_parent::basic_context_type;
+        using etraits                = typename final_context_parent::etraits;
 
         static_assert(Context<final_context_parent>,
                       "The specified extension list type doesn't include basic_context; "
@@ -260,7 +260,7 @@ namespace webpp::http {
         template <typename... E>
         using context_type_with_appended_extensions =
           typename istl::unique_parameters<typename root_extensions::template appended<E...>>::
-            template extensie_type<traits_type, context_descriptor_type, request_type>;
+            template extensie_type<traits_type, context_descriptor, request_type>;
 
 
 
@@ -398,16 +398,12 @@ namespace webpp::http {
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
-        using final_extensie_type = final_context<context_descriptor, EList>;
+        using final_extensie_type = final_context<EList>;
     };
 
 
 
     template <HTTPRequest ReqType>
-        requires requires {
-            typename ReqType::root_extensions::
-              template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
-        }
     using simple_context = typename ReqType::root_extensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
