@@ -22,8 +22,8 @@
             "description": "Clang build using Ninja generator",
             "binaryDir": "${sourceDir}/build-clang",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "Clang",
-                "CMAKE_C_COMPILER": "Clang"
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_C_COMPILER": "clang"
             }
         },
         {
@@ -97,6 +97,11 @@
             "test-views"
         ],
         "configurePreset": "default"
+    },
+    {
+        "name": "clang-tests",
+        "configurePreset": "clang",
+        "inherits": "tests"
     }],
     "testPresets": [{
         "name": "default",
