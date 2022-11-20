@@ -97,8 +97,7 @@
             "test-views"
         ],
         "configurePreset": "default"
-    },
-    {
+    }, {
         "name": "clang-tests",
         "configurePreset": "clang",
         "inherits": "tests"

@@ -176,7 +176,8 @@ namespace webpp::http {
          */
         template <HTTPRequest RequestType>
         constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
-            using context_type = simple_context<stl::remove_cvref_t<RequestType>, extension_list_type>;
+            using specified_request_type = stl::remove_cvref_t<RequestType>;
+            using context_type           = simple_context<specified_request_type>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not a match for Context concept");
             return this->template operator()<0>(context_type{req}, req);
@@ -226,8 +227,10 @@ namespace webpp::http {
          */
         template <istl::String StrT, HTTPRequest ReqT, stl::size_t Index = 0>
         void append_as_string(StrT& out, ReqT&& req) const {
+            using specified_request_type = stl::remove_cvref_t<ReqT>;
+            using context_type           = simple_context<specified_request_type>;
+
             auto const this_route = stl::get<Index>(routes);
-            using context_type    = simple_context<stl::remove_cvref_t<ReqT>, extension_list_type>;
             this_route.append_as_string(out, context_type{req}, req);
 
             // print the next route as well

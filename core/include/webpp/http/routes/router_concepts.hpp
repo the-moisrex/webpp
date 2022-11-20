@@ -1,11 +1,12 @@
 // Created by moisrex on 5/10/20.
 
-#ifndef WEBPP_ROUTER_CONCEPTS_H
-#define WEBPP_ROUTER_CONCEPTS_H
+#ifndef WEBPP_ROUTER_CONCEPTS_HPP
+#define WEBPP_ROUTER_CONCEPTS_HPP
 
 #include "../../extensions/extension.hpp"
 #include "../../std/tuple.hpp"
 #include "../../std/type_traits.hpp"
+#include "../http_concepts.hpp"
 
 
 namespace webpp::http {
@@ -189,4 +190,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_ROUTER_CONCEPTS_H
+#endif // WEBPP_ROUTER_CONCEPTS_HPP

@@ -232,26 +232,18 @@ namespace webpp::http {
         // todo: add all the features of returning a response each body type should have at least one method here
     };
 
-    template <Traits TraitsType,
-              typename ContextDescriptorType,
-              typename OriginalExtensionList,
-              typename EList,
-              typename ReqType>
+    template <typename ContextDescriptorType, typename EList>
     struct final_context final : public EList {
-        using traits_type                  = TraitsType;
-        using original_extension_pack_type = OriginalExtensionList;
-        using mother_extensions_type =
-          typename original_extension_pack_type::template mother_extensions<traits_type>;
-        using child_extensions_type   = EList;
+        using base_type               = EList;
+        using traits_type             = typename base_type::traits_type;
+        using root_extensions         = typename base_type::root_extensions;
+        using mother_extensions_type  = typename root_extensions::template mother_extensions<traits_type>;
         using final_context_parent    = EList;
         using context_descriptor_type = ContextDescriptorType;
-        using request_type            = stl::remove_cvref_t<ReqType>;
+        using request_type            = typename base_type::request_type;
         using basic_context_type      = typename final_context_parent::basic_context_type;
         using etraits                 = typename final_context_parent::etraits;
 
-        static_assert(EnabledTraits<final_context_parent>,
-                      "The specified extension list type is not"
-                      " traits enabled; bad constructors?.");
         static_assert(Context<final_context_parent>,
                       "The specified extension list type doesn't include basic_context; "
                       "did you forget to inherit from the "
@@ -259,7 +251,7 @@ namespace webpp::http {
 
         template <typename Ext>
         [[nodiscard]] static constexpr bool has_extension() noexcept {
-            return istl::contains_parameter<original_extension_pack_type, Ext>;
+            return istl::contains_parameter<root_extensions, Ext>;
         }
 
         /**
@@ -267,7 +259,7 @@ namespace webpp::http {
          */
         template <typename... E>
         using context_type_with_appended_extensions =
-          typename istl::unique_parameters<typename original_extension_pack_type::template appended<E...>>::
+          typename istl::unique_parameters<typename root_extensions::template appended<E...>>::
             template extensie_type<traits_type, context_descriptor_type, request_type>;
 
 
@@ -406,19 +398,17 @@ namespace webpp::http {
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
-        using final_extensie_type =
-          final_context<TraitsType, context_descriptor, RootExtensions, EList, ReqType>;
+        using final_extensie_type = final_context<context_descriptor, EList>;
     };
 
 
 
-    template <HTTPRequest ReqType,
-              /* fixme: ExtensionList */ typename RootExtensions = empty_extension_pack>
+    template <HTTPRequest ReqType>
         requires requires {
-            typename RootExtensions::
+            typename ReqType::root_extensions::
               template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
         }
-    using simple_context = typename RootExtensions::
+    using simple_context = typename ReqType::root_extensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
 
 
