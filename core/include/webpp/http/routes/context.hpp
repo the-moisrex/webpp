@@ -128,6 +128,7 @@ namespace webpp::http {
         using response_type          = ResponseType;
         using basic_context_type     = basic_context<TraitsType, EList, RequestType, ResponseType>;
         using request_ref            = request_type&;
+        using root_extensions        = typename request_type::root_extensions;
 
       public:
         request_ref request;
