@@ -31,10 +31,11 @@ namespace webpp::http {
         using super = stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>;
 
       public:
-        using traits_type = TraitsType;
-        using string_type = traits::general_string<traits_type>;
-        using field_type  = HeaderFieldType;
-        using elist_type  = HeaderEList;
+        using traits_type     = TraitsType;
+        using string_type     = traits::general_string<traits_type>;
+        using field_type      = HeaderFieldType;
+        using elist_type      = HeaderEList;
+        using root_extensions = typename field_type::root_extensions;
 
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
@@ -72,8 +73,9 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_header_field_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
-        using mid_level_extensie_type = header_field<traits::general_string<TraitsType>, EList>;
+        template <typename RootExtensions, typename TraitsType, typename EList>
+        using mid_level_extensie_type =
+          header_field<traits::general_string<TraitsType>, EList, RootExtensions>;
     };
 
 
@@ -83,11 +85,11 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_headers_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_headers<
           TraitsType,
           EList,
-          typename ExtensionListType::template extensie_type<TraitsType, response_header_field_descriptor>>;
+          typename RootExtensions::template extensie_type<TraitsType, response_header_field_descriptor>>;
     };
 
 } // namespace webpp::http

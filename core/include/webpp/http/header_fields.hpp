@@ -15,8 +15,9 @@ namespace webpp::http {
      *
      * This templated struct should satisfy the HTTPHeaderField concept.
      */
-    template <typename StringType, typename EList>
+    template <typename StringType, typename EList, typename RootExtensions>
     struct basic_header_field : public EList {
+        using root_extensions            = RootExtensions;
         using string_type                = StringType;
         using name_type                  = string_type;
         using value_type                 = string_type;
@@ -82,23 +83,25 @@ namespace webpp::http {
             return !operator==(stl::forward<decltype(str)>(str));
         }
 
-        friend constexpr bool operator==(istl::StringViewifiable auto&&               str,
-                                         basic_header_field<StringType, EList> const& field) noexcept {
+        friend constexpr bool
+        operator==(istl::StringViewifiable auto&&                               str,
+                   basic_header_field<StringType, EList, RootExtensions> const& field) noexcept {
             return field.operator==(istl::string_viewify(str));
         }
 
-        friend constexpr bool operator!=(istl::StringViewifiable auto&&               str,
-                                         basic_header_field<StringType, EList> const& field) noexcept {
+        friend constexpr bool
+        operator!=(istl::StringViewifiable auto&&                               str,
+                   basic_header_field<StringType, EList, RootExtensions> const& field) noexcept {
             return field.operator!=(istl::string_viewify(str));
         }
     };
 
 
-    template <istl::String StringType, typename EList>
-    using header_field = basic_header_field<StringType, EList>;
+    template <istl::String StringType, typename EList, typename RootExtensions>
+    using header_field = basic_header_field<StringType, EList, RootExtensions>;
 
-    template <istl::StringView StringType, typename EList>
-    using header_field_view = basic_header_field<StringType, EList>;
+    template <istl::StringView StringType, typename EList, typename RootExtensions>
+    using header_field_view = basic_header_field<StringType, EList, RootExtensions>;
 
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
@@ -146,7 +149,8 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::request_header_field_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = header_field_view<traits::string_view<TraitsType>, EList>;
+        using mid_level_extensie_type =
+          header_field_view<traits::string_view<TraitsType>, EList, RootExtensions>;
     };
 
 

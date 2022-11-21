@@ -25,9 +25,10 @@ namespace webpp::http {
         // we're not going to use trait's string type here.
         using body_type           = BodyType;
         using headers_type        = ResponseHeaderType;
+        using traits_type         = typename headers_type::traits_type;
+        using root_extensions     = typename headers_type::root_extensions;
         using elist_type          = EList;
         using basic_response_type = basic_response<EList, ResponseHeaderType, BodyType>;
-        using traits_type         = typename body_type::traits_type;
 
         body_type    body{};
         headers_type headers{};
@@ -103,14 +104,17 @@ namespace webpp::http {
 
 
 
-    template <Traits TraitsType, typename RootExtensions, typename EList>
+    template <typename EList>
     struct final_response final : public EList {
-        using traits_type         = TraitsType;
-        using response_extensions = EList;
-        using root_extensions     = RootExtensions;
-        using response_type       = final_response<TraitsType, RootExtensions, EList>;
-        using body_type           = typename response_type::body_type;
-        using headers_type        = typename response_type::headers_type;
+      private:
+        using super = EList;
+
+      public:
+        using traits_type     = typename super::traits_type;
+        using root_extensions = typename super::root_extensions;
+        using response_type   = final_response<EList>;
+        using body_type       = typename response_type::body_type;
+        using headers_type    = typename response_type::headers_type;
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
@@ -185,7 +189,7 @@ namespace webpp::http {
 
         // empty final extensie
         template <typename RootExtensions, typename TraitsType, typename EList>
-        using final_extensie_type = final_response<TraitsType, RootExtensions, EList>;
+        using final_extensie_type = final_response<EList>;
     };
 
 
