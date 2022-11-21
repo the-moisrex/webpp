@@ -426,6 +426,7 @@ namespace webpp::alloc {
         constexpr allocator_pack(filtered_resources_type&& res) noexcept : resources{stl::move(res)} {};
 
         template <typename... ResourceType>
+            requires((has_resource<stl::decay_t<ResourceType>> && ...))
         constexpr allocator_pack(ResourceType&&... res) noexcept
           : resources{istl::make_tuple_no_order<filtered_resources_type, ResourceType...>(
               stl::forward<ResourceType>(res)...)} {}

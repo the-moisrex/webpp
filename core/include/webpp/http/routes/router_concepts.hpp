@@ -144,7 +144,7 @@ namespace webpp::http {
         requires EnabledTraits<typename stl::remove_cvref_t<T>>;
         requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
         requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
-        // c.request;
+        { c.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
     };
 
 

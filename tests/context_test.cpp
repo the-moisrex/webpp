@@ -15,7 +15,7 @@ namespace fake {
 } // namespace fake
 
 using request_type =
-  typename fake_proto<std_traits, fake::app, extension_pack<string_response>>::request_type;
+  typename fake_proto<default_traits, fake::app, extension_pack<string_response>>::request_type;
 static_assert(HTTPRequest<request_type>, "fake_request should be a http request");
 using context_type = simple_context<request_type>;
 
@@ -44,19 +44,26 @@ TEST(Routes, ContextTests) {
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
-    traits::allocator_pack_type<std_traits> alloc_pack;
-    context_type                            ctx{alloc_pack};
+    request_type req;
+    context_type ctx{req};
 
-    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
-    // using nctx_type = decltype(nctx);
+    auto nctx       = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
+    using nctx_type = stl::remove_cvref_t<decltype(nctx)>;
     EXPECT_TRUE(nctx.test);
 
-    using context_type2 = simple_context<request_type, extension_pack<string_response, fake_mommy>>;
+
+    using request_type2 = typename fake_proto<default_traits,
+                                              fake::app,
+                                              extension_pack<string_response, fake_mommy>>::request_type;
+    using context_type2 = simple_context<request_type2>;
     EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));
     EXPECT_TRUE(static_cast<bool>(std::is_copy_constructible_v<context_type2>));
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type2>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type2>));
+
+    static_assert(stl::same_as<context_type2, nctx_type>,
+                  "Both should produce the same type for the copying below to work");
 
     context_type2 ctx2{nctx};
     auto          res = ctx2.string("test");
