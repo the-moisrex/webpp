@@ -45,8 +45,9 @@ TEST(Routes, ContextTests) {
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
-    request_type req;
-    context_type ctx{req};
+    request_type::server_type server1;
+    request_type              req{server1};
+    context_type              ctx{req};
 
     auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
     // using nctx_type = stl::remove_cvref_t<decltype(nctx)>;

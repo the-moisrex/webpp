@@ -57,8 +57,8 @@ namespace webpp {
         }
 
       public:
-        template <typename... Args>
-        fake_proto_request(Args&&... args) noexcept : super{stl::forward<Args>(args)...} {}
+        using super::super;
+
         fake_proto_request(fake_proto_request const&)     = default;
         fake_proto_request(fake_proto_request&)           = default;
         fake_proto_request(fake_proto_request&&) noexcept = default;
