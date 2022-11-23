@@ -8,6 +8,7 @@
 #include "../std/format.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "../strings/append.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "casts.hpp"
