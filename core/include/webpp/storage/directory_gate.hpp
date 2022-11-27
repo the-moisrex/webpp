@@ -241,7 +241,8 @@ namespace webpp {
                 if (ec) {
                     this->logger.error(
                       DIR_GATE_CAT,
-                      "Cannot get the OS's temp directory and you're not passing us any directory path to use as the cache directory.");
+                      "Cannot get the OS's temp directory and you're not passing us any directory path to use as the cache directory.",
+                      ec);
                     return;
                 }
                 auto random_str = object::make_local<string_type>(this->alloc_pack,
@@ -258,7 +259,8 @@ namespace webpp {
                     if (ec) {
                         this->logger.error(
                           DIR_GATE_CAT,
-                          "Cannot create a temp directory for cache files. Pass a good directory as input.");
+                          "Cannot create a temp directory for cache files. Pass a good directory as input.",
+                          ec);
                     }
                 }
             }
