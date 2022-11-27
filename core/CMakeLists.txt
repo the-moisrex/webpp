@@ -84,7 +84,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/convert/casts.hpp
         ${LIB_INCLUDE_DIR}/webpp/convert/lexical_cast.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/utils/cfile.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/flags.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/errors.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
@@ -224,6 +223,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_statement.hpp
         ${LIB_INCLUDE_DIR}/webpp/db/sqlite/sqlite_grammar.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/storage/file.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/cache.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/cache_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/storage/lru_cache.hpp
