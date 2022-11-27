@@ -6,7 +6,7 @@ file(GLOB BIN_SOURCES *.cpp)
 #string(REPLACE "\n" "\n/" "${INDEX_HTML}" INDEX_HTML)
 #configure_file(config.hpp.in config.hpp NEWLINE_STYLE UNIX)
 
-include(../../cmake/static_files.cmake)
+include(../../cmake/embedded_files.cmake)
 generate_config_file(${CMAKE_CURRENT_BINARY_DIR}/config.hpp index.html)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

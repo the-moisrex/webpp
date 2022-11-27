@@ -7,6 +7,7 @@
 #include "../../memory/object.hpp"
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
+#include "../../storage/embedded_file.hpp"
 #include "../../traits/traits.hpp"
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
@@ -14,16 +15,6 @@
 
 #include <filesystem>
 #include <fstream>
-
-
-
-#ifdef WEBPP_EMBEDDED_FILES
-#    if CONFIG_FILE != ""
-#        include CONFIG_FILE
-#    else
-extern std::string_view get_static_file(std::string_view const&) noexcept;
-#    endif
-#endif
 
 namespace webpp::http {
 
@@ -97,12 +88,13 @@ namespace webpp::http {
 
             bool load(stl::filesystem::path const&         filepath,
                       [[maybe_unused]] file_options const& options = {}) noexcept {
-#ifdef WEBPP_EMBEDDED_FILES
-                if (auto content = ::get_static_file(filepath); !content.empty()) {
-                    *this = string_type{this->content, alloc};
+
+                if (auto const efile = embedded_file::search(filepath)) {
+                    auto result = object::make_general<string_type>(*this);
+                    result      = efile->content();
+                    *this       = result;
                     return true;
                 }
-#endif
 
                 // todo: cache
 
@@ -197,11 +189,14 @@ namespace webpp::http {
 
             response_type file(stl::filesystem::path const&         filepath,
                                [[maybe_unused]] file_options const& options = {}) noexcept {
-#ifdef WEBPP_EMBEDDED_FILES
-                if (auto content = ::get_static_file(filepath); !content.empty()) {
-                    return string_type{this->content, alloc};
+
+
+                if (auto const efile = embedded_file::search(filepath)) {
+                    auto result = object::make_general<string_type>(*this);
+                    result      = efile->content();
+                    return result;
                 }
-#endif
+
 
                 // todo: cache
 

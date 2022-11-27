@@ -7,6 +7,7 @@
 #include "../std/format.hpp"
 #include "../std/map.hpp"
 #include "../std/string.hpp"
+#include "../storage/embedded_file.hpp"
 #include "../storage/lru_cache.hpp"
 #include "../storage/memory_gate.hpp"
 #include "../storage/null_gate.hpp"
@@ -20,14 +21,6 @@
 #include <system_error>
 #include <type_traits>
 #include <variant>
-
-#ifdef WEBPP_EMBEDDED_FILES
-#    if CONFIG_FILE != ""
-#        include CONFIG_FILE
-#    else
-extern std::string_view get_static_file(std::string_view const&) noexcept;
-#    endif
-#endif
 
 namespace webpp::views {
 
@@ -229,12 +222,12 @@ namespace webpp::views {
          * Read the file content
          */
         [[nodiscard]] string_type read_file(stl::filesystem::path const& file) const {
-#ifdef WEBPP_EMBEDDED_FILES
-            if (auto content = ::get_static_file(filepath); !content.empty()) {
-                return string_type{this->content, alloc};
-            }
-#endif
             auto result = object::make_general<string_type>(*this);
+            if (auto const efile = embedded_file::search(file)) {
+                result = efile->content();
+                return result;
+            }
+
             if (auto in = ifstream_type(file.c_str(), stl::ios::binary | stl::ios::ate); in.is_open()) {
                 // details on this matter:
                 // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696

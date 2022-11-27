@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 #string(REPLACE "\n" "\n/" "${INDEX_HTML}" INDEX_HTML)
 #configure_file(config.h.in config.h NEWLINE_STYLE UNIX)
 
-include(../../cmake/static_files.cmake)
+include(../../cmake/embedded_files.cmake)
 generate_config_file(${CMAKE_CURRENT_BINARY_DIR}/config.h index.html)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
