@@ -1,5 +1,5 @@
-#ifndef WEBPP_STORAGE_FILE_HPP
-#define WEBPP_STORAGE_FILE_HPP
+#ifndef WEBPP_STORAGE_EMBEDDED_FILE_HPP
+#define WEBPP_STORAGE_EMBEDDED_FILE_HPP
 
 #include <filesystem>
 #include <optional>
@@ -67,4 +67,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_STORAGE_FILE_HPP
+#endif // WEBPP_STORAGE_EMBEDDED_FILE_HPP
