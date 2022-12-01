@@ -1,10 +1,11 @@
 #ifndef WEBPP_STORAGE_FILE_HPP
 #define WEBPP_STORAGE_FILE_HPP
 
+#include "../std/string.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <optional>
-#include <string>
 
 namespace webpp {
 
@@ -14,7 +15,7 @@ namespace webpp {
 
       private:
       public:
-        // just read the file and return a file
+        // just read the file and put the result into "out"
         static bool read_to(std::filesystem::path const& filepath, auto& out) {
             if (auto in = ifstream_type(filepath.c_str(), std::ios::binary | std::ios::ate); in.is_open()) {
                 // details on this matter:
@@ -32,6 +33,16 @@ namespace webpp {
             } else {
                 return false;
             }
+        }
+
+        /**
+         * Get the string of the file or empty string if we failed to read it.
+         */
+        template <istl::String StringType = std::string, typename... StringArgs>
+        static StringType read(std::filesystem::path const& filepath, StringArgs&&... args) {
+            StringType result{stl::forward<StringArgs>(args)...};
+            static_cast<void>(read_to(filepath, result));
+            return result;
         }
     };
 
