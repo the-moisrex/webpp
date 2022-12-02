@@ -21,7 +21,7 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<json_response>;
+            using extensions = webpp::extension_pack<json_body>;
 
             router _router{extensions{},
                            (get and root) >>=

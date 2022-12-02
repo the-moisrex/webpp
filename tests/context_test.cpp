@@ -54,9 +54,8 @@ TEST(Routes, ContextTests) {
     EXPECT_TRUE(nctx.test);
 
 
-    using request_type2 = typename fake_proto<default_traits,
-                                              fake::app,
-                                              extension_pack<string_body, fake_mommy>>::request_type;
+    using request_type2 =
+      typename fake_proto<default_traits, fake::app, extension_pack<string_body, fake_mommy>>::request_type;
     using context_type2 = simple_context<request_type2>;
     EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));

@@ -13,7 +13,7 @@ namespace website {
 
     struct admin {
 
-        using my_extensions = extension_pack<string_body, json_response>;
+        using my_extensions = extension_pack<string_body, json_body>;
         router<my_extensions> _router{
           // home
           relative / "home" >>= static_file("admin/page.html"),

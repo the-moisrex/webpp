@@ -37,10 +37,10 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                    super{et,
-                          doc.template uglified<string_type>(
-                            et.alloc_pack.template general_allocator<char_type>())};
-                }
+                             super{et,
+                                   doc.template uglified<string_type>(
+                                     et.alloc_pack.template general_allocator<char_type>())};
+                         }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{et,
                       doc.template uglified<string_type>(
@@ -49,9 +49,9 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                    super{doc.template uglified<string_type>(
-                      et.alloc_pack.template general_allocator<char_type>())};
-                }
+                             super{doc.template uglified<string_type>(
+                               et.alloc_pack.template general_allocator<char_type>())};
+                         }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{doc.template uglified<string_type>(
                   et.alloc_pack.template general_allocator<char_type>())} {}
@@ -86,7 +86,8 @@ namespace webpp::http {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
                 using value_type             = traits::char_type<traits_type>;
-                if constexpr (!has_allocator && requires {
+                if constexpr (!has_allocator &&
+                              requires {
                                   json_response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<value_type>());
@@ -116,8 +117,8 @@ namespace webpp::http {
             // pass it to the body
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                    ResType{et, body_type{et, doc}};
-                }
+                             ResType{et, body_type{et, doc}};
+                         }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{et, body_type{et, doc}} {
                 this->add_headers();
@@ -127,8 +128,8 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                    ResType{body_type{et, doc}};
-                }
+                             ResType{body_type{et, doc}};
+                         }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{body_type{et, doc}} {
                 this->add_headers();
@@ -147,10 +148,11 @@ namespace webpp::http {
     /**
      * String Response Extension Pack.
      */
-    struct json_response {
+    struct json_body {
         // we're going to use "string extension" as a place to store the data
         using dependencies = extension_pack<string_body>;
 
+        // todo: add support for request body
         using response_body_extensions = extension_pack<as_extension<details::json_response_body_extension>>;
         using response_extensions      = extension_pack<as_extension<details::json_response_extension>>;
         using context_extensions       = extension_pack<as_extension<details::json_context_extension>>;
