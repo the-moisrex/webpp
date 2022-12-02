@@ -29,7 +29,7 @@ namespace website {
         }
 
         HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
-            using extensions = extension_pack<string_response>;
+            using extensions = extension_pack<string_body>;
             router _router{
               extensions{},
               (get and root) >>=

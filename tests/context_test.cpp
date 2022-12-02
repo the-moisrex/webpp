@@ -15,7 +15,7 @@ namespace fake {
 } // namespace fake
 
 
-using fake_protocol = fake_proto<default_traits, fake::app, extension_pack<string_response>>;
+using fake_protocol = fake_proto<default_traits, fake::app, extension_pack<string_body>>;
 using request_type  = typename fake_protocol::request_type;
 static_assert(HTTPRequest<request_type>, "fake_request should be a http request");
 using context_type = simple_context<request_type>;
@@ -49,14 +49,14 @@ TEST(Routes, ContextTests) {
     request_type              req{server1};
     context_type              ctx{req};
 
-    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_response>();
+    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_body>();
     // using nctx_type = stl::remove_cvref_t<decltype(nctx)>;
     EXPECT_TRUE(nctx.test);
 
 
     using request_type2 = typename fake_proto<default_traits,
                                               fake::app,
-                                              extension_pack<string_response, fake_mommy>>::request_type;
+                                              extension_pack<string_body, fake_mommy>>::request_type;
     using context_type2 = simple_context<request_type2>;
     EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));

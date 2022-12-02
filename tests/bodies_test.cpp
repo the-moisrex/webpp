@@ -43,7 +43,7 @@ TEST(Body, Text) {
 }
 
 TEST(Body, File) {
-    using body_t               = simple_response_body<std_traits, string_response>;
+    using body_t               = simple_response_body<std_traits, string_body>;
     std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};

@@ -24,7 +24,7 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<string_response>;
+            using extensions = webpp::extension_pack<string_body>;
             router _router{extensions{},
                            (get and (root / "home")) >>=
                            [this](Context auto& ctx) {

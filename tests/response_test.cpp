@@ -13,7 +13,7 @@ using namespace webpp::http;
 
 
 TEST(HTTPResponseTest, Type) {
-    using res_t                    = simple_response<std_traits, string_response>;
+    using res_t                    = simple_response<std_traits, string_body>;
     constexpr auto return_callback = [] {
         return res_t::with_body("Hello");
     };

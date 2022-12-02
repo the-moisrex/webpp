@@ -188,7 +188,7 @@ namespace webpp::http {
      *   - response         : 1 extension (adds string_view support to response)
      *   - context          : 1 extension (adds .string(...))
      */
-    struct string_response {
+    struct string_body {
         using request_body_extensions  = extension_pack<as_extension<details::string_body_extension>>;
         using response_body_extensions = extension_pack<as_extension<details::string_body_extension>>;
         using context_extensions       = extension_pack<as_extension<details::string_context_extension>>;

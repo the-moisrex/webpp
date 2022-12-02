@@ -149,7 +149,7 @@ namespace webpp::http {
      */
     struct json_response {
         // we're going to use "string extension" as a place to store the data
-        using dependencies = extension_pack<string_response>;
+        using dependencies = extension_pack<string_body>;
 
         using response_body_extensions = extension_pack<as_extension<details::json_response_body_extension>>;
         using response_extensions      = extension_pack<as_extension<details::json_response_extension>>;

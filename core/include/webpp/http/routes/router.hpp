@@ -97,7 +97,7 @@ namespace webpp::http {
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(forward<ResT>(res));
             } else if constexpr (istl::StringViewifiable<result_type>) {
-                if constexpr (context_type::template has_extension<string_response>()) {
+                if constexpr (context_type::template has_extension<string_body>()) {
                     // Use string_response, response type to handle strings
                     using char_type = typename local_string_type::value_type;
                     return response_type::with_body(istl::stringify_of<local_string_type>(

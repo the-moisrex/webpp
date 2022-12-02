@@ -12,7 +12,7 @@ auto page_one() {
 }
 
 int main() {
-    using extensions = extension_pack<string_response>;
+    using extensions = extension_pack<string_body>;
     router _router{extensions{},
                    root >>=
                    []() noexcept {
