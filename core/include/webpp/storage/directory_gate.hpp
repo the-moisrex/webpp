@@ -358,7 +358,7 @@ namespace webpp {
             }
 
             // check if the specified key exists
-            bool has(key_type const& key) {
+            [[nodiscard]] bool has(key_type const& key) {
                 return stl::filesystem::exists(key_path(key));
             }
 

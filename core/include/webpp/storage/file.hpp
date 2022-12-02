@@ -18,30 +18,30 @@ namespace webpp {
     };
 
     /**
-     * Read and Write files easily. This class is not designed to replace the std::filesystem utilities.
+     * Read and Write files easily. This class is not designed to replace the stl::filesystem utilities.
      * It's designed to make things easier.
      */
     struct file {
         using char_type     = char;
-        using ifstream_type = typename std::basic_ifstream<char_type, std::char_traits<char_type>>;
+        using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
       private:
       public:
         // just read the file and put the result into "out"
-        static bool read_to(std::filesystem::path const& filepath, auto& out) {
+        static bool read_to(stl::filesystem::path const& filepath, auto& out) {
             // TODO: performance tests
             // todo: add unix specializations for performance and having fun reasons
             // TODO: change the replace_string with replace_string_view if the file is cached
             // checkout this implementation: https://stackoverflow.com/a/17925143/4987470
-            if (auto in = ifstream_type(filepath.c_str(), std::ios::binary | std::ios::ate); in.is_open()) {
+            if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate); in.is_open()) {
                 // details on this matter:
                 // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
-                // std::unique_ptr<char[]> buffer{new char[buffer_size]};
-                // std::unique_ptr<char_type[]> result(static_cast<char_type*>(
+                // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
+                // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                 //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
                 in.seekg(0, in.end);
                 const auto size = in.tellg();
-                out.resize(static_cast<std::size_t>(
+                out.resize(static_cast<stl::size_t>(
                   size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
                 in.seekg(0L);
                 in.read(out.data(), size);
@@ -54,8 +54,8 @@ namespace webpp {
         /**
          * Get the string of the file or empty string if we failed to read it.
          */
-        template <istl::String StringType = std::string, typename... StringArgs>
-        static StringType read(std::filesystem::path const& filepath, StringArgs&&... args) {
+        template <istl::String StringType = stl::string, typename... StringArgs>
+        static StringType read(stl::filesystem::path const& filepath, StringArgs&&... args) {
             StringType result{stl::forward<StringArgs>(args)...};
             static_cast<void>(read_to(filepath, result));
             return result;
@@ -66,7 +66,7 @@ namespace webpp {
          * Get the file, search the embedded files first before trying to read the file
          * The method may even cache the file and listen for changes in the file.
          */
-        static bool get_to(std::filesystem::path const& filepath, auto& out) {
+        static bool get_to(stl::filesystem::path const& filepath, auto& out) {
             if (auto const efile = embedded_file::search(filepath)) {
                 out = efile->content();
                 return true;
@@ -80,8 +80,8 @@ namespace webpp {
         /**
          * Same as "get_to" but it creates the string type and returns that or an empty string if it failed.
          */
-        template <istl::String StringType = std::string, typename... StringArgs>
-        static StringType get(std::filesystem::path const& filepath, StringArgs&&... args) {
+        template <istl::String StringType = stl::string, typename... StringArgs>
+        static StringType get(stl::filesystem::path const& filepath, StringArgs&&... args) {
             StringType result{stl::forward<StringArgs>(args)...};
             static_cast<void>(get_to(filepath, result));
             return result;
