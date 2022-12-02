@@ -3,6 +3,7 @@
 
 #include "../convert/lexical_cast.hpp"
 #include "../crypto/base64.hpp"
+#include "../storage/file.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../version.hpp"
@@ -361,20 +362,14 @@ namespace webpp {
                 return stl::filesystem::exists(key_path(key));
             }
 
-            stl::optional<data_type> get_file(path_type const& file) {
-                if (stl::basic_ifstream<char_type> ifs(file); ifs.is_open()) {
-                    ifs.seekg(0, ifs.end);
-                    const auto size   = ifs.tellg();
-                    auto       result = object::make_general<string_type>(*this);
-                    // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
-                    result.resize(static_cast<stl::size_t>(size));
-                    ifs.seekg(0);
-                    ifs.read(result.data(), size);
-                    ifs.close();
+            stl::optional<data_type> get_file(path_type const& filepath) {
+                auto       result = object::make_general<string_type>(*this);
+                bool const res    = file::read_to(filepath, result);
+                if (res) {
                     return deserialize_file(result);
                 } else {
                     this->logger.error(DIR_GATE_CAT,
-                                       fmt::format("Cannot read the cache file {}", file.string()));
+                                       fmt::format("Cannot read the cache file {}", filepath.string()));
                     return stl::nullopt;
                 }
             }
