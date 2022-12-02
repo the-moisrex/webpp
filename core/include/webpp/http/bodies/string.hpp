@@ -7,7 +7,7 @@
 #include "../../memory/object.hpp"
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
-#include "../../storage/embedded_file.hpp"
+#include "../../storage/file.hpp"
 #include "../../traits/traits.hpp"
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
@@ -17,13 +17,6 @@
 #include <fstream>
 
 namespace webpp::http {
-
-    struct file_options {
-        bool     cache          = true;
-        bool     retry          = true;
-        unsigned retry_count    = 2;
-        void*    global_storage = nullptr; // todo
-    };
 
 
     namespace details {
@@ -78,7 +71,7 @@ namespace webpp::http {
             }
 
             template <typename Arg>
-            constexpr auto& operator=(Arg arg) {
+            constexpr auto& operator=(Arg&& arg) {
                 content.operator=(stl::forward<Arg>(arg));
                 return *this;
             }
@@ -86,41 +79,15 @@ namespace webpp::http {
 
 
 
-            bool load(stl::filesystem::path const&         filepath,
-                      [[maybe_unused]] file_options const& options = {}) noexcept {
+            bool load(stl::filesystem::path const& filepath) noexcept {
+                auto result = object::make_general<string_type>(*this);
 
-                if (auto const efile = embedded_file::search(filepath)) {
-                    auto result = object::make_general<string_type>(*this);
-                    result      = efile->content();
-                    *this       = result;
-                    return true;
+                bool const res = file::get_to(filepath, result);
+                if (res) {
+                    // read the file successfully
+                    *this = stl::move(result);
                 }
-
-                // todo: cache
-
-                // TODO: performance tests
-                // todo: add unix specializations for performance and having fun reasons
-                // TODO: change the replace_string with replace_string_view if the file is cached
-                // checkout this implementation: https://stackoverflow.com/a/17925143/4987470
-
-                if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate);
-                    in.is_open()) {
-                    // details on this matter:
-                    // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
-                    // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
-                    // in.rdbuf()->pubsetbuf(buffer.get(), buffer_size); // speed boost, I think
-                    const auto size          = in.tellg();
-                    const auto reserved_size = static_cast<stl::size_t>(size);
-                    auto       result        = object::make_general<string_type>(*this);
-                    result.resize(reserved_size);
-                    in.seekg(0L);
-                    in.read(result.data(), size);
-                    // todo: cache the results
-                    *this = result;
-                    return true;
-                } else {
-                    return false;
-                }
+                return res;
             }
         };
 
@@ -187,43 +154,15 @@ namespace webpp::http {
 
 
 
-            response_type file(stl::filesystem::path const&         filepath,
-                               [[maybe_unused]] file_options const& options = {}) noexcept {
+            response_type file(stl::filesystem::path const& filepath) noexcept {
+                auto result = object::make_general<string_type>(*this);
 
-
-                if (auto const efile = embedded_file::search(filepath)) {
-                    auto result = object::make_general<string_type>(*this);
-                    result      = efile->content();
-                    return result;
-                }
-
-
-                // todo: cache
-
-                // TODO: performance tests
-                // todo: add unix specializations for performance and having fun reasons
-                // TODO: change the replace_string with replace_string_view if the file is cached
-
-                if (auto in = ifstream_type(filepath.c_str(), stl::ios::binary | stl::ios::ate);
-                    in.is_open()) {
-                    // details on this matter:
-                    // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
-                    // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
-                    // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
-                    //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
-                    auto result = object::make_general<string_type>(*this);
-                    in.seekg(0, in.end);
-                    const auto size = in.tellg();
-                    result.resize(static_cast<stl::size_t>(
-                      size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
-                    in.seekg(0L);
-                    in.read(result.data(), size);
-                    // todo: cache the results
+                bool const res = file::get_to(filepath, result);
+                if (res) {
+                    // read the file successfully
                     return response_type{body_type{result}};
-                    // return body_type{string_type{result.get(),
-                    //                              static_cast<stl::string_view::size_type>(size),
-                    //                              this->get_allocator()}};
                 } else {
+
                     this->logger.error("Response/File",
                                        fmt::format("Cannot load the specified file: {}", filepath.string()));
                     // todo: retry feature

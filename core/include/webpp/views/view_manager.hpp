@@ -7,7 +7,7 @@
 #include "../std/format.hpp"
 #include "../std/map.hpp"
 #include "../std/string.hpp"
-#include "../storage/embedded_file.hpp"
+#include "../storage/file.hpp"
 #include "../storage/lru_cache.hpp"
 #include "../storage/memory_gate.hpp"
 #include "../storage/null_gate.hpp"
@@ -221,28 +221,13 @@ namespace webpp::views {
         /**
          * Read the file content
          */
-        [[nodiscard]] string_type read_file(stl::filesystem::path const& file) const {
+        [[nodiscard]] string_type read_file(stl::filesystem::path const& filepath) const {
             auto result = object::make_general<string_type>(*this);
-            if (auto const efile = embedded_file::search(file)) {
-                result = efile->content();
-                return result;
-            }
 
-            if (auto in = ifstream_type(file.c_str(), stl::ios::binary | stl::ios::ate); in.is_open()) {
-                // details on this matter:
-                // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
-                // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
-                // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
-                //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
-                in.seekg(0, in.end);
-                const auto size = in.tellg();
-                // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
-                result.resize(static_cast<stl::size_t>(size));
-                in.seekg(0);
-                in.read(result.data(), size);
-            } else {
+            bool const res = file::get_to(filepath, result);
+            if (!res) {
                 this->logger.error("Response/File",
-                                   fmt::format("Cannot load the specified file: {}", file.string()));
+                                   fmt::format("Cannot load the specified file: {}", filepath.string()));
                 // return empty string
             }
             return result;

@@ -2,6 +2,7 @@
 #define WEBPP_STORAGE_FILE_HPP
 
 #include "../std/string.hpp"
+#include "./embedded_file.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -9,6 +10,17 @@
 
 namespace webpp {
 
+    struct file_options {
+        bool     cache          = true;
+        bool     retry          = true;
+        unsigned retry_count    = 2;
+        void*    global_storage = nullptr; // todo
+    };
+
+    /**
+     * Read and Write files easily. This class is not designed to replace the std::filesystem utilities.
+     * It's designed to make things easier.
+     */
     struct file {
         using char_type     = char;
         using ifstream_type = typename std::basic_ifstream<char_type, std::char_traits<char_type>>;
@@ -17,6 +29,10 @@ namespace webpp {
       public:
         // just read the file and put the result into "out"
         static bool read_to(std::filesystem::path const& filepath, auto& out) {
+            // TODO: performance tests
+            // todo: add unix specializations for performance and having fun reasons
+            // TODO: change the replace_string with replace_string_view if the file is cached
+            // checkout this implementation: https://stackoverflow.com/a/17925143/4987470
             if (auto in = ifstream_type(filepath.c_str(), std::ios::binary | std::ios::ate); in.is_open()) {
                 // details on this matter:
                 // https://stackoverflow.com/questions/11563963/writing-a-binary-file-in-c-very-fast/39097696#39097696
@@ -42,6 +58,32 @@ namespace webpp {
         static StringType read(std::filesystem::path const& filepath, StringArgs&&... args) {
             StringType result{stl::forward<StringArgs>(args)...};
             static_cast<void>(read_to(filepath, result));
+            return result;
+        }
+
+
+        /**
+         * Get the file, search the embedded files first before trying to read the file
+         * The method may even cache the file and listen for changes in the file.
+         */
+        static bool get_to(std::filesystem::path const& filepath, auto& out) {
+            if (auto const efile = embedded_file::search(filepath)) {
+                out = efile->content();
+                return true;
+            }
+
+            // todo: cache
+            return file::read_to(filepath, out);
+        }
+
+
+        /**
+         * Same as "get_to" but it creates the string type and returns that or an empty string if it failed.
+         */
+        template <istl::String StringType = std::string, typename... StringArgs>
+        static StringType get(std::filesystem::path const& filepath, StringArgs&&... args) {
+            StringType result{stl::forward<StringArgs>(args)...};
+            static_cast<void>(get_to(filepath, result));
             return result;
         }
     };
