@@ -16,8 +16,6 @@ namespace webpp::http {
 
     namespace details {
 
-        // todo: do this for every implementation
-
         template <Traits TraitsType, HTTPResponseBody BodyType>
         struct json_response_body_extension : BodyType {
           private:
@@ -37,10 +35,10 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                             super{et,
-                                   doc.template uglified<string_type>(
-                                     et.alloc_pack.template general_allocator<char_type>())};
-                         }
+                    super{et,
+                          doc.template uglified<string_type>(
+                            et.alloc_pack.template general_allocator<char_type>())};
+                }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{et,
                       doc.template uglified<string_type>(
@@ -49,9 +47,9 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                             super{doc.template uglified<string_type>(
-                               et.alloc_pack.template general_allocator<char_type>())};
-                         }
+                    super{doc.template uglified<string_type>(
+                      et.alloc_pack.template general_allocator<char_type>())};
+                }
             constexpr json_response_body_extension(ET&& et, DocT const& doc)
               : super{doc.template uglified<string_type>(
                   et.alloc_pack.template general_allocator<char_type>())} {}
@@ -65,14 +63,12 @@ namespace webpp::http {
         /**
          * This extension helps the user to create a response with the help of the context
          */
-
         template <Traits TraitsType, Context ContextType>
         struct json_context_extension : public ContextType {
             using context_type       = ContextType;
             using traits_type        = TraitsType;
             using json_response_type = typename context_type::response_type;
             using json_document_type = json::document<traits_type>;
-            // ::template apply_extensions_type<details::json_response_body_extension>;
 
             using context_type::context_type; // inherit the constructors
 
@@ -86,8 +82,7 @@ namespace webpp::http {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
                 using value_type             = traits::char_type<traits_type>;
-                if constexpr (!has_allocator &&
-                              requires {
+                if constexpr (!has_allocator && requires {
                                   json_response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<value_type>());
@@ -117,8 +112,8 @@ namespace webpp::http {
             // pass it to the body
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                             ResType{et, body_type{et, doc}};
-                         }
+                    ResType{et, body_type{et, doc}};
+                }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{et, body_type{et, doc}} {
                 this->add_headers();
@@ -128,8 +123,8 @@ namespace webpp::http {
 
             template <EnabledTraits ET, json::JSONDocument DocT>
                 requires requires(ET et, DocT doc) {
-                             ResType{body_type{et, doc}};
-                         }
+                    ResType{body_type{et, doc}};
+                }
             constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
               : ResType{body_type{et, doc}} {
                 this->add_headers();
@@ -138,6 +133,7 @@ namespace webpp::http {
           private:
             constexpr void add_headers() {
                 // todo: encoding support
+                // todo: don't insert into headers directly
                 this->headers.emplace_back("Content-Type", "application/json; charset=utf-8");
             }
         };

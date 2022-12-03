@@ -74,15 +74,87 @@ namespace webpp::http {
         obj.template as_view<default_dynamic_traits>();
     };
 
+    ////////////////////////////// Body //////////////////////////////
 
-    ////////////////////////////// Request //////////////////////////////
+
+    /**
+     * @brief Blob Based Body Communicator (BBBC);
+     *
+     * The blob based body communicator is the way that the framework internals talk to the developers.
+     * This means that the way the body is stored is by the means of storing a vector of bytes; thus the whole
+     * body is available in the blob object itself.
+     */
+    template <typename T>
+    concept BlobBasedBodyCommunicator = requires(T body) {
+        body.data();
+        body.size();
+        // todo: ctor
+        // todo: .str
+        // todo: read and write operations
+    };
+
+
+    /**
+     * @brief Text Based Body Communicator (TBBC);
+     *
+     * The text based body communicator is the way that the framework internals talk to the developers.
+     * This means that the way the body is stored is by the means of storing a "string"; thus the whole
+     * body is available in the string itself (unless a special kind of string is used).
+     *
+     * This is different from the SBBC (Stream Based Body Communicator) that does the same thing through
+     * streams.
+     */
+    template <typename T>
+    concept TextBasedBodyCommunicator = requires(T body) {
+        typename T::string_type;
+        requires requires(typename T::string_type str) {
+            T{str};
+            body.str();
+            // todo: ctor
+            // todo: .str
+            // todo: read and write operations
+            body.append_to(str);
+        };
+    };
+
+    /**
+     * @brief Stream Based Body Communicator (SBBC);
+     *
+     * The stream based body communicator is the way that the framework internals talk to the developers.
+     * This means that the way the body is stored is by the means of storing a "stream"; thus the whole
+     * body is not available at one point of time unless buffers are used.
+     *
+     * This is different from the TBBC (Text Based Body Communicator) that does the same thing through
+     * strings.
+     */
+    template <typename T>
+    concept StreamBasedBodyCommunicator = requires(T body) {
+        typename T::pointer_type;
+        typename T::size_type;
+        requires requires(typename T::pointer_type ptr_out, typename T::size_type & size) {
+            // todo: ctor
+            // todo: std::istream std::ostream
+            // todo: read and write operations
+            body.append_to(ptr_out, size);
+        };
+    };
 
 
     template <typename T>
-    concept HTTPRequestBody = requires(stl::remove_cvref_t<T> body) {
-        { body.str() } -> istl::StringViewifiable;
-    }
-    || stl::same_as<T, istl::nothing_type>;
+    concept HTTPRequestBody = TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type>;
+
+
+    template <typename T>
+    concept HTTPResponseBody = TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      BlobBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+
+
+
+
+    ////////////////////////////// Request //////////////////////////////
 
 
     /**
@@ -114,11 +186,6 @@ namespace webpp::http {
 
     ////////////////////////////// Response //////////////////////////////
 
-    template <typename T>
-    concept HTTPResponseBody = requires(T res) {
-        { res.str() } -> istl::StringViewifiable;
-    };
-
     namespace details {
 
         template <typename ResType>
@@ -147,17 +214,6 @@ namespace webpp::http {
     concept AcceptableAsHTTPResponse =
       details::good_response_types<T> || istl::OptionalOf<details::is_optional_of_response, T>;
 
-    template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest = Application<App> && HTTPRequest<ReqType> && requires(App app) {
-        requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
-            { app(req_ref) } -> HTTPResponse;
-        } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
-            { app(req_cref) } -> HTTPResponse;
-        } || requires(ReqType req) {
-            { app(req) } -> HTTPResponse;
-        };
-    };
-
 
     template <typename T>
     concept ConvertibleToResponse =
@@ -175,6 +231,17 @@ namespace webpp::http {
 
 
     ////////////////////////////// Protocols //////////////////////////////
+
+    template <typename App, typename ReqType>
+    concept ApplicationAcceptingRequest = Application<App> && HTTPRequest<ReqType> && requires(App app) {
+        requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
+            { app(req_ref) } -> HTTPResponse;
+        } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
+            { app(req_cref) } -> HTTPResponse;
+        } || requires(ReqType req) {
+            { app(req) } -> HTTPResponse;
+        };
+    };
 
 
     /**

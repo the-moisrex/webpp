@@ -9,13 +9,13 @@
 using namespace webpp;
 
 TEST(IString, Creation) {
-    std_istring test = "test";
+    std_istring const test = "test";
     EXPECT_EQ(test, "test");
 
-    std_istring_view test_view = "test view";
+    std_istring_view const test_view = "test view";
     EXPECT_EQ(test_view, "test view");
 
-    istring hello = "hello";
+    istring const hello = "hello";
     EXPECT_EQ(hello, "hello");
 }
 

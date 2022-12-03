@@ -58,6 +58,9 @@ namespace webpp::http {
                 return content;
             }
 
+            // todo: add "replace_format"
+            // todo: add istring member functions to it
+
             [[nodiscard]] bool operator==(string_view_type str) const noexcept {
                 return str == content;
             }
@@ -76,9 +79,7 @@ namespace webpp::http {
                 return *this;
             }
 
-
-
-
+            // load a file as a string for the body
             bool load(stl::filesystem::path const& filepath) noexcept {
                 auto result = object::make_general<string_type>(*this);
 
@@ -121,8 +122,6 @@ namespace webpp::http {
             using body_type     = typename response_type::body_type;
             using char_type     = traits::char_type<traits_type>;
             using string_type   = typename body_type::string_type;
-            using ifstream_type = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
-            // ::template apply_extensions_type<details::string_response_body_extension>;
 
             using context_type::context_type; // inherit the constructors
 
@@ -152,9 +151,8 @@ namespace webpp::http {
                 return str;
             }
 
-
-
-            response_type file(stl::filesystem::path const& filepath) noexcept {
+            // load a file as a string body and return a response
+            [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
                 auto result = object::make_general<string_type>(*this);
 
                 bool const res = file::get_to(filepath, result);
@@ -182,16 +180,15 @@ namespace webpp::http {
 
     /**
      * String Response Extension Pack.
-     *
-     * This includes these extensions:
-     *   - response body    : 1 extension (adds .str())
-     *   - response         : 1 extension (adds string_view support to response)
-     *   - context          : 1 extension (adds .string(...))
      */
     struct string_body {
+
+        // implement TextBasedBodyCommunication concept
         using request_body_extensions  = extension_pack<as_extension<details::string_body_extension>>;
         using response_body_extensions = extension_pack<as_extension<details::string_body_extension>>;
-        using context_extensions       = extension_pack<as_extension<details::string_context_extension>>;
+
+        // Add easy to use member functions to use text as a body and generate text-based responses
+        using context_extensions = extension_pack<as_extension<details::string_context_extension>>;
     };
 
 

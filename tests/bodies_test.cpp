@@ -1,8 +1,6 @@
 // Created by moisrex on 2/4/20.
 
 #include "../core/include/webpp/http/bodies/string.hpp"
-#include "../core/include/webpp/http/response.hpp"
-#include "../core/include/webpp/http/response_body.hpp"
 #include "common_pch.hpp"
 
 
@@ -12,9 +10,10 @@ using namespace webpp::details;
 using namespace webpp::http::details;
 
 
+using text_body_type = simple_response_body<default_traits, as_extension<string_body_extension>>;
+
 TEST(Body, Text) {
-    using body_t = simple_response_body<std_traits, as_extension<string_body_extension>>;
-    body_t b     = "Testing";
+    text_body_type b = "Testing";
     EXPECT_EQ(b.str(), "Testing");
     EXPECT_TRUE(b == "Testing");
 
@@ -23,18 +22,18 @@ TEST(Body, Text) {
 
     EXPECT_EQ(b, "hello");
 
-    std::string_view sth = "nice";
-    b                    = sth;
+    std::string_view const sth = "nice";
+    b                          = sth;
     EXPECT_EQ(b, "nice");
 
     b = std::string("cool");
     EXPECT_EQ(b, "cool");
 
-    body_t bt;
+    text_body_type bt;
     {
-        std::string      _str = "testing";
-        std::string_view test = _str;
-        bt                    = test;
+        std::string            _str = "testing";
+        std::string_view const test = _str;
+        bt                          = test;
         EXPECT_EQ(bt.str(), test);
         _str = "";
     }
@@ -43,60 +42,25 @@ TEST(Body, Text) {
 }
 
 TEST(Body, File) {
-    using body_t               = simple_response_body<std_traits, string_body>;
     std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};
     handle << "Hello World";
     handle.close();
 
-    std::ifstream     in{file};
-    std::stringstream buf;
+    std::ifstream const in{file};
+    std::stringstream   buf;
     buf << in.rdbuf();
-    std::string file_out = buf.str();
+    std::string const file_out = buf.str();
 
     ASSERT_EQ(file_out, "Hello World");
 
     // so the file is okay
 
-    body_t the_body;
+    text_body_type the_body;
     the_body = "data";
     EXPECT_EQ(the_body.str(), "data");
     ASSERT_TRUE(the_body.load(file));
     EXPECT_EQ(the_body.str(), "Hello World");
     std::filesystem::remove(file);
 }
-
-// TEST(Response, Type) {
-//    constexpr auto return_callback = [] {
-//        return res_t("Hello");
-//    };
-//    using ret_type       = ::std::invoke_result_t<decltype(return_callback)>;
-//    constexpr bool one   = ::std::is_same_v<ret_type, res_t>;
-//    constexpr bool two   = ::std::is_convertible_v<ret_type, res_t>;
-//    constexpr bool three = ::std::is_convertible_v<res_t, res_t>;
-//    constexpr bool four  = ::std::is_convertible_v<std::string, res_t>;
-//    //    constexpr bool five = std::is_convertible_v<std::string_view,
-//    //    response>;
-//    EXPECT_TRUE(one);
-//    EXPECT_TRUE(two);
-//    EXPECT_TRUE(three);
-//    EXPECT_TRUE(four);
-//    //    EXPECT_TRUE(five);
-//}
-//
-// TEST(Response, Init) {
-//    auto res  = res_t();
-//    auto res2 = res_t();
-//
-//    EXPECT_EQ(res, res2);
-//
-//    EXPECT_EQ(std::string(res.body.str("")), "");
-//    res2 << "Code";
-//    EXPECT_EQ(std::string(res2.body.str()), "Code");
-//    res = res2;
-//    EXPECT_EQ(std::string(res.body.str()), "Code");
-//
-//    EXPECT_EQ(res, res2);
-//}
-//
