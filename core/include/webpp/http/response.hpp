@@ -13,9 +13,6 @@ namespace webpp::http {
 
     struct response_descriptor;
 
-    template <typename T, typename... E>
-    concept one_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
-
     /**
      * This class owns its data.
      */
@@ -35,7 +32,7 @@ namespace webpp::http {
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
-          requires(!one_of<Arg1, headers_type, http::status_code_type, body_type> &&
+          requires(!istl::one_of<Arg1, headers_type, http::status_code_type, body_type> &&
                    stl::is_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
