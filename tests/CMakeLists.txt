@@ -3,6 +3,12 @@ enable_testing()
 include(../cmake/coverage.cmake)
 include(../cmake/common.cmake)
 
+add_library(test-commons)
+set_target_properties(test-commons PROPERTIES EXCLUDE_FROM_ALL TRUE)
+target_sources(test-commons PUBLIC common_pch.hpp)
+target_precompile_headers(test-commons PUBLIC common_pch.hpp)
+setup_library(test-commons)
+
 function(setup_test name)
     if (TARGET gtest AND TARGET gtest_main)
             target_link_libraries(${name}
@@ -15,13 +21,13 @@ function(setup_test name)
                     PRIVATE ${LIB_NAME}
                     PRIVATE GTest::GTest
                     PRIVATE GTest::Main
+                    PRIVATE test-commons
                     )
     endif ()
     add_test(
         NAME ${name}
         COMMAND $<TARGET_FILE:${name}>)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-    target_precompile_headers(${name} PUBLIC common_pch.hpp)
     setup_executable(${name})
     target_code_coverage("${name}")
 
