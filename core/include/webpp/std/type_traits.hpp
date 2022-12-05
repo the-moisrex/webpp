@@ -1071,9 +1071,6 @@ namespace webpp::istl {
     static constexpr bool is_complete_v = is_complete<T>::value;
 
 
-    template <typename T, typename... E>
-    concept one_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
-
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

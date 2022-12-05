@@ -201,6 +201,11 @@ namespace webpp::istl {
     concept one_of = (sizeof...(T) > 1) &&
                      (istl::last_type<T...>::template rotate<details::is_one_of>::value);
 
+
+    // The simpler version of the above code
+    template <typename T, typename... E>
+    concept part_of = (stl::same_as<stl::remove_cvref_t<T>, E> || ...);
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H

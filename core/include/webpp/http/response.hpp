@@ -32,7 +32,7 @@ namespace webpp::http {
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
-          requires(!istl::one_of<Arg1, headers_type, http::status_code_type, body_type> &&
+          requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
                    stl::is_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
