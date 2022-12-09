@@ -131,10 +131,12 @@ namespace webpp::http::beast_proto {
         void make_beast_response() noexcept {
             beast_request_type& breq = parser->get();
 
-            // setting the version
+            // putting the beast's request into webpp's request
             req->set_beast_request(breq);
 
             HTTPResponse auto res = server.call_app(*req);
+
+            // putting the user's response into beast's response
             bres.emplace();
             res.calculate_default_headers();
             bres->version(breq.version());

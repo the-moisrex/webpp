@@ -31,7 +31,8 @@ namespace webpp::http {
             using char_type        = traits::char_type<traits_type>;
             using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
-          private: // the file extension will use the "content"'s allocator directly
+          private:
+            // the file extension will use the "content"'s allocator directly
             using alloc_type    = allocator_type const&;
             string_type content = "";
 
@@ -60,6 +61,7 @@ namespace webpp::http {
 
             // todo: add "replace_format"
             // todo: add istring member functions to it
+            // todo: operator >> and <<
 
             [[nodiscard]] bool operator==(string_view_type str) const noexcept {
                 return str == content;
@@ -113,7 +115,6 @@ namespace webpp::http {
          *
          * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
          */
-
         template <Traits TraitsType, Context ContextType>
         struct string_context_extension : public ContextType {
             using context_type  = ContextType;
