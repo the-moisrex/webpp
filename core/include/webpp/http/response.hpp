@@ -8,6 +8,7 @@
 #include "http_concepts.hpp"
 #include "response_body.hpp"
 #include "response_headers.hpp"
+#include "status_code.hpp"
 
 namespace webpp::http {
 
@@ -52,6 +53,12 @@ namespace webpp::http {
 
         constexpr basic_response& operator=(basic_response const&)         = default;
         constexpr basic_response& operator=(basic_response&& res) noexcept = default;
+
+        // set the status code for the headers
+        constexpr basic_response& operator=(http::status_code code) noexcept {
+            headers = code;
+            return *this;
+        }
 
         [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
             return headers == res.headers && body == res.body;

@@ -95,7 +95,7 @@ namespace webpp::http {
         cgi_request(cgi_request&&) noexcept            = default;
         cgi_request& operator=(cgi_request const&)     = default;
         cgi_request& operator=(cgi_request&&) noexcept = default;
-        ~cgi_request() final = default;
+        ~cgi_request() final                           = default;
 
         /**
          * Get the environment value safely

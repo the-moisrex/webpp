@@ -7,6 +7,7 @@
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
 #include "header_fields.hpp"
+#include "status_code.hpp"
 
 namespace webpp::http {
 
@@ -42,7 +43,13 @@ namespace webpp::http {
           : super{stl::forward<Args>(args)...},
             elist_type{} {}
 
-        http::status_code_type status_code = 200u;
+        http::status_code status_code = http::status_code::ok;
+
+        // set the response http status code
+        constexpr response_headers& operator=(http::status_code code) noexcept {
+            status_code = code;
+            return *this;
+        }
 
 
         auto str() const noexcept {
