@@ -82,10 +82,12 @@ namespace webpp::http {
 
             // todo: use headers facilities and if there aren't any, make them
             for (const auto& header : headers) {
-                if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-type"))
+                if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-type")) {
                     has_content_type = true;
-                else if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-length"))
+                } else if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name,
+                                                                                 "content-length")) {
                     has_content_length = true;
+                }
             }
 
             // todo: we can optimize this, pre-calculate the default header fields and copy when needed

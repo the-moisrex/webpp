@@ -43,7 +43,7 @@ namespace webpp::http {
           : super{stl::forward<Args>(args)...},
             elist_type{} {}
 
-        http::status_code status_code = http::status_code::ok;
+        http::status_code_type status_code = static_cast<http::status_code_type>(http::status_code::ok);
 
         // set the response http status code
         constexpr response_headers& operator=(http::status_code code) noexcept {
