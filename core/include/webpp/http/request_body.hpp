@@ -10,23 +10,7 @@
 namespace webpp::http {
 
     /**
-     * Request body:
-     *   This class will not load, cache, or parse the body until the user needs it.
-     *   This means that we need access to the Interface so we can use it to read
-     *   the data of the body, then we parse it to the thing that the user needs.
-     *
-     *   - Parsing formats:
-     *     - [ ] JSON that returns:
-     *       - [ ] JSONObject or some sort of custom class
-     *       - [ ] Array
-     *       - [ ] std::vector
-     *       - [ ] std::multimap
-     *     - [ ] blob
-     *     - [ ] GraphQL Object
-     *     - [ ] Form inputs
-     *       - [ ] format 1 (I don't remember the type now)
-     *       - [ ] format 2 TODO
-     *
+     * Request body
      */
     template <typename TraitsType, typename EList>
     struct request_body : public EList {
