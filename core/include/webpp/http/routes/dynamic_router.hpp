@@ -96,6 +96,21 @@ namespace webpp::http {
         stl::map<http::status_code, route_type, stl::less<http::status_code>, map_allocator> status_templates;
         bool is_synced = false;
 
+
+
+        // this method handles the response that we got from the user
+        template <typename T>
+        [[nodiscard]] constexpr auto handle_response(T&& res) const noexcept {
+            if constexpr (stl::same_as<T, bool>) {
+                // True:   go to next route
+                // False:  don't go to next route, checkout the "fallback table"
+            } else if constexpr (stl::same_as<T, http::status_code>) {
+                // Check the "fallback table"
+            } else {
+                // 404 from "fallback table"
+            }
+        }
+
       public:
         // These are the callable types
         objects_type objects;
