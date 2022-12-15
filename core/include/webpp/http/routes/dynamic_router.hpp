@@ -18,6 +18,32 @@
 
 namespace webpp::http {
 
+    /**
+     * Routing Tables:
+     *   - Pre-Routing
+     *   - Post-Routing
+     *   - Mangle (Middleware)
+     *   - Fallback
+     */
+    template <typename RouteType, Traits TraitsType>
+    struct routing_table : istl::vector<RouteType, TraitsType> {
+        using traits_type = TraitsType;
+        using vector_type = istl::vector<RouteType, TraitsType>;
+        using route_type  = RouteType;
+    };
+
+    template <Traits TraitsType>
+    struct prerouting_table
+      : routing_table<istl::function<void(), traits::general_allocator<TraitsType, stl::byte>>, TraitsType> {
+      private:
+        using super =
+          routing_table<istl::function<void(), traits::general_allocator<TraitsType, stl::byte>>, TraitsType>;
+
+      public:
+        using traits_type = typename super::triats_type;
+        using route_type  = typename super::route_type;
+    };
+
 
     template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router;
