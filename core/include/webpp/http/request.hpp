@@ -9,22 +9,20 @@
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
 
-/**
- * Only the protocol should be instantiating this class. There should be no
- * need for anybody else to do it.
- *
- * The user has access to this class. This class should be accessed as a const
- * variable since the user should not be able to make any changes here. Every
- * action that the user has to make should be in the "response" class or other
- * relative classes that finally end up in that class. This class is only for
- * giving information that the user or other modules need.
- *
- */
-
 namespace webpp::http {
 
-
-    template <typename REL, typename ServerType>
+    /**
+     * Only the protocol should be instantiating this class. There should be no
+     * need for anybody else to do it.
+     *
+     * The user has access to this class. This class should be accessed as a const
+     * variable since the user should not be able to make any changes here. Every
+     * action that the user has to make should be in the "response" class or other
+     * relative classes that finally end up in that class. This class is only for
+     * giving information that the user or other modules need.
+     *
+     */
+    template <typename REL, HTTPCommunicator ServerType>
     struct common_http_request : public enable_traits_with<typename ServerType::traits_type, REL> {
         using server_type           = ServerType;
         using server_ref            = stl::add_lvalue_reference_t<server_type>;
@@ -38,7 +36,7 @@ namespace webpp::http {
         using request_extensions    = REL;
         using fields_provider       = header_fields_provider<traits_type, root_extensions>;
         using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
-        using body_type             = simple_request_body<traits_type, root_extensions>;
+        using body_type             = simple_request_body<traits_type, server_type>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");
@@ -104,7 +102,7 @@ namespace webpp::http {
     };
 
 
-    template <typename ServerType, template <typename...> typename MidLevelRequestType>
+    template <HTTPCommunicator ServerType, template <typename...> typename MidLevelRequestType>
     using simple_request = typename ServerType::root_extensions::template extensie_type<
       typename ServerType::traits_type,
       request_descriptor<MidLevelRequestType, ServerType>>;

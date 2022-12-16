@@ -76,6 +76,17 @@ namespace webpp::http {
 
     ////////////////////////////// Body //////////////////////////////
 
+    template <typename T>
+    concept HTTPBodyCommunicator = requires(T communicator, void* data, stl::size_t size) {
+        { communicator.read(data, size) } -> stl::same_as<stl::size_t>;
+        { communicator.write(data, size) } -> stl::same_as<stl::size_t>;
+    };
+
+    template <typename T>
+    concept HTTPRequestBodyCommunicator = HTTPBodyCommunicator<T>;
+
+    template <typename T>
+    concept HTTPResponseBodyCommunicator = HTTPBodyCommunicator<T>;
 
     /**
      * @brief Blob Based Body Communicator (BBBC);
@@ -141,15 +152,12 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept HTTPRequestBody = TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type>;
+    concept HTTPRequestBody =
+      HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type>;
 
 
     template <typename T>
-    concept HTTPResponseBody = TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      BlobBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>>;
 
 
 
@@ -245,12 +253,26 @@ namespace webpp::http {
 
 
     /**
+     * This is a minimal "Protocol concept" where it's used internally in places like "Requests"
+     * where it's already specified in HTTPProtocol's concept and thus make a circular dependency of concepts.
+     * In order to avoid that problem, it's a good idea to use this concept for internal use and
+     * use HTTPProtocol for the users and other places where the Protocol's type is fully known.
+     */
+    template <typename T>
+    concept HTTPCommunicator = requires(T proto) {
+        requires EnabledTraits<T>;
+        requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
+        requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
+        typename T::root_extensions;
+    };
+
+    /**
      * Protocol is a "Protocol Type" based on the information that I said in the "server/server_concepts"
      * file.
      */
     template <typename T>
     concept HTTPProtocol = requires(T proto) {
-        requires EnabledTraits<T>;
+        requires HTTPCommunicator<T>;
         requires HTTPRequest<typename T::request_type>;
         requires Application<typename T::application_type>;
         requires ApplicationWrapper<typename T::app_wrapper_type>;
@@ -260,10 +282,6 @@ namespace webpp::http {
         { proto.is_ssl_available() } -> stl::same_as<bool>;
         { proto() } -> stl::same_as<int>;
     };
-
-    // todo
-    template <typename T>
-    concept HTTPProtocolExtensionList = ExtensionList<T>;
 
 
     struct http_protocol_descriptor {
