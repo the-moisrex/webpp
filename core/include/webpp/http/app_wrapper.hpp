@@ -117,14 +117,20 @@ namespace webpp::http {
         /**
          * The default error message provider; if the application doesn't provide one, we use this as the
          * default message provider function to generate error messages.
-         *
-         * todo: replace status code with a more sophisticated error type that can hold more information
          */
         [[nodiscard]] HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
                               { application_type::error(req, err) } -> HTTPResponse;
                           }) {
                 return application_type::error(req, err);
+            } else if constexpr (requires {
+                                     { application_type::error(err) } -> HTTPResponse;
+                                 }) {
+                return application_type::error(err);
+            } else if constexpr (requires {
+                                     { application_type::error(err, req) } -> HTTPResponse;
+                                 }) {
+                return application_type::error(err, req);
             } else {
                 return fmt::format("<!doctype html>\n"
                                    "<html>\n"
@@ -137,6 +143,59 @@ namespace webpp::http {
                                    "</html>\n",
                                    static_cast<status_code_type>(err),
                                    http::status_code_reason_phrase(err));
+            }
+        }
+
+
+        template <HTTPRequest ReqType>
+        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& request) noexcept {
+            if constexpr (stl::is_nothrow_invocable_v<application_type, ReqType>) {
+                return fix_response(request, application_type::operator()(request));
+            } else if constexpr (stl::is_nothrow_invocable_v<application_type>) {
+                return fix_response(request, application_type::operator()());
+            } else if constexpr (stl::is_invocable_v<application_type, ReqType> ||
+                                 stl::is_invocable_v<application_type>) {
+                try {
+                    if constexpr (stl::is_invocable_v<application_type, ReqType>) {
+                        return fix_response(request, application_type::operator()(request));
+                    } else if constexpr (stl::is_invocable_v<application_type>) {
+                        return fix_response(request, application_type::operator()());
+                    } else {
+                        static_assert_false(application_type,
+                                            "We don't know how to call your application, "
+                                            "it doesn't have app::operator()(request) or app::operator()().");
+                    }
+                } catch (stl::exception const& ex) {
+                    // todo: log
+                    return error(request, http::status_code::internal_server_error);
+                } catch (...) {
+                    // todo: log
+                    return error(request, http::status_code::internal_server_error);
+                }
+            } else {
+                static_assert_false(application_type,
+                                    "We don't know how to call your application, "
+                                    "it doesn't have app::operator()(request) or app::operator()().");
+            }
+        }
+
+      private:
+        /**
+         * Final conversion practices of the response body happens here.
+         */
+        template <typename ResType, typename ReqType>
+        [[nodiscard]] constexpr HTTPResponse auto fix_response(ReqType&& request,
+                                                               ResType&& response) noexcept {
+            using res_type = stl::remove_cvref_t<ResType>;
+            // todo: add more fixes
+            if constexpr (stl::same_as<res_type, http::status_code>) {
+                return error(request, response);
+            } else if constexpr (HTTPResponse<res_type>) {
+                return response;
+            } else {
+                static_assert_false(res_type,
+                                    "The return type of your application is not a valid response "
+                                    "type that our Protocols can read and send to the users.");
             }
         }
     };
