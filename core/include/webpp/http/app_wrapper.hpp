@@ -43,6 +43,8 @@ namespace webpp::http {
         using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
         using allocator_pack_type     = traits::allocator_pack_type<traits_type>;
 
+        struct enable_throws{};
+
         template <typename AllocType>
         static constexpr bool app_requires_logger_and_allocator =
           ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>;
@@ -117,6 +119,9 @@ namespace webpp::http {
         /**
          * The default error message provider; if the application doesn't provide one, we use this as the
          * default message provider function to generate error messages.
+         *
+         * todo: handle exceptions that get thrown from here as well
+         * todo: add more ways of printing the errors and logging them
          */
         [[nodiscard]] HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
@@ -156,15 +161,7 @@ namespace webpp::http {
             } else if constexpr (stl::is_invocable_v<application_type, ReqType> ||
                                  stl::is_invocable_v<application_type>) {
                 try {
-                    if constexpr (stl::is_invocable_v<application_type, ReqType>) {
-                        return fix_response(request, application_type::operator()(request));
-                    } else if constexpr (stl::is_invocable_v<application_type>) {
-                        return fix_response(request, application_type::operator()());
-                    } else {
-                        static_assert_false(application_type,
-                                            "We don't know how to call your application, "
-                                            "it doesn't have app::operator()(request) or app::operator()().");
-                    }
+                    return operator()(stl::forward<ReqType>(request), enable_throws{});
                 } catch (stl::exception const& ex) {
                     // todo: log
                     return error(request, http::status_code::internal_server_error);
@@ -172,6 +169,25 @@ namespace webpp::http {
                     // todo: log
                     return error(request, http::status_code::internal_server_error);
                 }
+            } else {
+                static_assert_false(application_type,
+                                    "We don't know how to call your application, "
+                                    "it doesn't have app::operator()(request) or app::operator()().");
+            }
+        }
+
+        // enable_throws will enable throwing the exceptions and won't catch them here.
+        // The usage of this is when you want to catch the exceptions yourself, maybe you already have a
+        // mechanism to catch per-request exceptions, and you want to use that one instead of response-only
+        // exception catching.
+        // For example, reading response headers and bodies may throw exceptions, and you want to catch both
+        // of them in one go instead of two passes.
+        template <HTTPRequest ReqType>
+        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& request, enable_throws) {
+            if constexpr (stl::is_invocable_v<application_type, ReqType>) {
+                return fix_response(request, application_type::operator()(request));
+            } else if constexpr (stl::is_invocable_v<application_type>) {
+                return fix_response(request, application_type::operator()());
             } else {
                 static_assert_false(application_type,
                                     "We don't know how to call your application, "
