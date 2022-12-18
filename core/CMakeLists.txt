@@ -171,6 +171,13 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/headers/header_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/headers/accept_encoding.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/content_encoding.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/content_type.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/header_extensions.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/host.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/keep_alive.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/accept.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/headers/allow.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/cookie.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/cookies/request_cookie.hpp
