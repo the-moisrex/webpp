@@ -358,7 +358,35 @@ namespace webpp::http {
         }
     }
 
+    // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
+    [[nodiscard]] static constexpr bool is_verb_safe(stl::string_view method) noexcept {
+        return method == "GET" || method == "HEAD" || method == "OPTIONS" || method == "TRACE";
+    }
 
+    // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
+    [[nodiscard]] static constexpr bool is_verb_safe(verb method) noexcept {
+        switch (method) {
+            case verb::get:
+            case verb::head:
+            case verb::options:
+            case verb::trace: return true;
+            default: return false;
+        }
+    }
+
+    // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
+    [[nodiscard]] static constexpr bool is_verb_idempotent(stl::string_view method) noexcept {
+        return is_verb_safe(method) || method == "PUT" || method == "DELETE";
+    }
+
+    // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
+    [[nodiscard]] static constexpr bool is_verb_idempotent(verb method) noexcept {
+        switch (method) {
+            case verb::put:
+            case verb::del: return true;
+            default: return is_verb_safe(method);
+        }
+    }
 
 } // namespace webpp::http
 
