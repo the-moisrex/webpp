@@ -4,6 +4,7 @@
 #define WEBPP_BEAST_HPP
 
 #include "../../std/string_view.hpp"
+#include "beast_proto/beast_body_communicator.hpp"
 #include "beast_proto/beast_server.hpp"
 #include "common/common_http_protocol.hpp"
 
@@ -38,16 +39,18 @@ namespace webpp::http {
         using thread_worker_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
                                                                 thread_worker_type>;
-        using thread_pool_type           = asio::thread_pool;
-        using request_type               = simple_request<protocol_type, beast_proto::beast_request>;
-        using request_body_communicator  = beast_request_body_communicator;
-        using response_body_communicator = beast_response_body_communicator;
+        using thread_pool_type          = asio::thread_pool;
+        using request_type              = simple_request<protocol_type, beast_proto::beast_request>;
+        using request_body_communicator = beast_proto::beast_request_body_communicator<protocol_type>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
 
 
-        static constexpr auto log_cat = "Beast";
+        static constexpr auto        log_cat                   = "Beast";
+        static constexpr port_type   default_http_port         = 80u;
+        static constexpr port_type   default_https_port        = 443u;
+        static constexpr stl::size_t default_http_worker_count = 20;
 
       private:
         using super = common_http_protocol<TraitsType, App, RootExtensions>;
@@ -56,10 +59,10 @@ namespace webpp::http {
         friend thread_worker_type;
 
         address_type       bind_address;
-        port_type          bind_port = 80;
+        port_type          bind_port = default_http_port;
         asio::io_context   io{static_cast<int>(stl::thread::hardware_concurrency())};
         acceptor_type      acceptor;
-        stl::size_t        http_worker_count{20};
+        stl::size_t        http_worker_count{default_http_worker_count};
         stl::size_t        thread_worker_count{stl::thread::hardware_concurrency()};
         thread_pool_type   pool{stl::thread::hardware_concurrency() - 1}; // there's a main thread too
         thread_worker_type thread_workers;
@@ -147,8 +150,8 @@ namespace webpp::http {
                 }
 
                 // port mapping
-                if (bind_port == 80) {
-                    bind_port = 443;
+                if (bind_port == default_http_port) {
+                    bind_port = default_https_port;
                 }
 
             } else {
@@ -164,8 +167,8 @@ namespace webpp::http {
                 }
 
                 // port mapping
-                if (bind_port == 443) {
-                    bind_port = 80;
+                if (bind_port == default_https_port) {
+                    bind_port = default_http_port;
                 }
             }
             return *this;

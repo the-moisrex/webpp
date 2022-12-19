@@ -133,6 +133,7 @@ namespace webpp::http::beast_proto {
 
             // putting the beast's request into webpp's request
             req->set_beast_request(breq);
+            req->body.set_beast_parsert(*parser);
 
             HTTPResponse auto res = server.call_app(*req);
 
@@ -246,7 +247,6 @@ namespace webpp::http::beast_proto {
      */
     template <typename ServerT>
     struct thread_worker {
-
         using server_type                           = ServerT;
         using etraits                               = typename server_type::etraits;
         using allocator_pack_type                   = typename etraits::allocator_pack_type;

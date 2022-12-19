@@ -77,16 +77,18 @@ namespace webpp::http {
     ////////////////////////////// Body //////////////////////////////
 
     template <typename T>
-    concept HTTPBodyCommunicator = requires(T communicator, void* data, stl::size_t size) {
+    concept HTTPRequestBodyCommunicator = requires(T communicator, char* data, stl::size_t size) {
+        // request body only need read
         { communicator.read(data, size) } -> stl::same_as<stl::size_t>;
-        { communicator.write(data, size) } -> stl::same_as<stl::size_t>;
+
+        // In order to write to it, the Protocol has to invert its own way;
+        // It's Protocol-Specific anyway so the protocol is providing this type so it has control over it.
     };
 
     template <typename T>
-    concept HTTPRequestBodyCommunicator = HTTPBodyCommunicator<T>;
-
-    template <typename T>
-    concept HTTPResponseBodyCommunicator = HTTPBodyCommunicator<T>;
+    concept HTTPResponseBodyCommunicator = requires(T communicator, char* data, stl::size_t size) {
+        { communicator.read(data, size) } -> stl::same_as<stl::size_t>;
+    };
 
     /**
      * @brief Blob Based Body Communicator (BBBC);
@@ -200,9 +202,8 @@ namespace webpp::http {
         concept HTTPResponse = requires(ResType res) {
             requires HTTPResponseBody<typename ResType::body_type>;
             requires HTTPHeaders<typename ResType::headers_type>;
-            {res.body};
-            {res.headers};
-            res.calculate_default_headers();
+            res.body;
+            res.headers;
         };
 
         template <typename T>
