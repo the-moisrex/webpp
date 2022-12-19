@@ -3,6 +3,10 @@
 #ifndef WEBPP_STATUS_CODE_HPP
 #define WEBPP_STATUS_CODE_HPP
 
+// There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
+// them, so we're disabling this warning for this file.
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 #include "../std/std.hpp"
 
 #include <cstdint>
@@ -85,23 +89,21 @@ namespace webpp::http {
 
     enum struct status_code : status_code_type {
         /** An unknown status-code.
-
-            This value indicates that the value for the status code
-            is not in the list of commonly recognized status codes.
-            Callers interested in the exactly value should use the
-            interface which provides the raw integer.
-        */
+         *
+         *  This value indicates that the value for the status code is not in the list of
+         *  commonly recognized status codes. Callers interested in the exactly value should
+         *  use the interface which provides the raw integer.
+         */
         unknown = 0,
 
         continue_ = 100,
 
         /** Switching Protocols
-
-            This status indicates that a request to switch to a new
-            protocol was accepted and applied by the server. A successful
-            response to a WebSocket Upgrade HTTP request will have this
-            code.
-        */
+         *
+         *  This status indicates that a request to switch to a new protocol was accepted and applied
+         *  by the server.
+         *  A successful response to a WebSocket Upgrade HTTP request will have this code.
+         */
         switching_protocols = 101,
 
         processing = 102,
@@ -310,5 +312,7 @@ namespace webpp::http {
 
 
 } // namespace webpp::http
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
 #endif // WEBPP_STATUS_CODE_HPP
