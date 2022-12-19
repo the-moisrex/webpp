@@ -19,6 +19,7 @@ namespace webpp::http {
      *   In the header:  "Subject: =?iso-8859-1?Q?=A1Hola,_se=F1or!?="
      *   Interpreted as: "Subject: ¡Hola, señor!"
      *
+     * Or rfc5987.
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
@@ -47,12 +48,13 @@ namespace webpp::http {
 
         // set the response http status code
         constexpr response_headers& operator=(http::status_code code) noexcept {
-            status_code = code;
+            status_code = static_cast<status_code_type>(code);
             return *this;
         }
 
 
-        auto str() const noexcept {
+        template <typename StringType>
+        constexpr void string_to(StringType& out) const {
             // todo check performance
             // TODO: add support for other HTTP versions
             // res << "HTTP/1.1" << " " << status_code() << " " <<
@@ -61,15 +63,20 @@ namespace webpp::http {
             for (auto const& field : *this) {
                 size += field.name.size() + field.value.size() + 4;
             }
-            string_type res{super::get_allocator()};
-            res.reserve(size);
+            out.outerve(size);
             for (auto const& field : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
-                fmt::format_to(stl::back_insert_iterator<string_type>(res),
+                fmt::format_to(stl::back_insert_iterator<string_type>(out),
                                "{}: {}\r\n",
                                field.name,
                                field.value);
             }
+        }
+
+        template <typename StringType = string_type>
+        [[nodiscard]] constexpr StringType str() const {
+            StringType res{super::get_allocator()};
+            string_to<StringType>(res);
             return res;
         }
     };
