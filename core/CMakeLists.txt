@@ -136,6 +136,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/self_hosted.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi_proto/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi_proto/cgi_request_body_communicator.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fastcgi/fcgi_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_request.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/shosted/self_hosted_session_manager.hpp

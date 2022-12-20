@@ -11,6 +11,8 @@ namespace webpp::http::beast_proto {
 
     /**
      * The middle man between beast request body and the framework's request body.
+     *
+     * This type implements HTTPRequestBodyCommunicator
      */
     template <typename ProtocolType>
     struct beast_request_body_communicator {
@@ -28,11 +30,11 @@ namespace webpp::http::beast_proto {
             body = input_parser.get().body();
         }
 
-        [[nodiscard]] size_type read(char_type* data, size_type count) const noexcept {
+        [[nodiscard]] size_type read(char_type* data, size_type count) const {
             return stl::copy_n(body->data(), count, data) - body->data();
         }
 
-        [[nodiscard]] size_type read(char_type* data) const noexcept {
+        [[nodiscard]] size_type read(char_type* data) const {
             return stl::copy_n(body->data(), size(), data) - body->data();
         }
 

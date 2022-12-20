@@ -2,15 +2,13 @@
 #define WEBPP_CGI_H
 
 #include "../../convert/casts.hpp"
-#include "../../memory/object.hpp"
 #include "../../std/string_view.hpp"
-#include "../../strings/to_case.hpp"
 #include "../../traits/default_traits.hpp"
-#include "../app_wrapper.hpp"
 #include "../request.hpp"
 #include "../request_body.hpp"
 #include "../response.hpp"
 #include "cgi_proto/cgi_request.hpp"
+#include "cgi_proto/cgi_request_body_communicator.hpp"
 #include "common/common_http_protocol.hpp"
 
 #include <iostream>
@@ -21,18 +19,20 @@ namespace webpp::http {
               Traits            TraitsType     = default_traits,
               RootExtensionList RootExtensions = empty_extension_pack>
     struct cgi : public common_http_protocol<TraitsType, App, RootExtensions> {
-        using traits_type            = TraitsType;
-        using etraits                = enable_owner_traits<traits_type>;
-        using application_type       = App;
-        using string_view_type       = traits::string_view<traits_type>;
-        using char_type              = traits::char_type<traits_type>;
-        using string_type            = traits::general_string<traits_type>;
-        using local_allocator_type   = traits::local_allocator<traits_type, char_type>;
-        using general_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using common_protocol_type   = common_http_protocol<TraitsType, App, RootExtensions>;
-        using app_wrapper_type       = typename common_protocol_type::app_wrapper_type;
-        using root_extensions        = RootExtensions;
-        using request_type           = simple_request<cgi, cgi_request>;
+        using traits_type               = TraitsType;
+        using etraits                   = enable_owner_traits<traits_type>;
+        using application_type          = App;
+        using protocol_type             = cgi;
+        using string_view_type          = traits::string_view<traits_type>;
+        using char_type                 = traits::char_type<traits_type>;
+        using string_type               = traits::general_string<traits_type>;
+        using local_allocator_type      = traits::local_allocator<traits_type, char_type>;
+        using general_allocator_type    = traits::general_allocator<traits_type, char_type>;
+        using common_protocol_type      = common_http_protocol<TraitsType, App, RootExtensions>;
+        using app_wrapper_type          = typename common_protocol_type::app_wrapper_type;
+        using root_extensions           = RootExtensions;
+        using request_type              = simple_request<cgi, cgi_request>;
+        using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;
 
         static_assert(HTTPRequest<request_type>,
                       "Web++ Internal Bug: request_type is not a match for Request concept.");
@@ -41,6 +41,8 @@ namespace webpp::http {
                       "Your application type can't be called with a request type of our choosing or "
                       "its response is not of a valid response type.");
 
+        static constexpr stl::size_t buffer_size = 1024ull * 1024ull;
+
       private:
         using super = common_http_protocol<TraitsType, App, RootExtensions>;
 
@@ -48,6 +50,11 @@ namespace webpp::http {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);
+
+            // The next line is generally not required because in this case the removal of synchronization is
+            // generally enough to get the big speedup, but the next line removes the synchronization between
+            // the C++ input and output buffers which gives a slight more speedup in most cases.
+            stl::cin.tie(nullptr);
         }
 
       public:
@@ -59,11 +66,27 @@ namespace webpp::http {
         /**
          * Read the body of the string
          */
-        static stl::streamsize read(char* data, stl::streamsize length) noexcept {
+        static stl::streamsize read(char* data, stl::streamsize length) {
             stl::cin.read(data, length);
             return stl::cin.gcount();
         }
 
+        static stl::streamsize read(char* data) {
+            // A good article for fast reads:
+            // https://ayandas.me/blog-tut/2019/04/06/speeding-up-iostreams-in-c++.html
+
+            stl::streamsize read_count = 0;
+            for (;;) {
+                stl::cin.read(data, buffer_size);
+
+                stl::streamsize const buf_read_size = stl::cin.gcount();
+                if (buf_read_size == 0) {
+                    break;
+                }
+                read_count += buf_read_size;
+            }
+            return read_count;
+        }
         /**
          * Send the stream to the user
          * @param stream
