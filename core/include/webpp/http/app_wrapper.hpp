@@ -43,7 +43,7 @@ namespace webpp::http {
         using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
         using allocator_pack_type     = traits::allocator_pack_type<traits_type>;
 
-        struct enable_throws{};
+        struct enable_throws {};
 
         template <typename AllocType>
         static constexpr bool app_requires_logger_and_allocator =

@@ -118,7 +118,7 @@ namespace webpp::http {
       public:
         using traits_type     = typename super::traits_type;
         using root_extensions = typename super::root_extensions;
-        using response_type   = final_response<EList>;
+        using response_type   = final_response;
         using body_type       = typename response_type::body_type;
         using headers_type    = typename response_type::headers_type;
 
