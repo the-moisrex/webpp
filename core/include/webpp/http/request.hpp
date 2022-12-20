@@ -22,7 +22,7 @@ namespace webpp::http {
      * giving information that the user or other modules need.
      *
      */
-    template <typename REL, HTTPCommunicator ServerType>
+    template <typename REL, typename ServerType>
     struct common_http_request : public enable_traits_with<typename ServerType::traits_type, REL> {
         using server_type           = ServerType;
         using server_ref            = stl::add_lvalue_reference_t<server_type>;
@@ -102,7 +102,7 @@ namespace webpp::http {
     };
 
 
-    template <HTTPCommunicator ServerType, template <typename...> typename MidLevelRequestType>
+    template <typename ServerType, template <typename...> typename MidLevelRequestType>
     using simple_request = typename ServerType::root_extensions::template extensie_type<
       typename ServerType::traits_type,
       request_descriptor<MidLevelRequestType, ServerType>>;

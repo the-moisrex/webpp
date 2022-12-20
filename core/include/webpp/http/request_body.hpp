@@ -20,7 +20,7 @@ namespace webpp::http {
         using request_body_extension_list = EList;
         using request_body_communicator   = Communicator; // the way that the Protocol gives us the body
         using char_type                   = traits::char_type<traits_type>;
-        using size_type                   = stl::size_t;
+        using size_type                   = stl::streamsize;
 
         template <typename... Args>
         constexpr request_body(Args&&... args) noexcept
@@ -32,8 +32,15 @@ namespace webpp::http {
          * with the goodies that the user sends in the request body.
          * This function is intentionally designed like POSIX "read" function.
          */
-        constexpr size_type read(char_type* data, size_type count) const noexcept {
+        constexpr size_type read(char_type* data, size_type count) const {
             return request_body_communicator::read(data, count);
+        }
+
+        /**
+         * Read all the body and return the read size
+         */
+        constexpr size_type read(char_type* data) const {
+            return request_body_communicator::read(data);
         }
     };
 

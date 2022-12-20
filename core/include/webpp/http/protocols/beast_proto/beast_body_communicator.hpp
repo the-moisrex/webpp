@@ -19,7 +19,7 @@ namespace webpp::http::beast_proto {
         using protocol_type             = ProtocolType;
         using traits_type               = typename protocol_type::traits_type;
         using char_type                 = traits::char_type<traits_type>;
-        using size_type                 = stl::size_t;
+        using size_type                 = stl::streamsize;
         using http_worker_type          = typename protocol_type::http_worker_type;
         using beast_request_parser_type = typename http_worker_type::beast_request_parser_type;
         using body_type                 = typename http_worker_type::beast_body_type;
