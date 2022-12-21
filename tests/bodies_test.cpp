@@ -14,7 +14,7 @@ using text_body_type = simple_response_body<default_traits, as_extension<string_
 
 TEST(Body, Text) {
     text_body_type b = "Testing";
-    EXPECT_EQ(b.str(), "Testing");
+    EXPECT_EQ(b.string(), "Testing");
     EXPECT_TRUE(b == "Testing");
 
     std::string str = "hello";
@@ -34,10 +34,10 @@ TEST(Body, Text) {
         std::string            _str = "testing";
         std::string_view const test = _str;
         bt                          = test;
-        EXPECT_EQ(bt.str(), test);
+        EXPECT_EQ(bt.string(), test);
         _str = "";
     }
-    // EXPECT_NE(bt.str(), "testing") << "The test should be empty since it was a string_view and not a
+    // EXPECT_NE(bt.string(), "testing") << "The test should be empty since it was a string_view and not a
     // string";
 }
 
@@ -59,8 +59,8 @@ TEST(Body, File) {
 
     text_body_type the_body;
     the_body = "data";
-    EXPECT_EQ(the_body.str(), "data");
+    EXPECT_EQ(the_body.string(), "data");
     ASSERT_TRUE(the_body.load(file));
-    EXPECT_EQ(the_body.str(), "Hello World");
+    EXPECT_EQ(the_body.string(), "Hello World");
     std::filesystem::remove(file);
 }

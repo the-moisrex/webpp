@@ -38,8 +38,8 @@ TEST(Server, Creation) {}
 //
 //        void operator()() noexcept {
 //            auto res      = this->router(req);
-//            body_result   = res.body.str();
-//            header_result = res.header.str();
+//            body_result   = res.body.string();
+//            header_result = res.header.string();
 //        }
 //    };
 //

@@ -30,7 +30,7 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPResponseHeaders = HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) {
-        { h.str() } -> istl::StringViewifiable;
+        { h.string() } -> istl::StringViewifiable;
     };
 
     template <typename T>
@@ -108,9 +108,6 @@ namespace webpp::http {
     concept BlobBasedBodyCommunicator = requires(T body) {
         body.data();
         body.size();
-        // todo: ctor
-        // todo: .str
-        // todo: read and write operations
     };
 
 
@@ -128,12 +125,8 @@ namespace webpp::http {
     concept TextBasedBodyCommunicator = requires(T body) {
         typename T::string_type;
         requires requires(typename T::string_type str) {
-            T{str};
-            body.str();
-            // todo: ctor
-            // todo: .str
-            // todo: read and write operations
-            body.append_to(str);
+            body.string();
+            body.string_to(str);
         };
     };
 
@@ -149,13 +142,9 @@ namespace webpp::http {
      */
     template <typename T>
     concept StreamBasedBodyCommunicator = requires(T body) {
-        typename T::pointer_type;
-        typename T::size_type;
-        requires requires(typename T::pointer_type ptr_out, typename T::size_type & size) {
-            // todo: ctor
-            // todo: std::istream std::ostream
-            // todo: read and write operations
-            body.append_to(ptr_out, size);
+        typename T::stream_type;
+        requires requires(typename T::stream_type stream) {
+            body.opeartor >> (stream);
         };
     };
 
@@ -166,7 +155,9 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>>;
+    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>> ||
+      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      TextBasedBodyCommunicator<stl::remove_cvref_t<T>> || BlobBasedBodyCommunicator<stl::remove_cvref_t<T>>;
 
 
 

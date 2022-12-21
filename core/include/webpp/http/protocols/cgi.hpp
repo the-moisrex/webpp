@@ -121,8 +121,8 @@ namespace webpp::http {
             static_assert(stl::constructible_from<request_type, cgi&>, "CGI Request type is not valid.");
             HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
-            const auto header_str = res.headers.str();
-            const auto str        = res.body.str();
+            const auto header_str = res.headers.string();
+            const auto str        = res.body.string();
 
             // From RFC: https://tools.ietf.org/html/rfc3875
             // Send status code:

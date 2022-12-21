@@ -46,20 +46,20 @@ TEST(Router, RouteCreation) {
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code, 200);
-    EXPECT_EQ(res.body.str(), "About page\n");
+    EXPECT_EQ(res.body.string(), "About page\n");
 
     router router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
                        return ctx.string("testing");
                    }};
     auto   res2 = router2(req);
-    EXPECT_EQ(res2.body.str(), "testing");
+    EXPECT_EQ(res2.body.string(), "testing");
 
 
     router router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
                        return ctx.string("testing 2");
                    }};
     auto   res3 = router3(req);
-    EXPECT_EQ(res3.body.str(), "testing 2");
+    EXPECT_EQ(res3.body.string(), "testing 2");
 }
 
 
@@ -115,7 +115,7 @@ TEST(Router, RouteCreation) {
 //    //
 //    //    EXPECT_TRUE(one.is_match(req));
 //    //    res = rr(req);
-//    //    EXPECT_EQ(std::string(res.body.str()), "Hello");
+//    //    EXPECT_EQ(std::string(res.body.string()), "Hello");
 //    //    EXPECT_EQ(i, 3);
 //}
 //
@@ -130,7 +130,7 @@ TEST(Router, RouteCreation) {
 //    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res         = _route(req);
-//    auto           strview_res = res.body.str();
+//    auto           strview_res = res.body.string();
 //    std::string    str_res     = std::string(strview_res);
 //    EXPECT_EQ(strview_res, "Hello world") << "strview_res is: " <<
 //    strview_res;
@@ -147,7 +147,7 @@ TEST(Router, RouteCreation) {
 //    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res = _router(req);
-//    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+//    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, ConstListForRouteList) {
@@ -157,7 +157,7 @@ TEST(Router, RouteCreation) {
 //    //    request_t<fake_cgi> req;
 //    //    req.set_method("GET");
 //    //    response res = _router(req);
-//    //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+//    //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, DefaultRouteList) {
@@ -168,7 +168,7 @@ TEST(Router, RouteCreation) {
 //    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
 //    basic_response res = _router(req);
-//    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+//    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, MergeEffect) {
@@ -183,7 +183,7 @@ TEST(Router, RouteCreation) {
 //    //    request_t<fake_cgi> req;
 //    //    req.set_method("GET");
 //    //    response res = merged_router(req);
-//    //    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+//    //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, DynamicRoute) {
@@ -197,7 +197,7 @@ TEST(Router, RouteCreation) {
 //
 //    basic_response<default_traits> res;
 //    droute(req, res);
-//    EXPECT_EQ(std::string(res.body.str()), "Hello world");
+//    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 //

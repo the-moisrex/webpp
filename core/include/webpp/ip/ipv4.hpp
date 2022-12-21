@@ -307,7 +307,7 @@ namespace webpp {
         /**
          * @brief get string representation of the ip
          */
-        [[nodiscard]] auto str() const noexcept {
+        [[nodiscard]] auto string() const noexcept {
             const auto _octets = octets();
             return fmt::format("{}.{}.{}.{}", _octets[0], _octets[1], _octets[2], _octets[3]);
         }

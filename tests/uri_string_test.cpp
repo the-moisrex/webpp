@@ -14,7 +14,7 @@ TEST(URITests, Creation) {
     mutable_uri u("http://example.com/");
     EXPECT_TRUE(u.has_scheme());
     EXPECT_TRUE(u.has_host());
-    EXPECT_EQ(u.str(), "http://example.com/");
+    EXPECT_EQ(u.string(), "http://example.com/");
     EXPECT_EQ(u.host_raw(), "example.com");
     EXPECT_TRUE(webpp::is::host(u.host_raw()));
     EXPECT_TRUE(u.has_authority());
@@ -34,15 +34,15 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
     EXPECT_FALSE(u.has_port());
-    EXPECT_EQ(u.str(), "//example.com/");
+    EXPECT_EQ(u.string(), "//example.com/");
     EXPECT_TRUE(u.is_normalized());
     u.clear_host();
     u.clear_host();
     EXPECT_TRUE(!u.has_host());
     EXPECT_EQ(u.host_raw(), "");
-    EXPECT_EQ(u.str(), "/");
+    EXPECT_EQ(u.string(), "/");
     u.path("folder/file");
-    EXPECT_EQ(u.str(), "/folder/file");
+    EXPECT_EQ(u.string(), "/folder/file");
     u.path("folder/file");
     EXPECT_TRUE(!u.has_host());
     u.host("eg2.com");
@@ -50,17 +50,17 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_host());
     EXPECT_TRUE(u.has_path());
     EXPECT_EQ(u.host_raw(), "eg2.com") << "host is: " << u.host_raw() << "\nsize: " << u.host_raw().size();
-    EXPECT_EQ(u.str(), "//eg2.com/folder/file") << "str is: " << u.str();
+    EXPECT_EQ(u.string(), "//eg2.com/folder/file") << "str is: " << u.string();
     u.scheme("https:");
     u.scheme("https:");
     EXPECT_TRUE(u.has_scheme());
     u.clear_path();
     u.clear_path();
-    EXPECT_EQ(u.str(), "https://eg2.com/");
+    EXPECT_EQ(u.string(), "https://eg2.com/");
     u.scheme("http");
     u.scheme("http");
     EXPECT_TRUE(u.has_scheme());
-    EXPECT_EQ(u.str(), "http://eg2.com/");
+    EXPECT_EQ(u.string(), "http://eg2.com/");
 
     uri_view ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(webpp::is::ipv4(ipv4_host.host_raw()));
@@ -92,14 +92,14 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(local_file.is_normalized());
     EXPECT_FALSE(local_file.is_path_relative());
     local_file.clear_path();
-    EXPECT_EQ(local_file.str(), "file:///");
+    EXPECT_EQ(local_file.string(), "file:///");
 }
 
 TEST(URITests, IPv6HostName) {
     uri_string<std::string> u;
     std::string             uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u                               = uri_str;
-    EXPECT_EQ(u.str(), uri_str);
+    EXPECT_EQ(u.string(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
     EXPECT_FALSE(!u.has_host());
     EXPECT_TRUE(u.has_port());
@@ -115,7 +115,7 @@ TEST(URITests, IPv6HostName) {
     EXPECT_TRUE(std::holds_alternative<ipv6>(u.host_structured()))
       << "index: " << u.host_structured().index();
     u.clear_path();
-    EXPECT_EQ(u.str(), "//[::1]:8080/?name=value&name2=value2#str");
+    EXPECT_EQ(u.string(), "//[::1]:8080/?name=value&name2=value2#str");
 }
 
 TEST(URITests, WieredURIs) {
@@ -303,15 +303,15 @@ TEST(URITests, URL) {
 }
 
 TEST(URITests, Set) {
-    EXPECT_EQ(mutable_uri().scheme("ftp").str(), "ftp:");
-    EXPECT_EQ(mutable_uri("mailto:someone@example.com").scheme("something_else").str(),
+    EXPECT_EQ(mutable_uri().scheme("ftp").string(), "ftp:");
+    EXPECT_EQ(mutable_uri("mailto:someone@example.com").scheme("something_else").string(),
               "something_else:someone@example.com");
 
     // TODO: should this be allowed even???
-    EXPECT_EQ(mutable_uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").str(),
+    EXPECT_EQ(mutable_uri("urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523").scheme("ftp").string(),
               "ftp:mpeg:mpeg7:schema:2001urn:isbn:0451450523");
 
-    EXPECT_EQ(mutable_uri("http://example.com/").scheme("ftp").str(), "ftp://example.com/");
+    EXPECT_EQ(mutable_uri("http://example.com/").scheme("ftp").string(), "ftp://example.com/");
 }
 
 TEST(URITests, Domains) {

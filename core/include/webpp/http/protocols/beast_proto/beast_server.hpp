@@ -144,7 +144,7 @@ namespace webpp::http::beast_proto {
             for (auto const& h : res.headers) {
                 bres->set(h.name, h.value);
             }
-            bres->body() = res.body.str();
+            bres->body() = res.body.string();
             // bres.content_length(res.body.size());
             bres->prepare_payload();
             str_serializer.emplace(*bres);

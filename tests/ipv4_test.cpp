@@ -28,9 +28,9 @@ TEST(IPv4Tests, FreeFunctions) {
 TEST(IPv4Tests, Creation) {
     constexpr ipv4_t one{192, 168, 2, 1};
     ipv4_t           two("192.168.2.1");
-    EXPECT_EQ(one, two) << "one is: " << one.str() << "; two is: " << two.str();
+    EXPECT_EQ(one, two) << "one is: " << one.string() << "; two is: " << two.string();
     EXPECT_EQ(one.integer(), two.integer());
-    EXPECT_EQ(one.str(), two.str());
+    EXPECT_EQ(one.string(), two.string());
     EXPECT_FALSE(one.is_zero());
 }
 
@@ -43,7 +43,7 @@ TEST(IPv4Tests, Methods) {
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
     EXPECT_FALSE(ip.is_zero());
-    EXPECT_EQ(ip.str(), "192.168.1.1");
+    EXPECT_EQ(ip.string(), "192.168.1.1");
 
     auto octets = ip.octets();
     EXPECT_EQ(octets[0], 192);
@@ -66,7 +66,7 @@ TEST(IPv4Tests, Validation) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4(_ip)));
-        EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).str();
+        EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         ipv4_t ip{_ip};
         (void) ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());
@@ -74,7 +74,7 @@ TEST(IPv4Tests, Validation) {
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv4(_ip));
-        EXPECT_FALSE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
+        EXPECT_FALSE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
         ipv4_t ip{_ip};
         (void) ip.integer(); // just to make sure it's parsed
         EXPECT_FALSE(ip.is_valid());
@@ -87,7 +87,7 @@ TEST(IPv4Tests, CIDR) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4_prefix(_ip))) << _ip;
-        EXPECT_TRUE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).str();
+        EXPECT_TRUE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
         EXPECT_TRUE(ipv4_t(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv4_t(_ip).prefix(), 0) << _ip;
         EXPECT_LE(ipv4_t(_ip).prefix(), 32) << _ip;

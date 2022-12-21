@@ -27,7 +27,7 @@ TEST(IPv6Tests, Creation) {
 
     ipv6_t ip4("2001:db8:0:85a3::ac1f:8001");
     EXPECT_TRUE(ip4.is_valid());
-    EXPECT_EQ("2001:0db8:0000:85a3:0000:0000:ac1f:8001", ip4.str());
+    EXPECT_EQ("2001:0db8:0000:85a3:0000:0000:ac1f:8001", ip4.string());
 }
 
 TEST(IPv6Tests, Validation) {
@@ -61,8 +61,8 @@ TEST(IPv6Tests, Validation) {
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_EQ(ipv6_t(ipv6_t(_ip).short_str()), ipv6_t(_ip))
           << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).short_str()
-          << "\nlong ip: " << ipv6_t(_ip).str()
-          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).str();
+          << "\nlong ip: " << ipv6_t(_ip).string()
+          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).string();
         EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
           << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
         EXPECT_TRUE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();

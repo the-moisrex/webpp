@@ -450,20 +450,20 @@ namespace webpp::uri {
 
         template <typename StringType, typename StringViewType>
         constexpr bool operator==(const uri_string<StringType, StringViewType>& other) const noexcept {
-            return ascii::iequals(str(), other.str());
+            return ascii::iequals(string(), other.string());
         }
 
         template <typename StringType, typename StringViewType>
         constexpr bool operator!=(const uri_string<StringType, StringViewType>& other) const noexcept {
-            return !ascii::iequals(str(), other.str());
+            return !ascii::iequals(string(), other.string());
         }
 
         constexpr bool operator==(string_view_type const& u) const noexcept {
-            return ascii::iequals(str(), u);
+            return ascii::iequals(string(), u);
         }
 
         constexpr bool operator!=(string_view_type const& u) const noexcept {
-            return !ascii::iequals(str(), u);
+            return !ascii::iequals(string(), u);
         }
 
         /**
@@ -487,7 +487,7 @@ namespace webpp::uri {
          * @brief this function is the same as "encodeURI" in javascript
          */
         void encode_to(istl::String auto& output) const noexcept {
-            encode_uri_component(str(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
+            encode_uri_component(string(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
         }
 
         /**
@@ -496,7 +496,7 @@ namespace webpp::uri {
          * be nullopt when the uri is not valid and has invalid characters
          */
         [[nodiscard]] bool decode_to(istl::String auto& output) const noexcept {
-            return decode_uri_component(str(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
+            return decode_uri_component(string(), output, details::ALLOWED_CHARACTERS_IN_URI<char_type>);
         }
 
 
@@ -1742,7 +1742,7 @@ namespace webpp::uri {
          * Get the string representation of the uri
          * @return string
          */
-        [[nodiscard]] storred_str_t const& str() const noexcept {
+        [[nodiscard]] storred_str_t const& string() const noexcept {
             return data;
         }
 

@@ -264,8 +264,8 @@ namespace webpp {
         int operator()() noexcept {
             auto res = app(req);
             res.calculate_default_headers();
-            auto header_str = res.headers.str();
-            auto str        = res.body.str();
+            auto header_str = res.headers.string();
+            auto str        = res.body.string();
 
             stl::stringstream data;
             data << "Status: " << res.headers.status_code << " "

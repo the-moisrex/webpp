@@ -70,6 +70,6 @@ TEST(Routes, ContextTests) {
     context_type2::request_type              req2{server};
     context_type2                            ctx2{req2};
     auto                                     res = ctx2.string("test");
-    EXPECT_EQ(res.body, "test") << res.body.str();
+    EXPECT_EQ(res.body, "test") << res.body.string();
     EXPECT_TRUE(ctx2.test);
 }

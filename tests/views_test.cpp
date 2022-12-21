@@ -31,12 +31,12 @@ TEST(TheViews, MustacheView) {
     v.scheme("My name is {{name}}");
     string_type str;
     auto        data = object::make_general<data_type>(et);
-    data.push_back(variable_type{et, "name", "moisrex"});
+    data.emplace_back(et, "name", "moisrex");
     v.render(str, data);
     EXPECT_EQ(str, "My name is moisrex");
     data.clear();
     str.clear();
-    data.push_back(variable_type{et, "name", "The Moisrex"});
+    data.emplace_back(et, "name", "The Moisrex");
     v.render(str, data);
     EXPECT_EQ(str, "My name is The Moisrex");
 }
@@ -47,10 +47,10 @@ TEST(TheViews, ViewManagerTest) {
     enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
-    man.view_roots.push_back("../tests/assets");
-    man.view_roots.push_back("../tests");
-    man.view_roots.push_back("./tests");
-    man.view_roots.push_back("./tests/assets");
+    man.view_roots.emplace_back("../tests/assets");
+    man.view_roots.emplace_back("../tests");
+    man.view_roots.emplace_back("./tests");
+    man.view_roots.emplace_back("./tests/assets");
 
     std::string roots;
     for (auto const& root : man.view_roots) {
@@ -58,7 +58,7 @@ TEST(TheViews, ViewManagerTest) {
     }
 
     auto data = object::make_general<data_type>(et);
-    data.push_back(variable_type{et, "name", "moisrex"});
+    data.emplace_back(et, "name", "moisrex");
     const auto res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
                                      << roots;
@@ -69,16 +69,16 @@ TEST(TheViews, MustacheViewPartials) {
     enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
-    man.view_roots.push_back("../tests/assets");
-    man.view_roots.push_back("../tests");
-    man.view_roots.push_back("./tests");
-    man.view_roots.push_back("./tests/assets");
+    man.view_roots.emplace_back("../tests/assets");
+    man.view_roots.emplace_back("../tests");
+    man.view_roots.emplace_back("./tests");
+    man.view_roots.emplace_back("./tests/assets");
 
     auto data = object::make_general<data_type>(et);
-    data.push_back(variable_type{et, "name", "moisrex"});
-    data.push_back(variable_type{et, "hello-world", partial_type([]() -> string_type {
-                                     return "Hello, {{name}}";
-                                 })});
+    data.emplace_back(et, "name", "moisrex");
+    data.emplace_back(et, "hello-world", partial_type([]() -> string_type {
+                          return "Hello, {{name}}";
+                      }));
     const auto res = man.mustache("assets/hello-bob", data);
     EXPECT_EQ(res, "Bob says: Hello, moisrex\n");
 }
@@ -88,10 +88,10 @@ TEST(TheViews, FileView) {
     enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
-    man.view_roots.push_back("../tests/assets");
-    man.view_roots.push_back("../tests");
-    man.view_roots.push_back("./tests");
-    man.view_roots.push_back("./tests/assets");
+    man.view_roots.emplace_back("../tests/assets");
+    man.view_roots.emplace_back("../tests");
+    man.view_roots.emplace_back("./tests");
+    man.view_roots.emplace_back("./tests/assets");
 
     std::string roots;
     for (auto const& root : man.view_roots) {

@@ -9,6 +9,10 @@
 #include <compare>
 #include <variant>
 
+// There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
+// them, so we're disabling this warning for this file.
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 namespace webpp {
 
     namespace details {
@@ -856,7 +860,7 @@ namespace webpp {
         }
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] StrT str(auto&&... str_args) const noexcept {
+        [[nodiscard]] StrT string(auto&&... str_args) const noexcept {
             StrT output{stl::forward<decltype(str_args)>(str_args)...};
             str_to(output);
             return output;
@@ -1022,5 +1026,7 @@ namespace webpp {
     };
 
 } // namespace webpp
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
 #endif // WEBPP_IPV6_H

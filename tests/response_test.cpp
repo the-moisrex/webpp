@@ -28,7 +28,7 @@ TEST(HTTPResponseTest, Type) {
     EXPECT_TRUE(three);
     //    EXPECT_TRUE(four);
     //    EXPECT_TRUE(five);
-    EXPECT_STREQ("Hello", return_callback().body.str().c_str());
+    EXPECT_STREQ("Hello", return_callback().body.string().c_str());
 }
 
 // TEST(Response, Init) {
@@ -39,9 +39,9 @@ TEST(HTTPResponseTest, Type) {
 //
 //    EXPECT_EQ(std::string(res.body.str("")), "");
 //    res2 << "Code";
-//    EXPECT_EQ(std::string(res2.body.str()), "Code");
+//    EXPECT_EQ(std::string(res2.body.string()), "Code");
 //    res = res2;
-//    EXPECT_EQ(std::string(res.body.str()), "Code");
+//    EXPECT_EQ(std::string(res.body.string()), "Code");
 //
 //    EXPECT_EQ(res, res2);
 //}
@@ -52,6 +52,6 @@ TEST(HTTPResponseTest, Type) {
 //    std::ofstream handle{file};
 //    handle << "Hello World";
 //    handle.close();
-//    EXPECT_EQ(res_t::res_t(file).body.str(), "Hello World");
+//    EXPECT_EQ(res_t::res_t(file).body.string(), "Hello World");
 //    std::filesystem::remove(file);
 //}

@@ -119,8 +119,12 @@ namespace webpp::istl {
                                  StrViewT{str.data(), str.size()};
                              }) {
             return StrViewT{str.data(), str.size()};
+        } else if constexpr (requires { str.string_view(); }) {
+            return string_viewify_of<StrViewT>(str.string_view());
         } else if constexpr (requires { str.str(); }) {
             return string_viewify_of<StrViewT>(str.str());
+        } else if constexpr (requires { str.string(); }) {
+            return string_viewify_of<StrViewT>(str.string());
         } else if constexpr (requires { str.template to_string<StrViewT>(); }) {
             return string_viewify_of<StrViewT>(str.template to_string<StrViewT>());
         } else if constexpr (requires { str.to_string(); }) {

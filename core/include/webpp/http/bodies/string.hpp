@@ -51,7 +51,7 @@ namespace webpp::http {
              * @brief Get a reference to the body's string
              * @return string
              */
-            [[nodiscard]] string_type const& str() const noexcept {
+            [[nodiscard]] string_type const& string() const noexcept {
                 return content;
             }
 
@@ -97,13 +97,13 @@ namespace webpp::http {
         template <Traits TraitsType>
         [[nodiscard]] bool operator==(typename TraitsType::string_view_type    str,
                                       string_body_extension<TraitsType> const& strbody) noexcept {
-            return strbody.str() == str;
+            return strbody.string() == str;
         }
 
         template <Traits TraitsType>
         [[nodiscard]] bool operator!=(typename TraitsType::string_view_type    str,
                                       string_body_extension<TraitsType> const& strbody) noexcept {
-            return strbody.str() != str;
+            return strbody.string() != str;
         }
 
         /**

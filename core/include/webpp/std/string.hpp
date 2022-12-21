@@ -104,6 +104,8 @@ namespace webpp::istl {
             return StrT{str.data(), str.size(), allocator};
         } else if constexpr (requires { str.str(); }) {
             return stringify_of<StrT>(str.str(), allocator);
+        } else if constexpr (requires { str.string(); }) {
+            return stringify_of<StrT>(str.string(), allocator);
         } else {
             // means static_assert(false, ...)
             static_assert(false && sizeof(StrT), "The specified input is not convertible to string");

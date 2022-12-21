@@ -74,7 +74,7 @@ namespace webpp::http {
         }
 
         template <typename StringType = string_type>
-        [[nodiscard]] constexpr StringType str() const {
+        [[nodiscard]] constexpr StringType string() const {
             StringType res{super::get_allocator()};
             string_to<StringType>(res);
             return res;
