@@ -70,11 +70,25 @@ namespace webpp::http {
     struct response_body : public EList {
         using traits_type = TraitsType;
         using elist_type  = EList;
-
-        // static_assert(ResponseBody<elist_type>, "We require at least one valid 'response body
-        // extension'.");
+        using char_type   = traits::char_type<traits_type>;
 
         using EList::EList;
+
+        [[nodiscard]] constexpr char_type const* data() const noexcept {
+            if constexpr (requires(elist_type body) { body.data(); }) {
+                return elist_type::data();
+            } else {
+                return nullptr;
+            }
+        }
+
+        [[nodiscard]] constexpr stl::streamsize size() const noexcept {
+            if constexpr (requires(elist_type body) { body.size(); }) {
+                return elist_type::size();
+            } else {
+                return 0;
+            }
+        }
     };
 
 

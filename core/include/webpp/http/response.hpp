@@ -119,8 +119,8 @@ namespace webpp::http {
         using traits_type     = typename super::traits_type;
         using root_extensions = typename super::root_extensions;
         using response_type   = final_response;
-        using body_type       = typename response_type::body_type;
-        using headers_type    = typename response_type::headers_type;
+        using body_type       = typename super::body_type;
+        using headers_type    = typename super::headers_type;
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
