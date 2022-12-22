@@ -97,7 +97,7 @@ namespace webpp::http {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::response_body_extensions;
 
-        template <typename ExtensionListType, typename TraitsType, typename EList>
+        template <typename RootExtensions, typename TraitsType, typename EList>
         using mid_level_extensie_type = response_body<TraitsType, EList>;
     };
 

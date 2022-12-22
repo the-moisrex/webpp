@@ -118,17 +118,18 @@ namespace webpp::http {
      *
      *
      */
-    template <Traits TraitsType, typename EList, HTTPRequest RequestType, HTTPResponse ResponseType>
-    struct basic_context : public enable_traits_with<TraitsType, extension_wrapper<EList>> {
-        using traits_type            = TraitsType;
+    template <HTTPRequest RequestType, typename EList>
+    struct basic_context
+      : public enable_traits_with<typename RequestType::traits_type, extension_wrapper<EList>> {
+        using request_type           = RequestType;
+        using traits_type            = typename request_type::traits_type;
         using mother_extensions_type = EList;
         using extension_wrapper_type = extension_wrapper<EList>;
         using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
-        using request_type           = RequestType;
-        using response_type          = ResponseType;
-        using basic_context_type     = basic_context<TraitsType, EList, RequestType, ResponseType>;
-        using request_ref            = request_type&;
         using root_extensions        = typename request_type::root_extensions;
+        using response_type          = simple_response_pack<traits_type, root_extensions>;
+        using basic_context_type     = basic_context;
+        using request_ref            = request_type&;
 
       public:
         request_ref request;
@@ -293,84 +294,6 @@ namespace webpp::http {
                           "Web++ Internal Bug: the context_type is not valid for some reason!");
             return local_context_type{*this};
         }
-
-        // todo: these methods need to be noexcept. They call unknown stuff.
-
-        //        void call_pre_subroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::pre_subroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                pre_subroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
-        //
-        //
-        //        void call_pre_entryroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::pre_entryroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                pre_entryroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
-        //
-        //
-        //        void call_pre_firstroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::pre_firstroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                pre_firstroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
-        //
-        //
-        //        void call_post_subroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::post_subroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                post_subroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
-        //
-        //        void call_post_entryroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::post_entryroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                post_entryroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
-        //
-        //
-        //        void call_post_lastroute_methods() noexcept {
-        //            ((has_context_extension_method<ExtensionTypes,
-        //                                           extension_method::post_lastroute,
-        //                                           basic_context>::value
-        //                ? (ExtensionTypes::template
-        //                post_lastroute<basic_context_type>(
-        //                     *this),
-        //                   (void)0)
-        //                : (void)0),
-        //             ...);
-        //        }
     };
 
 
@@ -390,11 +313,7 @@ namespace webpp::http {
                   typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type = basic_context<TraitsType,
-                                                      EList,
-                                                      ReqType,
-                                                      // getting the extensie_type of the basic_response
-                                                      simple_response_pack<TraitsType, RootExtensions>>;
+        using mid_level_extensie_type = basic_context<ReqType, EList>;
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
@@ -402,17 +321,9 @@ namespace webpp::http {
     };
 
 
-
     template <HTTPRequest ReqType>
     using simple_context = typename ReqType::root_extensions::
       template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
-
-
-    template <Extension... E>
-    struct as_context_extensions {
-        using context_extensions = extension_pack<E...>;
-    };
-
 
 } // namespace webpp::http
 
