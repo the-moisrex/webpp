@@ -63,7 +63,7 @@ namespace webpp::http {
             for (auto const& field : *this) {
                 size += field.name.size() + field.value.size() + 4;
             }
-            out.outerve(size);
+            out.reserve(size);
             for (auto const& field : *this) {
                 // todo: make sure value is secure and doesn't have any newlines
                 fmt::format_to(stl::back_insert_iterator<string_type>(out),
