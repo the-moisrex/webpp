@@ -121,6 +121,7 @@ namespace webpp::http {
         using response_type   = final_response;
         using body_type       = typename super::body_type;
         using headers_type    = typename super::headers_type;
+        using field_type      = typename headers_type::field_type;
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
@@ -178,6 +179,29 @@ namespace webpp::http {
         using apply_extensions_type =
           typename istl::unique_parameters<typename root_extensions::template appended<
             stl::remove_cvref_t<E>...>>::template extensie_type<traits_type, response_descriptor>;
+
+
+        [[nodiscard]] constexpr bool operator==(HTTPResponse auto const& res) const noexcept {
+            return this->headers == res.headers && this->body == this->body;
+        }
+
+        [[nodiscard]] constexpr bool operator!=(HTTPResponse auto const& res) const noexcept {
+            return !operator==(res);
+        }
+
+        // Pass the value to the headers/body depending on the value's type
+        template <typename ValueType>
+        constexpr response_type& operator<<(ValueType&& value) {
+            using value_type = stl::remove_cvref_t<ValueType>;
+            if constexpr (stl::same_as<value_type, field_type>) {
+                // give it to the headers
+                this->headers.emplace_back(stl::forward<ValueType>(value));
+            } else {
+                // give it to the body
+                this->body.operator<<(stl::forward<ValueType>(value));
+            }
+            return *this;
+        }
     };
 
 

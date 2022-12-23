@@ -12,8 +12,9 @@ using namespace webpp;
 using namespace webpp::http;
 
 
+using res_t = simple_response<default_traits, string_body>;
+
 TEST(HTTPResponseTest, Type) {
-    using res_t                    = simple_response<std_traits, string_body>;
     constexpr auto return_callback = [] {
         return res_t::with_body("Hello");
     };
@@ -31,27 +32,27 @@ TEST(HTTPResponseTest, Type) {
     EXPECT_STREQ("Hello", return_callback().body.string().c_str());
 }
 
-// TEST(Response, Init) {
-//    auto res  = res_t();
-//    auto res2 = res_t();
-//
-//    EXPECT_EQ(res, res2);
-//
-//    EXPECT_EQ(std::string(res.body.str("")), "");
-//    res2 << "Code";
-//    EXPECT_EQ(std::string(res2.body.string()), "Code");
-//    res = res2;
-//    EXPECT_EQ(std::string(res.body.string()), "Code");
-//
-//    EXPECT_EQ(res, res2);
-//}
-//
-// TEST(Response, File) {
-//    std::filesystem::path file = std::filesystem::temp_directory_path();
-//    file.append("webpp_test_file");
-//    std::ofstream handle{file};
-//    handle << "Hello World";
-//    handle.close();
-//    EXPECT_EQ(res_t::res_t(file).body.string(), "Hello World");
-//    std::filesystem::remove(file);
-//}
+TEST(Response, Init) {
+    auto res  = res_t::create();
+    auto res2 = res_t::create();
+
+    EXPECT_EQ(res, res2);
+
+    EXPECT_EQ(std::string(res.body.string("")), "");
+    res2 << "Code";
+    EXPECT_EQ(std::string(res2.body.string()), "Code");
+    res = res2;
+    EXPECT_EQ(std::string(res.body.string()), "Code");
+
+    EXPECT_EQ(res, res2);
+}
+
+TEST(Response, File) {
+    std::filesystem::path file = std::filesystem::temp_directory_path();
+    file.append("webpp_test_file");
+    std::ofstream handle{file};
+    handle << "Hello World";
+    handle.close();
+    EXPECT_EQ(res_t::with_body(file).body.string(), "Hello World");
+    std::filesystem::remove(file);
+}

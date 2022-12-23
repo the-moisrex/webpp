@@ -47,12 +47,26 @@ namespace webpp::http {
                          requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
             constexpr string_body_extension(Args&&... args) : content{stl::forward<Args>(args)...} {}
 
+
+            // load a file
+            constexpr string_body_extension(stl::filesystem::path const& file,
+                                            alloc_type                   alloc = allocator_type{})
+              : content{alloc} {
+                static_cast<void>(load(file));
+            }
+
             /**
              * @brief Get a reference to the body's string
              * @return string
              */
             [[nodiscard]] string_type const& string() const noexcept {
                 return content;
+            }
+
+            template <typename StrType>
+                requires(istl::StringifiableOf<string_type, StrType>)
+            [[nodiscard]] string_type const& string(StrType&& str) {
+                return content.operator=(stl::forward<StrType>(str));
             }
 
             constexpr operator string_type() const noexcept {
@@ -91,6 +105,15 @@ namespace webpp::http {
                     *this = stl::move(result);
                 }
                 return res;
+            }
+
+
+            template <typename StrType>
+                requires(istl::StringViewifiableOf<string_view_type, StrType>)
+            constexpr auto& operator<<(StrType&& str) {
+                auto const str_view = istl::string_viewify_of<string_view_type>(stl::forward<StrType>(str));
+                content.append(str_view.data(), str_view.size());
+                return *this;
             }
         };
 

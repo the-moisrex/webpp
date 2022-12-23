@@ -89,6 +89,20 @@ namespace webpp::http {
                 return 0;
             }
         }
+
+        [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {
+            if constexpr (requires { elist_type::operator==(body); }) {
+                return elist_type::operator==(body);
+            } else {
+                const auto this_size = size();
+                return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
+            }
+        }
+
+
+        [[nodiscard]] constexpr bool operator!=(response_body const& body) const noexcept {
+            return !operator==(body);
+        }
     };
 
 

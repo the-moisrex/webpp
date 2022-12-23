@@ -75,6 +75,14 @@ namespace webpp::http {
             return ascii::iequals(name, stl::forward<decltype(_str)>(_str));
         }
 
+        constexpr bool operator==(basic_header_field const& field) const noexcept {
+            return name == field.name && value == field.value;
+        }
+
+        constexpr bool operator!=(basic_header_field const& field) const noexcept {
+            return !operator==(field);
+        }
+
         constexpr bool operator==(istl::StringViewifiable auto&& str) const noexcept {
             return is_name(stl::forward<decltype(str)>(str));
         }
