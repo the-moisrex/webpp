@@ -16,16 +16,16 @@ namespace webpp::http {
     /**
      * Const router is a router that satisfies that "Router" concept.
      */
-    template <ExtensionList ExtensionListType = empty_extension_pack, typename... RouteType>
+    template <ExtensionList NewRootExtensions = empty_extension_pack, typename... RouteType>
     struct router {
-        using extension_list_type = stl::remove_cvref_t<ExtensionListType>;
+        using extension_list_type = stl::remove_cvref_t<NewRootExtensions>;
 
 
         // todo: extract additional routes from extensions
         // todo: add router_extensions as well
         const stl::tuple<RouteType...> routes;
 
-        constexpr router(ExtensionListType&&, RouteType&&... _route) noexcept
+        constexpr router(NewRootExtensions&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
 
         constexpr router(RouteType&&... _route) noexcept : routes(stl::forward<RouteType>(_route)...) {}
@@ -176,8 +176,11 @@ namespace webpp::http {
          */
         template <HTTPRequest RequestType>
         constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
-            using specified_request_type = stl::remove_cvref_t<RequestType>;
-            using context_type           = simple_context<specified_request_type>;
+            // fixme: The request's root_extensions is different than the router's root extensions causing problems
+            using req_type = stl::remove_cvref_t<RequestType>;
+            using merged_extensions =
+              typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;
+            using context_type = simple_context<req_type, merged_extensions>;
             static_assert(Context<context_type>,
                           "Web++ Internal Bug: the context_type is not a match for Context concept");
             return this->template operator()<0>(context_type{req}, req);
@@ -227,8 +230,10 @@ namespace webpp::http {
          */
         template <istl::String StrT, HTTPRequest ReqT, stl::size_t Index = 0>
         void append_as_string(StrT& out, ReqT&& req) const {
-            using specified_request_type = stl::remove_cvref_t<ReqT>;
-            using context_type           = simple_context<specified_request_type>;
+            using req_type = stl::remove_cvref_t<ReqT>;
+            using merged_extensions =
+              typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;
+            using context_type = simple_context<req_type, merged_extensions>;
 
             auto const this_route = stl::get<Index>(routes);
             this_route.append_as_string(out, context_type{req}, req);
@@ -258,8 +263,7 @@ namespace webpp::http {
     template <typename... RouteType>
         requires(sizeof...(RouteType) > 0 &&
                  !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-    router(RouteType&&...)
-    ->router<empty_extension_pack, RouteType...>;
+    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http

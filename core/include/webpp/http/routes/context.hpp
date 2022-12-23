@@ -14,7 +14,9 @@
 
 namespace webpp::http {
 
+    template <typename MergedRootExtensions>
     struct context_descriptor;
+
 
     /**
      *
@@ -118,7 +120,7 @@ namespace webpp::http {
      *
      *
      */
-    template <HTTPRequest RequestType, typename EList>
+    template <HTTPRequest RequestType, typename EList, typename RootExtensions>
     struct basic_context
       : public enable_traits_with<typename RequestType::traits_type, extension_wrapper<EList>> {
         using request_type           = RequestType;
@@ -126,7 +128,7 @@ namespace webpp::http {
         using mother_extensions_type = EList;
         using extension_wrapper_type = extension_wrapper<EList>;
         using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
-        using root_extensions        = typename request_type::root_extensions;
+        using root_extensions        = RootExtensions;
         using response_type          = simple_response_pack<traits_type, root_extensions>;
         using basic_context_type     = basic_context;
         using request_ref            = request_type&;
@@ -261,7 +263,7 @@ namespace webpp::http {
         template <typename... E>
         using context_type_with_appended_extensions =
           typename istl::unique_parameters<typename root_extensions::template appended<E...>>::
-            template extensie_type<traits_type, context_descriptor, request_type>;
+            template extensie_type<traits_type, context_descriptor<root_extensions>, request_type>;
 
 
 
@@ -303,6 +305,7 @@ namespace webpp::http {
      * extensions from the unified extension pack for context
      * Used by routers, to be passed to the extension_pack.
      */
+    template <typename MergedRootExtensions>
     struct context_descriptor {
 
         template <Extension ExtensionType>
@@ -313,7 +316,7 @@ namespace webpp::http {
                   typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type = basic_context<ReqType, EList>;
+        using mid_level_extensie_type = basic_context<ReqType, EList, MergedRootExtensions>;
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
@@ -321,9 +324,12 @@ namespace webpp::http {
     };
 
 
-    template <HTTPRequest ReqType>
-    using simple_context = typename ReqType::root_extensions::
-      template extensie_type<typename ReqType::traits_type, context_descriptor, ReqType>;
+    // Don't use ReqType::root_extensions directly, we merge its extensions with the router's extensions
+    template <HTTPRequest ReqType, typename MergedRootExtensions>
+    using simple_context =
+      typename MergedRootExtensions::template extensie_type<typename ReqType::traits_type,
+                                                            context_descriptor<MergedRootExtensions>,
+                                                            ReqType>;
 
 } // namespace webpp::http
 

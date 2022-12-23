@@ -478,6 +478,19 @@ namespace webpp {
     };
 
 
+    template <RootExtensionList ...RootExtensions>
+    struct merge_root_extensions;
+
+    template <typename ...E1, typename ...E2>
+    struct merge_root_extensions<extension_pack<E1...>, extension_pack<E2...>> {
+        using type = extension_pack<E1..., E2...>;
+    };
+
+    template <typename ...E1, typename ...E2, RootExtensionList ...RootExtensions>
+    struct merge_root_extensions<extension_pack<E1...>, extension_pack<E2...>, RootExtensions...> :
+      merge_root_extensions<extension_pack<E1..., E2...>, RootExtensions...> {};
+
+
 } // namespace webpp
 
 #endif // WEBPP_EXTENSION_HPP
