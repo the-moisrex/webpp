@@ -28,14 +28,41 @@ namespace webpp::http {
         using elist_type          = EList;
         using basic_response_type = basic_response<EList, ResponseHeaderType, BodyType>;
 
-        body_type    body{};
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+
         headers_type headers{};
+        body_type    body{};
+
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
           requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
                    stl::is_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
+
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+          : elist_type{et},
+            headers{et},
+            body{et} {}
+
+
+        template <EnabledTraits ET>
+        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
+                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+          : elist_type{},
+            headers{et},
+            body{et} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_response() noexcept                          = default;
         constexpr basic_response(basic_response const& res) noexcept = default;
@@ -77,31 +104,20 @@ namespace webpp::http {
             using header_field_type = typename headers_type::field_type;
             using str_t             = typename header_field_type::string_type;
 
-            bool has_content_type   = false;
-            bool has_content_length = false;
-
-            // todo: use headers facilities and if there aren't any, make them
-            for (const auto& header : headers) {
-                if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name, "content-type")) {
-                    has_content_type = true;
-                } else if (ascii::iequals<ascii::char_case_side::second_lowered>(header.name,
-                                                                                 "content-length")) {
-                    has_content_length = true;
-                }
-            }
+            auto const [has_content_type, has_content_length] = headers.has("content-type", "content-length");
 
             // todo: we can optimize this, pre-calculate the default header fields and copy when needed
             if (!has_content_type) {
                 static const header_field_type content_type_field{
                   str_t{"Content-Type", headers.get_allocator()},
                   str_t{"text/html; charset=utf-8", headers.get_allocator()}};
-                headers.push_back(content_type_field);
+                headers.emplace_back(content_type_field);
             }
 
             if (!has_content_length) {
                 str_t value{headers.get_allocator()};
                 append_to(value, body.string().size() * sizeof(char));
-                headers.push_back(
+                headers.emplace_back(
                   header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
             }
         }
@@ -181,11 +197,13 @@ namespace webpp::http {
             stl::remove_cvref_t<E>...>>::template extensie_type<traits_type, response_descriptor>;
 
 
-        [[nodiscard]] constexpr bool operator==(HTTPResponse auto const& res) const noexcept {
+        template <HTTPResponse ResType>
+        [[nodiscard]] constexpr bool operator==(ResType const& res) const noexcept {
             return this->headers == res.headers && this->body == this->body;
         }
 
-        [[nodiscard]] constexpr bool operator!=(HTTPResponse auto const& res) const noexcept {
+        template <HTTPResponse ResType>
+        [[nodiscard]] constexpr bool operator!=(ResType const& res) const noexcept {
             return !operator==(res);
         }
 
@@ -224,11 +242,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename RootExtensions>
-    using simple_response_pack =
-      typename RootExtensions::template extensie_type<TraitsType, response_descriptor>;
-
-    template <Traits TraitsType, Extension... E>
-    using simple_response = simple_response_pack<TraitsType, extension_pack<E...>>;
+    using simple_response = typename RootExtensions::template extensie_type<TraitsType, response_descriptor>;
 
 
 } // namespace webpp::http

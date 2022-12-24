@@ -8,6 +8,7 @@
 #include "./http_concepts.hpp"
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
+#include "./response.hpp"
 
 namespace webpp::http {
 
@@ -37,6 +38,7 @@ namespace webpp::http {
         using fields_provider       = header_fields_provider<traits_type, root_extensions>;
         using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
         using body_type             = simple_request_body<traits_type, server_type>;
+        using response_type         = simple_response<traits_type, root_extensions>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");
@@ -65,6 +67,14 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type framework_version() const noexcept {
             return webpp_version;
+        }
+
+
+
+        [[nodiscard]] constexpr HTTPResponse auto response() const {
+            response_type res{*this};
+            // todo: calculate the default response headers based on the request here
+            return res;
         }
     };
 

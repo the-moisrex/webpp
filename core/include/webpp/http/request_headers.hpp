@@ -14,6 +14,7 @@
 #include "../traits/traits.hpp"
 #include "./headers/accept_encoding.hpp"
 #include "header_fields.hpp"
+#include "headers.hpp"
 #include "http_concepts.hpp"
 
 namespace webpp::http {
@@ -36,8 +37,12 @@ namespace webpp::http {
         fields_type fields;
 
       public:
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
         template <EnabledTraits ET>
         constexpr header_fields_provider(ET&& et) : fields{alloc::general_alloc_for<fields_type>(et)} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         [[nodiscard]] constexpr auto begin() const noexcept {
             return fields.begin();
@@ -88,10 +93,11 @@ namespace webpp::http {
      * Boost/Beast is using std::multiset-like system; should we do the same thing instead of vector-like?
      */
     template <typename HeaderEList, HTTPRequestHeaderFieldsProvider FieldsProviderType>
-    class request_headers : public FieldsProviderType, public extension_wrapper<HeaderEList> {
+    class request_headers : public headers_container<FieldsProviderType>,
+                            public extension_wrapper<HeaderEList> {
 
         using elist_type           = extension_wrapper<HeaderEList>;
-        using fields_provider_type = FieldsProviderType;
+        using fields_provider_type = headers_container<FieldsProviderType>;
 
         static_assert(
           HTTPRequestHeaderFieldsProvider<fields_provider_type>,

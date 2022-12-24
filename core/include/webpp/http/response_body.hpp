@@ -74,6 +74,24 @@ namespace webpp::http {
 
         using EList::EList;
 
+        constexpr response_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
+          : elist_type{et} {}
+
+
+        template <EnabledTraits ET>
+        constexpr response_body([[maybe_unused]] ET&&) noexcept(
+          stl::is_nothrow_default_constructible_v<elist_type>)
+          : elist_type{} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+
         [[nodiscard]] constexpr char_type const* data() const noexcept {
             if constexpr (requires(elist_type body) { body.data(); }) {
                 return elist_type::data();

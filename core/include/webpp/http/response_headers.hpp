@@ -7,6 +7,7 @@
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
 #include "header_fields.hpp"
+#include "headers.hpp"
 #include "status_code.hpp"
 
 namespace webpp::http {
@@ -23,14 +24,12 @@ namespace webpp::http {
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
-      : public stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>,
+      : public headers_container<
+          stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>>,
         public HeaderEList {
 
-        // using super =
-        //   istl::unordered_multiset<TraitsType, HeaderFieldType,
-        //   response_header_field_hash<HeaderFieldType>,
-        //                            response_header_field_equals<HeaderFieldType>>;
-        using super = stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>;
+        using container = headers_container<
+          stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>>;
 
       public:
         using traits_type     = TraitsType;
@@ -41,10 +40,38 @@ namespace webpp::http {
 
         template <typename... Args>
         constexpr response_headers(Args&&... args) noexcept
-          : super{stl::forward<Args>(args)...},
+          : container{stl::forward<Args>(args)...},
             elist_type{} {}
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>&& stl::is_constructible_v<container, ET>)
+        constexpr response_headers(ET&& et) noexcept(
+          stl::is_nothrow_constructible_v<container, ET>&& stl::is_nothrow_constructible_v<elist_type, ET>)
+          : container{et},
+            elist_type{et} {}
+
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<container, ET>)
+        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<container, ET>&&
+                                                       stl::is_nothrow_default_constructible_v<elist_type>)
+          : container{et},
+            elist_type{} {}
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                       stl::is_nothrow_default_constructible_v<container>)
+          : container{},
+            elist_type{et} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         http::status_code_type status_code = static_cast<http::status_code_type>(http::status_code::ok);
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         // set the response http status code
         constexpr response_headers& operator=(http::status_code code) noexcept {
@@ -75,7 +102,7 @@ namespace webpp::http {
 
         template <typename StringType = string_type>
         [[nodiscard]] constexpr StringType string() const {
-            StringType res{super::get_allocator()};
+            StringType res{container::get_allocator()};
             string_to<StringType>(res);
             return res;
         }

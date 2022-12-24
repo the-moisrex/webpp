@@ -129,7 +129,7 @@ namespace webpp::http {
         using extension_wrapper_type = extension_wrapper<EList>;
         using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
         using root_extensions        = RootExtensions;
-        using response_type          = simple_response_pack<traits_type, root_extensions>;
+        using response_type          = simple_response<traits_type, root_extensions>;
         using basic_context_type     = basic_context;
         using request_ref            = request_type&;
 

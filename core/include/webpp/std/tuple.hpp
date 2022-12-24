@@ -459,6 +459,38 @@ namespace webpp::istl {
         }
     };
 
+
+
+    ////////////////////////////// Tuple of type T with N elements //////////////////////////////
+
+
+    template <typename, typename>
+    struct join_tuples;
+
+    template <typename... Left, typename... Right>
+    struct join_tuples<stl::tuple<Left...>, stl::tuple<Right...>> {
+        using type = stl::tuple<Left..., Right...>;
+    };
+
+    template <typename T, unsigned N>
+    struct generate_tuple_type {
+        using left  = typename generate_tuple_type<T, N / 2>::type;
+        using right = typename generate_tuple_type<T, N / 2 + N % 2>::type;
+        using type  = typename join_tuples<left, right>::type;
+    };
+
+    template <typename T>
+    struct generate_tuple_type<T, 1> {
+        using type = stl::tuple<T>;
+    };
+
+    template <typename T>
+    struct generate_tuple_type<T, 0> {
+        using type = stl::tuple<>;
+    };
+
+
+
 } // namespace webpp::istl
 
 namespace std {

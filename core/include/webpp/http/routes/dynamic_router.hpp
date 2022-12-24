@@ -109,7 +109,7 @@ namespace webpp::http {
         using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
         using routes_type      = stl::vector<route_type, vector_allocator>;
         using context_type     = simple_context<request_view>;
-        using response_type    = simple_response_pack<traits_type, extension_list>;
+        using response_type    = simple_response<traits_type, extension_list>;
 
         static constexpr auto log_cat = "DRouter";
 

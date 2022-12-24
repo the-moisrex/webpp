@@ -116,6 +116,21 @@ namespace webpp::http {
         // todo: add support for Allocator constructors and even references to other stuff
 
 
+        [[nodiscard]] HTTPResponse auto response(HTTPRequest auto& req) {
+            if constexpr (requires {
+                              { application_type::response(req) } -> HTTPResponse;
+                          }) {
+                return application_type::response(req);
+            } else if constexpr (requires {
+                                     { application_type::response() } -> HTTPResponse;
+                                 }) {
+                return application_type::response();
+            } else {
+                return req.response();
+            }
+        }
+
+
         /**
          * The default error message provider; if the application doesn't provide one, we use this as the
          * default message provider function to generate error messages.
@@ -137,17 +152,20 @@ namespace webpp::http {
                                  }) {
                 return application_type::error(err, req);
             } else {
-                return fmt::format("<!doctype html>\n"
-                                   "<html>\n"
-                                   "  <head>\n"
-                                   "    <title>{0} - {1}</title>\n"
-                                   "  <head>\n"
-                                   "  <body>\n"
-                                   "    <h1>{0} - {1}</h1>\n"
-                                   "  </body>\n"
-                                   "</html>\n",
-                                   static_cast<status_code_type>(err),
-                                   http::status_code_reason_phrase(err));
+                auto res    = response(req);
+                res.headers = err;
+                res.body    = fmt::format("<!DOCTYPE html>\n"
+                                          "<html>\n"
+                                          "  <head>\n"
+                                          "    <title>{0} - {1}</title>\n"
+                                          "  <head>\n"
+                                          "  <body>\n"
+                                          "    <h1>{0} - {1}</h1>\n"
+                                          "  </body>\n"
+                                          "</html>\n",
+                                       static_cast<status_code_type>(err),
+                                       http::status_code_reason_phrase(err));
+                return res;
             }
         }
 
