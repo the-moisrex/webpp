@@ -12,6 +12,15 @@
 
 namespace webpp::http {
 
+    namespace details {
+        template <typename TraitsType, typename HeaderFieldType>
+        struct response_headers_container
+          : stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>> {
+            // this field type is required for the "headers_container" to work
+            using field_type = HeaderFieldType;
+        };
+    } // namespace details
+
 
     /**
      * Setting non-ascii characters in the value section of the headers should
@@ -24,12 +33,10 @@ namespace webpp::http {
      */
     template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
     class response_headers
-      : public headers_container<
-          stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>>,
+      : public headers_container<details::response_headers_container<TraitsType, HeaderFieldType>>,
         public HeaderEList {
 
-        using container = headers_container<
-          stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>>;
+        using container = headers_container<details::response_headers_container<TraitsType, HeaderFieldType>>;
 
       public:
         using traits_type     = TraitsType;

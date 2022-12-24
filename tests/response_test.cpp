@@ -47,6 +47,14 @@ TEST(Response, Init) {
     EXPECT_EQ(res, res2);
 }
 
+TEST(Response, ResHeaders) {
+    auto res = res_t::create();
+    res.headers.emplace_back("one", "1");
+    EXPECT_EQ(res.headers["one"], "1");
+    res.headers.emplace_back("two", "2");
+    EXPECT_EQ(res.headers.has("one", "two"), stl::make_tuple(true, true));
+}
+
 TEST(Response, File) {
     std::filesystem::path file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");

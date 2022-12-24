@@ -123,38 +123,6 @@ namespace webpp::http {
         constexpr request_headers& operator=(request_headers&&) noexcept = default;
 
 
-        /**
-         * Get an iterator pointing to the field value that holds the specified header name
-         */
-        [[nodiscard]] constexpr auto iter(name_type name) const noexcept {
-            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
-                return field.is_name(name);
-            });
-        }
-
-
-        /**
-         * Get the field value that holds the specified header name
-         */
-        [[nodiscard]] constexpr stl::optional<field_type> field(name_type name) const noexcept {
-            const auto res = iter(name);
-            return res == this->end() ? stl::nullopt : *res;
-        }
-
-
-        /**
-         * Get the value of a header
-         * Returns an empty string if there are no header with that name
-         */
-        [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
-            const auto res = iter(name);
-            return res == this->end() ? value_type{} : res->value;
-        }
-
-        [[nodiscard]] constexpr value_type operator[](name_type name) const noexcept {
-            return get(name);
-        }
-
         // todo: add all the features in the "http/headers" directory here
         /*
         template <Traits TraitsType = default_traits>
@@ -172,7 +140,7 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr stl::size_t content_length() const noexcept {
             // todo: this might not be as safe as you thought
-            return to_size_t(get("content-length"));
+            return to_size_t(this->get("content-length"));
         }
     };
 

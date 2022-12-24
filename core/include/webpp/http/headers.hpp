@@ -13,7 +13,43 @@ namespace webpp::http {
     struct headers_container : public Container {
         using container_type = Container;
 
+        using field_type = typename container_type::field_type;
+        using name_type  = typename field_type::name_type;
+        using value_type = typename field_type::value_type;
+
         using Container::Container;
+
+        /**
+         * Get an iterator pointing to the field value that holds the specified header name
+         */
+        [[nodiscard]] constexpr auto iter(name_type name) const noexcept {
+            return stl::find_if(this->begin(), this->end(), [name](field_type const& field) noexcept {
+                return field.is_name(name);
+            });
+        }
+
+
+        /**
+         * Get the field value that holds the specified header name
+         */
+        [[nodiscard]] constexpr stl::optional<field_type> field(name_type name) const noexcept {
+            const auto res = iter(name);
+            return res == this->end() ? stl::nullopt : *res;
+        }
+
+
+        /**
+         * Get the value of a header
+         * Returns an empty string if there are no header with that name
+         */
+        [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
+            const auto res = iter(name);
+            return res == this->end() ? value_type{} : res->value;
+        }
+
+        [[nodiscard]] constexpr value_type operator[](name_type name) const noexcept {
+            return get(name);
+        }
 
         /**
          * Check if the specified names are in headers
