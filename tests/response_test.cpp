@@ -53,6 +53,7 @@ TEST(Response, ResHeaders) {
     EXPECT_EQ(res.headers["one"], "1");
     res.headers.emplace_back("two", "2");
     EXPECT_EQ(res.headers.has("one", "two"), stl::make_tuple(true, true));
+    EXPECT_EQ(res.headers.has("one", "two", "three"), stl::make_tuple(true, true, false));
 }
 
 TEST(Response, File) {

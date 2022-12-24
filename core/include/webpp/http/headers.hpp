@@ -1,7 +1,7 @@
 // Created by moisrex on 12/23/22.
 
-#ifndef WEBPP_HEADERS_HPP
-#define WEBPP_HEADERS_HPP
+#ifndef WEBPP_HTTP_HEADERS_COMMON_HPP
+#define WEBPP_HTTP_HEADERS_COMMON_HPP
 
 #include "../std/tuple.hpp"
 
@@ -80,4 +80,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_HEADERS_HPP
+#endif // WEBPP_HTTP_HEADERS_COMMON_HPP

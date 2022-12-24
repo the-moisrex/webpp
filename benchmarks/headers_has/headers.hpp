@@ -9,6 +9,10 @@ namespace stl {
 }
 
 struct S : std::vector<std::string> { // I know, I know
+
+
+    // The idea has come from here:
+    // https://twitter.com/_JoelFilho/status/1606642294160994304?s=20
     template<typename... NameType>
     auto has(NameType&&... name) {
         if constexpr(sizeof...(NameType) > 1) {
