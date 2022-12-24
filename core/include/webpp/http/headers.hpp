@@ -28,7 +28,7 @@ namespace webpp::http {
                 return stl::find(this->begin(), this->end(), name...) != this->end();
             } else if constexpr (sizeof...(NameType) > 1) {
                 auto tup = stl::make_tuple(((stl::ignore = name, false), ...));
-                auto fillter =
+                auto filler =
                   [&tup, names = stl::forward_as_tuple(stl::forward<NameType>(name)...)]<stl::size_t... I>(
                     field_type const& field,
                     stl::index_sequence<I...>) constexpr noexcept {
