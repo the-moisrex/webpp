@@ -5,6 +5,11 @@
 
 #include "../../../std/type_traits.hpp"
 #include "../../../traits/traits.hpp"
+#include "beast_string_body.hpp"
+
+#include <boost/beast/core.hpp>
+#include <boost/beast/http/read.hpp>
+#include <boost/beast/http/write.hpp>
 
 
 namespace webpp::http::beast_proto {
@@ -16,34 +21,43 @@ namespace webpp::http::beast_proto {
      */
     template <typename ProtocolType>
     struct beast_request_body_communicator {
-        using protocol_type             = ProtocolType;
-        using traits_type               = typename protocol_type::traits_type;
-        using char_type                 = traits::char_type<traits_type>;
-        using size_type                 = stl::streamsize;
-        using http_worker_type          = typename protocol_type::http_worker_type;
-        using beast_request_parser_type = typename http_worker_type::beast_request_parser_type;
-        using body_type                 = typename http_worker_type::beast_body_type;
-        using body_ptr                  = stl::add_pointer_t<body_type>;
+        using protocol_type    = ProtocolType;
+        using traits_type      = typename protocol_type::traits_type;
+        using char_type        = traits::char_type<traits_type>;
+        using size_type        = stl::streamsize;
+        using http_worker_type = typename protocol_type::http_worker_type;
+
+        // if you change, remember to sync these types with beast's http_worker's types, I'm not using
+        // http_worker_type directly because it's a still an incomplete type at this point.
+        using string_type         = traits::general_string<traits_type>;
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        using char_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
+        using beast_body_type = string_body_of<string_type>;
+        using beast_request_parser_type =
+          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
+        using request_type = typename beast_request_parser_type::value_type;
+        using request_ptr  = stl::add_pointer_t<request_type>;
 
 
         void set_beast_parser(beast_request_parser_type& input_parser) noexcept {
-            body = input_parser.get().body();
+            request = &input_parser.get();
         }
 
         [[nodiscard]] size_type read(char_type* data, size_type count) const {
-            return stl::copy_n(body->data(), count, data) - body->data();
+            return stl::copy_n(request->body().data(), count, data) - request->body().data();
         }
 
         [[nodiscard]] size_type read(char_type* data) const {
-            return stl::copy_n(body->data(), size(), data) - body->data();
+            return stl::copy_n(request->body().data(), size(), data) - request->body().data();
         }
 
         [[nodiscard]] size_type size() const noexcept {
-            return body->payload_size();
+            return request->payload_size();
         }
 
       private:
-        body_ptr body = nullptr;
+        request_ptr request = nullptr;
     };
 
 

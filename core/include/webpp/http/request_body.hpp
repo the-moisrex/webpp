@@ -16,15 +16,32 @@ namespace webpp::http {
      */
     template <typename TraitsType, HTTPRequestBodyCommunicator Communicator, typename EList>
     struct request_body : public EList, public Communicator {
-        using traits_type                 = TraitsType;
-        using request_body_extension_list = EList;
-        using request_body_communicator   = Communicator; // the way that the Protocol gives us the body
-        using char_type                   = traits::char_type<traits_type>;
-        using size_type                   = stl::streamsize;
+        using traits_type               = TraitsType;
+        using elist_type                = EList;
+        using request_body_communicator = Communicator; // the way that the Protocol gives us the body
+        using char_type                 = traits::char_type<traits_type>;
+        using size_type                 = stl::streamsize;
 
         template <typename... Args>
-        constexpr request_body(Args&&... args) noexcept
-          : request_body_extension_list{stl::forward<Args>(args)...} {}
+            requires(stl::is_constructible_v<elist_type, Args...>)
+        constexpr request_body(Args&&... args) noexcept(stl::is_nothrow_constructible_v<elist_type, Args...>)
+          : elist_type{stl::forward<Args>(args)...} {}
+
+        constexpr request_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr request_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
+          : elist_type{stl::forward<ET>(et)} {}
+
+        template <EnabledTraits ET>
+        constexpr request_body([[maybe_unused]] ET&&) noexcept(
+          stl::is_nothrow_default_constructible_v<elist_type>)
+          : elist_type{} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
 
         /**

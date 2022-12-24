@@ -133,7 +133,7 @@ namespace webpp::http::beast_proto {
 
             // putting the beast's request into webpp's request
             req->set_beast_request(breq);
-            req->body.set_beast_parsert(*parser);
+            req->body.set_beast_parser(*parser);
 
             HTTPResponse auto res = server.call_app(*req);
 
