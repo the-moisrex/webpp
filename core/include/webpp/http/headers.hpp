@@ -12,7 +12,6 @@ namespace webpp::http {
     template <typename Container>
     struct headers_container : public Container {
         using container_type = Container;
-        using field_type     = typename container_type::value_type;
 
         using Container::Container;
 
@@ -27,11 +26,11 @@ namespace webpp::http {
             if constexpr (sizeof...(NameType) == 1) {
                 return stl::find(this->begin(), this->end(), name...) != this->end();
             } else if constexpr (sizeof...(NameType) > 1) {
-                auto tup = stl::make_tuple(((stl::ignore = name, false), ...));
-                auto filler =
-                  [&tup, names = stl::forward_as_tuple(stl::forward<NameType>(name)...)]<stl::size_t... I>(
-                    field_type const& field,
-                    stl::index_sequence<I...>) constexpr noexcept {
+                stl::tuple tup{(stl::ignore.operator=(name), false)...}; // fill with "false" values
+                auto       names = stl::forward_as_tuple<NameType...>(name...);
+                static_assert(stl::tuple_size_v<decltype(tup)> == stl::tuple_size_v<decltype(names)>);
+                auto filler = [&]<stl::size_t... I>(auto const& field,
+                                                    stl::index_sequence<I...>) constexpr noexcept {
                     ((field == stl::get<I>(names) && (stl::get<I>(tup) = true)), ...);
                 };
                 for (const auto& field : *this) {
