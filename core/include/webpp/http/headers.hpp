@@ -62,16 +62,7 @@ namespace webpp::http {
             if constexpr (sizeof...(NameType) == 1) {
                 return stl::find(this->begin(), this->end(), name...) != this->end();
             } else if constexpr (sizeof...(NameType) > 1) {
-                stl::tuple tup{(stl::ignore.operator=(name), false)...}; // fill with "false" values
-                auto const names  = stl::forward_as_tuple<NameType...>(name...);
-                auto const filler = [&]<stl::size_t... I>(auto const& field,
-                                                          stl::index_sequence<I...>) constexpr noexcept {
-                    ((field == stl::get<I>(names) && (stl::get<I>(tup) = true)), ...);
-                };
-                for (const auto& field : *this) {
-                    filler(field, stl::make_index_sequence<sizeof...(NameType)>{});
-                }
-                return tup;
+                return stl::make_tuple((stl::find(this->begin(), this->end(), name) != this->end())...);
             } else {
                 return true;
             }

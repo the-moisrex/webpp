@@ -1,6 +1,7 @@
 flags = -std=c++20 -isystem /usr/local/include -L/usr/local/lib -lpthread -lbenchmark_main -lbenchmark
 optflags = -flto -Ofast -DNDEBUG -march=native -mtune=native
 files = headers_has.cpp
+CXX=g++
 
 all: gcc
 .PHONY: all
@@ -12,7 +13,7 @@ clang: $(files)
 	clang++ $(flags) $(optflags) $(files)
 
 gcc-noopt: $(files)
-	g++ $(flags) $(files)
+	$(CXX) $(flags) $(files)
 
 clang-noopt: $(files)
 	clang++ $(flags) $(files)
