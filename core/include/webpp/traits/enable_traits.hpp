@@ -34,8 +34,10 @@ namespace webpp {
         static constexpr bool debug = false;
 #endif
 
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
         // when this object is a mother of another class, this method can help get the traits' object.
@@ -82,13 +84,19 @@ namespace webpp {
         static constexpr bool debug = false;
 #endif
 
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
         constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
@@ -100,10 +108,14 @@ namespace webpp {
 
         constexpr explicit enable_traits(enable_traits const&) noexcept = default;
         constexpr explicit enable_traits(enable_traits&&) noexcept      = default;
+        constexpr ~enable_traits()                                      = default;
 
         constexpr enable_traits& operator=(enable_traits const& rhs) {
-            logger     = rhs.logger;
-            alloc_pack = rhs.alloc_pack;
+            if (this != &rhs) {
+                logger     = rhs.logger;
+                alloc_pack = rhs.alloc_pack;
+            }
+            return *this;
         }
 
         constexpr enable_traits& operator=(enable_traits&& rhs) noexcept {
@@ -141,6 +153,10 @@ namespace webpp {
 
 
 
+    /**
+     * Inheriting from this means you can inherit from type T and we make sure either T is traits' enabled,
+     * or if it's not, we provide one for you.
+     */
     template <Traits TraitsType, typename T>
     struct enable_traits_with : public T, public enable_traits<TraitsType> {
         using enable_traits<TraitsType>::enable_traits;
@@ -152,6 +168,37 @@ namespace webpp {
         using T::T;
     };
 
+    /**
+     * If
+     *  - traits type:          enable owner traits
+     *  - enable traits type:   enable traits
+     *  - enable owner traits: enable owner traits
+     * It's almost the opposite of enable_traits itself which only holds a reference, this one holds the
+     * owner too if a enable_traits is not passed to it.
+     */
+    template <Traits TraitsType>
+    struct enable_traits_access : public enable_owner_traits<TraitsType> {
+        using enable_owner_traits<TraitsType>::enable_owner_traits;
+    };
+
+    template <Traits TraitsType>
+    struct enable_traits_access<enable_traits<TraitsType>> : public enable_traits<TraitsType> {
+        using enable_traits<TraitsType>::enable_traits;
+    };
+
+    template <Traits TraitsType>
+    struct enable_traits_access<enable_owner_traits<TraitsType>> : public enable_owner_traits<TraitsType> {
+        using enable_owner_traits<TraitsType>::enable_owner_traits;
+    };
+
+
+    template <typename T>
+    concept TraitsAccess = Traits<T> || requires {
+        typename T::traits_type;
+        requires Traits<typename T::traits_type>;
+        requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
+          stl::same_as<T, enable_owner_traits<typename T::traits_type>>;
+    };
 
     // I added these here because they are traits' related and also allocator pack related, but their intent
     // is to simplify the users of the traits not allocator packs directly

@@ -1,9 +1,21 @@
-#ifndef WEBPP_BODY_H
-#define WEBPP_BODY_H
+#ifndef WEBPP_RESPONSE_BODY_HPP
+#define WEBPP_RESPONSE_BODY_HPP
 
 #include "../extensions/extension.hpp"
+#include "../std/functional.hpp"
 
 namespace webpp::http {
+
+
+    template <Traits TraitsType>
+    struct default_response_body_communicator {
+        using traits_type   = TraitsType;
+        using char_type     = traits::char_type<traits_type>;
+        using function_type = istl::function<void(char_type const* out_ptr)>;
+
+      private:
+      public:
+    };
 
     /**
      * There are two types of bodies:
@@ -111,13 +123,13 @@ namespace webpp::http {
             }
         }
 
-        constexpr response_body& write(char_type const* data, stl::streamsize count) {
-            if constexpr (requires {elist_type::write(data, count);}) {
-                elist_type::write(data, count);
+        constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
+            if constexpr (requires { elist_type::write(data, count); }) {
+                return elist_type::write(data, count);
             } else {
                 // todo
+                return 0;
             }
-            return *this;
         }
 
         [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {
@@ -151,4 +163,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_BODY_H
+#endif // WEBPP_RESPONSE_BODY_HPP

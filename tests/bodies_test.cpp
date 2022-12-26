@@ -64,3 +64,14 @@ TEST(Body, File) {
     EXPECT_EQ(the_body.string(), "Hello World");
     std::filesystem::remove(file);
 }
+
+
+TEST(Body, StringCustomBody) {
+    string_custom_body body;
+    body = "Hello world";
+    EXPECT_EQ(body, "Hello World");
+    string_custom_body body2 = "Hello World";
+    EXPECT_EQ(body, body2);
+    body2 = "nice";
+    EXPECT_EQ("nice", body2);
+}

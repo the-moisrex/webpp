@@ -131,6 +131,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/json.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/bodies/string.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/bodies/custom_body.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/cgi.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/fcgi.hpp
