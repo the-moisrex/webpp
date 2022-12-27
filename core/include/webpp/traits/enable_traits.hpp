@@ -94,7 +94,8 @@ namespace webpp {
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                    logger{obj.logger} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -159,12 +160,14 @@ namespace webpp {
      */
     template <Traits TraitsType, typename T>
     struct enable_traits_with : public T, public enable_traits<TraitsType> {
+        using enabled_type = T;
         using enable_traits<TraitsType>::enable_traits;
     };
 
     template <Traits TraitsType, EnabledTraits T>
         requires(EnabledTraitsOf<TraitsType, T>)
     struct enable_traits_with<TraitsType, T> : public T {
+        using enabled_type = T;
         using T::T;
     };
 
@@ -176,8 +179,20 @@ namespace webpp {
      * It's almost the opposite of enable_traits itself which only holds a reference, this one holds the
      * owner too if a enable_traits is not passed to it.
      */
+    template <typename TraitsType>
+    struct enable_traits_access;
+
+    template <typename T>
+        requires requires {
+                     typename T::traits_type;
+                     requires Traits<typename T::traits_type>;
+                 }
+    struct enable_traits_access<T> : public enable_traits_with<typename T::traits_type, T> {
+        using enable_traits_with<typename T::traits_type, T>::enable_traits_with;
+    };
+
     template <Traits TraitsType>
-    struct enable_traits_access : public enable_owner_traits<TraitsType> {
+    struct enable_traits_access<TraitsType> : public enable_owner_traits<TraitsType> {
         using enable_owner_traits<TraitsType>::enable_owner_traits;
     };
 
@@ -191,14 +206,27 @@ namespace webpp {
         using enable_owner_traits<TraitsType>::enable_owner_traits;
     };
 
+    template <Traits TraitsType, typename T>
+    struct enable_traits_access<enable_traits_with<TraitsType, T>>
+      : public enable_traits_with<TraitsType, T> {
+        using enable_traits_with<TraitsType, T>::enable_traits_with;
+    };
+
 
     template <typename T>
-    concept TraitsAccess = Traits<T> || requires {
-        typename T::traits_type;
-        requires Traits<typename T::traits_type>;
-        requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
-          stl::same_as<T, enable_owner_traits<typename T::traits_type>>;
-    };
+    concept TraitsAccess =
+      Traits<T> ||
+      requires {
+          typename T::traits_type;
+          requires Traits<typename T::traits_type>;
+          requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
+                     stl::same_as<T, enable_owner_traits<typename T::traits_type>> ||
+                     requires {
+                         typename T::enabled_type;
+                         requires stl::
+                           same_as<T, enable_traits_with<typename T::traits_type, typename T::enabled_type>>;
+                     };
+      };
 
     // I added these here because they are traits' related and also allocator pack related, but their intent
     // is to simplify the users of the traits not allocator packs directly
@@ -209,10 +237,10 @@ namespace webpp {
          */
         template <typename T>
         concept AllocatorHolder = requires(T holder) {
-            typename T::allocator_pack_type;
-            requires AllocatorPack<typename T::allocator_pack_type>;
-            { holder.alloc_pack } -> AllocatorPack;
-        };
+                                      typename T::allocator_pack_type;
+                                      requires AllocatorPack<typename T::allocator_pack_type>;
+                                      { holder.alloc_pack } -> AllocatorPack;
+                                  };
 
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto local_allocator(AllocHolder& holder) noexcept {

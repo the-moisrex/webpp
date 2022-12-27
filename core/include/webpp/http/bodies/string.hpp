@@ -8,6 +8,7 @@
 #include "../../std/concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../../storage/file.hpp"
+#include "../../strings/istring.hpp"
 #include "../../traits/traits.hpp"
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
@@ -154,7 +155,8 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator && requires {
+                if constexpr (!has_allocator &&
+                              requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -220,92 +222,29 @@ namespace webpp::http {
 
 
 
-    template <TraitsAccess TraitsType = default_traits>
-    struct string_custom_body : public custom_body<string_custom_body<TraitsType>, TraitsType> {
-        using custom_body_type = custom_body<string_custom_body, TraitsType>;
-        using traits_type      = typename custom_body_type::traits_type;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
-        using allocator_type   = typename string_type::allocator_type;
-        using char_type        = traits::char_type<traits_type>;
+    template <typename StringType>
+        requires(istl::String<StringType> || istl::StringView<StringType>)
+    struct custom_body<StringType> : public custom_body<istring<StringType>> {
+        using string_type = StringType;
 
-      private:
-        // the file extension will use the "content"'s allocator directly
-        using alloc_type = allocator_type const&;
-        string_type content{alloc::general_alloc_for<string_type>(*this)};
-
-      public:
-        using custom_body<string_custom_body, TraitsType>::custom_body;
-
-
-        // load a file
-        constexpr string_custom_body& operator=(stl::filesystem::path const& file) {
-            static_cast<void>(load(file));
-            return *this;
-        }
-
-        template <typename T>
-            requires(istl::StringifiableOf<string_type, T>)
-        constexpr string_custom_body& operator=(T&& str) {
-            content = istl::stringify_of<string_type>(stl::forward<T>(str), content.get_allocator());
-            return *this;
-        }
+        using custom_body<istring<StringType>>::custom_body;
 
         /**
          * @brief Get a reference to the body's string
          * @return string
          */
         [[nodiscard]] string_type const& string() const noexcept {
-            return content;
-        }
-
-        template <typename StrType>
-            requires(istl::StringifiableOf<string_type, StrType>)
-        [[nodiscard]] string_type const& string(StrType&& str) {
-            return content.operator=(stl::forward<StrType>(str));
+            return *this;
         }
 
         constexpr operator string_type() const noexcept {
-            return content;
+            return *this;
         }
-
-
 
         // todo: add "replace_format"
         // todo: add istring member functions to it
         // todo: operator >> and <<
 
-        template <typename StrT>
-            requires(istl::StringViewifiableOf<string_view_type, StrT>)
-        [[nodiscard]] constexpr bool operator==(StrT&& rhs) const noexcept {
-            return content == istl::string_viewify_of<string_view_type>(stl::forward<StrT>(rhs));
-        }
-
-        [[nodiscard]] constexpr auto operator==(string_custom_body const& rhs) const noexcept {
-            return content == rhs.content;
-        }
-
-        [[nodiscard]] constexpr auto operator<=>(string_custom_body const& rhs) const noexcept = default;
-
-
-        template <typename StrT>
-            requires(istl::StringViewifiableOf<string_view_type, StrT>)
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(StrT&& rhs) const noexcept {
-            return stl::compare_three_way{}(
-              content,
-              istl::string_viewify_of<string_view_type>(stl::forward<StrT>(rhs)));
-        }
-
-
-        [[nodiscard]] alloc_type get_allocator() const noexcept {
-            return content.get_allocator();
-        }
-
-        template <typename Arg>
-        constexpr auto& operator=(Arg&& arg) {
-            content.operator=(stl::forward<Arg>(arg));
-            return *this;
-        }
 
         // load a file as a string for the body
         bool load(stl::filesystem::path const& filepath) noexcept {
@@ -318,24 +257,13 @@ namespace webpp::http {
             }
             return res;
         }
-
-
-        template <typename StrType>
-            requires(istl::StringViewifiableOf<string_view_type, StrType>)
-        constexpr auto& operator<<(StrType&& str) {
-            auto const str_view = istl::string_viewify_of<string_view_type>(stl::forward<StrType>(str));
-            content.append(str_view.data(), str_view.size());
-            return *this;
-        }
     };
 
 
-    template <EnabledTraits ET>
-    string_custom_body(ET&&) -> string_custom_body<ET>;
-
-
-    template <typename T>
-    string_custom_body(T&&) -> string_custom_body<default_traits>;
+    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    template <istl::CharType CharT, stl::size_t size>
+    custom_body(const CharT (&)[size]) -> custom_body<stl::basic_string_view<CharT>>;
+    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 
 } // namespace webpp::http
 

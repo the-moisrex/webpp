@@ -3,6 +3,7 @@
 #ifndef WEBPP_ISTRING_HPP
 #define WEBPP_ISTRING_HPP
 
+#include "../std/functional.hpp"
 #include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
@@ -46,12 +47,10 @@ namespace webpp {
 #endif
 
         static constexpr bool has_allocator = requires(string_type str) {
-            typename string_type::allocator_type;
-            str.get_allocator();
-        };
-        static constexpr bool is_mutable = requires(string_type str) {
-            str.clear();
-        };
+                                                  typename string_type::allocator_type;
+                                                  str.get_allocator();
+                                              };
+        static constexpr bool is_mutable = requires(string_type str) { str.clear(); };
 
       private:
         // this will get you the allocator inside the StrT which should be the above "string_type"
@@ -71,17 +70,6 @@ namespace webpp {
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
       public:
-        // todo
-        struct range {
-            char_type* start;
-            char_type* end;
-
-            constexpr range(char_type* _start, char_type* _end) noexcept : start(_start), end(_end) {}
-            constexpr range(char_type* _start, stl::size_t _size) noexcept
-              : start(_start),
-                end(_start + _size) {}
-        };
-
         template <typename... Args>
         constexpr istring(Args&&... args) noexcept(noexcept(string_type(stl::forward<Args>(args)...)))
           : string_type{stl::forward<Args>(args)...} {}
@@ -92,7 +80,7 @@ namespace webpp {
 
         auto get_allocator() const noexcept {
             if constexpr (has_allocator) {
-                return this->get_allocator();
+                return string_type::get_allocator();
             } else {
                 return allocator_type{};
             }
@@ -364,9 +352,13 @@ namespace webpp {
         }
     };
 
+    template <typename StringType>
+    struct istring<istring<StringType>> : public istring<StringType> {};
 
+    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
     template <istl::CharType CharT, stl::size_t size>
     istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
+    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 
     using std_istring      = istring<stl::string>;
     using std_istring_view = istring<stl::string_view>;

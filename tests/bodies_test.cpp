@@ -67,10 +67,11 @@ TEST(Body, File) {
 
 
 TEST(Body, StringCustomBody) {
-    string_custom_body body;
+    custom_body<stl::string> body;
     body = "Hello World";
     EXPECT_EQ(body, "Hello World");
-    string_custom_body body2 = "Hello World";
+    custom_body<stl::string> body2;
+    body2 = "Hello World";
     EXPECT_EQ(body, body2);
     body2 = "nice";
     EXPECT_EQ("nice", body2);
