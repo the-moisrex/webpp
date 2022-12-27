@@ -68,7 +68,7 @@ TEST(Body, File) {
 
 TEST(Body, StringCustomBody) {
     string_custom_body body;
-    body = "Hello world";
+    body = "Hello World";
     EXPECT_EQ(body, "Hello World");
     string_custom_body body2 = "Hello World";
     EXPECT_EQ(body, body2);
