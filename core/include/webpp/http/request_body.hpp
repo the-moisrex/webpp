@@ -27,7 +27,9 @@ namespace webpp::http {
         constexpr request_body(Args&&... args) noexcept(stl::is_nothrow_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
-        constexpr request_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+        constexpr request_body()
+            requires(stl::is_default_constructible_v<elist_type>)
+        = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -58,6 +60,54 @@ namespace webpp::http {
          */
         constexpr size_type read(char_type* data) const {
             return request_body_communicator::read(data);
+        }
+
+
+        template <typename T>
+        constexpr T as() const {
+            if constexpr (requires {
+                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_request_body<T>(*this);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(*this);
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the request body to the specified type."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+        }
+
+        template <typename T>
+        constexpr operator T() const {
+            return as<T>();
+        }
+
+
+
+        template <typename T>
+        constexpr request_body& set(T&& obj) {
+            if constexpr (requires { serialize_request_body<T>(stl::forward<T>(obj), *this); }) {
+                serialize_request_body<T>(stl::forward<T>(obj), *this);
+            } else if constexpr (requires { serialize_body<T>(stl::forward<T>(obj), *this); }) {
+                serialize_body<T>(stl::forward<T>(obj), *this);
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the specified object to a request body."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+            return *this;
+        }
+
+        template <typename T>
+            requires(!requires(T obj) { elist_type::operator=(obj); })
+        constexpr request_body& operator=(T&& obj) {
+            set(stl::forward<T>(obj));
+            return *this;
         }
     };
 

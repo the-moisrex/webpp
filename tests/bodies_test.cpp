@@ -67,12 +67,16 @@ TEST(Body, File) {
 
 
 TEST(Body, StringCustomBody) {
-    custom_body<stl::string> body;
-    body = "Hello World";
-    EXPECT_EQ(body, "Hello World");
-    custom_body<stl::string> body2;
-    body2 = "Hello World";
-    EXPECT_EQ(body, body2);
-    body2 = "nice";
-    EXPECT_EQ("nice", body2);
+    text_body_type body = "Testing";
+    body                = "Hello World";
+    auto body_str       = body.template as<stl::string>();
+    EXPECT_EQ(body_str, "Hello World");
+    text_body_type body2;
+    body2          = "Hello World";
+    auto body_str2 = body2.template as<stl::string>();
+    EXPECT_EQ(body_str, body_str2);
+    body_str2 = "nice";
+    body2     = body_str2;
+    body_str2 = body2.template as<stl::string>();
+    EXPECT_EQ("nice", body_str2);
 }

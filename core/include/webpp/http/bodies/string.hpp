@@ -13,7 +13,6 @@
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
 #include "../status_code.hpp"
-#include "./custom_body.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -220,50 +219,32 @@ namespace webpp::http {
 
 
 
-
-
-    template <typename StringType>
-        requires(istl::String<StringType> || istl::StringView<StringType>)
-    struct custom_body<StringType> : public custom_body<istring<StringType>> {
-        using string_type = StringType;
-
-        using custom_body<istring<StringType>>::custom_body;
-
-        /**
-         * @brief Get a reference to the body's string
-         * @return string
-         */
-        [[nodiscard]] string_type const& string() const noexcept {
-            return *this;
+    template <typename T, typename BodyType>
+        requires(istl::Stringifiable<T> || istl::StringViewifiable<T>)
+    constexpr T deserialize_body(BodyType const& body) {
+        using type = stl::remove_cvref_t<T>;
+        if constexpr (istl::String<T> && EnabledTraits<BodyType>) {
+            return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
+        } else if constexpr (istl::StringView<T>) {
+            return istl::string_viewify_of<type>(body);
+        } else {
+            static_assert_false(T, "This should never happen.");
         }
+    }
 
-        constexpr operator string_type() const noexcept {
-            return *this;
+    template <typename T>
+        requires(istl::StringViewifiable<T>)
+    constexpr void serialize_body(T&& str, auto& body) {
+        using type          = stl::remove_cvref_t<T>;
+        auto const str_view = istl::string_viewify(stl::forward<T>(str));
+        if constexpr (requires { body.operator=(str_view); }) {
+            body = str_view;
+        } else if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {
+            body.write(str_view.data(), str_view.size());
+        } else {
+            static_assert_false(type, "The body type doesn't support strings.");
         }
-
-        // todo: add "replace_format"
-        // todo: add istring member functions to it
-        // todo: operator >> and <<
-
-
-        // load a file as a string for the body
-        bool load(stl::filesystem::path const& filepath) noexcept {
-            auto result = object::make_general<string_type>(*this);
-
-            bool const res = file::get_to(filepath, result);
-            if (res) {
-                // read the file successfully
-                *this = stl::move(result);
-            }
-            return res;
-        }
-    };
-
-
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-    template <istl::CharType CharT, stl::size_t size>
-    custom_body(const CharT (&)[size]) -> custom_body<stl::basic_string_view<CharT>>;
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    }
 
 } // namespace webpp::http
 
