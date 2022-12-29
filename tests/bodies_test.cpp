@@ -67,6 +67,8 @@ TEST(Body, File) {
 
 
 TEST(Body, StringCustomBody) {
+    static_assert(istl::String<stl::string> && stl::is_default_constructible_v<stl::string>,
+                  "We need string to be default constructible for this test to work.");
     text_body_type body = "Testing";
     body                = "Hello World";
     auto body_str       = body.template as<stl::string>();

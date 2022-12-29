@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_BODIES_STRING_H
 #define WEBPP_HTTP_BODIES_STRING_H
 
+#include "../../configs/constants.hpp"
 #include "../../extensions/extension.hpp"
 #include "../../memory/object.hpp"
 #include "../../std/concepts.hpp"
@@ -218,18 +219,77 @@ namespace webpp::http {
     };
 
 
+    template <typename T, typename BodyType>
+        requires(istl::String<T> || istl::StringView<T>)
+    constexpr void deserialize_body(T& str, BodyType const& body) {
+        using type      = stl::remove_cvref_t<T>;
+        using char_type = istl::char_type_of<type>;
+        if constexpr (istl::String<type>) {
+            if constexpr (requires {
+                              str.resize(1);
+                              { body.size() } -> stl::same_as<stl::size_t>;
+                          }) {
+                str.resize(str.size() + body.size());
+            }
+            if constexpr (requires {
+                              body.data();
+                              body.size();
+                          }) {
+                str.append(body.data(), body.size());
+            } else if constexpr (requires { body.read(str.data()); }) {
+                body.read(str.data());
+            } else if constexpr (requires(stl::streamsize count) { body.read(str.data(), count); }) {
+                for (;;) {
+                    stl::streamsize res = body.read(str.data() + str.size(), default_buffer_size);
+                    if (res == 0)
+                        break;
+                }
+            } else {
+                static_assert_false(
+                  T,
+                  "We're not able to put the body to the string; the body type is unknown to us.");
+            }
+        } else if constexpr (istl::StringView<T>) {
+            if constexpr (istl::StringViewifiableOf<type, BodyType>) {
+                str = istl::string_viewify_of<type>(body);
+            } else {
+                static_assert_false(T,
+                                    "We have to read and store the body into a string container, "
+                                    "a string view can't allocate memory for the body.");
+            }
+        } else {
+            static_assert_false(
+              T,
+              "We don't know how to get the string out of the body and append it to the string.");
+        }
+    }
+
 
     template <typename T, typename BodyType>
-        requires(istl::Stringifiable<T> || istl::StringViewifiable<T>)
+        requires(istl::String<T> || istl::StringView<T>)
     constexpr T deserialize_body(BodyType const& body) {
         using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
             return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (istl::StringView<T> && istl::StringViewifiableOf<type, BodyType>) {
-            return istl::string_viewify_of<type>(body);
+        } else if constexpr (istl::String<type> && EnabledTraits<BodyType>) {
+            type str{alloc::general_alloc_for<type>(body)};
+            deserialize_body(str, body);
+            return str;
+        } else if constexpr (istl::String<type> && stl::is_default_constructible_v<type>) {
+            type str;
+            deserialize_body(str, body);
+            return str;
+        } else if constexpr (istl::StringView<T>) {
+            if constexpr (istl::StringViewifiableOf<type, BodyType>) {
+                return istl::string_viewify_of<type>(body);
+            } else {
+                static_assert_false(T,
+                                    "We have to read and store the body into a string container, "
+                                    "a string view can't allocate memory for the body.");
+            }
         } else {
-            static_assert_false(T, "This should never happen.");
+            static_assert_false(T, "We don't know how to get the string out of the body.");
         }
     }
 

@@ -117,7 +117,7 @@ namespace webpp::http {
         }
 
         // Get the size of the response body if possible. returns 0 if it's not available
-        [[nodiscard]] constexpr stl::streamsize size() const noexcept {
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
             if constexpr (requires { elist_type::size(); }) {
                 return elist_type::size();
             } else {
