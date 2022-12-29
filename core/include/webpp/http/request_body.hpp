@@ -27,9 +27,7 @@ namespace webpp::http {
         constexpr request_body(Args&&... args) noexcept(stl::is_nothrow_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
-        constexpr request_body()
-            requires(stl::is_default_constructible_v<elist_type>)
-        = default;
+        constexpr request_body() requires(stl::is_default_constructible_v<elist_type>) = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 

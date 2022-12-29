@@ -155,8 +155,7 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator &&
-                              requires {
+                if constexpr (!has_allocator && requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -297,9 +296,7 @@ namespace webpp::http {
     constexpr void serialize_body(T&& str, auto& body) {
         using type          = stl::remove_cvref_t<T>;
         auto const str_view = istl::string_viewify(stl::forward<T>(str));
-        if constexpr (requires { body.operator=(str_view); }) {
-            body = str_view;
-        } else if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {
+        if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {
             body.write(str_view.data(), str_view.size());
         } else {
             static_assert_false(type, "The body type doesn't support strings.");
