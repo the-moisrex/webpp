@@ -222,8 +222,7 @@ namespace webpp::http {
     template <typename T, typename BodyType>
         requires(istl::String<T> || istl::StringView<T>)
     constexpr void deserialize_body(T& str, BodyType const& body) {
-        using type      = stl::remove_cvref_t<T>;
-        using char_type = istl::char_type_of<type>;
+        using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type>) {
             if constexpr (requires {
                               str.resize(1);
