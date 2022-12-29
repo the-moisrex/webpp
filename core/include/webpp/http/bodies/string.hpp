@@ -223,9 +223,10 @@ namespace webpp::http {
         requires(istl::Stringifiable<T> || istl::StringViewifiable<T>)
     constexpr T deserialize_body(BodyType const& body) {
         using type = stl::remove_cvref_t<T>;
-        if constexpr (istl::String<T> && EnabledTraits<BodyType>) {
+        if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
+                      istl::StringifiableOf<type, BodyType>) {
             return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (istl::StringView<T>) {
+        } else if constexpr (istl::StringView<T> && istl::StringViewifiableOf<type, BodyType>) {
             return istl::string_viewify_of<type>(body);
         } else {
             static_assert_false(T, "This should never happen.");
