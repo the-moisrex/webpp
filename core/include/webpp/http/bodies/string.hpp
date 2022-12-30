@@ -109,6 +109,13 @@ namespace webpp::http {
                 return res;
             }
 
+            [[nodiscard]] constexpr stl::size_t size() const noexcept {
+                return content.size();
+            }
+
+            [[nodiscard]] constexpr auto data() const noexcept {
+                return content.data();
+            }
 
             template <typename StrType>
                 requires(istl::StringViewifiableOf<string_view_type, StrType>)
@@ -224,21 +231,28 @@ namespace webpp::http {
         using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type>) {
             if constexpr (requires {
-                              str.resize(1);
-                              { body.size() } -> stl::same_as<stl::size_t>;
-                          }) {
-                str.resize(str.size() + body.size());
-            }
-            if constexpr (requires {
                               body.data();
                               body.size();
                           }) {
                 str.append(body.data(), body.size());
             } else if constexpr (requires { body.read(str.data()); }) {
+                if constexpr (requires {
+                                  str.resize(1);
+                                  { body.size() } -> stl::same_as<stl::size_t>;
+                              }) {
+                    str.resize(str.size() + body.size());
+                }
                 body.read(str.data());
             } else if constexpr (requires(stl::streamsize count) { body.read(str.data(), count); }) {
+                auto const str_size = str.size();
+                if constexpr (requires {
+                                  str.resize(1);
+                                  { body.size() } -> stl::same_as<stl::size_t>;
+                              }) {
+                    str.resize(str.size() + body.size());
+                }
                 for (;;) {
-                    stl::streamsize res = body.read(str.data() + str.size(), default_buffer_size);
+                    stl::streamsize res = body.read(str.data() + str_size, default_buffer_size);
                     if (res == 0)
                         break;
                 }

@@ -88,7 +88,11 @@ namespace webpp::http {
 
         template <typename T>
         constexpr request_body& set(T&& obj) {
-            if constexpr (requires { serialize_request_body<T>(stl::forward<T>(obj), *this); }) {
+            if constexpr (requires { elist_type::template set<T>(stl::forward<T>(obj)); }) {
+                elist_type::template set<T>(stl::forward<T>(obj));
+            } else if constexpr (requires { elist_type::template operator=<T>(stl::forward<T>(obj)); }) {
+                elist_type::template operator=<T>(stl::forward<T>(obj));
+            } else if constexpr (requires { serialize_request_body<T>(stl::forward<T>(obj), *this); }) {
                 serialize_request_body<T>(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_body<T>(stl::forward<T>(obj), *this); }) {
                 serialize_body<T>(stl::forward<T>(obj), *this);
@@ -102,7 +106,6 @@ namespace webpp::http {
         }
 
         template <typename T>
-            requires(!requires(T obj) { elist_type::operator=(obj); })
         constexpr request_body& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
