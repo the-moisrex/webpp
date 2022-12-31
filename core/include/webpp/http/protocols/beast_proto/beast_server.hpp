@@ -84,6 +84,7 @@ namespace webpp::http::beast_proto {
         server_ref                                    server;
         stl::optional<request_type>                   req{stl::nullopt};
         stl::optional<beast_request_parser_type>      parser{stl::nullopt};
+        stl::mutex                                    worker_mutex;
         buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
         template <typename StrT>
@@ -123,7 +124,8 @@ namespace webpp::http::beast_proto {
             async_read_request();
         }
 
-        [[nodiscard]] bool is_idle() const noexcept {
+        [[nodiscard]] bool is_idle() noexcept {
+            stl::scoped_lock lock{worker_mutex};
             return !stream.has_value();
         }
 
@@ -202,6 +204,8 @@ namespace webpp::http::beast_proto {
 
       public:
         void reset() noexcept {
+            stl::scoped_lock lock{worker_mutex};
+
             // todo: half of these things can be yanked out with the help of allocators
             boost::beast::error_code ec;
             stream->socket().close(ec);
@@ -225,6 +229,7 @@ namespace webpp::http::beast_proto {
 
             // Sleep indefinitely until we're given a new deadline.
             stream->expires_never();
+
             stream.reset(); // go in the idle mode
         }
 

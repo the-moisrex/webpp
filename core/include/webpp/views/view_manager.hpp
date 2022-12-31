@@ -259,7 +259,12 @@ namespace webpp::views {
                     return; // empty string is returned.
                 }
                 stl::get<view_type>(cached->view).scheme(cached->file_content);
-                cached.save();
+                // fixme: re-saving causes the "cached->view" to copied away and thus making the view invalid
+                //        but the problem is that without saving, the caching process is not fully correct
+                //        Not saving the cache only works for memory cache; if we change the cache to
+                //        Some other form of caching, the cache becomes invalid the moment the "cached" obj
+                //        goes out of scope.
+                // cached.save();
             }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
