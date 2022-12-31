@@ -45,6 +45,19 @@ namespace webpp::base64 {
         return true;
     }
 
+
+    /**
+     * @brief Gets the expected length of an encoded buffer
+     * Can be used to allocate the required storage before encoding
+     *
+     * len - The length of the buffer to encode
+     * @returns The expected length of an encoded buffer
+     */
+    static constexpr inline stl::size_t expected_length(stl::size_t len) noexcept {
+        return ((len + 2ull) / 3ull) * 4ull;
+    }
+
+
 } // namespace webpp::base64
 
 #endif // WEBPP_BASE64_HPP

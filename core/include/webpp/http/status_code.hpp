@@ -108,6 +108,9 @@ namespace webpp::http {
 
         processing = 102,
 
+        // https://httpwg.org/specs/rfc8297.html
+        early_hints = 103,
+
         ok                            = 200,
         created                       = 201,
         accepted                      = 202,
@@ -179,7 +182,7 @@ namespace webpp::http {
             case 101: return "Switching Protocols";
             case 102: // WebDav
                 return "Processing";
-            case 103: return "Early Hints";
+            case 103: return "Early Hints"; // rfc8297.html
 
             case 200: return "OK";
             case 201: return "Created";
