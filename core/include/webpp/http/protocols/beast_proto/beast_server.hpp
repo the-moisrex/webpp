@@ -129,18 +129,15 @@ namespace webpp::http::beast_proto {
 
       private:
         void make_beast_response() noexcept {
-            beast_request_type& breq = parser->get();
-
             // putting the beast's request into webpp's request
-            req->set_beast_request(breq);
-            req->body.set_beast_parser(*parser);
+            req->set_beast_parser(*parser);
 
             HTTPResponse auto res = server.call_app(*req);
 
             // putting the user's response into beast's response
             bres.emplace();
             res.calculate_default_headers();
-            bres->version(breq.version());
+            bres->version(parser->get().version());
             for (auto const& h : res.headers) {
                 bres->set(h.name, h.value);
             }

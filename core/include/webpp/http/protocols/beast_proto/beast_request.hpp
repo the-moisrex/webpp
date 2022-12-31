@@ -41,6 +41,10 @@ namespace webpp::http::beast_proto {
         using beast_request_ref  = beast_request_type&;
         using beast_request_ptr  = beast_request_type*;
 
+        using beast_request_parser_type =
+          boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
+        using beast_parser_ref = stl::add_lvalue_reference_t<beast_request_parser_type>;
+
         using super = common_http_request_type;
 
         beast_request_ptr breq;
@@ -109,16 +113,13 @@ namespace webpp::http::beast_proto {
 
         //////////////////////////////////////////
 
-        void set_beast_request(beast_request_ref req) noexcept {
-            breq = &req;
+        void set_beast_parser(beast_parser_ref parser) noexcept {
+            breq = &parser.get();
             // todo: not very efficient, is it?
             for (const auto& field : *breq) {
                 this->headers.emplace(string_viewify(field.name_string()), string_viewify(field.value()));
             }
-            // todo
-            if constexpr (requires { {this->body = *breq}; }) {
-                this->body = *breq;
-            }
+            this->body.set_beast_parser(parser);
         }
     };
 

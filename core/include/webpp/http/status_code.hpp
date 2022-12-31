@@ -314,6 +314,13 @@ namespace webpp::http {
     }
 
 
+
+    static constexpr bool is_fatal_error(status_code_type code) noexcept {
+        return (code == 400) || (code >= 500) || (code == 408) || ((code >= 411) && (code <= 415));
+    }
+
+
+
 } // namespace webpp::http
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

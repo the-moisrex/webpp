@@ -60,20 +60,20 @@ namespace webpp::http {
         // ctor that passes the enabled_traits object to daddy :)
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj, stl::forward<Args>(args)..., et_obj} {}
 
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj.logger, et_obj.alloc_pack, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
@@ -81,7 +81,7 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj.alloc_pack, et_obj.logger, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
@@ -90,7 +90,7 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj.alloc_pack, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
@@ -100,7 +100,7 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT& et_obj, Args&&... args)
+        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj.logger, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
@@ -111,7 +111,7 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        http_app_wrapper(ETT&, Args&&... args) : application_type{stl::forward<Args>(args)...} {}
+        constexpr http_app_wrapper(ETT&, Args&&... args) : application_type{stl::forward<Args>(args)...} {}
 
         // todo: add support for Allocator constructors and even references to other stuff
 
