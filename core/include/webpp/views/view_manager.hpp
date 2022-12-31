@@ -318,7 +318,7 @@ namespace webpp::views {
         }
 
         /**
-         * Get Render a view
+         * Render a view
          */
         template <istl::StringViewifiable StrT, typename DT>
             requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||

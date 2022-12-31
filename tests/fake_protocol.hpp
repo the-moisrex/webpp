@@ -240,13 +240,36 @@ namespace webpp {
         }
     };
 
+    template <typename Proto>
+    struct fake_request_body_communicator {
+        using size_type = stl::streamsize;
+        using char_type = char;
+
+        stl::string_view content;
+
+        [[nodiscard]] size_type read(char_type const* data, size_type count) const {
+            data = content.data();
+            return count;
+        }
+
+        [[nodiscard]] size_type read(char_type const* data) const {
+            data = content.data();
+            return content.size();
+        }
+
+        [[nodiscard]] size_type size() const noexcept {
+            return content.size();
+        }
+    };
+
 
     template <Traits TraitsType, Application App, RootExtensionList EList = empty_extension_pack>
     struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
-        using super           = common_http_protocol<TraitsType, App, EList>;
-        using traits_type     = TraitsType;
-        using root_extensions = EList;
-        using request_type    = simple_request<fake_proto, fake_proto_request>;
+        using super                     = common_http_protocol<TraitsType, App, EList>;
+        using traits_type               = TraitsType;
+        using root_extensions           = EList;
+        using request_type              = simple_request<fake_proto, fake_proto_request>;
+        using request_body_communicator = fake_request_body_communicator<fake_proto>;
 
         static_assert(HTTPRequest<request_type>, "request type is not request; why?");
 
@@ -262,7 +285,8 @@ namespace webpp {
 
 
         int operator()() noexcept {
-            auto res = app(req);
+            req.body.content = "fake";
+            auto res         = app(req);
             res.calculate_default_headers();
             auto header_str = res.headers.string();
             auto str        = res.body.string();

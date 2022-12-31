@@ -261,7 +261,7 @@ namespace webpp::http {
     concept HTTPCommunicator = requires(T proto) {
         requires EnabledTraits<T>;
         requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
-        requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
+        // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
         typename T::root_extensions;
     };
 
