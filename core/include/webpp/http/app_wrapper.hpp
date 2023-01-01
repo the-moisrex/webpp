@@ -116,7 +116,7 @@ namespace webpp::http {
         // todo: add support for Allocator constructors and even references to other stuff
 
 
-        [[nodiscard]] HTTPResponse auto response(HTTPRequest auto& req) {
+        [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {
             if constexpr (requires {
                               { application_type::response(req) } -> HTTPResponse;
                           }) {
@@ -131,6 +131,36 @@ namespace webpp::http {
         }
 
 
+
+        constexpr void error(HTTPRequest auto& req, http::status_code err, HTTPResponse auto& res) {
+            if constexpr (requires { application_type::error(req, err, res); }) {
+                application_type::error(req, err, res);
+            } else if constexpr (requires { application_type::error(err, res); }) {
+                application_type::error(err, res);
+            } else if constexpr (requires { application_type::error(err, req, res); }) {
+                application_type::error(err, req, res);
+            } else if constexpr (requires { application_type::error(req, res, err); }) {
+                application_type::error(req, res, err);
+            } else if constexpr (requires { application_type::error(res, req, err); }) {
+                application_type::error(res, req, err);
+            } else if constexpr (requires { application_type::error(res, err, req); }) {
+                application_type::error(res, err, req);
+            } else {
+                res.headers = err;
+                res.body    = fmt::format("<!DOCTYPE html>\n"
+                                          "<html>\n"
+                                          "  <head>\n"
+                                          "    <title>{0} - {1}</title>\n"
+                                          "  <head>\n"
+                                          "  <body>\n"
+                                          "    <h1>{0} - {1}</h1>\n"
+                                          "  </body>\n"
+                                          "</html>\n",
+                                       static_cast<status_code_type>(err),
+                                       http::status_code_reason_phrase(err));
+            }
+        }
+
         /**
          * The default error message provider; if the application doesn't provide one, we use this as the
          * default message provider function to generate error messages.
@@ -138,7 +168,7 @@ namespace webpp::http {
          * todo: handle exceptions that get thrown from here as well
          * todo: add more ways of printing the errors and logging them
          */
-        [[nodiscard]] HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
+        [[nodiscard]] constexpr HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
                               { application_type::error(req, err) } -> HTTPResponse;
                           }) {
@@ -152,23 +182,11 @@ namespace webpp::http {
                                  }) {
                 return application_type::error(err, req);
             } else {
-                auto res    = response(req);
-                res.headers = err;
-                res.body    = fmt::format("<!DOCTYPE html>\n"
-                                          "<html>\n"
-                                          "  <head>\n"
-                                          "    <title>{0} - {1}</title>\n"
-                                          "  <head>\n"
-                                          "  <body>\n"
-                                          "    <h1>{0} - {1}</h1>\n"
-                                          "  </body>\n"
-                                          "</html>\n",
-                                       static_cast<status_code_type>(err),
-                                       http::status_code_reason_phrase(err));
+                auto res = response(req);
+                error(req, err, res);
                 return res;
             }
         }
-
 
         template <HTTPRequest ReqType>
         [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& request) noexcept {
@@ -176,16 +194,77 @@ namespace webpp::http {
                 return fix_response(request, application_type::operator()(request));
             } else if constexpr (stl::is_nothrow_invocable_v<application_type>) {
                 return fix_response(request, application_type::operator()());
-            } else if constexpr (stl::is_invocable_v<application_type, ReqType> ||
-                                 stl::is_invocable_v<application_type>) {
-                try {
-                    return operator()(stl::forward<ReqType>(request), enable_throws{});
-                } catch (stl::exception const& ex) {
-                    // todo: log
-                    return error(request, http::status_code::internal_server_error);
-                } catch (...) {
-                    // todo: log
-                    return error(request, http::status_code::internal_server_error);
+            } else if constexpr (stl::is_invocable_v<application_type, ReqType>) {
+                using return_type = stl::invoke_result_t<application_type, ReqType>;
+                if constexpr (stl::is_constructible_v<return_type, ReqType>) {
+                    try {
+                        return operator()(stl::forward<ReqType>(request), enable_throws{});
+                    } catch (stl::exception const& ex) {
+                        // todo: log
+                        return_type res{request};
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    } catch (...) {
+                        // todo: log
+                        return_type res{request};
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    }
+                } else if constexpr (stl::is_default_constructible_v<return_type>) {
+                    try {
+                        return operator()(stl::forward<ReqType>(request), enable_throws{});
+                    } catch (stl::exception const& ex) {
+                        // todo: log
+                        return_type res;
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    } catch (...) {
+                        // todo: log
+                        return_type res;
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    }
+                } else {
+                    static_assert_false(ReqType,
+                                        "We know how to call your app, but we don't know how "
+                                        "to initialize your response type in case an error is "
+                                        "thrown from your app; mark your operator() as 'noexcept'.");
+                }
+            } else if constexpr (stl::is_invocable_v<application_type>) {
+                using return_type = stl::invoke_result_t<application_type>;
+                if constexpr (stl::is_constructible_v<return_type, ReqType>) {
+                    try {
+                        return operator()(request, enable_throws{});
+                    } catch (stl::exception const& ex) {
+                        // todo: log
+                        return_type res{request};
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    } catch (...) {
+                        // todo: log
+                        return_type res{request};
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    }
+                } else if constexpr (stl::is_default_constructible_v<return_type>) {
+                    try {
+                        return operator()(request, enable_throws{});
+                    } catch (stl::exception const& ex) {
+                        // todo: log
+                        return_type res;
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    } catch (...) {
+                        // todo: log
+                        return_type res;
+                        error(request, http::status_code::internal_server_error, res);
+                        return res;
+                    }
+                } else {
+                    static_assert_false(ReqType,
+                                        "We know how to call your app, but we don't know how "
+                                        "to initialize your response type in case an error is "
+                                        "thrown from your app; mark your operator() as 'noexcept'.");
                 }
             } else {
                 static_assert_false(application_type,

@@ -123,11 +123,8 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyCommunicator = requires(T body) {
-        typename T::string_type;
-        requires requires(typename T::string_type str) {
-            body.string();
-            body.string_to(str);
-        };
+        body.data();
+        body.size();
     };
 
     /**
@@ -144,7 +141,7 @@ namespace webpp::http {
     concept StreamBasedBodyCommunicator = requires(T body) {
         typename T::stream_type;
         requires requires(typename T::stream_type stream) {
-            body.opeartor >> (stream);
+            {body >> stream};
         };
     };
 
@@ -198,10 +195,14 @@ namespace webpp::http {
 
         template <typename ResType>
         concept HTTPResponse = requires(ResType res) {
+                                   typename ResType::body_type;
+                                   typename ResType::headers_type;
             requires HTTPResponseBody<typename ResType::body_type>;
             requires HTTPHeaders<typename ResType::headers_type>;
             res.body;
             res.headers;
+            requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
+            requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>, typename ResType::headers_type>;
         };
 
         template <typename T>
