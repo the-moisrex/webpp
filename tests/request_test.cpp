@@ -39,8 +39,7 @@ TEST(HTTPRequestTest, RequestViewTest) {
     req1.data.emplace("SERVER_PROTOCOL", "HTTP/1.1");
     req1.reload();
 
-
-    request_view view{req1};
+    request_view const view{req1};
 
     EXPECT_FALSE(view.headers.iter("content-length") == view.headers.end());
     EXPECT_EQ("23", view.headers.get("content-length"));

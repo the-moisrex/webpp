@@ -61,7 +61,6 @@ namespace webpp::http::beast_proto {
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
         using socket_type      = asio::ip::tcp::socket;
         using stream_type      = boost::beast::tcp_stream;
-        using server_ref       = stl::add_lvalue_reference_t<server_type>;
         using string_view_type = traits::string_view<traits_type>;
 
         using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
@@ -81,10 +80,9 @@ namespace webpp::http::beast_proto {
         stl::optional<stream_type>                    stream{stl::nullopt};
         stl::optional<beast_response_type>            bres{stl::nullopt};
         stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
-        server_ref                                    server;
+        server_type*                                    server;
         stl::optional<request_type>                   req{stl::nullopt};
         stl::optional<beast_request_parser_type>      parser{stl::nullopt};
-        stl::mutex                                    worker_mutex;
         buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
 
         template <typename StrT>
@@ -100,10 +98,10 @@ namespace webpp::http::beast_proto {
         http_worker& operator=(http_worker&&) noexcept = delete;
         ~http_worker()                                 = default;
 
-        http_worker(server_ref in_server)
-          : etraits{in_server},
+        http_worker(server_type* in_server)
+          : etraits{*in_server},
             server{in_server},
-            req{server},
+            req{*server},
             parser{
               stl::in_place,
               stl::piecewise_construct,
@@ -125,7 +123,6 @@ namespace webpp::http::beast_proto {
         }
 
         [[nodiscard]] bool is_idle() noexcept {
-            stl::scoped_lock lock{worker_mutex};
             return !stream.has_value();
         }
 
@@ -134,7 +131,7 @@ namespace webpp::http::beast_proto {
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
 
-            HTTPResponse auto res = server.call_app(*req);
+            HTTPResponse auto res = server->call_app(*req);
 
             // putting the user's response into beast's response
             bres.emplace();
@@ -152,7 +149,7 @@ namespace webpp::http::beast_proto {
 
         // Asynchronously receive a complete request message.
         void async_read_request() noexcept {
-            stream->expires_after(server.timeout);
+            stream->expires_after(server->timeout);
             boost::beast::http::async_read(
               *stream,
               buf,
@@ -204,7 +201,6 @@ namespace webpp::http::beast_proto {
 
       public:
         void reset() noexcept {
-            stl::scoped_lock lock{worker_mutex};
 
             // todo: half of these things can be yanked out with the help of allocators
             boost::beast::error_code ec;
@@ -214,7 +210,7 @@ namespace webpp::http::beast_proto {
             }
 
             // destroy the request type + be ready for the next request
-            req.emplace(server);
+            req.emplace(*server);
             parser.emplace(
               stl::piecewise_construct,
               stl::make_tuple(), // body args
@@ -268,9 +264,9 @@ namespace webpp::http::beast_proto {
         ~thread_worker()                                   = default;
 
         thread_worker(server_type& input_server)
-          : server(input_server),
-            http_workers{alloc::featured_alloc_for<worker_alloc_features, http_workers_type>(input_server)} {
-            for (stl::size_t i = 0ul; i != server.http_worker_count; ++i) {
+          : server(&input_server),
+            http_workers{alloc::featured_alloc_for<worker_alloc_features, http_workers_type>(*server)} {
+            for (stl::size_t i = 0ul; i != server->http_worker_count; ++i) {
                 http_workers.emplace_back(server);
             }
             worker = http_workers.begin();
@@ -306,7 +302,7 @@ namespace webpp::http::beast_proto {
             } while (!worker->is_idle());
         }
 
-        server_type&                         server;
+        server_type*                         server;
         http_workers_type                    http_workers;
         typename http_workers_type::iterator worker;
         stl::mutex                           worker_mutex;
