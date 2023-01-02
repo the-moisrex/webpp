@@ -30,7 +30,7 @@ namespace website {
 
         HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
             using extensions = extension_pack<string_body>;
-            router _router{
+            static router _router{
               extensions{},
               (get and root) >>=
               [this] {
@@ -43,7 +43,7 @@ namespace website {
               },
               (get and root / "about") >>=
               [this]() {
-                  return view_man.view("about.html");
+                  return view_man.file("about.html");
               }};
 
             return _router(req);

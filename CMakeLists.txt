@@ -119,6 +119,6 @@ add_subdirectory(${SDK_DIR})
 if (IS_DEBUG)
     add_subdirectory(${TESTS_DIR} EXCLUDE_FROM_ALL)
     add_subdirectory(${BENCHMARKS_DIR} EXCLUDE_FROM_ALL)
-    add_subdirectory(${EXAMPLES_DIR} EXCLUDE_FROM_ALL)
 endif ()
+add_subdirectory(${EXAMPLES_DIR} EXCLUDE_FROM_ALL)
 
