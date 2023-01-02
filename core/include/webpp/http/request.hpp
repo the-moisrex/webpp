@@ -34,14 +34,14 @@ namespace webpp::http {
         using string_view_type    = traits::string_view<traits_type>;
         using char_type           = traits::char_type<traits_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        // using fields_allocator_type =
-        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
-        using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using request_extensions    = REL;
-        using fields_provider       = header_fields_provider<traits_type, root_extensions>;
-        using headers_type          = simple_request_headers<traits_type, root_extensions, fields_provider>;
-        using body_type             = simple_request_body<traits_type, server_type>;
-        using response_type         = simple_response<traits_type, root_extensions>;
+        using fields_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
+        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using request_extensions = REL;
+        using fields_provider    = header_fields_provider<traits_type, root_extensions>;
+        using headers_type       = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using body_type          = simple_request_body<traits_type, server_type>;
+        using response_type      = simple_response<traits_type, root_extensions>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");

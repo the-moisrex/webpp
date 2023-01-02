@@ -195,14 +195,16 @@ namespace webpp::http {
 
         template <typename ResType>
         concept HTTPResponse = requires(ResType res) {
-                                   typename ResType::body_type;
-                                   typename ResType::headers_type;
+            typename ResType::body_type;
+            typename ResType::headers_type;
             requires HTTPResponseBody<typename ResType::body_type>;
             requires HTTPHeaders<typename ResType::headers_type>;
             res.body;
             res.headers;
-            requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
-            requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>, typename ResType::headers_type>;
+            requires stl::same_as < stl::remove_cvref_t<decltype(res.body)>,
+            typename ResType::body_type > ;
+            requires stl::same_as < stl::remove_cvref_t<decltype(res.headers)>,
+            typename ResType::headers_type > ;
         };
 
         template <typename T>

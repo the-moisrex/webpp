@@ -31,10 +31,9 @@ namespace webpp::http {
         using name_type           = typename field_type::string_type;
         using value_type          = typename field_type::string_type;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        // using field_allocator_type =
-        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, field_type>;
-
-        using field_allocator_type = traits::general_allocator<traits_type, field_type>;
+        using field_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, field_type>;
+        // using field_allocator_type = traits::general_allocator<traits_type, field_type>;
 
       private:
         using fields_type = stl::vector<field_type, field_allocator_type>;
@@ -45,7 +44,8 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-        constexpr header_fields_provider(ET&& et) : fields{alloc::general_alloc_for<fields_type>(et)} {}
+        constexpr header_fields_provider(ET&& et)
+          : fields{alloc::featured_alloc_for<alloc::sync_pool_features, fields_type>(et)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -126,18 +126,8 @@ namespace webpp::http {
         constexpr request_headers(request_headers&&) noexcept            = default;
         constexpr request_headers& operator=(request_headers const&)     = default;
         constexpr request_headers& operator=(request_headers&&) noexcept = default;
+        constexpr ~request_headers()                                     = default;
 
-
-        // todo: add all the features in the "http/headers" directory here
-        /*
-        template <Traits TraitsType = default_traits>
-        constexpr accept_encoding<TraitsType> accept_encoding() const noexcept {
-            if (auto header = get("Accept-Encoding"); header != this->end()) {
-                return {header.name, alloc::general_alloc_for<accept_encoding_type>(*this)};
-            }
-            return {};
-        }
-        */
 
 
         /**
