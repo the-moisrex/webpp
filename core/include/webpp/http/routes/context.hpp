@@ -325,7 +325,7 @@ namespace webpp::http {
 
 
     // Don't use ReqType::root_extensions directly, we merge its extensions with the router's extensions
-    template <HTTPRequest ReqType, typename MergedRootExtensions>
+    template <HTTPRequest ReqType, typename MergedRootExtensions = typename ReqType::root_extensions>
     using simple_context =
       typename MergedRootExtensions::template extensie_type<typename ReqType::traits_type,
                                                             context_descriptor<MergedRootExtensions>,

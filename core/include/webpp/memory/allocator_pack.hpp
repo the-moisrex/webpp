@@ -89,9 +89,9 @@ namespace webpp::alloc {
                                                                feature_pack child) noexcept {
         feature_pack pack;
         for (auto conflicting_pack : conflicting_features) {
-            features parent_feature =
+            features const parent_feature =
               parent.is_on(conflicting_pack.first) ? conflicting_pack.first : conflicting_pack.second;
-            features opposite_parent_feature =
+            features const opposite_parent_feature =
               parent_feature == conflicting_pack.first ? conflicting_pack.second : conflicting_pack.first;
 
             // fixing mistakes
@@ -431,7 +431,8 @@ namespace webpp::alloc {
           : resources{istl::make_tuple_no_order<filtered_resources_type, ResourceType...>(
               stl::forward<ResourceType>(res)...)} {}
 
-        constexpr allocator_pack() noexcept = default;
+        constexpr allocator_pack() noexcept  = default;
+        constexpr ~allocator_pack() noexcept = default;
 
         constexpr allocator_pack& operator=(const allocator_pack&) noexcept {
             // do nothing; really
