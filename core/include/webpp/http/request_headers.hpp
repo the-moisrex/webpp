@@ -28,11 +28,16 @@ namespace webpp::http {
         using traits_type     = TraitsType;
         using field_type =
           typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-        using name_type  = typename field_type::string_type;
-        using value_type = typename field_type::string_type;
+        using name_type           = typename field_type::string_type;
+        using value_type          = typename field_type::string_type;
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        // using field_allocator_type =
+        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, field_type>;
+
+        using field_allocator_type = traits::general_allocator<traits_type, field_type>;
 
       private:
-        using fields_type = stl::vector<field_type, traits::general_allocator<traits_type, field_type>>;
+        using fields_type = stl::vector<field_type, field_allocator_type>;
 
         fields_type fields;
 

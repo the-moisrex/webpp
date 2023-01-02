@@ -103,6 +103,7 @@ namespace webpp::http {
         beast(beast&&)                 = delete;
         beast& operator=(beast const&) = delete;
         beast& operator=(beast&&)      = delete;
+        ~beast()                       = default;
 
         template <typename... Args>
         beast(Args&&... args)

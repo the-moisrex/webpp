@@ -25,14 +25,17 @@ namespace webpp::http {
      */
     template <typename REL, typename ServerType>
     struct common_http_request : public enable_traits_with<typename ServerType::traits_type, REL> {
-        using server_type           = ServerType;
-        using server_ref            = stl::add_lvalue_reference_t<server_type>;
-        using root_extensions       = typename server_type::root_extensions;
-        using traits_type           = typename server_type::traits_type;
-        using etraits               = enable_traits_with<traits_type, REL>;
-        using string_type           = traits::general_string<traits_type>;
-        using string_view_type      = traits::string_view<traits_type>;
-        using char_type             = traits::char_type<traits_type>;
+        using server_type         = ServerType;
+        using server_ref          = stl::add_lvalue_reference_t<server_type>;
+        using root_extensions     = typename server_type::root_extensions;
+        using traits_type         = typename server_type::traits_type;
+        using etraits             = enable_traits_with<traits_type, REL>;
+        using string_type         = traits::general_string<traits_type>;
+        using string_view_type    = traits::string_view<traits_type>;
+        using char_type           = traits::char_type<traits_type>;
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        // using fields_allocator_type =
+        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
         using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using request_extensions    = REL;
         using fields_provider       = header_fields_provider<traits_type, root_extensions>;

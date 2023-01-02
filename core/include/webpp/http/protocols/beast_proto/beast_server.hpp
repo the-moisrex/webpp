@@ -80,7 +80,7 @@ namespace webpp::http::beast_proto {
         stl::optional<stream_type>                    stream{stl::nullopt};
         stl::optional<beast_response_type>            bres{stl::nullopt};
         stl::optional<beast_response_serializer_type> str_serializer{stl::nullopt};
-        server_type*                                    server;
+        server_type*                                  server;
         stl::optional<request_type>                   req{stl::nullopt};
         stl::optional<beast_request_parser_type>      parser{stl::nullopt};
         buffer_type buf{default_buffer_size}; // fixme: see if this is using our allocator
