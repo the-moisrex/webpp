@@ -3,7 +3,6 @@
 #ifndef WEBPP_EXAMPLE_APP_H
 #define WEBPP_EXAMPLE_APP_H
 
-#include <iostream>
 #include <webpp/http/http.hpp>
 
 namespace website {
@@ -25,14 +24,21 @@ namespace website {
         // how to run this function:
         //   REQUEST_URI=/content-length HTTP_CONTENT_LENGTH=5 REQUEST_METHOD=POST ./cgi-application
         auto get_len(Context auto&& ctx) const {
+            stl::string body = ctx.request.body.as();
             stl::size_t content_length = ctx.request.headers.content_length();
+
             auto res = ctx.format("Content-Length: {}\n", content_length);
+            res += ctx.format("Body Length: {}\n", body.size());
+
             for (auto const& hdr : ctx.request.headers) {
                 res += hdr.name;
                 res += ": ";
                 res += hdr.value;
                 res += "\n";
             }
+
+            res += "\n";
+            res += body;
             return res;
         }
 
