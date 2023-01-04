@@ -79,6 +79,10 @@ namespace webpp::http {
             }
         }
 
+        constexpr auto as() const {
+            return body_auto_converter<request_body>{.body = *this};
+        }
+
         template <typename T>
         constexpr operator T() const {
             return as<T>();
