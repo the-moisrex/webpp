@@ -6,6 +6,8 @@
 #include "../../../std/type_traits.hpp"
 #include "../../../traits/traits.hpp"
 
+#include <iostream>
+
 namespace webpp::http::cgi_proto {
 
     /**
@@ -15,10 +17,38 @@ namespace webpp::http::cgi_proto {
      */
     template <typename ProtocolType>
     struct cgi_request_body_communicator {
-        using protocol_type = ProtocolType;
-        using traits_type   = typename protocol_type::traits_type;
-        using char_type     = traits::char_type<traits_type>;
-        using size_type     = stl::streamsize;
+        using protocol_type    = ProtocolType;
+        using traits_type      = typename protocol_type::traits_type;
+        using char_type        = traits::char_type<traits_type>;
+        using size_type        = stl::streamsize;
+        using string_view_type = traits::string_view<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+
+
+      private:
+        string_type body_content;
+
+      public:
+        cgi_request_body_communicator(auto& cgi) : body_content{alloc::general_alloc_for<string_type>(cgi)} {
+            auto const content_length_str = cgi.env("CONTENT_LENGTH");
+            if (!content_length_str.empty()) {
+                auto const content_length = to_uint(content_length_str);
+                body_content.resize(content_length);
+                auto const begin_pos = body_content.size();
+                // todo: see if there's a better way to do this
+                stl::cin.rdbuf()->pubsetbuf(body_content.data() + begin_pos, content_length);
+            } else {
+                // we don't know how much the user is going to send. so we use a small size buffer:
+
+                // TODO: add something here
+            }
+        }
+
+        // set the body
+        void write(char_type const* data, size_type count) noexcept {
+            body_content.append(data, static_cast<stl::size_t>(count));
+        }
+
 
         /**
          * Read the body of the string

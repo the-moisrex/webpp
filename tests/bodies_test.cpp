@@ -18,7 +18,7 @@ TEST(Body, Text) {
     EXPECT_TRUE(b == "Testing");
 
     std::string const str = "hello";
-    b               = str;
+    b                     = str;
 
     EXPECT_EQ(b, "hello");
 
