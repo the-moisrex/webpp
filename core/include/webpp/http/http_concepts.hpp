@@ -1,13 +1,12 @@
 // Created by moisrex on 5/9/20.
 
-#ifndef WEBPP_RESPONSE_CONCEPTS_H
-#define WEBPP_RESPONSE_CONCEPTS_H
+#ifndef WEBPP_HTTP_CONCEPTS_HPP
+#define WEBPP_HTTP_CONCEPTS_HPP
 
 #include "../application/application_concepts.hpp"
 #include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
-#include "response_body.hpp"
 
 namespace webpp::http {
 
@@ -343,6 +342,26 @@ namespace webpp::http {
         // response body is empty
     }
 
+
+
+
+    /**
+     * This is designed to enable this syntax in the request and response bodies:
+     * @code
+     *   std::string body = ctx.request.body.as();
+     * @endcode
+     */
+    template <typename BodyType>
+    struct body_auto_converter {
+        BodyType const& body;
+
+        template <typename T>
+        constexpr operator T() const {
+            return body.template as<T>();
+        }
+    };
+
+
 } // namespace webpp::http
 
-#endif // WEBPP_RESPONSE_CONCEPTS_H
+#endif // WEBPP_HTTP_CONCEPTS_HPP

@@ -18,16 +18,6 @@ namespace webpp::http {
       public:
     };
 
-    template <typename BodyType>
-    struct body_auto_converter {
-        BodyType const& body;
-
-        template <typename T>
-        constexpr operator T() const {
-            return body.template as<T>();
-        }
-    };
-
 
     /**
      * There are two types of bodies:
