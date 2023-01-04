@@ -57,6 +57,10 @@ namespace webpp::http {
             return fields.end();
         }
 
+        [[nodiscard]] constexpr auto size() const noexcept {
+            return fields.size();
+        }
+
         void emplace(name_type name, value_type value) {
             fields.emplace_back(stl::move(name), stl::move(value));
         }

@@ -22,24 +22,55 @@ namespace webpp::http {
         using char_type                 = traits::char_type<traits_type>;
         using size_type                 = stl::streamsize;
 
-        template <typename... Args>
-            requires(stl::is_constructible_v<elist_type, Args...>)
-        constexpr request_body(Args&&... args) noexcept(stl::is_nothrow_constructible_v<elist_type, Args...>)
-          : elist_type{stl::forward<Args>(args)...} {}
-
-        constexpr request_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+        constexpr request_body() requires(
+          stl::is_default_constructible_v<elist_type>&&
+            stl::is_default_constructible_v<request_body_communicator>) = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
-        template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr request_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
-          : elist_type{stl::forward<ET>(et)} {}
+        // both require the server reference
+        template <EnabledTraits ServerType>
+            requires(stl::is_constructible_v<elist_type, ServerType&>&&
+                       stl::is_constructible_v<request_body_communicator, ServerType&>)
+        constexpr request_body(ServerType& server_ref) noexcept(
+          stl::is_nothrow_constructible_v<elist_type, ServerType&>&&
+            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
+          : elist_type{server_ref},
+            request_body_communicator{server_ref} {}
 
-        template <EnabledTraits ET>
-        constexpr request_body([[maybe_unused]] ET&&) noexcept(
+        // only communicator wants the server ref
+        template <EnabledTraits ServerType>
+            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
+                     stl::is_default_constructible_v<elist_type> &&
+                     stl::is_constructible_v<request_body_communicator, ServerType&>)
+        constexpr request_body(ServerType& server_ref) noexcept(
+          stl::is_nothrow_default_constructible_v<elist_type>&&
+            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
+          : elist_type{},
+            request_body_communicator{server_ref} {}
+
+
+        // only elist wants the server ref
+        template <EnabledTraits ServerType>
+            requires(stl::is_constructible_v<elist_type, ServerType&> &&
+                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
+                     stl::is_default_constructible_v<request_body_communicator>)
+        constexpr request_body(ServerType& server_ref) noexcept(
+          stl::is_nothrow_default_constructible_v<request_body_communicator>&&
+            stl::is_nothrow_constructible_v<elist_type, ServerType&>)
+          : elist_type{server_ref},
+            request_body_communicator{} {}
+
+        // none of them want anything
+        template <EnabledTraits ServerType>
+            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
+                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
+                     stl::is_default_constructible_v<request_body_communicator> &&
+                     stl::is_default_constructible_v<elist_type>)
+        constexpr request_body([[maybe_unused]] ServerType&) noexcept(
           stl::is_nothrow_default_constructible_v<elist_type>)
-          : elist_type{} {}
+          : elist_type{},
+            request_body_communicator{} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

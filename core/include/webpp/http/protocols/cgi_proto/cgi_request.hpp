@@ -5,12 +5,12 @@
 
 #include "../../../std/string_view.hpp"
 #include "../../../traits/traits.hpp"
+#include "../../bodies/string.hpp" // for setting the request body; CGI uses string views for body
 #include "../../http_concepts.hpp"
 #include "../../request_headers.hpp"
 #include "../../request_view.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
-#include <iostream> // for access to cin and cout
 #include <unistd.h> // for environ
 
 namespace webpp::http {
@@ -28,32 +28,48 @@ namespace webpp::http {
         using string_type      = typename super::string_type;
         using char_type        = traits::char_type<traits_type>;
 
-        string_type headers_holder;
+        string_type cache;
 
         string_view_type put_header_name(string_view_type name) {
-            headers_holder.append(name.data(), name.size());
-            stl::replace(headers_holder.end() - name.size(), headers_holder.end(), '_', '-');
-            return {headers_holder.data() + headers_holder.size() - name.size(), name.size()};
+            cache.append(name.data(), name.size());
+            stl::replace(cache.end() - name.size(), cache.end(), '_', '-');
+            return {cache.data() + cache.size() - name.size(), name.size()};
         }
 
-        string_view_type put_header_value(string_view_type value) {
-            headers_holder.append(value.data(), value.size());
-            return {headers_holder.data() + headers_holder.size() - value.size(), value.size()};
+        string_view_type put_value(string_view_type value) {
+            // todo: environ is save to use as a string view, I don't think we need to store it in the holder
+            cache.append(value.data(), value.size());
+            return {cache.data() + cache.size() - value.size(), value.size()};
         }
 
         void fill_headers() {
             static constexpr string_view_type HTTP_prefix = "HTTP_";
             for (auto it = ::environ; *it; it++) {
-                string_view_type hdr{*it};
-                if (ascii::starts_with(hdr, HTTP_prefix)) {
-                    hdr.remove_prefix(HTTP_prefix.size());
-                    auto const       equal_sign = hdr.find('=');
-                    string_view_type name       = hdr.substr(0, equal_sign);
-                    string_view_type value      = hdr.substr(equal_sign + 1);
+                switch (**it) {
+                    case 'C': {
+                        string_view_type       hdr{*it};
+                        auto const             equal_sign = hdr.find('=');
+                        string_view_type const name       = hdr.substr(0, equal_sign);
+                        if (name == "CONTENT_LENGTH") {
+                            string_view_type const value = hdr.substr(equal_sign + 1);
+                            this->headers.emplace("Content-Length", put_value(value));
+                        }
+                        break;
+                    }
+                    case 'H': {
+                        string_view_type hdr{*it};
+                        if (ascii::starts_with(hdr, HTTP_prefix)) {
+                            hdr.remove_prefix(HTTP_prefix.size());
+                            auto const       equal_sign = hdr.find('=');
+                            string_view_type name       = hdr.substr(0, equal_sign);
+                            string_view_type value      = hdr.substr(equal_sign + 1);
 
-                    name  = put_header_name(name);
-                    value = put_header_value(value);
-                    this->headers.emplace(name, value);
+                            name  = put_header_name(name);
+                            value = put_value(value);
+                            this->headers.emplace(name, value);
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -68,7 +84,7 @@ namespace webpp::http {
         }
 
         // get the dynamic request object
-        inline basic_request_view const& dreq() const noexcept {
+        [[nodiscard]] inline basic_request_view const& dreq() const noexcept {
             return static_cast<basic_request_view const&>(*this);
         }
 
@@ -85,9 +101,7 @@ namespace webpp::http {
         }
 
       public:
-        cgi_request(server_ref svr)
-          : super{svr},
-            headers_holder{alloc::general_alloc_for<string_type>(*this)} {
+        cgi_request(server_ref svr) : super{svr}, cache{alloc::general_alloc_for<string_type>(*this)} {
             fill_headers();
         }
 
@@ -358,80 +372,6 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type script_filename() const noexcept {
             return env("SCRIPT_FILENAME");
-        }
-
-        /**
-         * @brief get a single header
-         * @param name
-         */
-        [[nodiscard]] string_view_type get_header(string_view_type name) const noexcept {
-            return header(string_type(name, this->alloc_pack.template general_allocator<char_type>()));
-        }
-
-
-        /**
-         * Get a specific header by it's name
-         */
-        [[nodiscard]] string_view_type get_header(stl::string name) noexcept {
-            // fixme: check if this is all we have to do or we have to do more too:
-            stl::transform(name.begin(), name.end(), name.begin(), [](auto const& c) {
-                if (c == '-')
-                    return '_';
-                return static_cast<char>(stl::toupper(c));
-            });
-
-            name.insert(0, "HTTP_");
-            return env(name.c_str());
-        }
-
-        /**
-         * @brief get all of the headers as a string_view
-         * @details this method in CGI interfaces will have to do more than
-         * in the our own version because data has already been parsed by the
-         * CGI server; and we have to recreate it based on the environment
-         * variables.
-         */
-        [[nodiscard]] string_view_type get_headers() noexcept {
-            // we can do this only in CGI, we have to come up with new ways for long-running protocols:
-            static string_type headers_cache;
-            if (headers_cache.empty()) {
-                // TODO: this code won't work on windows. Change when you are worried about windows
-                for (auto it = ::environ; *it; it++) {
-                    string_view_type h{*it};
-                    if (starts_with(h, "HTTP_")) {
-                        headers_cache.append(h.substr(5));
-                        // FIXME: decide if you need to convert _ to - or not.
-                    }
-                }
-            }
-            return headers_cache;
-        }
-
-        /**
-         * @brief get the whole body as a string_view
-         * @details this method will return raw string values of the body of
-         * the request and will not parse it. Parsing it is another methods'
-         * problem that might even use this function as the source.
-         */
-        [[nodiscard]] string_view_type get_body() noexcept {
-            // again, we can do this only in cgi protocol not in other interfaces:
-            static string_type body_cache{this->alloc_pack.template general_allocator<char_type>()};
-            if (body_cache.empty()) {
-                if (auto content_length_str = env("CONTENT_LENGTH"); !content_length_str.empty()) {
-                    // now we know how much content the user is going to send,
-                    // so we just create a buffer with that size
-                    auto content_length = to_uint(content_length_str);
-
-                    body_cache.resize(content_length);
-                    // todo: see if there's a better way to do this
-                    stl::cin.rdbuf()->pubsetbuf(body_cache.data(), content_length);
-                } else {
-                    // we don't know how much the user is going to send. so we use a small size buffer:
-
-                    // TODO: add something here
-                }
-            }
-            return body_cache;
         }
     };
 
