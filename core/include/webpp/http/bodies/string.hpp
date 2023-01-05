@@ -162,7 +162,8 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator && requires {
+                if constexpr (!has_allocator &&
+                              requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -235,14 +236,6 @@ namespace webpp::http {
                               body.size();
                           }) {
                 str.append(body.data(), body.size());
-            } else if constexpr (requires { body.read(str.data()); }) {
-                if constexpr (requires {
-                                  str.resize(1);
-                                  { body.size() } -> stl::same_as<stl::size_t>;
-                              }) {
-                    str.resize(str.size() + body.size());
-                }
-                body.read(str.data());
             } else if constexpr (requires(stl::streamsize count) { body.read(str.data(), count); }) {
                 auto const str_size = str.size();
                 if constexpr (requires {
@@ -256,6 +249,14 @@ namespace webpp::http {
                     if (res == 0)
                         break;
                 }
+            } else if constexpr (requires { body.read(str.data()); }) {
+                if constexpr (requires {
+                                  str.resize(1);
+                                  { body.size() } -> stl::same_as<stl::size_t>;
+                              }) {
+                    str.resize(str.size() + body.size());
+                }
+                body.read(str.data());
             } else {
                 static_assert_false(
                   T,
