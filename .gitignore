@@ -26,3 +26,8 @@ webpp.kdev4
 .gdbinit
 .clangd
 CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+CPM_modules/
+_deps/
+cpm-package-lock.cmake
