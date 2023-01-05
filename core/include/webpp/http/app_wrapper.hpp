@@ -8,6 +8,7 @@
 #include "http_concepts.hpp"
 #include "routes/router_concepts.hpp"
 #include "status_code.hpp"
+#include "../common/meta.hpp"
 
 #include <cstdint>
 
