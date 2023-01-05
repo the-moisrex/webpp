@@ -121,7 +121,9 @@ namespace webpp::http {
             HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
             const auto header_str = res.headers.string();
-            const auto str        = res.body.string();
+
+            using response_type = stl::remove_cvref_t<decltype(res)>;
+            using body_type     = typename response_type::body_type;
 
             // From RFC: https://tools.ietf.org/html/rfc3875
             // Send status code:
@@ -140,7 +142,15 @@ namespace webpp::http {
 
             write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
             write("\r\n", 2L);
-            write(str.data(), static_cast<stl::streamsize>(str.size()));
+
+            if constexpr (TextBasedBodyCommunicator<body_type>) {
+                write(res.body.data(), static_cast<stl::streamsize>(res.body.size()));
+            } else {
+                static_assert_false(body_type,
+                                    "We don't know how to write the response body to output"
+                                    " in CGI protocol. Application returns a wrong "
+                                    "response type which contains unknown body.");
+            }
             return EXIT_SUCCESS;
         }
     };
