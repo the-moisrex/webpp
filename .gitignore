@@ -28,3 +28,6 @@ webpp.kdev4
 CMakeUserPresets.json
 CMakeCache.txt
 CMakeFiles/
+CPM_modules/
+_deps/
+cpm-package-lock.cmake
