@@ -31,71 +31,11 @@ namespace webpp::http {
             using string_type      = traits::general_string<traits_type>;
             using allocator_type   = typename string_type::allocator_type;
             using char_type        = traits::char_type<traits_type>;
-            using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
 
-          private:
-            // the file extension will use the "content"'s allocator directly
-            using alloc_type    = allocator_type const&;
-            string_type content = "";
-
-          public:
             constexpr string_body_extension() = default;
-
-            constexpr string_body_extension(string_view_type str, alloc_type alloc = allocator_type{})
-              : content{str, alloc} {}
-
-            template <typename... Args>
-                requires(sizeof...(Args) > 0 &&
-                         requires(Args... args) { string_type{stl::forward<Args>(args)...}; }) // string args
-            constexpr string_body_extension(Args&&... args) : content{stl::forward<Args>(args)...} {}
-
-
-            // load a file
-            constexpr string_body_extension(stl::filesystem::path const& file,
-                                            alloc_type                   alloc = allocator_type{})
-              : content{alloc} {
-                static_cast<void>(load(file));
-            }
-
-            /**
-             * @brief Get a reference to the body's string
-             * @return string
-             */
-            [[nodiscard]] string_type const& string() const noexcept {
-                return content;
-            }
-
-            template <typename StrType>
-                requires(istl::StringifiableOf<string_type, StrType>)
-            [[nodiscard]] string_type const& string(StrType&& str) {
-                return content.operator=(stl::forward<StrType>(str));
-            }
-
-            constexpr operator string_type() const noexcept {
-                return content;
-            }
-
             // todo: add "replace_format"
             // todo: add istring member functions to it
             // todo: operator >> and <<
-
-            [[nodiscard]] bool operator==(string_view_type str) const noexcept {
-                return str == content;
-            }
-
-            [[nodiscard]] bool operator!=(string_view_type str) const noexcept {
-                return str != content;
-            }
-
-            [[nodiscard]] auto get_allocator() const noexcept {
-                return content.get_allocator();
-            }
-
-            template <typename Arg>
-            constexpr auto& operator=(Arg&& arg) {
-                content.operator=(stl::forward<Arg>(arg));
-                return *this;
-            }
 
             // load a file as a string for the body
             bool load(stl::filesystem::path const& filepath) noexcept {
@@ -108,35 +48,8 @@ namespace webpp::http {
                 }
                 return res;
             }
-
-            [[nodiscard]] constexpr stl::size_t size() const noexcept {
-                return content.size();
-            }
-
-            [[nodiscard]] constexpr auto data() const noexcept {
-                return content.data();
-            }
-
-            template <typename StrType>
-                requires(istl::StringViewifiableOf<string_view_type, StrType>)
-            constexpr auto& operator<<(StrType&& str) {
-                auto const str_view = istl::string_viewify_of<string_view_type>(stl::forward<StrType>(str));
-                content.append(str_view.data(), str_view.size());
-                return *this;
-            }
         };
 
-        template <Traits TraitsType>
-        [[nodiscard]] bool operator==(typename TraitsType::string_view_type    str,
-                                      string_body_extension<TraitsType> const& strbody) noexcept {
-            return strbody.string() == str;
-        }
-
-        template <Traits TraitsType>
-        [[nodiscard]] bool operator!=(typename TraitsType::string_view_type    str,
-                                      string_body_extension<TraitsType> const& strbody) noexcept {
-            return strbody.string() != str;
-        }
 
         /**
          * This extension helps the user to create a response with the help of the context
@@ -162,8 +75,7 @@ namespace webpp::http {
             constexpr HTTPResponse auto string(Args&&... args) const {
                 // check if there's an allocator in the args:
                 constexpr bool has_allocator = (Allocator<Args> || ...);
-                if constexpr (!has_allocator &&
-                              requires {
+                if constexpr (!has_allocator && requires {
                                   response_type::with_body(
                                     stl::forward<Args>(args)...,
                                     this->alloc_pack.template general_allocator<char_type>());
@@ -278,9 +190,11 @@ namespace webpp::http {
     }
 
 
-    template <typename T, typename BodyType>
+    // This function will require a request/response body. The request or response objects should pass their
+    // own body to this function.
+    template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr T deserialize_body(BodyType const& body) {
+    constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
         using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
@@ -308,11 +222,11 @@ namespace webpp::http {
 
     template <typename T>
         requires(istl::StringViewifiable<T>)
-    constexpr void serialize_body(T&& str, auto& body) {
+    constexpr void serialize_body(T&& str, HTTPBody auto& body) {
         using type          = stl::remove_cvref_t<T>;
         auto const str_view = istl::string_viewify(stl::forward<T>(str));
         if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {
-            body.write(str_view.data(), str_view.size());
+            body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
         } else {
             static_assert_false(type, "The body type doesn't support strings.");
         }

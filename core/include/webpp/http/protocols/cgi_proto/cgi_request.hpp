@@ -31,8 +31,9 @@ namespace webpp::http {
         string_type cache;
 
         string_view_type put_header_name(string_view_type name) {
+            using diff_t = typename stl::iterator_traits<typename string_type::iterator>::difference_type;
             cache.append(name.data(), name.size());
-            stl::replace(cache.end() - name.size(), cache.end(), '_', '-');
+            stl::replace(cache.end() - static_cast<diff_t>(name.size()), cache.end(), '_', '-');
             return {cache.data() + cache.size() - name.size(), name.size()};
         }
 

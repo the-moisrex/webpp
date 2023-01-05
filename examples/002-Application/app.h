@@ -23,12 +23,12 @@ namespace website {
 
         // how to run this function:
         //   REQUEST_URI=/content-length HTTP_CONTENT_LENGTH=5 REQUEST_METHOD=POST ./cgi-application
-        auto get_len(Context auto&& ctx) const {
-            stl::string body = ctx.request.body.as();
-            stl::size_t content_length = ctx.request.headers.content_length();
+        stl::string get_len(Context auto& ctx) const {
+            stl::string const body = ctx.request.as();
+            stl::size_t const content_length = ctx.request.headers.content_length();
 
-            auto res = ctx.format("Content-Length: {}\n", content_length);
-            res += ctx.format("Body Length: {}\n", body.size());
+            stl::string res = webpp::fmt::format("Content-Length: {}\n", content_length);
+            res += webpp::fmt::format("Body Length: {}\n", body.size());
 
             for (auto const& hdr : ctx.request.headers) {
                 res += hdr.name;

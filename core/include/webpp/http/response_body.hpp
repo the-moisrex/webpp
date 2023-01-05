@@ -170,7 +170,7 @@ namespace webpp::http {
         }
 
         constexpr auto as() const {
-            return body_auto_converter<response_body>{.body = *this};
+            return auto_converter<response_body>{.obj = *this};
         }
 
 

@@ -157,6 +157,10 @@ namespace webpp::http {
 
 
 
+    template <typename T>
+    concept HTTPBody = HTTPRequestBody<T> || HTTPResponseBody<T>;
+
+
 
     ////////////////////////////// Request //////////////////////////////
 
@@ -297,29 +301,33 @@ namespace webpp::http {
       typename REList::template mother_extensie_type<TraitsType, http_protocol_descriptor>;
 
 
-
     //////////////////////////// Default Serializers /////////////////////////////
 
 
 
 
-    template <typename T>
-        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
-    constexpr istl::nothing_type deserialize_request_body(HTTPRequest auto const&) noexcept {
+    template <typename T, typename BodyType>
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
+                                                                               HTTPRequestBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_request_body(HTTPRequestBody auto const&) noexcept {
         // request body is empty
         return {};
     }
 
-    template <typename T>
-        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
-    constexpr istl::nothing_type deserialize_response_body(HTTPRequest auto const&) noexcept {
+    template <typename T, typename BodyType>
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPResponse<BodyType> ||
+                                                                               HTTPResponseBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_response_body(BodyType const&) noexcept {
         // request body is empty
         return {};
     }
 
-    template <typename T>
-        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
-    constexpr istl::nothing_type deserialize_body(HTTPRequest auto const&) noexcept {
+
+    template <typename T, typename BodyType>
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
+                                                                               HTTPResponse<BodyType> ||
+                                                                               HTTPBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_body(BodyType const&) noexcept {
         // request body is empty
         return {};
     }
@@ -352,12 +360,12 @@ namespace webpp::http {
      * @endcode
      */
     template <typename BodyType>
-    struct body_auto_converter {
-        BodyType const& body;
+    struct auto_converter {
+        BodyType const& obj; // body or request
 
         template <typename T>
         constexpr operator T() const {
-            return body.template as<T>();
+            return obj.template as<stl::remove_cvref_t<T>>();
         }
     };
 
