@@ -79,6 +79,42 @@ namespace webpp::http {
             // todo: calculate the default response headers based on the request here
             return res;
         }
+
+
+        template <typename T>
+        constexpr T as() const {
+            if constexpr (requires {
+                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_request_body<T>(*this);
+            } else if constexpr (requires {
+                                     { deserialize_request_body<T>(this->body) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_request_body<T>(this->body);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(*this);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(this->body) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(this->body);
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the request to the specified type."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+        }
+
+        constexpr auto as() const {
+            return auto_converter<common_http_request>{.obj = *this};
+        }
+
+        template <typename T>
+        constexpr operator T() const {
+            return as<T>();
+        }
     };
 
     /**
