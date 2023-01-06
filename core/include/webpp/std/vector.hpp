@@ -3,7 +3,7 @@
 #ifndef WEBPP_VECTOR_H
 #define WEBPP_VECTOR_H
 
-#include "../traits/traits.hpp"
+#include "../traits/default_traits.hpp"
 #include "std.hpp"
 
 #include <vector>
