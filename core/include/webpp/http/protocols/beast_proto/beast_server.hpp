@@ -128,10 +128,15 @@ namespace webpp::http::beast_proto {
 
       private:
         void make_beast_response() noexcept {
+            using std::swap;
+            using stl::swap;
+
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
 
             HTTPResponse auto res = server->call_app(*req);
+            using response_type   = stl::remove_cvref_t<decltype(res)>;
+            using body_type       = typename response_type::body_type;
 
             // putting the user's response into beast's response
             bres.emplace();
@@ -140,7 +145,17 @@ namespace webpp::http::beast_proto {
             for (auto const& h : res.headers) {
                 bres->set(h.name, h.value);
             }
-            bres->body() = res.body.string();
+            if constexpr (TextBasedBodyCommunicator<body_type>) {
+                if constexpr (stl::same_as<body_type, typename beast_body_type::value_type>) {
+                    swap(bres->body(), res.body);
+                } else {
+                    bres->body().replace(0, bres->body().size(), res.body.data(), res.body.size());
+                }
+            } else {
+                static_assert_false(body_type,
+                                    "We don't know how to read your response's body "
+                                    "thus we don't know how to send it to the user.");
+            }
             // bres.content_length(res.body.size());
             bres->prepare_payload();
             str_serializer.emplace(*bres);
