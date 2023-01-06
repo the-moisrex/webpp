@@ -11,7 +11,6 @@ set(BIN_SOVERSION 1)
 set(LIB_VERSION 1.0.0)
 set(BIN_VERSION 1.0.0)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -97,6 +96,10 @@ elseif (IS_CLANG AND IS_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wpedantic -Wextra -Wconversion -Wshadow")
 endif ()
 
+
+if (IS_CLANG)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif ()
 
 
 option (FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
