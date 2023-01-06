@@ -107,22 +107,15 @@ namespace webpp::http {
 
 
         // Get the data pointer if available, returns nullptr otherwise
-        [[nodiscard]] constexpr char_type const* data() const noexcept {
-            if constexpr (requires { elist_type::data(); }) {
-                return elist_type::data();
-            } else {
-                return nullptr;
-            }
+        [[nodiscard]] constexpr char_type const*
+        data() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+            return elist_type::data();
         }
 
         // Get the size of the response body if possible. returns 0 if it's not available
-        [[nodiscard]] constexpr stl::size_t size() const noexcept {
-            if constexpr (requires { elist_type::size(); }) {
-                return elist_type::size();
-            } else {
-                // todo: should we return -1 so we can identify whether the body is actually 0 or unknown
-                return 0;
-            }
+        [[nodiscard]] constexpr stl::size_t
+        size() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+            return elist_type::size();
         }
 
         constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
