@@ -79,9 +79,9 @@ namespace webpp {
     struct const_list_value {
         using type = std::decay_t<ValueType>;
 
-        type _value;
+        type value; // NOLINT(misc-non-private-member-variables-in-classes)
 
-        constexpr explicit const_list_value(type value) noexcept : _value(std::move(value)) {}
+        constexpr explicit const_list_value(type inp_value) noexcept : value(std::move(inp_value)) {}
     };
 
     template <>
@@ -93,9 +93,9 @@ namespace webpp {
     struct const_list_next_value {
         using type = std::decay_t<ValueType>;
 
-        type _next;
+        type next_value; // NOLINT(misc-non-private-member-variables-in-classes)
 
-        constexpr explicit const_list_next_value(type next) noexcept : _next(std::move(next)) {}
+        constexpr explicit const_list_next_value(type inp_next) noexcept : next_value(std::move(inp_next)) {}
     };
 
     template <>
@@ -117,6 +117,7 @@ namespace webpp {
         //        NextType>; using const_iterator = iterator;
 
         constexpr explicit const_list() noexcept = default;
+        constexpr ~const_list()                  = default;
 
         constexpr explicit const_list(type value) noexcept : value_t(std::move(value)) {}
 
@@ -132,23 +133,23 @@ namespace webpp {
         constexpr const_list& operator=(const_list const& v) noexcept = default;
 
         const_list& operator=(type const& _value) noexcept {
-            value_t::_value = _value;
+            value_t::value = _value;
             return *this;
         }
 
         const_list& operator=(type&& _value) noexcept {
-            value_t::_value = _value;
+            value_t::value = _value;
             return *this;
         }
 
         constexpr const_list& operator=(const_list&&) noexcept = default;
 
         constexpr auto const& next() const noexcept {
-            return next_value_t::_next;
+            return next_value_t::next_value;
         }
 
         constexpr auto const& value() const noexcept {
-            return value_t::_value;
+            return value_t::value;
         }
 
         template <typename NewValueType>

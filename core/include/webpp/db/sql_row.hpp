@@ -14,49 +14,49 @@ namespace webpp::sql {
         using size_type          = typename statement_type::size_type;
 
       private:
-        statement_type& stmt;
+        statement_type* stmt;
 
       public:
-        sql_row(statement_type& stmt_ref) noexcept : stmt{stmt_ref} {}
+        sql_row(statement_type& stmt_ref) noexcept : stmt{*stmt_ref} {}
 
         bool operator==(sql_row const& rhs) const noexcept {
-            return stmt == rhs.stmt;
+            return *stmt == *rhs.stmt;
         }
 
         auto operator<=>(sql_row const& rhs) const noexcept {
-            return stmt <=> rhs.stmt;
+            return *stmt <=> *rhs.stmt;
         }
 
 
         [[nodiscard]] inline cell_type operator[](size_type index) const noexcept {
-            return {stmt, index};
+            return {*stmt, index};
         }
 
 
         [[nodiscard]] inline cell_iterator_type begin() noexcept {
-            return {{stmt, 0}};
+            return {{*stmt, 0}};
         }
 
 
         [[nodiscard]] inline cell_iterator_type end() noexcept {
-            return {{stmt, stmt.column_count()}};
+            return {{*stmt, stmt->column_count()}};
         }
 
         [[nodiscard]] inline cell_iterator_type begin() const noexcept {
-            return {{stmt, 0}};
+            return {{*stmt, 0}};
         }
 
 
         [[nodiscard]] inline cell_iterator_type end() const noexcept {
-            return {{stmt, stmt.column_count()}};
+            return {{*stmt, stmt->column_count()}};
         }
 
         [[nodiscard]] inline size_type size() const noexcept {
-            return stmt.column_count();
+            return stmt->column_count();
         }
 
         statement_type& statement() noexcept {
-            return stmt;
+            return *stmt;
         }
 
         // return a tuple of N length containing cells
@@ -64,7 +64,7 @@ namespace webpp::sql {
         [[nodiscard]] inline auto as_tuple() const noexcept {
             using tuple = istl::repeat_type_t<N, cell_type, TupleType>;
             return ([this]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
-                return tuple{cell_type{stmt, I}...};
+                return tuple{cell_type{*stmt, I}...};
             })(stl::make_index_sequence<N>{});
         }
     };
@@ -96,6 +96,7 @@ namespace webpp::sql {
         constexpr row_iterator(row_iterator&&) noexcept            = default;
         constexpr row_iterator& operator=(row_iterator const&)     = default;
         constexpr row_iterator& operator=(row_iterator&&) noexcept = default;
+        constexpr ~row_iterator()                                  = default;
 
         constexpr bool operator==(const row_iterator& rhs) const noexcept {
             return row == rhs.row;

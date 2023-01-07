@@ -139,8 +139,8 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType>
-        requires(istl::String<T> || istl::StringView<T>)
-    constexpr void deserialize_body(T& str, BodyType const& body) {
+    requires(istl::String<T> || istl::StringView<T>) constexpr void deserialize_body(T&              str,
+                                                                                     BodyType const& body) {
         using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type>) {
             if constexpr (requires {
@@ -193,8 +193,8 @@ namespace webpp::http {
     // This function will require a request/response body. The request or response objects should pass their
     // own body to this function.
     template <typename T, HTTPBody BodyType>
-        requires(istl::String<T> || istl::StringView<T>)
-    constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
+    requires(istl::String<T> ||
+             istl::StringView<T>) constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
         using type = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
@@ -221,8 +221,7 @@ namespace webpp::http {
     }
 
     template <typename T>
-        requires(istl::StringViewifiable<T>)
-    constexpr void serialize_body(T&& str, HTTPBody auto& body) {
+    requires(istl::StringViewifiable<T>) constexpr void serialize_body(T&& str, HTTPBody auto& body) {
         using type          = stl::remove_cvref_t<T>;
         auto const str_view = istl::string_viewify(stl::forward<T>(str));
         if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {

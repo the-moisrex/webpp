@@ -66,8 +66,10 @@ namespace webpp {
             //   : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
-                requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
-            constexpr vctor([[maybe_unused]] Args&&... args) noexcept : Parent{} {}
+            requires(!stl::constructible_from<Parent, Args...> &&
+                     stl::is_default_constructible_v<
+                       Parent>) constexpr vctor([[maybe_unused]] Args&&... args) noexcept
+              : Parent{} {}
         };
 
         template <typename Parent>
@@ -471,9 +473,9 @@ namespace webpp {
     template <template <typename...> typename TemplatedExtension>
     struct as_extension {
         template <typename... T>
-            requires requires {
-                typename TemplatedExtension<T...>;
-            }
+        requires requires {
+            typename TemplatedExtension<T...>;
+        }
         using type = TemplatedExtension<T...>;
     };
 

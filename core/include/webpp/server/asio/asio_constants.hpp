@@ -1,5 +1,5 @@
-#ifndef WEBPP_SERVER_CONSTANTS_H
-#define WEBPP_SERVER_CONSTANTS_H
+#ifndef WEBPP_SERVER_CONSTANTS_HPP
+#define WEBPP_SERVER_CONSTANTS_HPP
 
 namespace webpp {
 
@@ -26,4 +26,4 @@ namespace webpp {
 } // namespace webpp
 
 
-#endif // WEBPP_INTERFACE_COMMON_CONSTANTS_H
+#endif // WEBPP_SERVER_CONSTANTS_HPP

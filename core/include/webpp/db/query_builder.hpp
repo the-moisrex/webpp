@@ -462,8 +462,7 @@ namespace webpp::sql {
 
         // helper to convert the input to acceptable string type
         template <typename T>
-            requires(is_stringify<T>)
-        constexpr auto stringify(T&& str) const noexcept {
+        requires(is_stringify<T>) constexpr auto stringify(T&& str) const noexcept {
             return istl::stringify_of<local_string_type>(stl::forward<T>(str),
                                                          alloc::local_alloc_for<local_string_type>(db));
         }
@@ -489,8 +488,8 @@ namespace webpp::sql {
          * Set columns to be selected in the sql query.
          */
         template <typename... T>
-            requires((istl::StringifiableOf<string_type, T> && ...))
-        constexpr query_builder& select(T&&... cols) noexcept {
+        requires((istl::StringifiableOf<string_type, T> &&
+                  ...)) constexpr query_builder& select(T&&... cols) noexcept {
             method = query_method::select;
             columns.reserve(columns.size() + sizeof...(T));
             (columns.push_back(stringify(stl::forward<T>(cols))), ...);
@@ -498,8 +497,9 @@ namespace webpp::sql {
         }
 
         template <typename StrT>
-            requires(istl::StringifiableOf<string_type, StrT>)
-        constexpr column_builder<database_type, string_type> operator[](StrT&& col_name) noexcept {
+        requires(
+          istl::StringifiableOf<string_type, StrT>) constexpr column_builder<database_type, string_type>
+        operator[](StrT&& col_name) noexcept {
             return {*this, stringify(stl::forward<StrT>(col_name))};
         }
 
@@ -629,8 +629,8 @@ namespace webpp::sql {
          *   select * from table where expr1 in (expr2, exprs...);
          */
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& where_in(Expr1&& expr1,
+                                                                          Exprs&&... exprs) noexcept {
             where_clauses.clear();
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -646,8 +646,8 @@ namespace webpp::sql {
         }
 
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& where_not_in(Expr1&& expr1,
+                                                                              Exprs&&... exprs) noexcept {
             where_clauses.clear();
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -662,8 +662,8 @@ namespace webpp::sql {
         }
 
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& and_where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& and_where_in(Expr1&& expr1,
+                                                                              Exprs&&... exprs) noexcept {
             using and_expr  = details::unary_op_expr<database_type>;
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -682,8 +682,8 @@ namespace webpp::sql {
         }
 
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& or_where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& or_where_in(Expr1&& expr1,
+                                                                             Exprs&&... exprs) noexcept {
             using and_expr  = details::unary_op_expr<database_type>;
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -702,8 +702,8 @@ namespace webpp::sql {
         }
 
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& or_where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& or_where_not_in(Expr1&& expr1,
+                                                                                 Exprs&&... exprs) noexcept {
             using and_expr  = details::unary_op_expr<database_type>;
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -722,8 +722,8 @@ namespace webpp::sql {
         }
 
         template <typename Expr1, typename... Exprs>
-            requires(sizeof...(Exprs) >= 1)
-        constexpr query_builder& and_where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
+        requires(sizeof...(Exprs) >= 1) constexpr query_builder& and_where_not_in(Expr1&& expr1,
+                                                                                  Exprs&&... exprs) noexcept {
             using and_expr  = details::unary_op_expr<database_type>;
             using expr_type = details::expr_in_expr<database_type>;
 
@@ -755,9 +755,10 @@ namespace webpp::sql {
 
 
         template <typename ColT, typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, ColT> &&
-                     (istl::StringifiableOf<local_string_type, StrT> && ...))
-        constexpr query_builder& left_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
+        requires(istl::StringifiableOf<local_string_type, ColT> &&
+                 (istl::StringifiableOf<local_string_type, StrT> &&
+                  ...)) constexpr query_builder& left_join_using(ColT&& col_string,
+                                                                 StrT&&... col_names) noexcept {
             joins.push_back(
               join_type{.cat       = join_type::join_cat::left,
                         .cond      = join_type::cond_type::using_cond,
@@ -770,9 +771,10 @@ namespace webpp::sql {
         }
 
         template <typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, StrT>&&...)
-        constexpr query_builder& left_join_using(query_builder const& sub_query,
-                                                 StrT&&... col_names) noexcept {
+        requires(istl::StringifiableOf<
+                 local_string_type,
+                 StrT>&&...) constexpr query_builder& left_join_using(query_builder const& sub_query,
+                                                                      StrT&&... col_names) noexcept {
             joins.push_back(
               join_type{.cat       = join_type::join_cat::left,
                         .cond      = join_type::cond_type::using_cond,
@@ -785,9 +787,10 @@ namespace webpp::sql {
         }
 
         template <typename ColT, typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, ColT> &&
-                     (istl::StringifiableOf<local_string_type, StrT> && ...))
-        constexpr query_builder& right_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
+        requires(istl::StringifiableOf<local_string_type, ColT> &&
+                 (istl::StringifiableOf<local_string_type, StrT> &&
+                  ...)) constexpr query_builder& right_join_using(ColT&& col_string,
+                                                                  StrT&&... col_names) noexcept {
             joins.push_back(
               join_type{.cat       = join_type::join_cat::right,
                         .cond      = join_type::cond_type::using_cond,
@@ -800,9 +803,10 @@ namespace webpp::sql {
         }
 
         template <typename... StrT>
-            requires(istl::StringifiableOf<local_string_type, StrT>&&...)
-        constexpr query_builder& right_join_using(query_builder const& sub_query,
-                                                  StrT&&... col_names) noexcept {
+        requires(istl::StringifiableOf<
+                 local_string_type,
+                 StrT>&&...) constexpr query_builder& right_join_using(query_builder const& sub_query,
+                                                                       StrT&&... col_names) noexcept {
             joins.push_back(
               join_type{.cat       = join_type::join_cat::right,
                         .cond      = join_type::cond_type::using_cond,

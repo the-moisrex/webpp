@@ -289,7 +289,7 @@ namespace webpp::http::beast_proto {
 
 
         void start_work(socket_type&& sock) {
-            http_worker_type* worker_ptr = nullptr;
+            http_worker_type* worker_ptr;
             {
                 stl::scoped_lock    lock{worker_mutex};
                 worker_ptr = worker.operator->();

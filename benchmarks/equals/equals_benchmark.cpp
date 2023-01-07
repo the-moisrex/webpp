@@ -35,7 +35,7 @@ bool cmp(auto&& str1, auto&& str2) noexcept {
             return false;
     }
 
-    // let's just forget about the rest of them now, it's just a benchmark and we already know the results.
+    // let's just forget about the rest of them now, it's just a benchmark, and we already know the results.
 
     return true;
 }

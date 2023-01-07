@@ -38,8 +38,9 @@ namespace webpp::unicode {
         pointer       start;
 
         template <typename T>
-            requires(stl::same_as<T, char_type> || stl::same_as<T, code_point_type>)
-        constexpr stl::strong_ordering operator<=>(T val) const noexcept {
+        requires(stl::same_as<T, char_type> ||
+                 stl::same_as<T, code_point_type>) constexpr stl::strong_ordering
+        operator<=>(T val) const noexcept {
             if constexpr (stl::same_as<T, char_type>) {
                 return *start <=> val;
             } else {
@@ -87,9 +88,9 @@ namespace webpp::unicode {
         constexpr unicode_ptr() = default;
 
         template <typename T>
-            requires(sizeof(T) == sizeof(char_type) &&
-                     !stl::same_as<T, char_type>) // same size but not char_type
-        constexpr unicode_ptr(T* p) noexcept : start{reinterpret_cast<pointer>(p)} {}
+        requires(sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
+          constexpr unicode_ptr(T* p) noexcept
+          : start{reinterpret_cast<pointer>(p)} {}
 
         constexpr unicode_ptr(pointer p) noexcept : start{p} {}
         constexpr unicode_ptr(reference r) noexcept : start{&r.value} {}
@@ -216,9 +217,10 @@ namespace webpp::unicode {
         char_type value;
 
         template <typename C>
-            requires(details::is_value<stl::remove_cvref_t<C>> &&
-                     !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
-        constexpr explicit(false) storage_unit(C c) noexcept : value(static_cast<char_type>(c)) {}
+        requires(details::is_value<stl::remove_cvref_t<C>> &&
+                 !stl::is_same_v<stl::remove_cvref_t<C>, char_type>) constexpr explicit(false)
+          storage_unit(C c) noexcept
+          : value(static_cast<char_type>(c)) {}
 
         constexpr explicit(false) storage_unit(char_type val) noexcept : value(val) {}
         constexpr storage_unit() noexcept                    = default;
@@ -228,8 +230,8 @@ namespace webpp::unicode {
         storage_unit& operator=(storage_unit&& val) noexcept = default;
 
         template <typename C>
-            requires(stl::is_integral_v<stl::remove_cvref_t<C>> && sizeof(C) == sizeof(char_type))
-        storage_unit& operator=(C c) {
+        requires(stl::is_integral_v<stl::remove_cvref_t<C>> && sizeof(C) == sizeof(char_type)) storage_unit&
+        operator=(C c) {
             value = static_cast<char_type>(c);
             return *this;
         }
@@ -238,8 +240,8 @@ namespace webpp::unicode {
          * Let it to be converted to another integer type with static_cast
          */
         template <typename IntType>
-            requires(stl::is_integral_v<stl::remove_cvref_t<IntType>>)
-        constexpr operator IntType() const noexcept {
+        requires(stl::is_integral_v<stl::remove_cvref_t<IntType>>) constexpr
+        operator IntType() const noexcept {
             return static_cast<IntType>(value);
         }
 
@@ -247,14 +249,14 @@ namespace webpp::unicode {
 
 
         template <typename IntT>
-            requires(details::is_value<stl::remove_cvref_t<IntT>>)
-        constexpr stl::strong_ordering operator<=>(IntT&& val) const noexcept {
+        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        operator<=>(IntT&& val) const noexcept {
             return value <=> val;
         }
 
         template <typename IntT>
-            requires(details::is_value<stl::remove_cvref_t<IntT>>)
-        constexpr stl::strong_ordering operator<=>(storage_unit<IntT> val) const noexcept {
+        requires(details::is_value<stl::remove_cvref_t<IntT>>) constexpr stl::strong_ordering
+        operator<=>(storage_unit<IntT> val) const noexcept {
             return value <=> static_cast<char_type>(val.value);
         }
     };
@@ -267,9 +269,9 @@ namespace webpp::unicode {
     }
 
     template <typename ChT, typename CharT, typename CodePointT>
-        requires requires(ChT str, CharT val) {
-            static_cast<CharT>(str) <=> val;
-        }
+    requires requires(ChT str, CharT val) {
+        static_cast<CharT>(str) <=> val;
+    }
     constexpr auto operator<=>(ChT&& str, const storage_unit<CharT, CodePointT>& unit) noexcept {
         return static_cast<CharT>(str) == unit.value;
     }

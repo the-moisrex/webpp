@@ -30,10 +30,10 @@ namespace webpp::uri {
         }
 
         template <typename T>
-            requires(stl::is_integral_v<stl::remove_cvref_t<T>> &&
-                     (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
-                     !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
-        constexpr basic_port(T port_num) : string_type{} {
+        requires(stl::is_integral_v<stl::remove_cvref_t<T>> &&
+                 (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
+                 !stl::is_floating_point_v<stl::remove_cvref_t<T>>) constexpr basic_port(T port_num)
+          : string_type{} {
             if (port_num < 0 || port_num > 65535)
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
 

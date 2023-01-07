@@ -147,8 +147,7 @@ namespace webpp::unicode {
 
 
     template <typename value_type>
-        requires(stl::is_integral_v<value_type>)
-    static constexpr auto count_bytes(value_type value) noexcept {
+    requires(stl::is_integral_v<value_type>) static constexpr auto count_bytes(value_type value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00u) == 0xD800u)
                 return 2;
@@ -304,8 +303,7 @@ namespace webpp::unicode {
         }
 
         template <typename Ptr, typename CharT = char32_t>
-            requires(!stl::is_const_v<Ptr>)
-        static constexpr void append(Ptr& result, CharT cp) noexcept {
+        requires(!stl::is_const_v<Ptr>) static constexpr void append(Ptr& result, CharT cp) noexcept {
             using char_type = stl::remove_cvref_t<decltype(*result)>;
             if constexpr (UTF8<char_type>) {
                 if (cp < 0x80) // one octet
@@ -335,8 +333,7 @@ namespace webpp::unicode {
     namespace checked {
 
         template <typename Ptr, typename CharT = char32_t>
-            requires(!stl::is_const_v<Ptr>)
-        static constexpr bool append(Ptr& result, CharT cp) noexcept {
+        requires(!stl::is_const_v<Ptr>) static constexpr bool append(Ptr& result, CharT cp) noexcept {
             if (!is_code_point_valid(cp))
                 return false;
             unchecked::append<Ptr, CharT>(result, cp);

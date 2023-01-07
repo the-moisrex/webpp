@@ -43,9 +43,10 @@ namespace webpp {
 
           public:
             template <typename ET, typename... Args>
-                requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
-                         !stl::same_as<ET, strategy&&>)
-            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&&... args) noexcept
+            requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
+                     !stl::same_as<ET, strategy&&>) constexpr strategy(ET&&        et,
+                                                                       stl::size_t max_size_value = 1024,
+                                                                       Args&&... args) noexcept
               : max_size{max_size_value},
                 gate{et, stl::forward<Args>(args)...} {}
 
@@ -54,17 +55,17 @@ namespace webpp {
                 gate{input_gate} {}
 
             template <typename K, typename V>
-                requires(stl::convertible_to<K, key_type>&&    // it's a key
-                           stl::convertible_to<V, value_type>) // it's a value
-            constexpr void set(K&& key, V&& value) {
+            requires(stl::convertible_to<K, key_type>&&    // it's a key
+                       stl::convertible_to<V, value_type>) // it's a value
+              constexpr void set(K&& key, V&& value) {
                 gate.set(stl::forward<K>(key), stl::forward<V>(value), next_usage++);
                 clean_up();
             }
 
 
             template <typename K>
-                requires(stl::convertible_to<K, key_type>) // it's a key
-            constexpr stl::optional<value_type> get(K&& key) {
+            requires(stl::convertible_to<K, key_type>) // it's a key
+              constexpr stl::optional<value_type> get(K&& key) {
                 stl::optional<data_type> data = gate.get(key);
                 if (!data)
                     return stl::nullopt;

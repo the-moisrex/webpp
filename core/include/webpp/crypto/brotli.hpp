@@ -5,6 +5,12 @@
 
 #include "../libs/brotli.hpp"
 
+#ifndef WEBPP_BROTLI
+#    include <cstdlib>
+#    include <stdexcept>
+#    include <string>
+#endif
+
 namespace webpp {
 
 
@@ -74,13 +80,13 @@ namespace webpp {
             return decompressed;
         }
 #else
-        static std::string compress(const char* /*data*/, const size_t /*ndata*/) {
-            throw stl::runtime_error(
+        static std::string compress(const char* /*data*/, const std::size_t /*ndata*/) {
+            throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliCompress()");
             abort();
         }
-        static std::string decompress(const char* /*data*/, const size_t /*ndata*/) {
-            throw stl::runtime_error(
+        static std::string decompress(const char* /*data*/, const std::size_t /*ndata*/) {
+            throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliDecompress()");
             abort();
         }

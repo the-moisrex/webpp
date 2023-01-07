@@ -287,8 +287,8 @@ namespace webpp::http {
         constexpr route(route&&) noexcept      = default;
 
         template <typename... Args>
-            requires(stl::is_constructible_v<super_t, Args...>)
-        constexpr route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
+        requires(stl::is_constructible_v<super_t, Args...>) constexpr route(Args&&... args) noexcept
+          : super_t{stl::forward<Args>(args)...} {}
 
 
       private:

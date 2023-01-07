@@ -93,8 +93,10 @@ namespace webpp {
 
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
-            requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack}, logger{obj.logger} {}
+        requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> &&
+                 EnabledTraits<T>) constexpr enable_traits(T&& obj) noexcept
+          : alloc_pack{obj.alloc_pack},
+            logger{obj.logger} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -164,8 +166,7 @@ namespace webpp {
     };
 
     template <Traits TraitsType, EnabledTraits T>
-        requires(EnabledTraitsOf<TraitsType, T>)
-    struct enable_traits_with<TraitsType, T> : public T {
+    requires(EnabledTraitsOf<TraitsType, T>) struct enable_traits_with<TraitsType, T> : public T {
         using enabled_type = T;
         using T::T;
     };
@@ -182,10 +183,10 @@ namespace webpp {
     struct enable_traits_access;
 
     template <typename T>
-        requires requires {
-            typename T::traits_type;
-            requires Traits<typename T::traits_type>;
-        }
+    requires requires {
+        typename T::traits_type;
+        requires Traits<typename T::traits_type>;
+    }
     struct enable_traits_access<T> : public enable_traits_with<typename T::traits_type, T> {
         using enable_traits_with<typename T::traits_type, T>::enable_traits_with;
     };

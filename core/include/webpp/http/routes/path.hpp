@@ -106,7 +106,8 @@ namespace webpp::http {
         struct make_a_path {
             NextSegType segment;
 
-            [[nodiscard]] constexpr bool operator()(PathContext auto const& ctx) const noexcept {
+            template <PathContext PCType>
+            [[nodiscard]] constexpr bool operator()(PCType const& ctx) const noexcept {
                 if constexpr (requires { {segment == ""}; }) {
                     return segment == *ctx.path.current_segment;
                 } else if constexpr (requires { {"" == segment}; }) {
@@ -293,8 +294,9 @@ namespace webpp::http {
         }
 
         template <typename ContextType>
-            requires(Context<stl::remove_cvref_t<ContextType>>) // Context
-        [[nodiscard]] bool operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
+        requires(Context<stl::remove_cvref_t<ContextType>>) // Context
+          [[nodiscard]] bool
+          operator()(ContextType&& ctx, HTTPRequest auto&& req) noexcept {
             // handle inside-sub-route internal segment is done in this method
 
             if constexpr (HasPathExtension<ContextType>) {

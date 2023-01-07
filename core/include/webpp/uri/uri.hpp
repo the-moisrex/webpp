@@ -28,6 +28,7 @@ namespace webpp::uri {
         using queries_type   = basic_queries<string_type>;
         using fragment_type  = basic_fragment<string_type>;
 
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         scheme_type    scheme{};
         user_info_type user_info{};
         host_type      host{};
@@ -35,6 +36,7 @@ namespace webpp::uri {
         path_type      path{};
         queries_type   queries{};
         fragment_type  fragment{};
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <istl::String StrT      = StringType,
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>

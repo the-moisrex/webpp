@@ -117,9 +117,9 @@ namespace webpp::json::rapidjson {
 
     // if they pass a GenericObject or GenericValue itself.
     template <typename T>
-        requires requires {
-            typename stl::remove_cvref_t<T>::AllocatorType;
-        }
+    requires requires {
+        typename stl::remove_cvref_t<T>::AllocatorType;
+    }
     struct rapidjson_allocator_wrapper<T>
       : public rapidjson_allocator_wrapper<typename stl::remove_cvref_t<T>::AllocatorType> {};
 
@@ -166,18 +166,18 @@ namespace webpp::json::rapidjson {
     namespace details {
 
         template <Traits TraitsType, typename ValueType>
-            requires requires {
-                typename stl::remove_cvref_t<ValueType>::AllocatorType;
-            } // has an allocator
+        requires requires {
+            typename stl::remove_cvref_t<ValueType>::AllocatorType;
+        } // has an allocator
         struct generic_value;
 
         template <Traits TraitsType, typename ArrayType>
         struct generic_array;
 
         template <Traits TraitsType, typename ObjectType>
-            requires requires {
-                typename stl::remove_cvref_t<ObjectType>::AllocatorType;
-            } // has an allocator
+        requires requires {
+            typename stl::remove_cvref_t<ObjectType>::AllocatorType;
+        } // has an allocator
         struct generic_object;
 
         /**
@@ -407,9 +407,9 @@ namespace webpp::json::rapidjson {
                 alloc{inp_alloc} {}
 
             template <typename ValT>
-                requires requires(ValT v) {
-                    v.GetAllocator();
-                }
+            requires requires(ValT v) {
+                v.GetAllocator();
+            }
             json_common(ValT&& obj) : val_handle{stl::forward<ValT>(obj)}, alloc{obj.GetAllocator()} {}
 
             template <typename T>
@@ -648,8 +648,9 @@ namespace webpp::json::rapidjson {
             using json_common_type::json_common; // common ctors
 
             template <typename T>
-                requires(stl::is_arithmetic_v<T>) // only numbers
-            generic_number(T val) : json_common_type{rapidjson_value_type{val}} {}
+            requires(stl::is_arithmetic_v<T>) // only numbers
+              generic_number(T val)
+              : json_common_type{rapidjson_value_type{val}} {}
 
             /**
              * Checks whether a number can be losslessly converted to a float.
@@ -671,9 +672,9 @@ namespace webpp::json::rapidjson {
          * The ValueType is a rapidjson value type not a generic value type.
          */
         template <Traits TraitsType, typename ObjectType>
-            requires requires {
-                typename stl::remove_cvref_t<ObjectType>::AllocatorType;
-            } // GenericAllocator has an Allocator itself.
+        requires requires {
+            typename stl::remove_cvref_t<ObjectType>::AllocatorType;
+        } // GenericAllocator has an Allocator itself.
         struct generic_object
           : public allocator_holder<
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
@@ -786,9 +787,9 @@ namespace webpp::json::rapidjson {
          * @tparam ValueType
          */
         template <Traits TraitsType, typename ValueType>
-            requires requires {
-                typename stl::remove_cvref_t<ValueType>::AllocatorType;
-            } // has an allocator
+        requires requires {
+            typename stl::remove_cvref_t<ValueType>::AllocatorType;
+        } // has an allocator
         struct generic_value : public json_common<TraitsType, ValueType> {
             using traits_type            = TraitsType;
             using common_type            = json_common<traits_type, ValueType>;
@@ -816,16 +817,16 @@ namespace webpp::json::rapidjson {
             constexpr generic_value(generic_value&&) noexcept = default;
 
             template <typename V>
-                requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
-            constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
-              V&&                   val,
-              allocator_type const& inp_alloc)
+            requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
+              constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
+                V&&                   val,
+                allocator_type const& inp_alloc)
               : json_common<TraitsType, ValueType>(stl::forward<V>(val), inp_alloc) {}
 
             template <typename V>
-                requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
-            constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
-              V&& val)
+            requires(!stl::is_same_v<stl::remove_cvref_t<V>, generic_value>) // no ctor
+              constexpr generic_value( // NOLINT(bugprone-forwarding-reference-overload)
+                V&& val)
               : json_common<TraitsType, ValueType>(stl::forward<V>(val)) {}
 
             /**
@@ -961,8 +962,8 @@ namespace webpp::json::rapidjson {
          * Parse the json string specified here
          */
         template <istl::StringViewifiable StrT>
-            requires(!stl::same_as<stl::remove_cvref_t<StrT>, document>) // not a copy/move ctor
-        document(StrT&& json_string) // NOLINT(bugprone-forwarding-reference-overload)
+        requires(!stl::same_as<stl::remove_cvref_t<StrT>, document>) // not a copy/move ctor
+          document(StrT&& json_string) // NOLINT(bugprone-forwarding-reference-overload)
           : generic_value_type{} {
             parse(stl::forward<StrT>(json_string));
         }
@@ -971,11 +972,11 @@ namespace webpp::json::rapidjson {
          * A document containing the specified, already parsed, value
          */
         template <typename ConvertibleToValue>
-            requires(!istl::StringViewifiable<ConvertibleToValue> &&
-                     (stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
-                                          value_type> && // check if it's a value or an object
-                      !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>) )
-        document(ConvertibleToValue&& val) // NOLINT(bugprone-forwarding-reference-overload)
+        requires(!istl::StringViewifiable<ConvertibleToValue> &&
+                 (stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
+                                      value_type> && // check if it's a value or an object
+                  !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>) )
+          document(ConvertibleToValue&& val) // NOLINT(bugprone-forwarding-reference-overload)
           : generic_value_type{stl::forward<ConvertibleToValue>(val)} {}
 
 

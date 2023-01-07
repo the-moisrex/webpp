@@ -45,9 +45,8 @@ namespace webpp::sql {
         constexpr sqlite_statement() noexcept = default;
         constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
         constexpr sqlite_statement(sqlite_statement const&) = delete;
-        constexpr sqlite_statement(sqlite_statement&& in_stmt) noexcept {
-            stmt         = in_stmt.stmt;
-            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroy"ed.
+        constexpr sqlite_statement(sqlite_statement&& in_stmt) noexcept : stmt{in_stmt.stmt} {
+            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroyed".
         }
 
         sqlite_statement& operator=(const sqlite_statement&) = delete;
@@ -57,7 +56,7 @@ namespace webpp::sql {
 
             destroy();
             stmt         = in_stmt.stmt;
-            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroy"ed.
+            in_stmt.stmt = nullptr; // stop the pointer from becoming "destroyed".
             return *this;
         }
 
@@ -86,7 +85,7 @@ namespace webpp::sql {
         }
 
         inline void reset(istl::String auto& errmsg) noexcept {
-            int rc = sqlite3_reset(stmt);
+            int const rc = sqlite3_reset(stmt);
             if (rc != SQLITE_OK) {
                 errmsg += "Sqlite reset error with code: ";
                 errmsg += stl::to_string(rc);
@@ -268,8 +267,8 @@ namespace webpp::sql {
         template <istl::String StrT = stl::string>
         void as_string(int index, StrT& out) const noexcept {
             // todo: handle text16
-            const char*       str     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, index));
-            const stl::size_t str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));
+            const char* str     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, index));
+            const auto  str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));
             out.append(str, str_len);
         }
     };

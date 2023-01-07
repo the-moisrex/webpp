@@ -6,7 +6,7 @@ related benchmarks from now on goes here and can be used to check if they're cor
 machines with different architectures, operating systems, hardware installed, software installed, and 
 even different situations for example system load.
 
-Unfortunately due to versioning, the old benchmarks have been lost or it's really hard to get to
+Unfortunately due to versioning, the old benchmarks have been lost, or it's really hard to get to
 them, that's why from now on there's going to be lots of code duplication and the benchmarks try to
 copy and paste the important parts that require benchmarking so at least what was intended to be benchmarked
 is not going to be lost after updates thus make the benchmarks faulty and even something un-compilable.

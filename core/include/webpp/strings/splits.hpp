@@ -93,7 +93,7 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
-            return !(*this == other);
+            return !this->operator==(other);
         }
 
         value_type operator*() {
@@ -117,9 +117,9 @@ namespace webpp::strings {
      * This class will help to split a string_splits
      */
     template <typename StrV = stl::string_view, Delimiter... DelimT>
-        requires((istl::StringView<StrV> || istl::String<StrV>) && // it can be a string or string view
-                 sizeof...(DelimT) > 0ul)                          // we must have at least one delimiter
-    struct basic_splitter {
+    requires((istl::StringView<StrV> || istl::String<StrV>) && // it can be a string or string view
+             sizeof...(DelimT) > 0ul)                          // we must have at least one delimiter
+      struct basic_splitter {
 
         static constexpr auto delim_count = sizeof...(DelimT);
 
@@ -225,8 +225,8 @@ namespace webpp::strings {
 
 
     template <Delimiter... DelimT>
-        requires(sizeof...(DelimT) > 0ul) // we must have at least one delimiter
-    struct splitter : basic_splitter<stl::string_view, DelimT...> {
+    requires(sizeof...(DelimT) > 0ul) // we must have at least one delimiter
+      struct splitter : basic_splitter<stl::string_view, DelimT...> {
         using basic_splitter<stl::string_view, DelimT...>::basic_splitter;
     };
 

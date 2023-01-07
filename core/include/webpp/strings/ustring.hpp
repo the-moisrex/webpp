@@ -75,8 +75,8 @@ namespace webpp {
 
 
         template <typename NewCharT>
-            requires(same_size_unit<NewCharT>) // both are the same size
-        explicit ustring(NewCharT const* val, const allocator_type& a = allocator_type{})
+        requires(same_size_unit<NewCharT>) // both are the same size
+          explicit ustring(NewCharT const* val, const allocator_type& a = allocator_type{})
           : basic_string_type{reinterpret_cast<value_type const*>(val), a} {}
 
         /*
@@ -91,9 +91,9 @@ namespace webpp {
         */
 
         template <typename NewCharT>
-            requires(same_size_unit<NewCharT> &&
-                     !stl::same_as<NewCharT, value_type>) // both are the same size
-        constexpr auto operator<=>(NewCharT const* val) noexcept {
+        requires(same_size_unit<NewCharT> && !stl::same_as<NewCharT, value_type>) // both are the same size
+          constexpr auto
+          operator<=>(NewCharT const* val) noexcept {
             return *this <=> reinterpret_cast<value_type const*>(val);
         }
 

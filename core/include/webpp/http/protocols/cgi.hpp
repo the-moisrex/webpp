@@ -1,5 +1,5 @@
-#ifndef WEBPP_CGI_H
-#define WEBPP_CGI_H
+#ifndef WEBPP_PROTOCOLS_CGI_HPP
+#define WEBPP_PROTOCOLS_CGI_HPP
 
 #include "../../convert/casts.hpp"
 #include "../../std/string_view.hpp"
@@ -205,4 +205,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_CGI_H
+#endif // WEBPP_PROTOCOLS_CGI_HPP

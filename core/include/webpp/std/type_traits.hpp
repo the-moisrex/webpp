@@ -97,7 +97,7 @@ namespace webpp::istl {
         struct nth_of {
             using type                         = T;
             static constexpr stl::size_t index = ThisIndex;
-            type                         value;
+            type                         value; // NOLINT(misc-non-private-member-variables-in-classes)
 
             // this is for adding one to the index
             constexpr auto add_one() noexcept {}
@@ -566,10 +566,10 @@ namespace webpp::istl {
      *   Replacer<CVREF_T>::type    -> the type that we should replace it with
      */
     template <typename T, template <typename> typename Replacer>
-        requires requires {
-            typename Replacer<void>::type;
-            {Replacer<void>::value};
-        }
+    requires requires {
+        typename Replacer<void>::type;
+        {Replacer<void>::value};
+    }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 
@@ -636,8 +636,7 @@ namespace webpp::istl {
     };
 
     template <typename TupleT, typename T, stl::size_t I>
-        requires(parameter_count<TupleT> > 0)
-    struct contains_parameter_type<TupleT, T, I> {
+    requires(parameter_count<TupleT> > 0) struct contains_parameter_type<TupleT, T, I> {
         static constexpr bool value =
           stl::is_same_v<nth_parameter<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
     };
@@ -694,9 +693,12 @@ namespace webpp::istl {
                   typename... Tails,
                   template <typename...>
                   typename TupleType>
-            requires(Concept<This>::value)
-        struct filter_parameters_impl<Concept, TupleType<This, Heads...>, TupleType<Tails...>, TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails..., This>, TupleType> {};
+        requires(Concept<This>::value) struct filter_parameters_impl<Concept,
+                                                                     TupleType<This, Heads...>,
+                                                                     TupleType<Tails...>,
+                                                                     TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails..., This>, TupleType> {
+        };
 
         // remove the first one
         template <template <typename...> typename Concept,
@@ -705,9 +707,12 @@ namespace webpp::istl {
                   typename... Tails,
                   template <typename...>
                   typename TupleType>
-            requires(!Concept<This>::value)
-        struct filter_parameters_impl<Concept, TupleType<This, Heads...>, TupleType<Tails...>, TupleType>
-          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {};
+        requires(!Concept<This>::value) struct filter_parameters_impl<Concept,
+                                                                      TupleType<This, Heads...>,
+                                                                      TupleType<Tails...>,
+                                                                      TupleType>
+          : filter_parameters_impl<Concept, TupleType<Heads...>, TupleType<Tails...>, TupleType> {
+        };
 
         // We're at the end of the line, no Heads left to check
         template <template <typename...> typename Concept,
@@ -803,8 +808,8 @@ namespace webpp::istl {
 
             // use TagT as the last type
             template <typename Tag>
-                requires(all_size < Limit)
-            constexpr tag<typename Tag::last, all> operator|(Tag&&) const noexcept {
+            requires(all_size < Limit) constexpr tag<typename Tag::last, all>
+            operator|(Tag&&) const noexcept {
                 return {};
             }
 

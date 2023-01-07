@@ -26,9 +26,12 @@ namespace webpp {
 
 
             template <typename ET>
-                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate&&>)
-            constexpr storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
+            requires(
+              EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
+              !stl::same_as<
+                ET,
+                storage_gate&&>) constexpr storage_gate(ET&&
+                                                          et) // NOLINT(cppcoreguidelines-pro-type-member-init)
               : map(et.alloc_pack, et.alloc_pack.general_resource()) {}
 
             template <typename K>
