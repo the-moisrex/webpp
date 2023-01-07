@@ -115,6 +115,10 @@ namespace webpp::http {
         uint32_t value = 0ul; // Packed as <major>:<minor>
     };
 
+
+    /**
+     * A list of http::version
+     */
     template <stl::size_t N>
     struct version_list : public stl::array<version, N> {
         using array_type = stl::array<version, N>;
