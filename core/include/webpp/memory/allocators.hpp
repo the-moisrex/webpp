@@ -72,8 +72,8 @@ namespace webpp {
      */
     template <typename... T>
     [[nodiscard]] inline auto extract_allocator(T&&... args) noexcept {
-        details::alloc_finder_type<> finder;
-        const auto                   res = (finder | ... | finder(stl::forward<T>(args)));
+        details::alloc_finder_type<> const finder;
+        const auto                         res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
           requires { res.alloc; },
           "We didn't find any allocator in the inputs.");
@@ -82,8 +82,8 @@ namespace webpp {
 
     template <typename Default = stl::allocator<void>, typename... T>
     [[nodiscard]] inline auto extract_allocator_or_default(T&&... args) noexcept {
-        details::alloc_finder_type<> finder;
-        const auto                   res = (finder | ... | finder(stl::forward<T>(args)));
+        details::alloc_finder_type<> const finder;
+        const auto                         res = (finder | ... | finder(stl::forward<T>(args)));
         if constexpr (requires { res.alloc; }) {
             return res.alloc;
         } else {

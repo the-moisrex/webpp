@@ -41,6 +41,22 @@ namespace webpp::sql {
       public:
         // todo: add support for vfs
 
+        sqlite_connection()                                    = default;
+        sqlite_connection(sqlite_connection const&)            = delete;
+        sqlite_connection(sqlite_connection&&) noexcept        = default;
+        sqlite_connection& operator=(sqlite_connection const&) = delete;
+        sqlite_connection& operator=(sqlite_connection&& other) noexcept {
+            using std::swap;
+            using stl::swap;
+            if (handle != other.handle) {
+                close();
+                swap(handle, other.handle);
+            } else {
+                other.handle = nullptr;
+            }
+            return *this;
+        }
+
 
         // in memory
         void open(istl::String auto& errmsg) noexcept {
@@ -68,7 +84,7 @@ namespace webpp::sql {
 
         bool close() noexcept {
             if (handle) {
-                if (int res = sqlite3_close_v2(handle); res == SQLITE_OK) {
+                if (const int res = sqlite3_close_v2(handle); res == SQLITE_OK) {
                     handle = nullptr;
                     return true;
                 }
@@ -80,7 +96,7 @@ namespace webpp::sql {
 
         void execute(std::string_view sql, istl::String auto& errmsg) noexcept {
             char*     err;
-            const int rc = sqlite3_exec(handle, sql.data(), 0, 0, &err);
+            const int rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
             if (rc != SQLITE_OK) {
                 errmsg += err;
                 sqlite3_free(err); // we have copied it

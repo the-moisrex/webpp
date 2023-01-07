@@ -15,7 +15,7 @@ unnecessary indirections in the project specially in high performance places
 (which means no `virtual` keyword in high throughput places of the core library).
 
 We totally could've avoided `trait` types if we wanted to use `virtual`s and thus
-we probably could've saved ourselves lots of meta programmings as well and we also
+we probably could've saved ourselves lots of meta programmings as well, and we also
 could've been able to use dynamic linking as well as static linking (thus the project
 could become non-header-only library as well).
 
@@ -46,7 +46,7 @@ the allocator pack.
 - __equal_sizes__: we're going to allocate lots of stuff with equal sizes.
 - __contagious__: we need to use it in contagious memory
 - __non_contagious__: the opposite of _contagious_.
-- __sync__: is going to be used in a multi-threaded environment
+- __sync__: is going to be used in a multithreaded environment
 - __no_sync__: don't care about thread-synchronization.
 - __fixed__: fixed size, don't need more than specified size.
 - __local__: not good for the duration of the process (https://youtu.be/nZNd5FjSquk?t=1009)
@@ -70,7 +70,7 @@ From (https://youtu.be/nZNd5FjSquk?t=355):
 ### some types of allocators:
 from: https://slembcke.github.io/2020/10/12/CustomAllocators.html
 
-- __Slab Allocator__: When you need to keep a pool of short lived allocations that are all the same size.
+- __Slab Allocator__: When you need to keep a pool of short-lived allocations that are all the same size.
 - __Linear Allocator__: When you need fast temporary memory with a finite lifespan.
 - __Zone Allocator__: When you need fast temporary memory with a finite lifespan, but don’t know how much you’ll need.
 - __Buddy Block Allocator__: When you need a general purpose allocator with predictable performance.
@@ -112,12 +112,12 @@ https://youtu.be/CFzuFNSpycI?t=2865
 for long-running systems, locality matters and how long the
 allocation and deallocation took don't.
 
-#### For long running systems:
+#### For long-running systems:
  - find the parts with high utilization
  - use local allocators there
  - or copy the data to a local allocator, use it, and copy back to the actual allocator
 
-this is because the long running systems, the time to allocate/deallocate don't matter.
+this is because the long-running systems, the time to allocate/deallocate don't matter.
 ONLY LOCALITY MATTERS IN LONG RUNNING SYSTEMS.
 
 

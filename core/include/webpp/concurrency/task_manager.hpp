@@ -83,7 +83,7 @@ namespace webpp {
         using allocator_type = stl::remove_cvref_t<AllocType>;
 
       private:
-        const unsigned                      _count{stl::thread::hardware_concurrency()};
+        unsigned                            _count{stl::thread::hardware_concurrency()};
         stl::vector<stl::thread, AllocType> _threads;
         stl::vector<notification_queue<allocator_type>, allocator_type> _q{_count};
         stl::atomic<unsigned>                                           _index{0};
@@ -112,6 +112,11 @@ namespace webpp {
                 });
             }
         }
+
+        task_system(task_system const&)                = delete;
+        task_system(task_system&&) noexcept            = default;
+        task_system& operator=(task_system const&)     = delete;
+        task_system& operator=(task_system&&) noexcept = delete; // todo: implement this if needed
 
         ~task_system() {
             for (auto& e : _q)

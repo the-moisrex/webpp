@@ -258,10 +258,11 @@ namespace webpp {
                     }
 
                     // If it's non-empty, or empty tokens were requested, return the token.
-                    if constexpr (Options & static_cast<int>(string_tokenizer_options::return_empty_tokens))
+                    if constexpr (Options & static_cast<int>(string_tokenizer_options::return_empty_tokens)) {
+                        return true; // NOLINT(bugprone-branch-clone)
+                    } else if (_token_begin != _token_end) {
                         return true;
-                    else if (_token_begin != _token_end)
-                        return true;
+                    }
                 }
 
                 assert(!_is_delim);
@@ -290,8 +291,6 @@ namespace webpp {
                 if constexpr (Options & static_cast<int>(string_tokenizer_options::return_delims))
                     return true;
             }
-
-            return false;
         }
 
         struct advance_state {

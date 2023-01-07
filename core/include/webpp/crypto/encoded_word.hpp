@@ -67,9 +67,12 @@ namespace webpp::http {
           : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
             output(alloc) {}
 
-        encoded_word()                        = delete;
-        encoded_word(encoded_word const&)     = default;
-        encoded_word(encoded_word&&) noexcept = default;
+        encoded_word()                                                  = delete;
+        constexpr encoded_word(encoded_word const&)                     = default;
+        constexpr encoded_word(encoded_word&&) noexcept                 = default;
+        constexpr encoded_word& operator=(encoded_word const&) noexcept = default;
+        constexpr encoded_word& operator=(encoded_word&&) noexcept      = default;
+        constexpr ~encoded_word()                                       = default;
 
         [[nodiscard]] string_view_type charset() const noexcept {}
 

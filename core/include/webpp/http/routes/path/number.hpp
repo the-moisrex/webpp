@@ -21,8 +21,8 @@ namespace webpp::http::routes {
         }
 
         template <typename T>
-            requires(stl::is_integral_v<T> || stl::is_constructible_v<T, long double>)
-        [[nodiscard]] stl::optional<T> parse(Context auto const& ctx) const noexcept {
+        requires(stl::is_integral_v<T> || stl::is_constructible_v<T, long double>)
+          [[nodiscard]] stl::optional<T> parse(Context auto const& ctx) const noexcept {
             using context_type     = decltype(ctx);
             using traits_type      = typename context_type::traits_type;
             using string_view_type = traits::string_view<traits_type>;

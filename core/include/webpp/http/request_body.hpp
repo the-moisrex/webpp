@@ -30,45 +30,64 @@ namespace webpp::http {
 
         // both require the server reference
         template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<elist_type, ServerType&>&&
-                       stl::is_constructible_v<request_body_communicator, ServerType&>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ServerType&>&&
-            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
+        requires(
+          stl::is_constructible_v<elist_type, ServerType&>&& stl::is_constructible_v<
+            request_body_communicator,
+            ServerType&>) constexpr request_body(ServerType&
+                                                   server_ref) noexcept(stl::
+                                                                          is_nothrow_constructible_v<
+                                                                            elist_type,
+                                                                            ServerType&>&&
+                                                                            stl::is_nothrow_constructible_v<
+                                                                              request_body_communicator,
+                                                                              ServerType&>)
           : elist_type{server_ref},
             request_body_communicator{server_ref} {}
 
         // only communicator wants the server ref
         template <EnabledTraits ServerType>
-            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
-                     stl::is_default_constructible_v<elist_type> &&
-                     stl::is_constructible_v<request_body_communicator, ServerType&>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>&&
-            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
+        requires(
+          !stl::is_constructible_v<elist_type, ServerType&> && stl::is_default_constructible_v<elist_type> &&
+          stl::is_constructible_v<
+            request_body_communicator,
+            ServerType&>) constexpr request_body(ServerType&
+                                                   server_ref) noexcept(stl::
+                                                                          is_nothrow_default_constructible_v<
+                                                                            elist_type>&&
+                                                                            stl::is_nothrow_constructible_v<
+                                                                              request_body_communicator,
+                                                                              ServerType&>)
           : elist_type{},
             request_body_communicator{server_ref} {}
 
 
         // only elist wants the server ref
         template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<elist_type, ServerType&> &&
-                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
-                     stl::is_default_constructible_v<request_body_communicator>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_default_constructible_v<request_body_communicator>&&
-            stl::is_nothrow_constructible_v<elist_type, ServerType&>)
+        requires(
+          stl::is_constructible_v<elist_type, ServerType&> &&
+          !stl::is_constructible_v<request_body_communicator, ServerType&> &&
+          stl::is_default_constructible_v<
+            request_body_communicator>) constexpr request_body(ServerType&
+                                                                 server_ref) noexcept(stl::
+                                                                                        is_nothrow_default_constructible_v<
+                                                                                          request_body_communicator>&&
+                                                                                          stl::
+                                                                                            is_nothrow_constructible_v<
+                                                                                              elist_type,
+                                                                                              ServerType&>)
           : elist_type{server_ref},
             request_body_communicator{} {}
 
         // none of them want anything
         template <EnabledTraits ServerType>
-            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
-                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
-                     stl::is_default_constructible_v<request_body_communicator> &&
-                     stl::is_default_constructible_v<elist_type>)
-        constexpr request_body([[maybe_unused]] ServerType&) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>)
+        requires(
+          !stl::is_constructible_v<elist_type, ServerType&> &&
+          !stl::is_constructible_v<request_body_communicator, ServerType&> &&
+          stl::is_default_constructible_v<request_body_communicator> &&
+          stl::is_default_constructible_v<
+            elist_type>) constexpr request_body([[maybe_unused]] ServerType&) noexcept(stl::
+                                                                                         is_nothrow_default_constructible_v<
+                                                                                           elist_type>)
           : elist_type{},
             request_body_communicator{} {}
 

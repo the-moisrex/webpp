@@ -15,9 +15,9 @@ namespace webpp::json {
      * A helper to get the values out of json files
      */
     template <typename T, typename ObjT>
-        requires requires(ObjT json_obj) {
-            { json_obj.template as<T>() } -> stl::same_as<T>;
-        }
+    requires requires(ObjT json_obj) {
+        { json_obj.template as<T>() } -> stl::same_as<T>;
+    }
     [[nodiscard]] static constexpr T as(ObjT&& obj) {
         return obj.template as<T>();
     }
@@ -26,9 +26,9 @@ namespace webpp::json {
      * A helper to check if the json value is of the specified type
      */
     template <typename T, typename ObjT>
-        requires requires(ObjT json_obj) {
-            { json_obj.template is<T>() } -> stl::same_as<bool>;
-        }
+    requires requires(ObjT json_obj) {
+        { json_obj.template is<T>() } -> stl::same_as<bool>;
+    }
     [[nodiscard]] static constexpr bool is(ObjT const& obj) {
         return obj.template is<T>();
     }
@@ -82,9 +82,9 @@ namespace webpp::json {
         }
 
         template <typename ObjHolder>
-            requires requires(ObjHolder holder) {
-                { holder.as_object() } -> JSONObject;
-            }
+        requires requires(ObjHolder holder) {
+            { holder.as_object() } -> JSONObject;
+        }
         field_pack& operator=(ObjHolder&& obj) {
             return operator=(obj.as_object());
         }

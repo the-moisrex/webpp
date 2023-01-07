@@ -60,7 +60,7 @@ namespace webpp {
         }
 
         void write() noexcept {
-            auto res = session.output();
+            auto res = session.output(); // fixme: never used
 
             // todo: do something about this
             if (session.logger.enabled) {

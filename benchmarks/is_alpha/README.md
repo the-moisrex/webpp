@@ -2,7 +2,7 @@
 
 Seems like arithmetic cannot beat lookup table. We are trading space in favor of speed.
 
-Unfortunately lookup table is not implementable with SIMD or if it is, i've been told 
+Unfortunately lookup table is not implementable with SIMD or if it is, I've been told 
 by Joel Falcou and others that it's not a good 
 solution since it requires specific size among other reasons.
 
@@ -62,7 +62,7 @@ IsAlpha_string_arithmetic3_stddev       0.075 ns        0.074 ns           10
 
 ## My conclusion (which might be wrong)
 The lookup table due to its nature, requires more cache, which means it's not going
-to perform better in a row of strings but it does perform better when the cache is free
+to perform better in a row of strings, but it does perform better when the cache is free
 to use.
 
 The arithmetic3 which someone on cpplang's slack proposed and told us that it's 1.3 times better

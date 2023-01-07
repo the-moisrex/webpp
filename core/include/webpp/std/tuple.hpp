@@ -77,8 +77,7 @@ namespace webpp::istl {
     };
 
     template <typename TupleT, typename T, stl::size_t I>
-        requires(stl::tuple_size_v<TupleT> > 0)
-    struct tuple_contains<TupleT, T, I> {
+    requires(stl::tuple_size_v<TupleT> > 0) struct tuple_contains<TupleT, T, I> {
         static constexpr bool value =
           stl::is_same_v<stl::tuple_element_t<I, TupleT>, T> || tuple_contains<TupleT, T, I - 1>::value;
     };
@@ -108,9 +107,8 @@ namespace webpp::istl {
      * The types that don't exists in the args, will be default constructed.
      */
     template <Tuple TupleT, typename... T>
-        requires((tuple_contains<TupleT, stl::remove_cvref_t<T>>::value &&
-                  ...)) // check if the types are okay
-    [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
+    requires((tuple_contains<TupleT, stl::remove_cvref_t<T>>::value && ...)) // check if the types are okay
+      [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
 
         // this uses the TupleT's tuple-like type; std::tuple<T...>;
         using no_order_tuple = typename rebind_parameters<TupleT, stl::remove_cvref_t<T>...>::type;
@@ -139,22 +137,21 @@ namespace webpp::istl {
      * Index can be gotten dynamically
      */
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-        requires(I >= sizeof...(Tp))
-    static constexpr void for_index(stl::size_t, Tup<Tp...> const&, FuncT&&) {
+    requires(I >= sizeof...(Tp)) static constexpr void for_index(stl::size_t, Tup<Tp...> const&, FuncT&&) {
         // ending condition function
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-        requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t index, Tup<Tp...>& t, FuncT&& f) {
+    requires(I < sizeof...(Tp)) static constexpr void for_index(stl::size_t index, Tup<Tp...>& t, FuncT&& f) {
         if (index == 0)
             f(stl::get<I>(t));
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
-        requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t index, Tup<Tp...> const& t, FuncT&& f) {
+    requires(I < sizeof...(Tp)) static constexpr void for_index(stl::size_t       index,
+                                                                Tup<Tp...> const& t,
+                                                                FuncT&&           f) {
         if (index == 0)
             f(stl::get<I>(t));
         for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
@@ -206,8 +203,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-        requires(ItupleOptions<T>)
-    struct is_ituple_options<T> {
+    requires(ItupleOptions<T>) struct is_ituple_options<T> {
         static constexpr bool        value = true;
         static constexpr stl::size_t size  = T::size;
     };
@@ -300,8 +296,7 @@ namespace webpp::istl {
 
 
         template <stl::size_t I>
-            requires(I < native_tuple_size)
-        [[nodiscard]] constexpr auto& get() noexcept {
+        requires(I < native_tuple_size) [[nodiscard]] constexpr auto& get() noexcept {
             return stl::get<I>(as_tuple());
         }
 
@@ -498,13 +493,14 @@ namespace std {
     ////////////////////////////// ituple //////////////////////////////
 
     template <size_t I, class... T>
-        requires(I < webpp::istl::ituple<T...>::native_tuple_size)
-    struct tuple_element<I, webpp::istl::ituple<T...>>
-      : tuple_element<I, typename webpp::istl::ituple<T...>::this_tuple> {};
+    requires(I <
+             webpp::istl::ituple<T...>::native_tuple_size) struct tuple_element<I, webpp::istl::ituple<T...>>
+      : tuple_element<I, typename webpp::istl::ituple<T...>::this_tuple> {
+    };
 
     template <size_t I, class... T>
-        requires(I >= webpp::istl::ituple<T...>::native_tuple_size)
-    struct tuple_element<I, webpp::istl::ituple<T...>> {
+    requires(
+      I >= webpp::istl::ituple<T...>::native_tuple_size) struct tuple_element<I, webpp::istl::ituple<T...>> {
         using type = typename webpp::istl::ituple<T...>::default_type;
     };
 

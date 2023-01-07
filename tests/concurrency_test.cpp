@@ -9,6 +9,8 @@
 using namespace webpp;
 using namespace webpp::stl;
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 TEST(ConcurrencyTest, AtomicCounter) {
 
     atomic_counter<int> counter;
@@ -46,3 +48,7 @@ TEST(ConcurrencyTest, STDAtomicCounter) {
     EXPECT_EQ(counter, 50);
     EXPECT_LT(counter, 3000);
 }
+
+
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

@@ -45,10 +45,10 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+        requires(stl::is_constructible_v<elist_type, ET>) constexpr basic_response(ET&& et) noexcept(
+          stl::is_nothrow_constructible_v<elist_type, ET>&&
+              stl::is_nothrow_constructible_v<headers_type, ET>&&
+              stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{et},
             headers{et},
             body{et} {}

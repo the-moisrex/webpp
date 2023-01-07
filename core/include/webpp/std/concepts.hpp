@@ -64,20 +64,17 @@ namespace webpp::istl {
         template <auto Constraint>
         struct requires_arg_op {
             template <typename T>
-                requires(Constraint.template operator()<T>())
-            operator T() {}
+            requires(Constraint.template operator()<T>()) operator T() {}
         };
 
 
         template <auto Constraint>
         struct requires_arg_op_cvref {
             template <typename T>
-                requires(Constraint.template operator()<T>())
-            operator T() {}
+            requires(Constraint.template operator()<T>()) operator T() {}
 
             template <typename T>
-                requires(Constraint.template operator()<T&>())
-            operator T&() {}
+            requires(Constraint.template operator()<T&>()) operator T&() {}
         };
     } // namespace details
 

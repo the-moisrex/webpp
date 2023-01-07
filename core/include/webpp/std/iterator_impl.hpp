@@ -36,7 +36,7 @@ namespace webpp::stl {
     struct incrementable_traits {};
 
     template <typename T>
-        requires is_object_v<T>
+    requires is_object_v<T>
     struct incrementable_traits<T*> {
         using difference_type = ptrdiff_t;
     };
@@ -45,20 +45,19 @@ namespace webpp::stl {
     struct incrementable_traits<const Iter> : incrementable_traits<Iter> {};
 
     template <typename T>
-        requires requires {
-            typename T::difference_type;
-        }
+    requires requires {
+        typename T::difference_type;
+    }
     struct incrementable_traits<T> {
         using difference_type = typename T::difference_type;
     };
 
     template <typename T>
-        requires(
-          !requires { typename T::difference_type; } &&
-          requires(const T& a, const T& b) {
-              { a - b } -> integral;
-          })
-    struct incrementable_traits<T> {
+    requires(
+      !requires { typename T::difference_type; } &&
+      requires(const T& a, const T& b) {
+          { a - b } -> integral;
+      }) struct incrementable_traits<T> {
         using difference_type = make_signed_t<decltype(std::declval<T>() - std::declval<T>())>;
     };
 
@@ -90,7 +89,7 @@ namespace webpp::stl {
         };
 
         template <typename Iter, typename T>
-            requires primary_traits_iter<Iter>
+        requires primary_traits_iter<Iter>
         struct iter_traits_impl<Iter, T> {
             using type = T;
         };
@@ -108,28 +107,27 @@ namespace webpp::stl {
 
         // ITER_CONCEPT(I) is ITER_TRAITS(I)::iterator_concept if that is valid.
         template <typename Iter>
-            requires requires {
-                typename iter_traits<Iter>::iterator_concept;
-            }
+        requires requires {
+            typename iter_traits<Iter>::iterator_concept;
+        }
         struct iter_concept_impl<Iter> {
             using type = typename iter_traits<Iter>::iterator_concept;
         };
 
         // Otherwise, ITER_TRAITS(I)::iterator_category if that is valid.
         template <typename Iter>
-            requires(
-              !requires { typename iter_traits<Iter>::iterator_concept; } &&
-              requires { typename iter_traits<Iter>::iterator_category; })
-        struct iter_concept_impl<Iter> {
+        requires(
+          !requires { typename iter_traits<Iter>::iterator_concept; } &&
+          requires { typename iter_traits<Iter>::iterator_category; }) struct iter_concept_impl<Iter> {
             using type = typename iter_traits<Iter>::iterator_category;
         };
 
         // Otherwise, random_access_tag if iterator_traits<I> is not specialized.
         template <typename Iter>
-            requires(
-              !requires { typename iter_traits<Iter>::iterator_concept; } &&
-              !requires { typename iter_traits<Iter>::iterator_category; } && primary_traits_iter<Iter>)
-        struct iter_concept_impl<Iter> {
+        requires(
+          !requires { typename iter_traits<Iter>::iterator_concept; } &&
+          !requires { typename iter_traits<Iter>::iterator_category; } &&
+          primary_traits_iter<Iter>) struct iter_concept_impl<Iter> {
             using type = random_access_iterator_tag;
         };
 
@@ -170,7 +168,7 @@ namespace webpp::stl {
             // iter_move(E), if E has class or enumeration type and iter_move(E) is a
             // well-formed expression when treated as an unevaluated operand, [...]
             template <class _Ip>
-                requires __class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>
+            requires __class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>
             [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr decltype(auto) operator()(_Ip&& __i) const
               noexcept(noexcept(iter_move(_VSTD::forward<_Ip>(__i)))) {
                 return iter_move(_VSTD::forward<_Ip>(__i));
@@ -181,8 +179,8 @@ namespace webpp::stl {
             //  1.2.1 if *E is an lvalue, std::move(*E);
             //  1.2.2 otherwise, *E.
             template <class _Ip>
-                requires(!(__class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>) )
-            &&requires(_Ip&& __i) {
+            requires(!(__class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>) ) &&
+              requires(_Ip&& __i) {
                 *_VSTD::forward<_Ip>(__i);
             }
             [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr decltype(auto) operator()(_Ip&& __i) const
@@ -204,9 +202,9 @@ namespace webpp::stl {
     }
 
     template <details::dereferenceable _Tp>
-        requires requires(_Tp& __t) {
-            { ranges::iter_move(__t) } -> details::can_reference;
-        }
+    requires requires(_Tp& __t) {
+        { ranges::iter_move(__t) } -> details::can_reference;
+    }
     using iter_rvalue_reference_t = decltype(ranges::iter_move(declval<_Tp&>()));
 
 
@@ -218,7 +216,7 @@ namespace webpp::stl {
     struct __cond_value_type {};
 
     template <class _Tp>
-        requires is_object_v<_Tp>
+    requires is_object_v<_Tp>
     struct __cond_value_type<_Tp> {
         using value_type = remove_cv_t<_Tp>;
     };
@@ -237,7 +235,7 @@ namespace webpp::stl {
     struct indirectly_readable_traits {};
 
     template <class _Ip>
-        requires is_array_v<_Ip>
+    requires is_array_v<_Ip>
     struct indirectly_readable_traits<_Ip> {
         using value_type = remove_cv_t<remove_extent_t<_Ip>>;
     };
@@ -256,12 +254,12 @@ namespace webpp::stl {
 
     // Pre-emptively applies LWG3541
     template <__has_member_value_type _Tp>
-        requires __has_member_element_type<_Tp>
+    requires __has_member_element_type<_Tp>
     struct indirectly_readable_traits<_Tp> {
     };
     template <__has_member_value_type _Tp>
-        requires __has_member_element_type<_Tp> &&
-          same_as<remove_cv_t<typename _Tp::element_type>, remove_cv_t<typename _Tp::value_type>>
+    requires __has_member_element_type<_Tp> &&
+      same_as<remove_cv_t<typename _Tp::element_type>, remove_cv_t<typename _Tp::value_type>>
     struct indirectly_readable_traits<_Tp> : __cond_value_type<typename _Tp::value_type> {
     };
 

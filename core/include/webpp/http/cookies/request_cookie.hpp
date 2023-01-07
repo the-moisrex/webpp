@@ -19,6 +19,7 @@ namespace webpp::http {
          * There's no point in instantiating this class without any cookies
          */
         constexpr request_cookie() noexcept = delete;
+        constexpr ~request_cookie()         = default;
 
         /**
          * Source here is in "name = value" syntax and only one single cookie
@@ -74,7 +75,7 @@ namespace webpp::http {
         }
 
 
-      protected:
+      private:
         name_t  _name;
         value_t _value;
         bool    _valid = false;
