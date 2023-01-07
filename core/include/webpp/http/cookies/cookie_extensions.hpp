@@ -3,8 +3,8 @@
 #ifndef WEBPP_COOKIE_EXTENSIONS_H
 #define WEBPP_COOKIE_EXTENSIONS_H
 
-#include "../common.hpp"
-#include "../header_concepts.hpp"
+#include "../http_concepts.hpp"
+#include "cookies_concepts.hpp"
 
 #include <algorithm>
 
@@ -13,7 +13,7 @@ namespace webpp::http {
 
     struct cookies {
 
-        template <HeaderField HF>
+        template <HTTPHeaderField HF>
         struct cookie_header_field_extension : public HF {
 
           private:
@@ -189,10 +189,9 @@ namespace webpp::http {
         }
     };
 
-    template <HeaderField HF>
+    template <HTTPHeaderField HF>
     using header_field_extensions = extension_pack<cookie_header_field_extension<HF>>;
-}; // namespace webpp
 
-} // namespace webpp
+} // namespace webpp::http
 
 #endif // WEBPP_COOKIE_EXTENSIONS_H

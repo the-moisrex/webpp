@@ -27,37 +27,45 @@ namespace webpp::http {
         using super = EList;
 
       public:
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         name_type  name;
         value_type value;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
-        constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept requires(is_mutable)
+
+        // NOLINTBEGIN(bugprone-easily-swappable-parameters)
+        constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(stl::move(_value)) {}
 
         constexpr basic_header_field(name_type const& _name, value_type const& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(_name),
             value(_value) {}
 
         constexpr basic_header_field(name_type&& _name, value_type const& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(_value) {}
 
         constexpr basic_header_field(name_type const& _name, value_type&& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(_name),
             value(stl::move(_value)) {}
 
-        constexpr basic_header_field(name_type _name, value_type _value) noexcept requires(!is_mutable)
+        constexpr basic_header_field(name_type _name, value_type _value) noexcept
+            requires(!is_mutable)
           : super{},
             name(_name),
             value(_value) {}
+        // NOLINTEND(bugprone-easily-swappable-parameters)
+
 
         constexpr basic_header_field(basic_header_field&&) noexcept       = default;
         constexpr basic_header_field(basic_header_field const&) noexcept  = default;
@@ -118,12 +126,17 @@ namespace webpp::http {
      */
     template <typename FieldType>
     struct header_field_hash {
+      private:
+        constexpr static auto hash_mask = 0x9e3779b9;
+        constexpr static auto u6_units  = 6u;
+
+      public:
         using field_type = FieldType;
 
         template <class T>
         constexpr void hash_combine(stl::size_t& seed, const T& v) noexcept {
             stl::hash<T> hasher;
-            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6u) + (seed >> 2u);
+            seed ^= hasher(v) + hash_mask + (seed << u6_units) + (seed >> 2u);
         }
 
         using result_type = stl::size_t;
