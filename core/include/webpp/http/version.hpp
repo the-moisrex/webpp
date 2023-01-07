@@ -13,22 +13,28 @@ namespace webpp::http {
     // Wrapper for an HTTP (major,minor) version pair.
     class version {
       private:
+        static constexpr auto uint_16_bits     = sizeof(stl::uint16_t) * 8u;
+        static constexpr auto minor_value_mask = 0xffffu;
+
         // parse version from string
         constexpr stl::uint32_t parse_string(auto&& str) noexcept {
             auto dot   = str.find('.');
             auto major = to_uint16(str.substr(0, dot));
             auto minor = to_uint16(str.substr(dot + 1, str.size()));
-            return static_cast<stl::uint32_t>(major << 16u | minor);
+            return static_cast<stl::uint32_t>(major << uint_16_bits | minor);
         }
+
 
       public:
         // Default constructor (major=0, minor=0).
         constexpr version() noexcept = default;
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
-        requires(!stl::same_as<stl::remove_cvref_t<T>, version> &&
-                 istl::StringViewifiable<T>) constexpr version(T&& str) noexcept
+            requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
+        constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr version(version const&) noexcept            = default;
         constexpr version(version&&) noexcept                 = default;
@@ -39,16 +45,16 @@ namespace webpp::http {
 
         // Build from unsigned major/minor pair.
         constexpr version(stl::uint16_t major, stl::uint16_t minor) noexcept
-          : value(static_cast<stl::uint32_t>(major << 16u | minor)) {}
+          : value(static_cast<stl::uint32_t>(major << uint_16_bits | minor)) {}
 
         // Major version number.
         [[nodiscard]] constexpr stl::uint16_t major_value() const noexcept {
-            return static_cast<stl::uint16_t>(value >> 16u);
+            return static_cast<stl::uint16_t>(value >> uint_16_bits);
         }
 
         // Minor version number.
         [[nodiscard]] constexpr stl::uint16_t minor_value() const noexcept {
-            return static_cast<stl::uint16_t>(value & 0xffffu);
+            return static_cast<stl::uint16_t>(value & minor_value_mask);
         }
 
         // Get an unknown HTTP version
