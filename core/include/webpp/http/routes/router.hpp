@@ -23,7 +23,7 @@ namespace webpp::http {
 
         // todo: extract additional routes from extensions
         // todo: add router_extensions as well
-        const stl::tuple<RouteType...> routes;
+        const stl::tuple<RouteType...> routes; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
 
         constexpr router(NewRootExtensions&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
@@ -32,6 +32,7 @@ namespace webpp::http {
 
         constexpr router(router const&) noexcept = default;
         constexpr router(router&&) noexcept      = default;
+        constexpr ~router()                      = default;
 
         constexpr router& operator=(router&&) noexcept = delete;
         constexpr router& operator=(router const&)     = delete;

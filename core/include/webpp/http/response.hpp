@@ -65,6 +65,7 @@ namespace webpp::http {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_response() noexcept                          = default;
+        constexpr ~basic_response()                                  = default;
         constexpr basic_response(basic_response const& res) noexcept = default;
         constexpr basic_response(basic_response&& res) noexcept      = default;
 
