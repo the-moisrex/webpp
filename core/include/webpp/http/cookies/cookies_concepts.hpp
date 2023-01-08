@@ -1,7 +1,7 @@
 // Created by moisrex on 5/27/20.
 
-#ifndef WEBPP_COOKIES_CONCEPTS_H
-#define WEBPP_COOKIES_CONCEPTS_H
+#ifndef WEBPP_HTTP_COOKIES_CONCEPTS_HPP
+#define WEBPP_HTTP_COOKIES_CONCEPTS_HPP
 
 #include "../../traits/traits.hpp"
 
@@ -9,8 +9,8 @@ namespace webpp::http {
 
     template <typename T>
     concept Cookie = requires(T cookie) {
-        {cookie.name()};
-        {cookie.value()};
+        cookie.name();
+        cookie.value();
     };
 
     template <typename T>
@@ -45,4 +45,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_COOKIES_CONCEPTS_H
+#endif // WEBPP_HTTP_COOKIES_CONCEPTS_HPP
