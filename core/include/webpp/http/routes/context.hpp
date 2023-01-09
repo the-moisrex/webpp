@@ -139,9 +139,8 @@ namespace webpp::http {
         constexpr basic_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
 
         template <Context CtxT>
-        requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type,
-                              request_type>) constexpr basic_context(CtxT const& ctx) noexcept
-          : basic_context{ctx.request} {}
+            requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
+        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
@@ -168,6 +167,16 @@ namespace webpp::http {
               typename response_type::template apply_extensions_type<NewExtensions...>;
             return new_response_type::with_body(stl::forward<Args>(args)...);
         }
+
+        /**
+         * Generate a response while passing the specified arguments as the body of that response
+         */
+        template <HTTPResponseBodyCommunicator BodyCommunicatorType>
+        [[nodiscard]] constexpr HTTPResponse auto response_body(BodyCommunicatorType&& communicator) const {
+            return response_type::template with_body<BodyCommunicatorType>(
+              stl::forward<BodyCommunicatorType>(communicator));
+        }
+
 
 
         [[nodiscard]] constexpr static bool is_debug() noexcept {

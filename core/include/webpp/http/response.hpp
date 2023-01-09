@@ -28,6 +28,9 @@ namespace webpp::http {
         using elist_type          = EList;
         using basic_response_type = basic_response<EList, ResponseHeaderType, BodyType>;
 
+        template <HTTPResponseBody NewBodyType>
+        using rebind_basic_response_type = basic_response<EList, ResponseHeaderType, NewBodyType>;
+
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 
         headers_type headers{};
@@ -37,18 +40,18 @@ namespace webpp::http {
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
-          requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
-                   stl::is_constructible_v<elist_type, Args...>)
+            requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
+                     stl::is_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-        requires(stl::is_constructible_v<elist_type, ET>) constexpr basic_response(ET&& et) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ET>&&
-              stl::is_nothrow_constructible_v<headers_type, ET>&&
-              stl::is_nothrow_constructible_v<body_type, ET>)
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{et},
             headers{et},
             body{et} {}
@@ -140,15 +143,32 @@ namespace webpp::http {
         using headers_type    = typename elist_type::headers_type;
         using field_type      = typename headers_type::field_type;
 
+
+        template <HTTPResponseBody NewBodyType>
+        using rebind_response_type =
+          final_response<typename elist_type::template rebind_basic_response_type<NewBodyType>>;
+
+
+        template <HTTPResponseBodyCommunicator NewBodyCommunicator>
+        using rebind_response_body_communicator_type = rebind_response_type<
+          typename body_type::template rebind_body_communicator_type<NewBodyCommunicator>>;
+
+
+
+
+
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
 
         using EList::EList;
 
 
-        template <typename... Args>
-        [[nodiscard]] constexpr static auto with_body(Args&&... args) {
-            return response_type{body_type{stl::forward<Args>(args)...}};
+        template <HTTPResponseBodyCommunicator BodyCommunicatorType>
+        [[nodiscard]] constexpr static auto with_body(BodyCommunicatorType&& obj) {
+            using new_communicator_type = stl::remove_cvref_t<BodyCommunicatorType>;
+            rebind_response_body_communicator_type<new_communicator_type> res;
+            res = stl::forward<BodyCommunicatorType>(obj);
+            return res;
         }
 
         template <typename... Args>
@@ -286,6 +306,22 @@ namespace webpp::http {
         constexpr final_response& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
+        }
+
+
+
+        template <HTTPResponseBodyCommunicator CommunicatorType, typename T>
+        constexpr auto rebind_body(T&& obj) const {
+            using new_response_type = rebind_response_body_communicator_type<CommunicatorType>;
+            if constexpr (EnabledTraits<final_response>) {
+                new_response_type res{this->get_traits()};
+                res = stl::forward<T>(obj);
+                return res;
+            } else {
+                new_response_type res;
+                res = stl::forward<T>(obj);
+                return res;
+            }
         }
     };
 
