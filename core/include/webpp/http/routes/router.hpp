@@ -21,9 +21,9 @@ namespace webpp::http {
         using extension_list_type = stl::remove_cvref_t<NewRootExtensions>;
 
 
-        // todo: extract additional routes from extensions
-        // todo: add router_extensions as well
-        const stl::tuple<RouteType...> routes; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        stl::tuple<RouteType...> routes;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         constexpr router(NewRootExtensions&&, RouteType&&... _route) noexcept
           : routes(stl::forward<RouteType>(_route)...) {}
@@ -177,7 +177,6 @@ namespace webpp::http {
          */
         template <HTTPRequest RequestType>
         constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
-            // fixme: The request's root_extensions is different than the router's root extensions causing problems
             using req_type = stl::remove_cvref_t<RequestType>;
             using merged_extensions =
               typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;
