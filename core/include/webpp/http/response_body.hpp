@@ -86,15 +86,20 @@ namespace webpp::http {
         using elist_type  = EList;
         using char_type   = traits::char_type<traits_type>;
 
+        template <HTTPResponseBodyCommunicator NewBodyCommunicator>
+        using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
+
         using EList::EList;
 
-        constexpr response_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+        constexpr response_body()
+            requires(stl::is_default_constructible_v<elist_type>)
+        = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-        requires(stl::is_constructible_v<elist_type, ET>) constexpr response_body(ET&& et) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ET>)
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
           : elist_type{et} {}
 
 
@@ -107,14 +112,16 @@ namespace webpp::http {
 
 
         // Get the data pointer if available, returns nullptr otherwise
-        [[nodiscard]] constexpr char_type const*
-        data() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+        [[nodiscard]] constexpr char_type const* data() const noexcept
+            requires TextBasedBodyCommunicator<elist_type>
+        {
             return elist_type::data();
         }
 
         // Get the size of the response body if possible. returns 0 if it's not available
-        [[nodiscard]] constexpr stl::size_t
-        size() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+        [[nodiscard]] constexpr stl::size_t size() const noexcept
+            requires TextBasedBodyCommunicator<elist_type>
+        {
             return elist_type::size();
         }
 
@@ -190,6 +197,21 @@ namespace webpp::http {
         constexpr response_body& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
+        }
+
+
+        template <HTTPResponseBodyCommunicator CommunicatorType, typename T>
+        constexpr auto rebind_body(T&& obj) const {
+            using new_body_type = rebind_body_communicator_type<CommunicatorType>;
+            if constexpr (EnabledTraits<response_body>) {
+                new_body_type res{this->get_traits()};
+                res = stl::forward<T>(obj);
+                return res;
+            } else {
+                new_body_type res;
+                res = stl::forward<T>(obj);
+                return res;
+            }
         }
     };
 

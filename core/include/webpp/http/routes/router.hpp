@@ -93,22 +93,18 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(move(res2), forward<CtxT>(ctx), req);
                 }
+            } else if constexpr (HTTPResponseBodyCommunicator<result_type>) {
+                return ctx.template response_body<result_type>(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
                 return ctx.response_body(forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(forward<ResT>(res));
-            } else if constexpr (istl::StringViewifiable<result_type>) {
-                if constexpr (context_type::template has_extension<string_body>()) {
-                    // Use string_response, response type to handle strings
-                    using char_type = typename local_string_type::value_type;
-                    return response_type::with_body(istl::stringify_of<local_string_type>(
-                      forward<ResT>(res),
-                      ctx.alloc_pack.template general_allocator<char_type>()));
-                } else {
-                    static_assert_false(
-                      result_type,
-                      "You returned a string, but the router doesn't have access to string_response extension. Pass it as an extension to the router.");
-                }
+            } else if constexpr (istl::Stringifiable<result_type>) {
+                // Use string_response, response type to handle strings
+                using char_type = typename local_string_type::value_type;
+                return response_type::with_body(istl::stringify_of<local_string_type>(
+                  forward<ResT>(res),
+                  ctx.alloc_pack.template general_allocator<char_type>()));
             } else {
                 // todo: consider "response extension" injection in order to get the right response type
 
@@ -261,10 +257,9 @@ namespace webpp::http {
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
 
     template <typename... RouteType>
-    requires(sizeof...(RouteType) > 0 &&
-             !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-      router(RouteType&&...)
-    ->router<empty_extension_pack, RouteType...>;
+        requires(sizeof...(RouteType) > 0 &&
+                 !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
+    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http
