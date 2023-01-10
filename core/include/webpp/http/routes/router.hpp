@@ -257,9 +257,10 @@ namespace webpp::http {
     router(ExtensionListType&&, RouteType&&...) -> router<ExtensionListType, RouteType...>;
 
     template <typename... RouteType>
-        requires(sizeof...(RouteType) > 0 &&
-                 !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
-    router(RouteType&&...) -> router<empty_extension_pack, RouteType...>;
+    requires(sizeof...(RouteType) > 0 &&
+             !istl::is_specialization_of_v<istl::first_type_t<RouteType...>, extension_pack>)
+      router(RouteType&&...)
+    ->router<empty_extension_pack, RouteType...>;
 
 
 } // namespace webpp::http

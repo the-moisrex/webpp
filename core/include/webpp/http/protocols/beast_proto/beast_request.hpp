@@ -13,6 +13,7 @@
 
 #include <boost/beast/http/fields.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/http/parser.hpp>
 
 namespace webpp::http::beast_proto {
 

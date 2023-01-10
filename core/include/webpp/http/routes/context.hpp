@@ -139,8 +139,9 @@ namespace webpp::http {
         constexpr basic_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
 
         template <Context CtxT>
-            requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
+        requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type,
+                              request_type>) constexpr basic_context(CtxT const& ctx) noexcept
+          : basic_context{ctx.request} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
