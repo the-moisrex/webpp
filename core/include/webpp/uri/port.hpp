@@ -5,7 +5,9 @@
 
 #include "../convert/casts.hpp"
 #include "../std/string.hpp"
+#include "../strings/append.hpp"
 
+#include <charconv>
 
 namespace webpp::uri {
 
@@ -21,6 +23,8 @@ namespace webpp::uri {
     struct basic_port : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
+        static constexpr auto max_port_number = 65535;
+
         template <typename... T>
         constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
             // todo: make sure if it's a valid port number
@@ -34,7 +38,7 @@ namespace webpp::uri {
                  (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
                  !stl::is_floating_point_v<stl::remove_cvref_t<T>>) constexpr basic_port(T port_num)
           : string_type{} {
-            if (port_num < 0 || port_num > 65535)
+            if (port_num < 0 || port_num > max_port_number)
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
 
             webpp::append_to(*this, port_num, stl::chars_format::fixed);

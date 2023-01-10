@@ -1,5 +1,5 @@
-#ifndef WEBPP_HTTP_RESPONSE_H
-#define WEBPP_HTTP_RESPONSE_H
+#ifndef WEBPP_HTTP_RESPONSE_HPP
+#define WEBPP_HTTP_RESPONSE_HPP
 
 #include "../convert/casts.hpp"
 #include "../strings/append.hpp"
@@ -40,18 +40,18 @@ namespace webpp::http {
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
-            requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
-                     stl::is_constructible_v<elist_type, Args...>)
+          requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
+                   stl::is_constructible_v<elist_type, Args...>)
           : elist_type{stl::forward<Args>(args)...} {}
 
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+        requires(stl::is_constructible_v<elist_type, ET>) constexpr basic_response(ET&& et) noexcept(
+          stl::is_nothrow_constructible_v<elist_type, ET>&&
+              stl::is_nothrow_constructible_v<headers_type, ET>&&
+              stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{et},
             headers{et},
             body{et} {}
@@ -349,4 +349,6 @@ namespace webpp::http {
 
 
 } // namespace webpp::http
-#endif // WEBPP_HTTP_RESPONSE_H
+
+
+#endif // WEBPP_HTTP_RESPONSE_HPP
