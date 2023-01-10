@@ -47,7 +47,7 @@ namespace webpp::http {
 
 
     /**
-     * @brief The calsses that implement this concept are "HTTP request header fields provider" means they
+     * @brief The classes that implement this concept are "HTTP request header fields provider" means they
      * provide header fields to the other part of the HTTP header system.
      * The thing about these classes are that they might not own the header fields they're selling.
      */
@@ -144,6 +144,49 @@ namespace webpp::http {
         };
     };
 
+    /**
+     * This is the primitives that the Protocols should understand and can read.
+     * Other BodyCommunicators can be derived from these
+     */
+    template <typename T>
+    concept BodyCommunicatorPrimitives = BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+
+    /**
+     * @brief Callback Based Body Communicator (CBBC);
+     */
+    template <typename T>
+    concept CallbackBasedBodyCommunicator = requires(T communicator) {
+        requires requires {
+            // Returns a primitive
+            { communicator() } -> BodyCommunicatorPrimitives;
+        };
+    };
+
+
+    /**
+     * @brief Optional Based Body Communicator (OBBC);
+     */
+    template <typename T>
+    concept OptionalBasedBodyCommunicator = istl::Optional<T> && requires {
+        typename T::value_type;
+        requires BodyCommunicatorPrimitives<typename T::value_type> ||
+          CallbackBasedBodyCommunicator<typename T::value_type>;
+    };
+
+
+    /**
+     * The whole idea of Body Communicator is represented here;
+     * Body Communicator is the way the developers will communicate with the underlying
+     * Protocol(CGI/FCGI/...) from the body of the request/response point of view.
+     *
+     * The final response that the Protocol gets requires the response' body to be a BodyCommunicator
+     */
+    template <typename T>
+    concept BodyCommunicator = OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+      CallbackBasedBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicatorPrimitives<T>;
+
 
     template <typename T>
     concept HTTPRequestBody =
@@ -151,9 +194,7 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>> ||
-      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      TextBasedBodyCommunicator<stl::remove_cvref_t<T>> || BlobBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicator<T>;
 
 
 
