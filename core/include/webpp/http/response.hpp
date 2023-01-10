@@ -31,12 +31,12 @@ namespace webpp::http {
         template <HTTPResponseBody NewBodyType>
         using rebind_basic_response_type = basic_response<EList, ResponseHeaderType, NewBodyType>;
 
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         headers_type headers{};
         body_type    body{};
-
         // NOLINTEND(misc-non-private-member-variables-in-classes)
+
 
         template <typename Arg1, typename... Args>
         constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
@@ -113,6 +113,7 @@ namespace webpp::http {
             auto const [has_content_type, has_content_length] = headers.has("content-type", "content-length");
 
             // todo: we can optimize this, pre-calculate the default header fields and copy when needed
+            // todo: use content_type class
             if (!has_content_type) {
                 static const header_field_type content_type_field{
                   str_t{"Content-Type", headers.get_allocator()},
@@ -156,11 +157,9 @@ namespace webpp::http {
           typename body_type::template rebind_body_communicator_type<NewBodyCommunicator>>;
 
 
-
-
-
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
+
 
         using EList::EList;
 
