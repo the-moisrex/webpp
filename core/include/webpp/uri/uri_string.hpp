@@ -753,6 +753,12 @@ namespace webpp::uri {
                 if (authority_end != data.size()) {
                     // there's a path
                     len = authority_end - start;
+                } else if (query_start != data.size()) {
+                    // there's a query
+                    len = query_start - start;
+                } else if (fragment_start != data.size()) {
+                    // there's a fragment
+                    len = fragment_start - start;
                 } else {
                     // there's no path either
                     len = data.size() - 1; // till the end

@@ -75,27 +75,6 @@ namespace webpp::http {
 
     ////////////////////////////// Body //////////////////////////////
 
-    template <typename T>
-    concept HTTPRequestBodyCommunicator = requires {
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
-            // request body only need read
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-
-            // In order to write to it, the Protocol has to invert its own way;
-            // It's Protocol-Specific anyway so the protocol is providing this type so it has
-            // control over it.
-        };
-    };
-
-    template <typename T>
-    concept HTTPResponseBodyCommunicator = requires {
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-        };
-    };
-
     /**
      * @brief Blob Based Body Communicator (BBBC);
      *
@@ -187,6 +166,27 @@ namespace webpp::http {
     concept BodyCommunicator = OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
       CallbackBasedBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicatorPrimitives<T>;
 
+
+    template <typename T>
+    concept HTTPRequestBodyCommunicator = requires {
+        typename T::char_type;
+        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+            // request body only need read
+            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+
+            // In order to write to it, the Protocol has to invert its own way;
+            // It's Protocol-Specific anyway so the protocol is providing this type so it has
+            // control over it.
+        };
+    };
+
+    template <typename T>
+    concept HTTPResponseBodyCommunicator = requires {
+        typename T::char_type;
+        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+        };
+    };
 
     template <typename T>
     concept HTTPRequestBody =
