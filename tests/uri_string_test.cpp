@@ -160,7 +160,8 @@ TEST(URITests, WieredURIs) {
         EXPECT_TRUE(view.is_valid()) << "\turi: " << _uri << "\n\tscheme: " << view.scheme()
                                      << "\n\thost raw: " << view.host_raw() << "\n\thost: " << view.host()
                                      << "\n\tpath: " << view.path_raw() << "\n\tquery: " << view.queries_raw()
-                                     << "\n\tuser info: " << view.user_info() << "\n\rerrors: " << view.error_string();
+                                     << "\n\tuser info: " << view.user_info()
+                                     << "\n\rerrors: " << view.error_string();
     }
 
     uri_string not_port{"http://username:password@domain.tld/path/file.ext"};
