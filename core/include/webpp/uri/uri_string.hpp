@@ -1308,7 +1308,7 @@ namespace webpp::uri {
          * container, it will return the whole path.
          */
         template <typename Container = basic_path<string_view_type, allocator_type>>
-        constexpr uri_string& extract_raw_slugs_to(Container& container) const noexcept {
+        constexpr uri_string const& extract_raw_slugs_to(Container& container) const noexcept {
             auto _path = path_raw();
             if (_path.empty())
                 return *this;
