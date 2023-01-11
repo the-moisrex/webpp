@@ -21,7 +21,7 @@ namespace webpp::uri {
         /**
          * Get the string in the encoded shape
          */
-        void append_to(istl::String auto& out) const {
+        constexpr void append_to(istl::String auto& out) const {
             if (!username.empty()) {
                 encode_uri_component(username, out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             }
@@ -32,13 +32,13 @@ namespace webpp::uri {
             }
         }
 
-        string_type to_string() const {
+        constexpr string_type to_string() const {
             string_type res{username.get_allocator()};
             append_to(res);
             return res;
         }
 
-        void append_raw_to(istl::String auto& out) const {
+        constexpr void append_raw_to(istl::String auto& out) const {
             const bool user_empty = !username.empty();
             const bool pass_empty = !password.empty();
             if (user_empty && pass_empty) {
@@ -58,7 +58,7 @@ namespace webpp::uri {
         /**
          * Convert to string without encoding it
          */
-        string_type to_raw_string() const {
+        constexpr string_type to_raw_string() const {
             string_type res{username.get_allocator()};
             append_raw_to(res);
             return res;

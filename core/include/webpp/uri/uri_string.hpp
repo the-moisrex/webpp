@@ -1527,7 +1527,7 @@ namespace webpp::uri {
         }
 
         template <typename MapType = basic_queries<string_type, allocator_type>>
-        [[nodiscard]] constexpr auto queries() const noexcept {
+        [[nodiscard]] constexpr MapType queries() const noexcept {
             MapType res(this->get_allocator());
             extract_queries_to(res);
             return res;
@@ -1643,7 +1643,7 @@ namespace webpp::uri {
          * It's also in a decoded format
          */
         template <typename MapType = basic_queries<string_type, allocator_type>>
-        constexpr uri_string& extract_queries_to(MapType& q_structured) const noexcept {
+        constexpr uri_string const& extract_queries_to(MapType& q_structured) const noexcept {
             using map_key_type   = typename MapType::key_type;
             using map_value_type = typename MapType::mapped_type;
             static_assert(istl::String<map_key_type>, "The specified container can't hold the query keys.");
