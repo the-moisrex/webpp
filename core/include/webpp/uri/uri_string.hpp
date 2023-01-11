@@ -256,11 +256,14 @@ namespace webpp::uri {
 
             parse_path(); // to get "authority_end"
 
-            auto _data = string_view();
+            auto const _data = string_view();
 
-            auto starting_point = user_info_end != data.size() ? user_info_end : authority_start;
-            port_start = _data.substr(starting_point, authority_end - starting_point).find_last_of(':');
-            if (port_start == string_view_type::npos) {
+            auto const starting_point = user_info_end != data.size() ? user_info_end : authority_start;
+            auto const host_port      = _data.substr(starting_point, authority_end - starting_point);
+
+            // caution about IPv6; host_port may contain something like [2001:db8::7]:8080
+            port_start                = host_port.find_last_of(":]");
+            if (port_start == string_view_type::npos || host_port.back() == ']') {
                 port_start = data.size(); // there's no port
             } else {
                 port_start += starting_point;
@@ -271,8 +274,7 @@ namespace webpp::uri {
                 } else {
                     // unfortunately this is the best way that I could think of
                     // but if the user wants the port as well, then we have converted this value twice
-                    // not efficient; I know. I should probably implement a better version of uri in the
-                    // future
+                    // not efficient; I know.
                     auto const p = to_int(port_view);
                     if (p < 0 || p > max_port_number) {
                         errors.failure(uri_error_type::port);
@@ -745,24 +747,26 @@ namespace webpp::uri {
                 start = user_info_end;
             }
 
+            // todo: see if it makes sense to use stl::min/max
+            // finding the length
             if (port_start != data.size()) {
                 // but there's a port
                 len = port_start - start;
+            } else if (authority_end != data.size()) {
+                // there's a path
+                len = authority_end - start;
+            } else if (query_start != data.size()) {
+                // there's a query
+                len = query_start - start;
+            } else if (fragment_start != data.size()) {
+                // there's a fragment
+                len = fragment_start - start;
+            } else if (start == data.size()) {
+                // there's no host at all
+                return {};
             } else {
-                // there's no port either
-                if (authority_end != data.size()) {
-                    // there's a path
-                    len = authority_end - start;
-                } else if (query_start != data.size()) {
-                    // there's a query
-                    len = query_start - start;
-                } else if (fragment_start != data.size()) {
-                    // there's a fragment
-                    len = fragment_start - start;
-                } else {
-                    // there's no path either
-                    len = data.size() - 1; // till the end
-                }
+                // there's no path, query, fragment; nothing; the host continues to the end
+                len = data.size() - 1; // till the end
             }
 
             return substr(start, len);
@@ -791,7 +795,14 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr string_type host() const noexcept {
             string_type d_host{this->get_allocator()};
-            if (!decode_uri_component(host_raw(), d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>)) {
+            const auto  raw = host_raw();
+
+            // don't decode the component if it's ipv6
+            if (ascii::starts_with(raw, '[') && webpp::is::ipv6(raw)) {
+                d_host = raw;
+                return d_host;
+            }
+            if (!decode_uri_component(raw, d_host, details::REG_NAME_NOT_PCT_ENCODED<char_type>)) {
                 d_host.clear();
             }
             return d_host;
@@ -1441,7 +1452,7 @@ namespace webpp::uri {
         constexpr uri_string& path_raw(istl::StringViewifiable auto&& m_path) noexcept {
             parse_path();
             auto _encoded_path = strings::join(
-              (authority_end != 0 && !ascii::starts_with(m_path, '/') ? "/" : ""),
+              (!ascii::starts_with(m_path, '/') ? "/" : ""),
               istl::stringify_of<string_type>(stl::forward<decltype(m_path)>(m_path), this->get_allocator()));
             replace_value(authority_end, query_start - authority_end, stl::move(_encoded_path));
             return *this;
@@ -1927,6 +1938,27 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool has_valid_user_info() const noexcept {
             // todo: evaluate user_info as well, user_info parser doesn't evaluate it
             return !user_info_raw().empty() || errors.is_off(uri_error_type::user_info);
+        }
+
+        // Get an error string; this should only be used for debugging
+        [[nodiscard]] constexpr string_type error_string() const noexcept {
+            string_type            err_str{this->get_allocator()};
+            constexpr stl::array<string_view_type, 2> error_indicator {" ", " !"};
+            err_str += error_indicator[has_valid_scheme()];
+            err_str += "scheme";
+            err_str += error_indicator[has_valid_user_info()];
+            err_str += "user-info";
+            err_str += error_indicator[has_valid_host()];
+            err_str += "host";
+            err_str += error_indicator[has_valid_port()];
+            err_str += "port";
+            err_str += error_indicator[has_valid_path()];
+            err_str += "path";
+            err_str += error_indicator[has_valid_queries()];
+            err_str += "queries";
+            err_str += error_indicator[has_valid_fragment()];
+            err_str += "fragment";
+            return err_str;
         }
     };
 

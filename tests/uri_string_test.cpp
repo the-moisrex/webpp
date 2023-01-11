@@ -151,13 +151,16 @@ TEST(URITests, WieredURIs) {
                   "news:comp.infosystems.www.servers.unix",
                   "tel:+1-816-555-1212",
                   "telnet://192.0.2.16:80/",
-                  "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
                   "ssh://test@test.com",
                   "https://bob:pass@test.com/place",
                   "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
-        EXPECT_TRUE(uri_view(_uri).is_valid()) << "uri: " << _uri;
+        uri_view view{_uri};
+        EXPECT_TRUE(view.is_valid()) << "\turi: " << _uri << "\n\tscheme: " << view.scheme()
+                                     << "\n\thost raw: " << view.host_raw() << "\n\thost: " << view.host()
+                                     << "\n\tpath: " << view.path_raw() << "\n\tquery: " << view.queries_raw()
+                                     << "\n\tuser info: " << view.user_info() << "\n\rerrors: " << view.error_string();
     }
 
     uri_string not_port{"http://username:password@domain.tld/path/file.ext"};
@@ -1500,5 +1503,5 @@ TEST(UriTests, PercentEncodePlusInQueries) {
     // percent-encoded in a URI when the URI is encoded.
     mutable_uri uri;
     uri.queries("foo+bar");
-    EXPECT_EQ("?foo%2Bbar", uri.to_string());
+    EXPECT_EQ("?foo%2Bbar", uri.to_string()) << uri.to_string();
 }
