@@ -29,7 +29,7 @@ TEST(URITests, PathFromString) {
     EXPECT_EQ(path[1], "a");
 }
 
-TEST(YRUTests, QueryParamGeneration) {
+TEST(URITests, QueryParamGeneration) {
     uri::uri url;
     url                   = "https://localhost/api/v2/content";
     url.queries["model"]  = "Encode this";

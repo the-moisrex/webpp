@@ -184,13 +184,14 @@ namespace webpp::uri {
 
         template <URIString URIType>
         constexpr basic_uri& extract_from(URIType const& uri_str) {
-            scheme    = uri_str.scheme();
-            user_info = uri_str.user_info();
-            host      = uri_str.host();
-            port      = uri_str.port();
-            path      = uri_str.path();
-            queries   = uri_str.queries();
-            fragment  = uri_str.fragment();
+            scheme             = uri_str.scheme();
+            user_info.username = uri_str.username().value_or("");
+            user_info.password = uri_str.password().value_or("");
+            host               = uri_str.host();
+            port               = uri_str.port();
+            path               = uri_str.path();
+            queries            = uri_str.queries();
+            fragment           = uri_str.fragment();
             return *this;
         }
 

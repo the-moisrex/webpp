@@ -24,7 +24,9 @@
     "map": "cpp",
     "set": "cpp",
     "executor": "cpp",
-    "io_context": "cpp"
+    "io_context": "cpp",
+    "internet": "cpp",
+    "__config": "cpp"
   },
   "cSpell.words": [
     "addr",
@@ -58,6 +60,7 @@
     "fcgi",
     "hasher",
     "hworker",
+    "iequals",
     "ints",
     "istl",
     "istring",
@@ -85,6 +88,7 @@
     "uint",
     "uniq",
     "unprocessable",
+    "userinfo",
     "ustring",
     "vals",
     "variablify",
