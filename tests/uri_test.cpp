@@ -35,5 +35,7 @@ TEST(URITests, QueryParamGeneration) {
     url.queries["model"]  = "Encode this";
     url.queries["locale"] = "English is a locale";
     url.queries["text"]   = "This text has a \n newline in it.";
-    EXPECT_EQ(url.to_string(), "https://localhost/api/v2/content?model=");
+    EXPECT_EQ(
+      url.to_string(),
+      "https://localhost/api/v2/content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%20newline%20in%20it.");
 }

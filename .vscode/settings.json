@@ -26,10 +26,14 @@
     "executor": "cpp",
     "io_context": "cpp",
     "internet": "cpp",
-    "__config": "cpp"
+    "__config": "cpp",
+    "bitset": "cpp",
+    "string_view": "cpp",
+    "__locale": "cpp"
   },
   "cSpell.words": [
     "addr",
+    "alphanum",
     "archivedir",
     "BBBC",
     "breq",
@@ -71,7 +75,9 @@
     "nolintbegin",
     "nolintend",
     "OBBC",
+    "PCHAR",
     "punycode",
+    "querystring",
     "rebinder",
     "routify",
     "samesite",

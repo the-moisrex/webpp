@@ -1650,12 +1650,14 @@ namespace webpp::uri {
             static_assert(istl::String<map_value_type>,
                           "The specified container can't hold the query values.");
             auto _query = queries_raw();
-            for (;;) {
+            for (; !_query.empty();) {
                 const auto and_sep = _query.find('&'); // find the delimiter
                 const auto eq_sep  = _query.find('=');
                 const auto name    = _query.substr(0, stl::min(eq_sep, and_sep));
-                if (name.empty()) // a name should not be empty
+                if (name.empty()) { // a name should not be empty
+                    _query.remove_prefix(stl::max(eq_sep, and_sep) + 1);
                     continue;
+                }
                 map_value_type d_name(this->get_allocator());
                 map_key_type   d_value(this->get_allocator());
                 if (!decode_uri_component(name,

@@ -46,10 +46,14 @@ namespace webpp::uri {
         }
 
         void append_to(istl::String auto& str) const {
+            str.append("?");
             for (const auto& [key, value] : *this) {
                 encode_uri_component(key, str, allowed_chars);
+                str.append("=");
                 encode_uri_component(value, str, allowed_chars);
+                str.append("&");
             }
+            str.pop_back(); // remove the "&" (or remove the unneeded "?" if it's empty)
         }
     };
 
