@@ -262,7 +262,7 @@ namespace webpp::uri {
             auto const host_port      = _data.substr(starting_point, authority_end - starting_point);
 
             // caution about IPv6; host_port may contain something like [2001:db8::7]:8080
-            port_start                = host_port.find_last_of(":]");
+            port_start = host_port.find_last_of(":]");
             if (port_start == string_view_type::npos || host_port.back() == ']') {
                 port_start = data.size(); // there's no port
             } else {
@@ -1942,8 +1942,8 @@ namespace webpp::uri {
 
         // Get an error string; this should only be used for debugging
         [[nodiscard]] constexpr string_type error_string() const noexcept {
-            string_type            err_str{this->get_allocator()};
-            constexpr stl::array<string_view_type, 2> error_indicator {" ", " !"};
+            string_type                               err_str{this->get_allocator()};
+            constexpr stl::array<string_view_type, 2> error_indicator{" ", " !"};
             err_str += error_indicator[has_valid_scheme()];
             err_str += "scheme";
             err_str += error_indicator[has_valid_user_info()];
