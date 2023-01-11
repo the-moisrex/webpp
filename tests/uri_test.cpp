@@ -28,3 +28,12 @@ TEST(URITests, PathFromString) {
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
 }
+
+TEST(YRUTests, QueryParamGeneration) {
+    uri::uri url;
+    url                   = "https://localhost/api/v2/content";
+    url.queries["model"]  = "Encode this";
+    url.queries["locale"] = "English is a locale";
+    url.queries["text"]   = "This text has a \n newline in it.";
+    EXPECT_EQ(url.to_string(), "https://localhost/api/v2/content?model=");
+}

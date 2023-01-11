@@ -9,7 +9,9 @@
 #include "port.hpp"
 #include "queries.hpp"
 #include "scheme.hpp"
+#include "uri_string.hpp"
 #include "user_info.hpp"
+#include "webpp/std/string_view.hpp"
 
 namespace webpp::uri {
 
@@ -54,7 +56,7 @@ namespace webpp::uri {
 
 
         template <typename DefaultAlloc = allocator_type>
-        auto get_allocator() const noexcept {
+        constexpr auto get_allocator() const noexcept {
             return extract_allocator_of_or_default<DefaultAlloc>(scheme,
                                                                  user_info.username,
                                                                  user_info.password,
@@ -66,7 +68,7 @@ namespace webpp::uri {
         }
 
 
-        void append_to(istl::String auto& out) {
+        constexpr void append_to(istl::String auto& out) {
             // estimate the size
             // todo: check if it has a good impact on performance or it's just in the way
             out.reserve(out.size() +                    // the size of out itself
@@ -124,7 +126,7 @@ namespace webpp::uri {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        [[nodiscard]] basic_uri resolve(const basic_uri& relative_uri) const noexcept {
+        [[nodiscard]] constexpr basic_uri resolve(const basic_uri& relative_uri) const noexcept {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -178,6 +180,37 @@ namespace webpp::uri {
 
             return target;
         }
+
+
+        template <URIString URIType>
+        constexpr basic_uri& extract_from(URIType const& uri_str) {
+            scheme    = uri_str.scheme();
+            user_info = uri_str.user_info();
+            host      = uri_str.host();
+            port      = uri_str.port();
+            path      = uri_str.path();
+            queries   = uri_str.queries();
+            fragment  = uri_str.fragment();
+            return *this;
+        }
+
+        template <istl::StringViewifiable StrVT>
+        requires(!URIString<StrVT>) constexpr basic_uri& extract_from(StrVT&& url_str) {
+            auto const str_view = istl::string_viewify(stl::forward<StrVT>(url_str));
+            using str_view_t    = stl::remove_cvref_t<decltype(str_view)>;
+            uri_string<const string_type, str_view_t> const uri_str{str_view};
+            extract_from(uri_str);
+            return *this;
+        }
+
+        template <typename T>
+        requires(URIString<T> || istl::StringViewifiable<T>) constexpr basic_uri& operator=(T&& uri_str) {
+            extract_from(uri_str);
+            return *this;
+        }
+
+        constexpr basic_uri& operator=(basic_uri const&)     = default;
+        constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
     };
 
     using uri = basic_uri<stl::string>;
