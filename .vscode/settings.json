@@ -29,7 +29,11 @@
     "__config": "cpp",
     "bitset": "cpp",
     "string_view": "cpp",
-    "__locale": "cpp"
+    "__locale": "cpp",
+    "memory_resource": "cpp",
+    "sstream": "cpp",
+    "__node_handle": "cpp",
+    "regex": "cpp"
   },
   "cSpell.words": [
     "addr",
