@@ -62,7 +62,7 @@ TEST(URITests, Creation) {
     EXPECT_TRUE(u.has_scheme());
     EXPECT_EQ(u.string(), "http://eg2.com/");
 
-    uri_view ipv4_host("https://192.168.1.1");
+    uri_view const ipv4_host("https://192.168.1.1");
     EXPECT_TRUE(webpp::is::ipv4(ipv4_host.host_raw()));
     EXPECT_EQ(ipv4_host.scheme(), "https");
     EXPECT_FALSE(ipv4_host.has_path());
@@ -97,7 +97,7 @@ TEST(URITests, Creation) {
 
 TEST(URITests, IPv6HostName) {
     uri_string<std::string> u;
-    std::string             uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
+    std::string const       uri_str = "//[::1]:8080/folder/file.md?name=value&name2=value2#str";
     u                               = uri_str;
     EXPECT_EQ(u.string(), uri_str);
     EXPECT_FALSE(u.has_scheme()) << "scheme: " << u.scheme();
@@ -119,7 +119,7 @@ TEST(URITests, IPv6HostName) {
 }
 
 TEST(URITests, WieredURIs) {
-    uri_view u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
+    uri_view const u1("ftp://ftp.is.co.za/rfc/rfc1808.txt");
     EXPECT_FALSE(!u1.has_host());
     EXPECT_TRUE(u1.has_scheme());
     EXPECT_EQ(u1.scheme(), "ftp");
@@ -133,30 +133,30 @@ TEST(URITests, WieredURIs) {
     EXPECT_FALSE(u1.is_urn());
 
     // some examples from https://rosettacode.org/wiki/URL_parser
-    auto _uris = {"ftp://ftp.is.co.za/rfc/rfc1808.txt",
-                  "http://www.ietf.org/rfc/rfc2396.txt",
-                  "ldap://[2001:db8::7]/c=GB?objectClass?one",
-                  "mailto:John.Doe@example.com",
-                  "news:comp.infosystems.www.servers.unix",
-                  "tel:+1-816-555-1212",
-                  "telnet://192.0.2.16:80/",
-                  "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-                  "foo://example.com:8042/over/there?name=ferret#nose",
-                  "urn:example:animal:ferret:nose",
-                  "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
-                  "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-                  "http://www.ietf.org/rfc/rfc2396.txt#header1",
-                  "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
-                  "mailto:example@email.com",
-                  "news:comp.infosystems.www.servers.unix",
-                  "tel:+1-816-555-1212",
-                  "telnet://192.0.2.16:80/",
-                  "ssh://test@test.com",
-                  "https://bob:pass@test.com/place",
-                  "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
+    const auto _uris = {"ftp://ftp.is.co.za/rfc/rfc1808.txt",
+                        "http://www.ietf.org/rfc/rfc2396.txt",
+                        "ldap://[2001:db8::7]/c=GB?objectClass?one",
+                        "mailto:John.Doe@example.com",
+                        "news:comp.infosystems.www.servers.unix",
+                        "tel:+1-816-555-1212",
+                        "telnet://192.0.2.16:80/",
+                        "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+                        "foo://example.com:8042/over/there?name=ferret#nose",
+                        "urn:example:animal:ferret:nose",
+                        "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
+                        "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+                        "http://www.ietf.org/rfc/rfc2396.txt#header1",
+                        "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
+                        "mailto:example@email.com",
+                        "news:comp.infosystems.www.servers.unix",
+                        "tel:+1-816-555-1212",
+                        "telnet://192.0.2.16:80/",
+                        "ssh://test@test.com",
+                        "https://bob:pass@test.com/place",
+                        "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
-        uri_view view{_uri};
+        uri_view const view{_uri};
         EXPECT_TRUE(view.is_valid()) << "\turi: " << _uri << "\n\tscheme: " << view.scheme()
                                      << "\n\thost raw: " << view.host_raw() << "\n\thost: " << view.host()
                                      << "\n\tpath: " << view.path_raw() << "\n\tquery: " << view.queries_raw()
@@ -164,7 +164,7 @@ TEST(URITests, WieredURIs) {
                                      << "\n\rerrors: " << view.error_string();
     }
 
-    uri_string not_port{"http://username:password@domain.tld/path/file.ext"};
+    uri_string const not_port{"http://username:password@domain.tld/path/file.ext"};
     EXPECT_FALSE(not_port.has_port());
     EXPECT_TRUE(not_port.has_username());
     EXPECT_TRUE(not_port.has_password());
@@ -197,9 +197,9 @@ TEST(URITests, URN) {
         EXPECT_FALSE(uri_string(_urn).is_url());
     }
 
-    uri_view   a("urn:example:a123,z456");
-    uri_string b{"URN:example:a123,z456"};
-    uri_string c{"urn:EXAMPLE:a123,z456"};
+    uri_view const   a("urn:example:a123,z456");
+    uri_string const b{"URN:example:a123,z456"};
+    uri_string const c{"urn:EXAMPLE:a123,z456"};
 
     EXPECT_TRUE(a == b);
     EXPECT_TRUE(a == c);
@@ -401,10 +401,10 @@ TEST(URITests, Domains) {
 
 TEST(URITests, EncodedDecoded) {
     // TODO
-    uri_string u{"http://سلام.com"};
+    uri_string const u{"http://سلام.com"};
     EXPECT_TRUE(u.is_valid());
 
-    uri_view ducky = "https://duckduckgo.com/?q=%D8%AA%D8%B3%D8%AA+%D9%85%DB%8C%DA%A9%D9%86%D9%85";
+    uri_view const ducky = "https://duckduckgo.com/?q=%D8%AA%D8%B3%D8%AA+%D9%85%DB%8C%DA%A9%D9%86%D9%85";
     // todo: should we use + or space?
     EXPECT_EQ(ducky.queries()["q"], "تست+میکنم");
     // todo: add tests for UTF-8 string types after you implemented them
@@ -412,7 +412,7 @@ TEST(URITests, EncodedDecoded) {
 
 
 TEST(URITests, TypedVariables) {
-    uri_string u{"/user/{user_id}"};
+    uri_string const u{"/user/{user_id}"};
     EXPECT_TRUE(u.has_path());
     auto _path = u.slugs();
     EXPECT_EQ(_path.size(), 3);
@@ -424,8 +424,8 @@ TEST(URITests, TypedVariables) {
 }
 
 TEST(URITests, StructuredPath) {
-    uri_string u{"/user/19"};
-    auto       parsed = u.slugs();
+    uri_string const u{"/user/19"};
+    auto             parsed = u.slugs();
     EXPECT_EQ(parsed.size(), 3);
     if (parsed.size() == 3) { // don't break other tests if this one is failing
         EXPECT_EQ(parsed[2], "19");
