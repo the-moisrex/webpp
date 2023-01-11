@@ -42,7 +42,7 @@ namespace webpp::uri {
 
         template <istl::String StrT      = StringType,
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
-        [[nodiscard]] static constexpr auto create(AllocatorType const& alloc) {
+        [[nodiscard]] static constexpr auto create(AllocatorType const& alloc = AllocatorType{}) {
             using str_t = stl::remove_cvref_t<StrT>;
             basic_uri<str_t> u{.scheme{alloc},
                                .user_info{.username = str_t{alloc}, .password = str_t{alloc}},
