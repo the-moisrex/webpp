@@ -1506,3 +1506,29 @@ TEST(UriTests, PercentEncodePlusInQueries) {
     uri.queries("foo+bar");
     EXPECT_EQ("?foo%2Bbar", uri.to_string()) << uri.to_string();
 }
+
+
+TEST(UriTests, HTTPInHTTP) {
+
+    /*
+     * http://http://http://@http://http://?http://#http://
+     * ----   ---- --------- ---- - ------- ------- -------
+     *  \       \      \       \   \     \     \       \
+     *   \       \   Password   \ No-Port \   Query     \
+     *    \       \              \         \          Fragment
+     *  Scheme  Username        Host      Path
+     *
+     * Got it from https://twitter.com/gregxsunday/status/1613154019760824322?s=20&t=TM26KRie72Ks1Tnw1GpSmw
+     * https://daniel.haxx.se/blog/2022/09/08/http-http-http-http-http-http-http/
+     */
+    uri_view const uri = "http://http://http://@http://http://?http://#http://";
+    EXPECT_TRUE(uri.is_valid()) << "Errors: " << uri.error_string();
+    EXPECT_EQ("http", uri.scheme());
+    EXPECT_EQ("http", uri.username());
+    EXPECT_EQ("//http://", uri.password());
+    EXPECT_EQ("http", uri.host());
+    EXPECT_EQ("", uri.port());
+    EXPECT_EQ("//http://", uri.path_raw());
+    EXPECT_EQ("http://", uri.queries_raw());
+    EXPECT_EQ("http://", uri.fragment());
+}
