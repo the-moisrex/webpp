@@ -1527,7 +1527,7 @@ TEST(UriTests, HTTPInHTTP) {
     EXPECT_EQ("http://http://", uri.user_info_raw());
     EXPECT_EQ("http", uri.username());
     EXPECT_EQ("//http://", uri.password_raw());
-    EXPECT_EQ("http", uri.host());
+    EXPECT_EQ("http", uri.host_raw());
     EXPECT_EQ("", uri.port());
     EXPECT_EQ("//http://", uri.path_raw());
     EXPECT_EQ("http://", uri.queries_raw());
