@@ -768,6 +768,8 @@ namespace webpp::uri {
             } else {
                 // there's a user info
                 start = user_info_end;
+                if (data[user_info_end] == '@')
+                    start++;
             }
 
             // todo: see if it makes sense to use stl::min/max
