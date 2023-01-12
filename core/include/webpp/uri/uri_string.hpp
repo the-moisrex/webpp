@@ -143,7 +143,7 @@ namespace webpp::uri {
             if (scheme_end != string_view_type::npos)
                 return; // It's already parsed
 
-            auto _data = string_view();
+            auto const _data = this->string_view();
 
             // extracting scheme
             if (ascii::starts_with(_data, "//")) {
@@ -191,15 +191,32 @@ namespace webpp::uri {
                 return; // there's no user_info_end without authority_start
             }
 
-            parse_path(); // to get "authority_end"
+            auto const _data = this->string_view();
+            auto const next_section =
+              stl::min(stl::min(stl::min(authority_end, query_start), fragment_start), _data.size());
+            auto const user_info_section = _data.substr(authority_start, next_section - authority_start);
 
-            auto _data = (stl::is_same_v<stored_str_t, string_view_type> ? data : string_view_type(data));
-
-            user_info_end = _data.substr(authority_start, authority_end - authority_start).find_first_of('@');
+            // finding the username
+            user_info_end = user_info_section.find_first_of(":[@");
             if (user_info_end == string_view_type::npos) {
                 user_info_end = data.size();
-            } else {
+            } else if (user_info_end == 0 && user_info_section.front() == '[') {
+                // It's an IPv6
+                user_info_end = data.size();
+            } else if (user_info_section[user_info_end] == '@') {
+                // no password; we only have username
+                // nothing to do
                 user_info_end += authority_start;
+                return;
+            } else if (user_info_section[user_info_end] == ':') {
+                // finding the password
+                user_info_end = user_info_section.find_first_of('@', user_info_end);
+                if (user_info_end == string_view_type::npos) {
+                    // it was a port
+                    user_info_end = data.size();
+                } else {
+                    user_info_end += authority_start;
+                }
                 // todo: evaluate the user info here
             }
         }
@@ -215,14 +232,18 @@ namespace webpp::uri {
             parse_scheme(); // to get "authority_start"
             parse_query();  // to get "query_start"
 
-            auto _data = string_view();
+            auto const _data = this->string_view();
 
             const bool is_urn =
               scheme_end != data.size() &&
               ascii::iequals<ascii::char_case_side::second_lowered>(_data.substr(0, scheme_end), "urn");
             stl::size_t starting_point; // NOLINT(cppcoreguidelines-init-variables)
             if (authority_start != data.size()) {
-                starting_point = authority_start;
+                starting_point        = authority_start;
+                auto const host_start = _data.find('@', starting_point);
+                if (host_start != string_view_type::npos) {
+                    starting_point = host_start;
+                }
             } else if (scheme_end != data.size()) {
                 starting_point = scheme_end;
             } else {
@@ -256,7 +277,7 @@ namespace webpp::uri {
 
             parse_path(); // to get "authority_end"
 
-            auto const _data = string_view();
+            auto const _data = this->string_view();
 
             auto const starting_point = user_info_end != data.size() ? user_info_end : authority_start;
             auto const host_port      = _data.substr(starting_point, authority_end - starting_point);
@@ -268,7 +289,11 @@ namespace webpp::uri {
             } else {
                 port_start += starting_point;
                 const auto port_view = _data.substr(port_start + 1, authority_end - (port_start + 1));
-                if (!ascii::is::digit(port_view)) {
+                if (port_view.empty()) {
+                    // example.com:/page
+                    // port is empty; empty is default
+                    return; // nothing to do
+                } else if (!ascii::is::digit(port_view)) {
                     port_start = data.size();
                     errors.failure(uri_error_type::port);
                 } else {
@@ -290,7 +315,7 @@ namespace webpp::uri {
             if (fragment_start != string_view_type::npos)
                 return; // It's already parsed
 
-            auto _data = string_view();
+            auto const _data = this->string_view();
 
             // todo: evaluate fragment here
             fragment_start = _data.find_first_of('#');
@@ -308,8 +333,8 @@ namespace webpp::uri {
 
             parse_fragment();
 
-            auto _data  = string_view();
-            query_start = _data.substr(0, fragment_start).find_first_of('?');
+            auto const _data = this->string_view();
+            query_start      = _data.substr(0, fragment_start).find_first_of('?');
             // todo: evaluate queries here
             if (query_start == string_view_type::npos) {
                 query_start = data.size();

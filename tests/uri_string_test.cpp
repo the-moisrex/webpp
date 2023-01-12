@@ -1524,8 +1524,9 @@ TEST(UriTests, HTTPInHTTP) {
     uri_view const uri = "http://http://http://@http://http://?http://#http://";
     EXPECT_TRUE(uri.is_valid()) << "Errors: " << uri.error_string();
     EXPECT_EQ("http", uri.scheme());
+    EXPECT_EQ("http://http://", uri.user_info_raw());
     EXPECT_EQ("http", uri.username());
-    EXPECT_EQ("//http://", uri.password());
+    EXPECT_EQ("//http://", uri.password_raw());
     EXPECT_EQ("http", uri.host());
     EXPECT_EQ("", uri.port());
     EXPECT_EQ("//http://", uri.path_raw());
