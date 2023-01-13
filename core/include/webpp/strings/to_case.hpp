@@ -66,7 +66,8 @@ namespace webpp::ascii {
     }
 
     template <typename CharT>
-    requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_upper(CharT& c) noexcept {
+        requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>)
+    inline void to_upper(CharT& c) noexcept {
         using char_type                 = stl::remove_cvref_t<decltype(c)>;
         static constexpr char_type diff = 'a' - 'A';
         if (c >= 'a' && c <= 'z')
@@ -86,7 +87,8 @@ namespace webpp::ascii {
     }
 
     template <typename CharT>
-    requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>) inline void to_lower(CharT& c) noexcept {
+        requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>)
+    inline void to_lower(CharT& c) noexcept {
         using char_type                 = stl::remove_cvref_t<decltype(c)>;
         static constexpr char_type diff = 'a' - 'A';
         if (c >= 'A' && c <= 'Z')
@@ -98,22 +100,22 @@ namespace webpp::ascii {
      * The "algo" namespace is used for when there are multiple algorithms for the same purpose.
      */
     namespace algo {
-#define WEBPP_ALGO(method)                                                                                   \
-    template <typename CharT>                                                                                \
-    requires(stl::is_integral_v<CharT> &&                                                                    \
-             !stl::is_const_v<CharT>) inline void simple_##method(CharT* start, const CharT* end) noexcept { \
-        auto* it = start;                                                                                    \
-        for (; it != end; ++it)                                                                              \
-            method(*it);                                                                                     \
-    }                                                                                                        \
-                                                                                                             \
-    inline void simple_##method(istl::Stringifiable auto& str) noexcept {                                    \
-        using str_t          = stl::remove_cvref_t<decltype(str)>;                                           \
-        using char_type      = istl::char_type_of<str_t>;                                                    \
-        char_type*       it  = istl::string_data(str);                                                       \
-        const char_type* end = it + size(str);                                                               \
-        for (; it != end; ++it)                                                                              \
-            method(*it);                                                                                     \
+#define WEBPP_ALGO(method)                                                 \
+    template <typename CharT>                                              \
+        requires(stl::is_integral_v<CharT> && !stl::is_const_v<CharT>)     \
+    inline void simple_##method(CharT* start, const CharT* end) noexcept { \
+        auto* it = start;                                                  \
+        for (; it != end; ++it)                                            \
+            method(*it);                                                   \
+    }                                                                      \
+                                                                           \
+    inline void simple_##method(istl::Stringifiable auto& str) noexcept {  \
+        using str_t          = stl::remove_cvref_t<decltype(str)>;         \
+        using char_type      = istl::char_type_of<str_t>;                  \
+        char_type*       it  = istl::string_data(str);                     \
+        const char_type* end = it + size(str);                             \
+        for (; it != end; ++it)                                            \
+            method(*it);                                                   \
     }
 
         WEBPP_ALGO(to_lower)
@@ -152,7 +154,8 @@ namespace webpp::ascii {
 
 #define WEBPP_TO_METHOD(method, chosen_algorithm)                                                            \
     template <typename CharT>                                                                                \
-    requires(stl::is_integral_v<CharT>) inline void method(CharT* it) noexcept {                             \
+        requires(stl::is_integral_v<CharT>)                                                                  \
+    inline void method(CharT* it) noexcept {                                                                 \
         for (; *it != '\0'; ++it)                                                                            \
             method(*it);                                                                                     \
     }                                                                                                        \

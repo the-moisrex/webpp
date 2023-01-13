@@ -348,47 +348,46 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType>
-    requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(
-      HTTPRequest<BodyType> || HTTPRequestBody<BodyType>) ) constexpr istl::nothing_type
-      deserialize_request_body(HTTPRequestBody auto const&) noexcept {
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
+                                                                               HTTPRequestBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_request_body(HTTPRequestBody auto const&) noexcept {
         // request body is empty
         return {};
     }
 
     template <typename T, typename BodyType>
-    requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(
-      HTTPResponse<BodyType> || HTTPResponseBody<BodyType>) ) constexpr istl::nothing_type
-      deserialize_response_body(BodyType const&) noexcept {
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPResponse<BodyType> ||
+                                                                               HTTPResponseBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_response_body(BodyType const&) noexcept {
         // request body is empty
         return {};
     }
 
 
     template <typename T, typename BodyType>
-    requires((stl::is_void_v<T> ||
-              stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> || HTTPResponse<BodyType> ||
-                                                      HTTPBody<BodyType>) ) constexpr istl::nothing_type
-      deserialize_body(BodyType const&) noexcept {
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
+                                                                               HTTPResponse<BodyType> ||
+                                                                               HTTPBody<BodyType>) )
+    constexpr istl::nothing_type deserialize_body(BodyType const&) noexcept {
         // request body is empty
         return {};
     }
 
     template <typename T>
-    requires(stl::is_void_v<T> ||
-             stl::same_as<T, istl::nothing_type>) constexpr void serialize_request_body(T&&, auto&) noexcept {
+        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
+    constexpr void serialize_request_body(T&&, auto&) noexcept {
         // request body is empty
     }
 
     template <typename T>
-    requires(stl::is_void_v<T> ||
-             stl::same_as<T, istl::nothing_type>) constexpr void serialize_response_body(T&&,
-                                                                                         auto&) noexcept {
+        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
+    constexpr void serialize_response_body(T&&, auto&) noexcept {
         // response body is empty
     }
 
     template <typename T>
-    requires(stl::is_void_v<T> ||
-             stl::same_as<T, istl::nothing_type>) constexpr void serialize_body(T&&, auto&) noexcept {
+        requires(stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>)
+    constexpr void serialize_body(T&&, auto&) noexcept {
         // response body is empty
     }
 

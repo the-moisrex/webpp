@@ -33,7 +33,8 @@ namespace webpp {
                 the_key{stl::move(key)} {}
 
             template <CacheValue V>
-            requires(stl::is_convertible_v<V, value_type>) constexpr cache_result& operator=(V&& new_val) {
+                requires(stl::is_convertible_v<V, value_type>)
+            constexpr cache_result& operator=(V&& new_val) {
                 c.set(the_key, stl::forward<V>(new_val));
                 return *this;
             }
@@ -72,32 +73,30 @@ namespace webpp {
 
 
         template <CacheKey K>
-        requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
-          constexpr cache_result
-          operator[](K&& key) noexcept {
+            requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
+        constexpr cache_result operator[](K&& key) noexcept {
             return cache_result{*this, key, get(key)};
         }
 
         template <CacheKey K, CacheValue V>
-        requires(stl::convertible_to<stl::remove_cvref_t<K>, key_type>&&    // it's a key
-                   stl::convertible_to<stl::remove_cvref_t<V>, value_type>) // it's a value
-          constexpr cache& set(K&& key, V&& value) {
+            requires(stl::convertible_to<stl::remove_cvref_t<K>, key_type>&&    // it's a key
+                       stl::convertible_to<stl::remove_cvref_t<V>, value_type>) // it's a value
+        constexpr cache& set(K&& key, V&& value) {
             strategy_type::set(stl::forward<K>(key), stl::forward<V>(value));
             return *this;
         }
 
 
         template <CacheKey K, CacheValue V>
-        requires(
-          stl::is_convertible_v<K, key_type>&& stl::is_convertible_v<V, value_type>) constexpr value_type
-          get(K&& key, V&& default_value) {
+            requires(stl::is_convertible_v<K, key_type>&& stl::is_convertible_v<V, value_type>)
+        constexpr value_type get(K&& key, V&& default_value) {
             return strategy_type::get(stl::forward<K>(key)).value_or(stl::forward<V>(default_value));
         }
 
 
         template <CacheKey K>
-        requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
-          constexpr optional_value_type get(K&& key) {
+            requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
+        constexpr optional_value_type get(K&& key) {
             return strategy_type::get(stl::forward<K>(key));
         }
 
@@ -106,8 +105,8 @@ namespace webpp {
          * Get the value if exists, if not, construct one, and return the constructed one.
          */
         template <CacheKey K, typename... Args>
-        requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
-          constexpr value_type emplace_get(K&& key, Args&&... args) {
+            requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
+        constexpr value_type emplace_get(K&& key, Args&&... args) {
             if (auto val = strategy_type::get(key); val) {
                 return *val;
             }

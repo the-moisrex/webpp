@@ -196,7 +196,8 @@ namespace webpp::uri {
         }
 
         template <istl::StringViewifiable StrVT>
-        requires(!URIString<StrVT>) constexpr basic_uri& extract_from(StrVT&& url_str) {
+            requires(!URIString<StrVT>)
+        constexpr basic_uri& extract_from(StrVT&& url_str) {
             auto const str_view = istl::string_viewify(stl::forward<StrVT>(url_str));
             using str_view_t    = stl::remove_cvref_t<decltype(str_view)>;
             uri_string<const string_type, str_view_t> const uri_str{str_view};
@@ -205,7 +206,8 @@ namespace webpp::uri {
         }
 
         template <typename T>
-        requires(URIString<T> || istl::StringViewifiable<T>) constexpr basic_uri& operator=(T&& uri_str) {
+            requires(URIString<T> || istl::StringViewifiable<T>)
+        constexpr basic_uri& operator=(T&& uri_str) {
             extract_from(uri_str);
             return *this;
         }

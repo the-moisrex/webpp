@@ -119,9 +119,9 @@ namespace webpp {
     };
 
     template <typename CPL, typename CPR, typename CharTL, typename CharTR>
-    requires requires(CharTL lhs, CharTR rhs) {
-        { lhs == rhs } -> stl::convertible_to<bool>;
-    }
+        requires requires(CharTL lhs, CharTR rhs) {
+            { lhs == rhs } -> stl::convertible_to<bool>;
+        }
     constexpr bool operator==(const unicode_iterator<CPL, CharTL>& lhs,
                               const unicode_iterator<CPR, CharTR>& rhs) noexcept(noexcept(lhs.base() ==
                                                                                           rhs.base())) {

@@ -157,7 +157,7 @@ namespace webpp::http {
                     str.resize(str.size() + body.size());
                 }
                 for (;;) {
-                    stl::streamsize res = body.read(str.data() + str_size, default_buffer_size);
+                    stl::streamsize const res = body.read(str.data() + str_size, default_buffer_size);
                     if (res == 0)
                         break;
                 }

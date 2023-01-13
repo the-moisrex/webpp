@@ -280,35 +280,33 @@ namespace webpp::istl {
     } // namespace details
 
     template <class T, class A>
-    requires(!stl::is_array_v<T>) constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
-      const A& alloc) {
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc) {
         details::sp_alloc_make<T, A> c(alloc, 1);
         stl::allocator_traits<A>::construct(c.state(), c.get());
         return c.release();
     }
 
     template <class T, class A, class... Args>
-    requires(!stl::is_array_v<T>) constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
-      const A& alloc,
-      Args&&... args) {
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc, Args&&... args) {
         details::sp_alloc_make<T, A> c(alloc, 1);
         stl::allocator_traits<A>::construct(c.state(), c.get(), stl::forward<Args>(args)...);
         return c.release();
     }
 
     template <class T, class A>
-    requires(!stl::is_array_v<T>) constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
-      const A&                               alloc,
-      typename stl::type_identity<T>::type&& value) {
+        requires(!stl::is_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>>
+    allocate_unique(const A& alloc, typename stl::type_identity<T>::type&& value) {
         details::sp_alloc_make<T, A> c(alloc, 1);
         stl::allocator_traits<A>::construct(c.state(), c.get(), stl::move(value));
         return c.release();
     }
 
     template <class T, class A>
-    requires(stl::is_unbounded_array_v<T>) constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
-      const A&    alloc,
-      stl::size_t size) {
+        requires(stl::is_unbounded_array_v<T>)
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(const A& alloc, stl::size_t size) {
         details::sp_alloc_make<T, A> c(alloc, size);
         stl::allocator_traits<A>::construct_n(c.state(),
                                               first_scalar(c.get()),
@@ -317,9 +315,9 @@ namespace webpp::istl {
     }
 
     template <class T, class A>
-    requires(stl::is_unbounded_array_v<T>) constexpr stl::unique_ptr<
-      typename details::sp_alloc_result<T>::type,
-      alloc_deleter<T, A>> allocate_unique(const A& alloc) {
+        requires(stl::is_unbounded_array_v<T>)
+    constexpr stl::unique_ptr<typename details::sp_alloc_result<T>::type, alloc_deleter<T, A>>
+    allocate_unique(const A& alloc) {
         details::sp_alloc_make<T, A> c(alloc, stl::extent<T>::value);
         stl::allocator_traits<A>::construct_n(c.state(),
                                               first_scalar(c.get()),
@@ -376,9 +374,8 @@ namespace webpp::istl {
         }
 
         template <typename C, typename... Args>
-        requires(stl::is_constructible_v<C, Args...>) constexpr dynamic(stl::type_identity<C>,
-                                                                        allocator_type const& input_alloc,
-                                                                        Args&&... args)
+            requires(stl::is_constructible_v<C, Args...>)
+        constexpr dynamic(stl::type_identity<C>, allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc} {
             emplace<C, Args...>(stl::forward<Args>(args)...);
         }
@@ -448,7 +445,8 @@ namespace webpp::istl {
         }
 
         template <typename C>
-        requires(stl::is_base_of_v<T, C>) constexpr dynamic& operator=(C&& new_type) noexcept {
+            requires(stl::is_base_of_v<T, C>)
+        constexpr dynamic& operator=(C&& new_type) noexcept {
             emplace<C>(stl::forward<C>(new_type));
             return *this;
         }
@@ -510,14 +508,15 @@ namespace webpp::istl {
         }
 
         template <typename C>
-        requires(stl::is_base_of_v<T, C>) constexpr C& as() noexcept {
+            requires(stl::is_base_of_v<T, C>)
+        constexpr C& as() noexcept {
             return *static_cast<C*>(ptr);
         }
 
 
         template <typename C, typename... Args>
-        requires(stl::is_base_of_v<T, C>&& stl::is_constructible_v<C, Args...>) constexpr dynamic& emplace(
-          Args&&... args) {
+            requires(stl::is_base_of_v<T, C>&& stl::is_constructible_v<C, Args...>)
+        constexpr dynamic& emplace(Args&&... args) {
             using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
             using new_pointer          = typename new_allocator_traits::pointer;

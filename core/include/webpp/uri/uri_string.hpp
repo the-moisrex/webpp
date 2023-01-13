@@ -1398,21 +1398,19 @@ namespace webpp::uri {
          * @brief set path
          */
         template <typename Container>
-            requires(!istl::StringViewifiable<Container> &&
-                     requires(Container c) {
-                         c.begin();
-                         c.end();
-                     })
+            requires(!istl::StringViewifiable<Container> && requires(Container c) {
+                c.begin();
+                c.end();
+            })
         constexpr uri_string& path(const Container& m_path) noexcept {
             return path(m_path.begin(), m_path.end());
         }
 
         template <typename Container>
-            requires(!istl::StringViewifiable<Container> &&
-                     requires(Container c) {
-                         c.begin();
-                         c.end();
-                     })
+            requires(!istl::StringViewifiable<Container> && requires(Container c) {
+                c.begin();
+                c.end();
+            })
         constexpr uri_string& path_raw(const Container& m_path) noexcept {
             return path_raw(m_path.begin(), m_path.end());
         }
@@ -1520,9 +1518,10 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr bool is_normalized() const noexcept {
             auto m_path = raw_slugs();
-            return stl::all_of(m_path.cbegin(), m_path.cend(), [](auto const& p) constexpr noexcept {
-                return p != "." && p != "..";
-            });
+            return stl::all_of(
+              m_path.cbegin(),
+              m_path.cend(),
+              [](auto const& p) constexpr noexcept { return p != "." && p != ".."; });
         }
 
         /**
@@ -2006,14 +2005,13 @@ namespace webpp::uri {
 
 
     template <typename T>
-    concept URIString =
-      requires {
-          typename stl::remove_cvref_t<T>::specified_string_type;
-          typename stl::remove_cvref_t<T>::specified_string_view_type;
-          requires stl::same_as<stl::remove_cvref_t<T>,
-                                uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
-                                           typename stl::remove_cvref_t<T>::specified_string_view_type>>;
-      };
+    concept URIString = requires {
+        typename stl::remove_cvref_t<T>::specified_string_type;
+        typename stl::remove_cvref_t<T>::specified_string_view_type;
+        requires stl::same_as < stl::remove_cvref_t<T>,
+          uri_string < typename stl::remove_cvref_t<T>::specified_string_type,
+        typename stl::remove_cvref_t<T>::specified_string_view_type >> ;
+    };
 
 
     template <typename Str1T, typename StrView1T, typename Str2T, typename StrView2T>
@@ -2040,15 +2038,17 @@ namespace webpp::uri {
         }
 
         if (it1 != _p1.cend()) {
-            if (!stl::all_of(it1, _p1.cend(), [](auto const& a) constexpr noexcept {
-                    return stl::empty(a);
-                }))
+            if (!stl::all_of(
+                  it1,
+                  _p1.cend(),
+                  [](auto const& a) constexpr noexcept { return stl::empty(a); }))
                 return false;
         }
         if (it1 != _p2.cend()) {
-            if (!stl::all_of(it2, _p2.cend(), [](auto const& a) constexpr noexcept {
-                    return stl::empty(a);
-                }))
+            if (!stl::all_of(
+                  it2,
+                  _p2.cend(),
+                  [](auto const& a) constexpr noexcept { return stl::empty(a); }))
                 return false;
         }
         return true;
