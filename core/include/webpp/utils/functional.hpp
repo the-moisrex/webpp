@@ -23,10 +23,8 @@ namespace webpp {
 
       public:
         template <typename T>
-        requires(
-          stl::is_invocable_v<T&, Args...> &&
-          !stl::is_same_v<stl::decay_t<T>, function_ref>) constexpr explicit function_ref(T&& x) noexcept
-          : _ptr{(void*) stl::addressof(x)} {
+            requires(stl::is_invocable_v<T&, Args...> && !stl::is_same_v<stl::decay_t<T>, function_ref>)
+        constexpr explicit function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
             erased_func =
               [](void* ptr, Args... xs) noexcept(noexcept(
                 (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))) -> Return {

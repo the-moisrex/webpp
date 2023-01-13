@@ -53,27 +53,24 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-        requires(
-          stl::is_constructible_v<elist_type, ET>&& stl::is_constructible_v<
-            container,
-            ET>) constexpr response_headers(ET&&
-                                              et) noexcept(stl::is_nothrow_constructible_v<container, ET>&&
-                                                             stl::is_nothrow_constructible_v<elist_type, ET>)
+            requires(stl::is_constructible_v<elist_type, ET>&& stl::is_constructible_v<container, ET>)
+        constexpr response_headers(ET&& et) noexcept(
+          stl::is_nothrow_constructible_v<container, ET>&& stl::is_nothrow_constructible_v<elist_type, ET>)
           : container{et},
             elist_type{et} {}
 
 
         template <EnabledTraits ET>
-        requires(stl::is_constructible_v<container, ET>) constexpr response_headers(ET&& et) noexcept(
-          stl::is_nothrow_constructible_v<container, ET>&&
-            stl::is_nothrow_default_constructible_v<elist_type>)
+            requires(stl::is_constructible_v<container, ET>)
+        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<container, ET>&&
+                                                       stl::is_nothrow_default_constructible_v<elist_type>)
           : container{et},
             elist_type{} {}
 
         template <EnabledTraits ET>
-        requires(stl::is_constructible_v<elist_type, ET>) constexpr response_headers(ET&& et) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ET>&&
-            stl::is_nothrow_default_constructible_v<container>)
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                       stl::is_nothrow_default_constructible_v<container>)
           : container{},
             elist_type{et} {}
 

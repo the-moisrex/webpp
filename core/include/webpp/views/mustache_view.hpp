@@ -170,9 +170,8 @@ namespace webpp::views {
 
               public:
                 template <EnabledTraits ET, typename StrT, typename T>
-                requires(istl::StringifiableOf<string_type, StrT>) constexpr variable(ET&&   et,
-                                                                                      StrT&& input_key,
-                                                                                      T&&    input_value)
+                    requires(istl::StringifiableOf<string_type, StrT>)
+                constexpr variable(ET&& et, StrT&& input_key, T&& input_value)
                   : variant_type{convert(stl::forward<T>(input_value), et)},
                     key_value{istl::stringify_of<string_type>(stl::forward<StrT>(input_key),
                                                               alloc::general_allocator<char_type>(et))} {}
@@ -587,10 +586,8 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>) constexpr mustache_view(
-          ET&& et) noexcept
-          : etraits{et},
-            root_component{et} {}
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
+        constexpr mustache_view(ET&& et) noexcept : etraits{et}, root_component{et} {}
 
         constexpr mustache_view(mustache_view const&)     = default;
         constexpr mustache_view(mustache_view&&) noexcept = default;
@@ -664,9 +661,8 @@ namespace webpp::views {
 
 
         template <typename DT = data_type>
-        requires(PossibleDataTypes<mustache_view, stl::remove_cvref_t<DT>>) constexpr void render(
-          string_type& out,
-          DT&&         data) {
+            requires(PossibleDataTypes<mustache_view, stl::remove_cvref_t<DT>>)
+        constexpr void render(string_type& out, DT&& data) {
             if (!is_valid()) {
                 return;
             }

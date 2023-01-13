@@ -22,23 +22,16 @@ namespace webpp {
 
         // the goal of this ctor and the next one is to make ET optional for the extension
         template <EnabledTraits ET, typename... Args>
-        requires(stl::is_constructible_v<T, ET, Args...>) constexpr extension_wrapper(
-          ET&& et,
-          Args&&... args) noexcept(noexcept(stl::is_nothrow_constructible_v<T, ET, Args...>))
+            requires(stl::is_constructible_v<T, ET, Args...>)
+        constexpr extension_wrapper(ET&& et, Args&&... args) noexcept(
+          noexcept(stl::is_nothrow_constructible_v<T, ET, Args...>))
           : T{stl::forward<ET>(et), stl::forward<Args>(args)...} {}
 
 
         template <EnabledTraits ET, typename... Args>
-        requires(
-          stl::is_constructible_v<T, Args...> &&
-          !stl::is_constructible_v<
-            T,
-            ET,
-            Args...>) constexpr extension_wrapper(ET&&,
-                                                  Args&&... args) noexcept(noexcept(stl::
-                                                                                      is_nothrow_constructible_v<
-                                                                                        T,
-                                                                                        Args...>))
+            requires(stl::is_constructible_v<T, Args...> && !stl::is_constructible_v<T, ET, Args...>)
+        constexpr extension_wrapper(ET&&, Args&&... args) noexcept(
+          noexcept(stl::is_nothrow_constructible_v<T, Args...>))
           : T{stl::forward<Args>(args)...} {}
     };
 

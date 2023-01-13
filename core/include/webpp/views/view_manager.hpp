@@ -79,10 +79,9 @@ namespace webpp::views {
 
 
         template <typename ET>
-        requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
-                 !stl::same_as<
-                   stl::remove_cvref_t<ET>,
-                   view_manager>) constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
+            requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
+                     !stl::same_as<stl::remove_cvref_t<ET>, view_manager>)
+        constexpr view_manager( // NOLINT(bugprone-forwarding-reference-overload)
           ET&&        et,
           stl::size_t cache_limit = 100) noexcept
           : etraits{et},
@@ -323,9 +322,9 @@ namespace webpp::views {
          * Render a view
          */
         template <istl::StringViewifiable StrT, typename DT>
-        requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
-                 PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
-          [[nodiscard]] auto view(StrT&& file_request, DT&& data) noexcept {
+            requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
+                     PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
+        [[nodiscard]] auto view(StrT&& file_request, DT&& data) noexcept {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {

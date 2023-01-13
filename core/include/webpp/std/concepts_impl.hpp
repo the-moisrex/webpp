@@ -94,9 +94,9 @@ namespace webpp::stl {
     //    If A and B are both lvalue reference types, COMMON-REF(A, B) is
     //    COND-RES(COPYCV(X, Y)&, COPYCV(Y, X)&) if that type exists and is a reference type.
     template <class Ap, class Bp, class Xp, class Yp>
-    requires requires {
-        typename __cv_cond_res<Xp, Yp>;
-    } && is_reference_v<__cv_cond_res<Xp, Yp>>
+        requires requires {
+            typename __cv_cond_res<Xp, Yp>;
+        } && is_reference_v<__cv_cond_res<Xp, Yp>>
     struct __common_ref<Ap&, Bp&, Xp, Yp> {
         using __type = __cv_cond_res<Xp, Yp>;
     };
@@ -112,9 +112,9 @@ namespace webpp::stl {
     //    .... If A and B are both rvalue reference types, C is well-formed, and
     //    is_convertible_v<A, C> && is_convertible_v<B, C> is true, then COMMON-REF(A, B) is C.
     template <class Ap, class Bp, class Xp, class Yp>
-    requires requires {
-        typename __common_ref_C<Xp, Yp>;
-    } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> && is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
+        requires requires {
+            typename __common_ref_C<Xp, Yp>;
+        } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> && is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
     struct __common_ref<Ap&&, Bp&&, Xp, Yp> {
         using __type = __common_ref_C<Xp, Yp>;
     };
@@ -128,9 +128,9 @@ namespace webpp::stl {
     //    ... If A is an rvalue reference and B is an lvalue reference and D is well-formed and
     //    is_convertible_v<A, D> is true, then COMMON-REF(A, B) is D.
     template <class Ap, class Bp, class Xp, class Yp>
-    requires requires {
-        typename __common_ref_D<Xp, Yp>;
-    } && is_convertible_v<Ap&&, __common_ref_D<Xp, Yp>>
+        requires requires {
+            typename __common_ref_D<Xp, Yp>;
+        } && is_convertible_v<Ap&&, __common_ref_D<Xp, Yp>>
     struct __common_ref<Ap&&, Bp&, Xp, Yp> {
         using __type = __common_ref_D<Xp, Yp>;
     };
@@ -186,9 +186,9 @@ namespace webpp::stl {
 
 
     template <class Tp, class Up>
-    requires is_reference_v<Tp> && is_reference_v<Up> && requires {
-        typename __common_ref_t<Tp, Up>;
-    }
+        requires is_reference_v<Tp> && is_reference_v<Up> && requires {
+            typename __common_ref_t<Tp, Up>;
+        }
     struct __common_reference_sub_bullet1<Tp, Up> {
         using type = __common_ref_t<Tp, Up>;
     };
@@ -208,9 +208,9 @@ namespace webpp::stl {
 
 
     template <class Tp, class Up>
-    requires requires {
-        typename __basic_common_reference_t<Tp, Up>;
-    }
+        requires requires {
+            typename __basic_common_reference_t<Tp, Up>;
+        }
     struct __common_reference_sub_bullet2<Tp, Up> {
         using type = __basic_common_reference_t<Tp, Up>;
     };
@@ -219,9 +219,9 @@ namespace webpp::stl {
     // sub-bullet 3 - Otherwise, if COND-RES(T1, T2) is well-formed,
     // then the member typedef `type` denotes that type.
     template <class Tp, class Up>
-    requires requires {
-        typename __cond_res<Tp, Up>;
-    }
+        requires requires {
+            typename __cond_res<Tp, Up>;
+        }
     struct __common_reference_sub_bullet3<Tp, Up> {
         using type = __cond_res<Tp, Up>;
     };
@@ -239,9 +239,9 @@ namespace webpp::stl {
     // bullet 4 - If there is such a type `C`, the member typedef type shall denote the same type, if
     //            any, as `common_reference_t<C, Rest...>`.
     template <class Tp, class Up, class _Vp, class... _Rest>
-    requires requires {
-        typename common_reference_t<Tp, Up>;
-    }
+        requires requires {
+            typename common_reference_t<Tp, Up>;
+        }
     struct common_reference<Tp, Up, _Vp, _Rest...>
       : common_reference<common_reference_t<Tp, Up>, _Vp, _Rest...> {};
 
@@ -392,7 +392,7 @@ namespace webpp::stl {
             // 2.1   `S` is `(void)swap(E1, E2)`* if `E1` or `E2` has class or enumeration type and...
             // *The name `swap` is used here unqualified.
             template <class Tp, class Up>
-            requires __unqualified_swappable_with<Tp, Up>
+                requires __unqualified_swappable_with<Tp, Up>
             constexpr void operator()(Tp&& __t, Up&& __u) const
               noexcept(noexcept(swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u)))) {
                 swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
@@ -400,7 +400,7 @@ namespace webpp::stl {
 
             // 2.2   Otherwise, if `E1` and `E2` are lvalues of array types with equal extent and...
             template <class Tp, class Up, size_t _Size>
-            requires __swappable_arrays<Tp, Up, _Size>
+                requires __swappable_arrays<Tp, Up, _Size>
             constexpr void operator()(Tp (&__t)[_Size], Up (&__u)[_Size]) const
               noexcept(noexcept((*this)(*__t, *__u))) {
                 // TODO(cjdb): replace with `ranges::swap_ranges`.

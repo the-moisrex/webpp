@@ -150,9 +150,9 @@ namespace webpp::http {
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
         template <typename ET>
-        requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
-                 !stl::same_as<stl::remove_cvref_t<ET>,
-                               basic_dynamic_router>) constexpr basic_dynamic_router(ET&& et)
+            requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
+                     !stl::same_as<stl::remove_cvref_t<ET>, basic_dynamic_router>)
+        constexpr basic_dynamic_router(ET&& et)
           : etraits{stl::forward<ET>(et)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
@@ -176,7 +176,8 @@ namespace webpp::http {
          * @brief Register a member function and it's object; It's the same as using std::mem_fn.
          */
         template <typename T, typename U>
-        requires(stl::is_member_function_pointer_v<T>) constexpr auto routify(T&& method, U&& obj) noexcept {
+            requires(stl::is_member_function_pointer_v<T>)
+        constexpr auto routify(T&& method, U&& obj) noexcept {
             using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             using return_type = typename method_type::return_type;
@@ -201,7 +202,8 @@ namespace webpp::http {
          * If you haven't added the object to the "objects" list, then it tries to default-construct it.
          */
         template <typename T>
-        requires(stl::is_member_function_pointer_v<T>) constexpr route_type routify(T&& method) noexcept {
+            requires(stl::is_member_function_pointer_v<T>)
+        constexpr route_type routify(T&& method) noexcept {
             using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             for (auto& obj : objects) {
@@ -237,8 +239,8 @@ namespace webpp::http {
         }
 
         template <typename StrT>
-        requires(istl::StringifiableOf<string_type, StrT>) constexpr response_type
-          error(status_code code, StrT&& reason) const noexcept {
+            requires(istl::StringifiableOf<string_type, StrT>)
+        constexpr response_type error(status_code code, StrT&& reason) const noexcept {
             if (auto const it = status_templates.find(code); it != status_templates.end()) {
                 return it; // response type will call this
             }

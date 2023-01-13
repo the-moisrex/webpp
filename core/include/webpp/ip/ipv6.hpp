@@ -197,11 +197,11 @@ namespace webpp {
 
       public:
         template <typename StrT>
-        requires(istl::StringViewifiable<StrT> &&
-                 !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
-                                                  stl::array> && // it shouldn't be array
-                 !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-          constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
+            requires(istl::StringViewifiable<StrT> &&
+                     !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
+                                                      stl::array> && // it shouldn't be array
+                     !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
+        constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
           : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
             parse(stl::forward<StrT>(str));
         }
@@ -224,8 +224,8 @@ namespace webpp {
         ipv6& operator=(ipv6 const& ip) noexcept = default;
 
         template <typename StrT>
-        requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>) ipv6&
-        operator=(StrT&& str) noexcept {
+            requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>)
+        ipv6& operator=(StrT&& str) noexcept {
             parse(stl::forward<StrT>(str));
             _prefix = 255u;
             return *this;
