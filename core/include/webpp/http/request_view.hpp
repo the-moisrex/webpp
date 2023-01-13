@@ -43,8 +43,8 @@ namespace webpp::http {
 
           public:
             template <typename ServerType>
-            requires(istl::one_of<ServerTypes..., ServerType>) basic_dynamic_server(ServerType& inp_server)
-              : svrvar{&inp_server} {}
+                requires(istl::one_of<ServerTypes..., ServerType>)
+            basic_dynamic_server(ServerType& inp_server) : svrvar{&inp_server} {}
 
             // Get the server name that's being used
             [[nodiscard]] string_view_type server_name() const noexcept {

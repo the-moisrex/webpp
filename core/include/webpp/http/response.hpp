@@ -48,21 +48,21 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-        requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
-                 stl::is_constructible_v<elist_type, ET>)                  // can we give it to elist
-          constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
-                                                         stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                         stl::is_nothrow_constructible_v<body_type, ET>)
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
+                     stl::is_constructible_v<elist_type, ET>)                  // can we give it to elist
+        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{et},
             headers{et},
             body{et} {}
 
 
         template <EnabledTraits ET>
-        requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>) // It's not a copy/move
-          constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
-                                                         stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                         stl::is_nothrow_constructible_v<body_type, ET>)
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>) // It's not a copy/move
+        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
+                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                       stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{},
             headers{et},
             body{et} {}
