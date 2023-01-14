@@ -76,6 +76,28 @@ namespace webpp::http {
     ////////////////////////////// Body //////////////////////////////
 
     /**
+     * @brief Blob Based Body Reader
+     */
+    template <typename T>
+    concept BlobBasedBodyReader = requires {
+        typename T::char_type;
+        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+        };
+    };
+
+    /**
+     * @brief Blob Based Body Writer
+     */
+    template <typename T>
+    concept BlobBasedBodyWriter = requires {
+        typename T::char_type;
+        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+        };
+    };
+
+    /**
      * @brief Blob Based Body Communicator (BBBC);
      *
      * The blob based body communicator is the way that the framework internals talk to the developers.
@@ -83,11 +105,24 @@ namespace webpp::http {
      * body is available in the blob object itself.
      */
     template <typename T>
-    concept BlobBasedBodyCommunicator = requires(T body) {
+    concept BlobBasedBodyCommunicator = BlobBasedBodyReader<T> || BlobBasedBodyWriter<T>;
+
+    /**
+     * @brief Text Based Body Reader
+     */
+    template <typename T>
+    concept TextBasedBodyReader = requires(T body) {
         body.data();
         body.size();
     };
 
+    /**
+     * @brief Text Based Body Writer
+     */
+    template <typename T>
+    concept TextBasedBodyWriter = requires(T body) {
+        body.append("");
+    };
 
     /**
      * @brief Text Based Body Communicator (TBBC);
@@ -95,15 +130,34 @@ namespace webpp::http {
      * The text based body communicator is the way that the framework internals talk to the developers.
      * This means that the way the body is stored is by the means of storing a "string"; thus the whole
      * body is available in the string itself (unless a special kind of string is used).
-     *
-     * This is different from the SBBC (Stream Based Body Communicator) that does the same thing through
-     * streams.
      */
     template <typename T>
-    concept TextBasedBodyCommunicator = requires(T body) {
-        body.data();
-        body.size();
+    concept TextBasedBodyCommunicator = TextBasedBodyReader<T> || TextBasedBodyWriter<T>;
+
+
+
+    /**
+     * @brief Stream Based Body Reader
+     */
+    template <typename T>
+    concept StreamBasedBodyReader = requires(T body) {
+        typename T::stream_type;
+        requires requires(typename T::stream_type stream) {
+            {body >> stream};
+        };
     };
+
+    /**
+     * @brief Stream Based Body Reader
+     */
+    template <typename T>
+    concept StreamBasedBodyWriter = requires(T body) {
+        typename T::stream_type;
+        requires requires(typename T::stream_type stream) {
+            {body << stream};
+        };
+    };
+
 
     /**
      * @brief Stream Based Body Communicator (SBBC);
@@ -111,17 +165,10 @@ namespace webpp::http {
      * The stream based body communicator is the way that the framework internals talk to the developers.
      * This means that the way the body is stored is by the means of storing a "stream"; thus the whole
      * body is not available at one point of time unless buffers are used.
-     *
-     * This is different from the TBBC (Text Based Body Communicator) that does the same thing through
-     * strings.
      */
     template <typename T>
-    concept StreamBasedBodyCommunicator = requires(T body) {
-        typename T::stream_type;
-        requires requires(typename T::stream_type stream) {
-            {body >> stream};
-        };
-    };
+    concept StreamBasedBodyCommunicator = StreamBasedBodyReader<T> || StreamBasedBodyWriter<T>;
+
 
     /**
      * This is the primitives that the Protocols should understand and can read.
@@ -131,6 +178,7 @@ namespace webpp::http {
     concept BodyCommunicatorPrimitives = BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
       TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
       StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+
 
     /**
      * @brief Callback Based Body Communicator (CBBC);
