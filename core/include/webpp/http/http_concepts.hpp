@@ -73,6 +73,10 @@ namespace webpp::http {
         obj.template as_view<default_dynamic_traits>();
     };
 
+
+
+
+
     ////////////////////////////// Body //////////////////////////////
 
     /**
@@ -216,29 +220,34 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept HTTPRequestBodyCommunicator = requires {
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
-            // request body only need read
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-
-            // In order to write to it, the Protocol has to invert its own way;
-            // It's Protocol-Specific anyway so the protocol is providing this type so it has
-            // control over it.
-        };
-    };
+    concept BodyReader = BlobBasedBodyReader<T> || TextBasedBodyReader<T> || StreamBasedBodyReader<T>;
 
     template <typename T>
-    concept HTTPResponseBodyCommunicator = requires {
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-        };
-    };
+    concept BodyWriter = BlobBasedBodyWriter<T> || TextBasedBodyWriter<T> || StreamBasedBodyWriter<T>;
 
+    /**
+     * Request body only need read
+     *
+     * In order to write to it, the Protocol has to invent its own way (and that's because of performance);
+     * It's Protocol-Specific anyway so the protocol is providing this type so it has control over it.
+     */
     template <typename T>
-    concept HTTPRequestBody =
-      HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> || stl::same_as<T, istl::nothing_type>;
+    concept HTTPRequestBodyCommunicator = BodyReader<stl::remove_cvref_t<T>>;
+
+    /**
+     * Response body communicator requires both read and write.
+     * The user Writes; and the Protocol, Reads.
+     */
+    template <typename T>
+    concept HTTPResponseBodyCommunicator = BodyCommunicator<T>;
+
+
+    /**
+     * Request body can be of type nothing too
+     */
+    template <typename T>
+    concept HTTPRequestBody = HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> ||
+      stl::same_as<T, istl::nothing_type> || stl::is_void_v<T>;
 
 
     template <typename T>
