@@ -97,7 +97,7 @@ namespace webpp::http {
     concept BlobBasedBodyWriter = requires {
         typename T::char_type;
         requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+            { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
         };
     };
 
