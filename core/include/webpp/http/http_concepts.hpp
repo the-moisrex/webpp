@@ -147,7 +147,9 @@ namespace webpp::http {
     concept StreamBasedBodyReader = requires(T body) {
         typename T::stream_type;
         requires requires(typename T::stream_type stream) {
-            {body >> stream};
+            body >> stream;
+            stream << body;
+            stream << body.rdbuf();
         };
     };
 
@@ -158,7 +160,8 @@ namespace webpp::http {
     concept StreamBasedBodyWriter = requires(T body) {
         typename T::stream_type;
         requires requires(typename T::stream_type stream) {
-            {body << stream};
+            body << stream;
+            stream >> body;
         };
     };
 
