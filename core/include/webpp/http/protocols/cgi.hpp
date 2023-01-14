@@ -87,6 +87,8 @@ namespace webpp::http {
             }
             return read_count;
         }
+
+
         /**
          * Send the stream to the user
          * @param stream
@@ -94,7 +96,7 @@ namespace webpp::http {
         static void write(auto& stream) noexcept {
             // TODO: check if you need to ignore the input or not
 
-            // I think o-stream is not readable so we cannot do this:
+            // I think o-stream is not readable, so we cannot do this:
             // https://stackoverflow.com/questions/15629886/how-to-write-ostringstream-directly-to-cout
             stl::cout << stream.rdbuf(); // TODO: test this, I don't trust myself :)
         }
@@ -146,9 +148,9 @@ namespace webpp::http {
             if constexpr (TextBasedBodyReader<body_type>) {
                 write(res.body.data(), static_cast<stl::streamsize>(res.body.size()));
             } else if constexpr (BlobBasedBodyReader<body_type>) {
-                stl::array<char_type, buffer_size> buf;
+                stl::array<char_type, default_buffer_size> buf;
                 while (stl::streamsize read_size =
-                         read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                         res.body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
                     write(buf.data(), read_size);
                 }
             } else if constexpr (StreamBasedBodyReader<body_type>) {

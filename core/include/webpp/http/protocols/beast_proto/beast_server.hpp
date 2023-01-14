@@ -134,9 +134,11 @@ namespace webpp::http::beast_proto {
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
 
-            HTTPResponse auto res = server->call_app(*req);
-            using response_type   = stl::remove_cvref_t<decltype(res)>;
-            using body_type       = typename response_type::body_type;
+            HTTPResponse auto res        = server->call_app(*req);
+            using response_type          = stl::remove_cvref_t<decltype(res)>;
+            using body_type              = typename response_type::body_type;
+            using beast_body_string_type = typename beast_body_type::value_type;
+            using beast_char_type        = typename beast_body_string_type::value_type;
 
             // putting the user's response into beast's response
             bres.emplace();
@@ -145,11 +147,39 @@ namespace webpp::http::beast_proto {
             for (auto const& h : res.headers) {
                 bres->set(h.name, h.value);
             }
-            if constexpr (TextBasedBodyCommunicator<body_type>) {
+
+            if constexpr (TextBasedBodyReader<body_type>) {
                 if constexpr (stl::same_as<body_type, typename beast_body_type::value_type>) {
                     swap(bres->body(), res.body);
                 } else {
-                    bres->body().replace(0, bres->body().size(), res.body.data(), res.body.size());
+                    bres->body().replace(0,
+                                         bres->body().size(),
+                                         static_cast<beast_char_type const*>(res.body.data()),
+                                         res.body.size() * sizeof(beast_char_type) /
+                                           sizeof(istl::char_type_of<body_type>));
+                }
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
+                // todo: string optimizations
+                while (stl::streamsize read_size =
+                         res.body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                    bres->body().append(buf.data(), read_size);
+                }
+            } else if constexpr (StreamBasedBodyReader<body_type>) {
+                if constexpr (stl::same_as<body_type, beast_body_string_type> &&
+                              requires { res.body.str(); }) {
+                    swap(bres->body(), res.body.str());
+                } else if constexpr (requires {
+                                         res.body.tellp();
+                                         res.body.seekg(0);
+                                         res.body.rdbuf();
+                                     }) {
+                    bres->body().resize(res.body.tellp());
+                    auto g = res.body.tellg();
+                    res.body.seekg(0);
+                    res.body.rdbuf()->sgetn(bres->body().data(), res.body.tellp());
+                    res.body.seekg(g);
+                } else {
+                    res.body >> bres->body();
                 }
             } else {
                 static_assert_false(body_type,
