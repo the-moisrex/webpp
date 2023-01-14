@@ -117,15 +117,34 @@ namespace webpp::http {
             return {};
         }
 
+      private:
+        template <typename BodyType>
+        void write_response_body(BodyType& body) {
+            using body_type = stl::remove_cvref_t<BodyType>;
+            if constexpr (TextBasedBodyReader<body_type>) {
+                write(body.data(), static_cast<stl::streamsize>(body.size()));
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
+                stl::array<char_type, default_buffer_size> buf;
+                while (stl::streamsize read_size =
+                         body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                    write(buf.data(), read_size);
+                }
+            } else if constexpr (StreamBasedBodyReader<body_type>) {
+                write(body);
+            } else {
+                static_assert_false(body_type,
+                                    "We don't know how to write the response body to output"
+                                    " in CGI protocol. Application returns a wrong "
+                                    "response type which contains unknown body.");
+            }
+        }
 
+      public:
         int operator()() noexcept {
             // we're putting the request on local allocator; yay us :)
             HTTPResponse auto res = this->app(request_type{*this});
             res.calculate_default_headers();
             const auto header_str = res.headers.string();
-
-            using response_type = stl::remove_cvref_t<decltype(res)>;
-            using body_type     = typename response_type::body_type;
 
             // From RFC: https://tools.ietf.org/html/rfc3875
             // Send status code:
@@ -144,23 +163,7 @@ namespace webpp::http {
 
             write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
             write("\r\n", 2L);
-
-            if constexpr (TextBasedBodyReader<body_type>) {
-                write(res.body.data(), static_cast<stl::streamsize>(res.body.size()));
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                stl::array<char_type, default_buffer_size> buf;
-                while (stl::streamsize read_size =
-                         res.body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
-                    write(buf.data(), read_size);
-                }
-            } else if constexpr (StreamBasedBodyReader<body_type>) {
-                write(res.body);
-            } else {
-                static_assert_false(body_type,
-                                    "We don't know how to write the response body to output"
-                                    " in CGI protocol. Application returns a wrong "
-                                    "response type which contains unknown body.");
-            }
+            write_response_body(res.body);
             return EXIT_SUCCESS;
         }
     };
