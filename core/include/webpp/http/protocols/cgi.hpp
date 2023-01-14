@@ -143,8 +143,16 @@ namespace webpp::http {
             write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
             write("\r\n", 2L);
 
-            if constexpr (TextBasedBodyCommunicator<body_type>) {
+            if constexpr (TextBasedBodyReader<body_type>) {
                 write(res.body.data(), static_cast<stl::streamsize>(res.body.size()));
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
+                stl::array<char_type, buffer_size> buf;
+                while (stl::streamsize read_size =
+                         read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                    write(buf.data(), read_size);
+                }
+            } else if constexpr (StreamBasedBodyReader<body_type>) {
+                write(res.body);
             } else {
                 static_assert_false(body_type,
                                     "We don't know how to write the response body to output"
