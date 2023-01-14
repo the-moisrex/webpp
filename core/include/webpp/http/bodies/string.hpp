@@ -1,7 +1,7 @@
 // Created by moisrex on 6/28/20.
 
-#ifndef WEBPP_HTTP_BODIES_STRING_H
-#define WEBPP_HTTP_BODIES_STRING_H
+#ifndef WEBPP_HTTP_BODIES_STRING_HPP
+#define WEBPP_HTTP_BODIES_STRING_HPP
 
 #include "../../configs/constants.hpp"
 #include "../../extensions/extension.hpp"
@@ -54,9 +54,11 @@ namespace webpp::http {
         /**
          * This extension helps the user to create a response with the help of the context
          *
+         * @code
          *   ctx.string_type{"this is a response"}
          *   ctx.str_t{"this is nice"}
          *   ctx.string("hello world")
+         * @endcode
          *
          * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
          */
@@ -141,14 +143,12 @@ namespace webpp::http {
     template <typename T, typename BodyType>
         requires(istl::String<T> || istl::StringView<T>)
     constexpr void deserialize_body(T& str, BodyType const& body) {
-        using type = stl::remove_cvref_t<T>;
+        using body_type = stl::remove_cvref_t<BodyType>;
+        using type      = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type>) {
-            if constexpr (requires {
-                              body.data();
-                              body.size();
-                          }) {
+            if constexpr (TextBasedBodyReader<body_type>) {
                 str.append(body.data(), body.size());
-            } else if constexpr (requires(stl::streamsize count) { body.read(str.data(), count); }) {
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
                 auto const str_size = str.size();
                 if constexpr (requires {
                                   str.resize(1);
@@ -169,6 +169,8 @@ namespace webpp::http {
                     str.resize(str.size() + body.size());
                 }
                 body.read(str.data());
+            } else if constexpr (StreamBasedBodyReader<body_type>) {
+                body >> str;
             } else {
                 static_assert_false(
                   T,
@@ -234,4 +236,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_HTTP_BODIES_STRING_H
+#endif // WEBPP_HTTP_BODIES_STRING_HPP
