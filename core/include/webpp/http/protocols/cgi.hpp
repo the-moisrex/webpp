@@ -141,29 +141,35 @@ namespace webpp::http {
 
       public:
         int operator()() noexcept {
-            // we're putting the request on local allocator; yay us :)
-            HTTPResponse auto res = this->app(request_type{*this});
-            res.calculate_default_headers();
-            const auto header_str = res.headers.string();
+            try {
+                // we're putting the request on local allocator; yay us :)
+                HTTPResponse auto res = this->app(request_type{*this});
+                res.calculate_default_headers();
+                const auto header_str = res.headers.string();
 
-            // From RFC: https://tools.ietf.org/html/rfc3875
-            // Send status code:
-            // Status         = "Status:" status-code SP reason-phrase NL
-            // status-code    = "200" | "302" | "400" | "501" | extension-code
-            // extension-code = 3digit
-            // reason-phrase  = *TEXT
+                // From RFC: https://tools.ietf.org/html/rfc3875
+                // Send status code:
+                // Status         = "Status:" status-code SP reason-phrase NL
+                // status-code    = "200" | "302" | "400" | "501" | extension-code
+                // extension-code = 3digit
+                // reason-phrase  = *TEXT
 
-            // todo: give the user the ability to change the status phrase
-            auto status_line = object::make_local<string_type>(this->alloc_pack);
-            fmt::format_to(stl::back_inserter(status_line),
-                           "Status: {} {}\r\n",
-                           res.headers.status_code,
-                           http::status_code_reason_phrase(res.headers.status_code));
-            write(status_line.data(), static_cast<stl::streamsize>(status_line.size()));
+                // todo: give the user the ability to change the status phrase
+                auto status_line = object::make_local<string_type>(this->alloc_pack);
+                fmt::format_to(stl::back_inserter(status_line),
+                               "Status: {} {}\r\n",
+                               res.headers.status_code,
+                               http::status_code_reason_phrase(res.headers.status_code));
+                write(status_line.data(), static_cast<stl::streamsize>(status_line.size()));
 
-            write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
-            write("\r\n", 2L);
-            write_response_body(res.body);
+                write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
+                write("\r\n", 2L);
+                write_response_body(res.body);
+            } catch (stl::exception const& ex) {
+                this->logger.fatal("CGI", "Fatal exception is thrown.", ex);
+            } catch (...) {
+                this->logger.fatal("CGI", "Fatal and unknown exception is thrown.");
+            }
             return EXIT_SUCCESS;
         }
     };
