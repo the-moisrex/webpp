@@ -145,6 +145,7 @@ namespace webpp::http {
         using body_type       = typename elist_type::body_type;
         using headers_type    = typename elist_type::headers_type;
         using field_type      = typename headers_type::field_type;
+        using string_type     = traits::general_string<traits_type>;
 
 
         template <HTTPResponseBody NewBodyType>
@@ -155,6 +156,9 @@ namespace webpp::http {
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_response_body_communicator_type = rebind_response_type<
           typename body_type::template rebind_body_communicator_type<NewBodyCommunicator>>;
+
+        using string_response_type = rebind_response_body_communicator_type<string_type>;
+        // todo: add stream and blob response types
 
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
