@@ -6,4 +6,4 @@ else
     formatter="/usr/bin/env clang-format";
 fi
 
-git ls-files | grep -E "\.(hpp|cpp)$"  | xargs $formatter -i --verbose $@
+git ls-files $@ | grep -E "\.(hpp|cpp)$"  | xargs $formatter -i --verbose

@@ -53,31 +53,28 @@ namespace webpp::http {
 
         // Get the data pointer if available, returns nullptr otherwise
         [[nodiscard]] constexpr char_type const*
-        data() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+        data() const noexcept requires TextBasedBodyReader<elist_type> {
             return elist_type::data();
         }
 
         // Get the size of the response body if possible. returns 0 if it's not available
-        [[nodiscard]] constexpr stl::size_t
-        size() const noexcept requires TextBasedBodyCommunicator<elist_type> {
+        [[nodiscard]] constexpr stl::size_t size() const noexcept requires TextBasedBodyReader<elist_type> {
             return elist_type::size();
         }
 
-        constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
-            if constexpr (requires { elist_type::write(data, count); }) {
-                return elist_type::write(data, count);
-            } else {
-                // todo
-                return 0;
-            }
+        constexpr stl::streamsize write(char_type const* data,
+                                        stl::streamsize  count) requires BlobBasedBodyWriter<elist_type> {
+            return elist_type::write(data, count);
         }
 
         [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {
             if constexpr (requires { elist_type::operator==(body); }) {
                 return elist_type::operator==(body);
-            } else {
+            } else if constexpr (TextBasedBodyReader<elist_type>) {
                 const auto this_size = size();
                 return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
+            } else {
+                // todo
             }
         }
 
