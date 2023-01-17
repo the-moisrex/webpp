@@ -84,6 +84,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept BlobBasedBodyReader = requires {
+        requires stl::copy_constructible<T>;
         typename T::char_type;
         requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
             { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
@@ -95,6 +96,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept BlobBasedBodyWriter = requires {
+        requires stl::copy_constructible<T>;
         typename T::char_type;
         requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
             { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
@@ -116,6 +118,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyReader = requires(T body) {
+        requires stl::copy_constructible<T>;
         body.data();
         body.size();
     };
@@ -125,10 +128,11 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyWriter = requires(T body) {
+        requires stl::copy_constructible<T>;
         typename T::value_type;
         requires requires(typename T::value_type const* data, stl::size_t count) {
             body.append(data, count); // Append a string
-        }
+        };
     };
 
     /**
@@ -148,6 +152,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept StreamBasedBodyReader = requires(T body) {
+        requires stl::copy_constructible<T>;
         typename T::stream_type;
         requires requires(typename T::stream_type stream) {
             body >> stream;
@@ -161,6 +166,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept StreamBasedBodyWriter = requires(T body) {
+        requires stl::copy_constructible<T>;
         typename T::stream_type;
         requires requires(typename T::stream_type stream) {
             body << stream;

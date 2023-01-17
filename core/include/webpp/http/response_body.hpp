@@ -23,6 +23,7 @@ namespace webpp::http {
     template <Traits TraitsType>
     struct string_response_body_communicator : traits::general_string<TraitsType> {
         using traits_type = TraitsType;
+        using string_type = traits::general_string<traits_type>;
     };
 
     template <Traits TraitsType>
@@ -60,6 +61,14 @@ namespace webpp::http {
 
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
+
+
+        static_assert(TextBasedBodyCommunicator<string_communicator_type>,
+                      "Response body Text Based Body Communicator is not a valid TBBC.");
+        static_assert(StreamBasedBodyCommunicator<stream_communicator_type>,
+                      "Response body Stream Based Body Communicator is not a valid SBBC.");
+        static_assert(BlobBasedBodyCommunicator<blob_communicator_type>,
+                      "Response body Blob Based Body Communicator is not a valid BBBC.");
 
 
       private:
