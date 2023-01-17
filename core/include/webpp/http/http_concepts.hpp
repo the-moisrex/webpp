@@ -125,7 +125,10 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyWriter = requires(T body) {
-        body.append("");
+        typename T::value_type;
+        requires requires(typename T::value_type const* data, stl::size_t count) {
+            body.append(data, count); // Append a string
+        }
     };
 
     /**

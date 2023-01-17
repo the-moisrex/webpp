@@ -3,8 +3,9 @@
 
 #include "../extensions/extension.hpp"
 #include "../std/functional.hpp"
-#include "../std/variant.hpp"
 #include "http_concepts.hpp"
+
+#include <variant>
 
 namespace webpp::http {
 
@@ -67,9 +68,7 @@ namespace webpp::http {
       public:
         using EList::EList;
 
-        constexpr response_body()
-            requires(stl::is_default_constructible_v<elist_type>)
-        = default;
+        constexpr response_body() requires(stl::is_default_constructible_v<elist_type>) = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -113,6 +112,21 @@ namespace webpp::http {
             }
         }
 
+        constexpr void append(char_type const* data, stl::size_t count) {
+            if constexpr (TextBasedBodyWriter<elist_type>) {
+                elist_type::append(data, count);
+            } else {
+                if (auto* writer = stl::get_if<string_communicator_type>(communicator)) {
+                    writer->append(data, count);
+                } else {
+                    communicator.template emplace<string_communicator_type>();
+                    auto& text_writer = stl::get<string_communicator_type>(communicator);
+                    text_writer.append(data, count);
+                }
+            }
+        }
+
+
         constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::write(data, count);
@@ -134,7 +148,7 @@ namespace webpp::http {
                 if (auto* reader = stl::get_if<blob_communicator_type>(communicator)) {
                     return reader->read(data, count);
                 } else {
-                    return 0ll; // nothing is read because we can't read it
+                    return 0LL; // nothing is read because we can't read it
                 }
             }
         }
