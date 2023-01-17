@@ -3,20 +3,43 @@
 
 #include "../extensions/extension.hpp"
 #include "../std/functional.hpp"
+#include "../std/variant.hpp"
 #include "http_concepts.hpp"
 
 namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct default_response_body_communicator {
+    struct callback_response_body_communicator {
         using traits_type   = TraitsType;
         using char_type     = traits::char_type<traits_type>;
-        using function_type = istl::function<void(char_type const* out_ptr)>;
+        using function_type = istl::function<void()>; // Oops; no concepts allowed!
 
       private:
       public:
     };
+
+    template <Traits TraitsType>
+    struct string_response_body_communicator : traits::general_string<TraitsType> {
+        using traits_type = TraitsType;
+    };
+
+    template <Traits TraitsType>
+    struct stream_response_body_communicator
+      : stl::basic_iostream<traits::char_type<TraitsType>, stl::char_traits<traits::char_type<TraitsType>>> {
+        using traits_type = TraitsType;
+        using stream_type = stl::basic_iostream<traits::char_type<traits_type>,
+                                                stl::char_traits<traits::char_type<traits_type>>>;
+        // todo: stl::char_traits can be contained in the traits type
+    };
+
+
+    template <Traits TraitsType>
+    struct blob_response_body_communicator {
+        using traits_type = TraitsType;
+        // todo
+    };
+
 
 
     /**
@@ -24,16 +47,29 @@ namespace webpp::http {
      */
     template <Traits TraitsType, typename EList>
     struct response_body : public EList {
-        using traits_type = TraitsType;
-        using elist_type  = EList;
-        using char_type   = traits::char_type<traits_type>;
+        using traits_type              = TraitsType;
+        using elist_type               = EList;
+        using char_type                = traits::char_type<traits_type>;
+        using string_communicator_type = string_response_body_communicator<traits_type>;
+        using stream_communicator_type = stream_response_body_communicator<traits_type>;
+        using blob_communicator_type   = blob_response_body_communicator<traits_type>;
+
+        using communicator_storage_type = stl::
+          variant<stl::monostate, string_communicator_type, stream_communicator_type, blob_communicator_type>;
 
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
 
+
+      private:
+        communicator_storage_type communicator{stl::monostate{}};
+
+      public:
         using EList::EList;
 
-        constexpr response_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+        constexpr response_body()
+            requires(stl::is_default_constructible_v<elist_type>)
+        = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -52,19 +88,55 @@ namespace webpp::http {
 
 
         // Get the data pointer if available, returns nullptr otherwise
-        [[nodiscard]] constexpr char_type const*
-        data() const noexcept requires TextBasedBodyReader<elist_type> {
-            return elist_type::data();
+        [[nodiscard]] constexpr char_type const* data() const noexcept {
+            if constexpr (TextBasedBodyReader<elist_type>) {
+                return elist_type::data();
+            } else {
+                if (auto const* reader = stl::get_if<string_communicator_type>(communicator)) {
+                    return reader->data();
+                } else {
+                    return nullptr;
+                }
+            }
         }
 
-        // Get the size of the response body if possible. returns 0 if it's not available
-        [[nodiscard]] constexpr stl::size_t size() const noexcept requires TextBasedBodyReader<elist_type> {
-            return elist_type::size();
+        // Get the size of the response body if possible. returns `npos` if it's not available
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            if constexpr (TextBasedBodyReader<elist_type>) {
+                return elist_type::size();
+            } else {
+                if (auto const* reader = stl::get_if<string_communicator_type>(communicator)) {
+                    return reader->size();
+                } else {
+                    return string_communicator_type::npos;
+                }
+            }
         }
 
-        constexpr stl::streamsize write(char_type const* data,
-                                        stl::streamsize  count) requires BlobBasedBodyWriter<elist_type> {
-            return elist_type::write(data, count);
+        constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
+            if constexpr (BlobBasedBodyWriter<elist_type>) {
+                return elist_type::write(data, count);
+            } else {
+                if (auto* writer = stl::get_if<blob_communicator_type>(communicator)) {
+                    return writer->write(data, count);
+                } else {
+                    communicator.template emplace<blob_communicator_type>();
+                    auto& blob_writer = stl::get<blob_communicator_type>(communicator);
+                    return blob_writer.write(data, count);
+                }
+            }
+        }
+
+        constexpr stl::streamsize read(char_type const* data, stl::streamsize count) {
+            if constexpr (BlobBasedBodyWriter<elist_type>) {
+                return elist_type::read(data, count);
+            } else {
+                if (auto* reader = stl::get_if<blob_communicator_type>(communicator)) {
+                    return reader->read(data, count);
+                } else {
+                    return 0ll; // nothing is read because we can't read it
+                }
+            }
         }
 
         [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {
@@ -82,8 +154,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr bool operator!=(response_body const& body) const noexcept {
             return !operator==(body);
         }
-
-
 
 
         template <typename T>

@@ -102,7 +102,6 @@ namespace webpp::http {
         }
 
         /**
-         *
          * The reason why this function exists here and not in "headers" is because this function may need
          * access to the body as well to check the body value's type for example.
          */
