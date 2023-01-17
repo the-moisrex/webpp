@@ -167,11 +167,10 @@ namespace webpp::http {
         using EList::EList;
 
 
-        template <HTTPResponseBodyCommunicator BodyCommunicatorType>
-        [[nodiscard]] constexpr static auto with_body(BodyCommunicatorType&& obj) {
-            using new_communicator_type = stl::remove_cvref_t<BodyCommunicatorType>;
-            rebind_response_body_communicator_type<new_communicator_type> res;
-            res = stl::forward<BodyCommunicatorType>(obj);
+        template <typename T>
+        [[nodiscard]] constexpr static auto with_body(T&& obj) {
+            response_type res = create();
+            res               = stl::forward<T>(obj);
             return res;
         }
 

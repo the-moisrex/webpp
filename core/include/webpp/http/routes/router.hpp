@@ -71,7 +71,7 @@ namespace webpp::http {
          * @returns optional; an optional that doesn't contain value will cause the next route to be called
          */
         template <typename ResT, Context CtxT, HTTPRequest ReqT>
-        [[nodiscard]] constexpr auto
+        [[nodiscard]] constexpr decltype(auto)
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using namespace stl;
 
@@ -82,7 +82,7 @@ namespace webpp::http {
             using body_type         = typename response_type::body_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
-                return res; // let the "next_route" function handle it
+                return stl::forward<ResT>(res); // let the "next_route" function handle it
             } else if constexpr (is_integral_v<result_type>) {
                 return ctx.error(res); // error code
             } else if constexpr (Route<result_type, context_type>) {
@@ -114,7 +114,7 @@ namespace webpp::http {
 
 
         template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
-        constexpr HTTPResponse auto next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
+        constexpr HTTPResponse decltype(auto) next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using result_type = stl::remove_cvref_t<ResT>;
 
             constexpr auto next_route_index = Index + 1;
@@ -150,7 +150,7 @@ namespace webpp::http {
                 return operator()<next_route_index>(stl::forward<ResT>(res), req);
             } else if constexpr (HTTPResponse<result_type>) {
                 // we found our response
-                return res;
+                return stl::forward<ResT>(res);
             } else if constexpr (stl::same_as<result_type, bool>) {
                 // if the user returns "true", then we'll check the next route, otherwise, it's a
                 // "route handling termination signal" for us.
@@ -187,7 +187,7 @@ namespace webpp::http {
          * Call the routes with the specified request and context.
          */
         template <stl::size_t Index = 0, Context CtxT, HTTPRequest ReqT>
-        constexpr HTTPResponse auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
+        constexpr HTTPResponse decltype(auto) operator()(CtxT&& ctx, ReqT&& req) const noexcept {
 
             constexpr bool no_routes         = route_count() == 0u;
             constexpr bool passed_last_route = Index > (route_count() - 1);
