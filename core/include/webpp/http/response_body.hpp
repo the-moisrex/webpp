@@ -3,8 +3,10 @@
 
 #include "../extensions/extension.hpp"
 #include "../std/functional.hpp"
+#include "../std/vector.hpp"
 #include "http_concepts.hpp"
 
+#include <algorithm>
 #include <variant>
 
 namespace webpp::http {
@@ -37,9 +39,19 @@ namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct blob_response_body_communicator {
+    struct blob_response_body_communicator : istl::vector<stl::byte, TraitsType> {
         using traits_type = TraitsType;
-        // todo
+        using byte_type   = stl::byte;
+
+        [[nodiscard]] stl::streamsize write(byte_type const* data, stl::streamsize count) {
+            this->insert(this->begin(), data, data + count);
+            return count;
+        }
+
+        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) {
+            stl::copy_n(this->begin(), count, data);
+            return count;
+        }
     };
 
 
