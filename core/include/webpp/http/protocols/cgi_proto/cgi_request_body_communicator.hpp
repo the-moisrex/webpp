@@ -20,6 +20,7 @@ namespace webpp::http::cgi_proto {
         using protocol_type    = ProtocolType;
         using traits_type      = typename protocol_type::traits_type;
         using char_type        = traits::char_type<traits_type>;
+        using byte_type        = stl::byte;
         using size_type        = stl::streamsize;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -44,7 +45,7 @@ namespace webpp::http::cgi_proto {
         }
 
         // set the body
-        void write(char_type const* data, size_type count) noexcept {
+        void write(byte_type const* data, size_type count) noexcept {
             body_content.append(data, static_cast<stl::size_t>(count));
         }
 
@@ -52,11 +53,11 @@ namespace webpp::http::cgi_proto {
         /**
          * Read the body of the string
          */
-        [[nodiscard]] size_type read(char_type* data, size_type count) const {
+        [[nodiscard]] size_type read(byte_type* data, size_type count) const {
             return protocol_type::read(data, count);
         }
 
-        [[nodiscard]] size_type read(char_type* data) const {
+        [[nodiscard]] size_type read(byte_type* data) const {
             return protocol_type::read(data);
         }
     };

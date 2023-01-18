@@ -75,23 +75,6 @@ namespace webpp::http {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
 
-        /**
-         * Read the body; this member function should be used by the custom bodies to fill their own bellies
-         * with the goodies that the user sends in the request body.
-         * This function is intentionally designed like POSIX "read" function.
-         */
-        constexpr size_type read(char_type* data, size_type count) const {
-            return request_body_communicator::read(data, count);
-        }
-
-        /**
-         * Read all the body and return the read size
-         */
-        constexpr size_type read(char_type* data) const {
-            return request_body_communicator::read(data);
-        }
-
-
         template <typename T>
         constexpr T as() const {
             if constexpr (requires {
