@@ -85,8 +85,8 @@ namespace webpp::http {
     template <typename T>
     concept BlobBasedBodyReader = requires {
         requires stl::copy_constructible<T>;
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+        typename T::byte_type;
+        requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
             { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
         };
     };
@@ -97,8 +97,8 @@ namespace webpp::http {
     template <typename T>
     concept BlobBasedBodyWriter = requires {
         requires stl::copy_constructible<T>;
-        typename T::char_type;
-        requires requires(T communicator, typename T::char_type * data, stl::streamsize size) {
+        typename T::byte_type;
+        requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
             { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
         };
     };
@@ -151,27 +151,18 @@ namespace webpp::http {
      * @brief Stream Based Body Reader
      */
     template <typename T>
-    concept StreamBasedBodyReader = requires(T body) {
-        requires stl::copy_constructible<T>;
-        typename T::stream_type;
-        requires requires(typename T::stream_type stream) {
-            body >> stream;
-            stream << body;
-            stream << body.rdbuf();
-        };
+    concept StreamBasedBodyReader = requires(T body, void*& val) {
+        // requires stl::copy_constructible<T>;
+        body >> val; // extract
     };
 
     /**
      * @brief Stream Based Body Reader
      */
     template <typename T>
-    concept StreamBasedBodyWriter = requires(T body) {
-        requires stl::copy_constructible<T>;
-        typename T::stream_type;
-        requires requires(typename T::stream_type stream) {
-            body << stream;
-            stream >> body;
-        };
+    concept StreamBasedBodyWriter = requires(T body, const void* val) {
+        // requires stl::copy_constructible<T>;
+        body << val;
     };
 
 
