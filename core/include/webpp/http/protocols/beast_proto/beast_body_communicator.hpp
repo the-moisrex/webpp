@@ -24,6 +24,7 @@ namespace webpp::http::beast_proto {
         using protocol_type    = ProtocolType;
         using traits_type      = typename protocol_type::traits_type;
         using char_type        = traits::char_type<traits_type>;
+        using byte_type        = stl::byte;
         using size_type        = stl::streamsize;
         using http_worker_type = typename protocol_type::http_worker_type;
 
@@ -44,11 +45,11 @@ namespace webpp::http::beast_proto {
             request = &input_parser.get();
         }
 
-        [[nodiscard]] size_type read(char_type* data, size_type count) const {
+        [[nodiscard]] size_type read(byte_type* data, size_type count) const {
             return stl::copy_n(request->body().data(), count, data) - request->body().data();
         }
 
-        [[nodiscard]] size_type read(char_type* data) const {
+        [[nodiscard]] size_type read(byte_type* data) const {
             return stl::copy_n(request->body().data(), size(), data) - request->body().data();
         }
 
