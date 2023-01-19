@@ -141,32 +141,33 @@ namespace webpp::http {
          */
         template <typename NewSegType>
         constexpr auto operator/(NewSegType&& next_segment) const noexcept {
-            using namespace stl;
-            using seg_type = remove_cvref_t<NewSegType>;
+            using seg_type = stl::remove_cvref_t<NewSegType>;
 
             /*if constexpr (Segment<seg_type, path_type,
                                   decltype(basic_uri<fake_traits_type, false>{}.path_structured())>) {
             } else*/
-            if constexpr (is_array_v<seg_type> && is_integral_v<remove_all_extents_t<seg_type>>) {
+            if constexpr (stl::is_array_v<seg_type> &&
+                          stl::is_integral_v<stl::remove_all_extents_t<seg_type>>) {
                 // int_type[N] => string_view
-                using char_type     = remove_all_extents_t<seg_type>;
-                using str_view_type = basic_string_view<char_type>;
-                return operator/<str_view_type>(forward<NewSegType>(next_segment));
-            } else if constexpr (is_pointer_v<seg_type> && is_integral_v<remove_pointer_t<seg_type>>) {
+                using char_type     = stl::remove_all_extents_t<seg_type>;
+                using str_view_type = stl::basic_string_view<char_type>;
+                return operator/<str_view_type>(stl::forward<NewSegType>(next_segment));
+            } else if constexpr (stl::is_pointer_v<seg_type> &&
+                                 stl::is_integral_v<stl::remove_pointer_t<seg_type>>) {
                 // char* => string_view
-                using char_type = remove_pointer_t<seg_type>;
-                return operator/<basic_string_view<char_type>>(forward<NewSegType>(next_segment));
-            } else if constexpr (is_integral_v<seg_type>) {
+                using char_type = stl::remove_pointer_t<seg_type>;
+                return operator/<stl::basic_string_view<char_type>>(stl::forward<NewSegType>(next_segment));
+            } else if constexpr (stl::is_integral_v<seg_type>) {
                 // integral types
                 return operator/([=](PathContext auto const& ctx) constexpr noexcept -> bool {
                     return to<seg_type>(ctx.path.current_segment) == next_segment;
                 });
-            } else if constexpr (istl::ComparableToString<seg_type> && is_class_v<seg_type>) {
+            } else if constexpr (istl::ComparableToString<seg_type> && stl::is_class_v<seg_type>) {
 
                 // Convert those segments that can be compared with a string, to a normal segment
                 // type that have an operator(context)
                 return operator/(
-                  details::make_a_path<seg_type>{.segment = forward<NewSegType>(next_segment)});
+                  details::make_a_path<seg_type>{.segment = stl::forward<NewSegType>(next_segment)});
             } else {
                 // segment
                 using new_path_type  = path<Segments..., NewSegType>;
