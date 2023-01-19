@@ -15,35 +15,27 @@ namespace webpp {
 
     // todo: check this, it's old
     template <typename T>
-    concept Extension =
-      stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
-      stl::is_move_constructible_v<T> && !stl::is_integral_v<T>;
+    concept Extension = stl::copy_constructible<T> && !
+    stl::is_final_v<T>&& stl::is_default_constructible_v<T>&& stl::is_move_constructible_v<T> &&
+      !stl::is_integral_v<T>;
 
     template <typename TraitsType, typename T>
-    concept MotherExtension = Extension<T> && requires {
-        typename T::template type<TraitsType>;
-    };
+    concept MotherExtension = Extension<T> && requires { typename T::template type<TraitsType>; };
 
     template <typename TraitsType, typename Parent, typename T>
-    concept ChildExtension = Extension<T> && requires {
-        typename T::template type<TraitsType, Parent>;
-    };
+    concept ChildExtension = Extension<T> && requires { typename T::template type<TraitsType, Parent>; };
 
 
     template <typename ExtensionDescriptorType, typename... Args>
-    concept HasMidLevelExtensie = requires {
-        typename ExtensionDescriptorType::template mid_level_extensie_type<Args...>;
-    };
+    concept HasMidLevelExtensie =
+      requires { typename ExtensionDescriptorType::template mid_level_extensie_type<Args...>; };
 
     template <typename ExtensionDescriptorType, typename... Args>
-    concept HasFinalExtensie = requires {
-        typename ExtensionDescriptorType::template final_extensie_type<Args...>;
-    };
+    concept HasFinalExtensie =
+      requires { typename ExtensionDescriptorType::template final_extensie_type<Args...>; };
 
     template <typename T>
-    concept HasDependencies = requires {
-        typename T::dependencies;
-    };
+    concept HasDependencies = requires { typename T::dependencies; };
 
     template <Extension... E>
     struct extension_pack;
@@ -81,7 +73,7 @@ namespace webpp {
 
             template <typename... Args>
             constexpr ctor([[maybe_unused]] Args&&... args) noexcept
-              requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
+                requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
               : Parent{} {}
         };
 
@@ -237,9 +229,8 @@ namespace webpp {
         struct has_related_extension_condition {
             template <typename ExtensionType>
             struct type {
-                static constexpr bool value = requires {
-                    typename ExtensieDescriptor::template extractor_type<ExtensionType>;
-                };
+                static constexpr bool value =
+                  requires { typename ExtensieDescriptor::template extractor_type<ExtensionType>; };
             };
         };
 
@@ -414,12 +405,14 @@ namespace webpp {
 
     template <typename E>
     concept ExtensionList = requires {
-        typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
-        // typename E::template is_all<fake_extensie_descriptor::template has_related_extension_pack>;
-    };
+                                typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
+                                // typename E::template is_all<fake_extensie_descriptor::template
+                                // has_related_extension_pack>;
+                            };
 
     template <typename E, template <typename> typename IF>
-    concept ExtensionListOf = ExtensionList<E> && E::template is_all<IF>::value;
+    concept ExtensionListOf = ExtensionList<E> && E::template
+    is_all<IF>::value;
 
 
     /**
@@ -447,9 +440,8 @@ namespace webpp {
 
 
     template <typename T>
-    concept ExtensionDescriptor = requires {
-        typename T::template related_extension_pack<empty_extension_pack>;
-    };
+    concept ExtensionDescriptor =
+      requires { typename T::template related_extension_pack<empty_extension_pack>; };
 
 
     namespace details {
@@ -471,9 +463,7 @@ namespace webpp {
     template <template <typename...> typename TemplatedExtension>
     struct as_extension {
         template <typename... T>
-            requires requires {
-                typename TemplatedExtension<T...>;
-            }
+            requires requires { typename TemplatedExtension<T...>; }
         using type = TemplatedExtension<T...>;
     };
 

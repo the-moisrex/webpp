@@ -8,11 +8,9 @@ namespace webpp::istl {
 
     namespace details {
 
-#define webpp_support_func(method, val_type)                    \
-    template <typename T>                                       \
-    concept supports_##method = requires(val_type val, T obj) { \
-        obj.method(val);                                        \
-    };
+#define webpp_support_func(method, val_type) \
+    template <typename T>                    \
+    concept supports_##method = requires(val_type val, T obj) { obj.method(val); };
 
         webpp_support_func(emplace_back, typename T::value_type);
         webpp_support_func(emplace, typename T::value_type);
@@ -26,19 +24,20 @@ namespace webpp::istl {
     } // namespace details
 
     template <typename T>
-    concept AppendableCollection = details::supports_emplace_back<T> || details::supports_emplace<T> ||
-      details::supports_push_back<T> || details::supports_push<T> || details::supports_add<T> ||
-      details::supports_append<T> || details::supports_insert<T>;
+    concept AppendableCollection =
+      details::supports_emplace_back<T> || details::supports_emplace<T> || details::supports_push_back<T> ||
+      details::supports_push<T> || details::supports_add<T> || details::supports_append<T> ||
+      details::supports_insert<T>;
 
     template <typename T>
     concept Collection = AppendableCollection<T>;
 
     template <typename T>
     concept ReadOnlyCollection = requires(T obj) {
-        typename T::value_type;
-        obj.begin();
-        obj.end();
-    };
+                                     typename T::value_type;
+                                     obj.begin();
+                                     obj.end();
+                                 };
 
     namespace collection {
 

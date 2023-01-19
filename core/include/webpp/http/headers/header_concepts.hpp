@@ -7,11 +7,11 @@ namespace webpp::http {
 
     template <typename T>
     concept Header = requires(T h) {
-        T{"Content-Type: string"};
-        T::versions;
-        h.parse();
-        h.is_valid();
-    };
+                         T{"Content-Type: string"};
+                         T::versions;
+                         h.parse();
+                         h.is_valid();
+                     };
 
 } // namespace webpp::http
 

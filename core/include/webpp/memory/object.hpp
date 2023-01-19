@@ -44,31 +44,29 @@ namespace webpp::object {
         /// These are the concepts that's going to be used to choose the best constructors
 
         template <typename... Args>
-        static constexpr bool support_tag_alloc_args = requires(allocator_type const& the_alloc,
-                                                                Args... args) {
-            super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
-        };
+        static constexpr bool support_tag_alloc_args =
+          requires(allocator_type const& the_alloc, Args... args) {
+              super{stl::allocator_arg, the_alloc, stl::forward<Args>(args)...};
+          };
 
         template <typename... Args>
         static constexpr bool support_alloc_args = requires(allocator_type const& the_alloc, Args... args) {
-            super{the_alloc, stl::forward<Args>(args)...};
-        };
+                                                       super{the_alloc, stl::forward<Args>(args)...};
+                                                   };
 
         template <typename... Args>
         static constexpr bool support_args_alloc = requires(allocator_type const& the_alloc, Args... args) {
-            super{stl::forward<Args>(args)..., the_alloc};
-        };
+                                                       super{stl::forward<Args>(args)..., the_alloc};
+                                                   };
 
 
         template <typename... Args>
         static constexpr bool support_tag_args = requires(Args... args) {
-            super{stl::allocator_arg, stl::forward<Args>(args)...};
-        };
+                                                     super{stl::allocator_arg, stl::forward<Args>(args)...};
+                                                 };
 
         template <typename... Args>
-        static constexpr bool support_args = requires(Args... args) {
-            super{stl::forward<Args>(args)...};
-        };
+        static constexpr bool support_args = requires(Args... args) { super{stl::forward<Args>(args)...}; };
 
       public:
         // let the user know what's missing with a better error message.
@@ -140,14 +138,14 @@ namespace webpp::object {
         /// these 3 are for when you pass a valid resource
 
         template <typename... Args>
-            requires(has_resource&& support_tag_alloc_args<Args...>)
+            requires(has_resource && support_tag_alloc_args<Args...>)
         constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-            requires(has_resource&& support_alloc_args<Args...> && !support_tag_alloc_args<Args...>)
+            requires(has_resource && support_alloc_args<Args...> && !support_tag_alloc_args<Args...>)
         constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, resource_type>(res),
                   stl::forward<Args>(args)...} {}

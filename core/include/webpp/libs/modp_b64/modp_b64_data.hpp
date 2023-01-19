@@ -130,8 +130,7 @@ namespace webpp::modp_b64 {
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff,
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff};
         }
-    }
-    ();
+    }();
 
 
     static constexpr auto d1 = []() constexpr noexcept -> std::array<std::uint32_t, 256> {
@@ -204,8 +203,7 @@ namespace webpp::modp_b64 {
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff,
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff};
         }
-    }
-    ();
+    }();
 
 
     static constexpr auto d2 = []() constexpr noexcept -> std::array<std::uint32_t, 256> {
@@ -278,8 +276,7 @@ namespace webpp::modp_b64 {
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff,
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff};
         }
-    }
-    ();
+    }();
 
 
     static constexpr auto d3 = []() constexpr noexcept -> std::array<std::uint32_t, 256> {
@@ -352,8 +349,7 @@ namespace webpp::modp_b64 {
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff,
               0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff, 0x01ffffff};
         }
-    }
-    ();
+    }();
 
 
 

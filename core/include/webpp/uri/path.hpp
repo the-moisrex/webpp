@@ -20,11 +20,11 @@ namespace webpp::uri {
      */
     template <typename T>
     concept Slug = requires(T slug) {
-        typename T::value_type;
-        slug.empty();
-        T{""};
-        slug.size();
-    };
+                       typename T::value_type;
+                       slug.empty();
+                       T{""};
+                       slug.size();
+                   };
 
     enum struct path_error : stl::uint8_t {
         none = success<path_error>(),

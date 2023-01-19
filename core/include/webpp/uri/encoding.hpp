@@ -86,7 +86,7 @@ namespace webpp {
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
-        static constexpr auto make_hex_digit = [](auto value) constexpr noexcept->char_type {
+        static constexpr auto make_hex_digit = [](auto value) constexpr noexcept -> char_type {
             if (value < 10) {
                 return static_cast<char_type>(value + '0');
             } else {

@@ -35,14 +35,13 @@ namespace webpp::flags {
             stl::conditional_t<(base_size <= sizeof(stl::uint32_t) * 8ul), stl::uint32_t, stl::uint64_t>>>;
         // There is a clang bug (or magic_enum bug)
         // GitHub issue: https://github.com/Neargye/magic_enum/issues/65
-        static constexpr bool are_values_sequential = []() constexpr noexcept->bool {
+        static constexpr bool are_values_sequential = []() constexpr noexcept -> bool {
             const auto vals = magic_enum::enum_values<type>();
             for (stl::size_t i = 0ul; i < vals.size(); ++i)
                 if (static_cast<stl::size_t>(magic_enum::enum_integer(vals[i])) != i)
                     return false;
             return true;
-        }
-        ();
+        }();
 
         base_type value = none;
 
@@ -62,7 +61,7 @@ namespace webpp::flags {
         constexpr manager& operator=(manager&&) noexcept = default;
 
         template <typename... T>
-            requires(stl::is_same_v<stl::remove_cvref_t<T>, base_type>&&...)
+            requires(stl::is_same_v<stl::remove_cvref_t<T>, base_type> && ...)
         constexpr manager(T... val) noexcept
           : value{static_cast<base_type>((base_type(0) | ... | static_cast<base_type>(val)))} {}
 

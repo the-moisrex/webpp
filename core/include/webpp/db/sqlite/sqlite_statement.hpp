@@ -27,7 +27,8 @@ namespace webpp::sql {
 
         void check_bind_result(int result, istl::String auto& err_msg) {
             switch (result) {
-                [[likely]] case SQLITE_OK : return;
+                [[likely]] case SQLITE_OK:
+                    return;
                 case SQLITE_RANGE: err_msg = "bind value out of range"; break;
                 case SQLITE_NOMEM: err_msg = "bind value out of memory"; break;
                 case SQLITE_TOOBIG: err_msg = "bind value is too big"; break;

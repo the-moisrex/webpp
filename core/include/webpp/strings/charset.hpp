@@ -50,8 +50,8 @@ namespace webpp {
                              charset<value_type, NN> const&... c_sets) noexcept {
             super data;
             auto  write = [&, i = 0ul](auto const& set) constexpr mutable noexcept {
-                 stl::copy(set.begin(), set.end(), data.begin() + i);
-                 i += set.size();
+                stl::copy(set.begin(), set.end(), data.begin() + i);
+                i += set.size();
             };
             write(set1);
             write(set2);
@@ -125,13 +125,14 @@ namespace webpp {
     };
 
     template <typename T>
-    concept CharSet = requires(T cs) {
-        typename stl::remove_cvref_t<T>::value_type;
-        stl::remove_cvref_t<T>::array_size;
-        requires stl::same_as<
-          stl::remove_cvref_t<T>,
-          charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
-    };
+    concept CharSet =
+      requires(T cs) {
+          typename stl::remove_cvref_t<T>::value_type;
+          stl::remove_cvref_t<T>::array_size;
+          requires stl::same_as<
+            stl::remove_cvref_t<T>,
+            charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
+      };
 
     /**
      * This constructs a character set that contains all the characters between the given
@@ -159,8 +160,7 @@ namespace webpp {
      */
     template <typename Tp, typename... Up>
         requires((stl::same_as<Tp, Up> && ...)) // T and Us should be same
-    charset(Tp, Up...)
-    ->charset<Tp, (1 + sizeof...(Up))>;
+    charset(Tp, Up...)->charset<Tp, (1 + sizeof...(Up))>;
 
     template <istl::CharType CharT = char, stl::size_t N>
     charset(const CharT (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
@@ -196,8 +196,8 @@ namespace webpp {
      * in a hexadecimal digit.
      */
     template <istl::CharType CharT = char>
-    static constexpr auto
-      HEXDIG = charset(DIGIT<CharT>, charset_range<CharT, 'A', 'F'>(), charset_range<CharT, 'a', 'f'>());
+    static constexpr auto HEXDIG =
+      charset(DIGIT<CharT>, charset_range<CharT, 'A', 'F'>(), charset_range<CharT, 'a', 'f'>());
 
 
     template <istl::CharType CharT = char>

@@ -15,9 +15,8 @@
 namespace webpp::istl {
     template <typename D>
     concept Destructible = requires(D u) {
-        { u.~D() }
-        noexcept;
-    };
+                               { u.~D() } noexcept;
+                           };
 
     template <typename T>
     concept MoveAssignable = stl::is_move_assignable_v<T>;
@@ -38,19 +37,15 @@ namespace webpp::istl {
      *   - instead of commenting the whole in-development concepts, fill them with this temporarily.
      */
     template <typename T>
-    concept All = requires {
-        typename T::yes;
-    }
-    || !requires {
-        typename T::yes;
-    };
+    concept All = requires { typename T::yes; } || !requires { typename T::yes; };
 
 
     /**
      * This concept is always false
      */
     template <typename T>
-    concept None = !All<T>;
+    concept None = !
+    All<T>;
 
 
 
@@ -95,11 +90,11 @@ namespace webpp::istl {
      *           );
      *       };
      */
-#define requires_arg(...)                                                       \
-    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {              \
-        return (requires {                                                      \
-            { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
-        });                                                                     \
+#define requires_arg(...)                                                               \
+    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {                      \
+        return (requires {                                                              \
+                    { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
+                });                                                                     \
     }> {}
 
     /**

@@ -139,15 +139,15 @@ namespace webpp::http {
         //                            segment rule
         //                                   // itself
         //
-        //#if CXX20
+        // #if CXX20
         //                        stl::basic_string_view<CharT>
         //                        seg_rule(seg_start, tit);
-        //#elif CXX17
+        // #elif CXX17
         //                        std::basic_string_view<CharT>
         //                        seg_rule(seg_start,
         //                                                               tit -
         //                                                               seg_start);
-        //#endif
+        // #endif
         //
         //                        // going to find the segment in the path string too
         //                        for (auto it = pit;; ++it) {
