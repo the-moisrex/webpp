@@ -89,7 +89,9 @@ namespace webpp::http {
       public:
         using EList::EList;
 
-        constexpr response_body() requires(stl::is_default_constructible_v<elist_type>) = default;
+        constexpr response_body()
+            requires(stl::is_default_constructible_v<elist_type>)
+        = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 

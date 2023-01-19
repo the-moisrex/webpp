@@ -17,14 +17,12 @@ namespace webpp::stl {
         using with_ref = T&;
 
         template <typename T>
-        concept can_reference = requires {
-            typename with_ref<T>;
-        };
+        concept can_reference = requires { typename with_ref<T>; };
 
         template <typename T>
         concept dereferenceable = requires(T& t) {
-            { *t } -> can_reference;
-        };
+                                      { *t } -> can_reference;
+                                  };
     } // namespace details
 
 
@@ -45,9 +43,7 @@ namespace webpp::stl {
     struct incrementable_traits<const Iter> : incrementable_traits<Iter> {};
 
     template <typename T>
-        requires requires {
-            typename T::difference_type;
-        }
+        requires requires { typename T::difference_type; }
     struct incrementable_traits<T> {
         using difference_type = typename T::difference_type;
     };
@@ -108,9 +104,7 @@ namespace webpp::stl {
 
         // ITER_CONCEPT(I) is ITER_TRAITS(I)::iterator_concept if that is valid.
         template <typename Iter>
-            requires requires {
-                typename iter_traits<Iter>::iterator_concept;
-            }
+            requires requires { typename iter_traits<Iter>::iterator_concept; }
         struct iter_concept_impl<Iter> {
             using type = typename iter_traits<Iter>::iterator_concept;
         };
@@ -157,9 +151,7 @@ namespace webpp::stl {
         void iter_move();
 
         template <class _Ip>
-        concept __unqualified_iter_move = requires(_Ip&& __i) {
-            iter_move(_VSTD::forward<_Ip>(__i));
-        };
+        concept __unqualified_iter_move = requires(_Ip&& __i) { iter_move(_VSTD::forward<_Ip>(__i)); };
 
         // [iterator.cust.move]/1
         // The name ranges::iter_move denotes a customization point object.
@@ -181,10 +173,8 @@ namespace webpp::stl {
             //  1.2.1 if *E is an lvalue, std::move(*E);
             //  1.2.2 otherwise, *E.
             template <class _Ip>
-                requires(!(__class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>) )
-            &&requires(_Ip&& __i) {
-                *_VSTD::forward<_Ip>(__i);
-            }
+                requires(!(__class_or_enum<remove_cvref_t<_Ip>> && __unqualified_iter_move<_Ip>) ) &&
+                        requires(_Ip&& __i) { *_VSTD::forward<_Ip>(__i); }
             [[nodiscard]] _LIBCPP_HIDE_FROM_ABI constexpr decltype(auto) operator()(_Ip&& __i) const
               noexcept(noexcept(*_VSTD::forward<_Ip>(__i))) {
                 if constexpr (is_lvalue_reference_v<decltype(*_VSTD::forward<_Ip>(__i))>) {
@@ -205,8 +195,8 @@ namespace webpp::stl {
 
     template <details::dereferenceable _Tp>
         requires requires(_Tp& __t) {
-            { ranges::iter_move(__t) } -> details::can_reference;
-        }
+                     { ranges::iter_move(__t) } -> details::can_reference;
+                 }
     using iter_rvalue_reference_t = decltype(ranges::iter_move(declval<_Tp&>()));
 
 
@@ -224,14 +214,10 @@ namespace webpp::stl {
     };
 
     template <class _Tp>
-    concept __has_member_value_type = requires {
-        typename _Tp::value_type;
-    };
+    concept __has_member_value_type = requires { typename _Tp::value_type; };
 
     template <class _Tp>
-    concept __has_member_element_type = requires {
-        typename _Tp::element_type;
-    };
+    concept __has_member_element_type = requires { typename _Tp::element_type; };
 
     template <class>
     struct indirectly_readable_traits {};
@@ -257,13 +243,11 @@ namespace webpp::stl {
     // Pre-emptively applies LWG3541
     template <__has_member_value_type _Tp>
         requires __has_member_element_type<_Tp>
-    struct indirectly_readable_traits<_Tp> {
-    };
+    struct indirectly_readable_traits<_Tp> {};
     template <__has_member_value_type _Tp>
         requires __has_member_element_type<_Tp> &&
-          same_as<remove_cv_t<typename _Tp::element_type>, remove_cv_t<typename _Tp::value_type>>
-    struct indirectly_readable_traits<_Tp> : __cond_value_type<typename _Tp::value_type> {
-    };
+                 same_as<remove_cv_t<typename _Tp::element_type>, remove_cv_t<typename _Tp::value_type>>
+    struct indirectly_readable_traits<_Tp> : __cond_value_type<typename _Tp::value_type> {};
 
     template <class>
     struct iterator_traits;
@@ -304,7 +288,8 @@ namespace webpp::stl {
         concept cv_bool = same_as<const volatile T, const volatile bool>;
 
         template <typename T>
-        concept integral_nonbool = integral<T> && !cv_bool<T>;
+        concept integral_nonbool = integral<T> && !
+        cv_bool<T>;
 
         template <typename T>
         concept is_int128 = is_signed_int128<T> || is_unsigned_int128<T>;
@@ -318,16 +303,16 @@ namespace webpp::stl {
           signed_integral<T> || is_signed_int128<T> || same_as<T, max_diff_type>;
 
         template <class In>
-        concept __IndirectlyReadableImpl = requires(const In in) {
-            typename iter_value_t<In>;
-            typename iter_reference_t<In>;
-            typename iter_rvalue_reference_t<In>;
-            { *in } -> same_as<iter_reference_t<In>>;
-            { ranges::iter_move(in) } -> same_as<iter_rvalue_reference_t<In>>;
-        }
-        &&common_reference_with<iter_reference_t<In>&&, iter_value_t<In>&>&&
-            common_reference_with<iter_reference_t<In>&&, iter_rvalue_reference_t<In>&&>&&
-            common_reference_with<iter_rvalue_reference_t<In>&&, const iter_value_t<In>&>;
+        concept __IndirectlyReadableImpl =
+          requires(const In in) {
+              typename iter_value_t<In>;
+              typename iter_reference_t<In>;
+              typename iter_rvalue_reference_t<In>;
+              { *in } -> same_as<iter_reference_t<In>>;
+              { ranges::iter_move(in) } -> same_as<iter_rvalue_reference_t<In>>;
+          } && common_reference_with<iter_reference_t<In>&&, iter_value_t<In>&> &&
+          common_reference_with<iter_reference_t<In>&&, iter_rvalue_reference_t<In>&&> &&
+          common_reference_with<iter_rvalue_reference_t<In>&&, const iter_value_t<In>&>;
 
 
     } // namespace details
@@ -338,60 +323,59 @@ namespace webpp::stl {
 
     /// Requirements on types that can be incremented with ++.
     template <typename Iter>
-    concept weakly_incrementable = movable<Iter> && requires(Iter i) {
-        typename iter_difference_t<Iter>;
-        requires details::is_signed_integer_like<iter_difference_t<Iter>>;
-        { ++i } -> same_as<Iter&>;
-        i++;
-    };
+    concept weakly_incrementable =
+      movable<Iter> && requires(Iter i) {
+                           typename iter_difference_t<Iter>;
+                           requires details::is_signed_integer_like<iter_difference_t<Iter>>;
+                           { ++i } -> same_as<Iter&>;
+                           i++;
+                       };
 
     template <typename Iter>
     concept incrementable = regular<Iter> && weakly_incrementable<Iter> && requires(Iter i) {
-        { i++ } -> same_as<Iter>;
-    };
+                                                                               { i++ } -> same_as<Iter>;
+                                                                           };
 
     template <typename Iter>
     concept input_or_output_iterator = requires(Iter i) {
-        { *i } -> details::can_reference;
-    }
-    &&weakly_incrementable<Iter>;
+                                           { *i } -> details::can_reference;
+                                       } && weakly_incrementable<Iter>;
 
     template <typename Sent, typename Iter>
     concept sentinel_for = semiregular<Sent> && input_or_output_iterator<Iter> &&
-      details::WeaklyEqualityComparableWith<Sent, Iter>;
+                           details::WeaklyEqualityComparableWith<Sent, Iter>;
 
     template <typename Sent, typename Iter>
     inline constexpr bool disable_sized_sentinel_for = false;
 
     template <typename Sent, typename Iter>
-    concept sized_sentinel_for =
-      sentinel_for<Sent, Iter> && !disable_sized_sentinel_for<remove_cv_t<Sent>, remove_cv_t<Iter>> &&
-      requires(const Iter& i, const Sent& s) {
-        { s - i } -> same_as<iter_difference_t<Iter>>;
-        { i - s } -> same_as<iter_difference_t<Iter>>;
-    };
+    concept sized_sentinel_for = sentinel_for<Sent, Iter> && !
+    disable_sized_sentinel_for<remove_cv_t<Sent>,
+                               remove_cv_t<Iter>>&& requires(const Iter& i, const Sent& s) {
+                                                        { s - i } -> same_as<iter_difference_t<Iter>>;
+                                                        { i - s } -> same_as<iter_difference_t<Iter>>;
+                                                    };
 
     // [iterator.concept.writable]
     template <class _Out, class _Tp>
-    concept indirectly_writable = requires(_Out&& __o, _Tp&& __t) {
-        *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*__o) =
-          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
-          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-    };
+    concept indirectly_writable =
+      requires(_Out&& __o, _Tp&& __t) {
+          *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          const_cast<const iter_reference_t<_Out>&&>(*__o) =
+            _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
+            _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+      };
 
     template <typename Iter>
-    concept input_iterator = input_or_output_iterator<Iter> && indirectly_readable<Iter> && requires {
-        typename details::iter_concept<Iter>;
-    } && derived_from<details::iter_concept<Iter>, input_iterator_tag>;
+    concept input_iterator = input_or_output_iterator<Iter> && indirectly_readable<Iter> &&
+                             requires { typename details::iter_concept<Iter>; } &&
+                             derived_from<details::iter_concept<Iter>, input_iterator_tag>;
 
     template <typename Iter, typename T>
     concept output_iterator = input_or_output_iterator<Iter> && indirectly_writable<Iter, T> &&
-      requires(Iter i, T&& t) {
-        *i++ = std::forward<T>(t);
-    };
+                              requires(Iter i, T&& t) { *i++ = std::forward<T>(t); };
 
 
     // [concept.totallyordered]
@@ -401,17 +385,17 @@ namespace webpp::stl {
 
 
     template <class _Tp, class _Up>
-    concept __partially_ordered_with = requires(__make_const_lvalue_ref<_Tp> __t,
-                                                __make_const_lvalue_ref<_Up> __u) {
-        { __t < __u } -> details::boolean_testable;
-        { __t > __u } -> details::boolean_testable;
-        { __t <= __u } -> details::boolean_testable;
-        { __t >= __u } -> details::boolean_testable;
-        { __u < __t } -> details::boolean_testable;
-        { __u > __t } -> details::boolean_testable;
-        { __u <= __t } -> details::boolean_testable;
-        { __u >= __t } -> details::boolean_testable;
-    };
+    concept __partially_ordered_with =
+      requires(__make_const_lvalue_ref<_Tp> __t, __make_const_lvalue_ref<_Up> __u) {
+          { __t < __u } -> details::boolean_testable;
+          { __t > __u } -> details::boolean_testable;
+          { __t <= __u } -> details::boolean_testable;
+          { __t >= __u } -> details::boolean_testable;
+          { __u < __t } -> details::boolean_testable;
+          { __u > __t } -> details::boolean_testable;
+          { __u <= __t } -> details::boolean_testable;
+          { __u >= __t } -> details::boolean_testable;
+      };
 
     template <class _Tp>
     concept totally_ordered = equality_comparable<_Tp> && __partially_ordered_with<_Tp, _Tp>;
@@ -429,24 +413,26 @@ namespace webpp::stl {
       incrementable<Iter> && sentinel_for<Iter, Iter>;
 
     template <typename Iter>
-    concept bidirectional_iterator = forward_iterator<Iter> &&
-      derived_from<details::iter_concept<Iter>, bidirectional_iterator_tag> && requires(Iter i) {
-        { --i } -> same_as<Iter&>;
-        { i-- } -> same_as<Iter>;
-    };
+    concept bidirectional_iterator =
+      forward_iterator<Iter> && derived_from<details::iter_concept<Iter>, bidirectional_iterator_tag> &&
+      requires(Iter i) {
+          { --i } -> same_as<Iter&>;
+          { i-- } -> same_as<Iter>;
+      };
 
 
     template <typename Iter>
-    concept random_access_iterator = bidirectional_iterator<Iter> &&
-      derived_from<details::iter_concept<Iter>, random_access_iterator_tag> && totally_ordered<Iter> &&
-      sized_sentinel_for<Iter, Iter> && requires(Iter i, const Iter j, const iter_difference_t<Iter> n) {
-        { i += n } -> same_as<Iter&>;
-        { j + n } -> same_as<Iter>;
-        { n + j } -> same_as<Iter>;
-        { i -= n } -> same_as<Iter&>;
-        { j - n } -> same_as<Iter>;
-        { j[n] } -> same_as<iter_reference_t<Iter>>;
-    };
+    concept random_access_iterator =
+      bidirectional_iterator<Iter> && derived_from<details::iter_concept<Iter>, random_access_iterator_tag> &&
+      totally_ordered<Iter> && sized_sentinel_for<Iter, Iter> &&
+      requires(Iter i, const Iter j, const iter_difference_t<Iter> n) {
+          { i += n } -> same_as<Iter&>;
+          { j + n } -> same_as<Iter>;
+          { n + j } -> same_as<Iter>;
+          { i -= n } -> same_as<Iter&>;
+          { j - n } -> same_as<Iter>;
+          { j[n] } -> same_as<iter_reference_t<Iter>>;
+      };
 
 } // namespace webpp::stl
 

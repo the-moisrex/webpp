@@ -19,7 +19,8 @@ namespace webpp::http {
     concept cookie_changer = stl::is_invocable_v<T, CookieType&>;
 
     template <typename T, typename CookieJarType>
-    concept cookie_iterator = stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::iterator>> ||
+    concept cookie_iterator =
+      stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::const_iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::reverse_iterator>> ||
       stl::same_as<stl::decay_t<T>, stl::decay_t<typename CookieJarType::const_reverse_iterator>>;

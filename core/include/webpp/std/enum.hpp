@@ -10,9 +10,9 @@ namespace webpp::istl {
 
     template <typename EnumType, typename T>
     concept EnumOf = stl::is_enum_v<EnumType> &&
-      (stl::same_as<T, EnumType> || (stl::same_as<T, stl::underlying_type_t<T>> && requires(T mod) {
-           static_cast<stl::underlying_type_t<T>>(mod) == mod;
-       }));
+                     (stl::same_as<T, EnumType> ||
+                      (stl::same_as<T, stl::underlying_type_t<T>> &&
+                       requires(T mod) { static_cast<stl::underlying_type_t<T>>(mod) == mod; }));
 
     /**
      * Convert an integral type, or enum type itself to an enum type of the specified type (of type EnumType).

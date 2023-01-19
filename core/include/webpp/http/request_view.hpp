@@ -91,10 +91,11 @@ namespace webpp::http {
          */
         template <typename T>
         concept HTTPRequestViewifiable =
-          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> && requires {
-            typename T::headers_type;
-            requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
-        };
+          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
+          requires {
+              typename T::headers_type;
+              requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
+          };
 
         /**
          * Will provide a std::span of the provided parent request header type;

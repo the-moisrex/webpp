@@ -35,30 +35,32 @@ namespace webpp::http {
 
 
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
-        constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept requires(is_mutable)
+        constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(stl::move(_value)) {}
 
         constexpr basic_header_field(name_type const& _name, value_type const& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(_name),
             value(_value) {}
 
         constexpr basic_header_field(name_type&& _name, value_type const& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(stl::move(_name)),
             value(_value) {}
 
         constexpr basic_header_field(name_type const& _name, value_type&& _value) noexcept
-          requires(is_mutable)
+            requires(is_mutable)
           : super{},
             name(_name),
             value(stl::move(_value)) {}
 
-        constexpr basic_header_field(name_type _name, value_type _value) noexcept requires(!is_mutable)
+        constexpr basic_header_field(name_type _name, value_type _value) noexcept
+            requires(!is_mutable)
           : super{},
             name(_name),
             value(_value) {}

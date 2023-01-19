@@ -300,19 +300,17 @@ namespace webpp::http {
         WEBPP_METHOD_TRIM(priority)
 
 #undef WEBPP_METHOD_TRIM
-#define WEBPP_METHOD_STRS(name)                     \
-    auto const& name() const noexcept {             \
-        return _##name;                             \
-    }                                               \
-                                                    \
-    auto& name(name##_t&& i_##name) noexcept {      \
-        _##name = stl::move(i_##name);              \
-        return *this;                               \
-    }                                               \
-                                                    \
-    auto& name(name##_t const& i_##name) noexcept { \
-        _##name = i_##name;                         \
-        return *this;                               \
+#define WEBPP_METHOD_STRS(name)                           \
+    auto const& name() const noexcept { return _##name; } \
+                                                          \
+    auto& name(name##_t&& i_##name) noexcept {            \
+        _##name = stl::move(i_##name);                    \
+        return *this;                                     \
+    }                                                     \
+                                                          \
+    auto& name(name##_t const& i_##name) noexcept {       \
+        _##name = i_##name;                               \
+        return *this;                                     \
     }
 
         WEBPP_METHOD_STRS(name)
@@ -325,14 +323,12 @@ namespace webpp::http {
         WEBPP_METHOD_STRS(expires)
 
 #undef WEBPP_METHOD_STRS
-#define WEBPP_METHOD_OTHERS(type, name)  \
-    type name() const noexcept {         \
-        return _##name;                  \
-    }                                    \
-                                         \
-    auto& name(type i_##name) noexcept { \
-        _##name = i_##name;              \
-        return *this;                    \
+#define WEBPP_METHOD_OTHERS(type, name)            \
+    type name() const noexcept { return _##name; } \
+                                                   \
+    auto& name(type i_##name) noexcept {           \
+        _##name = i_##name;                        \
+        return *this;                              \
     }
 
         WEBPP_METHOD_OTHERS(secure_t, secure);

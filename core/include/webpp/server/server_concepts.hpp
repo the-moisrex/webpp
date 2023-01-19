@@ -39,10 +39,10 @@ namespace webpp {
      */
     template <typename T>
     concept Server = requires(T server) {
-        typename T::connection_type;
-        requires ThreadPool<typename T::thread_pool_type>;
-        { server() } -> stl::same_as<int>;
-    };
+                         typename T::connection_type;
+                         requires ThreadPool<typename T::thread_pool_type>;
+                         { server() } -> stl::same_as<int>;
+                     };
 
     /**
      * The concept for Server types that are designed to run for ever (unless stopped explicitly of course).
@@ -52,9 +52,10 @@ namespace webpp {
      *   - Self Hosting
      */
     template <typename T>
-    concept LongRunningServer = Server<T> && requires(T srv) {
-        srv.sync_app(true); // enable or disable "Thread Sync for app"
-    };
+    concept LongRunningServer =
+      Server<T> && requires(T srv) {
+                       srv.sync_app(true); // enable or disable "Thread Sync for app"
+                   };
 
     /**
      * The concept for Server types that are designed to handle only one request only and they just shutdown
@@ -64,10 +65,11 @@ namespace webpp {
      *   - xinetd protocol
      */
     template <typename T>
-    concept SingleRequestServer = Server<T> && requires(T srv) {
-        srv.enable_std_stealing(); // steal cout and cin and cerr guts
-        srv.disable_std_stealing();
-    };
+    concept SingleRequestServer =
+      Server<T> && requires(T srv) {
+                       srv.enable_std_stealing(); // steal cout and cin and cerr guts
+                       srv.disable_std_stealing();
+                   };
 
 
     /**
@@ -80,14 +82,14 @@ namespace webpp {
      */
     template <typename T>
     concept Connection = requires(T conn) {
-        requires EnabledTraits<T>;
-        conn.remote_addr();
-        conn.logger_category; // a string for logging
-        // conn.read(buffer)
-        // conn.write(data, data_size)
-        // conn.write_file(header_buffer, header_buffer_size, file)
-        conn.done(); // close connection
-    };
+                             requires EnabledTraits<T>;
+                             conn.remote_addr();
+                             conn.logger_category; // a string for logging
+                             // conn.read(buffer)
+                             // conn.write(data, data_size)
+                             // conn.write_file(header_buffer, header_buffer_size, file)
+                             conn.done(); // close connection
+                         };
 
     /**
      * SessionManager is considered a "Protocol Type" which inherits a "Connection" type which itself is a
@@ -115,11 +117,11 @@ namespace webpp {
      */
     template <typename T>
     concept SessionManager = requires(T ses) {
-        // privately:
-        //   ses.app
-        //   ses.req
-        requires Connection<T>;
-    };
+                                 // privately:
+                                 //   ses.app
+                                 //   ses.req
+                                 requires Connection<T>;
+                             };
 
 
     /**
@@ -133,12 +135,12 @@ namespace webpp {
      */
     template <typename T>
     concept ServerTraits = requires {
-        typename T::traits_type;
-        typename T::thread_pool_type;
-        requires Traits<typename T::traits_type>;
-        requires ThreadPool<typename T::thread_pool_type>;
-        T::template server_type; // <session_manager, thread_pool_type>
-    };
+                               typename T::traits_type;
+                               typename T::thread_pool_type;
+                               requires Traits<typename T::traits_type>;
+                               requires ThreadPool<typename T::thread_pool_type>;
+                               T::template server_type; // <session_manager, thread_pool_type>
+                           };
 
     enum struct session_output_source {
         memory, // the output source is RAM

@@ -22,16 +22,17 @@ namespace webpp::http {
         using char_type                 = traits::char_type<traits_type>;
         using size_type                 = stl::streamsize;
 
-        constexpr request_body() requires(
-          stl::is_default_constructible_v<elist_type>&&
-            stl::is_default_constructible_v<request_body_communicator>) = default;
+        constexpr request_body()
+            requires(stl::is_default_constructible_v<elist_type> &&
+                     stl::is_default_constructible_v<request_body_communicator>)
+        = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         // both require the server reference
         template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<elist_type, ServerType&>&&
-                       stl::is_constructible_v<request_body_communicator, ServerType&>)
+            requires(stl::is_constructible_v<elist_type, ServerType&> &&
+                     stl::is_constructible_v<request_body_communicator, ServerType&>)
         constexpr request_body(ServerType& server_ref) noexcept(
           stl::is_nothrow_constructible_v<elist_type, ServerType&>&&
             stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)

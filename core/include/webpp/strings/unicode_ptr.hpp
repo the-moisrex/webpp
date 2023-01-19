@@ -267,9 +267,7 @@ namespace webpp::unicode {
     }
 
     template <typename ChT, typename CharT, typename CodePointT>
-        requires requires(ChT str, CharT val) {
-            static_cast<CharT>(str) <=> val;
-        }
+        requires requires(ChT str, CharT val) { static_cast<CharT>(str) <=> val; }
     constexpr auto operator<=>(ChT&& str, const storage_unit<CharT, CodePointT>& unit) noexcept {
         return static_cast<CharT>(str) == unit.value;
     }

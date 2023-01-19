@@ -35,8 +35,8 @@ namespace webpp::unicode {
     static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x10000 >> 10);
 
     template <typename u32 = char32_t>
-    static constexpr u32 surrogate_offset = 0x10000 -
-                                            (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
+    static constexpr u32 surrogate_offset =
+      0x10000 - (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
 
     // Max valid value for a unicode code point
     template <typename u32 = char32_t>

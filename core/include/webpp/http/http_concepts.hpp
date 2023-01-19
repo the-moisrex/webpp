@@ -18,32 +18,29 @@ namespace webpp::http {
      * This concept is what the underlying Protocols expect to see in a response's header from apps.
      */
     template <typename T>
-    concept HTTPHeaders = requires(stl::remove_cvref_t<T> h) {
-        typename stl::remove_cvref_t<T>::field_type;
-    };
+    concept HTTPHeaders = requires(stl::remove_cvref_t<T> h) { typename stl::remove_cvref_t<T>::field_type; };
 
     template <typename T>
-    concept HTTPRequestHeaders = HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) {
-        h["content-length"];
-    };
+    concept HTTPRequestHeaders =
+      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) { h["content-length"]; };
 
     template <typename T>
     concept HTTPResponseHeaders = HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) {
-        { h.string() } -> istl::StringViewifiable;
-    };
+                                                        { h.string() } -> istl::StringViewifiable;
+                                                    };
 
     template <typename T>
     concept HTTPHeaderField = requires(T f) {
-        typename T::string_type;
-        typename T::name_type;
-        typename T::value_type;
-        typename T::root_extensions; // for http::headers and http::response
-        requires requires(typename T::name_type name) {
-            { f.is_name(name) } -> stl::same_as<bool>;
-        };
-        { f.name } -> istl::StringViewifiable;
-        { f.value } -> istl::StringViewifiable;
-    };
+                                  typename T::string_type;
+                                  typename T::name_type;
+                                  typename T::value_type;
+                                  typename T::root_extensions; // for http::headers and http::response
+                                  requires requires(typename T::name_type name) {
+                                               { f.is_name(name) } -> stl::same_as<bool>;
+                                           };
+                                  { f.name } -> istl::StringViewifiable;
+                                  { f.value } -> istl::StringViewifiable;
+                              };
 
 
     /**
@@ -53,25 +50,26 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequestHeaderFieldsProvider = requires(T obj) {
-        obj.begin();
-        obj.end();
-        typename T::field_type;
-        typename T::name_type;
-        typename T::value_type;
-    };
+                                                  obj.begin();
+                                                  obj.end();
+                                                  typename T::field_type;
+                                                  typename T::name_type;
+                                                  typename T::value_type;
+                                              };
 
     /**
      * The class that implements this concept is a http request header fields provider which just provides
      * and owns the http fields. The big thing about this is that it owns what it sells.
      */
     template <typename T>
-    concept HTTPRequestHeaderFieldsOwner = HTTPRequestHeaderFieldsProvider<T> &&
+    concept HTTPRequestHeaderFieldsOwner =
+      HTTPRequestHeaderFieldsProvider<T> &&
       requires(T obj, typename T::name_type name, typename T::value_type value) {
-        obj.emplace(name, value);
+          obj.emplace(name, value);
 
-        // an example is implemented in "header_fields_provider" in request_headers.hpp file
-        obj.template as_view<default_dynamic_traits>();
-    };
+          // an example is implemented in "header_fields_provider" in request_headers.hpp file
+          obj.template as_view<default_dynamic_traits>();
+      };
 
 
 
@@ -83,25 +81,27 @@ namespace webpp::http {
      * @brief Blob Based Body Reader
      */
     template <typename T>
-    concept BlobBasedBodyReader = requires {
-        requires stl::copy_constructible<T>;
-        typename T::byte_type;
-        requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-        };
-    };
+    concept BlobBasedBodyReader =
+      requires {
+          requires stl::copy_constructible<T>;
+          typename T::byte_type;
+          requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
+                       { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+                   };
+      };
 
     /**
      * @brief Blob Based Body Writer
      */
     template <typename T>
-    concept BlobBasedBodyWriter = requires {
-        requires stl::copy_constructible<T>;
-        typename T::byte_type;
-        requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
-            { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
-        };
-    };
+    concept BlobBasedBodyWriter =
+      requires {
+          requires stl::copy_constructible<T>;
+          typename T::byte_type;
+          requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
+                       { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
+                   };
+      };
 
     /**
      * @brief Blob Based Body Communicator (BBBC);
@@ -118,22 +118,23 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyReader = requires(T body) {
-        requires stl::copy_constructible<T>;
-        body.data();
-        body.size();
-    };
+                                      requires stl::copy_constructible<T>;
+                                      body.data();
+                                      body.size();
+                                  };
 
     /**
      * @brief Text Based Body Writer
      */
     template <typename T>
-    concept TextBasedBodyWriter = requires(T body) {
-        requires stl::copy_constructible<T>;
-        typename T::value_type;
-        requires requires(typename T::value_type const* data, stl::size_t count) {
-            body.append(data, count); // Append a string
-        };
-    };
+    concept TextBasedBodyWriter =
+      requires(T body) {
+          requires stl::copy_constructible<T>;
+          typename T::value_type;
+          requires requires(typename T::value_type const* data, stl::size_t count) {
+                       body.append(data, count); // Append a string
+                   };
+      };
 
     /**
      * @brief Text Based Body Communicator (TBBC);
@@ -152,18 +153,18 @@ namespace webpp::http {
      */
     template <typename T>
     concept StreamBasedBodyReader = requires(T body, void*& val) {
-        // requires stl::copy_constructible<T>;
-        body >> val; // extract
-    };
+                                        // requires stl::copy_constructible<T>;
+                                        body >> val; // extract
+                                    };
 
     /**
      * @brief Stream Based Body Reader
      */
     template <typename T>
     concept StreamBasedBodyWriter = requires(T body, const void* val) {
-        // requires stl::copy_constructible<T>;
-        body << val;
-    };
+                                        // requires stl::copy_constructible<T>;
+                                        body << val;
+                                    };
 
 
     /**
@@ -183,8 +184,8 @@ namespace webpp::http {
      */
     template <typename T>
     concept BodyCommunicatorPrimitives = BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
-      StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
+                                         TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+                                         StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
 
 
     /**
@@ -192,22 +193,23 @@ namespace webpp::http {
      */
     template <typename T>
     concept CallbackBasedBodyCommunicator = requires(T communicator) {
-        requires requires {
-            // Returns a primitive
-            { communicator() } -> BodyCommunicatorPrimitives;
-        };
-    };
+                                                requires requires {
+                                                             // Returns a primitive
+                                                             { communicator() } -> BodyCommunicatorPrimitives;
+                                                         };
+                                            };
 
 
     /**
      * @brief Optional Based Body Communicator (OBBC);
      */
     template <typename T>
-    concept OptionalBasedBodyCommunicator = istl::Optional<T> && requires {
-        typename T::value_type;
-        requires BodyCommunicatorPrimitives<typename T::value_type> ||
-          CallbackBasedBodyCommunicator<typename T::value_type>;
-    };
+    concept OptionalBasedBodyCommunicator =
+      istl::Optional<T> && requires {
+                               typename T::value_type;
+                               requires BodyCommunicatorPrimitives<typename T::value_type> ||
+                                          CallbackBasedBodyCommunicator<typename T::value_type>;
+                           };
 
 
     /**
@@ -218,7 +220,8 @@ namespace webpp::http {
      * The final response that the Protocol gets requires the response' body to be a BodyCommunicator
      */
     template <typename T>
-    concept BodyCommunicator = OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+    concept BodyCommunicator =
+      OptionalBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
       CallbackBasedBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicatorPrimitives<T>;
 
 
@@ -250,7 +253,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequestBody = HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> ||
-      stl::same_as<T, istl::nothing_type> || stl::is_void_v<T>;
+                              stl::same_as<T, istl::nothing_type> || stl::is_void_v<T>;
 
 
     template <typename T>
@@ -275,21 +278,21 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
-        requires EnabledTraits<stl::remove_cvref_t<T>>;
-        typename stl::remove_cvref_t<T>::headers_type;
-        typename stl::remove_cvref_t<T>::body_type;
-        requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
-        requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
-        req.headers;
-        req.body;
-        req.uri();
+                              requires EnabledTraits<stl::remove_cvref_t<T>>;
+                              typename stl::remove_cvref_t<T>::headers_type;
+                              typename stl::remove_cvref_t<T>::body_type;
+                              requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
+                              requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
+                              req.headers;
+                              req.body;
+                              req.uri();
 
-        // so we can make a copy of it (initial request)
-        // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
+                              // so we can make a copy of it (initial request)
+                              // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
 
 
-        // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
-    };
+                              // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
+                          };
 
 
 
@@ -298,22 +301,23 @@ namespace webpp::http {
     namespace details {
 
         template <typename ResType>
-        concept HTTPResponse = requires(ResType res) {
-            typename ResType::body_type;
-            typename ResType::headers_type;
-            requires HTTPResponseBody<typename ResType::body_type>;
-            requires HTTPHeaders<typename ResType::headers_type>;
-            res.body;
-            res.headers;
-            requires stl::same_as < stl::remove_cvref_t<decltype(res.body)>,
-            typename ResType::body_type > ;
-            requires stl::same_as < stl::remove_cvref_t<decltype(res.headers)>,
-            typename ResType::headers_type > ;
-        };
+        concept HTTPResponse =
+          requires(ResType res) {
+              typename ResType::body_type;
+              typename ResType::headers_type;
+              requires HTTPResponseBody<typename ResType::body_type>;
+              requires HTTPHeaders<typename ResType::headers_type>;
+              res.body;
+              res.headers;
+              requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
+              requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>,
+                                    typename ResType::headers_type>;
+          };
 
         template <typename T>
-        concept good_response_types = HTTPResponse<stl::remove_cvref_t<T>> || stl::is_void_v<T> ||
-          stl::same_as<T, bool> || stl::is_integral_v<T> || istl::StringViewifiable<T>;
+        concept good_response_types =
+          HTTPResponse<stl::remove_cvref_t<T>> || stl::is_void_v<T> || stl::same_as<T, bool> ||
+          stl::is_integral_v<T> || istl::StringViewifiable<T>;
 
         template <typename T>
         struct is_optional_of_response {
@@ -330,8 +334,8 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept ConvertibleToResponse =
-      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+    concept ConvertibleToResponse = !
+    stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
     template <typename ResponseType, typename T>
@@ -347,15 +351,17 @@ namespace webpp::http {
     ////////////////////////////// Protocols //////////////////////////////
 
     template <typename App, typename ReqType>
-    concept ApplicationAcceptingRequest = Application<App> && HTTPRequest<ReqType> && requires(App app) {
-        requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
-            { app(req_ref) } -> HTTPResponse;
-        } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
-            { app(req_cref) } -> HTTPResponse;
-        } || requires(ReqType req) {
-            { app(req) } -> HTTPResponse;
-        };
-    };
+    concept ApplicationAcceptingRequest =
+      Application<App> && HTTPRequest<ReqType> &&
+      requires(App app) {
+          requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
+                       { app(req_ref) } -> HTTPResponse;
+                   } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
+                            { app(req_cref) } -> HTTPResponse;
+                        } || requires(ReqType req) {
+                                 { app(req) } -> HTTPResponse;
+                             };
+      };
 
 
     /**
@@ -365,12 +371,13 @@ namespace webpp::http {
      * use HTTPProtocol for the users and other places where the Protocol's type is fully known.
      */
     template <typename T>
-    concept HTTPCommunicator = requires(T proto) {
-        requires EnabledTraits<T>;
-        requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
-        // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
-        typename T::root_extensions;
-    };
+    concept HTTPCommunicator =
+      requires(T proto) {
+          requires EnabledTraits<T>;
+          requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
+          // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
+          typename T::root_extensions;
+      };
 
     /**
      * Protocol is a "Protocol Type" based on the information that I said in the "server/server_concepts"
@@ -378,16 +385,16 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPProtocol = requires(T proto) {
-        requires HTTPCommunicator<T>;
-        requires HTTPRequest<typename T::request_type>;
-        requires Application<typename T::application_type>;
-        requires ApplicationWrapper<typename T::app_wrapper_type>;
-        { proto.app } -> ApplicationWrapper; // get the app
-        // should be able to pass an app to it as well
+                               requires HTTPCommunicator<T>;
+                               requires HTTPRequest<typename T::request_type>;
+                               requires Application<typename T::application_type>;
+                               requires ApplicationWrapper<typename T::app_wrapper_type>;
+                               { proto.app } -> ApplicationWrapper; // get the app
+                               // should be able to pass an app to it as well
 
-        { proto.is_ssl_available() } -> stl::same_as<bool>;
-        { proto() } -> stl::same_as<int>;
-    };
+                               { proto.is_ssl_available() } -> stl::same_as<bool>;
+                               { proto() } -> stl::same_as<int>;
+                           };
 
 
     struct http_protocol_descriptor {
@@ -408,16 +415,16 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType>
-        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
-                                                                               HTTPRequestBody<BodyType>) )
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&
+                 (HTTPRequest<BodyType> || HTTPRequestBody<BodyType>) )
     constexpr istl::nothing_type deserialize_request_body(HTTPRequestBody auto const&) noexcept {
         // request body is empty
         return {};
     }
 
     template <typename T, typename BodyType>
-        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPResponse<BodyType> ||
-                                                                               HTTPResponseBody<BodyType>) )
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&
+                 (HTTPResponse<BodyType> || HTTPResponseBody<BodyType>) )
     constexpr istl::nothing_type deserialize_response_body(BodyType const&) noexcept {
         // request body is empty
         return {};
@@ -425,9 +432,8 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType>
-        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&(HTTPRequest<BodyType> ||
-                                                                               HTTPResponse<BodyType> ||
-                                                                               HTTPBody<BodyType>) )
+        requires((stl::is_void_v<T> || stl::same_as<T, istl::nothing_type>) &&
+                 (HTTPRequest<BodyType> || HTTPResponse<BodyType> || HTTPBody<BodyType>) )
     constexpr istl::nothing_type deserialize_body(BodyType const&) noexcept {
         // request body is empty
         return {};
