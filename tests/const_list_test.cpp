@@ -14,7 +14,9 @@ TEST(ConstListTest, ConstList) {
     EXPECT_EQ(one.next().value(), "two");
     EXPECT_EQ(one.next().next().value(), 3);
 
-    one.for_each([&](auto const& value) constexpr { EXPECT_TRUE(one.has(value)); });
+    one.for_each([&](auto const& value) constexpr {
+        EXPECT_TRUE(one.has(value));
+    });
 
     auto str_one = one.reduce(
       [](string const& data, auto const& value) {

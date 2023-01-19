@@ -44,7 +44,7 @@ namespace webpp::http {
         using byte_type   = stl::byte;
 
         [[nodiscard]] stl::streamsize write(byte_type const* data, stl::streamsize count) {
-            this->insert(this->begin(), data, data + count);
+            this->insert(this->begin(), data, data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return count;
         }
 
