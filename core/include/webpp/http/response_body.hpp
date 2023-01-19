@@ -44,7 +44,9 @@ namespace webpp::http {
         using byte_type   = stl::byte;
 
         [[nodiscard]] stl::streamsize write(byte_type const* data, stl::streamsize count) {
-            this->insert(this->begin(), data, data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            this->insert(this->begin(),
+                         data,
+                         data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return count;
         }
 
@@ -242,6 +244,10 @@ namespace webpp::http {
         }
 
 
+        /**
+         * Get a new response body type which uses the specified communicator type passed in the template
+         * params.
+         */
         template <HTTPResponseBodyCommunicator CommunicatorType, typename T>
         constexpr auto rebind_body(T&& obj) const {
             using new_body_type = rebind_body_communicator_type<CommunicatorType>;

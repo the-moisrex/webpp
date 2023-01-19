@@ -156,9 +156,6 @@ namespace webpp::http {
         using rebind_response_body_communicator_type = rebind_response_type<
           typename body_type::template rebind_body_communicator_type<NewBodyCommunicator>>;
 
-        using string_response_type = rebind_response_body_communicator_type<string_type>;
-        // todo: add stream and blob response types
-
 
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
@@ -313,16 +310,22 @@ namespace webpp::http {
 
 
 
+        /**
+         * Return a new response type that its body type's communicator is the one you specify in the template
+         * param.
+         */
         template <HTTPResponseBodyCommunicator CommunicatorType, typename T>
         constexpr auto rebind_body(T&& obj) const {
             using new_response_type = rebind_response_body_communicator_type<CommunicatorType>;
             if constexpr (EnabledTraits<final_response>) {
                 new_response_type res{this->get_traits()};
-                res = stl::forward<T>(obj);
+                res         = stl::forward<T>(obj);
+                res.headers = this->headers;
                 return res;
             } else {
                 new_response_type res;
-                res = stl::forward<T>(obj);
+                res         = stl::forward<T>(obj);
+                res.headers = this->headers;
                 return res;
             }
         }
