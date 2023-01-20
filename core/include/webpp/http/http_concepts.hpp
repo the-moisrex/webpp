@@ -154,10 +154,11 @@ namespace webpp::http {
      * streams as well.
      */
     template <typename T>
-    concept StreamBasedBodyReader = requires(T body, void*& val) {
-                                        // requires stl::copy_constructible<T>;
-                                        requires requires { body >> val; } || requires { *body >> val; };
-                                    };
+    concept StreamBasedBodyReader =
+      requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, void*& val) {
+          body >> val;
+          body.rdbuf();
+      };
 
     /**
      * @brief Stream Based Body Reader
@@ -165,10 +166,11 @@ namespace webpp::http {
      * streams as well.
      */
     template <typename T>
-    concept StreamBasedBodyWriter = requires(T body, const void* val) {
-                                        // requires stl::copy_constructible<T>;
-                                        requires requires { body << val; } || requires { *body << val; };
-                                    };
+    concept StreamBasedBodyWriter =
+      requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, const void* val) {
+          body << val;
+          body.rdbuf();
+      };
 
 
     /**
