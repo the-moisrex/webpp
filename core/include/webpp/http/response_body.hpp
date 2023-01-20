@@ -117,7 +117,7 @@ namespace webpp::http {
             if constexpr (TextBasedBodyReader<elist_type>) {
                 return elist_type::data();
             } else {
-                if (auto const* reader = stl::get_if<string_communicator_type>(communicator)) {
+                if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->data();
                 } else {
                     return nullptr;
@@ -130,7 +130,7 @@ namespace webpp::http {
             if constexpr (TextBasedBodyReader<elist_type>) {
                 return elist_type::size();
             } else {
-                if (auto const* reader = stl::get_if<string_communicator_type>(communicator)) {
+                if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->size();
                 } else {
                     return string_communicator_type::npos;
@@ -142,7 +142,7 @@ namespace webpp::http {
             if constexpr (TextBasedBodyWriter<elist_type>) {
                 elist_type::append(data, count);
             } else {
-                if (auto* writer = stl::get_if<string_communicator_type>(communicator)) {
+                if (auto* writer = stl::get_if<string_communicator_type>(&communicator)) {
                     writer->append(data, count);
                 } else {
                     communicator.template emplace<string_communicator_type>();
@@ -157,7 +157,7 @@ namespace webpp::http {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::write(data, count);
             } else {
-                if (auto* writer = stl::get_if<blob_communicator_type>(communicator)) {
+                if (auto* writer = stl::get_if<blob_communicator_type>(&communicator)) {
                     return writer->write(data, count);
                 } else {
                     communicator.template emplace<blob_communicator_type>();
@@ -171,7 +171,7 @@ namespace webpp::http {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::read(data, count);
             } else {
-                if (auto* reader = stl::get_if<blob_communicator_type>(communicator)) {
+                if (auto* reader = stl::get_if<blob_communicator_type>(&communicator)) {
                     return reader->read(data, count);
                 } else {
                     return 0LL; // nothing is read because we can't read it
