@@ -145,6 +145,7 @@ namespace webpp::http {
         requires(istl::String<T> || istl::StringView<T>)
     constexpr void deserialize_body(T& str, BodyType const& body) {
         using body_type = stl::remove_cvref_t<BodyType>;
+        using byte_type = typename body_type::byte_type;
         using type      = stl::remove_cvref_t<T>;
         if constexpr (istl::String<type>) {
             if constexpr (TextBasedBodyReader<body_type>) {
@@ -158,9 +159,20 @@ namespace webpp::http {
                     str.resize(str.size() + body.size());
                 }
                 for (;;) {
-                    stl::streamsize const res = body.read(str.data() + str_size, default_buffer_size);
-                    if (res == 0)
-                        break;
+                    // CGI supports char type as the "byte type" so it doesn't require casting; even though I
+                    // don't think this has any impact on the generated assembly
+                    if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
+                        stl::streamsize const res = body.read(str.data() + str_size, default_buffer_size);
+                        if (res == 0)
+                            break;
+                    } else {
+                        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+                        stl::streamsize const res =
+                          body.read(reinterpret_cast<byte_type*>(str.data() + str_size), default_buffer_size);
+                        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+                        if (res == 0)
+                            break;
+                    }
                 }
             } else if constexpr (requires { body.read(str.data()); }) {
                 if constexpr (requires {
@@ -231,7 +243,17 @@ namespace webpp::http {
         if constexpr (TextBasedBodyWriter<body_type>) {
             body.append(str_view.data(), str_view.size());
         } else if constexpr (BlobBasedBodyWriter<body_type>) {
-            body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
+            using byte_type = typename body_type::byte_type;
+            // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
+            // probably won't affect much, but it saves us 2 castings that happen because of this.
+            if constexpr (requires(stl::streamsize s) { body.write(str_view.data(), s); }) {
+                body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
+            } else {
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+                body.write(reinterpret_cast<const byte_type*>(str_view.data()),
+                           static_cast<stl::streamsize>(str_view.size()));
+                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+            }
         } else if constexpr (StreamBasedBodyWriter<body_type>) {
             body << str_view;
         } else {
