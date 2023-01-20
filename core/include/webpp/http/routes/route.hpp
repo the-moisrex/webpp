@@ -70,47 +70,45 @@ namespace webpp::http {
 
         template <typename CallableT, Context CtxT, typename... Args>
         constexpr decltype(auto) run_and_catch(CallableT&& callable, CtxT& ctx, Args&&... args) noexcept {
-            using namespace stl;
-
-            using return_type = invoke_result_t<CallableT, Args...>;
-            if constexpr (is_nothrow_invocable_v<CallableT, Args...>) {
+            using return_type = stl::invoke_result_t<CallableT, Args...>;
+            if constexpr (stl::is_nothrow_invocable_v<CallableT, Args...>) {
                 // It's noexcept, we call it knowing that.
-                return callable(forward<Args>(args)...);
-            } else if constexpr (is_invocable_v<CallableT, Args...>) {
+                return callable(stl::forward<Args>(args)...);
+            } else if constexpr (stl::is_invocable_v<CallableT, Args...>) {
 
-                if constexpr (is_void_v<return_type>) {
+                if constexpr (stl::is_void_v<return_type>) {
                     try {
-                        callable(forward<Args>(args)...);
+                        callable(stl::forward<Args>(args)...);
                     } catch (...) {
                         // nothing to do
                     }
-                } else if constexpr (same_as<return_type, bool>) {
+                } else if constexpr (stl::same_as<return_type, bool>) {
                     try {
-                        return callable(forward<Args>(args)...);
+                        return callable(stl::forward<Args>(args)...);
                     } catch (...) {
                         return false;
                     }
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
-                        return callable(forward<Args>(args)...);
+                        return callable(stl::forward<Args>(args)...);
                     } catch (...) {
                         // return 500 error on failure hoping the response type supports it
                         // todo: add more error handling stuff here to the result
                         return typename return_type::value_type{http::status_code::internal_server_error};
                     }
                 } else {
-                    using optional_type = decltype(make_optional(callable(forward<Args>(args)...)));
+                    using optional_type = decltype(stl::make_optional(callable(stl::forward<Args>(args)...)));
                     try {
-                        return make_optional(callable(forward<Args>(args)...));
+                        return stl::make_optional(callable(stl::forward<Args>(args)...));
                     } catch (...) {
-                        return optional_type{nullopt};
+                        return optional_type{stl::nullopt};
                     }
                 }
 
             } else {
                 return ctx.error(
                   http::status_code::internal_server_error,
-                  invalid_argument("The specified route is not valid. We're not able to call it."));
+                  stl::invalid_argument("The specified route is not valid. We're not able to call it."));
             }
         }
 

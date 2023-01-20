@@ -73,37 +73,35 @@ namespace webpp::http {
         template <typename ResT, Context CtxT, HTTPRequest ReqT>
         [[nodiscard]] constexpr decltype(auto)
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
-            using namespace stl;
-
-            using result_type       = remove_cvref_t<ResT>;
-            using context_type      = remove_cvref_t<CtxT>;
+            using result_type       = stl::remove_cvref_t<ResT>;
+            using context_type      = stl::remove_cvref_t<CtxT>;
             using local_string_type = typename context_type::string_type;
             using response_type     = typename context_type::response_type;
             using body_type         = typename response_type::body_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return stl::forward<ResT>(res); // let the "next_route" function handle it
-            } else if constexpr (is_integral_v<result_type>) {
+            } else if constexpr (stl::is_integral_v<result_type>) {
                 return ctx.error(res); // error code
             } else if constexpr (Route<result_type, context_type>) {
                 auto res2       = call_route(res, ctx, req);
-                using res2_type = remove_cvref_t<decltype(res2)>;
-                if constexpr (is_void_v<res2_type>) {
+                using res2_type = stl::remove_cvref_t<decltype(res2)>;
+                if constexpr (stl::is_void_v<res2_type>) {
                     return true; // run the next route
                 } else {
-                    return handle_primary_results(move(res2), forward<CtxT>(ctx), req);
+                    return handle_primary_results(stl::move(res2), stl::forward<CtxT>(ctx), req);
                 }
             } else if constexpr (HTTPResponseBodyCommunicator<result_type>) {
                 return ctx.template response_body<result_type>(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
-                return ctx.response_body(forward<ResT>(res));
+                return ctx.response_body(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
-                return ctx.response(forward<ResT>(res));
+                return ctx.response(stl::forward<ResT>(res));
             } else if constexpr (istl::Stringifiable<result_type>) {
                 // Use string_response, response type to handle strings
                 using char_type = typename local_string_type::value_type;
                 return response_type::with_body(istl::stringify_of<local_string_type>(
-                  forward<ResT>(res),
+                  stl::forward<ResT>(res),
                   ctx.alloc_pack.template general_allocator<char_type>()));
             } else {
                 // todo: consider "response extension" injection in order to get the right response type

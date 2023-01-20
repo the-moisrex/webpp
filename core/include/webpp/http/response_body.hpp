@@ -23,25 +23,19 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType>
-    struct string_response_body_communicator : traits::general_string<TraitsType> {
-        using traits_type = TraitsType;
-        using string_type = traits::general_string<traits_type>;
-    };
+    using string_response_body_communicator = traits::general_string<TraitsType>;
 
     template <Traits TraitsType>
-    struct stream_response_body_communicator
-      : stl::basic_iostream<traits::char_type<TraitsType>, stl::char_traits<traits::char_type<TraitsType>>> {
-        using traits_type = TraitsType;
-        using stream_type = stl::basic_iostream<traits::char_type<traits_type>,
-                                                stl::char_traits<traits::char_type<traits_type>>>;
-        // todo: stl::char_traits can be contained in the traits type
-    };
+    using stream_response_body_communicator = stl::shared_ptr<
+      stl::basic_iostream<traits::char_type<TraitsType>, stl::char_traits<traits::char_type<TraitsType>>>>;
 
 
     template <Traits TraitsType>
     struct blob_response_body_communicator : istl::vector<stl::byte, TraitsType> {
         using traits_type = TraitsType;
         using byte_type   = stl::byte;
+
+        using istl::vector<stl::byte, TraitsType>::vector; // ctors
 
         [[nodiscard]] stl::streamsize write(byte_type const* data, stl::streamsize count) {
             this->insert(this->begin(),
@@ -66,6 +60,7 @@ namespace webpp::http {
         using traits_type              = TraitsType;
         using elist_type               = EList;
         using char_type                = traits::char_type<traits_type>;
+        using byte_type                = stl::byte;
         using string_communicator_type = string_response_body_communicator<traits_type>;
         using stream_communicator_type = stream_response_body_communicator<traits_type>;
         using blob_communicator_type   = blob_response_body_communicator<traits_type>;
@@ -94,6 +89,12 @@ namespace webpp::http {
         constexpr response_body()
             requires(stl::is_default_constructible_v<elist_type>)
         = default;
+
+        constexpr response_body(response_body const&)                = default;
+        constexpr response_body(response_body&&) noexcept            = default;
+        constexpr response_body& operator=(response_body const&)     = default;
+        constexpr response_body& operator=(response_body&&) noexcept = default;
+        constexpr ~response_body() noexcept                          = default;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -152,7 +153,7 @@ namespace webpp::http {
         }
 
 
-        constexpr stl::streamsize write(char_type const* data, stl::streamsize count) {
+        constexpr stl::streamsize write(byte_type const* data, stl::streamsize count) {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::write(data, count);
             } else {
@@ -166,7 +167,7 @@ namespace webpp::http {
             }
         }
 
-        constexpr stl::streamsize read(char_type const* data, stl::streamsize count) {
+        constexpr stl::streamsize read(byte_type const* data, stl::streamsize count) {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::read(data, count);
             } else {
