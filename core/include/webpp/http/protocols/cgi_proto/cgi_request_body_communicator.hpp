@@ -44,17 +44,32 @@ namespace webpp::http::cgi_proto {
             }
         }
 
-        // set the body
-        void write(byte_type const* data, size_type count) noexcept {
+        // set the body with char type as the byte type
+        void write(char const* data, size_type count) noexcept {
             body_content.append(data, static_cast<stl::size_t>(count));
         }
 
+        // set the body
+        void write(byte_type const* data, size_type count) noexcept {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            body_content.append(reinterpret_cast<char const*>(data), static_cast<stl::size_t>(count));
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+
+        /**
+         * Read the body of the string
+         */
+        [[nodiscard]] size_type read(char* data, size_type count) const {
+            return protocol_type::read(data, count);
+        }
 
         /**
          * Read the body of the string
          */
         [[nodiscard]] size_type read(byte_type* data, size_type count) const {
-            return protocol_type::read(data, count);
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            return protocol_type::read(reinterpret_cast<char*>(data), count);
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
 
         [[nodiscard]] size_type read(byte_type* data) const {
