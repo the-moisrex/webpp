@@ -223,19 +223,19 @@ namespace webpp::http {
         }
     }
 
-    template <typename T>
+    template <typename T, HTTPBody BodyType>
         requires(istl::StringViewifiable<T>)
-    constexpr void serialize_body(T&& str, HTTPBody auto& body) {
-        using type          = stl::remove_cvref_t<T>;
+    constexpr void serialize_body(T&& str, BodyType& body) {
+        using body_type     = stl::remove_cvref_t<BodyType>;
         auto const str_view = istl::string_viewify(stl::forward<T>(str));
-        if constexpr (TextBasedBodyWriter<type>) {
+        if constexpr (TextBasedBodyWriter<body_type>) {
             body.append(str_view.data(), str_view.size());
-        } else if constexpr (BlobBasedBodyWriter<type>) {
+        } else if constexpr (BlobBasedBodyWriter<body_type>) {
             body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
-        } else if constexpr (StreamBasedBodyWriter<type>) {
+        } else if constexpr (StreamBasedBodyWriter<body_type>) {
             body << str_view;
         } else {
-            static_assert_false(type, "The body type doesn't support strings.");
+            static_assert_false(body_type, "The body type doesn't support strings.");
         }
     }
 
