@@ -150,20 +150,24 @@ namespace webpp::http {
 
     /**
      * @brief Stream Based Body Reader
+     * Since streams are not copyable but we want the response body to be copyable, we allow pointers to
+     * streams as well.
      */
     template <typename T>
     concept StreamBasedBodyReader = requires(T body, void*& val) {
                                         // requires stl::copy_constructible<T>;
-                                        body >> val; // extract
+                                        requires requires { body >> val; } || requires { *body >> val; };
                                     };
 
     /**
      * @brief Stream Based Body Reader
+     * Since streams are not copyable but we want the response body to be copyable, we allow pointers to
+     * streams as well.
      */
     template <typename T>
     concept StreamBasedBodyWriter = requires(T body, const void* val) {
                                         // requires stl::copy_constructible<T>;
-                                        body << val;
+                                        requires requires { body << val; } || requires { *body << val; };
                                     };
 
 
@@ -249,15 +253,21 @@ namespace webpp::http {
 
 
     /**
-     * Request body can be of type nothing too
+     * Request body:
+     *   - Can be istl::nothing_type or
+     *   - Contains Request Body Communicator
      */
     template <typename T>
     concept HTTPRequestBody = HTTPRequestBodyCommunicator<stl::remove_cvref_t<T>> ||
                               stl::same_as<T, istl::nothing_type> || stl::is_void_v<T>;
 
 
+    /**
+     * Respone Body:
+     *   - Contains a body communicator
+     */
     template <typename T>
-    concept HTTPResponseBody = HTTPResponseBodyCommunicator<stl::remove_cvref_t<T>> || BodyCommunicator<T>;
+    concept HTTPResponseBody = HTTPResponseBodyCommunicator<T>;
 
 
 

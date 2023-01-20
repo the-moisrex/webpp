@@ -228,8 +228,12 @@ namespace webpp::http {
     constexpr void serialize_body(T&& str, HTTPBody auto& body) {
         using type          = stl::remove_cvref_t<T>;
         auto const str_view = istl::string_viewify(stl::forward<T>(str));
-        if constexpr (requires { body.write(str_view.data(), str_view.size()); }) {
+        if constexpr (TextBasedBodyWriter<type>) {
+            body.append(str_view.data(), str_view.size());
+        } else if constexpr (BlobBasedBodyWriter<type>) {
             body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
+        } else if constexpr (StreamBasedBodyWriter<type>) {
+            body << str_view;
         } else {
             static_assert_false(type, "The body type doesn't support strings.");
         }
