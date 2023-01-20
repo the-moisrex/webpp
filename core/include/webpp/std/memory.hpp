@@ -563,6 +563,39 @@ namespace webpp::istl {
     }
 
 
+
+
+    /**
+     * Like std::remove_pointer for std::shared_ptr.
+     */
+    template <typename T>
+    struct remove_shared_ptr {
+        using type = T;
+    };
+
+    template <typename T>
+    struct remove_shared_ptr<std::shared_ptr<T>> {
+        using type = T;
+    };
+
+    template <typename T>
+    struct remove_shared_ptr<std::shared_ptr<const T>> {
+        using type = const T;
+    };
+
+    template <typename T>
+    struct remove_shared_ptr<const T> {
+        using type = const typename remove_shared_ptr<T>::type;
+    };
+
+    template <typename T>
+    struct remove_shared_ptr<T&> {
+        using type = typename remove_shared_ptr<T>::type;
+    };
+
+    template <typename T>
+    using remove_shared_ptr_t = typename remove_shared_ptr<T>::type;
+
 } // namespace webpp::istl
 
 #endif
