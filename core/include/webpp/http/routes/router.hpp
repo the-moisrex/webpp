@@ -99,11 +99,9 @@ namespace webpp::http {
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(stl::forward<ResT>(res));
             } else if constexpr (istl::Stringifiable<result_type>) {
-                // Use string_response, response type to handle strings
-                using char_type = typename local_string_type::value_type;
-                return response_type::with_body(istl::stringify_of<local_string_type>(
-                  stl::forward<ResT>(res),
-                  ctx.alloc_pack.template general_allocator<char_type>()));
+                return response_type::with_body(
+                  istl::stringify_of<local_string_type>(stl::forward<ResT>(res),
+                                                        alloc::general_alloc_for<local_string_type>(ctx)));
             } else {
                 // todo: consider "response extension" injection in order to get the right response type
 
@@ -129,9 +127,9 @@ namespace webpp::http {
             if constexpr (istl::Optional<result_type>) {
                 if (res) {
                     // Call this function for the same route, but strip out the optional struct
-                    return next_route<Index>(handle_primary_results(res.value(), ctx, req),
-                                             stl::forward<CtxT>(ctx),
-                                             req);
+                    return istl::deref(next_route<Index>(handle_primary_results(res.value(), ctx, req),
+                                                         stl::forward<CtxT>(ctx),
+                                                         req));
                 } else {
                     // We don't need to handle the result of this route, because there's none;
                     // So we just call the next route for the result.
