@@ -30,6 +30,10 @@ namespace webpp::http {
       stl::basic_iostream<traits::char_type<TraitsType>, stl::char_traits<traits::char_type<TraitsType>>>>;
 
 
+    /**
+     * BlobBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
+     * used to get a better performance)
+     */
     template <Traits TraitsType>
     struct blob_response_body_communicator : istl::vector<stl::byte, TraitsType> {
         using traits_type = TraitsType;
@@ -127,12 +131,17 @@ namespace webpp::http {
 
         // Get the size of the response body if possible. returns `npos` if it's not available
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
-            if constexpr (TextBasedBodyReader<elist_type>) {
+            if constexpr (SizableBody<elist_type>) {
                 return elist_type::size();
             } else {
                 if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->size();
                 } else {
+                    if constexpr (SizableBody<blob_communicator_type>) {
+                        if (auto const* blob_reader = stl::get_if<blob_communicator_type>(&communicator)) {
+                            return blob_reader->size();
+                        }
+                    }
                     return string_communicator_type::npos;
                 }
             }
