@@ -281,6 +281,20 @@ namespace webpp::http {
     template <typename T>
     concept HTTPBody = HTTPRequestBody<T> || HTTPResponseBody<T>;
 
+    // The order of this enum matters; the result of std::variant::index might be converted to this enum here
+    enum communicator_type {
+        nothing    = 0, // contains nothing (monostate)
+        text_based = 1,
+        blob_based,
+        stream_based
+    };
+
+    template <typename T>
+    concept RuntimeCommunicatorIndecation = BodyReader<T> && requires(T body) {
+                                                                 {
+                                                                     body.which_communicator()
+                                                                     } -> stl::same_as<communicator_type>;
+                                                             };
 
 
     ////////////////////////////// Request //////////////////////////////
