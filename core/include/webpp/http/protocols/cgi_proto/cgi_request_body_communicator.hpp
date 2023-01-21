@@ -75,6 +75,15 @@ namespace webpp::http::cgi_proto {
         [[nodiscard]] size_type read(byte_type* data) const {
             return protocol_type::read(data);
         }
+
+
+        /**
+         * Even though this request body is a BlobBasedBodyCommunicator, and blobs don't require being
+         * SizableBody, we can do such thing for CGI request body communicator.
+         */
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            return body_content.size();
+        }
     };
 
 } // namespace webpp::http::cgi_proto

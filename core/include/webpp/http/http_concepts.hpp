@@ -77,6 +77,11 @@ namespace webpp::http {
 
     ////////////////////////////// Body //////////////////////////////
 
+    template <typename T>
+    concept SizableBody = requires(T body) {
+                              { body.size() } -> stl::same_as<stl::size_t>;
+                          };
+
     /**
      * @brief Blob Based Body Reader
      */
@@ -119,8 +124,8 @@ namespace webpp::http {
     template <typename T>
     concept TextBasedBodyReader = requires(T body) {
                                       requires stl::copy_constructible<T>;
+                                      requires SizableBody<T>;
                                       body.data();
-                                      body.size();
                                   };
 
     /**
@@ -364,16 +369,7 @@ namespace webpp::http {
 
     template <typename App, typename ReqType>
     concept ApplicationAcceptingRequest =
-      Application<App> && HTTPRequest<ReqType> &&
-      requires(App app) {
-          requires requires(stl::add_lvalue_reference_t<ReqType> req_ref) {
-                       { app(req_ref) } -> HTTPResponse;
-                   } || requires(stl::add_const_t<stl::add_lvalue_reference_t<ReqType>> req_cref) {
-                            { app(req_cref) } -> HTTPResponse;
-                        } || requires(ReqType req) {
-                                 { app(req) } -> HTTPResponse;
-                             };
-      };
+      Application<App> && HTTPRequest<ReqType> && stl::invocable<App, ReqType>;
 
 
     /**
