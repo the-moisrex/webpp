@@ -68,6 +68,8 @@ namespace webpp::http {
 
     namespace details {
 
+        static constexpr auto route_log_cat = "RouteCalling";
+
         template <typename CallableT, Context CtxT, typename... Args>
         constexpr decltype(auto) run_and_catch(CallableT&& callable, CtxT& ctx, Args&&... args) noexcept {
             using return_type = stl::invoke_result_t<CallableT, Args...>;
@@ -79,28 +81,52 @@ namespace webpp::http {
                 if constexpr (stl::is_void_v<return_type>) {
                     try {
                         callable(stl::forward<Args>(args)...);
+                    } catch (stl::exception const& ex) {
+                        ctx.logger.error(route_log_cat,
+                                         "Error happened calling a route that returns void.",
+                                         ex);
                     } catch (...) {
-                        // nothing to do
+                        ctx.logger.error(route_log_cat,
+                                         "Unknown error happened calling a route that returns void.");
                     }
                 } else if constexpr (stl::same_as<return_type, bool>) {
                     try {
                         return callable(stl::forward<Args>(args)...);
+                    } catch (stl::exception const& ex) {
+                        ctx.logger.error(route_log_cat,
+                                         "Error happened calling a route that returns bool.",
+                                         ex);
+                        return false;
                     } catch (...) {
+                        ctx.logger.error(route_log_cat,
+                                         "Unknown error happened calling a route that returns bool.");
                         return false;
                     }
                 } else if constexpr (istl::Optional<return_type>) {
                     try {
                         return callable(stl::forward<Args>(args)...);
-                    } catch (...) {
+                    } catch (stl::exception const& ex) {
+                        ctx.logger.error(route_log_cat,
+                                         "Error happened calling a route that returns optional value.",
+                                         ex);
                         // return 500 error on failure hoping the response type supports it
-                        // todo: add more error handling stuff here to the result
+                        return typename return_type::value_type{http::status_code::internal_server_error};
+                    } catch (...) {
+                        ctx.logger.error(
+                          route_log_cat,
+                          "Unknown error happened calling a route that returns optional value.");
+                        // return 500 error on failure hoping the response type supports it
                         return typename return_type::value_type{http::status_code::internal_server_error};
                     }
                 } else {
                     using optional_type = decltype(stl::make_optional(callable(stl::forward<Args>(args)...)));
                     try {
                         return stl::make_optional(callable(stl::forward<Args>(args)...));
+                    } catch (stl::exception const& ex) {
+                        ctx.logger.error(route_log_cat, "Error happened calling a route.", ex);
+                        return optional_type{stl::nullopt};
                     } catch (...) {
+                        ctx.logger.error(route_log_cat, "Unknown error happened calling a route.");
                         return optional_type{stl::nullopt};
                     }
                 }
