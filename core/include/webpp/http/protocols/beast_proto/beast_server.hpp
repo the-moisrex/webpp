@@ -137,10 +137,14 @@ namespace webpp::http::beast_proto {
             } else {
                 using body_char_type = stl::remove_pointer_t<stl::remove_cvref_t<decltype(body.data())>>;
                 static constexpr stl::size_t char_type_size = sizeof(body_char_type);
+                const auto                   body_size      = body.size();
+                const auto                   body_data = static_cast<beast_char_type const*>(body.data());
+                if (body_size == 0 || body_data == nullptr)
+                    return;
                 bres->body().replace(0,
                                      bres->body().size(),
-                                     static_cast<beast_char_type const*>(body.data()),
-                                     body.size() * sizeof(beast_char_type) / char_type_size);
+                                     body_data,
+                                     body_size * sizeof(beast_char_type) / char_type_size);
             }
         }
 
