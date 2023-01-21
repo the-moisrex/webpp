@@ -66,11 +66,12 @@ namespace webpp::http {
         using char_type                = traits::char_type<traits_type>;
         using byte_type                = stl::byte;
         using string_communicator_type = string_response_body_communicator<traits_type>;
-        using stream_communicator_type = stream_response_body_communicator<traits_type>;
         using blob_communicator_type   = blob_response_body_communicator<traits_type>;
+        using stream_communicator_type = stream_response_body_communicator<traits_type>;
 
+        // the order of types in this variant must match the order of http::communicator_type enum
         using communicator_storage_type = stl::
-          variant<stl::monostate, string_communicator_type, stream_communicator_type, blob_communicator_type>;
+          variant<stl::monostate, string_communicator_type, blob_communicator_type, stream_communicator_type>;
 
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
@@ -186,6 +187,11 @@ namespace webpp::http {
                     return 0LL; // nothing is read because we can't read it
                 }
             }
+        }
+
+        // This member function will tell you this body contains what
+        [[nodiscard]] constexpr http::communicator_type witch_communicator() const noexcept {
+            return static_cast<http::communicator_type>(communicator.index());
         }
 
         [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {

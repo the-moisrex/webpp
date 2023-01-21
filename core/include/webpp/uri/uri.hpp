@@ -44,14 +44,13 @@ namespace webpp::uri {
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
         [[nodiscard]] static constexpr auto create(AllocatorType const& alloc = AllocatorType{}) {
             using str_t = stl::remove_cvref_t<StrT>;
-            basic_uri<str_t> u{.scheme{alloc},
-                               .user_info{.username = str_t{alloc}, .password = str_t{alloc}},
-                               .host{alloc},
-                               .port{alloc},
-                               .path{alloc},
-                               .queries{alloc},
-                               .fragment{alloc}};
-            return u;
+            return basic_uri<str_t>{.scheme{alloc},
+                                    .user_info{.username = str_t{alloc}, .password = str_t{alloc}},
+                                    .host{alloc},
+                                    .port{alloc},
+                                    .path{alloc},
+                                    .queries{alloc},
+                                    .fragment{alloc}};
         }
 
 
@@ -211,9 +210,6 @@ namespace webpp::uri {
             extract_from(uri_str);
             return *this;
         }
-
-        constexpr basic_uri& operator=(basic_uri const&)     = default;
-        constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
     };
 
     using uri = basic_uri<stl::string>;
