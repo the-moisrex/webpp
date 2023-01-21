@@ -92,8 +92,6 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(stl::move(res2), stl::forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (HTTPResponseBodyCommunicator<result_type>) {
-                return ctx.template response_body<result_type>(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
                 return ctx.response_body(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
@@ -169,7 +167,7 @@ namespace webpp::http {
          * @return final response
          */
         template <HTTPRequest RequestType>
-        constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
+        constexpr HTTPResponse decltype(auto) operator()(RequestType&& req) const noexcept {
             using req_type = stl::remove_cvref_t<RequestType>;
             using merged_extensions =
               typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;

@@ -120,11 +120,13 @@ namespace webpp::http {
                 headers.emplace_back(content_type_field);
             }
 
-            if (!has_content_length) {
-                str_t value{headers.get_allocator()};
-                append_to(value, body.string().size() * sizeof(char));
-                headers.emplace_back(
-                  header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
+            if constexpr (SizableBody<body_type>) {
+                if (!has_content_length) {
+                    str_t value{headers.get_allocator()};
+                    append_to(value, body.size() * sizeof(char));
+                    headers.emplace_back(
+                      header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
+                }
             }
         }
     };
