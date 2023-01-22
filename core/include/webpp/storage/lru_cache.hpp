@@ -22,12 +22,17 @@ namespace webpp {
             using data_type = typename storage_gate_type::data_type;
 
 
+            static constexpr stl::size_t default_max_size = 1024u;
 
           private:
-            stl::size_t max_size;
-            stl::size_t next_usage = 1; // it's essentially a timestamp
-          public:
+            stl::size_t       max_size;
+            stl::size_t       next_usage = 1; // it's essentially a timestamp
             storage_gate_type gate;
+
+          protected:
+            constexpr storage_gate_type& get_gate() noexcept {
+                return gate;
+            }
 
           private:
             // clean up the old data
@@ -42,14 +47,16 @@ namespace webpp {
             }
 
           public:
-            template <typename ET, typename... Args>
-                requires(EnabledTraits<ET> && !stl::same_as<ET, strategy const&> &&
-                         !stl::same_as<ET, strategy &&>)
-            constexpr strategy(ET&& et, stl::size_t max_size_value = 1024, Args&&... args) noexcept
+            template <EnabledTraits ET, typename... Args>
+                requires(EnabledTraits<ET> && !stl::same_as<stl::remove_cvref_t<ET>, strategy>)
+            constexpr strategy(ET&&        et,
+                               stl::size_t max_size_value = default_max_size,
+                               Args&&... args) noexcept
               : max_size{max_size_value},
                 gate{et, stl::forward<Args>(args)...} {}
 
-            constexpr strategy(storage_gate_type&& input_gate, stl::size_t max_size_value = 1024) noexcept
+            constexpr strategy(storage_gate_type&& input_gate,
+                               stl::size_t         max_size_value = default_max_size) noexcept
               : max_size{max_size_value},
                 gate{input_gate} {}
 
@@ -65,7 +72,7 @@ namespace webpp {
             template <typename K>
                 requires(stl::convertible_to<K, key_type>) // it's a key
             constexpr stl::optional<value_type> get(K&& key) {
-                stl::optional<data_type> data = gate.get(key);
+                stl::optional<data_type> const data = gate.get(key);
                 if (!data)
                     return stl::nullopt;
 
@@ -75,8 +82,6 @@ namespace webpp {
             }
         };
     };
-
-
 
 
     template <Traits      TraitsType   = default_traits,

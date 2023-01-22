@@ -265,7 +265,7 @@ namespace webpp::views {
                 //        Not saving the cache only works for memory cache; if we change the cache to
                 //        Some other form of caching, the cache becomes invalid the moment the "cached" obj
                 //        goes out of scope.
-                // cached.save();
+                cached.save();
             }
 
             // at this point we don't care about the extension of the file; the user explicitly wants us to
