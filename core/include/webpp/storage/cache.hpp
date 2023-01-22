@@ -23,19 +23,19 @@ namespace webpp {
 
         struct cache_result : optional_value_type {
           private:
-            cache&   c;
+            cache*   cache_ptr;
             key_type the_key;
 
           public:
             constexpr cache_result(cache& input_cache, key_type key, optional_value_type&& val) noexcept
               : optional_value_type{stl::move(val)},
-                c{input_cache},
+                cache_ptr{&input_cache},
                 the_key{stl::move(key)} {}
 
             template <CacheValue V>
                 requires(stl::is_convertible_v<V, value_type>)
             constexpr cache_result& operator=(V&& new_val) {
-                c.set(the_key, stl::forward<V>(new_val));
+                cache_ptr->set(the_key, stl::forward<V>(new_val));
                 return *this;
             }
 
@@ -45,7 +45,7 @@ namespace webpp {
                   requires(value_type v) { ++v; },
                   "You cannot run ++ operator on this value.");
                 assert(*this); // make sure we do have a value
-                c.set(the_key, ++this->value());
+                cache_ptr->set(the_key, ++this->value());
                 return *this;
             }
 
@@ -54,7 +54,7 @@ namespace webpp {
                   requires(value_type v) { --v; },
                   "You cannot run ++ operator on this value.");
                 assert(*this); // make sure we do have a value
-                c.set(the_key, ++this->value());
+                cache_ptr->set(the_key, ++this->value());
                 return *this;
             }
 
@@ -63,7 +63,7 @@ namespace webpp {
             }
 
             constexpr cache_result& save() {
-                c.set(the_key, this->value());
+                cache_ptr->set(the_key, this->value());
                 return *this;
             }
         };
@@ -118,33 +118,33 @@ namespace webpp {
             if constexpr (requires { this->begin(); }) {
                 return this->begin();
             } else {
-                return this->gate.begin();
+                return this->get_gate().begin();
             }
         }
         constexpr auto begin() const {
             if constexpr (requires { this->begin(); }) {
                 return this->begin();
             } else {
-                return this->gate.begin();
+                return this->get_gate().begin();
             }
         }
         constexpr auto end() {
             if constexpr (requires { this->end(); }) {
                 return this->end();
             } else {
-                return this->gate.end();
+                return this->get_gate().end();
             }
         }
         constexpr auto end() const {
             if constexpr (requires { this->end(); }) {
                 return this->end();
             } else {
-                return this->gate.end();
+                return this->get_gate().end();
             }
         }
 
         constexpr void clear() {
-            if constexpr (requires { this->gate.clear(); }) {
+            if constexpr (requires { this->get_gate().clear(); }) {
                 this->clear();
             } else {
                 for (auto const& [key, _] : *this) {
