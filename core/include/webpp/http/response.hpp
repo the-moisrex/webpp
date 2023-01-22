@@ -67,6 +67,20 @@ namespace webpp::http {
             headers{et},
             body{et} {}
 
+        template <EnabledTraits ET, typename T>
+            requires(!stl::is_constructible_v<elist_type, ET>)
+        constexpr basic_response(ET&& et, T&& obj)
+          : elist_type{},
+            headers{et},
+            body{et, stl::forward<T>(obj)} {}
+
+        template <EnabledTraits ET, typename T>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr basic_response(ET&& et, T&& obj)
+          : elist_type{et},
+            headers{et},
+            body{et, stl::forward<T>(obj)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_response() noexcept                          = default;
@@ -199,8 +213,6 @@ namespace webpp::http {
                 // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
                 // able to have access to the etraits.
                 return new_response_type{et, stl::forward<Args>(args)...};
-
-                // todo: add more ways for passing the allocator too.
             } else if constexpr (requires { new_response_type{stl::forward<Args>(args)..., et}; }) {
                 // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
                 // able to have access to the etraits.

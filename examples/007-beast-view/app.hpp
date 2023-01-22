@@ -18,7 +18,10 @@ namespace website {
         using etraits     = enable_owner_traits<default_traits>;
         using traits_type = typename etraits::traits_type;
 
+    private:
         views::view_manager<traits_type> view_man;
+
+    public:
 
         app() : etraits{}, view_man{*this} {
             view_man.view_roots.emplace_back("./public");

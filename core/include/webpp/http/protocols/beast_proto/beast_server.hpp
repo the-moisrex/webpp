@@ -361,9 +361,10 @@ namespace webpp::http::beast_proto {
 
 
         void start_work(socket_type&& sock) {
-            http_worker_type* worker_ptr = nullptr;
+            http_worker_type* worker_ptr; // NOLINT(cppcoreguidelines-init-variables)
             {
-                stl::scoped_lock    lock{worker_mutex};
+                [[maybe_unused]] stl::scoped_lock lock{worker_mutex};
+
                 worker_ptr = worker.operator->();
                 worker_ptr->set_socket(stl::move(sock));
                 next_worker();

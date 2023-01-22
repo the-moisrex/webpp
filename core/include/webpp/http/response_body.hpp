@@ -58,16 +58,20 @@ namespace webpp::http {
 
     /**
      * @brief Response Body
+     *
+     * Implements: BlobBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
      */
     template <Traits TraitsType, typename EList>
     struct response_body : public EList {
         using traits_type              = TraitsType;
         using elist_type               = EList;
         using char_type                = traits::char_type<traits_type>;
-        using byte_type                = stl::byte;
         using string_communicator_type = string_response_body_communicator<traits_type>;
         using blob_communicator_type   = blob_response_body_communicator<traits_type>;
         using stream_communicator_type = stream_response_body_communicator<traits_type>;
+
+        using byte_type  = stl::byte;                            // required by BlobBasedBodyWriter
+        using value_type = string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
         // the order of types in this variant must match the order of http::communicator_type enum
         using communicator_storage_type = stl::
@@ -108,11 +112,22 @@ namespace webpp::http {
         constexpr response_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
           : elist_type{et} {}
 
+        template <EnabledTraits ET, typename T>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et, T&& obj) : elist_type{et} {
+            this->set<T>(stl::forward<T>(obj));
+        }
+
 
         template <EnabledTraits ET>
         constexpr response_body([[maybe_unused]] ET&&) noexcept(
           stl::is_nothrow_default_constructible_v<elist_type>)
           : elist_type{} {}
+
+        template <EnabledTraits ET, typename T>
+        constexpr response_body([[maybe_unused]] ET&&, T&& obj) : elist_type{} {
+            this->set<T>(stl::forward<T>(obj));
+        }
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

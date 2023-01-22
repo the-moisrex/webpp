@@ -168,16 +168,6 @@ namespace webpp::http {
             return new_response_type::with_body(stl::forward<Args>(args)...);
         }
 
-        /**
-         * Generate a response while passing the specified arguments as the body of that response
-         */
-        template <HTTPResponseBodyCommunicator BodyCommunicatorType>
-        [[nodiscard]] constexpr HTTPResponse auto response_body(BodyCommunicatorType&& communicator) const {
-            return response_type::template with_body<BodyCommunicatorType>(
-              stl::forward<BodyCommunicatorType>(communicator));
-        }
-
-
 
         [[nodiscard]] constexpr static bool is_debug() noexcept {
             // todo: configure this in cmake
