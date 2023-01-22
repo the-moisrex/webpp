@@ -74,11 +74,9 @@ namespace webpp::http {
         template <typename ResT, Context CtxT, HTTPRequest ReqT>
         [[nodiscard]] constexpr decltype(auto)
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
-            using result_type       = stl::remove_cvref_t<ResT>;
-            using context_type      = stl::remove_cvref_t<CtxT>;
-            using local_string_type = typename context_type::string_type;
-            using response_type     = typename context_type::response_type;
-            using body_type         = typename response_type::body_type;
+            using result_type   = stl::remove_cvref_t<ResT>;
+            using context_type  = stl::remove_cvref_t<CtxT>;
+            using response_type = typename context_type::response_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return stl::forward<ResT>(res); // let the "next_route" function handle it
@@ -92,14 +90,8 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(stl::move(res2), stl::forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (ConstructibleWithResponseBody<body_type, result_type>) {
-                return ctx.response_body(stl::forward<ResT>(res));
             } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
                 return ctx.response(stl::forward<ResT>(res));
-            } else if constexpr (istl::Stringifiable<result_type>) {
-                return response_type::with_body(
-                  istl::stringify_of<local_string_type>(stl::forward<ResT>(res),
-                                                        alloc::general_alloc_for<local_string_type>(ctx)));
             } else {
                 // todo: consider "response extension" injection in order to get the right response type
 
