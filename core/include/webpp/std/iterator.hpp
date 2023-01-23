@@ -11,4 +11,15 @@
 #    include "./iterator_impl.hpp"
 #endif // cpp_lib_concepts
 
+
+namespace webpp::istl {
+
+    template <typename T>
+    concept Iterable = requires(T iter) {
+                           iter.begin();
+                           iter.end();
+                       };
+
+}
+
 #endif // WEBPP_STD_ITERATOR_HPP

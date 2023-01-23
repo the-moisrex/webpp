@@ -1,6 +1,7 @@
 #ifndef WEBPP_CACHE_CACHE_HPP
 #define WEBPP_CACHE_CACHE_HPP
 
+#include "../std/iterator.hpp"
 #include "cache_concepts.hpp"
 
 
@@ -52,7 +53,7 @@ namespace webpp {
             constexpr cache_result& operator--() {
                 static_assert(
                   requires(value_type v) { --v; },
-                  "You cannot run ++ operator on this value.");
+                  "You cannot run -- operator on this value.");
                 assert(*this); // make sure we do have a value
                 cache_ptr->set(the_key, ++this->value());
                 return *this;
@@ -114,29 +115,29 @@ namespace webpp {
             return strategy_type::get(key).value();
         }
 
-        constexpr auto begin() {
-            if constexpr (requires { this->begin(); }) {
+        constexpr decltype(auto) begin() {
+            if constexpr (istl::Iterable<strategy_type>) {
                 return this->begin();
             } else {
                 return this->get_gate().begin();
             }
         }
-        constexpr auto begin() const {
-            if constexpr (requires { this->begin(); }) {
+        constexpr decltype(auto) begin() const {
+            if constexpr (istl::Iterable<strategy_type>) {
                 return this->begin();
             } else {
                 return this->get_gate().begin();
             }
         }
-        constexpr auto end() {
-            if constexpr (requires { this->end(); }) {
+        constexpr decltype(auto) end() {
+            if constexpr (istl::Iterable<strategy_type>) {
                 return this->end();
             } else {
                 return this->get_gate().end();
             }
         }
-        constexpr auto end() const {
-            if constexpr (requires { this->end(); }) {
+        constexpr decltype(auto) end() const {
+            if constexpr (istl::Iterable<strategy_type>) {
                 return this->end();
             } else {
                 return this->get_gate().end();
