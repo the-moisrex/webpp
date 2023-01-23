@@ -36,6 +36,7 @@
 
 
 #include "../convert/lexical_cast.hpp"
+#include "../std/functional.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/splits.hpp"
 #include "../strings/trim.hpp"
@@ -46,7 +47,6 @@
 #include "view_concepts.hpp"
 
 #include <array>
-#include <functional>
 #include <map>
 #include <span>
 #include <variant>
@@ -65,8 +65,8 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
 
-        // todo: custom allocator support for std::allocator (https://github.com/the-moisrex/webpp/issues/115)
-        using type = stl::function<string_type(string_view_type, bool escaped)>;
+        using type = istl::function<string_type(string_view_type, bool escaped),
+                                    traits::general_allocator<traits_type, stl::byte>>;
 
         constexpr string_type operator()(string_view_type text, bool escaped = false) const {
             return func(text, escaped);
@@ -483,7 +483,7 @@ namespace webpp::views {
         using variable_type = typename data_type::value_type;
 
         constexpr context_pusher(context_internal<traits_type>& ctx, const variable_type* var) : ctx_(&ctx) {
-            ctx->ctx->push(var);
+            ctx.ctx->push(var);
         }
         constexpr ~context_pusher() {
             ctx_->ctx->pop();
@@ -582,8 +582,9 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = typename string_type::value_type;
 
-        using string_size_type  = typename string_type::size_type;
-        using escape_handler    = stl::function<string_type(string_view_type)>;
+        using string_size_type = typename string_type::size_type;
+        using escape_handler =
+          istl::function<string_type(string_view_type), traits::general_allocator<traits_type, stl::byte>>;
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
@@ -594,26 +595,30 @@ namespace webpp::views {
         using partial_type  = typename settings::partial_type;
 
 
-        using render_handler = stl::function<void(string_view_type)>; // todo: see if we need this handler
-        using renderer_type  = basic_renderer<traits_type>;
+        using render_handler = istl::function<
+          void(string_view_type),
+          traits::general_allocator<traits_type, stl::byte>>; // todo: see if we need this handler
+        using renderer_type = basic_renderer<traits_type>;
 
         static constexpr auto MUSTACHE_CAT = "MustacheView";
 
       private:
-        string_type    error_msg{this->alloc_pack.template general_allocator<char_type>()};
+        string_type    error_msg{alloc::general_alloc_for<string_type>(*this)};
         component_type root_component;
-        escape_handler escaper = [this](auto&& val) {
-            string_type out{this->alloc_pack.template general_allocator<char_type>()};
-            html_escape(val, out);
-            return out;
-        };
+        escape_handler escaper{[this](auto&& val) {
+                                   string_type out{alloc::general_alloc_for<string_type>(*this)};
+                                   html_escape(val, out);
+                                   return out;
+                               },
+                               alloc::general_alloc_for<typename renderer_type::type>(*this)};
 
       public:
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        constexpr mustache_view(ET&& et) noexcept
-          : etraits{et}, // NOLINT(bugprone-forwarding-reference-overload)
-            root_component{et} {}
+        constexpr mustache_view(ET&& et) noexcept : etraits{et},
+                                                    root_component{et} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr mustache_view(mustache_view const&)     = default;
         constexpr mustache_view(mustache_view&&) noexcept = default;
@@ -1011,7 +1016,7 @@ namespace webpp::views {
             switch (tag.type) {
                 case tag_type::variable:
                 case tag_type::unescaped_variable:
-                    var = ctx->ctx.get(tag.name);
+                    var = ctx.ctx->get(tag.name);
                     if (var != nullptr) {
                         if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
                             return walk_control_type::stop;
@@ -1019,7 +1024,7 @@ namespace webpp::views {
                     }
                     break;
                 case tag_type::section_begin:
-                    var = ctx->ctx.get(tag.name);
+                    var = ctx.ctx->get(tag.name);
                     if (var != nullptr) {
                         if (auto lambda_var = var->get_if_lambda()) {
                             if (!render_lambda(handler,
@@ -1036,13 +1041,13 @@ namespace webpp::views {
                     }
                     return walk_control_type::skip;
                 case tag_type::section_begin_inverted:
-                    var = ctx->ctx.get(tag.name);
+                    var = ctx.ctx->get(tag.name);
                     if (var == nullptr || var->is_false()) {
                         render_section(handler, ctx, comp, var);
                     }
                     return walk_control_type::skip;
                 case tag_type::partial:
-                    var = ctx->ctx.get_partial(tag.name);
+                    var = ctx.ctx->get_partial(tag.name);
                     if (var != nullptr && (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
@@ -1100,7 +1105,7 @@ namespace webpp::views {
                         error_msg = tmpl.error_message();
                         return {};
                     }
-                    context_internal<traits_type> render_ctx{ctx->ctx}; // start a new line_buffer
+                    context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
                     const auto                    str = tmpl.render(render_ctx);
                     if (!tmpl.is_valid()) {
                         error_msg = tmpl.error_message();
@@ -1125,7 +1130,9 @@ namespace webpp::views {
                 tmpl.set_custom_escape(escaper);
                 return process_template(tmpl);
             };
-            const renderer_type renderer{typename renderer_type::type{render}};
+            const renderer_type renderer{
+              typename renderer_type::type{render,
+                                           alloc::general_alloc_for<typename renderer_type::type>(*this)}};
             // todo: in original source, the next line wouldn't run if the user is getting a renderer as input
             render_current_line(handler, ctx.line_buffer, nullptr);
             ctx.line_buffer.data.append(var(text, renderer));
@@ -1142,13 +1149,6 @@ namespace webpp::views {
                 const render_lambda_escape escape_opt =
                   escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
                 return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);
-                {
-                    using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
-                    streamstring ss;
-                    ss << "Lambda with render argument is not allowed for regular variables";
-                    error_msg = ss.str();
-                    return false;
-                }
             }
             return true;
         }
