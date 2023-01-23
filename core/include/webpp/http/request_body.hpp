@@ -3,6 +3,7 @@
 #ifndef WEBPP_REQUEST_BODY_HPP
 #define WEBPP_REQUEST_BODY_HPP
 
+#include "../common/meta.hpp"
 #include "../extensions/extension.hpp"
 #include "http_concepts.hpp"
 

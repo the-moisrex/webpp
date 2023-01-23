@@ -141,6 +141,10 @@ namespace webpp::istl {
                 return static_cast<Function*>(this)->call(stl::forward<Args>(args)...);
             }
 
+            constexpr inline R operator()(Args... args) const noexcept(IsNoexcept) {
+                return static_cast<Function const*>(this)->call(stl::forward<Args>(args)...);
+            }
+
           protected:
             using const_signature = R(Args...) const noexcept(IsNoexcept);
             using mut_signature   = R(Args...) noexcept(IsNoexcept);
