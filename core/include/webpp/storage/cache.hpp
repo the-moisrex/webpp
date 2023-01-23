@@ -7,6 +7,59 @@
 
 namespace webpp {
 
+    template <typename CacheType>
+    struct cache_result : CacheType::optional_value_type {
+        using cache_type          = CacheType;
+        using optional_value_type = typename CacheType::optional_value_type;
+        using key_type            = typename cache_type::key_type;
+        using value_type          = typename cache_type::value_type;
+
+      private:
+        cache_type* cache_ptr;
+        key_type    the_key;
+
+      public:
+        constexpr cache_result(cache_type& input_cache, key_type key, optional_value_type&& val) noexcept
+          : optional_value_type{stl::move(val)},
+            cache_ptr{&input_cache},
+            the_key{stl::move(key)} {}
+
+        template <CacheValue V>
+            requires(stl::is_convertible_v<V, value_type>)
+        constexpr cache_result& operator=(V&& new_val) {
+            cache_ptr->set(the_key, stl::forward<V>(new_val));
+            return *this;
+        }
+
+
+        constexpr cache_result& operator++() {
+            static_assert(
+              requires(value_type v) { ++v; },
+              "You cannot run ++ operator on this value.");
+            assert(*this); // make sure we do have a value
+            cache_ptr->set(the_key, ++this->value());
+            return *this;
+        }
+
+        constexpr cache_result& operator--() {
+            static_assert(
+              requires(value_type v) { --v; },
+              "You cannot run -- operator on this value.");
+            assert(*this); // make sure we do have a value
+            cache_ptr->set(the_key, ++this->value());
+            return *this;
+        }
+
+        constexpr key_type key() const noexcept {
+            return the_key;
+        }
+
+        constexpr cache_result& save() {
+            cache_ptr->set(the_key, this->value());
+            return *this;
+        }
+    };
+
 
     /**
      * This class is mother of all caches.
@@ -21,53 +74,7 @@ namespace webpp {
         using value_type          = traits::generalify_allocators<traits_type, ValT>;
         using strategy_type       = typename CS::template strategy<TraitsType, KeyT, ValT, SG>;
         using optional_value_type = stl::optional<value_type>;
-
-        struct cache_result : optional_value_type {
-          private:
-            cache*   cache_ptr;
-            key_type the_key;
-
-          public:
-            constexpr cache_result(cache& input_cache, key_type key, optional_value_type&& val) noexcept
-              : optional_value_type{stl::move(val)},
-                cache_ptr{&input_cache},
-                the_key{stl::move(key)} {}
-
-            template <CacheValue V>
-                requires(stl::is_convertible_v<V, value_type>)
-            constexpr cache_result& operator=(V&& new_val) {
-                cache_ptr->set(the_key, stl::forward<V>(new_val));
-                return *this;
-            }
-
-
-            constexpr cache_result& operator++() {
-                static_assert(
-                  requires(value_type v) { ++v; },
-                  "You cannot run ++ operator on this value.");
-                assert(*this); // make sure we do have a value
-                cache_ptr->set(the_key, ++this->value());
-                return *this;
-            }
-
-            constexpr cache_result& operator--() {
-                static_assert(
-                  requires(value_type v) { --v; },
-                  "You cannot run -- operator on this value.");
-                assert(*this); // make sure we do have a value
-                cache_ptr->set(the_key, ++this->value());
-                return *this;
-            }
-
-            constexpr key_type key() const noexcept {
-                return the_key;
-            }
-
-            constexpr cache_result& save() {
-                cache_ptr->set(the_key, this->value());
-                return *this;
-            }
-        };
+        using cache_result_type   = cache_result<cache>;
 
         // ctor
         using CS::template strategy<TraitsType, KeyT, ValT, SG>::strategy;
@@ -75,8 +82,8 @@ namespace webpp {
 
         template <CacheKey K>
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
-        constexpr cache_result operator[](K&& key) noexcept {
-            return cache_result{*this, key, get(key)};
+        constexpr cache_result_type operator[](K&& key) noexcept {
+            return cache_result_type{*this, key, get(key)};
         }
 
         template <CacheKey K, CacheValue V>

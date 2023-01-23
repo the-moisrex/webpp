@@ -31,10 +31,11 @@ namespace webpp::views {
 
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
-        constexpr file_view([[maybe_unused]] ET&&) {}
+        constexpr file_view([[maybe_unused]] ET&&) {} // NOLINT(bugprone-forwarding-reference-overload)
 
         constexpr file_view(file_view const&)     = default;
         constexpr file_view(file_view&&) noexcept = default;
+        constexpr ~file_view() noexcept           = default;
 
         constexpr file_view& operator=(file_view const&)     = default;
         constexpr file_view& operator=(file_view&&) noexcept = default;
@@ -45,7 +46,7 @@ namespace webpp::views {
         }
 
 
-        void scheme(string_view_type str) {
+        void scheme(string_view_type str) noexcept {
             data = str;
         }
 

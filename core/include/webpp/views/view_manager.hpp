@@ -221,21 +221,28 @@ namespace webpp::views {
         /**
          * Read the file content
          */
-        [[nodiscard]] string_type read_file(stl::filesystem::path const& filepath) const {
-            auto result = object::make_general<string_type>(*this);
-
-            bool const res = file::get_to(filepath, result);
+        bool read_file(stl::filesystem::path const& filepath, istl::String auto& out) const {
+            bool const res = file::get_to(filepath, out);
             if (!res) {
                 this->logger.error("Response/File",
                                    fmt::format("Cannot load the specified file: {}", filepath.string()));
                 // return empty string
             }
+            return res;
+        }
+
+        /**
+         * Read the file content
+         */
+        [[nodiscard]] string_type read_file(stl::filesystem::path const& filepath) const {
+            auto result = object::make_general<string_type>(*this);
+            read_file(filepath, result);
             return result;
         }
 
 
         template <typename VT>
-        [[nodiscard]] auto get_view(path_type const& file) noexcept {
+        [[nodiscard]] decltype(auto) get_view(path_type const& file) {
             if (auto val = cached_views[file]; val) {
                 return val;
             }
@@ -248,17 +255,15 @@ namespace webpp::views {
 
 
         template <typename ViewType, typename OutT, typename... DataType>
-        constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) noexcept {
+        constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) {
             using view_type = ViewType;
             auto cached     = get_view<view_type>(file);
             if (cached->file_content.empty()) {
-
-                // get and set the code:
-                cached->file_content = read_file(file);
-                if (cached->file_content.empty()) {
-                    return; // empty string is returned.
+                if (!read_file(file, cached->file_content)) {
+                    return; // We weren't able to read the file.
                 }
-                stl::get<view_type>(cached->view).scheme(cached->file_content);
+                auto& view = stl::get<view_type>(cached->view);
+                view.scheme(cached->file_content);
                 // fixme: re-saving causes the "cached->view" to copied away and thus making the view invalid
                 //        but the problem is that without saving, the caching process is not fully correct
                 //        Not saving the cache only works for memory cache; if we change the cache to
@@ -267,14 +272,14 @@ namespace webpp::views {
                 cached.save();
             }
 
-            // at this point we don't care about the extension of the file; the user explicitly wants us to
-            // parse it as a mustache file
-            stl::get<view_type>(cached->view).render(out, stl::forward<DataType>(data)...);
+            // Render the view based on the data that passed to us
+            auto& view = stl::get<view_type>(cached->view);
+            view.render(out, stl::forward<DataType>(data)...);
         }
 
 
         template <typename ViewType, istl::StringViewifiable StrT, typename OutT, typename... DataType>
-        constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) noexcept {
+        constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             if (!file) {
                 this->logger.error(logging_category,
@@ -290,7 +295,7 @@ namespace webpp::views {
          * This is essentially the same as ".view" but it's specialized for a mustache file.
          */
         template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) noexcept {
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) {
             auto out = object::make_general<string_type>(this->alloc_pack);
             view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
@@ -298,22 +303,21 @@ namespace webpp::views {
 
 
         template <istl::StringViewifiable StrT, typename... StrT2, typename... DataType>
-        [[nodiscard]] constexpr auto mustache(StrT&& file_request,
-                                              stl::pair<StrT2, DataType>... data) noexcept {
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request, stl::pair<StrT2, DataType>... data) {
             auto m_data = object::make_general<mustache_data_type>(*this);
             (m_data.emplace_back(*this, stl::move(data)), ...);
             return mustache<StrT>(stl::forward<StrT>(file_request), m_data);
         }
 
         template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr string_view_type file(StrT&& file_request) noexcept {
+        [[nodiscard]] constexpr string_view_type file(StrT&& file_request) {
             string_view_type out;
             view_to<file_view_type>(out, stl::forward<StrT>(file_request));
             return out;
         }
 
         template <istl::StringViewifiable StrT = string_view_type>
-        [[nodiscard]] auto view(StrT&& file_request) noexcept {
+        [[nodiscard]] auto view(StrT&& file_request) {
             return view(stl::forward<StrT>(file_request), istl::nothing_type{});
         }
 
@@ -323,7 +327,7 @@ namespace webpp::views {
         template <istl::StringViewifiable StrT, typename DT>
             requires(PossibleDataTypes<mustache_view_type, stl::remove_cvref_t<DT>> ||
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
-        [[nodiscard]] auto view(StrT&& file_request, DT&& data) noexcept {
+        [[nodiscard]] auto view(StrT&& file_request, DT&& data) {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
             auto       out  = object::make_general<string_type>(this->alloc_pack);
             if (!file) {
