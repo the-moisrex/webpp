@@ -5,7 +5,6 @@
 
 #include "../http/http_concepts.hpp"
 #include "../std/format.hpp"
-#include "../std/map.hpp"
 #include "../std/string.hpp"
 #include "../storage/file.hpp"
 #include "../storage/lru_cache.hpp"
@@ -51,18 +50,10 @@ namespace webpp::views {
         using view_types = stl::variant<mustache_view_type, /*json_view_type,*/ file_view_type>;
 
 
-        /**
-         * This is what gets stored as a value
-         */
-        struct cache_value_type {
-            view_types  view;         // the view, the view should not own the data
-            string_type file_content; // content file; the view is a span/view/string_view... of the data
-        };
-
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
         using file_data_type = typename file_view_type::data_type;
-        using cache_type     = lru_cache<traits_type, path_type, cache_value_type, memory_gate<null_gate>>;
+        using cache_type     = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
 
         static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
 
@@ -231,49 +222,29 @@ namespace webpp::views {
             return res;
         }
 
-        /**
-         * Read the file content
-         */
-        [[nodiscard]] string_type read_file(stl::filesystem::path const& filepath) const {
-            auto result = object::make_general<string_type>(*this);
-            read_file(filepath, result);
-            return result;
-        }
-
 
         template <typename VT>
         [[nodiscard]] decltype(auto) get_view(path_type const& file) {
-            if (auto val = cached_views[file]; val) {
-                return val;
-            }
-            cached_views.set(
-              file,
-              cache_value_type{.view         = view_types{stl::in_place_type<VT>, *this},
-                               .file_content = string_type{alloc::general_alloc_for<string_type>(*this)}});
-            return cached_views[file];
+            static view_types default_view{stl::in_place_type<VT>, *this};
+            return cached_views.emplace_get(file, default_view);
         }
 
 
         template <typename ViewType, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) {
             using view_type = ViewType;
-            auto cached     = get_view<view_type>(file);
-            if (cached->file_content.empty()) {
-                if (!read_file(file, cached->file_content)) {
+            auto  cached    = get_view<view_type>(file);
+            auto& view      = stl::get<view_type>(*cached);
+            if (!view.has_scheme()) {
+                auto file_content = object::make_general<string_type>(*this);
+                if (!read_file(file, file_content)) {
                     return; // We weren't able to read the file.
                 }
-                auto& view = stl::get<view_type>(cached->view);
-                view.scheme(cached->file_content);
-                // fixme: re-saving causes the "cached->view" to copied away and thus making the view invalid
-                //        but the problem is that without saving, the caching process is not fully correct
-                //        Not saving the cache only works for memory cache; if we change the cache to
-                //        Some other form of caching, the cache becomes invalid the moment the "cached" obj
-                //        goes out of scope.
+                view.scheme(file_content);
                 cached.save();
             }
 
             // Render the view based on the data that passed to us
-            auto& view = stl::get<view_type>(cached->view);
             view.render(out, stl::forward<DataType>(data)...);
         }
 
