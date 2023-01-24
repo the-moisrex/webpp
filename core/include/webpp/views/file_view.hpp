@@ -24,14 +24,16 @@ namespace webpp::views {
         using data_type      = istl::nothing_type;
 
       private:
-        string_view_type data{};
+        string_type data;
 
       public:
         constexpr file_view() = default;
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
-        constexpr file_view([[maybe_unused]] ET&&) {} // NOLINT(bugprone-forwarding-reference-overload)
+        constexpr file_view(ET&& et) : data{alloc::general_alloc_for<string_type>(et)} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr file_view(file_view const&)     = default;
         constexpr file_view(file_view&&) noexcept = default;
@@ -45,18 +47,25 @@ namespace webpp::views {
             return {};
         }
 
+        [[nodiscard]] constexpr bool has_scheme() const noexcept {
+            return !data.empty();
+        }
 
-        void scheme(string_view_type str) noexcept {
+        constexpr void scheme(string_view_type str) {
             data = str;
         }
 
+        constexpr void scheme(string_type&& str) noexcept {
+            data.swap(str);
+        }
+
         template <typename... DataType>
-        void render(istl::String auto& out, [[maybe_unused]] DataType&&...) const {
+        constexpr void render(istl::String auto& out, [[maybe_unused]] DataType&&...) const {
             out.append(data);
         }
 
         template <typename... DataType>
-        void render(istl::StringView auto& out, [[maybe_unused]] DataType&&...) const noexcept {
+        constexpr void render(istl::StringView auto& out, [[maybe_unused]] DataType&&...) const noexcept {
             out = data;
         }
     };

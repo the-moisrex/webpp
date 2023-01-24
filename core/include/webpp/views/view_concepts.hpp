@@ -64,6 +64,7 @@ namespace webpp::views {
                                          typename T::data_type        dt) {
                                     view.scheme(sv); // reparse, and change the scheme
                                     view.render(out, dt);
+                                    { view.has_scheme() } -> stl::same_as<bool>;
                                 };
                    };
 

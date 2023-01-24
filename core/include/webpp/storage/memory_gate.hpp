@@ -25,11 +25,11 @@ namespace webpp {
             using data_type       = cache_tuple<key_type, value_type, options_type>;
 
 
-            template <typename ET>
-                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
-            constexpr storage_gate(ET&& et) // NOLINT(cppcoreguidelines-pro-type-member-init)
-              : map(et.alloc_pack, et.alloc_pack.general_resource()) {}
+            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+            template <EnabledTraits ET>
+                requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
+            constexpr storage_gate(ET&& et) : map(et.alloc_pack, et.alloc_pack.general_resource()) {}
+            // NOLINTEND(bugprone-forwarding-reference-overload)
 
             template <typename K>
             constexpr stl::optional<data_type> get(K&& key) {
