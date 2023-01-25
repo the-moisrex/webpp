@@ -113,7 +113,7 @@ TEST(Cache, ReferenceTest) {
     c.set("one", "new value");
     EXPECT_EQ("new value", *c.get_ptr("one"));
     auto& val_ref = *c.get_ptr("one");
-    val_ref = "new new value";
+    val_ref       = "new new value";
     EXPECT_EQ("new new value", c.get("one").value());
 }
 
