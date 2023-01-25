@@ -8,7 +8,7 @@
 namespace webpp {
 
     template <typename CacheType>
-    struct cache_result : CacheType::optional_value_type {
+    struct cache_result : private CacheType::optional_value_type {
         using cache_type          = CacheType;
         using optional_value_type = typename CacheType::optional_value_type;
         using key_type            = typename cache_type::key_type;
@@ -24,7 +24,20 @@ namespace webpp {
             cache_ptr{&input_cache},
             the_key{stl::move(key)} {}
 
-        using CacheType::optional_value_type::operator=;
+        using CacheType::optional_value_type::and_then;
+        using CacheType::optional_value_type::emplace;
+        using CacheType::optional_value_type::or_else;
+        using CacheType::optional_value_type::reset;
+        using CacheType::optional_value_type::value;
+        using CacheType::optional_value_type::value_or;
+
+
+        template <CacheValue V>
+            requires(stl::is_convertible_v<V, value_type>)
+        constexpr cache_result& operator=(V&& new_val) {
+            cache_ptr->set(the_key, stl::forward<V>(new_val));
+            return *this;
+        }
 
         constexpr key_type key() const noexcept {
             return the_key;
