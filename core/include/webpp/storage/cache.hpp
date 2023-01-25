@@ -24,6 +24,7 @@ namespace webpp {
             cache_ptr{&input_cache},
             the_key{stl::move(key)} {}
 
+        using CacheType::optional_value_type::operator=;
 
         constexpr key_type key() const noexcept {
             return the_key;
@@ -50,6 +51,9 @@ namespace webpp {
         using strategy_type       = typename CS::template strategy<TraitsType, KeyT, ValT, SG>;
         using optional_value_type = stl::optional<value_type>;
         using cache_result_type   = cache_result<cache>;
+
+        // This bool will tell you if this cache supports direct pointer to the values or not
+        static constexpr bool supports_direct_pointer = details::CacheStrategyPointerSupport<strategy_type>;
 
         // ctor
         using CS::template strategy<TraitsType, KeyT, ValT, SG>::strategy;
@@ -81,6 +85,15 @@ namespace webpp {
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
         constexpr optional_value_type get(K&& key) {
             return strategy_type::get(stl::forward<K>(key));
+        }
+
+        // Get a reference to the values, the life-time of the returned value becomes the problem in parallel
+        // algorithms
+        template <CacheKey K>
+            requires(details::CacheStrategyPointerSupport<strategy_type> &&
+                     stl::is_convertible_v<K, key_type>)
+        constexpr auto get_ptr(K&& key) {
+            return strategy_type::get_ptr(stl::forward<K>(key));
         }
 
 

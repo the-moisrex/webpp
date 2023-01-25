@@ -22,7 +22,9 @@ static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>,
 static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, double>, double>);
 static_assert(stl::is_same_v<traits::generalify_allocators<std_traits, std::string_view>, std::string_view>);
 
-TEST(Cache, LEUCacheTest) {
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
+TEST(Cache, LRUCacheTest) {
     enable_owner_traits<default_traits> t;
     lru_cache<>                         c(t);
     c.set("one", "value");
@@ -101,3 +103,18 @@ TEST(Cache, DirectoryGateTest) {
 
     stl::filesystem::remove_all(dir);
 }
+
+
+TEST(Cache, ReferenceTest) {
+    enable_owner_traits<default_traits> t;
+    lru_cache<>                         c(t);
+    c.set("one", "value");
+    EXPECT_EQ("value", *c.get_ptr("one").value());
+    c.set("one", "new value");
+    EXPECT_EQ("new value", *c.get_ptr("one").value());
+    auto& val_ref = *c.get_ptr("one").value();
+    val_ref = "new new value";
+    EXPECT_EQ("new new value", c.get("one").value());
+}
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

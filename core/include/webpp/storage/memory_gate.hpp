@@ -15,28 +15,43 @@ namespace webpp {
 
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, CacheOptions OptsT>
         struct storage_gate {
-            using traits_type     = TraitsType;
-            using value_pack_type = stl::pair<OptsT, ValueT>;
-            using map_type        = traits::general_object<traits_type, stl::map<KeyT, value_pack_type>>;
-            using mapped_type     = typename map_type::mapped_type;
-            using key_type        = typename map_type::key_type;
-            using value_type      = typename map_type::mapped_type::second_type;
-            using options_type    = typename mapped_type::first_type;
-            using data_type       = cache_tuple<key_type, value_type, options_type>;
+            using traits_type      = TraitsType;
+            using value_pack_type  = stl::pair<OptsT, ValueT>;
+            using map_type         = istl::map<traits_type, KeyT, value_pack_type>;
+            using mapped_type      = typename map_type::mapped_type;
+            using key_type         = typename map_type::key_type;
+            using value_type       = typename map_type::mapped_type::second_type;
+            using options_type     = typename mapped_type::first_type;
+            using bundle_type      = cache_tuple<key_type, value_type, options_type>;
+            using key_ptr_type     = stl::add_pointer_t<stl::add_const_t<key_type>>;
+            using value_ptr_type   = stl::add_pointer_t<value_type>;
+            using options_ptr_type = stl::add_pointer_t<options_type>;
+            using bundle_ptr_type  = cache_tuple<key_ptr_type, value_ptr_type, options_ptr_type>;
 
 
             // NOLINTBEGIN(bugprone-forwarding-reference-overload)
             template <EnabledTraits ET>
                 requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
-            constexpr storage_gate(ET&& et) : map(et.alloc_pack, et.alloc_pack.general_resource()) {}
+            constexpr storage_gate(ET&& et) : map{alloc::general_alloc_for<map_type>(et)} {}
             // NOLINTEND(bugprone-forwarding-reference-overload)
 
             template <typename K>
-            constexpr stl::optional<data_type> get(K&& key) {
+            constexpr stl::optional<bundle_type> get(K&& key) {
                 if (auto it = map.find(stl::forward<K>(key)); it != map.end()) {
-                    return data_type{.key     = it->first,
-                                     .value   = it->second.second,
-                                     .options = it->second.first};
+                    return bundle_type{.key     = stl::move(it->first),
+                                       .value   = stl::move(it->second.second),
+                                       .options = stl::move(it->second.first)};
+                }
+                return stl::nullopt;
+            }
+
+            // Get a reference instead of copying them
+            template <typename K>
+            constexpr stl::optional<bundle_ptr_type> get_ptr(K&& key) {
+                if (auto it = map.find(key); it != map.end()) {
+                    return bundle_ptr_type{.key     = &it->first,
+                                           .value   = &it->second.second,
+                                           .options = &it->second.first};
                 }
                 return stl::nullopt;
             }
@@ -64,7 +79,7 @@ namespace webpp {
                 stl::erase_if(map, [predicate](auto&& item) {
                     auto [key, value_pack] = item;
                     auto [opts, value]     = value_pack;
-                    return predicate(data_type{key, value, opts});
+                    return predicate(bundle_type{key, value, opts});
                 });
             }
 

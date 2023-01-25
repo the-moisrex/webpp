@@ -15,11 +15,11 @@ namespace webpp {
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
             using traits_type = TraitsType;
-            using key_type    = traits::generalify_allocators<traits_type, KeyT>;
-            using value_type  = traits::generalify_allocators<traits_type, ValueT>;
+            using key_type    = KeyT;
+            using value_type  = ValueT;
             using storage_gate_type =
               typename SG::template storage_gate<traits_type, key_type, value_type, stl::size_t>;
-            using data_type = typename storage_gate_type::data_type;
+            using bundle_type = typename storage_gate_type::bundle_type;
 
 
             static constexpr stl::size_t default_max_size = 1024u;
@@ -72,13 +72,32 @@ namespace webpp {
             template <typename K>
                 requires(stl::convertible_to<K, key_type>) // it's a key
             constexpr stl::optional<value_type> get(K&& key) {
-                stl::optional<data_type> const data = gate.get(key);
+                stl::optional<bundle_type> const data = gate.get(key);
                 if (!data)
                     return stl::nullopt;
 
                 gate.set_options(key, next_usage++);
 
                 return data->value;
+            }
+
+
+            template <typename K>
+                requires(details::StorageGatePointerSupport<storage_gate_type> &&
+                         stl::convertible_to<K, key_type>)
+            constexpr auto get_ptr(K&& key) {
+                // we can't use return type directly in the signature because we're using "value_ptr_type"
+                // which may not be present in every storage gate type.
+                using return_type = stl::optional<typename storage_gate_type::value_ptr_type>;
+                auto const data   = gate.get_ptr(key); // data is optional<bundle_ref_type>
+                if (!data)
+                    return return_type{stl::nullopt};
+
+                // todo: we have a reference to the options here, don't need to re-write it.
+                gate.set_options(key, next_usage++);
+
+                // return optional<value_ptr_type>
+                return return_type{data->value};
             }
         };
     };

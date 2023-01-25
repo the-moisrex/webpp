@@ -53,7 +53,7 @@ namespace webpp {
 
           private:
             dir_iter_type             dir_iter{};
-            storage_gate_type&        gate;
+            storage_gate_type*        gate;
             stl::optional<value_type> data{};
             stl::error_code           ec;
 
@@ -62,10 +62,10 @@ namespace webpp {
                     return;
                 }
                 if (ec) {
-                    gate.logger.error(DIR_GATE_CAT, "Cannot check the existence of a cache file.", ec);
+                    gate->logger.error(DIR_GATE_CAT, "Cannot check the existence of a cache file.", ec);
                     return;
                 }
-                auto const real_data = gate.get_file(dir_iter->path());
+                auto const real_data = gate->get_file(dir_iter->path());
                 if (!real_data)
                     data = stl::nullopt;
                 data = value_type{real_data->key, real_data->value};
@@ -81,20 +81,23 @@ namespace webpp {
             }
 
           public:
-            file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{the_gate} {}
+            file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{&the_gate} {}
 
             file_iterator(stl::filesystem::path const& dir, storage_gate_type& the_gate)
               : dir_iter{dir, ec},
-                gate{the_gate} {
+                gate{&the_gate} {
                 if (ec) {
-                    gate.logger.error(DIR_GATE_CAT, "Cache directory traverse error.", ec);
+                    gate->logger.error(DIR_GATE_CAT, "Cache directory traverse error.", ec);
                 } else {
                     deserialize();
                 }
             }
 
+            file_iterator(const file_iterator&)                = default;
+            file_iterator(file_iterator&&) noexcept            = default;
             file_iterator& operator=(const file_iterator&)     = default;
             file_iterator& operator=(file_iterator&&) noexcept = default;
+            ~file_iterator()                                   = default;
 
             bool operator==(const file_iterator& rhs) const {
                 return dir_iter == rhs.dir_iter && gate == rhs.gate;
@@ -118,7 +121,7 @@ namespace webpp {
                     reset();
                     return *this;
                 }
-                if (!gate.is_our_cache(dir_iter->path())) {
+                if (!gate->is_our_cache(dir_iter->path())) {
                     return operator++();
                 }
                 deserialize();
@@ -134,15 +137,15 @@ namespace webpp {
             using traits_type      = TraitsType;
             using etraits          = enable_traits<TraitsType>;
             using path_type        = stl::filesystem::path;
-            using key_type         = traits::generalify_allocators<traits_type, KeyT>;
-            using value_type       = traits::generalify_allocators<traits_type, ValueT>;
-            using options_type     = traits::generalify_allocators<traits_type, OptsT>;
+            using key_type         = KeyT;
+            using value_type       = ValueT;
+            using options_type     = OptsT;
             using string_type      = traits::general_string<traits_type>;
             using iterator         = file_iterator<storage_gate>;
             using const_iterator   = iterator;
             using char_type        = typename string_type::value_type;
             using string_view_type = traits::string_view<traits_type>;
-            using data_type        = cache_tuple<key_type, value_type, options_type>;
+            using bundle_type      = cache_tuple<key_type, value_type, options_type>;
 
           private:
             friend iterator;
@@ -167,7 +170,7 @@ namespace webpp {
             }
 
 
-            string_type serialize_file(data_type const& data) {
+            string_type serialize_file(bundle_type const& data) {
                 string_type data_str  = object::make_general<string_type>(this->alloc_pack);
                 string_type key_str   = lexical::cast<string_type>(data.key, this->alloc_pack);
                 auto        value_str = lexical::cast<string_type>(data.value, this->alloc_pack);
@@ -190,7 +193,7 @@ namespace webpp {
              *   options\n
              *   value
              */
-            stl::optional<data_type> deserialize_file(string_view_type data) {
+            stl::optional<bundle_type> deserialize_file(string_view_type data) {
                 const auto end_key_index = data.find_first_of('\n');
                 if (end_key_index == string_type::npos) {
                     this->logger.error(
@@ -230,14 +233,15 @@ namespace webpp {
                     // todo
                 }
 
-                return data_type{
+                return bundle_type{
                   .key     = lexical::cast<key_type>(key_str, this->alloc_pack),
                   .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), this->alloc_pack),
                   .options = opts};
             }
 
             void set_temp_dir() {
-                stl::error_code ec;
+                static constexpr stl::size_t temp_dir_size = 32;
+                stl::error_code              ec;
                 dir = stl::filesystem::temp_directory_path(ec);
                 if (ec) {
                     this->logger.error(
@@ -251,7 +255,7 @@ namespace webpp {
                                                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                                                   "abcdefghijklmnopqrstuvwxyz");
                 std::shuffle(random_str.begin(), random_str.end(), stl::mt19937{stl::random_device{}()});
-                random_str.resize(32);
+                random_str.resize(temp_dir_size);
                 dir.append(random_str.begin(), random_str.end());
                 if (stl::filesystem::exists(dir)) {
                     set_temp_dir();
@@ -321,13 +325,14 @@ namespace webpp {
                 }
             }
 
-            template <typename ET>
-                requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
-                         !stl::same_as<ET, storage_gate &&>)
+            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+            template <EnabledTraits ET>
+                requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
             storage_gate(ET&& et) : etraits{et},
                                     hashed_name{hash_name(et, "default")} {
                 set_temp_dir();
             }
+            // NOLINTEND(bugprone-forwarding-reference-overload)
 
 
             bool operator==(storage_gate const& rhs) const {
@@ -364,7 +369,7 @@ namespace webpp {
                 return stl::filesystem::exists(key_path(key));
             }
 
-            stl::optional<data_type> get_file(path_type const& filepath) {
+            stl::optional<bundle_type> get_file(path_type const& filepath) {
                 auto       result = object::make_general<string_type>(*this);
                 bool const res    = file::read_to(filepath, result);
                 if (res) {
@@ -376,7 +381,7 @@ namespace webpp {
                 }
             }
 
-            stl::optional<data_type> get(key_type const& key) {
+            stl::optional<bundle_type> get(key_type const& key) {
                 if (!has(key))
                     return stl::nullopt;
 
@@ -403,7 +408,7 @@ namespace webpp {
                 // I'm disabling the encryption for performance gains
                 const gate_options old_gate_opts = gate_opts;
                 gate_opts.encrypt_values         = false;
-                auto data                        = get(key).value_or(data_type{key, value_type{}, opts});
+                auto data                        = get(key).value_or(bundle_type{key, value_type{}, opts});
                 set(data.key, std::move(data.value), opts);
                 gate_opts = old_gate_opts; // restore the old gate options
             }
