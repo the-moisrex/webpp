@@ -314,7 +314,7 @@ namespace webpp::views {
         using char_type        = traits::char_type<traits_type>;
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type    = typename data_type::value_type;
-        using items_type = traits::generalify_allocators<traits_type, stl::vector<const variable_type*>>;
+        using items_type       = istl::vector<const variable_type*, traits_type>;
         using items_value_type = typename items_type::value_type;
         using etraits          = enable_traits<traits_type>;
 

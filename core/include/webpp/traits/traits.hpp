@@ -203,10 +203,10 @@ namespace webpp {
         template <Traits TT>
         using allocator_pack_type = alloc::allocator_pack<typename TT::allocator_descriptors>;
 
-        template <Traits TT, typename T>
+        template <Traits TT, typename T = stl::byte>
         using local_allocator = typename allocator_pack_type<TT>::template local_allocator_type<T>;
 
-        template <Traits TT, typename T>
+        template <Traits TT, typename T = stl::byte>
         using general_allocator = typename allocator_pack_type<TT>::template general_allocator_type<T>;
 
         template <Traits TT>

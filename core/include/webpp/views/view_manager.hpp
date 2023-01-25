@@ -234,7 +234,7 @@ namespace webpp::views {
         constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) {
             using view_type = ViewType;
             auto  cached    = get_view<view_type>(file);
-            auto& view      = stl::get<view_type>(*cached);
+            auto& view      = stl::get<view_type>(cached.value());
             if (!view.has_scheme()) {
                 auto file_content = object::make_general<string_type>(*this);
                 if (!read_file(file, file_content)) {
@@ -281,8 +281,8 @@ namespace webpp::views {
         }
 
         template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr string_view_type file(StrT&& file_request) {
-            string_view_type out;
+        [[nodiscard]] constexpr string_type file(StrT&& file_request) {
+            string_type out{alloc::general_alloc_for<string_type>(*this)};
             view_to<file_view_type>(out, stl::forward<StrT>(file_request));
             return out;
         }
