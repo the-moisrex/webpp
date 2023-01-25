@@ -109,10 +109,10 @@ TEST(Cache, ReferenceTest) {
     enable_owner_traits<default_traits> t;
     lru_cache<>                         c(t);
     c.set("one", "value");
-    EXPECT_EQ("value", *c.get_ptr("one").value());
+    EXPECT_EQ("value", *c.get_ptr("one"));
     c.set("one", "new value");
-    EXPECT_EQ("new value", *c.get_ptr("one").value());
-    auto& val_ref = *c.get_ptr("one").value();
+    EXPECT_EQ("new value", *c.get_ptr("one"));
+    auto& val_ref = *c.get_ptr("one");
     val_ref = "new new value";
     EXPECT_EQ("new new value", c.get("one").value());
 }

@@ -92,7 +92,7 @@ namespace webpp {
         template <CacheKey K>
             requires(details::CacheStrategyPointerSupport<strategy_type> &&
                      stl::is_convertible_v<K, key_type>)
-        constexpr auto get_ptr(K&& key) {
+        constexpr auto* get_ptr(K&& key) {
             return strategy_type::get_ptr(stl::forward<K>(key));
         }
 
