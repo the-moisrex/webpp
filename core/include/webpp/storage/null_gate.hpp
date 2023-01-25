@@ -17,7 +17,7 @@ namespace webpp {
 
             // we should be using cache_tuple, but we don't want to create a circular dependency by importing
             // cache_concepts.hpp file here.
-            struct data_type {
+            struct bundle_type {
                 key_type     key;
                 value_type   value;
                 options_type options;
@@ -26,7 +26,7 @@ namespace webpp {
             constexpr storage_gate(auto&&...) {}
 
             template <typename V>
-            constexpr stl::optional<data_type> get([[maybe_unused]] V&& value) {
+            constexpr stl::optional<bundle_type> get([[maybe_unused]] V&& value) {
                 return stl::nullopt;
             }
 

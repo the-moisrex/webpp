@@ -39,7 +39,7 @@ namespace webpp {
                 // stl::unique_ptr<char[]> buffer{new char[buffer_size]};
                 // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                 //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
-                in.seekg(0, in.end);
+                in.seekg(0, stl::ios_base::end);
                 const auto size = in.tellg();
                 out.resize(static_cast<stl::size_t>(
                   size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072

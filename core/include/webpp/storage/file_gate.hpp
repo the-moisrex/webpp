@@ -22,7 +22,7 @@ namespace webpp {
             using options_type = OptsT;
             using traits_type  = TraitsType;
             using path_type    = stl::filesystem::path;
-            using data_type    = cache_tuple<key_type, value_type, options_type>;
+            using bundle_type  = cache_tuple<key_type, value_type, options_type>;
 
           private:
             path_type cache_file;
@@ -31,7 +31,7 @@ namespace webpp {
             storage_gate(path_type output_file) : cache_file{stl::move(output_file)} {}
 
             template <typename V>
-            stl::optional<data_type> get(V&& value) {
+            stl::optional<bundle_type> get(V&& value) {
                 return stl::nullopt;
             }
 

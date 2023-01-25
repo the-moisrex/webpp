@@ -36,31 +36,56 @@ namespace webpp {
 
     namespace details {
         template <typename S>
-        concept StorageGateType = requires(S gate) {
-                                      typename S::key_type;
-                                      typename S::value_type;
-                                      typename S::options_type;
-                                      requires CacheKey<typename S::key_type>;
-                                      requires CacheValue<typename S::value_type>;
-                                      requires CacheOptions<typename S::options_type>;
-                                      typename S::traits_type;
-                                      requires Traits<typename S::traits_type>;
+        concept StorageGateType =
+          requires(S gate) {
+              typename S::key_type;
+              typename S::value_type;
+              typename S::options_type;
+              typename S::bundle_type;
+              requires CacheKey<typename S::key_type>;
+              requires CacheValue<typename S::value_type>;
+              requires CacheOptions<typename S::options_type>;
+              typename S::traits_type;
+              requires Traits<typename S::traits_type>;
 
-                                      requires requires(typename S::key_type     key,
-                                                        typename S::value_type   value,
-                                                        typename S::options_type opts) {
-                                                   gate.erase(key);
-                                                   gate.set(key, value, opts);
-                                                   gate.set_options(key, opts);
+              requires requires(typename S::key_type     key,
+                                typename S::value_type   value,
+                                typename S::options_type opts) {
+                           gate.erase(key);
+                           gate.set(key, value, opts);
+                           gate.set_options(key, opts);
+                           { gate.get(key) } -> stl::same_as<stl::optional<typename S::bundle_type>>;
 
-                                                   // I added the erase_if here and not in the "cache" because
-                                                   // it might be faster (I think)
-                                                   // todo: check if we really need erase_if here
-                                                   gate.erase_if([](typename S::key_type const&) -> bool {
-                                                       return true;
-                                                   });
-                                               };
-                                  };
+                           // I added the erase_if here and not in the "cache" because
+                           // it might be faster (I think)
+                           // todo: check if we really need erase_if here
+                           gate.erase_if([](typename S::key_type const&) -> bool {
+                               return true;
+                           });
+                       };
+          };
+
+        /**
+         * This concept accepts the StorageGate types that support references as well;
+         * for example the in-memory caches can give you a reference of what they're holding.
+         * The life-time management of this is a little tricky and should be avoided unless you know what
+         * you're doing.
+         */
+        template <typename T>
+        concept StorageGatePointerSupport =
+          requires {
+              typename T::key_ptr_type;
+              typename T::value_ptr_type;
+              typename T::options_ptr_type;
+              typename T::bundle_ptr_type;
+
+              requires requires(T                        gate,
+                                typename T::key_type     key,
+                                typename T::value_type   value,
+                                typename T::options_type opts) {
+                           { gate.get_ptr(key) } -> stl::same_as<stl::optional<typename T::bundle_ptr_type>>;
+                       };
+          };
 
 
         template <typename T>
@@ -71,9 +96,19 @@ namespace webpp {
               requires CacheKey<typename T::key_type>;
               requires CacheValue<typename T::value_type>;
               typename T::traits_type;
+              typename T::storage_gate_type;
               requires requires(T st, typename T::key_type key, typename T::value_type value) {
                            st.set(key, value);
+                           { st.get(key) } -> stl::same_as<stl::optional<typename T::value_type>>;
                        };
+          };
+
+
+        template <typename T>
+        concept CacheStrategyPointerSupport =
+          requires {
+              requires StorageGatePointerSupport<typename T::storage_gate_type>;
+              requires requires(T st, typename T::key_type key) { st.get_ptr(key); };
           };
 
     } // namespace details

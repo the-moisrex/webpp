@@ -1,7 +1,7 @@
 // Created by moisrex on 4/23/20.
 
-#ifndef WEBPP_MAP_H
-#define WEBPP_MAP_H
+#ifndef WEBPP_STD_MAP_HPP
+#define WEBPP_STD_MAP_HPP
 
 #include "../memory/allocators.hpp"
 #include "../traits/std_traits.hpp"
@@ -39,4 +39,4 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
-#endif // WEBPP_MAP_H
+#endif // WEBPP_STD_MAP_HPP
