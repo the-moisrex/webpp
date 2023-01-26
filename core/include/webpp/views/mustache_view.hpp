@@ -290,16 +290,21 @@ namespace webpp::views {
      */
     template <Traits TraitsType>
     struct delimiter_set {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
+        using traits_type = TraitsType;
+        using string_type = traits::general_string<traits_type>;
 
         static constexpr auto default_begin = "{{";
         static constexpr auto default_end   = "}}";
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        string_view_type begin = default_begin;
-        string_view_type end   = default_end;
+        string_type begin;
+        string_type end;
         // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+        template <EnabledTraits ET>
+        constexpr delimiter_set(ET& et)
+          : begin{default_begin, alloc::general_alloc_for<string_type>(et)},
+            end{default_end, alloc::general_alloc_for<string_type>(et)} {}
 
         [[nodiscard]] constexpr bool is_default() const noexcept {
             return begin == default_begin && end == default_end;
@@ -415,6 +420,9 @@ namespace webpp::views {
         bool        contained_section_tag = false;
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
+        template <EnabledTraits ET>
+        constexpr line_buffer_state(ET& et) : data{alloc::general_alloc_for<string_type>(et)} {}
+
         [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
             for (const auto ch : data) {
                 // don't look at newlines
@@ -435,9 +443,26 @@ namespace webpp::views {
     struct context_internal {
         using traits_type = TraitsType;
 
-        context<traits_type>*          ctx;
-        delimiter_set<traits_type>     delim_set{};
-        line_buffer_state<traits_type> line_buffer{};
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        context<traits_type>*          ctx = nullptr;
+        delimiter_set<traits_type>     delim_set;
+        line_buffer_state<traits_type> line_buffer;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+        constexpr context_internal(context<traits_type>& ctx_ref)
+          : ctx{&ctx_ref},
+            delim_set{ctx_ref},
+            line_buffer{ctx_ref} {}
+
+        constexpr context_internal(context_internal const&)                = default;
+        constexpr context_internal(context_internal&&) noexcept            = default;
+        constexpr context_internal& operator=(context_internal&&) noexcept = default;
+        constexpr context_internal& operator=(context_internal const&)     = default;
+        constexpr ~context_internal()                                      = default;
+
+        template <EnabledTraits ET>
+        constexpr context_internal(ET& et) : delim_set{et},
+                                             line_buffer{et} {}
     };
 
     enum class tag_type {
@@ -454,19 +479,22 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
-        using traits_type      = TraitsType;
-        using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
+        using traits_type = TraitsType;
+        using string_type = traits::general_string<traits_type>;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 
         // the name cannot be a string view
-        string_view_type                name;
-        tag_type                        type = tag_type::text;
-        stl::optional<string_view_type> section_text;
-        delimiter_set<traits_type>      delim_set;
+        string_type                name;
+        tag_type                   type         = tag_type::text;
+        stl::optional<string_type> section_text = stl::nullopt;
+        delimiter_set<traits_type> delim_set;
 
         // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+        template <EnabledTraits ET>
+        constexpr mstch_tag(ET& et) : name{alloc::general_alloc_for<string_type>(et)},
+                                      delim_set{et} {}
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
             return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
@@ -528,8 +556,9 @@ namespace webpp::views {
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, component>)
         constexpr component(ET&& et, string_view_type t = "", string_size_type p = string_view_type::npos)
-          : text(t),
-            children{et.alloc_pack.template general_allocator<component>()},
+          : text(t, alloc::general_alloc_for<string_type>(et)),
+            tag{et},
+            children{alloc::general_allocator<component>(et)},
             position(p) {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -624,7 +653,7 @@ namespace webpp::views {
         }
 
         constexpr void scheme(string_view_type input) {
-            delimiter_set<traits_type> delim_set;
+            delimiter_set<traits_type> delim_set{*this};
             parse(input, delim_set);
         }
 
@@ -674,7 +703,7 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            context<traits_type>          ctx{&data};
+            context<traits_type>          ctx{*this, &data};
             context_internal<traits_type> context{ctx};
             render(handler, context);
         }
@@ -688,7 +717,7 @@ namespace webpp::views {
             }
             if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_type>) {
                 context<traits_type>          ctx{*this, &data};
-                context_internal<traits_type> context{.ctx = &ctx};
+                context_internal<traits_type> context{ctx};
                 // todo: optimization chance: out::reserve
                 render(
                   [&]<typename ContentT>(ContentT&& content) {
@@ -850,8 +879,9 @@ namespace webpp::views {
                         error_msg.assign(ss.str());
                         return;
                     }
-                    sections.back()->tag.section_text =
-                      input.substr(section_starts.back(), tag_location_start - section_starts.back());
+                    sections.back()->tag.section_text = string_type{
+                      input.substr(section_starts.back(), tag_location_start - section_starts.back()),
+                      alloc::general_alloc_for<string_type>(*this)};
                     sections.pop_back();
                     section_starts.pop_back();
                 }
@@ -943,7 +973,7 @@ namespace webpp::views {
                     tag.name = contents;
                 } else {
                     tag.name = contents;
-                    tag.name.remove_prefix(1);
+                    tag.name.erase(0, 1); // remove the first char
                     ascii::trim(tag.name);
                 }
             }
@@ -1099,7 +1129,7 @@ namespace webpp::views {
                         error_msg = tmpl.error_message();
                         return {};
                     }
-                    context_internal<traits_type> render_ctx{ctx.ctx}; // start a new line_buffer
+                    context_internal<traits_type> render_ctx{ctx}; // start a new line_buffer
                     const auto                    str = tmpl.render(render_ctx);
                     if (!tmpl.is_valid()) {
                         error_msg = tmpl.error_message();
