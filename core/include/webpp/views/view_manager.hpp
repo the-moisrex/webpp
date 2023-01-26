@@ -224,24 +224,24 @@ namespace webpp::views {
 
 
         template <typename VT>
-        [[nodiscard]] decltype(auto) get_view(path_type const& file) {
+        [[nodiscard]] auto* get_view(path_type const& file) {
             static view_types default_view{stl::in_place_type<VT>, *this};
-            return cached_views.emplace_get(file, default_view);
+            return cached_views.emplace_get_ptr(file, default_view);
         }
 
 
         template <typename ViewType, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) {
             using view_type = ViewType;
-            auto  cached    = get_view<view_type>(file);
-            auto& view      = stl::get<view_type>(cached.value());
+            auto* cached    = get_view<view_type>(file);
+            auto& view      = stl::get<view_type>(*cached);
             if (!view.has_scheme()) {
                 auto file_content = object::make_general<string_type>(*this);
                 if (!read_file(file, file_content)) {
                     return; // We weren't able to read the file.
                 }
                 view.scheme(file_content);
-                cached.save();
+                // since we got a pointer, we don't need to save it the cache again
             }
 
             // Render the view based on the data that passed to us

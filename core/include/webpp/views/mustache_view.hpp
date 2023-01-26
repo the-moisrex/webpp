@@ -582,9 +582,7 @@ namespace webpp::views {
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = typename string_type::value_type;
 
-        using string_size_type = typename string_type::size_type;
-        using escape_handler =
-          istl::function<string_type(string_view_type), traits::general_allocator<traits_type, stl::byte>>;
+        using string_size_type  = typename string_type::size_type;
         using component_type    = component<traits_type>;
         using walk_control_type = typename component_type::walk_control;
 
@@ -605,12 +603,6 @@ namespace webpp::views {
       private:
         string_type    error_msg{alloc::general_alloc_for<string_type>(*this)};
         component_type root_component;
-        escape_handler escaper{[this](auto&& val) {
-                                   string_type out{alloc::general_alloc_for<string_type>(*this)};
-                                   html_escape(val, out);
-                                   return out;
-                               },
-                               alloc::general_alloc_for<typename renderer_type::type>(*this)};
 
       public:
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
@@ -647,10 +639,6 @@ namespace webpp::views {
 
         [[nodiscard]] constexpr string_view_type error_message() const noexcept {
             return error_msg;
-        }
-
-        constexpr void set_custom_escape(const escape_handler& escape_fn) {
-            escaper = escape_fn;
         }
 
         template <typename stream_type>
@@ -726,6 +714,13 @@ namespace webpp::views {
         }
 
       private:
+        [[nodiscard]] constexpr auto escaper(string_view_type val) {
+            string_type out{alloc::general_alloc_for<string_type>(*this)};
+            html_escape(val, out);
+            return out;
+        }
+
+
         /////// Parser
 
 
@@ -1053,7 +1048,6 @@ namespace webpp::views {
                           var->is_partial() ? var->partial_value()() : var->string_value();
                         mustache_view tmpl{get_traits()};
                         tmpl.scheme(partial_result);
-                        tmpl.set_custom_escape(escaper);
                         if (!tmpl.is_valid()) {
                             error_msg = tmpl.error_message();
                         } else {
@@ -1122,12 +1116,10 @@ namespace webpp::views {
                 if (parse_with_same_context) {
                     mustache_view tmpl{get_traits()};
                     tmpl.parse(txt, ctx.delim_set);
-                    tmpl.set_custom_escape(escaper);
                     return process_template(tmpl);
                 }
                 mustache_view tmpl{get_traits()};
                 tmpl.scheme(txt);
-                tmpl.set_custom_escape(escaper);
                 return process_template(tmpl);
             };
             const renderer_type renderer{

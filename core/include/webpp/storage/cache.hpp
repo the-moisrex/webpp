@@ -131,6 +131,25 @@ namespace webpp {
             }
         }
 
+        /**
+         * Get the value if exists, if not, construct one, and return the constructed one.
+         */
+        template <CacheKey K, typename... Args>
+            requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
+        constexpr auto* emplace_get_ptr(K&& key, Args&&... args) {
+            if (auto* val = get_ptr(key); val) {
+                return val;
+            }
+            if constexpr (sizeof...(Args) == 1 &&
+                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>) {
+                // if args... is value_type itself, no need to copy/move twice
+                set(key, args...);
+            } else {
+                set(key, value_type{stl::forward<Args>(args)...});
+            }
+            return get_ptr(key);
+        }
+
         constexpr decltype(auto) begin() {
             if constexpr (istl::Iterable<strategy_type>) {
                 return this->begin();
