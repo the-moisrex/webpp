@@ -14,7 +14,7 @@ namespace website {
 
     struct app {
 
-        auto about([[maybe_unused]] auto const& ctx) {
+        auto about(auto const& ctx) {
             auto doc    = ctx.json_doc();
             doc["page"] = "about";
             return doc;

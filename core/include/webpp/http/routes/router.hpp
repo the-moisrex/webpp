@@ -74,8 +74,8 @@ namespace webpp::http {
         template <typename ResT, Context CtxT, HTTPRequest ReqT>
         [[nodiscard]] constexpr decltype(auto)
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
-            using result_type   = stl::remove_cvref_t<ResT>;
-            using context_type  = stl::remove_cvref_t<CtxT>;
+            using result_type  = stl::remove_cvref_t<ResT>;
+            using context_type = stl::remove_cvref_t<CtxT>;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return stl::forward<ResT>(res); // let the "next_route" function handle it

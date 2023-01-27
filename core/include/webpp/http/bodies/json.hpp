@@ -35,23 +35,8 @@ namespace webpp::http {
 
             template <typename... Args>
             constexpr HTTPResponse auto json(Args&&... args) const noexcept {
-                // check if there's an allocator in the args:
-                constexpr bool has_allocator = (Allocator<Args> || ...);
-                using value_type             = traits::char_type<traits_type>;
-                if constexpr (!has_allocator &&
-                              requires {
-                                  json_response_type::with_body(
-                                    stl::forward<Args>(args)...,
-                                    this->alloc_pack.template general_allocator<value_type>());
-                              }) {
-                    return json_response_type::with_body(
-                      stl::forward<Args>(args)...,
-                      this->alloc_pack.template general_allocator<value_type>());
-                } else {
-                    return json_response_type::with_body(stl::forward<Args>(args)...);
-                }
+                return this->response_body(stl::forward<Args>(args)...);
             }
-
 
             constexpr json_document_type json_doc() const {
                 // fixme: should we use the default allocator?
@@ -91,10 +76,6 @@ namespace webpp::http {
     // Set the header for json and pass it to the serialize_body to set the body as well
     template <json::JSONDocument DocT, HTTPResponse ResT>
     constexpr void serialize_response_body(DocT const& doc, ResT& res) {
-        using response_type = stl::remove_cvref_t<ResT>;
-        using body_type     = typename response_type::body_type;
-        using traits_type   = typename body_type::traits_type;
-        using string_type   = traits::general_string<traits_type>;
 
         // todo: encoding support
         // todo: don't insert into headers directly
