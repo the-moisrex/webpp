@@ -369,13 +369,6 @@ namespace webpp::http {
     stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
-    template <typename ResponseType, typename T>
-    concept ConstructibleWithResponse = stl::is_constructible_v<ResponseType, T>;
-
-    template <typename ResponseBodyType, typename T>
-    concept ConstructibleWithResponseBody = stl::is_constructible_v<ResponseBodyType, T>;
-
-
 
 
 

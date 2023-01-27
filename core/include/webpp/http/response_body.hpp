@@ -4,6 +4,7 @@
 #include "../extensions/extension.hpp"
 #include "../std/functional.hpp"
 #include "../std/vector.hpp"
+#include "../traits/enable_traits.hpp"
 #include "http_concepts.hpp"
 
 #include <algorithm>
@@ -62,16 +63,17 @@ namespace webpp::http {
      * Implements: BlobBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
      */
     template <Traits TraitsType, typename EList>
-    struct response_body : public EList {
+    struct response_body : public enable_traits_with<TraitsType, EList> {
         using traits_type              = TraitsType;
-        using elist_type               = EList;
+        using elist_type               = enable_traits_with<TraitsType, EList>;
         using char_type                = traits::char_type<traits_type>;
         using string_communicator_type = string_response_body_communicator<traits_type>;
         using blob_communicator_type   = blob_response_body_communicator<traits_type>;
         using stream_communicator_type = stream_response_body_communicator<traits_type>;
 
-        using byte_type  = stl::byte;                            // required by BlobBasedBodyWriter
-        using value_type = string_communicator_type::value_type; // required by the TextBasedBodyWriter
+        using byte_type = stl::byte; // required by BlobBasedBodyWriter
+        using value_type =
+          typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
         // the order of types in this variant must match the order of http::communicator_type enum
         using communicator_storage_type = stl::
@@ -93,12 +95,6 @@ namespace webpp::http {
         communicator_storage_type communicator{stl::monostate{}};
 
       public:
-        using EList::EList;
-
-        constexpr response_body()
-            requires(stl::is_default_constructible_v<elist_type>)
-        = default;
-
         constexpr response_body(response_body const&)                = default;
         constexpr response_body(response_body&&) noexcept            = default;
         constexpr response_body& operator=(response_body const&)     = default;
@@ -108,9 +104,11 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET>)
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, response_body>)
         constexpr response_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
           : elist_type{et} {}
+
+
 
         template <EnabledTraits ET, typename T>
             requires(stl::is_constructible_v<elist_type, ET>)
@@ -118,16 +116,6 @@ namespace webpp::http {
             this->set<T>(stl::forward<T>(obj));
         }
 
-
-        template <EnabledTraits ET>
-        constexpr response_body([[maybe_unused]] ET&&) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>)
-          : elist_type{} {}
-
-        template <EnabledTraits ET, typename T>
-        constexpr response_body([[maybe_unused]] ET&&, T&& obj) : elist_type{} {
-            this->set<T>(stl::forward<T>(obj));
-        }
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -251,10 +239,17 @@ namespace webpp::http {
 
         template <typename T>
         constexpr response_body& set(T&& obj) {
+            using object_type = stl::remove_cvref_t<T>;
             if constexpr (requires { elist_type::template set<T>(stl::forward<T>(obj)); }) {
                 elist_type::template set<T>(stl::forward<T>(obj));
             } else if constexpr (requires { elist_type::template operator=<T>(stl::forward<T>(obj)); }) {
                 elist_type::template operator=<T>(stl::forward<T>(obj));
+            } else if constexpr (requires {
+                                     serialize_response_body<object_type>(stl::forward<T>(obj), *this);
+                                 }) {
+                serialize_response_body<object_type>(stl::forward<T>(obj), *this);
+            } else if constexpr (requires { serialize_body<object_type>(stl::forward<T>(obj), *this); }) {
+                serialize_body<object_type>(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_response_body<T>(stl::forward<T>(obj), *this); }) {
                 serialize_response_body<T>(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_body<T>(stl::forward<T>(obj), *this); }) {
@@ -270,7 +265,7 @@ namespace webpp::http {
 
         template <typename T>
         constexpr response_body& operator=(T&& obj) {
-            set(stl::forward<T>(obj));
+            set<T>(stl::forward<T>(obj));
             return *this;
         }
 

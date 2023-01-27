@@ -16,8 +16,18 @@ namespace webpp::http {
         template <typename TraitsType, typename HeaderFieldType>
         struct response_headers_container
           : stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>> {
+            using traits_type = TraitsType;
+            using vector_type =
+              stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>;
             // this field type is required for the "headers_container" to work
             using field_type = HeaderFieldType;
+
+            using stl::vector<HeaderFieldType,
+                              traits::general_allocator<TraitsType, HeaderFieldType>>::vector;
+
+            template <EnabledTraits ET>
+            constexpr response_headers_container(ET& et)
+              : vector_type{alloc::general_alloc_for<vector_type>(et)} {}
         };
     } // namespace details
 
@@ -46,6 +56,8 @@ namespace webpp::http {
         using root_extensions = typename field_type::root_extensions;
 
         template <typename... Args>
+            requires(stl::is_default_constructible_v<elist_type> &&
+                     stl::is_constructible_v<container, Args...>)
         constexpr response_headers(Args&&... args) noexcept
           : container{stl::forward<Args>(args)...},
             elist_type{} {}
@@ -61,14 +73,14 @@ namespace webpp::http {
 
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<container, ET>)
+            requires(stl::is_constructible_v<container, ET> && !stl::is_constructible_v<container, ET>)
         constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<container, ET>&&
                                                        stl::is_nothrow_default_constructible_v<elist_type>)
           : container{et},
             elist_type{} {}
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET>)
+            requires(!stl::is_constructible_v<container, ET> && stl::is_constructible_v<elist_type, ET>)
         constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
                                                        stl::is_nothrow_default_constructible_v<container>)
           : container{},

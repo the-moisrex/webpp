@@ -62,6 +62,7 @@ namespace webpp {
     struct enable_traits {
         using traits_type         = TraitsType;
         using non_owner_type      = enable_traits<traits_type>;
+        using enable_traits_type  = enable_traits;
         using logger_type         = traits::logger<traits_type>;
         using logger_ref          = typename logger_type::logger_ref;
         using string_view_type    = traits::string_view<traits_type>;
@@ -107,9 +108,9 @@ namespace webpp {
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 
-        constexpr explicit enable_traits(enable_traits const&) noexcept = default;
-        constexpr explicit enable_traits(enable_traits&&) noexcept      = default;
-        constexpr ~enable_traits()                                      = default;
+        constexpr enable_traits(enable_traits const&) noexcept = default;
+        constexpr enable_traits(enable_traits&&) noexcept      = default;
+        constexpr ~enable_traits()                             = default;
 
         constexpr enable_traits& operator=(enable_traits const& rhs) {
             if (this != &rhs) {
@@ -133,6 +134,10 @@ namespace webpp {
 
         // when this object is a mother of another class, this method can help get the traits object.
         constexpr enable_traits& get_traits() noexcept {
+            return *this;
+        }
+
+        constexpr enable_traits const& get_traits() const noexcept {
             return *this;
         }
     };
@@ -162,6 +167,17 @@ namespace webpp {
     struct enable_traits_with : public T, public enable_traits<TraitsType> {
         using enabled_type = T;
         using enable_traits<TraitsType>::enable_traits;
+
+        constexpr enable_traits_with(enable_traits<TraitsType> const& et) noexcept
+          : enable_traits<TraitsType>{et} {}
+        constexpr enable_traits_with(enable_traits<TraitsType>&& et) noexcept
+          : enable_traits<TraitsType>{stl::move(et)} {}
+
+        constexpr enable_traits_with(enable_traits_with const&) noexcept            = default;
+        constexpr enable_traits_with(enable_traits_with&&) noexcept                 = default;
+        constexpr ~enable_traits_with() noexcept                                    = default;
+        constexpr enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
+        constexpr enable_traits_with& operator=(enable_traits_with&&) noexcept      = default;
     };
 
     template <Traits TraitsType, EnabledTraits T>
@@ -169,13 +185,19 @@ namespace webpp {
     struct enable_traits_with<TraitsType, T> : public T {
         using enabled_type = T;
         using T::T;
+
+        constexpr enable_traits_with(enable_traits_with const&) noexcept            = default;
+        constexpr enable_traits_with(enable_traits_with&&) noexcept                 = default;
+        constexpr ~enable_traits_with() noexcept                                    = default;
+        constexpr enable_traits_with& operator=(enable_traits_with const&) noexcept = default;
+        constexpr enable_traits_with& operator=(enable_traits_with&&) noexcept      = default;
     };
 
     /**
      * If
      *  - traits type:          enable owner traits
      *  - enable traits type:   enable traits
-     *  - enable owner traits: enable owner traits
+     *  - enable owner traits:  enable owner traits
      * It's almost the opposite of enable_traits itself which only holds a reference, this one holds the
      * owner too if a enable_traits is not passed to it.
      */
