@@ -16,50 +16,6 @@ namespace webpp::http {
 
     namespace details {
 
-        template <Traits TraitsType, HTTPResponseBody BodyType>
-        struct json_response_body_extension : BodyType {
-          private:
-            using super = BodyType;
-
-          public:
-            using traits_type    = TraitsType;
-            using allocator_type = typename super::allocator_type;
-            using string_type    = typename super::string_type;
-            using char_type      = typename super::char_type;
-
-          private:
-            using alloc_type = allocator_type const&;
-
-          public:
-            using BodyType::BodyType;
-
-            template <EnabledTraits ET, json::JSONDocument DocT>
-                requires requires(ET et, DocT doc) {
-                             super{et,
-                                   doc.template uglified<string_type>(
-                                     et.alloc_pack.template general_allocator<char_type>())};
-                         }
-            constexpr json_response_body_extension(ET&& et, DocT const& doc)
-              : super{et,
-                      doc.template uglified<string_type>(
-                        et.alloc_pack.template general_allocator<char_type>())} {}
-
-
-            template <EnabledTraits ET, json::JSONDocument DocT>
-                requires requires(ET et, DocT doc) {
-                             super{doc.template uglified<string_type>(
-                               et.alloc_pack.template general_allocator<char_type>())};
-                         }
-            constexpr json_response_body_extension(ET&& et, DocT const& doc)
-              : super{doc.template uglified<string_type>(
-                  et.alloc_pack.template general_allocator<char_type>())} {}
-
-            template <json::JSONDocument DocT>
-            constexpr json_response_body_extension(DocT const& doc, alloc_type alloc = allocator_type{})
-              : super{doc.template uglified<string_type>(alloc), alloc} {}
-        };
-
-
         /**
          * This extension helps the user to create a response with the help of the context
          */
@@ -103,41 +59,6 @@ namespace webpp::http {
             }
         };
 
-        template <Traits TraitsType, typename ResType>
-        struct json_response_extension : public ResType {
-            using body_type   = typename ResType::body_type;
-            using traits_type = TraitsType;
-
-            using ResType::ResType;
-
-            // pass it to the body
-            template <EnabledTraits ET, json::JSONDocument DocT>
-                requires requires(ET et, DocT doc) {
-                             ResType{et, body_type{et, doc}};
-                         }
-            constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
-              : ResType{et, body_type{et, doc}} {
-                this->add_headers();
-            }
-
-
-
-            template <EnabledTraits ET, json::JSONDocument DocT>
-                requires requires(ET et, DocT doc) {
-                             ResType{body_type{et, doc}};
-                         }
-            constexpr json_response_extension(ET&& et, DocT const& doc) noexcept
-              : ResType{body_type{et, doc}} {
-                this->add_headers();
-            }
-
-          private:
-            constexpr void add_headers() {
-                // todo: encoding support
-                // todo: don't insert into headers directly
-                this->headers.emplace_back("Content-Type", "application/json; charset=utf-8");
-            }
-        };
 
     } // namespace details
 
@@ -146,15 +67,41 @@ namespace webpp::http {
      * String Response Extension Pack.
      */
     struct json_body {
-        // we're going to use "string extension" as a place to store the data
-        using dependencies = extension_pack<string_body>;
-
-        // todo: add support for request body
-        using response_body_extensions = extension_pack<as_extension<details::json_response_body_extension>>;
-        using response_extensions      = extension_pack<as_extension<details::json_response_extension>>;
-        using context_extensions       = extension_pack<as_extension<details::json_context_extension>>;
+        using context_extensions = extension_pack<as_extension<details::json_context_extension>>;
     };
 
+
+    template <json::JSONDocument DocT, HTTPBody BodyType>
+    constexpr void deserialize_body(BodyType const& body) {
+        // todo
+    }
+
+
+    // Only sets the body
+    template <json::JSONDocument DocT, HTTPBody BodyType>
+    constexpr void serialize_body(DocT const& doc, BodyType& body) {
+        using body_type   = stl::remove_cvref_t<BodyType>;
+        using traits_type = typename body_type::traits_type;
+        using string_type = traits::general_string<traits_type>;
+
+        // delegate the string to the serialize_body for the strings:
+        body = doc.template uglified<string_type>(alloc::general_alloc_for<string_type>(body));
+    }
+
+    // Set the header for json and pass it to the serialize_body to set the body as well
+    template <json::JSONDocument DocT, HTTPResponse ResT>
+    constexpr void serialize_response_body(DocT const& doc, ResT& res) {
+        using response_type = stl::remove_cvref_t<ResT>;
+        using body_type     = typename response_type::body_type;
+        using traits_type   = typename body_type::traits_type;
+        using string_type   = traits::general_string<traits_type>;
+
+        // todo: encoding support
+        // todo: don't insert into headers directly
+        res.headers.emplace_back("Content-Type", "application/json; charset=utf-8");
+
+        serialize_body<DocT>(stl::forward<DocT>(doc), res.body);
+    }
 
 } // namespace webpp::http
 

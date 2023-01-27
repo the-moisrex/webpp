@@ -165,7 +165,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
-            return new_response_type::with_body(stl::forward<Args>(args)...);
+            return new_response_type::with_body(*this, stl::forward<Args>(args)...);
         }
 
 

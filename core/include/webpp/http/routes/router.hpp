@@ -76,7 +76,6 @@ namespace webpp::http {
         handle_primary_results(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using result_type   = stl::remove_cvref_t<ResT>;
             using context_type  = stl::remove_cvref_t<CtxT>;
-            using response_type = typename context_type::response_type;
 
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return stl::forward<ResT>(res); // let the "next_route" function handle it
@@ -90,7 +89,7 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(stl::move(res2), stl::forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (ConstructibleWithResponse<response_type, result_type>) {
+            } else if constexpr (requires { ctx.response(stl::forward<ResT>(res)); }) {
                 return ctx.response(stl::forward<ResT>(res));
             } else {
                 // todo: consider "response extension" injection in order to get the right response type

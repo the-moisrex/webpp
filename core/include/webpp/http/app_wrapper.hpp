@@ -114,8 +114,6 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, ETT, Args...>)
         constexpr http_app_wrapper(ETT&, Args&&... args) : application_type{stl::forward<Args>(args)...} {}
 
-        // todo: add support for Allocator constructors and even references to other stuff
-
 
         [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {
             if constexpr (requires {
@@ -147,16 +145,16 @@ namespace webpp::http {
             } else if constexpr (requires { application_type::error(res, err, req); }) {
                 application_type::error(res, err, req);
             } else {
-                res.headers = err;
-                res.body    = fmt::format("<!DOCTYPE html>\n"
-                                          "<html>\n"
-                                          "  <head>\n"
-                                          "    <title>{0} - {1}</title>\n"
-                                          "  <head>\n"
-                                          "  <body>\n"
-                                          "    <h1>{0} - {1}</h1>\n"
-                                          "  </body>\n"
-                                          "</html>\n",
+                res      = err;
+                res.body = fmt::format("<!DOCTYPE html>\n"
+                                       "<html>\n"
+                                       "  <head>\n"
+                                       "    <title>{0} - {1}</title>\n"
+                                       "  <head>\n"
+                                       "  <body>\n"
+                                       "    <h1>{0} - {1}</h1>\n"
+                                       "  </body>\n"
+                                       "</html>\n",
                                        static_cast<status_code_type>(err),
                                        http::status_code_reason_phrase(err));
             }
@@ -196,18 +194,20 @@ namespace webpp::http {
             } else if constexpr (stl::is_nothrow_invocable_v<application_type>) {
                 return fix_response(request, application_type::operator()());
             } else if constexpr (stl::is_invocable_v<application_type, ReqType>) {
-                using return_type = stl::invoke_result_t<application_type, ReqType>;
-                if constexpr (stl::is_constructible_v<return_type, ReqType>) {
+                using request_type = stl::remove_cvref_t<ReqType>;
+                using etraits_type = typename request_type::enable_traits_type;
+                using return_type  = stl::invoke_result_t<application_type, ReqType>;
+                if constexpr (stl::is_constructible_v<return_type, etraits_type>) {
                     try {
                         return operator()(stl::forward<ReqType>(request), enable_throws{});
                     } catch (stl::exception const& ex) {
                         // todo: log
-                        return_type res{request};
+                        return_type res{request.get_traits()};
                         error(request, http::status_code::internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
-                        return_type res{request};
+                        return_type res{request.get_traits()};
                         error(request, http::status_code::internal_server_error, res);
                         return res;
                     }

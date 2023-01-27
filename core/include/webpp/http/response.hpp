@@ -33,23 +33,17 @@ namespace webpp::http {
 
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        headers_type headers{};
-        body_type    body{};
+        headers_type headers;
+        body_type    body;
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
-
-        template <typename Arg1, typename... Args>
-        constexpr basic_response([[maybe_unused]] Arg1&& arg1, Args&&... args) noexcept
-            requires(!istl::part_of<Arg1, headers_type, http::status_code_type, body_type> &&
-                     stl::is_constructible_v<elist_type, Args...>)
-          : elist_type{stl::forward<Args>(args)...} {}
 
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
-                     stl::is_constructible_v<elist_type, ET>)                  // can we give it to elist
+                     stl::is_constructible_v<elist_type, ET>)
         constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
                                                        stl::is_nothrow_constructible_v<headers_type, ET>&&
                                                        stl::is_nothrow_constructible_v<body_type, ET>)
@@ -59,7 +53,9 @@ namespace webpp::http {
 
 
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>) // It's not a copy/move
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
+                     !stl::is_constructible_v<elist_type, ET> &&
+                     stl::is_default_constructible_v<elist_type>) // can we give it to elist
         constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
                                                        stl::is_nothrow_constructible_v<headers_type, ET>&&
                                                        stl::is_nothrow_constructible_v<body_type, ET>)
@@ -69,34 +65,43 @@ namespace webpp::http {
 
         template <EnabledTraits ET, typename T>
             requires(!stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et, T&& obj)
+        constexpr basic_response(ET&& et, T&& body_obj)
           : elist_type{},
             headers{et},
-            body{et, stl::forward<T>(obj)} {}
+            body{et, stl::forward<T>(body_obj)} {}
 
         template <EnabledTraits ET, typename T>
             requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et, T&& obj)
+        constexpr basic_response(ET&& et, T&& body_obj)
           : elist_type{et},
             headers{et},
-            body{et, stl::forward<T>(obj)} {}
+            body{et, stl::forward<T>(body_obj)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        constexpr basic_response() noexcept                          = default;
         constexpr ~basic_response()                                  = default;
         constexpr basic_response(basic_response const& res) noexcept = default;
         constexpr basic_response(basic_response&& res) noexcept      = default;
 
-        constexpr basic_response(http::status_code_type err_code) noexcept
+        constexpr explicit basic_response(body_type const& b)
+            requires(stl::is_constructible_v<elist_type, decltype(b.get_traits())>)
+          : elist_type{b.get_traits()},
+            headers{b.get_traits()},
+            body(b) {}
+        constexpr explicit basic_response(body_type const& b)
           : elist_type{},
-            headers{err_code} {}
-
-        constexpr explicit basic_response(body_type const& b) noexcept : elist_type{}, body(b) {}
+            headers{b.get_traits()},
+            body(b) {}
+        constexpr explicit basic_response(body_type&& b)
+            requires(stl::is_constructible_v<elist_type, decltype(b.get_traits())>)
+          : elist_type{b.get_traits()},
+            headers{b.get_traits()},
+            body(stl::move(b)) {}
         constexpr explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
-        constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e)) {}
-        constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
+        // todo: headers are not Traits Enabled, so we can't fill the body with it
+        // constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e))
+        // {} constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
 
         constexpr basic_response& operator=(basic_response const&)         = default;
         constexpr basic_response& operator=(basic_response&& res) noexcept = default;
@@ -180,24 +185,20 @@ namespace webpp::http {
         using EList::EList;
 
 
-        template <typename T>
+        template <EnabledTraits T>
         [[nodiscard]] constexpr static auto with_body(T&& obj) {
-            response_type res = create();
-            res               = stl::forward<T>(obj);
-            return res;
+            return create(obj, obj);
         }
 
-        template <typename... Args>
-        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
-            return response_type{headers_type{stl::forward<Args>(args)...}};
+        template <EnabledTraits ET, typename T>
+        [[nodiscard]] constexpr static auto with_body(ET&& et, T&& obj) {
+            return create(et, obj);
         }
 
-        template <Extension... NewExtensions, typename... Args>
-        [[nodiscard]] static constexpr HTTPResponse auto create(Args&&... args) {
-            using new_response_type =
-              typename response_type::template apply_extensions_type<NewExtensions...>;
-            return new_response_type{stl::forward<Args>(args)...};
-        }
+        //        template <typename... Args>
+        //        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
+        //            return response_type{headers_type{stl::forward<Args>(args)...}};
+        //        }
 
         /**
          * Generate a response
@@ -295,10 +296,27 @@ namespace webpp::http {
 
         template <typename T>
         constexpr final_response& set(T&& obj) {
+            using object_type = stl::remove_cvref_t<T>;
             if constexpr (requires { elist_type::template set<T>(stl::forward<T>(obj)); }) {
                 elist_type::template set<T>(stl::forward<T>(obj));
             } else if constexpr (requires { elist_type::template operator=<T>(stl::forward<T>(obj)); }) {
                 elist_type::template operator=<T>(stl::forward<T>(obj));
+            } else if constexpr (requires {
+                                     serialize_response_body<object_type>(stl::forward<T>(obj), *this);
+                                 }) {
+                serialize_response_body<object_type>(stl::forward<T>(obj), *this);
+            } else if constexpr (requires {
+                                     serialize_response_body<object_type>(stl::forward<T>(obj), this->body);
+                                 }) {
+                serialize_response_body<object_type>(stl::forward<T>(obj), this->body);
+            } else if constexpr (requires { serialize_body<object_type>(stl::forward<T>(obj), *this); }) {
+                serialize_body<object_type>(stl::forward<T>(obj), *this);
+            } else if constexpr (requires {
+                                     serialize_body<object_type>(stl::forward<T>(obj), this->body);
+                                 }) {
+                serialize_body<object_type>(stl::forward<T>(obj), this->body);
+
+                // The same as above version with a little difference
             } else if constexpr (requires { serialize_response_body<T>(stl::forward<T>(obj), *this); }) {
                 serialize_response_body<T>(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_response_body<T>(stl::forward<T>(obj), this->body); }) {
@@ -316,7 +334,9 @@ namespace webpp::http {
             return *this;
         }
 
+        using elist_type::operator=;
         template <typename T>
+            requires(!stl::same_as<stl::remove_cvref_t<T>, http::status_code>)
         constexpr final_response& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
