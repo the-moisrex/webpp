@@ -260,6 +260,7 @@ namespace webpp::http {
 
         template <typename T>
         constexpr T as() const {
+            using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
                               { deserialize_response_body<T>(*this) } -> stl::same_as<T>;
                           }) {
@@ -276,6 +277,8 @@ namespace webpp::http {
                                      { deserialize_body<T>(this->body) } -> stl::same_as<T>;
                                  }) {
                 return deserialize_body<T>(this->body);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return as<requested_type>();
             } else {
                 static_assert_false(T,
                                     "We don't know how to convert the request to the specified type."
@@ -296,35 +299,18 @@ namespace webpp::http {
 
         template <typename T>
         constexpr final_response& set(T&& obj) {
-            using object_type = stl::remove_cvref_t<T>;
-            if constexpr (requires { elist_type::template set<T>(stl::forward<T>(obj)); }) {
-                elist_type::template set<T>(stl::forward<T>(obj));
-            } else if constexpr (requires { elist_type::template operator=<T>(stl::forward<T>(obj)); }) {
-                elist_type::template operator=<T>(stl::forward<T>(obj));
-            } else if constexpr (requires {
-                                     serialize_response_body<object_type>(stl::forward<T>(obj), *this);
-                                 }) {
-                serialize_response_body<object_type>(stl::forward<T>(obj), *this);
-            } else if constexpr (requires {
-                                     serialize_response_body<object_type>(stl::forward<T>(obj), this->body);
-                                 }) {
-                serialize_response_body<object_type>(stl::forward<T>(obj), this->body);
-            } else if constexpr (requires { serialize_body<object_type>(stl::forward<T>(obj), *this); }) {
-                serialize_body<object_type>(stl::forward<T>(obj), *this);
-            } else if constexpr (requires {
-                                     serialize_body<object_type>(stl::forward<T>(obj), this->body);
-                                 }) {
-                serialize_body<object_type>(stl::forward<T>(obj), this->body);
-
-                // The same as above version with a little difference
-            } else if constexpr (requires { serialize_response_body<T>(stl::forward<T>(obj), *this); }) {
-                serialize_response_body<T>(stl::forward<T>(obj), *this);
-            } else if constexpr (requires { serialize_response_body<T>(stl::forward<T>(obj), this->body); }) {
-                serialize_response_body<T>(stl::forward<T>(obj), this->body);
-            } else if constexpr (requires { serialize_body<T>(stl::forward<T>(obj), *this); }) {
-                serialize_body<T>(stl::forward<T>(obj), *this);
-            } else if constexpr (requires { serialize_body<T>(stl::forward<T>(obj), this->body); }) {
-                serialize_body<T>(stl::forward<T>(obj), this->body);
+            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
+                elist_type::set(stl::forward<T>(obj));
+            } else if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
+                elist_type::operator=(stl::forward<T>(obj));
+            } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
+                serialize_response_body(stl::forward<T>(obj), *this);
+            } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), this->body); }) {
+                serialize_response_body(stl::forward<T>(obj), this->body);
+            } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
+                serialize_body(stl::forward<T>(obj), *this);
+            } else if constexpr (requires { serialize_body(stl::forward<T>(obj), this->body); }) {
+                serialize_body(stl::forward<T>(obj), this->body);
             } else {
                 static_assert_false(T,
                                     "We don't know how to convert the specified object to a response."

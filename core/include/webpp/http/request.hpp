@@ -83,6 +83,7 @@ namespace webpp::http {
 
         template <typename T>
         constexpr T as() const {
+            using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
                               { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
                           }) {
@@ -99,6 +100,8 @@ namespace webpp::http {
                                      { deserialize_body<T>(this->body) } -> stl::same_as<T>;
                                  }) {
                 return deserialize_body<T>(this->body);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return as<requested_type>();
             } else {
                 static_assert_false(T,
                                     "We don't know how to convert the request to the specified type."
