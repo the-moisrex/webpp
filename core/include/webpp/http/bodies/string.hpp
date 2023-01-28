@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_BODIES_STRING_HPP
 #define WEBPP_HTTP_BODIES_STRING_HPP
 
+#include "../../common/meta.hpp"
 #include "../../configs/constants.hpp"
 #include "../../extensions/extension.hpp"
 #include "../../std/string.hpp"
@@ -141,12 +142,19 @@ namespace webpp::http {
                   "We're not able to put the body to the string; the body type is unknown to us.");
             }
         } else if constexpr (istl::StringView<T>) {
-            if constexpr (istl::StringViewifiableOf<type, BodyType>) {
-                str = istl::string_viewify_of<type>(body);
+            if constexpr (TextBasedBodyReader<BodyType>) {
+                if constexpr (istl::StringViewifiableOf<type, BodyType>) {
+                    str = istl::string_viewify_of<type>(body);
+                } else {
+                    using char_type = istl::char_type_of<type>;
+                    using data_type = char_type const*;
+
+                    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+                    str = type{reinterpret_cast<data_type>(body.data()), body.size()};
+                    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+                }
             } else {
-                using char_type = istl::char_type_of<type>;
-                using data_type = char_type const*;
-                str             = type{reinterpret_cast<data_type>(body.data()), body.size()};
+                static_assert_false(T, "Can't convert non-text-based body types to string view types.");
             }
         } else {
             static_assert_false(
@@ -156,16 +164,36 @@ namespace webpp::http {
     }
 
 
+    // Handle the string literals like `char const*`
+    template <typename T, HTTPBody BodyType>
+        requires(istl::StringLiteral<T> && TextBasedBodyReader<stl::remove_cvref_t<BodyType>>)
+    constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
+        using type = T;
+        if constexpr (stl::same_as<istl::char_type_of<type>, istl::char_type_of<decltype(body.data())>>) {
+            return body.data();
+        } else {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            return reinterpret_cast<type>(body.data());
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+    }
+
+
     // This function will require a request/response body. The request or response objects should pass their
     // own body to this function.
     template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
     constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
-        using type = stl::remove_cvref_t<T>;
+        using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
             return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (istl::String<type> && EnabledTraits<BodyType>) {
+        } else if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
+                             requires {
+                                 requires alloc::HasAllocatorFor<
+                                   type,
+                                   traits::allocator_pack_type<typename BodyType::traits_type>>;
+                             }) {
             type str{alloc::general_alloc_for<type>(body)};
             deserialize_body(str, body);
             return str;
@@ -185,6 +213,7 @@ namespace webpp::http {
             static_assert_false(T, "We don't know how to get the string out of the body.");
         }
     }
+
 
     template <istl::StringViewifiable T, HTTPBody BodyType>
     constexpr void serialize_body(T&& str, BodyType& body) {
