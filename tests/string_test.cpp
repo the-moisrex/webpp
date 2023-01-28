@@ -12,21 +12,30 @@ using namespace webpp::istl;
 using namespace webpp::strings;
 using namespace webpp::ascii;
 
-static_assert(stl::is_same_v<int, char_type_of<int*>>);
-static_assert(stl::is_same_v<char, char_type_of<char[]>>);
-static_assert(stl::is_same_v<char, char_type_of<char[10]>>);
-static_assert(stl::is_same_v<char, char_type_of<const char[10]>>);
-static_assert(stl::is_same_v<char, char_type_of<const char (&)[20]>>);
-static_assert(stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>);
-static_assert(stl::is_same_v<char, char_type_of<std::string>>);
-static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
+TEST(String, Concepts) {
+    ASSERT_TRUE((stl::is_same_v<int, char_type_of<int*>>) );
+    ASSERT_TRUE((stl::is_same_v<char, char_type_of<char[]>>) );
+    ASSERT_TRUE((stl::is_same_v<char, char_type_of<char[10]>>) );
+    ASSERT_TRUE((stl::is_same_v<char, char_type_of<const char[10]>>) );
+    ASSERT_TRUE((stl::is_same_v<char, char_type_of<const char(&)[20]>>) );
+    ASSERT_TRUE((stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>) );
+    ASSERT_TRUE((stl::is_same_v<char, char_type_of<std::string>>) );
+    ASSERT_TRUE((stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>) );
 
-static_assert(istl::StringViewifiable<const char*>);
-static_assert(istl::StringViewifiable<const char[8]>);
-static_assert(istl::StringViewifiable<const char (&)[8]>);
+    ASSERT_TRUE(istl::StringViewifiable<const char*>);
+    ASSERT_TRUE(istl::StringViewifiable<char*>);
+    ASSERT_TRUE(istl::StringViewifiable<const char[8]>);
+    ASSERT_TRUE(istl::StringViewifiable<const char(&)[8]>);
 
+    ASSERT_TRUE(istl::StringViewifiable<const wchar_t*>);
+    ASSERT_TRUE(istl::StringViewifiable<wchar_t*>);
+    ASSERT_TRUE(istl::StringViewifiable<const wchar_t[8]>);
+    ASSERT_TRUE(istl::StringViewifiable<const wchar_t(&)[8]>);
+}
 
-TEST(String, iequals) {
+TEST(String, IEquals) {
+    using webpp::ascii::iequals;
+
     const auto one = "Hello World!";
     const auto two = "hELLo WORLd!";
     const auto res = iequals(one, two);
