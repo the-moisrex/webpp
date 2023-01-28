@@ -1,9 +1,10 @@
 // Created by moisrex on 2/4/20.
 
+#include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/response_body.hpp"
+#include "../core/include/webpp/std/string.hpp"
 #include "common_pch.hpp"
 
-#include "../core/include/webpp/std/string.hpp"
 #include <filesystem>
 
 using namespace webpp;
@@ -12,17 +13,18 @@ using namespace webpp::details;
 using namespace webpp::http::details;
 
 
-using body_type = simple_response_body<default_traits>;
+using string_type = traits::general_string<default_traits>;
+using body_type   = simple_response_body<default_traits>;
 
 TEST(Body, Text) {
     enable_owner_traits<default_traits> et;
-    body_type b {et, "Testing"};
-    EXPECT_EQ(b.template as<std::string>(), "Testing");
+    body_type                           b{et, "Testing"};
+    EXPECT_EQ(b.template as<std::string_view>(), "Testing");
 
     // todo
     // EXPECT_TRUE(b == "Testing");
 
-    std::string const str = "hello";
+    string_type const str = "hello";
     b                     = str;
 
     EXPECT_EQ(b.as(), "hello");
@@ -31,12 +33,12 @@ TEST(Body, Text) {
     b                          = sth;
     EXPECT_EQ(b.as(), "nice");
 
-    b = std::string("cool");
+    b = string_type("cool");
     EXPECT_EQ(b.as(), "cool");
 
     body_type bt{et};
     {
-        std::string            _str = "testing";
+        string_type            _str = "testing";
         std::string_view const test = _str;
         bt                          = test;
         EXPECT_EQ(bt.as(), test);
@@ -48,7 +50,7 @@ TEST(Body, Text) {
 
 TEST(Body, File) {
     enable_owner_traits<default_traits> et;
-    std::filesystem::path file = std::filesystem::temp_directory_path();
+    std::filesystem::path               file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
     std::ofstream handle{file};
     handle << "Hello World";
@@ -57,7 +59,7 @@ TEST(Body, File) {
     std::ifstream const in{file};
     std::stringstream   buf;
     buf << in.rdbuf();
-    std::string const file_out = buf.str();
+    auto const file_out = buf.str();
 
     ASSERT_EQ(file_out, "Hello World");
 
