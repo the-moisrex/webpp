@@ -20,7 +20,7 @@ TEST(Body, Text) {
     enable_owner_traits<default_traits> et;
     body_type                           b{et, "Testing"};
     EXPECT_EQ(b.template as<std::string_view>(), "Testing");
-    EXPECT_EQ(b.template as<char const*>(), "Testing");
+    EXPECT_STREQ(b.template as<char const*>(), "Testing") << stl::string_view{b.as<const char*>()};
 
     // todo
     // EXPECT_TRUE(b == "Testing");
@@ -28,21 +28,21 @@ TEST(Body, Text) {
     string_type const str = "hello";
     b                     = str;
 
-    EXPECT_EQ(b.as(), "hello");
+    EXPECT_STREQ(b.as<const char*>(), "hello");
 
     std::string_view const sth = "nice";
     b                          = sth;
-    EXPECT_EQ(b.as(), "nice");
+    EXPECT_STREQ(b.as<const char*>(), "nice");
 
     b = string_type("cool");
-    EXPECT_EQ(b.as(), "cool");
+    EXPECT_EQ(b.as<stl::string_view>(), "cool");
 
     body_type bt{et};
     {
         string_type            _str = "testing";
         std::string_view const test = _str;
         bt                          = test;
-        EXPECT_EQ(bt.as(), test);
+        EXPECT_STREQ(bt.as(), test.data());
         _str = "";
     }
     // EXPECT_NE(bt.string(), "testing") << "The test should be empty since it was a string_view and not a
@@ -68,7 +68,7 @@ TEST(Body, File) {
 
     body_type the_body{et};
     the_body = "data";
-    EXPECT_EQ(the_body.as(), "data");
+    EXPECT_STREQ(the_body.as<char const*>(), "data");
     // ASSERT_TRUE(the_body.load(file));
     // EXPECT_EQ(the_body.as(), "Hello World");
     std::filesystem::remove(file);
