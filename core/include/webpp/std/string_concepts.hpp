@@ -182,6 +182,10 @@ namespace webpp::istl {
     template <typename T>
     concept UTF32 = sizeof(char_type_of<T>) == sizeof(char32_t);
 
+    template <typename T>
+    concept StringLiteral =
+      istl::one_of<stl::remove_const_t<T>, char*, char16_t*, char8_t*, char32_t*, wchar_t*>;
+
 } // namespace webpp::istl
 
 namespace webpp {

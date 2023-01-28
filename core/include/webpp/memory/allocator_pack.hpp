@@ -810,6 +810,14 @@ namespace webpp::alloc {
       };
 
 
+    template <typename AllocType, typename AllocPack>
+    concept HasAllocator = AllocatorPack<AllocPack> && AllocPack::template
+    has_allocator<AllocType>;
+
+    template <typename T, typename AllocPack>
+    concept HasAllocatorFor =
+      requires { typename T::allocator_type; } && HasAllocator<typename T::allocator_type, AllocPack>;
+
 } // namespace webpp::alloc
 
 #endif // WEBPP_ALLOCATOR_PACK_HPP
