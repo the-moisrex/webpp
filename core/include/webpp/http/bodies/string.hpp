@@ -98,7 +98,7 @@ namespace webpp::http {
     constexpr void deserialize_body(T& str, BodyType const& body) {
         using body_type = stl::remove_cvref_t<BodyType>;
         using byte_type = typename body_type::byte_type;
-        using type      = stl::remove_cvref_t<T>;
+        using type      = T;
         if constexpr (istl::String<type>) {
             if constexpr (TextBasedBodyReader<body_type>) {
                 str.append(body.data(), body.size());
@@ -167,7 +167,7 @@ namespace webpp::http {
     // Handle the string literals like `char const*`
     template <typename T, HTTPBody BodyType>
         requires(istl::StringLiteral<T> && TextBasedBodyReader<stl::remove_cvref_t<BodyType>>)
-    constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
+    constexpr auto deserialize_body(BodyType const& body) {
         using type = T;
         if constexpr (stl::same_as<istl::char_type_of<type>, istl::char_type_of<decltype(body.data())>>) {
             return body.data();
@@ -183,7 +183,7 @@ namespace webpp::http {
     // own body to this function.
     template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr stl::remove_cvref_t<T> deserialize_body(BodyType const& body) {
+    constexpr T deserialize_body(BodyType const& body) {
         using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {

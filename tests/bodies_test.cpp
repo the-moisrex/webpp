@@ -20,6 +20,7 @@ TEST(Body, Text) {
     enable_owner_traits<default_traits> et;
     body_type                           b{et, "Testing"};
     EXPECT_EQ(b.template as<std::string_view>(), "Testing");
+    EXPECT_EQ(b.template as<char const*>(), "Testing");
 
     // todo
     // EXPECT_TRUE(b == "Testing");

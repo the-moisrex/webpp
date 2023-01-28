@@ -115,7 +115,7 @@ namespace webpp::http {
         }
 
         template <typename T>
-            requires(!istl::part_of<T, body_type, headers_type>)
+            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type>)
         constexpr operator T() const {
             return as<T>();
         }

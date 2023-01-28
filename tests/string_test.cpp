@@ -13,24 +13,39 @@ using namespace webpp::strings;
 using namespace webpp::ascii;
 
 TEST(String, Concepts) {
-    ASSERT_TRUE((stl::is_same_v<int, char_type_of<int*>>) );
-    ASSERT_TRUE((stl::is_same_v<char, char_type_of<char[]>>) );
-    ASSERT_TRUE((stl::is_same_v<char, char_type_of<char[10]>>) );
-    ASSERT_TRUE((stl::is_same_v<char, char_type_of<const char[10]>>) );
-    ASSERT_TRUE((stl::is_same_v<char, char_type_of<const char(&)[20]>>) );
-    ASSERT_TRUE((stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>) );
-    ASSERT_TRUE((stl::is_same_v<char, char_type_of<std::string>>) );
-    ASSERT_TRUE((stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>) );
+    EXPECT_TRUE((stl::is_same_v<int, char_type_of<int*>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of<char[]>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of<char[10]>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of<const char[10]>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of<const char(&)[20]>>) );
+    EXPECT_TRUE((stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of<std::string>>) );
+    EXPECT_TRUE((stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>) );
 
-    ASSERT_TRUE(istl::StringViewifiable<const char*>);
-    ASSERT_TRUE(istl::StringViewifiable<char*>);
-    ASSERT_TRUE(istl::StringViewifiable<const char[8]>);
-    ASSERT_TRUE(istl::StringViewifiable<const char(&)[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<const char*>);
+    EXPECT_TRUE(istl::StringViewifiable<char*>);
+    EXPECT_TRUE(istl::StringViewifiable<const char[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<const char(&)[8]>);
 
-    ASSERT_TRUE(istl::StringViewifiable<const wchar_t*>);
-    ASSERT_TRUE(istl::StringViewifiable<wchar_t*>);
-    ASSERT_TRUE(istl::StringViewifiable<const wchar_t[8]>);
-    ASSERT_TRUE(istl::StringViewifiable<const wchar_t(&)[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<const wchar_t*>);
+    EXPECT_TRUE(istl::StringViewifiable<wchar_t*>);
+    EXPECT_TRUE(istl::StringViewifiable<const wchar_t[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<const wchar_t(&)[8]>);
+
+    EXPECT_TRUE((stl::same_as<char_type_of_string_literals<char*>, char>) );
+    EXPECT_TRUE((stl::same_as<char_type_of_string_literals<wchar_t[]>, wchar_t>) );
+    EXPECT_TRUE((stl::same_as<char_type_of_string_literals<wchar_t const(&)[20]>, wchar_t>) );
+    EXPECT_FALSE((istl::StringLiteral<char>) );
+    EXPECT_FALSE((istl::StringLiteral<stl::string_view>) );
+    EXPECT_FALSE((istl::StringLiteral<char**>) );
+    EXPECT_FALSE((istl::StringLiteral<wchar_t>) );
+    EXPECT_FALSE((istl::StringLiteral<int*>) );
+    EXPECT_TRUE(istl::StringLiteral<char*>);
+    EXPECT_TRUE(istl::StringLiteral<char[]>);
+    EXPECT_TRUE(istl::StringLiteral<char const[]>);
+    EXPECT_TRUE(istl::StringLiteral<char const[20]>);
+    EXPECT_TRUE(istl::StringLiteral<const char*>);
+    EXPECT_TRUE(istl::StringLiteral<const wchar_t*>);
 }
 
 TEST(String, IEquals) {

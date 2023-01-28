@@ -171,6 +171,9 @@ namespace webpp::istl {
                          templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
                          lazy_type<Default>>;
 
+    template <typename T>
+    using char_type_of_string_literals =
+      stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_all_extents_t<stl::remove_cvref_t<T>>>>;
 
 
     template <typename T>
@@ -184,7 +187,8 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringLiteral =
-      istl::one_of<stl::remove_const_t<T>, char*, char16_t*, char8_t*, char32_t*, wchar_t*>;
+      (!stl::same_as<char_type_of_string_literals<T>, stl::remove_cvref_t<T>>) &&
+      istl::part_of<char_type_of_string_literals<T>, char, wchar_t, char16_t, char8_t, char32_t>;
 
 } // namespace webpp::istl
 
