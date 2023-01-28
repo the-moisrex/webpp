@@ -5,6 +5,7 @@
 #include "../core/include/webpp/strings/splits.hpp"
 #include "common_pch.hpp"
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-magic-numbers)
 
 using namespace webpp;
 using namespace webpp::istl;
@@ -19,6 +20,10 @@ static_assert(stl::is_same_v<char, char_type_of<const char (&)[20]>>);
 static_assert(stl::is_same_v<wchar_t, char_type_of<const wchar_t*>>);
 static_assert(stl::is_same_v<char, char_type_of<std::string>>);
 static_assert(stl::is_same_v<int, char_type_of<std::basic_string_view<int>>>);
+
+static_assert(istl::StringViewifiable<const char*>);
+static_assert(istl::StringViewifiable<const char[8]>);
+static_assert(istl::StringViewifiable<const char (&)[8]>);
 
 
 TEST(String, iequals) {
@@ -48,9 +53,9 @@ TEST(String, Join) {
 
 
 TEST(String, JoinWith) {
-    stl::string              one   = "one";
-    stl::string              two   = "two";
-    stl::string              three = "three";
+    stl::string const        one   = "one";
+    stl::string const        two   = "two";
+    stl::string const        three = "three";
     stl::vector<stl::string> strings;
     istl::collection::emplace(strings, one, two, three, "four");
     auto const res = join_with(strings, ' ');
@@ -59,8 +64,8 @@ TEST(String, JoinWith) {
     EXPECT_EQ(res, "one two three four");
 
     using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;
-    tup_type   tup{one, two, three, "four"};
-    const auto tup_res = join_with(tup, ' ');
+    tup_type const tup{one, two, three, "four"};
+    const auto     tup_res = join_with(tup, ' ');
     EXPECT_EQ(tup_res, "one two three four");
 }
 
@@ -68,9 +73,9 @@ TEST(String, JoinWith) {
 
 
 TEST(String, Splitter) {
-    splitter email_splitter{"test@email.com", '@', "."};
-    auto     it  = email_splitter.begin();
-    auto     eit = email_splitter.end();
+    splitter const email_splitter{"test@email.com", '@', "."};
+    auto           it  = email_splitter.begin();
+    auto           eit = email_splitter.end();
     EXPECT_EQ(it, it);
     EXPECT_EQ(eit, eit);
     EXPECT_NE(it, eit);
@@ -107,9 +112,11 @@ TEST(String, SplitterConstexpr) {
     constexpr splitter email_splitter2{"test@email.com", stl::string_view{"@"}, '.'};
     constexpr auto     email2 = email_splitter2.split_array();
     ASSERT_EQ(email2.size(), 3);
-    if constexpr (stl::tuple_size_v<decltype(email2)> == 3) {
-        EXPECT_EQ(stl::get<0>(email2), "test");
-        EXPECT_EQ(stl::get<1>(email2), "email");
-        EXPECT_EQ(stl::get<2>(email2), "com");
-    }
+    ASSERT_EQ(stl::tuple_size_v<decltype(email2)>, 3);
+    EXPECT_EQ(stl::get<0>(email2), "test");
+    EXPECT_EQ(stl::get<1>(email2), "email");
+    EXPECT_EQ(stl::get<2>(email2), "com");
 }
+
+
+// NOLINTEND(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-magic-numbers)

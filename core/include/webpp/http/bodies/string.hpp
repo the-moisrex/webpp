@@ -5,12 +5,10 @@
 
 #include "../../configs/constants.hpp"
 #include "../../extensions/extension.hpp"
-#include "../../memory/object.hpp"
-#include "../../std/concepts.hpp"
+#include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
 #include "../../storage/file.hpp"
-#include "../../strings/istring.hpp"
-#include "../../traits/traits.hpp"
+#include "../../strings/size.hpp"
 #include "../http_concepts.hpp"
 #include "../routes/router_concepts.hpp"
 #include "../status_code.hpp"
@@ -21,70 +19,68 @@
 namespace webpp::http {
 
 
-    namespace details {
 
-        /**
-         * This extension helps the user to create a response with the help of the context
-         *
-         * @code
-         *   ctx.string_type{"this is a response"}
-         *   ctx.str_t{"this is nice"}
-         *   ctx.string("hello world")
-         * @endcode
-         *
-         * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
-         */
-        template <Traits TraitsType, Context ContextType>
-        struct string_context_extension : public ContextType {
-            using context_type  = ContextType;
-            using traits_type   = TraitsType;
-            using response_type = typename context_type::response_type;
-            using body_type     = typename response_type::body_type;
-            using string_type   = traits::general_string<traits_type>;
+    /**
+     * This extension helps the user to create a response with the help of the context
+     *
+     * @code
+     *   ctx.string_type{"this is a response"}
+     *   ctx.str_t{"this is nice"}
+     *   ctx.string("hello world")
+     * @endcode
+     *
+     * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
+     */
+    template <Traits TraitsType, Context ContextType>
+    struct string_context_extension : public ContextType {
+        using context_type  = ContextType;
+        using traits_type   = TraitsType;
+        using response_type = typename context_type::response_type;
+        using body_type     = typename response_type::body_type;
+        using string_type   = traits::general_string<traits_type>;
 
-            using context_type::context_type; // inherit the constructors
+        using context_type::context_type; // inherit the constructors
 
-            template <typename... Args>
-            constexpr HTTPResponse auto string(Args&&... args) const {
-                return this->response_body(stl::forward<Args>(args)...);
-            }
+        template <typename... Args>
+        constexpr HTTPResponse auto string(Args&&... args) const {
+            return this->response_body(stl::forward<Args>(args)...);
+        }
 
-            template <typename StrT, typename... Args>
-            constexpr string_type format(StrT&& format_str, Args&&... args) const {
-                // todo: it's possible to optimize this for constant expressions
-                // todo: should this function return a HTTPResponse instead of string?
-                string_type str{alloc::general_alloc_for<string_type>(*this)};
-                fmt::vformat_to(stl::back_inserter(str),
-                                istl::to_std_string_view(format_str),
-                                fmt::make_format_args(stl::forward<Args>(args)...));
-                return str;
-            }
+        template <typename StrT, typename... Args>
+        constexpr string_type format(StrT&& format_str, Args&&... args) const {
+            // todo: it's possible to optimize this for constant expressions
+            // todo: should this function return a HTTPResponse instead of string?
+            string_type str{alloc::general_alloc_for<string_type>(*this)};
+            fmt::vformat_to(stl::back_inserter(str),
+                            istl::to_std_string_view(format_str),
+                            fmt::make_format_args(stl::forward<Args>(args)...));
+            return str;
+        }
 
-            // load a file as a string body and return a response
-            [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
-                auto result = object::make_general<string_type>(*this);
+        // load a file as a string body and return a response
+        [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
+            auto result = object::make_general<string_type>(*this);
 
-                bool const res = file::get_to(filepath, result);
-                if (res) {
-                    // read the file successfully
-                    return response_type::with_body(result);
+            bool const res = file::get_to(filepath, result);
+            if (res) {
+                // read the file successfully
+                return response_type::with_body(result);
+            } else {
+
+                this->logger.error("Response/File",
+                                   fmt::format("Cannot load the specified file: {}", filepath.string()));
+                // todo: retry feature
+                if constexpr (context_type::is_debug()) {
+                    return this->error(http::status_code::internal_server_error);
                 } else {
-
-                    this->logger.error("Response/File",
-                                       fmt::format("Cannot load the specified file: {}", filepath.string()));
-                    // todo: retry feature
-                    if constexpr (context_type::is_debug()) {
-                        return this->error(http::status_code::internal_server_error);
-                    } else {
-                        return this->error(
-                          http::status_code::internal_server_error,
-                          fmt::format("We're not able to load the specified file: {}", filepath.string()));
-                    }
+                    return this->error(
+                      http::status_code::internal_server_error,
+                      fmt::format("We're not able to load the specified file: {}", filepath.string()));
                 }
             }
-        };
+        }
+    };
 
-    } // namespace details
 
 
     /**
@@ -92,7 +88,7 @@ namespace webpp::http {
      */
     struct string_body {
         // Add easy to use member functions to use text as a body and generate text-based responses
-        using context_extensions = extension_pack<as_extension<details::string_context_extension>>;
+        using context_extensions = extension_pack<as_extension<string_context_extension>>;
     };
 
 
@@ -148,9 +144,9 @@ namespace webpp::http {
             if constexpr (istl::StringViewifiableOf<type, BodyType>) {
                 str = istl::string_viewify_of<type>(body);
             } else {
-                static_assert_false(T,
-                                    "We have to read and store the body into a string container, "
-                                    "a string view can't allocate memory for the body.");
+                using char_type = istl::char_type_of<type>;
+                using data_type = char_type const*;
+                str             = type{reinterpret_cast<data_type>(body.data()), body.size()};
             }
         } else {
             static_assert_false(
@@ -181,9 +177,9 @@ namespace webpp::http {
             if constexpr (istl::StringViewifiableOf<type, BodyType>) {
                 return istl::string_viewify_of<type>(body);
             } else {
-                static_assert_false(T,
-                                    "We have to read and store the body into a string container, "
-                                    "a string view can't allocate memory for the body.");
+                type str;
+                deserialize_body(str, body);
+                return str;
             }
         } else {
             static_assert_false(T, "We don't know how to get the string out of the body.");
