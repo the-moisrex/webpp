@@ -215,6 +215,12 @@ namespace webpp::http {
         }
     }
 
+    template <istl::StringViewifiable T, HTTPResponse ResponseType>
+    constexpr void serialize_response_body(T&& str, ResponseType& res) {
+        res.headers.emplace_back("Content-Type", ascii::size(str));
+        serialize_body(stl::forward<T>(str), res.body);
+    }
+
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_BODIES_STRING_HPP
