@@ -65,7 +65,7 @@ namespace webpp::http {
             bool const res = file::get_to(filepath, result);
             if (res) {
                 // read the file successfully
-                return response_type::with_body(result);
+                return this->response_body(result);
             } else {
 
                 this->logger.error("Response/File",
