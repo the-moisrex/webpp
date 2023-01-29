@@ -117,7 +117,7 @@ namespace webpp::http {
                 // ignore the data in the stream
                 request_body_communicator::ignore(std::numeric_limits<std::streamsize>::max());
             } else {
-                // todo: BlobBasedBodyWriter doesn't support clearing
+                // todo: CStreamBasedBodyWriter doesn't support clearing
                 static_assert_false(request_body_communicator,
                                     "We're not able to clear the content of the request; "
                                     "the 'request body communicator' type doesn't support such feature.");

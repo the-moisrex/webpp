@@ -38,11 +38,11 @@ namespace webpp::http {
 
 
     /**
-     * BlobBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
+     * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
      * used to get a better performance)
      */
     template <Traits TraitsType>
-    struct blob_response_body_communicator : istl::vector<stl::byte, TraitsType> {
+    struct cstream_response_body_communicator : istl::vector<stl::byte, TraitsType> {
         using traits_type = TraitsType;
         using byte_type   = stl::byte;
 
@@ -66,25 +66,27 @@ namespace webpp::http {
     /**
      * @brief Response Body
      *
-     * Implements: BlobBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
+     * Implements: CStreamBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
      */
     template <Traits TraitsType, typename EList>
     struct response_body : public enable_traits_with<TraitsType, EList> {
-        using traits_type              = TraitsType;
-        using elist_type               = enable_traits_with<TraitsType, EList>;
-        using char_type                = traits::char_type<traits_type>;
-        using string_communicator_type = string_response_body_communicator<traits_type>;
-        using blob_communicator_type   = blob_response_body_communicator<traits_type>;
-        using stream_communicator_type = stream_response_body_communicator<traits_type>;
-        using stream_type              = typename stream_communicator_type::element_type;
+        using traits_type               = TraitsType;
+        using elist_type                = enable_traits_with<TraitsType, EList>;
+        using char_type                 = traits::char_type<traits_type>;
+        using string_communicator_type  = string_response_body_communicator<traits_type>;
+        using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
+        using stream_communicator_type  = stream_response_body_communicator<traits_type>;
+        using stream_type               = typename stream_communicator_type::element_type;
 
-        using byte_type = stl::byte; // required by BlobBasedBodyWriter
+        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
         using value_type =
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
         // the order of types in this variant must match the order of http::communicator_type enum
-        using communicator_storage_type = stl::
-          variant<stl::monostate, string_communicator_type, blob_communicator_type, stream_communicator_type>;
+        using communicator_storage_type = stl::variant<stl::monostate,
+                                                       string_communicator_type,
+                                                       cstream_communicator_type,
+                                                       stream_communicator_type>;
 
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
@@ -94,14 +96,14 @@ namespace webpp::http {
                       "Response body Text Based Body Communicator is not a valid TBBC.");
         static_assert(StreamBasedBodyCommunicator<stream_communicator_type>,
                       "Response body Stream Based Body Communicator is not a valid SBBC.");
-        static_assert(BlobBasedBodyCommunicator<blob_communicator_type>,
-                      "Response body Blob Based Body Communicator is not a valid BBBC.");
+        static_assert(CStreamBasedBodyCommunicator<cstream_communicator_type>,
+                      "Response body CStream Based Body Communicator is not a valid BBBC.");
 
 
       private:
-        using stream_char_type = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
-        using string_char_type = typename string_communicator_type::value_type;
-        using blob_byte_type   = typename blob_communicator_type::byte_type;
+        using stream_char_type  = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
+        using string_char_type  = typename string_communicator_type::value_type;
+        using cstream_byte_type = typename cstream_communicator_type::byte_type;
 
         communicator_storage_type communicator{stl::monostate{}};
 
@@ -139,7 +141,7 @@ namespace webpp::http {
                 if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->data();
                 } else {
-                    // There's not cross-talk for this; maybe for blobs, but not for streams unless we're
+                    // There's not cross-talk for this; maybe for c-streams, but not for streams unless we're
                     // willing to convert the body communicator to string type which is a bad idiom to let the
                     // user support
                     return nullptr;
@@ -157,13 +159,14 @@ namespace webpp::http {
                 } else {
                     // todo: see if you can get the size if the stream body supports but don't let it give false positives.
                     // todo: should we return npos?
-                    // todo: should we return blob's size when we're not letting the user to read it through ".data()"?
-                    // there's not cross-talky way of knowing the size for all stream types; (blobs can have
-                    // but not required at this point, that's why I check if the blob communicator supports it
-                    // or not)
-                    if constexpr (SizableBody<blob_communicator_type>) {
-                        if (auto const* blob_reader = stl::get_if<blob_communicator_type>(&communicator)) {
-                            return blob_reader->size();
+                    // todo: should we return c-stream's size when we're not letting the user to read it through ".data()"?
+                    // there's not cross-talky way of knowing the size for all stream types; (c-streams can
+                    // have but not required at this point, that's why I check if the c-stream communicator
+                    // supports it or not)
+                    if constexpr (SizableBody<cstream_communicator_type>) {
+                        if (auto const* cstream_reader =
+                              stl::get_if<cstream_communicator_type>(&communicator)) {
+                            return cstream_reader->size();
                         }
                     }
                     return string_communicator_type::npos;
@@ -180,12 +183,12 @@ namespace webpp::http {
                     writer->append(data, count);
                 } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
                     (*stream_writer)->write(data, static_cast<stl::streamsize>(count));
-                } else if (auto* blob_writer = stl::get_if<blob_communicator_type>(&communicator)) {
-                    auto*           byte_data = reinterpret_cast<blob_byte_type const*>(data);
+                } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&communicator)) {
+                    auto*           byte_data = reinterpret_cast<cstream_byte_type const*>(data);
                     auto            size      = static_cast<stl::streamsize>(count);
                     stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
                     do {
-                        ret_size = blob_writer->write(byte_data, size);
+                        ret_size = cstream_writer->write(byte_data, size);
                         byte_data += ret_size;
                         size -= ret_size;
                     } while (ret_size > 0);
@@ -210,7 +213,7 @@ namespace webpp::http {
                     (*stream_writer)
                       ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
                 } else {
-                    // todo: blob based doesn't have a way to clear the input
+                    // todo: c-stream based doesn't have a way to clear the input
                     reset();
                 }
             }
@@ -223,11 +226,11 @@ namespace webpp::http {
 
 
         constexpr stl::streamsize write(byte_type const* data, stl::streamsize count) {
-            if constexpr (BlobBasedBodyWriter<elist_type>) {
+            if constexpr (CStreamBasedBodyWriter<elist_type>) {
                 return elist_type::write(data, count);
             } else {
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-                if (auto* writer = stl::get_if<blob_communicator_type>(&communicator)) {
+                if (auto* writer = stl::get_if<cstream_communicator_type>(&communicator)) {
                     return writer->write(data, count);
                 } else if (auto* string_writer = stl::get_if<string_communicator_type>(&communicator)) {
                     string_writer->append(reinterpret_cast<string_char_type const*>(data),
@@ -237,24 +240,24 @@ namespace webpp::http {
                     (*stream_writer)->write(reinterpret_cast<stream_char_type const*>(data), count);
                     return count;
                 } else {
-                    communicator.template emplace<blob_communicator_type>(
-                      alloc::general_alloc_for<blob_communicator_type>(*this));
-                    auto& blob_writer = stl::get<blob_communicator_type>(communicator);
-                    return blob_writer.write(data, count);
+                    communicator.template emplace<cstream_communicator_type>(
+                      alloc::general_alloc_for<cstream_communicator_type>(*this));
+                    auto& cstream_writer = stl::get<cstream_communicator_type>(communicator);
+                    return cstream_writer.write(data, count);
                 }
                 // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
         }
 
         constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
-            if constexpr (BlobBasedBodyWriter<elist_type>) {
+            if constexpr (CStreamBasedBodyWriter<elist_type>) {
                 return elist_type::read(data, count);
             } else {
                 // Attention: cross-talks (writing to one communicator and reading from another) are
                 // discouraged
 
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-                if (auto* reader = stl::get_if<blob_communicator_type>(&communicator)) {
+                if (auto* reader = stl::get_if<cstream_communicator_type>(&communicator)) {
                     return reader->read(data, count);
                 } else if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
                     // todo: this is kinda implementation defined, it may falsely return 0
@@ -277,7 +280,7 @@ namespace webpp::http {
                 throw bad_cross_talk(
                   "Bad Cross-Talk error (you previously wrote to a different body "
                   "communicator, but now you're trying to read from a stream based body "
-                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicator which doesn't know how to convert the text/cstream-based-body "
                   "communicators to your object type. Be consistent in your "
                   "calls. Cross-Talks are discouraged.)");
             }
@@ -291,7 +294,7 @@ namespace webpp::http {
                 throw bad_cross_talk(
                   "Bad Cross-Talk error (you previously wrote to a different body "
                   "communicator, but now you're trying to read from a stream based body "
-                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicator which doesn't know how to convert the text/cstream-based-body "
                   "communicators to your object type. Be consistent in your "
                   "calls. Cross-Talks are discouraged.)");
             }
@@ -309,7 +312,7 @@ namespace webpp::http {
                 throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
                                      "communicator, but now you're trying to write to stream based body "
                                      "communicator which doesn't know how to convert your object to "
-                                     "text/blob-based-body communicators. Be consistent in your "
+                                     "text/cstream-based-body communicators. Be consistent in your "
                                      "calls. Cross-Talks are discouraged.)");
             }
             return *this;
@@ -324,7 +327,7 @@ namespace webpp::http {
                 throw bad_cross_talk(
                   "Bad Cross-Talk error (you previously wrote to a different body "
                   "communicator, but now you're trying to read from a stream based body "
-                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicator which doesn't know how to convert the text/cstream-based-body "
                   "communicators to your object type. Be consistent in your "
                   "calls. Cross-Talks are discouraged.)");
             }
@@ -356,8 +359,8 @@ namespace webpp::http {
                     }
                     case communicator_type::stream_based: // we can't check equality of streams without
                                                           // changing them
-                    case communicator_type::blob_based: {
-                        return false; // blobs don't have a mechanism to read but don't modify, so always
+                    case communicator_type::cstream_based: {
+                        return false; // c-streams don't have a mechanism to read but don't modify, so always
                                       // false too
                     }
                 }

@@ -2,9 +2,9 @@
 #define WEBPP_URL_PUNY_CODES_HPP
 
 /**
- * Original Source Code from: https://github.com/lemire/Code-used-on-Daniel-Lemire-s-blog/blob/master/2023/01/03/puny.h
- * Most likely written by Daniel Lemire
- * Modified by Mohammad Bahoosh
+ * Original Source Code from:
+ * https://github.com/lemire/Code-used-on-Daniel-Lemire-s-blog/blob/master/2023/01/03/puny.h Most likely
+ * written by Daniel Lemire Modified by Mohammad Bahoosh
  */
 
 #include "../std/string.hpp"
@@ -245,7 +245,7 @@ namespace webpp::uri {
         // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
     }
 
-} // namespace webpp
+} // namespace webpp::uri
 
 
 #endif // WEBPP_URL_PUNY_CODES_HPP

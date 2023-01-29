@@ -23,7 +23,7 @@ Body Communicator Primitives:
 
 - **Text Based Body Communicator**: for string-like types
 - **Stream Based Body Communicator**: for streams
-- **Blob Based Body Communicator**: for unknown types like images
+- **C-Stream Based Body Communicator**: for streams with c-like functions
 
 Every other body types should use the functions of these communicator primitives
 to communicate with the library's response and request bodies.

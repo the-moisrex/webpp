@@ -83,10 +83,10 @@ namespace webpp::http {
                           };
 
     /**
-     * @brief Blob Based Body Reader
+     * @brief C Stream Based Body Reader
      */
     template <typename T>
-    concept BlobBasedBodyReader =
+    concept CStreamBasedBodyReader =
       requires {
           requires stl::copy_constructible<T>;
           typename T::byte_type;
@@ -96,28 +96,26 @@ namespace webpp::http {
       };
 
     /**
-     * @brief Blob Based Body Writer
+     * @brief C Stream Based Body Writer
      */
     template <typename T>
-    concept BlobBasedBodyWriter =
+    concept CStreamBasedBodyWriter =
       requires {
           requires stl::copy_constructible<T>;
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
                        { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
-                       // todo: BlobBasedBodyWriter doesn't support clearing
+                       // todo: CStreamBasedBodyWriter doesn't support clearing
                    };
       };
 
     /**
-     * @brief Blob Based Body Communicator (BBBC);
+     * @brief C Stream Based Body Communicator (CBBC);
      *
-     * The blob based body communicator is the way that the framework internals talk to the developers.
-     * This means that the way the body is stored is by the means of storing a vector of bytes; thus the whole
-     * body is available in the blob object itself.
+     * The c-steram based body communicator is the way that the framework internals talk to the developers.
      */
     template <typename T>
-    concept BlobBasedBodyCommunicator = BlobBasedBodyReader<T> || BlobBasedBodyWriter<T>;
+    concept CStreamBasedBodyCommunicator = CStreamBasedBodyReader<T> || CStreamBasedBodyWriter<T>;
 
     /**
      * @brief Text Based Body Reader
@@ -205,7 +203,7 @@ namespace webpp::http {
      * Other BodyCommunicators can be derived from these
      */
     template <typename T>
-    concept BodyCommunicatorPrimitives = BlobBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
+    concept BodyCommunicatorPrimitives = CStreamBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
                                          TextBasedBodyCommunicator<stl::remove_cvref_t<T>> ||
                                          StreamBasedBodyCommunicator<stl::remove_cvref_t<T>>;
 
@@ -248,10 +246,10 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept BodyReader = BlobBasedBodyReader<T> || TextBasedBodyReader<T> || StreamBasedBodyReader<T>;
+    concept BodyReader = CStreamBasedBodyReader<T> || TextBasedBodyReader<T> || StreamBasedBodyReader<T>;
 
     template <typename T>
-    concept BodyWriter = BlobBasedBodyWriter<T> || TextBasedBodyWriter<T> || StreamBasedBodyWriter<T>;
+    concept BodyWriter = CStreamBasedBodyWriter<T> || TextBasedBodyWriter<T> || StreamBasedBodyWriter<T>;
 
     /**
      * Request body only need read
@@ -294,7 +292,7 @@ namespace webpp::http {
     enum communicator_type {
         nothing    = 0, // contains nothing (monostate)
         text_based = 1,
-        blob_based,
+        cstream_based,
         stream_based
     };
 
