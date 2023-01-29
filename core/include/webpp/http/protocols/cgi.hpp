@@ -123,13 +123,13 @@ namespace webpp::http {
 
 
         template <typename BodyType>
-        inline void write_blob(BodyType& body) {
-            using body_type      = stl::remove_cvref_t<BodyType>;
-            using blob_byte_type = typename body_type::byte_type;
+        inline void write_cstream(BodyType& body) {
+            using body_type         = stl::remove_cvref_t<BodyType>;
+            using cstream_byte_type = typename body_type::byte_type;
 
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             stl::array<char_type, default_buffer_size> buf;
-            while (stl::streamsize read_size = body.read(reinterpret_cast<blob_byte_type*>(buf.data()),
+            while (stl::streamsize read_size = body.read(reinterpret_cast<cstream_byte_type*>(buf.data()),
                                                          static_cast<stl::streamsize>(buf.size()))) {
                 write(buf.data(), read_size);
             }
@@ -145,8 +145,8 @@ namespace webpp::http {
                     case communicator_type::nothing: {
                         break;
                     }
-                    case communicator_type::blob_based: {
-                        write_blob(body);
+                    case communicator_type::cstream_based: {
+                        write_cstream(body);
                         break;
                     }
                     case communicator_type::stream_based: {
@@ -160,8 +160,8 @@ namespace webpp::http {
                 }
             } else if constexpr (TextBasedBodyReader<body_type>) {
                 write_text(body);
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                write_blob(body);
+            } else if constexpr (CStreamBasedBodyReader<body_type>) {
+                write_cstream(body);
             } else if constexpr (StreamBasedBodyReader<body_type>) {
                 write(body);
             } else {

@@ -106,9 +106,9 @@ namespace webpp::http {
         str.append(body.data(), body.size());
     }
 
-    template <typename T, BlobBasedBodyReader BodyType>
+    template <typename T, CStreamBasedBodyReader BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr void deserialize_blob_body(T& str, BodyType const& body) {
+    constexpr void deserialize_cstream_body(T& str, BodyType const& body) {
         using body_type     = stl::remove_cvref_t<BodyType>;
         using byte_type     = typename body_type::byte_type;
         auto const str_size = str.size();
@@ -166,15 +166,15 @@ namespace webpp::http {
                         deserialize_stream_body(str, body);
                         break;
                     }
-                    case communicator_type::blob_based: {
-                        deserialize_blob_body(str, body);
+                    case communicator_type::cstream_based: {
+                        deserialize_cstream_body(str, body);
                         break;
                     }
                 }
             } else if constexpr (TextBasedBodyReader<body_type>) {
                 deserialize_text_body(str, body);
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                deserialize_blob_body(str, body);
+            } else if constexpr (CStreamBasedBodyReader<body_type>) {
+                deserialize_cstream_body(str, body);
             } else if constexpr (StreamBasedBodyReader<body_type>) {
                 deserialize_stream_body(str, body);
             } else {
@@ -188,7 +188,7 @@ namespace webpp::http {
                     switch (body.which_communicator()) {
                         case communicator_type::nothing: return;
                         case communicator_type::text_based: break;
-                        case communicator_type::blob_based:
+                        case communicator_type::cstream_based:
                         case communicator_type::stream_based:
                             throw stl::invalid_argument(
                               "You're asking us to get the data of a body type while the body doesn't contain "
@@ -277,8 +277,8 @@ namespace webpp::http {
         body.append(str.data(), str.size());
     }
 
-    template <istl::StringView T, BlobBasedBodyReader BodyType>
-    constexpr void serialize_blob_body(T str, BodyType& body) {
+    template <istl::StringView T, CStreamBasedBodyReader BodyType>
+    constexpr void serialize_cstream_body(T str, BodyType& body) {
         using body_type = stl::remove_cvref_t<BodyType>;
         using byte_type = typename body_type::byte_type;
         // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
@@ -324,8 +324,8 @@ namespace webpp::http {
                     serialize_text_body(str_view, body);
                     break;
                 }
-                case communicator_type::blob_based: {
-                    serialize_blob_body(str_view, body);
+                case communicator_type::cstream_based: {
+                    serialize_cstream_body(str_view, body);
                     break;
                 }
                 case communicator_type::stream_based: {
@@ -335,8 +335,8 @@ namespace webpp::http {
             }
         } else if constexpr (TextBasedBodyWriter<body_type>) {
             serialize_text_body(str_view, body);
-        } else if constexpr (BlobBasedBodyWriter<body_type>) {
-            serialize_blob_body(str_view, body);
+        } else if constexpr (CStreamBasedBodyWriter<body_type>) {
+            serialize_cstream_body(str_view, body);
         } else if constexpr (StreamBasedBodyWriter<body_type>) {
             serialize_stream_body(str_view, body);
         } else {

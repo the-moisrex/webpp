@@ -148,8 +148,8 @@ namespace webpp::http::beast_proto {
             }
         }
 
-        template <BlobBasedBodyReader BodyType>
-        void set_response_body_blob(BodyType& body) {
+        template <CStreamBasedBodyReader BodyType>
+        void set_response_body_cstream(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
             using byte_type = typename body_type::byte_type;
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,
@@ -187,20 +187,20 @@ namespace webpp::http::beast_proto {
 
         template <typename BodyType>
         void set_response_body(BodyType& body) {
-            // todo: for performance reasons, we can have variant of string,stream,blob beast body types
+            // todo: for performance reasons, we can have variant of string,stream,c-stream beast body types
 
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
                     case http::communicator_type::nothing: return;
                     case http::communicator_type::text_based: set_response_body_string(body); return;
-                    case http::communicator_type::blob_based: set_response_body_blob(body); return;
+                    case http::communicator_type::cstream_based: set_response_body_cstream(body); return;
                     case http::communicator_type::stream_based: set_response_body_stream(body); return;
                 }
             } else if constexpr (TextBasedBodyReader<body_type>) {
                 set_response_body_string(body);
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                set_response_body_blob(body);
+            } else if constexpr (CStreamBasedBodyReader<body_type>) {
+                set_response_body_cstream(body);
             } else if constexpr (StreamBasedBodyReader<body_type>) {
                 set_response_body_stream(body);
             } else {

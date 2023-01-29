@@ -78,7 +78,7 @@ namespace webpp::http::cgi_proto {
 
 
         /**
-         * Even though this request body is a BlobBasedBodyCommunicator, and blobs don't require being
+         * Even though this request body is a CStreamBasedBodyCommunicator, and CStreams don't require being
          * SizableBody, we can do such thing for CGI request body communicator.
          */
         [[nodiscard]] constexpr stl::size_t size() const noexcept {

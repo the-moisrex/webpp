@@ -121,7 +121,7 @@ TEST(Body, BodyStreamToStream) {
     EXPECT_EQ(str, str2);
 }
 
-TEST(Body, BodyBlobToBlob) {
+TEST(Body, BodyCStreamToCStream) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
     stl::string const                   str = "this is a test";
@@ -146,7 +146,7 @@ TEST(Body, BodyTextToText) {
 
 ////////////////////////////////////////////////// Cross Talk //////////////////////////////////////////////////
 
-TEST(Body, BodyCrossTalkBlobToText) {
+TEST(Body, BodyCrossTalkCStreamToText) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
     stl::string const                   str = "this is a test";
@@ -156,7 +156,7 @@ TEST(Body, BodyCrossTalkBlobToText) {
     EXPECT_EQ(str, str2);
 }
 
-TEST(Body, BodyCrossTalkBlobToStream) {
+TEST(Body, BodyCrossTalkCStreamToStream) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
     stl::string const                   str = "this is a test";
@@ -176,7 +176,7 @@ TEST(Body, BodyCrossTalkTextToStream) {
     EXPECT_EQ(str, str2);
 }
 
-TEST(Body, BodyCrossTalkTextToBlob) {
+TEST(Body, BodyCrossTalkTextToCStream) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
     stl::string const                   str = "this is a test";
@@ -189,7 +189,7 @@ TEST(Body, BodyCrossTalkTextToBlob) {
     EXPECT_EQ(str, str2);
 }
 
-TEST(Body, BodyCrossTalkStreamToBlob) {
+TEST(Body, BodyCrossTalkStreamToCStream) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
     stl::string const                   str = "this is a test";
