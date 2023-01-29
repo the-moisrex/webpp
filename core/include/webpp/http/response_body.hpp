@@ -48,16 +48,28 @@ namespace webpp::http {
 
         using istl::vector<stl::byte, TraitsType>::vector; // ctors
 
-        [[nodiscard]] stl::streamsize write(byte_type const* data, stl::streamsize count) {
+
+      private:
+        mutable stl::size_t index = 0;
+
+      public:
+        [[nodiscard]] constexpr stl::streamsize write(byte_type const* data, stl::streamsize count) {
             this->insert(this->begin(),
                          data,
                          data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             return count;
         }
 
-        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) const {
-            stl::copy_n(this->begin(), count, data);
+        [[nodiscard]] constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
+            count =
+              stl::clamp(count, stl::streamsize{0LL}, static_cast<stl::streamsize>(this->size() - index));
+            stl::copy_n(this->begin() + index, count, data);
+            index += static_cast<stl::size_t>(count);
             return count;
+        }
+
+        constexpr void seek(stl::streamsize count) noexcept {
+            index = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0ul}, this->size());
         }
     };
 
