@@ -129,8 +129,10 @@ TEST(Body, BodyCStreamToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
-    str2.append(buf.data(), buf.size());
+    while (auto res =
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+        str2.append(buf.data(), static_cast<stl::size_t>(res));
+    }
     EXPECT_EQ(str, str2);
 }
 
@@ -184,8 +186,10 @@ TEST(Body, BodyCrossTalkTextToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
-    str2.append(buf.data(), buf.size());
+    while (auto res =
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+        str2.append(buf.data(), static_cast<stl::size_t>(res));
+    }
     EXPECT_EQ(str, str2);
 }
 
@@ -197,8 +201,10 @@ TEST(Body, BodyCrossTalkStreamToCStream) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
-    str2.append(buf.data(), buf.size());
+    while (auto res =
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+        str2.append(buf.data(), static_cast<stl::size_t>(res));
+    }
     EXPECT_EQ(str, str2);
 }
 

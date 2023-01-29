@@ -105,7 +105,8 @@ namespace webpp::http {
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
                        { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
-                       // todo: CStreamBasedBodyWriter doesn't support clearing
+                       communicator.seek(size);
+                       communicator.clear();
                    };
       };
 
