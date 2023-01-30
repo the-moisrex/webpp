@@ -105,6 +105,7 @@ namespace webpp::http {
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
                        { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
+                       // todo: BlobBasedBodyWriter doesn't support clearing
                    };
       };
 
@@ -138,6 +139,7 @@ namespace webpp::http {
           typename T::value_type;
           requires requires(typename T::value_type const* data, stl::size_t count) {
                        body.append(data, count); // Append a string
+                       body.clear();
                    };
       };
 
@@ -175,6 +177,8 @@ namespace webpp::http {
       requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, const void* val) {
           body << val;
           body.rdbuf();
+          body.ignore(INT_MAX); // clear the content inside the stream
+          body.clear();         // clear the state
       };
 
 

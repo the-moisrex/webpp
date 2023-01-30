@@ -107,12 +107,28 @@ namespace webpp::http {
             return as<T>();
         }
 
+
+        constexpr void clear() {
+            if constexpr (TextBasedBodyWriter<request_body_communicator>) {
+                request_body_communicator::clear();
+            } else if constexpr (StreamBasedBodyWriter<request_body_communicator>) {
+                request_body_communicator::clear(); // clear the state
+
+                // ignore the data in the stream
+                request_body_communicator::ignore(std::numeric_limits<std::streamsize>::max());
+            } else {
+                // todo: BlobBasedBodyWriter doesn't support clearing
+                static_assert_false(request_body_communicator,
+                                    "We're not able to clear the content of the request; "
+                                    "the 'request body communicator' type doesn't support such feature.");
+            }
+        }
+
+
         template <typename T>
-        constexpr request_body& set(T&& obj) {
-            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
-                elist_type::set(stl::forward<T>(obj));
-            } else if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
-                elist_type::operator=(stl::forward<T>(obj));
+        constexpr request_body& add(T&& obj) {
+            if constexpr (requires { elist_type::add(stl::forward<T>(obj)); }) {
+                elist_type::add(stl::forward<T>(obj));
             } else if constexpr (requires { serialize_request_body(stl::forward<T>(obj), *this); }) {
                 serialize_request_body(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
@@ -127,8 +143,34 @@ namespace webpp::http {
         }
 
         template <typename T>
+        constexpr request_body& set(T&& obj) {
+            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
+                elist_type::set(stl::forward<T>(obj));
+            } else {
+                clear();
+                add(stl::forward<T>(obj));
+            }
+            return *this;
+        }
+
+        template <typename T>
         constexpr request_body& operator=(T&& obj) {
-            set(stl::forward<T>(obj));
+            if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
+                elist_type::operator=(stl::forward<T>(obj));
+            } else {
+                set(stl::forward<T>(obj));
+            }
+            return *this;
+        }
+
+
+        template <typename T>
+        constexpr request_body& operator+=(T&& obj) {
+            if constexpr (requires { elist_type::operator+=(stl::forward<T>(obj)); }) {
+                elist_type::operator+=(stl::forward<T>(obj));
+            } else {
+                add(stl::forward<T>(obj));
+            }
             return *this;
         }
     };

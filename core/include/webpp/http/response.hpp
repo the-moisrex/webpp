@@ -269,21 +269,11 @@ namespace webpp::http {
                                      { deserialize_response_body<T>(this->body) } -> stl::same_as<T>;
                                  }) {
                 return deserialize_response_body<T>(this->body);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(*this);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(this->body) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(this->body);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return as<requested_type>();
             } else {
-                static_assert_false(T,
-                                    "We don't know how to convert the request to the specified type."
-                                    " Did you import the right header?"
-                                    " You can always write your own custom body (de)serializer functions.");
+                // Calls the `deserialize_body` functions
+                return this->body.template as<T>();
             }
         }
 
@@ -298,33 +288,48 @@ namespace webpp::http {
 
 
         template <typename T>
-        constexpr final_response& set(T&& obj) {
-            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
-                elist_type::set(stl::forward<T>(obj));
-            } else if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
-                elist_type::operator=(stl::forward<T>(obj));
+        constexpr final_response& add(T&& obj) {
+            if constexpr (requires { elist_type::add(stl::forward<T>(obj)); }) {
+                elist_type::add(stl::forward<T>(obj));
             } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
                 serialize_response_body(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), this->body); }) {
                 serialize_response_body(stl::forward<T>(obj), this->body);
-            } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
-                serialize_body(stl::forward<T>(obj), *this);
-            } else if constexpr (requires { serialize_body(stl::forward<T>(obj), this->body); }) {
-                serialize_body(stl::forward<T>(obj), this->body);
             } else {
-                static_assert_false(T,
-                                    "We don't know how to convert the specified object to a response."
-                                    " Did you import the right header?"
-                                    " You can always write your own custom body serializer functions.");
+                // calls `serialize_body` functions
+                this->body.template add<T>(stl::forward<T>(obj));
             }
             return *this;
         }
 
-        using elist_type::operator=;
         template <typename T>
-            requires(!stl::same_as<stl::remove_cvref_t<T>, http::status_code>)
+        constexpr final_response& set(T&& obj) {
+            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
+                elist_type::set(stl::forward<T>(obj));
+            } else {
+                this->body.clear();
+                add(stl::forward<T>(obj));
+            }
+            return *this;
+        }
+
+        template <typename T>
         constexpr final_response& operator=(T&& obj) {
-            set(stl::forward<T>(obj));
+            if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
+                elist_type::operator=(stl::forward<T>(obj));
+            } else {
+                set(stl::forward<T>(obj));
+            }
+            return *this;
+        }
+
+        template <typename T>
+        constexpr final_response& operator+=(T&& obj) {
+            if constexpr (requires { elist_type::operator+=(stl::forward<T>(obj)); }) {
+                elist_type::operator+=(stl::forward<T>(obj));
+            } else {
+                add(stl::forward<T>(obj));
+            }
             return *this;
         }
 
