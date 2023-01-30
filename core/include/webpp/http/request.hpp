@@ -92,21 +92,10 @@ namespace webpp::http {
                                      { deserialize_request_body<T>(this->body) } -> stl::same_as<T>;
                                  }) {
                 return deserialize_request_body<T>(this->body);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(*this);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(this->body) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(this->body);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return as<requested_type>();
             } else {
-                static_assert_false(T,
-                                    "We don't know how to convert the request to the specified type."
-                                    " Did you import the right header?"
-                                    " You can always write your own custom body (de)serializer functions.");
+                return this->body.template as<T>();
             }
         }
 
