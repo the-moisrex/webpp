@@ -92,3 +92,19 @@ TEST(Body, StringCustomBody) {
     body_str2 = body2.template as<stl::string>();
     EXPECT_EQ("nice", body_str2);
 }
+
+
+struct custom_body_type {};
+
+template <typename T, HTTPBody BodyT>
+    requires(stl::same_as<stl::remove_cvref_t<T>, custom_body_type>)
+void serialize_body(T&&, BodyT& body) {
+    body = "custom body type";
+}
+
+TEST(Body, CustomBodyTypeSerializerTest) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    body = custom_body_type{};
+    EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
+}
