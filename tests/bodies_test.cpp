@@ -96,9 +96,7 @@ TEST(Body, StringCustomBody) {
 
 struct custom_body_type {};
 
-template <typename T, HTTPBody BodyT>
-    requires(stl::same_as<stl::remove_cvref_t<T>, custom_body_type>)
-void serialize_body(T&&, BodyT& body) {
+void serialize_body(custom_body_type, HTTPBody auto& body) {
     body = "custom body type";
 }
 
@@ -108,3 +106,65 @@ TEST(Body, CustomBodyTypeSerializerTest) {
     body = custom_body_type{};
     EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
 }
+
+
+// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+
+TEST(Body, BodyCrossTalkBlobToText) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
+    stl::string const str2{body.data(), body.size()};
+    EXPECT_EQ(str, str2);
+}
+
+TEST(Body, BodyCrossTalkBlobToStream) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
+    stl::string str2;
+    body >> str2;
+    EXPECT_EQ(str, str2);
+}
+
+TEST(Body, BodyCrossTalkTextToStream) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.append(str.data(), str.size());
+    stl::string str2;
+    body >> str2;
+    EXPECT_EQ(str, str2);
+}
+
+TEST(Body, BodyCrossTalkTextToBlob) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.append(str.data(), str.size());
+    stl::string                 str2;
+    static constexpr auto       buff_size = 10;
+    stl::array<char, buff_size> buf{};
+    while (body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+        str2.append(buf.data(), buf.size());
+    }
+    EXPECT_EQ(str, str2);
+}
+
+TEST(Body, BodyCrossTalkStreamToBlob) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body << str;
+    stl::string                 str2;
+    static constexpr auto       buff_size = 10;
+    stl::array<char, buff_size> buf{};
+    while (body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+        str2.append(buf.data(), buf.size());
+    }
+    EXPECT_EQ(str, str2);
+}
+
+// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

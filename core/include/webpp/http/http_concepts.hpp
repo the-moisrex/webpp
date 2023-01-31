@@ -165,6 +165,11 @@ namespace webpp::http {
       requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, void*& val) {
           body >> val;
           body.rdbuf();
+          typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
+          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
+                            stl::streamsize count) {
+                       { body.readsome(data, count) } -> stl::same_as<stl::streamsize>;
+                   };
       };
 
     /**
@@ -176,9 +181,11 @@ namespace webpp::http {
     concept StreamBasedBodyWriter =
       requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, const void* val) {
           body << val;
-          body.rdbuf();
           body.ignore(INT_MAX); // clear the content inside the stream
           body.clear();         // clear the state
+          typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
+          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
+                            stl::streamsize count) { body.write(data, count); };
       };
 
 
@@ -280,8 +287,6 @@ namespace webpp::http {
     template <typename T>
     concept HTTPResponseBody = HTTPResponseBodyCommunicator<T>;
 
-
-
     template <typename T>
     concept HTTPBody = HTTPRequestBody<T> || HTTPResponseBody<T>;
 
@@ -295,10 +300,10 @@ namespace webpp::http {
 
     template <typename T>
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
-                                                                 {
-                                                                     body.which_communicator()
-                                                                     } -> stl::same_as<communicator_type>;
-                                                             };
+                                                     {
+                                                         body.which_communicator()
+                                                         } -> stl::same_as<communicator_type>;
+                                                 };
 
 
     ////////////////////////////// Request //////////////////////////////

@@ -12,6 +12,9 @@
 
 namespace webpp::http {
 
+    struct bad_cross_talk : stl::invalid_argument {
+        using stl::invalid_argument::invalid_argument;
+    };
 
     template <Traits TraitsType>
     struct callback_response_body_communicator {
@@ -19,6 +22,7 @@ namespace webpp::http {
         using char_type     = traits::char_type<traits_type>;
         using function_type = istl::function<void()>; // Oops; no concepts allowed!
 
+        // todo
       private:
       public:
     };
@@ -49,7 +53,7 @@ namespace webpp::http {
             return count;
         }
 
-        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) {
+        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) const {
             stl::copy_n(this->begin(), count, data);
             return count;
         }
@@ -92,6 +96,10 @@ namespace webpp::http {
 
 
       private:
+        using stream_char_type = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
+        using string_char_type = typename string_communicator_type::value_type;
+        using blob_byte_type   = typename blob_communicator_type::byte_type;
+
         communicator_storage_type communicator{stl::monostate{}};
 
       public:
@@ -128,6 +136,9 @@ namespace webpp::http {
                 if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->data();
                 } else {
+                    // There's not cross-talk for this; maybe for blobs, but not for streams unless we're
+                    // willing to convert the body communicator to string type which is a bad idiom to let the
+                    // user support
                     return nullptr;
                 }
             }
@@ -141,6 +152,12 @@ namespace webpp::http {
                 if (auto const* reader = stl::get_if<string_communicator_type>(&communicator)) {
                     return reader->size();
                 } else {
+                    // todo: see if you can get the size if the stream body supports but don't let it give false positives.
+                    // todo: should we return npos?
+                    // todo: should we return blob's size when we're not letting the user to read it through ".data()"?
+                    // there's not cross-talky way of knowing the size for all stream types; (blobs can have
+                    // but not required at this point, that's why I check if the blob communicator supports it
+                    // or not)
                     if constexpr (SizableBody<blob_communicator_type>) {
                         if (auto const* blob_reader = stl::get_if<blob_communicator_type>(&communicator)) {
                             return blob_reader->size();
@@ -155,13 +172,26 @@ namespace webpp::http {
             if constexpr (TextBasedBodyWriter<elist_type>) {
                 elist_type::append(data, count);
             } else {
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
                 if (auto* writer = stl::get_if<string_communicator_type>(&communicator)) {
                     writer->append(data, count);
+                } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
+                    (*stream_writer)->write(data, static_cast<stl::streamsize>(count));
+                } else if (auto* blob_writer = stl::get_if<blob_communicator_type>(&communicator)) {
+                    auto*           byte_data = reinterpret_cast<blob_byte_type const*>(data);
+                    auto            size      = static_cast<stl::streamsize>(count);
+                    stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
+                    do {
+                        ret_size = blob_writer->write(byte_data, size);
+                        byte_data += ret_size;
+                        size -= ret_size;
+                    } while (ret_size > 0);
                 } else {
                     communicator.template emplace<string_communicator_type>();
                     auto& text_writer = stl::get<string_communicator_type>(communicator);
                     text_writer.append(data, count);
                 }
+                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
         }
 
@@ -176,6 +206,7 @@ namespace webpp::http {
                     (*stream_writer)
                       ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
                 } else {
+                    // todo: blob based doesn't have a way to clear the input
                     reset();
                 }
             }
@@ -191,41 +222,139 @@ namespace webpp::http {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::write(data, count);
             } else {
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
                 if (auto* writer = stl::get_if<blob_communicator_type>(&communicator)) {
                     return writer->write(data, count);
+                } else if (auto* string_writer = stl::get_if<string_communicator_type>(&communicator)) {
+                    string_writer->append(reinterpret_cast<string_char_type const*>(data),
+                                          static_cast<stl::size_t>(count));
+                    return count;
+                } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
+                    (*stream_writer)->write(reinterpret_cast<stream_char_type const*>(data), count);
+                    return count;
                 } else {
                     communicator.template emplace<blob_communicator_type>();
                     auto& blob_writer = stl::get<blob_communicator_type>(communicator);
                     return blob_writer.write(data, count);
                 }
+                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
         }
 
-        constexpr stl::streamsize read(byte_type const* data, stl::streamsize count) {
+        constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
             if constexpr (BlobBasedBodyWriter<elist_type>) {
                 return elist_type::read(data, count);
             } else {
+                // Attention: cross-talks (writing to one communicator and reading from another) are
+                // discouraged
+
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
                 if (auto* reader = stl::get_if<blob_communicator_type>(&communicator)) {
                     return reader->read(data, count);
+                } else if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
+                    // todo: this is kinda implementation defined, it may falsely return 0
+                    return (*stream_reader)->readsome(reinterpret_cast<stream_char_type*>(data), count);
+                } else if (auto* string_reader = stl::get_if<string_communicator_type>(&communicator)) {
+                    auto* begin = reinterpret_cast<string_char_type*>(data);
+                    return stl::copy_n(string_reader->data(),
+                                static_cast<stl::size_t>(count),
+                                begin) - begin;
                 } else {
                     return 0LL; // nothing is read because we can't read it
                 }
+                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
         }
 
+        constexpr decltype(auto) rdbuf() const {
+            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
+                return (*stream_reader)->rdbuf();
+            } else {
+                // todo: should we log, or should we blow up with an exception?
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to read from a stream based body "
+                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicators to your object type. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
+            }
+        }
+
+        constexpr stl::streamsize readsome(stream_char_type* data, stl::streamsize count) {
+            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
+                return (*stream_reader)->readsome(data, count);
+            } else {
+                // todo: should we log, or should we blow up with an exception?
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to read from a stream based body "
+                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicators to your object type. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
+            }
+        }
+
+        template <typename T>
+        constexpr response_body& operator<<(T&& obj) {
+            if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
+                **stream_writer << stl::forward<T>(obj);
+            } else {
+                // todo: should we log, or should we blow up with an exception?
+                throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
+                                     "communicator, but now you're trying to write to stream based body "
+                                     "communicator which doesn't know how to convert your object to "
+                                     "text/blob-based-body communicators. Be consistent in your "
+                                     "calls. Cross-Talks are discouraged.)");
+            }
+            return *this;
+        }
+
+        template <typename T>
+        constexpr response_body const& operator>>(T& obj) const {
+            if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
+                **stream_writer >> obj;
+            } else {
+                // todo: should we log, or should we blow up with an exception?
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to read from a stream based body "
+                  "communicator which doesn't know how to convert the text/blob-based-body "
+                  "communicators to your object type. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
+            }
+            return *this;
+        }
+
         // This member function will tell you this body contains what
-        [[nodiscard]] constexpr http::communicator_type witch_communicator() const noexcept {
+        [[nodiscard]] constexpr http::communicator_type which_communicator() const noexcept {
             return static_cast<http::communicator_type>(communicator.index());
         }
 
         [[nodiscard]] constexpr bool operator==(response_body const& body) const noexcept {
             if constexpr (requires { elist_type::operator==(body); }) {
                 return elist_type::operator==(body);
-            } else if constexpr (TextBasedBodyReader<elist_type>) {
-                const auto this_size = size();
-                return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
             } else {
-                // todo
+                if (&body == this) {
+                    return true;
+                }
+                auto this_communicator = which_communicator();
+                if (this_communicator != body.which_communicator()) {
+                    return false;
+                }
+                switch (this_communicator) {
+                    case communicator_type::nothing: return true;
+                    case communicator_type::text_based: {
+                        const auto this_size = size();
+                        return this_size == body.size() &&
+                               stl::equal(data(), data() + this_size, body.data());
+                    }
+                    case communicator_type::stream_based: // we can't check equality of streams without
+                                                          // changing them
+                    case communicator_type::blob_based: {
+                        return false; // blobs don't have a mechanism to read but don't modify, so always
+                                      // false too
+                    }
+                }
             }
         }
 

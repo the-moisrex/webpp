@@ -93,57 +93,105 @@ namespace webpp::http {
     };
 
 
+
+
+
+    ////////////////////////////// Body Deserializer ( Body into Object ) //////////////////////////////
+
+
+
+    template <typename T>
+        requires(istl::String<T> || istl::StringView<T>)
+    constexpr void deserialize_text_body(T& str, TextBasedBodyReader auto const& body) {
+        str.append(body.data(), body.size());
+    }
+
+    template <typename T, BlobBasedBodyReader BodyType>
+        requires(istl::String<T> || istl::StringView<T>)
+    constexpr void deserialize_blob_body(T& str, BodyType const& body) {
+        using body_type     = stl::remove_cvref_t<BodyType>;
+        using byte_type     = typename body_type::byte_type;
+        auto const str_size = str.size();
+        if constexpr (requires {
+                          str.resize(1);
+                          { body.size() } -> stl::same_as<stl::size_t>;
+                      }) {
+            str.resize(str.size() + body.size());
+        }
+        // CGI supports char type as the "byte type" so it doesn't require casting; even though I
+        // don't think this has any impact on the generated assembly
+        if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
+            stl::streamsize read; // NOLINT(cppcoreguidelines-init-variables)
+            auto*           byte_data = str.data() + str_size;
+            for (;;) {
+                read = body.read(byte_data, default_buffer_size);
+                if (read == 0)
+                    break;
+                byte_data += read;
+            }
+        } else {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            stl::streamsize read; // NOLINT(cppcoreguidelines-init-variables)
+            auto*           byte_data = reinterpret_cast<byte_type*>(str.data() + str_size);
+            for (;;) {
+                read = body.read(byte_data, default_buffer_size);
+                if (read == 0)
+                    break;
+                byte_data += read;
+            }
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+    }
+
+    template <typename T>
+        requires(istl::String<T> || istl::StringView<T>)
+    constexpr void deserialize_stream_body(T& str, StreamBasedBodyReader auto const& body) {
+        body >> str;
+    }
+
     template <typename T, typename BodyType>
         requires(istl::String<T> || istl::StringView<T>)
     constexpr void deserialize_body(T& str, BodyType const& body) {
         using body_type = stl::remove_cvref_t<BodyType>;
-        using byte_type = typename body_type::byte_type;
         using type      = T;
         if constexpr (istl::String<type>) {
-            if constexpr (TextBasedBodyReader<body_type>) {
-                str.append(body.data(), body.size());
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                auto const str_size = str.size();
-                if constexpr (requires {
-                                  str.resize(1);
-                                  { body.size() } -> stl::same_as<stl::size_t>;
-                              }) {
-                    str.resize(str.size() + body.size());
-                }
-                for (;;) {
-                    // CGI supports char type as the "byte type" so it doesn't require casting; even though I
-                    // don't think this has any impact on the generated assembly
-                    if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
-                        stl::streamsize const res = body.read(str.data() + str_size, default_buffer_size);
-                        if (res == 0)
-                            break;
-                    } else {
-                        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-                        stl::streamsize const res =
-                          body.read(reinterpret_cast<byte_type*>(str.data() + str_size), default_buffer_size);
-                        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
-                        if (res == 0)
-                            break;
+            if constexpr (UnifiedBodyReader<body_type>) {
+                switch (body.which_communicator()) {
+                    case communicator_type::nothing: break;
+                    case communicator_type::text_based: {
+                        deserialize_text_body(str, body);
+                        break;
+                    }
+                    case communicator_type::stream_based: {
+                        deserialize_stream_body(str, body);
+                        break;
+                    }
+                    case communicator_type::blob_based: {
+                        deserialize_blob_body(str, body);
+                        break;
                     }
                 }
-            } else if constexpr (requires { body.read(str.data()); }) {
-                if constexpr (requires {
-                                  str.resize(1);
-                                  { body.size() } -> stl::same_as<stl::size_t>;
-                              }) {
-                    str.resize(str.size() + body.size());
-                }
-                body.read(str.data());
+            } else if constexpr (TextBasedBodyReader<body_type>) {
+                deserialize_text_body(str, body);
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
+                deserialize_blob_body(str, body);
             } else if constexpr (StreamBasedBodyReader<body_type>) {
-                body >> str;
+                deserialize_stream_body(str, body);
             } else {
                 static_assert_false(
                   T,
                   "We're not able to put the body to the string; the body type is unknown to us.");
             }
         } else if constexpr (istl::StringView<T>) {
-            if constexpr (TextBasedBodyReader<BodyType>) {
-                if constexpr (istl::StringViewifiableOf<type, BodyType>) {
+            if constexpr (TextBasedBodyReader<body_type>) {
+                if constexpr (UnifiedBodyReader<body_type>) {
+                    if (body.which_communicator() != communicator_type::text_based) {
+                        throw stl::invalid_argument(
+                          "You're asking us to get the data of a body type while the body doesn't contain "
+                          "a string type so we can get its data and put it in a string view type.");
+                    }
+                }
+                if constexpr (istl::StringViewifiableOf<type, body_type>) {
                     str = istl::string_viewify_of<type>(body);
                 } else {
                     using char_type = istl::char_type_of<type>;
@@ -215,26 +263,78 @@ namespace webpp::http {
     }
 
 
+
+
+    ////////////////////////////// Body Serializer ( Object into Body ) //////////////////////////////
+
+
+    template <istl::StringView T, TextBasedBodyReader BodyType>
+    constexpr void serialize_text_body(T str, BodyType& body) {
+        body.append(str.data(), str.size());
+    }
+
+    template <istl::StringView T, BlobBasedBodyReader BodyType>
+    constexpr void serialize_blob_body(T str, BodyType& body) {
+        using body_type = stl::remove_cvref_t<BodyType>;
+        using byte_type = typename body_type::byte_type;
+        // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
+        // probably won't affect much, but it saves us 2 castings that happen because of this.
+        if constexpr (requires(stl::streamsize s) { body.write(str.data(), s); }) {
+            auto*           byte_data = str.data();
+            auto            size      = static_cast<stl::streamsize>(str.size());
+            stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
+            do {
+                ret_size = body.write(byte_data, size);
+                byte_data += ret_size;
+                size -= ret_size;
+            } while (ret_size > 0);
+        } else {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            auto*           byte_data = reinterpret_cast<byte_type const*>(str.data());
+            auto            size      = static_cast<stl::streamsize>(str.size());
+            stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
+            do {
+                ret_size = body.write(byte_data, size);
+                byte_data += ret_size;
+                size -= ret_size;
+            } while (ret_size > 0);
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+        }
+    }
+
+    template <istl::StringView T, StreamBasedBodyReader BodyType>
+    constexpr void serialize_stream_body(T str, BodyType& body) {
+        body << str;
+    }
+
+
+
     template <istl::StringViewifiable T, HTTPBody BodyType>
     constexpr void serialize_body(T&& str, BodyType& body) {
         using body_type     = stl::remove_cvref_t<BodyType>;
         auto const str_view = istl::string_viewify(str);
-        if constexpr (TextBasedBodyWriter<body_type>) {
-            body.append(str_view.data(), str_view.size());
-        } else if constexpr (BlobBasedBodyWriter<body_type>) {
-            using byte_type = typename body_type::byte_type;
-            // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
-            // probably won't affect much, but it saves us 2 castings that happen because of this.
-            if constexpr (requires(stl::streamsize s) { body.write(str_view.data(), s); }) {
-                body.write(str_view.data(), static_cast<stl::streamsize>(str_view.size()));
-            } else {
-                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-                body.write(reinterpret_cast<const byte_type*>(str_view.data()),
-                           static_cast<stl::streamsize>(str_view.size()));
-                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+        if constexpr (UnifiedBodyReader<body_type>) {
+            switch (body.which_communicator()) {
+                case communicator_type::nothing: break;
+                case communicator_type::text_based: {
+                    serialize_text_body(str_view, body);
+                    break;
+                }
+                case communicator_type::blob_based: {
+                    serialize_blob_body(str_view, body);
+                    break;
+                }
+                case communicator_type::stream_based: {
+                    serialize_stream_body(str_view, body);
+                    break;
+                }
             }
+        } else if constexpr (TextBasedBodyWriter<body_type>) {
+            serialize_text_body(str_view, body);
+        } else if constexpr (BlobBasedBodyWriter<body_type>) {
+            serialize_blob_body(str_view, body);
         } else if constexpr (StreamBasedBodyWriter<body_type>) {
-            body << str_view;
+            serialize_stream_body(str_view, body);
         } else {
             static_assert_false(body_type, "The body type doesn't support strings.");
         }

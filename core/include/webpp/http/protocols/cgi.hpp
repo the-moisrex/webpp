@@ -118,7 +118,6 @@ namespace webpp::http {
         }
 
       private:
-
         template <typename BodyType>
         inline void write_text(BodyType& body) {
             write(body.data(), static_cast<stl::streamsize>(body.size()));
@@ -129,7 +128,7 @@ namespace webpp::http {
         inline void write_blob(BodyType& body) {
             stl::array<char_type, default_buffer_size> buf;
             while (stl::streamsize read_size =
-                    body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                     body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
                 write(buf.data(), read_size);
             }
         }
