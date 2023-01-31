@@ -189,7 +189,7 @@ namespace webpp::http::beast_proto {
             // todo: for performance reasons, we can have variant of string,stream,blob beast body types
 
             using body_type = stl::remove_cvref_t<BodyType>;
-            if constexpr (RuntimeCommunicatorIndecation<body_type>) {
+            if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.witch_communicator()) {
                     case http::communicator_type::nothing: return;
                     case http::communicator_type::text_based: set_response_body_string(body); return;
