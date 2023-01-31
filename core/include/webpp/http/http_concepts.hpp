@@ -294,7 +294,7 @@ namespace webpp::http {
     };
 
     template <typename T>
-    concept RuntimeCommunicatorIndecation = BodyReader<T> && requires(T body) {
+    concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
                                                                  {
                                                                      body.which_communicator()
                                                                      } -> stl::same_as<communicator_type>;

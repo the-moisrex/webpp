@@ -118,17 +118,48 @@ namespace webpp::http {
         }
 
       private:
+
         template <typename BodyType>
-        void write_response_body(BodyType& body) {
+        inline void write_text(BodyType& body) {
+            write(body.data(), static_cast<stl::streamsize>(body.size()));
+        }
+
+
+        template <typename BodyType>
+        inline void write_blob(BodyType& body) {
+            stl::array<char_type, default_buffer_size> buf;
+            while (stl::streamsize read_size =
+                    body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
+                write(buf.data(), read_size);
+            }
+        }
+
+
+        template <typename BodyType>
+        inline void write_response_body(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
-            if constexpr (TextBasedBodyReader<body_type>) {
-                write(body.data(), static_cast<stl::streamsize>(body.size()));
-            } else if constexpr (BlobBasedBodyReader<body_type>) {
-                stl::array<char_type, default_buffer_size> buf;
-                while (stl::streamsize read_size =
-                         body.read(buf.data(), static_cast<stl::streamsize>(buf.size()))) {
-                    write(buf.data(), read_size);
+            if constexpr (UnifiedBodyReader<body_type>) {
+                switch (body.which_communicator()) {
+                    case communicator_type::nothing: {
+                        break;
+                    }
+                    case communicator_type::blob_based: {
+                        write_blob(body);
+                        break;
+                    }
+                    case communicator_type::stream_based: {
+                        write(body);
+                        break;
+                    }
+                    case communicator_type::text_based: {
+                        write_text(body);
+                        break;
+                    }
                 }
+            } else if constexpr (TextBasedBodyReader<body_type>) {
+                write_text(body);
+            } else if constexpr (BlobBasedBodyReader<body_type>) {
+                write_blob(body);
             } else if constexpr (StreamBasedBodyReader<body_type>) {
                 write(body);
             } else {
