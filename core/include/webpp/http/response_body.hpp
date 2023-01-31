@@ -256,9 +256,7 @@ namespace webpp::http {
                     return (*stream_reader)->readsome(reinterpret_cast<stream_char_type*>(data), count);
                 } else if (auto* string_reader = stl::get_if<string_communicator_type>(&communicator)) {
                     auto* begin = reinterpret_cast<string_char_type*>(data);
-                    return stl::copy_n(string_reader->data(),
-                                static_cast<stl::size_t>(count),
-                                begin) - begin;
+                    return stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin) - begin;
                 } else {
                     return 0LL; // nothing is read because we can't read it
                 }
