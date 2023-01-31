@@ -185,10 +185,14 @@ namespace webpp::http {
         } else if constexpr (istl::StringView<T>) {
             if constexpr (TextBasedBodyReader<body_type>) {
                 if constexpr (UnifiedBodyReader<body_type>) {
-                    if (body.which_communicator() != communicator_type::text_based) {
-                        throw stl::invalid_argument(
-                          "You're asking us to get the data of a body type while the body doesn't contain "
-                          "a string type so we can get its data and put it in a string view type.");
+                    switch (body.which_communicator()) {
+                        case communicator_type::nothing: return;
+                        case communicator_type::text_based: break;
+                        case communicator_type::blob_based:
+                        case communicator_type::stream_based:
+                            throw stl::invalid_argument(
+                              "You're asking us to get the data of a body type while the body doesn't contain "
+                              "a string so we can't get its data to put it in a string view.");
                     }
                 }
                 if constexpr (istl::StringViewifiableOf<type, body_type>) {
@@ -315,7 +319,7 @@ namespace webpp::http {
         auto const str_view = istl::string_viewify(str);
         if constexpr (UnifiedBodyReader<body_type>) {
             switch (body.which_communicator()) {
-                case communicator_type::nothing: break;
+                case communicator_type::nothing:
                 case communicator_type::text_based: {
                     serialize_text_body(str_view, body);
                     break;
