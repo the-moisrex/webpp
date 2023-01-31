@@ -151,12 +151,13 @@ namespace webpp::http::beast_proto {
         template <BlobBasedBodyReader BodyType>
         void set_response_body_blob(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
-            // todo: string optimizations
             using byte_type = typename body_type::byte_type;
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-            while (stl::streamsize read_size = body.read(reinterpret_cast<byte_type const*>(buf.data()),
-                                                         static_cast<stl::streamsize>(buf.size()))) {
-                bres->body().append(buf.data(), read_size);
+            stl::array<char, default_buffer_size>
+              static_buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+            while (stl::streamsize read_size = body.read(reinterpret_cast<byte_type*>(static_buf.data()),
+                                                         static_cast<stl::streamsize>(static_buf.size()))) {
+                bres->body().append(static_buf.data(), static_cast<stl::size_t>(read_size));
             }
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
@@ -190,7 +191,7 @@ namespace webpp::http::beast_proto {
 
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
-                switch (body.witch_communicator()) {
+                switch (body.which_communicator()) {
                     case http::communicator_type::nothing: return;
                     case http::communicator_type::text_based: set_response_body_string(body); return;
                     case http::communicator_type::blob_based: set_response_body_blob(body); return;
