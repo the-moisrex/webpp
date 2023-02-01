@@ -319,7 +319,7 @@ namespace webpp::http {
         auto const str_view = istl::string_viewify(str);
         if constexpr (UnifiedBodyReader<body_type>) {
             switch (body.which_communicator()) {
-                case communicator_type::nothing:
+                case communicator_type::nothing: // nothing in the body, we can set a new string there
                 case communicator_type::text_based: {
                     serialize_text_body(str_view, body);
                     break;
