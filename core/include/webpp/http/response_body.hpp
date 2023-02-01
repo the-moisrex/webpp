@@ -187,7 +187,8 @@ namespace webpp::http {
                         size -= ret_size;
                     } while (ret_size > 0);
                 } else {
-                    communicator.template emplace<string_communicator_type>();
+                    communicator.template emplace<string_communicator_type>(
+                      alloc::general_alloc_for<string_communicator_type>(*this));
                     auto& text_writer = stl::get<string_communicator_type>(communicator);
                     text_writer.append(data, count);
                 }
@@ -233,7 +234,8 @@ namespace webpp::http {
                     (*stream_writer)->write(reinterpret_cast<stream_char_type const*>(data), count);
                     return count;
                 } else {
-                    communicator.template emplace<blob_communicator_type>();
+                    communicator.template emplace<blob_communicator_type>(
+                      alloc::general_alloc_for<blob_communicator_type>(*this));
                     auto& blob_writer = stl::get<blob_communicator_type>(communicator);
                     return blob_writer.write(data, count);
                 }

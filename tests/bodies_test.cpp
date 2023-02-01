@@ -115,6 +115,7 @@ TEST(Body, BodyCrossTalkBlobToText) {
     body_type                           body{et};
     stl::string const                   str = "this is a test";
     body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
+    ASSERT_NE(body.data(), nullptr);
     stl::string const str2{body.data(), body.size()};
     EXPECT_EQ(str, str2);
 }
@@ -147,9 +148,8 @@ TEST(Body, BodyCrossTalkTextToBlob) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    while (body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
-        str2.append(buf.data(), buf.size());
-    }
+    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
+    str2.append(buf.data(), buf.size());
     EXPECT_EQ(str, str2);
 }
 
@@ -161,9 +161,8 @@ TEST(Body, BodyCrossTalkStreamToBlob) {
     stl::string                 str2;
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
-    while (body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
-        str2.append(buf.data(), buf.size());
-    }
+    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
+    str2.append(buf.data(), buf.size());
     EXPECT_EQ(str, str2);
 }
 
