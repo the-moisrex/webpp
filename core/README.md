@@ -7,18 +7,22 @@ __Attention__: some of the things that is written here are outdated and obsolete
 ```c++
 struct application {
     using namespace webpp;
-
-    router _router {
-        get and root / number("user_id") / "page" / number("page_num") >> &app::page
-    };
+    
+    view_manager man;
 
     auto page(Context auto& ctx) const noexcept {
-        auto page_num = ctx.path.template get<int>("page_num");
-        auto _user = ctx.path.template get<user>("user_id");
-        return ctx.file("page.html", _user, page_num);
+        int page_num = ctx.request.param("page_num");
+        user _user = ctx.request.param("user_id");
+        return man.view("page.mustache", {
+            {"user", _user},
+            {"page_num", page_num}
+        });
     }
     
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
+        static router _router {
+            get and root / number("user_id") / "page" / number("page_num") >> &app::page
+        };
         return _router(req);
     }
 };
@@ -326,11 +330,6 @@ things. For example you could use a context extension to parse
 data in one router, and pass those data to another router, and
 that router will use those data knowing that it's already been parsed.
 
-**Extension requirements:**
- - [ ] Having a default constructor
- - [ ] Having a copy constructor for extensions
- - [ ] Having a move constructor for extensions
-
 **Extension collision:**
  It is possible to try to add an extension to the context and get
  compile time errors saying that it's a collision or an ambiguous call
@@ -343,30 +342,6 @@ return context.clone<as_field<map<traits, string, string>>>();
 
  It's also possible to simplify this line of code with
  "Extension aware context" struct.
-
-
-**Internal Extension Handling:**
-
- We can customize every single route to check if the extension is
- present in the returned context and then act accordingly, but that's
- not scalable; so in order to do this, we're gonna call "something"
- on each extension in these times (if the extension has its method):
-   - **pre_subroute**: Before every call to a sub-route
-   - **post_subroute**: After every call to a sub-route
-   - **pre_entryroute**: Before every call to an entry route
-   - **post_entryroute**: After every call to an entry route
-   - **pre_firstroute**: Before calling the first entry route if possible
-   - **post_lastroute**: When we get the final result and we're
-       about to send it to the user.
-
-
-**todo**: Extension dependency:
- We need a way of saying that an extension needs another extension to work.
-
-
-**todo**: Runtime modification of Initial context type:
-We need a way to achieve this; we need a way to specify the initial
-context type that will be used for every single time.
 
 
 ## Traits System
