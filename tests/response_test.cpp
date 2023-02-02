@@ -60,6 +60,13 @@ TEST(Response, ResHeaders) {
     EXPECT_EQ(res.headers.has("one", "two", "three"), stl::make_tuple(true, true, false));
 }
 
+TEST(Response, ResHeadersReference) {
+    enable_owner_traits<default_traits> et;
+    HTTPResponse auto                   res = res_t::create(et);
+    res.headers["Content-Length"]           = "10";
+    EXPECT_EQ(res.headers["Content-Length"], "10");
+}
+
 TEST(Response, File) {
     enable_owner_traits<default_traits> et;
     std::filesystem::path               file = std::filesystem::temp_directory_path();
