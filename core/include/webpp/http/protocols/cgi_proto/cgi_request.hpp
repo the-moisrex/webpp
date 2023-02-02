@@ -33,14 +33,18 @@ namespace webpp::http {
         string_view_type put_header_name(string_view_type name) {
             using diff_t = typename stl::iterator_traits<typename string_type::iterator>::difference_type;
             cache.append(name.data(), name.size());
-            stl::replace(cache.end() - static_cast<diff_t>(name.size()), cache.end(), '_', '-');
+            stl::replace(cache.begin() + cache.size() - static_cast<diff_t>(name.size()),
+                         cache.end(),
+                         '_',
+                         '-');
             return {cache.data() + cache.size() - name.size(), name.size()};
         }
 
         string_view_type put_value(string_view_type value) {
-            // todo: environ is save to use as a string view, I don't think we need to store it in the holder
-            cache.append(value.data(), value.size());
-            return {cache.data() + cache.size() - value.size(), value.size()};
+            return value;
+            // todo: environ is safe to use as a string view, I don't think we need to store it in the holder
+            // cache.append(value.data(), value.size());
+            // return {cache.data() + cache.size() - value.size(), value.size()};
         }
 
         void fill_headers() {
