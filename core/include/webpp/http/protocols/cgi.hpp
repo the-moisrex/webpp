@@ -41,8 +41,6 @@ namespace webpp::http {
                       "Your application type can't be called with a request type of our choosing or "
                       "its response is not of a valid response type.");
 
-        static constexpr stl::size_t buffer_size = 1024ull * 1024ull;
-
       private:
         using super = common_http_protocol<TraitsType, App, RootExtensions>;
 
@@ -77,7 +75,7 @@ namespace webpp::http {
 
             stl::streamsize read_count = 0;
             for (;;) {
-                stl::cin.read(data, buffer_size);
+                stl::cin.read(data, default_buffer_size);
 
                 stl::streamsize const buf_read_size = stl::cin.gcount();
                 if (buf_read_size == 0) {
