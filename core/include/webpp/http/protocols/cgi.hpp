@@ -197,12 +197,14 @@ namespace webpp::http {
                 write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));
                 write("\r\n", 2L);
                 write_response_body(res.body);
+                return EXIT_SUCCESS;
             } catch (stl::exception const& ex) {
                 this->logger.error("CGI", "Fatal exception is thrown.", ex);
+                return EXIT_FAILURE;
             } catch (...) {
                 this->logger.error("CGI", "Fatal and unknown exception is thrown.");
+                return EXIT_FAILURE;
             }
-            return EXIT_SUCCESS;
         }
     };
 

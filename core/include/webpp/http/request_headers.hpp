@@ -41,13 +41,10 @@ namespace webpp::http {
         fields_type fields;
 
       public:
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-
         template <EnabledTraits ET>
-        constexpr header_fields_provider(ET&& et)
+        constexpr header_fields_provider(ET& et)
           : fields{alloc::featured_alloc_for<alloc::sync_pool_features, fields_type>(et)} {}
 
-        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         [[nodiscard]] constexpr auto begin() const noexcept {
             return fields.begin();

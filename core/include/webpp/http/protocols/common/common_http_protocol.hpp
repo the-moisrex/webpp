@@ -25,11 +25,10 @@ namespace webpp::http {
         using app_wrapper_type    = http_app_wrapper<traits_type, application_type>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
 
-        app_wrapper_type app;
+        app_wrapper_type app; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename... Args>
-        common_http_protocol(Args&&... args) : etraits{},
-                                               app{*this, stl::forward<Args>(args)...} {}
+        constexpr common_http_protocol(Args&&... args) : app{this->get_traits(), stl::forward<Args>(args)...} {}
     };
 
 } // namespace webpp::http
