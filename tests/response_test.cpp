@@ -3,8 +3,8 @@
 
 #include "../core/include/webpp/http/response.hpp"
 
-#include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/bodies/file.hpp"
+#include "../core/include/webpp/http/bodies/string.hpp"
 #include "../core/include/webpp/http/response_body.hpp"
 #include "../core/include/webpp/traits/enable_traits.hpp"
 #include "common_pch.hpp"
@@ -37,15 +37,15 @@ TEST(HTTPResponseTest, Type) {
 
 TEST(Response, Init) {
     enable_owner_traits<default_traits> et;
-    HTTPResponse auto             res  = res_t::create(et);
-    HTTPResponse auto             res2 = res_t::create(et);
+    HTTPResponse auto                   res  = res_t::create(et);
+    HTTPResponse auto                   res2 = res_t::create(et);
 
     EXPECT_TRUE(res == res2);
 
     EXPECT_EQ(std::string(res.body.as()), "");
     res2 << "Code";
     EXPECT_EQ(std::string(res2.body.as<std::string>()), "Code");
-    res = res2;
+    res = res2.body;
     EXPECT_EQ(std::string(res.body.as<std::string>()), "Code");
 
     EXPECT_EQ(res, res2);
