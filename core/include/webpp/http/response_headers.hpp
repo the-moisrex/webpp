@@ -121,6 +121,16 @@ namespace webpp::http {
             string_to<StringType>(res);
             return res;
         }
+
+
+        [[nodiscard]] constexpr bool operator==(response_headers const& other) const noexcept {
+            return status_code == other.status_code &&
+                   static_cast<container const&>(*this) == static_cast<container const&>(other);
+        }
+
+        [[nodiscard]] constexpr bool operator!=(response_headers const& other) const noexcept {
+            return !operator==(other);
+        }
     };
 
 

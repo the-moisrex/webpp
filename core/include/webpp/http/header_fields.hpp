@@ -67,11 +67,11 @@ namespace webpp::http {
         // NOLINTEND(bugprone-easily-swappable-parameters)
 
 
-        constexpr basic_header_field(basic_header_field&&) noexcept       = default;
-        constexpr basic_header_field(basic_header_field const&) noexcept  = default;
+        constexpr basic_header_field(basic_header_field&&) noexcept                 = default;
+        constexpr basic_header_field(basic_header_field const&) noexcept            = default;
         constexpr basic_header_field& operator=(basic_header_field&&) noexcept      = default;
         constexpr basic_header_field& operator=(basic_header_field const&) noexcept = default;
-        constexpr ~basic_header_field()                                   = default;
+        constexpr ~basic_header_field()                                             = default;
 
 
         /**

@@ -28,7 +28,8 @@ namespace webpp::http {
         app_wrapper_type app; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename... Args>
-        constexpr common_http_protocol(Args&&... args) : app{this->get_traits(), stl::forward<Args>(args)...} {}
+        constexpr common_http_protocol(Args&&... args)
+          : app{this->get_traits(), stl::forward<Args>(args)...} {}
     };
 
 } // namespace webpp::http
