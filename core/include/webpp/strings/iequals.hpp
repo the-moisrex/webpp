@@ -33,6 +33,7 @@ namespace webpp::ascii {
         }
     }
 
+    // NOLINTBEGIN(bugprone-easily-swappable-parameters)
     [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case a, char_case b) noexcept {
         switch (a) {
             case char_case::lowered:
@@ -53,6 +54,9 @@ namespace webpp::ascii {
                 }
         }
     }
+    // NOLINTEND(bugprone-easily-swappable-parameters)
+
+
     /**
      * Compare two chars case-insensitively.
      * todo: benchmark this
@@ -121,6 +125,8 @@ namespace webpp::ascii {
 
 #ifdef WEBPP_EVE
 
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+
             using uchar_type = stl::make_unsigned_t<char_type>;
             // converting them to unsigned types; because our to upper algorithm relies on unsigned integers.
             auto* f1 = reinterpret_cast<uchar_type const*>(istl::string_data(_str1));
@@ -130,10 +136,11 @@ namespace webpp::ascii {
             using simd_utype = eve::wide<uchar_type>;
 
             struct equal_checker {
+              private:
+                uchar_type alphabet_length = 'z' - 'a';
+                uchar_type a_A_offset      = 'a' - 'A';
 
-                const uchar_type alphabet_length = 'z' - 'a';
-                const uchar_type a_A_offset      = 'a' - 'A';
-
+              public:
                 constexpr auto to_upper(simd_utype c) const noexcept {
                     // eve::sub[condition](a, b) is an equivalent to `eve::if_else(condition, a - b, a)`
                     // but it will also use masked instructions when those are avaliable.
@@ -168,6 +175,8 @@ namespace webpp::ascii {
             };
 
             return eve::algo::equal(eve::algo::as_range(f1, l1), f2, equal_checker{});
+
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 #else
             auto*       it1     = istl::string_data(_str1);
             auto*       it2     = istl::string_data(_str2);
