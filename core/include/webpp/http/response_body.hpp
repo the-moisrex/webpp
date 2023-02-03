@@ -337,7 +337,7 @@ namespace webpp::http {
                 if (&body == this) {
                     return true;
                 }
-                auto this_communicator = which_communicator();
+                auto const this_communicator = which_communicator();
                 if (this_communicator != body.which_communicator()) {
                     return false;
                 }
@@ -355,6 +355,7 @@ namespace webpp::http {
                                       // false too
                     }
                 }
+                return false;
             }
         }
 

@@ -234,7 +234,7 @@ namespace webpp::http {
 
         template <HTTPResponse ResType>
         [[nodiscard]] constexpr bool operator==(ResType const& res) const noexcept {
-            return this->headers == res.headers && this->body == this->body;
+            return this->headers == res.headers && this->body == res.body;
         }
 
         template <HTTPResponse ResType>
@@ -281,7 +281,7 @@ namespace webpp::http {
         }
 
         template <typename T>
-        constexpr operator T() const {
+        constexpr explicit(!HTTPResponse<T>) operator T() const {
             return as<T>();
         }
 
