@@ -32,7 +32,9 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     using stream_response_body_communicator = stl::shared_ptr<
-      stl::basic_iostream<traits::char_type<TraitsType>, stl::char_traits<traits::char_type<TraitsType>>>>;
+      stl::basic_stringstream<traits::char_type<TraitsType>,
+                              stl::char_traits<traits::char_type<TraitsType>>,
+                              traits::general_allocator<TraitsType, traits::char_type<TraitsType>>>>;
 
 
     /**
@@ -74,6 +76,7 @@ namespace webpp::http {
         using string_communicator_type = string_response_body_communicator<traits_type>;
         using blob_communicator_type   = blob_response_body_communicator<traits_type>;
         using stream_communicator_type = stream_response_body_communicator<traits_type>;
+        using stream_type              = typename stream_communicator_type::element_type;
 
         using byte_type = stl::byte; // required by BlobBasedBodyWriter
         using value_type =
@@ -105,7 +108,7 @@ namespace webpp::http {
       public:
         constexpr response_body(response_body const&)                = default;
         constexpr response_body(response_body&&) noexcept            = default;
-        constexpr response_body& operator=(response_body const&)     = default;
+        constexpr response_body& operator=(response_body const&)     = delete; // todo
         constexpr response_body& operator=(response_body&&) noexcept = default;
         constexpr ~response_body() noexcept                          = default;
 
@@ -298,6 +301,9 @@ namespace webpp::http {
         constexpr response_body& operator<<(T&& obj) {
             if (auto* stream_writer = stl::get_if<stream_communicator_type>(&communicator)) {
                 **stream_writer << stl::forward<T>(obj);
+            } else if (stl::holds_alternative<stl::monostate>(communicator)) {
+                init_stream();
+                *stl::get<stream_communicator_type>(communicator) << stl::forward<T>(obj);
             } else {
                 // todo: should we log, or should we blow up with an exception?
                 throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
@@ -452,6 +458,14 @@ namespace webpp::http {
                 res = stl::forward<T>(obj);
                 return res;
             }
+        }
+
+
+      private:
+        void init_stream() {
+            communicator.template emplace<stream_communicator_type>(
+              stl::allocate_shared<stream_type>(alloc::general_allocator<stream_type>(*this),
+                                                std::ios_base::in | std::ios_base::out));
         }
     };
 
