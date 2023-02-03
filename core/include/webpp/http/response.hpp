@@ -143,8 +143,7 @@ namespace webpp::http {
                 if (!has_content_length) {
                     str_t value{headers.get_allocator()};
                     append_to(value, body.size() * sizeof(char));
-                    headers.emplace_back(
-                      header_field_type{str_t{"Content-Length", headers.get_allocator()}, stl::move(value)});
+                    headers.set("Content-Length", stl::move(value));
                 }
             }
         }

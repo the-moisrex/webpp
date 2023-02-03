@@ -14,16 +14,14 @@ namespace webpp::http {
 
     namespace details {
         template <typename TraitsType, typename HeaderFieldType>
-        struct response_headers_container
-          : stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>> {
+        struct response_headers_container : istl::vector<HeaderFieldType, TraitsType> {
             using traits_type = TraitsType;
-            using vector_type =
-              stl::vector<HeaderFieldType, traits::general_allocator<TraitsType, HeaderFieldType>>;
+            using vector_type = istl::vector<HeaderFieldType, TraitsType>;
+
             // this field type is required for the "headers_container" to work
             using field_type = HeaderFieldType;
 
-            using stl::vector<HeaderFieldType,
-                              traits::general_allocator<TraitsType, HeaderFieldType>>::vector;
+            using istl::vector<HeaderFieldType, TraitsType>::vector;
 
             template <EnabledTraits ET>
             constexpr response_headers_container(ET& et)
