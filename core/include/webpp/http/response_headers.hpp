@@ -21,8 +21,6 @@ namespace webpp::http {
             // this field type is required for the "headers_container" to work
             using field_type = HeaderFieldType;
 
-            using istl::vector<HeaderFieldType, TraitsType>::vector;
-
             template <EnabledTraits ET>
             constexpr response_headers_container(ET& et)
               : vector_type{alloc::general_alloc_for<vector_type>(et)} {}
