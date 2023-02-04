@@ -34,20 +34,20 @@ namespace webpp::http {
           private:
             servers_variant svrvar; // server variant
 
-#define call_svr(mem, ...)                                      \
-    stl::visit(                                                 \
-      [](auto* svr) noexcept(noexcept(svr->mem(__VA_ARGS__))) { \
-          return svr->mem(__VA_ARGS__);                         \
-      },                                                        \
+#define call_svr(mem, ...)                                                \
+    stl::visit(                                                           \
+      [](auto* svr) constexpr noexcept(noexcept(svr->mem(__VA_ARGS__))) { \
+          return svr->mem(__VA_ARGS__);                                   \
+      },                                                                  \
       svrvar)
 
           public:
             template <typename ServerType>
                 requires(istl::one_of<ServerTypes..., ServerType>)
-            basic_dynamic_server(ServerType& inp_server) : svrvar{&inp_server} {}
+            constexpr basic_dynamic_server(ServerType& inp_server) : svrvar{&inp_server} {}
 
             // Get the server name that's being used
-            [[nodiscard]] string_view_type server_name() const noexcept {
+            [[nodiscard]] constexpr string_view_type server_name() const noexcept {
                 return call_svr(server_name);
             }
 
@@ -65,7 +65,7 @@ namespace webpp::http {
 
           protected:
             template <typename StrT, EnabledTraits ET>
-            inline string_type stringify(StrT&& str, ET&& et) const {
+            constexpr inline string_type stringify(StrT&& str, ET&& et) const {
                 return istl::stringify_of<string_type>(str, alloc::general_alloc_for<string_type>(et));
             }
 
@@ -82,7 +82,7 @@ namespace webpp::http {
             constexpr request_view_interface(request_view_interface&&) noexcept       = default;
             request_view_interface& operator=(request_view_interface&&) noexcept      = default;
             request_view_interface& operator=(request_view_interface const&) noexcept = default;
-            virtual ~request_view_interface() {}
+            virtual ~request_view_interface()                                         = default;
         };
 
 
@@ -150,23 +150,25 @@ namespace webpp::http {
         interface_ptr req   = nullptr;
 
       public:
+        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
         headers_type headers;
+        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
-        basic_request_view(ReqType const& inp_req) noexcept
+        constexpr basic_request_view(ReqType const& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
-        basic_request_view(basic_request_view const&) noexcept            = default;
-        basic_request_view(basic_request_view&&) noexcept                 = default;
-        basic_request_view& operator=(basic_request_view const&) noexcept = default;
-        basic_request_view& operator=(basic_request_view&&) noexcept      = default;
-        ~basic_request_view()                                             = default;
+        constexpr basic_request_view(basic_request_view const&) noexcept            = default;
+        constexpr basic_request_view(basic_request_view&&) noexcept                 = default;
+        constexpr basic_request_view& operator=(basic_request_view const&) noexcept = default;
+        constexpr basic_request_view& operator=(basic_request_view&&) noexcept      = default;
+        constexpr ~basic_request_view()                                             = default;
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
-        basic_request_view& operator=(ReqType const& inp_req) noexcept {
+        constexpr basic_request_view& operator=(ReqType const& inp_req) noexcept {
             req     = static_cast<interface_ptr>(&inp_req);
             headers = inp_req.headers.template as_view<traits_type>();
             return *this;
@@ -186,7 +188,7 @@ namespace webpp::http {
         }
 
         // Get the HTTP version of the request
-        [[nodiscard]] http::version version() const noexcept {
+        [[nodiscard]] constexpr http::version version() const noexcept {
             return req->get_version();
         }
     };
