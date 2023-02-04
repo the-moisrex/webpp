@@ -1,6 +1,6 @@
 # HTTP(s)
 
-## Headers
+### Headers
 
 Headers a container of fields.
 
@@ -13,7 +13,7 @@ Fields:
 We plan to have plenty of pre-defined types that represent each standard header types.
 Read more about **Pre-Defined Headers** in the [headers directory](./headers/README.md).
 
-## Bodies
+### Bodies
 
 Bodies have the concept of communicators. Body communicators are the way, you (the user of the library)
 communicate with the library itself and how you would pass your body types to us and how we can pass our
@@ -32,14 +32,14 @@ to communicate with the library's response and request bodies.
 You can write your own function to use these primitives to create your own custom bodies.
 Read more about **Custom Bodies** in the [bodies directory](./bodies/README.md).
 
-## Request
+### Request
 
 Requests have:
 
 - `request.headers`
 - `request.body`
 
-## Response
+### Response
 
 Responses have:
 
@@ -47,11 +47,21 @@ Responses have:
 - `response.body`
 
 
-## Protocols
+### Protocols
 
 Protocols are the way the HTTP is transported to the user of the app.
 
 - **CGI**: The server (another software) runs our executable for every request.
 - **FastCGI**: Special custom protocol to send and receive from the server.
 - **Beast**: Using `boost::beast` library as a server
+
+
+---------------------
+
+## Dynamic Routing System
+
+Dynamic routing system is a runtime initialized dynamic router and lets you
+use it without caring much about its type.
+
+### Request View
 
