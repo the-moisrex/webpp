@@ -109,6 +109,42 @@ TEST(Body, CustomBodyTypeSerializerTest) {
 
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+////////////////////////////////////////////////// Read & Write //////////////////////////////////////////////////
+
+TEST(Body, BodyStreamToStream) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body << str;
+    stl::string str2;
+    body >> str2;
+    EXPECT_EQ(str, str2);
+}
+
+TEST(Body, BodyBlobToBlob) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.write(reinterpret_cast<stl::byte const*>(str.data()), static_cast<stl::streamsize>(str.size()));
+    stl::string                 str2;
+    static constexpr auto       buff_size = 10;
+    stl::array<char, buff_size> buf{};
+    body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()));
+    str2.append(buf.data(), buf.size());
+    EXPECT_EQ(str, str2);
+}
+
+
+TEST(Body, BodyTextToText) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    stl::string const                   str = "this is a test";
+    body.append(str.data(), str.size());
+    stl::string const str2{body.data(), body.size()};
+    EXPECT_EQ(str, str2);
+}
+
+////////////////////////////////////////////////// Cross Talk //////////////////////////////////////////////////
 
 TEST(Body, BodyCrossTalkBlobToText) {
     enable_owner_traits<default_traits> et;
