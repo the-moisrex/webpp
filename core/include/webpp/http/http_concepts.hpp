@@ -500,6 +500,18 @@ namespace webpp::http {
     };
 
 
+
+    /**
+     * A helper to get the right value out of the body
+     */
+    template <typename T, typename ObjT>
+        requires(HTTPBody<stl::remove_cvref_t<ObjT>> || HTTPResponse<stl::remove_cvref_t<ObjT>> ||
+                 HTTPRequest<stl::remove_cvref_t<ObjT>>)
+    [[nodiscard]] static constexpr decltype(auto) as(ObjT&& obj) noexcept(noexcept(obj.template as<T>())) {
+        return obj.template as<T>();
+    }
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_CONCEPTS_HPP
