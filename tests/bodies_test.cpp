@@ -80,6 +80,7 @@ TEST(Body, StringCustomBody) {
     static_assert(istl::String<stl::string> && stl::is_default_constructible_v<stl::string>,
                   "We need string to be default constructible for this test to work.");
     body_type body{et, "Testing"};
+    EXPECT_EQ(as<std::string>(body), "Testing");
     body                       = "Hello World";
     stl::string const body_str = body.as();
     EXPECT_EQ(body_str, "Hello World");
