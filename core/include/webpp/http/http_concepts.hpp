@@ -164,6 +164,8 @@ namespace webpp::http {
       requires(istl::remove_shared_ptr_t<stl::remove_pointer_t<T>> body, void*& val) {
           body >> val;
           body.rdbuf();
+          body.tellg();
+          body.seekg(0);
           typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
           requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
                             stl::streamsize count) {
