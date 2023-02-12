@@ -115,11 +115,18 @@ TEST(Body, CustomBodyTypeSerializerTest) {
 TEST(Body, BodyStreamToStream) {
     enable_owner_traits<default_traits> et;
     body_type                           body{et};
-    stl::string const                   str = "this is a test";
+    stl::string const                   str = "one two three";
     body << str;
-    stl::string str2;
-    body >> str2;
-    EXPECT_EQ(str, str2);
+    stl::string one, two, three;
+    body >> one >> two >> three;
+    EXPECT_EQ("one", one);
+    EXPECT_EQ("two", two);
+    EXPECT_EQ("three", three);
+
+    stl::stringstream whole_str;
+    body.seekg(0);
+    whole_str << body.rdbuf();
+    EXPECT_EQ(str, whole_str.str());
 }
 
 TEST(Body, BodyCStreamToCStream) {
