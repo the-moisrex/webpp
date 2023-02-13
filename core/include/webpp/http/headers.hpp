@@ -155,6 +155,15 @@ namespace webpp::http {
             this->emplace_back(stl::move(name), stl::move(new_value));
         }
 
+        template <typename VT>
+        constexpr void set(name_type name, VT&& new_value) {
+            set(stl::move(name), value_type{stl::forward<VT>(new_value), this->get_allocator()});
+        }
+
+        template <typename NT>
+        constexpr void set(NT&& name, value_type new_value) {
+            set(name_type{stl::forward<NT>(name), this->get_allocator()}, stl::move(new_value));
+        }
 
         template <typename NT, typename VT>
         constexpr void set(NT&& name, VT&& new_value) {

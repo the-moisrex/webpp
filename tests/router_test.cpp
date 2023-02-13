@@ -40,22 +40,22 @@ TEST(Router, RouteCreation) {
     };
 
 
-    auto         req = request{fp};
-    router const router1{extension_pack<string_body>{}, about_page};
-    auto         res = router1(req);
+    request           req{fp};
+    router const      router1{extension_pack<string_body>{}, about_page};
+    HTTPResponse auto res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code, 200);
     EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
-    router const router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
+    router const            router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
                              return ctx.string("testing");
                          }};
-    auto         res2 = router2(req);
+    HTTPResponse auto const res2 = router2(req);
     EXPECT_EQ(as<std::string>(res2.body), "testing");
 
 
-    router const            router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
+    router const            router3{extension_pack<string_body>{}, [](Context auto&& ctx) {
                              return ctx.string("testing 2");
                          }};
     HTTPResponse auto const res3 = router3(req);
