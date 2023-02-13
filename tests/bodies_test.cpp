@@ -196,7 +196,7 @@ TEST(Body, BodyCrossTalkTextToCStream) {
     stl::array<char, buff_size> buf{};
     while (auto res =
              body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
-        str2.append(buf.data(), static_cast<stl::size_t>(res));
+        str2.append(buf.data(), static_cast<stl::size_t>(res)); // res is always zero to not create a loop!!!
     }
     EXPECT_EQ(str, str2);
 }

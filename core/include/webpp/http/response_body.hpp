@@ -111,6 +111,7 @@ namespace webpp::http {
         static_assert(CStreamBasedBodyCommunicator<cstream_communicator_type>,
                       "Response body CStream Based Body Communicator is not a valid BBBC.");
 
+        static constexpr auto log_cat = "ResBody";
 
       private:
         using stream_char_type  = typename istl::remove_shared_ptr_t<stream_communicator_type>::char_type;
@@ -272,11 +273,14 @@ namespace webpp::http {
                 if (auto* reader = stl::get_if<cstream_communicator_type>(&communicator)) {
                     return reader->read(data, count);
                 } else if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
+                    this->logger.warning(log_cat, "Stream to CStream Cross-Talk is discouraged.");
                     // todo: this is kinda implementation defined, it may falsely return 0
                     return (*stream_reader)->readsome(reinterpret_cast<stream_char_type*>(data), count);
                 } else if (auto* string_reader = stl::get_if<string_communicator_type>(&communicator)) {
+                    this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
                     auto* begin = reinterpret_cast<string_char_type*>(data);
-                    return stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin) - begin;
+                    stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
+                    return 0; // return 0 to skip the loop
                 } else {
                     return 0LL; // nothing is read because we can't read it
                 }
