@@ -43,8 +43,11 @@ namespace webpp::http {
      */
     template <Traits TraitsType>
     struct cstream_response_body_communicator : istl::vector<stl::byte, TraitsType> {
-        using traits_type = TraitsType;
-        using byte_type   = stl::byte;
+        using traits_type     = TraitsType;
+        using byte_type       = stl::byte;
+        using vector_type     = istl::vector<stl::byte, traits_type>;
+        using iterator        = typename vector_type::iterator;
+        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
         using istl::vector<stl::byte, TraitsType>::vector; // ctors
 
@@ -63,7 +66,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
             count =
               stl::clamp(count, stl::streamsize{0LL}, static_cast<stl::streamsize>(this->size() - index));
-            stl::copy_n(this->begin() + index, count, data);
+            stl::copy_n(this->begin() + static_cast<difference_type>(index), count, data);
             index += static_cast<stl::size_t>(count);
             return count;
         }
@@ -317,7 +320,7 @@ namespace webpp::http {
         }
 
 
-        constexpr stream_type::pos_type tellg() {
+        constexpr typename stream_type::pos_type tellg() {
             if (auto* stream_reader = stl::get_if<stream_communicator_type>(&communicator)) {
                 return (*stream_reader)->tellg();
             } else {

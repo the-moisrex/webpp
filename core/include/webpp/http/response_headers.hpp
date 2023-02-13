@@ -21,9 +21,14 @@ namespace webpp::http {
             // this field type is required for the "headers_container" to work
             using field_type = HeaderFieldType;
 
+            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
             template <EnabledTraits ET>
-            constexpr response_headers_container(ET& et)
+                requires(!stl::same_as<stl::remove_cvref_t<ET>, response_headers_container>)
+            constexpr response_headers_container(ET&& et)
               : vector_type{alloc::general_alloc_for<vector_type>(et)} {}
+            // NOLINTEND(bugprone-forwarding-reference-overload)
+
+            using istl::vector<HeaderFieldType, TraitsType>::vector;
         };
     } // namespace details
 

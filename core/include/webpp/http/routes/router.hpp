@@ -158,7 +158,7 @@ namespace webpp::http {
          * @return final response
          */
         template <HTTPRequest RequestType>
-        constexpr HTTPResponse decltype(auto) operator()(RequestType&& req) const noexcept {
+        constexpr HTTPResponse auto operator()(RequestType&& req) const noexcept {
             using req_type = stl::remove_cvref_t<RequestType>;
             using merged_extensions =
               typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;
@@ -173,7 +173,7 @@ namespace webpp::http {
          * Call the routes with the specified request and context.
          */
         template <stl::size_t Index = 0, Context CtxT, HTTPRequest ReqT>
-        constexpr HTTPResponse decltype(auto) operator()(CtxT&& ctx, ReqT&& req) const noexcept {
+        constexpr HTTPResponse auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
 
             constexpr bool no_routes         = route_count() == 0u;
             constexpr bool passed_last_route = Index > (route_count() - 1);
