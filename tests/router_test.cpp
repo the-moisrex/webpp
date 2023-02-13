@@ -12,13 +12,13 @@ using namespace webpp::http;
 using namespace std;
 
 constexpr auto s_router = router{root / "page" >>=
-                                [] {
-                                    return "page 1";
-                                },
-                                relative / "test" >>=
-                                [] {
-                                    return "test 2";
-                                }};
+                                 [] {
+                                     return "page 1";
+                                 },
+                                 relative / "test" >>=
+                                 [] {
+                                     return "test 2";
+                                 }};
 
 struct fake_app_struct {
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
@@ -40,25 +40,25 @@ TEST(Router, RouteCreation) {
     };
 
 
-    auto   req = request{fp};
+    auto         req = request{fp};
     router const router1{extension_pack<string_body>{}, about_page};
-    auto   res = router1(req);
+    auto         res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code, 200);
     EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
     router const router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
-                       return ctx.string("testing");
-                   }};
-    auto   res2 = router2(req);
+                             return ctx.string("testing");
+                         }};
+    auto         res2 = router2(req);
     EXPECT_EQ(as<std::string>(res2.body), "testing");
 
 
-    router const router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
-                       return ctx.string("testing 2");
-                   }};
-    HTTPResponse auto  const  res3 = router3(req);
+    router const            router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
+                             return ctx.string("testing 2");
+                         }};
+    HTTPResponse auto const res3 = router3(req);
     EXPECT_EQ(as<std::string>(res3.body), "testing 2");
 }
 
