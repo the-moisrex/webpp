@@ -11,7 +11,7 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
-constexpr auto _router = router{root / "page" >>=
+constexpr auto s_router = router{root / "page" >>=
                                 [] {
                                     return "page 1";
                                 },
@@ -22,12 +22,12 @@ constexpr auto _router = router{root / "page" >>=
 
 struct fake_app_struct {
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
-        return _router(req);
+        return s_router(req);
     }
 };
 
 TEST(Router, RouterConcepts) {
-    EXPECT_TRUE(static_cast<bool>(Application<decltype(_router)>));
+    EXPECT_TRUE(static_cast<bool>(Application<decltype(s_router)>));
 }
 
 TEST(Router, RouteCreation) {
@@ -41,25 +41,25 @@ TEST(Router, RouteCreation) {
 
 
     auto   req = request{fp};
-    router router1{extension_pack<string_body>{}, about_page};
+    router const router1{extension_pack<string_body>{}, about_page};
     auto   res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code, 200);
-    EXPECT_EQ(res.body.string(), "About page\n");
+    EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
-    router router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
+    router const router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
                        return ctx.string("testing");
                    }};
     auto   res2 = router2(req);
-    EXPECT_EQ(res2.body.string(), "testing");
+    EXPECT_EQ(as<std::string>(res2.body), "testing");
 
 
-    router router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
+    router const router3{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept(false) {
                        return ctx.string("testing 2");
                    }};
-    auto   res3 = router3(req);
-    EXPECT_EQ(res3.body.string(), "testing 2");
+    HTTPResponse auto  const  res3 = router3(req);
+    EXPECT_EQ(as<std::string>(res3.body), "testing 2");
 }
 
 
@@ -139,50 +139,50 @@ TEST(Router, RouteCreation) {
 //}
 //
 // TEST(Router, TupleForRouteList) {
-//    auto _router =
+//    auto s_router =
 //      router_t<default_traits, fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
 //          return "Hello world";
 //      });
 //
 //    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
-//    basic_response res = _router(req);
+//    basic_response res = s_router(req);
 //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, ConstListForRouteList) {
-//    //    constexpr auto _router = router<fake_cgi, const_list<>>{}.on(
+//    //    constexpr auto s_router = router<fake_cgi, const_list<>>{}.on(
 //    //        method("GET"), [] { return "Hello world"; });
 //    //
 //    //    request_t<fake_cgi> req;
 //    //    req.set_method("GET");
-//    //    response res = _router(req);
+//    //    response res = s_router(req);
 //    //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, DefaultRouteList) {
-//    auto _router = router_t<fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
+//    auto s_router = router_t<fake_cgi, std::tuple<>>{}.on(method("GET"), [] {
 //        return "Hello world";
 //    });
 //
 //    basic_request<default_traits, fake_cgi> req;
 //    req.set_method("GET");
-//    basic_response res = _router(req);
+//    basic_response res = s_router(req);
 //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //
 // TEST(Router, MergeEffect) {
-//    //    router<fake_cgi, std::tuple<>> _router1{};
-//    //    _router1.on(method("GET"), [] { return "Hello world"; });
+//    //    router<fake_cgi, std::tuple<>> s_router1{};
+//    //    s_router1.on(method("GET"), [] { return "Hello world"; });
 //    //
-//    //    constexpr auto _router2 = router<fake_cgi, std::tuple<>>{}.on(
+//    //    constexpr auto s_router2 = router<fake_cgi, std::tuple<>>{}.on(
 //    //        method("GET"), [] { return "Hello world"; });
 //    //
-//    //    router<fake_cgi> merged_router(_router1, _router2);
+//    //    router<fake_cgi> mergeds_router(s_router1, s_router2);
 //    //
 //    //    request_t<fake_cgi> req;
 //    //    req.set_method("GET");
-//    //    response res = merged_router(req);
+//    //    response res = mergeds_router(req);
 //    //    EXPECT_EQ(std::string(res.body.string()), "Hello world");
 //}
 //

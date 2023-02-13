@@ -25,6 +25,7 @@ namespace webpp {
     struct fake_proto_request : public CommonHTTPRequest, http::details::request_view_interface {
         using super       = CommonHTTPRequest;
         using traits_type = typename super::traits_type;
+        using server_type              = typename super::server_type;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
 
@@ -243,18 +244,18 @@ namespace webpp {
     template <typename Proto>
     struct fake_request_body_communicator {
         using size_type = stl::streamsize;
+        using byte_type = stl::byte;
         using char_type = char;
 
+    private:
         stl::string_view content;
+    public:
 
-        [[nodiscard]] size_type read(char_type const* data, size_type count) const {
-            data = content.data();
+        [[nodiscard]] size_type read(byte_type* data, size_type count) const {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            stl::copy_n(content.data(), static_cast<stl::size_t>(count), reinterpret_cast<char_type*>(data));
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             return count;
-        }
-
-        [[nodiscard]] size_type read(char_type const* data) const {
-            data = content.data();
-            return content.size();
         }
 
         [[nodiscard]] size_type size() const noexcept {

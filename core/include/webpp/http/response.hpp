@@ -124,7 +124,7 @@ namespace webpp::http {
          * The reason why this function exists here and not in "headers" is because this function may need
          * access to the body as well to check the body value's type for example.
          */
-        void calculate_default_headers() noexcept {
+        void calculate_default_headers() {
             using header_field_type = typename headers_type::field_type;
             using str_t             = typename header_field_type::string_type;
 
