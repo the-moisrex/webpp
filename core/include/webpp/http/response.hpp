@@ -130,13 +130,9 @@ namespace webpp::http {
 
             auto const [has_content_type, has_content_length] = headers.has("content-type", "content-length");
 
-            // todo: we can optimize this, pre-calculate the default header fields and copy when needed
             // todo: use content_type class
             if (!has_content_type) {
-                static const header_field_type content_type_field{
-                  str_t{"Content-Type", headers.get_allocator()},
-                  str_t{"text/html; charset=utf-8", headers.get_allocator()}};
-                headers.emplace_back(content_type_field);
+                headers.set("Content-Type", "text/html; charset=utf-8");
             }
 
             if constexpr (SizableBody<body_type>) {

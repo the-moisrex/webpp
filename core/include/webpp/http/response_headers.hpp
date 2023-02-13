@@ -139,17 +139,6 @@ namespace webpp::http {
     };
 
 
-    struct response_header_field_descriptor {
-
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::response_header_field_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type =
-          header_field<traits::general_string<TraitsType>, EList, RootExtensions>;
-    };
-
-
 
     struct response_headers_descriptor {
 
