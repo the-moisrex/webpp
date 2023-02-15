@@ -79,4 +79,4 @@ UseCRLF: false
 UseTab: Never
 IndentRequiresClause: true
 RequiresClausePosition: OwnLine
-RequiresExpressionIndentation: OuterScope
+# RequiresExpressionIndentation: OuterScope
