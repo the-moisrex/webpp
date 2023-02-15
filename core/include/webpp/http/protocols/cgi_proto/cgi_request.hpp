@@ -105,7 +105,8 @@ namespace webpp::http {
 
       public:
         template <typename ServerType>
-        cgi_request(ServerType& svr) : super{svr}, cache{alloc::general_alloc_for<string_type>(*this)} {
+        cgi_request(ServerType& svr) : super{svr},
+                                       cache{alloc::general_alloc_for<string_type>(*this)} {
             fill_headers();
         }
 
