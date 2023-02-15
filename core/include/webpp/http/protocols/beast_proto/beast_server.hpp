@@ -152,14 +152,15 @@ namespace webpp::http::beast_proto {
         void set_response_body_cstream(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
             using byte_type = typename body_type::byte_type;
-            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast,
-            // cppcoreguidelines-pro-type-member-init)
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
             stl::array<char, default_buffer_size> static_buf;
             while (stl::streamsize read_size = body.read(reinterpret_cast<byte_type*>(static_buf.data()),
                                                          static_cast<stl::streamsize>(static_buf.size()))) {
                 bres->body().append(static_buf.data(), static_cast<stl::size_t>(read_size));
             }
-            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-pro-type-member-init)
+            // NOLINTEND(cppcoreguidelines-pro-type-member-init)
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
 
 
