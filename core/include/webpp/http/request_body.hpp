@@ -175,24 +175,20 @@ namespace webpp::http {
         }
     };
 
-    template <typename ServerType>
+    template <HTTPRequestBodyCommunicator ReqCommunicator>
     struct request_body_descriptor {
-        static_assert(HTTPRequestBodyCommunicator<typename ServerType::request_body_communicator>,
-                      "The specified ServerType doesn't seem to have a request body communicator; "
-                      "the Protocol is not providing the correct types.");
-
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_body_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename BEList>
         using mid_level_extensie_type =
-          request_body<TraitsType, typename ServerType::request_body_communicator, BEList>;
+          request_body<TraitsType, ReqCommunicator, BEList>;
     };
 
-    template <Traits TraitsType, typename ServerType>
+    template <Traits TraitsType, RootExtensionList RootExtensions, HTTPRequestBodyCommunicator ReqCommunicator>
     using simple_request_body =
-      typename ServerType::root_extensions::template extensie_type<TraitsType,
-                                                                   request_body_descriptor<ServerType>>;
+      typename RootExtensions::template extensie_type<TraitsType,
+                                                                   request_body_descriptor<ReqCommunicator>>;
 
 
 } // namespace webpp::http

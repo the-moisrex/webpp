@@ -40,8 +40,16 @@ namespace webpp::http {
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
                                                                 thread_worker_type>;
         using thread_pool_type          = asio::thread_pool;
-        using request_type              = simple_request<protocol_type, beast_proto::beast_request>;
+        using char_type           = traits::char_type<traits_type>;
+        using fields_allocator_type =
+                typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
+        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using fields_provider    = header_fields_provider<traits_type, root_extensions>;
         using request_body_communicator = beast_proto::beast_request_body_communicator<protocol_type>;
+        using request_headers_type       = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using request_body_type          = simple_request_body<traits_type, root_extensions, request_body_communicator>;
+        using request_type              = simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
+        using response_type      = simple_response<traits_type, root_extensions>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
