@@ -44,7 +44,7 @@ namespace webpp::http::beast_proto {
         using root_extensions     = typename server_type::root_extensions;
         using endpoint_type       = asio::ip::tcp::endpoint;
         using steady_timer        = asio::steady_timer;
-        using request_type        = simple_request<server_type, beast_request>;
+        using request_type        = typename server_type::request_type;
         using buffer_type         = boost::beast::flat_buffer;
         using allocator_pack_type = typename server_type::allocator_pack_type;
         using request_header_type = typename request_type::headers_type;

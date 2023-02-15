@@ -1,5 +1,5 @@
-#ifndef WEBPP_REQUEST_H
-#define WEBPP_REQUEST_H
+#ifndef WEBPP_REQUEST_HPP
+#define WEBPP_REQUEST_HPP
 
 #include "../memory/object.hpp"
 #include "../traits/enable_traits.hpp"
@@ -23,25 +23,16 @@ namespace webpp::http {
      * giving information that the user or other modules need.
      *
      */
-    template <typename REL, typename ServerType>
-    struct common_http_request : public enable_traits_with<typename ServerType::traits_type, REL> {
-        using server_type         = ServerType;
-        using server_ref          = stl::add_lvalue_reference_t<server_type>;
-        using root_extensions     = typename server_type::root_extensions;
-        using traits_type         = typename server_type::traits_type;
+    template <typename REL, typename HeadersType, typename BodyType>
+    struct common_http_request : public enable_traits_with<typename HeadersType::traits_type, REL> {
+        using headers_type = HeadersType;
+        using body_type = BodyType;
+        using root_extensions     = typename headers_type::root_extensions;
+        using traits_type         = typename headers_type::traits_type;
         using etraits             = enable_traits_with<traits_type, REL>;
         using string_type         = traits::general_string<traits_type>;
         using string_view_type    = traits::string_view<traits_type>;
-        using char_type           = traits::char_type<traits_type>;
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        using fields_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
-        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using request_extensions = REL;
-        using fields_provider    = header_fields_provider<traits_type, root_extensions>;
-        using headers_type       = simple_request_headers<traits_type, root_extensions, fields_provider>;
-        using body_type          = simple_request_body<traits_type, server_type>;
-        using response_type      = simple_response<traits_type, root_extensions>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");
@@ -50,13 +41,13 @@ namespace webpp::http {
 
         headers_type                    headers; // NOLINT(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
-        server_ref                      server;  // NOLINT(misc-non-private-member-variables-in-classes)
 
-        constexpr common_http_request(server_ref inp_server) noexcept
+      public:
+        template <typename ServerType>
+        constexpr common_http_request(ServerType& inp_server) noexcept
           : etraits{inp_server},
             headers{inp_server},
-            body{inp_server},
-            server{inp_server} {}
+            body{inp_server} {}
 
         constexpr common_http_request(common_http_request const&)                     = default;
         constexpr common_http_request(common_http_request&&) noexcept                 = default;
@@ -70,14 +61,6 @@ namespace webpp::http {
          */
         [[nodiscard]] string_view_type framework_version() const noexcept {
             return webpp_version;
-        }
-
-
-
-        [[nodiscard]] constexpr HTTPResponse auto response() const {
-            response_type res{*this};
-            // todo: calculate the default response headers based on the request here
-            return res;
         }
 
 
@@ -106,46 +89,28 @@ namespace webpp::http {
         }
     };
 
-    /**
-     * If you want to add features to all of the request types, you can use this type
-     */
-    template <typename ReqType>
-    struct final_request final : public ReqType {
-        using traits_type      = typename ReqType::traits_type;
-        using string_view_type = traits::string_view<traits_type>;
-
-        using ReqType::ReqType;
-
-        constexpr final_request(final_request const&)                = default;
-        constexpr final_request(final_request&&) noexcept            = default;
-        constexpr final_request& operator=(final_request const&)     = default;
-        constexpr final_request& operator=(final_request&&) noexcept = default;
-        constexpr ~final_request()                                   = default;
-    };
-
-    template <template <typename...> typename MidLevelRequestType, typename ServerType>
+    template <template <typename...> typename MidLevelRequestType, typename HeadersType, typename BodyType>
     struct request_descriptor {
         template <typename ExtensionType>
         using extractor_type = typename ExtensionType::request_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename RequestEList>
-        using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, ServerType>>;
-
-        // empty final extensie
-        // template <RootExtensionList RootExtensions,
-        //           Traits            TraitsType,
-        //           typename MidLevelRequestWithExtensions,
-        //           typename... extra>
-        // using final_extensie_type = final_request<TraitsType, MidLevelRequestWithExtensions>;
+        using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, HeadersType, BodyType>>;
     };
 
 
-    template <typename ServerType, template <typename...> typename MidLevelRequestType>
-    using simple_request = typename ServerType::root_extensions::template extensie_type<
-      typename ServerType::traits_type,
-      request_descriptor<MidLevelRequestType, ServerType>>;
+    template <template <typename...> typename MidLevelRequestType, typename HeadersType, typename BodyType>
+    using simple_request = typename HeadersType::root_extensions::template extensie_type<
+      typename HeadersType::traits_type,
+      request_descriptor<MidLevelRequestType, HeadersType, BodyType>>;
 
+
+
+    /**
+     * Dynamic Request type
+     */
+    //struct request : common_http_request<istl::nothing_type, server> {};
 
 } // namespace webpp::http
 
-#endif // WEBPP_REQUEST_H
+#endif // WEBPP_REQUEST_HPP

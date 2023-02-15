@@ -19,11 +19,9 @@ namespace webpp::http {
     struct cgi_request final : public CommonHTTPRequest, details::request_view_interface {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
-        using server_type              = typename common_http_request_type::server_type;
 
       private:
         using super            = CommonHTTPRequest;
-        using server_ref       = typename super::server_ref;
         using string_view_type = typename super::string_view_type;
         using string_type      = typename super::string_type;
         using char_type        = traits::char_type<traits_type>;
@@ -106,7 +104,8 @@ namespace webpp::http {
         }
 
       public:
-        cgi_request(server_ref svr) : super{svr}, cache{alloc::general_alloc_for<string_type>(*this)} {
+        template <typename ServerType>
+        cgi_request(ServerType& svr) : super{svr}, cache{alloc::general_alloc_for<string_type>(*this)} {
             fill_headers();
         }
 
@@ -120,7 +119,9 @@ namespace webpp::http {
          * Get the environment value safely
          */
         [[nodiscard]] inline string_view_type env(char const* key) const noexcept {
-            return server_type::env(key);
+            if (const auto value = getenv(key))
+                return value;
+            return {};
         }
 
 
