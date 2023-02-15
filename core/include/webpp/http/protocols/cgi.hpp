@@ -33,11 +33,12 @@ namespace webpp::http {
         using root_extensions           = RootExtensions;
         using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;
 
-        using fields_provider    = header_fields_provider<traits_type, root_extensions>;
-        using request_headers_type       = simple_request_headers<traits_type, root_extensions, fields_provider>;
-        using request_body_type          = simple_request_body<traits_type, root_extensions, request_body_communicator>;
-        using request_type              = simple_request<cgi_request, request_headers_type, request_body_type>;
-        using response_type      = simple_response<traits_type, root_extensions>;
+        using fields_provider      = header_fields_provider<traits_type, root_extensions>;
+        using request_headers_type = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using request_body_type =
+          simple_request_body<traits_type, root_extensions, request_body_communicator>;
+        using request_type  = simple_request<cgi_request, request_headers_type, request_body_type>;
+        using response_type = simple_response<traits_type, root_extensions>;
 
 
         static_assert(HTTPRequest<request_type>,

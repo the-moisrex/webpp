@@ -181,14 +181,14 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::request_body_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename BEList>
-        using mid_level_extensie_type =
-          request_body<TraitsType, ReqCommunicator, BEList>;
+        using mid_level_extensie_type = request_body<TraitsType, ReqCommunicator, BEList>;
     };
 
-    template <Traits TraitsType, RootExtensionList RootExtensions, HTTPRequestBodyCommunicator ReqCommunicator>
+    template <Traits                      TraitsType,
+              RootExtensionList           RootExtensions,
+              HTTPRequestBodyCommunicator ReqCommunicator>
     using simple_request_body =
-      typename RootExtensions::template extensie_type<TraitsType,
-                                                                   request_body_descriptor<ReqCommunicator>>;
+      typename RootExtensions::template extensie_type<TraitsType, request_body_descriptor<ReqCommunicator>>;
 
 
 } // namespace webpp::http

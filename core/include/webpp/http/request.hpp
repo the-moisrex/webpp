@@ -25,13 +25,13 @@ namespace webpp::http {
      */
     template <typename REL, typename HeadersType, typename BodyType>
     struct common_http_request : public enable_traits_with<typename HeadersType::traits_type, REL> {
-        using headers_type = HeadersType;
-        using body_type = BodyType;
-        using root_extensions     = typename headers_type::root_extensions;
-        using traits_type         = typename headers_type::traits_type;
-        using etraits             = enable_traits_with<traits_type, REL>;
-        using string_type         = traits::general_string<traits_type>;
-        using string_view_type    = traits::string_view<traits_type>;
+        using headers_type       = HeadersType;
+        using body_type          = BodyType;
+        using root_extensions    = typename headers_type::root_extensions;
+        using traits_type        = typename headers_type::traits_type;
+        using etraits            = enable_traits_with<traits_type, REL>;
+        using string_type        = traits::general_string<traits_type>;
+        using string_view_type   = traits::string_view<traits_type>;
         using request_extensions = REL;
 
         static_assert(HTTPRequestHeaders<headers_type>,
@@ -95,7 +95,8 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::request_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename RequestEList>
-        using mid_level_extensie_type = MidLevelRequestType<common_http_request<RequestEList, HeadersType, BodyType>>;
+        using mid_level_extensie_type =
+          MidLevelRequestType<common_http_request<RequestEList, HeadersType, BodyType>>;
     };
 
 
@@ -109,7 +110,7 @@ namespace webpp::http {
     /**
      * Dynamic Request type
      */
-    //struct request : common_http_request<istl::nothing_type, server> {};
+    // struct request : common_http_request<istl::nothing_type, server> {};
 
 } // namespace webpp::http
 
