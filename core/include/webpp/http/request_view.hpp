@@ -143,7 +143,7 @@ namespace webpp::http {
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
         using fields_provider  = details::dynamic_header_fields_provider<root_extensions>;
-        using headers_type     = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using headers_type     = simple_request_headers<fields_provider>;
 
       private:
         using interface_ptr = details::request_view_interface const*;

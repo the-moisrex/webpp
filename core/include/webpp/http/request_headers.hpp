@@ -153,9 +153,10 @@ namespace webpp::http {
     };
 
 
-    template <Traits TraitsType, typename RootExtensions, typename FieldsProvider>
-    using simple_request_headers =
-      typename RootExtensions::template extensie_type<TraitsType, request_headers_descriptor<FieldsProvider>>;
+    template <typename FieldsProvider>
+    using simple_request_headers = typename FieldsProvider::root_extensions::template extensie_type<
+      typename FieldsProvider::traits_type,
+      request_headers_descriptor<FieldsProvider>>;
 
 } // namespace webpp::http
 

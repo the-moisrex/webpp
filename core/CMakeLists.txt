@@ -151,6 +151,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/http/protocols/common/common_http_protocol.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/http/response_body.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/body.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/server.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_view.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/request_body.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/header_fields.hpp

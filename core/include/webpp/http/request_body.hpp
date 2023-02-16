@@ -10,6 +10,15 @@
 
 namespace webpp::http {
 
+
+    /**
+     * Dynamic Request Body Communicator
+     * Implements HTTPRequestBodyCommunicator
+     */
+    struct request_body_communicator {};
+
+
+
     /**
      * Request body
      *
