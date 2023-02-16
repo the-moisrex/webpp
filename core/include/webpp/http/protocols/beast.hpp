@@ -46,7 +46,7 @@ namespace webpp::http {
         // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
         using fields_provider           = header_fields_provider<traits_type, root_extensions>;
         using request_body_communicator = beast_proto::beast_request_body_communicator<protocol_type>;
-        using request_headers_type = simple_request_headers<traits_type, root_extensions, fields_provider>;
+        using request_headers_type      = simple_request_headers<fields_provider>;
         using request_body_type =
           simple_request_body<traits_type, root_extensions, request_body_communicator>;
         using request_type =

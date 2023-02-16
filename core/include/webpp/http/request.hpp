@@ -106,11 +106,21 @@ namespace webpp::http {
       request_descriptor<MidLevelRequestType, HeadersType, BodyType>>;
 
 
-
     /**
      * Dynamic Request type
-     */
-    // struct request : common_http_request<istl::nothing_type, server> {};
+    struct request : common_http_request<
+                       istl::nothing_type,
+                       simple_request_headers<header_fields_provider<default_traits, empty_extension_pack>>,
+                       simple_request_body<default_traits, empty_extension_pack, request_body_communicator>> {
+        using headers_type =
+          simple_request_headers<header_fields_provider<default_traits, empty_extension_pack>>;
+        using body_type =
+          simple_request_body<default_traits, empty_extension_pack, request_body_communicator>;
+
+        using traits_type     = typename headers_type::traits_type;
+        using root_extensions = typename headers_type::root_extensions;
+    };
+    */
 
 } // namespace webpp::http
 

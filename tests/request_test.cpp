@@ -9,6 +9,7 @@
 using namespace webpp;
 using namespace webpp::http;
 
+static_assert(HTTPRequest<request>, "Request is not a valid request!!");
 
 
 using fake_protocol = fake_proto<default_traits, fake_app>;
