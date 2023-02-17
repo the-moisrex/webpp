@@ -484,7 +484,6 @@ namespace webpp::http {
 
 
 
-
     /**
      * This is designed to enable this syntax in the request and response bodies:
      * @code
@@ -493,15 +492,18 @@ namespace webpp::http {
      */
     template <typename BodyType>
     struct auto_converter {
-        BodyType const& obj; // body or request
+      private:
+        BodyType const* obj; // body or request
+
+      public:
+        constexpr auto_converter(BodyType const& inp_obj) noexcept : obj{&inp_obj} {}
+
 
         template <typename T>
         constexpr operator T() const {
-            return obj.template as<stl::remove_cvref_t<T>>();
+            return obj->template as<stl::remove_cvref_t<T>>();
         }
     };
-
-
 
     /**
      * A helper to get the right value out of the body
