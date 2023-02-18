@@ -40,18 +40,59 @@ namespace webpp {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        // a copy constructor essentially; works on enable_traits as well
+        template <typename T>
+            requires(!stl::same_as<stl::remove_cvref_t<T>, enable_owner_traits> && EnabledTraits<T>)
+        constexpr enable_owner_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                          logger{obj.logger} {}
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        constexpr enable_owner_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
+          : alloc_pack{alloc_pack_obj},
+            logger{logger_obj} {}
+
+        constexpr enable_owner_traits(logger_ref logger_obj, alloc_pack_ref alloc_pack_obj) noexcept
+          : alloc_pack{alloc_pack_obj},
+            logger{logger_obj} {}
+
+        constexpr enable_owner_traits() noexcept(
+          stl::is_nothrow_default_constructible_v<allocator_pack_type>&&
+            stl::is_nothrow_default_constructible_v<logger_type>)          = default;
+        constexpr enable_owner_traits(enable_owner_traits const&) noexcept = default;
+        constexpr enable_owner_traits(enable_owner_traits&&) noexcept      = default;
+        constexpr ~enable_owner_traits()                                   = default;
+
+        constexpr enable_owner_traits& operator=(enable_owner_traits const& rhs) {
+            if (this != &rhs) {
+                logger     = rhs.logger;
+                alloc_pack = rhs.alloc_pack;
+            }
+            return *this;
+        }
+
+        constexpr enable_owner_traits& operator=(enable_owner_traits&& rhs) noexcept {
+            logger     = stl::move(rhs.logger);
+            alloc_pack = rhs.alloc_pack;
+            return *this;
+        }
+
+        constexpr void swap(EnabledTraits auto& other) noexcept {
+            using stl::swap;
+            swap(alloc_pack, other.alloc_pack);
+            swap(logger, other.logger);
+        }
+
         // when this object is a mother of another class, this method can help get the traits' object.
         constexpr enable_owner_traits& get_traits() noexcept {
             return *this;
         }
 
-        // template <typename... ResType>
-        // requires((allocator_pack_type::template has_resource_object<ResType> &&
-        //           ...)) // check if the allocator pack has the resources
-        //   constexpr explicit enable_traits(logger_ref logger_obj = logger_type{},
-        //                                    ResType&... resources) noexcept
-        //   : logger{logger_obj},
-        //           alloc_pack{stl::forward<ResType>(resources)...} {}
+        constexpr enable_owner_traits const& get_traits() const noexcept {
+            return *this;
+        }
     };
 
 

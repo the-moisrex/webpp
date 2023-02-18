@@ -83,7 +83,7 @@ namespace webpp::http {
      * This is the dynamic parent for body readers and body writers.
      */
     template <Traits TraitsType>
-    struct body_communicator {
+    struct body_communicator : enable_traits<TraitsType> {
         using traits_type               = TraitsType;
         using char_type                 = traits::char_type<traits_type>;
         using string_communicator_type  = string_response_body_communicator<traits_type>;
@@ -119,6 +119,20 @@ namespace webpp::http {
         communicator_storage_type communicator_var{stl::monostate{}};
 
       public:
+        using enable_traits<TraitsType>::enable_traits;
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        template <EnabledTraits ET>
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, body_communicator>)
+        constexpr body_communicator(ET&& et) : enable_traits<TraitsType>(et) {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        constexpr body_communicator(body_communicator const&)                = default;
+        constexpr body_communicator(body_communicator&&) noexcept            = default;
+        constexpr body_communicator& operator=(body_communicator const&)     = default;
+        constexpr body_communicator& operator=(body_communicator&&) noexcept = default;
+        constexpr ~body_communicator() noexcept                              = default;
+
         [[nodiscard]] communicator_storage_type& communicator() noexcept {
             return communicator_var;
         }
@@ -151,6 +165,14 @@ namespace webpp::http {
         using byte_type = stl::byte; // required by CStreamBasedBodyReader
 
         static constexpr auto log_cat = "BodyReader";
+
+        using body_communicator<TraitsType>::body_communicator;
+        constexpr body_reader(body_reader const&)                = default;
+        constexpr body_reader(body_reader&&) noexcept            = default;
+        constexpr body_reader& operator=(body_reader const&)     = default;
+        constexpr body_reader& operator=(body_reader&&) noexcept = default;
+        constexpr ~body_reader() noexcept                        = default;
+
 
         // Get the data pointer if available, returns nullptr otherwise
         [[nodiscard]] constexpr char_type const* data() const noexcept {
@@ -195,11 +217,11 @@ namespace webpp::http {
             if (auto* reader = stl::get_if<cstream_communicator_type>(&this->communicator())) {
                 return reader->read(data, count);
             } else if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                this->logger.warning(log_cat, "Stream to CStream Cross-Talk is discouraged.");
+                // this->logger.warning(log_cat, "Stream to CStream Cross-Talk is discouraged.");
                 // todo: this is kinda implementation defined, it may falsely return 0
                 return (*stream_reader)->readsome(reinterpret_cast<stream_char_type*>(data), count);
             } else if (auto* string_reader = stl::get_if<string_communicator_type>(&this->communicator())) {
-                this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
+                // this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
                 auto* begin = reinterpret_cast<string_char_type*>(data);
                 stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
                 return 0; // return 0 to skip the loop
@@ -345,6 +367,14 @@ namespace webpp::http {
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
         static constexpr auto log_cat = "BodyWriter";
+
+        using body_reader<TraitsType>::body_reader;
+        constexpr body_writer(body_writer const&)                = default;
+        constexpr body_writer(body_writer&&) noexcept            = default;
+        constexpr body_writer& operator=(body_writer const&)     = default;
+        constexpr body_writer& operator=(body_writer&&) noexcept = default;
+        constexpr ~body_writer() noexcept                        = default;
+
 
         constexpr void append(char_type const* data, stl::size_t count) {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
