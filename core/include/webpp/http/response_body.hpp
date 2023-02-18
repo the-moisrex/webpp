@@ -19,14 +19,15 @@ namespace webpp::http {
      * Implements: CStreamBasedBodyCommunicator, StreamBasedBodyCommunicator, TextBasedBodyCommunicator
      */
     template <Traits TraitsType, typename EList>
-    struct response_body : public enable_traits_with<TraitsType, EList>, public body_writer<TraitsType> {
+    struct response_body : public EList, public body_writer<TraitsType> {
         using traits_type               = TraitsType;
-        using elist_type                = enable_traits_with<TraitsType, EList>;
+        using elist_type                = EList;
         using char_type                 = traits::char_type<traits_type>;
         using string_communicator_type  = string_response_body_communicator<traits_type>;
         using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
         using stream_type               = typename stream_communicator_type::element_type;
+        using body_communicator_type    = body_writer<TraitsType>;
 
         template <HTTPResponseBodyCommunicator NewBodyCommunicator>
         using rebind_body_communicator_type = response_body<traits_type, NewBodyCommunicator>;
@@ -44,15 +45,30 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, response_body>)
-        constexpr response_body(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>)
-          : elist_type{et} {}
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, response_body> &&
+                     stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et) : elist_type{et},
+                                           body_communicator_type{et.get_traits()} {}
+
+        template <EnabledTraits ET>
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, response_body> &&
+                     stl::is_default_constructible_v<elist_type> && !stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et) : elist_type{},
+                                           body_communicator_type{et.get_traits()} {}
 
 
 
         template <EnabledTraits ET, typename T>
             requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr response_body(ET&& et, T&& obj) : elist_type{et} {
+        constexpr response_body(ET&& et, T&& obj) : elist_type{et},
+                                                    body_communicator_type{et.get_traits()} {
+            this->template set<T>(stl::forward<T>(obj));
+        }
+
+        template <EnabledTraits ET, typename T>
+            requires(stl::is_default_constructible_v<elist_type> && !stl::is_constructible_v<elist_type, ET>)
+        constexpr response_body(ET&& et, T&& obj) : elist_type{},
+                                                    body_communicator_type{et.get_traits()} {
             this->template set<T>(stl::forward<T>(obj));
         }
 

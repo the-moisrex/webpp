@@ -180,6 +180,7 @@ namespace webpp {
           t.logger;
           t.alloc_pack;
           stl::remove_cvref_t<T>::is_resource_owner;
+          t.get_traits();
       };
 
 
