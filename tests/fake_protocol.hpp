@@ -25,7 +25,6 @@ namespace webpp {
     struct fake_proto_request : public CommonHTTPRequest, http::details::request_view_interface {
         using super       = CommonHTTPRequest;
         using traits_type = typename super::traits_type;
-        using server_type = typename super::server_type;
         using string_type = traits::general_string<traits_type>;
         using string_view = traits::string_view<traits_type>;
 
@@ -266,11 +265,21 @@ namespace webpp {
 
     template <Traits TraitsType, Application App, RootExtensionList EList = empty_extension_pack>
     struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
-        using super                     = common_http_protocol<TraitsType, App, EList>;
-        using traits_type               = TraitsType;
-        using root_extensions           = EList;
-        using request_type              = simple_request<fake_proto, fake_proto_request>;
+        using super               = common_http_protocol<TraitsType, App, EList>;
+        using traits_type         = TraitsType;
+        using root_extensions     = EList;
+        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        using char_type           = traits::char_type<traits_type>;
+        using fields_allocator_type =
+          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
+        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using fields_provider           = header_fields_provider<traits_type, root_extensions>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;
+        using request_headers_type      = simple_request_headers<fields_provider>;
+        using request_body_type =
+          simple_request_body<traits_type, root_extensions, request_body_communicator>;
+
+        using request_type = simple_request<fake_proto_request, request_headers_type, request_body_type>;
 
         static_assert(HTTPRequest<request_type>, "request type is not request; why?");
 
