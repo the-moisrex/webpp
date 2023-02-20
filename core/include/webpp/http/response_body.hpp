@@ -22,7 +22,6 @@ namespace webpp::http {
     struct response_body : public EList, public body_writer<TraitsType> {
         using traits_type               = TraitsType;
         using elist_type                = EList;
-        using char_type                 = traits::char_type<traits_type>;
         using string_communicator_type  = string_response_body_communicator<traits_type>;
         using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
@@ -41,6 +40,8 @@ namespace webpp::http {
         constexpr response_body& operator=(response_body const&)     = delete; // todo
         constexpr response_body& operator=(response_body&&) noexcept = default;
         constexpr ~response_body() noexcept                          = default;
+
+        using body_communicator_type::operator=;
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
