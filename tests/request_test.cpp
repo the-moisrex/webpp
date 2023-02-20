@@ -9,13 +9,13 @@
 using namespace webpp;
 using namespace webpp::http;
 
-static_assert(HTTPRequest<request>, "Request is not a valid request!!");
 
 
 using fake_protocol = fake_proto<default_traits, fake_app>;
 using req_t         = typename fake_protocol::request_type;
 
 TEST(HTTPRequestTest, ConceptTests) {
+    EXPECT_TRUE(bool(HTTPRequest<request>)) << "Request is not a valid request!!";
     EXPECT_TRUE(bool(HTTPRequest<req_t>));
     EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
     EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
