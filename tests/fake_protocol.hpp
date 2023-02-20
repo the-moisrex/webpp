@@ -31,7 +31,7 @@ namespace webpp {
         stl::map<string_type, string_type> data{};
 
       protected:
-        using pstring_type = typename basic_request_view::string_type;
+        using pstring_type = typename request_view::string_type;
 
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
@@ -40,8 +40,8 @@ namespace webpp {
         }
 
         // get the dynamic request object
-        inline basic_request_view const& dreq() const noexcept {
-            return static_cast<basic_request_view const&>(*this);
+        inline request_view const& dreq() const noexcept {
+            return static_cast<request_view const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {

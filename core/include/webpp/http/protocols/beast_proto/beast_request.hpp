@@ -62,7 +62,7 @@ namespace webpp::http::beast_proto {
         }
 
       protected:
-        using pstring_type = typename basic_request_view::string_type;
+        using pstring_type = typename request_view::string_type;
 
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
@@ -71,8 +71,8 @@ namespace webpp::http::beast_proto {
         }
 
         // get the dynamic request object
-        [[nodiscard]] inline basic_request_view const& dreq() const noexcept {
-            return static_cast<basic_request_view const&>(*this);
+        [[nodiscard]] inline request_view const& dreq() const noexcept {
+            return static_cast<request_view const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {

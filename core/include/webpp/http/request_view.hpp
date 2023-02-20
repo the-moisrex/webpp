@@ -14,7 +14,7 @@
 namespace webpp::http {
 
 
-    struct basic_request_view;
+    struct request_view;
 
     namespace details {
 
@@ -74,7 +74,7 @@ namespace webpp::http {
             [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-            friend struct http::basic_request_view;
+            friend struct http::request_view;
 
           public:
             constexpr request_view_interface() noexcept                               = default;
@@ -137,7 +137,7 @@ namespace webpp::http {
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
-    struct basic_request_view final {
+    struct request_view final {
         using traits_type      = default_dynamic_traits;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
@@ -156,19 +156,19 @@ namespace webpp::http {
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
-        constexpr basic_request_view(ReqType const& inp_req) noexcept
+        constexpr request_view(ReqType const& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
-        constexpr basic_request_view(basic_request_view const&) noexcept            = default;
-        constexpr basic_request_view(basic_request_view&&) noexcept                 = default;
-        constexpr basic_request_view& operator=(basic_request_view const&) noexcept = default;
-        constexpr basic_request_view& operator=(basic_request_view&&) noexcept      = default;
-        constexpr ~basic_request_view()                                             = default;
+        constexpr request_view(request_view const&) noexcept            = default;
+        constexpr request_view(request_view&&) noexcept                 = default;
+        constexpr request_view& operator=(request_view const&) noexcept = default;
+        constexpr request_view& operator=(request_view&&) noexcept      = default;
+        constexpr ~request_view()                                             = default;
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>
-        constexpr basic_request_view& operator=(ReqType const& inp_req) noexcept {
+        constexpr request_view& operator=(ReqType const& inp_req) noexcept {
             req     = static_cast<interface_ptr>(&inp_req);
             headers = inp_req.headers.template as_view<traits_type>();
             return *this;
@@ -192,10 +192,6 @@ namespace webpp::http {
             return req->get_version();
         }
     };
-
-
-
-    using request_view = basic_request_view;
 
 
 } // namespace webpp::http

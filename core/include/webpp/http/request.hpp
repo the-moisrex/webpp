@@ -108,19 +108,34 @@ namespace webpp::http {
 
     /**
      * Dynamic Request type
-    struct request : common_http_request<
-                       istl::nothing_type,
-                       simple_request_headers<header_fields_provider<default_traits, empty_extension_pack>>,
-                       simple_request_body<default_traits, empty_extension_pack, request_body_communicator>> {
-        using headers_type =
-          simple_request_headers<header_fields_provider<default_traits, empty_extension_pack>>;
-        using body_type =
-          simple_request_body<default_traits, empty_extension_pack, request_body_communicator>;
+     *
+     *   1. The difference between this request type and the `request_view` type is that this class
+     *      owns its data while the request view class doesn't own its data.
+     *   2. The difference between this request type and the `simple_request` alias is that this request
+     *      type is dynamic and easy to use while the other one requires the Protocol to specify the
+     *      right template parameters. This class can copy the data from that type of request directly.
+     *
+     */
+    struct request
+      : public common_http_request<
+          istl::nothing_type,
+          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>,
+          simple_request_body<default_dynamic_traits,
+                              empty_extension_pack,
+                              body_reader<default_dynamic_traits>>>,
+        public details::request_view_interface {
 
+        using headers_type =
+          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>;
+        using body_type = simple_request_body<default_dynamic_traits,
+                                              empty_extension_pack,
+                                              body_reader<default_dynamic_traits>>;
         using traits_type     = typename headers_type::traits_type;
         using root_extensions = typename headers_type::root_extensions;
+
+        // todo: implement request view interface
+        // todo: implement copying from simple_requests
     };
-    */
 
 } // namespace webpp::http
 
