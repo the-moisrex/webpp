@@ -144,7 +144,7 @@ namespace webpp::http {
     }
 
     template <typename T>
-        requires(istl::String<T> || istl::StringView<T>)
+        requires(istl::String<T>)
     constexpr void deserialize_stream_body(T& str, StreamBasedBodyReader auto const& body) {
         body >> str;
     }

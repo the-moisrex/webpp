@@ -275,6 +275,34 @@ namespace webpp::http {
             }
         }
 
+        constexpr body_reader& seekg(typename stream_type::pos_type pos) {
+            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
+                (*stream_reader)->seekg(pos);
+                return *this;
+            } else {
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to read from a stream based body "
+                  "communicator which doesn't know how to convert the text/cstream-based-body "
+                  "communicators to your object type. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
+            }
+        }
+
+        constexpr body_reader& seekg(typename stream_type::off_type off, stl::ios_base::seekdir dir) {
+            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
+                (*stream_reader)->seekg(off, dir);
+                return *this;
+            } else {
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to read from a stream based body "
+                  "communicator which doesn't know how to convert the text/cstream-based-body "
+                  "communicators to your object type. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
+            }
+        }
+
         template <typename T>
         constexpr body_reader const& operator>>(T& obj) const {
             if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
@@ -438,34 +466,6 @@ namespace webpp::http {
                 return cstream_writer.write(data, count);
             }
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
-        }
-
-        constexpr body_writer& seekg(typename stream_type::pos_type pos) {
-            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_reader)->seekg(pos);
-                return *this;
-            } else {
-                throw bad_cross_talk(
-                  "Bad Cross-Talk error (you previously wrote to a different body "
-                  "communicator, but now you're trying to read from a stream based body "
-                  "communicator which doesn't know how to convert the text/cstream-based-body "
-                  "communicators to your object type. Be consistent in your "
-                  "calls. Cross-Talks are discouraged.)");
-            }
-        }
-
-        constexpr body_writer& seekg(typename stream_type::off_type off, stl::ios_base::seekdir dir) {
-            if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_reader)->seekg(off, dir);
-                return *this;
-            } else {
-                throw bad_cross_talk(
-                  "Bad Cross-Talk error (you previously wrote to a different body "
-                  "communicator, but now you're trying to read from a stream based body "
-                  "communicator which doesn't know how to convert the text/cstream-based-body "
-                  "communicators to your object type. Be consistent in your "
-                  "calls. Cross-Talks are discouraged.)");
-            }
         }
 
         template <typename T>
