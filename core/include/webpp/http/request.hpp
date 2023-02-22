@@ -225,9 +225,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr http::version version() const noexcept {
             return request_version;
         }
-
-        // todo: implement request view interface
-        // todo: implement copying from simple_requests
     };
 
 } // namespace webpp::http

@@ -11,6 +11,7 @@
 #include "../storage/memory_gate.hpp"
 #include "../storage/null_gate.hpp"
 #include "../traits/traits.hpp"
+#include "data_view_caster.hpp"
 #include "file_view.hpp"
 #include "json_view.hpp"
 #include "mustache_view.hpp"
@@ -275,9 +276,17 @@ namespace webpp::views {
 
         template <istl::StringViewifiable StrT, typename... StrT2, typename... DataType>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, stl::pair<StrT2, DataType>... data) {
-            auto m_data = object::make_general<mustache_data_type>(*this);
-            (m_data.emplace_back(*this, stl::move(data)), ...);
-            return mustache<StrT>(stl::forward<StrT>(file_request), m_data);
+            return mustache<StrT>(stl::forward<StrT>(file_request),
+                                  view::data_view_caster<mustache_data_type>(*this, stl::move(data)...));
+        }
+
+        template <istl::StringViewifiable StrT, typename... DataType>
+            requires(!(sizeof...(DataType) == 1 &&
+                       (stl::same_as<stl::remove_cvref_t<DataType>, mustache_data_type> && ...)))
+        [[nodiscard]] constexpr auto mustache(StrT&& file_request, DataType&&... data) {
+            return mustache<StrT>(
+              stl::forward<StrT>(file_request),
+              view::data_view_caster<mustache_data_type>(*this, stl::forward<DataType>(data)...));
         }
 
         template <istl::StringViewifiable StrT>

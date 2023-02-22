@@ -5,6 +5,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/views/view_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/html.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/view_manager.hpp
+        ${LIB_INCLUDE_DIR}/webpp/views/data_view_caster.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/mustache_view.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/file_view.hpp
         ${LIB_INCLUDE_DIR}/webpp/views/json_view.hpp
