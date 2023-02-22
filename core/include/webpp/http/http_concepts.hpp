@@ -116,7 +116,7 @@ namespace webpp::http {
      * The c-steram based body communicator is the way that the framework internals talk to the developers.
      */
     template <typename T>
-    concept CStreamBasedBodyCommunicator = CStreamBasedBodyReader<T> || CStreamBasedBodyWriter<T>;
+    concept CStreamBasedBodyCommunicator = CStreamBasedBodyReader<T> && CStreamBasedBodyWriter<T>;
 
     /**
      * @brief Text Based Body Reader
@@ -150,7 +150,7 @@ namespace webpp::http {
      * body is available in the string itself (unless a special kind of string is used).
      */
     template <typename T>
-    concept TextBasedBodyCommunicator = TextBasedBodyReader<T> || TextBasedBodyWriter<T>;
+    concept TextBasedBodyCommunicator = TextBasedBodyReader<T> && TextBasedBodyWriter<T>;
 
 
 
@@ -198,7 +198,7 @@ namespace webpp::http {
      * body is not available at one point of time unless buffers are used.
      */
     template <typename T>
-    concept StreamBasedBodyCommunicator = StreamBasedBodyReader<T> || StreamBasedBodyWriter<T>;
+    concept StreamBasedBodyCommunicator = StreamBasedBodyReader<T> && StreamBasedBodyWriter<T>;
 
 
     /**

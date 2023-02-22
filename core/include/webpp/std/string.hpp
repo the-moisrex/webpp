@@ -27,6 +27,7 @@ namespace webpp::istl {
                          str.starts_with('a');
                          str.ends_with('a');
                          str.substr('a');
+                         str.resize(1);
                          str.begin();
                          str.end();
                          str.cbegin();

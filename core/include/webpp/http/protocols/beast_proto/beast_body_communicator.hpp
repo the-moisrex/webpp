@@ -45,8 +45,10 @@ namespace webpp::http::beast_proto {
             request = &input_parser.get();
         }
 
+        // todo: there's no index here
         [[nodiscard]] size_type read(byte_type* data, size_type count) const {
-            return stl::copy_n(request->body().data(), count, data) - request->body().data();
+            return stl::copy_n(request->body().data(), stl::clamp(count, stl::size_t{0}, size()), data) -
+                   request->body().data();
         }
 
         [[nodiscard]] size_type read(byte_type* data) const {

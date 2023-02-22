@@ -247,18 +247,46 @@ namespace webpp {
         using char_type = char;
 
       private:
-        stl::string_view content;
+        stl::string content;
+        stl::size_t index = 0;
 
       public:
-        [[nodiscard]] size_type read(byte_type* data, size_type count) const {
+        fake_request_body_communicator()                                                     = default;
+        fake_request_body_communicator(fake_request_body_communicator const&)                = default;
+        fake_request_body_communicator(fake_request_body_communicator&&) noexcept            = default;
+        fake_request_body_communicator& operator=(fake_request_body_communicator const&)     = default;
+        fake_request_body_communicator& operator=(fake_request_body_communicator&&) noexcept = default;
+        ~fake_request_body_communicator()                                                    = default;
+
+        [[nodiscard]] size_type read(byte_type* data, size_type count) {
+            count = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0}, content.size() - index);
+            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-            stl::copy_n(content.data(), static_cast<stl::size_t>(count), reinterpret_cast<char_type*>(data));
+            stl::copy_n(content.data() + index, count, reinterpret_cast<char_type*>(data));
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+            // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            index += static_cast<stl::size_t>(count);
+            return count;
+        }
+
+        [[nodiscard]] size_type write(byte_type const* data, size_type count) {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            content = stl::string{reinterpret_cast<char_type const*>(data), static_cast<stl::size_t>(count)};
+            index   = 0;
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             return count;
         }
 
         [[nodiscard]] size_type size() const noexcept {
             return content.size();
+        }
+
+        void seek(stl::streamsize new_index) noexcept {
+            index = static_cast<stl::size_t>(new_index);
+        }
+
+        void clear() noexcept {
+            content = {};
         }
     };
 
@@ -282,6 +310,8 @@ namespace webpp {
         using request_type = simple_request<fake_proto_request, request_headers_type, request_body_type>;
 
         static_assert(HTTPRequest<request_type>, "request type is not request; why?");
+        static_assert(CStreamBasedBodyCommunicator<request_body_communicator>,
+                      "Fake request body communicator is not correctly implemented.");
 
         request_type req;
 

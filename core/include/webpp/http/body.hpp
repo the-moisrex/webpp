@@ -3,10 +3,12 @@
 #ifndef WEBPP_HTTP_BODY_HPP
 #define WEBPP_HTTP_BODY_HPP
 
+#include "../common/meta.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
+#include "./http_concepts.hpp"
 
 #include <exception>
 
@@ -20,9 +22,9 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     struct callback_response_body_communicator {
-        using traits_type   = TraitsType;
-        using char_type     = traits::char_type<traits_type>;
-        using function_type = istl::function<void()>; // Oops; no concepts allowed!
+        using traits_type = TraitsType;
+        using char_type   = traits::char_type<traits_type>;
+        // using function_type = istl::function<void()>; // Oops; no concepts allowed!
 
         // todo
       private:
@@ -321,6 +323,27 @@ namespace webpp::http {
 
 
         template <typename T>
+        constexpr T as() {
+            using requested_type = stl::remove_cvref_t<T>;
+            if constexpr (requires {
+                              { deserialize_response_body<T>(*this) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_response_body<T>(*this);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(*this);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return as<requested_type>();
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the request body to the specified type."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+        }
+
+        template <typename T>
         constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -342,6 +365,10 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr auto_converter<body_reader> as() const noexcept {
+            return {*this};
+        }
+
+        [[nodiscard]] constexpr auto_converter<body_reader> as() noexcept {
             return {*this};
         }
 
@@ -436,6 +463,8 @@ namespace webpp::http {
                 (*stream_writer)->clear(); // clear the state
                 (*stream_writer)
                   ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
+            } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&this->communicator())) {
+                cstream_writer->clear();
             } else {
                 // todo: c-stream based doesn't have a way to clear the input
                 reset();
