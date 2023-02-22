@@ -86,7 +86,7 @@ namespace webpp::http {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T>
-        constexpr T as() {
+        [[nodiscard]] constexpr T as() {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
                               { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
@@ -108,7 +108,7 @@ namespace webpp::http {
 
 
         template <typename T>
-        constexpr T as() const {
+        [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
                               { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
@@ -128,11 +128,11 @@ namespace webpp::http {
             }
         }
 
-        constexpr auto_converter<request_body> as() const {
+        [[nodiscard]] constexpr auto_converter<request_body> as() const {
             return {*this};
         }
 
-        constexpr auto_converter<request_body> as() {
+        [[nodiscard]] constexpr auto_converter<request_body> as() {
             return {*this};
         }
 

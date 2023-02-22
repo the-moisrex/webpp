@@ -259,7 +259,8 @@ namespace webpp {
         ~fake_request_body_communicator()                                                    = default;
 
         [[nodiscard]] size_type read(byte_type* data, size_type count) {
-            count = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0}, content.size() - index);
+            count =
+              stl::clamp(count, stl::streamsize{0}, static_cast<stl::streamsize>(content.size() - index));
             // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             stl::copy_n(content.data() + index, count, reinterpret_cast<char_type*>(data));

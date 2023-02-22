@@ -65,7 +65,7 @@ namespace webpp::http {
 
 
         template <typename T>
-        constexpr T as() const {
+        [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
                               { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
@@ -78,13 +78,37 @@ namespace webpp::http {
             }
         }
 
-        constexpr auto as() const {
-            return auto_converter<common_http_request>{.obj = *this};
+        template <typename T>
+        [[nodiscard]] constexpr T as() {
+            using requested_type = stl::remove_cvref_t<T>;
+            if constexpr (requires {
+                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_request_body<T>(*this);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return as<requested_type>();
+            } else {
+                return this->body.template as<T>();
+            }
+        }
+
+        [[nodiscard]] constexpr auto as() const {
+            return auto_converter<common_http_request>{*this};
+        }
+
+        [[nodiscard]] constexpr auto as() {
+            return auto_converter<common_http_request>{*this};
         }
 
         template <typename T>
-            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type>)
+            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type, request_view>)
         constexpr operator T() const {
+            return as<T>();
+        }
+
+        template <typename T>
+            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type, request_view>)
+        constexpr operator T() {
             return as<T>();
         }
     };
