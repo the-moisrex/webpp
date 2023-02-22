@@ -32,6 +32,22 @@ TEST(HTTPRequestTest, Constructors) {
     EXPECT_EQ(23, req1.headers.content_length());
 }
 
+
+TEST(HTTPRequestTest, DynamicRequest) {
+    fake_protocol pt;
+    req_t         req{pt};
+    request       dreq{req};
+    EXPECT_EQ(dreq.version(), req.version());
+    EXPECT_EQ(dreq.method(), req.method());
+    EXPECT_EQ(dreq.uri(), req.uri());
+    // EXPECT_EQ(dreq.headers, req.headers);
+    EXPECT_EQ(as<std::string>(dreq.body), as<std::string>(req.body));
+
+    dreq.body = "this is a nice code";
+    req.body  = "this is a nice code";
+    EXPECT_EQ(as<std::string>(dreq.body), as<std::string>(req.body));
+}
+
 TEST(HTTPRequestTest, RequestViewTest) {
     fake_protocol pt;
     req_t         req1{pt};

@@ -106,41 +106,46 @@ namespace webpp::http {
         str.append(body.data(), body.size());
     }
 
-    template <typename T, CStreamBasedBodyReader BodyType>
-        requires(istl::String<T> || istl::StringView<T>)
-    constexpr void deserialize_cstream_body(T& str, BodyType const& body) {
+    template <typename T, typename BodyType>
+        requires(istl::String<T> && CStreamBasedBodyReader<stl::remove_cvref_t<BodyType>>)
+    constexpr void deserialize_cstream_body(T& str, BodyType&& body) {
         using body_type     = stl::remove_cvref_t<BodyType>;
         using byte_type     = typename body_type::byte_type;
         auto const str_size = str.size();
-        if constexpr (requires {
-                          str.resize(1);
-                          { body.size() } -> stl::same_as<stl::size_t>;
-                      }) {
+
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+        if constexpr (SizableBody<body_type>) {
             str.resize(str.size() + body.size());
-        }
-        // CGI supports char type as the "byte type" so it doesn't require casting; even though I
-        // don't think this has any impact on the generated assembly
-        if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
-            stl::streamsize read; // NOLINT(cppcoreguidelines-init-variables)
-            auto*           byte_data = str.data() + str_size;
-            for (;;) {
-                read = body.read(byte_data, default_buffer_size);
-                if (read == 0)
-                    break;
-                byte_data += read;
+            if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
+                static_cast<void>(
+                  body.read(str.data() + str_size, stl::numeric_limits<stl::streamsize>::max()));
+            } else {
+                auto* byte_data = reinterpret_cast<byte_type*>(str.data() + str_size);
+                static_cast<void>(body.read(byte_data, stl::numeric_limits<stl::streamsize>::max()));
             }
         } else {
-            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            constexpr stl::size_t buffer_size = 1024u;
+
+            // CGI supports char type as the "byte type" so it doesn't require casting; even though I
+            // don't think this has any impact on the generated assembly
+
             stl::streamsize read; // NOLINT(cppcoreguidelines-init-variables)
-            auto*           byte_data = reinterpret_cast<byte_type*>(str.data() + str_size);
+            stl::size_t     read_total = str_size;
             for (;;) {
-                read = body.read(byte_data, default_buffer_size);
+                // todo: if the body is empty, we're doing a useless allocation here, but we don't know if it's empty or not
+                str.resize(read_total + buffer_size);
+                if constexpr (requires { body.read(str.data(), default_buffer_size); }) {
+                    read = body.read(str.data() + read_total, buffer_size);
+                } else {
+                    read = body.read(reinterpret_cast<byte_type*>(str.data() + read_total), buffer_size);
+                }
                 if (read == 0)
                     break;
-                byte_data += read;
+                read_total += static_cast<stl::size_t>(read);
             }
-            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+            str.resize(read_total);
         }
+        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
     }
 
     template <typename T>
@@ -151,7 +156,7 @@ namespace webpp::http {
 
     template <typename T, typename BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr void deserialize_body(T& str, BodyType const& body) {
+    constexpr void deserialize_body(T& str, BodyType&& body) {
         using body_type = stl::remove_cvref_t<BodyType>;
         using type      = T;
         if constexpr (istl::String<type>) {
@@ -219,7 +224,7 @@ namespace webpp::http {
     // Handle the string literals like `char const*`
     template <typename T, HTTPBody BodyType>
         requires(istl::StringLiteral<T> && TextBasedBodyReader<stl::remove_cvref_t<BodyType>>)
-    constexpr auto deserialize_body(BodyType const& body) {
+    constexpr auto deserialize_body(BodyType&& body) {
         using type = T;
         if constexpr (stl::same_as<istl::char_type_of<type>, istl::char_type_of<decltype(body.data())>>) {
             return body.data();
@@ -235,7 +240,7 @@ namespace webpp::http {
     // own body to this function.
     template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr T deserialize_body(BodyType const& body) {
+    constexpr T deserialize_body(BodyType&& body) {
         using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
@@ -291,7 +296,7 @@ namespace webpp::http {
                 ret_size = body.write(byte_data, size);
                 byte_data += ret_size;
                 size -= ret_size;
-            } while (ret_size > 0);
+            } while (size > 0);
         } else {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             auto*           byte_data = reinterpret_cast<byte_type const*>(str.data());
@@ -301,7 +306,7 @@ namespace webpp::http {
                 ret_size = body.write(byte_data, size);
                 byte_data += ret_size;
                 size -= ret_size;
-            } while (ret_size > 0);
+            } while (size > 0);
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
     }

@@ -164,7 +164,7 @@ namespace webpp::http {
         constexpr request_view(request_view&&) noexcept                 = default;
         constexpr request_view& operator=(request_view const&) noexcept = default;
         constexpr request_view& operator=(request_view&&) noexcept      = default;
-        constexpr ~request_view()                                             = default;
+        constexpr ~request_view()                                       = default;
 
         // An HTTP Request is passed down
         template <details::HTTPRequestViewifiable ReqType>

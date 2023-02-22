@@ -1,14 +1,14 @@
-#ifndef WEBPP_REQUEST_HPP
-#define WEBPP_REQUEST_HPP
+#ifndef WEBPP_HTTP_REQUEST_HPP
+#define WEBPP_HTTP_REQUEST_HPP
 
-#include "../memory/object.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../version.hpp"
+#include "./body.hpp"
 #include "./header_fields.hpp"
 #include "./http_concepts.hpp"
 #include "./request_body.hpp"
 #include "./request_headers.hpp"
-#include "./response.hpp"
+#include "./request_view.hpp"
 
 namespace webpp::http {
 
@@ -114,24 +114,93 @@ namespace webpp::http {
      *   2. The difference between this request type and the `simple_request` alias is that this request
      *      type is dynamic and easy to use while the other one requires the Protocol to specify the
      *      right template parameters. This class can copy the data from that type of request directly.
+     *   3. This request's body is writable as well as readable.
      *
      */
-    struct request
+    struct request final
       : public common_http_request<
           istl::nothing_type,
           simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>,
           simple_request_body<default_dynamic_traits,
                               empty_extension_pack,
-                              body_reader<default_dynamic_traits>>>,
+                              body_writer<default_dynamic_traits>>>,
         public details::request_view_interface {
 
+        using common_request_type = common_http_request<
+          istl::nothing_type,
+          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>,
+          simple_request_body<default_dynamic_traits,
+                              empty_extension_pack,
+                              body_writer<default_dynamic_traits>>>;
         using headers_type =
           simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>;
-        using body_type = simple_request_body<default_dynamic_traits,
+        using body_type       = simple_request_body<default_dynamic_traits,
                                               empty_extension_pack,
-                                              body_reader<default_dynamic_traits>>;
+                                              body_writer<default_dynamic_traits>>;
         using traits_type     = typename headers_type::traits_type;
         using root_extensions = typename headers_type::root_extensions;
+
+        using string_type = traits::general_string<traits_type>;
+
+      private:
+        string_type   requested_uri;    // todo: isn't it better to have a uri instead?
+        string_type   requested_method; // It's a string because the user might send a custom method
+        http::version request_version;
+
+      protected:
+        using pstring_type = typename request_view::string_type;
+
+        template <typename T>
+        [[nodiscard]] inline pstring_type pstringify(T&& str) const {
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str),
+                                                    alloc::general_alloc_for<pstring_type>(*this));
+        }
+
+        [[nodiscard]] pstring_type get_method() const override {
+            return pstringify(this->method());
+        }
+
+        [[nodiscard]] pstring_type get_uri() const override {
+            return pstringify(this->uri());
+        }
+
+        [[nodiscard]] http::version get_version() const noexcept override {
+            return this->version();
+        }
+
+      public:
+        template <HTTPRequest ReqType>
+            requires(!stl::same_as<stl::remove_cvref_t<ReqType>, request>)
+        constexpr request(ReqType& req)
+          : common_request_type{req},
+            requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
+            requested_method{req.method(), alloc::general_alloc_for<string_type>(*this)},
+            request_version{req.version()} {}
+
+        constexpr request(request const&)      = default;
+        constexpr request(request&&) noexcept  = default;
+        request& operator=(request const&)     = default;
+        request& operator=(request&&) noexcept = default;
+        constexpr ~request() final             = default;
+
+
+        // Get a request view from this request
+        [[nodiscard]] constexpr request_view view() const noexcept {
+            return {*this};
+        }
+
+        [[nodiscard]] constexpr string_type const& uri() const noexcept {
+            return requested_uri;
+        }
+
+
+        [[nodiscard]] constexpr string_type const& method() const noexcept {
+            return requested_method;
+        }
+
+        [[nodiscard]] constexpr http::version version() const noexcept {
+            return request_version;
+        }
 
         // todo: implement request view interface
         // todo: implement copying from simple_requests
@@ -139,4 +208,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_REQUEST_HPP
+#endif // WEBPP_HTTP_REQUEST_HPP

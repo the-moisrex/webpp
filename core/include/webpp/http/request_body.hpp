@@ -85,6 +85,27 @@ namespace webpp::http {
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
+        template <typename T>
+        constexpr T as() {
+            using requested_type = stl::remove_cvref_t<T>;
+            if constexpr (requires {
+                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_request_body<T>(*this);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(*this);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return as<requested_type>();
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the request body to the specified type."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+        }
+
 
         template <typename T>
         constexpr T as() const {
@@ -111,8 +132,17 @@ namespace webpp::http {
             return {*this};
         }
 
+        constexpr auto_converter<request_body> as() {
+            return {*this};
+        }
+
         template <typename T>
         constexpr operator T() const {
+            return as<T>();
+        }
+
+        template <typename T>
+        constexpr operator T() {
             return as<T>();
         }
 
@@ -125,8 +155,9 @@ namespace webpp::http {
 
                 // ignore the data in the stream
                 request_body_communicator::ignore(std::numeric_limits<std::streamsize>::max());
+            } else if constexpr (CStreamBasedBodyWriter<request_body_communicator>) {
+                request_body_communicator::clear();
             } else {
-                // todo: CStreamBasedBodyWriter doesn't support clearing
                 static_assert_false(request_body_communicator,
                                     "We're not able to clear the content of the request; "
                                     "the 'request body communicator' type doesn't support such feature.");
