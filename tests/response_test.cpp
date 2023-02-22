@@ -78,3 +78,18 @@ TEST(Response, File) {
     EXPECT_EQ(res_t::with_body(et, file).body.as<stl::string_view>(), "Hello World");
     std::filesystem::remove(file);
 }
+
+
+TEST(Response, DynamicResponse) {
+    enable_owner_traits<default_dynamic_traits> et;
+
+    response       res{et};
+    response const res2{res};
+    response       res3{et};
+    res  = "string";
+    res3 = "string";
+    EXPECT_EQ(as<stl::string>(res), "string");
+    EXPECT_EQ(res, res2) << as<std::string>(res) << as<std::string>(res2);
+    EXPECT_EQ(res, res3) << as<std::string>(res) << as<std::string>(res3);
+    EXPECT_EQ(res2, res3) << as<std::string>(res2) << as<std::string>(res3);
+}
