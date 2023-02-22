@@ -25,7 +25,6 @@ namespace webpp::http::beast_proto {
         using traits_type      = typename protocol_type::traits_type;
         using char_type        = traits::char_type<traits_type>;
         using byte_type        = stl::byte;
-        using size_type        = stl::streamsize;
         using http_worker_type = typename protocol_type::http_worker_type;
 
         // if you change, remember to sync these types with beast's http_worker's types, I'm not using
@@ -45,22 +44,32 @@ namespace webpp::http::beast_proto {
             request = &input_parser.get();
         }
 
-        // todo: there's no index here
-        [[nodiscard]] size_type read(byte_type* data, size_type count) const {
-            return stl::copy_n(request->body().data(), stl::clamp(count, stl::size_t{0}, size()), data) -
-                   request->body().data();
+        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) {
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+            const stl::size_t length =
+              stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0}, size() - read_position);
+            stl::copy_n(reinterpret_cast<byte_type const*>(request->body().data() + read_position),
+                        length,
+                        data);
+            read_position += length;
+            return static_cast<stl::streamsize>(length);
+            // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
 
-        [[nodiscard]] size_type read(byte_type* data) const {
-            return stl::copy_n(request->body().data(), size(), data) - request->body().data();
+        [[nodiscard]] stl::streamsize read(byte_type* data) noexcept {
+            const stl::size_t the_size = size() - read_position;
+            stl::copy_n(request->body().data(), the_size, data);
+            read_position = the_size;
+            return the_size;
         }
 
-        [[nodiscard]] size_type size() const noexcept {
-            return request->payload_size();
+        [[nodiscard]] stl::size_t size() const noexcept {
+            return request->payload_size().value_or(0);
         }
 
       private:
-        request_ptr request = nullptr;
+        request_ptr request       = nullptr;
+        stl::size_t read_position = 0;
     };
 
 
