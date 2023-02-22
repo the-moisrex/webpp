@@ -141,27 +141,21 @@ namespace webpp::http {
      *   3. This request's body is writable as well as readable.
      *
      */
-    struct request final
+    template <Traits TraitsType = default_dynamic_traits>
+    struct basic_request final
       : public common_http_request<
           istl::nothing_type,
-          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>,
-          simple_request_body<default_dynamic_traits,
-                              empty_extension_pack,
-                              body_writer<default_dynamic_traits>>>,
+          simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>,
+          simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>>,
         public details::request_view_interface {
 
         using common_request_type = common_http_request<
           istl::nothing_type,
-          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>,
-          simple_request_body<default_dynamic_traits,
-                              empty_extension_pack,
-                              body_writer<default_dynamic_traits>>>;
-        using headers_type =
-          simple_request_headers<header_fields_provider<default_dynamic_traits, empty_extension_pack>>;
-        using body_type       = simple_request_body<default_dynamic_traits,
-                                              empty_extension_pack,
-                                              body_writer<default_dynamic_traits>>;
-        using traits_type     = typename headers_type::traits_type;
+          simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>,
+          simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>>;
+        using headers_type = simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>;
+        using body_type    = simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>;
+        using traits_type  = typename headers_type::traits_type;
         using root_extensions = typename headers_type::root_extensions;
 
         using string_type = traits::general_string<traits_type>;
@@ -194,18 +188,18 @@ namespace webpp::http {
 
       public:
         template <HTTPRequest ReqType>
-            requires(!stl::same_as<stl::remove_cvref_t<ReqType>, request>)
-        constexpr request(ReqType& req)
+            requires(!stl::same_as<stl::remove_cvref_t<ReqType>, basic_request>)
+        constexpr basic_request(ReqType& req)
           : common_request_type{req},
             requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
             requested_method{req.method(), alloc::general_alloc_for<string_type>(*this)},
             request_version{req.version()} {}
 
-        constexpr request(request const&)      = default;
-        constexpr request(request&&) noexcept  = default;
-        request& operator=(request const&)     = default;
-        request& operator=(request&&) noexcept = default;
-        constexpr ~request() final             = default;
+        constexpr basic_request(basic_request const&)      = default;
+        constexpr basic_request(basic_request&&) noexcept  = default;
+        basic_request& operator=(basic_request const&)     = default;
+        basic_request& operator=(basic_request&&) noexcept = default;
+        constexpr ~basic_request() final                   = default;
 
 
         // Get a request view from this request
@@ -226,6 +220,9 @@ namespace webpp::http {
             return request_version;
         }
     };
+
+
+    using request = basic_request<default_dynamic_traits>;
 
 } // namespace webpp::http
 
