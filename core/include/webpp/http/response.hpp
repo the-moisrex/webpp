@@ -18,7 +18,7 @@ namespace webpp::http {
      * This class owns its data.
      */
     template <typename EList, typename ResponseHeaderType, typename BodyType>
-    struct basic_response : public EList {
+    struct common_http_response : public EList {
 
         // we're not going to use trait's string type here.
         using body_type           = BodyType;
@@ -26,10 +26,10 @@ namespace webpp::http {
         using traits_type         = typename headers_type::traits_type;
         using root_extensions     = typename headers_type::root_extensions;
         using elist_type          = EList;
-        using basic_response_type = basic_response<EList, ResponseHeaderType, BodyType>;
+        using basic_response_type = common_http_response<EList, ResponseHeaderType, BodyType>;
 
         template <HTTPResponseBody NewBodyType>
-        using rebind_basic_response_type = basic_response<EList, ResponseHeaderType, NewBodyType>;
+        using rebind_basic_response_type = common_http_response<EList, ResponseHeaderType, NewBodyType>;
 
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -42,81 +42,81 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_response> && // It's not a copy/move
                      stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+        constexpr common_http_response(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
+                                                           stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                             stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{et},
             headers{et},
             body{et} {}
 
 
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response> && // It's not a copy/move
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_response> && // It's not a copy/move
                      !stl::is_constructible_v<elist_type, ET> &&
                      stl::is_default_constructible_v<elist_type>) // can we give it to elist
-        constexpr basic_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
-                                                       stl::is_nothrow_constructible_v<headers_type, ET>&&
-                                                       stl::is_nothrow_constructible_v<body_type, ET>)
+        constexpr common_http_response(ET&& et) noexcept(stl::is_nothrow_default_constructible_v<elist_type>&&
+                                                           stl::is_nothrow_constructible_v<headers_type, ET>&&
+                                                             stl::is_nothrow_constructible_v<body_type, ET>)
           : elist_type{},
             headers{et},
             body{et} {}
 
         template <EnabledTraits ET, typename T>
             requires(!stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et, T&& body_obj)
+        constexpr common_http_response(ET&& et, T&& body_obj)
           : elist_type{},
             headers{et},
             body{et, stl::forward<T>(body_obj)} {}
 
         template <EnabledTraits ET, typename T>
             requires(stl::is_constructible_v<elist_type, ET>)
-        constexpr basic_response(ET&& et, T&& body_obj)
+        constexpr common_http_response(ET&& et, T&& body_obj)
           : elist_type{et},
             headers{et},
             body{et, stl::forward<T>(body_obj)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        constexpr ~basic_response()                                  = default;
-        constexpr basic_response(basic_response const& res) noexcept = default;
-        constexpr basic_response(basic_response&& res) noexcept      = default;
+        constexpr ~common_http_response()                                        = default;
+        constexpr common_http_response(common_http_response const& res) noexcept = default;
+        constexpr common_http_response(common_http_response&& res) noexcept      = default;
 
-        constexpr explicit basic_response(body_type const& b)
+        constexpr explicit common_http_response(body_type const& b)
             requires(stl::is_constructible_v<elist_type, decltype(b.get_traits())>)
           : elist_type{b.get_traits()},
             headers{b.get_traits()},
             body(b) {}
-        constexpr explicit basic_response(body_type const& b)
+        constexpr explicit common_http_response(body_type const& b)
           : elist_type{},
             headers{b.get_traits()},
             body(b) {}
-        constexpr explicit basic_response(body_type&& b)
+        constexpr explicit common_http_response(body_type&& b)
             requires(stl::is_constructible_v<elist_type, decltype(b.get_traits())>)
           : elist_type{b.get_traits()},
             headers{b.get_traits()},
             body(stl::move(b)) {}
-        constexpr explicit basic_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
+        constexpr explicit common_http_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
         // todo: headers are not Traits Enabled, so we can't fill the body with it
         // constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e))
         // {} constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
 
-        constexpr basic_response& operator=(basic_response const&)         = default;
-        constexpr basic_response& operator=(basic_response&& res) noexcept = default;
+        constexpr common_http_response& operator=(common_http_response const&)         = default;
+        constexpr common_http_response& operator=(common_http_response&& res) noexcept = default;
 
         // set the status code for the headers
-        constexpr basic_response& operator=(http::status_code code) noexcept {
+        constexpr common_http_response& operator=(http::status_code code) noexcept {
             headers = code;
             return *this;
         }
 
-        [[nodiscard]] bool operator==(basic_response const& res) const noexcept {
+        [[nodiscard]] bool operator==(common_http_response const& res) const noexcept {
             return headers == res.headers && body == res.body;
         }
 
-        [[nodiscard]] bool operator!=(basic_response const& res) const noexcept {
+        [[nodiscard]] bool operator!=(common_http_response const& res) const noexcept {
             return headers != res.headers || body != res.body;
         }
 
@@ -149,7 +149,7 @@ namespace webpp::http {
 
 
     template <typename EList>
-    struct final_response final : public EList {
+    struct final_response : public EList {
       private:
         using elist_type = EList;
 
@@ -178,6 +178,12 @@ namespace webpp::http {
 
 
         using EList::EList;
+
+        constexpr final_response(final_response const&)                     = default;
+        constexpr final_response(final_response&&) noexcept                 = default;
+        constexpr final_response& operator=(final_response const&) noexcept = default;
+        constexpr final_response& operator=(final_response&&) noexcept      = default;
+        constexpr ~final_response()                                         = default;
 
 
         template <EnabledTraits T>
@@ -359,7 +365,7 @@ namespace webpp::http {
         using extractor_type = typename ExtensionType::response_extensions;
 
         template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = basic_response<
+        using mid_level_extensie_type = common_http_response<
           EList,
           typename RootExtensions::template extensie_type<TraitsType, response_headers_descriptor>,
           typename RootExtensions::template extensie_type<TraitsType, response_body_descriptor>>;
@@ -373,6 +379,36 @@ namespace webpp::http {
     template <Traits TraitsType, typename RootExtensions>
     using simple_response = typename RootExtensions::template extensie_type<TraitsType, response_descriptor>;
 
+
+
+    template <Traits TraitsType = default_dynamic_traits>
+    struct basic_response : public simple_response<TraitsType, empty_extension_pack> {
+        using final_response_type = simple_response<TraitsType, empty_extension_pack>;
+        using body_type           = typename final_response_type::body_type;
+        using traits_type         = TraitsType;
+
+        using simple_response<TraitsType, empty_extension_pack>::operator=;
+
+        constexpr basic_response(basic_response const&)                     = default;
+        constexpr basic_response(basic_response&&) noexcept                 = default;
+        constexpr basic_response& operator=(basic_response const&) noexcept = default;
+        constexpr basic_response& operator=(basic_response&&) noexcept      = default;
+        constexpr ~basic_response()                                         = default;
+
+        template <EnabledTraits ET, typename T>
+        constexpr basic_response(ET&& et, T&& body_obj)
+          : final_response_type{stl::forward<ET>(et), stl::forward<T>(body_obj)} {}
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        template <EnabledTraits ET>
+            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>)
+        constexpr basic_response(ET&& et) : final_response_type{stl::forward<ET>(et)} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        constexpr explicit basic_response(body_type const& b) : final_response_type{b} {}
+    };
+
+    using response = basic_response<default_dynamic_traits>;
 
 } // namespace webpp::http
 

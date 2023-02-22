@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_HEADERS_COMMON_HPP
 #define WEBPP_HTTP_HEADERS_COMMON_HPP
 
+#include "../convert/lexical_cast.hpp"
 #include "../std/tuple.hpp"
 
 #include <algorithm>
@@ -157,18 +158,20 @@ namespace webpp::http {
 
         template <typename VT>
         constexpr void set(name_type name, VT&& new_value) {
-            set(stl::move(name), value_type{stl::forward<VT>(new_value), this->get_allocator()});
+            set(stl::move(name),
+                lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
         }
 
         template <typename NT>
         constexpr void set(NT&& name, value_type new_value) {
-            set(name_type{stl::forward<NT>(name), this->get_allocator()}, stl::move(new_value));
+            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
+                stl::move(new_value));
         }
 
         template <typename NT, typename VT>
         constexpr void set(NT&& name, VT&& new_value) {
-            set(name_type{stl::forward<NT>(name), this->get_allocator()},
-                value_type{stl::forward<VT>(new_value), this->get_allocator()});
+            set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
+                lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
         }
     };
 
