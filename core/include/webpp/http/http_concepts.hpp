@@ -493,14 +493,20 @@ namespace webpp::http {
     template <typename BodyType>
     struct auto_converter {
       private:
-        BodyType const* obj; // body or request
+        BodyType* obj; // body or request
 
       public:
+        constexpr auto_converter(auto_converter const&) noexcept = default;
+        constexpr auto_converter(auto_converter&&) noexcept      = default;
+        constexpr auto_converter(BodyType& inp_obj) noexcept : obj{&inp_obj} {}
         constexpr auto_converter(BodyType const& inp_obj) noexcept : obj{&inp_obj} {}
+        constexpr auto_converter& operator=(auto_converter const&) noexcept = default;
+        constexpr auto_converter& operator=(auto_converter&&) noexcept      = default;
+        constexpr ~auto_converter() noexcept                                = default;
 
 
         template <typename T>
-        constexpr operator T() const {
+        explicit(HTTPRequest<T> || HTTPResponse<T>) constexpr operator T() const {
             return obj->template as<stl::remove_cvref_t<T>>();
         }
     };
@@ -509,8 +515,7 @@ namespace webpp::http {
      * A helper to get the right value out of the body
      */
     template <typename T, typename ObjT>
-        requires(HTTPBody<stl::remove_cvref_t<ObjT>> || HTTPResponse<stl::remove_cvref_t<ObjT>> ||
-                 HTTPRequest<stl::remove_cvref_t<ObjT>>)
+        requires(HTTPBody<ObjT> || HTTPResponse<ObjT> || HTTPRequest<ObjT>)
     [[nodiscard]] static constexpr decltype(auto) as(ObjT&& obj) noexcept(noexcept(obj.template as<T>())) {
         return obj.template as<T>();
     }

@@ -188,41 +188,41 @@ namespace webpp::http {
         }
 
         template <HTTPRequest ReqType>
-        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& request) noexcept {
+        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& req) noexcept {
             if constexpr (stl::is_nothrow_invocable_v<application_type, ReqType>) {
-                return fix_response(request, application_type::operator()(request));
+                return fix_response(req, application_type::operator()(req));
             } else if constexpr (stl::is_nothrow_invocable_v<application_type>) {
-                return fix_response(request, application_type::operator()());
+                return fix_response(req, application_type::operator()());
             } else if constexpr (stl::is_invocable_v<application_type, ReqType>) {
                 using request_type = stl::remove_cvref_t<ReqType>;
                 using etraits_type = typename request_type::enable_traits_type;
                 using return_type  = stl::invoke_result_t<application_type, ReqType>;
                 if constexpr (stl::is_constructible_v<return_type, etraits_type>) {
                     try {
-                        return operator()(stl::forward<ReqType>(request), enable_throws{});
+                        return operator()(stl::forward<ReqType>(req), enable_throws{});
                     } catch (stl::exception const& ex) {
                         // todo: log
-                        return_type res{request.get_traits()};
-                        error(request, http::status_code::internal_server_error, res);
+                        return_type res{req.get_traits()};
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
-                        return_type res{request.get_traits()};
-                        error(request, http::status_code::internal_server_error, res);
+                        return_type res{req.get_traits()};
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     }
                 } else if constexpr (stl::is_default_constructible_v<return_type>) {
                     try {
-                        return operator()(stl::forward<ReqType>(request), enable_throws{});
+                        return operator()(stl::forward<ReqType>(req), enable_throws{});
                     } catch (stl::exception const& ex) {
                         // todo: log
                         return_type res;
-                        error(request, http::status_code::internal_server_error, res);
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
                         return_type res;
-                        error(request, http::status_code::internal_server_error, res);
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     }
                 } else {
@@ -235,30 +235,30 @@ namespace webpp::http {
                 using return_type = stl::invoke_result_t<application_type>;
                 if constexpr (stl::is_constructible_v<return_type, ReqType>) {
                     try {
-                        return operator()(request, enable_throws{});
+                        return operator()(req, enable_throws{});
                     } catch (stl::exception const& ex) {
                         // todo: log
-                        return_type res{request};
-                        error(request, http::status_code::internal_server_error, res);
+                        return_type res{req};
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
-                        return_type res{request};
-                        error(request, http::status_code::internal_server_error, res);
+                        return_type res{req};
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     }
                 } else if constexpr (stl::is_default_constructible_v<return_type>) {
                     try {
-                        return operator()(request, enable_throws{});
+                        return operator()(req, enable_throws{});
                     } catch (stl::exception const& ex) {
                         // todo: log
                         return_type res;
-                        error(request, http::status_code::internal_server_error, res);
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     } catch (...) {
                         // todo: log
                         return_type res;
-                        error(request, http::status_code::internal_server_error, res);
+                        error(req, http::status_code::internal_server_error, res);
                         return res;
                     }
                 } else {
@@ -281,11 +281,11 @@ namespace webpp::http {
         // For example, reading response headers and bodies may throw exceptions, and you want to catch both
         // of them in one go instead of two passes.
         template <HTTPRequest ReqType>
-        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& request, enable_throws) {
+        [[nodiscard]] constexpr HTTPResponse auto operator()(ReqType&& req, enable_throws) {
             if constexpr (stl::is_invocable_v<application_type, ReqType>) {
-                return fix_response(request, application_type::operator()(request));
+                return fix_response(req, application_type::operator()(req));
             } else if constexpr (stl::is_invocable_v<application_type>) {
-                return fix_response(request, application_type::operator()());
+                return fix_response(req, application_type::operator()());
             } else {
                 static_assert_false(application_type,
                                     "We don't know how to call your application, "
@@ -298,14 +298,13 @@ namespace webpp::http {
          * Final conversion practices of the response body happens here.
          */
         template <typename ResType, typename ReqType>
-        [[nodiscard]] constexpr HTTPResponse auto fix_response(ReqType&& request,
-                                                               ResType&& response) noexcept {
+        [[nodiscard]] constexpr HTTPResponse auto fix_response(ReqType&& req, ResType&& res) noexcept {
             using res_type = stl::remove_cvref_t<ResType>;
             // todo: add more fixes
             if constexpr (stl::same_as<res_type, http::status_code>) {
-                return error(request, response);
+                return error(req, res);
             } else if constexpr (HTTPResponse<res_type>) {
-                return response;
+                return res;
             } else {
                 static_assert_false(res_type,
                                     "The return type of your application is not a valid response "

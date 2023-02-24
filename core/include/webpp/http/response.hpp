@@ -279,11 +279,14 @@ namespace webpp::http {
         }
 
         constexpr auto as() const {
-            return auto_converter<final_response>{.obj = *this};
+            return auto_converter<final_response>{*this};
         }
 
         template <typename T>
-        constexpr explicit(!HTTPResponse<T>) operator T() const {
+        explicit(istl::part_of<stl::remove_cvref_t<T>, final_response, elist_type, headers_type, body_type> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, common_http_response>) constexpr
+        operator T() const {
             return as<T>();
         }
 
