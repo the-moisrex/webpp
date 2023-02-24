@@ -137,12 +137,16 @@ namespace webpp::http {
         }
 
         template <typename T>
-        constexpr operator T() const {
+        explicit(istl::part_of<stl::remove_cvref_t<T>, request_body> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+        operator T() const {
             return as<T>();
         }
 
         template <typename T>
-        constexpr operator T() {
+        explicit(istl::part_of<stl::remove_cvref_t<T>, request_body> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+        operator T() {
             return as<T>();
         }
 

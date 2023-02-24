@@ -92,23 +92,25 @@ namespace webpp::http {
             }
         }
 
-        [[nodiscard]] constexpr auto as() const {
-            return auto_converter<common_http_request>{*this};
+        [[nodiscard]] constexpr auto_converter<common_http_request> as() const {
+            return {*this};
         }
 
-        [[nodiscard]] constexpr auto as() {
-            return auto_converter<common_http_request>{*this};
+        [[nodiscard]] constexpr auto_converter<common_http_request> as() {
+            return {*this};
         }
 
         template <typename T>
-            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type, request_view>)
-        constexpr operator T() const {
+        explicit(istl::part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+        operator T() const {
             return as<T>();
         }
 
         template <typename T>
-            requires(!istl::part_of<stl::remove_cvref_t<T>, body_type, headers_type, request_view>)
-        constexpr operator T() {
+        explicit(istl::part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type> ||
+                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+        operator T() {
             return as<T>();
         }
     };
