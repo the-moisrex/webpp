@@ -160,6 +160,11 @@ namespace webpp::http {
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
+        template <details::HTTPRequestViewifiable ReqType>
+        constexpr request_view(ReqType& inp_req) noexcept
+          : req{static_cast<interface_ptr>(&inp_req)},
+            headers{inp_req} {}
+
         constexpr request_view(request_view const&) noexcept            = default;
         constexpr request_view(request_view&&) noexcept                 = default;
         constexpr request_view& operator=(request_view const&) noexcept = default;
