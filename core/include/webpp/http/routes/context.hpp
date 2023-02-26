@@ -18,110 +18,8 @@ namespace webpp::http {
     struct context_descriptor;
 
 
-    /**
-     *
-     * Definitions:
-     *   - Context:     An object of arbitrary type that will contain everything
-     *                  that routes will need including:
-     *                    - some types:
-     *                      - Traits
-     *                      - Interface
-     *                      - Next sub route
-     *                    - references to:
-     *                      - Request
-     *                      - Response
-     *                      - Response Route in this route chain
-     *                    - Previous entry routes context changes
-     *                    - Previous sub routes context changes
-     *                    - Original entry routes level context
-     *                    - Original sub routes context changes
-     *   - Context Passing Pattern:
-     *                   A pattern designed to share arbitrary data down the
-     *                   routing chain.
-     *   - Context extensions:
-     *                   A class that extends the original context and will be
-     *                   used in context-switching process to add more
-     *                   features to the context so it can be used in the
-     *                   sub routes down the routing chain.
-     *
-     *
-     * Features we need:
-     *   - [X] Having access to the request and the response
-     *   - [ ] Termination of continuation of checking the sub-routes by parents
-     *   - [ ] Termination of continuation of checking the entry-routes by any
-     *         previous routes, or sub-routes.
-     *   - [ ] Context modification
-     *     - [X] Sub-Route local context modification by any previous sub-routes
-     *     - [ ] Inter-Entry-Route context modification by any previous
-     *           (sub/entry) routes
-     *   - [ ] Entry-Route prioritization
-     *     - [ ] Auto prioritization
-     *     - [ ] Manual prioritization
-     *     - [ ] Hinted prioritization
-     *     - [ ] On-The-Fly Re-Prioritization
-     *   - [ ] Dynamic route generation / Dynamic route switching
-     *   - [X] Context Passing pattern
-     *   - [X] Context extensions
-     *     - [ ] Deactivate route extension
-     *     - [X] Map extension
-     *
-     *
-     * Public fields:
-     *   - [X] priority   : to check/change this route chain
-     *   - [X] request    : a const reference to the the request object
-     *   - [X] response   : a non-const reference to the response object
-     *
-     * public methods:
-     *   - auto clone<extensions...>()
-     *       get a clone of itself with different type
-     *       designed to add extensions
-     *
-     *
-     * Extension requirements:
-     *   - [ ] Having a default constructor
-     *
-     * Extension collision:
-     *   It is possible to try to add an extension to the context and get
-     *   compile time errors saying that it's a collision or an ambiguous call
-     *   to some method, to solve this, you can use "Extension As Field"
-     *   features, which means you can clone a context like this:
-     *     return context.clone<as_field<map<traits, string, string>>>();
-     *   It's also possible to simplify this line of code with
-     *   "Extension aware context" struct.
-     *
-     *
-     * Internal Extension Handling:
-     *   We can customize every single route to check if the extension is
-     *   present in the returned context and then act accordingly, but that's
-     *   not scalable; so in order to do this, we're gonna call "something"
-     *   on each extension in these times (if the extension has its method):
-     *     - pre_subroute:      Before every call to a sub-route
-     *     - post_subroute:     After every call to a sub-route
-     *     - pre_entryroute:    Before every call to an entry route
-     *     - post_entryroute:   After every call to an entry route
-     *     - pre_globalroute:   Before calling the global route
-     *     - post_globalroute:  After calling the global route
-     *     - post_thisroute:    Call it once; right after this route
-     *     - pre_termination:   When we get the final result and we're about
-     *                            to send it to the user.
-     *
-     *
-     * todo: Extension dependency:
-     *   We need a way of saying that an extension needs another extension to
-     *   work.
-     *
-     *
-     * todo: Runtime modification of Initial context type:
-     *   We need a way to achieve this; we need a way to specify the initial
-     *   context type that will be used for every single time.
-     *   Or we need this:
-     *     A way to preserve data from request to request. Meaning:
-     *     Router extensions.
-     *
-     *
-     */
     template <HTTPRequest RequestType, typename EList, typename RootExtensions>
-    struct basic_context
+    struct common_context
       : public enable_traits_with<typename RequestType::traits_type, extension_wrapper<EList>> {
         using request_type           = RequestType;
         using traits_type            = typename request_type::traits_type;
@@ -130,22 +28,22 @@ namespace webpp::http {
         using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
         using root_extensions        = RootExtensions;
         using response_type          = simple_response<traits_type, root_extensions>;
-        using basic_context_type     = basic_context;
+        using basic_context_type     = common_context;
         using request_ref            = request_type&;
 
       public:
         request_ref request;
 
-        constexpr basic_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
+        constexpr common_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
 
         template <Context CtxT>
             requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
+        constexpr common_context(CtxT const& ctx) noexcept : common_context{ctx.request} {}
 
-        constexpr basic_context(basic_context&& ctx) noexcept        = default;
-        constexpr basic_context(basic_context const& ctx) noexcept   = default;
-        constexpr basic_context& operator=(basic_context const&)     = default;
-        constexpr basic_context& operator=(basic_context&&) noexcept = default;
+        constexpr common_context(common_context&& ctx) noexcept        = default;
+        constexpr common_context(common_context const& ctx) noexcept   = default;
+        constexpr common_context& operator=(common_context const&)     = default;
+        constexpr common_context& operator=(common_context&&) noexcept = default;
 
 
         /**
@@ -237,7 +135,7 @@ namespace webpp::http {
     };
 
     template <typename EList>
-    struct final_context final : public EList {
+    struct final_context : public EList {
         using base_type              = EList;
         using traits_type            = typename base_type::traits_type;
         using root_extensions        = typename base_type::root_extensions;
@@ -316,7 +214,7 @@ namespace webpp::http {
                   typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type = basic_context<ReqType, EList, MergedRootExtensions>;
+        using mid_level_extensie_type = common_context<ReqType, EList, MergedRootExtensions>;
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
@@ -330,6 +228,20 @@ namespace webpp::http {
       typename MergedRootExtensions::template extensie_type<typename ReqType::traits_type,
                                                             context_descriptor<MergedRootExtensions>,
                                                             ReqType>;
+
+
+
+    template <Traits TraitsType = default_dynamic_traits>
+    struct basic_context : public simple_context<basic_request<TraitsType>> {
+        using traits_type         = TraitsType;
+        using static_context_type = simple_context<basic_request<traits_type>>;
+        using request_type        = basic_request<traits_type>;
+        using response_type       = basic_response<traits_type>;
+
+        using simple_context<request_type>::final_context;
+    };
+
+    using context = basic_context<>;
 
 } // namespace webpp::http
 
