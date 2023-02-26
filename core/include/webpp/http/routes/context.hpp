@@ -7,6 +7,7 @@
 #include "../../extensions/extension_wrapper.hpp"
 #include "../../memory/object.hpp"
 #include "../../traits/enable_traits.hpp"
+#include "../../uri/path.hpp"
 #include "../bodies/string.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -32,7 +33,7 @@ namespace webpp::http {
         using request_ref            = request_type&;
 
       public:
-        request_ref request;
+        request_type request;
 
         constexpr common_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
 
@@ -237,8 +238,16 @@ namespace webpp::http {
         using static_context_type = simple_context<basic_request<traits_type>>;
         using request_type        = basic_request<traits_type>;
         using response_type       = basic_response<traits_type>;
+        using string_type         = traits::general_string<traits_type>;
+        using path_type           = uri::basic_path<string_type>;
 
         using simple_context<request_type>::final_context;
+
+
+        response_type response;
+
+      private:
+        path_type current_path;
     };
 
     using context = basic_context<>;
