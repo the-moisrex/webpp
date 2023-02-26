@@ -139,12 +139,12 @@ namespace webpp {
         /**
          * Set success
          */
-        auto& success() noexcept {
+        constexpr error_handler& success() noexcept {
             this->reset(success_value);
             return *this;
         }
 
-        auto& failure(type val) noexcept {
+        constexpr error_handler& failure(type val) noexcept {
             if (val != success_value) {
                 this->off(success_value);
                 this->on(val);
