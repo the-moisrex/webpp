@@ -13,7 +13,8 @@
 #    include <version>
 #endif
 
-namespace std::pmr {}
+namespace std::pmr { // NOLINT
+}
 
 namespace webpp::stl {
     using namespace ::std;
