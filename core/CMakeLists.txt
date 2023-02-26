@@ -78,6 +78,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/std/type_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/string_concepts.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/collection.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/expected.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/webpp/validators/email.hpp
@@ -86,7 +87,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/convert/lexical_cast.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/utils/flags.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/errors.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
