@@ -37,14 +37,27 @@ namespace webpp::uri {
       : public istl::expected<stl::vector<stl::remove_cvref_t<SlugType>,
                                           rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>,
                               path_error> {
-        using container_type = stl::vector<stl::remove_cvref_t<SlugType>,
+        using container_type         = stl::vector<stl::remove_cvref_t<SlugType>,
                                            rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
-        using value_type     = stl::remove_cvref_t<SlugType>;
-        using allocator_type = rebind_allocator<AllocType, value_type>;
-        using char_type      = typename SlugType::value_type;
-        using string_type    = stl::
+        using char_type              = typename SlugType::value_type;
+        using value_type             = typename container_type::value_type;
+        using pointer                = typename container_type::pointer;
+        using const_pointer          = typename container_type::const_pointer;
+        using reference              = typename container_type::reference;
+        using const_reference        = typename container_type::const_reference;
+        using iterator               = typename container_type::itereator;
+        using const_iterator         = typename container_type::const_iterator;
+        using const_reverse_iterator = typename container_type::const_reverse_iterator;
+        using reverse_iterator       = typename container_type::reverse_iterator;
+        using size_type              = typename container_type::size_type;
+        using difference_type        = typename container_type::different_type;
+        using allocator_type         = typename container_type::allocator_type;
+
+        using string_type = stl::
           conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
+
+
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -76,7 +89,7 @@ namespace webpp::uri {
                 if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
                     this->clear();
                     this->emplace(path_error::invalid_string); // set the error
-                    val = path.substr(0, the_size); // put the non-decoded value
+                    val = path.substr(0, the_size);            // put the non-decoded value
                     // todo: should we just "return" here and stop doing the work?
                 }
                 this->push_back(stl::move(val));
@@ -189,6 +202,60 @@ namespace webpp::uri {
             if (this->size() && this->back().empty()) {
                 (void) this->pop_back();
             }
+        }
+
+
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return this->has_value() ? this->size() : 0;
+        }
+
+        [[nodiscard]] constexpr iterator begin() noexcept {
+            return this->has_value() ? this->begin() : iterator{};
+        }
+
+        [[nodiscard]] constexpr const_iterator begin() const noexcept {
+            return this->has_value() ? this->begin() : const_iterator{};
+        }
+
+        [[nodiscard]] constexpr iterator end() noexcept {
+            return this->has_value() ? this->end() : iterator{};
+        }
+
+        [[nodiscard]] constexpr const_iterator end() const noexcept {
+            return this->has_value() ? this->end() : const_iterator{};
+        }
+
+        [[nodiscard]] constexpr reverse_iterator rbegin() noexcept {
+            return this->has_value() ? this->rbegin() : reverse_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept {
+            return this->has_value() ? this->rbegin() : const_reverse_iterator{};
+        }
+
+        [[nodiscard]] constexpr reverse_iterator rend() noexcept {
+            return this->has_value() ? this->rend() : reverse_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept {
+            return this->has_value() ? this->rend() : const_reverse_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_iterator cbegin() const noexcept {
+            return this->has_value() ? this->cbegin() : const_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_iterator cend() const noexcept {
+            return this->has_value() ? this->cend() : const_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept {
+            return this->has_value() ? this->crbegin() : const_reverse_iterator{};
+        }
+
+        [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept {
+            return this->has_value() ? this->crend() : const_reverse_iterator{};
         }
     };
 
