@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_HPP
 #define WEBPP_URI_HPP
 
+#include "../std/string_view.hpp"
 #include "fragment.hpp"
 #include "host.hpp"
 #include "path.hpp"
@@ -11,7 +12,6 @@
 #include "scheme.hpp"
 #include "uri_string.hpp"
 #include "user_info.hpp"
-#include "webpp/std/string_view.hpp"
 
 namespace webpp::uri {
 
