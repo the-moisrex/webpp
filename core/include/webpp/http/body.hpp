@@ -11,6 +11,7 @@
 #include "./http_concepts.hpp"
 
 #include <exception>
+#include <variant>
 
 // This file is for common types for bodies; request and response bodies alike
 namespace webpp::http {

@@ -10,13 +10,13 @@
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/to_case.hpp"
 #include "../../strings/validators.hpp"
-#include "../../utils/flags.hpp"
 
 namespace webpp::http {
 
 
-    enum struct accept_encoding_options { none, allow_unknown_algorithms };
-    using accept_encoding_option_manager = flags::manager<accept_encoding_options>;
+    struct accept_encoding_options {
+        bool allow_unknown_algorithms = false;
+    };
 
     /**
      * RFC:      https://tools.ietf.org/html/rfc7231#section-5.3.4
@@ -36,17 +36,16 @@ namespace webpp::http {
      *
      * todo: add support for pack200-gzip, exi, zstd
      */
-    template <Allocator                      AllocT,
-              istl::StringView               StrViewT = stl::string_view,
-              accept_encoding_option_manager Options =
-                accept_encoding_option_manager{accept_encoding_options::none}>
+    template <Allocator               AllocT,
+              istl::StringView        StrViewT = stl::string_view,
+              accept_encoding_options Options  = accept_encoding_options{}>
     struct basic_accept_encoding {
-        using str_v                 = StrViewT;
-        using char_type             = typename str_v::value_type;
-        using str_const_iterator    = typename str_v::const_iterator;
-        using allocator_type        = AllocT;
-        using string_tokenizer_type = string_tokenizer<str_v, str_const_iterator>;
-        static constexpr flags::manager<accept_encoding_options> options = Options;
+        using str_v                                      = StrViewT;
+        using char_type                                  = typename str_v::value_type;
+        using str_const_iterator                         = typename str_v::const_iterator;
+        using allocator_type                             = AllocT;
+        using string_tokenizer_type                      = string_tokenizer<str_v, str_const_iterator>;
+        static constexpr accept_encoding_options options = Options;
 
         /**
          * Known encoding types
@@ -68,8 +67,7 @@ namespace webpp::http {
             // preference is expressed.
         };
 
-        static constexpr bool allow_unknown_algos =
-          options.is_on(accept_encoding_options::allow_unknown_algorithms);
+        static constexpr bool allow_unknown_algos = options.allow_unknown_algorithms;
         using encoding_type = stl::conditional_t<allow_unknown_algos, str_v, encoding_types>;
 
         struct compression_algo_type {

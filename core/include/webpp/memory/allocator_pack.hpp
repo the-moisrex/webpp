@@ -6,7 +6,6 @@
 #include "../std/concepts.hpp"
 #include "../std/memory.hpp"
 #include "../std/type_traits.hpp"
-#include "../utils/flags.hpp"
 #include "allocator_concepts.hpp"
 
 namespace webpp::alloc {
@@ -23,8 +22,7 @@ namespace webpp::alloc {
     // https://cdn2-ecros.pl/event/codedive/files/presentations/2018/code%20dive%202018%20-%20Andreas%20Weis%20-%20Taming%20dynamic%20memory%20-%20An%20introduction%20to%20custom%20allocators%20in%20C%2B%2B.pdf
     // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0089r0.pdf
 
-    // every feature has to have an opposite feature so the child can overwrite the parent's decision.
-    enum features : unsigned short {
+    enum features : stl::uint_fast8_t {
         sync,
         unsync,
 
@@ -44,100 +42,255 @@ namespace webpp::alloc {
         low_locality
     };
 
-    // only for those that are not a required feature; only include one of conflicting features.
-    // the feature that if it's present it's usually better should be present here.
-    static constexpr stl::array<stl::pair<features, long long int>, 4> feature_rates{{
-      {noop_dealloc, 50},
-      {high_locality, 30},
-      {high_contention, 20},
-      {high_utilization, 10},
-    }};
+    // every feature has to have an opposite feature so the child can overwrite the parent's decision.
+    struct feature_pack {
+        using value_type = bool;
 
-    static constexpr stl::array<stl::pair<features, features>, 6> conflicting_features{{
-      {sync, unsync},
-      {noop_dealloc, no_noop_dealloc},
-      {stateful, stateless},
-      {high_contention, low_contention},
-      {high_utilization, low_utilization},
-      {high_locality, low_locality},
-    }};
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        value_type m_sync : 1   = false;
+        value_type m_unsync : 1 = false;
 
-    // whenever used, these features are considered required and if the allocator don't have it, its rank is
-    // going to be -100
-    static constexpr stl::array<features, 3> required_features{sync, stateful, stateless};
+        value_type m_noop_dealloc : 1    = false;
+        value_type m_no_noop_dealloc : 1 = false;
 
-    using feature_pack = flags::manager<features>;
+        value_type m_stateful : 1  = false;
+        value_type m_stateless : 1 = false;
 
-    /**
-     * Get the opposite feature of the input feature; the one that overwrite it if it's specified in the child
-     */
-    [[nodiscard]] static constexpr features opposite_feature(features fch) noexcept {
-        for (auto conflicting_fch : conflicting_features) {
-            if (conflicting_fch.first == fch)
-                return conflicting_fch.second;
-            if (conflicting_fch.second == fch)
-                return conflicting_fch.first;
+        value_type m_high_contention : 1 = false;
+        value_type m_low_contention : 1  = false;
+
+        value_type m_high_utilization : 1 = false;
+        value_type m_low_utilization : 1  = false;
+
+        value_type m_high_locality : 1 = false;
+        value_type m_low_locality : 1  = false;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+        template <typename... FeaturesType>
+            requires((stl::same_as<stl::remove_cvref_t<FeaturesType>, features> && ...))
+        constexpr feature_pack(FeaturesType... values) {
+            set_features(values...);
         }
-        return fch; // there's something wrong, we should not reach this part
-    }
 
-    /**
-     * Merge two feature packs. One of them is the parent, and the other one is the child.
-     * The Child's feature will overwrite the parent's feature if there's a conflict.
-     */
-    [[nodiscard]] static constexpr feature_pack merge_features(feature_pack parent,
-                                                               feature_pack child) noexcept {
-        feature_pack pack;
-        for (auto conflicting_pack : conflicting_features) {
-            features const parent_feature =
-              parent.is_on(conflicting_pack.first) ? conflicting_pack.first : conflicting_pack.second;
-            features const opposite_parent_feature =
-              parent_feature == conflicting_pack.first ? conflicting_pack.second : conflicting_pack.first;
+        template <typename... FeaturesType>
+            requires((stl::same_as<stl::remove_cvref_t<FeaturesType>, features> && ...))
+        constexpr void set_features(FeaturesType... values) noexcept {
+            (([this](features feature) {
+                 switch (feature) {
+                     case features::sync: set_sync(true); break;
+                     case features::unsync: set_sync(false); break;
+                     case features::noop_dealloc: set_noop_dealloc(true); break;
+                     case features::no_noop_dealloc: set_noop_dealloc(false); break;
+                     case features::stateful: set_stateful(true); break;
+                     case features::stateless: set_stateful(false); break;
+                     case features::high_contention: set_high_contention(true); break;
+                     case features::low_contention: set_high_contention(false); break;
+                     case features::high_utilization: set_high_utilization(true); break;
+                     case features::low_utilization: set_high_utilization(false); break;
+                     case features::high_locality: set_high_locality(true); break;
+                     case features::low_locality: set_high_locality(false); break;
+                 }
+             })(values),
+             ...);
+        }
 
-            // fixing mistakes
-            if (parent.is_on(conflicting_pack.first) && parent.is_on(conflicting_pack.second)) {
-                // daddy is stupid, whatever the child says
-                if (child.is_on(conflicting_pack.first)) {
-                    pack.on(conflicting_pack.first);
-                } else if (child.is_on(conflicting_pack.second)) {
-                    pack.on(conflicting_pack.second);
-                } else {
-                    // do not add it when they are both making the same mistake
-                }
-                continue;
-            } else if (child.is_on(conflicting_pack.first) && child.is_on(conflicting_pack.second)) {
-                // the child is stupid, whatever the daddy says
-                if (parent.is_on(conflicting_pack.first)) {
-                    pack.on(conflicting_pack.first);
-                } else if (parent.is_on(conflicting_pack.second)) {
-                    pack.on(conflicting_pack.second);
-                } else {
-                    // do not add it when they are both making the same mistake
-                }
-                continue;
+        [[nodiscard]] constexpr bool is(features feature) const noexcept {
+            switch (feature) {
+                case features::sync: return is_sync();
+                case features::unsync: return !is_sync();
+                case features::noop_dealloc: return is_noop_dealloc();
+                case features::no_noop_dealloc: return !is_noop_dealloc();
+                case features::stateful: return is_stateful();
+                case features::stateless: return is_stateless();
+                case features::high_contention: return is_high_contention();
+                case features::low_contention: return !is_high_contention();
+                case features::high_utilization: return is_high_utilization();
+                case features::low_utilization: return !is_high_utilization();
+                case features::high_locality: return is_high_locality();
+                case features::low_locality: return !is_high_locality();
+            }
+            return false;
+        }
+
+        [[nodiscard]] constexpr bool specified(features feature) const noexcept {
+            switch (feature) {
+                case features::sync:
+                case features::unsync: return specified_sync();
+                case features::noop_dealloc:
+                case features::no_noop_dealloc: return specified_noop_dealloc();
+                case features::stateful:
+                case features::stateless: return specified_state();
+                case features::high_contention:
+                case features::low_contention: return specified_contention();
+                case features::high_utilization:
+                case features::low_utilization: return specified_utilization();
+                case features::high_locality:
+                case features::low_locality: return specified_locality();
+            }
+            return false;
+        }
+
+        constexpr void set_sync(value_type val) noexcept {
+            m_sync   = val;
+            m_unsync = !val;
+        }
+
+        constexpr void set_noop_dealloc(value_type val) noexcept {
+            m_noop_dealloc    = val;
+            m_no_noop_dealloc = !val;
+        }
+
+
+        constexpr void set_stateful(value_type val) noexcept {
+            m_stateful  = val;
+            m_stateless = !val;
+        }
+
+        constexpr void set_high_contention(value_type val) noexcept {
+            m_high_contention = val;
+            m_low_contention  = !val;
+        }
+
+
+        constexpr void set_high_utilization(value_type val) noexcept {
+            m_high_utilization = val;
+            m_low_utilization  = !val;
+        }
+
+
+        constexpr void set_high_locality(value_type val) noexcept {
+            m_high_locality = val;
+            m_low_locality  = !val;
+        }
+
+        [[nodiscard]] constexpr value_type is_sync() const noexcept {
+            // sync is required that's why we don't check the unsync here
+            return m_sync;
+        }
+
+        [[nodiscard]] constexpr value_type is_noop_dealloc() const noexcept {
+            return m_noop_dealloc && !m_no_noop_dealloc;
+        }
+
+        [[nodiscard]] constexpr value_type is_stateful() const noexcept {
+            return m_stateful; // stateful is a required boolean, that's why we don't check the stateless
+        }
+
+        [[nodiscard]] constexpr value_type is_stateless() const noexcept {
+            return m_stateless; // stateful is a required boolean, that's why we don't check the stateful
+        }
+
+        [[nodiscard]] constexpr value_type is_high_contention() const noexcept {
+            return m_high_contention && !m_low_contention;
+        }
+
+        [[nodiscard]] constexpr value_type is_high_utilization() const noexcept {
+            return m_high_utilization && !m_low_utilization;
+        }
+
+        [[nodiscard]] constexpr value_type is_high_locality() const noexcept {
+            return m_high_locality && !m_low_locality;
+        }
+
+
+
+        [[nodiscard]] constexpr value_type specified_sync() const noexcept {
+            return m_sync || m_unsync;
+        }
+
+        [[nodiscard]] constexpr value_type specified_noop_dealloc() const noexcept {
+            return m_noop_dealloc || m_no_noop_dealloc;
+        }
+
+        [[nodiscard]] constexpr value_type specified_state() const noexcept {
+            return m_stateful || m_stateless;
+        }
+
+        [[nodiscard]] constexpr value_type specified_contention() const noexcept {
+            return m_high_contention || m_low_contention;
+        }
+
+        [[nodiscard]] constexpr value_type specified_utilization() const noexcept {
+            return m_high_utilization || m_low_utilization;
+        }
+
+        [[nodiscard]] constexpr value_type specified_locality() const noexcept {
+            return m_high_locality || m_low_locality;
+        }
+
+        [[nodiscard]] constexpr value_type is_empty() const noexcept {
+            return !specified_state() && !specified_sync() && !specified_contention() &&
+                   !specified_locality() && !specified_noop_dealloc() && !specified_utilization();
+        }
+
+
+
+        /**
+         * Merge two feature packs. One of them is the parent, and the other one is the child.
+         * The Child's feature will overwrite the parent's feature if there's a conflict.
+         */
+        [[nodiscard]] static constexpr feature_pack merge_features(feature_pack parent,
+                                                                   feature_pack child) noexcept {
+            feature_pack pack;
+            if (parent.is_sync() || child.is_sync())
+                pack.set_sync(true);
+            if (parent.is_noop_dealloc() || child.is_noop_dealloc())
+                pack.set_noop_dealloc(true);
+            if (parent.is_high_contention() || child.is_high_contention())
+                pack.set_high_contention(true);
+            if (parent.is_high_utilization() || child.is_high_utilization())
+                pack.set_high_utilization(true);
+            if (parent.is_high_locality() || child.is_high_locality())
+                pack.set_high_locality(true);
+            return pack;
+        }
+
+
+        // only for those that are not a required feature; only include one of conflicting features.
+        // the feature that if it's present it's usually better should be present here.
+        [[nodiscard]] constexpr static long long int rank(features feature) noexcept {
+            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+            switch (feature) {
+                case features::sync:
+                case features::unsync: return 200;
+                case features::noop_dealloc:
+                case features::no_noop_dealloc: return 50;
+                case features::stateful:
+                case features::stateless: return 200;
+                case features::high_contention:
+                case features::low_contention: return 20;
+                case features::high_utilization:
+                case features::low_utilization: return 10;
+                case features::high_locality:
+                case features::low_locality: return 30;
+            }
+            return 0;
+            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+        }
+
+
+        [[nodiscard]] constexpr long long int rank(feature_pack asked_features) const noexcept {
+            long long int res = 100; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+
+            // Checking required features first:
+            if ((asked_features.specified_state() && specified_state()) ||
+                (asked_features.is_sync() && specified_sync())) {
+                return res * -1;
             }
 
-            // if parent has this set of feature
-            if (parent.is_on(conflicting_pack.first) || parent.is_on(conflicting_pack.second)) {
-
-                if (child.is_on(opposite_parent_feature)) // overwrite what the parent says
-                    pack.on(opposite_parent_feature);
-                else // both are saying the same thing or the child has nothing to say about it, so inherit it
-                     // from daddy
-                    pack.on(parent_feature);
-
-            } else { // daddy says nothing, so let's see what the kid says about it
-                if (child.is_on(conflicting_pack.first)) {
-                    pack.on(conflicting_pack.first);
-                } else if (child.is_on(conflicting_pack.second)) {
-                    pack.on(conflicting_pack.second);
-                } else {
-                    // the kid says nothing as well, so just forget it
+            for (features const feature : {noop_dealloc, high_contention, high_utilization, high_locality}) {
+                const auto points = rank(feature);
+                if (asked_features.specified(feature) && specified(feature)) {
+                    res += asked_features.is(feature) == is(feature) ? points : -points;
+                } else if (specified(feature)) {
+                    // the user didn't ask for it, but half a point for those allocators that have this
+                    // feature and take half the point for those that have the opposite of this feature
+                    res += asked_features.is(feature) == is(feature) ? (points / 2) : -(points / 2);
                 }
             }
+            return res;
         }
-        return pack;
-    }
+    };
 
     // common allocator features
     // todo: complete this list
@@ -155,58 +308,13 @@ namespace webpp::alloc {
     template <feature_pack Features>
     struct ranking_condition {
 
-
-        static constexpr long long int value_generator(feature_pack TheFeatures,
-                                                       feature_pack AskedFeatures) noexcept {
-            long long int res = 100; // initial value
-
-            // Checking required features first:
-            for (auto const fch : required_features) {
-                if (AskedFeatures.is_on(fch)) {
-                    if (TheFeatures.is_off(fch) || TheFeatures.is_on(opposite_feature(fch))) {
-                        return res > 0 ? res * -1 : res; // abs(res) * -1
-                    }
-                }
-            }
-
-            for (auto const& ft : feature_rates) {
-                const auto fch          = ft.first;
-                const auto opposite_fch = opposite_feature(fch);
-                const auto points       = ft.second;
-                if (AskedFeatures.is_on(fch)) {
-                    if (TheFeatures.is_on(fch)) {
-                        res += points; // both are on
-                    } else if (TheFeatures.is_on(opposite_fch)) {
-                        res -= points; // asked for it to be on, but it has the opposite one
-                    }
-                } else if (AskedFeatures.is_on(opposite_fch)) {
-                    if (TheFeatures.is_on(fch)) {
-                        res -= points; // both are on
-                    } else if (TheFeatures.is_on(opposite_fch)) {
-                        res += points; // asked for it to be on, but it has the opposite one
-                    }
-                } else {
-                    // the user didn't asked for it, but half a point for those allocators that have this
-                    // feature and take half the point for those that have the opposite of this feature
-                    if (TheFeatures.is_on(fch)) {
-                        res += points / 2;
-                    } else if (TheFeatures.is_on(opposite_fch)) {
-                        res -= points / 2;
-                    }
-                }
-            }
-
-            return res;
-        }
-
-
         template <typename AllocDescriptor>
         struct ranker {
             static constexpr feature_pack asked_features = Features;
             static constexpr feature_pack alloc_features =
               alloc::descriptors::allocator_features<AllocDescriptor>;
 
-            static constexpr auto value = value_generator(alloc_features, asked_features);
+            static constexpr auto value = alloc_features.rank(asked_features);
         };
 
         template <typename AllocDescriptor, typename ResDescriptor>
@@ -215,9 +323,10 @@ namespace webpp::alloc {
             static constexpr feature_pack alloc_features =
               alloc::descriptors::allocator_features<AllocDescriptor>;
             static constexpr feature_pack res_features =
-              merge_features(alloc_features, alloc::descriptors::resource_features<ResDescriptor>);
+              feature_pack::merge_features(alloc_features,
+                                           alloc::descriptors::resource_features<ResDescriptor>);
 
-            static constexpr auto value = value_generator(res_features, asked_features);
+            static constexpr auto value = res_features.rank(asked_features);
         };
     };
 
@@ -434,7 +543,7 @@ namespace webpp::alloc {
         constexpr allocator_pack() noexcept  = default;
         constexpr ~allocator_pack() noexcept = default;
 
-        constexpr allocator_pack& operator=(const allocator_pack&) noexcept {
+        constexpr allocator_pack& operator=(const allocator_pack&) noexcept { // NOLINT(cert-oop54-cpp)
             // do nothing; really
             return *this;
         }
@@ -692,7 +801,7 @@ namespace webpp::alloc {
 
         template <typename T, feature_pack FPack, typename... Args>
         [[nodiscard]] constexpr auto make(Args&&... args) {
-            if constexpr (FPack.empty()) {
+            if constexpr (FPack.is_empty()) {
                 return this->make<T, Args...>(stl::forward<Args>(args)...);
             } else {
                 using best_choice        = ranked<FPack>;
@@ -709,7 +818,7 @@ namespace webpp::alloc {
         // this function will return a std::unique_ptr<T, ...> that's allocated on the specified allocator
         template <typename T, feature_pack FPack, typename... Args>
         [[nodiscard]] constexpr auto allocate_unique(Args&&... args) {
-            static_assert(!FPack.empty(), "What does it mean?");
+            static_assert(!FPack.is_empty(), "What does it mean?");
             return istl::allocate_unique<T>(get_allocator<FPack, T>(), stl::forward<Args>(args)...);
         }
 

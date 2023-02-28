@@ -263,8 +263,12 @@ namespace webpp::http {
                 // todo: we can optimize this, right? it parses the whole uri, do we need the whole uri? I think yes
                 // fixme: should we decode it? if we decode it we need to care about the UTF-8 stuff as well?
                 // todo: move this parsing into the request so we don't have to do it more than once for one request
-                uri::basic_path<string_type> uri_segments{req.uri(), alloc::allocator_for<string_type>(ctx)};
-                uri_segments.fix();
+                uri::basic_path<string_type> uri_segments{alloc::allocator_for<string_type>(ctx)};
+                if (!uri_segments.parse(req.uri())) {
+                    uri_segments.clear();
+                } else {
+                    uri_segments.fix();
+                }
                 using uri_segments_type = decltype(uri_segments);
 
 
@@ -288,7 +292,8 @@ namespace webpp::http {
         static constexpr bool verify_context(CtxT const& ctx) noexcept {
             if constexpr (HasPathExtension<CtxT>) {
                 // the URI is empty, so no checking it
-                return !ctx.path.segments.empty() && !ctx.path.segments.errors.is_failure();
+                // todo: we used to check the errors of the segments here, but the path class doesn't provide that anymore
+                return !ctx.path.segments.empty();
             } else {
                 return false;
             }
