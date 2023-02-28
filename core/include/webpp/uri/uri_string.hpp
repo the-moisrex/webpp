@@ -38,16 +38,31 @@
 
 namespace webpp::uri {
 
-    enum struct uri_error_type : stl::uint8_t {
-        none   = 0,
-        scheme = 1,
-        user_info,
-        host,
-        port,
-        path,
-        queries,
-        fragment
+    struct uri_error_type {
+        bool scheme : 1    = false;
+        bool user_info : 1 = false;
+        bool host : 1      = false;
+        bool port : 1      = false;
+        bool path : 1      = false;
+        bool queries : 1   = false;
+        bool fragment : 1  = false;
+
+        constexpr void reset() noexcept {
+            scheme    = false;
+            user_info = false;
+            host      = false;
+            port      = false;
+            path      = false;
+            queries   = false;
+            fragment  = false;
+        }
+
+        [[nodiscard]] constexpr bool is_success() const noexcept {
+            // todo: see if the compiler optimizes this or not
+            return !(scheme & user_info & host & port & path & queries & fragment);
+        }
     };
+
 
     namespace is {
         /**
@@ -113,14 +128,14 @@ namespace webpp::uri {
          */
         stored_str_t data{};
 
-        mutable stl::size_t                   scheme_end      = string_view_type::npos;
-        mutable stl::size_t                   authority_start = string_view_type::npos;
-        mutable stl::size_t                   user_info_end   = string_view_type::npos;
-        mutable stl::size_t                   port_start      = string_view_type::npos;
-        mutable stl::size_t                   authority_end   = string_view_type::npos;
-        mutable stl::size_t                   query_start     = string_view_type::npos;
-        mutable stl::size_t                   fragment_start  = string_view_type::npos;
-        mutable error_handler<uri_error_type> errors;
+        mutable stl::size_t    scheme_end      = string_view_type::npos;
+        mutable stl::size_t    authority_start = string_view_type::npos;
+        mutable stl::size_t    user_info_end   = string_view_type::npos;
+        mutable stl::size_t    port_start      = string_view_type::npos;
+        mutable stl::size_t    authority_end   = string_view_type::npos;
+        mutable stl::size_t    query_start     = string_view_type::npos;
+        mutable stl::size_t    fragment_start  = string_view_type::npos;
+        mutable uri_error_type errors;
 
         /**
          * scheme    :    start=0       end=[0]
@@ -164,12 +179,12 @@ namespace webpp::uri {
                         if (!ascii::iequals<ascii::char_case_side::second_lowered>(
                               _data.substr(0, scheme_end),
                               "urn")) {
-                            errors.failure(uri_error_type::scheme);
+                            errors.scheme = true;
                         }
                     }
                     return;
                 } else {
-                    errors.failure(uri_error_type::scheme);
+                    errors.scheme = true;
                 }
             }
 
@@ -293,15 +308,15 @@ namespace webpp::uri {
                     // port is empty; empty is default
                     return; // nothing to do
                 } else if (!ascii::is::digit(port_view)) {
-                    port_start = data.size();
-                    errors.failure(uri_error_type::port);
+                    port_start  = data.size();
+                    errors.port = true;
                 } else {
                     // unfortunately this is the best way that I could think of
                     // but if the user wants the port as well, then we have converted this value twice
                     // not efficient; I know.
                     auto const p = to_int(port_view);
                     if (p < 0 || p > max_port_number) {
-                        errors.failure(uri_error_type::port);
+                        errors.port = true;
                     }
                 }
             }
@@ -1233,7 +1248,7 @@ namespace webpp::uri {
             if (ascii::starts_with(new_port, ':'))
                 new_port.remove_prefix(1);
             if (!ascii::is::digit(new_port)) {
-                errors.failure(uri_error_type::port);
+                errors.port = true;
                 return *this;
             }
             parse_port();
@@ -1322,7 +1337,7 @@ namespace webpp::uri {
          * We know how to get the allocator, don't worry.
          * The specified container's string type should be a string and not a string_view
          */
-        template <typename Container = basic_path<string_type, allocator_type>>
+        template <typename Container = basic_path<string_type>>
         [[nodiscard]] constexpr Container slugs() const noexcept {
             using value_type = typename Container::value_type;
             Container container(this->template get_allocator_as<value_type>());
@@ -1337,7 +1352,7 @@ namespace webpp::uri {
          * You can use string_view as the underlying string type of the container since we don't
          * decode the string. As long as the class has access to the string_view, this method has too.
          */
-        template <typename Container = basic_path<string_type, allocator_type>>
+        template <typename Container = basic_path<string_type>>
         [[nodiscard]] constexpr Container raw_slugs() const noexcept {
             Container container(this->get_allocator());
             extract_raw_slugs_to<Container>(container);
@@ -1350,8 +1365,10 @@ namespace webpp::uri {
          * this method does not just response to the fact that Container should
          * be an std container, but if string/string_view is presented as a
          * container, it will return the whole path.
+         *
+         * todo: possible usage of path_view if you have any of those
          */
-        template <typename Container = basic_path<string_view_type, allocator_type>>
+        template <typename Container = basic_path<string_type>>
         constexpr uri_string const& extract_raw_slugs_to(Container& container) const noexcept {
             auto _path = path_raw();
             if (_path.empty())
@@ -1376,7 +1393,7 @@ namespace webpp::uri {
          * @attention do not use string_view or any alternatives for this method
          * as this method should own its data.
          */
-        template <typename Container = basic_path<string_type, allocator_type>>
+        template <typename Container = basic_path<string_type>>
         [[nodiscard]] constexpr bool extract_slugs_to(Container& container) const noexcept {
             using vec_str_t = typename Container::value_type;
             static_assert(istl::String<vec_str_t>,
@@ -1937,34 +1954,34 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_valid_scheme() const noexcept {
-            return !scheme().empty() || errors.is_off(uri_error_type::scheme);
+            return !scheme().empty() || errors.scheme;
         }
 
         [[nodiscard]] constexpr bool has_valid_host() const noexcept {
-            return !host_raw().empty() || errors.is_off(uri_error_type::host);
+            return !host_raw().empty() || !errors.host;
         }
 
         [[nodiscard]] constexpr bool has_valid_path() const noexcept {
-            return !path_raw().empty() || errors.is_off(uri_error_type::path);
+            return !path_raw().empty() || !errors.path;
         }
 
         [[nodiscard]] constexpr bool has_valid_port() const noexcept {
-            return !port().empty() || (errors.is_off(uri_error_type::port) && port_uint16());
+            return !port().empty() || (!errors.port && port_uint16());
         }
 
         [[nodiscard]] constexpr bool has_valid_queries() const noexcept {
             // todo: evaluate queries as well, query parser doesn't evaluate it
-            return !queries_raw().empty() || errors.is_off(uri_error_type::queries);
+            return !queries_raw().empty() || !errors.queries;
         }
 
         [[nodiscard]] constexpr bool has_valid_fragment() const noexcept {
             // todo: evaluate fragment as well, fragment parser doesn't evaluate it
-            return !fragment().empty() || errors.is_off(uri_error_type::fragment);
+            return !fragment().empty() || !errors.fragment;
         }
 
         [[nodiscard]] constexpr bool has_valid_user_info() const noexcept {
             // todo: evaluate user_info as well, user_info parser doesn't evaluate it
-            return !user_info_raw().empty() || errors.is_off(uri_error_type::user_info);
+            return !user_info_raw().empty() || !errors.user_info;
         }
 
         // Get an error string; this should only be used for debugging

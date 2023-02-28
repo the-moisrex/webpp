@@ -4,7 +4,6 @@
 #define WEBPP_PATH_HPP
 
 #include "../memory/allocators.hpp"
-#include "../std/expected.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
@@ -19,45 +18,22 @@ namespace webpp::uri {
      * Including normal string and string view types
      */
     template <typename T>
-    concept Slug = requires(T slug) {
-                       typename T::value_type;
-                       slug.empty();
-                       T{""};
-                       slug.size();
-                   };
+    concept Slug = istl::String<T>;
 
-    enum struct path_error : stl::uint_fast8_t {
-        none,          // no errors
-        invalid_string // Parts of the specified string cannot be decoded to a valid path.
-    };
-
-    template <Slug SlugType      = stl::string,
-              typename AllocType = typename stl::remove_cvref_t<SlugType>::allocator_type>
+    template <Slug SlugType = stl::string>
     struct basic_path
-      : public istl::expected<stl::vector<stl::remove_cvref_t<SlugType>,
-                                          rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>,
-                              path_error> {
-        using container_type         = stl::vector<stl::remove_cvref_t<SlugType>,
-                                           rebind_allocator<AllocType, stl::remove_cvref_t<SlugType>>>;
-        using char_type              = typename SlugType::value_type;
-        using value_type             = typename container_type::value_type;
-        using pointer                = typename container_type::pointer;
-        using const_pointer          = typename container_type::const_pointer;
-        using reference              = typename container_type::reference;
-        using const_reference        = typename container_type::const_reference;
-        using iterator               = typename container_type::itereator;
-        using const_iterator         = typename container_type::const_iterator;
-        using const_reverse_iterator = typename container_type::const_reverse_iterator;
-        using reverse_iterator       = typename container_type::reverse_iterator;
-        using size_type              = typename container_type::size_type;
-        using difference_type        = typename container_type::different_type;
-        using allocator_type         = typename container_type::allocator_type;
-
-        using string_type = stl::
+      : public stl::vector<stl::remove_cvref_t<SlugType>,
+                           rebind_allocator<typename stl::remove_cvref_t<SlugType>::allocator_type,
+                                            stl::remove_cvref_t<SlugType>>> {
+        using slug_type           = stl::remove_cvref_t<SlugType>;
+        using slug_allocator_type = typename slug_type::allocator_type;
+        using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector
+        using container_type      = stl::vector<slug_type, allocator_type>;
+        using value_type          = slug_type;
+        using char_type           = istl::char_type_of<slug_type>;
+        using string_type         = stl::
           conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
-
-
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -68,29 +44,27 @@ namespace webpp::uri {
             requires(stl::is_constructible_v<container_type, T...>)
         constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> && istl::StringViewifiable<T>)
         constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
-        // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        constexpr void parse(istl::StringifiableOf<string_view_type> auto&& str) {
+        constexpr bool parse(istl::StringifiableOf<string_view_type> auto&& str) {
             auto path = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
             if (path.empty())
-                return;
+                return true;
 
             for (;;) {
                 const stl::size_t slash_start = path.find(separator);
                 const stl::size_t the_size    = stl::min(slash_start, path.size());
-                value_type        val{this->get_allocator()}; // todo: how to get another allocator here?
+                value_type        val{this->get_allocator()};
                 if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
+                    // error: invalid string passed as a path
                     this->clear();
-                    this->emplace(path_error::invalid_string); // set the error
-                    val = path.substr(0, the_size);            // put the non-decoded value
-                    // todo: should we just "return" here and stop doing the work?
+                    // val = path.substr(0, the_size); // put the non-decoded value
+                    return false;
                 }
                 this->push_back(stl::move(val));
                 if (slash_start == string_view_type::npos) {
@@ -98,6 +72,7 @@ namespace webpp::uri {
                 }
                 path.remove_prefix(slash_start + 1);
             }
+            return true;
         }
 
         constexpr basic_path& operator=(value_type str) {
@@ -155,16 +130,16 @@ namespace webpp::uri {
             }
         }
 
-        constexpr void append_to(istl::String auto& str) const {
+        constexpr basic_path& append_to(istl::String auto& str) const {
             if (this->size() == 0)
-                return;
+                return *this;
 
             auto it = this->cbegin();
 
             // handling empty this special path: "/"
             if (it->empty() && this->size() == 1) {
                 str.append(separator);
-                return;
+                return *this;
             }
 
             str.append(*it++);
@@ -172,10 +147,11 @@ namespace webpp::uri {
                 str.append(separator);
                 encode_uri_component(*it, str, allowed_chars);
             }
+            return *this;
         }
 
 
-        constexpr string_type to_string() const {
+        [[nodiscard]] constexpr string_type to_string() const {
             string_type str{this->get_allocator()};
             append_to(str);
             return str;
@@ -202,60 +178,6 @@ namespace webpp::uri {
             if (this->size() && this->back().empty()) {
                 (void) this->pop_back();
             }
-        }
-
-
-
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return this->has_value() ? this->size() : 0;
-        }
-
-        [[nodiscard]] constexpr iterator begin() noexcept {
-            return this->has_value() ? this->begin() : iterator{};
-        }
-
-        [[nodiscard]] constexpr const_iterator begin() const noexcept {
-            return this->has_value() ? this->begin() : const_iterator{};
-        }
-
-        [[nodiscard]] constexpr iterator end() noexcept {
-            return this->has_value() ? this->end() : iterator{};
-        }
-
-        [[nodiscard]] constexpr const_iterator end() const noexcept {
-            return this->has_value() ? this->end() : const_iterator{};
-        }
-
-        [[nodiscard]] constexpr reverse_iterator rbegin() noexcept {
-            return this->has_value() ? this->rbegin() : reverse_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_reverse_iterator rbegin() const noexcept {
-            return this->has_value() ? this->rbegin() : const_reverse_iterator{};
-        }
-
-        [[nodiscard]] constexpr reverse_iterator rend() noexcept {
-            return this->has_value() ? this->rend() : reverse_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_reverse_iterator rend() const noexcept {
-            return this->has_value() ? this->rend() : const_reverse_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_iterator cbegin() const noexcept {
-            return this->has_value() ? this->cbegin() : const_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_iterator cend() const noexcept {
-            return this->has_value() ? this->cend() : const_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_reverse_iterator crbegin() const noexcept {
-            return this->has_value() ? this->crbegin() : const_reverse_iterator{};
-        }
-
-        [[nodiscard]] constexpr const_reverse_iterator crend() const noexcept {
-            return this->has_value() ? this->crend() : const_reverse_iterator{};
         }
     };
 
