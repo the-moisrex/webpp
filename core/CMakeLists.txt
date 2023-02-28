@@ -86,7 +86,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/convert/casts.hpp
         ${LIB_INCLUDE_DIR}/webpp/convert/lexical_cast.hpp
 
-        ${LIB_INCLUDE_DIR}/webpp/utils/flags.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
@@ -281,7 +280,7 @@ target_link_libraries(${LIB_NAME}
         PUBLIC Boost::asio
         PUBLIC Boost::container
         PUBLIC fmt::fmt
-        PUBLIC magic_enum::magic_enum
+        # PUBLIC magic_enum::magic_enum
         PUBLIC date::date
         PUBLIC date::date-tz
         PUBLIC ${PROJECT_NAME}::json

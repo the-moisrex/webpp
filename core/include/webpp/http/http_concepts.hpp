@@ -307,6 +307,24 @@ namespace webpp::http {
                                                  };
 
 
+    template <typename T>
+    concept DeserializablePrimitive = requires(T obj) {
+                                          requires(
+                                            requires {
+                                                { deserialize_request_body<T>(obj) } -> stl::same_as<T>;
+                                            } ||
+                                            requires {
+                                                { deserialize_response_body<T>(obj) } -> stl::same_as<T>;
+                                            } ||
+                                            requires {
+                                                { deserialize_body<T>(obj) } -> stl::same_as<T>;
+                                            });
+                                      };
+
+    template <typename T>
+    concept Deserializable = DeserializablePrimitive<T> || DeserializablePrimitive<stl::remove_cvref_t<T>>;
+
+
     ////////////////////////////// Request //////////////////////////////
 
 

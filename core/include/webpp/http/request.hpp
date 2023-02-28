@@ -102,16 +102,20 @@ namespace webpp::http {
 
         template <typename T>
         explicit(
-          istl::part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
-          istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+          Deserializable<T> &&
+          (istl::
+             part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
+           istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) ) constexpr
         operator T() const {
             return as<T>();
         }
 
         template <typename T>
         explicit(
-          istl::part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
-          istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
+          Deserializable<T> &&
+          (istl::
+             part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
+           istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) ) constexpr
         operator T() {
             return as<T>();
         }
