@@ -1,7 +1,7 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_PATH_HPP
-#define WEBPP_PATH_HPP
+#ifndef WEBPP_URI_PATH_HPP
+#define WEBPP_URI_PATH_HPP
 
 #include "../memory/allocators.hpp"
 #include "../std/string.hpp"
@@ -10,6 +10,7 @@
 #include "details/constants.hpp"
 #include "encoding.hpp"
 
+#include <compare>
 #include <numeric>
 
 namespace webpp::uri {
@@ -34,6 +35,7 @@ namespace webpp::uri {
         using string_type         = stl::
           conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
+        using path_type        = basic_path;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -75,10 +77,56 @@ namespace webpp::uri {
             return true;
         }
 
+        template <istl::StringViewifiable SegStrT>
+        constexpr basic_path& operator/=(SegStrT&& seg_str) {
+            auto path = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(seg_str));
+            if (path.empty())
+                return *this;
+
+            for (;;) {
+                const stl::size_t slash_start = path.find(separator);
+                const stl::size_t the_size    = stl::min(slash_start, path.size());
+                value_type        val{this->get_allocator()};
+                if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
+                    // error: invalid string passed as a path
+                    val = path.substr(0, the_size); // put the non-decoded value
+                }
+                this->push_back(stl::move(val));
+                if (slash_start == string_view_type::npos) {
+                    break;
+                }
+                path.remove_prefix(slash_start + 1);
+            }
+            return *this;
+        }
+
         constexpr basic_path& operator=(value_type str) {
             parse(stl::move(str));
             return *this;
         }
+
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
+            const auto lhs_size = this->size();
+            const auto rhs_size = rhs.size();
+            if (lhs_size != rhs_size)
+                return stl::compare_partial_order_fallback(lhs_size, rhs_size);
+            if (stl::equal(this->begin(), this->end(), rhs.begin(), rhs.end())) {
+                return stl::partial_ordering::equivalent;
+            } else {
+                return stl::partial_ordering::unordered;
+            }
+        }
+
+
+        template <istl::StringViewifiable SegStrT>
+            requires(!stl::same_as<stl::remove_cvref_t<SegStrT>, basic_path>)
+        [[nodiscard]] constexpr auto operator<=>(SegStrT&& rhs) const {
+            // todo: optimize this
+            auto const      path_str = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(rhs));
+            path_type const rhs_path{path_str, this->get_allocator()};
+            return *this <=> rhs_path;
+        }
+
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
             return !this->empty() && this->front().empty();
@@ -130,7 +178,7 @@ namespace webpp::uri {
             }
         }
 
-        constexpr basic_path& append_to(istl::String auto& str) const {
+        constexpr basic_path const& append_to(istl::String auto& str) const {
             if (this->size() == 0)
                 return *this;
 
@@ -187,4 +235,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_PATH_HPP
+#endif // WEBPP_URI_PATH_HPP

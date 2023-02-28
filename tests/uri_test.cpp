@@ -13,7 +13,7 @@ TEST(URITests, Generation) {
 
     auto alloc = u.get_allocator<std::allocator<char>>();
 
-    std::string str{alloc};
+    std::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
 
     u.scheme = "https";
@@ -27,6 +27,9 @@ TEST(URITests, PathFromString) {
     EXPECT_EQ(path.size(), 6);
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
+    path /= "nice";
+    EXPECT_TRUE(stl::is_eq(path <=> stl::string{"/a/b/c/../d/nice"}));
+    // EXPECT_EQ(path, "/a/b/c/../d/nice");
 }
 
 TEST(URITests, QueryParamGeneration) {
@@ -35,7 +38,8 @@ TEST(URITests, QueryParamGeneration) {
     url.queries["model"]  = "Encode this";
     url.queries["locale"] = "English is a locale";
     url.queries["text"]   = "This text has a \n newline in it.";
+    url.queries["token"]  = "f95d9af1-18da-439c-8326-55f9ff7d6f8c";
     EXPECT_EQ(
       url.to_string(),
-      "https://localhost/api/v2/content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%20newline%20in%20it.");
+      "https://localhost/api/v2/content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
 }
