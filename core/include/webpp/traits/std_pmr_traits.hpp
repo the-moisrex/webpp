@@ -50,11 +50,11 @@ namespace webpp {
     //    };
 
 
-    using std_pmr_traits    = basic_std_pmr_traits<char>;
-    using std_pmr_wtraits   = basic_std_pmr_traits<wchar_t>;
-    using std_pmr_u8traits  = basic_std_pmr_traits<char8_t>;
-    using std_pmr_u16traits = basic_std_pmr_traits<char16_t>;
-    using std_pmr_u32traits = basic_std_pmr_traits<char32_t>;
+    struct std_pmr_traits : basic_std_pmr_traits<char> {};
+    struct std_pmr_wtraits : basic_std_pmr_traits<wchar_t> {};
+    struct std_pmr_u8traits : basic_std_pmr_traits<char8_t> {};
+    struct std_pmr_u16traits : basic_std_pmr_traits<char16_t> {};
+    struct std_pmr_u32traits : basic_std_pmr_traits<char32_t> {};
 
 } // namespace webpp
 

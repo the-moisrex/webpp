@@ -72,6 +72,12 @@ namespace webpp::alloc {
             set_features(values...);
         }
 
+        constexpr feature_pack(const feature_pack&) noexcept            = default;
+        constexpr feature_pack(feature_pack&&) noexcept                 = default;
+        constexpr feature_pack& operator=(feature_pack const&) noexcept = default;
+        constexpr feature_pack& operator=(feature_pack&&) noexcept      = default;
+        constexpr ~feature_pack() noexcept                              = default;
+
         template <typename... FeaturesType>
             requires((stl::same_as<stl::remove_cvref_t<FeaturesType>, features> && ...))
         constexpr void set_features(FeaturesType... values) noexcept {

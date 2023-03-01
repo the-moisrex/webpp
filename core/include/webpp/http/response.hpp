@@ -260,6 +260,7 @@ namespace webpp::http {
 
 
         template <typename T>
+            requires(HTTPDeserializableBody<T, final_response>)
         constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -283,11 +284,9 @@ namespace webpp::http {
         }
 
         template <typename T>
-        explicit(!Deserializable<T> ||
-                 istl::part_of<stl::remove_cvref_t<T>, final_response, elist_type, headers_type, body_type> ||
-                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> ||
-                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, common_http_response>) constexpr
-        operator T() const {
+            requires(!istl::is_specialization_of_v<stl::remove_cvref_t<T>, common_http_response> &&
+                     HTTPConvertibleBody<T, final_response, elist_type, headers_type, body_type>)
+        constexpr operator T() const {
             return as<T>();
         }
 

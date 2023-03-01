@@ -137,9 +137,6 @@ namespace webpp::http {
             return *this;
         }
 
-        beast& post();
-        beast& defer();
-
         beast& set_worker_count(stl::size_t val) {
             http_worker_count = val;
             return *this;
