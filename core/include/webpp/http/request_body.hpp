@@ -32,6 +32,12 @@ namespace webpp::http {
         using char_type                 = traits::char_type<traits_type>;
         using size_type                 = stl::streamsize;
 
+        constexpr request_body(request_body const&)                     = default;
+        constexpr request_body(request_body&&) noexcept                 = default;
+        constexpr request_body& operator=(request_body&&) noexcept      = default;
+        constexpr request_body& operator=(request_body const&) noexcept = default;
+        constexpr ~request_body()                                       = default;
+
         constexpr request_body()
             requires(stl::is_default_constructible_v<elist_type> &&
                      stl::is_default_constructible_v<request_body_communicator>)
@@ -108,6 +114,7 @@ namespace webpp::http {
 
 
         template <typename T>
+        requires(HTTPDeserializableBody<T, request_body>)
         [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -137,19 +144,16 @@ namespace webpp::http {
         }
 
         template <typename T>
-        explicit(!Deserializable<T> || istl::part_of<stl::remove_cvref_t<T>, request_body> ||
-                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
-        operator T() const {
+            requires(HTTPConvertibleBody<T, request_body>)
+        constexpr operator T() const {
             return as<T>();
         }
 
         template <typename T>
-        explicit(!Deserializable<T> || istl::part_of<stl::remove_cvref_t<T>, request_body> ||
-                 istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) constexpr
-        operator T() {
+            requires(HTTPConvertibleBody<T, request_body>)
+        constexpr operator T() {
             return as<T>();
         }
-
 
         constexpr void clear() {
             if constexpr (TextBasedBodyWriter<request_body_communicator>) {

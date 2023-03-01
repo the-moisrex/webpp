@@ -65,6 +65,7 @@ namespace webpp::http {
 
 
         template <typename T>
+            requires(HTTPDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -79,6 +80,7 @@ namespace webpp::http {
         }
 
         template <typename T>
+            requires(HTTPDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -101,22 +103,14 @@ namespace webpp::http {
         }
 
         template <typename T>
-        explicit(
-          Deserializable<T> &&
-          (istl::
-             part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
-           istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) ) constexpr
-        operator T() const {
+            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
+        constexpr operator T() const {
             return as<T>();
         }
 
         template <typename T>
-        explicit(
-          Deserializable<T> &&
-          (istl::
-             part_of<stl::remove_cvref_t<T>, common_http_request, headers_type, body_type, request_view> ||
-           istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter>) ) constexpr
-        operator T() {
+            requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
+        constexpr operator T() {
             return as<T>();
         }
     };

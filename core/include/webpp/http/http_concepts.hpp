@@ -303,26 +303,30 @@ namespace webpp::http {
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
                                                      {
                                                          body.which_communicator()
-                                                         } -> stl::same_as<communicator_type>;
+                                                     } -> stl::same_as<communicator_type>;
                                                  };
 
 
-    template <typename T>
-    concept DeserializablePrimitive = requires(T obj) {
-                                          requires(
-                                            requires {
-                                                { deserialize_request_body<T>(obj) } -> stl::same_as<T>;
-                                            } ||
-                                            requires {
-                                                { deserialize_response_body<T>(obj) } -> stl::same_as<T>;
-                                            } ||
-                                            requires {
-                                                { deserialize_body<T>(obj) } -> stl::same_as<T>;
-                                            });
-                                      };
+    namespace details {
+        template <typename T, typename BodyType>
+        concept DeserializablePrimitive = requires(BodyType obj) {
+                                              requires(
+                                                requires {
+                                                    { deserialize_request_body<T>(obj) } -> stl::same_as<T>;
+                                                } ||
+                                                requires {
+                                                    { deserialize_response_body<T>(obj) } -> stl::same_as<T>;
+                                                } ||
+                                                requires {
+                                                    { deserialize_body<T>(obj) } -> stl::same_as<T>;
+                                                });
+                                          };
+    }
 
-    template <typename T>
-    concept Deserializable = DeserializablePrimitive<T> || DeserializablePrimitive<stl::remove_cvref_t<T>>;
+    template <typename T, typename BodyType>
+    concept HTTPDeserializableBody =
+      details::DeserializablePrimitive<T, stl::remove_cvref_t<BodyType>> ||
+      details::DeserializablePrimitive<stl::remove_cvref_t<T>, stl::remove_cvref_t<BodyType>>;
 
 
     ////////////////////////////// Request //////////////////////////////
@@ -393,8 +397,8 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept ConvertibleToResponse = !
-    stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+    concept ConvertibleToResponse =
+      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
 
@@ -538,6 +542,11 @@ namespace webpp::http {
         return obj.template as<T>();
     }
 
+
+    template <typename T, typename BodyType, typename... NotThese>
+    concept HTTPConvertibleBody =
+      istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
+      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> && HTTPDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 
