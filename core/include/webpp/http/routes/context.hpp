@@ -15,83 +15,85 @@
 
 namespace webpp::http {
 
-    template <typename MergedRootExtensions>
-    struct context_descriptor;
+
+    namespace details {
 
 
-    template <HTTPRequest RequestType, typename EList, typename RootExtensions>
-    struct common_context
-      : public enable_traits_with<typename RequestType::traits_type, extension_wrapper<EList>> {
-        using request_type           = RequestType;
-        using traits_type            = typename request_type::traits_type;
-        using mother_extensions_type = EList;
-        using extension_wrapper_type = extension_wrapper<EList>;
-        using etraits                = enable_traits_with<traits_type, extension_wrapper_type>;
-        using root_extensions        = RootExtensions;
-        using response_type          = simple_response<traits_type, root_extensions>;
-        using basic_context_type     = common_context;
-        using request_ref            = request_type&;
-
-      public:
-        request_type request;
-
-        constexpr common_context(request_ref inp_req) noexcept : etraits{inp_req}, request{inp_req} {}
-
-        template <Context CtxT>
-            requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-        constexpr common_context(CtxT const& ctx) noexcept : common_context{ctx.request} {}
-
-        constexpr common_context(common_context&& ctx) noexcept        = default;
-        constexpr common_context(common_context const& ctx) noexcept   = default;
-        constexpr common_context& operator=(common_context const&)     = default;
-        constexpr common_context& operator=(common_context&&) noexcept = default;
+        template <HTTPRequest RequestType, typename RootExtensions>
+        struct common_context_methods : public enable_traits<typename RequestType::traits_type> {
+            using request_type    = RequestType;
+            using traits_type     = typename request_type::traits_type;
+            using etraits         = enable_traits<traits_type>;
+            using root_extensions = RootExtensions;
+            using response_type   = simple_response<traits_type, root_extensions>;
+            using request_ref     = request_type&;
+            using request_cref    = request_type const&;
 
 
-        /**
-         * Generate a response
-         */
-        template <Extension... NewExtensions, typename... Args>
-        [[nodiscard]] constexpr HTTPResponse auto response(Args&&... args) const noexcept {
-            return response_type::template create<NewExtensions...>(*this, stl::forward<Args>(args)...);
-        }
+            constexpr common_context_methods(request_ref inp_req) noexcept : etraits{inp_req} {}
+
+            template <Context CtxT>
+                requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
+            constexpr common_context_methods(CtxT const& ctx) noexcept
+              : common_context_methods{ctx.request} {}
+
+            constexpr common_context_methods(common_context_methods&& ctx) noexcept        = default;
+            constexpr common_context_methods(common_context_methods const& ctx) noexcept   = default;
+            constexpr common_context_methods& operator=(common_context_methods const&)     = default;
+            constexpr common_context_methods& operator=(common_context_methods&&) noexcept = default;
+            constexpr ~common_context_methods()                                            = default;
 
 
-
-        /**
-         * Generate a response while passing the specified arguments as the body of that response
-         */
-        template <Extension... NewExtensions, typename... Args>
-        [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
-            using new_response_type =
-              typename response_type::template apply_extensions_type<NewExtensions...>;
-            return new_response_type::with_body(*this, stl::forward<Args>(args)...);
-        }
+            // todo: add more error handling templates here.
+            // todo: let the user customize error templates with extensions
+            // todo: add all the features of returning a response each body type should have at least one method here
 
 
-        [[nodiscard]] constexpr static bool is_debug() noexcept {
-            // todo: configure this in cmake
+            /**
+             * Generate a response
+             */
+            template <Extension... NewExtensions, typename... Args>
+            [[nodiscard]] constexpr HTTPResponse auto create_response(Args&&... args) const noexcept {
+                return response_type::template create<NewExtensions...>(*this, stl::forward<Args>(args)...);
+            }
+
+
+            /**
+             * Generate a response while passing the specified arguments as the body of that response
+             */
+            template <Extension... NewExtensions, typename... Args>
+            [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
+                using new_response_type =
+                  typename response_type::template apply_extensions_type<NewExtensions...>;
+                return new_response_type::with_body(*this, stl::forward<Args>(args)...);
+            }
+
+
+            [[nodiscard]] constexpr static bool is_debug() noexcept {
+                // todo: configure this in cmake
 #ifdef DEBUG
-            return true;
+                return true;
 #else
-            return false;
+                return false;
 #endif
-        }
+            }
 
-        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code) const noexcept {
-            return error(static_cast<http::status_code_type>(error_code));
-        }
+            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code) const noexcept {
+                return error(static_cast<http::status_code_type>(error_code));
+            }
 
-        template <typename DataType>
-        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code,
-                                                        DataType&&        data) const noexcept {
-            return error(static_cast<http::status_code_type>(error_code), stl::forward<DataType>(data));
-        }
+            template <typename DataType>
+            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code error_code,
+                                                            DataType&&        data) const noexcept {
+                return error(static_cast<http::status_code_type>(error_code), stl::forward<DataType>(data));
+            }
 
-        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code) const noexcept {
-            using str_t = traits::general_string<traits_type>;
-            auto msg    = object::make_general<str_t>(this->alloc_pack);
-            fmt::format_to(stl::back_inserter(msg),
-                           R"(<!doctype html>
+            [[nodiscard]] constexpr HTTPResponse auto
+            error(http::status_code_type error_code) const noexcept {
+                using str_t = traits::general_string<traits_type>;
+                auto msg    = object::make_general<str_t>(this->alloc_pack);
+                fmt::format_to(stl::back_inserter(msg),
+                               R"(<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -103,40 +105,79 @@ namespace webpp::http {
   </body>
 </html>
 )",
-                           error_code,
-                           http::status_code_reason_phrase(error_code));
-            return error(error_code, stl::move(msg));
-        }
-
-
-
-        [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code,
-                                                        auto&&                 data) const noexcept {
-            using data_type = stl::remove_cvref_t<decltype(data)>;
-            if constexpr (istl::StringViewifiable<data_type>) {
-                auto res                = response(istl::string_viewify(data));
-                res.headers.status_code = error_code;
-                return res;
-            } else if constexpr (requires {
-                                     { data.what() } -> istl::StringViewifiable;
-                                 }) {
-                auto res                = response(data.what());
-                res.headers.status_code = error_code;
-                return res;
-            } else {
-                auto res                = response();
-                res.headers.status_code = error_code;
-                return res;
+                               error_code,
+                               http::status_code_reason_phrase(error_code));
+                return error(error_code, stl::move(msg));
             }
-        }
 
-        // todo: add more error handling templates here.
-        // todo: let the user customize error templates with extensions
-        // todo: add all the features of returning a response each body type should have at least one method here
+
+
+            [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code,
+                                                            auto&&                 data) const noexcept {
+                using data_type = stl::remove_cvref_t<decltype(data)>;
+                if constexpr (istl::StringViewifiable<data_type>) {
+                    auto res                = create_response(istl::string_viewify(data));
+                    res.headers.status_code = error_code;
+                    return res;
+                } else if constexpr (requires {
+                                         { data.what() } -> istl::StringViewifiable;
+                                     }) {
+                    auto res                = create_response(data.what());
+                    res.headers.status_code = error_code;
+                    return res;
+                } else {
+                    auto res                = create_response();
+                    res.headers.status_code = error_code;
+                    return res;
+                }
+            }
+        };
+    } // namespace details
+
+    template <typename MergedRootExtensions>
+    struct context_descriptor;
+
+
+    template <HTTPRequest RequestType, typename EList, typename RootExtensions>
+    struct common_context_view : public details::common_context_methods<RequestType, RootExtensions>,
+                                 public extension_wrapper<EList> {
+        using request_type           = RequestType;
+        using traits_type            = typename request_type::traits_type;
+        using mother_extensions_type = EList;
+        using extension_wrapper_type = extension_wrapper<EList>;
+        using root_extensions        = RootExtensions;
+        using response_type          = simple_response<traits_type, root_extensions>;
+        using basic_context_type     = common_context_view;
+        using request_ref            = request_type&;
+        using request_cref           = request_type const&;
+
+      private:
+        using context_methods = details::common_context_methods<RequestType, RootExtensions>;
+
+      public:
+        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        request_ref request;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
+        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+
+        constexpr common_context_view(request_ref inp_req) noexcept
+          : context_methods{inp_req},
+            request{inp_req} {}
+
+        template <Context CtxT>
+            requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
+        constexpr common_context_view(CtxT const& ctx) noexcept : common_context_view{ctx.request} {}
+
+        constexpr common_context_view(common_context_view&& ctx) noexcept        = default;
+        constexpr common_context_view(common_context_view const& ctx) noexcept   = default;
+        constexpr common_context_view& operator=(common_context_view const&)     = default;
+        constexpr common_context_view& operator=(common_context_view&&) noexcept = default;
+        constexpr ~common_context_view()                                         = default;
     };
 
     template <typename EList>
-    struct final_context : public EList {
+    struct static_context_view : public EList {
         using base_type              = EList;
         using traits_type            = typename base_type::traits_type;
         using root_extensions        = typename base_type::root_extensions;
@@ -166,24 +207,17 @@ namespace webpp::http {
 
 
 
-        constexpr final_context(request_type& inp_req) : final_context_parent{inp_req} {}
+        constexpr static_context_view(request_type& inp_req) : final_context_parent{inp_req} {}
 
 
         template <Context CtxT>
-        constexpr final_context(CtxT const& ctx) noexcept : EList{ctx} {}
+        constexpr static_context_view(CtxT const& ctx) noexcept : EList{ctx} {}
 
-        constexpr final_context(final_context const&) noexcept       = default;
-        constexpr final_context(final_context&&) noexcept            = default;
-        constexpr final_context& operator=(final_context const&)     = default;
-        constexpr final_context& operator=(final_context&&) noexcept = default;
-
-        // final_context() = delete;
-        //
-        // template <EnabledTraits ET>
-        // requires(
-        //   !stl::same_as<ET, final_context> // forward-referencing first arg will confuse move and copy
-        // )
-        // constexpr final_context(ET&& et_obj) noexcept : final_context_parent(et_obj) {}
+        constexpr static_context_view(static_context_view const&) noexcept       = default;
+        constexpr static_context_view(static_context_view&&) noexcept            = default;
+        constexpr static_context_view& operator=(static_context_view const&)     = default;
+        constexpr static_context_view& operator=(static_context_view&&) noexcept = default;
+        constexpr ~static_context_view()                                         = default;
 
         /**
          * Clone this context and append the new extensions along the way.
@@ -215,11 +249,11 @@ namespace webpp::http {
                   typename TraitsType,
                   typename EList, // extension_pack
                   typename ReqType>
-        using mid_level_extensie_type = common_context<ReqType, EList, MergedRootExtensions>;
+        using mid_level_extensie_type = common_context_view<ReqType, EList, MergedRootExtensions>;
 
 
         template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
-        using final_extensie_type = final_context<EList>;
+        using final_extensie_type = static_context_view<EList>;
     };
 
 
@@ -231,23 +265,50 @@ namespace webpp::http {
                                                             ReqType>;
 
 
-
+    /**
+     * The standard and dynamic context which will own its data
+     */
     template <Traits TraitsType = default_dynamic_traits>
-    struct basic_context : public simple_context<basic_request<TraitsType>> {
+    struct basic_context : details::common_context_methods<basic_request<TraitsType>, empty_extension_pack> {
         using traits_type         = TraitsType;
-        using static_context_type = simple_context<basic_request<traits_type>>;
         using request_type        = basic_request<traits_type>;
+        using static_context_type = simple_context<request_type>;
         using response_type       = basic_response<traits_type>;
         using string_type         = traits::general_string<traits_type>;
         using path_type           = uri::basic_path<string_type>;
 
-        using simple_context<request_type>::final_context;
-
-
+        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        request_type  request;
         response_type response;
+        // NOLINTEND(misc-non-private-member-variables-in-classes)
+        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+
 
       private:
+        using context_methods =
+          details::common_context_methods<basic_request<TraitsType>, empty_extension_pack>;
+
         path_type current_path;
+
+      public:
+        constexpr basic_context(request_type& req) : context_methods{req} {}
+
+        template <Context CtxT>
+        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
+
+        constexpr basic_context(basic_context&& ctx) noexcept        = default;
+        constexpr basic_context(basic_context const& ctx) noexcept   = default;
+        constexpr basic_context& operator=(basic_context const&)     = default;
+        constexpr basic_context& operator=(basic_context&&) noexcept = default;
+        constexpr ~basic_context()                                   = default;
+
+        /**
+         * Clone this context and append the new extensions along the way.
+         */
+        [[nodiscard]] constexpr auto clone() const noexcept {
+            return basic_context{*this};
+        }
     };
 
     using context = basic_context<>;

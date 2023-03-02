@@ -89,11 +89,9 @@ namespace webpp::http {
                 } else {
                     return handle_primary_results(stl::move(res2), stl::forward<CtxT>(ctx), req);
                 }
-            } else if constexpr (requires { ctx.response(stl::forward<ResT>(res)); }) {
-                return ctx.response(stl::forward<ResT>(res));
+            } else if constexpr (requires { ctx.create_response(stl::forward<ResT>(res)); }) {
+                return ctx.create_response(stl::forward<ResT>(res));
             } else {
-                // todo: consider "response extension" injection in order to get the right response type
-
                 static_assert_false(result_type, "We don't know how to handle your output.");
             }
         }
