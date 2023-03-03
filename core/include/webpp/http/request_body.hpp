@@ -92,6 +92,7 @@ namespace webpp::http {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T>
+        // requires(HTTPDeserializableBody<T, request_body>)
         [[nodiscard]] constexpr T as() {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {
@@ -114,7 +115,7 @@ namespace webpp::http {
 
 
         template <typename T>
-        requires(HTTPDeserializableBody<T, request_body>)
+        // requires(HTTPDeserializableBody<T, request_body>)
         [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {

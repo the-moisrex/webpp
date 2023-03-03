@@ -80,7 +80,7 @@ namespace webpp::http {
         }
 
         template <typename T>
-            requires(HTTPDeserializableBody<T, common_http_request>)
+        // requires(HTTPDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {

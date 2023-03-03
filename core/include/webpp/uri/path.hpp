@@ -46,12 +46,14 @@ namespace webpp::uri {
             requires(stl::is_constructible_v<container_type, T...>)
         constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
-        template <typename T>
-            requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> && istl::StringViewifiable<T>)
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        template <istl::StringViewifiable T>
+            requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path>)
         constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr bool parse(istl::StringifiableOf<string_view_type> auto&& str) {
             auto path = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
