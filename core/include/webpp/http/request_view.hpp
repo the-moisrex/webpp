@@ -10,6 +10,8 @@
 #include "request_headers.hpp"
 #include "version.hpp"
 
+#include <variant>
+
 
 namespace webpp::http {
 
@@ -17,8 +19,6 @@ namespace webpp::http {
     struct request_view;
 
     namespace details {
-
-
 
         /**
          * This is a dynamic server which holds a reference to the servers
