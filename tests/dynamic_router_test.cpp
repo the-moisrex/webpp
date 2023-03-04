@@ -7,7 +7,11 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
-TEST(DynamicRouter, Init) {
+TEST(DynamicRouter, RouteRegistration) {
     dynamic_router router;
-    router.set_route();
+    router += router / "page" >> [](context ctx) -> response {
+        auto res = ctx.create_response();
+        res      = "Hello world";
+        return res;
+    };
 }

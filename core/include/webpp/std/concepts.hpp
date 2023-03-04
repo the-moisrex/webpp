@@ -202,6 +202,11 @@ namespace webpp::istl {
     template <typename T, typename... E>
     concept part_of = (stl::same_as<T, E> || ...);
 
+
+    template <typename T, typename U>
+    concept same_as_cvref = stl::same_as<stl::remove_cvref_t<T>, stl::remove_cvref_t<U>>;
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STD_CONCEPTS_H

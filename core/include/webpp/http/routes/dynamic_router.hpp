@@ -10,80 +10,92 @@
 #include "../../traits/enable_traits.hpp"
 #include "../../utils/functional.hpp"
 #include "../http_concepts.hpp"
+#include "../request.hpp"
 #include "../request_view.hpp"
+#include "../response.hpp"
 #include "../status_code.hpp"
+#include "./context.hpp"
 #include "route.hpp"
 
 #include <any>
 
 namespace webpp::http {
 
-    /**
-     * Routing Tables:
-     *   - Pre-Routing
-     *   - Post-Routing
-     *   - Mangle (Middleware)
-     *   - Fallback
-     */
-    template <typename RouteType, Traits TraitsType>
-    struct routing_table : istl::vector<RouteType, TraitsType> {
-        using traits_type = TraitsType;
-        using vector_type = istl::vector<RouteType, TraitsType>;
-        using route_type  = RouteType;
-    };
+    namespace details {
+
+        template <typename Callable, typename ContextType>
+        struct route_input_args {
+            using callable_type = stl::remove_cvref_t<Callable>;
+            using context_type  = ContextType;
+            using request_type  = typename context_type::request_type;
+            using response_type = typename context_type::response_type;
+
+            static constexpr bool context_ref = stl::is_invocable_v<callable_type, context_type&>;
+            static constexpr bool request_ref = stl::is_invocable_v<callable_type, request_type&>;
+            static constexpr bool ctx_req_ref =
+              stl::is_invocable_v<callable_type, context_type&, request_type&>;
+            static constexpr bool req_ctx_ref =
+              stl::is_invocable_v<callable_type, request_type&, context_type&>;
+
+
+            using type = void;
+        };
+
+
+
+        template <typename LeftCallable, typename RightCallable>
+        struct and_callables {
+            using left_type  = stl::remove_cvref_t<LeftCallable>;
+            using right_type = stl::remove_cvref_t<RightCallable>;
+
+            left_type  lhs;
+            right_type rhs;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {}
+        };
+    } // namespace details
+
 
     template <Traits TraitsType>
-    struct prerouting_table
-      : routing_table<istl::function<void(), traits::general_allocator<TraitsType, stl::byte>>, TraitsType> {
-      private:
-        using super =
-          routing_table<istl::function<void(), traits::general_allocator<TraitsType, stl::byte>>, TraitsType>;
-
-      public:
-        using traits_type = typename super::triats_type;
-        using route_type  = typename super::route_type;
-    };
-
-
-    template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
-    struct basic_dynamic_router;
-
-
-    template <ExtensionList ExtensionListType, EnabledTraits TraitsEnabler>
     struct dynamic_route {
-        using etraits           = TraitsEnabler;
-        using traits_type       = typename etraits::traits_type;
-        using string_type       = traits::general_string<traits_type>;
-        using non_owner_etraits = typename etraits::non_owner_type;
-        using route_allocator   = traits::general_allocator<traits_type, stl::byte>;
-        using router_type       = basic_dynamic_router<ExtensionListType, TraitsEnabler>;
-        using router_ref        = stl::add_lvalue_reference_t<router_type>;
-        using route_type        = istl::function<void(), route_allocator>;
-
-        enum operator_type { none, and_op, or_op, xor_op };
+        using traits_type     = TraitsType;
+        using string_type     = traits::general_string<traits_type>;
+        using route_allocator = traits::general_allocator<traits_type, stl::byte>;
+        using context_type    = basic_context<traits_type>;
+        using route_type      = istl::function<void(context_type&), route_allocator>;
 
       private:
-        route_type    route;
-        operator_type op = none;
+        route_type route;
 
-        template <typename R>
-        constexpr dynamic_route(router_ref inp_router, R&& inp_route) noexcept
+        template <typename R, EnabledTraits ET>
+        constexpr dynamic_route(ET&& inp_router, R&& inp_route) noexcept
           : route{stl::allocator_arg,
-                  alloc::general_alloc_for<route_type>(inp_router.get_traits().alloc_pack),
+                  alloc::general_alloc_for<route_type>(inp_router),
                   stl::forward<R>(inp_route)} {}
 
       public:
-        constexpr dynamic_route(router_ref inp_router) noexcept
-          : route{alloc::general_alloc_for<route_type>(inp_router.get_traits().alloc_pack)} {}
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        template <EnabledTraits ET>
+            requires(!istl::same_as_cvref<ET, dynamic_route>)
+        constexpr dynamic_route(ET&& inp_router) noexcept
+          : route{alloc::general_alloc_for<route_type>(inp_router)} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
-
+        template <typename CallableType>
+        constexpr dynamic_route operator/(CallableType&& callable) {
+            dynamic_route new_route;
+            new_route.route = [*this, callable](context_type& ctx) constexpr {
+                // todo: evaluate the path
+                ctx.response = call_route(stl::move(route), ctx, ctx.request);
+                ctx.response = call_route(stl::forward<CallableType>(callable), ctx, ctx.request);
+                return ctx.response;
+            };
+            return new_route;
+        }
 
         template <Context CtxT, HTTPRequest ReqT>
         constexpr auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
-            switch (op) {
-                case none: break;
-                case and_op: break;
-            }
             return http::call_route(route, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
         }
     };
@@ -96,11 +108,11 @@ namespace webpp::http {
      */
     template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router : TraitsEnabler {
-        using extension_list    = RootExtensions;
+        using root_extensions   = RootExtensions;
         using etraits           = TraitsEnabler;
         using traits_type       = typename etraits::traits_type;
         using non_owner_etraits = typename etraits::non_owner_type;
-        using route_type        = dynamic_route<extension_list, etraits>;
+        using route_type        = dynamic_route<traits_type>;
         using vector_allocator  = traits::general_allocator<traits_type, route_type>;
         using map_allocator =
           traits::general_allocator<traits_type, stl::pair<status_code const, route_type>>;
@@ -108,8 +120,9 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
         using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
         using routes_type      = stl::vector<route_type, vector_allocator>;
-        using context_type     = simple_context<request_view>;
-        using response_type    = simple_response<traits_type, extension_list>;
+        using response_type    = basic_response<traits_type>;
+        using context_type     = basic_context<traits_type>;
+        using request_type     = basic_request<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -151,8 +164,7 @@ namespace webpp::http {
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
         template <typename ET>
-            requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
-                     !stl::same_as<stl::remove_cvref_t<ET>, basic_dynamic_router>)
+            requires(EnabledTraits<stl::remove_cvref_t<ET>> && !istl::same_as_cvref<ET, basic_dynamic_router>)
         constexpr basic_dynamic_router(ET&& et)
           : etraits{stl::forward<ET>(et)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
@@ -264,27 +276,6 @@ namespace webpp::http {
             return *this;
         }
 
-        template <typename C>
-        constexpr basic_dynamic_router& register_subroutes(C&& callable) {
-            if constexpr (stl::is_invocable_v<C, subrouter_type&>) {
-                auto router = subrouter();
-                callable(router);
-                apply_subrouter(router);
-            } else if constexpr (stl::is_invocable_r_v<subrouter_type, C>) {
-                apply_subrouter(callable());
-            } else {
-                static_assert_false(C, "Unknown type is specified for registering subroutes.");
-            }
-            return *this;
-        }
-
-        /**
-         * Get an empty sub-router
-         */
-        [[nodiscard]] constexpr subrouter_type subrouter() const noexcept {
-            return {};
-        }
-
 
         // Append a migration
         template <typename C>
@@ -301,14 +292,10 @@ namespace webpp::http {
     };
 
 
-    using dynamic_response = basic_dynamic_response<default_traits>;
-    using dynamic_router   = basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_traits>>;
-    using dynamic_context  = basic_dynamic_context<default_traits>;
+    using dynamic_router = basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_traits>>;
 
 
     namespace pmr {
-        using dynamic_response = webpp::http::basic_dynamic_response<std_pmr_traits>;
-        using dynamic_context  = webpp::http::basic_dynamic_context<std_pmr_traits>;
         using dynamic_router =
           webpp::http::basic_dynamic_router<empty_extension_pack, enable_owner_traits<std_pmr_traits>>;
     } // namespace pmr
