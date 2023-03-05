@@ -520,8 +520,8 @@ namespace webpp::http {
 
         template <typename T>
         constexpr body_writer& add(T&& obj) {
-            if constexpr (requires { serialize_body_writer(stl::forward<T>(obj), *this); }) {
-                serialize_body_writer(stl::forward(obj), *this);
+            if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
+                serialize_response_body(stl::forward(obj), *this);
             } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
                 serialize_body(stl::forward<T>(obj), *this);
             } else {

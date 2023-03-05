@@ -227,7 +227,7 @@ TEST(TypeTraits, OneOfTest) {
 }
 
 
-TEST(TypeTraits, RotateInvocable) {
+TEST(TypeTraits, InvocableInOrder) {
     using std::function;
     using webpp::istl::invocable_inorder_v;
     struct one {};

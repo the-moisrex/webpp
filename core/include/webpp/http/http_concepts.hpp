@@ -321,12 +321,25 @@ namespace webpp::http {
                                                     { deserialize_body<T>(obj) } -> stl::same_as<T>;
                                                 });
                                           };
-    }
+
+        template <typename T, typename BodyType>
+        concept SerializablePrimitive =
+          requires(BodyType body, T obj) {
+              requires(
+                requires { serialize_request_body(obj, body); } ||
+                requires { serialize_response_body(obj, body); } || requires { serialize_body(obj, body); });
+          };
+    } // namespace details
 
     template <typename T, typename BodyType>
     concept HTTPDeserializableBody =
       details::DeserializablePrimitive<T, stl::remove_cvref_t<BodyType>> ||
       details::DeserializablePrimitive<stl::remove_cvref_t<T>, stl::remove_cvref_t<BodyType>>;
+
+    template <typename T, typename BodyType>
+    concept HTTPSerializableBody =
+      details::SerializablePrimitive<T, stl::remove_cvref_t<BodyType>> ||
+      details::SerializablePrimitive<stl::remove_cvref_t<T>, stl::remove_cvref_t<BodyType>>;
 
 
     ////////////////////////////// Request //////////////////////////////

@@ -25,18 +25,51 @@ namespace webpp::http {
 
         template <typename Callable, typename ContextType>
         struct route_input_args {
-            using callable_type = stl::remove_cvref_t<Callable>;
-            using context_type  = ContextType;
-            using request_type  = typename context_type::request_type;
-            using response_type = typename context_type::response_type;
+            using callable_type      = stl::remove_cvref_t<Callable>;
+            using context_type       = ContextType;
+            using request_type       = typename context_type::request_type;
+            using response_type      = typename context_type::response_type;
+            using response_body_type = typename response_type::body_type;
+            using invocable_inorder_type =
+              istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
+            using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
-            constexpr auto operator()(Callable&& callable, context_type& ctx) {
-                using invocable_inorder_type =
-                  istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
-                if constexpr (invocable_inorder_type::value) {
-                    return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
+            static_assert(invocable_inorder_type::value, "We're not able to call your route.");
+
+            static constexpr auto call(Callable&&    callable,
+                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+                return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
+            }
+
+            static constexpr bool is_positive(return_type const& ret) noexcept {
+                if constexpr (stl::same_as<return_type, bool>) {
+                    return ret;
+                } else if constexpr (istl::part_of<return_type, istl::nothing_type>) {
+                    return false;
+                } else if constexpr (stl::is_void_v<return_type> || HTTPResponse<return_type>) {
+                    return true;
                 } else {
-                    static_assert_false(Callable, "We're not able to call your route.");
+                    return false;
+                }
+            }
+
+            static constexpr void set_response(return_type&& ret, context_type& ctx) {
+                if constexpr (stl::is_void_v<return_type>) {
+                    // nothing to do
+                } else if constexpr (stl::same_as<return_type, bool>) {
+                    // todo
+                } else if constexpr (HTTPResponse<return_type> || HTTPResponseBody<return_type>) {
+                    ctx.response = stl::move(ret);
+                } else if constexpr (istl::Optional<return_type>) {
+                    if (ret) {
+                        set_response(stl::move(*ret), ctx);
+                    }
+                } else if constexpr (stl::same_as<return_type, http::status_code>) {
+                    ctx.response = ret;
+                } else if constexpr (stl::integral<return_type>) {
+                    ctx.response = static_cast<http::status_code>(ret);
+                } else if constexpr (HTTPSerializableBody<return_type, response_body_type>) {
+                    ctx.response = stl::move(ret);
                 }
             }
         };
@@ -56,6 +89,14 @@ namespace webpp::http {
                 using context_type     = basic_context<TraitsType>;
                 using left_input_args  = route_input_args<left_type, context_type>;
                 using right_input_args = route_input_args<right_type, context_type>;
+
+                auto left_res = left_input_args::call(lhs, ctx);
+                if (!left_input_args::is_positive(left_res)) {
+                    left_input_args::set_response(stl::move(left_res), ctx);
+                    return;
+                }
+                auto right_res = right_input_args::call(rhs, ctx);
+                right_input_args::set_response(stl::move(right_res), ctx);
             }
         };
     } // namespace details
