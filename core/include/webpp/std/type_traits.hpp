@@ -1080,12 +1080,14 @@ namespace webpp::istl {
     template <typename Callable, typename... Args>
     struct invocable_inorder : stl::false_type {
         static constexpr bool is_nothrow = false;
+        using result                     = void;
     };
 
     // valid args
     template <typename Callable, typename... Args>
         requires(stl::is_invocable_v<Callable, Args...>)
     struct invocable_inorder<Callable, Args...> : stl::true_type {
+        using result                               = stl::invoke_result_t<Callable, Args...>;
         static constexpr bool           is_nothrow = stl::is_nothrow_invocable_v<Callable, Args...>;
         static constexpr decltype(auto) call(Callable&& callable, Args&&... args) noexcept(is_nothrow) {
             return stl::forward<Callable>(callable)(stl::forward<Args>(args)...);
