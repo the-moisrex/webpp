@@ -30,15 +30,15 @@ namespace webpp::http {
             using request_type  = typename context_type::request_type;
             using response_type = typename context_type::response_type;
 
-            static constexpr bool context_ref = stl::is_invocable_v<callable_type, context_type&>;
-            static constexpr bool request_ref = stl::is_invocable_v<callable_type, request_type&>;
-            static constexpr bool ctx_req_ref =
-              stl::is_invocable_v<callable_type, context_type&, request_type&>;
-            static constexpr bool req_ctx_ref =
-              stl::is_invocable_v<callable_type, request_type&, context_type&>;
-
-
-            using type = void;
+            constexpr auto operator()(Callable&& callable, context_type& ctx) {
+                using invocable_inorder_type =
+                  istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
+                if constexpr (invocable_inorder_type::value) {
+                    return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
+                } else {
+                    static_assert_false(Callable, "We're not able to call your route.");
+                }
+            }
         };
 
 
@@ -52,7 +52,11 @@ namespace webpp::http {
             right_type rhs;
 
             template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {}
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type     = basic_context<TraitsType>;
+                using left_input_args  = route_input_args<left_type, context_type>;
+                using right_input_args = route_input_args<right_type, context_type>;
+            }
         };
     } // namespace details
 

@@ -110,7 +110,7 @@ namespace webpp::istl {
     template <Tuple TupleT, typename... T>
         requires((tuple_contains<TupleT, stl::remove_cvref_t<T>>::value &&
                   ...)) // check if the types are okay
-    [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) noexcept {
+    [[nodiscard]] static constexpr TupleT make_tuple_no_order(T&&... args) {
 
         // this uses the TupleT's tuple-like type; std::tuple<T...>;
         using no_order_tuple = typename rebind_parameters<TupleT, stl::remove_cvref_t<T>...>::type;
@@ -120,13 +120,12 @@ namespace webpp::istl {
             return TupleT{stl::forward<T>(args)...};
         } else {
             // re-order, and default-construct those that don't exist in the args
-            return (
-              []<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr noexcept {
-                  no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
-                  // It's a free function and not a lambda because C++ is stupid and doesn't
-                  // understand that "ints" in the lambda template is a parameter pack
-                  return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
-              })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
+            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr {
+                no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
+                // It's a free function and not a lambda because C++ is stupid and doesn't
+                // understand that "ints" in the lambda template is a parameter pack
+                return TupleT{details::tuple_get_value<TupleT, no_order_tuple, ints>(bad_tuple)...};
+            })(stl::make_index_sequence<stl::tuple_size_v<TupleT>>{}, stl::forward<T>(args)...);
         }
     }
 

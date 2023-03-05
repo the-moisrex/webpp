@@ -779,11 +779,11 @@ namespace webpp::istl {
             template <typename... L>
             using append = fake_tup<FT..., L...>;
 
-            template <template <typename...> typename Tt, typename... Additionals>
-            using replace_template = Tt<FT..., Additionals...>;
+            template <template <typename...> typename Tt, typename... Additional>
+            using replace_template = Tt<FT..., Additional...>;
 
-            template <template <typename...> typename Tt, typename... Additionals>
-            using replace_template_prepend = Tt<Additionals..., FT...>;
+            template <template <typename...> typename Tt, typename... Additional>
+            using replace_template_prepend = Tt<Additional..., FT...>;
 
             static constexpr stl::size_t size = sizeof...(FT);
         };
@@ -1070,6 +1070,83 @@ namespace webpp::istl {
     template <typename T>
     static constexpr bool is_complete_v = is_complete<T>::value;
 
+
+
+    /**
+     * Call a callable with the specified args, no matter in which order the arguments are specified.
+     * @tparam Callable
+     * @tparam Args
+     */
+    template <typename Callable, typename... Args>
+    struct invocable_inorder : stl::false_type {
+        static constexpr bool is_nothrow = false;
+    };
+
+    // valid args
+    template <typename Callable, typename... Args>
+        requires(stl::is_invocable_v<Callable, Args...>)
+    struct invocable_inorder<Callable, Args...> : stl::true_type {
+        static constexpr bool           is_nothrow = stl::is_nothrow_invocable_v<Callable, Args...>;
+        static constexpr decltype(auto) call(Callable&& callable, Args&&... args) noexcept(is_nothrow) {
+            return stl::forward<Callable>(callable)(stl::forward<Args>(args)...);
+        }
+    };
+
+    // rotate args once
+    template <typename Callable, typename Arg1, typename... Args>
+        requires(invocable_inorder<Callable, Args..., Arg1>::value &&
+                 !invocable_inorder<Callable, Args...>::value)
+    struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args..., Arg1> {
+        using parent_type = invocable_inorder<Callable, Args..., Arg1>;
+
+        static constexpr decltype(auto)
+        call(Callable&& callable, Arg1&& arg1, Args&&... args) noexcept(parent_type::is_nothrow) {
+            return parent_type::call(stl::forward<Callable>(callable),
+                                     stl::forward<Args>(args)...,
+                                     stl::forward<Arg1>(arg1));
+        }
+    };
+
+    // switch first and second args
+    template <typename Callable, typename Arg1, typename Arg2, typename... Args>
+        requires(invocable_inorder<Callable, Arg2, Arg1, Args...>::value)
+    struct invocable_inorder<Callable, Arg1, Arg2, Args...>
+      : invocable_inorder<Callable, Arg2, Arg1, Args...> {
+        using parent_type = invocable_inorder<Callable, Arg2, Arg1, Args...>;
+
+        static constexpr decltype(auto) call(Callable&& callable,
+                                             Arg1&&     arg1,
+                                             Arg2&&     arg2,
+                                             Args&&... args) noexcept(parent_type::is_nothrow) {
+            return parent_type::call(stl::forward<Callable>(callable),
+                                     stl::forward<Arg2>(arg2),
+                                     stl::forward<Arg1>(arg1),
+                                     stl::forward<Args>(args)...);
+        }
+    };
+
+    // ignore the first argument
+    template <typename Callable, typename Arg1, typename... Args>
+        requires(invocable_inorder<Callable, Args...>::value)
+    struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args...> {
+        using parent_type = invocable_inorder<Callable, Args...>;
+
+        static constexpr decltype(auto)
+        call(Callable&& callable, Arg1&&, Args&&... args) noexcept(parent_type::is_nothrow) {
+            return parent_type::call(stl::forward<Callable>(callable), stl::forward<Args>(args)...);
+        }
+    };
+
+    template <typename Callable, typename... Args>
+    static constexpr bool invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
+
+    template <typename Callable, typename... Args>
+    static constexpr decltype(auto)
+    invoke_inorder(Callable&& callable,
+                   Args&&... args) noexcept(invocable_inorder<Callable, Args...>::is_nothrow) {
+        return invocable_inorder<Callable, Args...>::call(stl::forward<Callable>(callable),
+                                                          stl::forward<Args>(args)...);
+    }
 
 } // namespace webpp::istl
 
