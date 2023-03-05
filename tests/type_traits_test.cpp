@@ -8,6 +8,7 @@
 #include "common_pch.hpp"
 
 #include <cmath>
+#include <functional>
 #include <list>
 #include <map>
 #include <string>
@@ -18,6 +19,8 @@
 
 using namespace std;
 using namespace webpp::istl;
+
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 
 ///////////////////////////////////////////// replace_parameter /////////////////////////////////////////////
 
@@ -161,8 +164,10 @@ struct iterable_type {
     using vec_iter = typename vec::iterator;
     using iterator = ituple_iterator<vec_iter>;
 
+  private:
     vec data;
 
+  public:
     iterable_type() {
         data.push_back(Tup{1, 1.1});
         data.push_back(Tup{2, 1.2});
@@ -192,7 +197,7 @@ TEST(TypeTraits, ITupleIteratorTest) {
         static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
         static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
         EXPECT_EQ(int_val, i);
-        double zero = std::fabs(double_val - d);
+        double const zero = std::fabs(double_val - d);
         EXPECT_LE(zero, numeric_limits<double>::epsilon());
     }
 }
@@ -203,12 +208,12 @@ TEST(TypeTraits, ITupleIteratorTestWithTuple) {
     int    i = 0;
     double d = 1.0;
     for (auto [int_val, double_val] : vecs) {
-        d += 0.1;
+        d += 0.1; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
         ++i;
         static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
         static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
         EXPECT_EQ(int_val, i);
-        double zero = std::fabs(double_val - d);
+        double const zero = std::fabs(double_val - d);
         EXPECT_LE(zero, numeric_limits<double>::epsilon());
     }
 }
@@ -220,3 +225,40 @@ TEST(TypeTraits, OneOfTest) {
     EXPECT_FALSE(bool(one_of<float, short, unsigned, double, int>));
     EXPECT_TRUE(bool(one_of<float, short, unsigned, int, double, int>));
 }
+
+
+TEST(TypeTraits, RotateInvocable) {
+    using std::function;
+    using webpp::istl::invocable_inorder_v;
+    struct one {};
+    struct two {};
+    struct three {};
+    struct four {};
+
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void()>>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int)>, int>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int, double)>, int, double>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int, int)>, int, int, int>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(double, int)>, int, double, int>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, one)>, one, one, two>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, one)>, two, one, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, two)>, two, one, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, two, three)>, two, three, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(four, one, two, three)>, two, four, three, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(four, two, three, one)>, two, four, three, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, four, three, one)>, two, four, three, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, two, three, one)>, two, four, two, three, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<void(two, four, two, one), two, four, two, one>));
+    EXPECT_FALSE(bool(invocable_inorder_v<void(two, two, four), two, two, one>));
+
+    auto const ok = [](one, two, three) -> bool {
+        return true;
+    };
+    EXPECT_TRUE(invoke_inorder(ok, three{}, two{}, one{}));
+    EXPECT_TRUE(invoke_inorder(ok, one{}, two{}, three{}));
+    EXPECT_TRUE(invoke_inorder(ok, three{}, one{}, two{}));
+}
+
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
