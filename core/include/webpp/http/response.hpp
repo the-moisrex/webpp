@@ -143,6 +143,14 @@ namespace webpp::http {
                 }
             }
         }
+
+
+        /**
+         * Check if the response is empty or not
+         */
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return headers.empty() && body.empty();
+        }
     };
 
 
