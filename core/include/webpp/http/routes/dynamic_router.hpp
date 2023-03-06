@@ -114,32 +114,32 @@ namespace webpp::http {
         using string_type     = traits::general_string<traits_type>;
         using route_allocator = traits::general_allocator<traits_type, stl::byte>;
         using context_type    = basic_context<traits_type>;
-        using route_type      = istl::function<void(context_type&), route_allocator>;
+        using callable_type   = istl::function<void(context_type&), route_allocator>;
 
       private:
-        route_type route;
+        callable_type callable;
 
         template <typename R, EnabledTraits ET>
         constexpr dynamic_route(ET&& inp_router, R&& inp_route) noexcept
-          : route{stl::allocator_arg,
-                  alloc::general_alloc_for<route_type>(inp_router),
-                  stl::forward<R>(inp_route)} {}
+          : callable{stl::allocator_arg,
+                     alloc::general_alloc_for<callable_type>(inp_router),
+                     stl::forward<R>(inp_route)} {}
 
       public:
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::same_as_cvref<ET, dynamic_route>)
         constexpr dynamic_route(ET&& inp_router) noexcept
-          : route{alloc::general_alloc_for<route_type>(inp_router)} {}
+          : callable{alloc::general_alloc_for<callable_type>(inp_router)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename CallableType>
-        constexpr dynamic_route operator/(CallableType&& callable) {
+        constexpr dynamic_route operator/(CallableType&& new_callable) {
             dynamic_route new_route;
-            new_route.route = [*this, callable](context_type& ctx) constexpr {
+            new_route.callable = [*this, new_callable](context_type& ctx) constexpr {
                 // todo: evaluate the path
-                ctx.response = call_route(stl::move(route), ctx, ctx.request);
-                ctx.response = call_route(stl::forward<CallableType>(callable), ctx, ctx.request);
+                ctx.response = call_route(callable, ctx, ctx.request);
+                ctx.response = call_route(stl::forward<CallableType>(new_callable), ctx, ctx.request);
                 return ctx.response;
             };
             return new_route;
@@ -147,7 +147,7 @@ namespace webpp::http {
 
         template <Context CtxT, HTTPRequest ReqT>
         constexpr auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
-            return http::call_route(route, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
+            return http::call_route(callable, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
         }
     };
 
@@ -184,22 +184,7 @@ namespace webpp::http {
         // todo: implement a function_vector that'll require only one allocator not one for each
         routes_type                                                                          routes;
         stl::map<http::status_code, route_type, stl::less<http::status_code>, map_allocator> status_templates;
-        bool is_synced = false;
 
-
-
-        // this method handles the response that we got from the user
-        template <typename T>
-        [[nodiscard]] constexpr auto handle_response(T&& res) const noexcept {
-            if constexpr (stl::same_as<T, bool>) {
-                // True:   go to next route
-                // False:  don't go to next route, checkout the "fallback table"
-            } else if constexpr (stl::same_as<T, http::status_code>) {
-                // Check the "fallback table"
-            } else {
-                // 404 from "fallback table"
-            }
-        }
 
       public:
         // These are the callable types
@@ -222,18 +207,6 @@ namespace webpp::http {
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-
-        /**
-         * @brief By enabling it, call to routes are synced and it becomes thread-safe
-         * @details Attention: if you've enabled synced inside the server (in beast-server for example), or
-         * the protocol that you're using is inherently synced (CGI for example), then enabling this is
-         * essentially a useless thing and it'll just slow the process down (not significant enough for apps
-         * with low use)
-         */
-        constexpr basic_dynamic_router& synced(bool enable_synced = true) noexcept {
-            is_synced = enable_synced;
-            return *this;
-        }
 
         template <typename T>
         constexpr auto routify(T&& callable) noexcept {}
