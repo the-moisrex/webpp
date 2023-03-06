@@ -173,6 +173,18 @@ namespace webpp::http {
             set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
                 lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
         }
+
+
+        /**
+         * Check if the header is empty or not
+         */
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            if constexpr (requires { container_type::empty(); }) {
+                return container_type::empty();
+            } else {
+                return this->begin() == this->end();
+            }
+        }
     };
 
 } // namespace webpp::http

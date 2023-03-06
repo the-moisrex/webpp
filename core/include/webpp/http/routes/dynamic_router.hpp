@@ -54,15 +54,18 @@ namespace webpp::http {
             }
 
             static constexpr void set_response(return_type&& ret, context_type& ctx) {
-                if constexpr (stl::is_void_v<return_type>) {
-                    // nothing to do
-                } else if constexpr (stl::same_as<return_type, bool>) {
-                    // todo
+                if constexpr (stl::is_void_v<return_type> ||
+                              istl::part_of<return_type, bool, istl::nothing_type>) {
+                    // ignore the result
                 } else if constexpr (HTTPResponse<return_type> || HTTPResponseBody<return_type>) {
                     ctx.response = stl::move(ret);
                 } else if constexpr (istl::Optional<return_type>) {
                     if (ret) {
                         set_response(stl::move(*ret), ctx);
+                    }
+                } else if constexpr (stl::is_pointer_v<return_type>) {
+                    if (ret != nullptr) {
+                        set_response(*ret, ctx);
                     }
                 } else if constexpr (stl::same_as<return_type, http::status_code>) {
                     ctx.response = ret;
@@ -70,6 +73,9 @@ namespace webpp::http {
                     ctx.response = static_cast<http::status_code>(ret);
                 } else if constexpr (HTTPSerializableBody<return_type, response_body_type>) {
                     ctx.response = stl::move(ret);
+                } else {
+                    static_assert_false(return_type,
+                                        "We don't know what to do with your route's return type.");
                 }
             }
         };
@@ -208,11 +214,13 @@ namespace webpp::http {
           : etraits{},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename ET>
-            requires(EnabledTraits<stl::remove_cvref_t<ET>> && !istl::same_as_cvref<ET, basic_dynamic_router>)
+            requires(EnabledTraits<ET> && !istl::same_as_cvref<ET, basic_dynamic_router>)
         constexpr basic_dynamic_router(ET&& et)
           : etraits{stl::forward<ET>(et)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
 
         /**
@@ -329,10 +337,37 @@ namespace webpp::http {
         }
 
 
+        /**
+         * Calling this will get you a response.
+         * Don't call this operator for your sub-routers; this will guarantees a response and your
+         * parent router will stop processing its next routes because this router returned a 404 response.
+         */
         template <HTTPRequest ReqType>
-        constexpr response_type const& operator()(ReqType&& in_req) noexcept {
-            // todo
-            return res;
+            requires(!Context<ReqType>)
+        constexpr response_type operator()(ReqType&& in_req) {
+            context_type ctx{in_req};
+
+            // call the router with the specified context, fill the response
+            this->operator()<context_type>(ctx);
+
+            // if it didn't fill the response:
+            if (ctx.response.empty()) {
+                // fill the response with 404 error page
+                ctx.response = error(http::status_code::not_found);
+            }
+
+            return ctx.response;
+        }
+
+        /**
+         * Run the router with the specified context;
+         * Sets the context's response if necessary
+         */
+        template <Context CtxT>
+        constexpr void operator()(CtxT& ctx) {
+            for (auto const& route : routes) {
+                // todo
+            }
         }
     };
 
