@@ -24,7 +24,7 @@ namespace webpp::http {
     namespace details {
 
         template <typename Callable, typename ContextType>
-        struct route_input_args {
+        struct route_traits {
             using callable_type      = stl::remove_cvref_t<Callable>;
             using context_type       = ContextType;
             using request_type       = typename context_type::request_type;
@@ -41,6 +41,7 @@ namespace webpp::http {
                 return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
             }
 
+
             static constexpr bool is_positive(return_type const& ret) noexcept {
                 if constexpr (stl::same_as<return_type, bool>) {
                     return ret;
@@ -48,8 +49,29 @@ namespace webpp::http {
                     return false;
                 } else if constexpr (stl::is_void_v<return_type> || HTTPResponse<return_type>) {
                     return true;
+                } else if constexpr (stl::is_pointer_v<return_type>) {
+                    return ret != nullptr;
+                } else if constexpr (istl::Optional<return_type>) {
+                    return bool{ret};
                 } else {
                     return false;
+                }
+            }
+
+
+            static constexpr bool is_prerouting_positive(return_type const& ret) noexcept {
+                if constexpr (HTTPResponse<return_type>) {
+                    return false;
+                } else {
+                    return is_positive(ret);
+                }
+            }
+
+            static constexpr bool is_postrouting_positive(return_type const& ret) noexcept {
+                if constexpr (HTTPResponse<return_type>) {
+                    return true;
+                } else {
+                    return is_positive(ret);
                 }
             }
 
@@ -80,31 +102,147 @@ namespace webpp::http {
             }
         };
 
+        template <typename PreRoute, typename Callable>
+        struct pre_route {
+            PreRoute pre;
+            Callable callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using pre_traits      = route_traits<PreRoute, context_type>;
+                using callable_traits = route_traits<Callable, context_type>;
+
+                auto pre_res = pre_traits::call(pre, ctx);
+                if (pre_traits::is_prerouting_positive(pre_res)) {
+                    pre_traits::set_response(stl::move(pre_res), ctx);
+                    callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+                }
+            }
+        };
+
+
+        template <typename Callable, typename PostRoute>
+        struct post_route {
+            Callable  callable;
+            PostRoute post;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using callable_traits = route_traits<PostRoute, context_type>;
+                using post_traits     = route_traits<Callable, context_type>;
+
+                auto callable_res = callable_traits::call(callable, ctx);
+                if (callable_traits::is_postrouting_positive(callable_res)) {
+                    callable_traits::set_response(stl::move(callable_res), ctx);
+                    post_traits::set_response(post_traits::call(post, ctx), ctx);
+                }
+            }
+        };
+
+
+        template <typename Callable>
+        struct not_callable {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                auto res = ctraits::call(callable, ctx);
+                if (!ctraits::is_positive(res)) {
+                    ctraits::set_response(stl::move(res), ctx);
+                }
+            }
+        };
 
 
         template <typename LeftCallable, typename RightCallable>
         struct and_callables {
-            using left_type  = stl::remove_cvref_t<LeftCallable>;
-            using right_type = stl::remove_cvref_t<RightCallable>;
+            using left_type  = LeftCallable;
+            using right_type = RightCallable;
 
             left_type  lhs;
             right_type rhs;
 
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type     = basic_context<TraitsType>;
-                using left_input_args  = route_input_args<left_type, context_type>;
-                using right_input_args = route_input_args<right_type, context_type>;
+                using context_type = basic_context<TraitsType>;
+                using left_traits  = route_traits<left_type, context_type>;
+                using right_traits = route_traits<right_type, context_type>;
 
-                auto left_res = left_input_args::call(lhs, ctx);
-                if (!left_input_args::is_positive(left_res)) {
-                    left_input_args::set_response(stl::move(left_res), ctx);
+                auto left_res = left_traits::call(lhs, ctx);
+                if (!left_traits::is_positive(left_res)) {
+                    left_traits::set_response(stl::move(left_res), ctx);
                     return;
                 }
-                auto right_res = right_input_args::call(rhs, ctx);
-                right_input_args::set_response(stl::move(right_res), ctx);
+                auto right_res = right_traits::call(rhs, ctx);
+                right_traits::set_response(stl::move(right_res), ctx);
             }
         };
+
+
+        template <typename LeftCallable, typename RightCallable>
+        struct or_callables {
+            using left_type  = LeftCallable;
+            using right_type = RightCallable;
+
+            left_type  lhs;
+            right_type rhs;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using left_traits  = route_traits<left_type, context_type>;
+                using right_traits = route_traits<right_type, context_type>;
+
+                auto left_res = left_traits::call(lhs, ctx);
+                if (left_traits::is_positive(left_res)) {
+                    left_traits::set_response(stl::move(left_res), ctx);
+                    return;
+                }
+                auto right_res = right_traits::call(rhs, ctx);
+                right_traits::set_response(stl::move(right_res), ctx);
+            }
+        };
+
+        template <typename C>
+        struct route_optimizer {
+            using type = C;
+        };
+
+
+        // move pre-routing hooks to the left because they supposed to be called before everything
+        template <template <typename, typename> typename CallableTemplate,
+                  typename Left,
+                  typename Pre,
+                  typename Right>
+        struct route_optimizer<CallableTemplate<Left, pre_route<Pre, Right>>>
+          : route_optimizer<CallableTemplate<
+              pre_route<typename route_optimizer<Pre>::type, typename route_optimizer<Left>::type>,
+              typename route_optimizer<Right>::type>> {};
+
+        // move post-routing hooks to the right because they supposed to be called after everything
+        template <template <typename, typename> typename CallableTemplate,
+                  typename Left,
+                  typename Post,
+                  typename Right>
+        struct route_optimizer<CallableTemplate<post_route<Left, Post>, Right>>
+          : route_optimizer<CallableTemplate<
+              typename route_optimizer<Left>::type,
+              post_route<typename route_optimizer<Right>::type, typename route_optimizer<Post>::type>>> {};
+
+        // !!C == C
+        template <typename C>
+        struct route_optimizer<not_callable<not_callable<C>>> : route_optimizer<C> {};
+
+        // C || Positive == ?
+        // C && Negative == ?
+
     } // namespace details
 
 
