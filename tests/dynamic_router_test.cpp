@@ -9,9 +9,12 @@ using namespace std;
 
 TEST(DynamicRouter, RouteRegistration) {
     dynamic_router router;
-    router += router / "page" >> [](context ctx) -> response {
-        auto res = ctx.create_response();
-        res      = "Hello world";
-        return res;
+
+    auto const page = router / "page";
+    router += page / "about" >> [] {
+        return "About";
+    };
+    router += page / "index" >> [] {
+        return "Index";
     };
 }

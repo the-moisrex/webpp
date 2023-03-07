@@ -100,6 +100,13 @@ namespace webpp::http {
                                         "We don't know what to do with your route's return type.");
                 }
             }
+
+
+            static constexpr bool set_get_response(return_type&& ret, context_type& ctx) {
+                bool const res = is_positive(ret);
+                set_response(stl::move(ret), ctx);
+                return res;
+            }
         };
 
         template <typename PreRoute, typename Callable>
@@ -118,6 +125,8 @@ namespace webpp::http {
         struct or_callables;
         template <typename... Callables>
         struct forward_callables;
+        template <typename... CallableSegments>
+        struct segment_callables;
 
 
 
@@ -262,6 +271,31 @@ namespace webpp::http {
                     };
                 }
             }
+
+
+
+            template <typename CallableSegment>
+            [[nodiscard]] constexpr auto operator/(CallableSegment&& segment) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return operator>>(stl::forward<CallableSegment>(segment));
+                } else {
+                    return route_optimizer_t<segment_callables<Self, stl::remove_cvref_t<CallableSegment>>>{
+                      .segments{
+                        *static_cast<Self const*>(this),       // first segment
+                        stl::forward<CallableSegment>(segment) // second segment
+                      }};
+                }
+            }
+
+
+            template <istl::StringViewifiable SegT>
+            [[nodiscard]] constexpr auto operator/(SegT&& segment) const {
+                return operator/(
+                  [segment]<typename TraitsType>(basic_context<TraitsType>& ctx) constexpr noexcept -> bool {
+                      // todo: check path
+                      return true;
+                  });
+            }
         };
 
 
@@ -398,9 +432,11 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
 
                 stl::apply(
-                  [&ctx]<typename Callable>(Callable&& callable) constexpr {
-                      using callable_traits = route_traits<Callable, context_type>;
-                      callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+                  [&ctx]<typename... T>(T&&... callees) constexpr {
+                      (route_traits<T, context_type>::set_response(
+                         route_traits<T, context_type>::call(stl::forward<T>(callees), ctx),
+                         ctx),
+                       ...);
                   },
                   callables);
             }
@@ -417,6 +453,18 @@ namespace webpp::http {
 
                 callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
             }
+        };
+
+        template <>
+        struct forward_callables<void> : route_root<forward_callables<void>> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const {}
+        };
+
+        template <>
+        struct forward_callables<> : route_root<forward_callables<>> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const {}
         };
 
 
@@ -475,6 +523,53 @@ namespace webpp::http {
 
         template <typename RightCallable>
         struct or_callables<void, RightCallable> : forward_callables<RightCallable> {};
+
+
+        template <typename... CallableSegments>
+        struct segment_callables : route_root<segment_callables<CallableSegments...>> {
+            stl::tuple<CallableSegments...> segments;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+
+                stl::apply(
+                  [&ctx]<typename... T>(T&&... callables) constexpr {
+                      (route_traits<T, context_type>::set_get_response(
+                         route_traits<T, context_type>::call(stl::forward<T>(callables), ctx),
+                         ctx) &&
+                       ...);
+                  },
+                  segments);
+            }
+        };
+
+
+        template <>
+        struct segment_callables<void> : route_root<segment_callables<void>> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+        };
+
+        template <>
+        struct segment_callables<> : route_root<segment_callables<>> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+        };
+
+
+        template <typename CallableSegment>
+        struct segment_callables<CallableSegment> : route_root<segment_callables<CallableSegment>> {
+            CallableSegment segment;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type   = basic_context<TraitsType>;
+                using segment_traits = route_traits<CallableSegment, context_type>;
+
+                segment_traits::set_response(segment_traits::call(segment, ctx), ctx);
+            }
+        };
 
     } // namespace details
 
@@ -571,16 +666,13 @@ namespace webpp::http {
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <typename ET>
-            requires(EnabledTraits<ET> && !istl::same_as_cvref<ET, basic_dynamic_router>)
+        template <EnabledTraits ET>
+            requires(!istl::same_as_cvref<ET, basic_dynamic_router>)
         constexpr basic_dynamic_router(ET&& et)
           : etraits{stl::forward<ET>(et)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-
-        template <typename T>
-        constexpr auto routify(T&& callable) noexcept {}
 
         /**
          * @brief Register a member function and it's object; It's the same as using std::mem_fn.
