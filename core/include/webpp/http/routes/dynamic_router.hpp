@@ -160,6 +160,38 @@ namespace webpp::http {
             }
         };
 
+        template <typename Callable>
+        struct negative_callable {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr bool operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                return false;
+            }
+        };
+
+        template <typename Callable>
+        struct positive_callable {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr bool operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                return true;
+            }
+        };
+
 
         template <typename LeftCallable, typename RightCallable>
         struct and_callables {
@@ -239,6 +271,27 @@ namespace webpp::http {
         // !!C == C
         template <typename C>
         struct route_optimizer<not_callable<not_callable<C>>> : route_optimizer<C> {};
+
+        // C || !C == +C
+        template <typename C>
+        struct route_optimizer<or_callables<C, not_callable<C>>> : route_optimizer<positive_callable<C>> {};
+
+        // !C || C == +C
+        template <typename C>
+        struct route_optimizer<or_callables<not_callable<C>, C>> : route_optimizer<positive_callable<C>> {};
+
+        // C && C == C
+        template <typename C>
+        struct route_optimizer<and_callables<C, C>> : route_optimizer<C> {};
+
+        // C && !C == -C
+        template <typename C>
+        struct route_optimizer<and_callables<C, not_callable<C>>> : route_optimizer<negative_callable<C>> {};
+
+        // !C && C == -C
+        template <typename C>
+        struct route_optimizer<and_callables<not_callable<C>, C>> : route_optimizer<negative_callable<C>> {};
+
 
         // C || Positive == ?
         // C && Negative == ?
