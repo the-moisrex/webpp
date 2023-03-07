@@ -103,144 +103,24 @@ namespace webpp::http {
         };
 
         template <typename PreRoute, typename Callable>
-        struct pre_route {
-            PreRoute pre;
-            Callable callable;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type    = basic_context<TraitsType>;
-                using pre_traits      = route_traits<PreRoute, context_type>;
-                using callable_traits = route_traits<Callable, context_type>;
-
-                auto pre_res = pre_traits::call(pre, ctx);
-                if (pre_traits::is_prerouting_positive(pre_res)) {
-                    pre_traits::set_response(stl::move(pre_res), ctx);
-                    callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
-                }
-            }
-        };
-
-
+        struct pre_route;
         template <typename Callable, typename PostRoute>
-        struct post_route {
-            Callable  callable;
-            PostRoute post;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type    = basic_context<TraitsType>;
-                using callable_traits = route_traits<PostRoute, context_type>;
-                using post_traits     = route_traits<Callable, context_type>;
-
-                auto callable_res = callable_traits::call(callable, ctx);
-                if (callable_traits::is_postrouting_positive(callable_res)) {
-                    callable_traits::set_response(stl::move(callable_res), ctx);
-                    post_traits::set_response(post_traits::call(post, ctx), ctx);
-                }
-            }
-        };
-
-
+        struct post_route;
         template <typename Callable>
-        struct not_callable {
-            using callable_type = Callable;
-
-            callable_type callable;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                using ctraits      = route_traits<callable_type, context_type>;
-
-                auto res = ctraits::call(callable, ctx);
-                if (!ctraits::is_positive(res)) {
-                    ctraits::set_response(stl::move(res), ctx);
-                }
-            }
-        };
-
+        struct not_callable;
         template <typename Callable>
-        struct negative_callable {
-            using callable_type = Callable;
-
-            callable_type callable;
-
-            template <Traits TraitsType>
-            constexpr bool operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                using ctraits      = route_traits<callable_type, context_type>;
-
-                ctraits::set_response(ctraits::call(callable, ctx), ctx);
-                return false;
-            }
-        };
-
+        struct negative_callable;
         template <typename Callable>
-        struct positive_callable {
-            using callable_type = Callable;
-
-            callable_type callable;
-
-            template <Traits TraitsType>
-            constexpr bool operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                using ctraits      = route_traits<callable_type, context_type>;
-
-                ctraits::set_response(ctraits::call(callable, ctx), ctx);
-                return true;
-            }
-        };
-
-
+        struct positive_callable;
         template <typename LeftCallable, typename RightCallable>
-        struct and_callables {
-            using left_type  = LeftCallable;
-            using right_type = RightCallable;
-
-            left_type  lhs;
-            right_type rhs;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                using left_traits  = route_traits<left_type, context_type>;
-                using right_traits = route_traits<right_type, context_type>;
-
-                auto left_res = left_traits::call(lhs, ctx);
-                if (!left_traits::is_positive(left_res)) {
-                    left_traits::set_response(stl::move(left_res), ctx);
-                    return;
-                }
-                auto right_res = right_traits::call(rhs, ctx);
-                right_traits::set_response(stl::move(right_res), ctx);
-            }
-        };
-
-
+        struct and_callables;
         template <typename LeftCallable, typename RightCallable>
-        struct or_callables {
-            using left_type  = LeftCallable;
-            using right_type = RightCallable;
+        struct or_callables;
+        template <typename... Callables>
+        struct forward_callables;
 
-            left_type  lhs;
-            right_type rhs;
 
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                using left_traits  = route_traits<left_type, context_type>;
-                using right_traits = route_traits<right_type, context_type>;
 
-                auto left_res = left_traits::call(lhs, ctx);
-                if (left_traits::is_positive(left_res)) {
-                    left_traits::set_response(stl::move(left_res), ctx);
-                    return;
-                }
-                auto right_res = right_traits::call(rhs, ctx);
-                right_traits::set_response(stl::move(right_res), ctx);
-            }
-        };
 
         template <typename C>
         struct route_optimizer {
@@ -296,6 +176,306 @@ namespace webpp::http {
         // C || Positive == ?
         // C && Negative == ?
 
+
+        template <typename C>
+        using route_optimizer_t = typename route_optimizer<C>::type;
+
+
+
+
+
+        template <typename Self>
+        struct route_root {
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return route_optimizer_t<forward_callables<stl::remove_cvref_t<Callable>>>{
+                      .callable = *static_cast<Self const*>(this) // callable
+                    };
+                } else {
+                    return route_optimizer_t<forward_callables<Self, stl::remove_cvref_t<Callable>>>{
+                      .callables{
+                        *static_cast<Self const*>(this), // route 1
+                        stl::forward<Callable>(callable) // route 2
+                      }};
+                }
+            }
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return operator>>(stl::forward<Callable>(callable));
+                } else {
+                    return route_optimizer_t<and_callables<Self, stl::remove_cvref_t<Callable>>>{
+                      .lhs = *static_cast<Self const*>(this), // left
+                      .rhs = stl::forward<Callable>(callable) // right
+                    };
+                }
+            }
+
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return operator>>(stl::forward<Callable>(callable));
+                } else {
+                    return route_optimizer_t<or_callables<Self, stl::remove_cvref_t<Callable>>>{
+                      .lhs = *static_cast<Self const*>(this), // left
+                      .rhs = stl::forward<Callable>(callable) // right
+                    };
+                }
+            }
+
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator!() const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return *this;
+                } else {
+                    return route_optimizer_t<not_callable<Self>>{.callable = *static_cast<Self const*>(this)};
+                }
+            }
+
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return operator>>(stl::forward<Callable>(callable));
+                } else {
+                    return route_optimizer_t<post_route<Self, stl::remove_cvref_t<Callable>>>{
+                      .callable = *static_cast<Self const*>(this), // self
+                      .post     = stl::forward<Callable>(callable) // post routing callable
+                    };
+                }
+            }
+
+
+            template <typename Callable>
+            [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
+                if constexpr (stl::is_void_v<Self>) {
+                    return operator>>(stl::forward<Callable>(callable));
+                } else {
+                    return route_optimizer_t<pre_route<stl::remove_cvref_t<Callable>, Self>>{
+                      .pre      = stl::forward<Callable>(callable), // pre routing callable
+                      .callable = *static_cast<Self const*>(this)   // self
+                    };
+                }
+            }
+        };
+
+
+
+
+        template <typename PreRoute, typename Callable>
+        struct pre_route : route_root<pre_route<PreRoute, Callable>> {
+            PreRoute pre;
+            Callable callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using pre_traits      = route_traits<PreRoute, context_type>;
+                using callable_traits = route_traits<Callable, context_type>;
+
+                auto pre_res = pre_traits::call(pre, ctx);
+                if (pre_traits::is_prerouting_positive(pre_res)) {
+                    pre_traits::set_response(stl::move(pre_res), ctx);
+                    callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+                }
+            }
+        };
+
+        template <typename PreRoute>
+        struct pre_route<PreRoute, void> : route_root<pre_route<PreRoute, void>> {
+            PreRoute pre;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using pre_traits   = route_traits<PreRoute, context_type>;
+
+                pre_traits::set_response(pre_traits::call(pre, ctx), ctx);
+            }
+        };
+
+
+        template <typename Callable, typename PostRoute>
+        struct post_route : route_root<post_route<Callable, PostRoute>> {
+            Callable  callable;
+            PostRoute post;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using callable_traits = route_traits<Callable, context_type>;
+                using post_traits     = route_traits<PostRoute, context_type>;
+
+                auto callable_res = callable_traits::call(callable, ctx);
+                if (callable_traits::is_postrouting_positive(callable_res)) {
+                    callable_traits::set_response(stl::move(callable_res), ctx);
+                    post_traits::set_response(post_traits::call(post, ctx), ctx);
+                }
+            }
+        };
+
+        template <typename PostRoute>
+        struct post_route<void, PostRoute> : route_root<post_route<void, PostRoute>> {
+            PostRoute post;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using post_traits  = route_traits<PostRoute, context_type>;
+
+                post_traits::set_response(post_traits::call(post, ctx), ctx);
+            }
+        };
+
+
+        template <typename Callable>
+        struct not_callable : route_root<not_callable<Callable>> {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                auto res = ctraits::call(callable, ctx);
+                if (!ctraits::is_positive(res)) {
+                    ctraits::set_response(stl::move(res), ctx);
+                }
+            }
+        };
+
+        template <>
+        struct not_callable<void> : route_root<not_callable<void>> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const {}
+        };
+
+        template <typename Callable>
+        struct negative_callable : route_root<negative_callable<Callable>> {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr bool operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                return false;
+            }
+        };
+
+        template <typename Callable>
+        struct positive_callable : route_root<positive_callable<Callable>> {
+            using callable_type = Callable;
+
+            callable_type callable;
+
+            template <Traits TraitsType>
+            constexpr bool operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using ctraits      = route_traits<callable_type, context_type>;
+
+                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                return true;
+            }
+        };
+
+        template <typename... Callables>
+        struct forward_callables : route_root<forward_callables<Callables...>> {
+            stl::tuple<Callables...> callables;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+
+                stl::apply(
+                  [&ctx]<typename Callable>(Callable&& callable) constexpr {
+                      using callable_traits = route_traits<Callable, context_type>;
+                      callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+                  },
+                  callables);
+            }
+        };
+
+        template <typename Callable>
+        struct forward_callables<Callable> : route_root<forward_callables<Callable>> {
+            Callable callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using callable_traits = route_traits<Callable, context_type>;
+
+                callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+            }
+        };
+
+
+
+        template <typename LeftCallable, typename RightCallable>
+        struct and_callables : route_root<and_callables<LeftCallable, RightCallable>> {
+            using left_type  = LeftCallable;
+            using right_type = RightCallable;
+
+            left_type  lhs;
+            right_type rhs;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using left_traits  = route_traits<left_type, context_type>;
+                using right_traits = route_traits<right_type, context_type>;
+
+                auto left_res = left_traits::call(lhs, ctx);
+                if (!left_traits::is_positive(left_res)) {
+                    left_traits::set_response(stl::move(left_res), ctx);
+                    return;
+                }
+                auto right_res = right_traits::call(rhs, ctx);
+                right_traits::set_response(stl::move(right_res), ctx);
+            }
+        };
+
+        template <typename RightCallable>
+        struct and_callables<void, RightCallable> : forward_callables<RightCallable> {};
+
+
+        template <typename LeftCallable, typename RightCallable>
+        struct or_callables : route_root<or_callables<LeftCallable, RightCallable>> {
+            using left_type  = LeftCallable;
+            using right_type = RightCallable;
+
+            left_type  lhs;
+            right_type rhs;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+                using left_traits  = route_traits<left_type, context_type>;
+                using right_traits = route_traits<right_type, context_type>;
+
+                auto left_res = left_traits::call(lhs, ctx);
+                if (left_traits::is_positive(left_res)) {
+                    left_traits::set_response(stl::move(left_res), ctx);
+                    return;
+                }
+                auto right_res = right_traits::call(rhs, ctx);
+                right_traits::set_response(stl::move(right_res), ctx);
+            }
+        };
+
+        template <typename RightCallable>
+        struct or_callables<void, RightCallable> : forward_callables<RightCallable> {};
+
     } // namespace details
 
 
@@ -349,7 +529,7 @@ namespace webpp::http {
      * user friendly.
      */
     template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
-    struct basic_dynamic_router : TraitsEnabler {
+    struct basic_dynamic_router : TraitsEnabler, details::route_root<void> {
         using root_extensions   = RootExtensions;
         using etraits           = TraitsEnabler;
         using traits_type       = typename etraits::traits_type;
