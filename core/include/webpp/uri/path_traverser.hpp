@@ -78,8 +78,17 @@ namespace webpp::uri {
         /**
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
-        [[nodiscard]] constexpr bool check_segment(slug_type slug) noexcept {
+        [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
             if (iterator != path.end() && *iterator == slug) {
+                next();
+                return true;
+            }
+            return false;
+        }
+
+        template <istl::StringViewifiable StrV>
+        [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
+            if (iterator != path.end() && *iterator == istl::string_viewify(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }

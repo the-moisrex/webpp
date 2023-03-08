@@ -7,7 +7,7 @@
 #include "../../extensions/extension_wrapper.hpp"
 #include "../../memory/object.hpp"
 #include "../../traits/enable_traits.hpp"
-#include "../../uri/path.hpp"
+#include "../../uri/path_traverser.hpp"
 #include "../bodies/string.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
@@ -275,7 +275,8 @@ namespace webpp::http {
         using static_context_type = simple_context<request_type>;
         using response_type       = basic_response<traits_type>;
         using string_type         = traits::general_string<traits_type>;
-        using path_type           = uri::basic_path<string_type>;
+        using slug_type           = string_type;
+        using path_traverser_type = uri::path_traverser<slug_type>;
 
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -289,7 +290,7 @@ namespace webpp::http {
         using context_methods =
           details::common_context_methods<basic_request<TraitsType>, empty_extension_pack>;
 
-        path_type current_path;
+        path_traverser_type traverser;
 
       public:
         constexpr basic_context(request_type& req) : context_methods{req} {}
@@ -308,6 +309,11 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr auto clone() const noexcept {
             return basic_context{*this};
+        }
+
+        template <typename T>
+        [[nodiscard]] constexpr bool check_segment(T&& slug) const noexcept {
+            return traverser.check_segment(stl::forward<T>(slug));
         }
     };
 
