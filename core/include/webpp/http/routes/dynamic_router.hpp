@@ -32,15 +32,27 @@ namespace webpp::http {
               istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
             using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
-            static_assert(invocable_inorder_type::value, "We're not able to call your route.");
+            // static_assert(invocable_inorder_type::value, "We're not able to call your route.");
 
             static constexpr auto call(Callable&&    callable,
-                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow)
+                requires(invocable_inorder_type::value)
+            {
                 return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
             }
 
+            template <typename T>
+                requires(istl::same_as_cvref<T, Callable>)
+            static constexpr auto call(T&&           segment,
+                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow)
+                requires(istl::StringViewifiable<Callable>)
+            {
+                return ctx.check_segment(stl::forward<T>(segment));
+            }
 
-            static constexpr bool is_positive(return_type const& ret) noexcept {
+
+            template <typename R>
+            static constexpr bool is_positive(R&& ret) noexcept {
                 if constexpr (stl::same_as<return_type, bool>) {
                     return ret;
                 } else if constexpr (istl::part_of<return_type, istl::nothing_type>) {
@@ -57,7 +69,8 @@ namespace webpp::http {
             }
 
 
-            static constexpr bool is_prerouting_positive(return_type const& ret) noexcept {
+            template <typename R>
+            static constexpr bool is_prerouting_positive(R&& ret) noexcept {
                 if constexpr (HTTPResponse<return_type>) {
                     return false;
                 } else {
@@ -65,7 +78,8 @@ namespace webpp::http {
                 }
             }
 
-            static constexpr bool is_postrouting_positive(return_type const& ret) noexcept {
+            template <typename R>
+            static constexpr bool is_postrouting_positive(R&& ret) noexcept {
                 if constexpr (HTTPResponse<return_type>) {
                     return true;
                 } else {
@@ -73,37 +87,59 @@ namespace webpp::http {
                 }
             }
 
-            static constexpr void set_response(return_type&& ret, context_type& ctx) {
-                if constexpr (stl::is_void_v<return_type> ||
-                              istl::part_of<return_type, bool, istl::nothing_type>) {
+            template <typename R>
+            static constexpr void set_response(R&& ret, context_type& ctx) {
+                using ret_t = stl::remove_cvref_t<R>;
+                if constexpr (stl::is_void_v<ret_t> || istl::part_of<ret_t, bool, istl::nothing_type>) {
                     // ignore the result
-                } else if constexpr (HTTPResponse<return_type> || HTTPResponseBody<return_type>) {
-                    ctx.response = stl::move(ret);
-                } else if constexpr (istl::Optional<return_type>) {
+                } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t>) {
+                    ctx.response = stl::forward<R>(ret);
+                } else if constexpr (istl::Optional<ret_t>) {
                     if (ret) {
                         set_response(stl::move(*ret), ctx);
                     }
-                } else if constexpr (stl::is_pointer_v<return_type>) {
+                } else if constexpr (stl::is_pointer_v<ret_t>) {
                     if (ret != nullptr) {
                         set_response(*ret, ctx);
                     }
-                } else if constexpr (stl::same_as<return_type, http::status_code>) {
+                } else if constexpr (stl::same_as<ret_t, http::status_code>) {
                     ctx.response = ret;
-                } else if constexpr (stl::integral<return_type>) {
+                } else if constexpr (stl::integral<ret_t>) {
                     ctx.response = static_cast<http::status_code>(ret);
-                } else if constexpr (HTTPSerializableBody<return_type, response_body_type>) {
-                    ctx.response = stl::move(ret);
+                } else if constexpr (HTTPSerializableBody<ret_t, response_body_type>) {
+                    ctx.response = stl::forward<R>(ret);
                 } else {
-                    static_assert_false(return_type,
-                                        "We don't know what to do with your route's return type.");
+                    static_assert_false(ret_t, "We don't know what to do with your route's return type.");
                 }
             }
 
 
-            static constexpr bool set_get_response(return_type&& ret, context_type& ctx) {
+            template <typename R>
+            static constexpr bool set_get_response(R&& ret, context_type& ctx) {
                 bool const res = is_positive(ret);
-                set_response(stl::move(ret), ctx);
+                set_response(stl::forward<R>(ret), ctx);
                 return res;
+            }
+
+
+            static constexpr void
+            call_and_set(Callable&& segment, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+                if constexpr (stl::is_void_v<return_type>) {
+                    call(stl::forward<Callable>(segment), ctx);
+                } else {
+                    set_response(call(stl::forward<Callable>(segment), ctx), ctx);
+                }
+            }
+
+
+            static constexpr bool
+            call_set_get(Callable&& segment, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+                if constexpr (stl::is_void_v<return_type>) {
+                    call(stl::forward<Callable>(segment), ctx);
+                    return true;
+                } else {
+                    return set_get_response(call(stl::forward<Callable>(segment), ctx), ctx);
+                }
             }
         };
 
@@ -179,6 +215,10 @@ namespace webpp::http {
         template <typename C>
         struct route_optimizer<and_callables<not_callable<C>, C>> : route_optimizer<negative_callable<C>> {};
 
+        // remove first voids
+        template <typename... C>
+        struct route_optimizer<forward_callables<void, C...>> : route_optimizer<forward_callables<C...>> {};
+
 
         // C || Positive == ?
         // C && Negative == ?
@@ -197,7 +237,7 @@ namespace webpp::http {
             template <typename Callable>
             [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
                 if constexpr (stl::is_void_v<Self>) {
-                    return route_root<void>{};
+                    return forward_callables<stl::remove_cvref_t<Callable>>{stl::forward<Callable>(callable)};
                 } else {
                     return route_optimizer_t<forward_callables<Self, stl::remove_cvref_t<Callable>>>{
                       .callables{
@@ -271,25 +311,33 @@ namespace webpp::http {
 
 
             template <typename CallableSegment>
-            [[nodiscard]] constexpr auto operator/(CallableSegment&& segment) const {
+            [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
                 if constexpr (stl::is_void_v<Self>) {
-                    return operator>>(stl::forward<CallableSegment>(segment));
+                    return segment_callables<stl::remove_cvref_t<CallableSegment>>{
+                      .segment = stl::forward<CallableSegment>(inp_segment)};
                 } else {
                     return route_optimizer_t<segment_callables<Self, stl::remove_cvref_t<CallableSegment>>>{
                       .segments{
-                        *static_cast<Self const*>(this),       // first segment
-                        stl::forward<CallableSegment>(segment) // second segment
+                        *static_cast<Self const*>(this),           // first segment
+                        stl::forward<CallableSegment>(inp_segment) // second segment
                       }};
                 }
             }
 
 
-            template <istl::StringViewifiable SegT>
-            [[nodiscard]] constexpr auto operator/(SegT&& segment) const {
-                return operator/(
-                  [segment]<typename TraitsType>(basic_context<TraitsType>& ctx) constexpr noexcept -> bool {
-                      return ctx.check_segment(segment);
-                  });
+            template <typename SegT>
+                requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
+            [[nodiscard]] constexpr auto operator/(SegT&& inp_segment) const {
+                auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
+                using seg_t      = stl::remove_cvref_t<decltype(seg_v)>;
+                if constexpr (stl::is_void_v<Self>) {
+                    return segment_callables<seg_t>{.segment = seg_v};
+                } else {
+                    return route_optimizer_t<segment_callables<Self, seg_t>>{.segments{
+                      *static_cast<Self const*>(this), // first segment
+                      seg_v                            // second segment
+                    }};
+                }
             }
         };
 
@@ -306,10 +354,7 @@ namespace webpp::http {
 
                 stl::apply(
                   [&ctx]<typename... T>(T&&... callees) constexpr {
-                      (route_traits<T, context_type>::set_response(
-                         route_traits<T, context_type>::call(stl::forward<T>(callees), ctx),
-                         ctx),
-                       ...);
+                      (route_traits<T, context_type>::call_and_set(stl::forward<T>(callees), ctx), ...);
                   },
                   callables);
             }
@@ -368,7 +413,7 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
                 using pre_traits   = route_traits<PreRoute, context_type>;
 
-                pre_traits::set_response(pre_traits::call(pre, ctx), ctx);
+                pre_traits::call_and_set(pre, ctx);
             }
         };
 
@@ -387,7 +432,7 @@ namespace webpp::http {
                 auto callable_res = callable_traits::call(callable, ctx);
                 if (callable_traits::is_postrouting_positive(callable_res)) {
                     callable_traits::set_response(stl::move(callable_res), ctx);
-                    post_traits::set_response(post_traits::call(post, ctx), ctx);
+                    post_traits::call_and_set(post, ctx);
                 }
             }
         };
@@ -401,7 +446,7 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
                 using post_traits  = route_traits<PostRoute, context_type>;
 
-                post_traits::set_response(post_traits::call(post, ctx), ctx);
+                post_traits::call_and_set(post, ctx);
             }
         };
 
@@ -441,7 +486,7 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
                 using ctraits      = route_traits<callable_type, context_type>;
 
-                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                ctraits::call_and_set(callable, ctx);
                 return false;
             }
         };
@@ -457,7 +502,7 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
                 using ctraits      = route_traits<callable_type, context_type>;
 
-                ctraits::set_response(ctraits::call(callable, ctx), ctx);
+                ctraits::call_and_set(callable, ctx);
                 return true;
             }
         };
@@ -483,8 +528,7 @@ namespace webpp::http {
                     left_traits::set_response(stl::move(left_res), ctx);
                     return;
                 }
-                auto right_res = right_traits::call(rhs, ctx);
-                right_traits::set_response(stl::move(right_res), ctx);
+                right_traits::call_and_set(rhs, ctx);
             }
         };
 
@@ -511,8 +555,7 @@ namespace webpp::http {
                     left_traits::set_response(stl::move(left_res), ctx);
                     return;
                 }
-                auto right_res = right_traits::call(rhs, ctx);
-                right_traits::set_response(stl::move(right_res), ctx);
+                right_traits::call_and_set(rhs, ctx);
             }
         };
 
@@ -530,10 +573,7 @@ namespace webpp::http {
 
                 stl::apply(
                   [&ctx]<typename... T>(T&&... callables) constexpr {
-                      (route_traits<T, context_type>::set_get_response(
-                         route_traits<T, context_type>::call(stl::forward<T>(callables), ctx),
-                         ctx) &&
-                       ...);
+                      (route_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
                   },
                   segments);
             }
