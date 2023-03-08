@@ -293,10 +293,16 @@ namespace webpp::http {
         path_traverser_type traverser;
 
       public:
-        constexpr basic_context(request_type& req) : context_methods{req} {}
+        constexpr basic_context(request_type& req)
+          : context_methods{req},
+            request{req},
+            response{req.get_traits()} {}
 
         template <Context CtxT>
-        constexpr basic_context(CtxT const& ctx) noexcept : basic_context{ctx.request} {}
+        constexpr basic_context(CtxT const& ctx) noexcept
+          : context_methods{ctx.request},
+            request{ctx.request},
+            response{ctx.response} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
@@ -314,6 +320,11 @@ namespace webpp::http {
         template <typename T>
         [[nodiscard]] constexpr bool check_segment(T&& slug) noexcept {
             return traverser.check_segment(stl::forward<T>(slug));
+        }
+
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return request.empty() && response.empty();
         }
     };
 

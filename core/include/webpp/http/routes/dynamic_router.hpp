@@ -660,7 +660,7 @@ namespace webpp::http {
          */
         template <typename CtxT>
         [[nodiscard]] constexpr bool continue_routing(CtxT& ctx) const noexcept {
-            return ctx.empty();
+            return ctx.response.empty();
         }
 
       public:
@@ -808,7 +808,8 @@ namespace webpp::http {
     };
 
 
-    using dynamic_router = basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_traits>>;
+    using dynamic_router =
+      basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_dynamic_traits>>;
 
 
     namespace pmr {
