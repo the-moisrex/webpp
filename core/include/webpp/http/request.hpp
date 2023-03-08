@@ -160,7 +160,8 @@ namespace webpp::http {
         using traits_type  = typename headers_type::traits_type;
         using root_extensions = typename headers_type::root_extensions;
 
-        using string_type = traits::general_string<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
 
       private:
         string_type   requested_uri;    // todo: isn't it better to have a uri instead?
@@ -190,12 +191,28 @@ namespace webpp::http {
 
       public:
         template <HTTPRequest ReqType>
-            requires(!stl::same_as<stl::remove_cvref_t<ReqType>, basic_request>)
+            requires(!istl::same_as_cvref<ReqType, basic_request>)
         constexpr basic_request(ReqType& req)
           : common_request_type{req},
             requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
             requested_method{req.method(), alloc::general_alloc_for<string_type>(*this)},
             request_version{req.version()} {}
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
+            requires(!istl::same_as_cvref<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
+                     istl::StringifiableOf<string_type, MStrT>)
+        constexpr basic_request(ET&&          et,
+                                MStrT&&       method = "GET",
+                                UStrT&&       url    = "/",
+                                http::version ver    = http::http_2_0)
+          : common_request_type{et},
+            requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
+                                                          alloc::general_alloc_for<string_type>(*this))},
+            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(method),
+                                                             alloc::general_alloc_for<string_type>(*this))},
+            request_version{ver} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_request(basic_request const&)      = default;
         constexpr basic_request(basic_request&&) noexcept  = default;
@@ -220,6 +237,11 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr http::version version() const noexcept {
             return request_version;
+        }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return this->heeaders.empty() && this->body.empty() && requested_uri.empty() &&
+                   requested_method.empty();
         }
     };
 

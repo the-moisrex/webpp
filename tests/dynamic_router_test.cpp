@@ -17,4 +17,7 @@ TEST(DynamicRouter, RouteRegistration) {
     router += page / "index" >> [] {
         return "Index";
     };
+
+    request req{router.get_traits()};
+    router(req);
 }
