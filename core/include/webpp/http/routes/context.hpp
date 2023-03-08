@@ -312,7 +312,7 @@ namespace webpp::http {
         }
 
         template <typename T>
-        [[nodiscard]] constexpr bool check_segment(T&& slug) const noexcept {
+        [[nodiscard]] constexpr bool check_segment(T&& slug) noexcept {
             return traverser.check_segment(stl::forward<T>(slug));
         }
     };
