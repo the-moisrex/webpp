@@ -288,8 +288,7 @@ namespace webpp::http {
             [[nodiscard]] constexpr auto operator/(SegT&& segment) const {
                 return operator/(
                   [segment]<typename TraitsType>(basic_context<TraitsType>& ctx) constexpr noexcept -> bool {
-                      // todo: check path
-                      return true;
+                      return ctx.check_segment(segment);
                   });
             }
         };
