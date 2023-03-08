@@ -3,12 +3,10 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../std/functional.hpp"
-#include "../../std/map.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
-#include "../../utils/functional.hpp"
 #include "../http_concepts.hpp"
 #include "../request.hpp"
 #include "../request_view.hpp"
@@ -199,9 +197,7 @@ namespace webpp::http {
             template <typename Callable>
             [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
                 if constexpr (stl::is_void_v<Self>) {
-                    return route_optimizer_t<forward_callables<stl::remove_cvref_t<Callable>>>{
-                      .callable = *static_cast<Self const*>(this) // callable
-                    };
+                    return route_root<void>{};
                 } else {
                     return route_optimizer_t<forward_callables<Self, stl::remove_cvref_t<Callable>>>{
                       .callables{
@@ -300,6 +296,50 @@ namespace webpp::http {
 
 
 
+
+        template <typename... Callables>
+        struct forward_callables : route_root<forward_callables<Callables...>> {
+            stl::tuple<Callables...> callables;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type = basic_context<TraitsType>;
+
+                stl::apply(
+                  [&ctx]<typename... T>(T&&... callees) constexpr {
+                      (route_traits<T, context_type>::set_response(
+                         route_traits<T, context_type>::call(stl::forward<T>(callees), ctx),
+                         ctx),
+                       ...);
+                  },
+                  callables);
+            }
+        };
+
+        template <typename Callable>
+        struct forward_callables<Callable> : route_root<forward_callables<Callable>> {
+            Callable callable;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type    = basic_context<TraitsType>;
+                using callable_traits = route_traits<Callable, context_type>;
+
+                callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+            }
+        };
+
+        template <>
+        struct forward_callables<void> : route_root<void> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const {}
+        };
+
+        template <>
+        struct forward_callables<> : route_root<void> {
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>&) const {}
+        };
 
         template <typename PreRoute, typename Callable>
         struct pre_route : route_root<pre_route<PreRoute, Callable>> {
@@ -423,50 +463,6 @@ namespace webpp::http {
             }
         };
 
-        template <typename... Callables>
-        struct forward_callables : route_root<forward_callables<Callables...>> {
-            stl::tuple<Callables...> callables;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-
-                stl::apply(
-                  [&ctx]<typename... T>(T&&... callees) constexpr {
-                      (route_traits<T, context_type>::set_response(
-                         route_traits<T, context_type>::call(stl::forward<T>(callees), ctx),
-                         ctx),
-                       ...);
-                  },
-                  callables);
-            }
-        };
-
-        template <typename Callable>
-        struct forward_callables<Callable> : route_root<forward_callables<Callable>> {
-            Callable callable;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type    = basic_context<TraitsType>;
-                using callable_traits = route_traits<Callable, context_type>;
-
-                callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
-            }
-        };
-
-        template <>
-        struct forward_callables<void> : route_root<forward_callables<void>> {
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>&) const {}
-        };
-
-        template <>
-        struct forward_callables<> : route_root<forward_callables<>> {
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>&) const {}
-        };
-
 
 
         template <typename LeftCallable, typename RightCallable>
@@ -575,46 +571,17 @@ namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct dynamic_route {
+    struct dynamic_route
+      : istl::function<void(basic_context<TraitsType>&), traits::general_allocator<TraitsType, stl::byte>>,
+        details::route_root<dynamic_route<TraitsType>> {
         using traits_type     = TraitsType;
         using string_type     = traits::general_string<traits_type>;
         using route_allocator = traits::general_allocator<traits_type, stl::byte>;
         using context_type    = basic_context<traits_type>;
         using callable_type   = istl::function<void(context_type&), route_allocator>;
 
-      private:
-        callable_type callable;
-
-        template <typename R, EnabledTraits ET>
-        constexpr dynamic_route(ET&& inp_router, R&& inp_route) noexcept
-          : callable{stl::allocator_arg,
-                     alloc::general_alloc_for<callable_type>(inp_router),
-                     stl::forward<R>(inp_route)} {}
-
-      public:
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <EnabledTraits ET>
-            requires(!istl::same_as_cvref<ET, dynamic_route>)
-        constexpr dynamic_route(ET&& inp_router) noexcept
-          : callable{alloc::general_alloc_for<callable_type>(inp_router)} {}
-        // NOLINTEND(bugprone-forwarding-reference-overload)
-
-        template <typename CallableType>
-        constexpr dynamic_route operator/(CallableType&& new_callable) {
-            dynamic_route new_route;
-            new_route.callable = [*this, new_callable](context_type& ctx) constexpr {
-                // todo: evaluate the path
-                ctx.response = call_route(callable, ctx, ctx.request);
-                ctx.response = call_route(stl::forward<CallableType>(new_callable), ctx, ctx.request);
-                return ctx.response;
-            };
-            return new_route;
-        }
-
-        template <Context CtxT, HTTPRequest ReqT>
-        constexpr auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
-            return http::call_route(callable, stl::forward<CtxT>(ctx), stl::forward<ReqT>(req));
-        }
+        using istl::function<void(basic_context<TraitsType>&),
+                             traits::general_allocator<TraitsType, stl::byte>>::function;
     };
 
     /**
@@ -631,15 +598,13 @@ namespace webpp::http {
         using non_owner_etraits = typename etraits::non_owner_type;
         using route_type        = dynamic_route<traits_type>;
         using vector_allocator  = traits::general_allocator<traits_type, route_type>;
-        using map_allocator =
-          traits::general_allocator<traits_type, stl::pair<status_code const, route_type>>;
-        using string_type      = traits::general_string<traits_type>;
-        using string_view_type = traits::string_view<traits_type>;
-        using objects_type     = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
-        using routes_type      = stl::vector<route_type, vector_allocator>;
-        using response_type    = basic_response<traits_type>;
-        using context_type     = basic_context<traits_type>;
-        using request_type     = basic_request<traits_type>;
+        using string_type       = traits::general_string<traits_type>;
+        using string_view_type  = traits::string_view<traits_type>;
+        using objects_type      = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
+        using routes_type       = stl::vector<route_type, vector_allocator>;
+        using response_type     = basic_response<traits_type>;
+        using context_type      = basic_context<traits_type>;
+        using request_type      = basic_request<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -648,9 +613,16 @@ namespace webpp::http {
 
       private:
         // todo: implement a function_vector that'll require only one allocator not one for each
-        routes_type                                                                          routes;
-        stl::map<http::status_code, route_type, stl::less<http::status_code>, map_allocator> status_templates;
+        routes_type routes;
 
+
+        /**
+         * This method checks the context and see if we have reached the end of the routing or not.
+         */
+        template <typename CtxT>
+        [[nodiscard]] constexpr bool continue_routing(CtxT& ctx) const noexcept {
+            return ctx.empty();
+        }
 
       public:
         // These are the callable types
@@ -743,33 +715,16 @@ namespace webpp::http {
             return response(code);
         }
 
-        template <typename StrT>
-            requires(istl::StringifiableOf<string_type, StrT>)
-        constexpr response_type error(status_code code, StrT&& reason) const noexcept {
-            if (auto const it = status_templates.find(code); it != status_templates.end()) {
-                return it; // response type will call this
-            }
-            auto res = error(code);
-            res.body; // todo
-            return res;
-        }
-
         constexpr response_type response(status_code code) const noexcept {
             return {this->get_traits(), code};
-        }
-
-
-        template <typename T>
-        constexpr basic_dynamic_router& on(status_code code, T&& route) {
-            status_templates.emplace(code, route);
-            return *this;
         }
 
 
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
-            return on<C>(stl::forward<C>(callable));
+            routes.emplace_back(details::route_optimizer_t<C>{stl::forward<C>(callable)});
+            return *this;
         }
 
 
@@ -798,11 +753,17 @@ namespace webpp::http {
         /**
          * Run the router with the specified context;
          * Sets the context's response if necessary
+         *
+         * This method does not set 404 error message at all, give you a chance to use this router as
+         * a sub-router of a parent router and let the parent router to deal with these things.
          */
         template <Context CtxT>
         constexpr void operator()(CtxT& ctx) {
-            for (auto const& route : routes) {
-                // todo
+            for (auto& route : routes) {
+                route(ctx);
+                if (!continue_routing(ctx)) {
+                    return;
+                }
             }
         }
     };
