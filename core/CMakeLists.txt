@@ -107,6 +107,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/uri/fragment.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/host.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/path.hpp
+        ${LIB_INCLUDE_DIR}/webpp/uri/path_traverser.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/port.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/queries.hpp
         ${LIB_INCLUDE_DIR}/webpp/uri/scheme.hpp
