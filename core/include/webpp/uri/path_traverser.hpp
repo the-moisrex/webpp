@@ -14,40 +14,25 @@ namespace webpp::uri {
         using path_iterator = typename path_type::iterator;
 
       private:
-        path_type     path;
-        path_iterator iterator = path.begin();
+        // todo: do we actually need the end? can't we just construct it ourselves?
+
+        path_iterator it;  // beginning (will be moved)
+        path_iterator fin; // end
 
       public:
-        template <typename... Args>
-        constexpr path_traverser(Args&&... args) noexcept(stl::is_nothrow_constructible_v<path_type, Args...>)
-          : path{stl::forward<Args>(args)...},
-            iterator{path.begin()} {}
+        constexpr path_traverser(path_type const& path) noexcept : it{path.begin()}, fin{path.end()} {}
 
-        constexpr path_traverser&
-        operator=(path_type&& new_path) noexcept(stl::is_nothrow_move_assignable_v<path_type>) {
-            path     = stl::move(new_path);
-            iterator = path.begin();
+        constexpr path_traverser& operator=(path_type const& path) noexcept {
+            it  = path.begin();
+            fin = path.end();
             return *this;
         }
 
-        constexpr path_traverser&
-        operator=(path_type const& new_path) noexcept(stl::is_nothrow_copy_assignable_v<path_type>) {
-            path     = new_path;
-            iterator = path.begin();
-            return *this;
-        }
-
-        constexpr path_traverser(path_traverser const&) noexcept(
-          stl::is_nothrow_copy_constructible_v<path_type>) = default;
-
-        constexpr path_traverser(path_traverser&&) noexcept = default;
-
+        constexpr path_traverser(path_traverser const&) noexcept       = default;
+        constexpr path_traverser(path_traverser&&) noexcept            = default;
         constexpr path_traverser& operator=(path_traverser&&) noexcept = default;
-
-        constexpr path_traverser&
-        operator=(path_traverser const&) noexcept(stl::is_nothrow_copy_assignable_v<path_type>) = default;
-
-        constexpr ~path_traverser() = default;
+        constexpr path_traverser& operator=(path_traverser const&)     = default;
+        constexpr ~path_traverser()                                    = default;
 
         /**
          * Get a copy
@@ -58,11 +43,11 @@ namespace webpp::uri {
         }
 
         constexpr void next() noexcept {
-            ++iterator;
+            ++it;
         }
 
         constexpr void prev() noexcept {
-            --iterator;
+            --it;
         }
 
         constexpr path_traverser& operator++() noexcept {
@@ -79,7 +64,7 @@ namespace webpp::uri {
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
         [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
-            if (iterator != path.end() && *iterator == slug) {
+            if (it != fin && *it == slug) {
                 next();
                 return true;
             }
@@ -88,7 +73,7 @@ namespace webpp::uri {
 
         template <istl::StringViewifiable StrV>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (iterator != path.end() && *iterator == istl::string_viewify(stl::forward<StrV>(slug))) {
+            if (it != fin && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }
