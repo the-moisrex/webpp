@@ -7,6 +7,7 @@
 
 namespace webpp::uri {
 
+
     template <Slug SlugType>
     struct path_traverser {
         using slug_type     = SlugType;
@@ -60,11 +61,15 @@ namespace webpp::uri {
             return *this;
         }
 
+        [[nodiscard]] constexpr bool at_end() const noexcept {
+            return it == fin;
+        }
+
         /**
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
         [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
-            if (it != fin && *it == slug) {
+            if (!at_end() && *it == slug) {
                 next();
                 return true;
             }
@@ -73,13 +78,126 @@ namespace webpp::uri {
 
         template <istl::StringViewifiable StrV>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (it != fin && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
+            if (!at_end() && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }
             return false;
         }
     };
+
+
+
+
+
+    template <istl::String SlugType = stl::string, istl::StringView StringViewType = stl::string_view>
+    struct basic_path_iterator {
+        using string_type      = SlugType;
+        using slug_type        = string_type;
+        using iterator         = typename slug_type::iterator;
+        using size_type        = typename slug_type::size_type;
+        using char_type        = istl::char_type_of<string_type>;
+        using string_view_type = StringViewType;
+
+        static constexpr string_view_type parent_dir  = "..";
+        static constexpr string_view_type current_dir = ".";
+        static constexpr string_view_type separator   = "/";
+        static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
+
+      private:
+        slug_type seg; // segment
+        iterator  it;
+        iterator  fin; // todo: technically it's possible to remove this
+
+      public:
+        constexpr basic_path_iterator(string_type const& path)
+          : seg{path.get_allocator()},
+            it{seg.begin()},
+            fin{seg.end()} {}
+
+        constexpr basic_path_iterator& operator=(string_type const& path) {
+            it  = path.begin();
+            fin = path.end();
+            seg.clear();
+            return *this;
+        }
+
+        constexpr basic_path_iterator(basic_path_iterator const&)                = default;
+        constexpr basic_path_iterator(basic_path_iterator&&) noexcept            = default;
+        constexpr basic_path_iterator& operator=(basic_path_iterator&&) noexcept = default;
+        constexpr basic_path_iterator& operator=(basic_path_iterator const&)     = default;
+        constexpr ~basic_path_iterator()                                         = default;
+
+        /**
+         * Get a copy
+         * Used for branching the traversal position
+         */
+        constexpr basic_path_iterator branch() const {
+            return {*this};
+        }
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return fin - it;
+        }
+
+        constexpr bool next() {
+            if (at_end()) {
+                return false;
+            }
+            const stl::size_t slash_start = stl::find(it, fin, separator);
+            const stl::size_t the_size    = stl::min(slash_start, size());
+            if (!decode_uri_component(string_view_type(it, the_size), seg, allowed_chars)) {
+                // error: invalid string passed as a path
+                seg.clear();
+                return false;
+            }
+            if (slash_start == string_view_type::npos) {
+                seg.clear();
+                it = fin;
+            }
+            it += slash_start + 1;
+            return true;
+        }
+
+        constexpr operator bool() const noexcept {
+            return at_end();
+        }
+
+        constexpr basic_path_iterator& operator++() noexcept {
+            next();
+            return *this;
+        }
+
+        [[nodiscard]] constexpr bool at_end() const noexcept {
+            return it == fin;
+        }
+
+        /**
+         * Check if the specified segment is a match, if it is, increment the segment pointer
+         */
+        [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
+            if (!at_end() && *it == slug) {
+                next();
+                return true;
+            }
+            return false;
+        }
+
+        template <istl::StringViewifiable StrV>
+        [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
+            if (!at_end() && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
+                next();
+                return true;
+            }
+            return false;
+        }
+    };
+
+
+    template <Traits TraitsType = default_traits>
+    using path_iterator =
+      basic_path_iterator<traits::general_string<TraitsType>, traits::string_view<TraitsType>>;
+
 } // namespace webpp::uri
 
 #endif // WEBPP_URI_PATH_TRAVERSER_HPP
