@@ -276,7 +276,7 @@ namespace webpp::http {
         using response_type       = basic_response<traits_type>;
         using string_type         = traits::general_string<traits_type>;
         using slug_type           = string_type;
-        using path_traverser_type = uri::path_traverser<slug_type>;
+        using path_traverser_type = uri::path_iterator<traits_type>;
 
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -290,7 +290,7 @@ namespace webpp::http {
         using context_methods =
           details::common_context_methods<basic_request<TraitsType>, empty_extension_pack>;
 
-        path_traverser_type traverser;
+        path_traverser_type traverser{request.path_iterator()};
 
       public:
         constexpr basic_context(request_type& req)

@@ -53,6 +53,13 @@ namespace webpp::uri {
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
+
+        template <istl::String T>
+            requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
+                     istl::same_as_cvref<typename T::allocator_type, allocator_type>)
+        constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
+            parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
+        }
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr bool parse(istl::StringifiableOf<string_view_type> auto&& str) {

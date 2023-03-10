@@ -2,6 +2,7 @@
 #define WEBPP_HTTP_REQUEST_HPP
 
 #include "../traits/enable_traits.hpp"
+#include "../uri/path_traverser.hpp"
 #include "../version.hpp"
 #include "./body.hpp"
 #include "./header_fields.hpp"
@@ -230,6 +231,9 @@ namespace webpp::http {
             return requested_uri;
         }
 
+        [[nodiscard]] constexpr uri::path_iterator<traits_type> path_iterator() const noexcept {
+            return {uri()};
+        }
 
         [[nodiscard]] constexpr string_type const& method() const noexcept {
             return requested_method;
