@@ -90,6 +90,9 @@ namespace webpp::uri {
 
 
 
+    /**
+     * Iterator through a path, and parse while we go through it
+     */
     template <istl::String SlugType = stl::string, istl::StringView StringViewType = stl::string_view>
     struct basic_path_iterator {
         using string_type      = SlugType;
@@ -160,7 +163,7 @@ namespace webpp::uri {
         }
 
         constexpr operator bool() const noexcept {
-            return at_end();
+            return !at_end();
         }
 
         constexpr basic_path_iterator& operator++() noexcept {
@@ -176,20 +179,12 @@ namespace webpp::uri {
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
         [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
-            if (!at_end() && *it == slug) {
-                next();
-                return true;
-            }
-            return false;
+            return next() && *it == slug;
         }
 
         template <istl::StringViewifiable StrV>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (!at_end() && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
-                next();
-                return true;
-            }
-            return false;
+            return next() && *it == istl::string_viewify(stl::forward<StrV>(slug));
         }
     };
 
