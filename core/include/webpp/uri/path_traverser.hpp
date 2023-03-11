@@ -97,7 +97,7 @@ namespace webpp::uri {
     struct basic_path_iterator {
         using string_type      = SlugType;
         using slug_type        = string_type;
-        using iterator         = typename slug_type::iterator;
+        using iterator         = typename slug_type::const_iterator;
         using size_type        = typename slug_type::size_type;
         using char_type        = istl::char_type_of<string_type>;
         using string_view_type = StringViewType;
@@ -114,12 +114,12 @@ namespace webpp::uri {
       public:
         constexpr basic_path_iterator(string_type const& path)
           : seg{path.get_allocator()},
-            it{seg.begin()},
-            fin{seg.end()} {}
+            it{stl::begin(path)},
+            fin{stl::end(path)} {}
 
         constexpr basic_path_iterator& operator=(string_type const& path) {
-            it  = path.begin();
-            fin = path.end();
+            it  = stl::begin(path);
+            fin = stl::end(path);
             seg.clear();
             return *this;
         }
@@ -147,16 +147,16 @@ namespace webpp::uri {
                 return false;
             }
             const auto slash_start = stl::find(it, fin, char_type{'/'});
+            if (slash_start == it) { // the first slash, or two or more contiguous slashes
+                ++it;
+                return next();
+            }
+            seg.clear();
             if (!decode_uri_component(string_view_type(it, slash_start), seg, allowed_chars)) {
-                // error: invalid string passed as a path
-                seg.clear();
                 return false;
             }
-            if (slash_start == fin) {
-                seg.clear();
-                it = fin;
-            } else {
-                it = slash_start;
+            it = slash_start;
+            if (it != fin) {
                 ++it;
             }
             return true;
@@ -169,6 +169,18 @@ namespace webpp::uri {
         constexpr basic_path_iterator& operator++() noexcept {
             next();
             return *this;
+        }
+
+        [[nodiscard]] constexpr slug_type const& operator*() const noexcept {
+            return seg;
+        }
+
+        [[nodiscard]] constexpr slug_type const* operator->() const noexcept {
+            return *seg;
+        }
+
+        [[nodiscard]] constexpr slug_type const& segment() const noexcept {
+            return seg;
         }
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
@@ -185,8 +197,7 @@ namespace webpp::uri {
         template <typename StrV>
             requires(istl::StringViewifiableOf<string_view_type, StrV>)
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            auto const slug_str = istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug));
-            return next() && size() == slug_str.size() && stl::equal(it, fin, slug_str.data());
+            return next() && seg == istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug));
         }
     };
 

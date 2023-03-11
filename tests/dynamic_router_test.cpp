@@ -8,6 +8,8 @@ using namespace webpp::http;
 using namespace std;
 
 TEST(DynamicRouter, RouteRegistration) {
+    EXPECT_TRUE(bool(HTTPRequest<request>));
+
     dynamic_router router;
 
     auto const page = router / "page";
@@ -19,5 +21,16 @@ TEST(DynamicRouter, RouteRegistration) {
     };
 
     request req{router.get_traits()};
-    router(req);
+    EXPECT_EQ(router(req).headers.status_code(), status_code::not_found);
+
+    req.method("GET");
+    req.uri("/page/about");
+    EXPECT_EQ(req.uri(), "/page/about");
+    auto it = req.path_iterator();
+    EXPECT_TRUE(it.check_segment("page")) << *it;
+    EXPECT_TRUE(it.check_segment("about")) << *it;
+
+    auto res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "About");
 }
