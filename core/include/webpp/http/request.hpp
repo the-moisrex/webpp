@@ -231,6 +231,13 @@ namespace webpp::http {
             return requested_uri;
         }
 
+        template <typename T>
+            requires(istl::StringifiableOf<string_type, T>)
+        constexpr basic_request& uri(T&& str) {
+            requested_uri = istl::stringify_of<string_type>(str, requested_uri.get_allocator());
+            return *this;
+        }
+
         [[nodiscard]] constexpr uri::path_iterator<traits_type> path_iterator() const noexcept {
             return {uri()};
         }
@@ -239,8 +246,20 @@ namespace webpp::http {
             return requested_method;
         }
 
+        template <typename T>
+            requires(istl::StringifiableOf<string_type, T>)
+        constexpr basic_request& method(T&& str) {
+            requested_method = istl::stringify_of<string_type>(str, requested_method.get_allocator());
+            return *this;
+        }
+
         [[nodiscard]] constexpr http::version version() const noexcept {
             return request_version;
+        }
+
+        constexpr basic_request& version(http::version ver) noexcept {
+            request_version = ver;
+            return *this;
         }
 
         [[nodiscard]] constexpr bool empty() const noexcept {
