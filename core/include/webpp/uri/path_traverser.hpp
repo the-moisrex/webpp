@@ -104,7 +104,6 @@ namespace webpp::uri {
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
-        static constexpr string_view_type separator   = "/";
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
       private:
@@ -140,25 +139,26 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
-            return fin - it;
+            return static_cast<size_type>(fin - it);
         }
 
         constexpr bool next() {
             if (at_end()) {
                 return false;
             }
-            const stl::size_t slash_start = stl::find(it, fin, separator);
-            const stl::size_t the_size    = stl::min(slash_start, size());
-            if (!decode_uri_component(string_view_type(it, the_size), seg, allowed_chars)) {
+            const auto slash_start = stl::find(it, fin, char_type{'/'});
+            if (!decode_uri_component(string_view_type(it, slash_start), seg, allowed_chars)) {
                 // error: invalid string passed as a path
                 seg.clear();
                 return false;
             }
-            if (slash_start == string_view_type::npos) {
+            if (slash_start == fin) {
                 seg.clear();
                 it = fin;
+            } else {
+                it = slash_start;
+                ++it;
             }
-            it += slash_start + 1;
             return true;
         }
 
@@ -182,9 +182,11 @@ namespace webpp::uri {
             return next() && *it == slug;
         }
 
-        template <istl::StringViewifiable StrV>
+        template <typename StrV>
+            requires(istl::StringViewifiableOf<string_view_type, StrV>)
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            return next() && *it == istl::string_viewify(stl::forward<StrV>(slug));
+            auto const slug_str = istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug));
+            return next() && size() == slug_str.size() && stl::equal(it, fin, slug_str.data());
         }
     };
 
