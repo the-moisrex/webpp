@@ -67,36 +67,68 @@ namespace webpp::http {
 
         template <EnabledTraits ET>
             requires(stl::is_constructible_v<elist_type, ET> && stl::is_constructible_v<container, ET>)
-        constexpr response_headers(ET&& et) noexcept(
+        constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
           stl::is_nothrow_constructible_v<container, ET>&& stl::is_nothrow_constructible_v<elist_type, ET>)
           : container{et},
-            elist_type{et} {}
+            elist_type{et},
+            m_status_code{static_cast<http::status_code_type>(code)} {}
 
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<container, ET> && !stl::is_constructible_v<container, ET>)
-        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<container, ET>&&
-                                                       stl::is_nothrow_default_constructible_v<elist_type>)
+            requires(stl::is_constructible_v<container, ET> && !stl::is_constructible_v<elist_type, ET>)
+        constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
+          stl::is_nothrow_constructible_v<container, ET>&&
+            stl::is_nothrow_default_constructible_v<elist_type>)
           : container{et},
-            elist_type{} {}
+            elist_type{},
+            m_status_code{static_cast<http::status_code_type>(code)} {}
 
         template <EnabledTraits ET>
             requires(!stl::is_constructible_v<container, ET> && stl::is_constructible_v<elist_type, ET>)
-        constexpr response_headers(ET&& et) noexcept(stl::is_nothrow_constructible_v<elist_type, ET>&&
-                                                       stl::is_nothrow_default_constructible_v<container>)
+        constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
+          stl::is_nothrow_constructible_v<elist_type, ET>&&
+            stl::is_nothrow_default_constructible_v<container>)
           : container{},
-            elist_type{et} {}
+            elist_type{et},
+            m_status_code{static_cast<http::status_code_type>(code)} {}
+
+        template <EnabledTraits ET>
+            requires(!stl::is_constructible_v<container, ET> && !stl::is_constructible_v<elist_type, ET>)
+        constexpr response_headers(ET&&, http::status_code code = http::status_code::ok) noexcept(
+          stl::is_nothrow_default_constructible_v<elist_type>&&
+            stl::is_nothrow_default_constructible_v<container>)
+          : container{},
+            elist_type{},
+            m_status_code{static_cast<http::status_code_type>(code)} {}
+
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        http::status_code_type status_code = static_cast<http::status_code_type>(http::status_code::ok);
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
+      private:
+        http::status_code_type m_status_code = static_cast<http::status_code_type>(http::status_code::ok);
 
+      public:
         // set the response http status code
         constexpr response_headers& operator=(http::status_code code) noexcept {
-            status_code = static_cast<status_code_type>(code);
+            m_status_code = static_cast<status_code_type>(code);
             return *this;
+        }
+
+
+        [[nodiscard]] constexpr http::status_code_type status_code_integer() const noexcept {
+            return m_status_code;
+        }
+
+        [[nodiscard]] constexpr http::status_code status_code() const noexcept {
+            return static_cast<http::status_code>(m_status_code);
+        }
+
+        constexpr void status_code(http::status_code code) noexcept {
+            m_status_code = static_cast<status_code_type>(code);
+        }
+
+        constexpr void status_code(http::status_code_type code) noexcept {
+            m_status_code = code;
         }
 
 
@@ -129,7 +161,7 @@ namespace webpp::http {
 
 
         [[nodiscard]] constexpr bool operator==(response_headers const& other) const noexcept {
-            return status_code == other.status_code &&
+            return m_status_code == other.m_status_code &&
                    static_cast<container const&>(*this) == static_cast<container const&>(other);
         }
 

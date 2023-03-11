@@ -63,6 +63,8 @@ namespace webpp::http {
             headers{et},
             body{et} {}
 
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
         template <EnabledTraits ET, typename T>
             requires(!stl::is_constructible_v<elist_type, ET>)
         constexpr common_http_response(ET&& et, T&& body_obj)
@@ -77,7 +79,20 @@ namespace webpp::http {
             headers{et},
             body{et, stl::forward<T>(body_obj)} {}
 
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+        template <EnabledTraits ET>
+            requires(stl::is_constructible_v<elist_type, ET>)
+        constexpr common_http_response(ET&& et, http::status_code code)
+          : elist_type{et},
+            headers{et, code},
+            body{et} {}
+
+        template <EnabledTraits ET>
+            requires(!stl::is_constructible_v<elist_type, ET>)
+        constexpr common_http_response(ET&& et, http::status_code code)
+          : elist_type{},
+            headers{et, code},
+            body{et} {}
+
 
         constexpr ~common_http_response()                                        = default;
         constexpr common_http_response(common_http_response const& res) noexcept = default;

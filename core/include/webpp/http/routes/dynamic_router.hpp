@@ -750,11 +750,11 @@ namespace webpp::http {
         /**
          * Response with the specified status code.
          */
-        constexpr response_type error(status_code code) const noexcept {
+        constexpr response_type error(status_code code) {
             return response(code);
         }
 
-        constexpr response_type response(status_code code) const noexcept {
+        constexpr response_type response(status_code code) {
             return {this->get_traits(), code};
         }
 
