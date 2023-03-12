@@ -165,7 +165,7 @@ namespace webpp::http {
         using string_view_type = traits::string_view<traits_type>;
 
       private:
-        string_type   requested_uri;    // todo: isn't it better to have a uri instead?
+        string_type   requested_uri;
         string_type   requested_method; // It's a string because the user might send a custom method
         http::version request_version;
 

@@ -143,6 +143,19 @@ namespace webpp::http {
             }
         };
 
+        template <typename Callable>
+        static constexpr void route_to_string(istl::String auto& out, Callable& func) {
+            if constexpr (istl::StringViewifiable<Callable>) {
+                out += istl::string_viewify(func);
+            } else if constexpr (requires { func.to_string(out); }) {
+                func.to_string(out);
+            } else {
+                out.append(typeid(Callable).name());
+            }
+        }
+
+
+
         template <typename PreRoute, typename Callable>
         struct pre_route;
         template <typename Callable, typename PostRoute>
@@ -353,8 +366,16 @@ namespace webpp::http {
                 using context_type = basic_context<TraitsType>;
 
                 stl::apply(
-                  [&ctx]<typename... T>(T&&... callees) constexpr {
-                      (route_traits<T, context_type>::call_and_set(stl::forward<T>(callees), ctx), ...);
+                  [&ctx]<typename... T>(T&&... funcs) constexpr {
+                      (route_traits<T, context_type>::call_and_set(stl::forward<T>(funcs), ctx), ...);
+                  },
+                  callables);
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                stl::apply(
+                  [&out]<typename... T>(T&&... funcs) constexpr {
+                      ((out.append(" >>"), route_to_string(out, funcs)), ...);
                   },
                   callables);
             }
@@ -371,18 +392,32 @@ namespace webpp::http {
 
                 callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
             }
+
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" >>");
+                route_to_string(out, callable);
+            }
         };
 
         template <>
         struct forward_callables<void> : route_root<void> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const {}
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" >> [empty]");
+            }
         };
 
         template <>
         struct forward_callables<> : route_root<void> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const {}
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" >> [empty]");
+            }
         };
 
         template <typename PreRoute, typename Callable>
@@ -402,6 +437,14 @@ namespace webpp::http {
                     callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
                 }
             }
+
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" -");
+                route_to_string(out, pre);
+                out.append(" >>");
+                route_to_string(out, callable);
+            }
         };
 
         template <typename PreRoute>
@@ -414,6 +457,11 @@ namespace webpp::http {
                 using pre_traits   = route_traits<PreRoute, context_type>;
 
                 pre_traits::call_and_set(pre, ctx);
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" -");
+                route_to_string(out, pre);
             }
         };
 
@@ -435,6 +483,14 @@ namespace webpp::http {
                     post_traits::call_and_set(post, ctx);
                 }
             }
+
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" >>");
+                route_to_string(out, callable);
+                out.append(" +");
+                route_to_string(out, post);
+            }
         };
 
         template <typename PostRoute>
@@ -447,6 +503,11 @@ namespace webpp::http {
                 using post_traits  = route_traits<PostRoute, context_type>;
 
                 post_traits::call_and_set(post, ctx);
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" +");
+                route_to_string(out, post);
             }
         };
 
@@ -467,12 +528,22 @@ namespace webpp::http {
                     ctraits::set_response(stl::move(res), ctx);
                 }
             }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" !(");
+                route_to_string(out, callable);
+                out.append(")");
+            }
         };
 
         template <>
         struct not_callable<void> : route_root<not_callable<void>> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const {}
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" !([empty])");
+            }
         };
 
         template <typename Callable>
@@ -489,6 +560,12 @@ namespace webpp::http {
                 ctraits::call_and_set(callable, ctx);
                 return false;
             }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" false(");
+                route_to_string(out, callable);
+                out.append(")");
+            }
         };
 
         template <typename Callable>
@@ -504,6 +581,12 @@ namespace webpp::http {
 
                 ctraits::call_and_set(callable, ctx);
                 return true;
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" true(");
+                route_to_string(out, callable);
+                out.append(")");
             }
         };
 
@@ -529,6 +612,15 @@ namespace webpp::http {
                     return;
                 }
                 right_traits::call_and_set(rhs, ctx);
+            }
+
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" (");
+                route_to_string(out, lhs);
+                out.append(" && ");
+                route_to_string(out, rhs);
+                out.append(")");
             }
         };
 
@@ -557,6 +649,14 @@ namespace webpp::http {
                 }
                 right_traits::call_and_set(rhs, ctx);
             }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" (");
+                route_to_string(out, lhs);
+                out.append(" || ");
+                route_to_string(out, rhs);
+                out.append(")");
+            }
         };
 
         template <typename RightCallable>
@@ -577,6 +677,15 @@ namespace webpp::http {
                   },
                   segments);
             }
+
+
+            constexpr void to_string(istl::String auto& out) const {
+                stl::apply(
+                  [&out]<typename... T>(T&&... callables) constexpr {
+                      ((out.append(" /"), route_to_string(out, callables)), ...);
+                  },
+                  segments);
+            }
         };
 
 
@@ -584,12 +693,20 @@ namespace webpp::http {
         struct segment_callables<void> : route_root<segment_callables<void>> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" / [empty]");
+            }
         };
 
         template <>
         struct segment_callables<> : route_root<segment_callables<>> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" / [empty]");
+            }
         };
 
 
@@ -603,6 +720,11 @@ namespace webpp::http {
                 using segment_traits = route_traits<CallableSegment, context_type>;
 
                 segment_traits::set_response(segment_traits::call(segment, ctx), ctx);
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" /");
+                route_to_string(out, segment);
             }
         };
 
@@ -621,6 +743,10 @@ namespace webpp::http {
 
         using istl::function<void(basic_context<TraitsType>&),
                              traits::general_allocator<TraitsType, stl::byte>>::function;
+
+        constexpr void to_string(istl::String auto& out) const {
+            details::route_to_string(out, *this);
+        }
     };
 
     /**
@@ -804,6 +930,20 @@ namespace webpp::http {
                     return;
                 }
             }
+        }
+
+        constexpr void to_string(istl::String auto& out) const {
+            for (auto& route : routes) {
+                route_to_string(out, route);
+            }
+        }
+
+
+        template <istl::String StrT = string_type>
+        constexpr StrT to_string() {
+            StrT out{alloc::general_alloc_for<StrT>(*this)};
+            to_string(out);
+            return out;
         }
     };
 

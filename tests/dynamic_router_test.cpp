@@ -31,6 +31,6 @@ TEST(DynamicRouter, RouteRegistration) {
     EXPECT_TRUE(it.check_segment("about")) << *it;
 
     auto res = router(req);
-    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
     EXPECT_EQ(as<std::string>(res.body), "About");
 }
