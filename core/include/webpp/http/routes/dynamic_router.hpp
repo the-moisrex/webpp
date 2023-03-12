@@ -3,6 +3,7 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../std/functional.hpp"
+#include "../../std/memory.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
 #include "../../traits/default_traits.hpp"
@@ -20,6 +21,70 @@
 namespace webpp::http {
 
     namespace details {
+
+
+        template <typename Callable>
+        static constexpr void route_to_string(istl::String auto& out, Callable& func) {
+            if constexpr (istl::StringViewifiable<Callable>) {
+                out += istl::string_viewify(func);
+            } else if constexpr (requires { func.to_string(out); }) {
+                func.to_string(out);
+            } else {
+                out.append(typeid(Callable).name());
+            }
+        }
+
+
+        template <Traits TraitsType, typename Callable = void>
+        struct dynamic_route final : dynamic_route<TraitsType, void> {
+
+            using traits_type   = TraitsType;
+            using string_type   = traits::general_string<traits_type>;
+            using context_type  = basic_context<traits_type>;
+            using callable_type = stl::remove_cvref_t<Callable>;
+
+          private:
+            callable_type callable;
+
+          public:
+            dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
+            dynamic_route(Callable const& new_callable) noexcept(
+              stl::is_nothrow_copy_constructible_v<callable_type>)
+              : callable(new_callable) {}
+            dynamic_route(dynamic_route const&)                     = delete;
+            dynamic_route(dynamic_route&&) noexcept                 = default;
+            dynamic_route& operator=(dynamic_route const&) noexcept = delete;
+            dynamic_route& operator=(dynamic_route&&) noexcept      = default;
+            ~dynamic_route() final                                  = default;
+
+            void operator()(context_type& ctx) final {
+                callable(ctx);
+            }
+
+            void to_string(string_type& out) const final {
+                route_to_string(out, callable);
+            }
+        };
+
+
+        template <Traits TraitsType>
+        struct dynamic_route<TraitsType, void> {
+            using traits_type  = TraitsType;
+            using string_type  = traits::general_string<traits_type>;
+            using context_type = basic_context<traits_type>;
+
+            dynamic_route()                                         = default;
+            dynamic_route(dynamic_route const&)                     = default;
+            dynamic_route(dynamic_route&&) noexcept                 = default;
+            dynamic_route& operator=(dynamic_route const&) noexcept = default;
+            dynamic_route& operator=(dynamic_route&&) noexcept      = default;
+
+            virtual ~dynamic_route() = default;
+
+            virtual void operator()(context_type& ctx)     = 0;
+            virtual void to_string(string_type& out) const = 0;
+        };
+
 
         template <typename Callable, typename ContextType>
         struct route_traits {
@@ -142,17 +207,6 @@ namespace webpp::http {
                 }
             }
         };
-
-        template <typename Callable>
-        static constexpr void route_to_string(istl::String auto& out, Callable& func) {
-            if constexpr (istl::StringViewifiable<Callable>) {
-                out += istl::string_viewify(func);
-            } else if constexpr (requires { func.to_string(out); }) {
-                func.to_string(out);
-            } else {
-                out.append(typeid(Callable).name());
-            }
-        }
 
 
 
@@ -400,15 +454,6 @@ namespace webpp::http {
             }
         };
 
-        template <>
-        struct forward_callables<void> : route_root<void> {
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>&) const {}
-
-            constexpr void to_string(istl::String auto& out) const {
-                out.append(" >> [empty]");
-            }
-        };
 
         template <>
         struct forward_callables<> : route_root<void> {
@@ -419,6 +464,10 @@ namespace webpp::http {
                 out.append(" >> [empty]");
             }
         };
+
+
+        template <>
+        struct forward_callables<void> : forward_callables<> {};
 
         template <typename PreRoute, typename Callable>
         struct pre_route : route_root<pre_route<PreRoute, Callable>> {
@@ -539,7 +588,7 @@ namespace webpp::http {
         template <>
         struct not_callable<void> : route_root<not_callable<void>> {
             template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>&) const {}
+            constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
             constexpr void to_string(istl::String auto& out) const {
                 out.append(" !([empty])");
@@ -690,7 +739,7 @@ namespace webpp::http {
 
 
         template <>
-        struct segment_callables<void> : route_root<segment_callables<void>> {
+        struct segment_callables<> : route_root<segment_callables<>> {
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
@@ -700,14 +749,7 @@ namespace webpp::http {
         };
 
         template <>
-        struct segment_callables<> : route_root<segment_callables<>> {
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
-
-            constexpr void to_string(istl::String auto& out) const {
-                out.append(" / [empty]");
-            }
-        };
+        struct segment_callables<void> : segment_callables<> {};
 
 
         template <typename CallableSegment>
@@ -731,24 +773,6 @@ namespace webpp::http {
     } // namespace details
 
 
-    template <Traits TraitsType>
-    struct dynamic_route
-      : istl::function<void(basic_context<TraitsType>&), traits::general_allocator<TraitsType, stl::byte>>,
-        details::route_root<dynamic_route<TraitsType>> {
-        using traits_type     = TraitsType;
-        using string_type     = traits::general_string<traits_type>;
-        using route_allocator = traits::general_allocator<traits_type, stl::byte>;
-        using context_type    = basic_context<traits_type>;
-        using callable_type   = istl::function<void(context_type&), route_allocator>;
-
-        using istl::function<void(basic_context<TraitsType>&),
-                             traits::general_allocator<TraitsType, stl::byte>>::function;
-
-        constexpr void to_string(istl::String auto& out) const {
-            details::route_to_string(out, *this);
-        }
-    };
-
     /**
      * @brief A Router that's is fully customizable at runtime
      *
@@ -757,19 +781,20 @@ namespace webpp::http {
      */
     template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router : TraitsEnabler, details::route_root<void> {
-        using root_extensions   = RootExtensions;
-        using etraits           = TraitsEnabler;
-        using traits_type       = typename etraits::traits_type;
-        using non_owner_etraits = typename etraits::non_owner_type;
-        using route_type        = dynamic_route<traits_type>;
-        using vector_allocator  = traits::general_allocator<traits_type, route_type>;
-        using string_type       = traits::general_string<traits_type>;
-        using string_view_type  = traits::string_view<traits_type>;
-        using objects_type      = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
-        using routes_type       = stl::vector<route_type, vector_allocator>;
-        using response_type     = basic_response<traits_type>;
-        using context_type      = basic_context<traits_type>;
-        using request_type      = basic_request<traits_type>;
+        using root_extensions    = RootExtensions;
+        using etraits            = TraitsEnabler;
+        using traits_type        = typename etraits::traits_type;
+        using non_owner_etraits  = typename etraits::non_owner_type;
+        using route_type         = details::dynamic_route<traits_type>;
+        using dynamic_route_type = istl::dynamic<route_type, traits::general_allocator<traits_type>>;
+        using vector_allocator   = traits::general_allocator<traits_type, dynamic_route_type>;
+        using string_type        = traits::general_string<traits_type>;
+        using string_view_type   = traits::string_view<traits_type>;
+        using objects_type       = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
+        using routes_type        = stl::vector<dynamic_route_type, vector_allocator>;
+        using response_type      = basic_response<traits_type>;
+        using context_type       = basic_context<traits_type>;
+        using request_type       = basic_request<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -888,7 +913,10 @@ namespace webpp::http {
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
-            routes.emplace_back(details::route_optimizer_t<C>{stl::forward<C>(callable)});
+            using callable_type  = details::route_optimizer_t<C>;
+            using new_route_type = details::dynamic_route<traits_type, callable_type>;
+
+            routes.emplace_back(new_route_type{stl::forward<C>(callable)});
             return *this;
         }
 
@@ -904,7 +932,7 @@ namespace webpp::http {
             context_type ctx{in_req};
 
             // call the router with the specified context, fill the response
-            this->operator()<context_type>(ctx);
+            this->operator()(ctx);
 
             // if it didn't fill the response:
             if (ctx.response.empty()) {
@@ -922,10 +950,9 @@ namespace webpp::http {
          * This method does not set 404 error message at all, give you a chance to use this router as
          * a sub-router of a parent router and let the parent router to deal with these things.
          */
-        template <Context CtxT>
-        constexpr void operator()(CtxT& ctx) {
+        constexpr void operator()(context_type& ctx) {
             for (auto& route : routes) {
-                route(ctx);
+                route->operator()(ctx);
                 if (!continue_routing(ctx)) {
                     return;
                 }
@@ -934,7 +961,8 @@ namespace webpp::http {
 
         constexpr void to_string(istl::String auto& out) const {
             for (auto& route : routes) {
-                route_to_string(out, route);
+                route->to_string(out);
+                out.append("\n");
             }
         }
 
