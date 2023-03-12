@@ -296,13 +296,15 @@ namespace webpp::http {
         constexpr basic_context(request_type& req)
           : context_methods{req},
             request{req},
-            response{req.get_traits()} {}
+            response{req.get_traits()},
+            traverser{request.path_iterator()} {}
 
         template <Context CtxT>
         constexpr basic_context(CtxT const& ctx) noexcept
           : context_methods{ctx.request},
             request{ctx.request},
-            response{ctx.response} {}
+            response{ctx.response},
+            traverser{request.path_iterator()} {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
@@ -325,6 +327,12 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr bool empty() const noexcept {
             return request.empty() && response.empty();
+        }
+
+        // You should call this function if you every wanted to change the request's url
+        constexpr basic_context& reset_path_traverser() noexcept {
+            traverser = request.path_traverser();
+            return *this;
         }
     };
 
