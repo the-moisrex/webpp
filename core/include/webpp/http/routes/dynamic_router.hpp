@@ -26,10 +26,13 @@ namespace webpp::http {
         template <typename Callable>
         static constexpr void route_to_string(istl::String auto& out, Callable& func) {
             if constexpr (istl::StringViewifiable<Callable>) {
+                out.append(" \"");
                 out += istl::string_viewify(func);
+                out.append("\"");
             } else if constexpr (requires { func.to_string(out); }) {
                 func.to_string(out);
             } else {
+                out.append(" ");
                 out.append(typeid(Callable).name());
             }
         }
@@ -286,6 +289,16 @@ namespace webpp::http {
         template <typename... C>
         struct route_optimizer<forward_callables<void, C...>> : route_optimizer<forward_callables<C...>> {};
 
+        // remove double forwarding
+        template <typename C1, typename... C>
+        struct route_optimizer<forward_callables<forward_callables<C1>, C...>>
+          : route_optimizer<forward_callables<C1, C...>> {};
+
+        // remove double segmenting
+        template <typename... C1s, typename... C>
+        struct route_optimizer<segment_callables<segment_callables<C1s...>, C...>>
+          : route_optimizer<segment_callables<C1s..., C...>> {};
+
 
         // C || Positive == ?
         // C && Negative == ?
@@ -307,10 +320,9 @@ namespace webpp::http {
                     return forward_callables<stl::remove_cvref_t<Callable>>{stl::forward<Callable>(callable)};
                 } else {
                     return route_optimizer_t<forward_callables<Self, stl::remove_cvref_t<Callable>>>{
-                      .callables{
-                        *static_cast<Self const*>(this), // route 1
-                        stl::forward<Callable>(callable) // route 2
-                      }};
+                      *static_cast<Self const*>(this), // route 1
+                      stl::forward<Callable>(callable) // route 2
+                    };
                 }
             }
 
@@ -384,10 +396,9 @@ namespace webpp::http {
                       .segment = stl::forward<CallableSegment>(inp_segment)};
                 } else {
                     return route_optimizer_t<segment_callables<Self, stl::remove_cvref_t<CallableSegment>>>{
-                      .segments{
-                        *static_cast<Self const*>(this),           // first segment
-                        stl::forward<CallableSegment>(inp_segment) // second segment
-                      }};
+                      *static_cast<Self const*>(this),           // first segment
+                      stl::forward<CallableSegment>(inp_segment) // second segment
+                    };
                 }
             }
 
@@ -400,10 +411,10 @@ namespace webpp::http {
                 if constexpr (stl::is_void_v<Self>) {
                     return segment_callables<seg_t>{.segment = seg_v};
                 } else {
-                    return route_optimizer_t<segment_callables<Self, seg_t>>{.segments{
+                    return route_optimizer_t<segment_callables<Self, seg_t>>{
                       *static_cast<Self const*>(this), // first segment
                       seg_v                            // second segment
-                    }};
+                    };
                 }
             }
         };
@@ -413,7 +424,27 @@ namespace webpp::http {
 
         template <typename... Callables>
         struct forward_callables : route_root<forward_callables<Callables...>> {
-            stl::tuple<Callables...> callables;
+            using tuple_type = stl::tuple<Callables...>;
+
+          private:
+            tuple_type callables;
+
+          public:
+            constexpr forward_callables(forward_callables const&)                     = default;
+            constexpr forward_callables(forward_callables&&) noexcept                 = default;
+            constexpr forward_callables& operator=(forward_callables&&) noexcept      = default;
+            constexpr forward_callables& operator=(forward_callables const&) noexcept = default;
+            constexpr ~forward_callables()                                            = default;
+
+            template <typename C1, typename... Cs>
+            constexpr forward_callables(forward_callables<C1> const& c1, Cs&&... funcs) noexcept(
+              stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
+              : forward_callables{c1.callable, stl::forward<Cs>(funcs)...} {}
+
+            template <typename... Cs>
+            constexpr forward_callables(Cs&&... funcs) noexcept(
+              stl::is_nothrow_constructible_v<tuple_type, Cs...>)
+              : callables{stl::forward<Cs>(funcs)...} {}
 
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>& ctx) {
@@ -714,7 +745,28 @@ namespace webpp::http {
 
         template <typename... CallableSegments>
         struct segment_callables : route_root<segment_callables<CallableSegments...>> {
-            stl::tuple<CallableSegments...> segments;
+            using tuple_type = stl::tuple<CallableSegments...>;
+
+          private:
+            tuple_type segments;
+
+          public:
+            constexpr segment_callables(segment_callables const&)                     = default;
+            constexpr segment_callables(segment_callables&&) noexcept                 = default;
+            constexpr segment_callables& operator=(segment_callables&&) noexcept      = default;
+            constexpr segment_callables& operator=(segment_callables const&) noexcept = default;
+            constexpr ~segment_callables()                                            = default;
+
+            template <typename C1, typename... Cs>
+            constexpr segment_callables(segment_callables<C1> const& c1, Cs&&... segs) noexcept(
+              stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
+              : segments{c1.segment, stl::forward<Cs>(segs)...} {}
+
+            template <typename... Cs>
+            constexpr segment_callables(Cs&&... segs) noexcept(
+              stl::is_nothrow_constructible_v<tuple_type, Cs...>)
+              : segments{stl::forward<Cs>(segs)...} {}
+
 
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>& ctx) {

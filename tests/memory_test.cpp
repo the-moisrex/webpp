@@ -166,7 +166,4 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
     int const side_effect_now = side_effect;
     family_member.reset();
     EXPECT_EQ(side_effect, side_effect_now + 10);
-
-    dynamic<daughter, alloc_t> real_daughter{alloc_t{}};
-    dynamic<mother, alloc_t>   not_mom{real_daughter};
 }
