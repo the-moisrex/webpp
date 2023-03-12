@@ -162,6 +162,12 @@ namespace webpp::http {
                     // ignore the result
                 } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t>) {
                     ctx.response = stl::forward<R>(ret);
+                } else if constexpr (HTTPSerializableBody<ret_t, response_body_type>) {
+                    ctx.response = stl::forward<R>(ret);
+                } else if constexpr (stl::same_as<ret_t, http::status_code>) {
+                    ctx.response = ret;
+                } else if constexpr (stl::integral<ret_t>) {
+                    ctx.response = static_cast<http::status_code>(ret);
                 } else if constexpr (istl::Optional<ret_t>) {
                     if (ret) {
                         set_response(stl::move(*ret), ctx);
@@ -170,12 +176,6 @@ namespace webpp::http {
                     if (ret != nullptr) {
                         set_response(*ret, ctx);
                     }
-                } else if constexpr (stl::same_as<ret_t, http::status_code>) {
-                    ctx.response = ret;
-                } else if constexpr (stl::integral<ret_t>) {
-                    ctx.response = static_cast<http::status_code>(ret);
-                } else if constexpr (HTTPSerializableBody<ret_t, response_body_type>) {
-                    ctx.response = stl::forward<R>(ret);
                 } else {
                     static_assert_false(ret_t, "We don't know what to do with your route's return type.");
                 }
