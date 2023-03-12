@@ -61,6 +61,8 @@ TEST(MemoryTest, AvailableMemory) {
 TEST(MemoryTest, DynamicType) {
     using webpp::istl::dynamic;
 
+    EXPECT_TRUE((stl::uses_allocator_v<dynamic<int, stl::allocator<stl::byte>>, stl::allocator<stl::byte>>) );
+
     // I disabled the default ctor.
 
     // EXPECT_TRUE((stl::is_default_constructible_v<dynamic<bool>>) );
@@ -148,6 +150,12 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
         }
     };
 
+    using alloc_t = stl::allocator<stl::byte>;
+    EXPECT_TRUE((stl::is_constructible_v<dynamic<mother>, dynamic<daughter>>) );
+    EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, dynamic<mother, alloc_t>, alloc_t>) );
+    EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, dynamic<daughter, alloc_t>, alloc_t>) );
+    EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, daughter, alloc_t>) );
+
     dynamic<mother> family_member{stl::allocator<mother>()};
     family_member.template emplace<son>(); // replace a son
     EXPECT_EQ(family_member->to_string(), "son");
@@ -155,7 +163,10 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
     EXPECT_EQ(family_member->to_string(), "daughter");
 
     // memory leak check
-    int side_effect_now = side_effect;
+    int const side_effect_now = side_effect;
     family_member.reset();
     EXPECT_EQ(side_effect, side_effect_now + 10);
+
+    dynamic<daughter, alloc_t> real_daughter{alloc_t{}};
+    dynamic<mother, alloc_t>   not_mom{real_daughter};
 }

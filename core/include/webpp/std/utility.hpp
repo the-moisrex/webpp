@@ -23,6 +23,14 @@ namespace webpp::istl {
     }
 
 
+    /**
+     * The opposite of std::move; it's convert rvalue references into lvalue references.
+     */
+    template <typename T>
+    [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(T&& t) noexcept {
+        return static_cast<stl::remove_cvref_t<T>&>(t);
+    }
+
 } // namespace webpp::istl
 
 #endif // WEBPP_UTILITY_HPP
