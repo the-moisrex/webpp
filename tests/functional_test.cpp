@@ -238,6 +238,10 @@ TEST(FunctionalTests, DoubleFreeFunction) {
     EXPECT_EQ(vec.back()(), 20);
 }
 
+int mmmax(int a, int b) {
+    return std::max(a, b);
+}
+
 TEST(FunctionalTests, FunctionRefTests) {
     function_ref<int()> view;
 
@@ -266,14 +270,57 @@ TEST(FunctionalTests, FunctionRefTests) {
         }
     };
 
-    object_type one{.value = 101};
-    object_type two{.value = 102};
+    object_type const one{.value = 101};
+    object_type const two{.value = 102};
 
     view = one;
     EXPECT_EQ(view(), 101);
     view = two;
     EXPECT_EQ(view(), 102);
+
+    function_ref<int(int, int)> const view2 = &mmmax;
+    EXPECT_EQ(view2(10, 15), 15);
 }
 
+// TEST(FunctionalTests, MemberFunctionRef) {
+//     struct const_op {
+//         constexpr int operator()() const {
+//             return 23;
+//         }
+//     };
+//
+//     struct non_const_op {
+//         constexpr int operator()() const {
+//             return 21;
+//         }
+//     };
+//
+//     struct both_const_op {
+//         constexpr int operator()() const {
+//             return 24;
+//         }
+//
+//         constexpr int operator()() {
+//             return 25;
+//         }
+//     };
+//
+//     member_function_ref<int()> view;
+//
+//     view = const_op{};
+//     EXPECT_EQ(view(), 23);
+//
+//     view = non_const_op{};
+//     EXPECT_EQ(view(), 24);
+//
+//
+//     view = both_const_op{};
+//     EXPECT_EQ(view(), 25); // calls the non-const version
+//
+//     both_const_op const has_both{};
+//     view = has_both;
+//     EXPECT_EQ(view(), 24); // calls the const version
+// }
+//
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
