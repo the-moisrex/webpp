@@ -2,39 +2,76 @@
 #define WEBPP_FUNCTIONAL_H
 
 // Created by moisrex on 12/6/19.
-#include "../std/std.hpp"
+#include "../std/concepts.hpp"
 #include "../std/type_traits.hpp"
 
-#include <utility>
+#include <functional>
 
 namespace webpp {
     template <typename Signature>
-    class function_ref;
+    struct function_ref;
 
     template <typename Return, typename... Args>
-    class function_ref<Return(Args...)> final {
+    struct function_ref<Return(Args...)> final {
       private:
-        using sig_type = Return (*)(void*, Args...);
+        using signature = Return (function_ref::*)(Args...) const;
+        struct error {
+            constexpr Return operator()(Args...) {
+                throw stl::bad_function_call{};
+            }
+        };
 
-        void* _ptr;
+        template <typename TPtr>
+        constexpr Return invoker(Args... xs) const
+          noexcept(noexcept((*static_cast<TPtr>(_ptr))(stl::forward<Args>(xs)...))) {
+            return (*static_cast<TPtr>(_ptr))(stl::forward<Args>(xs)...);
+        }
+
+
+        // object
+        void* _ptr = nullptr;
 
         // Return (*_erased_fn)(void*, Args...);
-        sig_type erased_func;
+        signature erased_func = &function_ref::invoker<stl::add_pointer_t<error>>;
 
       public:
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
-            requires(stl::is_invocable_v<T&, Args...> && !stl::is_same_v<stl::decay_t<T>, function_ref>)
-        constexpr explicit function_ref(T&& x) noexcept : _ptr{(void*) stl::addressof(x)} {
-            erased_func =
-              [](void* ptr, Args... xs) noexcept(noexcept(
-                (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...))) -> Return {
-                return (*reinterpret_cast<stl::add_pointer_t<T>>(ptr))(stl::forward<Args>(xs)...);
-            };
+            requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
+        constexpr explicit function_ref(T&& x) noexcept
+          : _ptr{static_cast<void*>(stl::addressof(x))},
+            erased_func{&function_ref::invoker<stl::add_pointer_t<T>>} {}
+
+
+        // Setting the member function, but not the object
+        // In order to call it, you have to first set the object as wee ot it's a blow up in your face
+        // situation.
+        template <typename T>
+            requires(stl::is_member_function_pointer_v<stl::remove_cvref_t<T>> &&
+                     !istl::same_as_cvref<T, function_ref>)
+        constexpr explicit function_ref(T&&) noexcept
+          : erased_func{&function_ref::invoker<stl::add_pointer_t<T>>} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+
+        constexpr function_ref() noexcept                               = default;
+        constexpr function_ref(function_ref const&) noexcept            = default;
+        constexpr function_ref(function_ref&&) noexcept                 = default;
+        constexpr function_ref& operator=(function_ref const&) noexcept = default;
+        constexpr function_ref& operator=(function_ref&&) noexcept      = default;
+        constexpr ~function_ref() noexcept                              = default;
+
+        template <typename T>
+            requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
+        constexpr function_ref& operator=(T&& x) noexcept {
+            _ptr        = static_cast<void*>(stl::addressof(x));
+            erased_func = &function_ref::invoker<stl::add_pointer_t<T>>;
+            return *this;
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
-          noexcept(noexcept(erased_func(_ptr, stl::forward<Args>(xs)...))) {
-            return erased_func(_ptr, stl::forward<Args>(xs)...);
+          noexcept(noexcept((this->*erased_func)(stl::forward<Args>(xs)...))) {
+            return (this->*erased_func)(stl::forward<Args>(xs)...);
         }
     };
 
