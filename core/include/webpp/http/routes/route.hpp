@@ -400,7 +400,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator>>=(RouteT&& new_route) const noexcept {
             using rt = stl::remove_cvref_t<RouteT>;
             if constexpr (stl::is_member_function_pointer_v<rt>) {
-                using mem_func_ptr_t = member_function_pointer<rt>;
+                using mem_func_ptr_t = member_function_pointer_traits<rt>;
                 using app_type       = typename mem_func_ptr_t::type;
                 return set_next<logical_operators::none>(
                   route_with_router_pointer<app_type,

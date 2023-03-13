@@ -12,74 +12,161 @@ namespace webpp {
     template <typename Signature>
     struct function_ref;
 
+    // Interesting Implementations:
+    //   - https://github.com/zhihaoy/nontype_functional/blob/main/include/std23/function_ref.h
+    //     Paper about this:
+    //       https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2472r3.html
     template <typename Return, typename... Args>
     struct function_ref<Return(Args...)> {
+        using signature = Return (*)(Args...);
+
       private:
         template <typename NewRet, typename... NewArgs>
         static constexpr bool is_convertible_function =
           stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
           (stl::is_convertible_v<Args, NewArgs> && ...);
 
-        using signature = Return (function_ref::*)(Args...) const;
-        struct error {
-            constexpr Return operator()(Args...) const {
-                throw stl::bad_function_call{};
-            }
-        };
+        using self_signature = Return (function_ref::*)(Args...) const;
 
-        template <typename TPtr>
+        constexpr Return error(Args...) const noexcept(false) {
+            throw stl::bad_function_call{};
+        }
+
+        template <typename T>
         constexpr Return invoker(Args... xs) const
-          noexcept(noexcept((*static_cast<TPtr>(obj_ptr))(stl::forward<Args>(xs)...))) {
-            return (*static_cast<TPtr>(obj_ptr))(stl::forward<Args>(xs)...);
+          noexcept(noexcept((*get<T>(obj))(stl::forward<Args>(xs)...))) {
+            return (*get<T>(obj))(stl::forward<Args>(xs)...);
         }
 
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
         // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
         constexpr Return func_invoker(Args... xs) const
-          noexcept(noexcept((*reinterpret_cast<Return (*)(Args...)>(obj_ptr))(stl::forward<Args>(xs)...))) {
-            return (*reinterpret_cast<Return (*)(Args...)>(obj_ptr))(stl::forward<Args>(xs)...);
+          noexcept(noexcept((*get<signature>(obj))(stl::forward<Args>(xs)...))) {
+            return (*get<signature>(obj))(stl::forward<Args>(xs)...);
         }
 
         template <typename NewRet, typename... NewArgs>
-        constexpr Return near_func_invoker(Args... xs) const noexcept(
-          noexcept((*reinterpret_cast<NewRet (*)(NewArgs...)>(obj_ptr))(stl::forward<Args>(xs)...))) {
-            return static_cast<Return>(
-              (*reinterpret_cast<NewRet (*)(NewArgs...)>(obj_ptr))(stl::forward<Args>(xs)...));
+        constexpr Return near_func_invoker(Args... xs) const
+          noexcept(noexcept((*get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...))) {
+            return static_cast<Return>((*get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...));
         }
 
 
+        union storage {
+            void*       obj_ptr = nullptr;
+            void const* const_obj_ptr;
+            signature   func_ptr;
+
+            constexpr storage() noexcept = default;
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage(T* p) noexcept : obj_ptr(p) {}
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage(T& p) noexcept : obj_ptr(stl::addressof(p)) {}
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage(T const* p) noexcept : const_obj_ptr(p) {}
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage(T const& p) noexcept : const_obj_ptr(stl::addressof(p)) {}
+
+            template <typename T>
+                requires stl::is_function_v<T>
+            constexpr storage(T* p) noexcept : func_ptr(reinterpret_cast<signature>(p)) {}
+
+
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage& operator=(T* p) noexcept {
+                obj_ptr = p;
+                return *this;
+            }
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage& operator=(T& p) noexcept {
+                obj_ptr = stl::addressof(p);
+                return *this;
+            }
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage& operator=(T const* p) noexcept {
+                const_obj_ptr = p;
+                return *this;
+            }
+
+            template <typename T>
+                requires stl::is_object_v<T>
+            constexpr storage& operator=(T const& p) noexcept {
+                const_obj_ptr = stl::addressof(p);
+                return *this;
+            }
+
+            template <typename T>
+                requires stl::is_function_v<T>
+            constexpr storage& operator=(T* p) noexcept {
+                func_ptr = reinterpret_cast<signature>(p);
+                return *this;
+            }
+        };
+
+        template <typename T>
+        constexpr static auto get(storage obj) noexcept {
+            if constexpr (stl::same_as<T, signature>) {
+                return reinterpret_cast<T>(obj.func_ptr);
+            } else if constexpr (stl::is_const_v<T>) {
+                return static_cast<T*>(obj.const_obj_ptr);
+            } else if constexpr (stl::is_object_v<T>) {
+                return static_cast<T*>(obj.obj_ptr);
+            }
+        }
+
         // object
-        void*     obj_ptr     = static_cast<void*>(this);
-        signature erased_func = &function_ref::invoker<stl::add_pointer_t<error>>;
+        storage        obj         = this;
+        self_signature erased_func = &function_ref::error;
 
       public:
         template <typename T>
             requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
-        constexpr explicit function_ref(T& x) noexcept
-          : obj_ptr{static_cast<void*>(stl::addressof(x))},
-            erased_func{&function_ref::invoker<stl::add_pointer_t<T>>} {}
+        constexpr explicit function_ref(T& x) noexcept : obj{x},
+                                                         erased_func{&function_ref::invoker<T>} {}
 
         template <typename T>
             requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
         constexpr explicit function_ref(T const& x) noexcept
-          : obj_ptr{const_cast<void*>(static_cast<void const*>(stl::addressof(x)))},
-            erased_func{&function_ref::invoker<stl::add_pointer_t<T>>} {}
+          : obj{x},
+            erased_func{&function_ref::invoker<T>} {}
 
-        constexpr function_ref(Return (*const inp_func)(Args...)) noexcept
-          : obj_ptr{reinterpret_cast<void*>(inp_func)},
-            erased_func{&function_ref::func_invoker} {}
+        constexpr function_ref(signature inp_func) noexcept
+          : obj{inp_func},
+            erased_func{&function_ref::func_invoker} {
+            if (!inp_func) {
+                operator=(stl::nullptr_t{});
+            }
+        }
 
         template <typename NewRet, typename... NewArgs>
             requires(is_convertible_function<NewRet, NewArgs...>)
         constexpr function_ref(NewRet (*const inp_func)(NewArgs...)) noexcept
-          : obj_ptr{reinterpret_cast<void*>(inp_func)},
-            erased_func{&function_ref::near_func_invoker<NewRet, NewArgs...>} {}
+          : obj{inp_func},
+            erased_func{&function_ref::near_func_invoker<NewRet, NewArgs...>} {
+            if (!inp_func) {
+                operator=(stl::nullptr_t{});
+            }
+        }
 
         // converting copy constructor
         template <typename NewRet, typename... NewArgs>
             requires(is_convertible_function<NewRet, NewArgs...>)
         constexpr function_ref(function_ref<NewRet(NewArgs...)> const& func) noexcept
-          : obj_ptr{func.obj_ptr},
+          : obj{func.obj},
             erased_func{func.erased_func} {}
 
 
@@ -95,22 +182,26 @@ namespace webpp {
         template <typename T>
             requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
         constexpr function_ref& operator=(T& x) noexcept {
-            obj_ptr     = static_cast<void*>(stl::addressof(x));
-            erased_func = &function_ref::invoker<stl::add_pointer_t<T>>;
+            obj         = x;
+            erased_func = &function_ref::invoker<T>;
             return *this;
         }
 
         template <typename T>
             requires(stl::is_invocable_v<T&, Args...> && !istl::same_as_cvref<T, function_ref>)
         constexpr function_ref& operator=(T const& x) noexcept {
-            obj_ptr     = const_cast<void*>(static_cast<void const*>(stl::addressof(x)));
-            erased_func = &function_ref::invoker<stl::add_pointer_t<T>>;
+            obj         = x;
+            erased_func = &function_ref::invoker<T>;
             return *this;
         }
 
-        constexpr function_ref& operator=(Return (*const inp_func)(Args...)) noexcept {
-            obj_ptr     = reinterpret_cast<void*>(inp_func);
-            erased_func = &function_ref::func_invoker;
+        constexpr function_ref& operator=(signature inp_func) noexcept {
+            if (!inp_func) {
+                operator=(stl::nullptr_t{});
+            } else {
+                obj         = inp_func;
+                erased_func = &function_ref::func_invoker;
+            }
             return *this;
         }
 
@@ -118,8 +209,12 @@ namespace webpp {
         template <typename NewRet, typename... NewArgs>
             requires(is_convertible_function<NewRet, NewArgs...>)
         constexpr function_ref& operator=(NewRet (*const inp_func)(NewArgs...)) noexcept {
-            obj_ptr     = reinterpret_cast<void*>(inp_func);
-            erased_func = &function_ref::near_func_invoker<NewRet, NewArgs...>;
+            if (!inp_func) {
+                operator=(stl::nullptr_t{});
+            } else {
+                obj         = inp_func;
+                erased_func = &function_ref::near_func_invoker<NewRet, NewArgs...>;
+            }
             return *this;
         }
 
@@ -128,13 +223,13 @@ namespace webpp {
 
 
         constexpr function_ref& operator=(stl::nullptr_t) noexcept {
-            obj_ptr     = static_cast<void*>(this);
-            erased_func = &function_ref::invoker<stl::add_pointer_t<error>>;
+            obj         = this;
+            erased_func = &function_ref::error;
             return *this;
         }
 
         constexpr operator bool() const noexcept {
-            return obj_ptr == static_cast<void*>(this);
+            return erased_func != &function_ref::error;
         }
 
         constexpr decltype(auto) operator()(Args... xs) const
@@ -432,8 +527,9 @@ namespace webpp {
      * Details of a member function pointer is going to be here
      */
     template <typename T>
-    struct member_function_pointer {};
+    struct member_function_pointer_traits {};
 
+    // todo: use template recursion instead of these macros??
 #define MEMBER_FUNCTION_POINTER_IMPL_no_noexcept
 #define MEMBER_FUNCTION_POINTER_IMPL_no_const
 #define MEMBER_FUNCTION_POINTER_IMPL_no_ref
@@ -460,10 +556,10 @@ namespace webpp {
 
 #define MEMBER_FUNCTION_POINTER_IMPL(IS_CONST, IS_VOLATILE, IS_REFERENCE, IS_MOVE, IS_NOEXCEPT)              \
     template <typename T, typename Ret, typename... Args>                                                    \
-    struct member_function_pointer<Ret (T::*)(Args...) MEMBER_FUNCTION_POINTER_IMPL_OPT(                     \
+    struct member_function_pointer_traits<Ret (T::*)(Args...) MEMBER_FUNCTION_POINTER_IMPL_OPT(              \
       IS_CONST) MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_VOLATILE) MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_REFERENCE) \
-                                     MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_MOVE)                               \
-                                       MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_NOEXCEPT)> {                      \
+                                            MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_MOVE)                        \
+                                              MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_NOEXCEPT)> {               \
         using return_type                       = Ret;                                                       \
         using type                              = T;                                                         \
         using args                              = stl::tuple<Args...>;                                       \

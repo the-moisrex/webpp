@@ -278,8 +278,12 @@ TEST(FunctionalTests, FunctionRefTests) {
     view = two;
     EXPECT_EQ(view(), 102);
 
-    function_ref<int(int, int)> const view2 = &mmmax;
+    function_ref<int(int, int)> view2;
+    view2 = &mmmax;
     EXPECT_EQ(view2(10, 15), 15);
+
+    function_ref<int(int, int)> const view3{&mmmax};
+    EXPECT_EQ(view3(10, 15), 15);
 }
 
 // TEST(FunctionalTests, MemberFunctionRef) {
