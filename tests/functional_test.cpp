@@ -11,6 +11,8 @@
 
 using namespace webpp;
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 void test(int limit) {
     static auto i = 0;
     i++;
@@ -235,3 +237,43 @@ TEST(FunctionalTests, DoubleFreeFunction) {
     vec.emplace_back(istl::pmr::function<long()>(item));
     EXPECT_EQ(vec.back()(), 20);
 }
+
+TEST(FunctionalTests, FunctionRefTests) {
+    function_ref<int()> view;
+
+    function_ref<int()> const view40{[]() noexcept(false) -> int {
+        return 40;
+    }};
+
+    auto ret20 = [] {
+        return 20;
+    };
+    view = ret20;
+    EXPECT_EQ(view40(), 40);
+    EXPECT_EQ(view(), 20);
+
+    view = [] {
+        return 30;
+    };
+
+    EXPECT_EQ(view(), 30);
+
+    struct object_type {
+        int value; // NOLINT(misc-non-private-member-variables-in-classes)
+
+        int operator()() const {
+            return value;
+        }
+    };
+
+    object_type one{.value = 101};
+    object_type two{.value = 102};
+
+    view = one;
+    EXPECT_EQ(view(), 101);
+    view = two;
+    EXPECT_EQ(view(), 102);
+}
+
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
