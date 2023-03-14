@@ -114,10 +114,6 @@ namespace webpp::http {
             body(stl::move(b)) {}
         constexpr explicit common_http_response(body_type&& b) noexcept : elist_type{}, body(stl::move(b)) {}
 
-        // todo: headers are not Traits Enabled, so we can't fill the body with it
-        // constexpr explicit basic_response(headers_type&& e) noexcept : elist_type{}, headers(stl::move(e))
-        // {} constexpr explicit basic_response(headers_type const& e) noexcept : elist_type{}, headers(e) {}
-
         constexpr common_http_response& operator=(common_http_response const&)         = default;
         constexpr common_http_response& operator=(common_http_response&& res) noexcept = default;
 
@@ -220,10 +216,10 @@ namespace webpp::http {
             return create(et, obj);
         }
 
-        //        template <typename... Args>
-        //        [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
-        //            return response_type{headers_type{stl::forward<Args>(args)...}};
-        //        }
+        // template <typename... Args>
+        // [[nodiscard]] constexpr static auto with_headers(Args&&... args) {
+        //     return response_type{headers_type{stl::forward<Args>(args)...}};
+        // }
 
         /**
          * Generate a response
@@ -232,9 +228,6 @@ namespace webpp::http {
         [[nodiscard]] static constexpr HTTPResponse auto create(ET&& et, Args&&... args) {
             using new_response_type =
               typename response_type::template apply_extensions_type<NewExtensions...>;
-            // todo: write an auto extension finder based on the Args that get passed
-
-
             if constexpr (requires { new_response_type{et, stl::forward<Args>(args)...}; }) {
                 // ctx is EnabledTraits type, passing ctx as the first argument will help the extensions to be
                 // able to have access to the etraits.

@@ -284,47 +284,72 @@ TEST(FunctionalTests, FunctionRefTests) {
 
     function_ref<int(int, int)> const view3{&mmmax};
     EXPECT_EQ(view3(10, 15), 15);
+
+
+    struct object_type_constness {
+        int operator()() const {
+            return 25;
+        }
+        int operator()() {
+            return 26;
+        }
+    };
+
+    object_type_constness const three;
+    object_type_constness       four;
+    four = three;
+    view = three;
+    EXPECT_EQ(view(), 25);
+    view = four;
+    EXPECT_EQ(view(), 26);
 }
 
-// TEST(FunctionalTests, MemberFunctionRef) {
-//     struct const_op {
-//         constexpr int operator()() const {
-//             return 23;
-//         }
-//     };
-//
-//     struct non_const_op {
-//         constexpr int operator()() const {
-//             return 21;
-//         }
-//     };
-//
-//     struct both_const_op {
-//         constexpr int operator()() const {
-//             return 24;
-//         }
-//
-//         constexpr int operator()() {
-//             return 25;
-//         }
-//     };
-//
-//     member_function_ref<int()> view;
-//
-//     view = const_op{};
-//     EXPECT_EQ(view(), 23);
-//
-//     view = non_const_op{};
-//     EXPECT_EQ(view(), 24);
-//
-//
-//     view = both_const_op{};
-//     EXPECT_EQ(view(), 25); // calls the non-const version
-//
-//     both_const_op const has_both{};
-//     view = has_both;
-//     EXPECT_EQ(view(), 24); // calls the const version
-// }
-//
+TEST(FunctionalTests, MemberFunctionRef) {
+    struct const_op {
+        constexpr int operator()() const {
+            return 23;
+        }
+    };
+
+    struct non_const_op {
+        constexpr int operator()() const {
+            return 21;
+        }
+    };
+
+    struct both_const_op {
+        constexpr int operator()() const {
+            return 24;
+        }
+
+        constexpr int operator()() {
+            return 25;
+        }
+
+        int call() const { // NOLINT(readability-convert-member-functions-to-static)
+            return 1;
+        }
+    };
+
+    member_function_ref<int()> view;
+
+    view = const_op{};
+    EXPECT_EQ(view(), 23);
+
+    view = non_const_op{};
+    EXPECT_EQ(view(), 21);
+
+
+    view = both_const_op{};
+    EXPECT_EQ(view(), 25); // calls the non-const version
+
+    both_const_op const has_both{};
+    view = has_both;
+    EXPECT_EQ(view(), 24); // calls the const version
+
+    view = &both_const_op::call;
+    EXPECT_EQ(view(), 1);
+}
+
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
