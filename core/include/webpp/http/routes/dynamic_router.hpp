@@ -102,7 +102,7 @@ namespace webpp::http {
 
             // static_assert(invocable_inorder_type::value, "We're not able to call your route.");
 
-            static constexpr auto call(Callable&&    callable,
+            static constexpr auto call(Callable&     callable,
                                        context_type& ctx) noexcept(invocable_inorder_type::is_nothrow)
                 requires(invocable_inorder_type::value)
             {
@@ -160,9 +160,8 @@ namespace webpp::http {
                 using ret_t = stl::remove_cvref_t<R>;
                 if constexpr (stl::is_void_v<ret_t> || istl::part_of<ret_t, bool, istl::nothing_type>) {
                     // ignore the result
-                } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t>) {
-                    ctx.response = stl::forward<R>(ret);
-                } else if constexpr (HTTPSerializableBody<ret_t, response_body_type>) {
+                } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t> ||
+                                     HTTPSerializableBody<ret_t, response_body_type>) {
                     ctx.response = stl::forward<R>(ret);
                 } else if constexpr (stl::same_as<ret_t, http::status_code>) {
                     ctx.response = ret;
@@ -393,7 +392,7 @@ namespace webpp::http {
             [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
                 if constexpr (stl::is_void_v<Self>) {
                     return segment_callables<stl::remove_cvref_t<CallableSegment>>{
-                      .segment = stl::forward<CallableSegment>(inp_segment)};
+                      stl::forward<CallableSegment>(inp_segment)};
                 } else {
                     return route_optimizer_t<segment_callables<Self, stl::remove_cvref_t<CallableSegment>>>{
                       *static_cast<Self const*>(this),           // first segment
@@ -409,7 +408,7 @@ namespace webpp::http {
                 auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
                 using seg_t      = stl::remove_cvref_t<decltype(seg_v)>;
                 if constexpr (stl::is_void_v<Self>) {
-                    return segment_callables<seg_t>{.segment = seg_v};
+                    return segment_callables<seg_t>{seg_v};
                 } else {
                     return route_optimizer_t<segment_callables<Self, seg_t>>{
                       *static_cast<Self const*>(this), // first segment
@@ -760,7 +759,7 @@ namespace webpp::http {
             template <typename C1, typename... Cs>
             constexpr segment_callables(segment_callables<C1> const& c1, Cs&&... segs) noexcept(
               stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
-              : segments{c1.segment, stl::forward<Cs>(segs)...} {}
+              : segments{c1.get_segment(), stl::forward<Cs>(segs)...} {}
 
             template <typename... Cs>
             constexpr segment_callables(Cs&&... segs) noexcept(
@@ -806,7 +805,26 @@ namespace webpp::http {
 
         template <typename CallableSegment>
         struct segment_callables<CallableSegment> : route_root<segment_callables<CallableSegment>> {
+          private:
             CallableSegment segment;
+
+          public:
+            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+            template <typename C>
+                requires(!istl::same_as_cvref<C, segment_callables>)
+            constexpr segment_callables(C&& seg) noexcept(stl::is_nothrow_constructible_v<CallableSegment, C>)
+              : segment{stl::forward<C>(seg)} {}
+            // NOLINTEND(bugprone-forwarding-reference-overload)
+
+            constexpr segment_callables(segment_callables const&)                     = default;
+            constexpr segment_callables(segment_callables&&) noexcept                 = default;
+            constexpr segment_callables& operator=(segment_callables&&) noexcept      = default;
+            constexpr segment_callables& operator=(segment_callables const&) noexcept = default;
+            constexpr ~segment_callables()                                            = default;
+
+            constexpr CallableSegment const& get_segment() const noexcept {
+                return segment;
+            }
 
             template <Traits TraitsType>
             constexpr void operator()(basic_context<TraitsType>& ctx) {
@@ -814,6 +832,41 @@ namespace webpp::http {
                 using segment_traits = route_traits<CallableSegment, context_type>;
 
                 segment_traits::set_response(segment_traits::call(segment, ctx), ctx);
+            }
+
+            constexpr void to_string(istl::String auto& out) const {
+                out.append(" /");
+                route_to_string(out, segment);
+            }
+        };
+
+
+        template <typename MemFuncType>
+        struct member_function_callable {
+            using method_traits = member_function_pointer_traits<MemFuncType>;
+            using object_type = typename method_traits::type;
+            using object_ptr = stl::add_pointer_t<object_type>;
+            using method_ptr  = MemFuncType;
+
+          private:
+            object_ptr obj = nullptr;
+            method_ptr func;
+          public:
+
+            constexpr member_function_callable(MemFuncType inp_func) noexcept : func{inp_func} {}
+
+            constexpr member_function_callable(member_function_callable const&)                     = default;
+            constexpr member_function_callable(member_function_callable&&) noexcept                 = default;
+            constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
+            constexpr member_function_callable& operator=(member_function_callable const&) noexcept = default;
+            constexpr ~member_function_callable()                                            = default;
+
+            template <Traits TraitsType>
+            constexpr void operator()(basic_context<TraitsType>& ctx) {
+                using context_type   = basic_context<TraitsType>;
+                using callable_traits = route_traits<member_function_callable, context_type>;
+
+                callable_traits::set_response(callable_traits::call(*this, ctx), ctx);
             }
 
             constexpr void to_string(istl::String auto& out) const {
@@ -894,7 +947,7 @@ namespace webpp::http {
         template <typename T, typename U>
             requires(stl::is_member_function_pointer_v<T>)
         constexpr auto routify(T&& method, U&& obj) noexcept {
-            using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
+            using method_type = member_function_pointer_traits<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             using return_type = typename method_type::return_type;
             static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
@@ -923,7 +976,7 @@ namespace webpp::http {
         template <typename T>
             requires(stl::is_member_function_pointer_v<T>)
         constexpr route_type routify(T&& method) noexcept {
-            using method_type = member_function_pointer<stl::remove_cvref_t<T>>;
+            using method_type = member_function_pointer_traits<stl::remove_cvref_t<T>>;
             using type        = typename method_type::type;
             for (auto& obj : objects) {
                 if (obj.type() == typeid(type)) {
@@ -941,13 +994,7 @@ namespace webpp::http {
                   fmt::format("You have not specified an object with typeid of '{}' in your dynamic router,"
                               " but you've tried to register a member function of unknown type for router.",
                               typeid(type).name()));
-                return invalid_route(
-                  "Unknown member function registered as a route; see the logs for more detail.");
             }
-        }
-
-        constexpr route_type invalid_route([[maybe_unused]] string_type const& str) {
-            return error(status_code::insufficient_storage, str);
         }
 
         /**
