@@ -9,69 +9,29 @@
 
 namespace webpp {
 
-    template <typename Signature>
-    struct function_ref;
-
-    // Interesting Implementations:
-    //   - https://github.com/zhihaoy/nontype_functional/blob/main/include/std23/function_ref.h
-    //     Paper about this:
-    //       https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2472r3.html
-    template <typename Return, typename... Args>
-    struct function_ref<Return(Args...)> {
-        using signature_ptr = Return (*)(Args...);
-
-      private:
-        template <typename NewRet, typename... NewArgs>
-        static constexpr bool is_convertible_function =
-          stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
-          (stl::is_convertible_v<Args, NewArgs> && ...);
-
-
-        template <typename T>
-        static constexpr bool invocable_using =
-          (stl::is_invocable_v<T&, Args...> ||
-           stl::is_invocable_v<T&, void*, Args...>) &&!istl::same_as_cvref<T, function_ref>;
-
-
-        using self_signature = Return (function_ref::*)(Args...) const;
-
-        constexpr Return error(Args...) const noexcept(false) {
-            throw stl::bad_function_call{};
-        }
-
-        template <typename T>
-            requires stl::is_invocable_v<T, Args...>
-        constexpr Return invoker(Args... xs) const
-          noexcept(noexcept((*get<T>(obj))(stl::forward<Args>(xs)...))) {
-            return (*get<T>(obj))(stl::forward<Args>(xs)...);
-        }
-
-        constexpr Return func_invoker(Args... xs) const
-          noexcept(noexcept((*get<signature_ptr>(obj))(stl::forward<Args>(xs)...))) {
-            return (*get<signature_ptr>(obj))(stl::forward<Args>(xs)...);
-        }
-
-        template <typename NewRet, typename... NewArgs>
-        constexpr Return near_func_invoker(Args... xs) const
-          noexcept(noexcept((*get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...))) {
-            return static_cast<Return>((*get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...));
-        }
+    namespace details {
 
 
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+        template <typename SigPtr>
         union storage {
-            void*         obj_ptr = nullptr;
-            void const*   const_obj_ptr;
-            signature_ptr func_ptr;
+            void*       obj_ptr = nullptr;
+            void const* const_obj_ptr;
+            SigPtr      func_ptr;
 
-            constexpr storage() noexcept = default;
+            constexpr storage() noexcept                          = default;
+            constexpr ~storage() noexcept                         = default;
+            constexpr storage(storage const&) noexcept            = default;
+            constexpr storage(storage&&) noexcept                 = default;
+            constexpr storage& operator=(storage const&) noexcept = default;
+            constexpr storage& operator=(storage&&) noexcept      = default;
 
             template <typename T>
                 requires stl::is_object_v<T>
             constexpr storage(T* p) noexcept : obj_ptr(p) {}
 
             template <typename T>
-                requires stl::is_object_v<T>
+                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
             constexpr storage(T& p) noexcept : obj_ptr(stl::addressof(p)) {}
 
             template <typename T>
@@ -79,12 +39,12 @@ namespace webpp {
             constexpr storage(T const* p) noexcept : const_obj_ptr(p) {}
 
             template <typename T>
-                requires stl::is_object_v<T>
+                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
             constexpr storage(T const& p) noexcept : const_obj_ptr(stl::addressof(p)) {}
 
             template <typename T>
                 requires stl::is_function_v<T>
-            constexpr storage(T* p) noexcept : func_ptr(reinterpret_cast<signature_ptr>(p)) {}
+            constexpr storage(T* p) noexcept : func_ptr(reinterpret_cast<SigPtr>(p)) {}
 
 
 
@@ -96,7 +56,7 @@ namespace webpp {
             }
 
             template <typename T>
-                requires stl::is_object_v<T>
+                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
             constexpr storage& operator=(T& p) noexcept {
                 obj_ptr = stl::addressof(p);
                 return *this;
@@ -110,7 +70,7 @@ namespace webpp {
             }
 
             template <typename T>
-                requires stl::is_object_v<T>
+                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
             constexpr storage& operator=(T const& p) noexcept {
                 const_obj_ptr = stl::addressof(p);
                 return *this;
@@ -119,14 +79,14 @@ namespace webpp {
             template <typename T>
                 requires stl::is_function_v<T>
             constexpr storage& operator=(T* p) noexcept {
-                func_ptr = reinterpret_cast<signature_ptr>(p);
+                func_ptr = reinterpret_cast<SigPtr>(p);
                 return *this;
             }
         };
 
-        template <typename T>
-        constexpr static auto get(storage obj) noexcept {
-            if constexpr (stl::same_as<T, signature_ptr>) {
+        template <typename T, typename SigPtr>
+        constexpr static auto get(storage<SigPtr> obj) noexcept {
+            if constexpr (stl::same_as<T, SigPtr>) {
                 return reinterpret_cast<T>(obj.func_ptr);
             } else if constexpr (stl::is_const_v<T>) {
                 return static_cast<T*>(obj.const_obj_ptr);
@@ -137,8 +97,62 @@ namespace webpp {
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
 
-        storage        obj         = this;
-        self_signature erased_func = &function_ref::error;
+    } // namespace details
+
+    template <typename Signature>
+    struct function_ref;
+
+    // Interesting Implementations:
+    //   - https://github.com/zhihaoy/nontype_functional/blob/main/include/std23/function_ref.h
+    //     Paper about this:
+    //       https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2472r3.html
+    template <typename Return, typename... Args>
+    struct function_ref<Return(Args...)> {
+        using signature_ptr = Return (*)(Args...);
+
+      private:
+        using storage_type = details::storage<signature_ptr>;
+
+        template <typename NewRet, typename... NewArgs>
+        static constexpr bool is_convertible_function =
+          stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
+          (stl::is_convertible_v<Args, NewArgs> && ...);
+
+
+        template <typename T>
+        static constexpr bool invocable_using =
+          (stl::is_invocable_v<T&, Args...> ||
+           stl::is_invocable_v<T&, void*, Args...>) &&!istl::same_as_cvref<T, function_ref>;
+
+
+        using self_signature = Return (*)(storage_type, Args...);
+
+        static constexpr Return error(storage_type, Args...) noexcept(false) {
+            throw stl::bad_function_call{};
+        }
+
+        template <typename T>
+            requires stl::is_invocable_v<T, Args...>
+        static constexpr Return
+        invoker(storage_type obj, Args... xs) noexcept(noexcept((*get<T>(obj))(stl::forward<Args>(xs)...))) {
+            return (*details::get<T>(obj))(stl::forward<Args>(xs)...);
+        }
+
+        static constexpr Return func_invoker(storage_type obj, Args... xs) noexcept(
+          noexcept((*details::get<signature_ptr>(obj))(stl::forward<Args>(xs)...))) {
+            return (*details::get<signature_ptr>(obj))(stl::forward<Args>(xs)...);
+        }
+
+        template <typename NewRet, typename... NewArgs>
+        static constexpr Return near_func_invoker(storage_type obj, Args... xs) noexcept(
+          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...))) {
+            return static_cast<Return>(
+              (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...));
+        }
+
+
+        details::storage<signature_ptr> obj         = this;
+        self_signature                  erased_func = &function_ref::error;
 
       public:
         template <typename T>
@@ -147,10 +161,15 @@ namespace webpp {
                                                          erased_func{&function_ref::invoker<T>} {}
 
         template <typename T>
+            requires(invocable_using<T> && stl::is_assignable_v<signature_ptr&, T>)
+        constexpr explicit function_ref(T&& x) noexcept : obj{+x},
+                                                          erased_func{&function_ref::func_invoker} {}
+
+        template <typename T>
             requires(invocable_using<T>)
         constexpr explicit function_ref(T const& x) noexcept
           : obj{x},
-            erased_func{&function_ref::invoker<T>} {}
+            erased_func{&function_ref::invoker<T const>} {}
 
         constexpr function_ref(signature_ptr inp_func) noexcept
           : obj{inp_func},
@@ -188,6 +207,14 @@ namespace webpp {
 
 
         template <typename T>
+            requires(invocable_using<T> && stl::is_assignable_v<signature_ptr&, T>)
+        constexpr function_ref& operator=(T&& x) noexcept {
+            obj         = +x;
+            erased_func = &function_ref::func_invoker;
+            return *this;
+        }
+
+        template <typename T>
             requires(invocable_using<T>)
         constexpr function_ref& operator=(T& x) noexcept {
             obj         = x;
@@ -199,7 +226,7 @@ namespace webpp {
             requires(invocable_using<T>)
         constexpr function_ref& operator=(T const& x) noexcept {
             obj         = x;
-            erased_func = &function_ref::invoker<T>;
+            erased_func = &function_ref::invoker<T const>;
             return *this;
         }
 
@@ -236,8 +263,8 @@ namespace webpp {
         }
 
         constexpr Return operator()(Args... xs) const
-          noexcept(noexcept((this->*erased_func)(stl::forward<Args>(xs)...))) {
-            return (this->*erased_func)(stl::forward<Args>(xs)...);
+          noexcept(noexcept((*erased_func)(obj, stl::forward<Args>(xs)...))) {
+            return (*erased_func)(obj, stl::forward<Args>(xs)...);
         }
     };
 
@@ -261,6 +288,9 @@ namespace webpp {
         static constexpr bool is_const = IsConst;
 
       private:
+        using storage_type   = details::storage<signature_ptr>;
+        using self_signature = Return (*)(void const*, storage_type, Args...);
+
         template <typename NewRet, typename... NewArgs>
         static constexpr bool is_convertible_function =
           stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
@@ -277,51 +307,69 @@ namespace webpp {
         constexpr member_function_ref& operator=(member_function_ref&&) noexcept      = default;
 
         constexpr member_function_ref& operator=(stl::nullptr_t) noexcept {
-            func    = nullptr;
-            obj_ptr = nullptr;
+            erased_func = &member_function_ref::error;
             return *this;
         }
 
         template <typename T>
+            requires(!is_const)
         constexpr member_function_ref(T& inp_obj, Return (T::*inp_mem_ptr)(Args...) = &T::operator()) noexcept
-          : func{member_function_holder<T, Return, Args...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
+          : obj{inp_obj},
+            erased_func{&member_function_ref::invoker<T, Return, Args...>} {
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
+        }
+
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+        // Checking if it's assignable to signature will ensure that the specified type is convertible to a
+        // function pointer, meaning it's probably a lambda
+        template <typename T>
+            requires(!is_const && !istl::same_as_cvref<T, member_function_ref> &&
+                     stl::is_assignable_v<signature_ptr&, T>)
+        constexpr member_function_ref(T&&                                     inp_obj,
+                                      Return (T::*inp_mem_ptr)(Args...) = &T::operator()) noexcept
+          : obj{inp_obj},
+            erased_func{&member_function_ref::invoker<T, Return, Args...>} {
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
+        }
+
 
         template <typename T>
-        constexpr member_function_ref(T&                                            inp_obj,
-                                      Return (T::*inp_mem_ptr)(Args...) const = &T::operator()) noexcept
-          : func{member_function_holder<T, Return, Args...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
-
-        template <typename T>
-            requires(is_const)
         constexpr member_function_ref(T const&                                      inp_obj,
                                       Return (T::*inp_mem_ptr)(Args...) const = &T::operator()) noexcept
-          : func{const_member_function_holder<T, Return, Args...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
-
+          : obj{inp_obj},
+            erased_func{&member_function_ref::const_invoker<T, Return, Args...>} {
+            construct<const_member_function_holder<T, Return, Args...>>(inp_mem_ptr);
+        }
 
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_convertible_function<NRet, NArgs...>)
+            requires(!is_const && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref(T& inp_obj, NRet (T::*inp_mem_ptr)(NArgs...) = &T::operator()) noexcept
-          : func{member_function_holder<T, NRet, NArgs...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
+          : obj{inp_obj},
+            erased_func{&member_function_ref::invoker<T, NRet, NArgs...>} {
+            construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
+        }
 
+        template <typename T, typename NRet, typename... NArgs>
+            requires(!is_const && is_convertible_function<NRet, NArgs...> &&
+                     stl::is_assignable_v<signature_ptr&, T>)
+        constexpr member_function_ref(T&& inp_obj, NRet (T::*inp_mem_ptr)(NArgs...) = &T::operator()) noexcept
+          : obj{inp_obj},
+            erased_func{&member_function_ref::invoker<T, NRet, NArgs...>} {
+            construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
+        }
+
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T, typename NRet, typename... NArgs>
             requires(is_convertible_function<NRet, NArgs...>)
-        constexpr member_function_ref(T&                                           inp_obj,
-                                      NRet (T::*inp_mem_ptr)(NArgs...) const = &T::operator()) noexcept
-          : func{member_function_holder<T, NRet, NArgs...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
-
-        template <typename T, typename NRet, typename... NArgs>
-            requires(is_const && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref(T const&                                     inp_obj,
                                       NRet (T::*inp_mem_ptr)(NArgs...) const = &T::operator()) noexcept
-          : func{const_member_function_holder<T, NRet, NArgs...>{inp_mem_ptr}},
-            obj_ptr{static_cast<void*>(stl::addressof(inp_obj))} {}
+          : obj{inp_obj},
+            erased_func{&member_function_ref::const_invoker<T, NRet, NArgs...>} {
+            construct<const_member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
+        }
 
 
 
@@ -331,39 +379,57 @@ namespace webpp {
         template <typename T>
             requires(!is_const)
         constexpr member_function_ref(Return (T::*inp_mem_ptr)(Args...)) noexcept
-          : func{member_function_holder<T, Return, Args...>{inp_mem_ptr}} {}
+          : erased_func{&member_function_ref::invoker<T, Return, Args...>} {
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
+        }
 
         template <typename T>
         constexpr member_function_ref(Return (T::*inp_mem_ptr)(Args...) const) noexcept
-          : func{const_member_function_holder<T, Return, Args...>{inp_mem_ptr}} {}
+          : erased_func{&member_function_ref::const_invoker<T, Return, Args...>} {
+            construct<const_member_function_holder<T, Return, Args...>>(inp_mem_ptr);
+        }
 
 
         template <typename T>
             requires(!is_const)
         constexpr member_function_ref& operator=(Return (T::*inp_mem_ptr)(Args...)) noexcept {
-            func = member_function_holder<T, Return, Args...>{inp_mem_ptr};
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
 
         template <typename T>
         constexpr member_function_ref& operator=(Return (T::*inp_mem_ptr)(Args...) const) noexcept {
-            func = const_member_function_holder<T, Return, Args...>{inp_mem_ptr};
+            erased_func = &member_function_ref::const_invoker<T, Return, Args...>;
+            construct<const_member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
         template <typename T>
-            requires(!is_const)
+            requires(!is_const && !istl::same_as_cvref<T, member_function_ref>)
         constexpr member_function_ref& operator=(T& new_obj) noexcept {
-            func    = member_function_holder<T, Return, Args...>{&T::operator()};
-            obj_ptr = static_cast<void*>(stl::addressof(new_obj));
+            obj         = new_obj;
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(&T::operator());
+            return *this;
+        }
+
+        template <typename T>
+            requires(!is_const && !istl::same_as_cvref<T, member_function_ref> &&
+                     stl::is_assignable_v<signature_ptr, T>)
+        constexpr member_function_ref& operator=(T&& new_obj) noexcept {
+            obj         = new_obj;
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(&T::operator());
             return *this;
         }
 
         template <typename T>
         constexpr member_function_ref& operator=(T const& new_obj) noexcept {
-            func    = const_member_function_holder<T, Return, Args...>{&T::operator()};
-            obj_ptr = const_cast<void*>(static_cast<void const*>(stl::addressof(new_obj)));
+            obj         = new_obj;
+            erased_func = &member_function_ref::const_invoker<T, Return, Args...>;
+            construct<const_member_function_holder<T, Return, Args...>>(&T::operator());
             return *this;
         }
 
@@ -373,87 +439,140 @@ namespace webpp {
         // The object that you're setting should match the already specified member function or when you call
         // it, it's a blow up in your face situation.
         template <typename T>
-        constexpr member_function_ref& set_object(T&& obj) noexcept {
-            obj_ptr = static_cast<void*>(stl::addressof(obj));
+        constexpr member_function_ref& set_object(T&& new_obj) noexcept {
+            obj = new_obj;
+            return *this;
+        }
+
+
+        template <typename T>
+            requires(!is_const && stl::is_assignable_v<signature_ptr&, T>)
+        constexpr member_function_ref& set(T&&                                     new_obj,
+                                           Return (T::*inp_mem_ptr)(Args...) = &T::operator()) noexcept {
+            obj         = new_obj;
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
         template <typename T>
-        constexpr member_function_ref& set(T&&                                     obj,
+            requires(!is_const)
+        constexpr member_function_ref& set(T&                                      new_obj,
                                            Return (T::*inp_mem_ptr)(Args...) = &T::operator()) noexcept {
-            func    = member_function_holder<T, Return, Args...>{inp_mem_ptr};
-            obj_ptr = static_cast<void*>(stl::addressof(obj));
+            obj         = new_obj;
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
         template <typename T>
         constexpr member_function_ref&
-        set(T&& obj, Return (T::*inp_mem_ptr)(Args...) const = &T::operator()) noexcept {
-            func    = const_member_function_holder<T, Return, Args...>{inp_mem_ptr};
-            obj_ptr = static_cast<void*>(stl::addressof(obj));
+        set(T&& new_obj, Return (T::*inp_mem_ptr)(Args...) const = &T::operator()) noexcept {
+            obj         = new_obj;
+            erased_func = &member_function_ref::const_invoker<T, Return, Args...>;
+            construct<const_member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
 
         template <typename T>
+            requires(!is_const)
         constexpr member_function_ref& set_member(Return (T::*inp_mem_ptr)(Args...)) noexcept {
-            func = member_function_holder<T, Return, Args...>{inp_mem_ptr};
+            erased_func = &member_function_ref::invoker<T, Return, Args...>;
+            construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
 
         template <typename T>
         constexpr member_function_ref& set_member(Return (T::*inp_mem_ptr)(Args...) const) noexcept {
-            func = const_member_function_holder<T, Return, Args...>{inp_mem_ptr};
+            erased_func = &member_function_ref::const_invoker<T, Return, Args...>;
+            construct<const_member_function_holder<T, Return, Args...>>(inp_mem_ptr);
             return *this;
         }
 
-        constexpr Return operator()(Args... xs) const
-          noexcept(noexcept(func(obj_ptr, stl::forward<Args>(xs)...))) {
-            return func(obj_ptr, stl::forward<Args>(xs)...);
-        }
-
-        constexpr Return operator()(void* new_obj, Args... xs) const
-          noexcept(noexcept(func(new_obj, stl::forward<Args>(xs)...))) {
-            return func(new_obj, stl::forward<Args>(xs)...);
+        constexpr Return operator()(Args... xs) const noexcept(noexcept(
+          (*erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(xs)...))) {
+            return (*erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(xs)...);
         }
 
         constexpr operator bool() const noexcept {
-            return func;
+            return erased_func != &member_function_ref::error;
         }
 
       private:
-        func_ref_sig_extra func;
-        void*              obj_ptr = nullptr;
+        static constexpr stl::size_t member_holder_required_storage =
+          sizeof(Return(member_function_ref::*)(Args...));
+
+        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+        storage_type   obj = this;
+        stl::byte      mem_ptr_storage[member_holder_required_storage]{};
+        self_signature erased_func = &member_function_ref::error;
+        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+
+        static constexpr Return error(void const*, storage_type, Args...) noexcept(false) {
+            throw stl::bad_function_call{};
+        }
+
+        template <typename T, typename NRet, typename... NArgs>
+            requires(!is_const)
+        static constexpr Return
+        invoker(void const* mem_ptr_storage, storage_type inp_obj, Args&&... args) noexcept(
+          stl::is_nothrow_invocable_v<member_function_holder<T, NRet, NArgs...>, NArgs...>) {
+            using type = member_function_holder<T, NRet, NArgs...>;
+            return static_cast<Return>(
+              (*static_cast<type const*>(mem_ptr_storage))(inp_obj, stl::forward<NArgs>(args)...));
+        }
+
+        template <typename T, typename NRet, typename... NArgs>
+        static constexpr Return
+        const_invoker(void const* mem_ptr_storage, storage_type inp_obj, Args&&... args) noexcept(
+          stl::is_nothrow_invocable_v<const_member_function_holder<T, NRet, NArgs...>, NArgs...>) {
+            using type = const_member_function_holder<T, NRet, NArgs...>;
+            return static_cast<Return>(
+              (*static_cast<type const*>(mem_ptr_storage))(inp_obj, stl::forward<NArgs>(args)...));
+        }
+
+
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+        template <typename Holder>
+        constexpr void construct(typename Holder::pointer inp_mem_ptr) noexcept {
+            stl::construct_at<Holder>(reinterpret_cast<Holder*>(mem_ptr_storage), inp_mem_ptr);
+        }
+        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+
 
         template <typename T, typename NRet, typename... NArgs>
         struct member_function_holder {
+            using pointer = NRet (T::*)(NArgs...);
+
           private:
-            NRet (T::*func)(NArgs...);
+            pointer func;
 
           public:
-            constexpr member_function_holder(NRet (T::*new_func)(NArgs...)) noexcept : func{new_func} {}
+            constexpr member_function_holder(pointer new_func) noexcept : func{new_func} {}
             constexpr member_function_holder(member_function_holder const&) noexcept            = default;
             constexpr member_function_holder(member_function_holder&&) noexcept                 = default;
             constexpr member_function_holder& operator=(member_function_holder const&) noexcept = default;
             constexpr member_function_holder& operator=(member_function_holder&&) noexcept      = default;
             constexpr ~member_function_holder() noexcept                                        = default;
 
-            constexpr Return operator()(void* new_obj, NArgs... args) const
-              noexcept(noexcept((static_cast<T*>(new_obj)->*func)(stl::forward<NArgs>(args)...))) {
-                return static_cast<Return>((static_cast<T*>(new_obj)->*func)(stl::forward<NArgs>(args)...));
+            constexpr Return operator()(storage_type inp_obj, NArgs... args) const
+              noexcept(noexcept((details::get<T>(inp_obj)->*func)(stl::forward<NArgs>(args)...))) {
+                return static_cast<Return>((details::get<T>(inp_obj)->*func)(stl::forward<NArgs>(args)...));
             }
         };
 
 
         template <typename T, typename NRet, typename... NArgs>
         struct const_member_function_holder {
+            using pointer = NRet (T::*)(NArgs...) const;
+
           private:
-            NRet (T::*func)(NArgs...) const;
+            pointer func;
 
           public:
-            constexpr const_member_function_holder(NRet (T::*new_func)(NArgs...) const) noexcept
-              : func{new_func} {}
+            constexpr const_member_function_holder(pointer new_func) noexcept : func{new_func} {}
             constexpr const_member_function_holder(const_member_function_holder const&) noexcept = default;
             constexpr const_member_function_holder(const_member_function_holder&&) noexcept      = default;
             constexpr const_member_function_holder&
@@ -462,10 +581,9 @@ namespace webpp {
             operator=(const_member_function_holder&&) noexcept = default;
             constexpr ~const_member_function_holder() noexcept = default;
 
-            constexpr Return operator()(void const* new_obj, NArgs... args) const
-              noexcept(noexcept((static_cast<T const*>(new_obj)->*func)(stl::forward<NArgs>(args)...))) {
-                return static_cast<Return>(
-                  (static_cast<T const*>(new_obj)->*func)(stl::forward<NArgs>(args)...));
+            constexpr Return operator()(storage_type inp_obj, NArgs... args) const
+              noexcept(noexcept((details::get<T>(inp_obj)->*func)(stl::forward<NArgs>(args)...))) {
+                return static_cast<Return>((details::get<T>(inp_obj)->*func)(stl::forward<NArgs>(args)...));
             }
         };
     };

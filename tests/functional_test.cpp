@@ -326,7 +326,7 @@ TEST(FunctionalTests, MemberFunctionRef) {
             return 25;
         }
 
-        int call() const { // NOLINT(readability-convert-member-functions-to-static)
+        [[nodiscard]] int call() const { // NOLINT(readability-convert-member-functions-to-static)
             return 1;
         }
     };
@@ -340,8 +340,38 @@ TEST(FunctionalTests, MemberFunctionRef) {
     EXPECT_EQ(view(), 21);
 
 
+    // Lambdas have implicit conversions to the signature, the ones I made above, don't
+    //  class __lambda_11_19
+    //  {
+    //    public:
+    //    inline /*constexpr */ int operator()(char, double) const
+    //    {
+    //      return 0;
+    //    }
+    //
+    //    using retType_11_19 = int (*)(char, double);
+    //    inline constexpr operator retType_11_19 () const noexcept
+    //    {
+    //      return __invoke;
+    //    };
+    //
+    //    private:
+    //    static inline /*constexpr */ int __invoke(char __param0, double __param1)
+    //    {
+    //      return __lambda_11_19{}.operator()(__param0, __param1);
+    //    }
+    //
+    //
+    //    public:
+    //    // /*constexpr */ __lambda_11_19() = default;
+    //
+    //  };
+
+    EXPECT_FALSE((stl::is_assignable_v<int (*&)(), const_op>) );
+    EXPECT_FALSE((stl::is_assignable_v<int (*&)(), non_const_op>) );
+    EXPECT_FALSE((stl::is_assignable_v<int (*&)(), both_const_op>) );
     view = both_const_op{};
-    EXPECT_EQ(view(), 25); // calls the non-const version
+    EXPECT_EQ(view(), 25); // Should it call the non-const version?
 
     both_const_op const has_both{};
     view = has_both;
