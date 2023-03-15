@@ -23,7 +23,7 @@ namespace website {
 
         app(etraits const& et);
 
-        dynamic_response operator()(request_view req);
+        response operator()(request_view req);
     };
 
 
