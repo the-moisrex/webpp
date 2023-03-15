@@ -458,7 +458,6 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithMultiplyLambda) {
     EXPECT_EQ(ref(10, 20), 200);
 }
 
-
 TEST(FunctionalTests, ChatGPTCopyConstructor) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
@@ -575,6 +574,85 @@ TEST(FunctionalTests, ChatGPTFunctionRefToPointToStdFunction) {
     };
     function_ref<int(int, int)> const ref(func);
     EXPECT_EQ(ref(2, 3), 5);
+}
+
+
+int addFunc(int a, int b) {
+    return a + b;
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRefFunctionPointer) {
+    // Create a new function_ref that points to addFunc function pointer
+    function_ref<int(int, int)> const ref1(addFunc);
+
+    // Create another function_ref that points to the first function_ref (ref1)
+    function_ref<int(int, int)> const ref2(ref1);
+
+    // Verify that they both produce the same result when called
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefToPointToStdFunctionFunctionPointer) {
+    stl::function<int(int, int)>      fptr = addFunc;
+    function_ref<int(int, int)> const ref(fptr);
+    EXPECT_EQ(ref(2, 3), 5);
+}
+
+
+TEST(FunctionalTests, ChatGPTCopyConstructorFunctionPointer) {
+    // Create a new function_ref that points to addFunc function pointer
+    function_ref<int(int, int)> const ref1(addFunc);
+
+    // Copy construct another function_ref from the first one (ref1)
+    function_ref<int(int, int)> const ref2(ref1);
+
+    // Verify that they both produce the same result when called
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTCopyAssignmentFunctionPointer) {
+    // Create a new function_ref that points to addFunc function pointer
+    function_ref<int(int, int)> const ref1(addFunc);
+
+    // Create another function_ref that points to multiplyFunc
+    auto multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)> ref2(multiplyFunc);
+
+    // Assign ref1 to ref2
+    ref2 = ref1;
+
+    // Verify that they both produce the same result when called
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTModifyFuncAfterAssignFunctionPointer) {
+    // Create a new function_ref that points to multiplyFunc
+    auto multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)> ref1(multiplyFunc);
+
+    // Create another function_ref that points to addFunc function pointer
+    function_ref<int(int, int)> const ref2(addFunc);
+
+    // After copy assignment ref1 should point to addFunc function pointer
+    ref1 = ref2;
+
+    // Verify that they both produce the same result when called
+    EXPECT_EQ(ref1(2, 3), 5);
+}
+
+TEST(FunctionalTests, ChatGPTMoveConstructorFunctionPointer) {
+    // Create a new function_ref that points to addFunc function pointer
+    function_ref<int(int, int)> ref1(addFunc);
+
+    // Move construct another function_ref from the first one (ref1)
+    function_ref<int(int, int)> const ref2(stl::move(ref1));
+
+    // Verify that the moved function_ref produces the expected result
+    EXPECT_EQ(ref2(2, 3), 5);
 }
 
 
