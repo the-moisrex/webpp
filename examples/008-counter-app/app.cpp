@@ -28,7 +28,6 @@ struct app_impl : public enable_traits<traits_type> {
         view_man.view_roots.emplace_back("../../examples/007-beast-view/public");
         view_man.view_roots.emplace_back("../../../examples/007-beast-view/public");
 
-        router.synced(true);
         setup_routes();
     }
 
@@ -79,6 +78,6 @@ struct app_impl : public enable_traits<traits_type> {
 // app impl
 app::app(typename app::etraits const& et) : the_app{stl::make_unique<app_impl>(et)} {}
 
-dynamic_response operator()(request_view req) {
+response operator()(request_view req) {
     the_app->operator()(req);
 }

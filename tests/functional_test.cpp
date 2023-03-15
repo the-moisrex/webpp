@@ -37,7 +37,7 @@ struct MyCallable {
 };
 
 TEST(FunctionalTests, DebouncedFunctions) {
-    using namespace std::chrono;
+    using namespace stl::chrono;
 
     constexpr auto limit = 1000;
 
@@ -106,7 +106,7 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
     istl::function<int()> func_copy = func;
     EXPECT_EQ(-369, func());
     EXPECT_EQ(func_copy(), -369);
-    istl::function<int()> func_clone{std::allocator<stl::byte>()};
+    istl::function<int()> func_clone{stl::allocator<stl::byte>()};
     func_clone = func_copy;
     EXPECT_EQ(func_clone(), -369);
     func_copy = nullptr;
@@ -114,11 +114,13 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
     func_copy = stl::move(func_clone);
     EXPECT_EQ(func_copy(), -369);
 
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     istl::function<int()> func2 = [i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
         ++i;
         big[i % 30] = i;
         return big[i % 30];
     };
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
     EXPECT_EQ(11, func2());
     EXPECT_EQ(-369, func());
     // EXPECT_NE(func, func2);
@@ -131,9 +133,9 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
 
 
 TEST(FunctionalTests, FunctionWithPMRAllocators) {
-    stl::array<stl::byte, 500>          buff{};
-    stl::pmr::monotonic_buffer_resource res{buff.begin(), buff.size()};
-    stl::pmr::polymorphic_allocator     alloc{&res};
+    stl::array<stl::byte, 500>            buff{};
+    stl::pmr::monotonic_buffer_resource   res{buff.begin(), buff.size()};
+    stl::pmr::polymorphic_allocator const alloc{&res};
 
     istl::pmr::function<int()> func{[i = 0]() mutable {
                                         return ++i;
@@ -169,12 +171,14 @@ TEST(FunctionalTests, FunctionWithPMRAllocators) {
     func_copy = stl::move(func_clone);
     EXPECT_EQ(func_copy(), -369);
 
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     istl::pmr::function<int()> func2{[i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
                                          ++i;
                                          big[i % 30] = i;
                                          return big[i % 30];
                                      },
                                      alloc};
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
     EXPECT_EQ(11, func2());
     EXPECT_EQ(-369, func());
     // EXPECT_NE(func, func2);
@@ -199,9 +203,9 @@ TEST(FunctionalTests, DoubleFreeFunction) {
         return 100;
     };
 
-    stl::array<stl::byte, 1000>         buf{};
-    stl::pmr::monotonic_buffer_resource res{buf.begin(), buf.size()};
-    stl::pmr::polymorphic_allocator     alloc{&res};
+    stl::array<stl::byte, 1000>           buf{};
+    stl::pmr::monotonic_buffer_resource   res{buf.begin(), buf.size()};
+    stl::pmr::polymorphic_allocator const alloc{&res};
 
     istl::pmr::function<int()> ifunc2{stl::allocator_arg_t{}, alloc, [i = 9]() mutable {
                                           return ++i;
@@ -224,7 +228,7 @@ TEST(FunctionalTests, DoubleFreeFunction) {
         return ++i;
     });
     struct item_type {
-        istl::pmr::function<int()> caller = [] {
+        istl::pmr::function<int()> caller = [] { // NOLINT(misc-non-private-member-variables-in-classes)
             return 20;
         };
         int operator()() {
@@ -239,7 +243,7 @@ TEST(FunctionalTests, DoubleFreeFunction) {
 }
 
 int mmmax(int a, int b) {
-    return std::max(a, b);
+    return stl::max(a, b);
 }
 
 TEST(FunctionalTests, FunctionRefTests) {
@@ -379,6 +383,198 @@ TEST(FunctionalTests, MemberFunctionRef) {
 
     view = &both_const_op::call;
     EXPECT_EQ(view(), 1);
+
+
+
+    auto const lambda = [] {
+        return 23;
+    };
+    view = lambda;
+    EXPECT_EQ(view(), 23);
+
+
+    // this lambda is convertible to function pointer, so it should be allowed
+    view = [] {
+        return 222;
+    };
+    EXPECT_EQ(view(), 222);
+
+
+    member_function_ref view_copy = view;
+    EXPECT_EQ(view(), 222);
+    view_copy = view_copy;
+    EXPECT_EQ(view(), 222);
+}
+
+
+
+
+////////////////////////////// ChatGPT Made tests (modified) //////////////////////////////
+
+
+
+
+TEST(FunctionalTests, ChatGPTFunctionRefWithLambda) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int, int)> const ref(addFunc);
+    EXPECT_EQ(ref(2, 3), 5);
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefWithCapture) {
+    int  a       = 10;
+    int  b       = 20;
+    auto addFunc = [&a, &b]() -> int {
+        return a + b;
+    };
+    function_ref<int()> const ref(addFunc);
+    a = 5;
+    b = 6;
+    EXPECT_EQ(ref(), 11);
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefWithCharPointer) {
+    auto charLengthFunc = [](const char* str) -> stl::size_t {
+        return strlen(str);
+    };
+    function_ref<int(const char*)> const ref(charLengthFunc);
+    EXPECT_EQ(ref("hello"), 5);
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefWithThreeIntParams) {
+    auto addThreeFunc = [](int a, int b, int c) -> int {
+        return a + b + c;
+    };
+    function_ref<int(int, int, int)> const ref(addThreeFunc);
+    EXPECT_EQ(ref(1, 2, 3), 6);
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefWithMultiplyLambda) {
+    auto multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)> const ref(multiplyFunc);
+    EXPECT_EQ(ref(10, 20), 200);
+}
+
+
+TEST(FunctionalTests, ChatGPTCopyConstructor) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int, int)> const ref1(addFunc);
+    function_ref<int(int, int)> const ref2(ref1);
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTCopyAssignment) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int, int)> const ref1(addFunc);
+    auto                              multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)> ref2(multiplyFunc);
+    ref2 = ref1;
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTModifyFuncAfterAssign) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    auto multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)>       ref1(multiplyFunc);
+    function_ref<int(int, int)> const ref2(addFunc);
+    // After copy assignment ref1 should point to addFunc
+    ref1 = ref2;
+    EXPECT_EQ(ref1(2, 3), 5);
+}
+
+TEST(FunctionalTests, ChatGPTMoveConstructor) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int, int)>       ref1(addFunc);
+    function_ref<int(int, int)> const ref2(stl::move(ref1));
+    EXPECT_EQ(ref2(2, 3), 5);
+}
+
+TEST(FunctionalTests, ChatGPTMoveAssignment) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+    auto multiplyFunc = [](int a, int b) -> int {
+        return a * b;
+    };
+    function_ref<int(int, int)> ref1(multiplyFunc);
+    function_ref<int(int, int)> ref2(addFunc);
+    ref1 = stl::move(ref2);
+    EXPECT_EQ(ref1(2, 3), 5);
+    try {
+        // Verify that ref2 has been moved
+        ref2(2, 3);
+        FAIL() << "Expected stl::bad_function_call";
+    } catch (const stl::bad_function_call&) {
+        SUCCEED();
+    }
+}
+
+TEST(FunctionalTests, ChatGPTVoidReturnType) {
+    int  result   = 0;
+    auto voidFunc = [&result]() {
+        result = 42;
+    };
+    function_ref<void()> const ref(voidFunc);
+    ref();
+    EXPECT_EQ(result, 42);
+}
+
+TEST(FunctionalTests, ChatGPTLambdaWithCapturedArgs) {
+    int  a       = 10;
+    auto addFunc = [&a](int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int)> const ref(addFunc);
+    EXPECT_EQ(ref(20), 30);
+}
+
+TEST(FunctionalTests, ChatGPTEmptyFunctionRef) {
+    function_ref<int()> const ref;
+    try {
+        // Calling an empty function_ref should cause a bad_function_call exception
+        ref();
+        FAIL() << "Expected std::bad_function_call";
+    } catch (const stl::bad_function_call&) {
+        SUCCEED();
+    }
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRef) {
+    auto addFunc = [](int a, int b) -> int {
+        return a + b;
+    };
+
+    // Create a new function_ref that points to addFunc
+    function_ref<int(int, int)> const ref1(addFunc);
+
+    // Create another function_ref that points to the first function_ref (ref1)
+    function_ref<int(int, int)> const ref2(ref1);
+
+    // Verify that they both produce the same result when called
+    EXPECT_EQ(ref1(2, 3), ref2(2, 3));
+}
+
+TEST(FunctionalTests, ChatGPTFunctionRefToPointToStdFunction) {
+    std::function<int(int, int)> func = [](int a, int b) -> int {
+        return a + b;
+    };
+    function_ref<int(int, int)> const ref(func);
+    EXPECT_EQ(ref(2, 3), 5);
 }
 
 

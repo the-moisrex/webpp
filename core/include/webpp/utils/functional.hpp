@@ -121,8 +121,7 @@ namespace webpp {
 
         template <typename T>
         static constexpr bool invocable_using =
-          (stl::is_invocable_v<T&, Args...> ||
-           stl::is_invocable_v<T&, void*, Args...>) &&!istl::same_as_cvref<T, function_ref>;
+          stl::is_invocable_r_v<Return, T&, Args...> && !istl::same_as_cvref<T, function_ref>;
 
 
         using self_signature = Return (*)(storage_type, Args...);
@@ -135,7 +134,7 @@ namespace webpp {
             requires stl::is_invocable_v<T, Args...>
         static constexpr Return
         invoker(storage_type obj, Args... xs) noexcept(noexcept((*get<T>(obj))(stl::forward<Args>(xs)...))) {
-            return (*details::get<T>(obj))(stl::forward<Args>(xs)...);
+            return static_cast<Return>((*details::get<T>(obj))(stl::forward<Args>(xs)...));
         }
 
         static constexpr Return func_invoker(storage_type obj, Args... xs) noexcept(
@@ -160,10 +159,12 @@ namespace webpp {
         constexpr explicit function_ref(T& x) noexcept : obj{x},
                                                          erased_func{&function_ref::invoker<T>} {}
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(invocable_using<T> && stl::is_assignable_v<signature_ptr&, T>)
         constexpr explicit function_ref(T&& x) noexcept : obj{+x},
                                                           erased_func{&function_ref::func_invoker} {}
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T>
             requires(invocable_using<T>)
@@ -312,7 +313,7 @@ namespace webpp {
         }
 
         template <typename T>
-            requires(!is_const)
+            requires(!is_const && !istl::same_as_cvref<T, member_function_ref>)
         constexpr member_function_ref(T& inp_obj, Return (T::*inp_mem_ptr)(Args...) = &T::operator()) noexcept
           : obj{inp_obj},
             erased_func{&member_function_ref::invoker<T, Return, Args...>} {
@@ -335,6 +336,7 @@ namespace webpp {
 
 
         template <typename T>
+            requires(!istl::same_as_cvref<T, member_function_ref>)
         constexpr member_function_ref(T const&                                      inp_obj,
                                       Return (T::*inp_mem_ptr)(Args...) const = &T::operator()) noexcept
           : obj{inp_obj},
@@ -363,7 +365,7 @@ namespace webpp {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_convertible_function<NRet, NArgs...>)
+            requires(is_convertible_function<NRet, NArgs...> && !istl::same_as_cvref<T, member_function_ref>)
         constexpr member_function_ref(T const&                                     inp_obj,
                                       NRet (T::*inp_mem_ptr)(NArgs...) const = &T::operator()) noexcept
           : obj{inp_obj},
@@ -426,6 +428,7 @@ namespace webpp {
         }
 
         template <typename T>
+            requires(!istl::same_as_cvref<T, member_function_ref>)
         constexpr member_function_ref& operator=(T const& new_obj) noexcept {
             obj         = new_obj;
             erased_func = &member_function_ref::const_invoker<T, Return, Args...>;
