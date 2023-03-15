@@ -337,10 +337,12 @@ TEST(FunctionalTests, MemberFunctionRef) {
 
     member_function_ref<int()> view;
 
-    view = const_op{};
+    const_op op1{};
+    view = op1;
     EXPECT_EQ(view(), 23);
 
-    view = non_const_op{};
+    non_const_op op2{};
+    view = op2;
     EXPECT_EQ(view(), 21);
 
 
@@ -393,6 +395,10 @@ TEST(FunctionalTests, MemberFunctionRef) {
     EXPECT_EQ(view(), 23);
 
 
+    member_function_ref<int()> const view_ctor{lambda};
+    EXPECT_EQ(view_ctor(), 23);
+
+
     // this lambda is convertible to function pointer, so it should be allowed
     view = [] {
         return 222;
@@ -408,7 +414,7 @@ TEST(FunctionalTests, MemberFunctionRef) {
 
 
 
-TEST(FunctionalTests, ChatGPTFunctionRefWithLambda) {
+TEST(FunctionalTests, FunctionRefWithLambda) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -416,7 +422,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithLambda) {
     EXPECT_EQ(ref(2, 3), 5);
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefWithCapture) {
+TEST(FunctionalTests, FunctionRefWithCapture) {
     int  a       = 10;
     int  b       = 20;
     auto addFunc = [&a, &b]() -> int {
@@ -428,7 +434,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithCapture) {
     EXPECT_EQ(ref(), 11);
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefWithCharPointer) {
+TEST(FunctionalTests, FunctionRefWithCharPointer) {
     auto charLengthFunc = [](const char* str) -> stl::size_t {
         return strlen(str);
     };
@@ -436,7 +442,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithCharPointer) {
     EXPECT_EQ(ref("hello"), 5);
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefWithThreeIntParams) {
+TEST(FunctionalTests, FunctionRefWithThreeIntParams) {
     auto addThreeFunc = [](int a, int b, int c) -> int {
         return a + b + c;
     };
@@ -444,7 +450,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithThreeIntParams) {
     EXPECT_EQ(ref(1, 2, 3), 6);
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefWithMultiplyLambda) {
+TEST(FunctionalTests, FunctionRefWithMultiplyLambda) {
     auto multiplyFunc = [](int a, int b) -> int {
         return a * b;
     };
@@ -452,7 +458,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefWithMultiplyLambda) {
     EXPECT_EQ(ref(10, 20), 200);
 }
 
-TEST(FunctionalTests, ChatGPTCopyConstructor) {
+TEST(FunctionalTests, CopyConstructor) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -461,7 +467,7 @@ TEST(FunctionalTests, ChatGPTCopyConstructor) {
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTCopyAssignment) {
+TEST(FunctionalTests, CopyAssignment) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -474,7 +480,7 @@ TEST(FunctionalTests, ChatGPTCopyAssignment) {
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTModifyFuncAfterAssign) {
+TEST(FunctionalTests, ModifyFuncAfterAssign) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -488,7 +494,7 @@ TEST(FunctionalTests, ChatGPTModifyFuncAfterAssign) {
     EXPECT_EQ(ref1(2, 3), 5);
 }
 
-TEST(FunctionalTests, ChatGPTMoveConstructor) {
+TEST(FunctionalTests, MoveConstructor) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -497,7 +503,7 @@ TEST(FunctionalTests, ChatGPTMoveConstructor) {
     EXPECT_EQ(ref2(2, 3), 5);
 }
 
-TEST(FunctionalTests, ChatGPTMoveAssignment) {
+TEST(FunctionalTests, MoveAssignment) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -517,7 +523,7 @@ TEST(FunctionalTests, ChatGPTMoveAssignment) {
     }
 }
 
-TEST(FunctionalTests, ChatGPTVoidReturnType) {
+TEST(FunctionalTests, VoidReturnType) {
     int  result   = 0;
     auto voidFunc = [&result]() {
         result = 42;
@@ -527,7 +533,7 @@ TEST(FunctionalTests, ChatGPTVoidReturnType) {
     EXPECT_EQ(result, 42);
 }
 
-TEST(FunctionalTests, ChatGPTLambdaWithCapturedArgs) {
+TEST(FunctionalTests, LambdaWithCapturedArgs) {
     int  a       = 10;
     auto addFunc = [&a](int b) -> int {
         return a + b;
@@ -536,7 +542,7 @@ TEST(FunctionalTests, ChatGPTLambdaWithCapturedArgs) {
     EXPECT_EQ(ref(20), 30);
 }
 
-TEST(FunctionalTests, ChatGPTEmptyFunctionRef) {
+TEST(FunctionalTests, EmptyFunctionRef) {
     function_ref<int()> const ref;
     try {
         // Calling an empty function_ref should cause a bad_function_call exception
@@ -547,7 +553,7 @@ TEST(FunctionalTests, ChatGPTEmptyFunctionRef) {
     }
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRef) {
+TEST(FunctionalTests, FunctionRefToPointToAnotherFunctionRef) {
     auto addFunc = [](int a, int b) -> int {
         return a + b;
     };
@@ -562,7 +568,7 @@ TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRef) {
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefToPointToStdFunction) {
+TEST(FunctionalTests, FunctionRefToPointToStdFunction) {
     std::function<int(int, int)> func = [](int a, int b) -> int {
         return a + b;
     };
@@ -575,7 +581,7 @@ int addFunc(int a, int b) {
     return a + b;
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRefFunctionPointer) {
+TEST(FunctionalTests, FunctionRefToPointToAnotherFunctionRefFunctionPointer) {
     // Create a new function_ref that points to addFunc function pointer
     function_ref<int(int, int)> const ref1(addFunc);
 
@@ -586,14 +592,14 @@ TEST(FunctionalTests, ChatGPTFunctionRefToPointToAnotherFunctionRefFunctionPoint
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTFunctionRefToPointToStdFunctionFunctionPointer) {
+TEST(FunctionalTests, FunctionRefToPointToStdFunctionFunctionPointer) {
     stl::function<int(int, int)>      fptr = addFunc;
     function_ref<int(int, int)> const ref(fptr);
     EXPECT_EQ(ref(2, 3), 5);
 }
 
 
-TEST(FunctionalTests, ChatGPTCopyConstructorFunctionPointer) {
+TEST(FunctionalTests, CopyConstructorFunctionPointer) {
     // Create a new function_ref that points to addFunc function pointer
     function_ref<int(int, int)> const ref1(addFunc);
 
@@ -604,7 +610,7 @@ TEST(FunctionalTests, ChatGPTCopyConstructorFunctionPointer) {
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTCopyAssignmentFunctionPointer) {
+TEST(FunctionalTests, CopyAssignmentFunctionPointer) {
     // Create a new function_ref that points to addFunc function pointer
     function_ref<int(int, int)> const ref1(addFunc);
 
@@ -621,7 +627,7 @@ TEST(FunctionalTests, ChatGPTCopyAssignmentFunctionPointer) {
     EXPECT_EQ(ref1(2, 3), ref2(2, 3));
 }
 
-TEST(FunctionalTests, ChatGPTModifyFuncAfterAssignFunctionPointer) {
+TEST(FunctionalTests, ModifyFuncAfterAssignFunctionPointer) {
     // Create a new function_ref that points to multiplyFunc
     auto multiplyFunc = [](int a, int b) -> int {
         return a * b;
@@ -638,7 +644,7 @@ TEST(FunctionalTests, ChatGPTModifyFuncAfterAssignFunctionPointer) {
     EXPECT_EQ(ref1(2, 3), 5);
 }
 
-TEST(FunctionalTests, ChatGPTMoveConstructorFunctionPointer) {
+TEST(FunctionalTests, MoveConstructorFunctionPointer) {
     // Create a new function_ref that points to addFunc function pointer
     function_ref<int(int, int)> ref1(addFunc);
 
@@ -726,6 +732,74 @@ TEST_F(MemberFunctionPtrTest2, BasicTest) {
     EXPECT_TRUE(is_even_ptr(0));
     EXPECT_TRUE(is_even_ptr(-2));
     EXPECT_FALSE(is_even_ptr(7));
+}
+
+
+// define a test fixture
+class MemberFunctionRefTest : public ::testing::Test {
+  protected:
+    struct TestStruct {
+        int  x; // NOLINT(misc-non-private-member-variables-in-classes)
+        void foo(int n) {
+            x = n;
+        }
+        [[nodiscard]] int bar(int n) const {
+            return x + n;
+        }
+    };
+    static int add_func(int a, int b) {
+        return a + b;
+    }
+};
+
+// test the basic functionality of member_function_ref with member function pointer
+TEST_F(MemberFunctionRefTest, MemberFunctionPtrTest) {
+    using MemberFooPtr         = member_function_ref<void (TestStruct::*)(int)>;
+    MemberFooPtr const foo_ptr = &TestStruct::foo;
+
+    TestStruct obj{0};
+    foo_ptr(obj, 42);
+    EXPECT_EQ(obj.x, 42);
+
+    using MemberBarPtr         = member_function_ref<int (TestStruct::*)(int) const>;
+    MemberBarPtr const bar_ptr = &TestStruct::bar;
+    EXPECT_EQ(bar_ptr(obj, 10), 52);
+}
+
+// test the basic functionality of member_function_ref with function pointer
+TEST_F(MemberFunctionRefTest, FunctionPtrTest) {
+    using AddFuncPtr         = member_function_ref<int (*)(int, int)>;
+    AddFuncPtr const add_ptr = &MemberFunctionRefTest::add_func;
+
+    EXPECT_EQ(add_ptr(2, 3), 5);
+    EXPECT_EQ(add_ptr(-1, 1), 0);
+}
+
+// test the basic functionality of member_function_ref with function_ref
+TEST_F(MemberFunctionRefTest, FunctionRefTest) {
+    auto ddd = [](int& x) {
+        x = 42;
+    };
+    static_assert(stl::is_assignable_v<void (*&)(int&), decltype(ddd)>, "It should be");
+    static_assert(stl::is_invocable_r_v<void, decltype(ddd), int&>, "It should be");
+    function_ref<void (*)(int&)> const ref0 = ddd;
+    function_ref<void(int&)> const     ref  = [](int& x) {
+        x = 42;
+    };
+    member_function_ref<void(int&)> const mf_ref0 = ddd;
+    // member_function_ref<void(int&)> mf_ref  = ref;
+
+    int x = 0;
+    //    mf_ref(x);
+    //    EXPECT_EQ(x, 42);
+
+    x = 0;
+    mf_ref0(x);
+    EXPECT_EQ(x, 42);
+
+    x = 0;
+    ref0(x);
+    EXPECT_EQ(x, 42);
 }
 
 
