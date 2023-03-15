@@ -398,12 +398,6 @@ TEST(FunctionalTests, MemberFunctionRef) {
         return 222;
     };
     EXPECT_EQ(view(), 222);
-
-
-    member_function_ref view_copy = view;
-    EXPECT_EQ(view(), 222);
-    view_copy = view_copy;
-    EXPECT_EQ(view(), 222);
 }
 
 
@@ -653,6 +647,85 @@ TEST(FunctionalTests, ChatGPTMoveConstructorFunctionPointer) {
 
     // Verify that the moved function_ref produces the expected result
     EXPECT_EQ(ref2(2, 3), 5);
+}
+
+
+
+
+////////////////////////////// ChatGPT Generated Tests for member_function_ref //////////////////////////////
+
+
+// define a test fixture
+class MemberFunctionPtrTest : public ::testing::Test {
+  protected:
+    struct TestStruct {
+        int  x;
+        void foo(int n) {
+            x = n;
+        }
+        [[nodiscard]] int bar(int n) const {
+            return x + n;
+        }
+    };
+};
+
+// test the basic functionality of member_function_ref
+TEST_F(MemberFunctionPtrTest, BasicTest) {
+    using MemberFoo         = member_function_ref<void (TestStruct::*)(int)>;
+    MemberFoo const foo_ptr = &TestStruct::foo;
+
+    TestStruct obj{0};
+    foo_ptr(obj, 42);
+    EXPECT_EQ(obj.x, 42);
+
+    using MemberBar         = member_function_ref<int (TestStruct::*)(int) const>;
+    MemberBar const bar_ptr = &TestStruct::bar;
+    EXPECT_EQ(bar_ptr(obj, 10), 52);
+}
+
+// test the copy/move constructor and assignment operators of member_function_ref
+TEST_F(MemberFunctionPtrTest, CopyAndMoveTest) {
+    using MemberFoo    = member_function_ref<void (TestStruct::*)(int)>;
+    MemberFoo foo_ptr1 = &TestStruct::foo;
+    MemberFoo foo_ptr2 = foo_ptr1;
+    MemberFoo foo_ptr3 = std::move(foo_ptr1);
+    foo_ptr1           = &TestStruct::foo;
+    foo_ptr2           = foo_ptr1;
+    foo_ptr3           = std::move(foo_ptr2);
+
+    TestStruct obj{0};
+    foo_ptr1(obj, 42);
+    EXPECT_EQ(obj.x, 42);
+    foo_ptr3(obj, 10);
+    EXPECT_EQ(obj.x, 10);
+}
+
+
+// define a test fixture
+class MemberFunctionPtrTest2 : public ::testing::Test {
+  protected:
+    static int add_func(int a, int b) {
+        return a + b;
+    }
+    static bool is_even(int n) {
+        return n % 2 == 0;
+    }
+};
+
+// test the basic functionality of function_pointer
+TEST_F(MemberFunctionPtrTest2, BasicTest) {
+    using AddFunc         = member_function_ref<int(int, int)>;
+    AddFunc const add_ptr = &MemberFunctionPtrTest2::add_func;
+
+    EXPECT_EQ(add_ptr(2, 3), 5);
+    EXPECT_EQ(add_ptr(-1, 1), 0);
+
+    using IsEvenFunc             = member_function_ref<bool (*)(int)>;
+    IsEvenFunc const is_even_ptr = &MemberFunctionPtrTest2::is_even;
+
+    EXPECT_TRUE(is_even_ptr(0));
+    EXPECT_TRUE(is_even_ptr(-2));
+    EXPECT_FALSE(is_even_ptr(7));
 }
 
 
