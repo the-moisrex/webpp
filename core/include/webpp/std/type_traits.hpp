@@ -1150,6 +1150,37 @@ namespace webpp::istl {
                                                           stl::forward<Args>(args)...);
     }
 
+
+
+    /**
+     * Give 2 param list, and check if Evaluator<L, R>::value on all of them are true or not
+     *
+     * @code
+     *   static constexpr bool value = are_all<std::is_convertible, tuple<int, double>, tuple<double, int>>;
+     * @endcode
+     */
+    template <template <typename, typename> typename Evaluator, typename, typename>
+    struct are_all : stl::false_type {};
+
+    // true condition, all are checked
+    template <template <typename, typename> typename Evaluator, template <typename...> typename T>
+    struct are_all<Evaluator, T<>, T<>> : stl::true_type {};
+
+    // check one
+    template <template <typename, typename> typename Evaluator,
+              template <typename...>
+              typename T,
+              typename... L,
+              typename... R,
+              typename L1,
+              typename R1>
+        requires(sizeof...(L) == sizeof...(R) && Evaluator<L1, R1>::value)
+    struct are_all<Evaluator, T<L1, L...>, T<R1, R...>> : are_all<Evaluator, T<L...>, T<R...>> {};
+
+
+    template <template <typename, typename> typename Evaluator, typename L, typename R>
+    static constexpr bool are_all_v = are_all<Evaluator, L, R>::value;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
