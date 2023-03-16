@@ -6,7 +6,7 @@
  *
  * Mustache
  * Copyright 2015-2020 Kevin Wojniak
- * Copyright 2022      Mohammad Bahoosh
+ * Copyright 2022-     Mohammad Bahoosh
  *
  * Permission is hereby granted, free of charge, to any person or organization
  * obtaining a copy of the software and accompanying documentation covered by
@@ -36,13 +36,13 @@
 
 
 #include "../convert/lexical_cast.hpp"
+#include "../std/function_ref.hpp"
 #include "../std/functional.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/splits.hpp"
 #include "../strings/trim.hpp"
 #include "../traits/enable_traits.hpp"
 #include "../traits/traits.hpp"
-#include "../utils/functional.hpp"
 #include "html.hpp"
 #include "view_concepts.hpp"
 
@@ -91,8 +91,8 @@ namespace webpp::views {
             using string_view_type = traits::string_view<traits_type>;
 
             using renderer_type = basic_renderer<traits_type>;
-            using lambda_type   = function_ref<string_type(string_view_type, renderer_type const&)>;
-            using partial_type  = function_ref<string_type()>;
+            using lambda_type   = istl::function_ref<string_type(string_view_type, renderer_type const&)>;
+            using partial_type  = istl::function_ref<string_type()>;
 
 
             template <typename V>
@@ -113,10 +113,13 @@ namespace webpp::views {
                 [[no_unique_address]] string_allocator_type string_allocator;
 
               public:
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
                 template <typename ET>
+                    requires(!istl::same_as_cvref<ET, mustache_data_view_settings>)
                 constexpr lambda_fixer(ET&& et, Func&& func) noexcept
                   : Func{stl::forward<Func>(func)},
                     string_allocator{alloc::general_allocator<char_type>(et)} {}
+                // NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
                 constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
                     if constexpr (requires_renderer) {
@@ -648,10 +651,6 @@ namespace webpp::views {
         constexpr mustache_view& operator=(mustache_view const&)     = default;
         constexpr mustache_view& operator=(mustache_view&&) noexcept = default;
 
-        constexpr etraits const& get_traits() const noexcept {
-            return static_cast<etraits const&>(*this);
-        }
-
         constexpr void scheme(string_view_type input) {
             delimiter_set<traits_type> delim_set{*this};
             parse(input, delim_set);
@@ -1076,7 +1075,7 @@ namespace webpp::views {
                     if (var != nullptr && (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
-                        mustache_view tmpl{get_traits()};
+                        mustache_view tmpl{this->get_traits()};
                         tmpl.scheme(partial_result);
                         if (!tmpl.is_valid()) {
                             error_msg = tmpl.error_message();
@@ -1144,11 +1143,11 @@ namespace webpp::views {
                     return do_escape ? escaper(str) : str;
                 };
                 if (parse_with_same_context) {
-                    mustache_view tmpl{get_traits()};
+                    mustache_view tmpl{this->get_traits()};
                     tmpl.parse(txt, ctx.delim_set);
                     return process_template(tmpl);
                 }
-                mustache_view tmpl{get_traits()};
+                mustache_view tmpl{this->get_traits()};
                 tmpl.scheme(txt);
                 return process_template(tmpl);
             };

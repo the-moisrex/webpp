@@ -49,6 +49,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/traits/std_traits.hpp
         ${LIB_INCLUDE_DIR}/webpp/traits/std_pmr_traits.hpp
 
+        ${LIB_INCLUDE_DIR}/webpp/std/function_ref.hpp
+        ${LIB_INCLUDE_DIR}/webpp/std/functional.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/enum.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/algorithm.hpp
         ${LIB_INCLUDE_DIR}/webpp/std/array.hpp
@@ -89,7 +91,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/webpp/utils/const_list.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/debounce.hpp
-        ${LIB_INCLUDE_DIR}/webpp/utils/functional.hpp
         ${LIB_INCLUDE_DIR}/webpp/utils/property.hpp
 
         ${LIB_INCLUDE_DIR}/webpp/memory/allocator_concepts.hpp
@@ -274,8 +275,8 @@ endif ()
 add_library(${LIB_NAME} STATIC)
 add_library("${PROJECT_NAME}::${LIB_NAME}" ALIAS ${LIB_NAME})
 target_sources(${LIB_NAME} INTERFACE
-    FILE_SET HEADERS
-    FILES ${ALL_SOURCES})
+        FILE_SET HEADERS
+        FILES ${ALL_SOURCES})
 
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::asio
