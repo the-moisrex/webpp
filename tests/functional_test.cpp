@@ -782,19 +782,32 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
     };
     static_assert(stl::is_assignable_v<void (*&)(int&), decltype(ddd)>, "It should be");
     static_assert(stl::is_invocable_r_v<void, decltype(ddd), int&>, "It should be");
+    static_assert(
+      details::is_specialization_of_mem_fun_ref_v<member_function_ref<void(int&)>, member_function_ref>,
+      "It should be");
+    static_assert(
+      !details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<decltype(ddd)>, member_function_ref>,
+      "It should not be");
+
+
     function_ref<void (*)(int&)> const ref0 = ddd;
     function_ref<void(int&)> const     ref  = [](int& x) {
         x = 42;
     };
-    member_function_ref<void(int&)> const mf_ref0 = ddd;
-    // member_function_ref<void(int&)> mf_ref  = ref;
+    member_function_ref<void(int&)> const mf_ref0     = ddd;
+    member_function_ref<void(int&)> const mf_ref      = ref;
+    member_function_ref<void(int&)> const mf_conv_cpy = mf_ref;
 
     int x = 0;
-    //    mf_ref(x);
-    //    EXPECT_EQ(x, 42);
+    mf_ref(x);
+    EXPECT_EQ(x, 42);
 
     x = 0;
     mf_ref0(x);
+    EXPECT_EQ(x, 42);
+
+    x = 0;
+    mf_conv_cpy(x);
     EXPECT_EQ(x, 42);
 
     x = 0;
