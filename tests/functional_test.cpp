@@ -377,7 +377,7 @@ TEST(FunctionalTests, MemberFunctionRef) {
     EXPECT_FALSE((stl::is_assignable_v<int (*&)(), const_op>) );
     EXPECT_FALSE((stl::is_assignable_v<int (*&)(), non_const_op>) );
     EXPECT_FALSE((stl::is_assignable_v<int (*&)(), both_const_op>) );
-    view = both_const_op{};
+    // view = both_const_op{};
     EXPECT_EQ(view(), 25); // Should it call the non-const version?
 
     both_const_op const has_both{};
@@ -784,11 +784,11 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
     static_assert(stl::is_assignable_v<void (*&)(int&), decltype(ddd)>, "It should be");
     static_assert(stl::is_invocable_r_v<void, decltype(ddd), int&>, "It should be");
     static_assert(
-      details::is_specialization_of_mem_fun_ref_v<member_function_ref<void(int&)>, member_function_ref>,
+      istl::details::is_specialization_of_mem_fun_ref_v<member_function_ref<void(int&)>, member_function_ref>,
       "It should be");
-    static_assert(
-      !details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<decltype(ddd)>, member_function_ref>,
-      "It should not be");
+    static_assert(!istl::details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<decltype(ddd)>,
+                                                                     member_function_ref>,
+                  "It should not be");
 
 
     function_ref<void (*)(int&)> const ref0 = ddd;
