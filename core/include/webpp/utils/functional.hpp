@@ -246,6 +246,8 @@ namespace webpp {
     template <typename Signature>
     struct function_ref;
 
+    template <typename Signature, typename ObjType = void, bool IsConst = false>
+    struct member_function_ref;
 
     template <typename Sig>
     struct function_ref<Sig*> : function_ref<Sig> {
@@ -295,8 +297,12 @@ namespace webpp {
         }
 
 
-        details::storage<signature_ptr> obj         = this;
-        self_signature                  erased_func = &function_ref::error;
+        storage_type   obj         = this;
+        self_signature erased_func = &function_ref::error;
+
+
+        template <typename, typename, bool>
+        friend struct member_function_ref;
 
       public:
         template <typename T>
@@ -416,10 +422,15 @@ namespace webpp {
 
 
 
+    namespace details {
+        define_is_specialization_of(is_specialization_of_mem_fun_ref,
+                                    typename WEBPP_COMMA typename WEBPP_COMMA bool,
+                                    typename Sig WEBPP_COMMA typename ObjT WEBPP_COMMA bool IsConst,
+                                    Sig WEBPP_COMMA ObjT WEBPP_COMMA                        IsConst)
+
+    }
 
 
-    template <typename Signature, typename ObjType = void, bool IsConst = false>
-    struct member_function_ref;
 
     template <typename T>
     struct member_function_ref<T*> : member_function_ref<T> {
@@ -466,11 +477,6 @@ namespace webpp {
         template <typename T>
         using remove_vref = stl::remove_volatile_t<stl::remove_reference_t<T>>;
 
-        //        template <typename MemPtr>
-        //        static constexpr bool is_mem_ptr = member_function_pointer_traits<MemPtr>::value &&
-        //                                           member_function_convertible<member_signature_type,
-        //                                           MemPtr>::value;
-
         template <typename NewRet, typename... NewArgs>
         static constexpr bool is_convertible_function =
           stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
@@ -487,7 +493,7 @@ namespace webpp {
 
         template <typename T>
         static constexpr bool is_object_type =
-          !istl::same_as_cvref<T, member_function_ref> &&
+          !details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<T>, member_function_ref> &&
           (stl::is_void_v<object_type> || istl::same_as_cvref<T, object_type>);
 
       public:
@@ -504,6 +510,17 @@ namespace webpp {
             erased_func = &member_function_ref::error;
             return *this;
         }
+
+
+        // converting copy constructor
+        template <typename NRet, typename... NArgs, bool NIsConst>
+            requires((!is_const || NIsConst) && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref(
+          member_function_ref<NRet(NArgs...), ObjType, NIsConst> const& other) noexcept
+          : obj{other.obj},
+            erased_func{other.erased_func},
+            mem_ptr_storage{other.mem_ptr_storage} {}
+
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T, typename NRet, typename... NArgs>
@@ -545,7 +562,7 @@ namespace webpp {
             requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
                      !stl::is_assignable_v<signature_ptr&, T>)
         constexpr member_function_ref(
-          T&                                  inp_obj,
+          T const&                            inp_obj,
           const_member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
           : obj{inp_obj},
             erased_func{&invoker<remove_vref<T>, Return, Args...>} {
@@ -906,20 +923,28 @@ namespace webpp {
         }
 
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-        template <typename Holder, typename Ptr>
-        constexpr void construct(Ptr inp_mem_ptr) noexcept {
-            using pointer_type   = stl::remove_cvref_t<Ptr>;
-            using const_ptr_type = typename Holder::const_pointer;
-            using ptr_type       = typename Holder::non_const_pointer;
-            if constexpr (!Holder::is_t_const && stl::same_as<pointer_type, ptr_type>) {
-                stl::construct_at<Holder>(reinterpret_cast<Holder*>(mem_ptr_storage), inp_mem_ptr);
-            } else if constexpr (stl::same_as<pointer_type, const_ptr_type>) {
-                using holder_type = typename Holder::const_rebinded;
-                stl::construct_at<holder_type>(reinterpret_cast<holder_type*>(mem_ptr_storage), inp_mem_ptr);
-            } else {
-                static_assert_false(Ptr, "You can't call a non-const member function on a const object.");
-            }
+
+        template <typename Holder>
+            requires(!Holder::is_t_const)
+        constexpr void construct(typename Holder::const_pointer inp_mem_ptr) noexcept {
+            using holder_type = typename Holder::const_rebinded;
+            stl::construct_at<holder_type>(reinterpret_cast<holder_type*>(mem_ptr_storage), inp_mem_ptr);
         }
+
+        template <typename Holder>
+            requires(!Holder::is_t_const)
+        constexpr void construct(typename Holder::non_const_pointer inp_mem_ptr) noexcept {
+            using holder_type = typename Holder::non_const_rebinded;
+            stl::construct_at<holder_type>(reinterpret_cast<holder_type*>(mem_ptr_storage), inp_mem_ptr);
+        }
+
+        template <typename Holder>
+            requires(Holder::is_t_const)
+        constexpr void construct(typename Holder::const_pointer inp_mem_ptr) noexcept {
+            using holder_type = typename Holder::const_rebinded;
+            stl::construct_at<holder_type>(reinterpret_cast<holder_type*>(mem_ptr_storage), inp_mem_ptr);
+        }
+
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
 
@@ -929,8 +954,9 @@ namespace webpp {
             static constexpr bool is_t_const = stl::is_const_v<type>;
             using const_pointer              = NRet (type::*)(NArgs...) const;
             using non_const_pointer          = NRet (type::*)(NArgs...);
-            using pointer        = stl::conditional_t<is_t_const, const_pointer, non_const_pointer>;
-            using const_rebinded = member_function_holder<stl::add_const_t<type>, NRet, NArgs...>;
+            using pointer            = stl::conditional_t<is_t_const, const_pointer, non_const_pointer>;
+            using const_rebinded     = member_function_holder<stl::add_const_t<type>, NRet, NArgs...>;
+            using non_const_rebinded = member_function_holder<stl::remove_cvref_t<type>, NRet, NArgs...>;
 
           private:
             pointer func;
