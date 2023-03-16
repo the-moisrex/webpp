@@ -1,9 +1,9 @@
 // Created by moisrex on 2/3/20.
 
-#ifndef WEBPP_DEBOUNCE_H
-#define WEBPP_DEBOUNCE_H
+#ifndef WEBPP_DEBOUNCE_HPP
+#define WEBPP_DEBOUNCE_HPP
 
-#include "functional.hpp"
+#include "../std/function_ref.hpp"
 
 #include <any>
 #include <chrono>
@@ -237,8 +237,9 @@ namespace webpp {
               typename Rep        = stl::chrono::milliseconds::rep,
               typename Period     = stl::chrono::milliseconds::period,
               typename Clock      = stl::chrono::steady_clock>
-    class debounce_t : public details::debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock> {
-        using impl_t = details::debounce_impl<make_inheritable<Callable>, DType, Rep, Period, Clock>;
+    class debounce_t
+      : public details::debounce_impl<istl::make_inheritable<Callable>, DType, Rep, Period, Clock> {
+        using impl_t = details::debounce_impl<istl::make_inheritable<Callable>, DType, Rep, Period, Clock>;
 
       public:
         using impl_t::impl_t;
@@ -393,4 +394,4 @@ namespace webpp {
 } // namespace webpp
 
 
-#endif // WEBPP_DEBOUNCE_H
+#endif // WEBPP_DEBOUNCE_HPP

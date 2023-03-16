@@ -1,8 +1,8 @@
 // Created by moisrex on 12/10/19.
 
-#include "../core/include/webpp/utils/functional.hpp"
-
 #include "../core/include/webpp/std/functional.hpp"
+
+#include "../core/include/webpp/std/function_ref.hpp"
 #include "../core/include/webpp/std/memory_resource.hpp"
 #include "../core/include/webpp/utils/debounce.hpp"
 #include "common_pch.hpp"
@@ -10,6 +10,7 @@
 
 
 using namespace webpp;
+using namespace webpp::istl;
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 

@@ -841,40 +841,39 @@ namespace webpp::http {
         };
 
 
-        template <typename MemFuncType>
-        struct member_function_callable {
-            using method_traits = member_function_pointer_traits<MemFuncType>;
-            using object_type = typename method_traits::type;
-            using object_ptr = stl::add_pointer_t<object_type>;
-            using method_ptr  = MemFuncType;
-
-          private:
-            object_ptr obj = nullptr;
-            method_ptr func;
-          public:
-
-            constexpr member_function_callable(MemFuncType inp_func) noexcept : func{inp_func} {}
-
-            constexpr member_function_callable(member_function_callable const&)                     = default;
-            constexpr member_function_callable(member_function_callable&&) noexcept                 = default;
-            constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
-            constexpr member_function_callable& operator=(member_function_callable const&) noexcept = default;
-            constexpr ~member_function_callable()                                            = default;
-
-            template <Traits TraitsType>
-            constexpr void operator()(basic_context<TraitsType>& ctx) {
-                using context_type   = basic_context<TraitsType>;
-                using callable_traits = route_traits<member_function_callable, context_type>;
-
-                callable_traits::set_response(callable_traits::call(*this, ctx), ctx);
-            }
-
-            constexpr void to_string(istl::String auto& out) const {
-                out.append(" /");
-                route_to_string(out, segment);
-            }
-        };
-
+        //        template <typename MemFuncType>
+        //        struct member_function_callable {
+        //            using method_traits = member_function_pointer_traits<MemFuncType>;
+        //            using object_type   = typename method_traits::type;
+        //            using object_ptr    = stl::add_pointer_t<object_type>;
+        //            using method_ptr    = MemFuncType;
+        //
+        //          private:
+        //            istl::member_function_ref<void(context_type)> func;
+        //
+        //          public:
+        //            constexpr member_function_callable(MemFuncType inp_func) noexcept : func{inp_func} {}
+        //
+        //            constexpr member_function_callable(member_function_callable const&) = default; constexpr
+        //            member_function_callable(member_function_callable&&) noexcept                 = default;
+        //            constexpr member_function_callable& operator=(member_function_callable&&) noexcept =
+        //            default; constexpr member_function_callable& operator=(member_function_callable const&)
+        //            noexcept = default; constexpr ~member_function_callable() = default;
+        //
+        //            template <Traits TraitsType>
+        //            constexpr void operator()(basic_context<TraitsType>& ctx) {
+        //                using context_type    = basic_context<TraitsType>;
+        //                using callable_traits = route_traits<member_function_callable, context_type>;
+        //
+        //                callable_traits::set_response(callable_traits::call(*this, ctx), ctx);
+        //            }
+        //
+        //            constexpr void to_string(istl::String auto& out) const {
+        //                out.append(" /");
+        //                route_to_string(out, segment);
+        //            }
+        //        };
+        //
     } // namespace details
 
 

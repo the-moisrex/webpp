@@ -4,9 +4,9 @@
 #define WEBPP_ROUTES_ROUTE_H
 
 #include "../../logs/log_concepts.hpp"
+#include "../../std/function_ref.hpp"
 #include "../../std/optional.hpp"
 #include "../../std/type_traits.hpp"
-#include "../../utils/functional.hpp"
 #include "context.hpp"
 #include "router_concepts.hpp"
 
@@ -175,9 +175,9 @@ namespace webpp::http {
     enum class logical_operators { none, AND, OR, XOR };
 
     template <typename RouteType, logical_operators Op, typename NextRoute>
-    struct basic_route : public make_inheritable<RouteType> {
+    struct basic_route : public istl::make_inheritable<RouteType> {
         using next_route_type = NextRoute;
-        using super_t         = make_inheritable<RouteType>;
+        using super_t         = istl::make_inheritable<RouteType>;
 
         constexpr static logical_operators op = Op;
         next_route_type                    next; // NOLINT(misc-non-private-member-variables-in-classes)
@@ -206,8 +206,8 @@ namespace webpp::http {
     };
 
     template <typename RouteType>
-    struct basic_route<RouteType, logical_operators::none, void> : public make_inheritable<RouteType> {
-        using super_t = make_inheritable<RouteType>;
+    struct basic_route<RouteType, logical_operators::none, void> : public istl::make_inheritable<RouteType> {
+        using super_t = istl::make_inheritable<RouteType>;
 
         template <typename... Args>
         constexpr basic_route(Args&&... args) noexcept : super_t{stl::forward<Args>(args)...} {}
@@ -400,7 +400,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator>>=(RouteT&& new_route) const noexcept {
             using rt = stl::remove_cvref_t<RouteT>;
             if constexpr (stl::is_member_function_pointer_v<rt>) {
-                using mem_func_ptr_t = member_function_pointer_traits<rt>;
+                using mem_func_ptr_t = istl::member_function_pointer_traits<rt>;
                 using app_type       = typename mem_func_ptr_t::type;
                 return set_next<logical_operators::none>(
                   route_with_router_pointer<app_type,
