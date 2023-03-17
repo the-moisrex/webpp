@@ -34,3 +34,27 @@ TEST(DynamicRouter, RouteRegistration) {
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
     EXPECT_EQ(as<std::string>(res.body), "About");
 }
+
+TEST(DynamicRouter, MemFuncPtr) {
+
+    struct pages {
+        // NOLINTBEGIN(readability-convert-member-functions-to-static)
+        [[nodiscard]] response about(context const& ctx) const {
+            response res{ctx};
+            res = "about page";
+            return res;
+        }
+        // NOLINTEND(readability-convert-member-functions-to-static)
+    };
+
+    dynamic_router router;
+    router.objects.emplace_back(pages{});
+
+    router += router / "about" >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about");
+
+    EXPECT_EQ(as<std::string>(router(req).body), "about page");
+}

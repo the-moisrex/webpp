@@ -408,11 +408,7 @@ TEST(FunctionalTests, MemberFunctionRef) {
 }
 
 
-
-
 ////////////////////////////// ChatGPT Made tests (modified) //////////////////////////////
-
-
 
 
 TEST(FunctionalTests, FunctionRefWithLambda) {
