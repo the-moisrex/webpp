@@ -237,6 +237,8 @@ namespace webpp::istl {
         constexpr static auto get(storage<SigPtr> obj) noexcept {
             if constexpr (stl::same_as<T, SigPtr>) {
                 return reinterpret_cast<T>(obj.func_ptr);
+            } else if constexpr (stl::same_as<T, void*>) {
+                return obj.obj_ptr; // return as a void*
             } else if constexpr (stl::is_const_v<T>) {
                 return static_cast<T*>(obj.const_obj_ptr);
             } else if constexpr (stl::is_object_v<T>) {
@@ -461,14 +463,12 @@ namespace webpp::istl {
 
     template <typename Return, typename... Args, typename ObjType, bool IsConst>
     struct member_function_ref<Return(Args...), ObjType, IsConst> {
-        using signature              = Return(Args...);
-        using signature_ptr          = Return (*)(Args...);
-        using function_ref_signature = function_ref<Return(Args...)>;
-        using func_ref_sig_extra     = function_ref<Return(void*, Args...)>;
-        using object_type            = stl::remove_cvref_t<ObjType>;
-
         static constexpr bool is_const = IsConst;
-
+        using signature                = Return(Args...);
+        using signature_ptr            = Return (*)(Args...);
+        using function_ref_signature   = function_ref<Return(Args...)>;
+        using object_type              = stl::remove_cvref_t<ObjType>;
+        using object_ptr               = stl::conditional_t<is_const, object_type const*, object_type*>;
         using non_void_object_type =
           stl::conditional_t<stl::is_void_v<object_type>, member_function_ref, object_type>;
         using member_signature_type = stl::conditional_t<is_const,
@@ -488,18 +488,68 @@ namespace webpp::istl {
           (stl::is_convertible_v<Args, NewArgs> && ...);
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_convertible_function<NRet, NArgs...>)
-        using member_of = NRet(T::*)(NArgs...);
+        using member_of = NRet (T::*)(NArgs...);
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_convertible_function<NRet, NArgs...>)
-        using const_member_of = NRet(T::*)(NArgs...) const;
-
+        using const_member_of = NRet (T::*)(NArgs...) const;
 
         template <typename T>
         static constexpr bool is_object_type =
           !details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<T>, member_function_ref> &&
           (stl::is_void_v<object_type> || istl::same_as_cvref<T, object_type>);
+
+        template <typename T>
+        static constexpr bool conv_to_func_ptr = stl::is_assignable_v<signature_ptr&, T>;
+
+        template <typename NRet, typename T, typename... NArgs>
+        static constexpr bool invocable_by = stl::is_invocable_r_v<Return, T, Args...>;
+
+
+        template <typename T>
+        static constexpr bool is_mutable_object =
+          is_object_type<T> && !conv_to_func_ptr<T> && !stl::is_rvalue_reference_v<T>;
+
+        template <typename T>
+        static constexpr bool is_const_object = is_object_type<T> && !conv_to_func_ptr<T>;
+
+        template <typename T>
+        static constexpr bool is_mutable_lambda = !is_const && is_object_type<T> && conv_to_func_ptr<T>;
+
+        template <typename T>
+        static constexpr bool is_const_lambda = is_object_type<T> && conv_to_func_ptr<T>;
+
+
+        template <typename T, typename NRet, typename... NArgs>
+        struct member_function_holder {
+            using type                       = T;
+            static constexpr bool is_t_const = stl::is_const_v<type>;
+            using const_pointer              = NRet (type::*)(NArgs...) const;
+            using non_const_pointer          = NRet (type::*)(NArgs...);
+            using pointer            = stl::conditional_t<is_t_const, const_pointer, non_const_pointer>;
+            using const_rebinded     = member_function_holder<stl::add_const_t<type>, NRet, NArgs...>;
+            using non_const_rebinded = member_function_holder<stl::remove_cvref_t<type>, NRet, NArgs...>;
+
+          private:
+            pointer func;
+
+          public:
+            constexpr member_function_holder(pointer new_func) noexcept : func{new_func} {}
+            constexpr member_function_holder(member_function_holder const&) noexcept            = default;
+            constexpr member_function_holder(member_function_holder&&) noexcept                 = default;
+            constexpr member_function_holder& operator=(member_function_holder const&) noexcept = default;
+            constexpr member_function_holder& operator=(member_function_holder&&) noexcept      = default;
+            constexpr ~member_function_holder() noexcept                                        = default;
+
+            constexpr Return operator()(storage_type inp_obj, NArgs... args) const
+              noexcept(noexcept((details::get<type>(inp_obj)->*func)(stl::forward<NArgs>(args)...))) {
+                return static_cast<Return>(
+                  (details::get<type>(inp_obj)->*func)(stl::forward<NArgs>(args)...));
+            }
+        };
+
+
+        static constexpr stl::size_t member_holder_required_storage =
+          sizeof(member_function_holder<non_void_object_type, Return, Args...>);
 
       public:
         constexpr member_function_ref(stl::nullptr_t) noexcept {}
@@ -528,47 +578,45 @@ namespace webpp::istl {
 
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+
+
+
+        template <typename T>
+            requires(is_object_type<T> && invocable_by<Return, T, Args...>)
+        constexpr member_function_ref(T&& inp_obj) noexcept
+          : member_function_ref{inp_obj, &stl::remove_cvref_t<T>::operator()} {}
+
+
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T&                           inp_obj,
-          member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_mutable_object<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref(T&& inp_obj, member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : obj{inp_obj},
             erased_func{&invoker<remove_vref<T>, NRet, NArgs...>} {
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T&                            inp_obj,
-          member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_mutable_object<T>)
+        constexpr member_function_ref(T&& inp_obj, member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : obj{inp_obj},
             erased_func{&invoker<remove_vref<T>, Return, Args...>} {
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
         }
 
 
-
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T const&                           inp_obj,
-          const_member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_const_object<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref(T const&                           inp_obj,
+                                      const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : obj{inp_obj},
             erased_func{&invoker<remove_vref<T>, NRet, NArgs...>} {
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T const&                            inp_obj,
-          const_member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_const_object<T>)
+        constexpr member_function_ref(T const&                            inp_obj,
+                                      const_member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : obj{inp_obj},
             erased_func{&invoker<remove_vref<T>, Return, Args...>} {
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -578,40 +626,34 @@ namespace webpp::istl {
         // Checking if it's assignable to signature will ensure that the specified type is convertible to a
         // function pointer, meaning it's probably a lambda
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T&&                          inp_obj,
-          member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_mutable_lambda<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref(T&& inp_obj, member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : obj{+inp_obj},
             erased_func{&invoker<remove_vref<T>, NRet, NArgs...>} {
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T&&                           inp_obj,
-          member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_mutable_lambda<T>)
+        constexpr member_function_ref(T&& inp_obj, member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : obj{+inp_obj},
             erased_func{&invoker<remove_vref<T>, Return, Args...>} {
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T const&                           inp_obj,
-          const_member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_const_lambda<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref(T const&                           inp_obj,
+                                      const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : obj{+inp_obj},
             erased_func{&invoker<remove_vref<T>, NRet, NArgs...>} {
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref(
-          T const&                            inp_obj,
-          const_member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept
+            requires(is_const_lambda<T>)
+        constexpr member_function_ref(T const&                            inp_obj,
+                                      const_member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : obj{+inp_obj},
             erased_func{&invoker<remove_vref<T>, Return, Args...>} {
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -624,7 +666,7 @@ namespace webpp::istl {
         // In order to call it, you have to first set the object as wee ot it's a blow up in your face
         // situation.
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref(member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, NRet, NArgs...>} {
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -639,7 +681,7 @@ namespace webpp::istl {
 
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref(const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, NRet, NArgs...>} {
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -678,7 +720,7 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref& operator=(member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             erased_func = &invoker<T, NRet, NArgs...>;
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -694,7 +736,7 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref& operator=(const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             erased_func = &invoker<T, NRet, NArgs...>;
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -711,8 +753,7 @@ namespace webpp::istl {
 
 
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     stl::is_invocable_r_v<Return, T, Args...> && !stl::is_assignable_v<signature_ptr&, T>)
+            requires(is_mutable_object<T> && invocable_by<Return, T, Args...>)
         constexpr member_function_ref& operator=(T&& new_obj) noexcept {
             obj         = new_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
@@ -722,8 +763,7 @@ namespace webpp::istl {
         }
 
         template <typename T>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T> &&
-                     stl::is_invocable_r_v<Return, T, Args...>)
+            requires(is_const_lambda<T> && invocable_by<Return, T, Args...>)
         constexpr member_function_ref& operator=(T&& new_obj) noexcept {
             obj         = +new_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
@@ -738,20 +778,23 @@ namespace webpp::istl {
         // The object that you're setting should match the already specified member function or when you call
         // it, it's a blow up in your face situation.
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     stl::is_invocable_r_v<Return, T, Args...> && !stl::is_assignable_v<signature_ptr&, T>)
+            requires(is_mutable_object<T> && invocable_by<Return, T, Args...>)
         constexpr member_function_ref& set_object(T&& new_obj) noexcept {
             obj = new_obj;
             return *this;
         }
 
 
+        template <typename T>
+            requires(is_object_type<T> && invocable_by<Return, T, Args...>)
+        constexpr member_function_ref& set(T&& inp_obj) noexcept {
+            set(stl::forward<T>(inp_obj), &stl::remove_cvref_t<T>::operator());
+            return *this;
+        }
+
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T&                           inp_obj,
-            member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_object<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref& set(T&& inp_obj, member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             obj         = inp_obj;
             erased_func = &invoker<remove_vref<T>, NRet, NArgs...>;
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
@@ -759,11 +802,8 @@ namespace webpp::istl {
         }
 
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T&                            inp_obj,
-            member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_object<T>)
+        constexpr member_function_ref& set(T&& inp_obj, member_of<T, Return, Args...> inp_mem_ptr) noexcept {
             obj         = inp_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -771,11 +811,9 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T const&                           inp_obj,
-            const_member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_object<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref& set(T const&                           inp_obj,
+                                           const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             obj         = inp_obj;
             erased_func = &invoker<remove_vref<T>, NRet, NArgs...>;
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
@@ -783,11 +821,9 @@ namespace webpp::istl {
         }
 
         template <typename T>
-            requires(is_object_type<T> && !stl::is_rvalue_reference_v<T> &&
-                     !stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T const&                            inp_obj,
-            const_member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_object<T>)
+        constexpr member_function_ref& set(T const&                            inp_obj,
+                                           const_member_of<T, Return, Args...> inp_mem_ptr) noexcept {
             obj         = inp_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -798,10 +834,8 @@ namespace webpp::istl {
         // Checking if it's assignable to signature will ensure that the specified type is convertible to a
         // function pointer, meaning it's probably a lambda
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T&&                          inp_obj,
-            member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_const_lambda<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref& set(T&& inp_obj, member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             obj         = +inp_obj;
             erased_func = &invoker<remove_vref<T>, NRet, NArgs...>;
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
@@ -809,10 +843,8 @@ namespace webpp::istl {
         }
 
         template <typename T>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T&&                           inp_obj,
-            member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_lambda<T>)
+        constexpr member_function_ref& set(T&& inp_obj, member_of<T, Return, Args...> inp_mem_ptr) noexcept {
             obj         = +inp_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -820,10 +852,9 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T const&                           inp_obj,
-            const_member_of<T, NRet, NArgs...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_mutable_lambda<T> && is_convertible_function<NRet, NArgs...>)
+        constexpr member_function_ref& set(T const&                           inp_obj,
+                                           const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             obj         = +inp_obj;
             erased_func = &invoker<remove_vref<T>, NRet, NArgs...>;
             construct<member_function_holder<remove_vref<T>, NRet, NArgs...>>(inp_mem_ptr);
@@ -831,10 +862,9 @@ namespace webpp::istl {
         }
 
         template <typename T>
-            requires(is_object_type<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr member_function_ref&
-        set(T const&                            inp_obj,
-            const_member_of<T, Return, Args...> inp_mem_ptr = &stl::remove_cvref_t<T>::operator()) noexcept {
+            requires(is_const_lambda<T>)
+        constexpr member_function_ref& set(T const&                            inp_obj,
+                                           const_member_of<T, Return, Args...> inp_mem_ptr) noexcept {
             obj         = +inp_obj;
             erased_func = &invoker<remove_vref<T>, Return, Args...>;
             construct<member_function_holder<remove_vref<T>, Return, Args...>>(inp_mem_ptr);
@@ -857,7 +887,7 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref& set_method(member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             erased_func = &invoker<T, NRet, NArgs...>;
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -873,7 +903,7 @@ namespace webpp::istl {
         }
 
         template <typename T, typename NRet, typename... NArgs>
-            requires(is_object_type<T>)
+            requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
         constexpr member_function_ref& set_method(const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept {
             erased_func = &invoker<T, NRet, NArgs...>;
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
@@ -926,7 +956,6 @@ namespace webpp::istl {
             return static_cast<Return>(
               (*static_cast<type const*>(mem_ptr_storage))(inp_obj, stl::forward<NArgs>(args)...));
         }
-
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 
         template <typename Holder>
@@ -952,39 +981,6 @@ namespace webpp::istl {
 
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
-
-        template <typename T, typename NRet, typename... NArgs>
-        struct member_function_holder {
-            using type                       = T;
-            static constexpr bool is_t_const = stl::is_const_v<type>;
-            using const_pointer              = NRet (type::*)(NArgs...) const;
-            using non_const_pointer          = NRet (type::*)(NArgs...);
-            using pointer            = stl::conditional_t<is_t_const, const_pointer, non_const_pointer>;
-            using const_rebinded     = member_function_holder<stl::add_const_t<type>, NRet, NArgs...>;
-            using non_const_rebinded = member_function_holder<stl::remove_cvref_t<type>, NRet, NArgs...>;
-
-          private:
-            pointer func;
-
-          public:
-            constexpr member_function_holder(pointer new_func) noexcept : func{new_func} {}
-            constexpr member_function_holder(member_function_holder const&) noexcept            = default;
-            constexpr member_function_holder(member_function_holder&&) noexcept                 = default;
-            constexpr member_function_holder& operator=(member_function_holder const&) noexcept = default;
-            constexpr member_function_holder& operator=(member_function_holder&&) noexcept      = default;
-            constexpr ~member_function_holder() noexcept                                        = default;
-
-            constexpr Return operator()(storage_type inp_obj, NArgs... args) const
-              noexcept(noexcept((details::get<type>(inp_obj)->*func)(stl::forward<NArgs>(args)...))) {
-                return static_cast<Return>(
-                  (details::get<type>(inp_obj)->*func)(stl::forward<NArgs>(args)...));
-            }
-        };
-
-
-
-        static constexpr stl::size_t member_holder_required_storage =
-          sizeof(member_function_holder<non_void_object_type, Return, Args...>);
 
         // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
         storage_type   obj = this;

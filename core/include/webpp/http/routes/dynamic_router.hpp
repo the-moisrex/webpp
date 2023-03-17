@@ -972,14 +972,21 @@ namespace webpp::http {
         constexpr ~member_function_callable() noexcept                                          = default;
 
         template <typename T>
-            requires(stl::is_member_function_pointer_v<T>)
+            requires(stl::is_member_function_pointer_v<T> && stl::constructible_from<mem_ref_type, T>)
         constexpr member_function_callable(T inp_func) noexcept : func{inp_func} {}
+
+        template <typename T>
+            requires(stl::is_member_function_pointer_v<T>)
+        constexpr member_function_callable(T inp_func) noexcept
+          : func{[inp_func](auto* obj, context_type& ctx) {
+                using callable_traits = route_traits<member_function_callable, context_type>;
+                callable_traits::set_response(callable_traits::call((obj->*inp_func), ctx), ctx);
+            }} {}
 
         constexpr member_function_callable(mem_ref_type inp_func) noexcept : func{inp_func} {}
 
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
+        constexpr void operator()(context_type& ctx) {
             using callable_traits = route_traits<member_function_callable, context_type>;
-
             callable_traits::set_response(callable_traits::call(func, ctx), ctx);
         }
 
