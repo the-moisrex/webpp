@@ -1114,6 +1114,36 @@ namespace webpp::http {
             obj = inp_obj;
         }
 
+
+        template <typename RouterType>
+        constexpr void setup(RouterType& router) {
+            for (auto& object : router.objects) {
+                if (object.type() == typeid(object_type)) {
+                    set_method(&stl::any_cast<object_type>(object));
+                    return;
+                }
+            }
+
+            // default constructing it if it's possible and use that object
+            if constexpr (stl::is_default_constructible_v<object_type>) {
+                router.objects.emplace_back(object_type{});
+                set_object(&stl::any_cast<object_type>(router.objects.back()));
+            } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
+                router.objects.emplace_back(object_type{router});
+                set_object(&stl::any_cast<object_type>(router.objects.back()));
+            } else {
+                router.logger.error(
+                  "DRouter",
+                  fmt::format(
+                    "You have not specified an object with typeid of '{}' in your dynamic router,"
+                    " but you've tried to register a member function pointer of that type in router."
+                    " Try registering your objects before registering the objects in the router"
+                    " to get rid of this error.",
+                    typeid(object_type).name()));
+            }
+        }
+
+
         constexpr void to_string(istl::String auto& out) const {
             out.append(" >>");
             route_to_string(out, mem_ptr);
@@ -1211,38 +1241,6 @@ namespace webpp::http {
         }
 
         /**
-         * @brief Register a member function as a route to call
-         * You will only need to pass the member function and not the object itself; for this function to
-         * work, you have to either:
-         *   - make sure object type is default constructible, or
-         *   - make sure you have already passed the object of type T to the "objects".
-         * If you haven't added the object to the "objects" list, then it tries to default-construct it.
-         */
-        template <typename T>
-            requires(stl::is_member_function_pointer_v<T>)
-        constexpr route_type routify(T&& method) noexcept {
-            using method_type = istl::member_function_pointer_traits<stl::remove_cvref_t<T>>;
-            using type        = typename method_type::type;
-            for (auto& obj : objects) {
-                if (obj.type() == typeid(type)) {
-                    return routify(method, stl::any_cast<type>(obj));
-                }
-            }
-
-            // default constructing it if it's possible and use that object
-            if constexpr (stl::is_default_constructible_v<type>) {
-                objects.emplace_back(type{});
-                return routify(method, stl::any_cast<type>(objects.back()));
-            } else {
-                this->logger.error(
-                  log_cat,
-                  fmt::format("You have not specified an object with typeid of '{}' in your dynamic router,"
-                              " but you've tried to register a member function of unknown type for router.",
-                              typeid(type).name()));
-            }
-        }
-
-        /**
          * Response with the specified status code.
          */
         constexpr response_type error(status_code code) {
@@ -1260,7 +1258,9 @@ namespace webpp::http {
             using callable_type  = details::route_optimizer_t<C>;
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
-            routes.emplace_back(new_route_type{stl::forward<C>(callable)});
+            new_route_type route{stl::forward<C>(callable)};
+            // route.setup(*this);
+            routes.emplace_back(stl::move(route));
             return *this;
         }
 
