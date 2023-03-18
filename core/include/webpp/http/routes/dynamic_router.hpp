@@ -123,7 +123,6 @@ namespace webpp::http {
             return ctx.check_segment(stl::forward<T>(segment));
         }
 
-
         template <typename R>
         static constexpr bool is_positive(R&& ret) noexcept {
             if constexpr (stl::same_as<return_type, bool>) {
@@ -1086,15 +1085,23 @@ namespace webpp::http {
         using member_ptr_type = MemPtr;
         using traits_type     = TraitsType;
         using context_type    = basic_context<traits_type>;
-        using mem_ref_type    = istl::member_function_pointer_traits<member_ptr_type>;
+        using mem_traits      = istl::member_function_pointer_traits<member_ptr_type>;
         using response_type   = basic_response<traits_type>;
         using request_type    = basic_request<traits_type>;
-        using object_type     = typename mem_ref_type::type;
+        using object_type     = typename mem_traits::type;
         using object_ptr      = object_type*;
 
       private:
-        member_ptr_type mem_ptr;
-        object_ptr      obj = nullptr;
+        struct method_holder {
+            member_ptr_type mem_ptr;
+            object_ptr      obj = nullptr;
+
+            template <typename... Args>
+                requires(mem_traits::template is_same_args_v<Args...>)
+            constexpr decltype(auto) operator()(Args&&... args) const noexcept(mem_traits::is_noexcept) {
+                return obj->*mem_ptr(stl::forward<Args>(args)...);
+            }
+        } holder;
 
       public:
         constexpr member_function_callable(member_function_callable const&) noexcept            = default;
@@ -1103,15 +1110,15 @@ namespace webpp::http {
         constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
         constexpr ~member_function_callable() noexcept                                          = default;
 
-        constexpr member_function_callable(mem_ref_type inp_func) noexcept : mem_ptr{inp_func} {}
+        constexpr member_function_callable(mem_traits inp_func) noexcept : holder{.mem_ptr = inp_func} {}
 
         constexpr void operator()(context_type& ctx) {
             using callable_traits = route_traits<member_function_callable, context_type>;
-            callable_traits::set_response(callable_traits::call(obj->*mem_ptr, ctx), ctx);
+            callable_traits::set_response(callable_traits::call(holder, ctx), ctx);
         }
 
         constexpr void set_object(object_ptr inp_obj) noexcept {
-            obj = inp_obj;
+            holder.obj = inp_obj;
         }
 
 
@@ -1146,7 +1153,7 @@ namespace webpp::http {
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" >>");
-            route_to_string(out, mem_ptr);
+            route_to_string(out, holder.mem_ptr);
         }
     };
 
@@ -1195,12 +1202,12 @@ namespace webpp::http {
         }
 
       public:
+        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
+
         // These are the callable types
         objects_type objects;
 
-        // we're not adding context and response here in router scope because we want the user to be able
-        // to take advantage of parallelism
-
+        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
 
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
@@ -1215,30 +1222,6 @@ namespace webpp::http {
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-
-        /**
-         * @brief Register a member function and it's object; It's the same as using std::mem_fn.
-         */
-        template <typename T, typename U>
-            requires(stl::is_member_function_pointer_v<T>)
-        constexpr auto routify(T&& method, U&& obj) noexcept {
-            using method_type = istl::member_function_pointer_traits<stl::remove_cvref_t<T>>;
-            using type        = typename method_type::type;
-            using return_type = typename method_type::return_type;
-            static_assert(stl::same_as<type, stl::remove_cvref_t<U>>,
-                          "The specified member function is not from the specified object.");
-
-            return routify(
-              [callable = obj, method]<typename... Args> requires(
-                method_type::template is_same_args_v<Args...>)(
-                Args && ... args) constexpr noexcept(method_type::is_noexcept) {
-                                                             return stl::invoke_result_t<return_type,
-                                                                                         Args...>(
-                                                               method,
-                                                               callable,
-                                                               stl::forward<Args>(args)...);
-                                                         });
-        }
 
         /**
          * Response with the specified status code.
@@ -1322,12 +1305,6 @@ namespace webpp::http {
 
     using dynamic_router =
       basic_dynamic_router<empty_extension_pack, enable_owner_traits<default_dynamic_traits>>;
-
-
-    namespace pmr {
-        using dynamic_router =
-          webpp::http::basic_dynamic_router<empty_extension_pack, enable_owner_traits<std_pmr_traits>>;
-    } // namespace pmr
 
 } // namespace webpp::http
 
