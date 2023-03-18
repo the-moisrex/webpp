@@ -235,7 +235,7 @@ namespace webpp::http {
     struct forward_callables;
     template <Traits TraitsType, typename... CallableSegments>
     struct segment_callables;
-    template <Traits TraitsType>
+    template <Traits TraitsType, typename MemPtr>
     struct member_function_callable;
 
 
@@ -337,30 +337,34 @@ namespace webpp::http {
 
 
 
-#define WEBPP_DEFINE_FUNC_BASE(Ret, ...)                                                            \
-                                                                                                    \
-    template <typename T>                                                                           \
-    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__)) const {                \
-        if constexpr (stl::is_void_v<Self>) {                                                       \
-            return forward_callables<traits_type, member_function_callable<traits_type>>{inp_func}; \
-        } else {                                                                                    \
-            return route_optimizer_t<                                                               \
-              forward_callables<traits_type, Self, member_function_callable<traits_type>>>{         \
-              *static_cast<Self const*>(this),                                                      \
-              inp_func};                                                                            \
-        }                                                                                           \
-    }                                                                                               \
-                                                                                                    \
-    template <typename T>                                                                           \
-    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__) const) const {          \
-        if constexpr (stl::is_void_v<Self>) {                                                       \
-            return forward_callables<traits_type, member_function_callable<traits_type>>{inp_func}; \
-        } else {                                                                                    \
-            return route_optimizer_t<                                                               \
-              forward_callables<traits_type, Self, member_function_callable<traits_type>>>{         \
-              *static_cast<Self const*>(this),                                                      \
-              inp_func};                                                                            \
-        }                                                                                           \
+#define WEBPP_DEFINE_FUNC_BASE(Ret, ...)                                                                  \
+                                                                                                          \
+    template <typename T>                                                                                 \
+    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__)) const {                      \
+        using mem_ptr_type = Ret (T::*)(__VA_ARGS__);                                                     \
+        if constexpr (stl::is_void_v<Self>) {                                                             \
+            return forward_callables<traits_type, member_function_callable<traits_type, mem_ptr_type>>{   \
+              inp_func};                                                                                  \
+        } else {                                                                                          \
+            return route_optimizer_t<                                                                     \
+              forward_callables<traits_type, Self, member_function_callable<traits_type, mem_ptr_type>>>{ \
+              *static_cast<Self const*>(this),                                                            \
+              inp_func};                                                                                  \
+        }                                                                                                 \
+    }                                                                                                     \
+                                                                                                          \
+    template <typename T>                                                                                 \
+    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__) const) const {                \
+        using mem_ptr_type = Ret (T::*)(__VA_ARGS__) const;                                               \
+        if constexpr (stl::is_void_v<Self>) {                                                             \
+            return forward_callables<traits_type, member_function_callable<traits_type, mem_ptr_type>>{   \
+              inp_func};                                                                                  \
+        } else {                                                                                          \
+            return route_optimizer_t<                                                                     \
+              forward_callables<traits_type, Self, member_function_callable<traits_type, mem_ptr_type>>>{ \
+              *static_cast<Self const*>(this),                                                            \
+              inp_func};                                                                                  \
+        }                                                                                                 \
     }
 
 #define WEBPP_DEFINE_FUNC(...)                                \
@@ -476,7 +480,7 @@ namespace webpp::http {
                     return *this;
                 } else {
                     return route_optimizer_t<not_callable<traits_type, Self>>{
-                      .callable = *static_cast<Self const*>(this)};
+                      *static_cast<Self const*>(this)};
                 }
             }
 
@@ -487,8 +491,8 @@ namespace webpp::http {
                     return operator>>(stl::forward<Callable>(callable));
                 } else {
                     return route_optimizer_t<post_route<traits_type, Self, stl::remove_cvref_t<Callable>>>{
-                      .callable = *static_cast<Self const*>(this), // self
-                      .post     = stl::forward<Callable>(callable) // post routing callable
+                      *static_cast<Self const*>(this), // self
+                      stl::forward<Callable>(callable) // post routing callable
                     };
                 }
             }
@@ -500,8 +504,8 @@ namespace webpp::http {
                     return operator>>(stl::forward<Callable>(callable));
                 } else {
                     return route_optimizer_t<pre_route<traits_type, stl::remove_cvref_t<Callable>, Self>>{
-                      .pre      = stl::forward<Callable>(callable), // pre routing callable
-                      .callable = *static_cast<Self const*>(this)   // self
+                      stl::forward<Callable>(callable), // pre routing callable
+                      *static_cast<Self const*>(this)   // self
                     };
                 }
             }
@@ -589,7 +593,17 @@ namespace webpp::http {
     template <Traits TraitsType, typename Callable>
     struct forward_callables<TraitsType, Callable>
       : details::route_root<TraitsType, forward_callables<TraitsType, Callable>> {
+      private:
         Callable callable;
+
+      public:
+        constexpr forward_callables(Callable inp_callable) : callable{stl::move(inp_callable)} {}
+        constexpr forward_callables(forward_callables const&)                     = default;
+        constexpr forward_callables(forward_callables&&) noexcept                 = default;
+        constexpr forward_callables& operator=(forward_callables&&) noexcept      = default;
+        constexpr forward_callables& operator=(forward_callables const&) noexcept = default;
+        constexpr ~forward_callables()                                            = default;
+
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type    = basic_context<TraitsType>;
@@ -621,8 +635,20 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename PreRoute, typename Callable>
     struct pre_route : details::route_root<TraitsType, pre_route<TraitsType, PreRoute, Callable>> {
+      private:
         PreRoute pre;
         Callable callable;
+
+      public:
+        constexpr pre_route(PreRoute inp_pre, Callable inp_callable)
+          : pre{stl::move(inp_pre)},
+            callable{stl::move(inp_callable)} {}
+        constexpr pre_route(pre_route const&)                     = default;
+        constexpr pre_route(pre_route&&) noexcept                 = default;
+        constexpr pre_route& operator=(pre_route&&) noexcept      = default;
+        constexpr pre_route& operator=(pre_route const&) noexcept = default;
+        constexpr ~pre_route()                                    = default;
+
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type    = basic_context<TraitsType>;
@@ -648,7 +674,16 @@ namespace webpp::http {
     template <Traits TraitsType, typename PreRoute>
     struct pre_route<TraitsType, PreRoute, void>
       : details::route_root<TraitsType, pre_route<TraitsType, PreRoute, void>> {
+      private:
         PreRoute pre;
+
+      public:
+        constexpr pre_route(PreRoute inp_pre) : pre{stl::move(inp_pre)} {}
+        constexpr pre_route(pre_route const&)                     = default;
+        constexpr pre_route(pre_route&&) noexcept                 = default;
+        constexpr pre_route& operator=(pre_route&&) noexcept      = default;
+        constexpr pre_route& operator=(pre_route const&) noexcept = default;
+        constexpr ~pre_route()                                    = default;
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -666,8 +701,20 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable, typename PostRoute>
     struct post_route : details::route_root<TraitsType, post_route<TraitsType, Callable, PostRoute>> {
+      private:
         Callable  callable;
         PostRoute post;
+
+      public:
+        constexpr post_route(Callable inp_callable, PostRoute inp_post)
+          : callable{stl::move(inp_callable)},
+            post{stl::move(inp_post)} {}
+        constexpr post_route(post_route const&)                     = default;
+        constexpr post_route(post_route&&) noexcept                 = default;
+        constexpr post_route& operator=(post_route&&) noexcept      = default;
+        constexpr post_route& operator=(post_route const&) noexcept = default;
+        constexpr ~post_route()                                     = default;
+
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type    = basic_context<TraitsType>;
@@ -693,7 +740,17 @@ namespace webpp::http {
     template <Traits TraitsType, typename PostRoute>
     struct post_route<TraitsType, void, PostRoute>
       : details::route_root<TraitsType, post_route<TraitsType, void, PostRoute>> {
+      private:
         PostRoute post;
+
+      public:
+        constexpr post_route(PostRoute inp_post) : post{stl::move(inp_post)} {}
+        constexpr post_route(post_route const&)                     = default;
+        constexpr post_route(post_route&&) noexcept                 = default;
+        constexpr post_route& operator=(post_route&&) noexcept      = default;
+        constexpr post_route& operator=(post_route const&) noexcept = default;
+        constexpr ~post_route()                                     = default;
+
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -713,7 +770,17 @@ namespace webpp::http {
     struct not_callable : details::route_root<TraitsType, not_callable<TraitsType, Callable>> {
         using callable_type = Callable;
 
+      private:
         callable_type callable;
+
+      public:
+        constexpr not_callable(Callable inp_callable) : callable{stl::move(inp_callable)} {}
+        constexpr not_callable(not_callable const&)                     = default;
+        constexpr not_callable(not_callable&&) noexcept                 = default;
+        constexpr not_callable& operator=(not_callable&&) noexcept      = default;
+        constexpr not_callable& operator=(not_callable const&) noexcept = default;
+        constexpr ~not_callable()                                       = default;
+
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -745,7 +812,17 @@ namespace webpp::http {
     struct negative_callable : details::route_root<TraitsType, negative_callable<TraitsType, Callable>> {
         using callable_type = Callable;
 
+      private:
         callable_type callable;
+
+      public:
+        constexpr negative_callable(Callable inp_callable) : callable{stl::move(inp_callable)} {}
+        constexpr negative_callable(negative_callable const&)                     = default;
+        constexpr negative_callable(negative_callable&&) noexcept                 = default;
+        constexpr negative_callable& operator=(negative_callable&&) noexcept      = default;
+        constexpr negative_callable& operator=(negative_callable const&) noexcept = default;
+        constexpr ~negative_callable()                                            = default;
+
 
         constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -766,7 +843,17 @@ namespace webpp::http {
     struct positive_callable : details::route_root<TraitsType, positive_callable<TraitsType, Callable>> {
         using callable_type = Callable;
 
+      private:
         callable_type callable;
+
+      public:
+        constexpr positive_callable(Callable inp_callable) : callable{stl::move(inp_callable)} {}
+        constexpr positive_callable(positive_callable const&)                     = default;
+        constexpr positive_callable(positive_callable&&) noexcept                 = default;
+        constexpr positive_callable& operator=(positive_callable&&) noexcept      = default;
+        constexpr positive_callable& operator=(positive_callable const&) noexcept = default;
+        constexpr ~positive_callable()                                            = default;
+
 
         constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -993,16 +1080,21 @@ namespace webpp::http {
     };
 
 
-    template <Traits TraitsType>
-    struct member_function_callable : details::route_root<TraitsType, member_function_callable<TraitsType>> {
-        using traits_type   = TraitsType;
-        using context_type  = basic_context<traits_type>;
-        using mem_ref_type  = istl::member_function_ref<void(context_type&)>;
-        using response_type = basic_response<traits_type>;
-        using request_type  = basic_request<traits_type>;
+    template <Traits TraitsType, typename MemPtr>
+    struct member_function_callable
+      : details::route_root<TraitsType, member_function_callable<TraitsType, MemPtr>> {
+        using member_ptr_type = MemPtr;
+        using traits_type     = TraitsType;
+        using context_type    = basic_context<traits_type>;
+        using mem_ref_type    = istl::member_function_pointer_traits<member_ptr_type>;
+        using response_type   = basic_response<traits_type>;
+        using request_type    = basic_request<traits_type>;
+        using object_type     = typename mem_ref_type::type;
+        using object_ptr      = object_type*;
 
       private:
-        mem_ref_type func;
+        member_ptr_type mem_ptr;
+        object_ptr      obj = nullptr;
 
       public:
         constexpr member_function_callable(member_function_callable const&) noexcept            = default;
@@ -1011,28 +1103,20 @@ namespace webpp::http {
         constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
         constexpr ~member_function_callable() noexcept                                          = default;
 
-        template <typename T>
-            requires(stl::is_member_function_pointer_v<T> && stl::constructible_from<mem_ref_type, T>)
-        constexpr member_function_callable(T inp_func) noexcept : func{inp_func} {}
-
-        template <typename T>
-            requires(stl::is_member_function_pointer_v<T>)
-        constexpr member_function_callable(T inp_func) noexcept
-          : func{[inp_func](auto* obj, context_type& ctx) {
-                using callable_traits = route_traits<member_function_callable, context_type>;
-                callable_traits::set_response(callable_traits::call((obj->*inp_func), ctx), ctx);
-            }} {}
-
-        constexpr member_function_callable(mem_ref_type inp_func) noexcept : func{inp_func} {}
+        constexpr member_function_callable(mem_ref_type inp_func) noexcept : mem_ptr{inp_func} {}
 
         constexpr void operator()(context_type& ctx) {
             using callable_traits = route_traits<member_function_callable, context_type>;
-            callable_traits::set_response(callable_traits::call(func, ctx), ctx);
+            callable_traits::set_response(callable_traits::call(obj->*mem_ptr, ctx), ctx);
+        }
+
+        constexpr void set_object(object_ptr inp_obj) noexcept {
+            obj = inp_obj;
         }
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" >>");
-            route_to_string(out, func);
+            route_to_string(out, mem_ptr);
         }
     };
 
