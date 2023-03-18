@@ -450,8 +450,8 @@ namespace webpp::http {
                     return operator>>(stl::forward<Callable>(callable));
                 } else {
                     return route_optimizer_t<and_callables<traits_type, Self, stl::remove_cvref_t<Callable>>>{
-                      .lhs = *static_cast<Self const*>(this), // left
-                      .rhs = stl::forward<Callable>(callable) // right
+                      *static_cast<Self const*>(this), // left
+                      stl::forward<Callable>(callable) // right
                     };
                 }
             }
@@ -463,8 +463,8 @@ namespace webpp::http {
                     return operator>>(stl::forward<Callable>(callable));
                 } else {
                     return route_optimizer_t<or_callables<traits_type, Self, stl::remove_cvref_t<Callable>>>{
-                      .lhs = *static_cast<Self const*>(this), // left
-                      .rhs = stl::forward<Callable>(callable) // right
+                      *static_cast<Self const*>(this), // left
+                      stl::forward<Callable>(callable) // right
                     };
                 }
             }
@@ -791,8 +791,28 @@ namespace webpp::http {
         using left_type  = LeftCallable;
         using right_type = RightCallable;
 
+      private:
         left_type  lhs;
         right_type rhs;
+
+      public:
+        constexpr and_callables(left_type&& inp_lhs, right_type&& inp_rhs) noexcept
+          : lhs{stl::move(inp_lhs)},
+            rhs{stl::move(inp_rhs)} {}
+        constexpr and_callables(left_type const& inp_lhs, right_type&& inp_rhs) noexcept
+          : lhs{inp_lhs},
+            rhs{stl::move(inp_rhs)} {}
+        constexpr and_callables(left_type const& inp_lhs, right_type const& inp_rhs) noexcept
+          : lhs{inp_lhs},
+            rhs{inp_rhs} {}
+        constexpr and_callables(left_type&& inp_lhs, right_type const& inp_rhs) noexcept
+          : lhs{stl::move(inp_lhs)},
+            rhs{inp_rhs} {}
+        constexpr and_callables(and_callables const&) noexcept            = default;
+        constexpr and_callables(and_callables&&) noexcept                 = default;
+        constexpr and_callables& operator=(and_callables const&) noexcept = default;
+        constexpr and_callables& operator=(and_callables&&) noexcept      = default;
+        constexpr ~and_callables()                                        = default;
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -827,8 +847,28 @@ namespace webpp::http {
         using left_type  = LeftCallable;
         using right_type = RightCallable;
 
+      private:
         left_type  lhs;
         right_type rhs;
+
+      public:
+        constexpr or_callables(left_type&& inp_lhs, right_type&& inp_rhs) noexcept
+          : lhs{stl::move(inp_lhs)},
+            rhs{stl::move(inp_rhs)} {}
+        constexpr or_callables(left_type const& inp_lhs, right_type&& inp_rhs) noexcept
+          : lhs{inp_lhs},
+            rhs{stl::move(inp_rhs)} {}
+        constexpr or_callables(left_type const& inp_lhs, right_type const& inp_rhs) noexcept
+          : lhs{inp_lhs},
+            rhs{inp_rhs} {}
+        constexpr or_callables(left_type&& inp_lhs, right_type const& inp_rhs) noexcept
+          : lhs{stl::move(inp_lhs)},
+            rhs{inp_rhs} {}
+        constexpr or_callables(or_callables const&) noexcept            = default;
+        constexpr or_callables(or_callables&&) noexcept                 = default;
+        constexpr or_callables& operator=(or_callables const&) noexcept = default;
+        constexpr or_callables& operator=(or_callables&&) noexcept      = default;
+        constexpr ~or_callables()                                       = default;
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
@@ -1001,8 +1041,8 @@ namespace webpp::http {
     /**
      * @brief A Router that's is fully customizable at runtime
      *
-     * This class will be used directly by the developers using this whole library. So be nice and careful and
-     * user friendly.
+     * This class will be used directly by the developers using this whole library. So be nice and careful
+     * and user friendly.
      */
     template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
     struct basic_dynamic_router : TraitsEnabler,
@@ -1044,8 +1084,8 @@ namespace webpp::http {
         // These are the callable types
         objects_type objects;
 
-        // we're not adding context and response here in router scope because we want the user to be able to
-        // take advantage of parallelism
+        // we're not adding context and response here in router scope because we want the user to be able
+        // to take advantage of parallelism
 
 
         constexpr basic_dynamic_router() noexcept
