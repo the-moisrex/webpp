@@ -251,6 +251,9 @@ TEST(TypeTraits, InvocableInOrder) {
     EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
     EXPECT_TRUE(bool(invocable_inorder_v<void(two, four, two, one), two, four, two, one>));
     EXPECT_FALSE(bool(invocable_inorder_v<void(two, two, four), two, two, one>));
+    EXPECT_TRUE(bool(invocable_inorder_v<void(two, two const&, four), two, two&, one, four&>));
+    EXPECT_TRUE(bool(invocable_inorder_v<void(two const&, four const&), two&, one, four&&>));
+    EXPECT_FALSE(bool(invocable_inorder_v<void(two&, four const&), two const&, one, four&&>));
 
     auto const ok = [](one, two, three) -> bool {
         return true;

@@ -355,14 +355,13 @@ namespace webpp::http {
     template <typename T>                                                                                 \
     [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__) const) const {                \
         using mem_ptr_type = Ret (T::*)(__VA_ARGS__) const;                                               \
+        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;                         \
         if constexpr (stl::is_void_v<Self>) {                                                             \
-            return forward_callables<traits_type, member_function_callable<traits_type, mem_ptr_type>>{   \
-              inp_func};                                                                                  \
+            return mem_type{inp_func};                                                                    \
         } else {                                                                                          \
-            return route_optimizer_t<                                                                     \
-              forward_callables<traits_type, Self, member_function_callable<traits_type, mem_ptr_type>>>{ \
+            return route_optimizer_t<forward_callables<traits_type, Self, mem_type>>{                     \
               *static_cast<Self const*>(this),                                                            \
-              inp_func};                                                                                  \
+              mem_type{inp_func}};                                                                        \
         }                                                                                                 \
     }
 
@@ -1097,9 +1096,9 @@ namespace webpp::http {
             object_ptr      obj = nullptr;
 
             template <typename... Args>
-                requires(mem_traits::template is_same_args_v<Args...>)
+                requires(mem_traits::template is_invocable<Args...>)
             constexpr decltype(auto) operator()(Args&&... args) const noexcept(mem_traits::is_noexcept) {
-                return obj->*mem_ptr(stl::forward<Args>(args)...);
+                return (obj->*mem_ptr)(stl::forward<Args>(args)...);
             }
         } holder;
 
@@ -1110,10 +1109,10 @@ namespace webpp::http {
         constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
         constexpr ~member_function_callable() noexcept                                          = default;
 
-        constexpr member_function_callable(mem_traits inp_func) noexcept : holder{.mem_ptr = inp_func} {}
+        constexpr member_function_callable(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
 
         constexpr void operator()(context_type& ctx) {
-            using callable_traits = route_traits<member_function_callable, context_type>;
+            using callable_traits = route_traits<method_holder, context_type>;
             callable_traits::set_response(callable_traits::call(holder, ctx), ctx);
         }
 

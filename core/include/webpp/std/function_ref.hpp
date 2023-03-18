@@ -19,6 +19,7 @@ namespace webpp::istl {
     template <typename T>
     struct member_function_pointer_traits : stl::false_type {
         using return_type                       = void;
+        using signature                         = void;
         using type                              = void;
         using args                              = stl::tuple<>;
         static constexpr bool is_const          = false;
@@ -38,6 +39,9 @@ namespace webpp::istl {
 
         template <template <typename...> typename TT>
         using args_as = TT<>;
+
+        template <typename... NArgs>
+        static constexpr bool is_invocable = false;
     };
 
     // todo: use template recursion instead of these macros??
@@ -73,8 +77,11 @@ namespace webpp::istl {
                                             MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_MOVE)                        \
                                               MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_NOEXCEPT)>                 \
       : stl::true_type {                                                                                     \
-        using return_type                       = Ret;                                                       \
-        using type                              = T;                                                         \
+        using return_type = Ret;                                                                             \
+        using type        = T;                                                                               \
+        using signature   = Ret (T::*)(Args...) MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_CONST)                   \
+          MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_VOLATILE) MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_REFERENCE)       \
+            MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_MOVE) MEMBER_FUNCTION_POINTER_IMPL_OPT(IS_NOEXCEPT);         \
         using args                              = stl::tuple<Args...>;                                       \
         static constexpr bool is_const          = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_CONST);             \
         static constexpr bool is_volatile       = MEMBER_FUNCTION_POINTER_IMPL_IF_OPT(IS_VOLATILE);          \
@@ -93,6 +100,9 @@ namespace webpp::istl {
                                                                                                              \
         template <template <typename...> typename TT>                                                        \
         using args_as = TT<Args...>;                                                                         \
+                                                                                                             \
+        template <typename... NArgs>                                                                         \
+        static constexpr bool is_invocable = stl::is_invocable_v<signature, T, NArgs...>;                    \
     }
 
     MEMBER_FUNCTION_POINTER_IMPL(no_const, no_volatile, no_ref, no_move, no_noexcept);
