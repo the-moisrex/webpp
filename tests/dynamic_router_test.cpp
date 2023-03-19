@@ -20,8 +20,10 @@ TEST(DynamicRouter, RouteRegistration) {
         return "Index";
     };
 
-    request req{router.get_traits()};
-    EXPECT_EQ(router(req).headers.status_code(), status_code::not_found);
+    request    req{router.get_traits()};
+    auto const empty_res = router(req);
+    EXPECT_TRUE(empty_res.body.empty()) << as<stl::string>(empty_res.body);
+    EXPECT_EQ(empty_res.headers.status_code(), status_code::not_found) << router.to_string();
 
     req.method("GET");
     req.uri("/page/about");

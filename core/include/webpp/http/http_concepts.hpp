@@ -92,6 +92,7 @@ namespace webpp::http {
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
                        { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+                       { communicator.empty() } -> stl::same_as<bool>;
                    };
       };
 
@@ -126,6 +127,7 @@ namespace webpp::http {
                                       requires stl::copy_constructible<T>;
                                       requires SizableBody<T>;
                                       body.data();
+                                      { body.empty() } -> stl::same_as<bool>;
                                   };
 
     /**
@@ -166,6 +168,7 @@ namespace webpp::http {
           body.rdbuf();
           body.tellg();
           body.seekg(0);
+          { body.eof() } -> stl::same_as<bool>;
           typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
           requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
                             stl::streamsize count) {
@@ -303,7 +306,7 @@ namespace webpp::http {
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
                                                      {
                                                          body.which_communicator()
-                                                         } -> stl::same_as<communicator_type>;
+                                                     } -> stl::same_as<communicator_type>;
                                                  };
 
 
@@ -410,8 +413,8 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept ConvertibleToResponse = !
-    stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+    concept ConvertibleToResponse =
+      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
 
@@ -557,8 +560,9 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType, typename... NotThese>
-    concept HTTPConvertibleBody = istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> && !
-    istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...>&& HTTPDeserializableBody<T, BodyType>;
+    concept HTTPConvertibleBody =
+      istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
+      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> && HTTPDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 

@@ -67,6 +67,10 @@ namespace webpp::http::beast_proto {
             return request->payload_size().value_or(0);
         }
 
+        [[nodiscard]] bool empty() const noexcept {
+            return request->payload_size();
+        }
+
       private:
         request_ptr request       = nullptr;
         stl::size_t read_position = 0;

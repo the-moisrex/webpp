@@ -1043,6 +1043,8 @@ namespace webpp::http {
     template <Traits TraitsType, typename CallableSegment>
     struct segment_callables<TraitsType, CallableSegment>
       : details::route_root<TraitsType, segment_callables<TraitsType, CallableSegment>> {
+        using context_type = basic_context<TraitsType>;
+
       private:
         CallableSegment segment;
 
@@ -1065,7 +1067,6 @@ namespace webpp::http {
         }
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type   = basic_context<TraitsType>;
             using segment_traits = route_traits<CallableSegment, context_type>;
 
             segment_traits::set_response(segment_traits::call(segment, ctx), ctx);

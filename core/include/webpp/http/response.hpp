@@ -160,8 +160,7 @@ namespace webpp::http {
          * Check if the response is empty or not
          */
         [[nodiscard]] constexpr bool empty() const noexcept {
-            // todo
-            return headers.empty(); //  && body.empty();
+            return headers.empty() && body.empty();
         }
     };
 

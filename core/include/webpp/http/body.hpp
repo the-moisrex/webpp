@@ -210,6 +210,22 @@ namespace webpp::http {
             }
         }
 
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            if (auto const* str_reader = stl::get_if<string_communicator_type>(&this->communicator())) {
+                return str_reader->empty();
+            } else if (auto const* stream_reader =
+                         stl::get_if<stream_communicator_type>(&this->communicator())) {
+                return (*stream_reader)->eof();
+            } else if (auto* cstr_reader = stl::get_if<cstream_communicator_type>(&this->communicator())) {
+                return cstr_reader->empty();
+            } else {
+                return true;
+            }
+        }
+
+        [[nodiscard]] constexpr bool eof() const noexcept {
+            return empty();
+        }
 
 
         constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
