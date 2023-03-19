@@ -84,6 +84,11 @@ namespace webpp::http::cgi_proto {
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
             return body_content.size();
         }
+
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return body_content.empty();
+        }
     };
 
 } // namespace webpp::http::cgi_proto
