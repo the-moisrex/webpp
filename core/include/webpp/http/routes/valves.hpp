@@ -183,212 +183,210 @@ namespace webpp::http {
 
 
 
-    namespace details {
 
-        template <typename C>
-        struct route_optimizer {
-            using type = C;
+    template <typename C>
+    struct route_optimizer {
+        using type = C;
 
-            template <typename... T>
-            static constexpr C convert(T&&... args) noexcept {
-                return {stl::forward<T>(args)...};
-            }
-        };
+        template <typename... T>
+        static constexpr C convert(T&&... args) noexcept {
+            return {stl::forward<T>(args)...};
+        }
+    };
 
-        // remove the unneeded void type
-        template <template <typename, typename, typename...> typename CallableTemplate,
-                  typename TraitsType,
-                  typename... T>
-        struct route_optimizer<CallableTemplate<TraitsType, void, T...>>
-          : route_optimizer<CallableTemplate<TraitsType, T...>> {};
-
-
-        // move pre-routing hooks to the left because they supposed to be called before everything
-        template <template <typename, typename, typename> typename CallableTemplate,
-                  typename Left,
-                  typename Pre,
-                  typename Right,
-                  typename TraitsType>
-        struct route_optimizer<CallableTemplate<TraitsType, Left, prerouting_valve<TraitsType, Pre, Right>>>
-          : route_optimizer<CallableTemplate<TraitsType,
-                                             prerouting_valve<TraitsType,
-                                                              typename route_optimizer<Pre>::type,
-                                                              typename route_optimizer<Left>::type>,
-                                             typename route_optimizer<Right>::type>> {
-
-            using left_parent  = route_optimizer<Left>;
-            using right_parent = route_optimizer<Right>;
-            using pre_parent   = route_optimizer<Pre>;
-            using preroute_type =
-              prerouting_valve<TraitsType, typename pre_parent::type, typename left_parent::type>;
-            using parent_type =
-              route_optimizer<CallableTemplate<TraitsType, preroute_type, typename pre_parent::type>>;
-            using return_type = typename parent_type::type;
-            using rhs_type    = prerouting_valve<TraitsType, Pre, Right>;
-            using lhs_type    = Left;
-
-            static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
-                return parent_type::convert(preroute_type{pre_parent::convert(stl::move(rhs.get_preroute())),
-                                                          left_parent::convert(stl::move(lhs))},
-                                            right_parent::convert(stl::move(rhs.get_callable())));
-            }
-        };
-
-        // move post-routing hooks to the right because they supposed to be called after everything
-        template <template <typename, typename, typename> typename CallableTemplate,
-                  typename Left,
-                  typename Post,
-                  typename Right,
-                  typename TraitsType>
-        struct route_optimizer<CallableTemplate<TraitsType, postrouting_valve<TraitsType, Left, Post>, Right>>
-          : route_optimizer<CallableTemplate<TraitsType,
-                                             typename route_optimizer<Left>::type,
-                                             postrouting_valve<TraitsType,
-                                                               typename route_optimizer<Right>::type,
-                                                               typename route_optimizer<Post>::type>>> {
-            using left_parent  = route_optimizer<Left>;
-            using right_parent = route_optimizer<Right>;
-            using post_parent  = route_optimizer<Post>;
-            using postroute_type =
-              postrouting_valve<TraitsType, typename right_parent::type, typename post_parent::type>;
-            using parent_type =
-              route_optimizer<CallableTemplate<TraitsType, typename left_parent::type, postroute_type>>;
-            using return_type = typename parent_type::type;
-            using lhs_type    = postrouting_valve<TraitsType, Left, Post>;
-            using rhs_type    = Right;
-
-            static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
-                return parent_type::convert(
-                  left_parent::convert(stl::move(lhs.get_callable())),
-                  postroute_type{right_parent::convert(stl::move(rhs)),
-                                 post_parent::convert(stl::move(lhs.get_postroute()))});
-            }
-        };
-
-        // !!C == C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<not_valve<TraitsType, not_valve<TraitsType, C>>> : route_optimizer<C> {
-            using parent_type = route_optimizer<C>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // C || !C == +C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<or_valve<TraitsType, C, not_valve<TraitsType, C>>>
-          : route_optimizer<positive_valve<TraitsType, C>> {
-            using parent_type = route_optimizer<positive_valve<TraitsType, C>>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // !C || C == +C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<or_valve<TraitsType, not_valve<TraitsType, C>, C>>
-          : route_optimizer<positive_valve<TraitsType, C>> {
-            using parent_type = route_optimizer<positive_valve<TraitsType, C>>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // C && C == C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<and_valve<TraitsType, C, C>> : route_optimizer<C> {
-            using parent_type = route_optimizer<C>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next, [[maybe_unused]] C) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // C && !C == -C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<and_valve<TraitsType, C, not_valve<TraitsType, C>>>
-          : route_optimizer<negative_valve<TraitsType, C>> {
-            using parent_type = route_optimizer<negative_valve<TraitsType, C>>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // !C && C == -C
-        template <typename C, typename TraitsType>
-        struct route_optimizer<and_valve<TraitsType, not_valve<TraitsType, C>, C>>
-          : route_optimizer<negative_valve<TraitsType, C>> {
-            using parent_type = route_optimizer<negative_valve<TraitsType, C>>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C next) noexcept {
-                return parent_type::convert(stl::forward<C>(next));
-            }
-        };
-
-        // remove first voids
-        template <typename... C, typename TraitsType>
-        struct route_optimizer<forward_valve<TraitsType, void, C...>>
-          : route_optimizer<forward_valve<TraitsType, C...>> {
-            using parent_type = route_optimizer<forward_valve<TraitsType, C...>>;
-            using return_type = typename parent_type::type;
-
-            static constexpr return_type convert(C... next_callables) noexcept {
-                return parent_type::convert(stl::forward<C>(next_callables)...);
-            }
-        };
-
-        // remove double forwarding
-        template <typename C1, typename... C, typename TraitsType>
-        struct route_optimizer<forward_valve<TraitsType, forward_valve<TraitsType, C1>, C...>>
-          : route_optimizer<forward_valve<TraitsType, C1, C...>> {
-            using parent_type       = route_optimizer<forward_valve<TraitsType, C1, C...>>;
-            using return_type       = typename parent_type::type;
-            using sub_callable_type = forward_valve<TraitsType, C1>;
-
-            template <typename... N>
-            static constexpr return_type convert(sub_callable_type const& sub_callable,
-                                                 N... next_callables) noexcept {
-                return parent_type::convert(sub_callable.get_callable(), stl::forward<N>(next_callables)...);
-            }
-        };
-
-        // remove double segmenting
-        template <typename... C1s, typename... C, typename TraitsType>
-        struct route_optimizer<segment_valve<TraitsType, segment_valve<TraitsType, C1s...>, C...>>
-          : route_optimizer<segment_valve<TraitsType, C1s..., C...>> {
-            using parent_type  = route_optimizer<segment_valve<TraitsType, C1s..., C...>>;
-            using return_type  = typename parent_type::type;
-            using sub_seg_type = segment_valve<TraitsType, C1s...>;
-
-            static constexpr return_type convert(sub_seg_type sub_seg, C... next_segs) noexcept {
-                return parent_type::convert(sub_seg.get_segment(), stl::forward<C>(next_segs)...);
-            }
-        };
+    // remove the unneeded void type
+    template <template <typename, typename, typename...> typename CallableTemplate,
+              typename TraitsType,
+              typename... T>
+    struct route_optimizer<CallableTemplate<TraitsType, void, T...>>
+      : route_optimizer<CallableTemplate<TraitsType, T...>> {};
 
 
-        // C || Positive == ?
-        // C && Negative == ?
+    // move pre-routing hooks to the left because they supposed to be called before everything
+    template <template <typename, typename, typename> typename CallableTemplate,
+              typename Left,
+              typename Pre,
+              typename Right,
+              typename TraitsType>
+    struct route_optimizer<CallableTemplate<TraitsType, Left, prerouting_valve<TraitsType, Pre, Right>>>
+      : route_optimizer<CallableTemplate<TraitsType,
+                                         prerouting_valve<TraitsType,
+                                                          typename route_optimizer<Pre>::type,
+                                                          typename route_optimizer<Left>::type>,
+                                         typename route_optimizer<Right>::type>> {
+
+        using left_parent  = route_optimizer<Left>;
+        using right_parent = route_optimizer<Right>;
+        using pre_parent   = route_optimizer<Pre>;
+        using preroute_type =
+          prerouting_valve<TraitsType, typename pre_parent::type, typename left_parent::type>;
+        using parent_type =
+          route_optimizer<CallableTemplate<TraitsType, preroute_type, typename pre_parent::type>>;
+        using return_type = typename parent_type::type;
+        using rhs_type    = prerouting_valve<TraitsType, Pre, Right>;
+        using lhs_type    = Left;
+
+        static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
+            return parent_type::convert(preroute_type{pre_parent::convert(stl::move(rhs.get_preroute())),
+                                                      left_parent::convert(stl::move(lhs))},
+                                        right_parent::convert(stl::move(rhs.get_callable())));
+        }
+    };
+
+    // move post-routing hooks to the right because they supposed to be called after everything
+    template <template <typename, typename, typename> typename CallableTemplate,
+              typename Left,
+              typename Post,
+              typename Right,
+              typename TraitsType>
+    struct route_optimizer<CallableTemplate<TraitsType, postrouting_valve<TraitsType, Left, Post>, Right>>
+      : route_optimizer<CallableTemplate<TraitsType,
+                                         typename route_optimizer<Left>::type,
+                                         postrouting_valve<TraitsType,
+                                                           typename route_optimizer<Right>::type,
+                                                           typename route_optimizer<Post>::type>>> {
+        using left_parent  = route_optimizer<Left>;
+        using right_parent = route_optimizer<Right>;
+        using post_parent  = route_optimizer<Post>;
+        using postroute_type =
+          postrouting_valve<TraitsType, typename right_parent::type, typename post_parent::type>;
+        using parent_type =
+          route_optimizer<CallableTemplate<TraitsType, typename left_parent::type, postroute_type>>;
+        using return_type = typename parent_type::type;
+        using lhs_type    = postrouting_valve<TraitsType, Left, Post>;
+        using rhs_type    = Right;
+
+        static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
+            return parent_type::convert(left_parent::convert(stl::move(lhs.get_callable())),
+                                        postroute_type{right_parent::convert(stl::move(rhs)),
+                                                       post_parent::convert(stl::move(lhs.get_postroute()))});
+        }
+    };
+
+    // !!C == C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<not_valve<TraitsType, not_valve<TraitsType, C>>> : route_optimizer<C> {
+        using parent_type = route_optimizer<C>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // C || !C == +C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<or_valve<TraitsType, C, not_valve<TraitsType, C>>>
+      : route_optimizer<positive_valve<TraitsType, C>> {
+        using parent_type = route_optimizer<positive_valve<TraitsType, C>>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // !C || C == +C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<or_valve<TraitsType, not_valve<TraitsType, C>, C>>
+      : route_optimizer<positive_valve<TraitsType, C>> {
+        using parent_type = route_optimizer<positive_valve<TraitsType, C>>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // C && C == C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<and_valve<TraitsType, C, C>> : route_optimizer<C> {
+        using parent_type = route_optimizer<C>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next, [[maybe_unused]] C) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // C && !C == -C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<and_valve<TraitsType, C, not_valve<TraitsType, C>>>
+      : route_optimizer<negative_valve<TraitsType, C>> {
+        using parent_type = route_optimizer<negative_valve<TraitsType, C>>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // !C && C == -C
+    template <typename C, typename TraitsType>
+    struct route_optimizer<and_valve<TraitsType, not_valve<TraitsType, C>, C>>
+      : route_optimizer<negative_valve<TraitsType, C>> {
+        using parent_type = route_optimizer<negative_valve<TraitsType, C>>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C next) noexcept {
+            return parent_type::convert(stl::forward<C>(next));
+        }
+    };
+
+    // remove first voids
+    template <typename... C, typename TraitsType>
+    struct route_optimizer<forward_valve<TraitsType, void, C...>>
+      : route_optimizer<forward_valve<TraitsType, C...>> {
+        using parent_type = route_optimizer<forward_valve<TraitsType, C...>>;
+        using return_type = typename parent_type::type;
+
+        static constexpr return_type convert(C... next_callables) noexcept {
+            return parent_type::convert(stl::forward<C>(next_callables)...);
+        }
+    };
+
+    // remove double forwarding
+    template <typename C1, typename... C, typename TraitsType>
+    struct route_optimizer<forward_valve<TraitsType, forward_valve<TraitsType, C1>, C...>>
+      : route_optimizer<forward_valve<TraitsType, C1, C...>> {
+        using parent_type       = route_optimizer<forward_valve<TraitsType, C1, C...>>;
+        using return_type       = typename parent_type::type;
+        using sub_callable_type = forward_valve<TraitsType, C1>;
+
+        template <typename... N>
+        static constexpr return_type convert(sub_callable_type const& sub_callable,
+                                             N... next_callables) noexcept {
+            return parent_type::convert(sub_callable.get_callable(), stl::forward<N>(next_callables)...);
+        }
+    };
+
+    // remove double segmenting
+    template <typename... C1s, typename... C, typename TraitsType>
+    struct route_optimizer<segment_valve<TraitsType, segment_valve<TraitsType, C1s...>, C...>>
+      : route_optimizer<segment_valve<TraitsType, C1s..., C...>> {
+        using parent_type  = route_optimizer<segment_valve<TraitsType, C1s..., C...>>;
+        using return_type  = typename parent_type::type;
+        using sub_seg_type = segment_valve<TraitsType, C1s...>;
+
+        static constexpr return_type convert(sub_seg_type sub_seg, C... next_segs) noexcept {
+            return parent_type::convert(sub_seg.get_segment(), stl::forward<C>(next_segs)...);
+        }
+    };
+
+
+    // todo: C || Positive == ?
+    // todo: C && Negative == ?
 
 
 
 
 
-        template <Traits TraitsType, typename Self>
-        struct valve {
-            using traits_type   = TraitsType;
-            using context_type  = basic_context<traits_type>;
-            using response_type = basic_response<traits_type>;
-            using request_type  = basic_request<traits_type>;
+    template <Traits TraitsType, typename Self>
+    struct valve {
+        using traits_type   = TraitsType;
+        using context_type  = basic_context<traits_type>;
+        using response_type = basic_response<traits_type>;
+        using request_type  = basic_request<traits_type>;
 
 
 
@@ -420,150 +418,149 @@ namespace webpp::http {
     WEBPP_DEFINE_FUNC_BASE(context_type const&, __VA_ARGS__)
 
 
-            WEBPP_DEFINE_FUNC(request_type)
-            WEBPP_DEFINE_FUNC(request_type&)
-            WEBPP_DEFINE_FUNC(request_type const&)
-            WEBPP_DEFINE_FUNC(request_type&&)
-            WEBPP_DEFINE_FUNC(request_type, response_type)
-            WEBPP_DEFINE_FUNC(request_type&, response_type)
-            WEBPP_DEFINE_FUNC(request_type const&, response_type)
-            WEBPP_DEFINE_FUNC(request_type&&, response_type)
-            WEBPP_DEFINE_FUNC(request_type, response_type&)
-            WEBPP_DEFINE_FUNC(request_type&, response_type&)
-            WEBPP_DEFINE_FUNC(request_type const&, response_type&)
-            WEBPP_DEFINE_FUNC(request_type&&, response_type&)
-            WEBPP_DEFINE_FUNC(request_type, response_type const&)
-            WEBPP_DEFINE_FUNC(request_type&, response_type const&)
-            WEBPP_DEFINE_FUNC(request_type const&, response_type const&)
-            WEBPP_DEFINE_FUNC(request_type&&, response_type const&)
-            WEBPP_DEFINE_FUNC(request_type, context_type)
-            WEBPP_DEFINE_FUNC(request_type&, context_type)
-            WEBPP_DEFINE_FUNC(request_type const&, context_type)
-            WEBPP_DEFINE_FUNC(request_type&&, context_type)
-            WEBPP_DEFINE_FUNC(request_type, context_type&)
-            WEBPP_DEFINE_FUNC(request_type&, context_type&)
-            WEBPP_DEFINE_FUNC(request_type const&, context_type&)
-            WEBPP_DEFINE_FUNC(request_type&&, context_type&)
-            WEBPP_DEFINE_FUNC(request_type, context_type const&)
-            WEBPP_DEFINE_FUNC(request_type&, context_type const&)
-            WEBPP_DEFINE_FUNC(request_type const&, context_type const&)
-            WEBPP_DEFINE_FUNC(request_type&&, context_type const&)
+        WEBPP_DEFINE_FUNC(request_type)
+        WEBPP_DEFINE_FUNC(request_type&)
+        WEBPP_DEFINE_FUNC(request_type const&)
+        WEBPP_DEFINE_FUNC(request_type&&)
+        WEBPP_DEFINE_FUNC(request_type, response_type)
+        WEBPP_DEFINE_FUNC(request_type&, response_type)
+        WEBPP_DEFINE_FUNC(request_type const&, response_type)
+        WEBPP_DEFINE_FUNC(request_type&&, response_type)
+        WEBPP_DEFINE_FUNC(request_type, response_type&)
+        WEBPP_DEFINE_FUNC(request_type&, response_type&)
+        WEBPP_DEFINE_FUNC(request_type const&, response_type&)
+        WEBPP_DEFINE_FUNC(request_type&&, response_type&)
+        WEBPP_DEFINE_FUNC(request_type, response_type const&)
+        WEBPP_DEFINE_FUNC(request_type&, response_type const&)
+        WEBPP_DEFINE_FUNC(request_type const&, response_type const&)
+        WEBPP_DEFINE_FUNC(request_type&&, response_type const&)
+        WEBPP_DEFINE_FUNC(request_type, context_type)
+        WEBPP_DEFINE_FUNC(request_type&, context_type)
+        WEBPP_DEFINE_FUNC(request_type const&, context_type)
+        WEBPP_DEFINE_FUNC(request_type&&, context_type)
+        WEBPP_DEFINE_FUNC(request_type, context_type&)
+        WEBPP_DEFINE_FUNC(request_type&, context_type&)
+        WEBPP_DEFINE_FUNC(request_type const&, context_type&)
+        WEBPP_DEFINE_FUNC(request_type&&, context_type&)
+        WEBPP_DEFINE_FUNC(request_type, context_type const&)
+        WEBPP_DEFINE_FUNC(request_type&, context_type const&)
+        WEBPP_DEFINE_FUNC(request_type const&, context_type const&)
+        WEBPP_DEFINE_FUNC(request_type&&, context_type const&)
 
 
-            WEBPP_DEFINE_FUNC(context_type&)
-            WEBPP_DEFINE_FUNC(context_type)
-            WEBPP_DEFINE_FUNC(context_type const&)
-            WEBPP_DEFINE_FUNC(context_type&, response_type)
-            WEBPP_DEFINE_FUNC(context_type, response_type)
-            WEBPP_DEFINE_FUNC(context_type const&, response_type)
-            WEBPP_DEFINE_FUNC(context_type&, response_type&)
-            WEBPP_DEFINE_FUNC(context_type, response_type&)
-            WEBPP_DEFINE_FUNC(context_type const&, response_type&)
-            WEBPP_DEFINE_FUNC(context_type&, response_type const&)
-            WEBPP_DEFINE_FUNC(context_type, response_type const&)
-            WEBPP_DEFINE_FUNC(context_type const&, response_type const&)
-            WEBPP_DEFINE_FUNC(context_type&, request_type)
-            WEBPP_DEFINE_FUNC(context_type, request_type)
-            WEBPP_DEFINE_FUNC(context_type const&, request_type)
-            WEBPP_DEFINE_FUNC(context_type&, request_type&)
-            WEBPP_DEFINE_FUNC(context_type, request_type&)
-            WEBPP_DEFINE_FUNC(context_type const&, request_type&)
-            WEBPP_DEFINE_FUNC(context_type&, request_type const&)
-            WEBPP_DEFINE_FUNC(context_type, request_type const&)
-            WEBPP_DEFINE_FUNC(context_type const&, request_type const&)
+        WEBPP_DEFINE_FUNC(context_type&)
+        WEBPP_DEFINE_FUNC(context_type)
+        WEBPP_DEFINE_FUNC(context_type const&)
+        WEBPP_DEFINE_FUNC(context_type&, response_type)
+        WEBPP_DEFINE_FUNC(context_type, response_type)
+        WEBPP_DEFINE_FUNC(context_type const&, response_type)
+        WEBPP_DEFINE_FUNC(context_type&, response_type&)
+        WEBPP_DEFINE_FUNC(context_type, response_type&)
+        WEBPP_DEFINE_FUNC(context_type const&, response_type&)
+        WEBPP_DEFINE_FUNC(context_type&, response_type const&)
+        WEBPP_DEFINE_FUNC(context_type, response_type const&)
+        WEBPP_DEFINE_FUNC(context_type const&, response_type const&)
+        WEBPP_DEFINE_FUNC(context_type&, request_type)
+        WEBPP_DEFINE_FUNC(context_type, request_type)
+        WEBPP_DEFINE_FUNC(context_type const&, request_type)
+        WEBPP_DEFINE_FUNC(context_type&, request_type&)
+        WEBPP_DEFINE_FUNC(context_type, request_type&)
+        WEBPP_DEFINE_FUNC(context_type const&, request_type&)
+        WEBPP_DEFINE_FUNC(context_type&, request_type const&)
+        WEBPP_DEFINE_FUNC(context_type, request_type const&)
+        WEBPP_DEFINE_FUNC(context_type const&, request_type const&)
 
 
 #undef WEBPP_DEFINE_FUNC
 #undef WEBPP_DEFINE_FUNC_BASE
 
 
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
-                using forward_type = forward_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-                return rebind_next<forward_type>(stl::forward<Callable>(callable));
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
+            using forward_type = forward_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<forward_type>(stl::forward<Callable>(callable));
+        }
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
+            using and_type = and_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<and_type>(stl::forward<Callable>(callable));
+        }
+
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
+            using or_type = or_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<or_type>(stl::forward<Callable>(callable));
+        }
+
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator!() const {
+            return rebind_next<not_valve<traits_type, Self>>();
+        }
+
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
+            using postroute_type = postrouting_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<postroute_type>(stl::forward<Callable>(callable));
+        }
+
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
+            using preroute_type = prerouting_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<preroute_type>(stl::forward<Callable>(callable));
+        }
+
+
+
+        template <typename CallableSegment>
+        [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
+            using seg_type = segment_valve<traits_type, Self, stl::remove_cvref_t<CallableSegment>>;
+            return rebind_next<seg_type>(stl::forward<CallableSegment>(inp_segment));
+        }
+
+
+        template <typename SegT>
+            requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
+        [[nodiscard]] constexpr auto operator/(SegT&& inp_segment) const {
+            auto const seg_v   = istl::string_viewify(stl::forward<SegT>(inp_segment));
+            using seg_t        = stl::remove_cvref_t<decltype(seg_v)>;
+            using segment_type = segment_valve<traits_type, Self, seg_t>;
+            return rebind_next<segment_type>(seg_v);
+        }
+
+
+      private:
+        template <typename NextType, typename T>
+        [[nodiscard]] constexpr auto rebind_next(T&& next) const noexcept {
+            using optimized_route = route_optimizer<NextType>;
+            if constexpr (stl::is_void_v<Self>) {
+                return optimized_route::convert(forward<T>(next));
+            } else {
+                return optimized_route::convert(*static_cast<Self const*>(this), stl::forward<T>(next));
             }
+        }
 
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
-                using and_type = and_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-                return rebind_next<and_type>(stl::forward<Callable>(callable));
+
+        template <typename NextType>
+        [[nodiscard]] constexpr auto rebind_next() const noexcept {
+            using optimized_route = route_optimizer<NextType>;
+            if constexpr (stl::is_void_v<Self>) {
+                return optimized_route::convert();
+            } else {
+                return optimized_route::convert(*static_cast<Self const*>(this));
             }
+        }
+    };
 
 
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
-                using or_type = or_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-                return rebind_next<or_type>(stl::forward<Callable>(callable));
-            }
-
-
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator!() const {
-                return rebind_next<not_valve<traits_type, Self>>();
-            }
-
-
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
-                using postroute_type = postrouting_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-                return rebind_next<postroute_type>(stl::forward<Callable>(callable));
-            }
-
-
-            template <typename Callable>
-            [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-                using preroute_type = prerouting_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-                return rebind_next<preroute_type>(stl::forward<Callable>(callable));
-            }
-
-
-
-            template <typename CallableSegment>
-            [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
-                using seg_type = segment_valve<traits_type, Self, stl::remove_cvref_t<CallableSegment>>;
-                return rebind_next<seg_type>(stl::forward<CallableSegment>(inp_segment));
-            }
-
-
-            template <typename SegT>
-                requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
-            [[nodiscard]] constexpr auto operator/(SegT&& inp_segment) const {
-                auto const seg_v   = istl::string_viewify(stl::forward<SegT>(inp_segment));
-                using seg_t        = stl::remove_cvref_t<decltype(seg_v)>;
-                using segment_type = segment_valve<traits_type, Self, seg_t>;
-                return rebind_next<segment_type>(seg_v);
-            }
-
-
-          private:
-            template <typename NextType, typename T>
-            [[nodiscard]] constexpr auto rebind_next(T&& next) const noexcept {
-                using optimized_route = route_optimizer<NextType>;
-                if constexpr (stl::is_void_v<Self>) {
-                    return optimized_route::convert(forward<T>(next));
-                } else {
-                    return optimized_route::convert(*static_cast<Self const*>(this), stl::forward<T>(next));
-                }
-            }
-
-
-            template <typename NextType>
-            [[nodiscard]] constexpr auto rebind_next() const noexcept {
-                using optimized_route = route_optimizer<NextType>;
-                if constexpr (stl::is_void_v<Self>) {
-                    return optimized_route::convert();
-                } else {
-                    return optimized_route::convert(*static_cast<Self const*>(this));
-                }
-            }
-        };
-
-
-    } // namespace details
 
 
     template <Traits TraitsType, typename... Callables>
-    struct forward_valve : details::valve<TraitsType, forward_valve<TraitsType, Callables...>> {
+    struct forward_valve : valve<TraitsType, forward_valve<TraitsType, Callables...>> {
         using tuple_type   = stl::tuple<Callables...>;
         using context_type = basic_context<TraitsType>;
 
@@ -604,8 +601,7 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType, typename Callable>
-    struct forward_valve<TraitsType, Callable>
-      : details::valve<TraitsType, forward_valve<TraitsType, Callable>> {
+    struct forward_valve<TraitsType, Callable> : valve<TraitsType, forward_valve<TraitsType, Callable>> {
       private:
         Callable next;
 
@@ -634,7 +630,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct forward_valve<TraitsType> : details::valve<TraitsType, void> {
+    struct forward_valve<TraitsType> : valve<TraitsType, void> {
         constexpr void operator()(basic_context<TraitsType>&) const {}
 
         constexpr void to_string(istl::String auto& out) const {
@@ -647,7 +643,7 @@ namespace webpp::http {
     struct forward_valve<TraitsType, void> : forward_valve<TraitsType> {};
 
     template <Traits TraitsType, typename PreRoute, typename Callable>
-    struct prerouting_valve : details::valve<TraitsType, prerouting_valve<TraitsType, PreRoute, Callable>> {
+    struct prerouting_valve : valve<TraitsType, prerouting_valve<TraitsType, PreRoute, Callable>> {
       private:
         PreRoute pre;
         Callable callable;
@@ -702,7 +698,7 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename PreRoute>
     struct prerouting_valve<TraitsType, PreRoute, void>
-      : details::valve<TraitsType, prerouting_valve<TraitsType, PreRoute, void>> {
+      : valve<TraitsType, prerouting_valve<TraitsType, PreRoute, void>> {
       private:
         PreRoute pre;
 
@@ -729,8 +725,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename Callable, typename PostRoute>
-    struct postrouting_valve
-      : details::valve<TraitsType, postrouting_valve<TraitsType, Callable, PostRoute>> {
+    struct postrouting_valve : valve<TraitsType, postrouting_valve<TraitsType, Callable, PostRoute>> {
       private:
         Callable  callable;
         PostRoute post;
@@ -784,7 +779,7 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename PostRoute>
     struct postrouting_valve<TraitsType, void, PostRoute>
-      : details::valve<TraitsType, postrouting_valve<TraitsType, void, PostRoute>> {
+      : valve<TraitsType, postrouting_valve<TraitsType, void, PostRoute>> {
       private:
         PostRoute post;
 
@@ -812,7 +807,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename Callable>
-    struct not_valve : details::valve<TraitsType, not_valve<TraitsType, Callable>> {
+    struct not_valve : valve<TraitsType, not_valve<TraitsType, Callable>> {
         using next_type = Callable;
 
       private:
@@ -846,7 +841,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct not_valve<TraitsType, void> : details::valve<TraitsType, not_valve<TraitsType, void>> {
+    struct not_valve<TraitsType, void> : valve<TraitsType, not_valve<TraitsType, void>> {
         constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
@@ -855,7 +850,7 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType, typename Callable>
-    struct negative_valve : details::valve<TraitsType, negative_valve<TraitsType, Callable>> {
+    struct negative_valve : valve<TraitsType, negative_valve<TraitsType, Callable>> {
         using next_type = Callable;
 
       private:
@@ -886,7 +881,7 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType, typename Callable>
-    struct positive_valve : details::valve<TraitsType, positive_valve<TraitsType, Callable>> {
+    struct positive_valve : valve<TraitsType, positive_valve<TraitsType, Callable>> {
         using next_type = Callable;
 
       private:
@@ -919,7 +914,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename LeftCallable, typename RightCallable>
-    struct and_valve : details::valve<TraitsType, and_valve<TraitsType, LeftCallable, RightCallable>> {
+    struct and_valve : valve<TraitsType, and_valve<TraitsType, LeftCallable, RightCallable>> {
         using left_type  = LeftCallable;
         using right_type = RightCallable;
 
@@ -971,7 +966,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename LeftCallable, typename RightCallable>
-    struct or_valve : details::valve<TraitsType, or_valve<TraitsType, LeftCallable, RightCallable>> {
+    struct or_valve : valve<TraitsType, or_valve<TraitsType, LeftCallable, RightCallable>> {
         using left_type  = LeftCallable;
         using right_type = RightCallable;
 
@@ -1022,7 +1017,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename... CallableSegments>
-    struct segment_valve : details::valve<TraitsType, segment_valve<TraitsType, CallableSegments...>> {
+    struct segment_valve : valve<TraitsType, segment_valve<TraitsType, CallableSegments...>> {
         using tuple_type = stl::tuple<CallableSegments...>;
 
         using context_type = basic_context<TraitsType>;
@@ -1067,7 +1062,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType>
-    struct segment_valve<TraitsType> : details::valve<TraitsType, segment_valve<TraitsType>> {
+    struct segment_valve<TraitsType> : valve<TraitsType, segment_valve<TraitsType>> {
         constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
@@ -1081,7 +1076,7 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename CallableSegment>
     struct segment_valve<TraitsType, CallableSegment>
-      : details::valve<TraitsType, segment_valve<TraitsType, CallableSegment>> {
+      : valve<TraitsType, segment_valve<TraitsType, CallableSegment>> {
         using context_type = basic_context<TraitsType>;
 
       private:
@@ -1119,8 +1114,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, typename MemPtr>
-    struct member_function_callable
-      : details::valve<TraitsType, member_function_callable<TraitsType, MemPtr>> {
+    struct member_function_callable : valve<TraitsType, member_function_callable<TraitsType, MemPtr>> {
         using member_ptr_type = MemPtr;
         using traits_type     = TraitsType;
         using context_type    = basic_context<traits_type>;
