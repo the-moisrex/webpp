@@ -124,6 +124,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/webpp/http/routes/router.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/dynamic_router.hpp
+        ${LIB_INCLUDE_DIR}/webpp/http/routes/valves.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/route.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/methods.hpp
         ${LIB_INCLUDE_DIR}/webpp/http/routes/path.hpp
