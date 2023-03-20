@@ -82,8 +82,7 @@ namespace webpp::http {
      * and user friendly.
      */
     template <ExtensionList RootExtensions, EnabledTraits TraitsEnabler>
-    struct basic_dynamic_router : TraitsEnabler,
-                                  details::valve<typename TraitsEnabler::traits_type, void> {
+    struct basic_dynamic_router : TraitsEnabler, details::valve<typename TraitsEnabler::traits_type, void> {
         using root_extensions    = RootExtensions;
         using etraits            = TraitsEnabler;
         using traits_type        = typename etraits::traits_type;
@@ -154,7 +153,7 @@ namespace webpp::http {
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
-            using callable_type  = details::route_optimizer_t<C>;
+            using callable_type  = typename details::route_optimizer<C>::type;
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
             new_route_type route{stl::forward<C>(callable)};
