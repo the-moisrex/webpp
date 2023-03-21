@@ -116,18 +116,18 @@ namespace webpp::http {
                                                             auto&&                 data) const noexcept {
                 using data_type = stl::remove_cvref_t<decltype(data)>;
                 if constexpr (istl::StringViewifiable<data_type>) {
-                    auto res                = create_response(istl::string_viewify(data));
-                    res.headers.status_code = error_code;
+                    auto res = create_response(istl::string_viewify(data));
+                    res.headers.status_code(error_code);
                     return res;
                 } else if constexpr (requires {
                                          { data.what() } -> istl::StringViewifiable;
                                      }) {
-                    auto res                = create_response(data.what());
-                    res.headers.status_code = error_code;
+                    auto res = create_response(data.what());
+                    res.headers.status_code(error_code);
                     return res;
                 } else {
-                    auto res                = create_response();
-                    res.headers.status_code = error_code;
+                    auto res = create_response();
+                    res.headers.status_code(error_code);
                     return res;
                 }
             }

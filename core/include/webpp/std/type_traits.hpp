@@ -1116,10 +1116,8 @@ namespace webpp::istl {
       : invocable_inorder<Callable, Arg2, Arg1, Args...> {
         using parent_type = invocable_inorder<Callable, Arg2, Arg1, Args...>;
 
-        static constexpr decltype(auto) call(Callable callable,
-                                             Arg1     arg1,
-                                             Arg2     arg2,
-                                             Args... args) noexcept(parent_type::is_nothrow) {
+        static constexpr decltype(auto)
+        call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args) noexcept(parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable),
                                      stl::forward<Arg2>(arg2),
                                      stl::forward<Arg1>(arg1),

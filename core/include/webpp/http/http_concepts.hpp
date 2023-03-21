@@ -306,7 +306,7 @@ namespace webpp::http {
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
                                                      {
                                                          body.which_communicator()
-                                                     } -> stl::same_as<communicator_type>;
+                                                         } -> stl::same_as<communicator_type>;
                                                  };
 
 
@@ -413,8 +413,8 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept ConvertibleToResponse =
-      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+    concept ConvertibleToResponse = !
+    stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
 
@@ -560,9 +560,8 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType, typename... NotThese>
-    concept HTTPConvertibleBody =
-      istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
-      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> && HTTPDeserializableBody<T, BodyType>;
+    concept HTTPConvertibleBody = istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> && !
+    istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...>&& HTTPDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 
