@@ -333,8 +333,8 @@ namespace webpp {
             auto str        = res.body.string();
 
             stl::stringstream data;
-            data << "Status: " << res.headers.status_code << " "
-                 << status_reason_phrase(res.headers.status_code) << "\r\n";
+            data << "Status: " << res.headers.status_code() << " "
+                 << status_reason_phrase(res.headers.status_code()) << "\r\n";
 
             data << header_str;
             data << str;

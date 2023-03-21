@@ -197,8 +197,8 @@ namespace webpp::http {
                 auto status_line = object::make_local<string_type>(this->alloc_pack);
                 fmt::format_to(stl::back_inserter(status_line),
                                "Status: {} {}\r\n",
-                               res.headers.status_code,
-                               http::status_code_reason_phrase(res.headers.status_code));
+                               res.headers.status_code_integer(),
+                               http::status_code_reason_phrase(res.headers.status_code()));
                 write(status_line.data(), static_cast<stl::streamsize>(status_line.size()));
 
                 write(header_str.data(), static_cast<stl::streamsize>(header_str.size()));

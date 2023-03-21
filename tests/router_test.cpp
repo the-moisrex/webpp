@@ -45,7 +45,7 @@ TEST(Router, RouteCreation) {
     HTTPResponse auto res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
-    EXPECT_EQ(res.headers.status_code, 200);
+    EXPECT_EQ(res.headers.status_code(), 200);
     EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
     router const            router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
