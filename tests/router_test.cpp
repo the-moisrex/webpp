@@ -1,8 +1,8 @@
-#include "../core/include/webpp/http/routes/router.hpp"
+#include "../webpp/http/routes/router.hpp"
 
-#include "../core/include/webpp/http/protocols/cgi.hpp"
-#include "../core/include/webpp/http/routes/path.hpp"
-#include "../core/include/webpp/traits/enable_traits.hpp"
+#include "../webpp/http/protocols/cgi.hpp"
+#include "../webpp/http/routes/path.hpp"
+#include "../webpp/traits/enable_traits.hpp"
 #include "common_pch.hpp"
 #include "fake_protocol.hpp"
 

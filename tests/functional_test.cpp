@@ -1,10 +1,10 @@
 // Created by moisrex on 12/10/19.
 
-#include "../core/include/webpp/std/functional.hpp"
+#include "../webpp/std/functional.hpp"
 
-#include "../core/include/webpp/std/function_ref.hpp"
-#include "../core/include/webpp/std/memory_resource.hpp"
-#include "../core/include/webpp/utils/debounce.hpp"
+#include "../webpp/std/function_ref.hpp"
+#include "../webpp/std/memory_resource.hpp"
+#include "../webpp/utils/debounce.hpp"
 #include "common_pch.hpp"
 
 

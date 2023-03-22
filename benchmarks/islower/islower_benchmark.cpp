@@ -1,4 +1,4 @@
-#include "../../core/include/webpp/strings/istring.hpp"
+#include "../../webpp/strings/istring.hpp"
 #include "../benchmark.hpp"
 
 #include <algorithm>

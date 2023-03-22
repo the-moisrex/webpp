@@ -1,4 +1,4 @@
-#include "../../core/include/webpp/convert/lexical_cast.hpp"
+#include "../../webpp/convert/lexical_cast.hpp"
 #include "../benchmark.hpp"
 
 #if __has_include(<boost/lexical_cast.hpp>)

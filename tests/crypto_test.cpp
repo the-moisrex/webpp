@@ -1,8 +1,8 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/crypto/base64.hpp"
-#include "../core/include/webpp/crypto/base64_url.hpp"
-#include "../core/include/webpp/crypto/gzip.hpp"
+#include "../webpp/crypto/base64.hpp"
+#include "../webpp/crypto/base64_url.hpp"
+#include "../webpp/crypto/gzip.hpp"
 #include "common_pch.hpp"
 
 

@@ -1,12 +1,12 @@
 // Created by moisrex on 1/27/20.
 
-#include "../core/include/webpp/memory/allocator_pack.hpp"
-#include "../core/include/webpp/memory/available_memory.hpp"
-#include "../core/include/webpp/memory/object.hpp"
-#include "../core/include/webpp/memory/std_allocator_pack.hpp"
-#include "../core/include/webpp/memory/std_pmr_allocator_pack.hpp"
-#include "../core/include/webpp/std/memory_resource.hpp"
-#include "../core/include/webpp/std/string.hpp"
+#include "../webpp/memory/allocator_pack.hpp"
+#include "../webpp/memory/available_memory.hpp"
+#include "../webpp/memory/object.hpp"
+#include "../webpp/memory/std_allocator_pack.hpp"
+#include "../webpp/memory/std_pmr_allocator_pack.hpp"
+#include "../webpp/std/memory_resource.hpp"
+#include "../webpp/std/string.hpp"
 #include "common_pch.hpp"
 
 #include <vector>

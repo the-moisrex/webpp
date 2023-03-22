@@ -1,6 +1,6 @@
 // Created by moisrex on 1/27/20.
-#include "../core/include/webpp/convert/casts.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../webpp/convert/casts.hpp"
+#include "../webpp/traits/std_traits.hpp"
 #include "common_pch.hpp"
 
 using namespace webpp;

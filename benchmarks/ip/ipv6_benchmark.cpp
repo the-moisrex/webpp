@@ -1,6 +1,6 @@
-#include "../../core/include/webpp/ip/ipv4.hpp"
-#include "../../core/include/webpp/ip/ipv6.hpp"
-#include "../../core/include/webpp/traits/std_traits.hpp"
+#include "../../webpp/ip/ipv4.hpp"
+#include "../../webpp/ip/ipv6.hpp"
+#include "../../webpp/traits/std_traits.hpp"
 #include "../benchmark.hpp"
 #include "../boost_pch.hpp"
 

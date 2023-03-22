@@ -1,4 +1,4 @@
-#include "../../core/include/webpp/strings/to_case.hpp"
+#include "../../webpp/strings/to_case.hpp"
 #include "../benchmark.hpp"
 #include "../simd_pch.hpp" // std::experimental as of writing this
 

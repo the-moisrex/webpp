@@ -1,8 +1,8 @@
 // Created by moisrex on 2/4/20.
 
-#include "../core/include/webpp/http/bodies/string.hpp"
-#include "../core/include/webpp/http/response_body.hpp"
-#include "../core/include/webpp/std/string.hpp"
+#include "../webpp/http/bodies/string.hpp"
+#include "../webpp/http/response_body.hpp"
+#include "../webpp/std/string.hpp"
 #include "common_pch.hpp"
 
 #include <filesystem>

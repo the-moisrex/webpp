@@ -1,10 +1,10 @@
 // Created by moisrex on 12/17/20.
 
-#include "../core/include/webpp/std/type_traits.hpp"
+#include "../webpp/std/type_traits.hpp"
 
-#include "../core/include/webpp/std/concepts.hpp"
-#include "../core/include/webpp/std/optional.hpp"
-#include "../core/include/webpp/std/tuple.hpp"
+#include "../webpp/std/concepts.hpp"
+#include "../webpp/std/optional.hpp"
+#include "../webpp/std/tuple.hpp"
 #include "common_pch.hpp"
 
 #include <cmath>

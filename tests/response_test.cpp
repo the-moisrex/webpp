@@ -1,12 +1,12 @@
 // Created by moisrex on 2/4/20.
 
 
-#include "../core/include/webpp/http/response.hpp"
+#include "../webpp/http/response.hpp"
 
-#include "../core/include/webpp/http/bodies/file.hpp"
-#include "../core/include/webpp/http/bodies/string.hpp"
-#include "../core/include/webpp/http/response_body.hpp"
-#include "../core/include/webpp/traits/enable_traits.hpp"
+#include "../webpp/http/bodies/file.hpp"
+#include "../webpp/http/bodies/string.hpp"
+#include "../webpp/http/response_body.hpp"
+#include "../webpp/traits/enable_traits.hpp"
 #include "common_pch.hpp"
 
 

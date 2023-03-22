@@ -10,6 +10,6 @@
 #    define WEBPP_PROJECT_ROOT "../../"
 #endif
 
-#define webpp_include(file_path) <WEBPP_PROJECT_ROOT/core/include/webpp/file_path.hpp>
+#define webpp_include(file_path) <WEBPP_PROJECT_ROOT/webpp/file_path.hpp>
 
 #endif // WEBPP_BENCHMARK_HPP

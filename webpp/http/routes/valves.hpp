@@ -558,6 +558,9 @@ namespace webpp::http {
 
 
 
+    template <Traits TraitsType, typename... Callables>
+    struct mangler_valve : valve<TraitsType, mangler_valve<TraitsType, Callables...>> {};
+
 
     template <Traits TraitsType, typename... Callables>
     struct forward_valve : valve<TraitsType, forward_valve<TraitsType, Callables...>> {

@@ -1,6 +1,6 @@
-#include "../../core/include/webpp/std/string_view.hpp"
-#include "../../core/include/webpp/strings/iequals.hpp"
-#include "../../core/include/webpp/strings/to_case.hpp"
+#include "../../webpp/std/string_view.hpp"
+#include "../../webpp/strings/iequals.hpp"
+#include "../../webpp/strings/to_case.hpp"
 #include "../benchmark.hpp"
 
 #include <strings.h>

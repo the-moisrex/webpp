@@ -1,8 +1,8 @@
 
-#include "../core/include/webpp/ip/ipv6.hpp"
+#include "../webpp/ip/ipv6.hpp"
 
-#include "../core/include/webpp/traits/std_traits.hpp"
-#include "../core/include/webpp/validators/validators.hpp"
+#include "../webpp/traits/std_traits.hpp"
+#include "../webpp/validators/validators.hpp"
 #include "common_pch.hpp"
 
 

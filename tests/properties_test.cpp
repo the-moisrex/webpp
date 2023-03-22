@@ -1,5 +1,5 @@
 
-#include "../core/include/webpp/utils/property.hpp"
+#include "../webpp/utils/property.hpp"
 #include "common_pch.hpp"
 
 

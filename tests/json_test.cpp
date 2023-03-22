@@ -1,7 +1,7 @@
 // Created by moisrex
 
 
-#include "../core/include/webpp/json/defaultjson.hpp"
+#include "../webpp/json/defaultjson.hpp"
 #include "common_pch.hpp"
 
 using namespace webpp;

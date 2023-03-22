@@ -1,8 +1,8 @@
 // Created by moisrex on 12/17/20.
 
-#include "../core/include/webpp/std/concepts.hpp"
-#include "../core/include/webpp/traits/default_traits.hpp"
-#include "../core/include/webpp/traits/enable_traits.hpp"
+#include "../webpp/std/concepts.hpp"
+#include "../webpp/traits/default_traits.hpp"
+#include "../webpp/traits/enable_traits.hpp"
 
 using namespace webpp;
 using namespace webpp::stl;

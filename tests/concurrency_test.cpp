@@ -1,7 +1,7 @@
 // Created by moisrex on 15/1/22.
 
 
-#include "../core/include/webpp/concurrency/atomic_counter.hpp"
+#include "../webpp/concurrency/atomic_counter.hpp"
 #include "common_pch.hpp"
 
 #include <thread>

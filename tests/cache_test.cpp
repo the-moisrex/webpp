@@ -1,8 +1,8 @@
-#include "../core/include/webpp/storage/cache.hpp"
+#include "../webpp/storage/cache.hpp"
 
-#include "../core/include/webpp/storage/directory_gate.hpp"
-#include "../core/include/webpp/storage/file_gate.hpp"
-#include "../core/include/webpp/storage/lru_cache.hpp"
+#include "../webpp/storage/directory_gate.hpp"
+#include "../webpp/storage/file_gate.hpp"
+#include "../webpp/storage/lru_cache.hpp"
 #include "common_pch.hpp"
 
 using namespace webpp;
