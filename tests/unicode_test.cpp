@@ -1,5 +1,5 @@
 // Created by moisrex on 12/28/20.
-#include "../core/include/webpp/strings/unicode.hpp"
+#include "../webpp/strings/unicode.hpp"
 
 #include "common_pch.hpp"
 

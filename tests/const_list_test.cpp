@@ -1,6 +1,6 @@
 // Created by moisrex on 11/29/19.
 
-#include "../core/include/webpp/utils/const_list.hpp"
+#include "../webpp/utils/const_list.hpp"
 
 #include "common_pch.hpp"
 

@@ -1,6 +1,6 @@
-#include "../core/include/webpp/extensions/extension.hpp"
-#include "../core/include/webpp/std/concepts.hpp"
-#include "../core/include/webpp/traits/std_traits.hpp"
+#include "../webpp/extensions/extension.hpp"
+#include "../webpp/std/concepts.hpp"
+#include "../webpp/traits/std_traits.hpp"
 #include "common_pch.hpp"
 
 

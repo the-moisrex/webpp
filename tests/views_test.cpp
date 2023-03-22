@@ -1,10 +1,10 @@
 // Created by moisrex on 11/04/22.
-#include "../core/include/webpp/http/request_body.hpp"
-#include "../core/include/webpp/http/routes/context.hpp"
-#include "../core/include/webpp/traits/default_traits.hpp"
-#include "../core/include/webpp/views/mustache_view.hpp"
-#include "../core/include/webpp/views/view_concepts.hpp"
-#include "../core/include/webpp/views/view_manager.hpp"
+#include "../webpp/http/request_body.hpp"
+#include "../webpp/http/routes/context.hpp"
+#include "../webpp/traits/default_traits.hpp"
+#include "../webpp/views/mustache_view.hpp"
+#include "../webpp/views/view_concepts.hpp"
+#include "../webpp/views/view_manager.hpp"
 #include "common_pch.hpp"
 
 

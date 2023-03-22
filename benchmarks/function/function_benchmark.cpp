@@ -1,5 +1,5 @@
-#include "../../core/include/webpp/std/functional.hpp"
-#include "../../core/include/webpp/std/memory_resource.hpp"
+#include "../../webpp/std/functional.hpp"
+#include "../../webpp/std/memory_resource.hpp"
 #include "../benchmark.hpp"
 
 using namespace webpp;

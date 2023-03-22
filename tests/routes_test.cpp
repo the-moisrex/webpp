@@ -1,6 +1,6 @@
 // Created by moisrex on 11/7/19.
-#include "../core/include/webpp/http/routes/methods.hpp"
-#include "../core/include/webpp/http/routes/path.hpp"
+#include "../webpp/http/routes/methods.hpp"
+#include "../webpp/http/routes/path.hpp"
 #include "fake_protocol.hpp"
 
 

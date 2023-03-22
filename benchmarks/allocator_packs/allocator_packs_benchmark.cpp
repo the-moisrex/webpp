@@ -1,5 +1,5 @@
-#include "../../core/include/webpp/memory/object.hpp"
-#include "../../core/include/webpp/memory/std_pmr_allocator_pack.hpp"
+#include "../../webpp/memory/object.hpp"
+#include "../../webpp/memory/std_pmr_allocator_pack.hpp"
 #include "../benchmark.hpp"
 
 using namespace webpp;

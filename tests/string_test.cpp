@@ -1,8 +1,8 @@
 // Created by moisrex on 11/20/20.
-#include "../core/include/webpp/std/string_concepts.hpp"
-#include "../core/include/webpp/strings/iequals.hpp"
-#include "../core/include/webpp/strings/join.hpp"
-#include "../core/include/webpp/strings/splits.hpp"
+#include "../webpp/std/string_concepts.hpp"
+#include "../webpp/strings/iequals.hpp"
+#include "../webpp/strings/join.hpp"
+#include "../webpp/strings/splits.hpp"
 #include "common_pch.hpp"
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-magic-numbers)

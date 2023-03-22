@@ -1,4 +1,4 @@
-#include "../../core/include/webpp/strings/join.hpp"
+#include "../../webpp/strings/join.hpp"
 #include "../benchmark_pch.hpp"
 #include "../common_utils_pch.hpp"
 

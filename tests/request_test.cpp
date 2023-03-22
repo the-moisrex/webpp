@@ -1,7 +1,7 @@
-#include "../core/include/webpp/http/request.hpp"
+#include "../webpp/http/request.hpp"
 
-#include "../core/include/webpp/http/request_view.hpp"
-#include "../core/include/webpp/traits/default_traits.hpp"
+#include "../webpp/http/request_view.hpp"
+#include "../webpp/traits/default_traits.hpp"
 #include "common_pch.hpp"
 #include "fake_protocol.hpp"
 

@@ -1,6 +1,6 @@
 // Created by moisrex on 11/9/20.
 
-#include "../core/include/webpp/uri/uri.hpp"
+#include "../webpp/uri/uri.hpp"
 
 #include "common_pch.hpp"
 

@@ -1,7 +1,7 @@
 // Created by moisrex on 11/30/20.
 
 
-#include "../core/include/webpp/utils/errors.hpp"
+#include "../webpp/utils/errors.hpp"
 
 #include "common_pch.hpp"
 
