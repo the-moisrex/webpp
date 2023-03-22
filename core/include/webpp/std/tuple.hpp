@@ -490,6 +490,15 @@ namespace webpp::istl {
 
 
 
+    template <typename Tuple, typename FuncT>
+        requires(stl::tuple_size_v<Tuple> >= 2)
+    constexpr void adjacent_apply(const Tuple& tup, FuncT func) {
+        ([&]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
+            ((func(stl::get<I>(tup), stl::get<I + 1>(tup))), ...);
+        })(stl::make_index_sequence<stl::tuple_size_v<Tuple> - 1>{});
+    }
+
+
 } // namespace webpp::istl
 
 namespace std {
