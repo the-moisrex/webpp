@@ -491,11 +491,12 @@ namespace webpp::istl {
 
 
     template <typename Tuple, typename FuncT>
-        requires(stl::tuple_size_v<Tuple> >= 2)
-    constexpr void adjacent_apply(const Tuple& tup, FuncT func) {
+        requires(stl::tuple_size_v<stl::remove_cvref_t<Tuple>> >= 2)
+    constexpr void adjacent_apply(Tuple&& tup, FuncT&& func) {
+        using tuple_type = stl::remove_cvref_t<Tuple>;
         ([&]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
             ((func(stl::get<I>(tup), stl::get<I + 1>(tup))), ...);
-        })(stl::make_index_sequence<stl::tuple_size_v<Tuple> - 1>{});
+        })(stl::make_index_sequence<stl::tuple_size_v<tuple_type> - 1>{});
     }
 
 
