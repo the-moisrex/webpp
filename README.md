@@ -11,7 +11,7 @@ This project on:
 * [GitHub](https://github.com/the-moisrex/webpp)
 * [GitLab](https://gitlab.com/webpp/webpp)
 
-Look at the [Core Readme file](./core/README.md) for the core concepts of the project.
+Look at the [Core Readme file](./webpp/README.md) for the core concepts of the project.
 
 ## Project goals
 
