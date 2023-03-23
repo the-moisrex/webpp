@@ -45,3 +45,4 @@ CMakeFiles/
 CPM_modules/
 _deps/
 cpm-package-lock.cmake
+/.vs
