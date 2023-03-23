@@ -276,6 +276,23 @@ namespace webpp {
     };
 
 
+    template <EnabledTraits T>
+    struct enable_traits_for : T {
+        using etraits = enable_owner_traits<typename T::traits_type>;
+
+      private:
+        etraits et{};
+
+      public:
+        using T::T;
+
+        template <typename... Args>
+            requires(stl::is_constructible_v<T, etraits, Args...>)
+        constexpr enable_traits_for(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<T, etraits, Args...>)
+          : T{et, stl::forward<Args>(args)...} {}
+    };
+
     template <typename T>
     concept TraitsAccess =
       Traits<T> ||

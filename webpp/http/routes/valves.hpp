@@ -17,6 +17,24 @@
 
 namespace webpp::http {
 
+    template <Traits>
+    struct basic_dynamic_router;
+
+    template <typename TraitsType>
+    using next_route = istl::function_ref<void(basic_context<TraitsType>&)>;
+
+    template <typename TraitsType, typename T>
+    concept Valve = Traits<TraitsType> && stl::is_invocable_v<T, basic_context<TraitsType>&>;
+
+    template <typename TraitsType, typename T>
+    concept Mangler = Traits<TraitsType> && stl::is_invocable_v<T,                          // type
+                                                                basic_context<TraitsType>&, // context
+                                                                next_route<TraitsType>      // next valve
+                                                                >;
+
+    template <typename TraitsType, typename T>
+    concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
+
 
     template <typename Callable>
     static constexpr void valve_to_string(istl::String auto& out, Callable& func) {
@@ -158,23 +176,27 @@ namespace webpp::http {
         }
 
 
-        static constexpr void call_and_set(Callable&&    segment,
+        template <typename C>
+            requires istl::same_as_cvref<C, Callable>
+        static constexpr void call_and_set(C&&           segment,
                                            context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
-                call(stl::forward<Callable>(segment), ctx);
+                call(stl::forward<C>(segment), ctx);
             } else {
-                set_response(call(stl::forward<Callable>(segment), ctx), ctx);
+                set_response(call(stl::forward<C>(segment), ctx), ctx);
             }
         }
 
 
-        static constexpr bool call_set_get(Callable&&    segment,
+        template <typename C>
+            requires istl::same_as_cvref<C, Callable>
+        static constexpr bool call_set_get(C&&           segment,
                                            context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
-                call(stl::forward<Callable>(segment), ctx);
+                call(stl::forward<C>(segment), ctx);
                 return true;
             } else {
-                return set_get_response(call(stl::forward<Callable>(segment), ctx), ctx);
+                return set_get_response(call(stl::forward<C>(segment), ctx), ctx);
             }
         }
     };
@@ -359,6 +381,23 @@ namespace webpp::http {
         }
     };
 
+    // forward<segment, ...> = segment<forward, ...>
+    template <typename... C, typename... SC, typename TraitsType>
+    struct route_optimizer<forward_valve<TraitsType, segment_valve<TraitsType, SC...>, C...>>
+      : route_optimizer<segment_valve<TraitsType, SC..., route_optimizer<forward_valve<TraitsType, C...>>>> {
+        using next_t       = route_optimizer<forward_valve<TraitsType, C...>>;
+        using next_type    = typename next_t::type;
+        using out_seg_type = segment_valve<TraitsType, SC..., next_type>;
+        using parent_type  = route_optimizer<out_seg_type>;
+        using return_type  = typename parent_type::type;
+        using seg_type     = segment_valve<TraitsType, SC...>;
+
+        template <typename NewCallable>
+        static constexpr return_type convert(seg_type const& seg, NewCallable&& next) noexcept {
+            return parent_type::convert(seg, next_t::convert(stl::forward<NewCallable>(next)));
+        }
+    };
+
     // remove double segmenting
     template <typename... C1s, typename... C, typename TraitsType>
     struct route_optimizer<segment_valve<TraitsType, segment_valve<TraitsType, C1s...>, C...>>
@@ -537,7 +576,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto rebind_next(T&& next) const noexcept {
             using optimized_route = route_optimizer<NextType>;
             if constexpr (stl::is_void_v<Self>) {
-                return optimized_route::convert(forward<T>(next));
+                return optimized_route::convert(stl::forward<T>(next));
             } else {
                 return optimized_route::convert(*static_cast<Self const*>(this), stl::forward<T>(next));
             }
@@ -604,6 +643,8 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable>
     struct forward_valve<TraitsType, Callable> : valve<TraitsType, forward_valve<TraitsType, Callable>> {
+        using context_type = basic_context<TraitsType>;
+
       private:
         Callable next;
 
@@ -616,11 +657,9 @@ namespace webpp::http {
         constexpr ~forward_valve()                                        = default;
 
 
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using next_traits  = valve_traits<Callable, context_type>;
-
-            next_traits::set_response(next_traits::call(next, ctx), ctx);
+        constexpr void operator()(context_type& ctx) {
+            using next_traits = valve_traits<Callable, context_type>;
+            next_traits::call_and_set(next, ctx);
         }
 
 
@@ -1039,10 +1078,18 @@ namespace webpp::http {
                                 Cs&&... segs) noexcept(stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
           : segments{c1.get_segment(), stl::forward<Cs>(segs)...} {}
 
+        template <typename... CS1, typename... Cs>
+        constexpr segment_valve(segment_valve<TraitsType, CS1...> const& c1, Cs&&... segs) noexcept(
+          stl::is_nothrow_constructible_v<tuple_type, CS1..., Cs...>)
+          : segments{stl::tuple_cat(c1.get_segments(), stl::tuple<Cs...>{stl::forward<Cs>(segs)...})} {}
+
         template <typename... Cs>
         constexpr segment_valve(Cs&&... segs) noexcept(stl::is_nothrow_constructible_v<tuple_type, Cs...>)
           : segments{stl::forward<Cs>(segs)...} {}
 
+        constexpr tuple_type const& get_segments() const noexcept {
+            return segments;
+        }
 
         constexpr void operator()(basic_context<TraitsType>& ctx) {
             stl::apply(
@@ -1072,8 +1119,8 @@ namespace webpp::http {
         }
     };
 
-    template <Traits TraitsType>
-    struct segment_valve<TraitsType, void> : segment_valve<TraitsType> {};
+    template <Traits TraitsType, typename... Cs>
+    struct segment_valve<TraitsType, void, Cs...> : segment_valve<TraitsType, Cs...> {};
 
 
     template <Traits TraitsType, typename CallableSegment>

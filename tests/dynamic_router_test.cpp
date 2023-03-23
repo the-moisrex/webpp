@@ -10,7 +10,7 @@ using namespace std;
 TEST(DynamicRouter, RouteRegistration) {
     EXPECT_TRUE(bool(HTTPRequest<request>));
 
-    dynamic_router router;
+    enable_traits_for<dynamic_router> router;
 
     auto const page = router / "page";
     router += page / "about" >> [] {
@@ -49,7 +49,7 @@ TEST(DynamicRouter, MemFuncPtr) {
         // NOLINTEND(readability-convert-member-functions-to-static)
     };
 
-    dynamic_router router;
+    enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
     router += router / "about" >> &pages::about;

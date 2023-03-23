@@ -22,7 +22,7 @@
 namespace webpp::http {
 
 
-    template <EnabledTraits TraitsEnabler>
+    template <Traits>
     struct basic_dynamic_router;
 
 
@@ -32,8 +32,7 @@ namespace webpp::http {
         using string_type       = traits::general_string<traits_type>;
         using context_type      = basic_context<traits_type>;
         using callable_type     = stl::remove_cvref_t<Callable>;
-        using owner_router_type = basic_dynamic_router<enable_owner_traits<traits_type>>;
-        using router_type       = basic_dynamic_router<enable_traits<traits_type>>;
+        using router_type       = basic_dynamic_router<traits_type>;
 
       private:
         callable_type callable;
@@ -61,14 +60,6 @@ namespace webpp::http {
             }
         }
 
-        void operator()(context_type& ctx, [[maybe_unused]] owner_router_type& router) final {
-            if constexpr (stl::is_invocable_v<callable_type, context_type&, owner_router_type&>) {
-                callable(ctx, router);
-            } else {
-                callable(ctx);
-            }
-        }
-
         void to_string(string_type& out) const final {
             valve_to_string(out, callable);
         }
@@ -80,8 +71,7 @@ namespace webpp::http {
         using traits_type       = TraitsType;
         using string_type       = traits::general_string<traits_type>;
         using context_type      = basic_context<traits_type>;
-        using owner_router_type = basic_dynamic_router<enable_owner_traits<traits_type>>;
-        using router_type       = basic_dynamic_router<enable_traits<traits_type>>;
+        using router_type       = basic_dynamic_router<traits_type>;
 
         dynamic_route()                                         = default;
         dynamic_route(dynamic_route const&)                     = default;
@@ -92,7 +82,6 @@ namespace webpp::http {
         virtual ~dynamic_route() = default;
 
         virtual void operator()(context_type& ctx, [[maybe_unused]] router_type& router)       = 0;
-        virtual void operator()(context_type& ctx, [[maybe_unused]] owner_router_type& router) = 0;
         virtual void operator()(context_type& ctx)                                             = 0;
         virtual void to_string(string_type& out) const                                         = 0;
     };
@@ -104,11 +93,11 @@ namespace webpp::http {
      * This class will be used directly by the developers using this whole library. So be nice and careful
      * and user friendly.
      */
-    template <EnabledTraits TraitsEnabler>
-    struct basic_dynamic_router : TraitsEnabler, valve<typename TraitsEnabler::traits_type, void> {
+    template <Traits TraitsType>
+    struct basic_dynamic_router : enable_traits<TraitsType>, valve<TraitsType, void> {
         using root_extensions    = empty_extension_pack;
-        using etraits            = TraitsEnabler;
-        using traits_type        = typename etraits::traits_type;
+        using traits_type        = TraitsType;
+        using etraits            = enable_traits<traits_type>;
         using non_owner_etraits  = typename etraits::non_owner_type;
         using route_type         = dynamic_route<traits_type>;
         using dynamic_route_type = istl::dynamic<route_type, traits::general_allocator<traits_type>>;
@@ -241,7 +230,7 @@ namespace webpp::http {
     };
 
 
-    using dynamic_router = basic_dynamic_router<enable_owner_traits<default_dynamic_traits>>;
+    using dynamic_router = basic_dynamic_router<default_dynamic_traits>;
 
 } // namespace webpp::http
 
