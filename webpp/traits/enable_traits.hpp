@@ -276,9 +276,25 @@ namespace webpp {
     };
 
 
+    /**
+     * Make T an owner
+     * Usages:
+     * @code
+     *   enable_traits_for<my_class> obj;
+     * @endcode
+     */
+    template <typename T, typename TraitsType = typename T::traits_type>
+    struct enable_traits_for;
+
     template <EnabledTraits T>
-    struct enable_traits_for : T {
-        using etraits = enable_owner_traits<typename T::traits_type>;
+        requires(T::is_resource_owner)
+    struct enable_traits_for<T> : T {
+        using T::T;
+    };
+
+    template <typename T, Traits TraitsType>
+    struct enable_traits_for<T, TraitsType> : T {
+        using etraits = enable_owner_traits<TraitsType>;
 
       private:
         etraits et{};
@@ -291,7 +307,28 @@ namespace webpp {
         constexpr enable_traits_for(Args&&... args) noexcept(
           stl::is_nothrow_constructible_v<T, etraits, Args...>)
           : T{et, stl::forward<Args>(args)...} {}
+
+        template <typename... Args>
+            requires(
+              !stl::is_constructible_v<T, etraits, Args...> &&
+              requires {
+                  typename T::allocator_type;
+                  requires stl::is_constructible_v<T, typename T::allocator_type const&>;
+                  requires etraits::allocator_pack_type::template has_allocator<typename T::allocator_type>;
+              })
+        constexpr enable_traits_for(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
+          : T{alloc::general_alloc_for<T>(et), stl::forward<Args>(args)...} {}
+
+
+        constexpr enable_traits_for(enable_traits_for const&) noexcept            = default;
+        constexpr enable_traits_for(enable_traits_for&&) noexcept                 = default;
+        constexpr ~enable_traits_for() noexcept                                   = default;
+        constexpr enable_traits_for& operator=(enable_traits_for const&) noexcept = default;
+        constexpr enable_traits_for& operator=(enable_traits_for&&) noexcept      = default;
     };
+
+
 
     template <typename T>
     concept TraitsAccess =
