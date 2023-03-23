@@ -22,6 +22,9 @@ build/
 !.vscode/c_cpp_properties.json
 !.vscode/settings.json
 
+# Visual Studio
+/.vs
+
 # CLion's configs are a mess; this url didn't help either: https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 .idea
 

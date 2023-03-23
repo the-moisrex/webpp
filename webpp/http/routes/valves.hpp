@@ -93,8 +93,6 @@ namespace webpp::http {
         static constexpr bool is_positive(R&& ret) noexcept {
             if constexpr (stl::same_as<return_type, bool>) {
                 return ret;
-            } else if constexpr (istl::part_of<return_type, istl::nothing_type>) {
-                return false;
             } else if constexpr (stl::is_void_v<return_type> || HTTPResponse<return_type>) {
                 return true;
             } else if constexpr (stl::is_pointer_v<return_type>) {
@@ -102,6 +100,7 @@ namespace webpp::http {
             } else if constexpr (istl::Optional<return_type>) {
                 return bool{ret};
             } else {
+                // istl::nothing_type, ...
                 return false;
             }
         }
