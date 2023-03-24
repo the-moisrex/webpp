@@ -613,8 +613,8 @@ namespace webpp::http {
                         case logical_operators::XOR: append_to(out, " ^ "); break;
                     }
                 }
-                if constexpr (requires { the_route.append_name_to(out); }) {
-                    the_route.append_name_to(out);
+                if constexpr (requires { the_route.to_string(out); }) {
+                    the_route.to_string(out);
                 } else {
                     append_to(out, "condition");
                 }
@@ -625,8 +625,8 @@ namespace webpp::http {
                 } else {
                     append_to(out, " >> response");
                 }
-            } else if constexpr (requires { the_route.append_name_to(out); }) {
-                the_route.append_name_to(out); // method_route_condition has this method
+            } else if constexpr (requires { the_route.to_string(out); }) {
+                the_route.to_string(out); // method_route_condition has this method
             } else {
                 if constexpr (First) {
                     append_to(out, "[unknown]");

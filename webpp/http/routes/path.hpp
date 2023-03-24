@@ -329,7 +329,7 @@ namespace webpp::http {
 
 
         template <istl::String StrT = stl::string>
-        void append_name_to(StrT& out) const {
+        void to_string(StrT& out) const {
             ([&, this]<stl::size_t... index>(stl::index_sequence<index...>) constexpr noexcept {
                 (([&](auto const& seg) {
                      out.append(" /");
