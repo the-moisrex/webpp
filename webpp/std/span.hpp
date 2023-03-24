@@ -20,7 +20,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    static constexpr bool is_span_v = is_span<T>::value;
+    concept is_span_v = is_span<T>::value;
 
     template <typename T>
     concept Span = is_span_v<T>;
