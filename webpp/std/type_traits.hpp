@@ -649,7 +649,7 @@ namespace webpp::istl {
     };
 
     template <typename TupleT, typename T>
-    static constexpr bool contains_parameter = contains_parameter_type<TupleT, T>::value;
+    concept contains_parameter = contains_parameter_type<TupleT, T>::value;
 
 
     /**
@@ -1068,7 +1068,7 @@ namespace webpp::istl {
     using is_complete = decltype(details::is_complete_impl(stl::declval<T*>()));
 
     template <typename T>
-    static constexpr bool is_complete_v = is_complete<T>::value;
+    concept is_complete_v = is_complete<T>::value;
 
 
 
@@ -1138,7 +1138,7 @@ namespace webpp::istl {
     };
 
     template <typename Callable, typename... Args>
-    static constexpr bool invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
+    bool invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
 
     template <typename Callable, typename... Args>
     static constexpr decltype(auto)
@@ -1177,7 +1177,7 @@ namespace webpp::istl {
 
 
     template <template <typename, typename> typename Evaluator, typename L, typename R>
-    static constexpr bool are_all_v = are_all<Evaluator, L, R>::value;
+    concept are_all_v = are_all<Evaluator, L, R>::value;
 
 } // namespace webpp::istl
 

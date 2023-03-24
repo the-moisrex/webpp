@@ -21,7 +21,7 @@ namespace webpp::istl {
     using is_specialization_of_array = details::is_specialization_of_array_impl<T, stl::array>;
 
     template <typename T>
-    static constexpr bool is_specialization_of_array_v = is_specialization_of_array<T>::value;
+    concept is_specialization_of_array_v = is_specialization_of_array<T>::value;
 
 } // namespace webpp::istl
 
