@@ -28,11 +28,11 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable = void>
     struct dynamic_route final : dynamic_route<TraitsType, void> {
-        using traits_type       = TraitsType;
-        using string_type       = traits::general_string<traits_type>;
-        using context_type      = basic_context<traits_type>;
-        using callable_type     = stl::remove_cvref_t<Callable>;
-        using router_type       = basic_dynamic_router<traits_type>;
+        using traits_type   = TraitsType;
+        using string_type   = traits::general_string<traits_type>;
+        using context_type  = basic_context<traits_type>;
+        using callable_type = stl::remove_cvref_t<Callable>;
+        using router_type   = basic_dynamic_router<traits_type>;
 
       private:
         callable_type callable;
@@ -68,10 +68,10 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     struct dynamic_route<TraitsType, void> {
-        using traits_type       = TraitsType;
-        using string_type       = traits::general_string<traits_type>;
-        using context_type      = basic_context<traits_type>;
-        using router_type       = basic_dynamic_router<traits_type>;
+        using traits_type  = TraitsType;
+        using string_type  = traits::general_string<traits_type>;
+        using context_type = basic_context<traits_type>;
+        using router_type  = basic_dynamic_router<traits_type>;
 
         dynamic_route()                                         = default;
         dynamic_route(dynamic_route const&)                     = default;
@@ -81,9 +81,9 @@ namespace webpp::http {
 
         virtual ~dynamic_route() = default;
 
-        virtual void operator()(context_type& ctx, [[maybe_unused]] router_type& router)       = 0;
-        virtual void operator()(context_type& ctx)                                             = 0;
-        virtual void to_string(string_type& out) const                                         = 0;
+        virtual void operator()(context_type& ctx, [[maybe_unused]] router_type& router) = 0;
+        virtual void operator()(context_type& ctx)                                       = 0;
+        virtual void to_string(string_type& out) const                                   = 0;
     };
 
 
