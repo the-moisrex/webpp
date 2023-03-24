@@ -11,7 +11,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/views/json_view.hpp
 
         ${LIB_INCLUDE_DIR}/configs/config_concepts.hpp
-        ${LIB_INCLUDE_DIR}/configs/configs.hpp
         ${LIB_INCLUDE_DIR}/configs/constants.hpp
 
         ${LIB_INCLUDE_DIR}/libs/asio.hpp
@@ -296,11 +295,13 @@ target_link_libraries(${LIB_NAME}
 if (USE_CTRE)
     target_link_libraries(${LIB_NAME}
             PUBLIC ctre::ctre)
+    target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_CTRE=1)
 endif()
 
 if (USE_EVE)
     target_link_libraries(${LIB_NAME}
             PUBLIC eve::eve)
+    target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_EVE=1)
 endif()
 
 
