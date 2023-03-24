@@ -79,5 +79,5 @@ TEST(DynamicRouter, ManglerTest) {
     req.method("GET");
     req.uri("/about");
 
-    EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>");
+    EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
 }

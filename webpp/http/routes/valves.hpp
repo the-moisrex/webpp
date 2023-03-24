@@ -664,7 +664,7 @@ namespace webpp::http {
         constexpr void to_string(istl::String auto& out) const {
             out.append(" (");
             valve_to_string(out, next.get_next());
-            out.append(") % ");
+            out.append(" ) % ");
             valve_to_string(out, mangler);
         }
     };
@@ -1306,7 +1306,6 @@ namespace webpp::http {
 
 
         constexpr void to_string(istl::String auto& out) const {
-            out.append(" >>");
             valve_to_string(out, holder.mem_ptr);
         }
     };
