@@ -105,11 +105,9 @@ namespace webpp::http {
         }
 
         template <typename T>
-            requires(istl::same_as_cvref<T, Callable>)
+            requires(istl::same_as_cvref<T, Callable> && istl::StringViewifiable<Callable>)
         static constexpr auto call(T&&           segment,
-                                   context_type& ctx) noexcept(invocable_inorder_type::is_nothrow)
-            requires(istl::StringViewifiable<Callable>)
-        {
+                                   context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return ctx.check_segment(stl::forward<T>(segment));
         }
 

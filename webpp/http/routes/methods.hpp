@@ -13,8 +13,12 @@ namespace webpp::http {
             return req.method() == *this;
         }
 
-        template <istl::String StrT = stl::string>
-        void append_name_to(StrT& out) const {
+        template <Traits TraitsType>
+        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType> const& ctx) const noexcept {
+            return operator()(ctx.request);
+        }
+
+        void to_string(istl::String auto& out) const {
             append_to(out, *this);
         }
     };
