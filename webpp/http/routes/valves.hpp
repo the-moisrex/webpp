@@ -87,7 +87,11 @@ namespace webpp::http {
         using response_body_type = typename response_type::body_type;
         using invocable_inorder_type =
           istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
-        using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
+        using traits_type      = typename context_type::traits_type;
+        using string_view_type = traits::string_view<traits_type>;
+        using return_type      = stl::conditional_t<istl::StringViewifiable<Callable>,
+                                               string_view_type,
+                                               stl::remove_cvref_t<typename invocable_inorder_type::result>>;
 
         // static_assert(invocable_inorder_type::value, "We're not able to call your route.");
 
@@ -109,13 +113,14 @@ namespace webpp::http {
 
         template <typename R>
         static constexpr bool is_positive(R&& ret) noexcept {
-            if constexpr (stl::same_as<return_type, bool>) {
+            using ret_type = stl::remove_cvref_t<R>;
+            if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
-            } else if constexpr (stl::is_void_v<return_type> || HTTPResponse<return_type>) {
+            } else if constexpr (stl::is_void_v<ret_type> || HTTPResponse<ret_type>) {
                 return true;
-            } else if constexpr (stl::is_pointer_v<return_type>) {
+            } else if constexpr (stl::is_pointer_v<ret_type>) {
                 return ret != nullptr;
-            } else if constexpr (istl::Optional<return_type>) {
+            } else if constexpr (istl::Optional<ret_type>) {
                 return bool{ret};
             } else {
                 // istl::nothing_type, ...
