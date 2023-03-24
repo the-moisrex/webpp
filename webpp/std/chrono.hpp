@@ -5,8 +5,9 @@
 
 #include "std.hpp"
 
-// A polyfill of some sort for std::chrono
-#if defined(__cpp_lib_chrono) && __cpp_lib_chrono < 201907L
+// A polyfill of some sort for std::chrono (We need C++20 std::chrono::utc_clock)
+// If you needed to change the conditions here, make sure to change the conditions of date.cmake file as well
+#if !defined(__cpp_lib_chrono) || __cpp_lib_chrono < 201907L
 #    include <date/date.h>
 #    include <date/tz.h>
 namespace webpp::stl::chrono {

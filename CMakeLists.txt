@@ -13,11 +13,14 @@ set(BIN_VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
+set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 #option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
 option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)
 option(VERBOSE "Verbose printing" OFF)
+option(USE_EVE "Use Eve Library for vectorization" OFF)
+option(USE_CTRE "Use CTRE Library for compile-time-regular-expressions" OFF)
 
 # output the libraries and executables in the cmake home directory instead of
 # their own folders
@@ -38,6 +41,7 @@ set(gcc_min_version 12.2.0)
 set(clang_min_version 14.0.6)
 
 message(STATUS "Project name                   : ${PROJECT_NAME}")
+message(STATUS "C++ Standard Version           : C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Library version                : ${LIB_VERSION}")
 message(STATUS "Library soversion              : ${LIB_SOVERSION}")
 message(STATUS "Binary version                 : ${BIN_VERSION}")

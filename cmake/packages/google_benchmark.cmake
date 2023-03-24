@@ -7,5 +7,5 @@ CPMAddPackage(
 
 if (benchmark_ADDED)
     # patch benchmark target
-    set_target_properties(benchmark PROPERTIES CXX_STANDARD 20)
+    set_target_properties(benchmark PROPERTIES CXX_STANDARD 23)
 endif ()
