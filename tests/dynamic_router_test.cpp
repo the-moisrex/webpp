@@ -81,3 +81,20 @@ TEST(DynamicRouter, ManglerTest) {
 
     EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
 }
+
+TEST(DynamicRouter, CacheDeceptionTest) {
+    // I got the idea from: https://twitter.com/naglinagli/status/1639351113571868673?s=20
+
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    router += router / "about" >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about/style.css");
+
+    auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::not_found) << router.to_string();
+    EXPECT_NE(as<std::string>(res.body), "about page");
+}
