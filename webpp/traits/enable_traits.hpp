@@ -308,12 +308,13 @@ namespace webpp {
           stl::is_nothrow_constructible_v<T, etraits, Args...>)
           : T{et, stl::forward<Args>(args)...} {}
 
+        // pass a general allocator as the first argument
         template <typename... Args>
             requires(
               !stl::is_constructible_v<T, etraits, Args...> &&
               requires {
                   typename T::allocator_type;
-                  requires stl::is_constructible_v<T, typename T::allocator_type const&>;
+                  requires stl::is_constructible_v<T, typename T::allocator_type const&, Args...>;
                   requires etraits::allocator_pack_type::template has_allocator<typename T::allocator_type>;
               })
         constexpr enable_traits_for(Args&&... args) noexcept(
