@@ -77,6 +77,8 @@ namespace webpp::http {
     struct segment_valve;
     template <Traits TraitsType, typename MemPtr>
     struct member_function_callable;
+    template <Traits TraitsType, typename ManglerType, typename NextCallable>
+    struct mangler_valve;
 
     template <typename Callable, typename ContextType>
     struct valve_traits {
@@ -525,6 +527,12 @@ namespace webpp::http {
         }
 
         template <typename Callable>
+        [[nodiscard]] constexpr auto operator%(Callable&& callable) const {
+            using mangler_type = mangler_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
+            return rebind_next<mangler_type>(stl::forward<Callable>(callable));
+        }
+
+        template <typename Callable>
         [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
             using and_type = and_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
             return rebind_next<and_type>(stl::forward<Callable>(callable));
@@ -601,13 +609,11 @@ namespace webpp::http {
 
 
 
-    template <Traits TraitsType, typename ManglerType, typename NextCallable>
+    template <Traits TraitsType, typename NextCallable, typename ManglerType>
     struct mangler_valve : valve<TraitsType, mangler_valve<TraitsType, ManglerType, NextCallable>> {
         using context_type = basic_context<TraitsType>;
 
       private:
-        ManglerType mangler;
-
         struct next_callable {
           private:
             NextCallable next;
@@ -615,10 +621,10 @@ namespace webpp::http {
           public:
             constexpr next_callable(NextCallable&& inp_next) noexcept(
               stl::is_nothrow_move_constructible_v<NextCallable>)
-              : next{.next = stl::move(inp_next)} {}
+              : next{stl::move(inp_next)} {}
             constexpr next_callable(NextCallable const& inp_next) noexcept(
               stl::is_nothrow_copy_constructible_v<NextCallable>)
-              : next{.next = inp_next} {}
+              : next{inp_next} {}
 
 
             [[nodiscard]] NextCallable const& get_next() const noexcept {
@@ -630,17 +636,19 @@ namespace webpp::http {
             }
         } next;
 
+        ManglerType mangler;
+
       public:
-        constexpr mangler_valve(ManglerType&& inp_mangler, NextCallable&& inp_next) noexcept(
+        constexpr mangler_valve(NextCallable&& inp_next, ManglerType&& inp_mangler) noexcept(
           stl::is_nothrow_move_constructible_v<NextCallable>&&
             stl::is_nothrow_move_constructible_v<ManglerType>)
-          : mangler{stl::move(inp_mangler)},
-            next{stl::move(inp_next)} {}
-        constexpr mangler_valve(ManglerType const& inp_mangler, NextCallable const& inp_next) noexcept(
+          : next{stl::move(inp_next)},
+            mangler{stl::move(inp_mangler)} {}
+        constexpr mangler_valve(NextCallable const& inp_next, ManglerType const& inp_mangler) noexcept(
           stl::is_nothrow_copy_constructible_v<NextCallable>&&
             stl::is_nothrow_copy_constructible_v<ManglerType>)
-          : mangler{inp_mangler},
-            next{inp_next} {}
+          : next{inp_next},
+            mangler{inp_mangler} {}
 
         constexpr mangler_valve(mangler_valve const&)                     = default;
         constexpr mangler_valve(mangler_valve&&) noexcept                 = default;
@@ -650,7 +658,7 @@ namespace webpp::http {
 
 
         constexpr void operator()(context_type& ctx) {
-            valve_traits<next_callable, context_type>::call_and_set(next_route<TraitsType>{next}, ctx);
+            mangler(ctx, next_route<TraitsType>{next});
         }
 
         constexpr void to_string(istl::String auto& out) const {

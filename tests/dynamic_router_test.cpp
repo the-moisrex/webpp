@@ -7,6 +7,16 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
+struct pages {
+    // NOLINTBEGIN(readability-convert-member-functions-to-static)
+    [[nodiscard]] response about(context const& ctx) const {
+        response res{ctx};
+        res = "about page";
+        return res;
+    }
+    // NOLINTEND(readability-convert-member-functions-to-static)
+};
+
 TEST(DynamicRouter, RouteRegistration) {
     EXPECT_TRUE(bool(HTTPRequest<request>));
 
@@ -39,16 +49,6 @@ TEST(DynamicRouter, RouteRegistration) {
 
 TEST(DynamicRouter, MemFuncPtr) {
 
-    struct pages {
-        // NOLINTBEGIN(readability-convert-member-functions-to-static)
-        [[nodiscard]] response about(context const& ctx) const {
-            response res{ctx};
-            res = "about page";
-            return res;
-        }
-        // NOLINTEND(readability-convert-member-functions-to-static)
-    };
-
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
@@ -59,4 +59,25 @@ TEST(DynamicRouter, MemFuncPtr) {
     req.uri("/about");
 
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
+}
+
+
+TEST(DynamicRouter, ManglerTest) {
+
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    auto const body_mangler = [](context& ctx, auto next) {
+        if (next(ctx)) {
+            ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
+        }
+    };
+
+    router += (router / "about" >> &pages::about) % body_mangler;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about");
+
+    EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>");
 }
