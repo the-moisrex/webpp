@@ -11,15 +11,17 @@
 
 #include "../std/std.hpp"
 
-#if __has_include(<eve/eve.hpp>)
-#    define WEBPP_EVE
-#endif
+#ifdef WEBPP_USE_EVE
+#    if __has_include(<eve/eve.hpp>)
+#        define WEBPP_EVE
+#    endif
 
-#ifdef WEBPP_EVE
+#    ifdef WEBPP_EVE
 namespace eve {}
 namespace webpp::eve {
     using namespace ::eve;
 } // namespace webpp::eve
+#    endif
 #endif
 
 #endif // WEBPP_EVE_HPP
