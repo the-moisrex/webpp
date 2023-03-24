@@ -63,11 +63,10 @@ namespace webpp::istl {
 
         // separated this because of Clang error; clang gives errors if I use the 'requires clause' directly
         template <typename T>
-        static constexpr bool has_value_type =
-          requires {
-              typename stl::remove_cvref_t<T>::value_type;
-              requires stl::integral<typename stl::remove_cvref_t<T>::value_type>;
-          };
+        concept has_value_type = requires {
+                                     typename stl::remove_cvref_t<T>::value_type;
+                                     requires stl::integral<typename stl::remove_cvref_t<T>::value_type>;
+                                 };
 
 
         template <typename T>
@@ -76,8 +75,7 @@ namespace webpp::istl {
         };
 
         template <typename T>
-        static constexpr bool has_allocator_type =
-          requires { typename stl::remove_cvref_t<T>::allocator_type; };
+        concept has_allocator_type = requires { typename stl::remove_cvref_t<T>::allocator_type; };
     } // namespace details
 
     /**
