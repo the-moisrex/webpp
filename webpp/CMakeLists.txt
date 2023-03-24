@@ -290,8 +290,18 @@ target_link_libraries(${LIB_NAME}
         PUBLIC fixed_string::fixed_string
         ${BROTLI_SHARED_LIBS}
         PUBLIC ZLIB::ZLIB
-        PUBLIC ctre::ctre
+        # PUBLIC ctre::ctre
         )
+
+if (USE_CTRE)
+    target_link_libraries(${LIB_NAME}
+            PUBLIC ctre::ctre)
+endif()
+
+if (USE_EVE)
+    target_link_libraries(${LIB_NAME}
+            PUBLIC eve::eve)
+endif()
 
 
 #if (SHARED_LIBRARY_EXECUTABLE)
