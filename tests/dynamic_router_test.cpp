@@ -100,6 +100,31 @@ TEST(DynamicRouter, CacheDeceptionTest) {
     EXPECT_NE(as<std::string>(res.body), "about page");
 }
 
+TEST(DynamicRouter, CommonBypassTests) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    router += router % "admin" >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+
+    for (auto const u : {"/%2e/admin",
+                         "/admin/.",
+                         "//admin//",
+                         "/./admin/..",
+                         "/;/admin",
+                         "/.;/admin",
+                         "//;//admin",
+                         "/admin..;/",
+                         "/aDmIN"}) {
+        req.uri(u);
+        auto const res = router(req);
+        EXPECT_EQ(res.headers.status_code(), status_code::not_found) << router.to_string();
+        EXPECT_NE(as<std::string>(res.body), "about page");
+    }
+}
+
 TEST(DynamicRouter, ValvesInStaticRouter) {
     router const _router{empty_extension_pack{},
                          valve{} / "home" >>
