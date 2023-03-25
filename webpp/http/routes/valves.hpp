@@ -1248,7 +1248,7 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) {
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
                   return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) &&
@@ -1320,7 +1320,7 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        [[nodiscard]] constexpr bool operator()(context_type& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             using segment_traits = valve_traits<CallableSegment, context_type>;
             return segment_traits::call_set_get(segment, ctx);
         }
