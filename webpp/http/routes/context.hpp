@@ -339,6 +339,15 @@ namespace webpp::http {
             traverser = request.path_traverser();
             return *this;
         }
+
+
+        constexpr path_traverser_type& path_traverser() noexcept {
+            return traverser;
+        }
+
+        constexpr path_traverser_type const& path_traverser() const noexcept {
+            return traverser;
+        }
     };
 
     using context = basic_context<>;
