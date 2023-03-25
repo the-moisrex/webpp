@@ -422,6 +422,11 @@ namespace webpp::http {
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>)
         constexpr basic_response(ET&& et) : final_response_type{stl::forward<ET>(et)} {}
+
+
+        template <HTTPResponse ResT>
+            requires(!stl::same_as<stl::remove_cvref_t<ResT>, basic_response>)
+        constexpr basic_response(ResT&& res) : final_response_type{stl::forward<ResT>(res)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr explicit basic_response(body_type const& b) : final_response_type{b} {}
