@@ -449,7 +449,7 @@ namespace webpp::istl {
             if (other.ptr) {
                 // todo: if T is a virtual type, then this will call a copy constructor on a virtual type:
                 // https://isocpp.org/wiki/faq/virtual-functions#virtual-ctors
-                init(*other.ptr);
+                init<value_type>(*other.ptr);
             }
         }
 
