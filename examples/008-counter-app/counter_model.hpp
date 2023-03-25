@@ -11,9 +11,11 @@ namespace website {
     using namespace webpp::sql;
 
     struct counter_model {
+      private:
         sql_database<sqlite> db;
         stl::string          ip;
 
+      public:
         counter_model() {
             auto counter = db.create_query().table("counter");
             counter["id"].primary().number().not_null();
@@ -23,13 +25,13 @@ namespace website {
         };
 
         bool increment() {
-            auto counter = db.tables["counter"].where("ip", ip);
+            auto counter = db.table("counter").where("ip", ip);
             counter++;
             return counter.update_or_set();
         }
 
         stl::size_t current() {
-            return db.tables["counter"].where("ip", ip).select("value").first();
+            return db.table("counter").where("ip", ip).select("value").first();
         }
     };
 

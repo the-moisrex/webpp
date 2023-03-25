@@ -142,8 +142,7 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
     req.method("GET");
     req.uri("/about/style.css");
 
-    // todo:
-    //    HTTPResponse auto const res = _router(req);
-    //    EXPECT_EQ(res.headers.status_code(), status_code::ok);
-    //    EXPECT_NE(as<std::string>(res.body), "about page");
+    HTTPResponse auto const res = _router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_NE(as<std::string>(res.body), "about page");
 }

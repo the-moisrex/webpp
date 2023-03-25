@@ -10,6 +10,7 @@
 #include "../traits/traits.hpp"
 #include "sql_concepts.hpp"
 
+#include <array>
 #include <variant>
 
 namespace webpp::sql {
@@ -47,13 +48,23 @@ namespace webpp::sql {
         using grammar_type    = typename database_type::grammar_type;                                         \
         using connection_type = typename database_type::connection_type;                                      \
                                                                                                               \
+      private:                                                                                                \
         struct expr_data {                                                                                    \
             __VA_ARGS__                                                                                       \
-        } data;                                                                                               \
+        } m_data;                                                                                             \
                                                                                                               \
-        constexpr name(expr_data&& input_data) noexcept : data{stl::move(input_data)} {}                      \
+      public:                                                                                                 \
+        constexpr expr_data& data() noexcept {                                                                \
+            return m_data;                                                                                    \
+        }                                                                                                     \
+        constexpr expr_data const& data() const noexcept {                                                    \
+            return m_data;                                                                                    \
+        }                                                                                                     \
+                                                                                                              \
+        constexpr name(expr_data&& input_data) noexcept : m_data{stl::move(input_data)} {}                    \
         constexpr name(name const&)                = default;                                                 \
         constexpr name(name&&) noexcept            = default;                                                 \
+        constexpr ~name()                          = default;                                                 \
         constexpr name& operator=(name const&)     = default;                                                 \
         constexpr name& operator=(name&&) noexcept = default;                                                 \
                                                                                                               \
@@ -67,23 +78,23 @@ namespace webpp::sql {
 
         // literal value
         define_expression(floating_expr, db_float_type val;) {
-            out.append(lexical::cast<local_string_type>(data.val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db));
         }
 
         define_expression(integer_expr, db_integer_type val;) {
-            out.append(lexical::cast<local_string_type>(data.val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db));
         }
 
         define_expression(string_expr, local_string_type val;) {
-            db.quoted_escape(data.val, out);
+            db.quoted_escape(data().val, out);
         }
 
         define_expression(blob_expr, db_blob_type val;) {
-            out.append(lexical::cast<local_string_type>(data.val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db));
         }
 
         define_expression(bool_expr, bool val;) {
-            out.append(data.val ? keywords::true_word : keywords::false_word);
+            out.append(data().val ? keywords::true_word : keywords::false_word);
         }
 
         define_expression(null_expr) {
@@ -91,18 +102,22 @@ namespace webpp::sql {
         }
 
         define_expression(col_name_expr, local_string_type schema_name{}, table_name{}, column_name;) {
-            db.quoted_escape(data.schema_name, out);
-            db.quoted_escape(data.table_name, out);
-            db.quoted_escape(data.column_name, out);
+            db.quoted_escape(data().schema_name, out);
+            db.quoted_escape(data().table_name, out);
+            db.quoted_escape(data().column_name, out);
         }
 
         // op expr
-        constexpr inline stl::string_view unary_op_expr_op_strs[]{" + ", " - ", " ++", " --", " !"};
+        constexpr inline stl::array<stl::string_view, 5> unary_op_expr_op_strs{" + ",
+                                                                               " - ",
+                                                                               " ++",
+                                                                               " --",
+                                                                               " !"};
         define_expression(
           unary_op_expr, enum struct operation
           : stl::uint_fast8_t{plus, minus, incr, decr, negate, and_op, or_op, and_not, or_not} op;
           expr_func expr;) {
-            switch (data.op) {
+            switch (data().op) {
                 case expr_data::operation::and_op: {
                     out.push_back(' ');
                     out.append(keywords::and_word);
@@ -132,37 +147,37 @@ namespace webpp::sql {
                     break;
                 }
                 default: {
-                    out.append(unary_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
+                    out.append(unary_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data().op)]);
                 }
             }
-            data.expr(out, db);
+            data().expr(out, db);
         }
 
         // expr op expr
-        constexpr inline stl::string_view expr_op_expr_op_strs[]{" + ",
-                                                                 " - ",
-                                                                 " * ",
-                                                                 " / ",
-                                                                 " % ",
-                                                                 " = ",
-                                                                 " != ",
-                                                                 " > ",
-                                                                 " < ",
-                                                                 " >= ",
-                                                                 " <= "};
+        constexpr inline stl::array<stl::string_view, 11> expr_op_expr_op_strs{" + ",
+                                                                               " - ",
+                                                                               " * ",
+                                                                               " / ",
+                                                                               " % ",
+                                                                               " = ",
+                                                                               " != ",
+                                                                               " > ",
+                                                                               " < ",
+                                                                               " >= ",
+                                                                               " <= "};
         define_expression(expr_op_expr, enum struct operation
                           : stl::uint_fast8_t{add, sub, mul, div, modulo, eq, neq, gt, lt, ge, le} op;
                           expr_func left_expr, right_expr;) {
-            data.left_expr(out, db);
-            out.append(expr_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data.op)]);
-            data.right_expr(out, db);
+            data().left_expr(out, db);
+            out.append(expr_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data().op)]);
+            data().right_expr(out, db);
         }
 
         // ( expr, expr, expr, ... )
         define_expression(expr_list, expr_vec exprs;) {
             out.push_back('(');
-            auto       it     = data.exprs.begin();
-            auto const it_end = data.exprs.end();
+            auto       it     = data().exprs.begin();
+            auto const it_end = data().exprs.end();
             for (;;) {
                 (*it)(out, db);
                 ++it;
@@ -175,9 +190,9 @@ namespace webpp::sql {
         }
 
         define_expression(expr_is_null, enum struct operation{is_null, not_null} op; expr_func expr;) {
-            data.expr(out, db);
+            data().expr(out, db);
             out.push_back(' ');
-            switch (data.op) {
+            switch (data().op) {
                 case expr_data::operation::is_null: {
                     out.append(keywords::is);
                     out.push_back(' ');
@@ -195,9 +210,9 @@ namespace webpp::sql {
 
         define_expression(expr_is_expr, enum struct operation{is, is_not, is_distinct, is_not_distinct} op;
                           expr_func left_expr, right_expr;) {
-            data.left_expr(out, db);
+            data().left_expr(out, db);
             out.push_back(' ');
-            switch (data.op) {
+            switch (data().op) {
                 case expr_data::operation::is: {
                     out.append(keywords::is);
                     break;
@@ -228,7 +243,7 @@ namespace webpp::sql {
                 }
             }
             out.push_back(' ');
-            data.right_expr(out, db);
+            data().right_expr(out, db);
         }
 
 
@@ -237,17 +252,17 @@ namespace webpp::sql {
         define_expression(expr_in_expr, enum struct operation{in, not_in} op; expr_func left_expr;
                           expr_vec     exprs;
                           subquery_ptr select_stmt;) {
-            data.left_expr(out, db);
+            data().left_expr(out, db);
             out.push_back(' ');
-            if (data.op == expr_data::operation::not_in) {
+            if (data().op == expr_data::operation::not_in) {
                 out.append(keywords::not_word);
                 out.push_back(' ');
             }
             out.append(keywords::in);
             out.append(" (");
-            if (!data.exprs.empty()) {
-                auto       it     = data.exprs.begin();
-                auto const it_end = data.exprs.end();
+            if (!data().exprs.empty()) {
+                auto       it     = data().exprs.begin();
+                auto const it_end = data().exprs.end();
                 for (;;) {
                     (*it)(out, db);
                     ++it;
@@ -257,7 +272,7 @@ namespace webpp::sql {
                     out.append(", ");
                 }
             } else {
-                data.select_stmt->to_string(out);
+                data().select_stmt->to_string(out);
             }
             out.push_back(')');
         }
@@ -279,8 +294,10 @@ namespace webpp::sql {
             [[no_unique_address]] struct table_type {
 
                 constexpr inline subquery_type& enclosing() noexcept {
+                    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
                     return *reinterpret_cast<subquery_type*>(reinterpret_cast<char*>(this) -
                                                              offsetof(query_builder_subclasses, table));
+                    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
                 }
 
                 // set the name
@@ -304,10 +321,12 @@ namespace webpp::sql {
                     return name(stl::forward<StrvT>(in_table_name)...);
                 }
 
+                // NOLINTBEGIN(cppcoreguidelines-c-copy-assignment-signature)
                 template <istl::Stringifiable StrvT>
                 constexpr subquery_type& operator=(StrvT&& in_table_name) noexcept {
                     return name(stl::forward<StrvT>(in_table_name));
                 }
+                // NOLINTEND(cppcoreguidelines-c-copy-assignment-signature)
 
             } table;
         };
@@ -481,6 +500,7 @@ namespace webpp::sql {
 
         constexpr query_builder(query_builder&&) noexcept      = default;
         constexpr query_builder(query_builder const&) noexcept = default;
+        constexpr ~query_builder()                             = default;
 
         constexpr query_builder& operator=(query_builder&&) noexcept      = default;
         constexpr query_builder& operator=(query_builder const&) noexcept = default;
@@ -1234,7 +1254,7 @@ namespace webpp::sql {
 
       private:
         // template <SQLKeywords words>
-        // static constexpr string_view_type join_strings[]{{
+        // static constexpr stl::array<string_view_type, 4> join_strings{{
         //   " "+ keywords::left + " " + keywords::join + " ",  // 1
         //   " "+ keywords::right + " " + keywords::join + " ", // 2
         //   " "+ keywords::full + " " + keywords::join + " ",  // 3
@@ -1242,7 +1262,7 @@ namespace webpp::sql {
         // }};
 
         // template <SQLKeywords words>
-        // static constexpr string_view_type cond_strings[]{{
+        // static constexpr stl::array<string_view_type, 2> cond_strings{{
         //   string_view_type{" "} + keywords::using_word + " (", // 0
         //   string_view_type{" "} + keywords::on_word + " "      // 1
         // }};
