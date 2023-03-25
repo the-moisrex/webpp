@@ -79,6 +79,19 @@ namespace webpp::http {
     struct member_function_callable;
     template <Traits TraitsType, typename ManglerType, typename NextCallable>
     struct mangler_valve;
+    struct endpath_valve {
+
+        template <Traits TraitsType>
+        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
+            return ctx.path_traverser().at_end();
+        }
+
+        constexpr void to_string(istl::String auto& out) const {
+            out.append(" / endpath");
+        }
+    } endpath;
+
+
 
     template <typename Callable, typename ContextType>
     struct valve_traits {
@@ -433,87 +446,94 @@ namespace webpp::http {
 
 
 
-#define WEBPP_DEFINE_FUNC_BASE(Ret, ...)                                                         \
-                                                                                                 \
-    template <typename T>                                                                        \
-    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__)) const {             \
-        using mem_ptr_type = Ret (T::*)(__VA_ARGS__);                                            \
-        using forward_type =                                                                     \
-          forward_valve<traits_type, Self, member_function_callable<traits_type, mem_ptr_type>>; \
-        return rebind_next<forward_type>(inp_func);                                              \
-    }                                                                                            \
-                                                                                                 \
-    template <typename T>                                                                        \
-    [[nodiscard]] constexpr auto operator>>(Ret (T::*inp_func)(__VA_ARGS__) const) const {       \
-        using mem_ptr_type = Ret (T::*)(__VA_ARGS__) const;                                      \
-        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;                \
-        using forward_type = forward_valve<traits_type, Self, mem_type>;                         \
-        return rebind_next<forward_type>(mem_type{inp_func});                                    \
+#define WEBPP_DEFINE_FUNC_BASE(op, ValveType, Ret, ...)                            \
+                                                                                   \
+    template <typename T>                                                          \
+    [[nodiscard]] constexpr auto op(Ret (T::*inp_func)(__VA_ARGS__)) const {       \
+        using mem_ptr_type = Ret (T::*)(__VA_ARGS__);                              \
+        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;  \
+        using valve_type   = ValveType<traits_type, Self, mem_type>;               \
+        return rebind_next<valve_type>(inp_func);                                  \
+    }                                                                              \
+                                                                                   \
+    template <typename T>                                                          \
+    [[nodiscard]] constexpr auto op(Ret (T::*inp_func)(__VA_ARGS__) const) const { \
+        using mem_ptr_type = Ret (T::*)(__VA_ARGS__) const;                        \
+        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;  \
+        using valve_type   = ValveType<traits_type, Self, mem_type>;               \
+        return rebind_next<valve_type>(mem_type{inp_func});                        \
     }
 
-#define WEBPP_DEFINE_FUNC(...)                                \
-    WEBPP_DEFINE_FUNC_BASE(response_type, __VA_ARGS__)        \
-    WEBPP_DEFINE_FUNC_BASE(response_type const&, __VA_ARGS__) \
-    WEBPP_DEFINE_FUNC_BASE(response_type&, __VA_ARGS__)       \
-    WEBPP_DEFINE_FUNC_BASE(void, __VA_ARGS__)                 \
-    WEBPP_DEFINE_FUNC_BASE(context_type, __VA_ARGS__)         \
-    WEBPP_DEFINE_FUNC_BASE(context_type&, __VA_ARGS__)        \
-    WEBPP_DEFINE_FUNC_BASE(context_type const&, __VA_ARGS__)
+#define WEBPP_DEFINE_FUNC(op, ValveType, ...)                                \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type, __VA_ARGS__)        \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type const&, __VA_ARGS__) \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type&, __VA_ARGS__)       \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, void, __VA_ARGS__)                 \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type, __VA_ARGS__)         \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type&, __VA_ARGS__)        \
+    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type const&, __VA_ARGS__)
 
 
-        WEBPP_DEFINE_FUNC(request_type)
-        WEBPP_DEFINE_FUNC(request_type&)
-        WEBPP_DEFINE_FUNC(request_type const&)
-        WEBPP_DEFINE_FUNC(request_type&&)
-        WEBPP_DEFINE_FUNC(request_type, response_type)
-        WEBPP_DEFINE_FUNC(request_type&, response_type)
-        WEBPP_DEFINE_FUNC(request_type const&, response_type)
-        WEBPP_DEFINE_FUNC(request_type&&, response_type)
-        WEBPP_DEFINE_FUNC(request_type, response_type&)
-        WEBPP_DEFINE_FUNC(request_type&, response_type&)
-        WEBPP_DEFINE_FUNC(request_type const&, response_type&)
-        WEBPP_DEFINE_FUNC(request_type&&, response_type&)
-        WEBPP_DEFINE_FUNC(request_type, response_type const&)
-        WEBPP_DEFINE_FUNC(request_type&, response_type const&)
-        WEBPP_DEFINE_FUNC(request_type const&, response_type const&)
-        WEBPP_DEFINE_FUNC(request_type&&, response_type const&)
-        WEBPP_DEFINE_FUNC(request_type, context_type)
-        WEBPP_DEFINE_FUNC(request_type&, context_type)
-        WEBPP_DEFINE_FUNC(request_type const&, context_type)
-        WEBPP_DEFINE_FUNC(request_type&&, context_type)
-        WEBPP_DEFINE_FUNC(request_type, context_type&)
-        WEBPP_DEFINE_FUNC(request_type&, context_type&)
-        WEBPP_DEFINE_FUNC(request_type const&, context_type&)
-        WEBPP_DEFINE_FUNC(request_type&&, context_type&)
-        WEBPP_DEFINE_FUNC(request_type, context_type const&)
-        WEBPP_DEFINE_FUNC(request_type&, context_type const&)
-        WEBPP_DEFINE_FUNC(request_type const&, context_type const&)
-        WEBPP_DEFINE_FUNC(request_type&&, context_type const&)
+#define WEBPP_DEFINE_OPERATOR(op, ValveType)                                    \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type)                              \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&)                             \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&)                       \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&)                            \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type)             \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type&)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type&)             \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type&)       \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type&)            \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type const&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type const&)       \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type const&) \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type const&)      \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type)                \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type)         \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type&)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type&)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type&)             \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type const&)         \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type const&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type const&)  \
+    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type const&)       \
+                                                                                \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&)                             \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type)                              \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&)                       \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type&)             \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type&)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type&)       \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type const&)       \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type const&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type const&) \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type)                \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type)         \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type&)              \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type&)               \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type const&)        \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type const&)         \
+    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type const&)
 
 
-        WEBPP_DEFINE_FUNC(context_type&)
-        WEBPP_DEFINE_FUNC(context_type)
-        WEBPP_DEFINE_FUNC(context_type const&)
-        WEBPP_DEFINE_FUNC(context_type&, response_type)
-        WEBPP_DEFINE_FUNC(context_type, response_type)
-        WEBPP_DEFINE_FUNC(context_type const&, response_type)
-        WEBPP_DEFINE_FUNC(context_type&, response_type&)
-        WEBPP_DEFINE_FUNC(context_type, response_type&)
-        WEBPP_DEFINE_FUNC(context_type const&, response_type&)
-        WEBPP_DEFINE_FUNC(context_type&, response_type const&)
-        WEBPP_DEFINE_FUNC(context_type, response_type const&)
-        WEBPP_DEFINE_FUNC(context_type const&, response_type const&)
-        WEBPP_DEFINE_FUNC(context_type&, request_type)
-        WEBPP_DEFINE_FUNC(context_type, request_type)
-        WEBPP_DEFINE_FUNC(context_type const&, request_type)
-        WEBPP_DEFINE_FUNC(context_type&, request_type&)
-        WEBPP_DEFINE_FUNC(context_type, request_type&)
-        WEBPP_DEFINE_FUNC(context_type const&, request_type&)
-        WEBPP_DEFINE_FUNC(context_type&, request_type const&)
-        WEBPP_DEFINE_FUNC(context_type, request_type const&)
-        WEBPP_DEFINE_FUNC(context_type const&, request_type const&)
+        WEBPP_DEFINE_OPERATOR(operator>>, forward_valve)
+        WEBPP_DEFINE_OPERATOR(operator/, segment_valve)
+        WEBPP_DEFINE_OPERATOR(operator&&, and_valve)
+        WEBPP_DEFINE_OPERATOR(operator||, or_valve)
+        WEBPP_DEFINE_OPERATOR(operator%, mangler_valve)
 
-
+#undef WEBPP_DEFINE_OPERATOR
 #undef WEBPP_DEFINE_FUNC
 #undef WEBPP_DEFINE_FUNC_BASE
 
@@ -581,6 +601,15 @@ namespace webpp::http {
             return rebind_next<segment_type>(seg_v);
         }
 
+        template <typename SegT>
+            requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
+        [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
+            auto const seg_v   = istl::string_viewify(stl::forward<SegT>(inp_segment));
+            using seg_t        = stl::remove_cvref_t<decltype(seg_v)>;
+            using segment_type = segment_valve<traits_type, Self, seg_t, endpath_valve>;
+            return rebind_next<segment_type>(seg_v, endpath);
+        }
+
 
 
         // Convert Custom Contexts into dynamic context
@@ -607,24 +636,13 @@ namespace webpp::http {
             return static_cast<Self*>(this);
         }
 
-        template <typename NextType, typename T>
-        [[nodiscard]] constexpr auto rebind_next(T&& next) const noexcept {
+        template <typename NextType, typename... T>
+        [[nodiscard]] constexpr auto rebind_next(T&&... nexts) const noexcept {
             using optimized_route = route_optimizer<NextType>;
             if constexpr (stl::is_void_v<Self>) {
-                return optimized_route::convert(stl::forward<T>(next));
+                return optimized_route::convert(stl::forward<T>(nexts)...);
             } else {
-                return optimized_route::convert(*self(), stl::forward<T>(next));
-            }
-        }
-
-
-        template <typename NextType>
-        [[nodiscard]] constexpr auto rebind_next() const noexcept {
-            using optimized_route = route_optimizer<NextType>;
-            if constexpr (stl::is_void_v<Self>) {
-                return optimized_route::convert();
-            } else {
-                return optimized_route::convert(*self());
+                return optimized_route::convert(*self(), stl::forward<T>(nexts)...);
             }
         }
     };
@@ -946,7 +964,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
+
+        constexpr void operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using post_traits  = valve_traits<PostRoute, context_type>;
 
@@ -978,14 +997,17 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
+
+        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using ctraits      = valve_traits<next_type, context_type>;
 
-            auto res = ctraits::call(next, ctx);
-            if (!ctraits::is_positive(res)) {
+            auto       res         = ctraits::call(next, ctx);
+            const bool is_positive = ctraits::is_positive(res);
+            if (!is_positive) {
                 ctraits::set_response(stl::move(res), ctx);
             }
+            return !is_positive;
         }
 
         constexpr void to_string(istl::String auto& out) const {
@@ -1001,7 +1023,8 @@ namespace webpp::http {
         using valve_type = valve<TraitsType, not_valve<TraitsType, void>>;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>&) const noexcept {}
+
+        constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" !([empty])");
@@ -1026,7 +1049,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr bool    operator()(basic_context<TraitsType>& ctx) {
+
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using ctraits      = valve_traits<next_type, context_type>;
 
@@ -1059,7 +1083,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr bool    operator()(basic_context<TraitsType>& ctx) {
+
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using ctraits      = valve_traits<next_type, context_type>;
 
@@ -1106,14 +1131,16 @@ namespace webpp::http {
         constexpr ~and_valve()                                    = default;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
+
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 
             if (left_traits::call_set_get(lhs, ctx)) {
-                right_traits::call_and_set(rhs, ctx);
+                return right_traits::call_set_get(rhs, ctx);
             }
+            return false;
         }
 
 
@@ -1160,14 +1187,16 @@ namespace webpp::http {
         constexpr ~or_valve()                                   = default;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
+
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 
             if (!left_traits::call_set_get(lhs, ctx)) {
-                right_traits::call_and_set(rhs, ctx);
+                return right_traits::call_set_get(rhs, ctx);
             }
+            return false;
         }
 
         constexpr void to_string(istl::String auto& out) const {
@@ -1218,10 +1247,12 @@ namespace webpp::http {
         }
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
-            stl::apply(
+
+        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) {
+            return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
-                  (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
+                  return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) &&
+                          ...);
               },
               segments);
         }
@@ -1248,7 +1279,8 @@ namespace webpp::http {
         using valve_type = valve<TraitsType, segment_valve<TraitsType>>;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>&) const noexcept {}
+
+        constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" / [empty]");
@@ -1287,10 +1319,10 @@ namespace webpp::http {
         }
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
-            using segment_traits = valve_traits<CallableSegment, context_type>;
 
-            segment_traits::set_response(segment_traits::call(segment, ctx), ctx);
+        [[nodiscard]] constexpr bool operator()(context_type& ctx) {
+            using segment_traits = valve_traits<CallableSegment, context_type>;
+            return segment_traits::call_set_get(segment, ctx);
         }
 
         constexpr void to_string(istl::String auto& out) const {

@@ -95,6 +95,7 @@ namespace webpp::http {
      */
     template <Traits TraitsType>
     struct basic_dynamic_router : enable_traits<TraitsType>, valve<TraitsType, void> {
+        using valve_type         = valve<TraitsType, void>;
         using root_extensions    = empty_extension_pack;
         using traits_type        = TraitsType;
         using etraits            = enable_traits<traits_type>;
@@ -182,8 +183,8 @@ namespace webpp::http {
          */
         template <HTTPRequest ReqType>
             requires(!Context<ReqType>)
-        constexpr response_type operator()(ReqType&& in_req) {
-            context_type ctx{in_req};
+        [[nodiscard]] constexpr response_type operator()(ReqType&& in_req) {
+            context_type ctx{stl::forward<ReqType>(in_req)};
 
             // call the router with the specified context, fill the response
             this->operator()(ctx);
@@ -196,6 +197,8 @@ namespace webpp::http {
 
             return ctx.response;
         }
+
+        using valve_type::operator();
 
         /**
          * Run the router with the specified context;
