@@ -17,51 +17,57 @@ namespace webpp::sql {
         statement_type* stmt;
 
       public:
-        sql_row(statement_type& stmt_ref) noexcept : stmt{*stmt_ref} {}
+        constexpr sql_row(sql_row const&) noexcept            = default;
+        constexpr sql_row(sql_row&&) noexcept                 = default;
+        constexpr ~sql_row() noexcept                         = default;
+        constexpr sql_row& operator=(sql_row const&) noexcept = default;
+        constexpr sql_row& operator=(sql_row&&) noexcept      = default;
 
-        bool operator==(sql_row const& rhs) const noexcept {
+        constexpr sql_row(statement_type& stmt_ref) noexcept : stmt{stl::addressof(stmt_ref)} {}
+
+        constexpr bool operator==(sql_row const& rhs) const noexcept {
             return *stmt == *rhs.stmt;
         }
 
-        auto operator<=>(sql_row const& rhs) const noexcept {
+        constexpr auto operator<=>(sql_row const& rhs) const noexcept {
             return *stmt <=> *rhs.stmt;
         }
 
 
-        [[nodiscard]] inline cell_type operator[](size_type index) const noexcept {
+        [[nodiscard]] constexpr inline cell_type operator[](size_type index) const noexcept {
             return {*stmt, index};
         }
 
 
-        [[nodiscard]] inline cell_iterator_type begin() noexcept {
+        [[nodiscard]] constexpr inline cell_iterator_type begin() noexcept {
             return {{*stmt, 0}};
         }
 
 
-        [[nodiscard]] inline cell_iterator_type end() noexcept {
+        [[nodiscard]] constexpr inline cell_iterator_type end() noexcept {
             return {{*stmt, stmt->column_count()}};
         }
 
-        [[nodiscard]] inline cell_iterator_type begin() const noexcept {
+        [[nodiscard]] constexpr inline cell_iterator_type begin() const noexcept {
             return {{*stmt, 0}};
         }
 
 
-        [[nodiscard]] inline cell_iterator_type end() const noexcept {
+        [[nodiscard]] constexpr inline cell_iterator_type end() const noexcept {
             return {{*stmt, stmt->column_count()}};
         }
 
-        [[nodiscard]] inline size_type size() const noexcept {
+        [[nodiscard]] constexpr inline size_type size() const noexcept {
             return stmt->column_count();
         }
 
-        statement_type& statement() noexcept {
+        constexpr statement_type& statement() noexcept {
             return *stmt;
         }
 
         // return a tuple of N length containing cells
         template <stl::size_t N, template <typename...> typename TupleType = stl::tuple>
-        [[nodiscard]] inline auto as_tuple() const noexcept {
+        [[nodiscard]] constexpr inline auto as_tuple() const noexcept {
             using tuple = istl::repeat_type_t<N, cell_type, TupleType>;
             return ([this]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
                 return tuple{cell_type{*stmt, I}...};
@@ -143,16 +149,14 @@ namespace webpp::sql {
 
 } // namespace webpp::sql
 
-namespace std {
 
-    template <size_t I, class... T>
-    struct tuple_element<I, webpp::sql::sql_row<T...>> {
-        using type = typename webpp::sql::sql_row<T...>::cell_type;
-    };
+template <size_t I, class... T>
+struct std::tuple_element<I, webpp::sql::sql_row<T...>> {
+    using type = typename webpp::sql::sql_row<T...>::cell_type;
+};
 
-    template <class... T>
-    struct tuple_size<webpp::sql::sql_row<T...>> : integral_constant<size_t, 0> {};
+template <class... T>
+struct std::tuple_size<webpp::sql::sql_row<T...>> : integral_constant<size_t, 0> {};
 
-} // namespace std
 
 #endif // WEBPP_DATABASE_SQL_ROW_HPP
