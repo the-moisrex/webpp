@@ -1,5 +1,5 @@
-#ifndef WEBPP_ROUTER_H
-#define WEBPP_ROUTER_H
+#ifndef WEBPP_HTTP_STATIC_ROUTER_HPP
+#define WEBPP_HTTP_STATIC_ROUTER_HPP
 
 #include "../../extensions/extension.hpp"
 #include "../../std/optional.hpp"
@@ -209,20 +209,20 @@ namespace webpp::http {
          * Append a string representation of the routes
          */
         template <istl::String StrT, HTTPRequest ReqT, stl::size_t Index = 0>
-        void append_as_string(StrT& out, ReqT&& req) const {
+        void to_string(StrT& out, ReqT&& req) const {
             using req_type = stl::remove_cvref_t<ReqT>;
             using merged_extensions =
               typename merge_root_extensions<typename req_type::root_extensions, NewRootExtensions>::type;
             using context_type = simple_context<req_type, merged_extensions>;
 
             auto const this_route = stl::get<Index>(routes);
-            this_route.append_as_string(out, context_type{req}, req);
+            this_route.to_string(out, context_type{req}, req);
 
             // print the next route as well
             constexpr bool last_route = Index == (route_count() - 1);
             if constexpr (!last_route) {
                 out.push_back('\n');
-                append_as_string<StrT, ReqT, Index + 1>(out, stl::forward<ReqT>(req));
+                to_string<StrT, ReqT, Index + 1>(out, stl::forward<ReqT>(req));
             }
         }
 
@@ -232,7 +232,7 @@ namespace webpp::http {
         template <istl::String StrT = stl::string, HTTPRequest ReqT>
         StrT to_string(ReqT&& req) const {
             StrT out;
-            append_as_string(out, stl::forward<ReqT>(req));
+            to_string(out, stl::forward<ReqT>(req));
             return out;
         }
     };
@@ -248,4 +248,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_ROUTER_H
+#endif // WEBPP_HTTP_STATIC_ROUTER_HPP

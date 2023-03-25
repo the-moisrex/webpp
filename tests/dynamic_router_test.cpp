@@ -1,5 +1,6 @@
 #include "../webpp/http/routes/dynamic_router.hpp"
 
+#include "../webpp/http/routes/router.hpp"
 #include "common_pch.hpp"
 
 
@@ -96,5 +97,27 @@ TEST(DynamicRouter, CacheDeceptionTest) {
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found) << router.to_string();
+    EXPECT_NE(as<std::string>(res.body), "about page");
+}
+
+TEST(DynamicRouter, ValvesInStaticRouter) {
+    router const _router{empty_extension_pack{},
+                         valve{} / "home" >>
+                           [] {
+                               return "Home Page";
+                           },
+                         valve{} / "about" >>
+                           []() {
+                               return "About Page";
+                           }};
+
+    enable_owner_traits<default_dynamic_traits> et;
+
+    request req{et};
+    req.method("GET");
+    req.uri("/about/style.css");
+
+    HTTPResponse auto const res = _router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_NE(as<std::string>(res.body), "about page");
 }

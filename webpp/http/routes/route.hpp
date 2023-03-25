@@ -1,7 +1,7 @@
 // Created by moisrex on 11/1/19.
 
-#ifndef WEBPP_ROUTES_ROUTE_H
-#define WEBPP_ROUTES_ROUTE_H
+#ifndef WEBPP_HTTP_ROUTES_ROUTE_HPP
+#define WEBPP_HTTP_ROUTES_ROUTE_HPP
 
 #include "../../logs/log_concepts.hpp"
 #include "../../std/function_ref.hpp"
@@ -641,7 +641,7 @@ namespace webpp::http {
          * Generate a string representation of this route
          */
         template <Context CtxT, HTTPRequest ReqT, bool First = true>
-        void append_as_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) const {
+        void to_string(istl::String auto& out, CtxT&& ctx, ReqT&& req) const {
             using namespace stl;
             using res_t   = remove_cvref_t<decltype(call_this_route(ctx, req))>;
             using n_res_t = remove_cvref_t<decltype(call_next_route(ctx, req))>;
@@ -650,10 +650,8 @@ namespace webpp::http {
 
             // print the next route
             if constexpr (is_next_route_valid) {
-                if constexpr (requires {
-                                  this->next.template append_as_string<CtxT, ReqT, false>(out, ctx, req);
-                              }) {
-                    this->next.template append_as_string<CtxT, ReqT, false>(out, ctx, req);
+                if constexpr (requires { this->next.template to_string<CtxT, ReqT, false>(out, ctx, req); }) {
+                    this->next.template to_string<CtxT, ReqT, false>(out, ctx, req);
                 } else {
                     append_route_as_string<n_res_t, false>(out, this->next);
                 }
@@ -663,7 +661,7 @@ namespace webpp::http {
         template <typename StrT = stl::string>
         [[nodiscard]] StrT to_string() const {
             StrT out;
-            append_as_string(out);
+            to_string(out);
             return out;
         }
     };
@@ -671,4 +669,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_ROUTES_ROUTE_H
+#endif // WEBPP_HTTP_ROUTES_ROUTE_HPP

@@ -13,7 +13,7 @@ namespace webpp::istl {
     /**
      *  @brief  Convert a rvalue or lvalue to a value
      *  This has the same effect of auto(...) in C++23
-     *  This implementation is very similar to the std::move but does the opposite
+     *  This implementation is very similar to the std::move but does "almost" the opposite
      *  @param  t  A thing of arbitrary type.
      *  @return The parameter cast to a non-reference value.
      */

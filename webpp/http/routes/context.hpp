@@ -293,6 +293,14 @@ namespace webpp::http {
         path_traverser_type traverser{request.path_iterator()};
 
       public:
+        template <HTTPRequest ReqT>
+            requires(!istl::same_as_cvref<ReqT, request_type>)
+        constexpr basic_context(ReqT& req)
+          : context_methods{req},
+            request{req},
+            response{req.get_traits()},
+            traverser{request.path_iterator()} {}
+
         constexpr basic_context(request_type& req)
           : context_methods{req},
             request{req},
@@ -300,11 +308,8 @@ namespace webpp::http {
             traverser{request.path_iterator()} {}
 
         template <Context CtxT>
-        constexpr basic_context(CtxT const& ctx) noexcept
-          : context_methods{ctx.request},
-            request{ctx.request},
-            response{ctx.response},
-            traverser{request.path_iterator()} {}
+            requires(!istl::same_as_cvref<CtxT, basic_context>)
+        constexpr basic_context(CtxT const& ctx) noexcept : basic_context(ctx.request) {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;
