@@ -17,7 +17,7 @@ namespace website {
 
       public:
         counter_model() {
-            auto counter = db.create_query().table("counter");
+            auto counter = db.table("counter");
             counter["id"].primary().number().not_null();
             counter["ip"].string().unique().not_null();
             counter["val"].number().not_null().default_value(0);
@@ -26,7 +26,7 @@ namespace website {
 
         bool increment() {
             auto counter = db.table("counter").where("ip", ip);
-            counter++;
+            counter["val"]++;
             return counter.update_or_set();
         }
 

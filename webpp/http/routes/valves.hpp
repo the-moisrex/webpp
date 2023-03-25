@@ -79,7 +79,10 @@ namespace webpp::http {
     struct member_function_callable;
     template <Traits TraitsType, typename ManglerType, typename NextCallable>
     struct mangler_valve;
-    struct endpath_valve {
+
+
+
+    static constexpr struct endpath_valve {
 
         template <Traits TraitsType>
         [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
@@ -439,13 +442,13 @@ namespace webpp::http {
 
     template <Traits TraitsType = default_dynamic_traits, typename Self = void>
     struct valve {
+      private:
         using traits_type   = TraitsType;
         using context_type  = basic_context<traits_type>;
         using response_type = basic_response<traits_type>;
         using request_type  = basic_request<traits_type>;
 
-
-
+      public:
 #define WEBPP_DEFINE_FUNC_BASE(op, ValveType, Ret, ...)                            \
                                                                                    \
     template <typename T>                                                          \
@@ -532,6 +535,8 @@ namespace webpp::http {
         WEBPP_DEFINE_OPERATOR(operator&&, and_valve)
         WEBPP_DEFINE_OPERATOR(operator||, or_valve)
         WEBPP_DEFINE_OPERATOR(operator%, mangler_valve)
+        WEBPP_DEFINE_OPERATOR(operator+, postrouting_valve)
+        WEBPP_DEFINE_OPERATOR(operator-, prerouting_valve)
 
 #undef WEBPP_DEFINE_OPERATOR
 #undef WEBPP_DEFINE_FUNC
@@ -738,7 +743,7 @@ namespace webpp::http {
           : callables{stl::forward<Cs>(funcs)...} {}
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
+        constexpr void    operator()(context_type& ctx) {
             stl::apply(
               [&ctx]<typename... T>(T&&... funcs) constexpr {
                   (valve_traits<T, context_type>::call_and_set(stl::forward<T>(funcs), ctx), ...);
@@ -788,10 +793,12 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     struct forward_valve<TraitsType> : valve<TraitsType, void> {
-        using valve_type = valve<TraitsType, void>;
+        using valve_type   = valve<TraitsType, void>;
+        using context_type = basic_context<TraitsType>;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>&) const {}
+
+        constexpr void operator()(context_type&) const {}
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" >> [empty]");
@@ -804,7 +811,8 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename PreRoute, typename Callable>
     struct prerouting_valve : valve<TraitsType, prerouting_valve<TraitsType, PreRoute, Callable>> {
-        using valve_type = valve<TraitsType, prerouting_valve<TraitsType, PreRoute, Callable>>;
+        using valve_type   = valve<TraitsType, prerouting_valve<TraitsType, PreRoute, Callable>>;
+        using context_type = basic_context<TraitsType>;
 
       private:
         PreRoute pre;
@@ -822,8 +830,7 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
-            using context_type    = basic_context<TraitsType>;
+        constexpr void    operator()(context_type& ctx) {
             using pre_traits      = valve_traits<PreRoute, context_type>;
             using callable_traits = valve_traits<Callable, context_type>;
 
@@ -862,7 +869,8 @@ namespace webpp::http {
     template <Traits TraitsType, typename PreRoute>
     struct prerouting_valve<TraitsType, PreRoute, void>
       : valve<TraitsType, prerouting_valve<TraitsType, PreRoute, void>> {
-        using valve_type = valve<TraitsType, prerouting_valve<TraitsType, PreRoute, void>>;
+        using valve_type   = valve<TraitsType, prerouting_valve<TraitsType, PreRoute, void>>;
+        using context_type = basic_context<TraitsType>;
 
       private:
         PreRoute pre;
@@ -876,9 +884,8 @@ namespace webpp::http {
         constexpr ~prerouting_valve()                                           = default;
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using pre_traits   = valve_traits<PreRoute, context_type>;
+        constexpr void    operator()(context_type& ctx) {
+            using pre_traits = valve_traits<PreRoute, context_type>;
 
             pre_traits::call_and_set(pre, ctx);
         }
@@ -892,7 +899,8 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable, typename PostRoute>
     struct postrouting_valve : valve<TraitsType, postrouting_valve<TraitsType, Callable, PostRoute>> {
-        using valve_type = valve<TraitsType, postrouting_valve<TraitsType, Callable, PostRoute>>;
+        using valve_type   = valve<TraitsType, postrouting_valve<TraitsType, Callable, PostRoute>>;
+        using context_type = basic_context<TraitsType>;
 
       private:
         Callable  callable;
@@ -910,8 +918,7 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(basic_context<TraitsType>& ctx) {
-            using context_type    = basic_context<TraitsType>;
+        constexpr void    operator()(context_type& ctx) {
             using callable_traits = valve_traits<Callable, context_type>;
             using post_traits     = valve_traits<PostRoute, context_type>;
 
@@ -949,7 +956,8 @@ namespace webpp::http {
     template <Traits TraitsType, typename PostRoute>
     struct postrouting_valve<TraitsType, void, PostRoute>
       : valve<TraitsType, postrouting_valve<TraitsType, void, PostRoute>> {
-        using valve_type = valve<TraitsType, postrouting_valve<TraitsType, void, PostRoute>>;
+        using valve_type   = valve<TraitsType, postrouting_valve<TraitsType, void, PostRoute>>;
+        using context_type = basic_context<TraitsType>;
 
       private:
         PostRoute post;
@@ -965,10 +973,8 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using post_traits  = valve_traits<PostRoute, context_type>;
-
+        constexpr void operator()(context_type& ctx) {
+            using post_traits = valve_traits<PostRoute, context_type>;
             post_traits::call_and_set(post, ctx);
         }
 
@@ -981,8 +987,9 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable>
     struct not_valve : valve<TraitsType, not_valve<TraitsType, Callable>> {
-        using valve_type = valve<TraitsType, not_valve<TraitsType, Callable>>;
-        using next_type  = Callable;
+        using valve_type   = valve<TraitsType, not_valve<TraitsType, Callable>>;
+        using next_type    = Callable;
+        using context_type = basic_context<TraitsType>;
 
       private:
         next_type next;
@@ -998,9 +1005,8 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using ctraits      = valve_traits<next_type, context_type>;
+        [[nodiscard]] constexpr bool operator()(context_type& ctx) {
+            using ctraits = valve_traits<next_type, context_type>;
 
             auto       res         = ctraits::call(next, ctx);
             const bool is_positive = ctraits::is_positive(res);
@@ -1020,11 +1026,12 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     struct not_valve<TraitsType, void> : valve<TraitsType, not_valve<TraitsType, void>> {
-        using valve_type = valve<TraitsType, not_valve<TraitsType, void>>;
+        using valve_type   = valve<TraitsType, not_valve<TraitsType, void>>;
+        using context_type = basic_context<TraitsType>;
 
         using valve_type::operator();
 
-        constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+        constexpr void operator()(context_type&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" !([empty])");
@@ -1033,8 +1040,9 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable>
     struct negative_valve : valve<TraitsType, negative_valve<TraitsType, Callable>> {
-        using valve_type = valve<TraitsType, negative_valve<TraitsType, Callable>>;
-        using next_type  = Callable;
+        using valve_type   = valve<TraitsType, negative_valve<TraitsType, Callable>>;
+        using next_type    = Callable;
+        using context_type = basic_context<TraitsType>;
 
       private:
         next_type next;
@@ -1050,9 +1058,8 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using ctraits      = valve_traits<next_type, context_type>;
+        constexpr bool operator()(context_type& ctx) {
+            using ctraits = valve_traits<next_type, context_type>;
 
             ctraits::call_and_set(next, ctx);
             return false;
@@ -1067,8 +1074,9 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename Callable>
     struct positive_valve : valve<TraitsType, positive_valve<TraitsType, Callable>> {
-        using valve_type = valve<TraitsType, positive_valve<TraitsType, Callable>>;
-        using next_type  = Callable;
+        using valve_type   = valve<TraitsType, positive_valve<TraitsType, Callable>>;
+        using next_type    = Callable;
+        using context_type = basic_context<TraitsType>;
 
       private:
         next_type next;
@@ -1084,9 +1092,8 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
-            using ctraits      = valve_traits<next_type, context_type>;
+        constexpr bool operator()(context_type& ctx) {
+            using ctraits = valve_traits<next_type, context_type>;
 
             ctraits::call_and_set(next, ctx);
             return true;
@@ -1103,9 +1110,10 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename LeftCallable, typename RightCallable>
     struct and_valve : valve<TraitsType, and_valve<TraitsType, LeftCallable, RightCallable>> {
-        using valve_type = valve<TraitsType, and_valve<TraitsType, LeftCallable, RightCallable>>;
-        using left_type  = LeftCallable;
-        using right_type = RightCallable;
+        using valve_type   = valve<TraitsType, and_valve<TraitsType, LeftCallable, RightCallable>>;
+        using left_type    = LeftCallable;
+        using right_type   = RightCallable;
+        using context_type = basic_context<TraitsType>;
 
       private:
         left_type  lhs;
@@ -1132,8 +1140,7 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        constexpr bool operator()(context_type& ctx) {
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 
@@ -1159,9 +1166,10 @@ namespace webpp::http {
 
     template <Traits TraitsType, typename LeftCallable, typename RightCallable>
     struct or_valve : valve<TraitsType, or_valve<TraitsType, LeftCallable, RightCallable>> {
-        using valve_type = valve<TraitsType, or_valve<TraitsType, LeftCallable, RightCallable>>;
-        using left_type  = LeftCallable;
-        using right_type = RightCallable;
+        using valve_type   = valve<TraitsType, or_valve<TraitsType, LeftCallable, RightCallable>>;
+        using left_type    = LeftCallable;
+        using right_type   = RightCallable;
+        using context_type = basic_context<TraitsType>;
 
       private:
         left_type  lhs;
@@ -1188,8 +1196,7 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
-            using context_type = basic_context<TraitsType>;
+        constexpr bool operator()(context_type& ctx) {
             using left_traits  = valve_traits<left_type, context_type>;
             using right_traits = valve_traits<right_type, context_type>;
 
@@ -1248,7 +1255,7 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr bool operator()(basic_context<TraitsType>& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
                   return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) &&
@@ -1276,11 +1283,12 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     struct segment_valve<TraitsType> : valve<TraitsType, segment_valve<TraitsType>> {
-        using valve_type = valve<TraitsType, segment_valve<TraitsType>>;
+        using valve_type   = valve<TraitsType, segment_valve<TraitsType>>;
+        using context_type = basic_context<TraitsType>;
 
         using valve_type::operator();
 
-        constexpr void operator()(basic_context<TraitsType>&) const noexcept {}
+        constexpr void operator()(context_type&) const noexcept {}
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" / [empty]");
