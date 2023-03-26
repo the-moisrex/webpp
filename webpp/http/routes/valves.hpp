@@ -231,7 +231,7 @@ namespace webpp::http {
         using type = C;
 
         template <typename... T>
-        static constexpr C convert(T&&... args) noexcept {
+        static constexpr C convert(T&&... args) noexcept(stl::is_nothrow_constructible_v<C, T...>) {
             return {stl::forward<T>(args)...};
         }
     };
@@ -268,7 +268,9 @@ namespace webpp::http {
         using rhs_type    = prerouting_valve<TraitsType, Pre, Right>;
         using lhs_type    = Left;
 
-        static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
+        template <typename LT, typename RT>
+            requires(istl::same_as_cvref<LT, lhs_type> && istl::same_as_cvref<RT, rhs_type>)
+        static constexpr return_type convert(LT&& lhs, RT&& rhs) noexcept {
             return parent_type::convert(preroute_type{pre_parent::convert(stl::move(rhs.get_preroute())),
                                                       left_parent::convert(stl::move(lhs))},
                                         right_parent::convert(stl::move(rhs.get_callable())));
@@ -298,7 +300,9 @@ namespace webpp::http {
         using lhs_type    = postrouting_valve<TraitsType, Left, Post>;
         using rhs_type    = Right;
 
-        static constexpr return_type convert(lhs_type&& lhs, rhs_type&& rhs) noexcept {
+        template <typename LT, typename RT>
+            requires(istl::same_as_cvref<LT, lhs_type> && istl::same_as_cvref<RT, rhs_type>)
+        static constexpr return_type convert(LT&& lhs, RT&& rhs) noexcept {
             return parent_type::convert(left_parent::convert(stl::move(lhs.get_callable())),
                                         postroute_type{right_parent::convert(stl::move(rhs)),
                                                        post_parent::convert(stl::move(lhs.get_postroute()))});
@@ -918,7 +922,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             using callable_traits = valve_traits<Callable, context_type>;
             using post_traits     = valve_traits<PostRoute, context_type>;
 

@@ -136,7 +136,7 @@ TEST(DynamicRouter, PostRoutingTest) {
     router.objects.emplace_back(pages{});
 
     auto const main_page = router / "page" + &pages::add_body;
-    router += main_page % "about" >> &pages::about;
+    router += main_page / "about" >> &pages::about;
 
     request req{router.get_traits()};
     req.method("GET");
