@@ -136,7 +136,7 @@ TEST(DynamicRouter, PostRoutingTest) {
     router.objects.emplace_back(pages{});
 
     auto const main_page = router / "page" + &pages::add_body;
-    router += main_page / "about" >> &pages::about;
+    router += main_page % "about" >> &pages::about;
 
     request req{router.get_traits()};
     req.method("GET");
@@ -144,7 +144,7 @@ TEST(DynamicRouter, PostRoutingTest) {
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
-    EXPECT_NE(as<std::string>(res.body), "<body>about page</body>");
+    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>");
 }
 
 

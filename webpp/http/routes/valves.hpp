@@ -35,6 +35,9 @@ namespace webpp::http {
     template <typename TraitsType, typename T>
     concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
 
+    template <typename Router, typename T>
+    concept ValveRequiresSetup = requires(T callable, Router& router) { callable.setup(router); };
+
 
     template <typename Callable>
     static constexpr void valve_to_string(istl::String auto& out, Callable& func) {
@@ -199,8 +202,8 @@ namespace webpp::http {
 
         template <typename C>
             requires istl::same_as_cvref<C, Callable>
-        static constexpr void call_and_set(C&&           segment,
-                                           context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr void call_set(C&&           segment,
+                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
                 call(stl::forward<C>(segment), ctx);
             } else {
@@ -708,7 +711,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             mangler(ctx, next_route<TraitsType>{next});
         }
 
@@ -747,10 +751,11 @@ namespace webpp::http {
           : callables{stl::forward<Cs>(funcs)...} {}
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             stl::apply(
               [&ctx]<typename... T>(T&&... funcs) constexpr {
-                  (valve_traits<T, context_type>::call_and_set(stl::forward<T>(funcs), ctx), ...);
+                  (valve_traits<T, context_type>::call_set(stl::forward<T>(funcs), ctx), ...);
               },
               callables);
         }
@@ -782,9 +787,10 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             using next_traits = valve_traits<Callable, context_type>;
-            next_traits::call_and_set(next, ctx);
+            next_traits::call_set(next, ctx);
         }
 
 
@@ -834,7 +840,8 @@ namespace webpp::http {
 
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             using pre_traits      = valve_traits<PreRoute, context_type>;
             using callable_traits = valve_traits<Callable, context_type>;
 
@@ -888,10 +895,11 @@ namespace webpp::http {
         constexpr ~prerouting_valve()                                           = default;
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             using pre_traits = valve_traits<PreRoute, context_type>;
 
-            pre_traits::call_and_set(pre, ctx);
+            pre_traits::call_set(pre, ctx);
         }
 
         constexpr void to_string(istl::String auto& out) const {
@@ -930,7 +938,7 @@ namespace webpp::http {
             auto callable_res = callable_traits::call(callable, ctx);
             if (callable_traits::is_postrouting_positive(callable_res)) {
                 callable_traits::set_response(stl::move(callable_res), ctx);
-                post_traits::call_and_set(post, ctx);
+                post_traits::call_set(post, ctx);
             }
         }
 
@@ -956,6 +964,17 @@ namespace webpp::http {
             out.append(" +");
             valve_to_string(out, post);
         }
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, Callable> || ValveRequiresSetup<RouterT, PostRoute>)
+        constexpr void setup(RouterT& router) {
+            if constexpr (ValveRequiresSetup<RouterT, Callable>) {
+                callable.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, PostRoute>) {
+                post.setup(router);
+            }
+        }
     };
 
     template <Traits TraitsType, typename PostRoute>
@@ -980,12 +999,18 @@ namespace webpp::http {
 
         constexpr void operator()(context_type& ctx) {
             using post_traits = valve_traits<PostRoute, context_type>;
-            post_traits::call_and_set(post, ctx);
+            post_traits::call_set(post, ctx);
         }
 
         constexpr void to_string(istl::String auto& out) const {
             out.append(" +");
             valve_to_string(out, post);
+        }
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, PostRoute>)
+        constexpr void setup(RouterT& router) {
+            post.setup(router);
         }
     };
 
@@ -1025,6 +1050,13 @@ namespace webpp::http {
             out.append(" !(");
             valve_to_string(out, next);
             out.append(")");
+        }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, Callable>)
+        constexpr void setup(RouterT& router) {
+            next.setup(router);
         }
     };
 
@@ -1066,7 +1098,7 @@ namespace webpp::http {
         constexpr bool operator()(context_type& ctx) {
             using ctraits = valve_traits<next_type, context_type>;
 
-            ctraits::call_and_set(next, ctx);
+            ctraits::call_set(next, ctx);
             return false;
         }
 
@@ -1074,6 +1106,13 @@ namespace webpp::http {
             out.append(" false(");
             valve_to_string(out, next);
             out.append(")");
+        }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, Callable>)
+        constexpr void setup(RouterT& router) {
+            next.setup(router);
         }
     };
 
@@ -1100,7 +1139,7 @@ namespace webpp::http {
         constexpr bool operator()(context_type& ctx) {
             using ctraits = valve_traits<next_type, context_type>;
 
-            ctraits::call_and_set(next, ctx);
+            ctraits::call_set(next, ctx);
             return true;
         }
 
@@ -1108,6 +1147,13 @@ namespace webpp::http {
             out.append(" true(");
             valve_to_string(out, next);
             out.append(")");
+        }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, Callable>)
+        constexpr void setup(RouterT& router) {
+            next.setup(router);
         }
     };
 
@@ -1163,6 +1209,18 @@ namespace webpp::http {
             valve_to_string(out, rhs);
             out.append(")");
         }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, left_type> || ValveRequiresSetup<RouterT, right_type>)
+        constexpr void setup(RouterT& router) {
+            if constexpr (ValveRequiresSetup<RouterT, left_type>) {
+                lhs.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, right_type>) {
+                rhs.setup(router);
+            }
+        }
     };
 
     template <Traits TraitsType, typename RightCallable>
@@ -1217,6 +1275,18 @@ namespace webpp::http {
             out.append(" || ");
             valve_to_string(out, rhs);
             out.append(")");
+        }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, left_type> || ValveRequiresSetup<RouterT, right_type>)
+        constexpr void setup(RouterT& router) {
+            if constexpr (ValveRequiresSetup<RouterT, left_type>) {
+                lhs.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, right_type>) {
+                rhs.setup(router);
+            }
         }
     };
 
@@ -1283,6 +1353,22 @@ namespace webpp::http {
               },
               segments);
         }
+
+
+        template <typename RouterT>
+            requires((ValveRequiresSetup<RouterT, CallableSegments> || ...))
+        constexpr void setup(RouterT& router) {
+            stl::apply(
+              [&router]<typename... T>(T&&... callables) constexpr {
+                  (([&router](auto&& callable) constexpr {
+                       if constexpr (ValveRequiresSetup<RouterT, T>) {
+                           callable.setup(router);
+                       }
+                   })(callables),
+                   ...);
+              },
+              segments);
+        }
     };
 
 
@@ -1342,6 +1428,13 @@ namespace webpp::http {
             out.append(" /");
             valve_to_string(out, segment);
         }
+
+
+        template <typename RouterT>
+            requires(ValveRequiresSetup<RouterT, CallableSegment>)
+        constexpr void setup(RouterT& router) {
+            segment.setup(router);
+        }
     };
 
 
@@ -1379,9 +1472,10 @@ namespace webpp::http {
         constexpr member_function_callable(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
 
         using valve_type::operator();
-        constexpr void    operator()(context_type& ctx) {
+
+        constexpr void operator()(context_type& ctx) {
             using callable_traits = valve_traits<method_holder, context_type>;
-            callable_traits::set_response(callable_traits::call(holder, ctx), ctx);
+            callable_traits::call_set(holder, ctx);
         }
 
         constexpr void set_object(object_ptr inp_obj) noexcept {
