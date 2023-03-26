@@ -6,15 +6,12 @@
 #include "../../std/memory.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
-#include "../../traits/default_traits.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../request.hpp"
-#include "../request_view.hpp"
 #include "../response.hpp"
 #include "../status_code.hpp"
 #include "./context.hpp"
-#include "route.hpp"
 #include "valves.hpp"
 
 #include <any>
@@ -63,6 +60,13 @@ namespace webpp::http {
         void to_string(string_type& out) const final {
             valve_to_string(out, callable);
         }
+
+
+        void setup([[maybe_unused]] router_type& router) final {
+            if constexpr (ValveRequiresSetup<router_type, callable_type>) {
+                callable.setup(router);
+            }
+        }
     };
 
 
@@ -84,6 +88,7 @@ namespace webpp::http {
         virtual void operator()(context_type& ctx, [[maybe_unused]] router_type& router) = 0;
         virtual void operator()(context_type& ctx)                                       = 0;
         virtual void to_string(string_type& out) const                                   = 0;
+        virtual void setup(router_type& out)                                             = 0;
     };
 
 
@@ -170,7 +175,7 @@ namespace webpp::http {
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
             new_route_type route{stl::forward<C>(callable)};
-            // route.setup(*this);
+            route.setup(*this);
             routes.emplace_back(stl::move(route));
             return *this;
         }
