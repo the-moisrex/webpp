@@ -489,6 +489,10 @@ namespace webpp::http {
     WEBPP_DEFINE_FUNC(op, ValveType, request_type&)                             \
     WEBPP_DEFINE_FUNC(op, ValveType, request_type const&)                       \
     WEBPP_DEFINE_FUNC(op, ValveType, request_type&&)                            \
+    WEBPP_DEFINE_FUNC(op, ValveType, response_type)                             \
+    WEBPP_DEFINE_FUNC(op, ValveType, response_type&)                            \
+    WEBPP_DEFINE_FUNC(op, ValveType, response_type const&)                      \
+    WEBPP_DEFINE_FUNC(op, ValveType, response_type&&)                           \
     WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type)               \
     WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type)              \
     WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type)        \
@@ -1487,7 +1491,7 @@ namespace webpp::http {
         constexpr void setup(RouterType& router) {
             for (auto& object : router.objects) {
                 if (object.type() == typeid(object_type)) {
-                    set_method(&stl::any_cast<object_type>(object));
+                    set_object(stl::any_cast<object_type>(stl::addressof(object)));
                     return;
                 }
             }
@@ -1495,10 +1499,10 @@ namespace webpp::http {
             // default constructing it if it's possible and use that object
             if constexpr (stl::is_default_constructible_v<object_type>) {
                 router.objects.emplace_back(object_type{});
-                set_object(&stl::any_cast<object_type>(router.objects.back()));
+                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
             } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
                 router.objects.emplace_back(object_type{router});
-                set_object(&stl::any_cast<object_type>(router.objects.back()));
+                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
             } else {
                 router.logger.error(
                   "DRouter",

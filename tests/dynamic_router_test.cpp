@@ -17,7 +17,7 @@ struct pages {
     }
 
     // I know it's not efficient
-    response add_body(response res) const {
+    [[nodiscard]] response add_body(response res) const {
         res.body = "<body>" + as<stl::string>(res.body) + "</body>";
         return res;
     }
