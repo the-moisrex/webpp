@@ -1138,7 +1138,7 @@ namespace webpp::istl {
     };
 
     template <typename Callable, typename... Args>
-    bool invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
+    concept invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
 
     template <typename Callable, typename... Args>
     static constexpr decltype(auto)

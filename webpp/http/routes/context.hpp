@@ -294,7 +294,7 @@ namespace webpp::http {
 
       public:
         template <HTTPRequest ReqT>
-            requires(!istl::same_as_cvref<ReqT, request_type>)
+            requires(!istl::cvref_as<ReqT, request_type>)
         constexpr basic_context(ReqT& req)
           : context_methods{req},
             request{req},
@@ -308,7 +308,7 @@ namespace webpp::http {
             traverser{request.path_iterator()} {}
 
         template <Context CtxT>
-            requires(!istl::same_as_cvref<CtxT, basic_context>)
+            requires(!istl::cvref_as<CtxT, basic_context>)
         constexpr basic_context(CtxT const& ctx) noexcept : basic_context(ctx.request) {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;

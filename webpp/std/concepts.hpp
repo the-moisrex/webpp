@@ -44,8 +44,7 @@ namespace webpp::istl {
      * This concept is always false
      */
     template <typename T>
-    concept None = !
-    All<T>;
+    concept None = !All<T>;
 
 
 
@@ -203,8 +202,46 @@ namespace webpp::istl {
     concept part_of = (stl::same_as<T, E> || ...);
 
 
-    template <typename T, typename U>
-    concept same_as_cvref = stl::same_as<stl::remove_cvref_t<T>, stl::remove_cvref_t<U>>;
+
+
+    namespace details {
+        // failure condition
+        template <typename... T>
+        struct is_same_all : stl::false_type {};
+
+        // success termination condition
+        template <typename T1>
+        struct is_same_all<T1, T1> : stl::true_type {};
+
+        // append from right tuple to left tuple
+        template <typename... TX, typename T2, typename... T>
+            requires(sizeof...(TX) < sizeof...(T) + 1)
+        struct is_same_all<is_same_all<TX...>, is_same_all<T2, T...>>
+          : is_same_all<is_same_all<TX..., T2>, is_same_all<T...>> {};
+    }
+
+    /**
+     * Check if the first half of types are the same as the second half of types.
+     * This is the same thing as "std::same_as" but accepts more templates
+     * Possible Usage:
+     * @code
+     *   template <typename ...T>
+     *   struct A {
+     *
+     *      template <typename ...U>
+     *          requires(same_as_all<T..., U...>)
+     *      void call(U&&...); // You can do perfect forwarding with U
+     *   };
+     * @endcode
+     */
+    template <typename... T>
+    concept same_as_all = details::is_same_all<details::is_same_all<>, details::is_same_all<T...>>::value;
+
+    /**
+     * Same as "same_as_all" except it removes the cvref qualifications first.
+     */
+    template <typename... T>
+    concept cvref_as = same_as_all<stl::remove_cvref_t<T>...>;
 
 
 } // namespace webpp::istl

@@ -227,13 +227,13 @@ TEST(TypeTraits, OneOfTest) {
 }
 
 
+struct one {};
+struct two {};
+struct three {};
+struct four {};
 TEST(TypeTraits, InvocableInOrder) {
     using std::function;
     using webpp::istl::invocable_inorder_v;
-    struct one {};
-    struct two {};
-    struct three {};
-    struct four {};
 
     EXPECT_TRUE(bool(invocable_inorder_v<function<void()>>));
     EXPECT_TRUE(bool(invocable_inorder_v<function<void(int)>, int>));
@@ -263,5 +263,18 @@ TEST(TypeTraits, InvocableInOrder) {
     EXPECT_TRUE(invoke_inorder(ok, three{}, one{}, two{}));
 }
 
+
+TEST(TypeTraits, SameAsAllTest) {
+    EXPECT_TRUE(bool(same_as_all<one, one>));
+    EXPECT_TRUE(bool(same_as_all<one, two, three, one, two, three>));
+    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three>));
+    EXPECT_TRUE(bool(cvref_as<one const&, one&&>));
+    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three const>));
+    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three&&>));
+    EXPECT_FALSE(bool(same_as_all<one, two, three, one, four, three>));
+    EXPECT_FALSE(bool(cvref_as<one const&, four, three const&, one, two, three>));
+    EXPECT_FALSE(bool(same_as_all<one, two, three, one, one, three>));
+    EXPECT_FALSE(bool(cvref_as<one const&, one, three const&, one, two, three>));
+}
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

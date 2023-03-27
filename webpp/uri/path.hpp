@@ -56,7 +56,7 @@ namespace webpp::uri {
 
         template <istl::String T>
             requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
-                     istl::same_as_cvref<typename T::allocator_type, allocator_type>)
+                     istl::cvref_as<typename T::allocator_type, allocator_type>)
         constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }

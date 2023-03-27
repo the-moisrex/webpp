@@ -115,7 +115,7 @@ namespace webpp::views {
               public:
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
                 template <typename ET>
-                    requires(!istl::same_as_cvref<ET, mustache_data_view_settings>)
+                    requires(!istl::cvref_as<ET, mustache_data_view_settings>)
                 constexpr lambda_fixer(ET&& et, Func&& func) noexcept
                   : Func{stl::forward<Func>(func)},
                     string_allocator{alloc::general_allocator<char_type>(et)} {}
