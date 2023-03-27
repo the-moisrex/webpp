@@ -135,36 +135,18 @@ namespace webpp::http {
             using ret_type = stl::remove_cvref_t<R>;
             if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
-            } else if constexpr (stl::is_void_v<ret_type> || HTTPResponse<ret_type>) {
+            } else if constexpr (stl::is_void_v<ret_type>) {
                 return true;
             } else if constexpr (stl::is_pointer_v<ret_type>) {
                 return ret != nullptr;
             } else if constexpr (istl::Optional<ret_type>) {
                 return bool{ret};
             } else {
-                // istl::nothing_type, ...
+                // istl::nothing_type, HTTPResponse<ret_type>, ...
                 return false;
             }
         }
 
-
-        template <typename R>
-        static constexpr bool is_prerouting_positive(R&& ret) noexcept {
-            if constexpr (HTTPResponse<return_type>) {
-                return false;
-            } else {
-                return is_positive(ret);
-            }
-        }
-
-        template <typename R>
-        static constexpr bool is_postrouting_positive(R&& ret) noexcept {
-            if constexpr (HTTPResponse<return_type>) {
-                return true;
-            } else {
-                return is_positive(ret);
-            }
-        }
 
         template <typename R>
         static constexpr void set_response(R&& ret, context_type& ctx) {
@@ -845,15 +827,14 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr void operator()(context_type& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             using pre_traits      = valve_traits<PreRoute, context_type>;
             using callable_traits = valve_traits<Callable, context_type>;
 
-            auto pre_res = pre_traits::call(pre, ctx);
-            if (pre_traits::is_prerouting_positive(pre_res)) {
-                pre_traits::set_response(stl::move(pre_res), ctx);
-                callable_traits::set_response(callable_traits::call(callable, ctx), ctx);
+            if (pre_traits::call_set_get(pre, ctx)) {
+                return callable_traits::call_set_get(callable, ctx);
             }
+            return false;
         }
 
         [[nodiscard]] constexpr Callable const& get_callable() const noexcept {
@@ -900,10 +881,10 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr void operator()(context_type& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             using pre_traits = valve_traits<PreRoute, context_type>;
 
-            pre_traits::call_set(pre, ctx);
+            return pre_traits::call_set_get(pre, ctx);
         }
 
         constexpr void to_string(istl::String auto& out) const {
@@ -935,15 +916,14 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr void operator()(context_type& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             using callable_traits = valve_traits<Callable, context_type>;
             using post_traits     = valve_traits<PostRoute, context_type>;
 
-            auto callable_res = callable_traits::call(callable, ctx);
-            if (callable_traits::is_postrouting_positive(callable_res)) {
-                callable_traits::set_response(stl::move(callable_res), ctx);
-                post_traits::call_set(post, ctx);
+            if (callable_traits::call_set_get(callable, ctx)) {
+                return post_traits::call_set_get(post, ctx);
             }
+            return false;
         }
 
         [[nodiscard]] constexpr Callable const& get_callable() const noexcept {
@@ -1001,9 +981,9 @@ namespace webpp::http {
 
         using valve_type::operator();
 
-        constexpr void operator()(context_type& ctx) {
+        constexpr bool operator()(context_type& ctx) {
             using post_traits = valve_traits<PostRoute, context_type>;
-            post_traits::call_set(post, ctx);
+            return post_traits::call_set_get(post, ctx);
         }
 
         constexpr void to_string(istl::String auto& out) const {
