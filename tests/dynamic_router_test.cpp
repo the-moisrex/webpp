@@ -8,6 +8,29 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
+
+template <typename Iter, char Num = 13>
+void rot13(Iter begin, const Iter& end) noexcept {
+    while (begin != end) {
+        char& c = *begin;
+
+        if (c >= 'a' && c <= 'm') {
+            c += Num;
+        } else if (c >= 'n' && c <= 'z') {
+            c -= Num;
+        } else if (c >= 'A' && c <= 'M') {
+            c += Num;
+        } else if (c >= 'N' && c <= 'Z') {
+            c -= Num;
+        }
+        ++begin;
+    }
+}
+
+void rot13(auto& str) noexcept {
+    rot13(str.begin(), str.end());
+}
+
 struct pages {
     // NOLINTBEGIN(readability-convert-member-functions-to-static)
     [[nodiscard]] response about(context const& ctx) const {
@@ -20,6 +43,12 @@ struct pages {
     [[nodiscard]] response add_body(response res) const {
         res.body = "<body>" + as<stl::string>(res.body) + "</body>";
         return res;
+    }
+
+    void rot13_path(context& ctx) const {
+        auto uri = ctx.request.uri();
+        rot13(uri);
+        ctx.request.uri(uri); // set the uri again
     }
     // NOLINTEND(readability-convert-member-functions-to-static)
 };
@@ -141,6 +170,42 @@ TEST(DynamicRouter, PostRoutingTest) {
     request req{router.get_traits()};
     req.method("GET");
     req.uri("/page/about");
+
+    auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
+    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>");
+}
+
+TEST(DynamicRouter, PreRoutingTest) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    auto const main_page = router / "page" - &pages::rot13_path;
+    router += main_page % "about" >> &pages::about;
+
+    std::string uri = "/page/about";
+    rot13(uri);
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri(uri);
+
+    auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
+    EXPECT_EQ(as<std::string>(res.body), "about page");
+}
+
+TEST(DynamicRouter, PrePostRoutingTest) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    auto const main_page = router / "page" - &pages::rot13_path + &pages::add_body;
+    router += main_page % "about" >> &pages::about;
+
+    std::string uri = "/page/about";
+    rot13(uri);
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri(uri);
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
