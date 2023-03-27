@@ -192,7 +192,7 @@ namespace webpp::http {
 
       public:
         template <HTTPRequest ReqType>
-            requires(!istl::same_as_cvref<ReqType, basic_request>)
+            requires(!istl::cvref_as<ReqType, basic_request>)
         constexpr basic_request(ReqType& req)
           : common_request_type{req},
             requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
@@ -201,7 +201,7 @@ namespace webpp::http {
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
-            requires(!istl::same_as_cvref<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
+            requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
         constexpr basic_request(ET&&          et,
                                 MStrT&&       method = "GET",

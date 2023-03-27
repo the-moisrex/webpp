@@ -190,7 +190,7 @@ namespace webpp::istl {
             constexpr storage(T* p) noexcept : obj_ptr(p) {}
 
             template <typename T>
-                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
+                requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
             constexpr storage(T& p) noexcept : obj_ptr(stl::addressof(p)) {}
 
             template <typename T>
@@ -198,7 +198,7 @@ namespace webpp::istl {
             constexpr storage(T const* p) noexcept : const_obj_ptr(p) {}
 
             template <typename T>
-                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
+                requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
             constexpr storage(T const& p) noexcept : const_obj_ptr(stl::addressof(p)) {}
 
             template <typename T>
@@ -215,7 +215,7 @@ namespace webpp::istl {
             }
 
             template <typename T>
-                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
+                requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
             constexpr storage& operator=(T& p) noexcept {
                 obj_ptr = stl::addressof(p);
                 return *this;
@@ -229,7 +229,7 @@ namespace webpp::istl {
             }
 
             template <typename T>
-                requires(stl::is_object_v<T> && !istl::same_as_cvref<T, storage>)
+                requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
             constexpr storage& operator=(T const& p) noexcept {
                 const_obj_ptr = stl::addressof(p);
                 return *this;
@@ -290,7 +290,7 @@ namespace webpp::istl {
 
         template <typename T>
         static constexpr bool invocable_using =
-          stl::is_invocable_r_v<Return, T, Args...> && !istl::same_as_cvref<T, function_ref>;
+          stl::is_invocable_r_v<Return, T, Args...> && !istl::cvref_as<T, function_ref>;
 
 
         using self_signature = Return (*)(storage_type, Args...);
@@ -506,7 +506,7 @@ namespace webpp::istl {
         template <typename T>
         static constexpr bool is_object_type =
           !details::is_specialization_of_mem_fun_ref_v<stl::remove_cvref_t<T>, member_function_ref> &&
-          (stl::is_void_v<object_type> || istl::same_as_cvref<T, object_type>);
+          (stl::is_void_v<object_type> || istl::cvref_as<T, object_type>);
 
         template <typename T>
         static constexpr bool conv_to_func_ptr = stl::is_assignable_v<signature_ptr&, T>;
@@ -935,7 +935,7 @@ namespace webpp::istl {
         }
 
         template <typename NewObjType>
-            requires(istl::same_as_cvref<NewObjType, object_type> && !stl::is_void_v<object_type>)
+            requires(istl::cvref_as<NewObjType, object_type> && !stl::is_void_v<object_type>)
         constexpr Return operator()(NewObjType&& new_obj, Args... xs) const noexcept(noexcept(
           (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...))) {
             return (
