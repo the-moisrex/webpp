@@ -259,7 +259,7 @@ namespace webpp::http {
                                         typename route_optimizer<Left>::type,
                                         typename route_optimizer<Right>::type...>>;
 
-        template <istl::cvref_as<Left> LT, istl::cvref_as<prerouting_valve<Pre>> PT, typename... RT>
+        template <istl::cvref_as<Left> LT, istl::cvref_as<Pre> PT, typename... RT>
             requires istl::cvref_as<Right..., RT...>
         static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) noexcept {
             return parent_type::convert(
@@ -668,6 +668,10 @@ namespace webpp::http {
 
 
             [[nodiscard]] NextCallable const& get_next() const noexcept {
+                return next;
+            }
+
+            [[nodiscard]] NextCallable& get_next() noexcept {
                 return next;
             }
 
