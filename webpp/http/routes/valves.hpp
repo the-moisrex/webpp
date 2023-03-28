@@ -227,77 +227,69 @@ namespace webpp::http {
         using type = C;
 
         template <typename... T>
+            requires stl::constructible_from<C, T...>
         static constexpr C convert(T&&... args) noexcept(stl::is_nothrow_constructible_v<C, T...>) {
             return {stl::forward<T>(args)...};
         }
     };
 
     // remove the unneeded void type
-    template <template <typename, typename, typename...> typename CallableTemplate,
-              typename TraitsType,
-              typename... T>
-    struct route_optimizer<CallableTemplate<TraitsType, void, T...>>
-      : route_optimizer<CallableTemplate<TraitsType, T...>> {};
+    template <template <typename, typename...> typename ValveTemplate, typename TraitsType, typename... T>
+    struct route_optimizer<ValveTemplate<TraitsType, void, T...>>
+      : route_optimizer<ValveTemplate<TraitsType, T...>> {};
 
 
     // move pre-routing hooks to the left because they supposed to be called before everything
-    template <template <typename, typename, typename, typename...> typename CallableTemplate,
+    template <template <typename, typename, typename, typename...> typename ValveTemplate,
               typename Left,
               typename Pre,
               typename... Right,
               typename TraitsType>
-    struct route_optimizer<CallableTemplate<TraitsType, Left, prerouting_valve<Pre>, Right...>>
-      : route_optimizer<CallableTemplate<TraitsType,
-                                         prerouting_valve<typename route_optimizer<Pre>::type>,
-                                         typename route_optimizer<Left>::type,
-                                         typename route_optimizer<Right>::type...>> {
+    struct route_optimizer<ValveTemplate<TraitsType, Left, prerouting_valve<Pre>, Right...>>
+      : route_optimizer<ValveTemplate<TraitsType,
+                                      prerouting_valve<typename route_optimizer<Pre>::type>,
+                                      typename route_optimizer<Left>::type,
+                                      typename route_optimizer<Right>::type...>> {
 
         using left_parent = route_optimizer<Left>;
         using pre_parent  = route_optimizer<Pre>;
         using parent_type =
-          route_optimizer<CallableTemplate<TraitsType,
-                                           prerouting_valve<typename route_optimizer<Pre>::type>,
-                                           typename route_optimizer<Left>::type,
-                                           typename route_optimizer<Right>::type...>>;
+          route_optimizer<ValveTemplate<TraitsType,
+                                        prerouting_valve<typename route_optimizer<Pre>::type>,
+                                        typename route_optimizer<Left>::type,
+                                        typename route_optimizer<Right>::type...>>;
 
-        template <istl::cvref_as<Left>                  LT,
-                  istl::cvref_as<prerouting_valve<Pre>> PT,
-                  istl::cvref_as<Right>... RT>
+        template <istl::cvref_as<Left> LT, istl::cvref_as<prerouting_valve<Pre>> PT, typename... RT>
+            requires istl::cvref_as<Right..., RT...>
         static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) noexcept {
             return parent_type::convert(
               pre_parent::convert(stl::forward<PT>(pre)),
               left_parent::convert(stl::forward<LT>(lhs)),
-              route_optimizer<istl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...);
+              route_optimizer<stl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...);
         }
     };
 
     // move post-routing hooks to the right because they supposed to be called after everything
-    template <template <typename, typename, typename> typename CallableTemplate,
-              typename Left,
+    template <template <typename, typename, typename...> typename ValveTemplate,
               typename Post,
-              typename Right,
+              typename... Right,
               typename TraitsType>
-    struct route_optimizer<CallableTemplate<TraitsType, postrouting_valve<Left, Post>, Right>>
-      : route_optimizer<CallableTemplate<
-          TraitsType,
-          typename route_optimizer<Left>::type,
-          postrouting_valve<typename route_optimizer<Right>::type, typename route_optimizer<Post>::type>>> {
-        using left_parent    = route_optimizer<Left>;
-        using right_parent   = route_optimizer<Right>;
-        using post_parent    = route_optimizer<Post>;
-        using postroute_type = postrouting_valve<typename right_parent::type, typename post_parent::type>;
+    struct route_optimizer<ValveTemplate<TraitsType, postrouting_valve<Post>, Right...>>
+      : route_optimizer<ValveTemplate<TraitsType,
+                                      postrouting_valve<typename route_optimizer<Post>::type>,
+                                      typename route_optimizer<Right>::type...>> {
+        using post_parent = route_optimizer<Post>;
         using parent_type =
-          route_optimizer<CallableTemplate<TraitsType, typename left_parent::type, postroute_type>>;
-        using return_type = typename parent_type::type;
-        using lhs_type    = postrouting_valve<Left, Post>;
-        using rhs_type    = Right;
+          route_optimizer<ValveTemplate<TraitsType,
+                                        postrouting_valve<typename route_optimizer<Post>::type>,
+                                        typename route_optimizer<Right>::type...>>;
 
-        template <typename LT, typename RT>
-            requires(istl::cvref_as<LT, lhs_type> && istl::cvref_as<RT, rhs_type>)
-        static constexpr return_type convert(LT&& lhs, RT&& rhs) noexcept {
-            return parent_type::convert(left_parent::convert(stl::move(lhs.get_callable())),
-                                        postroute_type{right_parent::convert(stl::move(rhs)),
-                                                       post_parent::convert(stl::move(lhs.get_postroute()))});
+        template <istl::cvref_as<postrouting_valve<Post>> PT, typename... RT>
+            requires(istl::cvref_as<Right..., RT...>)
+        static constexpr auto convert(PT&& post, RT&&... rhs) noexcept {
+            return parent_type::convert(
+              route_optimizer<stl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...,
+              post_parent::convert(stl::forward<PT>(post)));
         }
     };
 
@@ -325,8 +317,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<positive_valve<C>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C&& next) noexcept {
-            return parent_type::convert(stl::move(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T&& next) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -337,8 +330,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<positive_valve<C>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C&& next) noexcept {
-            return parent_type::convert(stl::move(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T&& next) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -348,8 +342,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<positive_valve<C>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C&& next) noexcept {
-            return parent_type::convert(stl::move(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T&& next) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -359,8 +354,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<C>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C next, [[maybe_unused]] C) noexcept {
-            return parent_type::convert(stl::forward<C>(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T&& next, [[maybe_unused]] T&&) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -370,8 +366,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<negative_valve<C>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C next) noexcept {
-            return parent_type::convert(stl::forward<C>(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T&& next) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -381,8 +378,9 @@ namespace webpp::http {
         using parent_type = route_optimizer<negative_valve<C>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C next) noexcept {
-            return parent_type::convert(stl::forward<C>(next));
+        template <istl::cvref_as<C> T>
+        static constexpr return_type convert(T next) noexcept {
+            return parent_type::convert(stl::forward<T>(next));
         }
     };
 
@@ -393,8 +391,10 @@ namespace webpp::http {
         using parent_type = route_optimizer<forward_valve<TraitsType, C...>>;
         using return_type = typename parent_type::type;
 
-        static constexpr return_type convert(C&&... next_callables) noexcept {
-            return parent_type::convert(stl::move(next_callables)...);
+        template <typename... T>
+            requires istl::cvref_as<C..., T...>
+        static constexpr return_type convert(T&&... next_callables) noexcept {
+            return parent_type::convert(stl::forward<T>(next_callables)...);
         }
     };
 
@@ -407,8 +407,8 @@ namespace webpp::http {
         using sub_callable_type = forward_valve<TraitsType, C1>;
 
         template <typename... N>
-        static constexpr return_type convert(sub_callable_type const& sub_callable,
-                                             N... next_callables) noexcept {
+        static constexpr return_type convert(istl::cvref_as<sub_callable_type> auto&& sub_callable,
+                                             N&&... next_callables) noexcept {
             return parent_type::convert(sub_callable.get_callable(), stl::forward<N>(next_callables)...);
         }
     };
@@ -424,9 +424,10 @@ namespace webpp::http {
         using return_type  = typename parent_type::type;
         using seg_type     = segment_valve<TraitsType, SC...>;
 
-        template <typename NewCallable>
-        static constexpr return_type convert(seg_type const& seg, NewCallable&& next) noexcept {
-            return parent_type::convert(seg, next_t::convert(stl::forward<NewCallable>(next)));
+        template <istl::cvref_as<seg_type> SegT, typename NewCallable>
+        static constexpr return_type convert(SegT&& seg, NewCallable&& next) noexcept {
+            return parent_type::convert(stl::forward<SegT>(seg),
+                                        next_t::convert(stl::forward<NewCallable>(next)));
         }
     };
 
@@ -438,8 +439,10 @@ namespace webpp::http {
         using return_type  = typename parent_type::type;
         using sub_seg_type = segment_valve<TraitsType, C1s...>;
 
-        static constexpr return_type convert(sub_seg_type sub_seg, C... next_segs) noexcept {
-            return parent_type::convert(sub_seg.get_segment(), stl::forward<C>(next_segs)...);
+        template <istl::cvref_as<sub_seg_type> SS, typename... CT>
+            requires istl::cvref_as<C..., CT...>
+        static constexpr return_type convert(SS&& sub_seg, CT&&... next_segs) noexcept {
+            return parent_type::convert(sub_seg.get_segment(), stl::forward<CT>(next_segs)...);
         }
     };
 
@@ -594,21 +597,15 @@ namespace webpp::http {
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
-            using postroute_type =
-              forward_valve<traits_type,
-                            Self,
-                            postrouting_valve<callable_valve<traits_type, stl::remove_cvref_t<Callable>>>>;
-            return rebind_next<postroute_type>(stl::forward<Callable>(callable));
+            using postroute_type = postrouting_valve<stl::remove_cvref_t<Callable>>;
+            return operator>><postroute_type>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-            using preroute_type =
-              forward_valve<traits_type,
-                            Self,
-                            prerouting_valve<callable_valve<traits_type, stl::remove_cvref_t<Callable>>>>;
-            return rebind_next<preroute_type>(stl::forward<Callable>(callable));
+            using preroute_type = prerouting_valve<stl::remove_cvref_t<Callable>>;
+            return operator>><preroute_type>(stl::forward<Callable>(callable));
         }
 
 
@@ -785,9 +782,14 @@ namespace webpp::http {
 
 
         template <typename RouterT>
-            requires(ValveRequiresSetup<RouterT, NextCallable>)
+            requires(ValveRequiresSetup<RouterT, NextCallable> || ValveRequiresSetup<RouterT, ManglerType>)
         constexpr void setup(RouterT& router) {
-            next.get_next().setup(router);
+            if constexpr (ValveRequiresSetup<RouterT, NextCallable>) {
+                next.get_next().setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, ManglerType>) {
+                mangler.setup(router);
+            }
         }
     };
 
@@ -1189,6 +1191,7 @@ namespace webpp::http {
         constexpr ~segment_valve()                                        = default;
 
         template <typename C1, typename... Cs>
+            requires istl::cvref_as<CallableSegments..., C1, Cs...>
         constexpr segment_valve(segment_valve<TraitsType, C1> const& c1,
                                 Cs&&... segs) noexcept(stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
           : segments{c1.get_segment(), stl::forward<Cs>(segs)...} {}
@@ -1199,6 +1202,7 @@ namespace webpp::http {
           : segments{stl::tuple_cat(c1.get_segments(), stl::tuple<Cs...>{stl::forward<Cs>(segs)...})} {}
 
         template <typename... Cs>
+            requires istl::cvref_as<CallableSegments..., Cs...>
         constexpr segment_valve(Cs&&... segs) noexcept(stl::is_nothrow_constructible_v<tuple_type, Cs...>)
           : segments{stl::forward<Cs>(segs)...} {}
 
