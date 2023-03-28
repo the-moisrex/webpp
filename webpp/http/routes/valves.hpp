@@ -464,175 +464,64 @@ namespace webpp::http {
         using request_type  = basic_request<traits_type>;
 
       public:
-#define WEBPP_DEFINE_FUNC_BASE(op, ValveType, Ret, ...)                            \
-                                                                                   \
-    template <typename T>                                                          \
-    [[nodiscard]] constexpr auto op(Ret (T::*inp_func)(__VA_ARGS__)) const {       \
-        using mem_ptr_type = Ret (T::*)(__VA_ARGS__);                              \
-        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;  \
-        using valve_type   = ValveType<traits_type, Self, mem_type>;               \
-        return rebind_next<valve_type>(inp_func);                                  \
-    }                                                                              \
-                                                                                   \
-    template <typename T>                                                          \
-    [[nodiscard]] constexpr auto op(Ret (T::*inp_func)(__VA_ARGS__) const) const { \
-        using mem_ptr_type = Ret (T::*)(__VA_ARGS__) const;                        \
-        using mem_type     = member_function_callable<traits_type, mem_ptr_type>;  \
-        using valve_type   = ValveType<traits_type, Self, mem_type>;               \
-        return rebind_next<valve_type>(mem_type{inp_func});                        \
-    }
-
-#define WEBPP_DEFINE_FUNC(op, ValveType, ...)                                \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type, __VA_ARGS__)        \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type const&, __VA_ARGS__) \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, response_type&, __VA_ARGS__)       \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, void, __VA_ARGS__)                 \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type, __VA_ARGS__)         \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type&, __VA_ARGS__)        \
-    WEBPP_DEFINE_FUNC_BASE(op, ValveType, context_type const&, __VA_ARGS__)
-
-
-#define WEBPP_DEFINE_OPERATOR(op, ValveType)                                    \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type)                              \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&)                             \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&)                       \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&)                            \
-    WEBPP_DEFINE_FUNC(op, ValveType, response_type)                             \
-    WEBPP_DEFINE_FUNC(op, ValveType, response_type&)                            \
-    WEBPP_DEFINE_FUNC(op, ValveType, response_type const&)                      \
-    WEBPP_DEFINE_FUNC(op, ValveType, response_type&&)                           \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type)             \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type&)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type&)             \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type&)       \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type&)            \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, response_type const&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, response_type const&)       \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, response_type const&) \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, response_type const&)      \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type)                \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type)         \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type&)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type&)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type&)             \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type, context_type const&)         \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&, context_type const&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type const&, context_type const&)  \
-    WEBPP_DEFINE_FUNC(op, ValveType, request_type&&, context_type const&)       \
-                                                                                \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&)                             \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type)                              \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&)                       \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type&)             \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type&)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type&)       \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, response_type const&)       \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, response_type const&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, response_type const&) \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type)                \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type)         \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type&)              \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type&)               \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type&, request_type const&)        \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type, request_type const&)         \
-    WEBPP_DEFINE_FUNC(op, ValveType, context_type const&, request_type const&)
-
-
-        WEBPP_DEFINE_OPERATOR(operator>>, forward_valve)
-        WEBPP_DEFINE_OPERATOR(operator/, segment_valve)
-        WEBPP_DEFINE_OPERATOR(operator&&, and_valve)
-        WEBPP_DEFINE_OPERATOR(operator||, or_valve)
-        WEBPP_DEFINE_OPERATOR(operator%, mangler_valve)
-        // WEBPP_DEFINE_OPERATOR(operator+, postrouting_valve)
-        // WEBPP_DEFINE_OPERATOR(operator-, prerouting_valve)
-
-#undef WEBPP_DEFINE_OPERATOR
-#undef WEBPP_DEFINE_FUNC
-#undef WEBPP_DEFINE_FUNC_BASE
-
-
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
-            using forward_type = forward_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-            return rebind_next<forward_type>(stl::forward<Callable>(callable));
+            return rebind_next<forward_valve, traits_type, Self>(stl::forward<Callable>(callable));
         }
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator%(Callable&& callable) const {
-            using mangler_type = mangler_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-            return rebind_next<mangler_type>(stl::forward<Callable>(callable));
+            return rebind_next<mangler_valve, traits_type, Self>(stl::forward<Callable>(callable));
         }
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
-            using and_type = and_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-            return rebind_next<and_type>(stl::forward<Callable>(callable));
+            return rebind_next<and_valve, traits_type, Self>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
-            using or_type = or_valve<traits_type, Self, stl::remove_cvref_t<Callable>>;
-            return rebind_next<or_type>(stl::forward<Callable>(callable));
+            return rebind_next<or_valve, traits_type, Self>(stl::forward<Callable>(callable));
         }
 
 
-        template <typename Callable>
         [[nodiscard]] constexpr auto operator!() const {
-            using not_type = callable_valve<traits_type, Self>;
-            return rebind_next<not_type>();
+            return rebind_next<not_valve, Self>();
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
-            using postroute_type = postrouting_valve<stl::remove_cvref_t<Callable>>;
-            return operator>><postroute_type>(stl::forward<Callable>(callable));
+            return rebind_next<postrouting_valve>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-            using preroute_type = prerouting_valve<stl::remove_cvref_t<Callable>>;
-            return operator>><preroute_type>(stl::forward<Callable>(callable));
+            return rebind_next<prerouting_valve>(stl::forward<Callable>(callable));
         }
 
 
 
         template <typename CallableSegment>
         [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
-            using seg_type = segment_valve<traits_type, Self, stl::remove_cvref_t<CallableSegment>>;
-            return rebind_next<seg_type>(stl::forward<CallableSegment>(inp_segment));
+            return rebind_next<segment_valve, traits_type, Self>(stl::forward<CallableSegment>(inp_segment));
         }
 
 
         template <typename SegT>
             requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
         [[nodiscard]] constexpr auto operator/(SegT&& inp_segment) const {
-            auto const seg_v   = istl::string_viewify(stl::forward<SegT>(inp_segment));
-            using seg_t        = stl::remove_cvref_t<decltype(seg_v)>;
-            using segment_type = segment_valve<traits_type, Self, seg_t>;
-            return rebind_next<segment_type>(seg_v);
+            auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
+            return rebind_next<segment_valve, traits_type, Self>(seg_v);
         }
 
         template <typename SegT>
             requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
-            auto const seg_v   = istl::string_viewify(stl::forward<SegT>(inp_segment));
-            using seg_t        = stl::remove_cvref_t<decltype(seg_v)>;
-            using segment_type = segment_valve<traits_type, Self, seg_t, endpath_valve>;
-            return rebind_next<segment_type>(seg_v, endpath);
+            auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
+            return rebind_next<segment_valve, traits_type, Self>(seg_v, endpath);
         }
 
 
@@ -661,13 +550,21 @@ namespace webpp::http {
             return static_cast<Self*>(this);
         }
 
-        template <typename NextType, typename... T>
-        [[nodiscard]] constexpr auto rebind_next(T&&... nexts) const noexcept {
-            using optimized_route = route_optimizer<NextType>;
+        template <template <typename...> typename Templ, typename... T, typename Arg>
+            requires stl::is_member_function_pointer_v<stl::remove_cvref_t<Arg>>
+        [[nodiscard]] constexpr auto rebind_next(Arg&& next) const noexcept {
+            using mem_type   = member_function_callable<traits_type, stl::remove_cvref_t<Arg>>;
+            return rebind_next<Templ, T...>(mem_type{stl::forward<Arg>(next)});
+        }
+
+        template <template <typename...> typename Templ, typename... T, typename... Args>
+        [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
+            using valve_type      = Templ<T..., stl::remove_cvref_t<Args>...>;
+            using optimized_route = route_optimizer<valve_type>;
             if constexpr (stl::is_void_v<Self>) {
-                return optimized_route::convert(stl::forward<T>(nexts)...);
+                return optimized_route::convert(stl::forward<Args>(nexts)...);
             } else {
-                return optimized_route::convert(*self(), stl::forward<T>(nexts)...);
+                return optimized_route::convert(*self(), stl::forward<Args>(nexts)...);
             }
         }
     };
