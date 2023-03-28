@@ -414,24 +414,25 @@ namespace webpp::http {
         }
     };
 
-    // forward<segment, ...> = segment<forward, ...>
-    // template <typename... C, typename... SC, typename TraitsType>
-    // struct route_optimizer<forward_valve<TraitsType, segment_valve<TraitsType, SC...>, C...>>
-    //   : route_optimizer<segment_valve<TraitsType, SC..., route_optimizer<forward_valve<TraitsType, C...>>>>
-    //   {
-    //     using next_t       = route_optimizer<forward_valve<TraitsType, C...>>;
-    //     using next_type    = typename next_t::type;
-    //     using out_seg_type = segment_valve<TraitsType, SC..., next_type>;
-    //     using parent_type  = route_optimizer<out_seg_type>;
-    //     using return_type  = typename parent_type::type;
-    //     using seg_type     = segment_valve<TraitsType, SC...>;
-    //
-    //     template <istl::cvref_as<seg_type> SegT, typename NewCallable>
-    //     static constexpr return_type convert(SegT&& seg, NewCallable&& next) noexcept {
-    //         return parent_type::convert(stl::forward<SegT>(seg),
-    //                                     next_t::convert(stl::forward<NewCallable>(next)));
-    //     }
-    // };
+     // forward<segment, ...> = segment<forward, ...>
+     // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're changing that here:
+     template <typename... C, typename... SC, typename TraitsType>
+     struct route_optimizer<forward_valve<TraitsType, segment_valve<TraitsType, SC...>, C...>>
+       : route_optimizer<segment_valve<TraitsType, SC..., route_optimizer<forward_valve<TraitsType, C...>>>>
+       {
+         using next_t       = route_optimizer<forward_valve<TraitsType, C...>>;
+         using next_type    = typename next_t::type;
+         using out_seg_type = segment_valve<TraitsType, SC..., next_type>;
+         using parent_type  = route_optimizer<out_seg_type>;
+         using return_type  = typename parent_type::type;
+         using seg_type     = segment_valve<TraitsType, SC...>;
+
+         template <istl::cvref_as<seg_type> SegT, typename NewCallable>
+         static constexpr return_type convert(SegT&& seg, NewCallable&& next) noexcept {
+             return parent_type::convert(stl::forward<SegT>(seg),
+                                         next_t::convert(stl::forward<NewCallable>(next)));
+         }
+     };
 
     // remove double segmenting (flatten the type)
     template <typename... C1s, typename... C, typename TraitsType>
@@ -444,7 +445,7 @@ namespace webpp::http {
         template <istl::cvref_as<sub_seg_type> SS, typename... CT>
             requires istl::cvref_as<C..., CT...>
         static constexpr return_type convert(SS&& sub_seg, CT&&... next_segs) noexcept {
-            return parent_type::convert(sub_seg.get_segment(), stl::forward<CT>(next_segs)...);
+            return parent_type::convert(sub_seg, stl::forward<CT>(next_segs)...);
         }
     };
 
