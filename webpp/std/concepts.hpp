@@ -218,7 +218,7 @@ namespace webpp::istl {
             requires(sizeof...(TX) < sizeof...(T) + 1)
         struct is_same_all<is_same_all<TX...>, is_same_all<T2, T...>>
           : is_same_all<is_same_all<TX..., T2>, is_same_all<T...>> {};
-    }
+    } // namespace details
 
     /**
      * Check if the first half of types are the same as the second half of types.
@@ -242,7 +242,6 @@ namespace webpp::istl {
      */
     template <typename... T>
     concept cvref_as = same_as_all<stl::remove_cvref_t<T>...>;
-
 
 } // namespace webpp::istl
 

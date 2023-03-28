@@ -10,6 +10,10 @@
 
 namespace webpp::istl {
 
+    // Used where a tuple is needed but you don't really want the any features of tuple
+    template <typename...>
+    struct type_list {};
+
     /**
      * This can be used for when you need a quick anonymous struct within an expression.
      * Example:
