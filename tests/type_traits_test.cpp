@@ -265,6 +265,8 @@ TEST(TypeTraits, InvocableInOrder) {
 
 
 TEST(TypeTraits, SameAsAllTest) {
+    EXPECT_TRUE(bool(same_as_all<>));
+    EXPECT_FALSE(bool(same_as_all<one>));
     EXPECT_TRUE(bool(same_as_all<one, one>));
     EXPECT_TRUE(bool(same_as_all<one, two, three, one, two, three>));
     EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three>));
