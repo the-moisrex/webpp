@@ -259,7 +259,7 @@ namespace webpp::http {
                                         typename route_optimizer<Left>::type,
                                         typename route_optimizer<Right>::type...>>;
 
-        template <istl::cvref_as<Left> LT, istl::cvref_as<Pre> PT, typename... RT>
+        template <istl::cvref_as<Left> LT, istl::cvref_as<prerouting_valve<Pre>> PT, typename... RT>
             requires istl::cvref_as<Right..., RT...>
         static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) noexcept {
             return parent_type::convert(
@@ -274,16 +274,16 @@ namespace webpp::http {
               typename Post,
               typename... Right,
               typename TraitsType>
+        requires(sizeof...(Right) > 0)
     struct route_optimizer<ValveTemplate<TraitsType, postrouting_valve<Post>, Right...>>
       : route_optimizer<ValveTemplate<TraitsType,
-                                      postrouting_valve<typename route_optimizer<Post>::type>,
-                                      typename route_optimizer<Right>::type...>> {
+                                      typename route_optimizer<Right>::type...,
+                                      postrouting_valve<typename route_optimizer<Post>::type>>> {
         using post_parent = route_optimizer<Post>;
         using parent_type =
           route_optimizer<ValveTemplate<TraitsType,
-                                        postrouting_valve<typename route_optimizer<Post>::type>,
-                                        typename route_optimizer<Right>::type...>>;
-
+                                        typename route_optimizer<Right>::type...,
+                                        postrouting_valve<typename route_optimizer<Post>::type>>>;
         template <istl::cvref_as<postrouting_valve<Post>> PT, typename... RT>
             requires(istl::cvref_as<Right..., RT...>)
         static constexpr auto convert(PT&& post, RT&&... rhs) noexcept {
@@ -592,12 +592,13 @@ namespace webpp::http {
                   typename... T,
                   typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
-            using valve_type      = WrapperTempl<T..., Templ<stl::remove_cvref_t<Args>...>>;
+            using templ_type      = Templ<stl::remove_cvref_t<Args>...>;
+            using valve_type      = WrapperTempl<T..., templ_type>;
             using optimized_route = route_optimizer<valve_type>;
             if constexpr (stl::is_void_v<Self>) {
-                return optimized_route::convert(stl::forward<Args>(nexts)...);
+                return optimized_route::convert(templ_type{stl::forward<Args>(nexts)...});
             } else {
-                return optimized_route::convert(*self(), stl::forward<Args>(nexts)...);
+                return optimized_route::convert(*self(), templ_type{stl::forward<Args>(nexts)...});
             }
         }
     };
@@ -745,16 +746,14 @@ namespace webpp::http {
         constexpr ~forward_valve()                                        = default;
 
         template <typename C1, typename... Cs>
-            requires istl::
-              are_all_v<stl::is_convertible, istl::type_list<Callables...>, istl::type_list<C1, Cs...>>
-          constexpr forward_valve(forward_valve<C1> const& c1, Cs&&... funcs) noexcept(
-            stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
+            requires stl::constructible_from<tuple_type, C1, Cs...>
+        constexpr forward_valve(forward_valve<C1> const& c1, Cs&&... funcs) noexcept(
+          stl::is_nothrow_constructible_v<tuple_type, C1, Cs...>)
           : forward_valve{c1.callable, stl::forward<Cs>(funcs)...} {}
 
         template <typename... Cs>
-            requires istl::
-              are_all_v<stl::is_convertible, istl::type_list<Callables...>, istl::type_list<Cs...>>
-          constexpr forward_valve(Cs&&... funcs) noexcept(stl::is_nothrow_constructible_v<tuple_type, Cs...>)
+            requires stl::constructible_from<tuple_type, Cs...>
+        constexpr forward_valve(Cs&&... funcs) noexcept(stl::is_nothrow_constructible_v<tuple_type, Cs...>)
           : callables{stl::forward<Cs>(funcs)...} {}
 
         using valve_type::operator();
@@ -781,11 +780,11 @@ namespace webpp::http {
         constexpr void setup(RouterT& router) {
             stl::apply(
               [&router]<typename... T>(T&&... inp_callables) constexpr {
-                  (([&router](auto&& callable) constexpr {
+                  (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
                        if constexpr (ValveRequiresSetup<RouterT, T>) {
                            callable.setup(router);
                        }
-                   })(inp_callables),
+                   })(inp_callables, router),
                    ...);
               },
               callables);
@@ -1174,11 +1173,11 @@ namespace webpp::http {
         constexpr void setup(RouterT& router) {
             stl::apply(
               [&router]<typename... T>(T&&... callables) constexpr {
-                  (([&router](auto&& callable) constexpr {
+                  (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
                        if constexpr (ValveRequiresSetup<RouterT, T>) {
                            callable.setup(router);
                        }
-                   })(callables),
+                   })(callables, router),
                    ...);
               },
               segments);
