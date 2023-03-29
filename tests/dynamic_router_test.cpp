@@ -173,7 +173,7 @@ TEST(DynamicRouter, PostRoutingTest) {
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
-    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>");
+    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>") << router.to_string();
 }
 
 TEST(DynamicRouter, PreRoutingTest) {

@@ -104,7 +104,6 @@ namespace webpp::http {
         using root_extensions    = empty_extension_pack;
         using traits_type        = TraitsType;
         using etraits            = enable_traits<traits_type>;
-        using non_owner_etraits  = typename etraits::non_owner_type;
         using route_type         = dynamic_route<traits_type>;
         using dynamic_route_type = istl::dynamic<route_type, traits::general_allocator<traits_type>>;
         using vector_allocator   = traits::general_allocator<traits_type, dynamic_route_type>;
@@ -122,7 +121,6 @@ namespace webpp::http {
                       "For some reason the response type is not a valid match for HTTPResponse concept.");
 
       private:
-        // todo: implement a function_vector that'll require only one allocator not one for each
         routes_type routes;
 
 
