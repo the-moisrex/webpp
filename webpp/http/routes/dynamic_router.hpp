@@ -99,8 +99,8 @@ namespace webpp::http {
      * and user friendly.
      */
     template <Traits TraitsType>
-    struct basic_dynamic_router : enable_traits<TraitsType>, valve<TraitsType, void> {
-        using valve_type         = valve<TraitsType, void>;
+    struct basic_dynamic_router : enable_traits<TraitsType>, valve<void> {
+        using valve_type         = valve<void>;
         using root_extensions    = empty_extension_pack;
         using traits_type        = TraitsType;
         using etraits            = enable_traits<traits_type>;

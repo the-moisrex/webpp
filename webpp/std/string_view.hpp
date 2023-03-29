@@ -1,23 +1,14 @@
 // Created by moisrex on 4/23/20.
 
-#ifndef WEBPP_STRING_VIEW_H
-#define WEBPP_STRING_VIEW_H
+#ifndef WEBPP_STD_STRING_VIEW_HPP
+#define WEBPP_STD_STRING_VIEW_HPP
 
-#include "../traits/traits.hpp"
 #include "string_concepts.hpp"
 
 #include <string_view>
 
 
 namespace webpp::istl {
-
-    // Traits aware string_view:
-    // removed basic_string_view<traits_type>, "traits::string_view" should be used
-    //
-    //    template <Traits TraitsType, typename CharT = istl::char_type_of<typename TraitsType::string_view>,
-    //              typename CharTraits = stl::char_traits<CharT>>
-    //    using basic_string_view = ::std::basic_string_view<CharT, CharTraits>;
-
 
 
     template <typename T>
@@ -61,8 +52,8 @@ namespace webpp::istl {
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf = !
-    stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
+    concept StringViewifiableOf =
+      !stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
       requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of<T>> &&
       requires(stl::remove_cvref_t<T> str) {
           typename stl::remove_cvref_t<StrViewType>;
@@ -90,8 +81,8 @@ namespace webpp::istl {
                          stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>>;
 
     template <typename T>
-    concept StringViewifiable = !
-    stl::is_void_v<char_type_of<T>>&& StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+    concept StringViewifiable = !stl::is_void_v<char_type_of<T>> &&
+                                StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
@@ -178,4 +169,4 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
-#endif // WEBPP_STRING_VIEW_H
+#endif // WEBPP_STD_STRING_VIEW_HPP
