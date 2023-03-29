@@ -223,15 +223,11 @@ namespace webpp::http {
         using type = C;
 
         template <typename... T>
-            requires stl::constructible_from<C, T...>
+        // requires stl::constructible_from<C, T...>
         static constexpr C convert(T&&... args) noexcept(stl::is_nothrow_constructible_v<C, T...>) {
             return {stl::forward<T>(args)...};
         }
     };
-
-    // remove 'void'
-    template <template <typename, typename...> typename Tmpl, typename... T>
-    struct route_optimizer<Tmpl<void, T...>> : route_optimizer<Tmpl<T...>> {};
 
 
     // move pre-routing hooks to the left because they supposed to be called before everything
@@ -413,7 +409,7 @@ namespace webpp::http {
         static constexpr return_type convert(istl::cvref_as<sub_callable_type> auto&& sub_callable,
                                              N&&... next_callables) noexcept {
             return parent_type::convert(
-              stl::tuple_cat(sub_callable, stl::tuple<N...>{stl::forward<N>(next_callables)...}));
+              stl::tuple_cat(sub_callable.as_tuple(), stl::tuple<N...>{stl::forward<N>(next_callables)...}));
         }
     };
 
@@ -421,7 +417,7 @@ namespace webpp::http {
     // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're changing that here:
     template <typename... C, typename... SC>
     struct route_optimizer<forward_valve<segment_valve<SC...>, C...>>
-      : route_optimizer<segment_valve<SC..., route_optimizer<forward_valve<C...>>>> {
+      : route_optimizer<segment_valve<SC..., typename route_optimizer<forward_valve<C...>>::type>> {
         using next_t       = route_optimizer<forward_valve<C...>>;
         using next_type    = typename next_t::type;
         using out_seg_type = segment_valve<SC..., next_type>;
@@ -431,8 +427,9 @@ namespace webpp::http {
 
         template <istl::cvref_as<seg_type> SegT, typename NewCallable>
         static constexpr return_type convert(SegT&& seg, NewCallable&& next) noexcept {
-            return parent_type::convert(stl::forward<SegT>(seg),
-                                        next_t::convert(stl::forward<NewCallable>(next)));
+            return parent_type::convert(
+              stl::tuple_cat(seg.as_tuple(),
+                             stl::forward_as_tuple(next_t::convert(stl::forward<NewCallable>(next)))));
         }
     };
 
@@ -447,7 +444,8 @@ namespace webpp::http {
         template <istl::cvref_as<sub_seg_type> SS, typename... CT>
             requires istl::cvref_as<C..., CT...>
         static constexpr return_type convert(SS&& sub_seg, CT&&... next_segs) noexcept {
-            return parent_type::convert(sub_seg, stl::forward<CT>(next_segs)...);
+            return parent_type::convert(
+              stl::tuple_cat(sub_seg.as_tuple(), stl::tuple<CT...>{stl::forward<CT>(next_segs)...}));
         }
     };
 
@@ -487,61 +485,54 @@ namespace webpp::http {
     struct valve {
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
-            return rebind_next<forward_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<forward_valve>(stl::forward<Callable>(callable));
         }
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator%(Callable&& callable) const {
-            return rebind_next<mangler_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<mangler_valve>(stl::forward<Callable>(callable));
         }
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
-            return rebind_next<and_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<and_valve>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
-            return rebind_next<or_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<or_valve>(stl::forward<Callable>(callable));
         }
 
 
         [[nodiscard]] constexpr auto operator!() const {
-            return rebind_next<not_valve, Self>();
+            return rebind_next<not_valve>();
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
-            return rebind_next<postrouting_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<postrouting_valve>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-            return rebind_next<prerouting_valve, Self>(stl::forward<Callable>(callable));
+            return rebind_next<prerouting_valve>(stl::forward<Callable>(callable));
         }
 
 
         template <typename CallableSegment>
         [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
-            return rebind_next<segment_valve, Self>(stl::forward<CallableSegment>(inp_segment));
+            return rebind_next<segment_valve>(stl::forward<CallableSegment>(inp_segment));
         }
 
-
-        template <typename SegT>
-            requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
-        [[nodiscard]] constexpr auto operator/(SegT&& inp_segment) const {
-            auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
-            return rebind_next<segment_valve, Self>(seg_v);
-        }
 
         template <typename SegT>
             requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
             auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
-            return rebind_next<segment_valve, Self>(seg_v, endpath);
+            return rebind_next<segment_valve>(seg_v, endpath);
         }
 
 
@@ -581,11 +572,15 @@ namespace webpp::http {
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
-            using valve_type      = Templ<T..., stl::remove_cvref_t<Args>...>;
-            using optimized_route = route_optimizer<valve_type>;
             if constexpr (stl::is_void_v<Self>) {
+                using valve_type =
+                  Templ<T..., stl::remove_cvref_t<decltype(valvify<Args>(stl::declval<Args>()))>...>;
+                using optimized_route = route_optimizer<valve_type>;
                 return optimized_route::convert(valvify<Args>(stl::forward<Args>(nexts))...);
             } else {
+                using valve_type =
+                  Templ<Self, T..., stl::remove_cvref_t<decltype(valvify<Args>(stl::declval<Args>()))>...>;
+                using optimized_route = route_optimizer<valve_type>;
                 return optimized_route::convert(*self(), valvify<Args>(stl::forward<Args>(nexts))...);
             }
         }
@@ -708,8 +703,12 @@ namespace webpp::http {
     template <typename... Callables>
     struct forward_valve : valve<forward_valve<Callables...>>, stl::tuple<Callables...> {
         using valve_type = valve<forward_valve<Callables...>>;
+        using tuple_type = stl::tuple<Callables...>;
 
-        using stl::tuple<Callables...>::tuple;
+        template <typename... Args>
+            requires stl::constructible_from<tuple_type, Args...>
+        constexpr forward_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+          : tuple_type{stl::forward<Args>(args)...} {}
 
         constexpr forward_valve(forward_valve const&)                     = default;
         constexpr forward_valve(forward_valve&&) noexcept                 = default;
@@ -726,7 +725,15 @@ namespace webpp::http {
               [&ctx]<typename... T>(T&&... funcs) constexpr {
                   (valve_traits<T, context_type>::call_set(stl::forward<T>(funcs), ctx), ...);
               },
-              *this);
+              as_tuple());
+        }
+
+        [[nodiscard]] constexpr tuple_type& as_tuple() noexcept {
+            return *static_cast<tuple_type*>(this);
+        }
+
+        [[nodiscard]] constexpr tuple_type const& as_tuple() const noexcept {
+            return *static_cast<tuple_type const*>(this);
         }
 
         constexpr void to_string(istl::String auto& out) const {
@@ -734,23 +741,22 @@ namespace webpp::http {
               [&out]<typename... T>(T&&... funcs) constexpr {
                   ((out.append(" >>"), valve_to_string(out, funcs)), ...);
               },
-              *this);
+              as_tuple());
         }
-
 
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, Callables> || ...))
-        constexpr void setup(RouterT& router) {
+        constexpr void setup(RouterT& inp_router) {
             stl::apply(
-              [&router]<typename... T>(T&&... inp_callables) constexpr {
+              [&inp_router]<typename... T>(T&&... inp_callables) constexpr {
                   (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
                        if constexpr (ValveRequiresSetup<RouterT, T>) {
                            callable.setup(router);
                        }
-                   })(inp_callables, router),
+                   })(inp_callables, inp_router),
                    ...);
               },
-              *this);
+              as_tuple());
         }
     };
 
@@ -1002,8 +1008,12 @@ namespace webpp::http {
     template <typename... CallableSegments>
     struct segment_valve : valve<segment_valve<CallableSegments...>>, stl::tuple<CallableSegments...> {
         using valve_type = valve<segment_valve<CallableSegments...>>;
+        using tuple_type = stl::tuple<CallableSegments...>;
 
-        using stl::tuple<CallableSegments...>::tuple;
+        template <typename... Args>
+            requires stl::constructible_from<tuple_type, Args...>
+        constexpr segment_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+          : tuple_type{stl::forward<Args>(args)...} {}
 
         constexpr segment_valve(segment_valve const&)                     = default;
         constexpr segment_valve(segment_valve&&) noexcept                 = default;
@@ -1021,9 +1031,16 @@ namespace webpp::http {
                   return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) &&
                           ...);
               },
-              *this);
+              as_tuple());
         }
 
+        [[nodiscard]] constexpr tuple_type& as_tuple() noexcept {
+            return *static_cast<tuple_type*>(this);
+        }
+
+        [[nodiscard]] constexpr tuple_type const& as_tuple() const noexcept {
+            return *static_cast<tuple_type const*>(this);
+        }
 
         constexpr void to_string(istl::String auto& out) const {
             stl::apply(
@@ -1036,23 +1053,23 @@ namespace webpp::http {
                    })(callables),
                    ...);
               },
-              *this);
+              as_tuple());
         }
 
 
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, CallableSegments> || ...))
-        constexpr void setup(RouterT& router) {
+        constexpr void setup(RouterT& inp_router) {
             stl::apply(
-              [&router]<typename... T>(T&&... callables) constexpr {
+              [&inp_router]<typename... T>(T&&... callables) constexpr {
                   (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
                        if constexpr (ValveRequiresSetup<RouterT, T>) {
                            callable.setup(router);
                        }
-                   })(callables, router),
+                   })(callables, inp_router),
                    ...);
               },
-              *this);
+              as_tuple());
         }
     };
 

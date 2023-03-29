@@ -36,6 +36,12 @@ namespace webpp::istl {
     struct is_tuple<T const> : public is_tuple<T> {};
 
     template <typename T>
+    struct is_tuple<T&> : public is_tuple<T> {};
+
+    template <typename T>
+    struct is_tuple<T&&> : public is_tuple<T> {};
+
+    template <typename T>
     struct is_tuple<T volatile> : public is_tuple<T> {};
 
     template <typename T>
