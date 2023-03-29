@@ -194,6 +194,30 @@ TEST(DynamicRouter, PreRoutingTest) {
     EXPECT_EQ(as<std::string>(res.body), "about page");
 }
 
+TEST(DynamicRouter, DoublePreRoutingTest) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+    int num = 0;
+
+    auto const add_num = [&]() {
+        ++num;
+    };
+
+    auto const main_page = router / "page" - &pages::rot13_path - add_num - add_num;
+    router += (main_page % "about" - add_num >> &pages::about) - add_num;
+
+    std::string uri = "/page/about";
+    rot13(uri);
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri(uri);
+
+    auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
+    EXPECT_EQ(as<std::string>(res.body), "about page");
+    EXPECT_EQ(num, 4);
+}
+
 TEST(DynamicRouter, PrePostRoutingTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
