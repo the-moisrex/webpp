@@ -52,8 +52,8 @@ namespace webpp::istl {
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf =
-      !stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
+    concept StringViewifiableOf = !
+    stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
       requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of<T>> &&
       requires(stl::remove_cvref_t<T> str) {
           typename stl::remove_cvref_t<StrViewType>;
@@ -81,8 +81,8 @@ namespace webpp::istl {
                          stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>>;
 
     template <typename T>
-    concept StringViewifiable = !stl::is_void_v<char_type_of<T>> &&
-                                StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+    concept StringViewifiable = !
+    stl::is_void_v<char_type_of<T>>&& StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT

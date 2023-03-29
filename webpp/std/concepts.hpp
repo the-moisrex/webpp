@@ -44,7 +44,8 @@ namespace webpp::istl {
      * This concept is always false
      */
     template <typename T>
-    concept None = !All<T>;
+    concept None = !
+    All<T>;
 
 
 

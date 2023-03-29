@@ -1,7 +1,7 @@
 // Created by moisrex on 8/9/20.
 
-#ifndef WEBPP_STRING_CONCEPTS_HPP
-#define WEBPP_STRING_CONCEPTS_HPP
+#ifndef WEBPP_STD_STRING_CONCEPTS_HPP
+#define WEBPP_STD_STRING_CONCEPTS_HPP
 
 #include "concepts.hpp"
 
@@ -10,42 +10,39 @@
 namespace webpp::istl {
 
 
-    // clang-format off
     template <typename X>
     concept CharTraits = requires {
-        typename X::char_type;
-        typename X::int_type;
-        typename X::off_type;
-        typename X::pos_type;
-        typename X::state_type;
-    } && requires(
-            typename X::char_type c,
-            typename X::char_type const* p,
-            typename X::char_type* s,
-            stl::size_t n,
-            typename X::int_type e,
-            typename X::char_type const& ch
-    ) {
-        requires CopyAssignable<typename X::state_type>;
-        requires Destructible<typename X::state_type>;
-        requires CopyConstructible<typename X::state_type>;
-        requires DefaultConstructible<typename X::state_type>;
+                             typename X::char_type;
+                             typename X::int_type;
+                             typename X::off_type;
+                             typename X::pos_type;
+                             typename X::state_type;
+                             requires requires(typename X::char_type        c,
+                                               typename X::char_type const* p,
+                                               typename X::char_type*       s,
+                                               stl::size_t                  n,
+                                               typename X::int_type         e,
+                                               typename X::char_type const& ch) {
+                                          requires CopyAssignable<typename X::state_type>;
+                                          requires Destructible<typename X::state_type>;
+                                          requires CopyConstructible<typename X::state_type>;
+                                          requires DefaultConstructible<typename X::state_type>;
 
-        { X::eq(c, c) }             -> stl::same_as<bool>;
-        { X::lt(c, c) }             -> stl::same_as<bool>;
-        { X::compare(p, p, n) }     -> stl::same_as<int>;
-        { X::length(p) }            -> stl::same_as<stl::size_t>;
-        { X::find(p, n, ch) }       -> stl::same_as<typename X::char_type const*>;
-        { X::move(s, p, ch) }       -> stl::same_as<typename X::char_type*>;
-        { X::copy(s, p, n) }        -> stl::same_as<typename X::char_type*>;
-        { X::assign(s, n, c) }      -> stl::same_as<typename X::char_type*>;
-        { X::not_eof(e) }           -> stl::same_as<typename X::int_type>;
-        { X::to_char_type(e) }      -> stl::same_as<typename X::char_type>;
-        { X::to_int_type(c) }       -> stl::same_as<typename X::int_type>;
-        { X::eq_int_type(e, e) }    -> stl::same_as<bool>;
-        { X::eof() }                -> stl::same_as<typename X::int_type>;
-    };
-    // clang-format on
+                                          { X::eq(c, c) } -> stl::same_as<bool>;
+                                          { X::lt(c, c) } -> stl::same_as<bool>;
+                                          { X::compare(p, p, n) } -> stl::same_as<int>;
+                                          { X::length(p) } -> stl::same_as<stl::size_t>;
+                                          { X::find(p, n, ch) } -> stl::same_as<typename X::char_type const*>;
+                                          { X::move(s, p, ch) } -> stl::same_as<typename X::char_type*>;
+                                          { X::copy(s, p, n) } -> stl::same_as<typename X::char_type*>;
+                                          { X::assign(s, n, c) } -> stl::same_as<typename X::char_type*>;
+                                          { X::not_eof(e) } -> stl::same_as<typename X::int_type>;
+                                          { X::to_char_type(e) } -> stl::same_as<typename X::char_type>;
+                                          { X::to_int_type(c) } -> stl::same_as<typename X::int_type>;
+                                          { X::eq_int_type(e, e) } -> stl::same_as<bool>;
+                                          { X::eof() } -> stl::same_as<typename X::int_type>;
+                                      };
+                         };
 
     template <typename T>
     concept CharType = stl::is_integral_v<stl::remove_cvref_t<T>>;
@@ -131,15 +128,4 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
-namespace webpp {
-
-    /**
-     * Automatically choose a string type based on mutability requested
-     */
-    template <typename TraitsType, bool Mutable>
-    using auto_string_type =
-      stl::conditional_t<Mutable, typename TraitsType::string_type, typename TraitsType::string_view_type>;
-
-} // namespace webpp
-
-#endif // WEBPP_STRING_CONCEPTS_HPP
+#endif // WEBPP_STD_STRING_CONCEPTS_HPP
