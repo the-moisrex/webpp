@@ -229,7 +229,7 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
     int num = 0;
 
     auto const set_num = [&] {
-        num = 10;
+        num = 10; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
     };
 
     auto const add_num = [&](context& ctx) {
@@ -241,11 +241,9 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
     auto const main_page = router / "page" + add_num + add_num;
     router += (((main_page % "about" + add_num) >> &pages::about) >> set_num) + add_num;
 
-    std::string uri = "/page/about";
-    rot13(uri);
     request req{router.get_traits()};
     req.method("GET");
-    req.uri(uri);
+    req.uri("/page/about");
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();

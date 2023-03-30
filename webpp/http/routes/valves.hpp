@@ -7,6 +7,7 @@
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
 #include "../../std/tuple.hpp"
+#include "../../std/types.hpp"
 #include "../../traits/traits.hpp"
 #include "../http_concepts.hpp"
 #include "../request.hpp"
@@ -53,12 +54,12 @@ namespace webpp::http {
             func.to_string(out);
         } else if constexpr (mem_traits::value) {
             out.append(" ");
-            out.append(typeid(typename mem_traits::type).name());
+            out.append(istl::type_name<typename mem_traits::type>());
             out.append("::");
-            out.append(typeid(Callable).name());
+            out.append(istl::type_name<Callable>());
         } else {
             out.append(" ");
-            out.append(typeid(Callable).name());
+            out.append(istl::type_name<Callable>());
         }
     }
 
@@ -125,8 +126,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type
-          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type call(C&&           callable,
+                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
@@ -223,7 +224,7 @@ namespace webpp::http {
         using type = C;
 
         template <typename... T>
-        // requires stl::constructible_from<C, T...>
+            requires stl::constructible_from<C, T...>
         static constexpr C convert(T&&... args) noexcept(stl::is_nothrow_constructible_v<C, T...>) {
             return {stl::forward<T>(args)...};
         }
