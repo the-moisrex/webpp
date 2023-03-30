@@ -188,8 +188,6 @@ namespace webpp::http::beast_proto {
 
         template <typename BodyType>
         void set_response_body(BodyType& body) {
-            // todo: for performance reasons, we can have variant of string,stream,c-stream beast body types
-
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
@@ -213,9 +211,6 @@ namespace webpp::http::beast_proto {
 
 
         void make_beast_response() noexcept {
-            using std::swap;
-            using stl::swap;
-
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
 

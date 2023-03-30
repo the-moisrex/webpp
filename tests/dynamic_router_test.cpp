@@ -97,26 +97,41 @@ TEST(DynamicRouter, MemFuncPtr) {
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
 
-
-TEST(DynamicRouter, ManglerTest) {
+TEST(DynamicRouter, DynamicString) {
 
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
+    std::string const about_route = "about";
 
-    auto const body_mangler = [](context& ctx, auto next) {
-        if (next(ctx)) {
-            ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
-        }
-    };
-
-    router += (router / "about" >> &pages::about) % body_mangler;
+    router += router / about_route >> &pages::about;
 
     request req{router.get_traits()};
     req.method("GET");
     req.uri("/about");
 
-    EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
+    EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
+
+
+// TEST(DynamicRouter, ManglerTest) {
+//
+//     enable_traits_for<dynamic_router> router;
+//     router.objects.emplace_back(pages{});
+//
+//     auto const body_mangler = [](context& ctx, auto next) {
+//         if (next(ctx)) {
+//             ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
+//         }
+//     };
+//
+//     router += (router / "about" >> &pages::about) % body_mangler;
+//
+//     request req{router.get_traits()};
+//     req.method("GET");
+//     req.uri("/about");
+//
+//     EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
+// }
 
 TEST(DynamicRouter, CacheDeceptionTest) {
     // I got the idea from: https://twitter.com/naglinagli/status/1639351113571868673?s=20

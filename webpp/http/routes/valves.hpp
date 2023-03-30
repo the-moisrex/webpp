@@ -26,10 +26,14 @@ namespace webpp::http {
     using next_route = istl::function_ref<bool(basic_context<TraitsType>&)>;
 
     /**
-     * Checks if the type is an actual `valve<...>` type.
+     * Checks if the type is a valve type.
      */
     template <typename TraitsType, typename T>
-    concept Valve = Traits<TraitsType> && stl::is_invocable_v<T, basic_context<TraitsType>&>;
+    concept ValveOf = Traits<TraitsType> &&
+                      (stl::is_invocable_v<T, basic_context<TraitsType>&> || istl::StringViewifiable<T>);
+
+    template <typename T>
+    concept Valve = ValveOf<default_dynamic_traits, T>;
 
     template <typename TraitsType, typename T>
     concept Mangler = Traits<TraitsType> && stl::is_invocable_v<T,                          // type
@@ -42,6 +46,12 @@ namespace webpp::http {
 
     template <typename Router, typename T>
     concept ValveRequiresSetup = requires(T callable, Router& router) { callable.setup(router); };
+
+    template <typename T>
+    concept Valvifiable = requires(T obj) {
+                              { valvify<T>(obj) } -> Valve;
+                          };
+
 
 
     template <typename Callable>
@@ -110,6 +120,35 @@ namespace webpp::http {
 
 
 
+    // General Valvifier
+    template <typename T>
+    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
+        return stl::forward<T>(next);
+    }
+
+    // Member Function Pointer Valvifier
+    template <typename T>
+        requires stl::is_member_function_pointer_v<stl::remove_cvref_t<T>>
+    [[nodiscard]] static constexpr member_function_callable<stl::remove_cvref_t<T>>
+    valvify(T&& next) noexcept {
+        return {stl::forward<T>(next)};
+    }
+
+    // String Views Valvifier
+    template <typename T>
+        requires(istl::StringView<T> || istl::StringLiteral<T>)
+    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
+        return istl::string_viewify(stl::forward<T>(next));
+    }
+
+    // String object is passed
+    template <istl::String T>
+    [[nodiscard]] static constexpr auto valvify(T&& next) {
+        return stl::forward<T>(next);
+    }
+
+
+
     template <typename Callable, typename ContextType>
     struct valve_traits {
         using callable_type      = stl::remove_cvref_t<Callable>;
@@ -134,9 +173,16 @@ namespace webpp::http {
 
         template <typename T>
             requires(istl::cvref_as<T, Callable> && istl::StringViewifiable<Callable>)
+        static constexpr auto call(T&& segment, context_type& ctx) noexcept {
+            return ctx.check_segment(stl::forward<T>(segment));
+        }
+
+        template <Valvifiable T>
+            requires(istl::cvref_as<T, Callable> && !istl::StringViewifiable<Callable> &&
+                     !invocable_inorder_type::value)
         static constexpr auto call(T&&           segment,
                                    context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
-            return ctx.check_segment(stl::forward<T>(segment));
+            return call(valvify(stl::forward<T>(segment)), ctx);
         }
 
         template <typename R>
@@ -385,19 +431,6 @@ namespace webpp::http {
         }
     };
 
-    // remove first voids
-    template <typename... C>
-    struct route_optimizer<forward_valve<void, C...>> : route_optimizer<forward_valve<C...>> {
-        using parent_type = route_optimizer<forward_valve<C...>>;
-        using return_type = typename parent_type::type;
-
-        template <typename... T>
-            requires istl::cvref_as<C..., T...>
-        static constexpr return_type convert(T&&... next_callables) noexcept {
-            return parent_type::convert(stl::forward<T>(next_callables)...);
-        }
-    };
-
     // remove double forwarding (flatten the type)
     template <typename C1, typename... C>
     struct route_optimizer<forward_valve<forward_valve<C1>, C...>>
@@ -455,30 +488,6 @@ namespace webpp::http {
     // todo: C || Positive == ?
     // todo: C && Negative == ?
 
-
-
-
-
-    // General Valvifier
-    template <typename T>
-    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
-        return stl::forward<T>(next);
-    }
-
-    // Member Function Pointer Valvifier
-    template <typename T>
-        requires stl::is_member_function_pointer_v<stl::remove_cvref_t<T>>
-    [[nodiscard]] static constexpr member_function_callable<stl::remove_cvref_t<T>>
-    valvify(T&& next) noexcept {
-        return {stl::forward<T>(next)};
-    }
-
-    // String Views Valvifier
-    template <typename T>
-        requires(istl::StringView<T> || istl::StringLiteral<T>)
-    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
-        return istl::string_viewify(stl::forward<T>(next));
-    }
 
 
 
