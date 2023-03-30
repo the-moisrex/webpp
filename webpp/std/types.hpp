@@ -4,6 +4,7 @@
 #define WEBPP_STD_TYPES_HPP
 
 #include <string_view>
+#include <typeinfo>
 
 namespace webpp::istl {
 

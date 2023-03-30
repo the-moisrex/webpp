@@ -15,6 +15,7 @@
 #include "./context.hpp"
 
 #include <any>
+#include <typeinfo>
 
 namespace webpp::http {
 
@@ -490,11 +491,6 @@ namespace webpp::http {
         }
 
         template <typename Callable>
-        [[nodiscard]] constexpr auto operator%(Callable&& callable) const {
-            return rebind_next<mangler_valve>(stl::forward<Callable>(callable));
-        }
-
-        template <typename Callable>
         [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
             return rebind_next<and_valve>(stl::forward<Callable>(callable));
         }
@@ -530,12 +526,9 @@ namespace webpp::http {
 
 
         template <typename SegT>
-            requires(istl::StringView<SegT> || stl::is_array_v<stl::remove_cvref_t<SegT>>)
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
-            auto const seg_v = istl::string_viewify(stl::forward<SegT>(inp_segment));
-            return rebind_next<segment_valve>(seg_v, endpath);
+            return rebind_next<segment_valve>(stl::forward<SegT>(inp_segment), endpath);
         }
-
 
 
         // Convert Custom Contexts into dynamic context
@@ -570,6 +563,16 @@ namespace webpp::http {
             return static_cast<Self*>(this);
         }
 
+
+        // template <template <typename...> typename Templ, typename... T, Mangler Arg>
+        //     requires(!stl::is_void_v<Self>)
+        // [[nodiscard]] constexpr auto rebind_next(Arg&& next) const noexcept {
+        //     using mangler_type    = stl::remove_cvref_t<decltype(valvify<Arg>(stl::declval<Arg>()))>;
+        //     using templ_type      = Templ<Self, T...>;
+        //     using valve_type      = mangler_valve<templ_type, mangler_type>;
+        //     using optimized_route = route_optimizer<valve_type>;
+        //     return optimized_route::convert(*self(), valvify<Arg>(stl::forward<Arg>(next)));
+        // }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
