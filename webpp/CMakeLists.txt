@@ -48,6 +48,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/traits/std_traits.hpp
         ${LIB_INCLUDE_DIR}/traits/std_pmr_traits.hpp
 
+        ${LIB_INCLUDE_DIR}/std/types.hpp
         ${LIB_INCLUDE_DIR}/std/function_ref.hpp
         ${LIB_INCLUDE_DIR}/std/functional.hpp
         ${LIB_INCLUDE_DIR}/std/enum.hpp
@@ -296,13 +297,13 @@ if (USE_CTRE)
     target_link_libraries(${LIB_NAME}
             PUBLIC ctre::ctre)
     target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_CTRE=1)
-endif()
+endif ()
 
 if (USE_EVE)
     target_link_libraries(${LIB_NAME}
             PUBLIC eve::eve)
     target_compile_definitions(${LIB_NAME} PUBLIC -D WEBPP_USE_EVE=1)
-endif()
+endif ()
 
 
 #if (SHARED_LIBRARY_EXECUTABLE)
