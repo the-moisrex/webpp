@@ -614,26 +614,25 @@ namespace webpp::istl {
      * Check if the type T is one of the TupleT's elements.
      * It's an alternative to "tuple_contains" in the tuple.hpp (more generalized version actually)
      */
-    template <typename TupleT, typename T, stl::size_t I = parameter_count<TupleT> - 1>
-    struct contains_parameter_type {
-        static constexpr bool value = false;
-    };
+    template <typename Find, typename... T>
+    struct contains_parameter : stl::false_type {};
 
-    template <typename TupleT, typename T, stl::size_t I>
-        requires(parameter_count<TupleT> > 0)
-    struct contains_parameter_type<TupleT, T, I> {
-        static constexpr bool value =
-          stl::is_same_v<nth_parameter_of<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
-    };
+    template <typename Find, typename... T>
+    struct contains_parameter<Find, Find, T...> : stl::true_type {};
 
+    template <typename Find, typename Head, typename... T>
+    struct contains_parameter<Find, Head, T...> : contains_parameter<Find, T...> {};
+
+    namespace details {
+        template <typename Tup, typename Find, typename... T>
+        struct contains_parameter_of;
+
+        template <template <typename...> typename TupTempl, typename Find, typename... T>
+        struct contains_parameter_of<TupTempl<T...>, Find> : contains_parameter<Find, T...> {};
+    } // namespace details
 
     template <typename TupleT, typename T>
-    struct contains_parameter_type<TupleT, T, 0> {
-        static constexpr bool value = stl::is_same_v<nth_parameter_of<0, TupleT>, T>;
-    };
-
-    template <typename TupleT, typename T>
-    concept contains_parameter = contains_parameter_type<TupleT, T>::value;
+    concept contains_parameter_of = details::contains_parameter_of<TupleT, T>::value;
 
 
     /**

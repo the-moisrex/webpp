@@ -194,7 +194,7 @@ namespace webpp::http {
 
         template <typename Ext>
         [[nodiscard]] static constexpr bool has_extension() noexcept {
-            return istl::contains_parameter<root_extensions, Ext>;
+            return istl::contains_parameter_of<root_extensions, Ext>;
         }
 
         /**

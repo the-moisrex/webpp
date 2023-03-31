@@ -43,7 +43,7 @@ namespace webpp::istl {
             using type = stl::index_sequence<I...>;
         };
 
-    }
+    } // namespace details
 
     template <stl::size_t Start, stl::size_t End>
     using make_index_range = typename details::make_index_range_maker<Start, End>::type;
