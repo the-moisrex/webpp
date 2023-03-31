@@ -484,26 +484,26 @@ namespace webpp::alloc {
 
         template <AllocatorDescriptor AllocDescType>
         static constexpr bool has_allocator_descriptor =
-          istl::contains_parameter<allocator_descriptors, AllocDescType>;
+          istl::contains_parameter_of<allocator_descriptors, AllocDescType>;
 
         template <template <typename> typename AllocType>
         static constexpr bool has_templated_allocator =
-          istl::contains_parameter<allocators_type<char>, AllocType<char>>;
+          istl::contains_parameter_of<allocators_type<char>, AllocType<char>>;
 
         template <Allocator AllocType>
         static constexpr bool has_allocator =
-          istl::contains_parameter<allocators_type<typename AllocType::value_type>, AllocType>;
+          istl::contains_parameter_of<allocators_type<typename AllocType::value_type>, AllocType>;
 
         template <typename ResourceType>
-        static constexpr bool has_resource = istl::contains_parameter<resources_type, ResourceType>;
+        static constexpr bool has_resource = istl::contains_parameter_of<resources_type, ResourceType>;
 
         template <typename ResourceType>
         static constexpr bool has_resource_object =
-          istl::contains_parameter<filtered_resources_type, ResourceType>;
+          istl::contains_parameter_of<filtered_resources_type, ResourceType>;
 
         template <ResourceDescriptor ResDescType>
         static constexpr bool has_resource_descriptor =
-          istl::contains_parameter<resource_descriptors, ResDescType>;
+          istl::contains_parameter_of<resource_descriptors, ResDescType>;
 
         template <ResourceDescriptor ResDescType>
         static constexpr bool has_resource_descriptor_object =
@@ -763,7 +763,7 @@ namespace webpp::alloc {
                 return T::create(the_alloc, stl::forward<Args>(args)...);
             } else if constexpr (requires { T::create(stl::forward<Args>(args)..., the_alloc); }) {
                 return T::create(stl::forward<Args>(args)..., the_alloc);
-            } else if constexpr (istl::contains_parameter<type_list<Args...>, placeholder>) {
+            } else if constexpr (istl::contains_parameter_of<type_list<Args...>, placeholder>) {
                 return T{istl::replace_object<placeholder, alloc_type, Args>(stl::forward<Args>(args),
                                                                              the_alloc)...};
             } else if constexpr (requires {
