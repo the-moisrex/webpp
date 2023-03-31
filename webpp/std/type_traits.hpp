@@ -581,15 +581,6 @@ namespace webpp::istl {
     template <typename T>
     struct parameter_count_type;
 
-    template <typename T>
-    struct parameter_count_type<const T> : public parameter_count_type<T> {};
-
-    template <typename T>
-    struct parameter_count_type<volatile T> : public parameter_count_type<T> {};
-
-    template <typename T>
-    struct parameter_count_type<const volatile T> : public parameter_count_type<T> {};
-
     /// class tuple_size
     template <template <typename...> typename TupleT, typename... Elements>
     struct parameter_count_type<TupleT<Elements...>>
@@ -597,37 +588,26 @@ namespace webpp::istl {
 
 
     template <typename T>
-    static constexpr stl::size_t parameter_count = parameter_count_type<T>::value;
+    static constexpr stl::size_t parameter_count = parameter_count_type<stl::remove_cvref_t<T>>::value;
 
 
     /// Gives the type of the ith element of a given tuple type.
-    template <stl::size_t Index, typename T>
-    struct nth_parameter_type;
-
-    template <stl::size_t Index, typename T>
-    struct nth_parameter_type<Index, const T>
-      : public stl::add_const<typename nth_parameter_type<Index, T>::type> {};
-
-    template <stl::size_t Index, typename T>
-    struct nth_parameter_type<Index, volatile T>
-      : public stl::add_volatile<typename nth_parameter_type<Index, T>::type> {};
-
-    template <stl::size_t Index, typename T>
-    struct nth_parameter_type<Index, const volatile T>
-      : public stl::add_cv<typename nth_parameter_type<Index, T>::type> {};
+    template <stl::size_t Index, typename... T>
+    struct nth_parameter;
 
     // recursive case
-    template <template <typename...> typename TupleT, stl::size_t I, typename Head, typename... Tail>
-    struct nth_parameter_type<I, TupleT<Head, Tail...>> : nth_parameter_type<I - 1, TupleT<Tail...>> {};
+    template <stl::size_t I, typename Head, typename... Tail>
+    struct nth_parameter<I, Head, Tail...> : nth_parameter<I - 1, Tail...> {};
 
     // base case
-    template <template <typename...> typename TupleT, typename Head, typename... Tail>
-    struct nth_parameter_type<0, TupleT<Head, Tail...>> {
+    template <typename Head, typename... Tail>
+    struct nth_parameter<0, Head, Tail...> {
         using type = Head;
     };
 
+    // this same as std::tuple_element_t, but it supports any type of tuple not just std::tuple
     template <stl::size_t Index, typename T>
-    using nth_parameter = typename nth_parameter_type<Index, T>::type;
+    using nth_parameter_of = typename nth_parameter<Index, T>::type;
 
 
     /**
@@ -643,13 +623,13 @@ namespace webpp::istl {
         requires(parameter_count<TupleT> > 0)
     struct contains_parameter_type<TupleT, T, I> {
         static constexpr bool value =
-          stl::is_same_v<nth_parameter<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
+          stl::is_same_v<nth_parameter_of<I, TupleT>, T> || contains_parameter_type<TupleT, T, I - 1>::value;
     };
 
 
     template <typename TupleT, typename T>
     struct contains_parameter_type<TupleT, T, 0> {
-        static constexpr bool value = stl::is_same_v<nth_parameter<0, TupleT>, T>;
+        static constexpr bool value = stl::is_same_v<nth_parameter_of<0, TupleT>, T>;
     };
 
     template <typename TupleT, typename T>
@@ -750,7 +730,7 @@ namespace webpp::istl {
 
 
     template <typename Tup>
-    using first_parameter = nth_parameter<0, Tup>;
+    using first_parameter = nth_parameter_of<0, Tup>;
     // todo: add last_parameter as well
 
     /**

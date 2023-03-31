@@ -31,6 +31,24 @@ namespace webpp::istl {
         return static_cast<stl::remove_cvref_t<T>&>(t);
     }
 
+
+
+
+    namespace details {
+        template <stl::size_t Start, stl::size_t End, stl::size_t... I>
+        struct make_index_range_maker : make_index_range_maker<Start + 1, End, I..., Start + 1> {};
+
+        template <stl::size_t End, stl::size_t... I>
+        struct make_index_range_maker<End, End, I...> {
+            using type = stl::index_sequence<I...>;
+        };
+
+    }
+
+    template <stl::size_t Start, stl::size_t End>
+    using make_index_range = typename details::make_index_range_maker<Start, End>::type;
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_UTILITY_HPP
