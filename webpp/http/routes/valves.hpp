@@ -357,31 +357,6 @@ namespace webpp::http {
     // };
 
 
-    // C || !C == +C
-    template <typename C>
-    struct route_optimizer<or_valve<C, not_valve<C>>> : route_optimizer<positive_valve<C>> {
-        using parent_type = route_optimizer<positive_valve<C>>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
-    // !C || C == +C
-    template <typename C>
-    struct route_optimizer<or_valve<not_valve<C>, C>> : route_optimizer<positive_valve<C>> {
-        using parent_type = route_optimizer<positive_valve<C>>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
-
     // remove double forwarding (flatten the type)
     template <typename C1, typename... C>
     struct route_optimizer<forward_valve<forward_valve<C1>, C...>>
@@ -467,7 +442,16 @@ namespace webpp::http {
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
-            return rebind_next<or_valve>(stl::forward<Callable>(callable));
+            using callable_type = stl::remove_cvref_t<Callable>;
+            if constexpr (stl::same_as<Self, callable_type>) { // C || C = C
+                return *this;
+            } else if constexpr (stl::same_as<not_valve<Self>, callable_type>) { // C || !C == +C
+                return rebind_self<negative_valve>(*self());
+            } else if constexpr (stl::same_as<Self, not_valve<callable_type>>) { // !C || C == -C
+                return rebind_self<negative_valve>(stl::forward<Callable>(callable));
+            } else {
+                return rebind_next<or_valve>(stl::forward<Callable>(callable));
+            }
         }
 
 
