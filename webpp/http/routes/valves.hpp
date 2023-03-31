@@ -149,7 +149,7 @@ namespace webpp::http {
 
 
 
-    template <typename Callable, typename ContextType>
+    template <typename Callable, typename ContextType = context>
     struct valve_traits {
         using callable_type      = stl::remove_cvref_t<Callable>;
         using context_type       = ContextType;
@@ -356,36 +356,6 @@ namespace webpp::http {
     //     }
     // };
 
-    // !!C == C
-    template <typename C>
-        requires requires {
-                     typename C::traits_type;
-                     requires requires(C callable, basic_context<typename C::traits_type> & ctx) {
-                                  { callable(ctx) } -> stl::same_as<bool>;
-                              };
-                 }
-    struct route_optimizer<not_valve<not_valve<C>>> : route_optimizer<C> {
-        using parent_type = route_optimizer<C>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
-    // !!C == +C
-    template <typename C>
-    struct route_optimizer<not_valve<not_valve<C>>> : route_optimizer<positive_valve<C>> {
-        using parent_type = route_optimizer<positive_valve<C>>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
 
     // C || !C == +C
     template <typename C>
@@ -502,7 +472,16 @@ namespace webpp::http {
 
 
         [[nodiscard]] constexpr auto operator!() const {
-            return rebind_next<not_valve>();
+            if constexpr (istl::remove_template_of_v<not_valve, Self>) {
+                // This only checks against the default traits'-type's return type
+                if constexpr (stl::same_as<bool, typename valve_traits<Self>::return_type>) { // !!C == C
+                    return self()->unwrap();
+                } else { // !!C = +C
+                    return rebind_self<positive_valve>(self()->unwrap());
+                }
+            } else {
+                return rebind_next<not_valve>();
+            }
         }
 
 
@@ -776,6 +755,9 @@ namespace webpp::http {
             out.append(")");
         }
 
+        [[nodiscard]] constexpr next_type const& unwrap() const noexcept {
+            return next;
+        }
 
         template <typename RouterT>
             requires(ValveRequiresSetup<RouterT, Callable>)

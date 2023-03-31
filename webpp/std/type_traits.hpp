@@ -1163,36 +1163,50 @@ namespace webpp::istl {
     concept are_all_v = are_all<Evaluator, L, R>::value;
 
 
+
+    /**
+     * Remove Templ out of T if it T is `Templ<NotT>`
+     * @tparam Templ
+     * @tparam T
+     */
     template <template <typename> typename Templ, typename T>
-    struct remove_template_of {
+    struct remove_template_of : stl::false_type {
         using type = T;
     };
 
-
     template <template <typename> typename Templ, typename T>
-    struct remove_template_of<Templ, Templ<T>> {
+    struct remove_template_of<Templ, Templ<T>> : stl::true_type {
         using type = T;
     };
 
     template <template <typename> typename Templ, typename T>
     using remove_template_of_t = typename remove_template_of<Templ, T>::type;
 
+    template <template <typename> typename Templ, typename T>
+    concept remove_template_of_v = remove_template_of<Templ, T>::value;
 
 
 
 
+    /**
+     * Remove Any template out of T if it T is `Templ<NotT>`
+     * @tparam T
+     */
     template <typename T>
-    struct remove_template {
+    struct remove_template : stl::false_type {
         using type = T;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct remove_template<Templ<T>> {
+    struct remove_template<Templ<T>> : stl::true_type {
         using type = T;
     };
 
     template <typename T>
     using remove_template_t = typename remove_template<T>::type;
+
+    template <typename T>
+    concept remove_template_v = remove_template<T>::value;
 
 } // namespace webpp::istl
 
