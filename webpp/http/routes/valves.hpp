@@ -296,7 +296,7 @@ namespace webpp::http {
 
         template <istl::cvref_as<Left> LT, istl::cvref_as<prerouting_valve<Pre...>> PT, typename... RT>
             requires istl::cvref_as<Right..., RT...>
-        static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) noexcept {
+        static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) {
             return parent_type::convert(
               pre_parent::convert(stl::forward<PT>(pre)),
               left_parent::convert(stl::forward<LT>(lhs)),
@@ -313,9 +313,11 @@ namespace webpp::http {
         using post_parent = route_optimizer<Post...>;
         using parent_type = route_optimizer<Tmpl<typename route_optimizer<Right>::type...,
                                                  postrouting_valve<typename route_optimizer<Post>::type...>>>;
+
+
         template <istl::cvref_as<postrouting_valve<Post...>> PT, typename... RT>
             requires(istl::cvref_as<Right..., RT...>)
-        static constexpr auto convert(PT&& post, RT&&... rhs) noexcept {
+        static constexpr auto convert(PT&& post, RT&&... rhs) {
             return parent_type::convert(
               route_optimizer<stl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...,
               post_parent::convert(stl::forward<PT>(post)));
@@ -333,12 +335,26 @@ namespace webpp::http {
         using parent_type = route_optimizer<Tmpl<prerouting_valve<LeftPre..., RightPre...>, Right...>>;
 
         template <typename T>
-        static constexpr auto convert(T&& obj) noexcept {
+        static constexpr auto convert(T&& obj) {
             return parent_type::convert(stl::forward<T>(obj)); // the forward_valve has to handle this one
         }
     };
 
     // todo: Merge post-routings
+
+    // Take Preroutings out
+    // template <typename... Pre, typename... Right, typename... FarRight>
+    // struct route_optimizer<forward_valve<forward_valve<prerouting_valve<Pre...>, Right...>, FarRight...>>
+    //   : route_optimizer<forward_valve<prerouting_valve<Pre...>, Right..., FarRight...>> {
+    //     using parent_type = route_optimizer<forward_valve<prerouting_valve<Pre...>, Right...,
+    //     FarRight...>>;
+
+    //     template <typename T>
+    //     static constexpr auto convert(T&& obj) {
+    //         return parent_type::convert(
+    //           stl::tuple_cat(stl::get<1>(obj.as_tuple()), istl::sub_tuple<1>(obj.as_tuple())));
+    //     }
+    // };
 
     // !!C == C
     template <typename C>
@@ -353,7 +369,7 @@ namespace webpp::http {
         using return_type = typename parent_type::type;
 
         template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) noexcept {
+        static constexpr return_type convert(T&& next) {
             return parent_type::convert(stl::forward<T>(next));
         }
     };
@@ -365,7 +381,7 @@ namespace webpp::http {
         using return_type = typename parent_type::type;
 
         template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) noexcept {
+        static constexpr return_type convert(T&& next) {
             return parent_type::convert(stl::forward<T>(next));
         }
     };
@@ -378,7 +394,7 @@ namespace webpp::http {
         using return_type = typename parent_type::type;
 
         template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) noexcept {
+        static constexpr return_type convert(T&& next) {
             return parent_type::convert(stl::forward<T>(next));
         }
     };
@@ -390,46 +406,11 @@ namespace webpp::http {
         using return_type = typename parent_type::type;
 
         template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) noexcept {
+        static constexpr return_type convert(T&& next) {
             return parent_type::convert(stl::forward<T>(next));
         }
     };
 
-    // C && C == C
-    template <typename C>
-    struct route_optimizer<and_valve<C, C>> : route_optimizer<C> {
-        using parent_type = route_optimizer<C>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next, [[maybe_unused]] T&&) noexcept {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
-    // C && !C == -C
-    template <typename C>
-    struct route_optimizer<and_valve<C, not_valve<C>>> : route_optimizer<negative_valve<C>> {
-        using parent_type = route_optimizer<negative_valve<C>>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T&& next) noexcept {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
-
-    // !C && C == -C
-    template <typename C>
-    struct route_optimizer<and_valve<not_valve<C>, C>> : route_optimizer<negative_valve<C>> {
-        using parent_type = route_optimizer<negative_valve<C>>;
-        using return_type = typename parent_type::type;
-
-        template <istl::cvref_as<C> T>
-        static constexpr return_type convert(T next) noexcept {
-            return parent_type::convert(stl::forward<T>(next));
-        }
-    };
 
     // remove double forwarding (flatten the type)
     template <typename C1, typename... C>
@@ -442,7 +423,7 @@ namespace webpp::http {
         template <typename... N>
             requires istl::cvref_as<C..., N...>
         static constexpr return_type convert(istl::cvref_as<sub_callable_type> auto&& sub_callable,
-                                             N&&... next_callables) noexcept {
+                                             N&&... next_callables) {
             return parent_type::convert(
               stl::tuple_cat(sub_callable.as_tuple(), stl::tuple<N...>{stl::forward<N>(next_callables)...}));
         }
@@ -461,7 +442,7 @@ namespace webpp::http {
         using seg_type     = segment_valve<SC...>;
 
         template <istl::cvref_as<seg_type> SegT, typename NewCallable>
-        static constexpr return_type convert(SegT&& seg, NewCallable&& next) noexcept {
+        static constexpr return_type convert(SegT&& seg, NewCallable&& next) {
             return parent_type::convert(
               stl::tuple_cat(seg.as_tuple(),
                              stl::forward_as_tuple(next_t::convert(stl::forward<NewCallable>(next)))));
@@ -478,7 +459,7 @@ namespace webpp::http {
 
         template <istl::cvref_as<sub_seg_type> SS, typename... CT>
             requires istl::cvref_as<C..., CT...>
-        static constexpr return_type convert(SS&& sub_seg, CT&&... next_segs) noexcept {
+        static constexpr return_type convert(SS&& sub_seg, CT&&... next_segs) {
             return parent_type::convert(
               stl::tuple_cat(sub_seg.as_tuple(), stl::tuple<CT...>{stl::forward<CT>(next_segs)...}));
         }
@@ -500,8 +481,17 @@ namespace webpp::http {
         }
 
         template <typename Callable>
-        [[nodiscard]] constexpr auto operator&&(Callable&& callable) const {
-            return rebind_next<and_valve>(stl::forward<Callable>(callable));
+        [[nodiscard]] constexpr auto operator&&([[maybe_unused]] Callable&& callable) const {
+            using callable_type = stl::remove_cvref_t<Callable>;
+            if constexpr (stl::same_as<Self, callable_type>) { // C && C = C
+                return *this;
+            } else if constexpr (stl::same_as<not_valve<Self>, callable_type>) { // C && !C == -C
+                return rebind_self<negative_valve>(*self());
+            } else if constexpr (stl::same_as<Self, not_valve<callable_type>>) { // !C && C == -C
+                return rebind_self<negative_valve>(stl::forward<Callable>(callable));
+            } else {
+                return rebind_next<and_valve>(stl::forward<Callable>(callable));
+            }
         }
 
 
@@ -584,7 +574,7 @@ namespace webpp::http {
         // }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
-        [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
+        [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
             if constexpr (stl::is_void_v<Self>) {
                 using valve_type =
                   Templ<T..., stl::remove_cvref_t<decltype(valvify<Args>(stl::declval<Args>()))>...>;
@@ -599,34 +589,14 @@ namespace webpp::http {
         }
 
 
-        // for pre/post routing
-        //        template <template <typename...> typename WrapperTempl,
-        //                  template <typename...>
-        //                  typename Templ,
-        //                  typename... T,
-        //                  typename Arg>
-        //            requires stl::is_member_function_pointer_v<stl::remove_cvref_t<Arg>>
-        //        [[nodiscard]] constexpr auto rebind_next(Arg&& next) const noexcept {
-        //            using mem_type = member_function_callable< stl::remove_cvref_t<Arg>>;
-        //            return rebind_next<WrapperTempl, Templ, T...>(mem_type{stl::forward<Arg>(next)});
-        //        }
-        //
-        //        // for pre/post routing
-        //        template <template <typename...> typename WrapperTempl,
-        //                  template <typename...>
-        //                  typename Templ,
-        //                  typename... T,
-        //                  typename... Args>
-        //        [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const noexcept {
-        //            using templ_type      = Templ<stl::remove_cvref_t<Args>...>;
-        //            using valve_type      = WrapperTempl<T..., templ_type>;
-        //            using optimized_route = route_optimizer<valve_type>;
-        //            if constexpr (stl::is_void_v<Self>) {
-        //                return optimized_route::convert(templ_type{stl::forward<Args>(nexts)...});
-        //            } else {
-        //                return optimized_route::convert(*self(), templ_type{stl::forward<Args>(nexts)...});
-        //            }
-        //        }
+
+        template <template <typename...> typename Templ, typename... T, typename... Args>
+        [[nodiscard]] constexpr auto rebind_self(Args&&... nexts) const {
+            using valve_type =
+              Templ<T..., stl::remove_cvref_t<decltype(valvify<Args>(stl::declval<Args>()))>...>;
+            using optimized_route = route_optimizer<valve_type>;
+            return optimized_route::convert(valvify<Args>(stl::forward<Args>(nexts))...);
+        }
     };
 
 
@@ -636,9 +606,9 @@ namespace webpp::http {
         using valve_type = valve<mangler_valve<ManglerType, NextCallable>>;
 
       private:
-        struct next_callable {
+        [[no_unique_address]] struct next_callable {
           private:
-            NextCallable next;
+            [[no_unique_address]] NextCallable next;
 
           public:
             constexpr next_callable(NextCallable&& inp_next) noexcept(
@@ -664,7 +634,7 @@ namespace webpp::http {
             }
         } next;
 
-        ManglerType mangler;
+        [[no_unique_address]] ManglerType mangler;
 
       public:
         constexpr mangler_valve(NextCallable&& inp_next, ManglerType&& inp_mangler) noexcept(
@@ -780,7 +750,7 @@ namespace webpp::http {
         using next_type  = Callable;
 
       private:
-        next_type next;
+        [[no_unique_address]] next_type next;
 
       public:
         template <stl::convertible_to<Callable> C>
@@ -821,7 +791,7 @@ namespace webpp::http {
         using next_type  = Callable;
 
       private:
-        next_type next;
+        [[no_unique_address]] next_type next;
 
       public:
         template <stl::convertible_to<Callable> C>
@@ -864,7 +834,7 @@ namespace webpp::http {
         using next_type  = Callable;
 
       private:
-        next_type next;
+        [[no_unique_address]] next_type next;
 
       public:
         template <stl::convertible_to<Callable> C>
@@ -910,8 +880,8 @@ namespace webpp::http {
         using right_type = RightCallable;
 
       private:
-        left_type  lhs;
-        right_type rhs; // RHS (Right Hand Side) is the "next" valve
+        [[no_unique_address]] left_type  lhs;
+        [[no_unique_address]] right_type rhs; // RHS (Right Hand Side) is the "next" valve
 
       public:
         template <stl::convertible_to<left_type> L, stl::convertible_to<right_type> R>
@@ -968,8 +938,8 @@ namespace webpp::http {
         using right_type = RightCallable;
 
       private:
-        left_type  lhs;
-        right_type rhs; // RHS (Right Hand Side) is the "next" valve
+        [[no_unique_address]] left_type  lhs;
+        [[no_unique_address]] right_type rhs; // RHS (Right Hand Side) is the "next" valve
 
       public:
         template <stl::convertible_to<left_type> L, stl::convertible_to<right_type> R>
