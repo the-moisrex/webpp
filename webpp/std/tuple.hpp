@@ -5,6 +5,7 @@
 
 #include "std.hpp"
 #include "type_traits.hpp"
+#include "utility.hpp"
 
 #include <tuple>
 
@@ -126,7 +127,7 @@ namespace webpp::istl {
             return TupleT{stl::forward<T>(args)...};
         } else {
             // re-order, and default-construct those that don't exist in the args
-            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr {
+            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T&&... sub_args) constexpr {
                 no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
                 // It's a free function and not a lambda because C++ is stupid and doesn't
                 // understand that "ints" in the lambda template is a parameter pack
@@ -505,6 +506,87 @@ namespace webpp::istl {
         })(stl::make_index_sequence<stl::tuple_size_v<tuple_type> - 1>{});
     }
 
+
+
+    namespace details {
+        template <typename T>
+        constexpr auto explode(T&& t, char) {
+            return stl::forward_as_tuple(stl::forward<T>(t));
+        }
+
+        template <typename T, stl::size_t I = stl::tuple_size_v<stl::decay_t<T>>>
+        constexpr auto explode(T&& t, int);
+
+        template <typename T, stl::size_t... Is>
+        constexpr auto explode(T&& t, stl::index_sequence<Is...>) {
+            return tuple_cat(explode(get<Is>(stl::forward<T>(t)), 0)...);
+        }
+
+        template <typename T, stl::size_t I>
+        constexpr auto explode(T&& t, int) {
+            return explode(stl::forward<T>(t), stl::make_index_sequence<I>{});
+        }
+
+        template <typename T, stl::size_t... Is>
+        constexpr auto decay_tuple(T&& t, stl::index_sequence<Is...>) {
+            return stl::make_tuple(get<Is>(stl::forward<T>(t))...);
+        }
+
+        template <typename T>
+        constexpr auto decay_tuple(T&& t) {
+            return decay_tuple(stl::forward<T>(t),
+                               stl::make_index_sequence<stl::tuple_size_v<stl::decay_t<T>>>{});
+        }
+
+        template <typename T, stl::size_t... Is>
+        constexpr auto flatten_tuple(T&& t, stl::index_sequence<Is...>) {
+            return decay_tuple(tuple_cat(explode(get<Is>(stl::forward<T>(t)), 0)...));
+        }
+
+    } // namespace details
+
+    template <typename T>
+    constexpr auto flatten_tuple(T&& t) {
+        return details::flatten_tuple(stl::forward<T>(t),
+                                      stl::make_index_sequence<stl::tuple_size_v<stl::decay_t<T>>>{});
+    }
+
+
+
+    template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
+    [[nodiscard]] constexpr TupTempl<nth_parameter<I, T...>...>
+    sub_tuple(TupTempl<T...>&& tup, stl::index_sequence<I...>) noexcept(
+      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter<I, T...>...>) {
+        return {get<I>(stl::move(tup))...};
+    }
+
+    template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
+    [[nodiscard]] constexpr TupTempl<nth_parameter<I, T...>...>
+    sub_tuple(TupTempl<T...> const& tup, stl::index_sequence<I...>) noexcept(
+      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter<I, T...>...>) {
+        return {get<I>(tup)...};
+    }
+
+    template <stl::size_t Start = 0,
+              stl::size_t End   = Start,
+              template <typename...>
+              typename TupTempl,
+              typename... T>
+    constexpr auto sub_tuple(TupTempl<T...> const& tup) noexcept(
+      noexcept(sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
+        return sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
+    }
+
+    template <stl::size_t Start = 0,
+              stl::size_t End   = Start,
+              template <typename...>
+              typename TupTempl,
+              typename... T>
+    constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(noexcept(
+      sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
+        return sub_tuple(stl::move(tup),
+                         make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
+    }
 
 } // namespace webpp::istl
 
