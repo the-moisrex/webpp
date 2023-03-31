@@ -1162,6 +1162,38 @@ namespace webpp::istl {
     template <template <typename, typename> typename Evaluator, typename L, typename R>
     concept are_all_v = are_all<Evaluator, L, R>::value;
 
+
+    template <template <typename> typename Templ, typename T>
+    struct remove_template_of {
+        using type = T;
+    };
+
+
+    template <template <typename> typename Templ, typename T>
+    struct remove_template_of<Templ, Templ<T>> {
+        using type = T;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    using remove_template_of_t = typename remove_template_of<Templ, T>::type;
+
+
+
+
+
+    template <typename T>
+    struct remove_template {
+        using type = T;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct remove_template<Templ<T>> {
+        using type = T;
+    };
+
+    template <typename T>
+    using remove_template_t = typename remove_template<T>::type;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP
