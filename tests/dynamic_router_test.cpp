@@ -97,6 +97,20 @@ TEST(DynamicRouter, MemFuncPtr) {
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
 
+TEST(DynamicRouter, NotNotTest) {
+
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    router += !!(router / "about") >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about");
+
+    EXPECT_EQ(as<std::string>(router(req).body), "about page") << router.to_string();
+}
+
 TEST(DynamicRouter, DynamicString) {
 
     enable_traits_for<dynamic_router> router;
