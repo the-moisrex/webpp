@@ -1208,6 +1208,21 @@ namespace webpp::istl {
     template <typename T>
     concept remove_template_v = remove_template<T>::value;
 
+
+    /**
+     * Check if T is `Templ<...>`
+     * @tparam Templ
+     * @tparam T
+     */
+    template <template <typename...> typename Templ, typename T>
+    struct template_of : stl::false_type {};
+
+    template <template <typename...> typename Templ, typename... T>
+    struct template_of<Templ, Templ<T...>> : stl::true_type {};
+
+    template <template <typename...> typename Templ, typename T>
+    concept template_of_v = template_of<Templ, T>::value;
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

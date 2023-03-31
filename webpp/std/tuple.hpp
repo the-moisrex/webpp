@@ -545,6 +545,7 @@ namespace webpp::istl {
 
     } // namespace details
 
+    // todo: check this, it's not tested.
     template <typename T>
     constexpr auto flatten_tuple(T&& t) {
         return details::flatten_tuple(stl::forward<T>(t),
