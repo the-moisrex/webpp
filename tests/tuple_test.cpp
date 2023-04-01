@@ -80,4 +80,25 @@ TEST_F(TupleTest, AdjacentApplyTwoElementsTuple) {
     adjacent_apply(two_elements_tuple, identity_func);
 }
 
+
+
+TEST_F(TupleTest, SubTuples) {
+    auto const tup = stl::make_tuple(0, 1, 2, 3, 4, 5);
+    EXPECT_EQ((istl::sub_tuple<2, 5>(tup)), (stl::make_tuple(2, 3, 4)));
+    EXPECT_EQ((istl::sub_tuple<1, 1>(tup)), (stl::make_tuple()));
+    EXPECT_EQ((istl::sub_tuple<1, 2>(tup)), (stl::make_tuple(1)));
+}
+
+
+TEST_F(TupleTest, MoveElements) {
+    auto const tup = stl::make_tuple(0, 1, 2, 3, 4, 5);
+    EXPECT_EQ((istl::move_element_to_front<2>(tup)), (stl::make_tuple(2, 0, 1, 3, 4, 5)));
+    EXPECT_EQ((istl::move_element_to_front<0>(tup)), tup);
+    EXPECT_EQ((istl::move_element_to_front<5>(tup)), (stl::make_tuple(5, 0, 1, 2, 3, 4)));
+    EXPECT_EQ((istl::move_element_to_back<0>(tup)), (stl::make_tuple(1, 2, 3, 4, 5, 0)));
+    EXPECT_EQ((istl::move_element_to_back<3>(tup)), (stl::make_tuple(0, 1, 2, 4, 5, 3)));
+    EXPECT_EQ((istl::move_element_to<2, 4>(tup)), (stl::make_tuple(0, 1, 3, 2, 4, 5)));
+}
+
+
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

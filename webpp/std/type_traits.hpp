@@ -605,9 +605,19 @@ namespace webpp::istl {
         using type = Head;
     };
 
+
+    template <stl::size_t Index, typename... T>
+    using nth_parameter_t = typename nth_parameter<Index, T...>::type;
+
+    template <stl::size_t Index, typename T>
+    struct nth_parameter_of;
+
+    template <stl::size_t Index, template <typename...> typename Templ, typename... T>
+    struct nth_parameter_of<Index, Templ<T...>> : nth_parameter<Index, T...> {};
+
     // this same as std::tuple_element_t, but it supports any type of tuple not just std::tuple
     template <stl::size_t Index, typename T>
-    using nth_parameter_of = typename nth_parameter<Index, T>::type;
+    using nth_parameter_of_t = typename nth_parameter_of<Index, T>::type;
 
 
     /**
@@ -729,7 +739,7 @@ namespace webpp::istl {
 
 
     template <typename Tup>
-    using first_parameter = nth_parameter_of<0, Tup>;
+    using first_parameter = nth_parameter_of_t<0, Tup>;
     // todo: add last_parameter as well
 
     /**
