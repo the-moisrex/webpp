@@ -279,4 +279,15 @@ TEST(TypeTraits, SameAsAllTest) {
     EXPECT_FALSE(bool(cvref_as<one const&, one, three const&, one, two, three>));
 }
 
+template <typename T>
+using is_one = is_same<T, one>;
+
+
+TEST(TypeTraits, IndexesIfTest) {
+    EXPECT_TRUE(bool(same_as<indexes_if<is_one, two, one, three>, index_sequence<1>>));
+    EXPECT_TRUE(bool(same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
+    EXPECT_TRUE(
+      bool(same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
+}
+
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
