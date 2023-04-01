@@ -1099,6 +1099,23 @@ namespace webpp::istl {
       : stl::integral_constant<stl::size_t, 1 + index_of_item<T, R...>::value> {};
 
 
+    template <typename T1, typename... T>
+    struct integer_sequence_cat;
+
+    template <typename Type, Type... I1, Type... I2, typename... Rest>
+    struct integer_sequence_cat<stl::integer_sequence<Type, I1...>,
+                                stl::integer_sequence<Type, I2...>,
+                                Rest...>
+      : integer_sequence_cat<stl::integer_sequence<Type, I1..., I2...>, Rest...> {};
+
+    template <typename Type, Type... I>
+    struct integer_sequence_cat<stl::integer_sequence<Type, I...>> {
+        using type = stl::integer_sequence<Type, I...>;
+    };
+
+    template <typename T1, typename... T>
+    using integer_sequence_cat_t = typename integer_sequence_cat<T1, T...>::type;
+
 
     namespace details {
         template <typename T, std::size_t = sizeof(T)>

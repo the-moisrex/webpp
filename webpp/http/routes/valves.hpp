@@ -174,8 +174,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type call(C&&           callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type
+          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
@@ -503,9 +503,11 @@ namespace webpp::http {
 
         template <template <typename...> typename Templ, typename... T, typename... TupT>
         [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
-            auto sorted = stl::tuple_cat(istl::sub_tuple(nexts, istl::indexes_if<is_prerouting, TupT...>{}),
-                                         istl::sub_tuple(nexts, istl::indexes_if<is_normal_valve, TupT...>{}),
-                                         istl::sub_tuple(nexts, istl::indexes_if<is_postrouting, TupT...>{}));
+            auto sorted = istl::tuple_reorder_elements(
+              nexts,
+              istl::integer_sequence_cat_t<istl::indexes_if<is_prerouting, TupT...>,
+                                           istl::indexes_if<is_normal_valve, TupT...>,
+                                           istl::indexes_if<is_postrouting, TupT...>>{});
             return rebind_self<Templ, T...>(stl::move(sorted), sorted_tag{});
         }
 
