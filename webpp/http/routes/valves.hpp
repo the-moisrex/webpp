@@ -174,8 +174,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type
-          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type call(C&&           callable,
+                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
@@ -460,6 +460,14 @@ namespace webpp::http {
             return static_cast<Self*>(this);
         }
 
+        template <typename T>
+        using is_prerouting = istl::template_of<prerouting_valve, T>;
+
+        template <typename T>
+        using is_postrouting = istl::template_of<postrouting_valve, T>;
+
+        template <typename T>
+        using is_normal_valve = stl::negation<stl::disjunction<is_prerouting<T>, is_postrouting<T>>>;
 
         // template <template <typename...> typename Templ, typename... T, Mangler Arg>
         //     requires(!stl::is_void_v<Self>)
@@ -481,14 +489,24 @@ namespace webpp::http {
         }
 
 
+        struct sorted_tag {};
+
         // We get a tuple<>, but we want to pass all the individual elements to `valvify`
         // Attention: This means we will be calling `valvify` multiple times for each element
         template <template <typename...> typename Templ, typename... T, typename... TupT>
-        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
+        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts, sorted_tag) const {
             using valve_type = Templ<T..., valvified_type<TupT>...>;
             return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
                 return valve_type{valvify(stl::get<I>(nexts))...};
             })(stl::index_sequence_for<TupT...>{});
+        }
+
+        template <template <typename...> typename Templ, typename... T, typename... TupT>
+        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
+            auto sorted = stl::tuple_cat(istl::sub_tuple(nexts, istl::indexes_if<is_prerouting, TupT...>{}),
+                                         istl::sub_tuple(nexts, istl::indexes_if<is_normal_valve, TupT...>{}),
+                                         istl::sub_tuple(nexts, istl::indexes_if<is_postrouting, TupT...>{}));
+            return rebind_self<Templ, T...>(stl::move(sorted), sorted_tag{});
         }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
