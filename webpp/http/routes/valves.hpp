@@ -151,6 +151,8 @@ namespace webpp::http {
     }
 
 
+    template <typename T>
+    using valvified_type = stl::remove_cvref_t<decltype(valvify(stl::declval<T>()))>;
 
     template <typename Callable, typename ContextType = context>
     struct valve_traits {
@@ -169,8 +171,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type call(C&&           callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type
+          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
@@ -268,99 +270,6 @@ namespace webpp::http {
 
 
 
-
-    template <typename C>
-    struct route_optimizer {
-        using type = C;
-
-        template <typename... T>
-            requires stl::constructible_from<C, T...>
-        static constexpr C convert(T&&... args) noexcept(stl::is_nothrow_constructible_v<C, T...>) {
-            return {stl::forward<T>(args)...};
-        }
-    };
-
-
-    // move pre-routing hooks to the left because they supposed to be called before everything
-    template <template <typename, typename, typename...> typename Tmpl,
-              typename Left,
-              typename... Pre,
-              typename... Right>
-    struct route_optimizer<Tmpl<Left, prerouting_valve<Pre...>, Right...>>
-      : route_optimizer<Tmpl<prerouting_valve<typename route_optimizer<Pre>::type...>,
-                             typename route_optimizer<Left>::type,
-                             typename route_optimizer<Right>::type...>> {
-
-        using left_parent = route_optimizer<Left>;
-        using pre_parent  = route_optimizer<Pre...>;
-        using parent_type = route_optimizer<Tmpl<prerouting_valve<typename route_optimizer<Pre>::type...>,
-                                                 typename route_optimizer<Left>::type,
-                                                 typename route_optimizer<Right>::type...>>;
-
-        template <istl::cvref_as<Left> LT, istl::cvref_as<prerouting_valve<Pre...>> PT, typename... RT>
-            requires istl::cvref_as<Right..., RT...>
-        static constexpr auto convert(LT&& lhs, PT&& pre, RT&&... rhs) {
-            return parent_type::convert(
-              pre_parent::convert(stl::forward<PT>(pre)),
-              left_parent::convert(stl::forward<LT>(lhs)),
-              route_optimizer<stl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...);
-        }
-    };
-
-    // move post-routing hooks to the right because they supposed to be called after everything
-    template <template <typename, typename...> typename Tmpl, typename... Post, typename... Right>
-        requires(sizeof...(Right) > 0)
-    struct route_optimizer<Tmpl<postrouting_valve<Post...>, Right...>>
-      : route_optimizer<Tmpl<typename route_optimizer<Right>::type...,
-                             postrouting_valve<typename route_optimizer<Post>::type...>>> {
-        using post_parent = route_optimizer<Post...>;
-        using parent_type = route_optimizer<Tmpl<typename route_optimizer<Right>::type...,
-                                                 postrouting_valve<typename route_optimizer<Post>::type...>>>;
-
-
-        template <istl::cvref_as<postrouting_valve<Post...>> PT, typename... RT>
-            requires(istl::cvref_as<Right..., RT...>)
-        static constexpr auto convert(PT&& post, RT&&... rhs) {
-            return parent_type::convert(
-              route_optimizer<stl::remove_cvref_t<RT>>::convert(stl::forward<RT>(rhs))...,
-              post_parent::convert(stl::forward<PT>(post)));
-        }
-    };
-
-
-    // Merge pre-routings
-    template <template <typename, typename, typename...> typename Tmpl,
-              typename... LeftPre,
-              typename... RightPre,
-              typename... Right>
-    struct route_optimizer<Tmpl<prerouting_valve<LeftPre...>, prerouting_valve<RightPre...>, Right...>>
-      : route_optimizer<Tmpl<prerouting_valve<LeftPre..., RightPre...>, Right...>> {
-        using parent_type = route_optimizer<Tmpl<prerouting_valve<LeftPre..., RightPre...>, Right...>>;
-
-        template <typename T>
-        static constexpr auto convert(T&& obj) {
-            return parent_type::convert(stl::forward<T>(obj)); // the forward_valve has to handle this one
-        }
-    };
-
-    // todo: Merge post-routings
-
-    // Take Preroutings out
-    // template <typename... Pre, typename... Right, typename... FarRight>
-    // struct route_optimizer<forward_valve<forward_valve<prerouting_valve<Pre...>, Right...>, FarRight...>>
-    //   : route_optimizer<forward_valve<prerouting_valve<Pre...>, Right..., FarRight...>> {
-    //     using parent_type = route_optimizer<forward_valve<prerouting_valve<Pre...>, Right...,
-    //     FarRight...>>;
-
-    //     template <typename T>
-    //     static constexpr auto convert(T&& obj) {
-    //         return parent_type::convert(
-    //           stl::tuple_cat(stl::get<1>(obj.as_tuple()), istl::sub_tuple<1>(obj.as_tuple())));
-    //     }
-    // };
-
-
-
     template <typename Self = void>
     struct valve {
 
@@ -438,13 +347,26 @@ namespace webpp::http {
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
+            using callable_type = stl::remove_cvref_t<Callable>;
             return rebind_next<postrouting_valve>(stl::forward<Callable>(callable));
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-            return rebind_next<prerouting_valve>(stl::forward<Callable>(callable));
+            using callable_type = stl::remove_cvref_t<Callable>;
+            if constexpr (istl::template_of_v<prerouting_valve, Self>) {
+                if constexpr (istl::template_of_v<prerouting_valve, callable_type>) {
+                    return rebind_self<prerouting_valve>(
+                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
+                } else { // append the callable to the end of the prerouting valve
+                    return rebind_self<prerouting_valve>(
+                      stl::tuple_cat(self()->as_tuple(),
+                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+                }
+            } else {
+                return rebind_next<prerouting_valve>(stl::forward<Callable>(callable));
+            }
         }
 
 
@@ -525,7 +447,7 @@ namespace webpp::http {
         // template <template <typename...> typename Templ, typename... T, Mangler Arg>
         //     requires(!stl::is_void_v<Self>)
         // [[nodiscard]] constexpr auto rebind_next(Arg&& next) const noexcept {
-        //     using mangler_type    = stl::remove_cvref_t<decltype(valvify<Arg>(stl::declval<Arg>()))>;
+        //     using mangler_type    = valvified_type<Arg>;
         //     using templ_type      = Templ<Self, T...>;
         //     using valve_type      = mangler_valve<templ_type, mangler_type>;
         //     using optimized_route = route_optimizer<valve_type>;
@@ -535,15 +457,11 @@ namespace webpp::http {
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
             if constexpr (stl::is_void_v<Self>) {
-                using valve_type =
-                  Templ<T..., stl::remove_cvref_t<decltype(valvify(stl::declval<Args>()))>...>;
-                using optimized_route = route_optimizer<valve_type>;
-                return optimized_route::convert(valvify(stl::forward<Args>(nexts))...);
+                using valve_type = Templ<T..., valvified_type<Args>...>;
+                return valve_type{valvify(stl::forward<Args>(nexts))...};
             } else {
-                using valve_type =
-                  Templ<Self, T..., stl::remove_cvref_t<decltype(valvify(stl::declval<Args>()))>...>;
-                using optimized_route = route_optimizer<valve_type>;
-                return optimized_route::convert(*self(), valvify(stl::forward<Args>(nexts))...);
+                using valve_type = Templ<Self, T..., valvified_type<Args>...>;
+                return valve_type{*self(), valvify(stl::forward<Args>(nexts))...};
             }
         }
 
@@ -552,18 +470,16 @@ namespace webpp::http {
         // Attention: This means we will be calling `valvify` multiple times for each element
         template <template <typename...> typename Templ, typename... T, typename... TupT>
         [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
-            using valve_type = Templ<T..., stl::remove_cvref_t<decltype(valvify(stl::declval<TupT>()))>...>;
-            using optimized_route = route_optimizer<valve_type>;
+            using valve_type = Templ<T..., valvified_type<TupT>...>;
             return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
-                return optimized_route::convert(valvify(stl::get<I>(nexts))...);
+                return valve_type{valvify(stl::get<I>(nexts))...};
             })(stl::index_sequence_for<TupT...>{});
         }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_self(Args&&... nexts) const {
-            using valve_type = Templ<T..., stl::remove_cvref_t<decltype(valvify(stl::declval<Args>()))>...>;
-            using optimized_route = route_optimizer<valve_type>;
-            return optimized_route::convert(valvify(stl::forward<Args>(nexts))...);
+            using valve_type = Templ<T..., valvified_type<Args>...>;
+            return valve_type{valvify(stl::forward<Args>(nexts))...};
         }
     };
 

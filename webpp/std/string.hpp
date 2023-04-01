@@ -49,21 +49,22 @@ namespace webpp::istl {
     } // namespace details::string
 
     template <typename StrT, typename T>
-    concept StringifiableOf = !stl::is_void_v<StrT> && !istl::CharType<stl::remove_cvref_t<T>> &&
-                              requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of<T>> &&
-                              requires(stl::remove_cvref_t<T> str) {
-                                  stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
-                                  stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
-                                  requires requires { StrT{str}; } || requires {
-                                                                          str.data();
-                                                                          str.size();
-                                                                          StrT{str.data(), str.size()};
-                                                                      } || requires {
-                                                                               str.c_str();
-                                                                               str.size();
-                                                                               StrT{str.c_str(), str.size()};
-                                                                           };
-                              };
+    concept StringifiableOf = !
+    stl::is_void_v<StrT> && !istl::CharType<stl::remove_cvref_t<T>> &&
+      requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of<T>> &&
+      requires(stl::remove_cvref_t<T> str) {
+          stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
+          stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
+          requires requires { StrT{str}; } || requires {
+                                                  str.data();
+                                                  str.size();
+                                                  StrT{str.data(), str.size()};
+                                              } || requires {
+                                                       str.c_str();
+                                                       str.size();
+                                                       StrT{str.c_str(), str.size()};
+                                                   };
+      };
 
 
     template <template <typename...> typename StrType, typename T>

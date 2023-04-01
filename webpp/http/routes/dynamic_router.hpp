@@ -169,7 +169,7 @@ namespace webpp::http {
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
-            using callable_type  = typename route_optimizer<C>::type;
+            using callable_type  = stl::remove_cvref_t<C>;
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
             new_route_type route{stl::forward<C>(callable)};
