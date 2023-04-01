@@ -47,11 +47,6 @@ namespace webpp::http {
     template <typename Router, typename T>
     concept ValveRequiresSetup = requires(T callable, Router& router) { callable.setup(router); };
 
-    template <typename T>
-    concept Valvifiable = requires(T obj) {
-                              { valvify<T>(obj) } -> Valve;
-                          };
-
 
 
     template <istl::String StrT, typename Callable>
@@ -151,8 +146,16 @@ namespace webpp::http {
     }
 
 
+
     template <typename T>
     using valvified_type = stl::remove_cvref_t<decltype(valvify(stl::declval<T>()))>;
+
+
+    template <typename T>
+    concept Valvifiable = requires(T obj) {
+                              { valvify(obj) } -> Valve;
+                          };
+
 
     template <typename Callable, typename ContextType = context>
     struct valve_traits {
@@ -348,7 +351,19 @@ namespace webpp::http {
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
-            return rebind_next<postrouting_valve>(stl::forward<Callable>(callable));
+            if constexpr (istl::template_of_v<postrouting_valve, Self>) {
+                if constexpr (istl::template_of_v<postrouting_valve, callable_type>) {
+                    return rebind_self<postrouting_valve>(
+                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
+                } else {
+                    return rebind_self<postrouting_valve>(
+                      stl::tuple_cat(self()->as_tuple(),
+                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+                }
+            } else {
+                return rebind_self<forward_valve>(
+                  rebind_next<postrouting_valve>(stl::forward<Callable>(callable)));
+            }
         }
 
 
@@ -357,6 +372,7 @@ namespace webpp::http {
             using callable_type = stl::remove_cvref_t<Callable>;
             if constexpr (istl::template_of_v<prerouting_valve, Self>) {
                 if constexpr (istl::template_of_v<prerouting_valve, callable_type>) {
+                    // pre<..., pre<C>> = pre<..., C>
                     return rebind_self<prerouting_valve>(
                       stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
                 } else { // append the callable to the end of the prerouting valve
@@ -365,7 +381,8 @@ namespace webpp::http {
                                      stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
                 }
             } else {
-                return rebind_next<prerouting_valve>(stl::forward<Callable>(callable));
+                return rebind_next<forward_valve>(
+                  rebind_self<prerouting_valve>(stl::forward<Callable>(callable)));
             }
         }
 
@@ -457,11 +474,9 @@ namespace webpp::http {
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
             if constexpr (stl::is_void_v<Self>) {
-                using valve_type = Templ<T..., valvified_type<Args>...>;
-                return valve_type{valvify(stl::forward<Args>(nexts))...};
+                return rebind_self<Templ, T...>(stl::forward<Args>(nexts)...);
             } else {
-                using valve_type = Templ<Self, T..., valvified_type<Args>...>;
-                return valve_type{*self(), valvify(stl::forward<Args>(nexts))...};
+                return rebind_self<Templ, T...>(*self(), stl::forward<Args>(nexts)...);
             }
         }
 

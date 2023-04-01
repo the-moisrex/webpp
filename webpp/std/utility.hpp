@@ -36,13 +36,19 @@ namespace webpp::istl {
 
     namespace details {
         template <stl::size_t Start, stl::size_t End, stl::size_t... I>
-        struct make_index_range_maker : make_index_range_maker<Start + 1, End, I..., Start + 1> {};
+        struct make_index_range_maker : make_index_range_maker<Start + 1, End, I..., Start> {};
 
+        // last element is ignored
         template <stl::size_t End, stl::size_t... I>
         struct make_index_range_maker<End, End, I...> {
             using type = stl::index_sequence<I...>;
         };
 
+        // Start and End are the same, it's an empty range
+        template <stl::size_t Start>
+        struct make_index_range_maker<Start, Start> {
+            using type = stl::index_sequence<>;
+        };
     } // namespace details
 
     template <stl::size_t Start, stl::size_t End>

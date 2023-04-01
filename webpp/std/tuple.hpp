@@ -555,16 +555,16 @@ namespace webpp::istl {
 
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
-    [[nodiscard]] constexpr TupTempl<nth_parameter<I, T...>...>
+    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
     sub_tuple(TupTempl<T...>&& tup, stl::index_sequence<I...>) noexcept(
-      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter<I, T...>...>) {
+      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(stl::move(tup))...};
     }
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
-    [[nodiscard]] constexpr TupTempl<nth_parameter<I, T...>...>
+    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
     sub_tuple(TupTempl<T...> const& tup, stl::index_sequence<I...>) noexcept(
-      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter<I, T...>...>) {
+      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(tup)...};
     }
 
@@ -573,7 +573,7 @@ namespace webpp::istl {
               template <typename...>
               typename TupTempl,
               typename... T>
-    constexpr auto sub_tuple(TupTempl<T...> const& tup) noexcept(
+    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...> const& tup) noexcept(
       noexcept(sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
         return sub_tuple(tup, make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
     }
@@ -583,10 +583,46 @@ namespace webpp::istl {
               template <typename...>
               typename TupTempl,
               typename... T>
-    constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(noexcept(
+    [[nodiscard]] constexpr auto sub_tuple(TupTempl<T...>&& tup) noexcept(noexcept(
       sub_tuple(stl::move(tup), make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{}))) {
         return sub_tuple(stl::move(tup),
                          make_index_range<Start, (End < sizeof...(T) ? End : sizeof...(T))>{});
+    }
+
+
+    template <stl::size_t From, stl::size_t To, Tuple T>
+        requires(From == To)
+    [[nodiscard]] constexpr auto move_element_to(T&& tup) {
+        return stl::forward<T>(tup);
+    }
+
+    template <stl::size_t From, stl::size_t To, Tuple T>
+        requires(From < To)
+    [[nodiscard]] constexpr auto move_element_to(T&& tup) {
+        return stl::tuple_cat(sub_tuple<0, From>(tup),
+                              sub_tuple<From + 1, To>(tup),
+                              stl::make_tuple(get<From>(tup)),
+                              sub_tuple<To, stl::tuple_size_v<stl::remove_cvref_t<T>>>(tup));
+    }
+
+    template <stl::size_t From, stl::size_t To, Tuple T>
+        requires(From > To)
+    [[nodiscard]] constexpr auto move_element_to(T&& tup) {
+        return stl::tuple_cat(sub_tuple<0, To>(tup),
+                              stl::make_tuple(get<From>(tup)),
+                              sub_tuple<To, From>(tup),
+                              sub_tuple<From + 1, stl::tuple_size_v<stl::remove_cvref_t<T>>>(tup));
+    }
+
+    template <stl::size_t From, Tuple T>
+    [[nodiscard]] constexpr auto move_element_to_back(T&& tup) {
+        return move_element_to<From, stl::tuple_size_v<stl::remove_cvref_t<T>>>(stl::forward<T>(tup));
+    }
+
+
+    template <stl::size_t From, Tuple T>
+    [[nodiscard]] constexpr auto move_element_to_front(T&& tup) {
+        return move_element_to<From, 0>(stl::forward<T>(tup));
     }
 
 } // namespace webpp::istl
