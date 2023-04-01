@@ -625,6 +625,17 @@ namespace webpp::istl {
         return move_element_to<From, 0>(stl::forward<T>(tup));
     }
 
+
+
+    /**
+     * Re-Order the tuple's element based on the specified index_sequence
+     */
+    template <typename Tup, stl::size_t... I>
+    [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&& tup, stl::index_sequence<I...>) {
+        return stl::make_tuple(get<I>(tup)...);
+    }
+
+
 } // namespace webpp::istl
 
 namespace std {
