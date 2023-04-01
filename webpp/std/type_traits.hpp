@@ -1017,6 +1017,45 @@ namespace webpp::istl {
 
 
 
+    /**
+     * Get a list of all indexes that `Evaluator<T>::value` is true
+     */
+    template <template <typename> typename Evaluator,
+              stl::size_t From,
+              typename TypeList,
+              stl::size_t... Indexes>
+    struct indexes_if;
+
+    // No more
+    template <template <typename> typename Evaluator, stl::size_t... Indexes>
+    struct indexes_if<Evaluator, 0, type_list<>, Indexes...> {
+        using type = stl::index_sequence<Indexes...>;
+    };
+
+    // still looking
+    template <template <typename> typename Evaluator,
+              stl::size_t From,
+              typename F,
+              typename... T,
+              stl::size_t... Indexes>
+    struct indexes_if<Evaluator, From, type_list<F, T...>, Indexes...>
+      : indexes_if<Evaluator, From - 1, type_list<T...>, Indexes...> {};
+
+
+    // found another one
+    template <template <typename> typename Evaluator,
+              stl::size_t From,
+              typename F,
+              typename... T,
+              stl::size_t... Indexes>
+        requires(Evaluator<F>::value)
+    struct indexes_if<Evaluator, From, type_list<F, T...>, Indexes...>
+      : indexes_if<Evaluator, From - 1, type_list<T...>, Indexes..., From> {};
+
+
+    template <template <typename> typename Evaluator, typename... T>
+    using indexes_if_t = typename indexes_if<Evaluator, 0, T...>::type;
+
     template <typename...>
     struct index_of_type;
 
