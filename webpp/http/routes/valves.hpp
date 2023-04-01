@@ -360,51 +360,34 @@ namespace webpp::http {
     // };
 
 
-    // remove double forwarding (flatten the type)
-    template <typename C1, typename... C>
-    struct route_optimizer<forward_valve<forward_valve<C1>, C...>>
-      : route_optimizer<forward_valve<C1, C...>> {
-        using parent_type       = route_optimizer<forward_valve<C1, C...>>;
-        using return_type       = typename parent_type::type;
-        using sub_callable_type = forward_valve<C1>;
-
-        template <typename... N>
-            requires istl::cvref_as<C..., N...>
-        static constexpr return_type convert(istl::cvref_as<sub_callable_type> auto&& sub_callable,
-                                             N&&... next_callables) {
-            return parent_type::convert(
-              stl::tuple_cat(sub_callable.as_tuple(), stl::tuple<N...>{stl::forward<N>(next_callables)...}));
-        }
-    };
-
-    // forward<segment, ...> = segment<forward, ...>
-    // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're changing that here:
-    template <typename... C, typename... SC>
-    struct route_optimizer<forward_valve<segment_valve<SC...>, C...>>
-      : route_optimizer<segment_valve<SC..., typename route_optimizer<forward_valve<C...>>::type>> {
-        using next_t       = route_optimizer<forward_valve<C...>>;
-        using next_type    = typename next_t::type;
-        using out_seg_type = segment_valve<SC..., next_type>;
-        using parent_type  = route_optimizer<out_seg_type>;
-        using return_type  = typename parent_type::type;
-        using seg_type     = segment_valve<SC...>;
-
-        template <istl::cvref_as<seg_type> SegT, typename NewCallable>
-        static constexpr return_type convert(SegT&& seg, NewCallable&& next) {
-            return parent_type::convert(
-              stl::tuple_cat(seg.as_tuple(),
-                             stl::forward_as_tuple(next_t::convert(stl::forward<NewCallable>(next)))));
-        }
-    };
-
-
-
 
     template <typename Self = void>
     struct valve {
+
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
-            return rebind_next<forward_valve>(stl::forward<Callable>(callable));
+            using callable_type = stl::remove_cvref_t<Callable>;
+            if constexpr (istl::template_of_v<forward_valve, Self>) {
+                if constexpr (istl::template_of_v<forward_valve, callable_type>) {
+                    // Prevent double forwarding (flatten the type):
+                    //   forward_valve<C2..., forward_valve<C...>>
+                    return rebind_self<forward_valve>(
+                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
+                } else { // append the segment
+                    return rebind_self<forward_valve>(
+                      stl::tuple_cat(self()->as_tuple(),
+                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+                }
+            } else if constexpr (istl::template_of_v<segment_valve, Self>) {
+                // forward<segment, ...> = segment<forward, ...>
+                // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
+                // changing that here:
+                return rebind_self<segment_valve>(
+                  stl::tuple_cat(self()->as_tuple(),
+                                 stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+            } else {
+                return rebind_next<forward_valve>(stl::forward<Callable>(callable));
+            }
         }
 
         template <typename Callable>
@@ -477,7 +460,7 @@ namespace webpp::http {
                 } else { // append the segment
                     return rebind_self<segment_valve>(
                       stl::tuple_cat(self()->as_tuple(),
-                                     stl::forward_as_tuple<CallableSegment>(inp_segment)));
+                                     stl::make_tuple(valvify(stl::forward<CallableSegment>(inp_segment)))));
                 }
             } else {
                 return rebind_next<segment_valve>(stl::forward<CallableSegment>(inp_segment));
@@ -495,9 +478,10 @@ namespace webpp::http {
                     return rebind_self<segment_valve>(
                       stl::tuple_cat(self()->as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
                 } else { // append the segment
-                    return rebind_self<segment_valve>(stl::tuple_cat(self()->as_tuple(),
-                                                                     stl::forward_as_tuple<SegT>(inp_segment),
-                                                                     stl::make_tuple(endpath)));
+                    return rebind_self<segment_valve>(
+                      stl::tuple_cat(self()->as_tuple(),
+                                     stl::make_tuple(valvify(stl::forward<SegT>(inp_segment))),
+                                     stl::make_tuple(endpath)));
                 }
             } else {
                 return rebind_next<segment_valve>(stl::forward<SegT>(inp_segment), endpath);
