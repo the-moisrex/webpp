@@ -54,8 +54,8 @@ namespace webpp::http {
 
 
 
-    template <typename Callable>
-    static constexpr void valve_to_string(istl::String auto& out, Callable& func) {
+    template <istl::String StrT, typename Callable>
+    static constexpr void valve_to_string(StrT& out, Callable& func) {
         using mem_traits = istl::member_function_pointer_traits<Callable>;
         if constexpr (istl::StringViewifiable<Callable>) {
             out.append(" \"");
@@ -70,7 +70,10 @@ namespace webpp::http {
             out.append(istl::type_name<Callable>());
         } else {
             out.append(" ");
-            out.append(istl::type_name<Callable>());
+            StrT name{istl::type_name<Callable>(), out.get_allocator()};
+            istl::replace_all(name, "webpp::http::", "");
+            istl::replace_all(name, "webpp::", "");
+            out.append(name);
         }
     }
 
