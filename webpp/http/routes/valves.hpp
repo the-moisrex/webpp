@@ -91,6 +91,8 @@ namespace webpp::http {
     struct member_function_callable;
     template <typename ManglerType, typename NextCallable>
     struct mangler_valve;
+    template <typename Pres, typename Posts, typename Manglers, typename Routes>
+    struct valves_group;
 
 
     template <typename... PreRoutes>
@@ -174,8 +176,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type
-          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type call(C&&           callable,
+                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
@@ -1056,6 +1058,87 @@ namespace webpp::http {
     };
 
 
+    template <typename... Pres, typename... Posts, typename... Manglers, typename... Routes>
+    struct valves_group<prerouting_valve<Pres...>,
+                        postrouting_valve<Posts...>,
+                        mangler_valve<Manglers...>,
+                        forward_valve<Routes...>> : valve<valves_group<prerouting_valve<Pres...>,
+                                                                       postrouting_valve<Posts...>,
+                                                                       mangler_valve<Manglers...>,
+                                                                       forward_valve<Routes...>>> {
+
+        using valve_type   = valve<valves_group>;
+        using pre_type     = prerouting_valve<Pres...>;
+        using post_type    = postrouting_valve<Posts...>;
+        using mangler_type = mangler_valve<Manglers...>;
+        using route_type   = forward_valve<Routes...>;
+
+      private:
+        pre_type     pres;
+        post_type    posts;
+        mangler_type manglers;
+        route_type   routes;
+
+      public:
+        template <istl::cvref_as<pre_type>     PreT,
+                  istl::cvref_as<post_type>    PostT,
+                  istl::cvref_as<mangler_type> ManglerT,
+                  istl::cvref_as<route_type>   RouteT>
+        constexpr valves_group(PreT&& inp_pre, PostT&& inp_post, ManglerT&& inp_mangler, RouteT&& inp_route)
+          : pres{stl::forward<PreT>(inp_pre)},
+            posts{stl::forward<PostT>(inp_post)},
+            manglers{stl::forward<ManglerT>(inp_mangler)},
+            routes{stl::forward<RouteT>(inp_route)} {}
+
+        constexpr valves_group(valves_group const&)                = default;
+        constexpr valves_group(valves_group&&) noexcept            = default;
+        constexpr valves_group& operator=(valves_group const&)     = default;
+        constexpr valves_group& operator=(valves_group&&) noexcept = default;
+        constexpr ~valves_group()                                  = default;
+
+
+        using valve_type::operator();
+
+        template <Traits TraitsType>
+        constexpr void operator()(basic_context<TraitsType>& ctx) {
+            using context_type   = basic_context<TraitsType>;
+            using pre_traits     = valve_traits<pre_type, context_type>;
+            using post_traits    = valve_traits<post_type, context_type>;
+            using mangler_traits = valve_traits<mangler_type, context_type>;
+            using route_traits   = valve_traits<route_type, context_type>;
+            pre_traits::call_set(pres, ctx);
+            route_traits::call_set(routes, ctx);
+            post_traits::call_set(posts, ctx);
+        }
+
+
+        template <typename RouterT>
+        constexpr void setup(RouterT& router) {
+            if constexpr (ValveRequiresSetup<RouterT, pre_type>) {
+                pres.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, mangler_type>) {
+                manglers.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, route_type>) {
+                routes.setup(router);
+            }
+            if constexpr (ValveRequiresSetup<RouterT, post_type>) {
+                posts.setup(router);
+            }
+        }
+
+
+        constexpr void to_string(istl::String auto& out) const {
+            out.append("- (");
+            valve_to_string(out, pres);
+            out.append(")");
+            valve_to_string(out, routes);
+            out.append("+ (");
+            valve_to_string(out, posts);
+            out.append(")");
+        }
+    };
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_ROUTER_VALVES_HPP
