@@ -1,14 +1,13 @@
 // Created by moisrex on 4/29/20.
 
-#ifndef WEBPP_TPATH_H
-#define WEBPP_TPATH_H
+#ifndef WEBPP_ROUTES_TEMPLATED_PATH_HPP
+#define WEBPP_ROUTES_TEMPLATED_PATH_HPP
 
+#include "../../std/string_view.hpp"
 #include "route.hpp"
 #include "webpp/uri/uri_string.hpp"
 
 #include <cassert>
-#include <cstddef> // for std::size_t
-#include <string_view>
 
 
 namespace webpp::http {
@@ -240,4 +239,4 @@ namespace webpp::http {
     //
 } // namespace webpp::http
 
-#endif // WEBPP_TPATH_H
+#endif // WEBPP_ROUTES_TEMPLATED_PATH_HPP
