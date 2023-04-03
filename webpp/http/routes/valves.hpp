@@ -112,7 +112,7 @@ namespace webpp::http {
         }
 
         constexpr void to_string(istl::String auto& out) const {
-            out.append(" / endpath");
+            out.append(" endpath");
         }
     } endpath;
 
@@ -641,7 +641,7 @@ namespace webpp::http {
         constexpr void to_string(istl::String auto& out) const {
             stl::apply(
               [&out]<typename... T>(T&&... funcs) constexpr {
-                  ((out.append(" >>"), valve_to_string(out, funcs)), ...);
+                  ((out.append(" >> ("), valve_to_string(out, funcs), out.append(" )")), ...);
               },
               as_tuple());
         }
@@ -951,9 +951,7 @@ namespace webpp::http {
             stl::apply(
               [&out]<typename... T>(T&&... callables) constexpr {
                   (([&out](auto&& callable) constexpr {
-                       if constexpr (istl::StringViewifiable<T>) {
-                           out.append(" /");
-                       }
+                       out.append(" /");
                        valve_to_string(out, callable);
                    })(callables),
                    ...);

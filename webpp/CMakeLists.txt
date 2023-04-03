@@ -124,6 +124,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/http/routes/router.hpp
         ${LIB_INCLUDE_DIR}/http/routes/dynamic_router.hpp
+        ${LIB_INCLUDE_DIR}/http/routes/dynamic_route.hpp
         ${LIB_INCLUDE_DIR}/http/routes/valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/route.hpp
         ${LIB_INCLUDE_DIR}/http/routes/methods.hpp
