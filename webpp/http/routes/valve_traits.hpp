@@ -134,8 +134,8 @@ namespace webpp::http {
 
     template <typename T>
     concept Valvifiable = requires(T obj) {
-        { valvify(obj) } -> Valve;
-    };
+                              { valvify(obj) } -> Valve;
+                          };
 
 
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
@@ -155,8 +155,8 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type call(C&&           callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type
+          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 

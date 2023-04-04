@@ -276,7 +276,6 @@ namespace webpp::http {
 
 
         template <typename T>
-            requires(HTTPDeserializableBody<T, final_response>)
         constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
             if constexpr (requires {

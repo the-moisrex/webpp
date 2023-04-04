@@ -37,7 +37,7 @@ namespace webpp::http {
       public:
         constexpr response_body(response_body const&)                = default;
         constexpr response_body(response_body&&) noexcept            = default;
-        constexpr response_body& operator=(response_body const&)     = delete; // todo
+        constexpr response_body& operator=(response_body const&)     = default;
         constexpr response_body& operator=(response_body&&) noexcept = default;
         constexpr ~response_body() noexcept                          = default;
 

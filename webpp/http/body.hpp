@@ -557,6 +557,7 @@ namespace webpp::http {
         }
 
         template <typename T>
+            requires(!istl::cvref_as<body_writer>)
         constexpr body_writer& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
