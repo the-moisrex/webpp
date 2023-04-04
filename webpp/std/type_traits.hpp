@@ -571,9 +571,9 @@ namespace webpp::istl {
      */
     template <typename T, template <typename> typename Replacer>
         requires requires {
-                     typename Replacer<void>::type;
-                     { Replacer<void>::value };
-                 }
+            typename Replacer<void>::type;
+            { Replacer<void>::value };
+        }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 
@@ -850,6 +850,47 @@ namespace webpp::istl {
                   typename... Replacements>
         using put_if =
           stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<T..., Replacements...>>;
+    };
+
+    template <>
+    struct last_type<> {
+
+        // last type
+        using type = void;
+
+        // all except last type (remove the last type)
+        template <template <typename...> typename Tt>
+        using remove = Tt<>;
+
+        // put the last type first, and the rest is the rest
+        template <template <typename...> typename Tt>
+        using rotate = Tt<>;
+
+        // remove the last types ao there's only N types in the tuple
+        template <template <typename...> typename Tt, stl::size_t>
+        using remove_limit = Tt<>;
+
+        // remove the last type if
+        template <template <typename...> typename Tt, template <typename> typename>
+        using remove_if = Tt<>;
+
+        template <template <typename...> typename Tt, typename... Replacements>
+        using replace = Tt<Replacements...>;
+
+        // replace last type if
+        template <template <typename...> typename Tt,
+                  template <typename>
+                  typename Condition,
+                  typename... Replacements>
+        using replace_if = stl::conditional_t<Condition<type>::value, replace<Tt, Replacements...>, Tt<>>;
+
+
+        // replace if exists, add if it doesn't
+        template <template <typename...> typename Tt,
+                  template <typename>
+                  typename Condition,
+                  typename... Replacements>
+        using put_if = Tt<Replacements...>;
     };
 
     template <typename... T>

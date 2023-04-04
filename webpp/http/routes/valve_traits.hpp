@@ -35,7 +35,7 @@ namespace webpp::http {
     struct segment_valve;
     template <typename MemPtr>
     struct member_function_callable;
-    template <typename ...ManglerTypes>
+    template <typename... ManglerTypes>
     struct mangler_valve;
     template <typename Pres, typename Posts, typename Manglers, typename Routes>
     struct valves_group;
@@ -253,6 +253,16 @@ namespace webpp::http {
 
 
 
+
+    template <typename T>
+    struct routes_type_of_valve {
+        using type = T;
+    };
+
+    template <typename Pres, typename Posts, typename Manglers, typename Routes>
+    struct routes_type_of_valve<valves_group<Pres, Posts, Manglers, Routes>> {
+        using type = Routes;
+    };
 
 
 } // namespace webpp::http

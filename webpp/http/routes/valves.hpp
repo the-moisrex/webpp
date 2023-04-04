@@ -19,26 +19,32 @@ namespace webpp::http {
         template <template <typename...> typename T>
         static constexpr bool is_self_of = istl::template_of_v<T, Self>;
 
+        using routes_type = typename routes_type_of_valve<Self>::type;
+
+        template <template <typename...> typename T>
+        static constexpr bool is_routes_of = istl::template_of_v<T, routes_type>;
+
+
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
-            if constexpr (is_self_of<forward_valve>) {
+            if constexpr (is_routes_of<forward_valve>) {
                 if constexpr (istl::template_of_v<forward_valve, callable_type>) {
                     // Prevent double forwarding (flatten the type):
                     //   forward_valve<C2..., forward_valve<C...>>
                     return rebind_self<forward_valve>(
-                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
+                      stl::tuple_cat(routes()->as_tuple(), callable.as_tuple()));
                 } else { // append the segment
                     return rebind_self<forward_valve>(
-                      stl::tuple_cat(self()->as_tuple(),
+                      stl::tuple_cat(routes()->as_tuple(),
                                      stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
                 }
-            } else if constexpr (is_self_of<segment_valve>) {
+            } else if constexpr (is_routes_of<segment_valve>) {
                 // forward<segment, ...> = segment<forward, ...>
                 // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
                 // changing that here:
                 return rebind_self<segment_valve>(
-                  stl::tuple_cat(self()->as_tuple(),
+                  stl::tuple_cat(routes()->as_tuple(),
                                  stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
             } else {
                 return rebind_next<forward_valve>(stl::forward<Callable>(callable));
@@ -49,11 +55,11 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator&&([[maybe_unused]] Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C && Negative == ?
-            if constexpr (stl::same_as<Self, callable_type>) {                   // C && C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C && C = C
                 return *this;
-            } else if constexpr (stl::same_as<not_valve<Self>, callable_type>) { // C && !C == -C
-                return rebind_self<negative_valve>(*self());
-            } else if constexpr (stl::same_as<Self, not_valve<callable_type>>) { // !C && C == -C
+            } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C && !C == -C
+                return rebind_self<negative_valve>(*routes());
+            } else if constexpr (stl::same_as<routes_type, not_valve<callable_type>>) { // !C && C == -C
                 return rebind_self<negative_valve>(stl::forward<Callable>(callable));
             } else {
                 return rebind_next<and_valve>(stl::forward<Callable>(callable));
@@ -65,11 +71,11 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C || Positive == ?
-            if constexpr (stl::same_as<Self, callable_type>) {                   // C || C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C || C = C
                 return *this;
-            } else if constexpr (stl::same_as<not_valve<Self>, callable_type>) { // C || !C == +C
-                return rebind_self<positive_valve>(*self());
-            } else if constexpr (stl::same_as<Self, not_valve<callable_type>>) { // !C || C == -C
+            } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C || !C == +C
+                return rebind_self<positive_valve>(*routes());
+            } else if constexpr (stl::same_as<routes_type, not_valve<callable_type>>) { // !C || C == -C
                 return rebind_self<positive_valve>(stl::forward<Callable>(callable));
             } else {
                 return rebind_next<or_valve>(stl::forward<Callable>(callable));
@@ -78,12 +84,13 @@ namespace webpp::http {
 
 
         [[nodiscard]] constexpr auto operator!() const {
-            if constexpr (istl::remove_template_of_v<not_valve, Self>) {
+            if constexpr (istl::remove_template_of_v<not_valve, routes_type>) {
                 // This only checks against the default traits'-type's return type
-                if constexpr (stl::same_as<bool, typename valve_traits<Self>::return_type>) { // !!C == C
-                    return self()->unwrap();
-                } else {                                                                      // !!C = +C
-                    return rebind_self<positive_valve>(self()->unwrap());
+                if constexpr (stl::same_as<bool,
+                                           typename valve_traits<routes_type>::return_type>) { // !!C == C
+                    return routes()->unwrap();
+                } else {                                                                       // !!C = +C
+                    return rebind_self<positive_valve>(routes()->unwrap());
                 }
             } else {
                 return rebind_next<not_valve>();
@@ -114,15 +121,15 @@ namespace webpp::http {
         template <typename CallableSegment>
         [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
             using seg_type = stl::remove_cvref_t<CallableSegment>;
-            if constexpr (is_self_of<segment_valve>) {
+            if constexpr (is_routes_of<segment_valve>) {
                 if constexpr (istl::template_of_v<segment_valve, seg_type>) {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(self()->as_tuple(), inp_segment.as_tuple()));
+                      stl::tuple_cat(routes()->as_tuple(), inp_segment.as_tuple()));
                 } else { // append the segment
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(self()->as_tuple(),
+                      stl::tuple_cat(routes()->as_tuple(),
                                      stl::make_tuple(valvify(stl::forward<CallableSegment>(inp_segment)))));
                 }
             } else {
@@ -134,15 +141,15 @@ namespace webpp::http {
         template <typename SegT>
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
             using seg_type = stl::remove_cvref_t<SegT>;
-            if constexpr (is_self_of<segment_valve>) {
+            if constexpr (is_routes_of<segment_valve>) {
                 if constexpr (istl::template_of_v<segment_valve, seg_type>) {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(self()->as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
+                      stl::tuple_cat(routes()->as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
                 } else { // append the segment
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(self()->as_tuple(),
+                      stl::tuple_cat(routes()->as_tuple(),
                                      stl::make_tuple(valvify(stl::forward<SegT>(inp_segment))),
                                      stl::make_tuple(endpath)));
                 }
@@ -172,43 +179,44 @@ namespace webpp::http {
 
 
       private:
-        [[nodiscard]] constexpr Self const* self() const noexcept
+        [[nodiscard]] constexpr auto const* self() const noexcept
             requires(!stl::is_void_v<Self>)
         {
             return static_cast<Self const*>(this);
         }
 
-        [[nodiscard]] constexpr Self* self() noexcept
+        [[nodiscard]] constexpr auto* self() noexcept
             requires(!stl::is_void_v<Self>)
         {
             return static_cast<Self*>(this);
         }
 
-        template <typename T>
-        using is_prerouting = istl::template_of<prerouting_valve, T>;
+        [[nodiscard]] constexpr auto* routes() noexcept
+            requires(!stl::is_void_v<Self>)
+        {
+            if constexpr (is_self_of<valves_group>) {
+                return &self()->get_routes();
+            } else {
+                return self();
+            }
+        }
 
-        template <typename T>
-        using is_postrouting = istl::template_of<postrouting_valve, T>;
-
-        template <typename T>
-        using is_normal_valve = stl::negation<stl::disjunction<is_prerouting<T>, is_postrouting<T>>>;
-
-        // template <template <typename...> typename Templ, typename... T, Mangler Arg>
-        //     requires(!stl::is_void_v<Self>)
-        // [[nodiscard]] constexpr auto rebind_next(Arg&& next) const noexcept {
-        //     using mangler_type    = valvified_type<Arg>;
-        //     using templ_type      = Templ<Self, T...>;
-        //     using valve_type      = mangler_valve<templ_type, mangler_type>;
-        //     using optimized_route = route_optimizer<valve_type>;
-        //     return optimized_route::convert(*self(), valvify<Arg>(stl::forward<Arg>(next)));
-        // }
+        [[nodiscard]] constexpr auto const* routes() const noexcept
+            requires(!stl::is_void_v<Self>)
+        {
+            if constexpr (is_self_of<valves_group>) {
+                return &self()->get_routes();
+            } else {
+                return self();
+            }
+        }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
             if constexpr (stl::is_void_v<Self>) {
                 return rebind_self<Templ, T...>(stl::forward<Args>(nexts)...);
             } else {
-                return rebind_self<Templ, T...>(*self(), stl::forward<Args>(nexts)...);
+                return rebind_self<Templ, T...>(*routes(), stl::forward<Args>(nexts)...);
             }
         }
 
@@ -218,15 +226,26 @@ namespace webpp::http {
         template <template <typename...> typename Templ, typename... T, typename... TupT>
         [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
             using valve_type = Templ<T..., valvified_type<TupT>...>;
-            return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
-                return valve_type{valvify(stl::get<I>(nexts))...};
-            })(stl::index_sequence_for<TupT...>{});
+            if constexpr (is_self_of<valves_group>) {
+                return self()->replace_route(
+                  ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
+                      return valve_type{valvify(stl::get<I>(nexts))...};
+                  })(stl::index_sequence_for<TupT...>{}));
+            } else {
+                return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
+                    return valve_type{valvify(stl::get<I>(nexts))...};
+                })(stl::index_sequence_for<TupT...>{});
+            }
         }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_self(Args&&... nexts) const {
             using valve_type = Templ<T..., valvified_type<Args>...>;
-            return valve_type{valvify(stl::forward<Args>(nexts))...};
+            if constexpr (is_self_of<valves_group>) {
+                return self()->replace_route(valve_type{valvify(stl::forward<Args>(nexts))...});
+            } else {
+                return valve_type{valvify(stl::forward<Args>(nexts))...};
+            }
         }
     };
 

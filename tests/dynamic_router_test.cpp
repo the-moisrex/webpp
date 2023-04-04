@@ -233,7 +233,8 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
         // rot13 should already be run, so we should get a clear "page" as the first segment
         EXPECT_EQ("page", *ctx.path_traverser())
           << "Segment: " << *ctx.path_traverser() << "\n"
-          << "Should be called before checking the paths, it's a pre-routing.\nNum: " << num;
+          << "Should be called before checking the paths, it's a pre-routing.\nNum: " << num
+          << "\nRouter: " << router.to_string();
         ++num;
     };
 
@@ -262,7 +263,7 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
     };
 
     auto const add_num = [&](context& ctx) {
-        EXPECT_TRUE(ctx.path_traverser().at_end()) << num;
+        EXPECT_TRUE(ctx.path_traverser().at_end()) << num << "\nRouter: " << router.to_string();
         EXPECT_GE(num, 10);
         ++num;
     };
@@ -295,7 +296,7 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
-    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>");
+    EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>") << router.to_string();
 }
 
 
