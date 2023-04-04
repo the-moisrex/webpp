@@ -180,20 +180,20 @@ namespace webpp::http {
 
 
 
-    template <typename... Pres, typename... Posts, typename... Manglers, typename... Routes>
+    template <typename... Pres, typename... Posts, typename... Manglers, typename Routes>
     struct valves_group<prerouting_valve<Pres...>,
                         postrouting_valve<Posts...>,
                         mangler_valve<Manglers...>,
-                        forward_valve<Routes...>> : valve<valves_group<prerouting_valve<Pres...>,
-                                                                       postrouting_valve<Posts...>,
-                                                                       mangler_valve<Manglers...>,
-                                                                       forward_valve<Routes...>>> {
+                        Routes> : valve<valves_group<prerouting_valve<Pres...>,
+                                                     postrouting_valve<Posts...>,
+                                                     mangler_valve<Manglers...>,
+                                                     Routes>> {
 
         using valve_type   = valve<valves_group>;
         using pre_type     = prerouting_valve<Pres...>;
         using post_type    = postrouting_valve<Posts...>;
         using mangler_type = mangler_valve<Manglers...>;
-        using route_type   = forward_valve<Routes...>;
+        using route_type   = Routes;
 
       private:
         [[no_unique_address]] pre_type     pres{};
@@ -242,9 +242,13 @@ namespace webpp::http {
             using post_traits    = valve_traits<post_type, context_type>;
             using mangler_traits = valve_traits<mangler_type, context_type>;
             using route_traits   = valve_traits<route_type, context_type>;
-            pre_traits::call_set(pres, ctx);
+            if constexpr (sizeof...(Pres) > 0) {
+                pre_traits::call_set(pres, ctx);
+            }
             route_traits::call_set(routes, ctx);
-            post_traits::call_set(posts, ctx);
+            if constexpr (sizeof...(Posts) > 0) {
+                post_traits::call_set(posts, ctx);
+            }
         }
 
 
@@ -262,6 +266,14 @@ namespace webpp::http {
             if constexpr (ValveRequiresSetup<RouterT, post_type>) {
                 posts.setup(router);
             }
+        }
+
+        [[nodiscard]] constexpr route_type const& get_routes() const noexcept {
+            return routes;
+        }
+
+        [[nodiscard]] constexpr route_type& get_routes() noexcept {
+            return routes;
         }
 
         template <typename Callable>
@@ -288,29 +300,15 @@ namespace webpp::http {
               routes};
         }
 
-        template <typename Callable>
-        [[nodiscard]] constexpr auto append_route(Callable&& callable) const {
-            using callable_type  = stl::remove_cvref_t<Callable>;
-            using new_route_type = forward_valve<Routes..., callable_type>;
-            return valves_group<pre_type, post_type, mangler_type, new_route_type>{
-              pres,
-              posts,
-              manglers,
-              new_route_type{
-                stl::tuple_cat(routes.as_tuple(), stl::make_tuple(stl::forward<Callable>(callable)))}};
-        }
 
         template <typename Callable>
-        [[nodiscard]] constexpr auto rebind_last_route(Callable&& callable) const {
+        [[nodiscard]] constexpr auto replace_route(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
-            using new_route_type =
-              typename istl::last_type<Routes...>::template replace<forward_valve, callable_type>;
-            return valves_group<pre_type, post_type, mangler_type, new_route_type>{
+            return valves_group<pre_type, post_type, mangler_type, callable_type>{
               pres,
               posts,
               manglers,
-              new_route_type{stl::tuple_cat(istl::sub_tuple<0, sizeof...(Routes) - 1>(routes.as_tuple()),
-                                            stl::make_tuple(stl::forward<Callable>(callable)))}};
+              stl::forward<Callable>(callable)};
         }
 
 
@@ -325,9 +323,7 @@ namespace webpp::http {
                 valve_to_string(out, manglers);
                 out.append(")");
             }
-            if constexpr (sizeof...(Routes) > 0) {
-                valve_to_string(out, routes);
-            }
+            valve_to_string(out, routes);
             if constexpr (sizeof...(Posts) > 0) {
                 out.append(" + (");
                 valve_to_string(out, posts);
@@ -349,9 +345,8 @@ namespace webpp::http {
     valves_group(mangler_valve<T...>)
       -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, forward_valve<>>;
 
-    template <typename... T>
-    valves_group(forward_valve<T...>)
-      -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<>, forward_valve<T...>>;
+    template <typename T>
+    valves_group(T&&) -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<>, T>;
 
     template <typename... T>
     postrouting_valve(T&&...) -> postrouting_valve<T...>;
