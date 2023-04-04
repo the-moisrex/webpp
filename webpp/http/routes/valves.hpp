@@ -16,10 +16,13 @@ namespace webpp::http {
     template <typename Self>
     struct valve {
 
+        template <template <typename...> typename T>
+        static constexpr bool is_self_of = istl::template_of_v<T, Self>;
+
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
-            if constexpr (istl::template_of_v<forward_valve, Self>) {
+            if constexpr (is_self_of<forward_valve>) {
                 if constexpr (istl::template_of_v<forward_valve, callable_type>) {
                     // Prevent double forwarding (flatten the type):
                     //   forward_valve<C2..., forward_valve<C...>>
@@ -30,7 +33,7 @@ namespace webpp::http {
                       stl::tuple_cat(self()->as_tuple(),
                                      stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
                 }
-            } else if constexpr (istl::template_of_v<segment_valve, Self>) {
+            } else if constexpr (is_self_of<segment_valve>) {
                 // forward<segment, ...> = segment<forward, ...>
                 // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
                 // changing that here:
@@ -90,39 +93,20 @@ namespace webpp::http {
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
-            using callable_type = stl::remove_cvref_t<Callable>;
-            if constexpr (istl::template_of_v<postrouting_valve, Self>) {
-                if constexpr (istl::template_of_v<postrouting_valve, callable_type>) {
-                    return rebind_self<postrouting_valve>(
-                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
-                } else {
-                    return rebind_self<postrouting_valve>(
-                      stl::tuple_cat(self()->as_tuple(),
-                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
-                }
+            if constexpr (is_self_of<valves_group>) {
+                return self()->append_postroute(valvify(stl::forward<Callable>(callable)));
             } else {
-                return rebind_self<forward_valve>(
-                  rebind_next<postrouting_valve>(stl::forward<Callable>(callable)));
+                return valves_group{postrouting_valve{valvify(stl::forward<Callable>(callable))}};
             }
         }
 
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
-            using callable_type = stl::remove_cvref_t<Callable>;
-            if constexpr (istl::template_of_v<prerouting_valve, Self>) {
-                if constexpr (istl::template_of_v<prerouting_valve, callable_type>) {
-                    // pre<..., pre<C>> = pre<..., C>
-                    return rebind_self<prerouting_valve>(
-                      stl::tuple_cat(self()->as_tuple(), callable.as_tuple()));
-                } else { // append the callable to the end of the prerouting valve
-                    return rebind_self<prerouting_valve>(
-                      stl::tuple_cat(self()->as_tuple(),
-                                     stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
-                }
+            if constexpr (is_self_of<valves_group>) {
+                return self()->append_preroute(valvify(stl::forward<Callable>(callable)));
             } else {
-                return rebind_next<forward_valve>(
-                  rebind_self<prerouting_valve>(stl::forward<Callable>(callable)));
+                return valves_group{prerouting_valve{valvify(stl::forward<Callable>(callable))}};
             }
         }
 
@@ -130,7 +114,7 @@ namespace webpp::http {
         template <typename CallableSegment>
         [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
             using seg_type = stl::remove_cvref_t<CallableSegment>;
-            if constexpr (istl::template_of_v<segment_valve, Self>) {
+            if constexpr (is_self_of<segment_valve>) {
                 if constexpr (istl::template_of_v<segment_valve, seg_type>) {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
@@ -150,7 +134,7 @@ namespace webpp::http {
         template <typename SegT>
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
             using seg_type = stl::remove_cvref_t<SegT>;
-            if constexpr (istl::template_of_v<segment_valve, Self>) {
+            if constexpr (is_self_of<segment_valve>) {
                 if constexpr (istl::template_of_v<segment_valve, seg_type>) {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
@@ -229,26 +213,14 @@ namespace webpp::http {
         }
 
 
-        struct sorted_tag {};
-
         // We get a tuple<>, but we want to pass all the individual elements to `valvify`
         // Attention: This means we will be calling `valvify` multiple times for each element
         template <template <typename...> typename Templ, typename... T, typename... TupT>
-        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts, sorted_tag) const {
+        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
             using valve_type = Templ<T..., valvified_type<TupT>...>;
             return ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
                 return valve_type{valvify(stl::get<I>(nexts))...};
             })(stl::index_sequence_for<TupT...>{});
-        }
-
-        template <template <typename...> typename Templ, typename... T, typename... TupT>
-        [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
-            auto sorted = istl::tuple_reorder_elements(
-              nexts,
-              istl::integer_sequence_cat_t<istl::indexes_if<is_prerouting, TupT...>,
-                                           istl::indexes_if<is_normal_valve, TupT...>,
-                                           istl::indexes_if<is_postrouting, TupT...>>{});
-            return rebind_self<Templ, T...>(stl::move(sorted), sorted_tag{});
         }
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
