@@ -8,6 +8,10 @@
 #include "../webpp/http/response_body.hpp"
 #include "../webpp/traits/enable_traits.hpp"
 #include "common_pch.hpp"
+#include "extensions/extension.hpp"
+#include "traits/default_traits.hpp"
+
+#include <string>
 
 
 using namespace webpp;
@@ -34,6 +38,43 @@ TEST(HTTPResponseTest, Type) {
     //    EXPECT_TRUE(five);
     EXPECT_STREQ("Hello", return_callback().body.as<const char*>());
 }
+
+TEST(Response, VariantCopyAssignment) {
+    using data_type = std::variant<std::monostate, std::string>;
+    data_type one;
+    data_type two;
+    one = "hello world";
+    two = std::monostate{};
+    two = one;
+    EXPECT_EQ(one, two);
+    EXPECT_EQ(get<std::string>(two), "hello world");
+}
+
+TEST(Response, ResponseBodyCopyCtor) {
+    using body_type = response_body<default_dynamic_traits, empty_extension_pack>;
+    enable_owner_traits<default_dynamic_traits> et;
+
+    body_type one{et};
+    one = "hello world";
+    EXPECT_EQ(as<std::string>(one), "hello world");
+    body_type two{one};
+    EXPECT_EQ(one, two);
+    EXPECT_EQ(as<std::string>(two), "hello world");
+}
+
+TEST(Response, ResponseBodyCopyAssignment) {
+    using body_type = response_body<default_dynamic_traits, empty_extension_pack>;
+    enable_owner_traits<default_dynamic_traits> et;
+
+    body_type one{et};
+    body_type two{et};
+    one = "hello world";
+    EXPECT_EQ(as<std::string>(one), "hello world");
+    two = one;
+    EXPECT_EQ(one, two);
+    EXPECT_EQ(as<std::string>(two), "hello world");
+}
+
 
 TEST(Response, Init) {
     enable_owner_traits<default_traits> et;

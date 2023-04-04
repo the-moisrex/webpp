@@ -55,7 +55,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator&&([[maybe_unused]] Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C && Negative == ?
-            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C && C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) { // C && C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C && !C == -C
                 return rebind_self<negative_valve>(*routes());
@@ -71,7 +71,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C || Positive == ?
-            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C || C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) { // C || C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C || !C == +C
                 return rebind_self<positive_valve>(*routes());
@@ -89,7 +89,7 @@ namespace webpp::http {
                 if constexpr (stl::same_as<bool,
                                            typename valve_traits<routes_type>::return_type>) { // !!C == C
                     return routes()->unwrap();
-                } else {                                                                       // !!C = +C
+                } else { // !!C = +C
                     return rebind_self<positive_valve>(routes()->unwrap());
                 }
             } else {
