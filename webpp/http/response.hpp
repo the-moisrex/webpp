@@ -308,9 +308,7 @@ namespace webpp::http {
 
         template <typename T>
         constexpr final_response& add(T&& obj) {
-            if constexpr (requires { elist_type::add(stl::forward<T>(obj)); }) {
-                elist_type::add(stl::forward<T>(obj));
-            } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
+            if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
                 serialize_response_body(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_response_body(stl::forward<T>(obj), this->body); }) {
                 serialize_response_body(stl::forward<T>(obj), this->body);
@@ -323,32 +321,19 @@ namespace webpp::http {
 
         template <typename T>
         constexpr final_response& set(T&& obj) {
-            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
-                elist_type::set(stl::forward<T>(obj));
-            } else {
-                this->body.clear();
-                add(stl::forward<T>(obj));
-            }
+            this->body.set(stl::forward<T>(obj));
             return *this;
         }
 
         template <typename T>
         constexpr final_response& operator=(T&& obj) {
-            if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
-                elist_type::operator=(stl::forward<T>(obj));
-            } else {
-                set(stl::forward<T>(obj));
-            }
+            set(stl::forward<T>(obj));
             return *this;
         }
 
         template <typename T>
         constexpr final_response& operator+=(T&& obj) {
-            if constexpr (requires { elist_type::operator+=(stl::forward<T>(obj)); }) {
-                elist_type::operator+=(stl::forward<T>(obj));
-            } else {
-                add(stl::forward<T>(obj));
-            }
+            add(stl::forward<T>(obj));
             return *this;
         }
 
@@ -419,12 +404,12 @@ namespace webpp::http {
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, basic_response>)
+            requires(!HTTPResponse<ET> && !istl::cvref_as<basic_response, ET>)
         constexpr basic_response(ET&& et) : final_response_type{stl::forward<ET>(et)} {}
 
 
         template <HTTPResponse ResT>
-            requires(!stl::same_as<stl::remove_cvref_t<ResT>, basic_response>)
+            requires(!istl::cvref_as<basic_response, ResT>)
         constexpr basic_response(ResT&& res) : final_response_type{stl::forward<ResT>(res)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

@@ -86,6 +86,7 @@ TEST(Response, Init) {
     EXPECT_EQ(std::string(res.body.as()), "");
     res2 << "Code";
     EXPECT_EQ(std::string(res2.body.as<std::string>()), "Code");
+    res2.body.seekg(0);
     res = res2.body;
     EXPECT_EQ(std::string(res.body.as<std::string>()), "Code");
 
@@ -127,10 +128,12 @@ TEST(Response, DynamicResponse) {
     response       res{et};
     response const res2{res};
     response       res3{et};
+    EXPECT_EQ(res, res2) << as<std::string>(res) << as<std::string>(res2);
+    EXPECT_EQ(res2, res3) << as<std::string>(res2) << as<std::string>(res3);
     res  = "string";
     res3 = "string";
     EXPECT_EQ(as<stl::string>(res), "string");
-    EXPECT_EQ(res, res2) << as<std::string>(res) << as<std::string>(res2);
+    EXPECT_EQ(as<stl::string>(res2), "");
+    EXPECT_EQ(as<stl::string>(res3), "string");
     EXPECT_EQ(res, res3) << as<std::string>(res) << as<std::string>(res3);
-    EXPECT_EQ(res2, res3) << as<std::string>(res2) << as<std::string>(res3);
 }
