@@ -103,7 +103,7 @@ namespace webpp::http {
             if constexpr (is_self_of<valves_group>) {
                 return self()->append_postroute(valvify(stl::forward<Callable>(callable)));
             } else {
-                return valves_group{postrouting_valve{valvify(stl::forward<Callable>(callable))}};
+                return valves_group{postrouting_valve{valvify(stl::forward<Callable>(callable))}, *routes()};
             }
         }
 
@@ -113,7 +113,7 @@ namespace webpp::http {
             if constexpr (is_self_of<valves_group>) {
                 return self()->append_preroute(valvify(stl::forward<Callable>(callable)));
             } else {
-                return valves_group{prerouting_valve{valvify(stl::forward<Callable>(callable))}};
+                return valves_group{prerouting_valve{valvify(stl::forward<Callable>(callable))}, *routes()};
             }
         }
 

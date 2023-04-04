@@ -213,17 +213,25 @@ namespace webpp::http {
             routes{stl::forward<RouteT>(inp_route)} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-        template <istl::cvref_as<pre_type> T>
-        constexpr valves_group(T&& inp_pre) : pres{stl::forward<T>(inp_pre)} {}
+        template <istl::cvref_as<pre_type> T, istl::cvref_as<route_type> R>
+        constexpr valves_group(T&& inp_pre, R&& inp_routes = route_type{})
+          : pres{stl::forward<T>(inp_pre)},
+            routes{stl::forward<R>(inp_routes)} {}
 
-        template <istl::cvref_as<post_type> T>
-        constexpr valves_group(T&& inp_post) : posts{stl::forward<T>(inp_post)} {}
+        template <istl::cvref_as<post_type> T, istl::cvref_as<route_type> R>
+        constexpr valves_group(T&& inp_post, R&& inp_routes = route_type{})
+          : posts{stl::forward<T>(inp_post)},
+            routes{stl::forward<R>(inp_routes)} {}
 
-        template <istl::cvref_as<mangler_type> T>
-        constexpr valves_group(T&& inp_mangler) : manglers{stl::forward<T>(inp_mangler)} {}
+        template <istl::cvref_as<mangler_type> T, istl::cvref_as<route_type> R>
+        constexpr valves_group(T&& inp_mangler, R&& inp_routes = route_type{})
+          : manglers{stl::forward<T>(inp_mangler)},
+            routes{stl::forward<R>(inp_routes)} {}
 
-        template <istl::cvref_as<route_type> T>
-        constexpr valves_group(T&& inp_route) : manglers{stl::forward<T>(inp_route)} {}
+        template <istl::cvref_as<route_type> T, istl::cvref_as<route_type> R>
+        constexpr valves_group(T&& inp_route, R&& inp_routes = route_type{})
+          : manglers{stl::forward<T>(inp_route)},
+            routes{stl::forward<R>(inp_routes)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr valves_group(valves_group const&)                = default;
@@ -337,13 +345,25 @@ namespace webpp::http {
     valves_group(prerouting_valve<T...>)
       -> valves_group<prerouting_valve<T...>, postrouting_valve<>, mangler_valve<>, forward_valve<>>;
 
+    template <typename... T, typename R>
+    valves_group(prerouting_valve<T...>, R&&)
+      -> valves_group<prerouting_valve<T...>, postrouting_valve<>, mangler_valve<>, R>;
+
     template <typename... T>
     valves_group(postrouting_valve<T...>)
       -> valves_group<prerouting_valve<>, postrouting_valve<T...>, mangler_valve<>, forward_valve<>>;
 
+    template <typename... T, typename R>
+    valves_group(postrouting_valve<T...>, R&&)
+      -> valves_group<prerouting_valve<>, postrouting_valve<T...>, mangler_valve<>, R>;
+
     template <typename... T>
     valves_group(mangler_valve<T...>)
       -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, forward_valve<>>;
+
+    template <typename... T, typename R>
+    valves_group(mangler_valve<T...>, R&&)
+      -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, R>;
 
     template <typename T>
     valves_group(T&&) -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<>, T>;
