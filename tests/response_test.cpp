@@ -136,4 +136,7 @@ TEST(Response, DynamicResponse) {
     EXPECT_EQ(as<stl::string>(res2), "");
     EXPECT_EQ(as<stl::string>(res3), "string");
     EXPECT_EQ(res, res3) << as<std::string>(res) << as<std::string>(res3);
+
+    response const res4{res3};
+    EXPECT_EQ(res4.body.as_string(), res3.body.as_string()) << as<std::string>(res) << as<std::string>(res3);
 }

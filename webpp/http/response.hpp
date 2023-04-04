@@ -405,12 +405,12 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!HTTPResponse<ET> && !istl::cvref_as<basic_response, ET>)
-        constexpr basic_response(ET&& et) : final_response_type{stl::forward<ET>(et)} {}
+        explicit constexpr basic_response(ET&& et) : final_response_type{stl::forward<ET>(et)} {}
 
 
         template <HTTPResponse ResT>
             requires(!istl::cvref_as<basic_response, ResT>)
-        constexpr basic_response(ResT&& res) : final_response_type{stl::forward<ResT>(res)} {}
+        explicit constexpr basic_response(ResT&& res) : final_response_type{stl::forward<ResT>(res)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr explicit basic_response(body_type const& b) : final_response_type{b} {}
