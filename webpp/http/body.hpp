@@ -9,6 +9,7 @@
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
 #include "./http_concepts.hpp"
+#include "std/concepts.hpp"
 
 #include <exception>
 #include <variant>
@@ -94,7 +95,7 @@ namespace webpp::http {
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
         using stream_type               = typename stream_communicator_type::element_type;
 
-        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
+        using byte_type = stl::byte;                     // required by CStreamBasedBodyWriter
         using value_type =
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
@@ -126,9 +127,18 @@ namespace webpp::http {
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
-            requires(!stl::same_as<stl::remove_cvref_t<ET>, body_communicator>)
+            requires(!istl::cvref_as<ET, body_communicator>)
         constexpr body_communicator(ET&& et) : enable_traits<TraitsType>(et) {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        template <EnabledTraits ET, typename ComT>
+            requires(istl::part_of<stl::remove_cvref_t<ComT>,
+                                   string_communicator_type,
+                                   stream_communicator_type,
+                                   cstream_communicator_type>)
+        constexpr body_communicator(ET&& et, ComT&& inp_communicator)
+          : enable_traits<TraitsType>(et),
+            communicator_var{stl::forward<ComT>(inp_communicator)} {}
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
@@ -170,9 +180,16 @@ namespace webpp::http {
         static constexpr auto log_cat = "BodyReader";
 
         using body_communicator<TraitsType>::body_communicator;
-        constexpr body_reader(body_reader const&)                = default;
-        constexpr body_reader(body_reader&&) noexcept            = default;
-        constexpr body_reader& operator=(body_reader const&)     = default;
+        constexpr body_reader(body_reader const& other)
+          : body_communicator<TraitsType>{other.get_traits(), other.as_string_communicator()} {}
+        constexpr body_reader(body_reader&&) noexcept = default;
+        constexpr body_reader& operator=(body_reader const& other) {
+            if (this != &other) {
+                this->communicator().template emplace<string_communicator_type>(
+                  other.as_string_communicator());
+            }
+            return *this;
+        }
         constexpr body_reader& operator=(body_reader&&) noexcept = default;
         constexpr ~body_reader() noexcept                        = default;
 
@@ -243,7 +260,7 @@ namespace webpp::http {
                 // this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
                 auto* begin = reinterpret_cast<string_char_type*>(data);
                 stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
-                return 0; // return 0 to skip the loop
+                return 0;   // return 0 to skip the loop
             } else {
                 return 0LL; // nothing is read because we can't read it
             }
@@ -391,6 +408,22 @@ namespace webpp::http {
             return {*this};
         }
 
+        [[nodiscard]] constexpr string_communicator_type as_string_communicator() const {
+            return as_string();
+        }
+
+        [[nodiscard]] constexpr string_communicator_type as_string_communicator() {
+            return as_string();
+        }
+
+        [[nodiscard]] constexpr traits::general_string<traits_type> as_string() const {
+            return as<traits::general_string<traits_type>>();
+        }
+
+        [[nodiscard]] constexpr traits::general_string<traits_type> as_string() {
+            return as<traits::general_string<traits_type>>();
+        }
+
 
         [[nodiscard]] constexpr bool operator==(body_reader const& body) const noexcept {
             if (&body == this) {
@@ -436,7 +469,7 @@ namespace webpp::http {
         using string_char_type  = typename string_communicator_type::value_type;
         using cstream_byte_type = typename cstream_communicator_type::byte_type;
 
-        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
+        using byte_type = stl::byte;                     // required by CStreamBasedBodyWriter
         using value_type =
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
@@ -479,7 +512,7 @@ namespace webpp::http {
             if (auto* string_writer = stl::get_if<string_communicator_type>(&this->communicator())) {
                 string_writer->clear();
             } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_writer)->clear(); // clear the state
+                (*stream_writer)->clear();                               // clear the state
                 (*stream_writer)
                   ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
             } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&this->communicator())) {
@@ -551,13 +584,20 @@ namespace webpp::http {
 
         template <typename T>
         constexpr body_writer& set(T&& obj) {
-            clear();
-            add(stl::forward<T>(obj));
+            if constexpr (BodyReader<T> && requires {
+                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
+                          }) {
+                this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
+            } else if constexpr (BodyCommunicator<T>) {
+                this->communicator().template emplace<stl::remove_cvref_t<T>>(obj);
+            } else {
+                clear();
+                add(stl::forward<T>(obj));
+            }
             return *this;
         }
 
         template <typename T>
-            requires(!istl::cvref_as<body_writer>)
         constexpr body_writer& operator=(T&& obj) {
             set(stl::forward<T>(obj));
             return *this;
