@@ -50,406 +50,361 @@ jobs:
         run: ./webpp-benchmarks
   test-bodies:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-bodies
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-bodies
       - name: Run test-bodies
-        runs-on: ubuntu-latest
         run: ./test-bodies
   test-cache:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-cache
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-cache
       - name: Run test-cache
-        runs-on: ubuntu-latest
         run: ./test-cache
   test-charset:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-charset
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-charset
       - name: Run test-charset
-        runs-on: ubuntu-latest
         run: ./test-charset
   test-concurrency:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-concurrency
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-concurrency
       - name: Run test-concurrency
-        runs-on: ubuntu-latest
         run: ./test-concurrency
   test-const-list:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-const-list
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-const-list
       - name: Run test-const-list
-        runs-on: ubuntu-latest
         run: ./test-const-list
   test-context:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-context
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-context
       - name: Run test-context
-        runs-on: ubuntu-latest
         run: ./test-context
   test-convert:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-convert
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-convert
       - name: Run test-convert
-        runs-on: ubuntu-latest
         run: ./test-convert
   test-cookies:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-cookies
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-cookies
       - name: Run test-cookies
-        runs-on: ubuntu-latest
         run: ./test-cookies
   test-crypto:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-crypto
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-crypto
       - name: Run test-crypto
-        runs-on: ubuntu-latest
         run: ./test-crypto
   test-dynamic-router:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-dynamic-router
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-dynamic-router
       - name: Run test-dynamic-router
-        runs-on: ubuntu-latest
         run: ./test-dynamic-router
   test-extensions:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-extensions
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-extensions
       - name: Run test-extensions
-        runs-on: ubuntu-latest
         run: ./test-extensions
   test-find-str:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-find-str
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-find-str
       - name: Run test-find-str
-        runs-on: ubuntu-latest
         run: ./test-find-str
   test-functional:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-functional
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-functional
       - name: Run test-functional
-        runs-on: ubuntu-latest
         run: ./test-functional
   test-header-accept-encoding:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-header-accept-encoding
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-header-accept-encoding
       - name: Run test-header-accept-encoding
-        runs-on: ubuntu-latest
         run: ./test-header-accept-encoding
   test-http-parser:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-http-parser
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-http-parser
       - name: Run test-http-parser
-        runs-on: ubuntu-latest
         run: ./test-http-parser
   test-ipv4:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-ipv4
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-ipv4
       - name: Run test-ipv4
-        runs-on: ubuntu-latest
         run: ./test-ipv4
   test-ipv6:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-ipv6
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-ipv6
       - name: Run test-ipv6
-        runs-on: ubuntu-latest
         run: ./test-ipv6
   test-istring:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-istring
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-istring
       - name: Run test-istring
-        runs-on: ubuntu-latest
         run: ./test-istring
   test-json:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-json
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-json
       - name: Run test-json
-        runs-on: ubuntu-latest
         run: ./test-json
   test-logger:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-logger
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-logger
       - name: Run test-logger
-        runs-on: ubuntu-latest
         run: ./test-logger
   test-memory:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-memory
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-memory
       - name: Run test-memory
-        runs-on: ubuntu-latest
         run: ./test-memory
   test-properties:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-properties
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-properties
       - name: Run test-properties
-        runs-on: ubuntu-latest
         run: ./test-properties
   test-request:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-request
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-request
       - name: Run test-request
-        runs-on: ubuntu-latest
         run: ./test-request
   test-response:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-response
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-response
       - name: Run test-response
-        runs-on: ubuntu-latest
         run: ./test-response
   test-router:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-router
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-router
       - name: Run test-router
-        runs-on: ubuntu-latest
         run: ./test-router
   test-routes:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-routes
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-routes
       - name: Run test-routes
-        runs-on: ubuntu-latest
         run: ./test-routes
   test-server:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-server
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-server
       - name: Run test-server
-        runs-on: ubuntu-latest
         run: ./test-server
   test-sql:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-sql
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-sql
       - name: Run test-sql
-        runs-on: ubuntu-latest
         run: ./test-sql
   test-string:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-string
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-string
       - name: Run test-string
-        runs-on: ubuntu-latest
         run: ./test-string
   test-traits:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-traits
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-traits
       - name: Run test-traits
-        runs-on: ubuntu-latest
         run: ./test-traits
   test-tuple:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-tuple
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-tuple
       - name: Run test-tuple
-        runs-on: ubuntu-latest
         run: ./test-tuple
   test-type-traits:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-type-traits
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-type-traits
       - name: Run test-type-traits
-        runs-on: ubuntu-latest
         run: ./test-type-traits
   test-unicode:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-unicode
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-unicode
       - name: Run test-unicode
-        runs-on: ubuntu-latest
         run: ./test-unicode
   test-uri-string:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-uri-string
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-uri-string
       - name: Run test-uri-string
-        runs-on: ubuntu-latest
         run: ./test-uri-string
   test-uri:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-uri
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-uri
       - name: Run test-uri
-        runs-on: ubuntu-latest
         run: ./test-uri
   test-ustring:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-ustring
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-ustring
       - name: Run test-ustring
-        runs-on: ubuntu-latest
         run: ./test-ustring
   test-utils-casts:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-utils-casts
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-utils-casts
       - name: Run test-utils-casts
-        runs-on: ubuntu-latest
         run: ./test-utils-casts
   test-utils-strings:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-utils-strings
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-utils-strings
       - name: Run test-utils-strings
-        runs-on: ubuntu-latest
         run: ./test-utils-strings
   test-validations:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-validations
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-validations
       - name: Run test-validations
-        runs-on: ubuntu-latest
         run: ./test-validations
   test-views:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build test-views
-        runs-on: ubuntu-latest
         run: cmake --build --preset test-views
       - name: Run test-views
-        runs-on: ubuntu-latest
         run: ./test-views
   example-cgi-hello-world:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build Example cgi-hello-world
-        runs-on: ubuntu-latest
         run: cmake --build --preset cgi-hello-world
       - name: Run Example cgi-hello-world
-        runs-on: ubuntu-latest
         run: ./cgi-hello-world
   example-cgi-application:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build Example cgi-application
-        runs-on: ubuntu-latest
         run: cmake --build --preset cgi-application
       - name: Run Example cgi-application
-        runs-on: ubuntu-latest
         run: ./cgi-application
   example-json-app:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build Example json-app
-        runs-on: ubuntu-latest
         run: cmake --build --preset json-app
       - name: Run Example json-app
-        runs-on: ubuntu-latest
         run: ./json-app
   example-beast-json:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build Example beast-json
-        runs-on: ubuntu-latest
         run: cmake --build --preset beast-json
       - name: Run Example beast-json
-        runs-on: ubuntu-latest
         run: ./beast-json
   example-beast-view:
     needs: install
+    runs-on: ubuntu-latest
     steps:
       - name: Build Example beast-view
-        runs-on: ubuntu-latest
         run: cmake --build --preset beast-view
       - name: Run Example beast-view
-        runs-on: ubuntu-latest
         run: ./beast-view
