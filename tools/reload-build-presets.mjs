@@ -137,7 +137,7 @@ async function reloadGithubActions() {
                 },
                 {
                     name: `Run ${target}`,
-                    run: `./${target}`
+                    run: `./build/${target}`
                 }
             ]
         };
@@ -159,7 +159,7 @@ async function reloadGithubActions() {
                 },
                 {
                     name: `Run Example ${target}`,
-                    run: `./${target}`
+                    run: `./build/${target}`
                 }
             ]
         };
