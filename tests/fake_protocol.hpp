@@ -282,6 +282,10 @@ namespace webpp {
             return content.size();
         }
 
+        [[nodiscard]] bool empty() const noexcept {
+            return content.empty();
+        }
+
         void seek(stl::streamsize new_index) noexcept {
             index = static_cast<stl::size_t>(new_index);
         }

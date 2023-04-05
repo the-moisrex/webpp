@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_PATH_TRAVERSER_HPP
 #define WEBPP_URI_PATH_TRAVERSER_HPP
 
+#include "../std/optional.hpp"
 #include "path.hpp"
 
 namespace webpp::uri {

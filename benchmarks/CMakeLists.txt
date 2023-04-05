@@ -1,4 +1,4 @@
-set(exec_name webenchpp)
+set(exec_name webpp-benchmarks)
 
 include(../cmake/compilers.cmake)
 

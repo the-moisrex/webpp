@@ -5,6 +5,7 @@
 
 #include "../libs/zlib.hpp"
 #include "../std/string.hpp"
+#include <cassert>
 
 namespace webpp {
 
