@@ -24,20 +24,19 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Installing Dependencies
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest g++-12 ninja
+        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: cmake --preset=default
-  build:
+  tests:
     needs: install
     runs-on: ubuntu-latest
 
     steps:
       - name: Build Tests
-        # Build your program with the given configuration
-        run: cmake --build --preset webpp-tests
+        run: cmake --build --preset tests
 
       - name: Test
         working-directory: ${{github.workspace}}/build
@@ -60,12 +59,20 @@ jobs:
       - name: Build Benchmarks
         run: cmake --build --preset benchmarks
 
+      - name: Run the executable
+        working-directory: ${{github.workspace}}/build
+        run: ./webpp-benchmarks
+
   cgi-hello-world-example:
     needs: install
     runs-on: ubuntu-latest
     steps:
       - name: Build CGI / Hello World Example
         run: cmake --build --preset cgi-hello-world
+
+      - name: Run the executable
+        working-directory: ${{github.workspace}}/build
+        run: ./cgi-hello-world
 
   cgi-application:
     needs: install
@@ -74,9 +81,17 @@ jobs:
       - name: Build CGI / Application Example
         run: cmake --build --preset cgi-application
 
+      - name: Run the executable
+        working-directory: ${{github.workspace}}/build
+        run: ./cgi-application
+
   beast-view:
     needs: install
     runs-on: ubuntu-latest
     steps:
       - name: Build CGI / Application Example
         run: cmake --build --preset beast-view
+
+      - name: Run the executable
+        working-directory: ${{github.workspace}}/build
+        run: ./beast-view

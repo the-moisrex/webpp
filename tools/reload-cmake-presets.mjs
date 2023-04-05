@@ -79,6 +79,10 @@ async function reloadPresets() {
             name: target,
             inherits: "test-default"
         })));
+    pr.testPresets.push({
+        name: "tests",
+        inherits: "test-default"
+    });
 
     // All tests in one build
     pr.buildPresets.push({
