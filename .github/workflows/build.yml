@@ -9,11 +9,11 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
-  CXX: /usr/bin/g++-11
-  CC: /usr/bin/gcc-11
+  CXX: /usr/bin/g++-12
+  CC: /usr/bin/gcc-12
 
 jobs:
-  build:
+  install:
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
@@ -21,34 +21,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Installing Dependencies
-      run: sudo apt update && sudo apt install libboost-all-dev brotli zlib1g-dev googletest g++-11 gcc-11 rapidjson-dev
+      - name: Installing Dependencies
+        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest g++-12
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: cmake --preset=default
+  build:
+    needs: install
+    runs-on: ubuntu-latest
 
-    - name: Build Tests
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target webpp-tests
+    steps:
+      - name: Build Tests
+        # Build your program with the given configuration
+        run: cmake --build --preset webpp-tests
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      # Execute tests defined by the CMake configuration.  
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest -C ${{env.BUILD_TYPE}} -S "webpp-tests"
-      
-    - name: Build Web++ Binary
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target webpp
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        # Execute tests defined by the CMake configuration.
+        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+        run: ctest -C ${{env.BUILD_TYPE}} -S "webpp-tests"
 
-    - name: Build Benchmarks
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target webenchpp
+  webpp-lib:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Web++ Library
+        # run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target webpp
+        run: cmake --build --preset webpp
 
-    - name: Build CGI / Hello World Example
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cgi-hello-world
+  benchmarks:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Benchmarks
+        run: cmake --build --preset benchmarks
 
-    - name: Build CGI / Application Example
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target cgi-application
+  cgi-hello-world-example:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build CGI / Hello World Example
+        run: cmake --build --preset cgi-hello-world
+
+  cgi-application:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build CGI / Application Example
+        run: cmake --build --preset cgi-application
+
+  beast-view:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build CGI / Application Example
+        run: cmake --build --preset beast-view
