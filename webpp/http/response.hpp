@@ -331,6 +331,11 @@ namespace webpp::http {
             return *this;
         }
 
+        constexpr final_response& operator=(http::status_code code) {
+            elist_type::operator=(code);
+            return *this;
+        }
+
         template <typename T>
         constexpr final_response& operator+=(T&& obj) {
             add(stl::forward<T>(obj));

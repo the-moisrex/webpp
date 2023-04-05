@@ -1,16 +1,21 @@
 name: Build
+run-name: Deploy to ${{ inputs.deploy_target }} by @${{ github.actor }}
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, main ]
   pull_request:
-    branches: [ dev ]
+    branches: [ dev, main ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Debug
   CXX: /usr/bin/g++-12
   CC: /usr/bin/gcc-12
+
+defaults:
+  run:
+    working-directory: ${{github.workspace}}
 
 jobs:
   install:
@@ -39,10 +44,9 @@ jobs:
         run: cmake --build --preset tests
 
       - name: Test
-        working-directory: ${{github.workspace}}/build
         # Execute tests defined by the CMake configuration.
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C ${{env.BUILD_TYPE}} -S "webpp-tests"
+        run: ctest --preset tests
 
   webpp-lib:
     needs: install
@@ -60,8 +64,7 @@ jobs:
         run: cmake --build --preset benchmarks
 
       - name: Run the executable
-        working-directory: ${{github.workspace}}/build
-        run: ./webpp-benchmarks
+        run: ./build/webpp-benchmarks
 
   cgi-hello-world-example:
     needs: install
@@ -71,8 +74,7 @@ jobs:
         run: cmake --build --preset cgi-hello-world
 
       - name: Run the executable
-        working-directory: ${{github.workspace}}/build
-        run: ./cgi-hello-world
+        run: ./build/cgi-hello-world
 
   cgi-application:
     needs: install
@@ -82,8 +84,7 @@ jobs:
         run: cmake --build --preset cgi-application
 
       - name: Run the executable
-        working-directory: ${{github.workspace}}/build
-        run: ./cgi-application
+        run: ./build/cgi-application
 
   beast-view:
     needs: install
@@ -93,5 +94,4 @@ jobs:
         run: cmake --build --preset beast-view
 
       - name: Run the executable
-        working-directory: ${{github.workspace}}/build
-        run: ./beast-view
+        run: ./build/beast-view
