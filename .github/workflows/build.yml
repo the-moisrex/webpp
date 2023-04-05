@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Installing Dependencies
+        working-directory: ${{github.workspace}}
         run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
           g++-12 ninja-build
       - name: Configure CMake
