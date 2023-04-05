@@ -96,7 +96,7 @@ namespace webpp::http {
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
         using stream_type               = typename stream_communicator_type::element_type;
 
-        using byte_type = stl::byte;                     // required by CStreamBasedBodyWriter
+        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
         using value_type =
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
@@ -261,7 +261,7 @@ namespace webpp::http {
                 // this->logger.warning(log_cat, "Text to CStream Cross-Talk is discouraged.");
                 auto* begin = reinterpret_cast<string_char_type*>(data);
                 stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
-                return 0;   // return 0 to skip the loop
+                return 0; // return 0 to skip the loop
             } else {
                 return 0LL; // nothing is read because we can't read it
             }
@@ -470,7 +470,7 @@ namespace webpp::http {
         using string_char_type  = typename string_communicator_type::value_type;
         using cstream_byte_type = typename cstream_communicator_type::byte_type;
 
-        using byte_type = stl::byte;                     // required by CStreamBasedBodyWriter
+        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
         using value_type =
           typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
 
@@ -513,7 +513,7 @@ namespace webpp::http {
             if (auto* string_writer = stl::get_if<string_communicator_type>(&this->communicator())) {
                 string_writer->clear();
             } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_writer)->clear();                               // clear the state
+                (*stream_writer)->clear(); // clear the state
                 (*stream_writer)
                   ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
             } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&this->communicator())) {
@@ -587,8 +587,10 @@ namespace webpp::http {
         constexpr body_writer& set(T&& obj) {
             clear();
             if constexpr (BodyReader<T> && requires {
-                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
-                          }) {
+                                               {
+                                                   obj.as_string_communicator()
+                                                   } -> stl::same_as<string_communicator_type>;
+                                           }) {
                 this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
             } else if constexpr (stl::constructible_from<string_communicator_type, T>) {
                 this->communicator().template emplace<string_communicator_type>(stl::forward<T>(obj));

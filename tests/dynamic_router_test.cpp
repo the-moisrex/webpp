@@ -246,7 +246,7 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
     auto const add_num = [&](context& ctx) {
         EXPECT_FALSE(ctx.path_traverser().at_end()) << num;
         // rot13 should already be run, so we should get a clear "page" as the first segment
-        EXPECT_EQ("page", *ctx.path_traverser())
+        EXPECT_EQ("page", ctx.path_traverser().peek().value_or(""))
           << "Segment: " << *ctx.path_traverser() << "\n"
           << "Should be called before checking the paths, it's a pre-routing.\nNum: " << num
           << "\nRouter: " << router.to_string();
