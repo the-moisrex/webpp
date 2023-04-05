@@ -162,6 +162,27 @@ namespace webpp::uri {
             return true;
         }
 
+        constexpr stl::optional<slug_type> peek() const {
+            if (at_end()) {
+                return stl::nullopt;
+            }
+            iterator pit = it;
+            iterator slash_start;
+            for (;;) {
+                slash_start = stl::find(pit, fin, char_type{'/'});
+                if (slash_start == pit) { // the first slash, or two or more contiguous slashes
+                    ++pit;
+                } else {
+                    break;
+                }
+            }
+            slug_type slug;
+            if (!decode_uri_component(string_view_type(pit, slash_start), slug, allowed_chars)) {
+                return stl::nullopt;
+            }
+            return slug;
+        }
+
         constexpr operator bool() const noexcept {
             return !at_end();
         }
