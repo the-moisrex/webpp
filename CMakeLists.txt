@@ -40,6 +40,7 @@ set(INSTALL_ARCHIVEDIR ${INSTALL_LIBDIR})
 set(gcc_min_version 12.1.0)
 set(clang_min_version 14.0.6)
 
+message(STATUS "CMake Version                  : ${CMAKE_VERSION}")
 message(STATUS "Project name                   : ${PROJECT_NAME}")
 message(STATUS "C++ Standard Version           : C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Library version                : ${LIB_VERSION}")

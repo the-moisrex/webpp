@@ -1,0 +1,14 @@
+{
+  "name": "webpp-tools",
+  "version": "1.0.0",
+  "description": "Dependencies for web++ tools",
+  "main": "reload-build-presets.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "The Moisrex",
+  "license": "MIT",
+  "dependencies": {
+    "yaml": "^2.2.1"
+  }
+}
