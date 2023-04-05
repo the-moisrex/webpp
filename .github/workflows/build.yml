@@ -12,9 +12,6 @@ env:
   BUILD_TYPE: Debug
   CXX: /usr/bin/g++-12
   CC: /usr/bin/gcc-12
-defaults:
-  run:
-    working-directory: ./build
 jobs:
   install:
     runs-on: ubuntu-latest
@@ -48,7 +45,7 @@ jobs:
       - name: Build Benchmarks
         run: cmake --build --preset benchmarks
       - name: Run the executable
-        run: ./webpp-benchmarks
+        run: ./build/webpp-benchmarks
   test-bodies:
     needs: install
     runs-on: ubuntu-latest
@@ -56,7 +53,7 @@ jobs:
       - name: Build test-bodies
         run: cmake --build --preset test-bodies
       - name: Run test-bodies
-        run: ./test-bodies
+        run: ./build/test-bodies
   test-cache:
     needs: install
     runs-on: ubuntu-latest
@@ -64,7 +61,7 @@ jobs:
       - name: Build test-cache
         run: cmake --build --preset test-cache
       - name: Run test-cache
-        run: ./test-cache
+        run: ./build/test-cache
   test-charset:
     needs: install
     runs-on: ubuntu-latest
@@ -72,7 +69,7 @@ jobs:
       - name: Build test-charset
         run: cmake --build --preset test-charset
       - name: Run test-charset
-        run: ./test-charset
+        run: ./build/test-charset
   test-concurrency:
     needs: install
     runs-on: ubuntu-latest
@@ -80,7 +77,7 @@ jobs:
       - name: Build test-concurrency
         run: cmake --build --preset test-concurrency
       - name: Run test-concurrency
-        run: ./test-concurrency
+        run: ./build/test-concurrency
   test-const-list:
     needs: install
     runs-on: ubuntu-latest
@@ -88,7 +85,7 @@ jobs:
       - name: Build test-const-list
         run: cmake --build --preset test-const-list
       - name: Run test-const-list
-        run: ./test-const-list
+        run: ./build/test-const-list
   test-context:
     needs: install
     runs-on: ubuntu-latest
@@ -96,7 +93,7 @@ jobs:
       - name: Build test-context
         run: cmake --build --preset test-context
       - name: Run test-context
-        run: ./test-context
+        run: ./build/test-context
   test-convert:
     needs: install
     runs-on: ubuntu-latest
@@ -104,7 +101,7 @@ jobs:
       - name: Build test-convert
         run: cmake --build --preset test-convert
       - name: Run test-convert
-        run: ./test-convert
+        run: ./build/test-convert
   test-cookies:
     needs: install
     runs-on: ubuntu-latest
@@ -112,7 +109,7 @@ jobs:
       - name: Build test-cookies
         run: cmake --build --preset test-cookies
       - name: Run test-cookies
-        run: ./test-cookies
+        run: ./build/test-cookies
   test-crypto:
     needs: install
     runs-on: ubuntu-latest
@@ -120,7 +117,7 @@ jobs:
       - name: Build test-crypto
         run: cmake --build --preset test-crypto
       - name: Run test-crypto
-        run: ./test-crypto
+        run: ./build/test-crypto
   test-dynamic-router:
     needs: install
     runs-on: ubuntu-latest
@@ -128,7 +125,7 @@ jobs:
       - name: Build test-dynamic-router
         run: cmake --build --preset test-dynamic-router
       - name: Run test-dynamic-router
-        run: ./test-dynamic-router
+        run: ./build/test-dynamic-router
   test-extensions:
     needs: install
     runs-on: ubuntu-latest
@@ -136,7 +133,7 @@ jobs:
       - name: Build test-extensions
         run: cmake --build --preset test-extensions
       - name: Run test-extensions
-        run: ./test-extensions
+        run: ./build/test-extensions
   test-find-str:
     needs: install
     runs-on: ubuntu-latest
@@ -144,7 +141,7 @@ jobs:
       - name: Build test-find-str
         run: cmake --build --preset test-find-str
       - name: Run test-find-str
-        run: ./test-find-str
+        run: ./build/test-find-str
   test-functional:
     needs: install
     runs-on: ubuntu-latest
@@ -152,7 +149,7 @@ jobs:
       - name: Build test-functional
         run: cmake --build --preset test-functional
       - name: Run test-functional
-        run: ./test-functional
+        run: ./build/test-functional
   test-header-accept-encoding:
     needs: install
     runs-on: ubuntu-latest
@@ -160,7 +157,7 @@ jobs:
       - name: Build test-header-accept-encoding
         run: cmake --build --preset test-header-accept-encoding
       - name: Run test-header-accept-encoding
-        run: ./test-header-accept-encoding
+        run: ./build/test-header-accept-encoding
   test-http-parser:
     needs: install
     runs-on: ubuntu-latest
@@ -168,7 +165,7 @@ jobs:
       - name: Build test-http-parser
         run: cmake --build --preset test-http-parser
       - name: Run test-http-parser
-        run: ./test-http-parser
+        run: ./build/test-http-parser
   test-ipv4:
     needs: install
     runs-on: ubuntu-latest
@@ -176,7 +173,7 @@ jobs:
       - name: Build test-ipv4
         run: cmake --build --preset test-ipv4
       - name: Run test-ipv4
-        run: ./test-ipv4
+        run: ./build/test-ipv4
   test-ipv6:
     needs: install
     runs-on: ubuntu-latest
@@ -184,7 +181,7 @@ jobs:
       - name: Build test-ipv6
         run: cmake --build --preset test-ipv6
       - name: Run test-ipv6
-        run: ./test-ipv6
+        run: ./build/test-ipv6
   test-istring:
     needs: install
     runs-on: ubuntu-latest
@@ -192,7 +189,7 @@ jobs:
       - name: Build test-istring
         run: cmake --build --preset test-istring
       - name: Run test-istring
-        run: ./test-istring
+        run: ./build/test-istring
   test-json:
     needs: install
     runs-on: ubuntu-latest
@@ -200,7 +197,7 @@ jobs:
       - name: Build test-json
         run: cmake --build --preset test-json
       - name: Run test-json
-        run: ./test-json
+        run: ./build/test-json
   test-logger:
     needs: install
     runs-on: ubuntu-latest
@@ -208,7 +205,7 @@ jobs:
       - name: Build test-logger
         run: cmake --build --preset test-logger
       - name: Run test-logger
-        run: ./test-logger
+        run: ./build/test-logger
   test-memory:
     needs: install
     runs-on: ubuntu-latest
@@ -216,7 +213,7 @@ jobs:
       - name: Build test-memory
         run: cmake --build --preset test-memory
       - name: Run test-memory
-        run: ./test-memory
+        run: ./build/test-memory
   test-properties:
     needs: install
     runs-on: ubuntu-latest
@@ -224,7 +221,7 @@ jobs:
       - name: Build test-properties
         run: cmake --build --preset test-properties
       - name: Run test-properties
-        run: ./test-properties
+        run: ./build/test-properties
   test-request:
     needs: install
     runs-on: ubuntu-latest
@@ -232,7 +229,7 @@ jobs:
       - name: Build test-request
         run: cmake --build --preset test-request
       - name: Run test-request
-        run: ./test-request
+        run: ./build/test-request
   test-response:
     needs: install
     runs-on: ubuntu-latest
@@ -240,7 +237,7 @@ jobs:
       - name: Build test-response
         run: cmake --build --preset test-response
       - name: Run test-response
-        run: ./test-response
+        run: ./build/test-response
   test-router:
     needs: install
     runs-on: ubuntu-latest
@@ -248,7 +245,7 @@ jobs:
       - name: Build test-router
         run: cmake --build --preset test-router
       - name: Run test-router
-        run: ./test-router
+        run: ./build/test-router
   test-routes:
     needs: install
     runs-on: ubuntu-latest
@@ -256,7 +253,7 @@ jobs:
       - name: Build test-routes
         run: cmake --build --preset test-routes
       - name: Run test-routes
-        run: ./test-routes
+        run: ./build/test-routes
   test-server:
     needs: install
     runs-on: ubuntu-latest
@@ -264,7 +261,7 @@ jobs:
       - name: Build test-server
         run: cmake --build --preset test-server
       - name: Run test-server
-        run: ./test-server
+        run: ./build/test-server
   test-sql:
     needs: install
     runs-on: ubuntu-latest
@@ -272,7 +269,7 @@ jobs:
       - name: Build test-sql
         run: cmake --build --preset test-sql
       - name: Run test-sql
-        run: ./test-sql
+        run: ./build/test-sql
   test-string:
     needs: install
     runs-on: ubuntu-latest
@@ -280,7 +277,7 @@ jobs:
       - name: Build test-string
         run: cmake --build --preset test-string
       - name: Run test-string
-        run: ./test-string
+        run: ./build/test-string
   test-traits:
     needs: install
     runs-on: ubuntu-latest
@@ -288,7 +285,7 @@ jobs:
       - name: Build test-traits
         run: cmake --build --preset test-traits
       - name: Run test-traits
-        run: ./test-traits
+        run: ./build/test-traits
   test-tuple:
     needs: install
     runs-on: ubuntu-latest
@@ -296,7 +293,7 @@ jobs:
       - name: Build test-tuple
         run: cmake --build --preset test-tuple
       - name: Run test-tuple
-        run: ./test-tuple
+        run: ./build/test-tuple
   test-type-traits:
     needs: install
     runs-on: ubuntu-latest
@@ -304,7 +301,7 @@ jobs:
       - name: Build test-type-traits
         run: cmake --build --preset test-type-traits
       - name: Run test-type-traits
-        run: ./test-type-traits
+        run: ./build/test-type-traits
   test-unicode:
     needs: install
     runs-on: ubuntu-latest
@@ -312,7 +309,7 @@ jobs:
       - name: Build test-unicode
         run: cmake --build --preset test-unicode
       - name: Run test-unicode
-        run: ./test-unicode
+        run: ./build/test-unicode
   test-uri-string:
     needs: install
     runs-on: ubuntu-latest
@@ -320,7 +317,7 @@ jobs:
       - name: Build test-uri-string
         run: cmake --build --preset test-uri-string
       - name: Run test-uri-string
-        run: ./test-uri-string
+        run: ./build/test-uri-string
   test-uri:
     needs: install
     runs-on: ubuntu-latest
@@ -328,7 +325,7 @@ jobs:
       - name: Build test-uri
         run: cmake --build --preset test-uri
       - name: Run test-uri
-        run: ./test-uri
+        run: ./build/test-uri
   test-ustring:
     needs: install
     runs-on: ubuntu-latest
@@ -336,7 +333,7 @@ jobs:
       - name: Build test-ustring
         run: cmake --build --preset test-ustring
       - name: Run test-ustring
-        run: ./test-ustring
+        run: ./build/test-ustring
   test-utils-casts:
     needs: install
     runs-on: ubuntu-latest
@@ -344,7 +341,7 @@ jobs:
       - name: Build test-utils-casts
         run: cmake --build --preset test-utils-casts
       - name: Run test-utils-casts
-        run: ./test-utils-casts
+        run: ./build/test-utils-casts
   test-utils-strings:
     needs: install
     runs-on: ubuntu-latest
@@ -352,7 +349,7 @@ jobs:
       - name: Build test-utils-strings
         run: cmake --build --preset test-utils-strings
       - name: Run test-utils-strings
-        run: ./test-utils-strings
+        run: ./build/test-utils-strings
   test-validations:
     needs: install
     runs-on: ubuntu-latest
@@ -360,7 +357,7 @@ jobs:
       - name: Build test-validations
         run: cmake --build --preset test-validations
       - name: Run test-validations
-        run: ./test-validations
+        run: ./build/test-validations
   test-views:
     needs: install
     runs-on: ubuntu-latest
@@ -368,7 +365,7 @@ jobs:
       - name: Build test-views
         run: cmake --build --preset test-views
       - name: Run test-views
-        run: ./test-views
+        run: ./build/test-views
   example-cgi-hello-world:
     needs: install
     runs-on: ubuntu-latest
@@ -376,7 +373,7 @@ jobs:
       - name: Build Example cgi-hello-world
         run: cmake --build --preset cgi-hello-world
       - name: Run Example cgi-hello-world
-        run: ./cgi-hello-world
+        run: ./build/cgi-hello-world
   example-cgi-application:
     needs: install
     runs-on: ubuntu-latest
@@ -384,7 +381,7 @@ jobs:
       - name: Build Example cgi-application
         run: cmake --build --preset cgi-application
       - name: Run Example cgi-application
-        run: ./cgi-application
+        run: ./build/cgi-application
   example-json-app:
     needs: install
     runs-on: ubuntu-latest
@@ -392,7 +389,7 @@ jobs:
       - name: Build Example json-app
         run: cmake --build --preset json-app
       - name: Run Example json-app
-        run: ./json-app
+        run: ./build/json-app
   example-beast-json:
     needs: install
     runs-on: ubuntu-latest
@@ -400,7 +397,7 @@ jobs:
       - name: Build Example beast-json
         run: cmake --build --preset beast-json
       - name: Run Example beast-json
-        run: ./beast-json
+        run: ./build/beast-json
   example-beast-view:
     needs: install
     runs-on: ubuntu-latest
@@ -408,4 +405,4 @@ jobs:
       - name: Build Example beast-view
         run: cmake --build --preset beast-view
       - name: Run Example beast-view
-        run: ./beast-view
+        run: ./build/beast-view
