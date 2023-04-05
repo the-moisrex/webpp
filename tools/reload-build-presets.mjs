@@ -132,10 +132,12 @@ async function reloadGithubActions() {
             steps: [
                 {
                     name: `Build ${target}`,
+                    'runs-on': 'ubuntu-latest',
                     run: `cmake --build --preset ${target}`
                 },
                 {
                     name: `Run ${target}`,
+                    'runs-on': 'ubuntu-latest',
                     run: `./${target}`
                 }
             ]
@@ -153,10 +155,12 @@ async function reloadGithubActions() {
             steps: [
                 {
                     name: `Build Example ${target}`,
+                    'runs-on': 'ubuntu-latest',
                     run: `cmake --build --preset ${target}`
                 },
                 {
                     name: `Run Example ${target}`,
+                    'runs-on': 'ubuntu-latest',
                     run: `./${target}`
                 }
             ]
