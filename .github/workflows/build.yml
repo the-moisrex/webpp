@@ -14,7 +14,7 @@ env:
 
 defaults:
   run:
-    working-directory: ${{github.workspace}}
+    working-directory: .
 
 jobs:
   install:
