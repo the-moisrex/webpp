@@ -40,7 +40,7 @@ endfunction()
 file(GLOB TEST_SOURCES *_test.cpp)
 set(TEST_NAME ${PROJECT_NAME}-tests)
 add_executable(${TEST_NAME})
-target_sources(${TEST_NAME} PRIVATE ${TEST_SOURCE})
+target_sources(${TEST_NAME} PRIVATE ${TEST_SOURCES})
 set_target_properties(${EXEC_NAME} PROPERTIES OUTPUT_NAME tests)
 setup_test(${TEST_NAME})
 
@@ -64,4 +64,3 @@ foreach(source ${TEST_SOURCES})
 
     setup_test(${name})
 endforeach()
-
