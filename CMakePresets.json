@@ -334,6 +334,10 @@
         {
             "name": "test-views",
             "inherits": "test-default"
+        },
+        {
+            "name": "tests",
+            "inherits": "test-default"
         }
     ]
 }
