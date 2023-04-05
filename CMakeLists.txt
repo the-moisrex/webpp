@@ -37,7 +37,7 @@ set(INSTALL_LIBDIR $<IF:$<BOOL:${CMAKE_INSTALL_LIBDIR}>,${CMAKE_INSTALL_LIBDIR},
 set(INSTALL_BINDIR $<IF:$<BOOL:${CMAKE_INSTALL_BINDIR}>,${CMAKE_INSTALL_BINDIR},bin>)
 set(INSTALL_INCLUDEDIR $<IF:$<BOOL:${CMAKE_INSTALL_INCLUDEDIR}>,${CMAKE_INSTALL_INCLUDEDIR},include>)
 set(INSTALL_ARCHIVEDIR ${INSTALL_LIBDIR})
-set(gcc_min_version 12.2.0)
+set(gcc_min_version 12.1.0)
 set(clang_min_version 14.0.6)
 
 message(STATUS "Project name                   : ${PROJECT_NAME}")
