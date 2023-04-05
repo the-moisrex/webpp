@@ -147,7 +147,14 @@ namespace webpp::http {
 
         constexpr void to_string(istl::String auto& out) const {
             for (auto& route : routes) {
-                route->to_string(out);
+                if constexpr (requires {route->to_string(out);}) {
+                    route->to_string(out);
+                } else {
+                    // I know, looks not great, but to_string is a virtual call
+                    string_type inout{alloc::general_alloc_for<string_type>(*this)};
+                    to_string(inout);
+                    out.append(stl::move(inout));
+                }
                 out.append("\n");
             }
         }
