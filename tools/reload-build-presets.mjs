@@ -1,4 +1,5 @@
 import fs from 'fs';
+import yaml from 'yaml';
 
 const {
     projectRoot,
@@ -115,7 +116,65 @@ async function reloadPresets() {
     return pr;
 }
 
+async function reloadGithubActions() {
+    let actions = yaml.parse(fs.readFileSync(`${projectRoot}.github/workflows/build.yml`, 'utf8'));
+    const tests = await getTestsNames();
+    const examples = await getExamples();
 
-console.log(await reloadPresets())
+    // remove test jobs (we remove them because one/some of them might be removed)
+    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
+            .filter(([name]) => !name.startsWith('test-')));
 
-fs.writeFileSync(`${projectRoot}CMakePresets.json`, JSON.stringify(await reloadPresets(), null, 4));
+    // add tests jobs
+    for (const target of tests) {
+        actions.jobs[target] = {
+            needs: 'install',
+            steps: [
+                {
+                    name: `Build ${target}`,
+                    run: `cmake --build --preset ${target}`
+                },
+                {
+                    name: `Run ${target}`,
+                    run: `./${target}`
+                }
+            ]
+        };
+    }
+
+    // remove example jobs (we remove them because one/some of them might be removed)
+    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
+            .filter(([name]) => !name.startsWith('example-')));
+
+    // add examples
+    for (const target of examples) {
+        actions.jobs[`example-${target}`] = {
+            needs: 'install',
+            steps: [
+                {
+                    name: `Build Example ${target}`,
+                    run: `cmake --build --preset ${target}`
+                },
+                {
+                    name: `Run Example ${target}`,
+                    run: `./${target}`
+                }
+            ]
+        };
+    }
+
+    return actions;
+}
+
+async function writeCMakePresets() {
+    fs.writeFileSync(`${projectRoot}CMakePresets.json`, JSON.stringify(await reloadPresets(), null, 4));
+}
+
+async function writeGithubActions() {
+    fs.writeFileSync(`${projectRoot}.github/workflows/build.yml`, yaml.stringify(await reloadGithubActions()));
+}
+
+// console.log(yaml.stringify(await reloadGithubActions()))
+
+await writeCMakePresets();
+await writeGithubActions();
