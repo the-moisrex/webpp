@@ -45,9 +45,9 @@ TEST(Routes, ContextTests) {
     EXPECT_TRUE(static_cast<bool>(std::is_move_constructible_v<context_type>));
     EXPECT_TRUE(static_cast<bool>(Context<context_type>));
 
-    request_type::server_type server1;
-    request_type              req{server1};
-    context_type              ctx{req};
+    fake_protocol server1;
+    request_type  req{server1};
+    context_type  ctx{req};
 
     auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_body>();
     // using nctx_type = stl::remove_cvref_t<decltype(nctx)>;
@@ -66,10 +66,10 @@ TEST(Routes, ContextTests) {
     // static_assert(stl::same_as<context_type2, nctx_type>,
     //               "Both should produce the same type for the copying below to work");
 
-    context_type2::request_type::server_type server;
-    context_type2::request_type              req2{server};
-    context_type2                            ctx2{req2};
-    auto                                     res = ctx2.string("test");
-    EXPECT_EQ(res.body, "test") << res.body.string();
+    fake_protocol               server;
+    context_type2::request_type req2{server};
+    context_type2               ctx2{req2};
+    auto                        res = ctx2.string("test");
+    EXPECT_EQ(res.body.as_string(), "test") << res.body.as_string();
     EXPECT_TRUE(ctx2.test);
 }
