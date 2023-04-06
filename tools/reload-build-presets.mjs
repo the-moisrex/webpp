@@ -133,15 +133,28 @@ async function reloadGithubActions() {
     actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
             .filter(([name]) => !name.startsWith('test-')));
 
+    const jobDefaultSteps = [
+        {
+            uses: "actions/checkout@v3"
+        }, {
+            uses: 'actions/cache@v3',
+            with: {
+                path: ['build'],
+                key: "${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./CMakePresets.json')}}",
+                'restore-keys': [
+                    "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
+                ]
+            }
+        }
+    ];
+
     // add tests jobs
     for (const target of tests) {
         actions.jobs[target] = {
             needs: 'install',
             'runs-on': 'ubuntu-latest',
             steps: [
-                {
-                    uses: "actions/checkout@v3"
-                },
+                ...jobDefaultSteps,
                 {
                     name: `Build ${target}`,
                     run: `cmake --build --preset ${target}`
@@ -164,9 +177,7 @@ async function reloadGithubActions() {
             needs: 'install',
             'runs-on': 'ubuntu-latest',
             steps: [
-                {
-                    uses: "actions/checkout@v3"
-                },
+                ...jobDefaultSteps,
                 {
                     name: `Build Example ${target}`,
                     run: `cmake --build --preset ${target}`
@@ -178,6 +189,50 @@ async function reloadGithubActions() {
             ]
         };
     }
+
+    actions.jobs.tests = {
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Build All Tests`,
+                run: `cmake --build --preset tests`
+            }, {
+                name: `Run All Tests`,
+                run: `ctest --preset tests`
+            }
+        ]
+    };
+
+
+    actions.jobs['webpp-lib'] = {
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Build Web++ Library`,
+                run: `cmake --build --preset webpp`
+            }
+        ]
+    };
+
+
+    actions.jobs['benchmarks'] = {
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Build All Benchmarks`,
+                run: `cmake --build --preset benchmarks`
+            }, {
+                name: "Run All Benchmarks",
+                run: './build/webpp-benchmarks'
+            }
+        ]
+    };
 
     return actions;
 }
