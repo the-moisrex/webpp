@@ -134,12 +134,13 @@ jobs:
         run: ./build/${{ matrix.target }}
   test-examples:
     strategy:
-      target:
-        - cgi-hello-world
-        - cgi-application
-        - json-app
-        - beast-json
-        - beast-view
+      matrix:
+        target:
+          - cgi-hello-world
+          - cgi-application
+          - json-app
+          - beast-json
+          - beast-view
     needs: install
     runs-on: ubuntu-latest
     steps:
