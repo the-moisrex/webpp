@@ -159,6 +159,7 @@ async function reloadGithubActions() {
     // add tests jobs
     actions.jobs['test-targets'] = {
         strategy: {
+            'fail-fast': false,
             matrix: {
                 target: [...tests]
             }
@@ -180,6 +181,7 @@ async function reloadGithubActions() {
 
     actions.jobs['test-examples'] = {
         strategy: {
+            'fail-fast': false,
             matrix: {
                 target: [...examples]
             }

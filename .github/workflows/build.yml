@@ -72,6 +72,7 @@ jobs:
         run: ./build/webpp-benchmarks
   test-targets:
     strategy:
+      fail-fast: false
       matrix:
         target:
           - test-bodies
@@ -135,6 +136,7 @@ jobs:
         run: ./build/${{ matrix.target }}
   test-examples:
     strategy:
+      fail-fast: false
       matrix:
         target:
           - cgi-hello-world
