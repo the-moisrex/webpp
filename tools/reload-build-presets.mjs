@@ -234,7 +234,9 @@ async function reloadGithubActions() {
         ]
     };
 
-    return actions;
+    return new yaml.Document(actions, {
+        aliasDuplicateObjects: false // disabling anchors, Github Actions doesn't support it
+    });
 }
 
 async function writeCMakePresets() {
