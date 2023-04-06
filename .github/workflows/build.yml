@@ -41,8 +41,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -58,8 +57,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -73,8 +71,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -90,8 +87,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -107,8 +103,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -124,8 +119,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -141,8 +135,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -158,8 +151,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -175,8 +167,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -192,8 +183,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -209,8 +199,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -226,8 +215,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -243,8 +231,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -260,8 +247,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -277,8 +263,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -294,8 +279,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -311,8 +295,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -328,8 +311,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -345,8 +327,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -362,8 +343,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -379,8 +359,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -396,8 +375,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -413,8 +391,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -430,8 +407,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -447,8 +423,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -464,8 +439,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -481,8 +455,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -498,8 +471,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -515,8 +487,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -532,8 +503,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -549,8 +519,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -566,8 +535,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -583,8 +551,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -600,8 +567,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -617,8 +583,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -634,8 +599,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -651,8 +615,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -668,8 +631,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -685,8 +647,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -702,8 +663,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -719,8 +679,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -736,8 +695,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -753,8 +711,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -770,8 +727,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -787,8 +743,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -804,8 +759,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -821,8 +775,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
@@ -838,8 +791,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path:
-            - build
+          path: build
           key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
