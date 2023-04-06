@@ -144,9 +144,11 @@ async function reloadGithubActions() {
                 'restore-keys': "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
             }
         }, {
-            name: "Installing Dependencies",
-            'working-directory': '${{github.workspace}}',
-            run: 'sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest g++-12 ninja-build'
+            uses: 'awalsh128/cache-apt-pkgs-action@latest',
+            with: {
+                packages: 'libboost-all-dev zlib1g-dev googletest g++-12 ninja-build',
+                version: 1.0
+            }
         }
     ];
 

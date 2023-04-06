@@ -24,10 +24,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Configure CMake
         run: cmake --preset=default
   tests:
@@ -42,10 +42,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build All Tests
         run: cmake --build --preset tests
       - name: Run All Tests
@@ -62,10 +62,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Web++ Library
         run: cmake --build --preset webpp
   benchmarks:
@@ -80,10 +80,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build All Benchmarks
         run: cmake --build --preset benchmarks
       - name: Run All Benchmarks
@@ -100,10 +100,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-bodies
         run: cmake --build --preset test-bodies
       - name: Run test-bodies
@@ -120,10 +120,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-cache
         run: cmake --build --preset test-cache
       - name: Run test-cache
@@ -140,10 +140,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-charset
         run: cmake --build --preset test-charset
       - name: Run test-charset
@@ -160,10 +160,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-concurrency
         run: cmake --build --preset test-concurrency
       - name: Run test-concurrency
@@ -180,10 +180,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-const-list
         run: cmake --build --preset test-const-list
       - name: Run test-const-list
@@ -200,10 +200,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-context
         run: cmake --build --preset test-context
       - name: Run test-context
@@ -220,10 +220,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-convert
         run: cmake --build --preset test-convert
       - name: Run test-convert
@@ -240,10 +240,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-cookies
         run: cmake --build --preset test-cookies
       - name: Run test-cookies
@@ -260,10 +260,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-crypto
         run: cmake --build --preset test-crypto
       - name: Run test-crypto
@@ -280,10 +280,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-dynamic-router
         run: cmake --build --preset test-dynamic-router
       - name: Run test-dynamic-router
@@ -300,10 +300,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-extensions
         run: cmake --build --preset test-extensions
       - name: Run test-extensions
@@ -320,10 +320,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-find-str
         run: cmake --build --preset test-find-str
       - name: Run test-find-str
@@ -340,10 +340,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-functional
         run: cmake --build --preset test-functional
       - name: Run test-functional
@@ -360,10 +360,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-header-accept-encoding
         run: cmake --build --preset test-header-accept-encoding
       - name: Run test-header-accept-encoding
@@ -380,10 +380,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-http-parser
         run: cmake --build --preset test-http-parser
       - name: Run test-http-parser
@@ -400,10 +400,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-ipv4
         run: cmake --build --preset test-ipv4
       - name: Run test-ipv4
@@ -420,10 +420,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-ipv6
         run: cmake --build --preset test-ipv6
       - name: Run test-ipv6
@@ -440,10 +440,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-istring
         run: cmake --build --preset test-istring
       - name: Run test-istring
@@ -460,10 +460,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-json
         run: cmake --build --preset test-json
       - name: Run test-json
@@ -480,10 +480,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-logger
         run: cmake --build --preset test-logger
       - name: Run test-logger
@@ -500,10 +500,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-memory
         run: cmake --build --preset test-memory
       - name: Run test-memory
@@ -520,10 +520,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-properties
         run: cmake --build --preset test-properties
       - name: Run test-properties
@@ -540,10 +540,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-request
         run: cmake --build --preset test-request
       - name: Run test-request
@@ -560,10 +560,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-response
         run: cmake --build --preset test-response
       - name: Run test-response
@@ -580,10 +580,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-router
         run: cmake --build --preset test-router
       - name: Run test-router
@@ -600,10 +600,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-routes
         run: cmake --build --preset test-routes
       - name: Run test-routes
@@ -620,10 +620,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-server
         run: cmake --build --preset test-server
       - name: Run test-server
@@ -640,10 +640,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-sql
         run: cmake --build --preset test-sql
       - name: Run test-sql
@@ -660,10 +660,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-string
         run: cmake --build --preset test-string
       - name: Run test-string
@@ -680,10 +680,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-traits
         run: cmake --build --preset test-traits
       - name: Run test-traits
@@ -700,10 +700,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-tuple
         run: cmake --build --preset test-tuple
       - name: Run test-tuple
@@ -720,10 +720,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-type-traits
         run: cmake --build --preset test-type-traits
       - name: Run test-type-traits
@@ -740,10 +740,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-unicode
         run: cmake --build --preset test-unicode
       - name: Run test-unicode
@@ -760,10 +760,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-uri-string
         run: cmake --build --preset test-uri-string
       - name: Run test-uri-string
@@ -780,10 +780,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-uri
         run: cmake --build --preset test-uri
       - name: Run test-uri
@@ -800,10 +800,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-ustring
         run: cmake --build --preset test-ustring
       - name: Run test-ustring
@@ -820,10 +820,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-utils-casts
         run: cmake --build --preset test-utils-casts
       - name: Run test-utils-casts
@@ -840,10 +840,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-utils-strings
         run: cmake --build --preset test-utils-strings
       - name: Run test-utils-strings
@@ -860,10 +860,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-validations
         run: cmake --build --preset test-validations
       - name: Run test-validations
@@ -880,10 +880,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build test-views
         run: cmake --build --preset test-views
       - name: Run test-views
@@ -900,10 +900,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Example cgi-hello-world
         run: cmake --build --preset cgi-hello-world
       - name: Run Example cgi-hello-world
@@ -920,10 +920,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Example cgi-application
         run: cmake --build --preset cgi-application
       - name: Run Example cgi-application
@@ -940,10 +940,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Example json-app
         run: cmake --build --preset json-app
       - name: Run Example json-app
@@ -960,10 +960,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Example beast-json
         run: cmake --build --preset beast-json
       - name: Run Example beast-json
@@ -980,10 +980,10 @@ jobs:
             hashFiles('**/CMakeLists.txt') }}-${{
             hashFiles('./CMakePresets.json')}}
           restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - name: Installing Dependencies
-        working-directory: ${{github.workspace}}
-        run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
-          g++-12 ninja-build
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
       - name: Build Example beast-view
         run: cmake --build --preset beast-view
       - name: Run Example beast-view
