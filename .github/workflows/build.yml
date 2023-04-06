@@ -17,6 +17,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.BUILD_TYPE }}-
       - name: Installing Dependencies
         working-directory: ${{github.workspace}}
         run: sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest
@@ -28,32 +38,46 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build Tests
+      - &a1
+        uses: actions/checkout@v3
+      - &a2
+        uses: actions/cache@v3
+        with:
+          path:
+            - build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys:
+            - ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - name: Build All Tests
         run: cmake --build --preset tests
-      - name: Test
+      - name: Run All Tests
         run: ctest --preset tests
   webpp-lib:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Web++ Library
         run: cmake --build --preset webpp
   benchmarks:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build Benchmarks
+      - *a1
+      - *a2
+      - name: Build All Benchmarks
         run: cmake --build --preset benchmarks
-      - name: Run the executable
+      - name: Run All Benchmarks
         run: ./build/webpp-benchmarks
   test-bodies:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-bodies
         run: cmake --build --preset test-bodies
       - name: Run test-bodies
@@ -62,7 +86,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-cache
         run: cmake --build --preset test-cache
       - name: Run test-cache
@@ -71,7 +96,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-charset
         run: cmake --build --preset test-charset
       - name: Run test-charset
@@ -80,7 +106,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-concurrency
         run: cmake --build --preset test-concurrency
       - name: Run test-concurrency
@@ -89,7 +116,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-const-list
         run: cmake --build --preset test-const-list
       - name: Run test-const-list
@@ -98,7 +126,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-context
         run: cmake --build --preset test-context
       - name: Run test-context
@@ -107,7 +136,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-convert
         run: cmake --build --preset test-convert
       - name: Run test-convert
@@ -116,7 +146,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-cookies
         run: cmake --build --preset test-cookies
       - name: Run test-cookies
@@ -125,7 +156,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-crypto
         run: cmake --build --preset test-crypto
       - name: Run test-crypto
@@ -134,7 +166,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-dynamic-router
         run: cmake --build --preset test-dynamic-router
       - name: Run test-dynamic-router
@@ -143,7 +176,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-extensions
         run: cmake --build --preset test-extensions
       - name: Run test-extensions
@@ -152,7 +186,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-find-str
         run: cmake --build --preset test-find-str
       - name: Run test-find-str
@@ -161,7 +196,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-functional
         run: cmake --build --preset test-functional
       - name: Run test-functional
@@ -170,7 +206,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-header-accept-encoding
         run: cmake --build --preset test-header-accept-encoding
       - name: Run test-header-accept-encoding
@@ -179,7 +216,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-http-parser
         run: cmake --build --preset test-http-parser
       - name: Run test-http-parser
@@ -188,7 +226,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-ipv4
         run: cmake --build --preset test-ipv4
       - name: Run test-ipv4
@@ -197,7 +236,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-ipv6
         run: cmake --build --preset test-ipv6
       - name: Run test-ipv6
@@ -206,7 +246,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-istring
         run: cmake --build --preset test-istring
       - name: Run test-istring
@@ -215,7 +256,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-json
         run: cmake --build --preset test-json
       - name: Run test-json
@@ -224,7 +266,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-logger
         run: cmake --build --preset test-logger
       - name: Run test-logger
@@ -233,7 +276,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-memory
         run: cmake --build --preset test-memory
       - name: Run test-memory
@@ -242,7 +286,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-properties
         run: cmake --build --preset test-properties
       - name: Run test-properties
@@ -251,7 +296,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-request
         run: cmake --build --preset test-request
       - name: Run test-request
@@ -260,7 +306,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-response
         run: cmake --build --preset test-response
       - name: Run test-response
@@ -269,7 +316,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-router
         run: cmake --build --preset test-router
       - name: Run test-router
@@ -278,7 +326,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-routes
         run: cmake --build --preset test-routes
       - name: Run test-routes
@@ -287,7 +336,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-server
         run: cmake --build --preset test-server
       - name: Run test-server
@@ -296,7 +346,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-sql
         run: cmake --build --preset test-sql
       - name: Run test-sql
@@ -305,7 +356,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-string
         run: cmake --build --preset test-string
       - name: Run test-string
@@ -314,7 +366,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-traits
         run: cmake --build --preset test-traits
       - name: Run test-traits
@@ -323,7 +376,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-tuple
         run: cmake --build --preset test-tuple
       - name: Run test-tuple
@@ -332,7 +386,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-type-traits
         run: cmake --build --preset test-type-traits
       - name: Run test-type-traits
@@ -341,7 +396,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-unicode
         run: cmake --build --preset test-unicode
       - name: Run test-unicode
@@ -350,7 +406,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-uri-string
         run: cmake --build --preset test-uri-string
       - name: Run test-uri-string
@@ -359,7 +416,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-uri
         run: cmake --build --preset test-uri
       - name: Run test-uri
@@ -368,7 +426,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-ustring
         run: cmake --build --preset test-ustring
       - name: Run test-ustring
@@ -377,7 +436,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-utils-casts
         run: cmake --build --preset test-utils-casts
       - name: Run test-utils-casts
@@ -386,7 +446,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-utils-strings
         run: cmake --build --preset test-utils-strings
       - name: Run test-utils-strings
@@ -395,7 +456,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-validations
         run: cmake --build --preset test-validations
       - name: Run test-validations
@@ -404,7 +466,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build test-views
         run: cmake --build --preset test-views
       - name: Run test-views
@@ -413,7 +476,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Example cgi-hello-world
         run: cmake --build --preset cgi-hello-world
       - name: Run Example cgi-hello-world
@@ -422,7 +486,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Example cgi-application
         run: cmake --build --preset cgi-application
       - name: Run Example cgi-application
@@ -431,7 +496,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Example json-app
         run: cmake --build --preset json-app
       - name: Run Example json-app
@@ -440,7 +506,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Example beast-json
         run: cmake --build --preset beast-json
       - name: Run Example beast-json
@@ -449,7 +516,8 @@ jobs:
     needs: install
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - *a1
+      - *a2
       - name: Build Example beast-view
         run: cmake --build --preset beast-view
       - name: Run Example beast-view
