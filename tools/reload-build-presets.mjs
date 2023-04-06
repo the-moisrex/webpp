@@ -178,7 +178,9 @@ async function reloadGithubActions() {
 
     actions.jobs['test-examples'] = {
         strategy: {
-            target: [...examples]
+            matrix: {
+                target: [...examples]
+            }
         },
         needs: 'install',
         'runs-on': 'ubuntu-latest',
