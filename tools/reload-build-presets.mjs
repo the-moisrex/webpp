@@ -92,6 +92,14 @@ async function reloadPresets() {
         inherits: "default-build"
     });
 
+    // Build Tests
+    Array.prototype.push.apply(pr.buildPresets, tests
+        .map(target => ({
+            name: target,
+            targets: target,
+            inherits: "default-build"
+        })));
+
     // benchmark
     pr.buildPresets.push({
         name: "benchmarks",
