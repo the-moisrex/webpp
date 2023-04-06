@@ -141,9 +141,7 @@ async function reloadGithubActions() {
             with: {
                 path: ['build'],
                 key: "${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./CMakePresets.json')}}",
-                'restore-keys': [
-                    "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
-                ]
+                'restore-keys': "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
             }
         }
     ];
