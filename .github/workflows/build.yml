@@ -72,47 +72,48 @@ jobs:
         run: ./build/webpp-benchmarks
   test-targets:
     strategy:
-      target:
-        - test-bodies
-        - test-cache
-        - test-charset
-        - test-concurrency
-        - test-const-list
-        - test-context
-        - test-convert
-        - test-cookies
-        - test-crypto
-        - test-dynamic-router
-        - test-extensions
-        - test-find-str
-        - test-functional
-        - test-header-accept-encoding
-        - test-http-parser
-        - test-ipv4
-        - test-ipv6
-        - test-istring
-        - test-json
-        - test-logger
-        - test-memory
-        - test-properties
-        - test-request
-        - test-response
-        - test-router
-        - test-routes
-        - test-server
-        - test-sql
-        - test-string
-        - test-traits
-        - test-tuple
-        - test-type-traits
-        - test-unicode
-        - test-uri-string
-        - test-uri
-        - test-ustring
-        - test-utils-casts
-        - test-utils-strings
-        - test-validations
-        - test-views
+      matrix:
+        target:
+          - test-bodies
+          - test-cache
+          - test-charset
+          - test-concurrency
+          - test-const-list
+          - test-context
+          - test-convert
+          - test-cookies
+          - test-crypto
+          - test-dynamic-router
+          - test-extensions
+          - test-find-str
+          - test-functional
+          - test-header-accept-encoding
+          - test-http-parser
+          - test-ipv4
+          - test-ipv6
+          - test-istring
+          - test-json
+          - test-logger
+          - test-memory
+          - test-properties
+          - test-request
+          - test-response
+          - test-router
+          - test-routes
+          - test-server
+          - test-sql
+          - test-string
+          - test-traits
+          - test-tuple
+          - test-type-traits
+          - test-unicode
+          - test-uri-string
+          - test-uri
+          - test-ustring
+          - test-utils-casts
+          - test-utils-strings
+          - test-validations
+          - test-views
     needs: install
     runs-on: ubuntu-latest
     steps:
