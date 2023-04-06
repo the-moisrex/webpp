@@ -139,7 +139,7 @@ async function reloadGithubActions() {
         }, {
             uses: 'actions/cache@v3',
             with: {
-                path: ['build'],
+                path: 'build',
                 key: "${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./CMakePresets.json')}}",
                 'restore-keys': "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
             }
