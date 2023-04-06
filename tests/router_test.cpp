@@ -33,19 +33,19 @@ TEST(Router, RouterConcepts) {
 TEST(Router, RouteCreation) {
     using fake_protocol = fake_proto<default_traits, fake_app_struct>;
     fake_protocol fp;
-    using request = typename fake_protocol::request_type;
+    using request_type = typename fake_protocol::request_type;
 
     constexpr auto about_page = []() noexcept {
         return "About page\n";
     };
 
 
-    request           req{fp};
+    request_type      req{fp};
     router const      router1{extension_pack<string_body>{}, about_page};
     HTTPResponse auto res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
-    EXPECT_EQ(res.headers.status_code(), 200);
+    EXPECT_EQ(res.headers.status_code_integer(), 200);
     EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
     router const            router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
