@@ -121,6 +121,206 @@
             "inherits": "default-build"
         },
         {
+            "name": "test-bodies",
+            "targets": "test-bodies",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-cache",
+            "targets": "test-cache",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-charset",
+            "targets": "test-charset",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-concurrency",
+            "targets": "test-concurrency",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-const-list",
+            "targets": "test-const-list",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-context",
+            "targets": "test-context",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-convert",
+            "targets": "test-convert",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-cookies",
+            "targets": "test-cookies",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-crypto",
+            "targets": "test-crypto",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-dynamic-router",
+            "targets": "test-dynamic-router",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-extensions",
+            "targets": "test-extensions",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-find-str",
+            "targets": "test-find-str",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-functional",
+            "targets": "test-functional",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-header-accept-encoding",
+            "targets": "test-header-accept-encoding",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-http-parser",
+            "targets": "test-http-parser",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-ipv4",
+            "targets": "test-ipv4",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-ipv6",
+            "targets": "test-ipv6",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-istring",
+            "targets": "test-istring",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-json",
+            "targets": "test-json",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-logger",
+            "targets": "test-logger",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-memory",
+            "targets": "test-memory",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-properties",
+            "targets": "test-properties",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-request",
+            "targets": "test-request",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-response",
+            "targets": "test-response",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-router",
+            "targets": "test-router",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-routes",
+            "targets": "test-routes",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-server",
+            "targets": "test-server",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-sql",
+            "targets": "test-sql",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-string",
+            "targets": "test-string",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-traits",
+            "targets": "test-traits",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-tuple",
+            "targets": "test-tuple",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-type-traits",
+            "targets": "test-type-traits",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-unicode",
+            "targets": "test-unicode",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-uri-string",
+            "targets": "test-uri-string",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-uri",
+            "targets": "test-uri",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-ustring",
+            "targets": "test-ustring",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-utils-casts",
+            "targets": "test-utils-casts",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-utils-strings",
+            "targets": "test-utils-strings",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-validations",
+            "targets": "test-validations",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-views",
+            "targets": "test-views",
+            "inherits": "default-build"
+        },
+        {
             "name": "benchmarks",
             "targets": "webpp-benchmarks",
             "inherits": "default-build"
