@@ -226,6 +226,7 @@ namespace webpp::unicode {
         constexpr storage_unit(storage_unit&&) noexcept      = default;
         storage_unit& operator=(storage_unit const& val)     = default;
         storage_unit& operator=(storage_unit&& val) noexcept = default;
+        constexpr ~storage_unit() noexcept                   = default;
 
         template <typename C>
             requires(stl::is_integral_v<stl::remove_cvref_t<C>> && sizeof(C) == sizeof(char_type))
