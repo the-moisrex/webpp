@@ -133,6 +133,10 @@ async function reloadGithubActions() {
     actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
             .filter(([name]) => !name.startsWith('test-')));
 
+    // remove example jobs (we remove them because one/some of them might be removed)
+    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
+            .filter(([name]) => !name.startsWith('example-')));
+
     const jobDefaultSteps = [
         {
             uses: "actions/checkout@v3"
@@ -153,27 +157,43 @@ async function reloadGithubActions() {
     ];
 
     // add tests jobs
-    for (const target of tests) {
-        actions.jobs[target] = {
-            needs: 'install',
-            'runs-on': 'ubuntu-latest',
-            steps: [
-                ...jobDefaultSteps,
-                {
-                    name: `Build ${target}`,
-                    run: `cmake --build --preset ${target}`
-                },
-                {
-                    name: `Run ${target}`,
-                    run: `./build/${target}`
-                }
-            ]
-        };
-    }
+    actions.jobs['test-targets'] = {
+        strategy: {
+            target: [...tests]
+        },
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: 'Build ${{ matrix.target }}',
+                run: 'cmake --build --preset ${{ matrix.target }}'
+            },
+            {
+                name: 'Run ${{ matrix.target }}',
+                run: './build/${{ matrix.target }}'
+            }
+        ]
+    };
 
-    // remove example jobs (we remove them because one/some of them might be removed)
-    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
-            .filter(([name]) => !name.startsWith('example-')));
+    actions.jobs['test-examples'] = {
+        strategy: {
+            target: [...examples]
+        },
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: 'Build Example ${{ matrix.target }}',
+                run: 'cmake --build --preset ${{ matrix.target }}'
+            },
+            {
+                name: 'Run Example ${{ matrix.target }}',
+                run: './build/${{ matrix.target }}'
+            }
+        ]
+    };
 
 
     actions.jobs.install = {
@@ -187,25 +207,6 @@ async function reloadGithubActions() {
         ]
     };
 
-
-    // add examples
-    for (const target of examples) {
-        actions.jobs[`example-${target}`] = {
-            needs: 'install',
-            'runs-on': 'ubuntu-latest',
-            steps: [
-                ...jobDefaultSteps,
-                {
-                    name: `Build Example ${target}`,
-                    run: `cmake --build --preset ${target}`
-                },
-                {
-                    name: `Run Example ${target}`,
-                    run: `./build/${target}`
-                }
-            ]
-        };
-    }
 
     actions.jobs.tests = {
         needs: 'install',
