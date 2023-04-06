@@ -143,6 +143,10 @@ async function reloadGithubActions() {
                 key: "${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{ hashFiles('**/CMakeLists.txt') }}-${{ hashFiles('./CMakePresets.json')}}",
                 'restore-keys': "${{ runner.os }}-${{ env.BUILD_TYPE }}-"
             }
+        }, {
+            name: "Installing Dependencies",
+            'working-directory': '${{github.workspace}}',
+            run: 'sudo apt update && sudo apt install libboost-all-dev zlib1g-dev googletest g++-12 ninja-build'
         }
     ];
 
@@ -168,6 +172,19 @@ async function reloadGithubActions() {
     // remove example jobs (we remove them because one/some of them might be removed)
     actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
             .filter(([name]) => !name.startsWith('example-')));
+
+
+    actions.jobs.install = {
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Configure CMake`,
+                run: `cmake --preset=default`
+            }
+        ]
+    };
+
 
     // add examples
     for (const target of examples) {
