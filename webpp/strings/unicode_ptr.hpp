@@ -117,7 +117,7 @@ namespace webpp::unicode {
         }
 
 
-        constexpr operator element_type const*() noexcept {
+        constexpr operator element_type const*() const noexcept {
             return reinterpret_cast<element_type const*>(start);
         }
 
