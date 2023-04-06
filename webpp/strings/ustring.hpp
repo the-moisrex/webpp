@@ -32,7 +32,7 @@ namespace webpp {
 
         // this right here is the point of the whole wrapper:
         using pointer       = typename parent_value_type::pointer;
-        using const_pointer = stl::add_const_t<typename pointer::const_pointer>;
+        using const_pointer = typename pointer::const_pointer;
 
         // we need this, because if we don't do this, the "rebind" will use the AllocType and not the
         // wrapped version of AllocType after the "rebind".
