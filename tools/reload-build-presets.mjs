@@ -140,6 +140,9 @@ async function reloadGithubActions() {
             'runs-on': 'ubuntu-latest',
             steps: [
                 {
+                    uses: "actions/checkout@v3"
+                },
+                {
                     name: `Build ${target}`,
                     run: `cmake --build --preset ${target}`
                 },
@@ -161,6 +164,9 @@ async function reloadGithubActions() {
             needs: 'install',
             'runs-on': 'ubuntu-latest',
             steps: [
+                {
+                    uses: "actions/checkout@v3"
+                },
                 {
                     name: `Build Example ${target}`,
                     run: `cmake --build --preset ${target}`
