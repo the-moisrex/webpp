@@ -223,17 +223,17 @@ async function reloadGithubActions() {
     };
 
 
-    actions.jobs['webpp-lib'] = {
-        needs: 'install',
-        'runs-on': 'ubuntu-latest',
-        steps: [
-            ...jobDefaultSteps,
-            {
-                name: `Build Web++ Library`,
-                run: `cmake --build --preset webpp`
-            }
-        ]
-    };
+    // actions.jobs['webpp-lib'] = {
+    //     needs: 'install',
+    //     'runs-on': 'ubuntu-latest',
+    //     steps: [
+    //         ...jobDefaultSteps,
+    //         {
+    //             name: `Build Web++ Library`,
+    //             run: `cmake --build --preset webpp`
+    //         }
+    //     ]
+    // };
 
 
     actions.jobs['benchmarks'] = {
