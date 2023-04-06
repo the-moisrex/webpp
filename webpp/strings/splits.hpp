@@ -8,6 +8,8 @@
 #include "size.hpp"
 #include "strings_concepts.hpp"
 
+#include <cassert>
+
 namespace webpp::strings {
 
 
@@ -41,8 +43,6 @@ namespace webpp::strings {
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
-        constexpr splitter_iterator() noexcept                         = default; // .end()
-        constexpr splitter_iterator(splitter_iterator const&) noexcept = default; // .end()
         constexpr splitter_iterator(splitter_ptr    ptr,
                                     difference_type start_pos_val   = 0ul,
                                     difference_type finish_pos_val  = 0ul,
@@ -51,8 +51,14 @@ namespace webpp::strings {
             start_pos{start_pos_val},
             finish_pos{finish_pos_val},
             delim_index{delim_index_val} {}
+        constexpr splitter_iterator() noexcept                                    = default; // .end()
+        constexpr splitter_iterator(splitter_iterator&&) noexcept                 = default;
+        constexpr splitter_iterator(splitter_iterator const&) noexcept            = default;
+        constexpr splitter_iterator& operator=(splitter_iterator&&) noexcept      = default;
+        constexpr splitter_iterator& operator=(splitter_iterator const&) noexcept = default;
+        constexpr ~splitter_iterator() noexcept                                   = default;
 
-        iterator& operator++() {
+        constexpr iterator& operator++() {
             assert(spltr != nullptr);
             const auto len = spltr->str.size();
             if (finish_pos == len) {
@@ -79,7 +85,7 @@ namespace webpp::strings {
             return *this;
         }
 
-        iterator operator++(int) {
+        constexpr iterator operator++(int) {
             iterator retval = *this;
             ++(*this);
             return retval;
@@ -96,7 +102,7 @@ namespace webpp::strings {
             return !this->operator==(other);
         }
 
-        value_type operator*() {
+        [[nodiscard]] constexpr value_type operator*() {
             // can't dereference an iterator that points to nothing
             assert(spltr != nullptr);
             return spltr->str.substr(start_pos, finish_pos - start_pos);
@@ -160,7 +166,7 @@ namespace webpp::strings {
          * Split the strings and get a vector
          */
         template <typename Vec = default_collection_type, typename... Args>
-        [[nodiscard]] Vec split(Args&&... args) const {
+        [[nodiscard]] constexpr Vec split(Args&&... args) const {
             Vec vec{stl::forward<Args>(args)...};
             vec.reserve(delim_count + 1ul); // we're gambling here
             split<Vec>(vec);
