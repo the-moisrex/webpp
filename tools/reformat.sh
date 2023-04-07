@@ -18,8 +18,12 @@ function reformat_staged {
 
 function reformat_pre_commit {
   files=$(git --no-pager diff-index --cached --name-only HEAD | grep -E "\.(hpp|cpp)$");
-  echo "$files" | xargs "$formatter"
-  echo "$files" | xargs -l git add
+  if [ ! -z "$files" ]; then
+    echo "$files" | xargs "$formatter"
+    echo "$files" | xargs -l git add
+  else
+    echo "Reformatting is not required.";
+  fi
 }
 
 case $1 in
