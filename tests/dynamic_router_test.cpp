@@ -9,7 +9,7 @@ using namespace webpp::http;
 using namespace std;
 
 
-template <typename Iter, char Num = 13>
+template <typename Iter, char Num = 13> // NOLINT(cppcoreguidelines-avoid-magic-numbers)
 void rot13(Iter begin, const Iter& end) noexcept {
     while (begin != end) {
         char& c = *begin;
