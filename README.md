@@ -57,29 +57,41 @@ auto page_one() {
     return "Page 1";
 }
 
+
+struct web_app {
+    enable_owner_traits<default_traits> et; // holds the allocator, logger, ...
+    dynamic_router router{et};              // Helps with the routing, could be used as an app too
+    
+    web_app() {
+        // register your routes
+        
+        router += router / endpath >> []() noexcept {
+                           return "main page";
+                       };
+        
+        router += router / "page" / "one" / endpath >> page_one; // free functions
+        router += router / "cgi-bin" % "cgi-hello-world" >> [] {
+                           return "Hello world";
+                       };
+        
+        // "/about" or "/cgi-bin/cgi-hello-world/about"
+        router += (router % "about") || (router / "cgi-bin" / "cgi-hello-world" % "about") >>
+                       [](context& ctx) {
+                           return ctx.view("about.html");
+                       };
+    }
+    
+    auto operator()(auto&& req) {
+        return router(req);
+    }
+};
+
 int main() {
-    using namespace webpp;
-    using namespace webpp::http;
-
-    dynamic_router router;
-    router += router >> []() noexcept {
-                       return "main page";
-                   };
+    // CGI Protocol
+    webpp::http::cgi<web_app> cgi_application;
     
-    router += router / "page" / "one" >> page_one;
-    
-    router += router / "cgi-bin" / "cgi-hello-world" >> [] {
-                       return "Hello world";
-                   };
-    
-    // "/about" or "/cgi-bin/cgi-hello-world/about"
-    router += (router / "about") || (router / "cgi-bin" / "cgi-hello-world" / "about") >>
-                   [](context& ctx) {
-                       return ctx.view("about.html");
-                   };
-
     // run the app:
-    return cgi(router)();
+    return cgi_application();
 }
 ```
 
@@ -95,6 +107,7 @@ struct app {
     app() {
         // Tell the view manager where to look for the files
         view_man.view_roots.emplace_back("./public");
+        view_man.view_roots.emplace_back("./static");
     }
     
     response index(context& ctx) {
@@ -102,7 +115,7 @@ struct app {
     }
     
     response api(request const& req) {
-        json::document doc{req};
+        json::document doc{req};     // You can choose which JSON lib you want to use in the background
         doc["user"] = "username";
         doc["token"] = "some token";
         return doc;
@@ -117,11 +130,11 @@ struct app {
     }
     
     auto page_one() {
-        return view_man("pages/page1.mustache"); // We have mustache built-in
+        return view_man.view("pages/page1.mustache"); // We have mustache built-in
     }
     
     auto hello() {
-        return view_man("pages/hello.html");
+        return view_man.view("pages/hello.html");
     }
     
   private:
@@ -146,10 +159,10 @@ struct app_controller {
         router.objects.emplace_back(my_app);
         
         // register the routes:
-        router += router >> &app::index;
-        router += router / "page" / "one" >> &app::page_one;
+        router += router / endpath >> &app::index;
+        router += router / "page" % "one" >> &app::page_one;
         router += router / "api" / "v1" >> &app::api;
-        router += router / "cgi-bin" / "cgi-hello-world" >> &app::hello;
+        router += router / "cgi-bin" % "cgi-hello-world" >> &app::hello;
         router += (router / "about") || (router / "cgi-bin" / "cgi-hello-world" / "about") >> &app::about;
     }
 
