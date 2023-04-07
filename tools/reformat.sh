@@ -16,10 +16,20 @@ function reformat_staged {
   git --no-pager diff --name-only --staged | grep -E "\.(hpp|cpp)$"  | xargs "$formatter"
 }
 
+function reformat_pre_commit {
+  files=$(git --no-pager diff-index --cached --name-only HEAD | grep -E "\.(hpp|cpp)$");
+  echo "$files" | xargs "$formatter"
+  echo "$files" | xargs -l git add
+}
+
 case $1 in
   --staged)
     shift;
     reformat_staged
+    ;;
+  --pre-commit)
+    shift;
+    reformat_pre_commit
     ;;
   *)
     reformat;
