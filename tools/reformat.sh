@@ -26,7 +26,14 @@ function reformat_pre_commit {
   fi
 }
 
+function auto_reformat {
+  git clang-format
+}
+
 case $1 in
+  --auto)
+    auto_reformat;
+    ;;
   --staged)
     shift;
     reformat_staged
