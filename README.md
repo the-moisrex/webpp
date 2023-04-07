@@ -125,7 +125,7 @@ struct app {
     }
     
   private:
-    views::view_manager<> view_man;
+    enable_traits_for<views::view_manager<>> view_man;
 };
 
 // for demonstration purposes only, we could've done this a lot easier
@@ -136,7 +136,7 @@ struct app_controller {
     using namespace webpp::http;
 
   private:
-    dynamic_router router;
+    enable_traits_for<dynamic_router> router;
     app my_app;
     
   public:
