@@ -1,14 +1,15 @@
 ---
-name: Tasks
+name: Task List
 about: Write a list of tasks/todos
-title: "Q: "
-labels: 
+title: ""
+labels: tasks
+assignees: the-moisrex
 
 ---
 
-## Bug
+### Bug
 
 
-## Todo
+### Todo
 
 - [ ] 
