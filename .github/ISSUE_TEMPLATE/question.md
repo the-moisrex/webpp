@@ -1,9 +1,7 @@
 ---
 name: Question
 about: Ask a question
-title: "Q: How can I ..."
+title: "Q: "
 labels: question
 
 ---
-
-# How can I ...
