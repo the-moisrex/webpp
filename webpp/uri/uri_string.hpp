@@ -196,7 +196,7 @@ namespace webpp::uri {
          */
         constexpr void parse_user_info() const noexcept {
             if (user_info_end != string_view_type::npos)
-                return;     // It's already parsed
+                return; // It's already parsed
 
             parse_scheme(); // to get "authority_start"
 
@@ -241,7 +241,7 @@ namespace webpp::uri {
          */
         constexpr void parse_path() const noexcept {
             if (authority_end != string_view_type::npos)
-                return;     // It's already parsed
+                return; // It's already parsed
 
             parse_scheme(); // to get "authority_start"
             parse_query();  // to get "query_start"
@@ -280,7 +280,7 @@ namespace webpp::uri {
          */
         constexpr void parse_port() const noexcept {
             if (port_start != string_view_type::npos)
-                return;        // It's already parsed
+                return; // It's already parsed
 
             parse_user_info(); // to get "authority_start" and "user_info_end"
 
@@ -1724,7 +1724,7 @@ namespace webpp::uri {
                 if (!decode_uri_component(name,
                                           d_name,
                                           details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>)) {
-                    d_name = name;                      // just put the non-decoded string there
+                    d_name = name; // just put the non-decoded string there
                 }
                 if (eq_sep != string_view_type::npos) { // we have a value as well
                     auto const value = _query.substr(eq_sep + 1, and_sep);
@@ -2020,13 +2020,14 @@ namespace webpp::uri {
 
 
     template <typename T>
-    concept URIString = requires {
-        typename stl::remove_cvref_t<T>::specified_string_type;
-        typename stl::remove_cvref_t<T>::specified_string_view_type;
-        requires stl::same_as<stl::remove_cvref_t<T>,
-                              uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
-                                         typename stl::remove_cvref_t<T>::specified_string_view_type>>;
-    };
+    concept URIString =
+      requires {
+          typename stl::remove_cvref_t<T>::specified_string_type;
+          typename stl::remove_cvref_t<T>::specified_string_view_type;
+          requires stl::same_as<stl::remove_cvref_t<T>,
+                                uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
+                                           typename stl::remove_cvref_t<T>::specified_string_view_type>>;
+      };
 
 
     template <typename Str1T, typename StrView1T, typename Str2T, typename StrView2T>
