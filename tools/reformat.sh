@@ -18,7 +18,7 @@ function reformat_staged {
 
 function reformat_pre_commit {
   files=$(git --no-pager diff-index --cached --name-only HEAD | grep -E "\.(hpp|cpp)$");
-  if [ ! -z "$files" ]; then
+  if [ -n "$files" ]; then
     echo "$files" | xargs "$formatter"
     echo "$files" | xargs -l git add
   else
