@@ -7,8 +7,8 @@ function print_help {
 }
 
 function setup_hooks {
-  git config --local core.hookspath "\$GIT_WORK_TREE/tools/git-hooks"
-  echo "Git's hooks' path is now set to: '\$GIT_WORK_TREE/tools/git-hooks'"
+  git config --local core.hookspath "./tools/git-hooks"
+  echo "Git's hooks' path is now set to: './tools/git-hooks'"
 }
 
 function setup_repo {
