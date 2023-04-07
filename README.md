@@ -1,5 +1,4 @@
 # WEB++ (C++ Web Framework)
-[![Build Status](https://travis-ci.com/the-moisrex/webpp.svg?branch=master)](https://travis-ci.com/the-moisrex/webpp)
 
 This is a web framework written in C++ and hopefully will be used by other programming languages other than C++ too.
 
@@ -18,7 +17,7 @@ Look at the [Core Readme file](./webpp/README.md) for the core concepts of the p
 - To remove the necessity for dealing with low-level networking APIs
 - Cross-Platform: no need to deal with OS-specific APIs
 - Modular: to use other people's written apps and modules in your code easily
-- Cross-Protocol: Remove the necessity for dealing with specific protocols (CGI/FCGI/...)
+- Cross-Protocol: Remove the necessity for dealing with specific protocols (CGI/FastCGI/...)
 - Cross-Database-API: being able to access wide range of databases without dealing with DB-specific APIs and switch between them in the config files instead of changing the code itself.
 - Parallelization Access: being able to compute things in parallel easily
 - Implement Common Patterns easily
@@ -30,7 +29,7 @@ help you with these kinda projects someday:
 
 - Develop a static/dynamic website easily in C++
 - Using other people's already written websites/modules/components in your app
-- Writing long-runnig web apps and store temporary data in variables instead of database (not all languages can do that)
+- Writing long-running web apps and store temporary data in variables instead of database (not all languages can do that)
 
 ## Why C++?
 
@@ -40,15 +39,139 @@ Well there are multiple answers:
 - C++ does have the potential specially the newer versions of C++
 - Having full power of C++ and your OS at your disposal
 - WebAssembly is getting stronger, you will be able to write both back-end and front-end in the same language with C++ (even though you already can if you choose JavaScript for example, but here's another option)
-- Has the potiential to be faster than other languages
+- Has the potential to be faster than other languages
 - C++ can be easy if the library is easy to use.
 - Using modern C++ is fun
-- Compile-Time computation is something that youeither can't achive or it's going to be difficult to achieve in other languages
+- Compile-Time computation is something that you either can't achieve or it's going to be difficult to achieve in other languages
 - Remove the necessity to learn other languages if you're already familiar with C++
 - Using older codes in your project more easily
 - Multi-threading access: not all languages provide that access easily specially in a web framework
 
-## Dependencies
+
+
+## Example Codes
+
+**A Simple CGI application**
+```c++
+auto page_one() {
+    return "Page 1";
+}
+
+int main() {
+    using namespace webpp;
+    using namespace webpp::http;
+
+    dynamic_router router;
+    router += router >> []() noexcept {
+                       return "main page";
+                   };
+    
+    router += router / "page" / "one" >> page_one;
+    
+    router += router / "cgi-bin" / "cgi-hello-world" >> [] {
+                       return "Hello world";
+                   };
+    
+    // "/about" or "/cgi-bin/cgi-hello-world/about"
+    router += (router / "about") || (router / "cgi-bin" / "cgi-hello-world" / "about") >>
+                   [](context& ctx) {
+                       return ctx.view("about.html");
+                   };
+
+    // run the app:
+    return cgi(router)();
+}
+```
+
+**There are a lot more features, designed to be used in a modular way:**
+```c++
+
+// Could be a sub-app of another sub-app that has no
+// clue how the server works or what kinda protocol (CGI/FastCGI/Self Served/...) is being used
+struct app {
+    using namespace webpp;
+    using namespace webpp::http;
+    
+    app() {
+        // Tell the view manager where to look for the files
+        view_man.view_roots.emplace_back("./public");
+    }
+    
+    response index(context& ctx) {
+        return "Main Page";
+    }
+    
+    response api(request const& req) {
+        json::document doc{req};
+        doc["user"] = "username";
+        doc["token"] = "some token";
+        return doc;
+    }
+    
+    response about(request const& req) {
+        response res{req};
+        res.headers = http::status_code::ok;
+        res.headers["Content-Type"] = "text/html";
+        res.body = "About Page";
+        return res;
+    }
+    
+    auto page_one() {
+        return view_man("pages/page1.mustache"); // We have mustache built-in
+    }
+    
+    auto hello() {
+        return view_man("pages/hello.html");
+    }
+    
+  private:
+    views::view_manager<> view_man;
+};
+
+// for demonstration purposes only, we could've done this a lot easier
+// The Server calls this class (the operator() of this class) for every request
+// BTW, the `router` can totally replace this, you can inherit from it even
+struct app_controller {
+    using namespace webpp;
+    using namespace webpp::http;
+
+  private:
+    dynamic_router router;
+    app my_app;
+    
+  public:
+    
+    app_controller() {
+        // register your app
+        router.objects.emplace_back(my_app);
+        
+        // register the routes:
+        router += router >> &app::index;
+        router += router / "page" / "one" >> &app::page_one;
+        router += router / "api" / "v1" >> &app::api;
+        router += router / "cgi-bin" / "cgi-hello-world" >> &app::hello;
+        router += (router / "about") || (router / "cgi-bin" / "cgi-hello-world" / "about") >> &app::about;
+    }
+
+    // This operator will be called for each request
+    HTTPResponse auto operator()(HTTPRequest auto&& req) {
+        return router(req);
+    }
+};
+
+int main() {
+    webpp::http::beast<app_controller> server;
+    server
+      .enable_sync()        // call the app in a thread-safe manner (might be removed in the future)
+      .address("127.0.0.1") // listen on localhost
+      .port(8080);          // on http port
+      
+    // Start the server and share your website to the world like there's no tomorrow  
+    return server();
+}
+```
+
+## Somewhat Dependencies
 
 These are the dependencies this project requires for certain parts of the project
 to function properly. Some of these libraries haven't been integrated into the project
@@ -61,7 +184,7 @@ their performance but other factors are in play as well.
 - `boost::asio` or `asio` (for FastCGI and Self-Hosted interfaces only)
 - `boost::beast` _(optional)_ (for benchmarking only)
 - `fmt`: as a fallback for `std::format`
-- `eve` _(optional)_: for better performance with SIMD
+- `eve` _(optional|Disabled)_: for better performance with SIMD
 - `openssl` (used by asio)
 - _(optional)_ for `gzip` support one of these:
   - `zlib` _(optional)_
@@ -70,7 +193,7 @@ their performance but other factors are in play as well.
   - `libdeflate` _(optional)_
 - `zstd` _(optional)_: for `zstd` compression support
 - `brotli` _(optional)_: for `br` compression support
-- `CTRE` _(optional)_: compile-time-regular-expression
+- `CTRE` _(optional|Disabled)_: compile-time-regular-expression
 - `modp_64`: modified version is included in the sources
 
 ## Development
@@ -92,13 +215,6 @@ I'd appreciate any help of any kind. Even if you're not interested in coding, he
 ### Examples
 In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint. Take a look at them and you can be sure that we'll try to write tests for all of them; so if you read tests, you'll learn even more about the project.
 
-### Tests
-We currently use `googletest` library for unit/integrated testing. This might change in a few years though.
-
-There are many tests you can read, confirm, fix, and/or write. They are the perfect place to start learning about the project after the examples.
-
-You currently can run tests just by running the `webpptest` executable. It's as easy as that.
-
 ### Benchmarks
 Benchmarks are done for us developers so we know which tool/class/implementation/library/framework/solution that we choose is the best. Currently we are using Googles' mini-benchmark library for this purpose.
 
@@ -106,22 +222,36 @@ Benchmarks are done for us developers so we know which tool/class/implementation
 We don't have a documentation/tutorial/guide at this point. You can help us write one. We're just too busy writing the code that we don't have much time writing documentations at this point. But you can be sure from the point that this project becomes production-ready, we'll have documentations.
 
 ### Build
-Requirements for building and testing:
-
-* At least C++20 (we will be using C++20/23/... as they come and deprecate old versions)
-* CMake
-* Boost
-* Googletest (gtest)
 
 ```bash
+
+# Download
 git clone https://gitlab.com/webpp/webpp.git --depth=1
 cd webpp/
-mkdir build/
-cd build
-cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Debug ..
-ninja
-sudo ninja install # needed only for building the examples
+
+# Configure CMake (default uses ninja and creates 'build' directory)
+cmake --preset=default
+
+# Build Examples (See /examples directory for the list of them)
+cmake --build --preset=cgi-application
+cmake --build --preset=beast-view
+cmake --build --preset=cgi-hello-world
+cmake --build --preset=beast-json
+
+# Build Tests (See /tests directory for the list of tests, each file is a test)
+cmake --build --preset=test-type-traits
+cmake --build --preset=test-dynamic-router
+cmake --build --preset=test-context
+cmake --build --preset=test-cookies
+cmake --build --preset=test-response
+
+# Run the tests individually
+./build/test-response
+./build/test-type-traits
+
+# Run all tests (Need to build first)
+ctest --preset=tests
+
+# install
+cmake --install ./build --prefix=/usr
 ```
-
-And then in order to run the tests, you just have to run the `webpptest` binary in that directory. You don't need to build tests individually but you have to build examples individually; but this may change when we hit our first production-ready version.
-
