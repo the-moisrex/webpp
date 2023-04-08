@@ -15,32 +15,29 @@ namespace website {
     struct app {
 
         auto about([[maybe_unused]] auto const& ctx) {
-            auto doc    = ctx.json_doc();
+            document doc;
             doc["page"] = "about";
             return doc;
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<json_body>;
+            static_router router{(get and root) >>
+                                   [] {
+                                       document doc;
+                                       doc["page"] = "home";
+                                       return doc;
+                                   },
+                                 (get and root / "about") >>
+                                   [this](context& ctx) {
+                                       return this->about(ctx);
+                                   },
+                                 [] {
+                                     document doc;
+                                     doc["welcome"] = "Hello World";
+                                     return doc;
+                                 }};
 
-            router _router{extensions{},
-                           (get and root) >>=
-                           [] {
-                               document doc;
-                               doc["page"] = "home";
-                               return doc;
-                           },
-                           (get and root / "about") >>=
-                           [this](auto&& ctx) {
-                               return this->about(ctx);
-                           },
-                           [] {
-                               document doc;
-                               doc["welcome"] = "Hello World";
-                               return doc;
-                           }};
-
-            return _router(req);
+            return router(req);
         }
     };
 

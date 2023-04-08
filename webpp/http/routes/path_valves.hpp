@@ -3,6 +3,8 @@
 #ifndef WEBPP_PATH_VALVES_HPP
 #define WEBPP_PATH_VALVES_HPP
 
+#include "../../std/string.hpp"
+#include "../../std/string_view.hpp"
 #include "valve_traits.hpp"
 
 namespace webpp::http {
@@ -84,6 +86,51 @@ namespace webpp::http {
               as_tuple());
         }
     };
+
+
+
+
+    template <typename Segment>
+    struct segment_string {
+      private:
+        Segment seg;
+
+      public:
+        constexpr segment_string(Segment&& inp_seg) noexcept : seg{stl::move(inp_seg)} {}
+        constexpr segment_string(Segment const& inp_seg) noexcept : seg{inp_seg} {}
+
+        constexpr segment_string(segment_string const&)                = default;
+        constexpr segment_string(segment_string&&) noexcept            = default;
+        constexpr ~segment_string()                                    = default;
+        constexpr segment_string& operator=(segment_string const&)     = default;
+        constexpr segment_string& operator=(segment_string&&) noexcept = default;
+
+        template <typename TraitsType>
+        [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
+            return ctx.check_segment(seg);
+        }
+
+        constexpr void to_string(istl::String auto& out) const {
+            out.append(seg);
+        }
+    };
+
+    template <typename Seg>
+    segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
+
+
+    // String Views Valvifier
+    template <typename T>
+        requires(istl::StringView<T> || istl::StringLiteral<T>)
+    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
+        return segment_string{istl::string_viewify(stl::forward<T>(next))};
+    }
+
+    // String object is passed
+    template <istl::String T>
+    [[nodiscard]] static constexpr auto valvify(T&& next) {
+        return segment_string{istl::stringify(stl::forward<T>(next))};
+    }
 
 } // namespace webpp::http
 

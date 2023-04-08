@@ -1,13 +1,15 @@
 // Created by moisrex on 5/5/20.
 
-#ifndef WEBPP_APP_H
-#define WEBPP_APP_H
+#ifndef WEBPP_FCGI_EXAMPLE_APP_H
+#define WEBPP_FCGI_EXAMPLE_APP_H
 
-#include <webpp.hpp>
+#include <webpp/http/http.hpp>
+#include <webpp/webpp.hpp>
 
-using namespace webpp;
 
 struct app {
+    using namespace webpp;
+    using namespace webpp::http;
 
     auto home(Context auto& ctx) noexcept {
         return ctx.string("Home page");
@@ -17,27 +19,25 @@ struct app {
         return ctx.string("About page");
     }
 
-    Response auto operator()(Request auto& req) noexcept {
+    auto operator()(HTTPRequest auto& req) noexcept {
         using extensions = extension_pack<string_response>;
         const auto admin = []() {
             return "Nice page.";
         };
 
-        constexpr auto home_root = root / stl::string_view{"home"};
 
-        router _router{extensions{},
-                       get and home_root >>=
-                       [this](Context auto& ctx) {
-                           return this->home(ctx);
-                       },
-                       get & (root / "about" >>=
-                              [this](Context auto& ctx) {
-                                  return this->about(ctx);
-                              }),
-                       root / "admin" >>= admin};
+        static_router router{get and root / "home" >>
+                                       [this](context& ctx) {
+                                           return this->home(ctx);
+                                       },
+                             get & (root / "about" >>
+                                    [this](context& ctx) {
+                                        return this->about(ctx);
+                                    }),
+                             root / "admin" >> admin};
 
-        return _router(req);
+        return router(req);
     }
 };
 
-#endif // WEBPP_APP_H
+#endif // WEBPP_FCGI_EXAMPLE_APP_H

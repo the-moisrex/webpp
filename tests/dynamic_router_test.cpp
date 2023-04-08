@@ -1,6 +1,7 @@
 #include "../webpp/http/routes/dynamic_router.hpp"
 
-#include "../webpp/http/routes/router.hpp"
+#include "../webpp/http/routes/path.hpp"
+#include "../webpp/http/routes/static_router.hpp"
 #include "common_pch.hpp"
 
 
@@ -348,15 +349,15 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
-    router const _router{empty_extension_pack{},
-                         valve{} / "home" >>
-                           [] {
-                               return "Home Page";
-                           },
-                         valve{} / "about" >>
-                           []() {
-                               return "About Page";
-                           }};
+    static_router const _router{empty_extension_pack{},
+                                valve{} / "home" >>
+                                  [] {
+                                      return "Home Page";
+                                  },
+                                valve{} / "about" >>
+                                  []() {
+                                      return "About Page";
+                                  }};
 
     enable_owner_traits<default_dynamic_traits> et;
 

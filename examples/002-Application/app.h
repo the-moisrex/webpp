@@ -1,7 +1,7 @@
 // Created by moisrex on 5/5/20.
 
-#ifndef WEBPP_EXAMPLE_APP_H
-#define WEBPP_EXAMPLE_APP_H
+#ifndef WEBPP_CGI_EXAMPLE_APP_H
+#define WEBPP_CGI_EXAMPLE_APP_H
 
 #include <webpp/http/http.hpp>
 
@@ -12,19 +12,19 @@ namespace website {
 
     struct app {
 
-        auto home(Context auto&& ctx) const noexcept {
-            return ctx.string("Home page");
+        [[nodiscard]] auto home() const noexcept {
+            return "Home page";
         }
 
-        auto about(Context auto&& ctx) const {
-            return ctx.string("About page");
+        [[nodiscard]] auto about() const noexcept {
+            return "About page";
         }
 
 
         // how to run this function:
         //   REQUEST_URI=/content-length HTTP_CONTENT_LENGTH=5 REQUEST_METHOD=POST ./cgi-application
-        stl::string get_len(Context auto& ctx) const {
-            stl::string const body = ctx.request.as();
+        static stl::string get_len(context& ctx) {
+            stl::string const body           = ctx.request.as();
             stl::size_t const content_length = ctx.request.headers.content_length();
 
             stl::string res = webpp::fmt::format("Content-Length: {}\n", content_length);
@@ -43,28 +43,23 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<string_body>;
             const auto admin = []() {
                 return "Nice page.";
             };
-            router _router{extensions{},
-                           (get and root) >>=
-                           [] {
-                               return "main page";
-                           },
-                           (post and root / "content-length") >>= mem_call(get_len),
-                           (get and (root / "home")) >>= mem_call(home),
-                           get & (root / "about") >>= mem_call(about),
-                           root / "admin" >>= admin};
+            static_router router{(get and root) >>
+                                   [] {
+                                       return "main page";
+                                   },
+                                 (post and root / "content-length") >> app::get_len,
+                                 (get and (root / "home")) >> &app::home,
+                                 get && (root / "about") >> &app::about,
+                                 root / "admin" >> admin};
 
-            // for debugging purposes
-            // std::cerr << _router.to_string(req) << std::endl;
-
-            return _router(req);
+            return router(req);
         }
     };
 
 } // namespace website
 
 
-#endif // WEBPP_EXAMPLE_APP_H
+#endif // WEBPP_CGI_EXAMPLE_APP_H

@@ -31,26 +31,24 @@ namespace website {
         }
 
         HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
-            using extensions = extension_pack<string_body>;
-            static router _router{extensions{},
-                                  (get and root) >>=
-                                  [this] {
-                                      return view_man.view("home.html");
-                                  },
-                                  (post and root) >>=
-                                  [this](Context auto&& ctx) {
-                                      stl::size_t body_size = ctx.request.headers.content_length();
-                                      stl::map<stl::string, stl::string> values;
-                                      values["request_body_size"] = stl::to_string(body_size);
-                                      values["request_body"]      = as<stl::string>(ctx.request.body);
-                                      return view_man.mustache("home-post", values);
-                                  },
-                                  (get and root / "about") >>=
-                                  [this]() {
-                                      return view_man.file("about.html");
-                                  }};
+            static static_router router{(get and root) >>
+                                          [this] {
+                                              return view_man.view("home.html");
+                                          },
+                                        (post and root) >>
+                                          [this](context& ctx) {
+                                              stl::size_t body_size = ctx.request.headers.content_length();
+                                              stl::map<stl::string, stl::string> values;
+                                              values["request_body_size"] = stl::to_string(body_size);
+                                              values["request_body"]      = as<stl::string>(ctx.request.body);
+                                              return view_man.mustache("home-post", values);
+                                          },
+                                        (get and root / "about") >>
+                                          [this]() {
+                                              return view_man.file("about.html");
+                                          }};
 
-            return _router(req);
+            return router(req);
         }
     };
 

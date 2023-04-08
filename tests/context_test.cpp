@@ -8,7 +8,7 @@ using namespace webpp::http;
 namespace fake {
     struct app {
         HTTPResponse auto operator()(HTTPRequest auto&& req) {
-            router _router{[]() {}};
+            static_router _router{[]() {}};
             return _router(req);
         }
     };

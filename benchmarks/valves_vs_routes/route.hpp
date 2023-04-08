@@ -3,12 +3,12 @@
 #ifndef WEBPP_HTTP_ROUTES_ROUTE_HPP
 #define WEBPP_HTTP_ROUTES_ROUTE_HPP
 
-#include "../../logs/log_concepts.hpp"
-#include "../../std/function_ref.hpp"
-#include "../../std/optional.hpp"
-#include "../../std/type_traits.hpp"
-#include "context.hpp"
-#include "router_concepts.hpp"
+#include "../../webpp/http/routes/context.hpp"
+#include "../../webpp/http/routes/router_concepts.hpp"
+#include "../../webpp/logs/log_concepts.hpp"
+#include "../../webpp/std/function_ref.hpp"
+#include "../../webpp/std/optional.hpp"
+#include "../../webpp/std/type_traits.hpp"
 
 #include <utility>
 

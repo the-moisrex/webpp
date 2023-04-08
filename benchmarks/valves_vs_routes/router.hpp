@@ -1,16 +1,15 @@
 #ifndef WEBPP_HTTP_STATIC_ROUTER_HPP
 #define WEBPP_HTTP_STATIC_ROUTER_HPP
 
-#include "../../extensions/extension.hpp"
-#include "../../std/optional.hpp"
-#include "../../std/tuple.hpp"
-#include "../../std/utility.hpp"
-#include "../../std/vector.hpp"
-#include "../bodies/string.hpp"
-#include "../http_concepts.hpp"
-#include "context.hpp"
-#include "route.hpp"
-#include "router_concepts.hpp"
+#include "../../webpp/extensions/extension.hpp"
+#include "../../webpp/http/bodies/string.hpp"
+#include "../../webpp/http/http_concepts.hpp"
+#include "../../webpp/http/routes/context.hpp"
+#include "../../webpp/http/routes/router_concepts.hpp"
+#include "../../webpp/std/optional.hpp"
+#include "../../webpp/std/tuple.hpp"
+#include "../../webpp/std/utility.hpp"
+#include "../../webpp/std/vector.hpp"
 
 namespace webpp::http {
 

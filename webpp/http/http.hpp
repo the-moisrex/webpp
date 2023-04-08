@@ -1,12 +1,9 @@
 #ifndef WEBPP_HTTP_HTTP_HPP
 #define WEBPP_HTTP_HTTP_HPP
 
-// todo: import the right files
-#include "../application/application_concepts.hpp"
-#include "../traits/default_traits.hpp"
-#include "protocols/cgi.hpp"
+#include "routes/dynamic_router.hpp"
 #include "routes/methods.hpp"
 #include "routes/path.hpp"
-#include "routes/router.hpp"
+#include "routes/static_router.hpp"
 
 #endif // WEBPP_HTTP_HTTP_HPP

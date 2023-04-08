@@ -1,23 +1,18 @@
-//
 // Created by moisrex on 6/19/20.
-//
 
-#ifndef WEBPP_NUMBER_H
-#define WEBPP_NUMBER_H
+#ifndef WEBPP_HTTP_ROUTES_NUMBER_HPP
+#define WEBPP_HTTP_ROUTES_NUMBER_HPP
 
-#include "../../../std/optional.hpp"
-#include "../../../std/string_view.hpp"
-#include "../../../std/type_traits.hpp"
-#include "../../../validators/validators.hpp"
-#include "../path.hpp"
+#include "../../std/string_view.hpp"
+#include "../../validators/validators.hpp"
+#include "context.hpp"
 
 namespace webpp::http::routes {
 
     struct number {
-        stl::string_view variable_name = "";
-
-        [[nodiscard]] bool operator()(Context auto& ctx) const noexcept {
-            return is::number(ctx.path.current_segment);
+        template <typename TraitsType>
+        [[nodiscard]] bool operator()(basic_context<TraitsType>& ctx) const noexcept {
+            return is::number(*ctx.path_traverser());
         }
 
         template <typename T>
@@ -44,4 +39,4 @@ namespace webpp::http::routes {
 
 } // namespace webpp::http::routes
 
-#endif // WEBPP_NUMBER_H
+#endif // WEBPP_HTTP_ROUTES_NUMBER_HPP
