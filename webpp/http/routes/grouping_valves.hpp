@@ -140,7 +140,7 @@ namespace webpp::http {
             using context_type = basic_context<TraitsType>;
             stl::apply(
               [&ctx]<typename... T>(T&&... funcs) constexpr {
-                  (valve_traits<T, context_type>::call_set(stl::forward<T>(funcs), ctx), ...);
+                  (valve_traits<T, context_type>::call_then(stl::forward<T>(funcs), ctx) && ...);
               },
               as_tuple());
         }
@@ -251,9 +251,13 @@ namespace webpp::http {
             using mangler_traits = valve_traits<mangler_type, context_type>;
             using route_traits   = valve_traits<route_type, context_type>;
             if constexpr (sizeof...(Pres) > 0) {
-                pre_traits::call_set(pres, ctx);
+                if (!pre_traits::call_then(pres, ctx)) {
+                    return;
+                };
             }
-            route_traits::call_set(routes, ctx);
+            if (!route_traits::call_then(routes, ctx)) {
+                return;
+            }
             if constexpr (sizeof...(Posts) > 0) {
                 post_traits::call_set(posts, ctx);
             }

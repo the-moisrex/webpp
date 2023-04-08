@@ -39,13 +39,13 @@ namespace webpp::http {
                       stl::tuple_cat(routes()->as_tuple(),
                                      stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
                 }
-            } else if constexpr (is_routes_of<segment_valve>) {
-                // forward<segment, ...> = segment<forward, ...>
-                // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
-                // changing that here:
-                return rebind_self<segment_valve>(
-                  stl::tuple_cat(routes()->as_tuple(),
-                                 stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
+                // } else if constexpr (is_routes_of<segment_valve>) {
+                //     // forward<segment, ...> = segment<forward, ...>
+                //     // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
+                //     // changing that here:
+                //     return rebind_self<segment_valve>(
+                //       stl::tuple_cat(routes()->as_tuple(),
+                //                      stl::make_tuple(valvify(stl::forward<Callable>(callable)))));
             } else {
                 return rebind_next<forward_valve>(stl::forward<Callable>(callable));
             }

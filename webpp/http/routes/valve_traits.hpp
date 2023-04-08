@@ -191,6 +191,16 @@ namespace webpp::http {
             }
         }
 
+        template <typename R>
+        static constexpr bool is_done(R&& ret) noexcept {
+            using ret_type = stl::remove_cvref_t<R>;
+            if constexpr (stl::same_as<ret_type, bool>) {
+                return ret;
+            } else {
+                return true;
+            }
+        }
+
 
         template <typename R>
         static constexpr void set_response(R&& ret, context_type& ctx) {
@@ -218,14 +228,6 @@ namespace webpp::http {
         }
 
 
-        template <typename R>
-        static constexpr bool set_get_response(R&& ret, context_type& ctx) {
-            bool const res = is_positive(ret);
-            set_response(stl::forward<R>(ret), ctx);
-            return res;
-        }
-
-
         template <typename C>
             requires istl::cvref_as<C, Callable>
         static constexpr void call_set(C&&           segment,
@@ -246,7 +248,26 @@ namespace webpp::http {
                 call(stl::forward<C>(segment), ctx);
                 return true;
             } else {
-                return set_get_response(call(stl::forward<C>(segment), ctx), ctx);
+                auto       ret = call(stl::forward<C>(segment), ctx);
+                bool const res = is_positive(ret);
+                set_response(stl::move(ret), ctx);
+                return res;
+            }
+        }
+
+
+        template <typename C>
+            requires istl::cvref_as<C, Callable>
+        static constexpr bool call_then(C&&           callable,
+                                        context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+            if constexpr (stl::is_void_v<return_type>) {
+                call(stl::forward<C>(callable), ctx);
+                return true;
+            } else {
+                auto       ret = call(stl::forward<C>(callable), ctx);
+                bool const res = is_done(ret);
+                set_response(stl::move(ret), ctx);
+                return res;
             }
         }
     };

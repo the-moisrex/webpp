@@ -189,6 +189,23 @@ TEST(DynamicRouter, CommonBypassTests) {
     }
 }
 
+TEST(DynamicRouter, DoubleForwardingEarlyStoppingTest) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    router += router / "page" % "about" >> &pages::about >> [] {
+        return false;
+    } >> &pages::add_body;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/page/about");
+
+    auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
+    EXPECT_EQ(as<std::string>(res.body), "about page") << router.to_string();
+}
+
 TEST(DynamicRouter, DoubleForwardingTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
