@@ -6,10 +6,4 @@
 #include "benchmark_pch.hpp"
 #include "common_utils_pch.hpp"
 
-#ifndef WEBPP_PROJECT_ROOT
-#    define WEBPP_PROJECT_ROOT "../../"
-#endif
-
-#define webpp_include(file_path) <WEBPP_PROJECT_ROOT/webpp/file_path.hpp>
-
 #endif // WEBPP_BENCHMARK_HPP

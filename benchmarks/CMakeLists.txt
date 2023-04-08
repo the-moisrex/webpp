@@ -30,6 +30,7 @@ set(FILE_SOURCES
         allocator_packs/allocator_packs_benchmark.cpp
         strview_find_method/strview_find_method_benchmark.cpp
         headers_has/headers_has.cpp
+        valves_vs_routes/valves_vs_routes_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
@@ -122,4 +123,3 @@ target_precompile_headers(${exec_name} PUBLIC ${FILE_PCH})
 
 # don't compile this if you don't need it
 set_target_properties(${exec_name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-
