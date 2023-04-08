@@ -99,6 +99,7 @@ namespace webpp::http {
 
 
 
+
     // General Valvifier
     template <typename T>
     [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
@@ -112,20 +113,6 @@ namespace webpp::http {
     valvify(T&& next) noexcept {
         return {stl::forward<T>(next)};
     }
-
-    // String Views Valvifier
-    template <typename T>
-        requires(istl::StringView<T> || istl::StringLiteral<T>)
-    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
-        return istl::string_viewify(stl::forward<T>(next));
-    }
-
-    // String object is passed
-    template <istl::String T>
-    [[nodiscard]] static constexpr auto valvify(T&& next) {
-        return stl::forward<T>(next);
-    }
-
 
 
     template <typename T>
@@ -147,11 +134,8 @@ namespace webpp::http {
         using response_body_type = typename response_type::body_type;
         using invocable_inorder_type =
           istl::invocable_inorder<callable_type, context_type&, request_type&, response_type&>;
-        using traits_type      = typename context_type::traits_type;
-        using string_view_type = traits::string_view<traits_type>;
-        using return_type      = stl::conditional_t<istl::StringViewifiable<Callable>,
-                                               string_view_type,
-                                               stl::remove_cvref_t<typename invocable_inorder_type::result>>;
+        using traits_type = typename context_type::traits_type;
+        using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
         template <istl::cvref_as<Callable> C>
             requires(invocable_inorder_type::value)
@@ -160,15 +144,8 @@ namespace webpp::http {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
-        template <typename T>
-            requires(istl::cvref_as<T, Callable> && istl::StringViewifiable<Callable>)
-        static constexpr auto call(T&& segment, context_type& ctx) noexcept {
-            return ctx.check_segment(stl::forward<T>(segment));
-        }
-
         template <Valvifiable T>
-            requires(istl::cvref_as<T, Callable> && !istl::StringViewifiable<Callable> &&
-                     !invocable_inorder_type::value)
+            requires(istl::cvref_as<T, Callable> && !invocable_inorder_type::value)
         static constexpr auto call(T&&           segment,
                                    context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return call(valvify(stl::forward<T>(segment)), ctx);

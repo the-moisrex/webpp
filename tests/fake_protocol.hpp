@@ -7,7 +7,7 @@
 #include "../webpp/http/request.hpp"
 #include "../webpp/http/request_view.hpp"
 #include "../webpp/http/response.hpp"
-#include "../webpp/http/routes/router.hpp"
+#include "../webpp/http/routes/static_router.hpp"
 #include "../webpp/std/string_view.hpp"
 #include "../webpp/strings/to_case.hpp"
 #include "../webpp/traits/enable_traits.hpp"

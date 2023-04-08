@@ -1,7 +1,6 @@
-#include "../webpp/http/routes/router.hpp"
-
 #include "../webpp/http/protocols/cgi.hpp"
 #include "../webpp/http/routes/path.hpp"
+#include "../webpp/http/routes/static_router.hpp"
 #include "../webpp/traits/enable_traits.hpp"
 #include "common_pch.hpp"
 #include "fake_protocol.hpp"
@@ -11,14 +10,14 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
-constexpr auto s_router = router{root / "page" >>=
-                                 [] {
-                                     return "page 1";
-                                 },
-                                 relative / "test" >>=
-                                 [] {
-                                     return "test 2";
-                                 }};
+constexpr auto s_router = static_router{root / "page" >>
+                                          [] {
+                                              return "page 1";
+                                          },
+                                        root / "test" >>
+                                          [] {
+                                              return "test 2";
+                                          }};
 
 struct fake_app_struct {
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
@@ -41,23 +40,23 @@ TEST(Router, RouteCreation) {
 
 
     request_type      req{fp};
-    router const      router1{extension_pack<string_body>{}, about_page};
+    static_router     router1{about_page};
     HTTPResponse auto res = router1(req);
     res.calculate_default_headers();
     EXPECT_EQ(router1.route_count(), 1);
     EXPECT_EQ(res.headers.status_code_integer(), 200);
     EXPECT_EQ(as<std::string>(res.body), "About page\n");
 
-    router const            router2{extension_pack<string_body>{}, [](Context auto&& ctx) noexcept {
-                             return ctx.string("testing");
-                         }};
+    static_router           router2{[]() noexcept {
+        return "testing";
+    }};
     HTTPResponse auto const res2 = router2(req);
     EXPECT_EQ(as<std::string>(res2.body), "testing");
 
 
-    router const            router3{extension_pack<string_body>{}, [](Context auto&& ctx) {
-                             return ctx.string("testing 2");
-                         }};
+    static_router           router3{[]() {
+        return "testing 2";
+    }};
     HTTPResponse auto const res3 = router3(req);
     EXPECT_EQ(as<std::string>(res3.body), "testing 2");
 }

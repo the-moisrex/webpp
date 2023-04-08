@@ -1,7 +1,7 @@
 // Created by moisrex on 5/1/20.
 
-#ifndef WEBPP_ROUTES_CONTEXT_H
-#define WEBPP_ROUTES_CONTEXT_H
+#ifndef WEBPP_HTTP_ROUTES_CONTEXT_HPP
+#define WEBPP_HTTP_ROUTES_CONTEXT_HPP
 
 #include "../../extensions/extension.hpp"
 #include "../../extensions/extension_wrapper.hpp"
@@ -29,8 +29,8 @@ namespace webpp::http {
             using request_ref     = request_type&;
             using request_cref    = request_type const&;
 
-
-            constexpr common_context_methods(request_ref inp_req) noexcept : etraits{inp_req} {}
+            template <HTTPRequest ReqT>
+            constexpr common_context_methods(ReqT const& inp_req) noexcept : etraits{inp_req} {}
 
             template <Context CtxT>
                 requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
@@ -354,4 +354,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_ROUTES_CONTEXT_H
+#endif // WEBPP_HTTP_ROUTES_CONTEXT_HPP

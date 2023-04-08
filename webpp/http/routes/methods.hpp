@@ -1,16 +1,28 @@
-#ifndef WEBPP_VALVES_METHODS_H
-#define WEBPP_VALVES_METHODS_H
+#ifndef WEBPP_VALVES_METHODS_HPP
+#define WEBPP_VALVES_METHODS_HPP
 
-#include "route.hpp"
+#include "valves.hpp"
 
 namespace webpp::http {
 
-    struct method_route_condition : public stl::string_view {
-        using stl::string_view::basic_string_view; // ctors
+    struct method : valve<method> {
+      private:
+        // since It's literally just a few characters, we don't need to store the size as well
+        // todo: is it a good idea to use a buffer?
+        char const* method_str;
+
+      public:
+        constexpr method(char const* inp_method) noexcept : method_str{inp_method} {}
+        constexpr method(method const&) noexcept            = default;
+        constexpr method(method&&) noexcept                 = default;
+        constexpr method& operator=(method const&) noexcept = default;
+        constexpr method& operator=(method&&) noexcept      = default;
+        constexpr ~method() noexcept                        = default;
+
 
         template <HTTPRequest ReqT>
         [[nodiscard]] constexpr bool operator()(ReqT const& req) const noexcept {
-            return req.method() == *this;
+            return req.method() == method_str;
         }
 
         template <Traits TraitsType>
@@ -19,27 +31,27 @@ namespace webpp::http {
         }
 
         void to_string(istl::String auto& out) const {
-            append_to(out, *this);
+            append_to(out, method_str);
         }
     };
 
-    using method = route<method_route_condition>;
+    using method = method;
 
-    constexpr auto get     = method("GET");
-    constexpr auto post    = method("POST");
-    constexpr auto head    = method("HEAD");
-    constexpr auto put     = method("PUT");
-    constexpr auto patch   = method("PATCH");
-    constexpr auto del     = method("DELETE");
-    constexpr auto options = method("OPTIONS");
+    constexpr auto get     = method{"GET"};
+    constexpr auto post    = method{"POST"};
+    constexpr auto head    = method{"HEAD"};
+    constexpr auto put     = method{"PUT"};
+    constexpr auto patch   = method{"PATCH"};
+    constexpr auto del     = method{"DELETE"};
+    constexpr auto options = method{"OPTIONS"};
 
     inline namespace literals {
-        constexpr auto operator""_method(const char* str, std::size_t len) noexcept {
-            return method(str, len);
+        constexpr auto operator""_method(const char* str, std::size_t) noexcept {
+            return method{str};
         }
     } // namespace literals
 
 } // namespace webpp::http
 
 
-#endif // WEBPP_VALVES_METHODS_H
+#endif // WEBPP_VALVES_METHODS_HPP

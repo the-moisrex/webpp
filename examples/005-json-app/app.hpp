@@ -1,7 +1,7 @@
 // Created by moisrex on 5/5/20.
 
-#ifndef WEBPP_EXAMPLE_APP_H
-#define WEBPP_EXAMPLE_APP_H
+#ifndef WEBPP_CGI_EXAMPLE_APP_H
+#define WEBPP_CGI_EXAMPLE_APP_H
 
 #include <webpp/http/bodies/json.hpp>
 #include <webpp/http/http.hpp>
@@ -21,25 +21,22 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            using extensions = webpp::extension_pack<json_body>;
+            static_router router{(get and root) >>
+                                   [] {
+                                       document doc;
+                                       doc["page"] = "about";
+                                       return doc;
+                                   },
+                                 (get and root / "about") >>
+                                   [this](auto&& ctx) {
+                                       return this->about(ctx);
+                                   }};
 
-            router _router{extensions{},
-                           (get and root) >>=
-                           [] {
-                               document doc;
-                               doc["page"] = "about";
-                               return doc;
-                           },
-                           (get and root / "about") >>=
-                           [this](auto&& ctx) {
-                               return this->about(ctx);
-                           }};
-
-            return _router(req);
+            return router(req);
         }
     };
 
 } // namespace website
 
 
-#endif // WEBPP_EXAMPLE_APP_H
+#endif // WEBPP_CGI_EXAMPLE_APP_H

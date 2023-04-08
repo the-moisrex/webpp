@@ -7,6 +7,7 @@
 #include "grouping_valves.hpp"
 #include "logical_valves.hpp"
 #include "path_valves.hpp"
+#include "router_concepts.hpp"
 
 #include <any>
 #include <typeinfo>
