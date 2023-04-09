@@ -34,7 +34,7 @@ namespace webpp::http {
     template <typename... CallableSegments>
     struct segment_valve;
     template <typename MemPtr>
-    struct member_function_callable;
+    struct member_function_valve;
     template <typename... ManglerTypes>
     struct mangler_valve;
     template <typename Pres, typename Posts, typename Manglers, typename Routes>
@@ -102,16 +102,8 @@ namespace webpp::http {
 
     // General Valvifier
     template <typename T>
-    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
+    [[nodiscard]] static constexpr decltype(auto) valvify(T&& next) noexcept {
         return stl::forward<T>(next);
-    }
-
-    // Member Function Pointer Valvifier
-    template <typename T>
-        requires stl::is_member_function_pointer_v<stl::remove_cvref_t<T>>
-    [[nodiscard]] static constexpr member_function_callable<stl::remove_cvref_t<T>>
-    valvify(T&& next) noexcept {
-        return {stl::forward<T>(next)};
     }
 
 
@@ -120,9 +112,7 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept Valvifiable = requires(T obj) {
-                              { valvify(obj) } -> Valve;
-                          };
+    concept Valvifiable = requires(T obj) { valvify(obj); };
 
 
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>

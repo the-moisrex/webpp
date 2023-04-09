@@ -6,11 +6,11 @@
 #include "../../std/tuple.hpp"
 #include "grouping_valves.hpp"
 #include "logical_valves.hpp"
+#include "member_function_valves.hpp"
 #include "path_valves.hpp"
 #include "router_concepts.hpp"
+#include "valve_traits.hpp"
 
-#include <any>
-#include <typeinfo>
 
 namespace webpp::http {
 
@@ -241,7 +241,15 @@ namespace webpp::http {
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_self(Args&&... nexts) const {
+            static_assert((Valvifiable<Args> && ...),
+                          "We're not able to valvify the valve, "
+                          "did you include the required headers "
+                          "that defines the right valvify function?");
             using valve_type = Templ<T..., valvified_type<Args>...>;
+            static_assert(stl::is_constructible_v<valve_type, valvified_type<Args>...>,
+                          "The specified valves are unknown even after valvifying them, "
+                          "did you forget to include the required headers that define "
+                          "the right valvify functions to convert your valves to the right type?");
             if constexpr (is_self_of<valves_group>) {
                 return self()->replace_route(valve_type{valvify(stl::forward<Args>(nexts))...});
             } else {
@@ -250,86 +258,6 @@ namespace webpp::http {
         }
     };
 
-
-
-
-
-    template <typename MemPtr>
-    struct member_function_callable : valve<member_function_callable<MemPtr>> {
-        using valve_type      = valve<member_function_callable<MemPtr>>;
-        using member_ptr_type = MemPtr;
-        using mem_traits      = istl::member_function_pointer_traits<member_ptr_type>;
-        using object_type     = typename mem_traits::type;
-        using object_ptr      = object_type*;
-
-      private:
-        struct method_holder {
-            member_ptr_type mem_ptr;
-            object_ptr      obj = nullptr;
-
-            template <typename... Args>
-                requires(mem_traits::template is_invocable<Args...>)
-            constexpr decltype(auto) operator()(Args&&... args) const noexcept(mem_traits::is_noexcept) {
-                return (obj->*mem_ptr)(stl::forward<Args>(args)...);
-            }
-        } holder;
-
-      public:
-        constexpr member_function_callable(member_function_callable const&) noexcept            = default;
-        constexpr member_function_callable(member_function_callable&&) noexcept                 = default;
-        constexpr member_function_callable& operator=(member_function_callable const&) noexcept = default;
-        constexpr member_function_callable& operator=(member_function_callable&&) noexcept      = default;
-        constexpr ~member_function_callable() noexcept                                          = default;
-
-        constexpr member_function_callable(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
-
-        using valve_type::operator();
-
-        template <Traits TraitsType>
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type    = basic_context<TraitsType>;
-            using callable_traits = valve_traits<method_holder, context_type>;
-            callable_traits::call_set(holder, ctx);
-        }
-
-        constexpr void set_object(object_ptr inp_obj) noexcept {
-            holder.obj = inp_obj;
-        }
-
-
-        template <typename RouterType>
-        constexpr void setup(RouterType& router) {
-            for (auto& object : router.objects) {
-                if (object.type() == typeid(object_type)) {
-                    set_object(stl::any_cast<object_type>(stl::addressof(object)));
-                    return;
-                }
-            }
-
-            // default constructing it if it's possible and use that object
-            if constexpr (stl::is_default_constructible_v<object_type>) {
-                router.objects.emplace_back(object_type{});
-                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
-            } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
-                router.objects.emplace_back(object_type{router});
-                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
-            } else {
-                router.logger.error(
-                  "DRouter",
-                  fmt::format(
-                    "You have not specified an object with typeid of '{}' in your dynamic router,"
-                    " but you've tried to register a member function pointer of that type in router."
-                    " Try registering your objects before registering the objects in the router"
-                    " to get rid of this error.",
-                    typeid(object_type).name()));
-            }
-        }
-
-
-        constexpr void to_string(istl::String auto& out) const {
-            valve_to_string(out, holder.mem_ptr);
-        }
-    };
 
 } // namespace webpp::http
 

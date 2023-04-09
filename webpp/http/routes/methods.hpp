@@ -1,14 +1,13 @@
 #ifndef WEBPP_VALVES_METHODS_HPP
 #define WEBPP_VALVES_METHODS_HPP
 
-#include "valves.hpp"
+#include "valve_traits.hpp"
 
 namespace webpp::http {
 
     struct method : valve<method> {
       private:
         // since It's literally just a few characters, we don't need to store the size as well
-        // todo: is it a good idea to use a buffer?
         char const* method_str;
 
       public:

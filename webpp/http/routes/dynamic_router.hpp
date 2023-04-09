@@ -2,14 +2,11 @@
 #define WEBPP_DYNAMIC_ROUTER_HPP
 
 #include "../../extensions/extension.hpp"
-#include "../../std/functional.hpp"
 #include "../../std/memory.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../http_concepts.hpp"
-#include "../request.hpp"
-#include "../response.hpp"
 #include "../status_code.hpp"
 #include "dynamic_route.hpp"
 
@@ -17,6 +14,8 @@
 
 namespace webpp::http {
 
+    template <Traits>
+    struct basic_response;
 
     /**
      * @brief A Router that's is fully customizable at runtime
@@ -39,7 +38,6 @@ namespace webpp::http {
         using routes_type        = stl::vector<dynamic_route_type, vector_allocator>;
         using response_type      = basic_response<traits_type>;
         using context_type       = basic_context<traits_type>;
-        using request_type       = basic_request<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -111,7 +109,6 @@ namespace webpp::http {
          * parent router will stop processing its next routes because this router returned a 404 response.
          */
         template <HTTPRequest ReqType>
-            requires(!Context<ReqType>)
         [[nodiscard]] constexpr response_type operator()(ReqType&& in_req) {
             context_type ctx{stl::forward<ReqType>(in_req)};
 
@@ -138,6 +135,7 @@ namespace webpp::http {
          */
         constexpr void operator()(context_type& ctx) {
             for (auto& route : routes) {
+                ctx.current_route(*route); // set the current route on context
                 route->operator()(ctx);
                 if (!continue_routing(ctx)) {
                     return;
@@ -161,7 +159,7 @@ namespace webpp::http {
 
 
         template <istl::String StrT = string_type>
-        constexpr StrT to_string() {
+        [[nodiscard]] constexpr StrT to_string() const {
             StrT out{alloc::general_alloc_for<StrT>(*this)};
             to_string(out);
             return out;
