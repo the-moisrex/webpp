@@ -4,8 +4,8 @@
 #define WEBPP_ROUTES_TEMPLATED_PATH_HPP
 
 #include "../../std/string_view.hpp"
+#include "../../uri/uri_string.hpp"
 #include "route.hpp"
-#include "webpp/uri/uri_string.hpp"
 
 #include <cassert>
 

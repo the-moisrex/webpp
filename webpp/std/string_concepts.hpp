@@ -45,7 +45,7 @@ namespace webpp::istl {
                          };
 
     template <typename T>
-    concept CharType = stl::is_integral_v<stl::remove_cvref_t<T>>;
+    concept CharType = istl::part_of<stl::remove_cvref_t<T>, char, wchar_t, char16_t, char8_t, char32_t>;
 
     namespace details {
         template <typename T>
@@ -122,9 +122,8 @@ namespace webpp::istl {
     concept UTF32 = sizeof(char_type_of<T>) == sizeof(char32_t);
 
     template <typename T>
-    concept StringLiteral =
-      (!stl::same_as<char_type_of_string_literals<T>, stl::remove_cvref_t<T>>) &&
-      istl::part_of<char_type_of_string_literals<T>, char, wchar_t, char16_t, char8_t, char32_t>;
+    concept StringLiteral = (!stl::same_as<char_type_of_string_literals<T>, stl::remove_cvref_t<T>>) &&
+                            CharType<char_type_of_string_literals<T>>;
 
 } // namespace webpp::istl
 

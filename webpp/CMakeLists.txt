@@ -129,6 +129,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/routes/valve_traits.hpp
         ${LIB_INCLUDE_DIR}/http/routes/logical_valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/grouping_valves.hpp
+        ${LIB_INCLUDE_DIR}/http/routes/member_function_valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/path_valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/route.hpp
         ${LIB_INCLUDE_DIR}/http/routes/methods.hpp

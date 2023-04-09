@@ -1,7 +1,7 @@
 // Created by moisrex on 4/3/23.
 
-#ifndef WEBPP_PATH_VALVES_HPP
-#define WEBPP_PATH_VALVES_HPP
+#ifndef WEBPP_HTTP_ROUTES_PATH_VALVES_HPP
+#define WEBPP_HTTP_ROUTES_PATH_VALVES_HPP
 
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
@@ -21,6 +21,10 @@ namespace webpp::http {
         }
     } endpath;
 
+
+    /**
+     * A Series of Path Segments
+     */
     template <typename... CallableSegments>
     struct segment_valve : valve<segment_valve<CallableSegments...>>, stl::tuple<CallableSegments...> {
         using valve_type = valve<segment_valve<CallableSegments...>>;
@@ -97,7 +101,7 @@ namespace webpp::http {
 
       public:
         constexpr segment_string(Segment&& inp_seg) noexcept : seg{stl::move(inp_seg)} {}
-        constexpr segment_string(Segment const& inp_seg) noexcept : seg{inp_seg} {}
+        constexpr segment_string(Segment const& inp_seg) : seg{inp_seg} {}
 
         constexpr segment_string(segment_string const&)                = default;
         constexpr segment_string(segment_string&&) noexcept            = default;
@@ -118,20 +122,23 @@ namespace webpp::http {
     template <typename Seg>
     segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
 
+    template <istl::CharType CharT>
+    [[nodiscard]] static constexpr auto valvify(CharT const* next) noexcept {
+        return segment_string{istl::string_viewify(next)};
+    }
 
     // String Views Valvifier
-    template <typename T>
-        requires(istl::StringView<T> || istl::StringLiteral<T>)
+    template <istl::StringView T>
     [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
-        return segment_string{istl::string_viewify(stl::forward<T>(next))};
+        return segment_string{stl::forward<T>(next)};
     }
 
     // String object is passed
     template <istl::String T>
     [[nodiscard]] static constexpr auto valvify(T&& next) {
-        return segment_string{istl::stringify(stl::forward<T>(next))};
+        return segment_string{stl::forward<T>(next)};
     }
 
 } // namespace webpp::http
 
-#endif // WEBPP_PATH_VALVES_HPP
+#endif // WEBPP_HTTP_ROUTES_PATH_VALVES_HPP

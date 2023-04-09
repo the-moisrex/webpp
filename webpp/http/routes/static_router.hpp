@@ -1,12 +1,6 @@
 #ifndef WEBPP_HTTP_STATIC_ROUTER_HPP
 #define WEBPP_HTTP_STATIC_ROUTER_HPP
 
-#include "../../extensions/extension.hpp"
-#include "../../std/tuple.hpp"
-#include "../bodies/string.hpp"
-#include "../http_concepts.hpp"
-#include "context.hpp"
-#include "router_concepts.hpp"
 #include "valves.hpp"
 
 namespace webpp::http {
@@ -68,6 +62,7 @@ namespace webpp::http {
             using traits_type  = typename req_type::traits_type;
             using context_type = basic_context<traits_type>;
             context_type ctx{req};
+            // ctx.current_route(routes); // todo: is there a more accurate way to set individual sub-routes?
             routes(ctx);
             // if it didn't fill the response:
             if (ctx.response.empty()) {

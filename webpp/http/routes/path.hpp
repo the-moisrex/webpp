@@ -3,8 +3,8 @@
 #ifndef WEBPP_HTTP_ROUTES_PATH_HPP
 #define WEBPP_HTTP_ROUTES_PATH_HPP
 
-#include "path_valves.hpp"
-#include "valves.hpp"
+#include "path_valves.hpp" // definition
+#include "valves.hpp"      // implementation
 
 namespace webpp::http {
 

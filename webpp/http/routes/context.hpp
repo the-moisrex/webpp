@@ -5,10 +5,8 @@
 
 #include "../../extensions/extension.hpp"
 #include "../../extensions/extension_wrapper.hpp"
-#include "../../memory/object.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../uri/path_traverser.hpp"
-#include "../bodies/string.hpp"
 #include "../request.hpp"
 #include "../response.hpp"
 #include "router_concepts.hpp"
@@ -91,7 +89,7 @@ namespace webpp::http {
             [[nodiscard]] constexpr HTTPResponse auto
             error(http::status_code_type error_code) const noexcept {
                 using str_t = traits::general_string<traits_type>;
-                auto msg    = object::make_general<str_t>(this->alloc_pack);
+                str_t msg{alloc::allocator_for<str_t>(*this)};
                 fmt::format_to(stl::back_inserter(msg),
                                R"(<!doctype html>
 <html lang="en">
@@ -277,6 +275,8 @@ namespace webpp::http {
         using string_type         = traits::general_string<traits_type>;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_iterator<traits_type>;
+        using dynamic_route_type  = dynamic_route<traits_type>;
+        using dynamic_route_ptr   = dynamic_route_type*;
 
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -291,6 +291,7 @@ namespace webpp::http {
           details::common_context_methods<basic_request<TraitsType>, empty_extension_pack>;
 
         path_traverser_type traverser{request.path_iterator()};
+        dynamic_route_ptr   current_route_ptr = nullptr;
 
       public:
         template <HTTPRequest ReqT>
@@ -347,6 +348,19 @@ namespace webpp::http {
 
         constexpr path_traverser_type const& path_traverser() const noexcept {
             return traverser;
+        }
+
+
+        constexpr dynamic_route_type const& current_route() const noexcept {
+            return *current_route_ptr;
+        }
+
+        constexpr dynamic_route_type& current_route() noexcept {
+            return *current_route_ptr;
+        }
+
+        constexpr void current_route(dynamic_route_type& new_route) noexcept {
+            current_route_ptr = stl::addressof(new_route);
         }
     };
 

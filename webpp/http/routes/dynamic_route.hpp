@@ -4,7 +4,6 @@
 #define WEBPP_DYNAMIC_ROUTE_HPP
 
 #include "../../traits/traits.hpp"
-#include "context.hpp"
 #include "valves.hpp"
 
 namespace webpp::http {
@@ -12,6 +11,9 @@ namespace webpp::http {
 
     template <Traits>
     struct basic_dynamic_router;
+
+    template <Traits>
+    struct basic_context;
 
 
     template <Traits TraitsType, typename Callable = void>
@@ -80,6 +82,18 @@ namespace webpp::http {
         virtual void operator()(context_type& ctx)                                       = 0;
         virtual void to_string(string_type& out) const                                   = 0;
         virtual void setup(router_type& out)                                             = 0;
+
+
+        /**
+         * Utility to get a string more easily; this method should not be used in the library itself.
+         */
+        template <typename StrT = string_type, typename... Args>
+            requires((!istl::cvref_as<StrT, Args> && ...))
+        [[nodiscard]] StrT to_string(Args&&... args) const {
+            StrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
+        }
     };
 
 

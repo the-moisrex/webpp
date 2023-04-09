@@ -1,5 +1,8 @@
+
 #include "../webpp/http/routes/dynamic_router.hpp"
 
+#include "../webpp/http/bodies/string.hpp"
+#include "../webpp/http/routes/context.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
 #include "common_pch.hpp"
@@ -54,12 +57,16 @@ struct pages {
     // NOLINTEND(readability-convert-member-functions-to-static)
 };
 
+TEST(DynamicRouter, PathValveTest) {
+    EXPECT_TRUE(bool(stl::same_as<valvified_type<decltype("test")>, segment_string<stl::string_view>>));
+}
+
 TEST(DynamicRouter, RouteRegistration) {
     EXPECT_TRUE(bool(HTTPRequest<request>));
 
     enable_traits_for<dynamic_router> router;
 
-    auto const page = router / "page";
+    auto const page = root / "page";
     router += page / "about" >> [] {
         return "About";
     };
@@ -349,15 +356,14 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
-    static_router const _router{empty_extension_pack{},
-                                valve{} / "home" >>
-                                  [] {
-                                      return "Home Page";
-                                  },
-                                valve{} / "about" >>
-                                  []() {
-                                      return "About Page";
-                                  }};
+    static_router _router{root / "home" >>
+                            [] {
+                                return "Home Page";
+                            },
+                          root / "about" >>
+                            []() {
+                                return "About Page";
+                            }};
 
     enable_owner_traits<default_dynamic_traits> et;
 
@@ -365,7 +371,25 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
     req.method("GET");
     req.uri("/about/style.css");
 
-    // HTTPResponse auto const res = _router(req);
-    // EXPECT_EQ(res.headers.status_code(), status_code::ok);
-    // EXPECT_NE(as<std::string>(res.body), "about page");
+    HTTPResponse auto const res = _router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_NE(as<std::string>(res.body), "about page");
+}
+
+
+TEST(DynamicRouter, ContextCurrentRoute) {
+    enable_owner_traits<default_dynamic_traits> et;
+
+    dynamic_router router{et};
+    router += root / "home" >> [](context& ctx) {
+        return ctx.current_route().to_string();
+    };
+
+    request req{et};
+    req.method("GET");
+    req.uri("/home");
+
+    HTTPResponse auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_TRUE(as<std::string>(res.body).contains("home")) << as<std::string>(res.body);
 }
