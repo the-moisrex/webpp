@@ -88,7 +88,7 @@ namespace webpp::http {
          * Utility to get a string more easily; this method should not be used in the library itself.
          */
         template <typename StrT = string_type, typename... Args>
-            requires((!istl::cvref_as<StrT, Args> && ...))
+            requires((!istl::String<Args> && ...))
         [[nodiscard]] StrT to_string(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
             to_string(out);

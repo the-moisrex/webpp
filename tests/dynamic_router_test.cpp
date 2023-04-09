@@ -57,10 +57,6 @@ struct pages {
     // NOLINTEND(readability-convert-member-functions-to-static)
 };
 
-TEST(DynamicRouter, PathValveTest) {
-    EXPECT_TRUE(bool(stl::same_as<valvified_type<decltype("test")>, segment_string<stl::string_view>>));
-}
-
 TEST(DynamicRouter, RouteRegistration) {
     EXPECT_TRUE(bool(HTTPRequest<request>));
 
@@ -192,8 +188,11 @@ TEST(DynamicRouter, CommonBypassTests) {
                          "/aDmIN"}) {
         req.uri(u);
         auto const res = router(req);
-        EXPECT_EQ(res.headers.status_code(), status_code::not_found) << router.to_string();
-        EXPECT_NE(as<std::string>(res.body), "about page");
+        EXPECT_EQ(res.headers.status_code(), status_code::not_found)
+          << res.headers.status_code_integer() << "\n"
+          << router.to_string() << "\n"
+          << u;
+        EXPECT_NE(as<std::string>(res.body), "about page") << u;
     }
 }
 
@@ -356,14 +355,9 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
-    static_router _router{root / "home" >>
-                            [] {
-                                return "Home Page";
-                            },
-                          root / "about" >>
-                            []() {
-                                return "About Page";
-                            }};
+    static_router _router{root % "about" >> []() {
+        return "about page";
+    }};
 
     enable_owner_traits<default_dynamic_traits> et;
 
@@ -372,7 +366,7 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
     req.uri("/about/style.css");
 
     HTTPResponse auto const res = _router(req);
-    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_NE(res.headers.status_code(), status_code::ok);
     EXPECT_NE(as<std::string>(res.body), "about page");
 }
 
@@ -393,3 +387,73 @@ TEST(DynamicRouter, ContextCurrentRoute) {
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_TRUE(as<std::string>(res.body).contains("home")) << as<std::string>(res.body);
 }
+
+
+struct custom_callable {
+  private:
+    int res = 0;
+
+  public:
+    constexpr custom_callable() noexcept = default;
+    constexpr custom_callable(int inp) noexcept : res{inp} {}
+    constexpr custom_callable(custom_callable const&) noexcept            = default;
+    constexpr custom_callable(custom_callable&&) noexcept                 = default;
+    constexpr custom_callable& operator=(custom_callable&&) noexcept      = default;
+    constexpr custom_callable& operator=(custom_callable const&) noexcept = default;
+    constexpr ~custom_callable() noexcept                                 = default;
+
+    constexpr bool operator()(context&) noexcept {
+        res = 1;
+        return true;
+    }
+
+    constexpr int get_res() const noexcept {
+        return res;
+    }
+};
+
+struct custom_type {
+  private:
+    custom_callable cc;
+
+  public:
+    constexpr custom_type(custom_callable c) : cc{c} {}
+    constexpr custom_type(custom_type const&) noexcept            = default;
+    constexpr custom_type(custom_type&&) noexcept                 = default;
+    constexpr custom_type& operator=(custom_type&&) noexcept      = default;
+    constexpr custom_type& operator=(custom_type const&) noexcept = default;
+    constexpr ~custom_type() noexcept                             = default;
+
+    constexpr custom_callable get_cc() const noexcept {
+        return cc;
+    }
+};
+
+template <>
+struct webpp::http::valvify<custom_type> {
+    static constexpr auto call(custom_type ct) noexcept {
+        return ct.get_cc();
+    }
+};
+
+
+// TEST(DynamicRouter, CustomValvifier) {
+//     enable_owner_traits<default_dynamic_traits> et;
+//
+//     custom_callable cc;
+//     custom_type     ct{cc};
+//
+//     dynamic_router router{et};
+//     router += router / "home" >> ct >> [] {
+//         return "home sweet home";
+//     };
+//
+//     request req{et};
+//     req.method("GET");
+//     req.uri("/home");
+//
+//     HTTPResponse auto const res = router(req);
+//     EXPECT_EQ(cc.get_res(), 1);
+//     EXPECT_EQ(res.headers.status_code(), status_code::ok);
+//     EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
+// }
