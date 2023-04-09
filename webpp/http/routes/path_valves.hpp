@@ -5,6 +5,8 @@
 
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
+#include "std/concepts.hpp"
+#include "std/string_concepts.hpp"
 #include "valve_traits.hpp"
 
 namespace webpp::http {
@@ -27,6 +29,7 @@ namespace webpp::http {
      */
     template <typename... CallableSegments>
     struct segment_valve : valve<segment_valve<CallableSegments...>>, stl::tuple<CallableSegments...> {
+        static_assert((true && ... && !istl::StringLiteral<CallableSegments>), "");
         using valve_type = valve<segment_valve<CallableSegments...>>;
         using tuple_type = stl::tuple<CallableSegments...>;
 
@@ -122,10 +125,11 @@ namespace webpp::http {
     template <typename Seg>
     segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
 
-    template <istl::CharType CharT>
-    struct valvify<CharT const*> {
-        [[nodiscard]] static constexpr auto call(CharT const* next) noexcept {
-            return segment_string{istl::string_viewify(next)};
+    template <istl::StringLiteral StrT>
+    struct valvify<StrT> {
+        template <istl::cvref_as<StrT> TT>
+        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
+            return segment_string{istl::string_viewify(stl::forward<TT>(next))};
         }
     };
 

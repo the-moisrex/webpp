@@ -13,7 +13,7 @@ using namespace webpp::strings;
 using namespace webpp::ascii;
 
 TEST(String, Concepts) {
-    EXPECT_TRUE((stl::is_same_v<int, char_type_of<int*>>) );
+    EXPECT_FALSE((stl::is_same_v<int, char_type_of<int*>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of<char[]>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of<char[10]>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of<const char[10]>>) );
@@ -44,6 +44,7 @@ TEST(String, Concepts) {
     EXPECT_TRUE(istl::StringLiteral<char[]>);
     EXPECT_TRUE(istl::StringLiteral<char const[]>);
     EXPECT_TRUE(istl::StringLiteral<char const[20]>);
+    EXPECT_TRUE(istl::StringLiteral<char[20]>);
     EXPECT_TRUE(istl::StringLiteral<const char*>);
     EXPECT_TRUE(istl::StringLiteral<const wchar_t*>);
 }

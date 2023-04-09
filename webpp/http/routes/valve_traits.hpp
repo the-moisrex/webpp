@@ -113,8 +113,8 @@ namespace webpp::http {
     concept Valvifiable = requires(T obj) { valvify<stl::remove_cvref_t<T>>::call(obj); };
 
     template <typename T>
-    [[nodiscard]] static constexpr auto valvify_or(T&& next) noexcept {
-        return valvify<stl::remove_cvref_t<T>>::call(next);
+    [[nodiscard]] static constexpr decltype(auto) valvify_or(T&& next) noexcept {
+        return valvify<stl::remove_cvref_t<T>>::call(stl::forward<T>(next));
     }
 
 
@@ -137,13 +137,6 @@ namespace webpp::http {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
-        template <typename T>
-            requires(Valvifiable<T> && istl::cvref_as<T, Callable> && !invocable_inorder_type::value)
-        static constexpr auto call(T&&           segment,
-                                   context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
-            return istl::invoke_inorder(valvify_or(stl::forward<T>(segment)), ctx, ctx.request, ctx.response);
-        }
-
         template <typename R>
         static constexpr bool is_positive(R&& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
@@ -162,7 +155,7 @@ namespace webpp::http {
         }
 
         template <typename R>
-        static constexpr bool is_done(R&& ret) noexcept {
+        static constexpr bool should_continue(R&& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
             if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
@@ -235,7 +228,7 @@ namespace webpp::http {
                 return true;
             } else {
                 auto       ret = call(stl::forward<C>(callable), ctx);
-                bool const res = is_done(ret);
+                bool const res = should_continue(ret);
                 set_response(stl::move(ret), ctx);
                 return res;
             }

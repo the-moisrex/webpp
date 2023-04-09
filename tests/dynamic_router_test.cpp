@@ -89,7 +89,8 @@ TEST(DynamicRouter, RouteRegistration) {
 
 TEST(DynamicRouter, MemFuncPtr) {
 
-    enable_traits_for<dynamic_router> router;
+    enable_owner_traits<default_dynamic_traits> et;
+    dynamic_router                              router{et};
     router.objects.emplace_back(pages{});
 
     router += router / "about" >> &pages::about;
@@ -407,7 +408,7 @@ struct custom_callable {
         return true;
     }
 
-    constexpr int get_res() const noexcept {
+    [[nodiscard]] constexpr int get_res() const noexcept {
         return res;
     }
 };
@@ -424,36 +425,36 @@ struct custom_type {
     constexpr custom_type& operator=(custom_type const&) noexcept = default;
     constexpr ~custom_type() noexcept                             = default;
 
-    constexpr custom_callable get_cc() const noexcept {
+    constexpr custom_callable& get_cc() noexcept {
         return cc;
     }
 };
 
 template <>
 struct webpp::http::valvify<custom_type> {
-    static constexpr auto call(custom_type ct) noexcept {
+    static constexpr custom_callable& call(custom_type& ct) noexcept {
         return ct.get_cc();
     }
 };
 
 
-// TEST(DynamicRouter, CustomValvifier) {
-//     enable_owner_traits<default_dynamic_traits> et;
-//
-//     custom_callable cc;
-//     custom_type     ct{cc};
-//
-//     dynamic_router router{et};
-//     router += router / "home" >> ct >> [] {
-//         return "home sweet home";
-//     };
-//
-//     request req{et};
-//     req.method("GET");
-//     req.uri("/home");
-//
-//     HTTPResponse auto const res = router(req);
-//     EXPECT_EQ(cc.get_res(), 1);
-//     EXPECT_EQ(res.headers.status_code(), status_code::ok);
-//     EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
-// }
+TEST(DynamicRouter, CustomValvifier) {
+    enable_owner_traits<default_dynamic_traits> et;
+
+    custom_callable const cc;
+    custom_type           ct{cc};
+
+    dynamic_router router{et};
+    router += router / "home" >> ct >> [] {
+        return "home sweet home";
+    };
+
+    request req{et};
+    req.method("GET");
+    req.uri("/home");
+
+    HTTPResponse auto const res = router(req);
+    EXPECT_EQ(ct.get_cc().get_res(), 1);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
+}
