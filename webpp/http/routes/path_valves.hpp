@@ -123,21 +123,29 @@ namespace webpp::http {
     segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
 
     template <istl::CharType CharT>
-    [[nodiscard]] static constexpr auto valvify(CharT const* next) noexcept {
-        return segment_string{istl::string_viewify(next)};
-    }
+    struct valvify<CharT const*> {
+        [[nodiscard]] static constexpr auto call(CharT const* next) noexcept {
+            return segment_string{istl::string_viewify(next)};
+        }
+    };
 
     // String Views Valvifier
     template <istl::StringView T>
-    [[nodiscard]] static constexpr auto valvify(T&& next) noexcept {
-        return segment_string{stl::forward<T>(next)};
-    }
+    struct valvify<T> {
+        template <istl::cvref_as<T> TT>
+        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
+            return segment_string{stl::forward<TT>(next)};
+        }
+    };
 
     // String object is passed
     template <istl::String T>
-    [[nodiscard]] static constexpr auto valvify(T&& next) {
-        return segment_string{stl::forward<T>(next)};
-    }
+    struct valvify<T> {
+        template <istl::cvref_as<T> TT>
+        [[nodiscard]] static constexpr auto call(TT&& next) {
+            return segment_string{stl::forward<TT>(next)};
+        }
+    };
 
 } // namespace webpp::http
 

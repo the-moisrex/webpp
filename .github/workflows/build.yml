@@ -114,6 +114,7 @@ jobs:
           - test-utils-casts
           - test-utils-strings
           - test-validations
+          - test-valves
           - test-views
     needs: install
     runs-on: ubuntu-latest

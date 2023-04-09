@@ -10,6 +10,7 @@
 #include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
+#include "std/type_traits.hpp"
 
 namespace webpp::http {
 
@@ -98,21 +99,23 @@ namespace webpp::http {
     }
 
 
-
-
     // General Valvifier
     template <typename T>
-    [[nodiscard]] static constexpr decltype(auto) valvify(T&& next) noexcept {
-        return stl::forward<T>(next);
+    struct valvify {
+
+        template <istl::cvref_as<T> TT>
+        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
+            return stl::forward<TT>(next);
+        }
+    };
+
+    template <typename T>
+    concept Valvifiable = requires(T obj) { valvify<stl::remove_cvref_t<T>>::call(obj); };
+
+    template <typename T>
+    [[nodiscard]] static constexpr auto valvify_or(T&& next) noexcept {
+        return valvify<stl::remove_cvref_t<T>>::call(next);
     }
-
-
-    template <typename T>
-    using valvified_type = stl::remove_cvref_t<decltype(valvify(stl::declval<T>()))>;
-
-
-    template <typename T>
-    concept Valvifiable = requires(T obj) { valvify(obj); };
 
 
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
@@ -134,11 +137,11 @@ namespace webpp::http {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
         }
 
-        template <Valvifiable T>
-            requires(istl::cvref_as<T, Callable> && !invocable_inorder_type::value)
+        template <typename T>
+            requires(Valvifiable<T> && istl::cvref_as<T, Callable> && !invocable_inorder_type::value)
         static constexpr auto call(T&&           segment,
                                    context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
-            return call(valvify(stl::forward<T>(segment)), ctx);
+            return istl::invoke_inorder(valvify_or(stl::forward<T>(segment)), ctx, ctx.request, ctx.response);
         }
 
         template <typename R>
@@ -242,6 +245,7 @@ namespace webpp::http {
 
 
 
+    // Get the valves_group's routes_type
     template <typename T>
     struct routes_type_of_valve {
         using type = T;
