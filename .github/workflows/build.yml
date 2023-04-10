@@ -70,7 +70,7 @@ jobs:
         run: cmake --build --preset benchmarks
       - name: Run All Benchmarks
         run: ./build/webpp-benchmarks
-  test-targets:
+  build-test-targets:
     strategy:
       fail-fast: false
       matrix:
@@ -116,7 +116,72 @@ jobs:
           - test-validations
           - test-valves
           - test-views
+    name: Build ${{ matrix.target }}
     needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build ${{ matrix.target }}
+        run: cmake --build --preset ${{ matrix.target }}
+  run-test-targets:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - test-bodies
+          - test-cache
+          - test-charset
+          - test-concurrency
+          - test-const-list
+          - test-context
+          - test-convert
+          - test-cookies
+          - test-crypto
+          - test-dynamic-router
+          - test-extensions
+          - test-find-str
+          - test-functional
+          - test-header-accept-encoding
+          - test-http-parser
+          - test-ipv4
+          - test-ipv6
+          - test-istring
+          - test-json
+          - test-logger
+          - test-memory
+          - test-properties
+          - test-request
+          - test-response
+          - test-router
+          - test-routes
+          - test-server
+          - test-sql
+          - test-string
+          - test-traits
+          - test-tuple
+          - test-type-traits
+          - test-unicode
+          - test-uri-string
+          - test-uri
+          - test-ustring
+          - test-utils-casts
+          - test-utils-strings
+          - test-validations
+          - test-valves
+          - test-views
+    name: Run ${{ matrix.target }}
+    needs: build-test-target (${{ matrix.target }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -145,6 +210,7 @@ jobs:
           - json-app
           - beast-json
           - beast-view
+    name: Build ${{ matrix.target }}
     needs: install
     runs-on: ubuntu-latest
     steps:
@@ -162,5 +228,3 @@ jobs:
           version: 1
       - name: Build Example ${{ matrix.target }}
         run: cmake --build --preset ${{ matrix.target }}
-      - name: Run Example ${{ matrix.target }}
-        run: ./build/${{ matrix.target }}

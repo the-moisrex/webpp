@@ -156,15 +156,36 @@ async function reloadGithubActions() {
         }
     ];
 
-    // add tests jobs
-    actions.jobs['test-targets'] = {
+    // Build tests
+    actions.jobs['build-test-targets'] = {
         strategy: {
             'fail-fast': false,
             matrix: {
                 target: [...tests]
             }
         },
+        name: 'Build ${{ matrix.target }}',
         needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: 'Build ${{ matrix.target }}',
+                run: 'cmake --build --preset ${{ matrix.target }}'
+            }
+        ]
+    };
+
+    // Run tests
+    actions.jobs['run-test-targets'] = {
+        strategy: {
+            'fail-fast': false,
+            matrix: {
+                target: [...tests]
+            }
+        },
+        name: 'Run ${{ matrix.target }}',
+        needs: 'build-test-target (${{ matrix.target }})',
         'runs-on': 'ubuntu-latest',
         steps: [
             ...jobDefaultSteps,
@@ -178,7 +199,6 @@ async function reloadGithubActions() {
             }
         ]
     };
-
     actions.jobs['test-examples'] = {
         strategy: {
             'fail-fast': false,
@@ -186,6 +206,7 @@ async function reloadGithubActions() {
                 target: [...examples]
             }
         },
+        name: 'Build ${{ matrix.target }}',
         needs: 'install',
         'runs-on': 'ubuntu-latest',
         steps: [
@@ -193,11 +214,11 @@ async function reloadGithubActions() {
             {
                 name: 'Build Example ${{ matrix.target }}',
                 run: 'cmake --build --preset ${{ matrix.target }}'
-            },
-            {
-                name: 'Run Example ${{ matrix.target }}',
-                run: './build/${{ matrix.target }}'
             }
+            // ,{
+            //     name: 'Run Example ${{ matrix.target }}',
+            //     run: './build/${{ matrix.target }}'
+            // }
         ]
     };
 
