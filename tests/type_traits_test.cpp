@@ -290,4 +290,13 @@ TEST(TypeTraits, IndexesIfTest) {
       bool(same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
 }
 
+
+TEST(TypeTraits, RmoeveUnsignedTest) {
+    EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<char>>));
+    EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<unsigned char>>));
+    EXPECT_TRUE(bool(same_as<char volatile, remove_unsigned_t<volatile unsigned char>>));
+    EXPECT_TRUE(bool(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
+    EXPECT_TRUE(bool(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
+}
+
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

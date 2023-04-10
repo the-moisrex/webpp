@@ -27,8 +27,8 @@ using namespace webpp;
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
     using str2_t     = stl::remove_cvref_t<str2_type>;
-    using char_type  = istl::char_type_of<str1_t>;
-    using char_type2 = istl::char_type_of<str2_t>;
+    using char_type  = istl::char_type_of_t<str1_t>;
+    using char_type2 = istl::char_type_of_t<str2_t>;
     static_assert(
       stl::is_same_v<char_type, char_type2>,
       "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
@@ -69,8 +69,8 @@ using namespace webpp;
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
     using str2_t     = stl::remove_cvref_t<str2_type>;
-    using char_type  = istl::char_type_of<str1_t>;
-    using char_type2 = istl::char_type_of<str2_t>;
+    using char_type  = istl::char_type_of_t<str1_t>;
+    using char_type2 = istl::char_type_of_t<str2_t>;
     static_assert(
       stl::is_same_v<char_type, char_type2>,
       "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
@@ -101,8 +101,8 @@ using namespace webpp;
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
     using str2_t     = stl::remove_cvref_t<str2_type>;
-    using char_type  = istl::char_type_of<str1_t>;
-    using char_type2 = istl::char_type_of<str2_t>;
+    using char_type  = istl::char_type_of_t<str1_t>;
+    using char_type2 = istl::char_type_of_t<str2_t>;
     static_assert(
       stl::is_same_v<char_type, char_type2>,
       "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
@@ -135,8 +135,8 @@ using namespace webpp;
     using str2_type  = decltype(_str2);
     using str1_t     = stl::remove_cvref_t<str1_type>;
     using str2_t     = stl::remove_cvref_t<str2_type>;
-    using char_type  = istl::char_type_of<str1_t>;
-    using char_type2 = istl::char_type_of<str2_t>;
+    using char_type  = istl::char_type_of_t<str1_t>;
+    using char_type2 = istl::char_type_of_t<str2_t>;
     static_assert(
       stl::is_same_v<char_type, char_type2>,
       "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");

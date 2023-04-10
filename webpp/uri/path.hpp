@@ -31,7 +31,7 @@ namespace webpp::uri {
         using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector
         using container_type      = stl::vector<slug_type, allocator_type>;
         using value_type          = slug_type;
-        using char_type           = istl::char_type_of<slug_type>;
+        using char_type           = istl::char_type_of_t<slug_type>;
         using string_type         = stl::
           conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;

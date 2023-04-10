@@ -37,7 +37,9 @@ namespace webpp::istl {
     using void_holder = stl::conditional_t<stl::is_void_v<T>, nothing_type, T>;
 
     template <typename T>
-    struct type_holder {};
+    struct type_holder {
+        using type = T;
+    };
 
     template <auto V>
     struct value_holder {};
@@ -1347,17 +1349,116 @@ namespace webpp::istl {
     concept template_of_v = template_of<Templ, T>::value;
 
 
+
+
+
     /**
-     * Exactly like std::make_signed except it's not ill-formed when non-integral types are given.
+     * Pass Templ a non-cvref type, get the Templ<T>::type, then add the cvref again
      */
-    template <typename T>
-    struct remove_unsigned {
-        using type = T;
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref {
+        using type = typename Templ<T>::type;
     };
 
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile T> {
+        using type = volatile typename Templ<T>::type;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, const T> {
+        using type = const typename Templ<T>::type;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, T&> {
+        using type = typename Templ<T>::type&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, T&&> {
+        using type = typename Templ<T>::type&&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile const T> {
+        using type = volatile const typename Templ<T>::type;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, const T&> {
+        using type = const typename Templ<T>::type&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, const T&&> {
+        using type = const typename Templ<T>::type&&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile T&> {
+        using type = volatile typename Templ<T>::type&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile T&&> {
+        using type = volatile typename Templ<T>::type&&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile const T&> {
+        using type = volatile const typename Templ<T>::type&;
+    };
+
+    template <template <typename> typename Templ, typename T>
+    struct preserve_cvref<Templ, volatile const T&&> {
+        using type = volatile const typename Templ<T>::type&&;
+    };
+
+
+    template <template <typename> typename Templ, typename T>
+    using preserve_cvref_t = typename preserve_cvref<Templ, T>::type;
+
+
+
+    namespace details {
+        template <typename T>
+        struct remove_unsigned {
+            using type = T;
+        };
+
+        template <>
+        struct remove_unsigned<unsigned char> {
+            using type = char;
+        };
+
+        template <>
+        struct remove_unsigned<unsigned short> {
+            using type = short;
+        };
+
+        template <>
+        struct remove_unsigned<unsigned int> {
+            using type = int;
+        };
+
+        template <>
+        struct remove_unsigned<unsigned long> {
+            using type = long;
+        };
+
+        template <>
+        struct remove_unsigned<unsigned long long> {
+            using type = long long;
+        };
+    } // namespace details
+
+    /**
+     * Exactly like std::make_signed except it's not ill-formed when non-integral types are given.
+     * Also, make_signed adds "signed" to it but we don't, we just remove the "unsigned"
+     */
     template <typename T>
-        requires stl::is_signed_v<T>
-    struct remove_unsigned<T> : stl::make_signed<T> {};
+    struct remove_unsigned : preserve_cvref<details::remove_unsigned, T> {};
 
     template <typename T>
     using remove_unsigned_t = typename remove_unsigned<T>::type;

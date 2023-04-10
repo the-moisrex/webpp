@@ -40,7 +40,7 @@ namespace webpp::http {
         using logger_type             = traits::logger<traits_type>;
         using logger_ref              = typename logger_type::logger_ref;
         using string_view_type        = traits::string_view<traits_type>;
-        using char_type               = istl::char_type_of<string_view_type>;
+        using char_type               = istl::char_type_of_t<string_view_type>;
         using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
         using allocator_pack_type     = traits::allocator_pack_type<traits_type>;
 

@@ -49,7 +49,7 @@ namespace webpp::lexical {
                 if constexpr (stl::same_as<src_t, char> || stl::same_as<src_t, char8_t> ||
                               stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>) {
                     // don't need to convert, it's a char type
-                    using char_type = istl::char_type_of<target_t>;
+                    using char_type = istl::char_type_of_t<target_t>;
                     return Target{1, static_cast<char_type>(source), the_alloc};
                 } else { // convert
                     // Source is integer type

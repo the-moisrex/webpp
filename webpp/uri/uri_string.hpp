@@ -103,13 +103,13 @@ namespace webpp::uri {
         using specified_string_view_type = StrViewT;
         using string_type                = stl::remove_cvref_t<StrT>;
         using string_view_type           = stl::remove_cvref_t<StrViewT>;
-        using char_type                  = istl::char_type_of<StrT>;
+        using char_type                  = istl::char_type_of_t<StrT>;
         using allocator_type             = typename string_type::allocator_type;
         using alloc_holder_type          = allocator_holder<allocator_type>;
 
         static constexpr bool Mutable = !stl::is_const_v<StrT>;
 
-        static_assert(stl::same_as<char_type, istl::char_type_of<string_view_type>>,
+        static_assert(stl::same_as<char_type, istl::char_type_of_t<string_view_type>>,
                       "The specified string types do not have the same character type.");
 
         /**

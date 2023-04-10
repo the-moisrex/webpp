@@ -214,7 +214,7 @@ namespace webpp {
         using string_view = typename TT::string_view;
 
         template <Traits TT>
-        using char_type = istl::char_type_of<string_view<TT>>;
+        using char_type = istl::char_type_of_t<string_view<TT>>;
 
         template <Traits TT>
         using local_string_allocator = local_allocator<TT, char_type<TT>>;

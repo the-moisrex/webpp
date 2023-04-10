@@ -23,7 +23,7 @@ namespace webpp::http {
     template <istl::String StringType = stl::string>
     struct response_cookie {
         using string_type           = StringType;
-        using char_type             = istl::char_type_of<string_type>;
+        using char_type             = istl::char_type_of_t<string_type>;
         using string_allocator_type = typename string_type::allocator_type;
 
         static constexpr auto illegal_chars = charset("()[]/|\\',;");
