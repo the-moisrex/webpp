@@ -6,8 +6,8 @@
 
 // Initially named functional.h by moisrex on 12/6/19.
 #include "../common/meta.hpp"
-#include "../std/concepts.hpp"
-#include "../std/type_traits.hpp"
+#include "concepts.hpp"
+#include "type_traits.hpp"
 
 #include <functional>
 
@@ -285,7 +285,7 @@ namespace webpp::istl {
         template <typename NewRet, typename... NewArgs>
         static constexpr bool is_convertible_function =
           stl::is_convertible_v<NewRet, Return> && (sizeof...(Args) == sizeof...(NewArgs)) &&
-          (stl::is_convertible_v<Args, NewArgs> && ...);
+          are_all_v<stl::is_convertible, type_list<Args...>, type_list<NewArgs...>>;
 
 
         template <typename T>

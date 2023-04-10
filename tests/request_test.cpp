@@ -1,5 +1,6 @@
 #include "../webpp/http/request.hpp"
 
+#include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/request_view.hpp"
 #include "../webpp/traits/default_traits.hpp"
 #include "common_pch.hpp"
