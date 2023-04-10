@@ -10,7 +10,6 @@
 #include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
-#include "std/type_traits.hpp"
 
 namespace webpp::http {
 
