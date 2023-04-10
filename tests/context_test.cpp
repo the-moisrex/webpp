@@ -1,4 +1,7 @@
 // Created by moisrex on 7/1/20.
+#include "../webpp/http/routes/context.hpp"
+
+#include "../webpp/http/bodies/string.hpp"
 #include "common_pch.hpp"
 #include "fake_protocol.hpp"
 
@@ -15,7 +18,7 @@ namespace fake {
 } // namespace fake
 
 
-using fake_protocol = fake_proto<default_traits, fake::app, extension_pack<string_body>>;
+using fake_protocol = fake_proto<default_traits, fake::app>;
 using request_type  = typename fake_protocol::request_type;
 static_assert(HTTPRequest<request_type>, "fake_request should be a http request");
 using context_type = simple_context<request_type>;
@@ -49,13 +52,13 @@ TEST(Routes, ContextTests) {
     request_type  req{server1};
     context_type  ctx{req};
 
-    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension, string_body>();
+    auto nctx = ctx.template clone<typename fake_mommy::my_context_extension>();
     // using nctx_type = stl::remove_cvref_t<decltype(nctx)>;
     EXPECT_TRUE(nctx.test);
 
 
     using request_type2 =
-      typename fake_proto<default_traits, fake::app, extension_pack<string_body, fake_mommy>>::request_type;
+      typename fake_proto<default_traits, fake::app, extension_pack<fake_mommy>>::request_type;
     using context_type2 = simple_context<request_type2>;
     EXPECT_TRUE(static_cast<bool>(Traits<typename context_type2::traits_type>));
     EXPECT_TRUE(static_cast<bool>(HTTPRequest<typename context_type2::request_type>));
@@ -68,8 +71,8 @@ TEST(Routes, ContextTests) {
 
     fake_protocol               server;
     context_type2::request_type req2{server};
-    context_type2               ctx2{req2};
-    auto                        res = ctx2.string("test");
+    context_type2 const         ctx2{req2};
+    auto                        res = ctx2.create_response("test");
     EXPECT_EQ(res.body.as_string(), "test") << res.body.as_string();
     EXPECT_TRUE(ctx2.test);
 }
