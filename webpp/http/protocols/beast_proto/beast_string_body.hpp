@@ -6,11 +6,6 @@
 #include "../../../libs/asio.hpp"
 #include "../../../std/string.hpp"
 
-#ifdef WEBPP_BOOST_ASIO
-#    include <boost/asio/buffer.hpp>
-#else
-#    include <asio/buffer.hpp>
-#endif
 #include <boost/beast/core/buffers_range.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
