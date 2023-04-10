@@ -58,7 +58,11 @@ namespace webpp::istl {
         };
 
         template <typename T>
-            requires requires { typename T::value_type; }
+            requires requires {
+                         typename T::value_type;
+                         requires stl::is_trivial_v<typename T::value_type>;
+                         requires stl::is_standard_layout_v<typename T::value_type>;
+                     }
         struct char_type_of<T> {
             using type = typename T::value_type;
         };
@@ -73,13 +77,6 @@ namespace webpp::istl {
         struct traits_extractor {
             using type = typename T::traits_type;
         };
-
-        // separated this because of Clang error; clang gives errors if I use the 'requires clause' directly
-        template <typename T>
-        concept has_value_type = requires {
-                                     typename stl::remove_cvref_t<T>::value_type;
-                                     requires stl::integral<typename stl::remove_cvref_t<T>::value_type>;
-                                 };
 
 
         template <typename T>
