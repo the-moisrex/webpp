@@ -54,7 +54,7 @@ namespace webpp::istl {
     template <typename StrViewType, typename T>
     concept StringViewifiableOf = !
     stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
-      requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of<T>> &&
+      requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of_t<T>> &&
       requires(stl::remove_cvref_t<T> str) {
           typename stl::remove_cvref_t<StrViewType>;
           stl::is_trivial_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
@@ -78,11 +78,10 @@ namespace webpp::istl {
     using defaulted_string_view =
       stl::conditional_t<StringView<T>,
                          stl::remove_cvref_t<T>,
-                         stl::basic_string_view<char_type_of<T>, char_traits_type_of<T>>>;
+                         stl::basic_string_view<char_type_of_t<T>, char_traits_type_of<T>>>;
 
     template <typename T>
-    concept StringViewifiable = !
-    stl::is_void_v<char_type_of<T>>&& StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
@@ -143,7 +142,7 @@ namespace webpp::istl {
     }
 
     // template <typename T>
-    // using char_type_of = typename
+    // using char_type_of_t = typename
     // decltype(string_viewify(stl::declval<stl::remove_cvref_t<T>>()))::value_type;
 
 
@@ -152,13 +151,14 @@ namespace webpp::istl {
     //    using char_traits_type_of = typename decltype(string_viewify(stl::declval<T>()))::traits_type;
 
     template <typename T>
-    using string_view_type_of = stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of<T>>>;
+    using string_view_type_of =
+      stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>>>;
 
 
     template <StringViewifiable T>
     [[nodiscard]] static constexpr auto to_std_string_view(T&& str) noexcept {
         using str_t     = stl::remove_cvref_t<T>;
-        using char_type = char_type_of<str_t>;
+        using char_type = char_type_of_t<str_t>;
         using str_v     = stl::basic_string_view<char_type>;
         if constexpr (stl::is_same_v<str_t, str_v>) {
             return str;

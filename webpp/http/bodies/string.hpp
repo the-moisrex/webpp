@@ -203,7 +203,7 @@ namespace webpp::http {
                 if constexpr (istl::StringViewifiableOf<type, body_type>) {
                     str = istl::string_viewify_of<type>(body);
                 } else {
-                    using char_type = istl::char_type_of<type>;
+                    using char_type = istl::char_type_of_t<type>;
                     using data_type = char_type const*;
 
                     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -226,7 +226,7 @@ namespace webpp::http {
         requires(istl::StringLiteral<T> && TextBasedBodyReader<stl::remove_cvref_t<BodyType>>)
     constexpr auto deserialize_body(BodyType&& body) {
         using type = T;
-        if constexpr (stl::same_as<istl::char_type_of<type>, istl::char_type_of<decltype(body.data())>>) {
+        if constexpr (stl::same_as<istl::char_type_of_t<type>, istl::char_type_of_t<decltype(body.data())>>) {
             return body.data();
         } else {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)

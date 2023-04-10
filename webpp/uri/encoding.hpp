@@ -16,10 +16,10 @@ namespace webpp {
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
     [[nodiscard]] bool
-    decode_uri_component(istl::StringViewifiable auto&&                               encoded_str,
-                         istl::String auto&                                           output,
-                         charset<istl::char_type_of<decltype(encoded_str)>, N> const& chars) noexcept {
-        using char_type          = istl::char_type_of<stl::remove_cvref_t<decltype(encoded_str)>>;
+    decode_uri_component(istl::StringViewifiable auto&&                                 encoded_str,
+                         istl::String auto&                                             output,
+                         charset<istl::char_type_of_t<decltype(encoded_str)>, N> const& chars) noexcept {
+        using char_type          = istl::char_type_of_t<stl::remove_cvref_t<decltype(encoded_str)>>;
         stl::size_t digits_left  = 0;
         char_type   decoded_char = 0;
         for (const auto c : istl::string_viewify(encoded_str)) {
@@ -78,10 +78,10 @@ namespace webpp {
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
-    static void encode_uri_component(istl::StringViewifiable auto&&                       src,
-                                     istl::String auto&                                   output,
-                                     charset<istl::char_type_of<decltype(src)>, N> const& chars) {
-        using char_type   = istl::char_type_of<decltype(src)>;
+    static void encode_uri_component(istl::StringViewifiable auto&&                         src,
+                                     istl::String auto&                                     output,
+                                     charset<istl::char_type_of_t<decltype(src)>, N> const& chars) {
+        using char_type   = istl::char_type_of_t<decltype(src)>;
         using uchar_type  = stl::make_unsigned_t<char_type>;
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,

@@ -92,7 +92,7 @@ namespace webpp {
          */
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
             auto ipv6_data         = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
-            using char_type        = istl::char_type_of<decltype(ipv6_data)>;
+            using char_type        = istl::char_type_of_t<decltype(ipv6_data)>;
             using string_view_type = stl::remove_cvref_t<decltype(ipv6_data)>;
             constexpr auto hexes   = HEXDIG<char_type>.string_view();
 
@@ -842,7 +842,7 @@ namespace webpp {
          * @brief long string representation of the ip
          */
         void str_to(istl::String auto& output) const noexcept {
-            using char_type      = istl::char_type_of<decltype(output)>;
+            using char_type      = istl::char_type_of_t<decltype(output)>;
             char_type buffer[40] = {};
             auto      _octets    = octets16();
             fmt::format_to(buffer,
@@ -871,7 +871,7 @@ namespace webpp {
          * TODO: all zero ip prints in a wrong format
          */
         void short_str_to(istl::String auto& output) const noexcept {
-            using char_type = istl::char_type_of<decltype(output)>;
+            using char_type = istl::char_type_of_t<decltype(output)>;
 
             auto _octets = octets16();
 

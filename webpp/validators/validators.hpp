@@ -161,8 +161,8 @@ namespace webpp::is {
      */
     template <stl::size_t N>
     [[nodiscard]] constexpr bool
-    ipv4_prefix(istl::StringViewifiable auto&&                        _str,
-                charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars) noexcept {
+    ipv4_prefix(istl::StringViewifiable auto&&                          _str,
+                charset<istl::char_type_of_t<decltype(_str)>, N> const& divider_chars) noexcept {
 
         auto str = istl::string_viewify(_str);
 
@@ -191,7 +191,7 @@ namespace webpp::is {
      */
     [[nodiscard]] constexpr bool ipv4_prefix(istl::StringViewifiable auto&& _str) noexcept {
         auto str        = istl::string_viewify(_str);
-        using char_type = istl::char_type_of<decltype(str)>;
+        using char_type = istl::char_type_of_t<decltype(str)>;
         return ipv4_prefix(str, charset<char_type, 2>{':', '/'});
     }
 
@@ -262,13 +262,13 @@ namespace webpp::is {
 
     template <stl::size_t N = 1>
     [[nodiscard]] constexpr bool
-    ipv6_prefix(istl::StringViewifiable auto&&                        _str,
-                charset<istl::char_type_of<decltype(_str)>, N> const& divider_chars =
-                  charset<istl::char_type_of<decltype(_str)>, 1>('/')) noexcept {
+    ipv6_prefix(istl::StringViewifiable auto&&                          _str,
+                charset<istl::char_type_of_t<decltype(_str)>, N> const& divider_chars =
+                  charset<istl::char_type_of_t<decltype(_str)>, 1>('/')) noexcept {
 
         auto str = istl::string_viewify(_str);
 
-        // using char_type = istl::char_type_of<decltype(str)>;
+        // using char_type = istl::char_type_of_t<decltype(str)>;
 
         if (auto found = stl::find_if(stl::rbegin(str),
                                       stl::rend(str),
@@ -374,7 +374,7 @@ namespace webpp::is {
 
     [[nodiscard]] constexpr bool query(istl::StringViewifiable auto&& _str) noexcept {
         auto str        = istl::string_viewify(_str);
-        using char_type = istl::char_type_of<decltype(str)>;
+        using char_type = istl::char_type_of_t<decltype(str)>;
 
         /**
          * This is the character set corresponds to the "unreserved" syntax
@@ -528,7 +528,7 @@ namespace webpp::is {
      */
     [[nodiscard]] bool name_color(istl::StringViewifiable auto&& _str) noexcept {
         stl::basic_string str{_str};
-        using char_type = istl::char_type_of<decltype(str)>;
+        using char_type = istl::char_type_of_t<decltype(str)>;
 
         // converting to lower case
         stl::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {

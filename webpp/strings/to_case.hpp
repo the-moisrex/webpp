@@ -82,7 +82,7 @@ namespace webpp::ascii {
                                                                            \
     inline void simple_##method(istl::Stringifiable auto& str) noexcept {  \
         using str_t          = stl::remove_cvref_t<decltype(str)>;         \
-        using char_type      = istl::char_type_of<str_t>;                  \
+        using char_type      = istl::char_type_of_t<str_t>;                \
         char_type*       it  = istl::string_data(str);                     \
         const char_type* end = it + size(str);                             \
         for (; it != end; ++it)                                            \
@@ -143,7 +143,7 @@ namespace webpp::ascii {
                                                                                                              \
                                                                                                              \
     [[nodiscard]] inline auto method##_copy(istl::Stringifiable auto _str) noexcept {                        \
-        using char_type = istl::char_type_of<decltype(_str)>;                                                \
+        using char_type = istl::char_type_of_t<decltype(_str)>;                                              \
         auto str        = istl::stringify(stl::move(_str), stl::allocator<char_type>());                     \
         method(str);                                                                                         \
         return str;                                                                                          \
@@ -166,8 +166,8 @@ namespace webpp::ascii {
         return istl::string_viewify(_str).starts_with(stl::forward<T>(data));
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&     _str,
-                                           istl::char_type_of<decltype(_str)> c) noexcept {
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&       _str,
+                                           istl::char_type_of_t<decltype(_str)> c) noexcept {
         const auto str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }

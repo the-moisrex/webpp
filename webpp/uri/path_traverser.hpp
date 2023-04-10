@@ -100,7 +100,7 @@ namespace webpp::uri {
         using slug_type        = string_type;
         using iterator         = typename slug_type::const_iterator;
         using size_type        = typename slug_type::size_type;
-        using char_type        = istl::char_type_of<string_type>;
+        using char_type        = istl::char_type_of_t<string_type>;
         using string_view_type = StringViewType;
 
         static constexpr string_view_type parent_dir  = "..";

@@ -294,7 +294,7 @@ namespace webpp {
 
 
     template <stl::size_t Size>
-    using char_type_of =
+    using char_type_of_t =
       stl::conditional_t<Size == sizeof(char8_t),
                          char8_t,
                          stl::conditional_t<Size == sizeof(char16_t),

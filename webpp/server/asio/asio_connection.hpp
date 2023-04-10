@@ -16,7 +16,7 @@ namespace webpp {
     struct asio_connection {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using char_type        = istl::char_type_of<string_view_type>;
+        using char_type        = istl::char_type_of_t<string_view_type>;
         using logger_type      = traits::logger<traits_type>;
         using logger_ref       = typename logger_type::logger_ref;
         using session_type     = SessionType;

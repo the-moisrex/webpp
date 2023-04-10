@@ -44,15 +44,30 @@ namespace webpp::istl {
                                       };
                          };
 
+
     template <typename T>
-    concept CharType = istl::
-      part_of<istl::remove_unsigned_t<stl::remove_cvref_t<T>>, char, wchar_t, char16_t, char8_t, char32_t>;
+    concept SingleCharacter = part_of<T, unsigned char, char, wchar_t, char16_t, char8_t, char32_t>;
+
+    template <typename T>
+    concept CharType = istl::SingleCharacter<stl::remove_cvref_t<T>>;
 
     namespace details {
         template <typename T>
-        struct char_extractor {
+        struct char_type_of {
+            using type = void;
+        };
+
+        template <typename T>
+            requires requires { typename T::value_type; }
+        struct char_type_of<T> {
             using type = typename T::value_type;
         };
+
+        template <SingleCharacter T>
+        struct char_type_of<T> {
+            using type = T;
+        };
+
 
         template <typename T>
         struct traits_extractor {
@@ -79,18 +94,17 @@ namespace webpp::istl {
     /**
      * Get the underlying character type in a string/string view/c style string
      */
-    template <typename T,
-              typename BestGuess =
-                stl::remove_cvref_t<stl::remove_all_extents_t<stl::remove_pointer_t<stl::decay_t<T>>>>>
-    using char_type_of =
-      lazy_conditional_t<details::has_value_type<T>,
-                         templated_lazy_type<details::char_extractor, BestGuess>,
-                         lazy_type<stl::conditional_t<CharType<BestGuess>, BestGuess, void>>>;
+    template <typename T>
+    struct char_type_of : details::char_type_of<stl::decay_t<stl::remove_pointer_t<stl::decay_t<T>>>> {};
+
+    template <typename T>
+    using char_type_of_t = typename char_type_of<T>::type;
+
 
     /**
      * Get the underlying allocator_type
      */
-    template <typename T, typename DefaultAllocator = stl::allocator<char_type_of<T>>>
+    template <typename T, typename DefaultAllocator = stl::allocator<char_type_of_t<T>>>
     using allocator_type_of = lazy_conditional_t<
       details::has_allocator_type<T>,
       templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
@@ -102,29 +116,29 @@ namespace webpp::istl {
         concept has_traits_type = requires { typename stl::remove_cvref_t<T>::traits_type; };
     } // namespace details
 
-    template <typename T, typename Default = stl::char_traits<char_type_of<T>>>
+    template <typename T, typename Default = stl::char_traits<char_type_of_t<T>>>
     using char_traits_type_of =
       lazy_conditional_t<details::has_traits_type<T>,
                          templated_lazy_type<details::traits_extractor, stl::remove_cvref_t<T>>,
                          lazy_type<Default>>;
 
     template <typename T>
-    using char_type_of_string_literals =
+    using char_type_of_t_string_literals =
       stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_all_extents_t<stl::remove_cvref_t<T>>>>;
 
 
     template <typename T>
-    concept UTF8 = sizeof(char_type_of<T>) == sizeof(char8_t);
+    concept UTF8 = sizeof(char_type_of_t<T>) == sizeof(char8_t);
 
     template <typename T>
-    concept UTF16 = sizeof(char_type_of<T>) == sizeof(char16_t);
+    concept UTF16 = sizeof(char_type_of_t<T>) == sizeof(char16_t);
 
     template <typename T>
-    concept UTF32 = sizeof(char_type_of<T>) == sizeof(char32_t);
+    concept UTF32 = sizeof(char_type_of_t<T>) == sizeof(char32_t);
 
     template <typename T>
-    concept StringLiteral = (!stl::same_as<char_type_of_string_literals<T>, stl::remove_cvref_t<T>>) &&
-                            CharType<char_type_of_string_literals<T>>;
+    concept StringLiteral = (!stl::same_as<char_type_of_t_string_literals<T>, stl::remove_cvref_t<T>>) &&
+                            CharType<char_type_of_t_string_literals<T>>;
 
 } // namespace webpp::istl
 

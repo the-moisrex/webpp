@@ -10,7 +10,7 @@ namespace webpp::http {
     template <istl::StringView StringViewType = stl::string_view>
     struct request_cookie {
         using string_view_type = StringViewType;
-        using char_type        = istl::char_type_of<string_view_type>;
+        using char_type        = istl::char_type_of_t<string_view_type>;
 
         static constexpr auto valid_cookie_name_chars  = details::VALID_COOKIE_NAME<char_type>;
         static constexpr auto valid_cookie_value_chars = details::VALID_COOKIE_VALUE<char_type>;

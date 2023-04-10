@@ -305,7 +305,7 @@ BENCHMARK(TLR_WebppToLowerStringData);
 inline void webpp_to_lower2(auto& str) noexcept {
     using namespace webpp;
     using str_t           = stl::remove_cvref_t<decltype(str)>;
-    using char_type       = istl::char_type_of<str_t>;
+    using char_type       = istl::char_type_of_t<str_t>;
     char_type*       it   = str.data();
     const auto       size = str.size();
     const char_type* end  = it + size;
@@ -326,7 +326,7 @@ inline void webpp_to_lower3(auto& str) noexcept {
     using namespace webpp;
     using namespace webpp::ascii;
     using str_t                 = stl::remove_cvref_t<decltype(str)>;
-    using char_type             = istl::char_type_of<str_t>;
+    using char_type             = istl::char_type_of_t<str_t>;
     char_type*       it         = str.data();
     const auto       size       = str.size();
     const char_type* end        = it + size;

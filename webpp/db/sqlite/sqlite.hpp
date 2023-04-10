@@ -25,7 +25,7 @@ namespace webpp::sql {
 
         template <typename T>
         static constexpr bool supports_string_view =
-          istl::StringView<T> && stl::same_as<istl::char_type_of<T>, char>;
+          istl::StringView<T> && stl::same_as<istl::char_type_of_t<T>, char>;
 
         static_assert(supports_string_view<stl::string_view>, "It should support standard string views");
 

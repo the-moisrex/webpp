@@ -47,7 +47,7 @@ namespace webpp::http {
     template <istl::StringView StrViewT, Allocator AllocT>
     struct http_lexer {
         using string_view_type      = StrViewT;
-        using char_type             = istl::char_type_of<string_view_type>;
+        using char_type             = istl::char_type_of_t<string_view_type>;
         using allocator_type        = AllocT;
         using header_view_type      = stl::array<string_view_type, 2>;
         using header_view_allocator = rebind_allocator<allocator_type, header_view_type>;

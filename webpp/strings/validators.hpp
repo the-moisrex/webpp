@@ -190,7 +190,7 @@ namespace webpp::ascii::is {
      */
     [[nodiscard]] constexpr bool hex(istl::StringViewifiable auto&& _str) noexcept {
         auto str        = istl::string_viewify(_str);
-        using char_type = istl::char_type_of<decltype(str)>;
+        using char_type = istl::char_type_of_t<decltype(str)>;
 
         auto first = stl::cbegin(str);
         if (str.starts_with('-') || str.starts_with('+')) {
