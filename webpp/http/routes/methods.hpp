@@ -2,6 +2,7 @@
 #define WEBPP_VALVES_METHODS_HPP
 
 #include "valve_traits.hpp"
+#include "valves.hpp" // method is not templated, so we need valve NOW
 
 namespace webpp::http {
 
