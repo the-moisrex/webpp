@@ -13,9 +13,6 @@
 
 namespace webpp::http {
 
-    template <Traits T>
-    struct dynamic_route;
-
 
     namespace details {
 

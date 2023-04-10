@@ -10,42 +10,10 @@
 #include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
 #include "../status_code.hpp"
+#include "router_concepts.hpp"
 
 namespace webpp::http {
 
-    template <typename Self = void>
-    struct valve;
-    template <typename Callable>
-    struct not_valve;
-    template <typename Callable>
-    struct negative_valve;
-    template <typename Callable>
-    struct positive_valve;
-    template <typename LeftCallable, typename RightCallable>
-    struct and_valve;
-    template <typename LeftCallable, typename RightCallable>
-    struct or_valve;
-    template <typename... Callables>
-    struct forward_valve;
-    template <typename... PreRoutes>
-    struct prerouting_valve;
-    template <typename... PostRoutes>
-    struct postrouting_valve;
-    template <typename... CallableSegments>
-    struct segment_valve;
-    template <typename MemPtr>
-    struct member_function_valve;
-    template <typename... ManglerTypes>
-    struct mangler_valve;
-    template <typename Pres, typename Posts, typename Manglers, typename Routes>
-    struct valves_group;
-
-
-    template <Traits TraitsType>
-    struct basic_context;
-
-    template <Traits>
-    struct basic_dynamic_router;
 
     template <typename TraitsType>
     using next_route = istl::function_ref<bool(basic_context<TraitsType>&)>;

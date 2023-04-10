@@ -100,6 +100,45 @@ namespace webpp::http {
                     };
 
 
+
+    template <Traits>
+    struct basic_dynamic_router;
+
+    template <Traits>
+    struct basic_context;
+
+    template <Traits T, typename Callable = void>
+    struct dynamic_route;
+
+    template <typename Self = void>
+    struct valve;
+    template <typename Callable>
+    struct not_valve;
+    template <typename Callable>
+    struct negative_valve;
+    template <typename Callable>
+    struct positive_valve;
+    template <typename LeftCallable, typename RightCallable>
+    struct and_valve;
+    template <typename LeftCallable, typename RightCallable>
+    struct or_valve;
+    template <typename... Callables>
+    struct forward_valve;
+    template <typename... PreRoutes>
+    struct prerouting_valve;
+    template <typename... PostRoutes>
+    struct postrouting_valve;
+    template <typename... CallableSegments>
+    struct segment_valve;
+    template <typename MemPtr>
+    struct member_function_valve;
+    template <typename... ManglerTypes>
+    struct mangler_valve;
+    template <typename Pres, typename Posts, typename Manglers, typename Routes>
+    struct valves_group;
+
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_ROUTER_CONCEPTS_HPP

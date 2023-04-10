@@ -204,13 +204,13 @@ namespace webpp::http {
             requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
         constexpr basic_request(ET&&          et,
-                                MStrT&&       method = "GET",
-                                UStrT&&       url    = "/",
-                                http::version ver    = http::http_2_0)
+                                MStrT&&       inp_method = "GET",
+                                UStrT&&       url        = "/",
+                                http::version ver        = http::http_2_0)
           : common_request_type{et},
             requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
                                                           alloc::general_alloc_for<string_type>(*this))},
-            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(method),
+            requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method),
                                                              alloc::general_alloc_for<string_type>(*this))},
             request_version{ver} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)

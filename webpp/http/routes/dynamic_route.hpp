@@ -9,14 +9,8 @@
 namespace webpp::http {
 
 
-    template <Traits>
-    struct basic_dynamic_router;
 
-    template <Traits>
-    struct basic_context;
-
-
-    template <Traits TraitsType, typename Callable = void>
+    template <Traits TraitsType, typename Callable>
     struct dynamic_route final : dynamic_route<TraitsType, void> {
         using traits_type   = TraitsType;
         using string_type   = traits::general_string<traits_type>;

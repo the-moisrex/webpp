@@ -1,4 +1,5 @@
 #include "../webpp/http/protocols/cgi.hpp"
+#include "../webpp/http/routes/context.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
 #include "../webpp/traits/enable_traits.hpp"
