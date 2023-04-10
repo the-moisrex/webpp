@@ -1,8 +1,5 @@
-#include <webpp/http/bodies/string.hpp>
+#include <webpp/http/http.hpp>
 #include <webpp/http/protocols/cgi.hpp>
-#include <webpp/http/routes/methods.hpp>
-#include <webpp/http/routes/path.hpp>
-#include <webpp/http/routes/static_router.hpp>
 
 using namespace webpp;
 using namespace webpp::http;
