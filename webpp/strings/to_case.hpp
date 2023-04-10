@@ -30,7 +30,7 @@ namespace webpp::ascii {
      * chars. One example is in the HTTP headers which changing the locale should
      * not affect that.
      */
-    [[nodiscard]] constexpr auto to_upper_copy(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr auto to_upper_copy(istl::CharType auto c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         return c >= 'a' && c <= 'z' ? c - diff : c;
@@ -51,7 +51,7 @@ namespace webpp::ascii {
      * chars. One example is in the HTTP headers which changing the locale should
      * not affect that.
      */
-    [[nodiscard]] constexpr auto to_lower_copy(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr auto to_lower_copy(istl::CharType auto c) noexcept {
         using char_type          = stl::remove_cvref_t<decltype(c)>;
         constexpr char_type diff = 'a' - 'A';
         return c >= 'A' && c <= 'Z' ? c + diff : c;

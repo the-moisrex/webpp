@@ -16,7 +16,7 @@ namespace webpp::ascii::is {
      * @param c the character to check
      * @return true if c is a whitespace
      */
-    [[nodiscard]] constexpr bool whitespace(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr bool whitespace(istl::CharType auto c) noexcept {
         // todo: do we need '\v'?
         return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\f' || c == '\v';
     }
@@ -56,7 +56,7 @@ namespace webpp::ascii::is {
      * @param character
      * @return true if the specified input is an integer
      */
-    [[nodiscard]] constexpr bool digit(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr bool digit(istl::CharType auto c) noexcept {
         return c >= '0' && c <= '9';
     }
 
@@ -79,7 +79,7 @@ namespace webpp::ascii::is {
      * @param c
      * @return
      */
-    [[nodiscard]] constexpr bool number(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr bool number(istl::CharType auto c) noexcept {
         return digit(c) || c == '.';
     }
 
@@ -110,7 +110,7 @@ namespace webpp::ascii::is {
      * @param c
      * @return
      */
-    [[nodiscard]] constexpr bool lowercase(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr bool lowercase(istl::CharType auto c) noexcept {
         return c >= 'a' && c <= 'z';
     }
 
@@ -134,7 +134,7 @@ namespace webpp::ascii::is {
      * @param c
      * @return
      */
-    [[nodiscard]] constexpr bool uppercase(istl::CharType auto&& c) noexcept {
+    [[nodiscard]] constexpr bool uppercase(istl::CharType auto c) noexcept {
         return c >= 'A' && c <= 'Z';
     }
 
@@ -178,7 +178,7 @@ namespace webpp::ascii::is {
      * @param char
      * @return bool
      */
-    [[nodiscard]] constexpr bool hex(istl::CharType auto&& t) noexcept {
+    [[nodiscard]] constexpr bool hex(istl::CharType auto t) noexcept {
         return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') || (t >= 'A' && t <= 'F');
     }
 
