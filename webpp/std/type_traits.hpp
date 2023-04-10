@@ -1346,6 +1346,24 @@ namespace webpp::istl {
     template <template <typename...> typename Templ, typename T>
     concept template_of_v = template_of<Templ, T>::value;
 
+
+    /**
+     * Exactly like std::make_signed except it's not ill-formed when non-integral types are given.
+     */
+    template <typename T>
+    struct remove_unsigned {
+        using type = T;
+    };
+
+    template <typename T>
+        requires stl::is_signed_v<T>
+    struct remove_unsigned<T> : stl::make_signed<T> {};
+
+    template <typename T>
+    using remove_unsigned_t = typename remove_unsigned<T>::type;
+
+
+
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

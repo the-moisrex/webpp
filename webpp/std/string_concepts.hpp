@@ -45,7 +45,8 @@ namespace webpp::istl {
                          };
 
     template <typename T>
-    concept CharType = istl::part_of<stl::remove_cvref_t<T>, char, wchar_t, char16_t, char8_t, char32_t>;
+    concept CharType = istl::
+      part_of<istl::remove_unsigned_t<stl::remove_cvref_t<T>>, char, wchar_t, char16_t, char8_t, char32_t>;
 
     namespace details {
         template <typename T>
