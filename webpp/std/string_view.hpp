@@ -48,27 +48,32 @@ namespace webpp::istl {
 
     } // namespace details::string_view
 
+    namespace details {
+        template <typename StrViewType, typename T>
+        concept StringViewifiableOf = !
+        stl::is_void_v<StrViewType> && !stl::is_void_v<char_type_of_t<T>> &&
+          requires(T str) {
+              typename StrViewType::value_type;
+              requires stl::is_trivial_v<typename StrViewType::value_type>;
+              requires stl::is_standard_layout_v<typename StrViewType::value_type>;
+              requires requires { StrViewType{str}; } || requires {
+                                                             str.data();
+                                                             str.size();
+                                                             StrViewType{str.data(), str.size()};
+                                                         } || requires {
+                                                                  str.c_str();
+                                                                  str.size();
+                                                                  StrViewType{str.c_str(), str.size()};
+                                                              };
+          };
+    } // namespace details
+
     /**
      * Check if T is a "string view" of type "StringViewType"
      */
     template <typename StrViewType, typename T>
-    concept StringViewifiableOf = !
-    stl::is_void_v<StrViewType> && !istl::CharType<stl::remove_cvref_t<T>> &&
-      requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of_t<T>> &&
-      requires(stl::remove_cvref_t<T> str) {
-          typename stl::remove_cvref_t<StrViewType>;
-          stl::is_trivial_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
-          stl::is_standard_layout_v<typename stl::remove_cvref_t<StrViewType>::value_type>;
-          requires requires { StrViewType{str}; } || requires {
-                                                         str.data();
-                                                         str.size();
-                                                         StrViewType{str.data(), str.size()};
-                                                     } || requires {
-                                                              str.c_str();
-                                                              str.size();
-                                                              StrViewType{str.c_str(), str.size()};
-                                                          };
-      };
+    concept StringViewifiableOf =
+      details::StringViewifiableOf<stl::remove_cvref_t<StrViewType>, stl::remove_cvref_t<T>>;
 
     template <template <typename...> typename StrViewType, typename T>
     concept StringViewifiableOfTemplate =
@@ -81,7 +86,7 @@ namespace webpp::istl {
                          stl::basic_string_view<char_type_of_t<T>, char_traits_type_of<T>>>;
 
     template <typename T>
-    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, stl::remove_cvref_t<T>>;
+    concept StringViewifiable = StringViewifiableOf<defaulted_string_view<T>, T>;
 
     /**
      * Convert the string value specified to a "string view" of type StrViewT
