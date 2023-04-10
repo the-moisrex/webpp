@@ -7,6 +7,8 @@
 using namespace webpp;
 using namespace webpp::json;
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
 using doc_type    = document<>;
 using value_type  = typename doc_type::value_type;
 using object_type = typename doc_type::object_type;
@@ -45,8 +47,8 @@ TEST(JSONTest, Fields) {
     field<string> username{"username"};
     // field<vector<string>> emails{"emails"};
 
-    document         doc;
-    stl::string_view json_string = R"JSON({
+    document               doc;
+    stl::string_view const json_string = R"JSON({
         "username": "the-moisrex",
         "emails":   ["one@example.com", "two@example.com"],
         "id":       313
@@ -105,3 +107,5 @@ TEST(JSONTest, Create) {
       },
       json_impls());
 }
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

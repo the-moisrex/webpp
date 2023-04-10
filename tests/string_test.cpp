@@ -5,6 +5,8 @@
 #include "../webpp/strings/splits.hpp"
 #include "common_pch.hpp"
 
+#include <array>
+
 // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-magic-numbers)
 
 using namespace webpp;
@@ -142,6 +144,11 @@ TEST(String, SplitterConstexpr) {
     EXPECT_EQ(stl::get<1>(email2), "email");
     EXPECT_EQ(stl::get<2>(email2), "com");
 }
+
+TEST(String, StringViewConcept) {
+    EXPECT_FALSE(bool(StringViewifiable<stl::array<char const*, 4>>));
+}
+
 
 
 // NOLINTEND(cppcoreguidelines-avoid-c-arrays,cppcoreguidelines-avoid-magic-numbers)

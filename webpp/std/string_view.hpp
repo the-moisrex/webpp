@@ -56,6 +56,7 @@ namespace webpp::istl {
               typename StrViewType::value_type;
               requires stl::is_trivial_v<typename StrViewType::value_type>;
               requires stl::is_standard_layout_v<typename StrViewType::value_type>;
+              requires !stl::is_pointer_v<typename StrViewType::value_type>; // exclude array<char const*, N>
               requires requires { StrViewType{str}; } || requires {
                                                              str.data();
                                                              str.size();
