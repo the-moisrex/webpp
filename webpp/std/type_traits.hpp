@@ -1264,6 +1264,8 @@ namespace webpp::istl {
      * @code
      *   static constexpr bool value = are_all<std::is_convertible, tuple<int, double>, tuple<double, int>>;
      * @endcode
+     *
+     * todo: we can manage to remove the necessity of "tuple-like" types here by splitting the values in half
      */
     template <template <typename, typename> typename Evaluator, typename, typename>
     struct are_all : stl::false_type {};
