@@ -2,9 +2,11 @@
 #define WEBPP_INTERFACES_COMMON_SERVER_H
 
 #include "../../libs/asio.hpp"
-// clang-format off
-#include asio_include(ip/tcp)
-// clang-format on
+#ifdef WEBPP_BOOST_ASIO
+#    include <boost/asio/ip/tcp.hpp>
+#else
+#    include <asio/ip/tcp.hpp>
+#endif
 
 #include "../../std/vector.hpp"
 #include "../../traits/enable_traits.hpp"

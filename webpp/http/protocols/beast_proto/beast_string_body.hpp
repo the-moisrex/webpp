@@ -6,9 +6,11 @@
 #include "../../../libs/asio.hpp"
 #include "../../../std/string.hpp"
 
-// clang-format off
-#include asio_include(buffer)
-// clang-format on
+#ifdef WEBPP_BOOST_ASIO
+#    include <boost/asio/buffer.hpp>
+#else
+#    include <asio/buffer.hpp>
+#endif
 #include <boost/beast/core/buffers_range.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>

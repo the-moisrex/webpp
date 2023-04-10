@@ -18,14 +18,21 @@
 #include <mutex>
 #include <thread>
 
-// clang-format off
-#include asio_include(ip/address)
-#include asio_include(post)
-#include asio_include(thread_pool)
-#include asio_include(ip/tcp)
-#include asio_include(signal_set)
-#include asio_include(strand)
-// clang-format on
+#ifdef WEBPP_BOOST_ASIO
+#    include <boost/asio/ip/address.hpp>
+#    include <boost/asio/ip/tcp.hpp>
+#    include <boost/asio/post.hpp>
+#    include <boost/asio/signal_set.hpp>
+#    include <boost/asio/strand.hpp>
+#    include <boost/asio/thread_pool.hpp>
+#else
+#    include <asio/ip/address.hpp>
+#    include <asio/ip/tcp.hpp>
+#    include <asio/post.hpp>
+#    include <asio/signal_set.hpp>
+#    include <asio/strand.hpp>
+#    include <asio/thread_pool.hpp>
+#endif
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http/read.hpp>
