@@ -13,13 +13,14 @@
 #    define WEBPP_ASIO
 #endif
 
-#ifdef WEBPP_BOOST_ASIO
-#    define asio_include(asio_file) <boost/asio/asio_file.hpp>
-#elif defined(WEBPP_ASIO)
-#    define asio_include(asio_file) <asio/asio_file.hpp>
-#else
-#    define asio_include(asio_file) // nothing
-#endif
+// This was a cool idea, but unfortunately it's not standard
+// #ifdef WEBPP_BOOST_ASIO
+// #    define asio_include(asio_file) <boost/asio/asio_file.hpp>
+// #elif defined(WEBPP_ASIO)
+// #    define asio_include(asio_file) <asio/asio_file.hpp>
+// #else
+// #    define asio_include(asio_file) // nothing
+// #endif
 
 #ifdef WEBPP_BOOST_ASIO
 #    include <boost/system/error_code.hpp>

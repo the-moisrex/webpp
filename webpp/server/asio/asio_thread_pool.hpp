@@ -1,13 +1,15 @@
 // Created by moisrex on 4/7/20.
 
-#ifndef WEBPP_THREAD_POOL_H
-#define WEBPP_THREAD_POOL_H
+#ifndef WEBPP_THREAD_POOL_HPP
+#define WEBPP_THREAD_POOL_HPP
 
 #include "../../libs/asio.hpp"
 
-// clang-format off
-#include asio_include(thread_pool)
-// clang-format on
+#ifdef WEBPP_BOOST_ASIO
+#    include <boost/asio/thread_pool.hpp>
+#else
+#    include <asio/thread_pool.hpp>
+#endif
 
 namespace webpp {
 
@@ -15,4 +17,4 @@ namespace webpp {
 
 } // namespace webpp
 
-#endif // WEBPP_THREAD_POOL_H
+#endif // WEBPP_THREAD_POOL_HPP
