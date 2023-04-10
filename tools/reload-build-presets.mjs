@@ -137,6 +137,13 @@ async function reloadGithubActions() {
     actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
             .filter(([name]) => !name.startsWith('example-')));
 
+
+    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
+            .filter(([name]) => !name.startsWith('build-')));
+
+    actions.jobs = Object.fromEntries(Object.entries(actions.jobs)
+            .filter(([name]) => !name.startsWith('run-')));
+
     const jobDefaultSteps = [
         {
             uses: "actions/checkout@v3"
@@ -157,48 +164,72 @@ async function reloadGithubActions() {
     ];
 
     // Build tests
-    actions.jobs['build-test-targets'] = {
-        strategy: {
-            'fail-fast': false,
-            matrix: {
-                target: [...tests]
-            }
-        },
-        name: 'Build ${{ matrix.target }}',
-        needs: 'install',
-        'runs-on': 'ubuntu-latest',
-        steps: [
-            ...jobDefaultSteps,
-            {
-                name: 'Build ${{ matrix.target }}',
-                run: 'cmake --build --preset ${{ matrix.target }}'
-            }
-        ]
-    };
+    for (const target of tests) {
+        actions.jobs[`build-${target}`] = {
+            // strategy: {
+            //     'fail-fast': false,
+            //     matrix: {
+            //         target: [...tests]
+            //     }
+            // },
+            name: `Build ${target}`,
+            needs: 'install',
+            'runs-on': 'ubuntu-latest',
+            steps: [
+                ...jobDefaultSteps,
+                {
+                    name: `Build ${target}`,
+                    run: `cmake --build --preset ${target}`
+                }
+            ]
+        };
+
+        // Run tests
+        actions.jobs[`run-${target}`] = {
+            name: `Run ${target}`,
+            needs: `build-${target}`,
+            'runs-on': 'ubuntu-latest',
+            steps: [
+                ...jobDefaultSteps,
+                {
+                    name: `Run ${target}`,
+                    run: `cmake --build --preset ${target}`
+                },
+                {
+                    name: `Run ${target}`,
+                    run: `./build/${target}`
+                }
+            ]
+        };
+
+    }
 
     // Run tests
-    actions.jobs['run-test-targets'] = {
-        strategy: {
-            'fail-fast': false,
-            matrix: {
-                target: [...tests]
-            }
-        },
-        name: 'Run ${{ matrix.target }}',
-        needs: 'build-test-target (${{ matrix.target }})',
-        'runs-on': 'ubuntu-latest',
-        steps: [
-            ...jobDefaultSteps,
-            {
-                name: 'Build ${{ matrix.target }}',
-                run: 'cmake --build --preset ${{ matrix.target }}'
-            },
-            {
-                name: 'Run ${{ matrix.target }}',
-                run: './build/${{ matrix.target }}'
-            }
-        ]
-    };
+    // actions.jobs['run-test-targets'] = {
+    //     strategy: {
+    //         'fail-fast': false,
+    //         matrix: {
+    //             target: [...tests]
+    //         }
+    //     },
+    //     name: 'Run ${{ matrix.target }}',
+    //     needs: 'build-test-target (${{ matrix.target }})',
+    //     'runs-on': 'ubuntu-latest',
+    //     steps: [
+    //         ...jobDefaultSteps,
+    //         {
+    //             name: 'Build ${{ matrix.target }}',
+    //             run: 'cmake --build --preset ${{ matrix.target }}'
+    //         },
+    //         {
+    //             name: 'Run ${{ matrix.target }}',
+    //             run: './build/${{ matrix.target }}'
+    //         }
+    //     ]
+    // };
+
+
+
     actions.jobs['test-examples'] = {
         strategy: {
             'fail-fast': false,
