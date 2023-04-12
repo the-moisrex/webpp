@@ -636,6 +636,24 @@ namespace webpp::istl {
     }
 
 
+
+    namespace details {
+        template <typename TupleT, typename F, stl::size_t... Indices>
+        static constexpr void for_each_impl(F&& f, TupleT&& tup, stl::index_sequence<Indices...>) {
+            using swallow = int[];
+            (void) swallow{1, (f(get<Indices>(stl::forward<TupleT>(tup))), void(), int{})...};
+        }
+    } // namespace details
+
+    // initially from https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
+    // The order of the elements are reversed to match std::apply
+    template <typename F, typename... Args, template <typename...> typename TupleT>
+        requires((stl::is_invocable_v<F, Args> && ...))
+    static constexpr void for_each_element(F&& f, const TupleT<Args...>& tup) noexcept(
+      (stl::is_nothrow_invocable_v<F, Args> && ...)) {
+        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+    }
+
 } // namespace webpp::istl
 
 namespace std {

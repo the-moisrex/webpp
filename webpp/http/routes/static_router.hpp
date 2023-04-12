@@ -16,7 +16,15 @@ namespace webpp::http {
         forward_valve<RouteType...> routes;
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
-        constexpr static_router(RouteType&&... _route) : routes(stl::forward<RouteType>(_route)...) {}
+        constexpr static_router(RouteType&&... _route) : routes(stl::forward<RouteType>(_route)...) {
+            istl::for_each_element(
+              [router = this]<typename R>([[maybe_unused]] R& route) {
+                  if constexpr (ValveRequiresSetup<static_router, R>) {
+                      route.setup(*router);
+                  }
+              },
+              routes);
+        }
 
         constexpr static_router(static_router const&) noexcept = default;
         constexpr static_router(static_router&&) noexcept      = default;
