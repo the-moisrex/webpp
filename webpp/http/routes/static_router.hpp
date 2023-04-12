@@ -11,12 +11,12 @@ namespace webpp::http {
      */
     template <typename... RouteType>
     struct static_router {
+        using routes_type = forward_valve<RouteType...>;
 
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        forward_valve<RouteType...> routes;
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
+      private:
+        routes_type routes;
 
-        constexpr static_router(RouteType&&... _route) : routes(stl::forward<RouteType>(_route)...) {
+        constexpr void setup_routes() {
             istl::for_each_element(
               [router = this]<typename R>([[maybe_unused]] R& route) {
                   if constexpr (ValveRequiresSetup<static_router, R>) {
@@ -24,6 +24,19 @@ namespace webpp::http {
                   }
               },
               routes.as_tuple());
+        }
+
+      public:
+        constexpr static_router(RouteType&&... _route) : routes{stl::forward<RouteType>(_route)...} {
+            setup_routes();
+        }
+
+        constexpr static_router(stl::tuple<RouteType...>&& inp_routes) : routes{stl::move(inp_routes)} {
+            setup_routes();
+        }
+
+        constexpr static_router(stl::tuple<RouteType...> const& inp_routes) : routes{inp_routes} {
+            setup_routes();
         }
 
         constexpr static_router(static_router const&) noexcept = default;
@@ -59,6 +72,10 @@ namespace webpp::http {
         }
 
       public:
+        constexpr routes_type const& get_routes() const noexcept {
+            return routes;
+        }
+
         /**
          * Run the request through the routes and then return the response
          * @param req
@@ -111,6 +128,14 @@ namespace webpp::http {
     template <typename... RouteType>
     static_router(RouteType&&...) -> static_router<RouteType...>;
 
+    template <typename... RouteType>
+    static_router(stl::tuple<RouteType...>&&) -> static_router<RouteType...>;
+
+    template <typename... RouteType>
+    static_router(stl::tuple<RouteType...> const&) -> static_router<RouteType...>;
+
+    template <typename... RouteType>
+    static_router(stl::tuple<RouteType...>&) -> static_router<RouteType...>;
 
 } // namespace webpp::http
 
