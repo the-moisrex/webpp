@@ -28,8 +28,8 @@ namespace website {
                                        return doc;
                                    },
                                  (get and root / "about") >>
-                                   [this](auto&& ctx) {
-                                       return this->about(ctx);
+                                   [this]() {
+                                       return this->about();
                                    }};
 
             return router(req);
