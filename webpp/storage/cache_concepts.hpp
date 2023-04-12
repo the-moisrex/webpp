@@ -35,6 +35,15 @@ namespace webpp {
 
 
     namespace details {
+
+        // I extracted this function from StorageGateType because of GCC segfault crash.
+        // Seems like we can't use lambdas in concepts in GCC 12.1.0, it's been resolved in 12.2.1.
+        struct if_condition {
+            [[nodiscard]] constexpr bool operator()(auto const&) const noexcept {
+                return true;
+            }
+        };
+
         template <typename S>
         concept StorageGateType =
           requires(S gate) {
@@ -50,7 +59,8 @@ namespace webpp {
 
               requires requires(typename S::key_type     key,
                                 typename S::value_type   value,
-                                typename S::options_type opts) {
+                                typename S::options_type opts,
+                                if_condition             condition) {
                            gate.erase(key);
                            gate.set(key, value, opts);
                            gate.set_options(key, opts);
@@ -59,9 +69,7 @@ namespace webpp {
                            // I added the erase_if here and not in the "cache" because
                            // it might be faster (I think)
                            // todo: check if we really need erase_if here
-                           gate.erase_if([](typename S::key_type const&) -> bool {
-                               return true;
-                           });
+                           gate.erase_if(condition);
                        };
           };
 
