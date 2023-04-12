@@ -99,14 +99,11 @@ namespace webpp::http {
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, ManglerType> || ...))
         constexpr void setup(RouterT& inp_router) {
-            stl::apply(
-              [&inp_router]<typename... T>(T&&... inp_callables) constexpr {
-                  (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
-                       if constexpr (ValveRequiresSetup<RouterT, T>) {
-                           callable.setup(router);
-                       }
-                   })(inp_callables, inp_router),
-                   ...);
+            istl::for_each_element(
+              [&inp_router]<typename T>([[maybe_unused]] T&& inp_callable) constexpr {
+                  if constexpr (ValveRequiresSetup<RouterT, T>) {
+                      inp_callable.setup(inp_router);
+                  }
               },
               as_tuple());
         }
@@ -164,14 +161,11 @@ namespace webpp::http {
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, Callables> || ...))
         constexpr void setup(RouterT& inp_router) {
-            stl::apply(
-              [&inp_router]<typename... T>(T&&... inp_callables) constexpr {
-                  (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
-                       if constexpr (ValveRequiresSetup<RouterT, T>) {
-                           callable.setup(router);
-                       }
-                   })(inp_callables, inp_router),
-                   ...);
+            istl::for_each_element(
+              [&inp_router]<typename T>([[maybe_unused]] T&& inp_callable) constexpr {
+                  if constexpr (ValveRequiresSetup<RouterT, T>) {
+                      inp_callable.setup(inp_router);
+                  }
               },
               as_tuple());
         }
