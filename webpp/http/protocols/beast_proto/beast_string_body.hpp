@@ -50,19 +50,19 @@ namespace webpp::http::beast_proto {
          * Meets the requirements of <em>BodyReader</em>.
          */
         class reader {
-            value_type& body_;
+            value_type* body_ptr;
 
           public:
             template <bool isRequest, class Fields>
-            explicit reader(boost::beast::http::header<isRequest, Fields>&, value_type& b) : body_(b) {}
+            explicit reader(boost::beast::http::header<isRequest, Fields>&, value_type& b) : body_ptr(&b) {}
 
             void init(boost::optional<std::uint64_t> const& length, boost::beast::error_code& ec) {
                 if (length) {
-                    if (*length > body_.max_size()) {
+                    if (*length > body_ptr->max_size()) {
                         ec = boost::beast::http::error::buffer_overflow;
                         return;
                     }
-                    body_.reserve(boost::beast::detail::clamp(*length));
+                    body_ptr->reserve(boost::beast::detail::clamp(*length));
                 }
                 ec = {};
             }
@@ -70,15 +70,15 @@ namespace webpp::http::beast_proto {
             template <class ConstBufferSequence>
             std::size_t put(ConstBufferSequence const& buffers, boost::beast::error_code& ec) {
                 auto const extra = boost::beast::buffer_bytes(buffers);
-                auto const size  = body_.size();
-                if (extra > body_.max_size() - size) {
+                auto const size  = body_ptr->size();
+                if (extra > body_ptr->max_size() - size) {
                     ec = boost::beast::http::error::buffer_overflow;
                     return 0;
                 }
 
-                body_.resize(size + extra);
+                body_ptr->resize(size + extra);
                 ec           = {};
-                pointer dest = &body_[size];
+                pointer dest = &(*body_ptr)[size];
                 for (auto b : boost::beast::buffers_range_ref(buffers)) {
                     str_traits_type::copy(dest, static_cast<const_pointer>(b.data()), b.size());
                     dest += b.size();
@@ -97,14 +97,14 @@ namespace webpp::http::beast_proto {
          * Meets the requirements of <em>BodyWriter</em>.
          */
         class writer {
-            value_type const& body_;
+            value_type const* body_ptr;
 
           public:
             using const_buffers_type = asio::const_buffer;
 
             template <bool isRequest, class Fields>
             explicit writer(boost::beast::http::header<isRequest, Fields> const&, value_type const& b)
-              : body_(b) {}
+              : body_ptr(&b) {}
 
             void init(boost::beast::error_code& ec) {
                 ec = {};
@@ -112,7 +112,7 @@ namespace webpp::http::beast_proto {
 
             boost::optional<std::pair<const_buffers_type, bool>> get(boost::beast::error_code& ec) {
                 ec = {};
-                return {{const_buffers_type{body_.data(), body_.size()}, false}};
+                return {{const_buffers_type{body_ptr->data(), body_ptr->size()}, false}};
             }
         };
     };
