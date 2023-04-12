@@ -23,7 +23,7 @@ namespace webpp::http {
                       route.setup(*router);
                   }
               },
-              routes);
+              routes.as_tuple());
         }
 
         constexpr static_router(static_router const&) noexcept = default;

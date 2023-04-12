@@ -648,12 +648,26 @@ namespace webpp::istl {
     // initially from https://codereview.stackexchange.com/questions/51407/stdtuple-foreach-implementation
     // The order of the elements are reversed to match std::apply
     template <typename F, typename... Args, template <typename...> typename TupleT>
-        requires((stl::is_invocable_v<F, Args> && ...))
+        requires((stl::is_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...))
     static constexpr void for_each_element(F&& f, const TupleT<Args...>& tup) noexcept(
-      (stl::is_nothrow_invocable_v<F, Args> && ...)) {
+      (stl::is_nothrow_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...)) {
         details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
     }
 
+    template <typename F, typename... Args, template <typename...> typename TupleT>
+        requires((stl::is_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...))
+    static constexpr void for_each_element(F&& f, TupleT<Args...>& tup) noexcept(
+      (stl::is_nothrow_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...)) {
+        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+    }
+
+
+    template <typename F, typename... Args, template <typename...> typename TupleT>
+        requires((stl::is_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...))
+    static constexpr void for_each_element(F&& f, TupleT<Args...>&& tup) noexcept(
+      (stl::is_nothrow_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...)) {
+        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+    }
 } // namespace webpp::istl
 
 namespace std {
