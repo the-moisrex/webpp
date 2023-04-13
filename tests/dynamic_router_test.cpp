@@ -458,3 +458,20 @@ TEST(DynamicRouter, CustomValvifier) {
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
 }
+
+TEST(DynamicRouter, CrossStringTypeSupport) {
+    enable_owner_traits<std_pmr_traits> et;
+
+    dynamic_router router{et};
+    router += router / std::string{"home"} >> [] {
+        return "home sweet home";
+    };
+
+    request req{et};
+    req.method("GET");
+    req.uri("/home");
+
+    HTTPResponse auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
+}
