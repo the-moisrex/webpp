@@ -81,14 +81,11 @@ namespace webpp::http {
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, CallableSegments> || ...))
         constexpr void setup(RouterT& inp_router) {
-            stl::apply(
-              [&inp_router]<typename... T>(T&&... callables) constexpr {
-                  (([]([[maybe_unused]] auto&& callable, [[maybe_unused]] RouterT& router) constexpr {
-                       if constexpr (ValveRequiresSetup<RouterT, T>) {
-                           callable.setup(router);
-                       }
-                   })(callables, inp_router),
-                   ...);
+            istl::for_each_element(
+              [&inp_router]<typename T>(T& callable) constexpr {
+                  if constexpr (ValveRequiresSetup<RouterT, T>) {
+                      callable.setup(inp_router);
+                  }
               },
               as_tuple());
         }
