@@ -210,6 +210,8 @@ namespace webpp::http {
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
             if (auto const* reader = stl::get_if<string_communicator_type>(&this->communicator())) {
                 return reader->size();
+            } else if (stl::holds_alternative<stl::monostate>(this->communicator())) {
+                return 0;
             } else {
                 // todo: see if you can get the size if the stream body supports but don't let it give false positives.
                 // todo: should we return npos?
