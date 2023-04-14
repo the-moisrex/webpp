@@ -217,6 +217,30 @@ namespace webpp::http {
     };
 
 
+
+    /**
+     * Context Chaining
+     * @code
+     *   // Calla get_data with ctx, and then call add_layout with ctx;
+     *   ctx >> get_data >> add_layout;
+     * @endcode
+     */
+    template <Context CtxT, typename Callable>
+    constexpr CtxT& operator>>(CtxT& ctx, Callable&& callable) {
+        valve_traits<Callable, CtxT>::call_set(stl::forward<Callable>(callable), ctx);
+        return ctx;
+    }
+
+    /**
+     * Call the valve with the specified context
+     * You can use "ctx >> route" as well.
+     */
+    template <typename Callable, Context CtxT>
+    constexpr CtxT& call_route(Callable&& callable, CtxT& ctx) {
+        valve_traits<Callable, CtxT>::call_set(stl::forward<Callable>(callable), ctx);
+        return ctx;
+    }
+
 } // namespace webpp::http
 
 #endif // WEBPP_VALVE_TRAITS_HPP

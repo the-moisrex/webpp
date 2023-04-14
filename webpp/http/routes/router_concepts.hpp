@@ -102,7 +102,7 @@ namespace webpp::http {
 
 
     template <Traits>
-    class basic_dynamic_router;
+    struct basic_dynamic_router;
 
     template <Traits>
     struct basic_context;
