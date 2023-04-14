@@ -475,3 +475,28 @@ TEST(DynamicRouter, CrossStringTypeSupport) {
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
 }
+
+// https://github.com/the-moisrex/webpp/issues/307
+TEST(DynamicRouter, ContextCallChaining) {
+    enable_owner_traits<default_dynamic_traits> et;
+
+    dynamic_router router{et};
+    router += router / "home" >> [](context& ctx) {
+        auto fill_context = [] {
+            return "home sweet home";
+        };
+        auto wrap_with_body = [](response res) {
+            res = "<body>" + res.body.as_string() + "</body>";
+            return res;
+        };
+        ctx >> fill_context >> wrap_with_body;
+    };
+
+    request req{et};
+    req.method("GET");
+    req.uri("/home");
+
+    HTTPResponse auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "<body>home sweet home</body>") << as<std::string>(res.body);
+}
