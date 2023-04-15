@@ -150,7 +150,7 @@ namespace webpp::http {
           istl::nothing_type,
           simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>,
           simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>>,
-        public details::request_view_interface {
+        public details::request_view_interface<TraitsType> {
 
         using common_request_type = common_http_request<
           istl::nothing_type,
