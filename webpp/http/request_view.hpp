@@ -16,7 +16,8 @@
 namespace webpp::http {
 
 
-    struct request_view;
+    template <Traits = default_dynamic_traits>
+    struct basic_request_view;
 
     namespace details {
 
@@ -58,8 +59,9 @@ namespace webpp::http {
         /**
          * This request type can hold other HTTP request types.
          */
+        template <typename TraitsType>
         struct request_view_interface {
-            using traits_type      = default_dynamic_traits;
+            using traits_type      = TraitsType;
             using string_view_type = traits::string_view<traits_type>;
             using string_type      = traits::general_string<traits_type>;
 
@@ -74,7 +76,7 @@ namespace webpp::http {
             [[nodiscard]] virtual http::version get_version() const noexcept = 0;
 
 
-            friend struct http::request_view;
+            friend struct basic_request_view<traits_type>;
 
           public:
             constexpr request_view_interface() noexcept                               = default;
@@ -89,9 +91,9 @@ namespace webpp::http {
         /**
          * An HTTPRequest that meets the requirements of a "request view".
          */
-        template <typename T>
+        template <typename T, typename TraitsType>
         concept HTTPRequestViewifiable =
-          stl::is_base_of_v<request_view_interface, stl::decay_t<T>> && HTTPRequest<T> &&
+          stl::is_base_of_v<request_view_interface<TraitsType>, stl::decay_t<T>> && HTTPRequest<T> &&
           requires {
               typename T::headers_type;
               requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
@@ -102,10 +104,10 @@ namespace webpp::http {
          * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
          * they have to make sure this dynamic provider works for their provider as well.
          */
-        template <RootExtensionList RootExtensions>
+        template <Traits TraitsType, RootExtensionList RootExtensions>
         struct dynamic_header_fields_provider {
             using root_extensions  = RootExtensions;
-            using traits_type      = default_dynamic_traits;
+            using traits_type      = TraitsType;
             using string_view_type = traits::string_view<traits_type>;
             using field_type =
               typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
@@ -117,9 +119,10 @@ namespace webpp::http {
             fields_type view;
 
           public:
-            template <HTTPRequestViewifiable ReqType>
+            template <typename ReqType>
+                requires HTTPRequestViewifiable<ReqType, traits_type>
             constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
-              : dynamic_header_fields_provider{inp_req.headers.template as_view<field_type>()} {}
+              : dynamic_header_fields_provider{inp_req.headers.as_view()} {}
 
             constexpr dynamic_header_fields_provider(fields_type inp_fields) noexcept : view{inp_fields} {}
 
@@ -137,16 +140,17 @@ namespace webpp::http {
     /**
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
-    struct request_view final {
-        using traits_type      = default_dynamic_traits;
+    template <Traits TraitsType>
+    struct basic_request_view final {
+        using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
         using root_extensions  = empty_extension_pack;
-        using fields_provider  = details::dynamic_header_fields_provider<root_extensions>;
+        using fields_provider  = details::dynamic_header_fields_provider<traits_type, root_extensions>;
         using headers_type     = simple_request_headers<fields_provider>;
 
       private:
-        using interface_ptr = details::request_view_interface const*;
+        using interface_ptr = details::request_view_interface<traits_type> const*;
         interface_ptr req   = nullptr;
 
       public:
@@ -155,27 +159,30 @@ namespace webpp::http {
         // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
 
         // An HTTP Request is passed down
-        template <details::HTTPRequestViewifiable ReqType>
-        constexpr request_view(ReqType const& inp_req) noexcept
+        template <typename ReqType>
+            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+        constexpr basic_request_view(ReqType const& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
-        template <details::HTTPRequestViewifiable ReqType>
-        constexpr request_view(ReqType& inp_req) noexcept
+        template <typename ReqType>
+            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+        constexpr basic_request_view(ReqType& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
-        constexpr request_view(request_view const&) noexcept            = default;
-        constexpr request_view(request_view&&) noexcept                 = default;
-        constexpr request_view& operator=(request_view const&) noexcept = default;
-        constexpr request_view& operator=(request_view&&) noexcept      = default;
-        constexpr ~request_view()                                       = default;
+        constexpr basic_request_view(basic_request_view const&) noexcept            = default;
+        constexpr basic_request_view(basic_request_view&&) noexcept                 = default;
+        constexpr basic_request_view& operator=(basic_request_view const&) noexcept = default;
+        constexpr basic_request_view& operator=(basic_request_view&&) noexcept      = default;
+        constexpr ~basic_request_view()                                             = default;
 
         // An HTTP Request is passed down
-        template <details::HTTPRequestViewifiable ReqType>
-        constexpr request_view& operator=(ReqType const& inp_req) noexcept {
+        template <typename ReqType>
+            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+        constexpr basic_request_view& operator=(ReqType const& inp_req) noexcept {
             req     = static_cast<interface_ptr>(&inp_req);
-            headers = inp_req.headers.template as_view<traits_type>();
+            headers = inp_req.headers.as_view();
             return *this;
         }
 
@@ -198,6 +205,8 @@ namespace webpp::http {
         }
     };
 
+
+    using request_view = basic_request_view<>;
 
 } // namespace webpp::http
 

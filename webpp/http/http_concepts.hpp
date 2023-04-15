@@ -68,7 +68,7 @@ namespace webpp::http {
           obj.emplace(name, value);
 
           // an example is implemented in "header_fields_provider" in request_headers.hpp file
-          obj.template as_view<default_dynamic_traits>();
+          obj.as_view();
       };
 
 

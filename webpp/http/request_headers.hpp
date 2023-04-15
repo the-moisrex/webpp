@@ -65,26 +65,8 @@ namespace webpp::http {
         /**
          * Get a view of the underlying fields
          */
-        template <typename NewFieldsType>
-        [[nodiscard]] stl::span<stl::add_const_t<NewFieldsType>> as_view() const noexcept {
-            using new_field_type = stl::remove_const_t<NewFieldsType>;
-            if constexpr (stl::same_as<new_field_type, fields_type>) {
-                return {fields};
-            } else {
-                using new_fields_type =
-                  stl::vector<new_field_type, traits::general_allocator<traits_type, new_field_type>>;
-                using new_name_type  = typename new_field_type::name_type;
-                using new_value_type = typename new_field_type::value_type;
-                static new_fields_type new_fields{fields.get_allocator()};
-                if (new_fields.size() != fields.size()) {
-                    new_fields.reserve(fields.size());
-                    for (auto const& field : fields) {
-                        new_fields.emplace_back(istl::string_viewify_of<new_name_type>(field.name),
-                                                istl::string_viewify_of<new_value_type>(field.value));
-                    }
-                }
-                return {new_fields};
-            }
+        [[nodiscard]] constexpr stl::span<const field_type> as_view() const noexcept {
+            return {fields};
         }
     };
 
