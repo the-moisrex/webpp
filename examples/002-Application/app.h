@@ -46,11 +46,12 @@ namespace website {
             const auto admin = []() {
                 return "Nice page.";
             };
-            static_router router{(get and root) >>
+            static_router router{stl::tuple{*this},
+                                 (get and root) >>
                                    [] {
                                        return "main page";
                                    },
-                                 (post and root / "content-length") >> app::get_len,
+                                 (post and root / "content-length") >> &app::get_len,
                                  (get and (root / "home")) >> &app::home,
                                  get && (root / "about") >> &app::about,
                                  root / "admin" >> admin};

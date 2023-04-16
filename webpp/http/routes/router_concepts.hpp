@@ -139,6 +139,17 @@ namespace webpp::http {
 
 
 
+    template <typename Router, typename RouteType>
+    concept ValveRequiresSetup = requires(RouteType route, Router& router) { route.setup(router); };
+
+    template <typename Callable, typename RouterType>
+    static constexpr void setup_route([[maybe_unused]] Callable&&  route,
+                                      [[maybe_unused]] RouterType& router) {
+        if constexpr (ValveRequiresSetup<RouterType, Callable>) {
+            route.setup(router);
+        }
+    }
+
 } // namespace webpp::http
 
 #endif // WEBPP_ROUTER_CONCEPTS_HPP

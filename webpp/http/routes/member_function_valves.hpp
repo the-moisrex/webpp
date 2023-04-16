@@ -60,29 +60,44 @@ namespace webpp::http {
 
         template <typename RouterType>
         constexpr void setup(RouterType& router) {
-            for (auto& object : router.objects) {
-                if (object.type() == typeid(object_type)) {
-                    set_object(stl::any_cast<object_type>(stl::addressof(object)));
-                    return;
-                }
-            }
+            using objects_type = typename RouterType::objects_type;
+            if constexpr (istl::Tuple<objects_type>) {
+                // static router's object
 
-            // default constructing it if it's possible and use that object
-            if constexpr (stl::is_default_constructible_v<object_type>) {
-                router.objects.emplace_back(object_type{});
-                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
-            } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
-                router.objects.emplace_back(object_type{router});
-                set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
+                if constexpr (istl::contains_parameter_of<objects_type, object_type>) {
+                    set_object(stl::addressof(get<object_type>(router.objects)));
+                } else {
+                    static_assert_false(object_type,
+                                        "The router doesn't include an object type that "
+                                        "we can call the specified member function pointer on.");
+                }
             } else {
-                router.logger.error(
-                  "DRouter",
-                  fmt::format(
-                    "You have not specified an object with typeid of '{}' in your dynamic router,"
-                    " but you've tried to register a member function pointer of that type in router."
-                    " Try registering your objects before registering the objects in the router"
-                    " to get rid of this error.",
-                    typeid(object_type).name()));
+                // dynamic router's object:
+
+                for (auto& object : router.objects) {
+                    if (object.type() == typeid(object_type)) {
+                        set_object(stl::any_cast<object_type>(stl::addressof(object)));
+                        return;
+                    }
+                }
+
+                // default constructing it if it's possible and use that object
+                if constexpr (stl::is_default_constructible_v<object_type>) {
+                    router.objects.emplace_back(object_type{});
+                    set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
+                } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
+                    router.objects.emplace_back(object_type{router});
+                    set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
+                } else {
+                    router.logger.error(
+                      "DRouter",
+                      fmt::format(
+                        "You have not specified an object with typeid of '{}' in your dynamic router,"
+                        " but you've tried to register a member function pointer of that type in router."
+                        " Try registering your objects before registering the objects in the router"
+                        " to get rid of this error.",
+                        typeid(object_type).name()));
+                }
             }
         }
 
