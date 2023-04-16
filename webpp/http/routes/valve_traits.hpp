@@ -37,9 +37,6 @@ namespace webpp::http {
     template <typename TraitsType, typename T>
     concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
 
-    template <typename Router, typename T>
-    concept ValveRequiresSetup = requires(T callable, Router& router) { callable.setup(router); };
-
 
 
     template <istl::String StrT, typename Callable>
