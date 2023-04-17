@@ -5,6 +5,8 @@
 
 #include "../std/type_traits.hpp"
 
+
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 namespace webpp::unicode {
 
     template <typename T>
@@ -182,6 +184,7 @@ namespace webpp::unicode {
         namespace details {
 
             // from glib/gutf8.c
+            // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
             template <typename CharT = char8_t>
             static constexpr CharT utf8_skip[256] = {
               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -192,6 +195,7 @@ namespace webpp::unicode {
               1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
               2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
               3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
+            // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
         } // namespace details
 
 
@@ -280,6 +284,7 @@ namespace webpp::unicode {
                  */
                 if (p - start <= max)
                     ++len;
+                return len;
             } else {
                 // todo
             }
@@ -346,5 +351,7 @@ namespace webpp::unicode {
     } // namespace checked
 
 } // namespace webpp::unicode
+
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
 #endif // WEBPP_UNICODE_HPP

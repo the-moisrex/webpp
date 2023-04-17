@@ -68,9 +68,10 @@ namespace webpp::unicode {
 
         static constexpr bool is_storage_const = stl::is_const_v<storage_unit_type>;
 
-        using element_type  = storage_unit_type;
-        using reference     = stl::conditional_t<is_storage_const, const element_type&, element_type&>;
-        using const_pointer = unicode_ptr<const_storage_unit_type>;
+        using element_type    = storage_unit_type;
+        using reference       = stl::conditional_t<is_storage_const, const element_type&, element_type&>;
+        using const_reference = const element_type&;
+        using const_pointer   = unicode_ptr<const_storage_unit_type>;
 
         using element_ptr =
           stl::add_pointer_t<stl::conditional_t<is_storage_const, const element_type, element_type>>;
@@ -130,10 +131,17 @@ namespace webpp::unicode {
         }
 
         // Random access iterator requirements
-        constexpr reference operator[](difference_type n) const noexcept {
-            return start[n];
+        constexpr const_reference operator[](difference_type n) const noexcept {
+            return reinterpret_cast<const_reference>(start[n]);
         }
 
+        constexpr reference operator[](difference_type n) noexcept {
+            return reinterpret_cast<reference>(start[n]);
+        }
+
+        // constexpr code_point_type operator[](difference_type n) noexcept {
+        //     return operator+(n).operator*();
+        // }
 
         constexpr stl::strong_ordering operator<=>(unicode_ptr const&) const noexcept = default;
         constexpr stl::strong_ordering operator<=>(pointer const& p) const noexcept {
@@ -187,10 +195,6 @@ namespace webpp::unicode {
                 ret.operator--();
             return ret;
         }
-
-        constexpr code_point_type operator[](difference_type n) noexcept {
-            return operator+(n).operator*();
-        }
     };
 
     /**
@@ -201,7 +205,7 @@ namespace webpp::unicode {
         using char_type               = CharT;
         using code_point_type         = CodePointType;
         using type                    = storage_unit<CharT, CodePointType>;
-        using const_storage_unit_type = const storage_unit<const CharT, CodePointType>;
+        using const_storage_unit_type = const storage_unit<CharT, CodePointType>;
 
         // the std::iterator_traits uses this to get the pointer type
         using pointer = unicode_ptr<type>;
@@ -213,7 +217,7 @@ namespace webpp::unicode {
         static constexpr bool is_utf8  = unicode::UTF8<char_type>;
         static constexpr bool is_wchar = unicode::WChar<char_type>;
 
-        char_type value;
+        char_type value; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename C>
             requires(details::is_value<stl::remove_cvref_t<C>> &&
