@@ -60,7 +60,8 @@ namespace webpp::unicode {
         using storage_unit_type       = StorageUnitType;
         using char_type               = typename storage_unit_type::char_type;
         using code_point_type         = typename storage_unit_type::code_point_type;
-        using pointer                 = stl::add_pointer_t<char_type>;
+        using pointer                 = char_type*;
+        using const_pointer           = const char_type*;
         using difference_type         = stl::ptrdiff_t;
         using const_storage_unit_type = typename storage_unit_type::const_storage_unit_type;
         using iterator_category       = stl::random_access_iterator_tag;
@@ -71,7 +72,7 @@ namespace webpp::unicode {
         using element_type    = storage_unit_type;
         using reference       = stl::conditional_t<is_storage_const, const element_type&, element_type&>;
         using const_reference = const element_type&;
-        using const_pointer   = unicode_ptr<const_storage_unit_type>;
+        // using const_pointer   = unicode_ptr<const_storage_unit_type>;
 
         using element_ptr =
           stl::add_pointer_t<stl::conditional_t<is_storage_const, const element_type, element_type>>;
@@ -143,7 +144,7 @@ namespace webpp::unicode {
         //     return operator+(n).operator*();
         // }
 
-        constexpr stl::strong_ordering operator<=>(unicode_ptr const&) const noexcept = default;
+        // constexpr stl::strong_ordering operator<=>(unicode_ptr const&) const noexcept = default;
         constexpr stl::strong_ordering operator<=>(pointer const& p) const noexcept {
             return start <=> p;
         }
