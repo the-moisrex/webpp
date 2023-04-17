@@ -4,7 +4,6 @@
 #define WEBPP_REQUEST_BODY_HPP
 
 #include "../common/meta.hpp"
-#include "../extensions/extension.hpp"
 #include "http_concepts.hpp"
 
 
@@ -12,22 +11,13 @@ namespace webpp::http {
 
 
     /**
-     * Dynamic Request Body Communicator
-     * Implements HTTPRequestBodyCommunicator
-     */
-    struct request_body_communicator {};
-
-
-
-    /**
      * Request body
      *
      * All request bodies will come from here, you can add all the nice features for the request body here.
      */
-    template <typename TraitsType, HTTPRequestBodyCommunicator Communicator, typename EList>
-    struct request_body : public EList, public Communicator {
+    template <typename TraitsType, HTTPRequestBodyCommunicator Communicator>
+    struct request_body : public Communicator {
         using traits_type               = TraitsType;
-        using elist_type                = EList;
         using request_body_communicator = Communicator; // the way that the Protocol gives us the body
         using char_type                 = traits::char_type<traits_type>;
         using size_type                 = stl::streamsize;
@@ -39,57 +29,25 @@ namespace webpp::http {
         constexpr ~request_body()                                       = default;
 
         constexpr request_body()
-            requires(stl::is_default_constructible_v<elist_type> &&
-                     stl::is_default_constructible_v<request_body_communicator>)
+            requires(stl::is_default_constructible_v<request_body_communicator>)
         = default;
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
-        // both require the server reference
         template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<elist_type, ServerType&> &&
-                     stl::is_constructible_v<request_body_communicator, ServerType&>)
+            requires(stl::is_constructible_v<request_body_communicator, ServerType&>)
         constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ServerType&>&&
-            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
-          : elist_type{server_ref},
-            request_body_communicator{server_ref} {}
-
-        // only communicator wants the server ref
-        template <EnabledTraits ServerType>
-            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
-                     stl::is_default_constructible_v<elist_type> &&
-                     stl::is_constructible_v<request_body_communicator, ServerType&>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>&&
-            stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
-          : elist_type{},
-            request_body_communicator{server_ref} {}
+          stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
+          : request_body_communicator{server_ref} {}
 
 
         // only elist wants the server ref
         template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<elist_type, ServerType&> &&
-                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
+            requires(!stl::is_constructible_v<request_body_communicator, ServerType&> &&
                      stl::is_default_constructible_v<request_body_communicator>)
         constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_default_constructible_v<request_body_communicator>&&
-            stl::is_nothrow_constructible_v<elist_type, ServerType&>)
-          : elist_type{server_ref},
-            request_body_communicator{} {}
+          stl::is_nothrow_default_constructible_v<request_body_communicator>)
+          : request_body_communicator{} {}
 
-        // none of them want anything
-        template <EnabledTraits ServerType>
-            requires(!stl::is_constructible_v<elist_type, ServerType&> &&
-                     !stl::is_constructible_v<request_body_communicator, ServerType&> &&
-                     stl::is_default_constructible_v<request_body_communicator> &&
-                     stl::is_default_constructible_v<elist_type>)
-        constexpr request_body([[maybe_unused]] ServerType&) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>)
-          : elist_type{},
-            request_body_communicator{} {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T>
         // requires(HTTPDeserializableBody<T, request_body>)
@@ -176,9 +134,7 @@ namespace webpp::http {
 
         template <typename T>
         constexpr request_body& add(T&& obj) {
-            if constexpr (requires { elist_type::add(stl::forward<T>(obj)); }) {
-                elist_type::add(stl::forward<T>(obj));
-            } else if constexpr (requires { serialize_request_body(stl::forward<T>(obj), *this); }) {
+            if constexpr (requires { serialize_request_body(stl::forward<T>(obj), *this); }) {
                 serialize_request_body(stl::forward<T>(obj), *this);
             } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
                 serialize_body(stl::forward<T>(obj), *this);
@@ -193,51 +149,24 @@ namespace webpp::http {
 
         template <typename T>
         constexpr request_body& set(T&& obj) {
-            if constexpr (requires { elist_type::set(stl::forward<T>(obj)); }) {
-                elist_type::set(stl::forward<T>(obj));
-            } else {
-                clear();
-                add(stl::forward<T>(obj));
-            }
+            clear();
+            add(stl::forward<T>(obj));
             return *this;
         }
 
         template <typename T>
         constexpr request_body& operator=(T&& obj) {
-            if constexpr (requires { elist_type::operator=(stl::forward<T>(obj)); }) {
-                elist_type::operator=(stl::forward<T>(obj));
-            } else {
-                set(stl::forward<T>(obj));
-            }
+            set(stl::forward<T>(obj));
             return *this;
         }
 
 
         template <typename T>
         constexpr request_body& operator+=(T&& obj) {
-            if constexpr (requires { elist_type::operator+=(stl::forward<T>(obj)); }) {
-                elist_type::operator+=(stl::forward<T>(obj));
-            } else {
-                add(stl::forward<T>(obj));
-            }
+            add(stl::forward<T>(obj));
             return *this;
         }
     };
-
-    template <HTTPRequestBodyCommunicator ReqCommunicator>
-    struct request_body_descriptor {
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::request_body_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename BEList>
-        using mid_level_extensie_type = request_body<TraitsType, ReqCommunicator, BEList>;
-    };
-
-    template <Traits                      TraitsType,
-              RootExtensionList           RootExtensions,
-              HTTPRequestBodyCommunicator ReqCommunicator>
-    using simple_request_body =
-      typename RootExtensions::template extensie_type<TraitsType, request_body_descriptor<ReqCommunicator>>;
 
 
 } // namespace webpp::http

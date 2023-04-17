@@ -4,7 +4,6 @@
 #define WEBPP_HTTP_BODIES_JSON_HPP
 
 
-#include "../../extensions/extension.hpp"
 #include "../../json/defaultjson.hpp"
 #include "../http_concepts.hpp"
 #include "../response_body.hpp"
@@ -17,7 +16,7 @@ namespace webpp::http {
     namespace details {
 
         /**
-         * This extension helps the user to create a response with the help of the context
+         * todo: remove this when you don't need to see the implementation
          */
         template <Traits TraitsType, Context ContextType>
         struct json_context_extension : public ContextType {
@@ -47,13 +46,6 @@ namespace webpp::http {
 
     } // namespace details
 
-
-    /**
-     * String Response Extension Pack.
-     */
-    struct json_body {
-        using context_extensions = extension_pack<as_extension<details::json_context_extension>>;
-    };
 
 
     template <json::JSONDocument DocT, HTTPBody BodyType>

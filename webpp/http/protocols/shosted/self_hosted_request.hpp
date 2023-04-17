@@ -8,14 +8,10 @@
 namespace webpp::http::shosted {
 
 
-    template <Traits TraitsType,
-              typename SessionManager,
-              typename ConnectionType,
-              HTTPRequestExtensionParent REL,
-              RootExtensionList          RootExtensions>
+    template <Traits TraitsType, typename SessionManager, typename ConnectionType>
     struct self_hosted_request : private ConnectionType {
       private:
-        using super = common_http_request<TraitsType, REL, RootExtensions>;
+        using super = common_http_request<TraitsType>;
 
       public:
         using session_manager_type = SessionManager;

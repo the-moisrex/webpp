@@ -1,10 +1,11 @@
 #ifndef WEBPP_HTTP_HEADERS_H
 #define WEBPP_HTTP_HEADERS_H
 
+#include "../std/span.hpp"
 #include "../strings/iequals.hpp"
+#include "../traits/enable_traits.hpp"
+#include "http_concepts.hpp"
 #include "status_code.hpp"
-
-#include <cstdint>
 
 namespace webpp::http {
 
@@ -15,16 +16,12 @@ namespace webpp::http {
      *
      * This templated struct should satisfy the HTTPHeaderField concept.
      */
-    template <typename StringType, typename EList, typename RootExtensions>
-    struct basic_header_field : public EList {
-        using root_extensions            = RootExtensions;
+    template <typename StringType>
+    struct basic_header_field {
         using string_type                = StringType;
         using name_type                  = string_type;
         using value_type                 = string_type;
         static constexpr bool is_mutable = istl::String<string_type> && !istl::StringView<string_type>;
-
-      private:
-        using super = EList;
 
       public:
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
@@ -37,32 +34,27 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
         constexpr basic_header_field(name_type&& _name, value_type&& _value) noexcept
             requires(is_mutable)
-          : super{},
-            name(stl::move(_name)),
+          : name(stl::move(_name)),
             value(stl::move(_value)) {}
 
         constexpr basic_header_field(name_type const& _name, value_type const& _value) noexcept
             requires(is_mutable)
-          : super{},
-            name(_name),
+          : name(_name),
             value(_value) {}
 
         constexpr basic_header_field(name_type&& _name, value_type const& _value) noexcept
             requires(is_mutable)
-          : super{},
-            name(stl::move(_name)),
+          : name(stl::move(_name)),
             value(_value) {}
 
         constexpr basic_header_field(name_type const& _name, value_type&& _value) noexcept
             requires(is_mutable)
-          : super{},
-            name(_name),
+          : name(_name),
             value(stl::move(_value)) {}
 
         constexpr basic_header_field(name_type _name, value_type _value) noexcept
             requires(!is_mutable)
-          : super{},
-            name(_name),
+          : name(_name),
             value(_value) {}
         // NOLINTEND(bugprone-easily-swappable-parameters)
 
@@ -99,25 +91,31 @@ namespace webpp::http {
             return !operator==(stl::forward<decltype(str)>(str));
         }
 
-        friend constexpr bool
-        operator==(istl::StringViewifiable auto&&                               str,
-                   basic_header_field<StringType, EList, RootExtensions> const& field) noexcept {
+        friend constexpr bool operator==(istl::StringViewifiable auto&&        str,
+                                         basic_header_field<StringType> const& field) noexcept {
             return field.operator==(istl::string_viewify(str));
         }
 
-        friend constexpr bool
-        operator!=(istl::StringViewifiable auto&&                               str,
-                   basic_header_field<StringType, EList, RootExtensions> const& field) noexcept {
+        friend constexpr bool operator!=(istl::StringViewifiable auto&&        str,
+                                         basic_header_field<StringType> const& field) noexcept {
             return field.operator!=(istl::string_viewify(str));
         }
     };
 
 
-    template <istl::String StringType, typename EList, typename RootExtensions>
-    using header_field = basic_header_field<StringType, EList, RootExtensions>;
+    template <istl::String StringType>
+    using header_field = basic_header_field<StringType>;
 
-    template <istl::StringView StringType, typename EList, typename RootExtensions>
-    using header_field_view = basic_header_field<StringType, EList, RootExtensions>;
+    template <istl::StringView StringType = stl::string_view>
+    using header_field_view = basic_header_field<StringType>;
+
+
+    template <Traits TraitsType>
+    using header_field_view_of = basic_header_field<traits::string_view<TraitsType>>;
+
+    template <Traits TraitsType>
+    using header_field_of = basic_header_field<traits::general_string<TraitsType>>;
+
 
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
@@ -161,32 +159,104 @@ namespace webpp::http {
 
 
 
-    /**
-     * Request Header Field Descriptor
-     */
-    struct request_header_field_descriptor {
-
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::request_header_field_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type =
-          header_field_view<traits::string_view<TraitsType>, EList, RootExtensions>;
-    };
-
 
     /**
-     * Response Header Field Descriptor
+     * @brief Vector of fields, used as a base for request/response headers
      */
-    struct response_header_field_descriptor {
+    template <HTTPHeaderField FieldType>
+    struct header_fields_provider {
+        using field_type     = FieldType;
+        using name_type      = typename field_type::string_type;
+        using value_type     = typename field_type::string_type;
+        using string_type    = typename field_type::string_type;
+        using allocator_type = typename string_type::allocator_type;
+        // using field_allocator_type =
+        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, field_type>;
+        // using field_allocator_type = traits::general_allocator<traits_type, field_type>;
 
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::response_header_field_extensions;
+      private:
+        using vector_allocator_type =
+          typename stl::allocator_traits<allocator_type>::template rebind_alloc<field_type>;
+        using fields_type = stl::vector<field_type, vector_allocator_type>;
 
-        template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type =
-          header_field<traits::general_string<TraitsType>, EList, RootExtensions>;
+        fields_type fields;
+
+      public:
+        template <EnabledTraits ET>
+        constexpr header_fields_provider(ET& et) : fields{alloc::general_alloc_for<fields_type>(et)} {}
+
+        template <HTTPHeaderFieldsProvider T>
+            requires(!istl::cvref_as<T, header_fields_provider> &&
+                     requires(T other) { other.get_allocator(); })
+        constexpr header_fields_provider(T const& other)
+          : fields{other.begin(), other.end(), other.get_allocator()} {}
+
+        template <EnabledTraits ET, HTTPHeaderFieldsProvider T>
+        constexpr header_fields_provider(ET&& et, T const& other)
+          : fields{other.begin(), other.end(), alloc::general_alloc_for<fields_type>(et)} {}
+
+        constexpr header_fields_provider(header_fields_provider const&)                = default;
+        constexpr header_fields_provider(header_fields_provider&&) noexcept            = default;
+        constexpr ~header_fields_provider()                                            = default;
+        constexpr header_fields_provider& operator=(header_fields_provider&&) noexcept = default;
+        constexpr header_fields_provider& operator=(header_fields_provider const&)     = default;
+
+        template <HTTPHeaderFieldsProvider T>
+            requires(!istl::cvref_as<T, header_fields_provider>)
+        constexpr header_fields_provider& operator=(T const& other) {
+            stl::copy(other.begin(), other.end(), fields.begin());
+        }
+
+        [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
+            return fields.get_allocator();
+        }
+
+        [[nodiscard]] constexpr auto begin() const noexcept {
+            return fields.begin();
+        }
+
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return fields.end();
+        }
+
+        [[nodiscard]] constexpr auto size() const noexcept {
+            return fields.size();
+        }
+
+        template <typename NameT, typename ValueT>
+            requires(istl::String<string_type> && istl::StringifiableOf<string_type, NameT> &&
+                     istl::StringifiableOf<string_type, ValueT>)
+        constexpr void emplace(NameT&& name, ValueT value) {
+            fields.emplace_back(
+              istl::stringify_of<string_type>(stl::forward<NameT>(name), get_allocator()),
+              istl::stringify_of<string_type>(stl::forward<ValueT>(value), get_allocator()));
+        }
+
+        template <typename NameT, typename ValueT>
+            requires(istl::StringView<string_type> && istl::StringViewifiableOf<string_type, NameT> &&
+                     istl::StringViewifiableOf<string_type, ValueT>)
+        constexpr void emplace(NameT&& name, ValueT value) {
+            fields.emplace_back(istl::string_viewify_of<string_type>(stl::forward<NameT>(name)),
+                                istl::string_viewify_of<string_type>(stl::forward<ValueT>(value)));
+        }
+
+        /**
+         * Get a view of the underlying fields
+         */
+        [[nodiscard]] constexpr stl::span<const field_type> as_view() const noexcept {
+            return {fields};
+        }
+
+        [[nodiscard]] constexpr bool operator==(header_fields_provider const& other) const noexcept {
+            return fields == other.fields;
+        }
+
+
+        [[nodiscard]] constexpr bool operator!=(header_fields_provider const& other) const noexcept {
+            return fields != other.fields;
+        }
     };
+
 
 
 } // namespace webpp::http

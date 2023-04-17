@@ -15,10 +15,8 @@
 
 namespace webpp::http {
 
-    template <Application       App,
-              Traits            TraitsType     = default_traits,
-              RootExtensionList RootExtensions = empty_extension_pack>
-    struct cgi : public common_http_protocol<TraitsType, App, RootExtensions> {
+    template <Application App, Traits TraitsType = default_traits>
+    struct cgi : public common_http_protocol<TraitsType, App> {
         using traits_type               = TraitsType;
         using etraits                   = enable_owner_traits<traits_type>;
         using application_type          = App;
@@ -28,17 +26,15 @@ namespace webpp::http {
         using string_type               = traits::general_string<traits_type>;
         using local_allocator_type      = traits::local_allocator<traits_type, char_type>;
         using general_allocator_type    = traits::general_allocator<traits_type, char_type>;
-        using common_protocol_type      = common_http_protocol<TraitsType, App, RootExtensions>;
+        using common_protocol_type      = common_http_protocol<TraitsType, App>;
         using app_wrapper_type          = typename common_protocol_type::app_wrapper_type;
-        using root_extensions           = RootExtensions;
         using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;
 
-        using fields_provider      = header_fields_provider<traits_type, root_extensions>;
-        using request_headers_type = simple_request_headers<fields_provider>;
-        using request_body_type =
-          simple_request_body<traits_type, root_extensions, request_body_communicator>;
-        using request_type  = simple_request<cgi_request, request_headers_type, request_body_type>;
-        using response_type = simple_response<traits_type, root_extensions>;
+        using fields_provider      = header_fields_provider<header_field_of<traits_type>>;
+        using request_headers_type = request_headers<fields_provider>;
+        using request_body_type    = request_body<traits_type, request_body_communicator>;
+        using request_type         = simple_request<cgi_request, request_headers_type, request_body_type>;
+        using response_type        = simple_response<traits_type>;
 
 
         static_assert(HTTPRequest<request_type>,
@@ -49,7 +45,7 @@ namespace webpp::http {
                       "its response is not of a valid response type.");
 
       private:
-        using super = common_http_protocol<TraitsType, App, RootExtensions>;
+        using super = common_http_protocol<TraitsType, App>;
 
         void ctor() noexcept {
             // I'm not using C here; so why should I pay for it!
@@ -184,7 +180,8 @@ namespace webpp::http {
             try {
                 HTTPResponse auto res = this->app(request_type{*this});
                 res.calculate_default_headers();
-                const auto header_str = res.headers.string();
+                string_type header_str{alloc::general_alloc_for<string_type>(*this)};
+                res.headers.string_to(header_str);
 
                 // From RFC: https://tools.ietf.org/html/rfc3875
                 // Send status code:
@@ -216,7 +213,7 @@ namespace webpp::http {
     };
 
     template <typename App>
-    cgi(App&&) -> cgi<App, default_traits, empty_extension_pack>;
+    cgi(App&&) -> cgi<App, default_traits>;
 
     // fixme: implement these too:
     //    AUTH_PASSWORD

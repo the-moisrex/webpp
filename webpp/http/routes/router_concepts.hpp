@@ -9,43 +9,6 @@
 
 namespace webpp::http {
 
-    /**
-     * Router:
-     *
-     * Router types:
-     *   - Dynamic route   : dynamic_route
-     *       The routes and the context can be changed at runtime.
-     *   - Constexpr route : const_route
-     *       No route can be changed at runtime. The initial context cannot be
-     *       changed either.
-     *
-     * Routing table implementation:
-     *   - Entry route list:
-     *       It's a list of entry routes (which they include some sub-routes of
-     *       their own).
-     *       We don't need  a Global Routing table, we just need a good
-     *       prioritization technique.
-     *   - Priorities of the entry route list:
-     *       This table will be used to change the priority of the entry route
-     *       list. This priority change is done through the context extensions.
-     *       So the context extensions need a way to access the router. The best
-     *       way to do so is to add this route itself to the base_context. This
-     *       is possible because the context is created initially by the
-     *       router itself and the changes in its type should be done inside the
-     *       router too.
-     *
-     *
-     * Router Extensions:
-     *   Router extensions have these features:
-     *     - Can specify other extensions as dependencies of this extension.
-     *     - Can add new extensions for the "initial context type".
-     *     - Cannot change the initial extension type to something not valid.
-     *     - Can add routes:
-     *         - Before all routes
-     *         - After all routes
-     *
-     */
-
 
 
     ////////////////////////////// Context Concepts //////////////////////////////

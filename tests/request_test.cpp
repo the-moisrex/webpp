@@ -12,7 +12,7 @@ using namespace webpp::http;
 
 
 
-using fake_protocol = fake_proto<default_traits, fake_app>;
+using fake_protocol = fake_proto<fake_app>;
 using req_t         = typename fake_protocol::request_type;
 
 TEST(HTTPRequestTest, ConceptTests) {
@@ -63,4 +63,18 @@ TEST(HTTPRequestTest, RequestViewTest) {
     EXPECT_EQ("23", view.headers.get("content-length"));
     EXPECT_EQ(23, view.headers.content_length());
     EXPECT_EQ(http::http_1_1, view.version());
+}
+
+TEST(HTTPRequestTest, RequestCopying) {
+    fake_protocol pt;
+    req_t         req1{pt};
+
+    req1.data.emplace("Content-Length", "23");
+    req1.data.emplace("SERVER_PROTOCOL", "HTTP/1.1");
+    req1.reload();
+
+    request req{req1};
+
+    EXPECT_EQ(req.headers.size(), 2);
+    EXPECT_EQ(req.headers["Content-Length"], "23");
 }

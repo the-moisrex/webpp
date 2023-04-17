@@ -39,6 +39,9 @@ namespace website {
 
             res += "\n";
             res += body;
+
+            res += "\n";
+            res += "Done";
             return res;
         }
 

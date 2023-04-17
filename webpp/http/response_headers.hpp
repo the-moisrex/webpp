@@ -12,27 +12,6 @@
 
 namespace webpp::http {
 
-    namespace details {
-        template <typename TraitsType, typename HeaderFieldType>
-        struct response_headers_container : istl::vector<HeaderFieldType, TraitsType> {
-            using traits_type = TraitsType;
-            using vector_type = istl::vector<HeaderFieldType, TraitsType>;
-
-            // this field type is required for the "headers_container" to work
-            using field_type = HeaderFieldType;
-
-            // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-            template <EnabledTraits ET>
-                requires(!stl::same_as<stl::remove_cvref_t<ET>, response_headers_container>)
-            constexpr response_headers_container(ET&& et)
-              : vector_type{alloc::general_alloc_for<vector_type>(et)} {}
-            // NOLINTEND(bugprone-forwarding-reference-overload)
-
-            using istl::vector<HeaderFieldType, TraitsType>::vector;
-        };
-    } // namespace details
-
-
     /**
      * Setting non-ascii characters in the value section of the headers should
      * result in transforming the value to the "Encoded-Word" syntax (RFC 2047).
@@ -42,65 +21,35 @@ namespace webpp::http {
      *
      * Or rfc5987.
      */
-    template <Traits TraitsType, typename HeaderEList, typename HeaderFieldType>
-    class response_headers
-      : public headers_container<details::response_headers_container<TraitsType, HeaderFieldType>>,
-        public HeaderEList {
-
-        using container = headers_container<details::response_headers_container<TraitsType, HeaderFieldType>>;
+    template <HTTPResponseHeaderFieldsProvider FieldsProviderType>
+    class response_headers : public headers_container<FieldsProviderType> {
+        using container = headers_container<FieldsProviderType>;
 
       public:
-        using traits_type     = TraitsType;
-        using string_type     = traits::general_string<traits_type>;
-        using field_type      = HeaderFieldType;
-        using elist_type      = HeaderEList;
-        using root_extensions = typename field_type::root_extensions;
+        using fields_provider_type = FieldsProviderType;
+        using field_type           = typename fields_provider_type::field_type;
+        using string_type          = typename field_type::string_type;
 
         template <typename... Args>
-            requires(stl::is_default_constructible_v<elist_type> &&
-                     stl::is_constructible_v<container, Args...>)
-        constexpr response_headers(Args&&... args) noexcept
-          : container{stl::forward<Args>(args)...},
-            elist_type{} {}
+            requires(stl::is_constructible_v<container, Args...>)
+        constexpr response_headers(Args&&... args) noexcept : container{stl::forward<Args>(args)...} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<elist_type, ET> && stl::is_constructible_v<container, ET>)
+            requires(stl::is_constructible_v<container, ET>)
         constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
-          stl::is_nothrow_constructible_v<container, ET>&& stl::is_nothrow_constructible_v<elist_type, ET>)
+          stl::is_nothrow_constructible_v<container, ET>)
           : container{et},
-            elist_type{et},
             m_status_code{static_cast<http::status_code_type>(code)} {}
 
 
         template <EnabledTraits ET>
-            requires(stl::is_constructible_v<container, ET> && !stl::is_constructible_v<elist_type, ET>)
-        constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
-          stl::is_nothrow_constructible_v<container, ET>&&
-            stl::is_nothrow_default_constructible_v<elist_type>)
-          : container{et},
-            elist_type{},
-            m_status_code{static_cast<http::status_code_type>(code)} {}
-
-        template <EnabledTraits ET>
-            requires(!stl::is_constructible_v<container, ET> && stl::is_constructible_v<elist_type, ET>)
-        constexpr response_headers(ET&& et, http::status_code code = http::status_code::ok) noexcept(
-          stl::is_nothrow_constructible_v<elist_type, ET>&&
-            stl::is_nothrow_default_constructible_v<container>)
-          : container{},
-            elist_type{et},
-            m_status_code{static_cast<http::status_code_type>(code)} {}
-
-        template <EnabledTraits ET>
-            requires(!stl::is_constructible_v<container, ET> && !stl::is_constructible_v<elist_type, ET>)
+            requires(!stl::is_constructible_v<container, ET>)
         constexpr response_headers(ET&&, http::status_code code = http::status_code::ok) noexcept(
-          stl::is_nothrow_default_constructible_v<elist_type>&&
-            stl::is_nothrow_default_constructible_v<container>)
+          stl::is_nothrow_default_constructible_v<container>)
           : container{},
-            elist_type{},
             m_status_code{static_cast<http::status_code_type>(code)} {}
-
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -152,11 +101,9 @@ namespace webpp::http {
             }
         }
 
-        template <typename StringType = string_type>
-        [[nodiscard]] constexpr StringType string() const {
-            StringType res{container::get_allocator()};
-            string_to<StringType>(res);
-            return res;
+        template <istl::String StringType = string_type>
+        constexpr void to_string(StringType& out) const {
+            string_to<StringType>(out);
         }
 
 
@@ -171,18 +118,6 @@ namespace webpp::http {
     };
 
 
-
-    struct response_headers_descriptor {
-
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::response_headers_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename EList>
-        using mid_level_extensie_type = response_headers<
-          TraitsType,
-          EList,
-          typename RootExtensions::template extensie_type<TraitsType, response_header_field_descriptor>>;
-    };
 
 } // namespace webpp::http
 

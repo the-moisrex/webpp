@@ -31,7 +31,7 @@ TEST(Router, RouterConcepts) {
 }
 
 TEST(Router, RouteCreation) {
-    using fake_protocol = fake_proto<default_traits, fake_app_struct>;
+    using fake_protocol = fake_proto<fake_app_struct>;
     fake_protocol fp;
     using request_type = typename fake_protocol::request_type;
 

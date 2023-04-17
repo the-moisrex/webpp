@@ -24,11 +24,10 @@ namespace webpp::http {
         /**
          * This is a dynamic server which holds a reference to the servers
          */
-        template <Traits TraitsType, ExtensionList RootExtensions, typename... ServerTypes>
+        template <Traits TraitsType, typename... ServerTypes>
         struct basic_dynamic_server {
             using servers_variant   = stl::variant<ServerTypes*...>;
             using traits_type       = TraitsType;
-            using root_extensions   = RootExtensions;
             using string_view_type  = traits::string_view<traits_type>;
             using supported_servers = stl::tuple<ServerTypes...>;
 
@@ -91,36 +90,39 @@ namespace webpp::http {
         /**
          * An HTTPRequest that meets the requirements of a "request view".
          */
-        template <typename T, typename TraitsType>
+        template <typename TraitsType, typename T>
         concept HTTPRequestViewifiable =
-          stl::is_base_of_v<request_view_interface<TraitsType>, stl::decay_t<T>> && HTTPRequest<T> &&
-          requires {
-              typename T::headers_type;
-              requires HTTPRequestHeaderFieldsOwner<typename T::headers_type>;
-          };
+          stl::is_base_of_v<request_view_interface<TraitsType>, stl::remove_cvref_t<T>> && HTTPRequest<T>;
 
         /**
          * Will provide a std::span of the provided parent request header type;
          * The data owner can be "header_fields_provider" but the protocols can have their own providers; but
          * they have to make sure this dynamic provider works for their provider as well.
          */
-        template <Traits TraitsType, RootExtensionList RootExtensions>
+        template <Traits TraitsType>
         struct dynamic_header_fields_provider {
-            using root_extensions  = RootExtensions;
             using traits_type      = TraitsType;
             using string_view_type = traits::string_view<traits_type>;
-            using field_type =
-              typename root_extensions::template extensie_type<traits_type, request_header_field_descriptor>;
-            using name_type   = typename field_type::string_type;
-            using value_type  = typename field_type::string_type;
-            using fields_type = stl::span<stl::add_const_t<field_type>>;
+            using field_type       = header_field_of<traits_type>;
+            using name_type        = typename field_type::string_type;
+            using value_type       = typename field_type::string_type;
+            using fields_type      = stl::span<stl::add_const_t<field_type>>;
 
           private:
             fields_type view;
 
           public:
+            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider const&) noexcept =
+              default;
+            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider&&) noexcept = default;
+            constexpr ~dynamic_header_fields_provider() noexcept                                = default;
+            constexpr dynamic_header_fields_provider&
+            operator=(dynamic_header_fields_provider const&) noexcept = default;
+            constexpr dynamic_header_fields_provider&
+            operator=(dynamic_header_fields_provider&&) noexcept = default;
+
             template <typename ReqType>
-                requires HTTPRequestViewifiable<ReqType, traits_type>
+                requires(HTTPRequestViewifiable<traits_type, ReqType>)
             constexpr dynamic_header_fields_provider(ReqType& inp_req) noexcept
               : dynamic_header_fields_provider{inp_req.headers.as_view()} {}
 
@@ -133,6 +135,10 @@ namespace webpp::http {
             [[nodiscard]] constexpr auto end() const noexcept {
                 return view.end();
             }
+
+            [[nodiscard]] constexpr auto as_view() const noexcept {
+                return view;
+            }
         };
 
     } // namespace details
@@ -141,13 +147,12 @@ namespace webpp::http {
      * A dynamic request; this is what the developers need to use if they want to have a dynamic request type.
      */
     template <Traits TraitsType>
-    struct basic_request_view final {
+    struct basic_request_view {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using string_type      = traits::general_string<traits_type>;
-        using root_extensions  = empty_extension_pack;
-        using fields_provider  = details::dynamic_header_fields_provider<traits_type, root_extensions>;
-        using headers_type     = simple_request_headers<fields_provider>;
+        using fields_provider  = details::dynamic_header_fields_provider<traits_type>;
+        using headers_type     = request_headers<fields_provider>;
 
       private:
         using interface_ptr = details::request_view_interface<traits_type> const*;
@@ -160,13 +165,13 @@ namespace webpp::http {
 
         // An HTTP Request is passed down
         template <typename ReqType>
-            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
         constexpr basic_request_view(ReqType const& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
 
         template <typename ReqType>
-            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
         constexpr basic_request_view(ReqType& inp_req) noexcept
           : req{static_cast<interface_ptr>(&inp_req)},
             headers{inp_req} {}
@@ -179,7 +184,7 @@ namespace webpp::http {
 
         // An HTTP Request is passed down
         template <typename ReqType>
-            requires details::HTTPRequestViewifiable<ReqType, traits_type>
+            requires(details::HTTPRequestViewifiable<traits_type, ReqType>)
         constexpr basic_request_view& operator=(ReqType const& inp_req) noexcept {
             req     = static_cast<interface_ptr>(&inp_req);
             headers = inp_req.headers.as_view();

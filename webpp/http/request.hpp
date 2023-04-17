@@ -24,16 +24,14 @@ namespace webpp::http {
      * giving information that the user or other modules need.
      *
      */
-    template <typename REL, typename HeadersType, typename BodyType>
-    struct common_http_request : public enable_traits_with<typename HeadersType::traits_type, REL> {
-        using headers_type       = HeadersType;
-        using body_type          = BodyType;
-        using root_extensions    = typename headers_type::root_extensions;
-        using traits_type        = typename headers_type::traits_type;
-        using etraits            = enable_traits_with<traits_type, REL>;
-        using string_type        = traits::general_string<traits_type>;
-        using string_view_type   = traits::string_view<traits_type>;
-        using request_extensions = REL;
+    template <typename HeadersType, typename BodyType>
+    struct common_http_request : public enable_traits<typename BodyType::traits_type> {
+        using headers_type     = HeadersType;
+        using body_type        = BodyType;
+        using traits_type      = typename body_type::traits_type;
+        using etraits          = enable_traits<traits_type>;
+        using string_type      = traits::general_string<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
                       "Something is wrong with the request's headers type.");
@@ -116,21 +114,11 @@ namespace webpp::http {
         }
     };
 
-    template <template <typename...> typename MidLevelRequestType, typename HeadersType, typename BodyType>
-    struct request_descriptor {
-        template <typename ExtensionType>
-        using extractor_type = typename ExtensionType::request_extensions;
-
-        template <typename RootExtensions, typename TraitsType, typename RequestEList>
-        using mid_level_extensie_type =
-          MidLevelRequestType<common_http_request<RequestEList, HeadersType, BodyType>>;
-    };
 
 
     template <template <typename...> typename MidLevelRequestType, typename HeadersType, typename BodyType>
-    using simple_request = typename HeadersType::root_extensions::template extensie_type<
-      typename HeadersType::traits_type,
-      request_descriptor<MidLevelRequestType, HeadersType, BodyType>>;
+    using simple_request = MidLevelRequestType<common_http_request<HeadersType, BodyType>>;
+
 
 
     /**
@@ -146,20 +134,16 @@ namespace webpp::http {
      */
     template <Traits TraitsType = default_dynamic_traits>
     struct basic_request final
-      : public common_http_request<
-          istl::nothing_type,
-          simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>,
-          simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>>,
+      : public common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
+                                   request_body<TraitsType, body_writer<TraitsType>>>,
         public details::request_view_interface<TraitsType> {
 
-        using common_request_type = common_http_request<
-          istl::nothing_type,
-          simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>,
-          simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>>;
-        using headers_type = simple_request_headers<header_fields_provider<TraitsType, empty_extension_pack>>;
-        using body_type    = simple_request_body<TraitsType, empty_extension_pack, body_writer<TraitsType>>;
-        using traits_type  = typename headers_type::traits_type;
-        using root_extensions = typename headers_type::root_extensions;
+        using common_request_type =
+          common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
+                              request_body<TraitsType, body_writer<TraitsType>>>;
+        using headers_type = request_headers<header_fields_provider<header_field_of<TraitsType>>>;
+        using body_type    = request_body<TraitsType, body_writer<TraitsType>>;
+        using traits_type  = typename body_type::traits_type;
 
         using string_type      = traits::general_string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;

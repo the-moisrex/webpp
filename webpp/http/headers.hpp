@@ -153,7 +153,7 @@ namespace webpp::http {
 
 
         constexpr void set(name_type name, value_type new_value) {
-            this->emplace_back(stl::move(name), stl::move(new_value));
+            this->emplace(stl::move(name), stl::move(new_value));
         }
 
         template <typename VT>

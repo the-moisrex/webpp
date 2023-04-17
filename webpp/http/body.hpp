@@ -625,6 +625,19 @@ namespace webpp::http {
         }
     };
 
+
+    template <typename TraitsType>
+    constexpr body_reader<TraitsType>& as_body_reader(body_reader<TraitsType>& body) noexcept {
+        return body;
+    }
+
+    template <typename TraitsType>
+    constexpr body_reader<TraitsType>& as_body_reader(body_writer<TraitsType>& body) noexcept {
+        return static_cast<body_reader<TraitsType>&>(body);
+    }
+
+
+
 } // namespace webpp::http
 
 #endif // WEBPP_HTTP_BODY_HPP

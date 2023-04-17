@@ -5,7 +5,6 @@
 
 #include "../../common/meta.hpp"
 #include "../../configs/constants.hpp"
-#include "../../extensions/extension.hpp"
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
 #include "../../storage/file.hpp"
@@ -31,6 +30,8 @@ namespace webpp::http {
      * @endcode
      *
      * The reason for preferring "string" over "string_type" is that the allocator is handled correctly.
+     *
+     * todo: remove this, extensions are removed
      */
     template <Traits TraitsType, Context ContextType>
     struct string_context_extension : public ContextType {
@@ -81,18 +82,6 @@ namespace webpp::http {
             }
         }
     };
-
-
-
-    /**
-     * String Response Extension Pack.
-     */
-    struct string_body {
-        // Add easy to use member functions to use text as a body and generate text-based responses
-        using context_extensions = extension_pack<as_extension<string_context_extension>>;
-    };
-
-
 
 
 

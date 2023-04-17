@@ -1,7 +1,6 @@
 #ifndef WEBPP_DYNAMIC_ROUTER_HPP
 #define WEBPP_DYNAMIC_ROUTER_HPP
 
-#include "../../extensions/extension.hpp"
 #include "../../std/memory.hpp"
 #include "../../std/string.hpp"
 #include "../../std/vector.hpp"
@@ -26,7 +25,6 @@ namespace webpp::http {
     template <Traits TraitsType>
     struct basic_dynamic_router : enable_traits<TraitsType>, valve<void> {
         using valve_type         = valve<void>;
-        using root_extensions    = empty_extension_pack;
         using traits_type        = TraitsType;
         using etraits            = enable_traits<traits_type>;
         using route_type         = dynamic_route<traits_type>;
