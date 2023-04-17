@@ -163,6 +163,34 @@ async function reloadGithubActions() {
         }
     ];
 
+
+    actions.jobs['build-tests'] = {
+        needs: 'install',
+        'runs-on': 'ubuntu-latest',
+        name: 'Build All Tests',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Build All Tests`,
+                run: `cmake --build --preset tests`
+            }
+        ]
+    };
+
+    actions.jobs['run-tests'] = {
+        needs: 'build-tests',
+        name: 'Run All Tests',
+        'runs-on': 'ubuntu-latest',
+        steps: [
+            ...jobDefaultSteps,
+            {
+                name: `Run All Tests`,
+                run: `ctest --preset tests`
+            }
+        ]
+    };
+
+
     // Build tests
     for (const target of tests) {
         actions.jobs[`build-${target}`] = {
@@ -265,21 +293,6 @@ async function reloadGithubActions() {
         ]
     };
 
-
-    actions.jobs.tests = {
-        needs: 'install',
-        'runs-on': 'ubuntu-latest',
-        steps: [
-            ...jobDefaultSteps,
-            {
-                name: `Build All Tests`,
-                run: `cmake --build --preset tests`
-            }, {
-                name: `Run All Tests`,
-                run: `ctest --preset tests`
-            }
-        ]
-    };
 
 
     // actions.jobs['webpp-lib'] = {
