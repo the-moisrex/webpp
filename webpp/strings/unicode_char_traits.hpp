@@ -36,10 +36,10 @@ namespace webpp {
     template <typename CharT>
     struct unicode_char_traits {
         using char_type  = CharT;
-        using int_type   = typename char_types<CharT>::int_type;
-        using pos_type   = typename char_types<CharT>::pos_type;
-        using off_type   = typename char_types<CharT>::off_type;
-        using state_type = typename char_types<CharT>::state_type;
+        using int_type   = typename char_types<char_type>::int_type;
+        using pos_type   = typename char_types<char_type>::pos_type;
+        using off_type   = typename char_types<char_type>::off_type;
+        using state_type = typename char_types<char_type>::state_type;
 
 #ifdef has_compare
         // for 3-way comparison
@@ -69,7 +69,7 @@ namespace webpp {
         }
 
         static constexpr stl::size_t length(const char_type* pp) noexcept {
-            return unicode::unchecked::count(pp);
+            return unicode::unchecked::count(stl::addressof(pp->value));
             // stl::size_t      i = 0;
             // const char_type* p = pp;
             // while (!eq(*p, char_type())) {
@@ -112,6 +112,7 @@ namespace webpp {
                 return s1;
             }
 #endif
+            // todo
             return static_cast<CharT*>(builtin_memmove(s1, s2, n * sizeof(char_type)));
         }
 
