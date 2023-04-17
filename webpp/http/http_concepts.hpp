@@ -4,7 +4,6 @@
 #define WEBPP_HTTP_CONCEPTS_HPP
 
 #include "../application/application_concepts.hpp"
-#include "../extensions/extension.hpp"
 #include "../std/optional.hpp"
 #include "../traits/std_traits.hpp"
 
@@ -25,16 +24,14 @@ namespace webpp::http {
       HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) { h["content-length"]; };
 
     template <typename T>
-    concept HTTPResponseHeaders = HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) {
-                                                        { h.string() } -> istl::StringViewifiable;
-                                                    };
+    concept HTTPResponseHeaders =
+      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h, stl::string out) { h.to_string(out); };
 
     template <typename T>
     concept HTTPHeaderField = requires(T f) {
                                   typename T::string_type;
                                   typename T::name_type;
                                   typename T::value_type;
-                                  typename T::root_extensions; // for http::headers and http::response
                                   requires requires(typename T::name_type name) {
                                                { f.is_name(name) } -> stl::same_as<bool>;
                                            };
@@ -57,6 +54,10 @@ namespace webpp::http {
                                                   typename T::value_type;
                                               };
 
+    template <typename T>
+    concept HTTPResponseHeaderFieldsProvider = HTTPRequestHeaderFieldsProvider<T>;
+
+
     /**
      * The class that implements this concept is a http request header fields provider which just provides
      * and owns the http fields. The big thing about this is that it owns what it sells.
@@ -71,8 +72,23 @@ namespace webpp::http {
           obj.as_view();
       };
 
+    template <typename T>
+    concept HTTPResponseHeaderFieldsOwner =
+      HTTPResponseHeaderFieldsProvider<T> &&
+      requires(T obj, typename T::name_type name, typename T::value_type value) {
+          obj.emplace(name, value);
+
+          // an example is implemented in "header_fields_provider" in request_headers.hpp file
+          obj.as_view();
+      };
 
 
+
+    template <typename T>
+    concept HTTPHeaderFieldsProvider = requires(T provider) {
+                                           { provider.begin() } -> stl::forward_iterator;
+                                           { provider.end() } -> stl::forward_iterator;
+                                       };
 
 
     ////////////////////////////// Body //////////////////////////////
@@ -419,6 +435,20 @@ namespace webpp::http {
 
 
 
+    ////////////////////////////// Request, Response Common //////////////////////////////
+
+
+    template <typename T>
+    concept HTTPHeadersHolder = requires(T server) {
+                                    { server.headers } -> HTTPHeaders;
+                                };
+
+
+    template <typename T>
+    concept HTTPBodyHolder = requires(T server) {
+                                 { server.body } -> HTTPBody;
+                             };
+
 
     ////////////////////////////// Protocols //////////////////////////////
 
@@ -439,7 +469,6 @@ namespace webpp::http {
           requires EnabledTraits<T>;
           requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
           // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
-          typename T::root_extensions;
       };
 
     /**
@@ -458,18 +487,6 @@ namespace webpp::http {
                                { proto.is_ssl_available() } -> stl::same_as<bool>;
                                { proto() } -> stl::same_as<int>;
                            };
-
-
-    struct http_protocol_descriptor {
-        template <RootExtensionList REL>
-        using extractor_type = typename REL::protocol_extensions;
-    };
-
-    // this will apply only the "Mother Extension" and gives you the result of that.
-    // this does not apply the child extensions
-    template <Traits TraitsType, RootExtensionList REList>
-    using apply_protocol_extensions =
-      typename REList::template mother_extensie_type<TraitsType, http_protocol_descriptor>;
 
 
     //////////////////////////// Default Serializers /////////////////////////////

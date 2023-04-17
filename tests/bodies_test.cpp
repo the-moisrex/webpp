@@ -14,7 +14,7 @@ using namespace webpp::http::details;
 
 
 using string_type = traits::general_string<default_traits>;
-using body_type   = simple_response_body<default_traits>;
+using body_type   = response_body<default_traits>;
 
 TEST(Body, Concepts) {
     EXPECT_TRUE(bool(BodyReader<body_reader<default_traits>>));

@@ -3,8 +3,6 @@
 #ifndef WEBPP_HTTP_ROUTES_CONTEXT_HPP
 #define WEBPP_HTTP_ROUTES_CONTEXT_HPP
 
-#include "../../extensions/extension.hpp"
-#include "../../extensions/extension_wrapper.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../../uri/path_traverser.hpp"
 #include "../request.hpp"
@@ -17,15 +15,14 @@ namespace webpp::http {
     namespace details {
 
 
-        template <HTTPRequest RequestType, typename RootExtensions>
+        template <HTTPRequest RequestType>
         struct common_context_methods : public enable_traits<typename RequestType::traits_type> {
-            using request_type    = RequestType;
-            using traits_type     = typename request_type::traits_type;
-            using etraits         = enable_traits<traits_type>;
-            using root_extensions = RootExtensions;
-            using response_type   = simple_response<traits_type, root_extensions>;
-            using request_ref     = request_type&;
-            using request_cref    = request_type const&;
+            using request_type  = RequestType;
+            using traits_type   = typename request_type::traits_type;
+            using etraits       = enable_traits<traits_type>;
+            using response_type = simple_response<traits_type>;
+            using request_ref   = request_type&;
+            using request_cref  = request_type const&;
 
             template <HTTPRequest ReqT>
             constexpr common_context_methods(ReqT const& inp_req) noexcept : etraits{inp_req} {}
@@ -50,20 +47,18 @@ namespace webpp::http {
             /**
              * Generate a response
              */
-            template <Extension... NewExtensions, typename... Args>
+            template <typename... Args>
             [[nodiscard]] constexpr HTTPResponse auto create_response(Args&&... args) const noexcept {
-                return response_type::template create<NewExtensions...>(*this, stl::forward<Args>(args)...);
+                return response_type::create(*this, stl::forward<Args>(args)...);
             }
 
 
             /**
              * Generate a response while passing the specified arguments as the body of that response
              */
-            template <Extension... NewExtensions, typename... Args>
+            template <typename... Args>
             [[nodiscard]] constexpr HTTPResponse auto response_body(Args&&... args) const noexcept {
-                using new_response_type =
-                  typename response_type::template apply_extensions_type<NewExtensions...>;
-                return new_response_type::with_body(*this, stl::forward<Args>(args)...);
+                return with_body(*this, stl::forward<Args>(args)...);
             }
 
 
@@ -132,25 +127,19 @@ namespace webpp::http {
         };
     } // namespace details
 
-    template <typename MergedRootExtensions>
-    struct context_descriptor;
 
 
-    template <HTTPRequest RequestType, typename EList, typename RootExtensions>
-    struct common_context_view : public details::common_context_methods<RequestType, RootExtensions>,
-                                 public extension_wrapper<EList> {
-        using request_type           = RequestType;
-        using traits_type            = typename request_type::traits_type;
-        using mother_extensions_type = EList;
-        using extension_wrapper_type = extension_wrapper<EList>;
-        using root_extensions        = RootExtensions;
-        using response_type          = simple_response<traits_type, root_extensions>;
-        using basic_context_type     = common_context_view;
-        using request_ref            = request_type&;
-        using request_cref           = request_type const&;
+    template <HTTPRequest RequestType>
+    struct common_context_view : public details::common_context_methods<RequestType> {
+        using request_type       = RequestType;
+        using traits_type        = typename request_type::traits_type;
+        using response_type      = simple_response<traits_type>;
+        using basic_context_type = common_context_view;
+        using request_ref        = request_type&;
+        using request_cref       = request_type const&;
 
       private:
-        using context_methods = details::common_context_methods<RequestType, RootExtensions>;
+        using context_methods = details::common_context_methods<RequestType>;
 
       public:
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
@@ -174,100 +163,17 @@ namespace webpp::http {
         constexpr ~common_context_view()                                         = default;
     };
 
-    template <typename EList>
-    struct static_context_view : public EList {
-        using base_type              = EList;
-        using traits_type            = typename base_type::traits_type;
-        using root_extensions        = typename base_type::root_extensions;
-        using mother_extensions_type = typename root_extensions::template mother_extensions<traits_type>;
-        using final_context_parent   = EList;
-        using request_type           = typename base_type::request_type;
-        using basic_context_type     = typename final_context_parent::basic_context_type;
-        using etraits                = typename final_context_parent::etraits;
-
-        static_assert(Context<final_context_parent>,
-                      "The specified extension list type doesn't include basic_context; "
-                      "did you forget to inherit from the "
-                      "passed basic context type in your extension?");
-
-        template <typename Ext>
-        [[nodiscard]] static constexpr bool has_extension() noexcept {
-            return istl::contains_parameter_of<root_extensions, Ext>;
-        }
-
-        /**
-         * Append some extensions to this context type and get the type back
-         */
-        template <typename... E>
-        using context_type_with_appended_extensions =
-          typename istl::unique_parameters<typename root_extensions::template appended<E...>>::
-            template extensie_type<traits_type, context_descriptor<root_extensions>, request_type>;
 
 
-
-        constexpr static_context_view(request_type& inp_req) : final_context_parent{inp_req} {}
-
-
-        template <Context CtxT>
-        constexpr static_context_view(CtxT const& ctx) noexcept : EList{ctx} {}
-
-        constexpr static_context_view(static_context_view const&) noexcept       = default;
-        constexpr static_context_view(static_context_view&&) noexcept            = default;
-        constexpr static_context_view& operator=(static_context_view const&)     = default;
-        constexpr static_context_view& operator=(static_context_view&&) noexcept = default;
-        constexpr ~static_context_view()                                         = default;
-
-        /**
-         * Clone this context and append the new extensions along the way.
-         */
-        template <Extension... E>
-        [[nodiscard]] constexpr auto clone() const noexcept {
-            using local_context_type = context_type_with_appended_extensions<E...>;
-            static_assert(Context<local_context_type>,
-                          "Web++ Internal Bug: the context_type is not valid for some reason!");
-            return local_context_type{*this};
-        }
-    };
-
-
-
-    /**
-     * This struct helps the extension pack to find the correct type of the
-     * extensions from the unified extension pack for context
-     * Used by routers, to be passed to the extension_pack.
-     */
-    template <typename MergedRootExtensions>
-    struct context_descriptor {
-
-        template <Extension ExtensionType>
-        using extractor_type = typename ExtensionType::context_extensions;
-
-
-        template <ExtensionList RootExtensions,
-                  typename TraitsType,
-                  typename EList, // extension_pack
-                  typename ReqType>
-        using mid_level_extensie_type = common_context_view<ReqType, EList, MergedRootExtensions>;
-
-
-        template <ExtensionList RootExtensions, typename TraitsType, typename EList, typename ReqType>
-        using final_extensie_type = static_context_view<EList>;
-    };
-
-
-    // Don't use ReqType::root_extensions directly, we merge its extensions with the router's extensions
-    template <HTTPRequest ReqType, typename MergedRootExtensions = typename ReqType::root_extensions>
-    using simple_context =
-      typename MergedRootExtensions::template extensie_type<typename ReqType::traits_type,
-                                                            context_descriptor<MergedRootExtensions>,
-                                                            ReqType>;
+    template <HTTPRequest ReqType>
+    using simple_context = common_context_view<ReqType>;
 
 
     /**
      * The standard and dynamic context which will own its data
      */
     template <Traits TraitsType = default_dynamic_traits>
-    struct basic_context : details::common_context_methods<basic_request<TraitsType>, empty_extension_pack> {
+    struct basic_context : details::common_context_methods<basic_request<TraitsType>> {
         using traits_type         = TraitsType;
         using request_type        = basic_request<traits_type>;
         using static_context_type = simple_context<request_type>;
@@ -287,8 +193,7 @@ namespace webpp::http {
 
 
       private:
-        using context_methods =
-          details::common_context_methods<basic_request<TraitsType>, empty_extension_pack>;
+        using context_methods = details::common_context_methods<basic_request<TraitsType>>;
 
         path_traverser_type traverser{request.path_iterator()};
         dynamic_route_ptr   current_route_ptr = nullptr;
@@ -319,7 +224,7 @@ namespace webpp::http {
         constexpr ~basic_context()                                   = default;
 
         /**
-         * Clone this context and append the new extensions along the way.
+         * Clone this context
          */
         [[nodiscard]] constexpr auto clone() const noexcept {
             return basic_context{*this};

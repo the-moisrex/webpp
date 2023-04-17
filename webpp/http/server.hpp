@@ -16,9 +16,9 @@ namespace webpp::http {
      *
      * Implements HTTPProtocol
      */
-    struct server : common_http_protocol<default_traits, application_holder, empty_extension_pack> {
-        using protocol_type = common_http_protocol<default_traits, application_holder, empty_extension_pack>;
-        using traits_type   = default_traits;
+    struct server : common_http_protocol<default_traits, application_holder> {
+        using protocol_type    = common_http_protocol<default_traits, application_holder>;
+        using traits_type      = default_traits;
         using application_type = application_holder;
 
         int operator()() noexcept {

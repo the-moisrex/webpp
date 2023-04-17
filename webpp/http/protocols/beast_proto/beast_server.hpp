@@ -48,7 +48,6 @@ namespace webpp::http::beast_proto {
         using duration            = typename server_type::duration;
         using acceptor_type       = typename server_type::acceptor_type;
         using traits_type         = typename server_type::traits_type;
-        using root_extensions     = typename server_type::root_extensions;
         using endpoint_type       = asio::ip::tcp::endpoint;
         using steady_timer        = asio::steady_timer;
         using request_type        = typename server_type::request_type;

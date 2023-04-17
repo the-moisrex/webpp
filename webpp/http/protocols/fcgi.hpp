@@ -14,17 +14,14 @@
 namespace webpp::http::inline fastcgi {
 
 
-    template <typename App,
-              ServerTraits ServerType = default_server_traits,
-              typename EList          = empty_extension_pack>
+    template <typename App, ServerTraits ServerType = default_server_traits>
     struct fcgi : public enable_traits<typename ServerType::traits_type> {
         using server_type      = ServerType;
         using traits_type      = typename server_type::traits_type;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
         using application_type = stl::remove_cvref_t<App>;
-        using extension_list   = stl::remove_cvref_t<EList>;
-        using interface_type   = fcgi<server_type, application_type, extension_list>;
-        using request_type     = simple_request<traits_type, fcgi_request, interface_type, extension_list>;
+        using interface_type   = fcgi<server_type, application_type>;
+        using request_type     = simple_request<traits_type, fcgi_request, interface_type>;
         using logger_type      = traits::logger<traits_type>;
         using logger_ref       = typename logger_type::logger_ref;
         using allocator_type   = typename app_wrapper_type::allocator_type;

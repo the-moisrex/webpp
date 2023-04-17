@@ -19,7 +19,9 @@ namespace webpp::http::beast_proto {
 
 
     template <typename CommonHTTPRequest>
-    struct beast_request final : public CommonHTTPRequest, protected details::request_view_interface {
+    struct beast_request final
+      : public CommonHTTPRequest,
+        protected details::request_view_interface<typename CommonHTTPRequest::traits_type> {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;

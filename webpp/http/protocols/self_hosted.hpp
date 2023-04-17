@@ -15,17 +15,14 @@
 
 namespace webpp::http::inline shosted {
 
-    template <Application       App,
-              ServerTraits      ServerTraitsType = default_server_traits,
-              RootExtensionList RootExtensions   = empty_extension_pack>
-    struct self_hosted
-      : public common_http_protocol<typename ServerTraitsType::traits_type, App, RootExtensions> {
+    template <Application App, ServerTraits ServerTraitsType = default_server_traits>
+    struct self_hosted : public common_http_protocol<typename ServerTraitsType::traits_type, App> {
 
         using server_traits_type = ServerTraitsType;
         using traits_type        = typename server_traits_type::traits_type;
 
       private:
-        using super = common_http_protocol<traits_type, App, RootExtensions>;
+        using super = common_http_protocol<traits_type, App>;
 
       public:
         using app_wrapper_type = typename super::app_wrapper_type;
@@ -51,7 +48,7 @@ namespace webpp::http::inline shosted {
         }
     };
 
-    //    template <Traits TraitsType, Application App, ExtensionList EList = empty_extension_pack>
+    //    template <Traits TraitsType, Application App>
     //    using server =
 
 } // namespace webpp::http::inline shosted

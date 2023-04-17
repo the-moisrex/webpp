@@ -297,21 +297,19 @@ namespace webpp {
     };
 
 
-    template <Traits TraitsType, Application App, RootExtensionList EList = empty_extension_pack>
-    struct fake_proto : public common_http_protocol<TraitsType, App, EList> {
-        using super               = common_http_protocol<TraitsType, App, EList>;
-        using traits_type         = TraitsType;
-        using root_extensions     = EList;
+    template <Application App>
+    struct fake_proto : public common_http_protocol<default_dynamic_traits, App> {
+        using traits_type         = default_dynamic_traits;
+        using super               = common_http_protocol<traits_type, App>;
         using allocator_pack_type = traits::allocator_pack_type<traits_type>;
         using char_type           = traits::char_type<traits_type>;
         using fields_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
         // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using fields_provider           = header_fields_provider<traits_type, root_extensions>;
+        using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;
-        using request_headers_type      = simple_request_headers<fields_provider>;
-        using request_body_type =
-          simple_request_body<traits_type, root_extensions, request_body_communicator>;
+        using request_headers_type      = request_headers<fields_provider>;
+        using request_body_type         = request_body<traits_type, request_body_communicator>;
 
         using request_type = simple_request<fake_proto_request, request_headers_type, request_body_type>;
 
@@ -357,8 +355,7 @@ namespace webpp {
         }
     };
 
-    static_assert(HTTPProtocol<fake_proto<default_traits, fake_app>>,
-                  "FakeProto is not really a valid Protocol");
+    static_assert(HTTPProtocol<fake_proto<fake_app>>, "FakeProto is not really a valid Protocol");
 
 
 } // namespace webpp

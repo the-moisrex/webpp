@@ -18,7 +18,7 @@ using namespace webpp;
 using namespace webpp::http;
 
 
-using res_t = simple_response<default_traits, extension_pack<string_body>>;
+using res_t = simple_response<default_traits>;
 
 TEST(HTTPResponseTest, Type) {
     enable_owner_traits<default_traits> et;
@@ -51,7 +51,7 @@ TEST(Response, VariantCopyAssignment) {
 }
 
 TEST(Response, ResponseBodyCopyCtor) {
-    using body_type = response_body<default_dynamic_traits, empty_extension_pack>;
+    using body_type = response_body<default_dynamic_traits>;
     enable_owner_traits<default_dynamic_traits> et;
 
     body_type one{et};
@@ -63,7 +63,7 @@ TEST(Response, ResponseBodyCopyCtor) {
 }
 
 TEST(Response, ResponseBodyCopyAssignment) {
-    using body_type = response_body<default_dynamic_traits, empty_extension_pack>;
+    using body_type = response_body<default_dynamic_traits>;
     enable_owner_traits<default_dynamic_traits> et;
 
     body_type one{et};
@@ -96,9 +96,9 @@ TEST(Response, Init) {
 TEST(Response, ResHeaders) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res = res_t::create(et);
-    res.headers.emplace_back("one", "1");
+    res.headers.set("one", "1");
     EXPECT_EQ(res.headers["one"], "1");
-    res.headers.emplace_back("two", "2");
+    res.headers.set("two", "2");
     EXPECT_EQ(res.headers.has("one", "two"), stl::make_tuple(true, true));
     EXPECT_EQ(res.headers.has("one", "two", "three"), stl::make_tuple(true, true, false));
 }
