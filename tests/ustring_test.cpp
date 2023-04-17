@@ -8,9 +8,9 @@ using namespace webpp;
 using namespace std;
 
 TEST(UString, UTF8_Init) {
-    utf8<> one{u8"hello world"};
-    utf8<> two{"hello world"};
-    utf8<> three{u8"سلام"};
+    utf8<> const one{u8"hello world"};
+    utf8<> const two{"hello world"};
+    utf8<> const three{u8"سلام"};
     // EXPECT_TRUE(one.operator==("hello world"));
     EXPECT_EQ(one, "hello world");
     EXPECT_EQ(two, "hello world");
