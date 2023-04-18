@@ -37,7 +37,9 @@ namespace webpp::http::cgi_proto {
                 auto const content_length = to_uint(content_length_str);
                 body_content.resize(content_length);
                 // todo: see if there's a better way to do this
-                stl::cin.rdbuf()->pubsetbuf(body_content.data(), content_length);
+                // stl::cin.rdbuf()->pubsetbuf(body_content.data(), content_length);
+                // while (stl::fgets(body_content.data(), content_length, stdin) == nullptr);
+                stl::cin.get(body_content.data(), content_length + 1);
             } else {
                 // we don't know how much the user is going to send. so we use a small size buffer:
 
