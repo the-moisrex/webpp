@@ -15,7 +15,7 @@ namespace webpp::http {
      *
      * All request bodies will come from here, you can add all the nice features for the request body here.
      */
-    template <typename TraitsType, HTTPRequestBodyCommunicator Communicator>
+    template <Traits TraitsType, HTTPRequestBodyCommunicator Communicator>
     struct request_body : public Communicator {
         using traits_type               = TraitsType;
         using request_body_communicator = Communicator; // the way that the Protocol gives us the body
@@ -33,20 +33,7 @@ namespace webpp::http {
         = default;
 
 
-        template <EnabledTraits ServerType>
-            requires(stl::is_constructible_v<request_body_communicator, ServerType&>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_constructible_v<request_body_communicator, ServerType&>)
-          : request_body_communicator{server_ref} {}
-
-
-        // only elist wants the server ref
-        template <EnabledTraits ServerType>
-            requires(!stl::is_constructible_v<request_body_communicator, ServerType&> &&
-                     stl::is_default_constructible_v<request_body_communicator>)
-        constexpr request_body(ServerType& server_ref) noexcept(
-          stl::is_nothrow_default_constructible_v<request_body_communicator>)
-          : request_body_communicator{} {}
+        using Communicator::Communicator;
 
 
         template <typename T>

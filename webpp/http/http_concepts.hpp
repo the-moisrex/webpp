@@ -104,7 +104,7 @@ namespace webpp::http {
     template <typename T>
     concept CStreamBasedBodyReader =
       requires {
-          requires stl::copy_constructible<T>;
+          // requires stl::copy_constructible<T>;
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
                        { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
@@ -118,7 +118,7 @@ namespace webpp::http {
     template <typename T>
     concept CStreamBasedBodyWriter =
       requires {
-          requires stl::copy_constructible<T>;
+          // requires stl::copy_constructible<T>;
           typename T::byte_type;
           requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
                        { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
@@ -140,7 +140,7 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyReader = requires(T body) {
-                                      requires stl::copy_constructible<T>;
+                                      // requires stl::copy_constructible<T>;
                                       requires SizableBody<T>;
                                       body.data();
                                       { body.empty() } -> stl::same_as<bool>;
@@ -152,7 +152,7 @@ namespace webpp::http {
     template <typename T>
     concept TextBasedBodyWriter =
       requires(T body) {
-          requires stl::copy_constructible<T>;
+          // requires stl::copy_constructible<T>;
           typename T::value_type;
           requires requires(typename T::value_type const* data, stl::size_t count) {
                        body.append(data, count); // Append a string
@@ -439,13 +439,13 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept HTTPHeadersHolder = requires(T server) {
+    concept HTTPHeadersHolder = requires(stl::remove_cvref_t<T> server) {
                                     { server.headers } -> HTTPHeaders;
                                 };
 
 
     template <typename T>
-    concept HTTPBodyHolder = requires(T server) {
+    concept HTTPBodyHolder = requires(stl::remove_cvref_t<T> server) {
                                  { server.body } -> HTTPBody;
                              };
 
