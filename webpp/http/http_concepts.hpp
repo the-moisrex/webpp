@@ -86,8 +86,8 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeaderFieldsProvider = requires(T provider) {
-                                           { provider.begin() } -> stl::forward_iterator;
-                                           { provider.end() } -> stl::forward_iterator;
+                                           provider.begin();
+                                           provider.end();
                                        };
 
 
