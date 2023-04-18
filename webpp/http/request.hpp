@@ -53,7 +53,7 @@ namespace webpp::http {
         template <typename ReqT>
             requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
                      EnabledTraits<ReqT> && !istl::cvref_as<ReqT, common_http_request>)
-        constexpr common_http_request(ReqT& inp_req) noexcept
+        constexpr common_http_request(ReqT& inp_req)
           : etraits{inp_req},
             headers{inp_req.headers},
             body{inp_req.get_traits(), inp_req.body} {}
