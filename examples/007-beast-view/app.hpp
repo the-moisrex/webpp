@@ -60,7 +60,8 @@ namespace website {
                                           },
                                         (post and root) >>
                                           [this](context& ctx) {
-                                              stl::size_t body_size = ctx.request.headers.content_length();
+                                              stl::size_t const body_size =
+                                                ctx.request.headers.content_length();
                                               stl::map<stl::string, stl::string> values;
                                               values["request_body_size"] = stl::to_string(body_size);
                                               values["request_body"]      = as<stl::string>(ctx.request.body);
