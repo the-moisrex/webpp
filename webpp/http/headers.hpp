@@ -98,6 +98,16 @@ namespace webpp::http {
 
         using Container::Container;
 
+        template <HTTPHeadersHolder H>
+        constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
+          : Container{holder.headers} {}
+
+        constexpr headers_container(headers_container const&)                = default;
+        constexpr headers_container(headers_container&&) noexcept            = default;
+        constexpr headers_container& operator=(headers_container&&) noexcept = default;
+        constexpr headers_container& operator=(headers_container const&)     = default;
+        constexpr ~headers_container()                                       = default;
+
         /**
          * Get an iterator pointing to the field value that holds the specified header name
          */
