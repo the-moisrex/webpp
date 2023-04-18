@@ -252,6 +252,7 @@ namespace webpp {
         stl::size_t index = 0;
 
       public:
+        fake_request_body_communicator(auto&) {}
         fake_request_body_communicator()                                                     = default;
         fake_request_body_communicator(fake_request_body_communicator const&)                = default;
         fake_request_body_communicator(fake_request_body_communicator&&) noexcept            = default;
