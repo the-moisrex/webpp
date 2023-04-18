@@ -42,11 +42,21 @@ namespace webpp::http {
         [[no_unique_address]] body_type body;    // NOLINT(misc-non-private-member-variables-in-classes)
 
       public:
-        template <typename ServerType>
-        constexpr common_http_request(ServerType& inp_server) noexcept
+        template <typename ServerT>
+            requires(EnabledTraits<ServerT> && !HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
+                     !istl::cvref_as<ServerT, common_http_request>)
+        constexpr common_http_request(ServerT& inp_server) noexcept
           : etraits{inp_server},
             headers{inp_server},
             body{inp_server} {}
+
+        template <typename ReqT>
+            requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
+                     EnabledTraits<ReqT> && !istl::cvref_as<ReqT, common_http_request>)
+        constexpr common_http_request(ReqT& inp_req) noexcept
+          : etraits{inp_req},
+            headers{inp_req.headers},
+            body{inp_req.get_traits(), inp_req.body} {}
 
         constexpr common_http_request(common_http_request const&)                     = default;
         constexpr common_http_request(common_http_request&&) noexcept                 = default;

@@ -83,12 +83,38 @@ namespace webpp::http {
     };
 
 
+    namespace details {
+        template <typename T, typename Obj>
+        constexpr T get_as(Obj&& obj) {
+            using requested_type = stl::remove_cvref_t<T>;
+            if constexpr (requires {
+                              { deserialize_response_body<T>(obj) } -> stl::same_as<T>;
+                          }) {
+                return deserialize_response_body<T>(obj);
+            } else if constexpr (requires {
+                                     { deserialize_body<T>(obj) } -> stl::same_as<T>;
+                                 }) {
+                return deserialize_body<T>(obj);
+            } else if constexpr (!stl::same_as<T, requested_type>) {
+                return get_as<requested_type>();
+            } else {
+                static_assert_false(T,
+                                    "We don't know how to convert the request body to the specified type."
+                                    " Did you import the right header?"
+                                    " You can always write your own custom body (de)serializer functions.");
+            }
+        }
+
+    } // namespace details
+
+
     /**
      * This is the dynamic parent for body readers and body writers.
      */
     template <Traits TraitsType>
     struct body_communicator : enable_traits<TraitsType> {
         using traits_type               = TraitsType;
+        using etraits_type              = enable_traits<traits_type>;
         using char_type                 = traits::char_type<traits_type>;
         using string_communicator_type  = string_response_body_communicator<traits_type>;
         using cstream_communicator_type = cstream_response_body_communicator<traits_type>;
@@ -137,8 +163,64 @@ namespace webpp::http {
                                    stream_communicator_type,
                                    cstream_communicator_type>)
         constexpr body_communicator(ET&& et, ComT&& inp_communicator)
-          : enable_traits<TraitsType>(et),
+          : etraits_type{et},
             communicator_var{stl::forward<ComT>(inp_communicator)} {}
+
+        template <typename ComT>
+            requires(EnabledTraits<ComT> &&
+                     istl::part_of<stl::remove_cvref_t<ComT>,
+                                   string_communicator_type,
+                                   stream_communicator_type,
+                                   cstream_communicator_type> &&
+                     !istl::cvref_as<ComT, body_communicator>)
+        constexpr body_communicator(ComT&& inp_communicator)
+          : etraits_type{inp_communicator},
+            communicator_var{stl::forward<ComT>(inp_communicator)} {}
+
+        template <typename ComT>
+            requires(EnabledTraits<ComT> && requires(ComT c) { c.as_string_communicator(); })
+        constexpr body_communicator(ComT&& inp_communicator)
+          : etraits_type{inp_communicator},
+            communicator_var{inp_communicator.as_string_communicator()} {}
+
+
+        template <TextBasedBodyReader ComT>
+            requires(EnabledTraits<ComT>)
+        constexpr body_communicator(ComT& body)
+          : etraits_type{body},
+            communicator_var{string_communicator_type{body}} {}
+
+        template <CStreamBasedBodyReader ComT>
+            requires(EnabledTraits<ComT>)
+        constexpr body_communicator(ComT& body)
+          : etraits_type{body},
+            communicator_var{
+              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+
+        template <StreamBasedBodyReader ComT>
+            requires(EnabledTraits<ComT>)
+        constexpr body_communicator(ComT& body)
+          : etraits_type{body},
+            communicator_var{
+              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+
+        template <EnabledTraits ET, TextBasedBodyReader ComT>
+        constexpr body_communicator(ET&& et, ComT& body)
+          : etraits_type{et},
+            communicator_var{string_communicator_type{body}} {}
+
+        template <EnabledTraits ET, CStreamBasedBodyReader ComT>
+        constexpr body_communicator(ET&& et, ComT& body)
+          : etraits_type{et},
+            communicator_var{
+              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+
+        template <EnabledTraits ET, StreamBasedBodyReader ComT>
+        constexpr body_communicator(ET&& et, ComT& body)
+          : etraits_type{et},
+            communicator_var{
+              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
@@ -180,8 +262,16 @@ namespace webpp::http {
         static constexpr auto log_cat = "BodyReader";
 
         using body_communicator<TraitsType>::body_communicator;
+
         constexpr body_reader(body_reader const& other)
           : body_communicator<TraitsType>{other.get_traits(), other.as_string_communicator()} {}
+
+
+        template <HTTPBodyHolder H>
+            requires(EnabledTraits<H>)
+        constexpr body_reader(H& holder) : body_reader{holder.body} {}
+
+
         constexpr body_reader(body_reader&&) noexcept = default;
         constexpr body_reader& operator=(body_reader const& other) {
             if (this != &other) {
@@ -361,45 +451,13 @@ namespace webpp::http {
         template <typename T>
         // requires(HTTPDeserializableBody<T, body_reader>)
         constexpr T as() {
-            using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_response_body<T>(*this) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_response_body<T>(*this);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(*this);
-            } else if constexpr (!stl::same_as<T, requested_type>) {
-                return as<requested_type>();
-            } else {
-                static_assert_false(T,
-                                    "We don't know how to convert the request body to the specified type."
-                                    " Did you import the right header?"
-                                    " You can always write your own custom body (de)serializer functions.");
-            }
+            return details::get_as<T>(*this);
         }
 
         template <typename T>
             requires(HTTPDeserializableBody<T, body_reader>)
         constexpr T as() const {
-            using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_response_body<T>(*this) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_response_body<T>(*this);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(*this) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(*this);
-            } else if constexpr (!stl::same_as<T, requested_type>) {
-                return as<requested_type>();
-            } else {
-                static_assert_false(T,
-                                    "We don't know how to convert the request body to the specified type."
-                                    " Did you import the right header?"
-                                    " You can always write your own custom body (de)serializer functions.");
-            }
+            return details::get_as<T>(*this);
         }
 
         [[nodiscard]] constexpr auto_converter<body_reader> as() const noexcept {
@@ -634,6 +692,12 @@ namespace webpp::http {
     template <typename TraitsType>
     constexpr body_reader<TraitsType>& as_body_reader(body_writer<TraitsType>& body) noexcept {
         return static_cast<body_reader<TraitsType>&>(body);
+    }
+
+    template <HTTPBodyHolder T>
+        requires(EnabledTraits<T>)
+    constexpr body_reader<typename T::traits_type>& as_body_reader(T& holder) noexcept {
+        return static_cast<body_reader<typename T::traits_type>&>(holder.body);
     }
 
 

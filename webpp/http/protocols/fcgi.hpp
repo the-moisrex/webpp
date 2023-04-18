@@ -14,9 +14,9 @@
 namespace webpp::http::inline fastcgi {
 
 
-    template <typename App, ServerTraits ServerType = default_server_traits>
-    struct fcgi : public enable_traits<typename ServerType::traits_type> {
-        using server_type      = ServerType;
+    template <typename App, ServerTraits ReqT = default_server_traits>
+    struct fcgi : public enable_traits<typename ReqT::traits_type> {
+        using server_type      = ReqT;
         using traits_type      = typename server_type::traits_type;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
         using application_type = stl::remove_cvref_t<App>;
