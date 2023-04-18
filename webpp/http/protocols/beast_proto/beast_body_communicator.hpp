@@ -39,6 +39,7 @@ namespace webpp::http::beast_proto {
         using request_type = typename beast_request_parser_type::value_type;
         using request_ptr  = stl::add_pointer_t<request_type>;
 
+        beast_request_body_communicator(auto&) noexcept {}
 
         void set_beast_parser(beast_request_parser_type& input_parser) noexcept {
             request = &input_parser.get();

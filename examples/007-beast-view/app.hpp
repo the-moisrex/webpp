@@ -21,6 +21,29 @@ namespace website {
       private:
         views::view_manager<traits_type> view_man;
 
+        // curl -d @Dockerfile localhost:8080/content-length
+        static stl::string get_len(context& ctx) {
+            stl::string const body           = ctx.request.as();
+            stl::size_t const content_length = ctx.request.headers.content_length();
+
+            stl::string res = webpp::fmt::format("Content-Length: {}\n", content_length);
+            res += webpp::fmt::format("Body Length: {}\n", body.size());
+
+            for (auto const& hdr : ctx.request.headers) {
+                res += hdr.name;
+                res += ": ";
+                res += hdr.value;
+                res += "\n";
+            }
+
+            res += "\n";
+            res += body;
+
+            res += "\n";
+            res += "Done";
+            return res;
+        }
+
       public:
         app() : etraits{}, view_man{*this} {
             view_man.view_roots.emplace_back("./public");
@@ -46,7 +69,8 @@ namespace website {
                                         (get and root / "about") >>
                                           [this]() {
                                               return view_man.file("about.html");
-                                          }};
+                                          },
+                                        (post and root / "content-length") >> app::get_len};
 
             return router(req);
         }
