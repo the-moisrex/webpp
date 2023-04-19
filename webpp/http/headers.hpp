@@ -140,6 +140,19 @@ namespace webpp::http {
             return res == this->end() ? value_type{} : res->value;
         }
 
+
+        /**
+         * Get multiple header values as a tuple
+         * returns stl::tuple<value_type, value_type, ...> if you give multiple names
+         */
+        template <typename... NameType>
+            requires(sizeof...(NameType) > 1)
+        [[nodiscard]] constexpr auto get(NameType&&... name) const noexcept {
+            return stl::make_tuple(get(name)...);
+        }
+
+
+
         [[nodiscard]] constexpr const_reference_type operator[](name_type name) const noexcept {
             return const_reference_type{*this, name, get(name)};
         }
