@@ -45,7 +45,7 @@ namespace webpp::http {
 
 
         template <EnabledTraits ET>
-            requires(!stl::is_constructible_v<container, ET>)
+            requires(!stl::is_constructible_v<container, ET> && stl::is_default_constructible_v<container>)
         constexpr response_headers(ET&&, http::status_code code = http::status_code::ok) noexcept(
           stl::is_nothrow_default_constructible_v<container>)
           : container{},

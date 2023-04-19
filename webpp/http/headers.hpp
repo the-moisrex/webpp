@@ -102,6 +102,10 @@ namespace webpp::http {
         constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
           : Container{holder.headers} {}
 
+        template <EnabledTraits ET>
+            requires(!HTTPHeadersHolder<ET>)
+        constexpr headers_container(ET&& et) noexcept : Container{stl::forward<ET>(et)} {}
+
         constexpr headers_container(headers_container const&)                = default;
         constexpr headers_container(headers_container&&) noexcept            = default;
         constexpr headers_container& operator=(headers_container&&) noexcept = default;
