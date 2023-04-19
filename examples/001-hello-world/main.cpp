@@ -13,7 +13,7 @@ int main() {
                            []() noexcept {
                                return "main page";
                            },
-                         (get and root / "page" / "one") >> page_one,
+                         (get and root / "page" / "one") >> &page_one,
                          get and root / "cgi-bin" / "cgi-hello-world" >>
                                    []() noexcept {
                                        return "Hello world";
