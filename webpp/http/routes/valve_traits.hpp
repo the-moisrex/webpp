@@ -68,7 +68,7 @@ namespace webpp::http {
     struct valvify {
 
         template <istl::cvref_as<T> TT>
-        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
+        [[nodiscard]] static constexpr decltype(auto) call(TT&& next) noexcept {
             return stl::forward<TT>(next);
         }
     };
@@ -84,7 +84,7 @@ namespace webpp::http {
 
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
     struct valve_traits {
-        using callable_type      = stl::remove_cvref_t<Callable>;
+        using callable_type      = stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<Callable>>>;
         using context_type       = ContextType;
         using request_type       = typename context_type::request_type;
         using response_type      = typename context_type::response_type;
@@ -95,10 +95,17 @@ namespace webpp::http {
         using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
         template <istl::cvref_as<Callable> C>
-            requires(invocable_inorder_type::value)
+            requires(!stl::is_pointer_v<stl::remove_cvref_t<C>> && invocable_inorder_type::value)
         static constexpr return_type
           call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
+        }
+
+        template <istl::cvref_as<callable_type> C>
+            requires(invocable_inorder_type::value)
+        static constexpr return_type
+          call(C* callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+            return istl::invoke_inorder(*callable, ctx, ctx.request, ctx.response);
         }
 
         template <typename R>

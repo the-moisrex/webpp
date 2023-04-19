@@ -137,6 +137,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/routes/tpath.hpp
         ${LIB_INCLUDE_DIR}/http/routes/context.hpp
         ${LIB_INCLUDE_DIR}/http/routes/path/number.hpp
+        ${LIB_INCLUDE_DIR}/http/routes/disabler.hpp
 
         ${LIB_INCLUDE_DIR}/http/bodies/json.hpp
         ${LIB_INCLUDE_DIR}/http/bodies/string.hpp

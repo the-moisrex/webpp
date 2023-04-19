@@ -3,6 +3,7 @@
 
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/routes/context.hpp"
+#include "../webpp/http/routes/disabler.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
 #include "common_pch.hpp"
@@ -499,4 +500,30 @@ TEST(DynamicRouter, ContextCallChaining) {
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "<body>home sweet home</body>") << as<std::string>(res.body);
+}
+
+
+TEST(DynamicRouter, RouteDisabler) {
+    enable_owner_traits<default_dynamic_traits> et;
+
+    route_disabler home_enabler;
+
+    dynamic_router router{et};
+    router += router / "home" >> &home_enabler >> [] {
+        return "home";
+    };
+
+    request req{et};
+    req.method("GET");
+    req.uri("/home");
+
+    HTTPResponse auto const res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "home") << as<std::string>(res.body);
+
+    home_enabler.disable();
+
+    HTTPResponse auto const res2 = router(req);
+    EXPECT_EQ(res2.headers.status_code(), status_code::not_found);
+    EXPECT_NE(as<std::string>(res2.body), "home") << as<std::string>(res2.body);
 }

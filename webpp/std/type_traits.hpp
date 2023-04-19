@@ -1189,6 +1189,13 @@ namespace webpp::istl {
     struct invocable_inorder : stl::false_type {
         static constexpr bool is_nothrow = false;
         using result                     = void;
+
+        template <typename C>
+        static constexpr auto call(C, Args...) {
+            // static_assert_false
+            static_assert(false && !sizeof(C*),
+                          "The specified callable cannot be called with the specified arguments.");
+        }
     };
 
     // valid args
