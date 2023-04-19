@@ -245,18 +245,18 @@ namespace webpp::http {
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_self(Args&&... nexts) const {
-            //            static_assert((Valvifiable<Args> && ...),
-            //                          "We're not able to valvify the valve, "
-            //                          "did you include the required headers "
-            //                          "that defines the right valvify function?");
+            static_assert((Valvifiable<Args> && ...),
+                          "We're not able to valvify the valve, "
+                          "did you include the required headers "
+                          "that defines the right valvify function?");
             using valve_type =
               Templ<T..., stl::remove_cvref_t<decltype(valvify_or(stl::declval<Args>()))>...>;
-            //            static_assert(
-            //              stl::is_constructible_v<valve_type,
-            //                                      stl::remove_cvref_t<decltype(valvify_or(stl::declval<Args>()))>...>,
-            //              "The specified valves are unknown even after valvifying them, "
-            //              "did you forget to include the required headers that define "
-            //              "the right valvify functions to convert your valves to the right type?");
+            static_assert(
+              stl::is_constructible_v<valve_type,
+                                      stl::remove_cvref_t<decltype(valvify_or(stl::declval<Args>()))>...>,
+              "The specified valves are unknown even after valvifying them, "
+              "did you forget to include the required headers that define "
+              "the right valvify functions to convert your valves to the right type?");
             if constexpr (is_self_of<valves_group>) {
                 return self()->replace_route(valve_type{valvify_or(stl::forward<Args>(nexts))...});
             } else {
