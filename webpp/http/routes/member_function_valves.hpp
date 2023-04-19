@@ -121,6 +121,18 @@ namespace webpp::http {
         }
     };
 
+    // Free Functions
+    template <typename T>
+        requires stl::is_function_v<stl::remove_cvref_t<T>>
+    struct valvify<T> {
+
+        template <istl::cvref_as<T> TT>
+        [[nodiscard]] static constexpr member_function_valve<stl::remove_cvref_t<T>>
+        call(TT&& next) noexcept {
+            return {stl::forward<TT>(next)};
+        }
+    };
+
 
 } // namespace webpp::http
 
