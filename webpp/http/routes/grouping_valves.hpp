@@ -43,14 +43,34 @@ namespace webpp::http {
         struct next_callable {
           private:
             NextCallable* next;
+            tuple_type*   manglers_ptr;
 
           public:
-            constexpr next_callable(NextCallable* inp_next) noexcept : next{inp_next} {}
+            constexpr next_callable(tuple_type& inp_manglers, NextCallable& inp_next) noexcept
+              : manglers_ptr{&inp_manglers},
+                next{&inp_next} {}
 
+
+            // to make sure it matches the "basic_next_route"'s return type
             template <Traits TraitsType>
-            constexpr bool operator()(basic_context<TraitsType>& ctx) {
-                using context_type = basic_context<TraitsType>;
-                return valve_traits<NextCallable, context_type>::call_set_get(*next, ctx);
+            constexpr void call_next(basic_context<TraitsType>& ctx) const {
+                valve_traits<NextCallable, basic_context<TraitsType>>::call_set_get(*next, ctx);
+            }
+
+            template <Traits TraitsType, stl::size_t Index = 0>
+            constexpr void operator()(basic_context<TraitsType>& ctx) const {
+                if constexpr (Index == stl::tuple_size_v<tuple_type> - 1) {
+                    (stl::get<stl::tuple_size_v<tuple_type> - 1>(*manglers_ptr))(
+                      ctx,
+                      basic_next_route<TraitsType>{*this,
+                                                   &next_callable<NextCallable>::call_next<TraitsType>});
+                } else if constexpr (stl::tuple_size_v<tuple_type> != 0) {
+                    (stl::get<Index>(*manglers_ptr))(
+                      ctx,
+                      basic_next_route<TraitsType>{
+                        *this,
+                        &next_callable<NextCallable>::operator()<TraitsType, Index + 1>});
+                }
             }
         };
 
@@ -70,14 +90,16 @@ namespace webpp::http {
 
         using valve_type::operator();
 
+
         template <Traits TraitsType, typename NextCallable>
-        constexpr void operator()(basic_context<TraitsType>& ctx, NextCallable&& next) {
-            stl::apply(
-              [&ctx, &next](ManglerType&... mangler) constexpr {
-                  // todo: is this okay?
-                  (mangler(ctx, next_route<TraitsType>{next_callable<NextCallable>(next)}), ...);
-              },
-              manglers);
+        constexpr bool operator()(basic_context<TraitsType>& ctx, NextCallable&& next) {
+            if constexpr (sizeof...(ManglerType) == 0) {
+                return valve_traits<NextCallable, basic_context<TraitsType>>::call_set_get(next, ctx);
+            } else {
+                next_callable<stl::remove_cvref_t<NextCallable>> const callers{manglers, next};
+                callers(ctx);
+                return true;
+            }
         }
 
         [[nodiscard]] constexpr tuple_type& as_tuple() noexcept {
@@ -110,6 +132,9 @@ namespace webpp::http {
     };
 
 
+    /**
+     * Forward Valve can contain multiple callables and calls them in-order
+     */
     template <typename... Callables>
     struct forward_valve : valve<forward_valve<Callables...>> {
         using valve_type = valve<forward_valve<Callables...>>;
@@ -222,10 +247,6 @@ namespace webpp::http {
           : manglers{stl::forward<T>(inp_mangler)},
             routes{stl::forward<R>(inp_routes)} {}
 
-        template <istl::cvref_as<route_type> T, istl::cvref_as<route_type> R>
-        constexpr valves_group(T&& inp_route, R&& inp_routes = route_type{})
-          : manglers{stl::forward<T>(inp_route)},
-            routes{stl::forward<R>(inp_routes)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr valves_group(valves_group const&)                = default;
@@ -239,17 +260,16 @@ namespace webpp::http {
 
         template <Traits TraitsType>
         constexpr void operator()(basic_context<TraitsType>& ctx) {
-            using context_type   = basic_context<TraitsType>;
-            using pre_traits     = valve_traits<pre_type, context_type>;
-            using post_traits    = valve_traits<post_type, context_type>;
-            using mangler_traits = valve_traits<mangler_type, context_type>;
-            using route_traits   = valve_traits<route_type, context_type>;
+            using context_type = basic_context<TraitsType>;
+            using pre_traits   = valve_traits<pre_type, context_type>;
+            using post_traits  = valve_traits<post_type, context_type>;
+            using route_traits = valve_traits<route_type, context_type>;
             if constexpr (sizeof...(Pres) > 0) {
                 if (!pre_traits::call_then(pres, ctx)) {
                     return;
                 };
             }
-            if (!route_traits::call_then(routes, ctx)) {
+            if (!manglers(ctx, routes)) {
                 return;
             }
             if constexpr (sizeof...(Posts) > 0) {
@@ -303,6 +323,18 @@ namespace webpp::http {
               new_post_type{
                 stl::tuple_cat(posts.as_tuple(), stl::make_tuple(stl::forward<Callable>(callable)))},
               manglers,
+              routes};
+        }
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto append_mangler(Callable&& callable) const {
+            using callable_type    = stl::remove_cvref_t<Callable>;
+            using new_mangler_type = mangler_valve<Manglers..., callable_type>;
+            return valves_group<pre_type, post_type, new_mangler_type, route_type>{
+              pres,
+              posts,
+              new_mangler_type{
+                stl::tuple_cat(manglers.as_tuple(), stl::make_tuple(stl::forward<Callable>(callable)))},
               routes};
         }
 

@@ -98,7 +98,8 @@ namespace webpp::http {
 
 
         template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
-        constexpr HTTPResponse decltype(auto) next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
+        constexpr HTTPResponse decltype(auto)
+        basic_next_route(ResT&& res, CtxT&& ctx, ReqT&& req) const noexcept {
             using result_type = stl::remove_cvref_t<ResT>;
 
             constexpr auto next_route_index = Index + 1;
@@ -114,9 +115,9 @@ namespace webpp::http {
             if constexpr (istl::Optional<result_type>) {
                 if (res) {
                     // Call this function for the same route, but strip out the optional struct
-                    return istl::deref(next_route<Index>(handle_primary_results(res.value(), ctx, req),
-                                                         stl::forward<CtxT>(ctx),
-                                                         req));
+                    return istl::deref(basic_next_route<Index>(handle_primary_results(res.value(), ctx, req),
+                                                               stl::forward<CtxT>(ctx),
+                                                               req));
                 } else {
                     // We don't need to handle the result of this route, because there's none;
                     // So we just call the next route for the result.
@@ -198,9 +199,10 @@ namespace webpp::http {
                     call_route(route, ctx, req);
                     return ctx.error(status_code::not_found);
                 } else {
-                    return next_route<Index>(handle_primary_results(call_route(route, ctx, req), ctx, req),
-                                             ctx,
-                                             req);
+                    return basic_next_route<Index>(
+                      handle_primary_results(call_route(route, ctx, req), ctx, req),
+                      ctx,
+                      req);
                 }
             }
         }

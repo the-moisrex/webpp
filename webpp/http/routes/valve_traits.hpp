@@ -16,7 +16,9 @@ namespace webpp::http {
 
 
     template <typename TraitsType>
-    using next_route = istl::function_ref<bool(basic_context<TraitsType>&)>;
+    using basic_next_route = istl::member_function_ref<void(basic_context<TraitsType>&)>;
+
+    using next_route = basic_next_route<default_dynamic_traits>;
 
     /**
      * Checks if the type is a valve type.
@@ -29,9 +31,9 @@ namespace webpp::http {
     concept Valve = ValveOf<default_dynamic_traits, T>;
 
     template <typename TraitsType, typename T>
-    concept Mangler = Traits<TraitsType> && stl::is_invocable_v<T,                          // type
-                                                                basic_context<TraitsType>&, // context
-                                                                next_route<TraitsType>      // next valve
+    concept Mangler = Traits<TraitsType> && stl::is_invocable_v<T,                           // type
+                                                                basic_context<TraitsType>&,  // context
+                                                                basic_next_route<TraitsType> // next valve
                                                                 >;
 
     template <typename TraitsType, typename T>

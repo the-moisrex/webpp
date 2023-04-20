@@ -133,25 +133,46 @@ TEST(DynamicRouter, DynamicString) {
 }
 
 
-// TEST(DynamicRouter, ManglerTest) {
-//
-//     enable_traits_for<dynamic_router> router;
-//     router.objects.emplace_back(pages{});
-//
-//     auto const body_mangler = [](context& ctx, auto next) {
-//         if (next(ctx)) {
-//             ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
-//         }
-//     };
-//
-//     router += (router / "about" >> &pages::about) % body_mangler;
-//
-//     request req{router.get_traits()};
-//     req.method("GET");
-//     req.uri("/about");
-//
-//     EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
-// }
+TEST(DynamicRouter, ManglerTest) {
+
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    auto const body_mangler = [](context& ctx, next_route next) {
+        next(ctx);
+        if (!ctx.response.empty()) {
+            ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
+        }
+    };
+
+    router += router * body_mangler / "about" >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about");
+
+    EXPECT_EQ(as<std::string>(router(req).body), "<body>about page</body>") << router.to_string();
+}
+
+TEST(DynamicRouter, MuliManglerTest) {
+
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    auto const body_mangler = [](context& ctx, next_route next) {
+        next(ctx);
+        ctx.response.body = "<body>" + as<stl::string>(ctx.response.body) + "</body>";
+    };
+
+    router += (router * body_mangler / "about" >> &pages::about) * body_mangler;
+
+    request req{router.get_traits()};
+    req.method("GET");
+    req.uri("/about");
+
+    EXPECT_EQ(as<std::string>(router(req).body), "<body><body>about page</body></body>")
+      << router.to_string();
+}
 
 TEST(DynamicRouter, CacheDeceptionTest) {
     // I got the idea from: https://twitter.com/naglinagli/status/1639351113571868673?s=20

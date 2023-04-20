@@ -512,7 +512,7 @@ namespace webpp::istl {
         static constexpr bool conv_to_func_ptr = stl::is_assignable_v<signature_ptr&, T>;
 
         template <typename NRet, typename T, typename... NArgs>
-        static constexpr bool invocable_by = stl::is_invocable_r_v<Return, T, Args...>;
+        static constexpr bool invocable_by = stl::is_invocable_r_v<NRet, T, Args...>;
 
 
         template <typename T>
@@ -936,6 +936,14 @@ namespace webpp::istl {
 
         template <typename NewObjType>
             requires(istl::cvref_as<NewObjType, object_type> && !stl::is_void_v<object_type>)
+        constexpr Return operator()(NewObjType&& new_obj, Args... xs) const noexcept(noexcept(
+          (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...))) {
+            return (
+              *erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...);
+        }
+
+        template <typename NewObjType>
+            requires(stl::is_void_v<object_type>)
         constexpr Return operator()(NewObjType&& new_obj, Args... xs) const noexcept(noexcept(
           (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...))) {
             return (
