@@ -761,6 +761,21 @@ TEST_F(MemberFunctionRefTest, MemberFunctionPtrTest) {
     using MemberBarPtr         = member_function_ref<int (TestStruct::*)(int) const>;
     MemberBarPtr const bar_ptr = &TestStruct::bar;
     EXPECT_EQ(bar_ptr(obj, 10), 52);
+
+
+    using KindaMemberBarPtr               = member_function_ref<int(int) const>;
+    KindaMemberBarPtr const kinda_bar_ptr = &TestStruct::bar;
+    EXPECT_EQ(kinda_bar_ptr(obj, 10), 52);
+
+
+    using KindaMemberBarPtr2 = member_function_ref<int(int) const>;
+    KindaMemberBarPtr2 const kinda_bar_ptr2{obj, &TestStruct::bar};
+    EXPECT_EQ(kinda_bar_ptr2(10), 52);
+
+
+    using KindaMemberBarPtr3 = member_function_ref<int(int)>;
+    KindaMemberBarPtr3 const kinda_bar_ptr3{obj, &TestStruct::bar};
+    EXPECT_EQ(kinda_bar_ptr3(10), 52);
 }
 
 // test the basic functionality of member_function_ref with function pointer

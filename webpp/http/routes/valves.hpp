@@ -35,10 +35,10 @@ namespace webpp::http {
                     // Prevent double forwarding (flatten the type):
                     //   forward_valve<C2..., forward_valve<C...>>
                     return rebind_self<forward_valve>(
-                      stl::tuple_cat(routes()->as_tuple(), callable.as_tuple()));
+                      stl::tuple_cat(routes().as_tuple(), callable.as_tuple()));
                 } else { // append the segment
                     return rebind_self<forward_valve>(
-                      stl::tuple_cat(routes()->as_tuple(),
+                      stl::tuple_cat(routes().as_tuple(),
                                      stl::make_tuple(valvify_or(stl::forward<Callable>(callable)))));
                 }
                 // } else if constexpr (is_routes_of<segment_valve>) {
@@ -46,7 +46,7 @@ namespace webpp::http {
                 //     // Operator precedence of '>>' is lower than the precedence of '/' and '%', so we're
                 //     // changing that here:
                 //     return rebind_self<segment_valve>(
-                //       stl::tuple_cat(routes()->as_tuple(),
+                //       stl::tuple_cat(routes().as_tuple(),
                 //                      stl::make_tuple(valvify_or(stl::forward<Callable>(callable)))));
             } else {
                 return rebind_next<forward_valve>(stl::forward<Callable>(callable));
@@ -60,7 +60,7 @@ namespace webpp::http {
             if constexpr (stl::same_as<routes_type, callable_type>) { // C && C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C && !C == -C
-                return rebind_self<negative_valve>(*routes());
+                return rebind_self<negative_valve>(routes());
             } else if constexpr (stl::same_as<routes_type, not_valve<callable_type>>) { // !C && C == -C
                 return rebind_self<negative_valve>(stl::forward<Callable>(callable));
             } else {
@@ -76,7 +76,7 @@ namespace webpp::http {
             if constexpr (stl::same_as<routes_type, callable_type>) { // C || C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C || !C == +C
-                return rebind_self<positive_valve>(*routes());
+                return rebind_self<positive_valve>(routes());
             } else if constexpr (stl::same_as<routes_type, not_valve<callable_type>>) { // !C || C == -C
                 return rebind_self<positive_valve>(stl::forward<Callable>(callable));
             } else {
@@ -90,9 +90,9 @@ namespace webpp::http {
                 // This only checks against the default traits'-type's return type
                 if constexpr (stl::same_as<bool,
                                            typename valve_traits<routes_type>::return_type>) { // !!C == C
-                    return routes()->unwrap();
+                    return routes().unwrap();
                 } else { // !!C = +C
-                    return rebind_self<positive_valve>(routes()->unwrap());
+                    return rebind_self<positive_valve>(routes().unwrap());
                 }
             } else {
                 return rebind_next<not_valve>();
@@ -106,7 +106,7 @@ namespace webpp::http {
                 return self()->append_postroute(valvify_or(stl::forward<Callable>(callable)));
             } else {
                 return valves_group{postrouting_valve{valvify_or(stl::forward<Callable>(callable))},
-                                    *routes()};
+                                    routes()};
             }
         }
 
@@ -116,11 +116,19 @@ namespace webpp::http {
             if constexpr (is_self_of<valves_group>) {
                 return self()->append_preroute(valvify_or(stl::forward<Callable>(callable)));
             } else {
-                return valves_group{prerouting_valve{valvify_or(stl::forward<Callable>(callable))},
-                                    *routes()};
+                return valves_group{prerouting_valve{valvify_or(stl::forward<Callable>(callable))}, routes()};
             }
         }
 
+
+        template <typename Callable>
+        [[nodiscard]] constexpr auto operator*(Callable&& callable) const {
+            if constexpr (is_self_of<valves_group>) {
+                return self()->append_mangler(valvify_or(stl::forward<Callable>(callable)));
+            } else {
+                return valves_group{mangler_valve{valvify_or(stl::forward<Callable>(callable))}, routes()};
+            }
+        }
 
         template <typename CallableSegment>
         [[nodiscard]] constexpr auto operator/(CallableSegment&& inp_segment) const {
@@ -130,10 +138,10 @@ namespace webpp::http {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(routes()->as_tuple(), inp_segment.as_tuple()));
+                      stl::tuple_cat(routes().as_tuple(), inp_segment.as_tuple()));
                 } else { // append the segment
                     return rebind_self<segment_valve>(stl::tuple_cat(
-                      routes()->as_tuple(),
+                      routes().as_tuple(),
                       stl::make_tuple(valvify_or(stl::forward<CallableSegment>(inp_segment)))));
                 }
             } else {
@@ -150,10 +158,10 @@ namespace webpp::http {
                     // Prevent double segmenting (flatten the type):
                     //   segment_valve<C2..., segment_valve<C...>>
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(routes()->as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
+                      stl::tuple_cat(routes().as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
                 } else { // append the segment
                     return rebind_self<segment_valve>(
-                      stl::tuple_cat(routes()->as_tuple(),
+                      stl::tuple_cat(routes().as_tuple(),
                                      stl::make_tuple(valvify_or(stl::forward<SegT>(inp_segment))),
                                      stl::make_tuple(endpath)));
                 }
@@ -195,23 +203,27 @@ namespace webpp::http {
             return static_cast<Self*>(this);
         }
 
-        [[nodiscard]] constexpr auto* routes() noexcept
-            requires(!stl::is_void_v<Self>)
-        {
-            if constexpr (is_self_of<valves_group>) {
-                return &self()->get_routes();
+        [[nodiscard]] constexpr decltype(auto) routes() noexcept {
+            if constexpr (stl::is_void_v<Self>) {
+                return forward_valve<>{};
             } else {
-                return self();
+                if constexpr (is_self_of<valves_group>) {
+                    return self()->get_routes();
+                } else {
+                    return *self();
+                }
             }
         }
 
-        [[nodiscard]] constexpr auto const* routes() const noexcept
-            requires(!stl::is_void_v<Self>)
-        {
-            if constexpr (is_self_of<valves_group>) {
-                return &self()->get_routes();
+        [[nodiscard]] constexpr decltype(auto) routes() const noexcept {
+            if constexpr (stl::is_void_v<Self>) {
+                return forward_valve<>{};
             } else {
-                return self();
+                if constexpr (is_self_of<valves_group>) {
+                    return self()->get_routes();
+                } else {
+                    return *self();
+                }
             }
         }
 
@@ -220,7 +232,7 @@ namespace webpp::http {
             if constexpr (stl::is_void_v<Self>) {
                 return rebind_self<Templ, T...>(stl::forward<Args>(nexts)...);
             } else {
-                return rebind_self<Templ, T...>(*routes(), stl::forward<Args>(nexts)...);
+                return rebind_self<Templ, T...>(routes(), stl::forward<Args>(nexts)...);
             }
         }
 
