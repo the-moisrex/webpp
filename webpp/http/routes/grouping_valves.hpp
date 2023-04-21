@@ -42,8 +42,8 @@ namespace webpp::http {
         template <typename NextCallable>
         struct next_callable {
           private:
-            NextCallable* next;
             tuple_type*   manglers_ptr;
+            NextCallable* next;
 
           public:
             constexpr next_callable(tuple_type& inp_manglers, NextCallable& inp_next) noexcept
@@ -263,7 +263,6 @@ namespace webpp::http {
             using context_type = basic_context<TraitsType>;
             using pre_traits   = valve_traits<pre_type, context_type>;
             using post_traits  = valve_traits<post_type, context_type>;
-            using route_traits = valve_traits<route_type, context_type>;
             if constexpr (sizeof...(Pres) > 0) {
                 if (!pre_traits::call_then(pres, ctx)) {
                     return;

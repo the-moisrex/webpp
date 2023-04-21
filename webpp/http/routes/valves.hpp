@@ -229,7 +229,10 @@ namespace webpp::http {
 
         template <template <typename...> typename Templ, typename... T, typename... Args>
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
-            if constexpr (stl::is_void_v<Self>) {
+            // skip passing the routes if the valve_group's routes are empty, that would create an
+            // empty segment route (for example)
+            if constexpr (stl::is_void_v<Self> || (is_self_of<valves_group> &&
+                                                   istl::cvref_as<decltype(routes()), forward_valve<>>) ) {
                 return rebind_self<Templ, T...>(stl::forward<Args>(nexts)...);
             } else {
                 return rebind_self<Templ, T...>(routes(), stl::forward<Args>(nexts)...);
