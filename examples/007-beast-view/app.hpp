@@ -71,7 +71,7 @@ namespace website {
                                           [this]() {
                                               return view_man.file("about.html");
                                           },
-                                        (post and root / "content-length") >> app::get_len};
+                                        (post and root / "content-length") >> &app::get_len};
 
             return router(req);
         }
