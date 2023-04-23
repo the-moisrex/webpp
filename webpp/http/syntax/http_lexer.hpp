@@ -56,10 +56,10 @@ namespace webpp::http {
         static constexpr stl::array<char_type, 2> CRLF{{0x0D, 0x0A}}; // CR(\r), LF(\n)
         static constexpr stl::array<char_type, 2> OWS{{0x20, 0x09}};  // SP, HTAB
 
-        string_view_type       raw_view{};
-        string_view_type       body_view{};
-        header_views_type      header_views{};
-        enum http::status_code status_code = http::status_code::ok;
+        string_view_type  raw_view{};
+        string_view_type  body_view{};
+        header_views_type header_views{};
+        http::status_code status_code = http::status_code::ok;
 
         inline auto consume_next(auto&&... what_to_find) noexcept {
             auto res = raw_view.find(stl::forward<decltype(what_to_find)>(what_to_find)...);
@@ -68,7 +68,7 @@ namespace webpp::http {
             }
         }
 
-        enum http::status_code next_line() noexcept {
+        http::status_code next_line() noexcept {
             if (raw_view.starts_with(CRLF.data())) {
                 body_view = raw_view.substr(CRLF.size());
                 return http::status_code::ok;
