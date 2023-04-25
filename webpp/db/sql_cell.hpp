@@ -254,6 +254,7 @@ namespace webpp::sql {
         constexpr cell_iterator(cell_iterator&&) noexcept            = default;
         constexpr cell_iterator& operator=(cell_iterator const&)     = default;
         constexpr cell_iterator& operator=(cell_iterator&&) noexcept = default;
+        constexpr ~cell_iterator() noexcept                          = default;
 
         constexpr auto operator==(const cell_iterator& rhs) noexcept {
             return cell == rhs.cell;
