@@ -13,7 +13,7 @@
 
 
 // This file contains the list of HTTP status codes. Taken from IANA HTTP Status Code Registry.
-// http://www.iana.org/assignments/http-status-codes/http-status-codes.xml
+// https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
 // There are some that are defined in this file as well but is not standard.
 
 // Informational 1xx

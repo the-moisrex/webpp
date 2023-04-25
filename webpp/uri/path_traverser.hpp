@@ -93,6 +93,8 @@ namespace webpp::uri {
 
     /**
      * Iterator through a path, and parse while we go through it
+     *
+     * https://httpwg.org/specs/rfc9110.html#uri.references
      */
     template <istl::String SlugType = stl::string, istl::StringView StringViewType = stl::string_view>
     struct basic_path_iterator {
