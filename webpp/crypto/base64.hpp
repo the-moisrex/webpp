@@ -51,6 +51,7 @@ namespace webpp::base64 {
      * Can be used to allocate the required storage before encoding
      *
      * len - The length of the buffer to encode
+     * You many need to add one to it if you want space for '\0' as well.
      * @returns The expected length of an encoded buffer
      */
     static constexpr inline stl::size_t expected_length(stl::size_t len) noexcept {
