@@ -31,6 +31,7 @@ set(FILE_SOURCES
         strview_find_method/strview_find_method_benchmark.cpp
         headers_has/headers_has.cpp
         valves_vs_routes/valves_vs_routes_benchmark.cpp
+        bool_array/bool_array_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
