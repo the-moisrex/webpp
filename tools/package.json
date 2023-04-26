@@ -9,6 +9,6 @@
   "author": "The Moisrex",
   "license": "MIT",
   "dependencies": {
-    "yaml": "^2.2.1"
+    "yaml": "^2.2.2"
   }
 }
