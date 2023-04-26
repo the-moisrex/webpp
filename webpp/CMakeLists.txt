@@ -184,6 +184,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/syntax/common.hpp
         ${LIB_INCLUDE_DIR}/http/syntax/request_parser.hpp
         ${LIB_INCLUDE_DIR}/http/syntax/http_lexer.hpp
+        ${LIB_INCLUDE_DIR}/http/syntax/tokens.hpp
 
         ${LIB_INCLUDE_DIR}/http/headers/header_concepts.hpp
         ${LIB_INCLUDE_DIR}/http/headers/accept_encoding.hpp
