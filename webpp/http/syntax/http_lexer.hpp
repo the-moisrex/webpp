@@ -7,6 +7,8 @@
 #include "../../memory/allocators.hpp"
 #include "../../std/string_view.hpp"
 #include "../../std/vector.hpp"
+#include "../../strings/size.hpp"
+#include "tokens.hpp"
 
 #include <array>
 
@@ -53,9 +55,6 @@ namespace webpp::http {
         using header_view_allocator = rebind_allocator<allocator_type, header_view_type>;
         using header_views_type     = stl::vector<header_view_type, header_view_allocator>;
 
-        static constexpr stl::array<char_type, 2> CRLF{{0x0D, 0x0A}}; // CR(\r), LF(\n)
-        static constexpr stl::array<char_type, 2> OWS{{0x20, 0x09}};  // SP, HTAB
-
         string_view_type  raw_view{};
         string_view_type  body_view{};
         header_views_type header_views{};
@@ -69,14 +68,14 @@ namespace webpp::http {
         }
 
         http::status_code next_line() noexcept {
-            if (raw_view.starts_with(CRLF.data())) {
-                body_view = raw_view.substr(CRLF.size());
+            if (raw_view.starts_with(CRLF)) {
+                body_view = raw_view.substr(ascii::size(CRLF));
                 return http::status_code::ok;
             }
             if (auto colon = raw_view.find(':'); colon != string_view_type::npos) {
-                if (auto after_spaces = raw_view.find_first_not(OWS.data(), colon + 1);
+                if (auto after_spaces = raw_view.find_first_not(OWS, colon + 1);
                     after_spaces != string_view_type::npos) {
-                    if (auto CRLF_found = raw_view.find(CRLF.data(), after_spaces + 1);
+                    if (auto CRLF_found = raw_view.find(CRLF, after_spaces + 1);
                         CRLF_found != string_view_type::npos) {
                         header_views.emplace_back(stl::array<string_view_type, 2>{
                           raw_view.substr(0, colon),
