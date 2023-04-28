@@ -6,7 +6,16 @@ namespace webpp::http {
     // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
 
     static constexpr char CRLF[]{0x0D, 0x0A}; // CR(\r), LF(\n)
-    static constexpr char OWS[]{0x20, 0x09};  // SP, HTAB
+
+    // OWS: optional whitespace
+    // OWS = *( SP / HTAB )
+    //
+    // RWS: required whitespace
+    // RWS = 1*( SP / HTAB )
+    //
+    // BWS: bad whitespaces
+    // BWS = OWS
+    static constexpr char OWS[]{0x20, 0x09}; // SP, HTAB
 
     /**
      * This is the "Token" specified in the HTTP Semantics RFC (https://httpwg.org/specs/rfc9110.html#tokens)
