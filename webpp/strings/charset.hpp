@@ -22,7 +22,7 @@ namespace webpp {
      * to find out if a character is in the set or not.
      */
     template <istl::CharType CharT, stl::size_t N>
-        requires(N <= stl::numeric_limits<unsigned char>::max())
+        requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
     struct charset : public stl::array<CharT, N> {
         using value_type                        = CharT;
         static constexpr stl::size_t array_size = N;
@@ -208,7 +208,7 @@ namespace webpp {
      * Attention: if your table is more than 256 cells, you're doing it wrong
      **/
     template <stl::size_t N>
-        requires(N <= stl::numeric_limits<unsigned char>::max())
+        requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
     struct charmap : public stl::array<bool, N> {
         static constexpr stl::size_t array_size = N;
 
@@ -359,8 +359,9 @@ namespace webpp {
       -> charmap<stl::max({N1, N2, N...})>;
 
 
-    using charmap_half = charmap<stl::numeric_limits<char>::max()>; // Half Table (excluding negative chars)
-    using charmap_full = charmap<stl::numeric_limits<unsigned char>::max()>; // Full Table
+    using charmap_half =
+      charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative chars)
+    using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
 
 
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays)

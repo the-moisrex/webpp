@@ -91,6 +91,7 @@ static constexpr charmap_full token_charmap{
   charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}};
 
 TEST(CharsetTest, CharMapExpectation) {
+    EXPECT_EQ(token_charmap.size(), 256);
     for (stl::size_t index = 0; index != token_charmap.size(); ++index) {
         EXPECT_EQ(token_charmap[index], token_char_map[index]) << index;
     }
