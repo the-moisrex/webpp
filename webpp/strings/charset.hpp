@@ -9,43 +9,34 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <concepts>
 #include <initializer_list>
-#include <tuple>
+#include <limits>
 #include <utility>
 
 namespace webpp {
+    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
 
     /**
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
      */
     template <istl::CharType CharT, stl::size_t N>
-    struct charset : public stl::array<stl::remove_cvref_t<CharT>, N> {
-        using value_type                        = stl::remove_cvref_t<CharT>;
+        requires(N <= stl::numeric_limits<unsigned char>::max())
+    struct charset : public stl::array<CharT, N> {
+        using value_type                        = CharT;
         static constexpr stl::size_t array_size = N;
 
       private:
-        template <typename Tpl, typename Callable, stl::size_t... I>
-        constexpr void
-        do_this_for_that(stl::index_sequence<I...>, Tpl const& tpl, Callable callback) noexcept {
-            (callback(stl::get<I>(tpl)), ...);
-        }
-
-        template <typename Tpl, typename Callable>
-        constexpr void for_each_tuple(Tpl const& tpl, Callable callback) noexcept {
-            constexpr auto tpl_size = stl::tuple_size<Tpl>::value;
-            do_this_for_that(stl::make_index_sequence<tpl_size>(), tpl, callback);
-        }
-
         using super = stl::array<value_type, N>;
 
         template <stl::size_t... I>
-        constexpr auto to_array(stl::index_sequence<I...>, auto&& items) noexcept {
+        consteval auto to_array(stl::index_sequence<I...>, auto&& items) noexcept {
             return super{items[I]...};
         }
 
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
-        constexpr auto merge(charset<value_type, N1> const& set1,
+        consteval auto merge(charset<value_type, N1> const& set1,
                              charset<value_type, N2> const& set2,
                              charset<value_type, NN> const&... c_sets) noexcept {
             super data;
@@ -65,9 +56,10 @@ namespace webpp {
         consteval charset(const value_type (&str)[N + 1]) noexcept
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
+
         template <typename... T>
-            requires((stl::same_as<T, value_type> && ...) && sizeof...(T) <= N)
-        constexpr charset(T&&... data) noexcept : super{stl::forward<T>(data)...} {}
+            requires((stl::convertible_to<T, value_type> && ...) && sizeof...(T) <= N)
+        consteval charset(T... chars) noexcept : super{static_cast<value_type>(chars)...} {}
 
         /**
          * This constructs a character set that contains all the
@@ -145,7 +137,7 @@ namespace webpp {
      *     This is the last of the range of characters to put in the set.
      */
     template <istl::CharType CharT = char, CharT First, CharT Last>
-    [[nodiscard]] static constexpr auto charset_range() noexcept {
+    [[nodiscard]] static consteval auto charset_range() noexcept {
         constexpr stl::size_t    the_size = static_cast<stl::size_t>(Last - First) + 1ul;
         charset<CharT, the_size> data;
         for (CharT it = First; it != Last; ++it)
@@ -204,6 +196,174 @@ namespace webpp {
     static constexpr auto ALPHA_DIGIT = charset(ALPHA<CharT>, DIGIT<CharT>);
 
 
+
+
+    ////////////////////////////// CHAR MAP //////////////////////////////
+
+
+    /**
+     * This is a Bolean Map of the specified characters.
+     * This is faster to query than charset but might take more memory
+     *
+     * Attention: if your table is more than 256 cells, you're doing it wrong
+     **/
+    template <stl::size_t N>
+        requires(N <= stl::numeric_limits<unsigned char>::max())
+    struct charmap : public stl::array<bool, N> {
+        static constexpr stl::size_t array_size = N;
+
+      private:
+        using super = stl::array<bool, N>;
+
+#define webpp_or_set(set, out)                                      \
+    do {                                                            \
+        for (stl::size_t index = 0; index != (set).size(); ++index) \
+            (out)[static_cast<stl::size_t>((set)[index])] |= true;  \
+    } while (false)
+
+
+      public:
+        consteval charmap(const bool (&bools)[N]) noexcept : super{bools} {}
+
+        template <typename CharT, stl::size_t... I>
+        consteval charmap(const CharT (&... str)[I]) noexcept
+          : super{} // init with false
+        {
+            (
+              [this, &str]() {
+                  webpp_or_set(str, *this);
+              }(),
+              ...); // make them true
+        }
+
+        template <istl::CharType... T>
+            requires(sizeof...(T) <= N)
+        consteval charmap(T... data) noexcept : super{} {
+            stl::array<char, sizeof...(T)> const list{data...};
+            webpp_or_set(list, *this);
+        }
+
+        /**
+         * This constructs a character map that contains all the
+         * characters in all the other given character maps.
+         *
+         * @param[in] characterMaps
+         *     These are the character maps to include.
+         */
+        template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
+            requires(N1 <= N && N2 <= N && (... && (NN <= N)))
+        consteval charmap(charmap<N1> const& set1,
+                          charmap<N2> const& set2,
+                          charmap<NN> const&... c_sets) noexcept
+          : super{} // init with false values
+        {
+            webpp_or_set(set1, *this);
+            webpp_or_set(set2, *this);
+            (
+              [this, &c_sets]() {
+                  webpp_or_set(c_sets, *this);
+              }(),
+              ...);
+        }
+
+        template <typename CharT, stl::size_t... NN>
+            requires((... && (NN <= N)))
+        consteval charmap(charset<CharT, NN> const&... c_sets) noexcept
+          : super{} // init with false values
+        {
+            (
+              [this, &c_sets]() {
+                  webpp_or_set(c_sets, *this);
+              }(),
+              ...);
+        }
+
+        template <stl::size_t N1, typename... CharT>
+        consteval charmap(charmap<N1> const& set1, CharT... c_set) noexcept
+          : charmap{set1, charmap{c_set...}} {}
+
+
+        /**
+         * This method checks to see if the given character
+         * is in the character map.
+         *
+         * @param[in] c
+         *     This is the character to check.
+         *
+         * @return
+         *     An indication of whether or not the given character
+         *     is in the character map is returned.
+         */
+        template <typename CharT>
+        [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
+            return this->operator[](static_cast<stl::size_t>(c));
+        }
+
+        /**
+         * @brief checks if all the chars in the _cs is in the chars list or not
+         * @param _cs
+         * @return
+         */
+        [[nodiscard]] constexpr bool contains(stl::basic_string_view<bool> const& _cs) const noexcept {
+            for (auto const& c : _cs)
+                if (!contains(c))
+                    return false;
+            return true;
+        }
+
+        template <istl::StringView StrViewType = stl::basic_string_view<bool>>
+        [[nodiscard]] constexpr auto string_view() const noexcept {
+            return StrViewType(this->data(), this->size());
+        }
+
+        template <istl::String StrType = stl::basic_string<bool>>
+        [[nodiscard]] StrType string(
+          typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
+            return StrType{super::data(), super::size(), alloc};
+        }
+
+#undef webpp_or_set
+    };
+
+    template <typename T>
+    concept CharMap = requires(T cs) {
+                          stl::remove_cvref_t<T>::array_size;
+                          requires istl::cvref_as<T, charmap<stl::remove_cvref_t<T>::array_size>>;
+                      };
+
+    /**
+     * This constructs a character map that contains all the characters between the given
+     * "first" and "last" characters, inclusive.
+     *
+     * first
+     *     This is the first of the range of characters to put in the set.
+     *
+     * last
+     *     This is the last of the range of characters to put in the set.
+     */
+    template <auto First, auto Last>
+    [[nodiscard]] static consteval auto charmap_range() noexcept {
+        constexpr auto    the_size = static_cast<stl::size_t>(Last) + 1;
+        charmap<the_size> data{}; // all false
+        for (auto it = First; it != Last + 1; ++it)
+            data[it] = true;
+        return data;
+    }
+
+
+    template <istl::CharType CharT = char, stl::size_t... N>
+    charmap(const CharT (&... str)[N]) -> charmap<stl::max(N...) - 1>;
+
+    template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
+    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...)
+      -> charmap<stl::max({N1, N2, N...})>;
+
+
+    using charmap_half = charmap<stl::numeric_limits<char>::max()>; // Half Table (excluding negative chars)
+    using charmap_full = charmap<stl::numeric_limits<unsigned char>::max()>; // Full Table
+
+
+    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 
 } // namespace webpp
 #endif // WEBPP_CHARSET_HPP
