@@ -1,7 +1,7 @@
 // Created by moisrex on 7/20/19.
 
-#ifndef WEBPP_META_H
-#define WEBPP_META_H
+#ifndef WEBPP_META_HPP
+#define WEBPP_META_HPP
 
 #if __cplusplus >= 199711L
 #    define CXX98 1
@@ -48,7 +48,16 @@ namespace webpp::details {
         static_assert(errv, StrLiteral);                                                    \
     })
 
-#define constexpr_assert_false(ERR, StrLiteral)  constexpr_assert(false, StrLiteral)
-#define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
+#define constexpr_assert_false(ERR, StrLiteral) constexpr_assert(false, StrLiteral)
 
-#endif // WEBPP_META_H
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2593r0.html
+// GCC 13.1 started supporting static_assert(false, ...)
+// Clang 16 doesn't support this, but the current trunk version does
+// todo: add Clang version to this mix as well
+#if __GNUC__ >= 13 || (__GNUC__ == 13 && (__GNUC_MINOR__ >= 1))
+#    define static_assert_false(BasedOn, StrLiteral) static_assert(false, StrLiteral)
+#else
+#    define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
+#endif
+
+#endif // WEBPP_META_HPP

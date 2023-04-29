@@ -37,15 +37,14 @@ namespace webpp::istl {
      *   - instead of commenting the whole in-development concepts, fill them with this temporarily.
      */
     template <typename T>
-    concept All = requires { typename T::yes; } || !requires { typename T::yes; };
+    concept All = true;
 
 
     /**
      * This concept is always false
      */
     template <typename T>
-    concept None = !
-    All<T>;
+    concept None = false;
 
 
 
