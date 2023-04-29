@@ -23,7 +23,8 @@ namespace webpp::uri {
     struct basic_port : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
-        static constexpr auto max_port_number = 65535;
+        static constexpr uint16_t max_port_number       = 65535;
+        static constexpr uint16_t well_known_upper_port = 1024;
 
         template <typename... T>
         constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
@@ -58,7 +59,17 @@ namespace webpp::uri {
             out.append(*this);
         }
 
-        [[nodiscard]] constexpr uint16_t value() const {
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            auto const val = value();
+            return val >= 0 && val <= stl::numeric_limits<uint16_t>::max();
+        }
+
+        [[nodiscard]] constexpr bool is_well_known() const noexcept {
+            auto const val = value();
+            return val >= 0 && val < well_known_upper_port;
+        }
+
+        [[nodiscard]] constexpr uint16_t value() const noexcept {
             return to_uint16(*this);
         }
     };
