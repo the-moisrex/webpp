@@ -29,7 +29,7 @@ namespace webpp {
      *
      *   char input[] = "this is a test";
      *   c_string_tokenizer t(input, input + strlen(input), " ");
-     *   while (t.GetNext()) {
+     *   while (t.next()) {
      *     printf("%s\n", t.token().c_str());
      *   }
      *
@@ -43,10 +43,8 @@ namespace webpp {
      *
      * EXAMPLE 2:
      *
-     *   std::string input = "no-cache=\"foo, bar\", private";
-     *   string_tokenizer t(input, ", ");
-     *   t.set_quote_chars("\"");
-     *   while (t.GetNext()) {
+     *   std::string_view input = "no-cache=\"foo, bar\", private";
+     *   while (t.next(charset{',', ' '}, charset{'"'})) {
      *     printf("%s\n", t.token().c_str());
      *   }
      *
@@ -61,7 +59,7 @@ namespace webpp {
      *   bool next_is_option = false, next_is_value = false;
      *   std::string input = "text/html; charset=UTF-8; foo=bar";
      *   string_tokenizer<> t(input);
-     *   while (t.next<"; =", {}, string_tokenizer_options::return_delims>()) {
+     *   while (t.next<{}, string_tokenizer_options::return_delims>("; =")) {
      *     if (t.token_is_delim()) {
      *       switch (*t.token_begin()) {
      *         case ';':
@@ -130,36 +128,38 @@ namespace webpp {
         // Call this method to advance the tokenizer to the next delimiter.  This
         // returns false if the tokenizer is complete.  This method must be called
         // before calling any of the token* methods.
-        template <CharSet auto Delims  = charset<typename StringViewType::value_type, 0>{},
-                  CharSet auto Quotes  = charset<typename StringViewType::value_type, 1>{'\0'},
-                  int          Options = 0>
-        [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool next() noexcept {
-            if constexpr (Options == 0 && Quotes.empty()) {
-                return quick_get_next<Delims>();
+        template <int Options = 0, CharSet CharSetT = charset<char_type, 1>>
+        [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool
+        next(CharSetT delims = NULL_CHAR<char_type>) noexcept {
+            if constexpr (Options == 0) {
+                return quick_get_next(delims);
             } else {
-                return full_get_next<Delims, Quotes, Options>();
+                return full_get_next<Options>(delims, NULL_CHAR<char_type>);
             }
         }
 
-        template <CharSet auto Chars>
-        constexpr bool next_until() noexcept {
+        template <int Options = 0, CharSet CharSetT = charset<char_type, 1>>
+        [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool
+        next(CharSetT delims, CharSet auto quotes) noexcept {
+            return full_get_next<Options>(delims, quotes);
+        }
+
+        constexpr bool next_until(CharSet auto chars) noexcept {
             _token_begin = _token_end;
-            while (_token_end != _end && Chars.contains(*_token_end))
+            while (_token_end != _end && chars.contains(*_token_end))
                 ++_token_end;
             return true;
         }
 
-        template <CharSet auto Chars>
-        constexpr bool next_until_not() noexcept {
+        constexpr bool next_until_not(CharSet auto chars) noexcept {
             _token_begin = _token_end;
-            while (_token_end != _end && !Chars.contains(*_token_end))
+            while (_token_end != _end && !chars.contains(*_token_end))
                 ++_token_end;
             return true;
         }
 
-        template <CharSet auto Chars>
-        constexpr void skip() noexcept {
-            while (_token_begin != _end && Chars.contains(*_token_begin))
+        constexpr void skip(CharSet auto chars) noexcept {
+            while (_token_begin != _end && chars.contains(*_token_begin))
                 ++_token_begin;
             _token_end = _token_begin;
         }
@@ -204,16 +204,11 @@ namespace webpp {
             _token_begin = _token_end;
         }
 
-        //        [[nodiscard]] string_view_type token_view() const noexcept {
-        //            return string_view_type{&*_token_begin, std::distance(_token_begin, _token_end)};
-        //        }
-
       private:
-        // Implementation of get_next() for when we have no quote characters. We have
+        // Implementation of next() for when we have no quote characters. We have
         // two separate implementations because advance_one() is a hot spot in large
         // text files with large tokens.
-        template <CharSet auto Delims>
-        constexpr bool quick_get_next() noexcept {
+        constexpr bool quick_get_next(CharSet auto delims) noexcept {
             _is_delim = false;
             for (;;) {
                 _token_begin = _token_end;
@@ -222,18 +217,18 @@ namespace webpp {
                     return false;
                 }
                 ++_token_end;
-                if (!Delims.contains(*_token_begin))
+                if (!delims.contains(*_token_begin))
                     break;
                 // else skip over delimiter.
             }
-            while (_token_end != _end && !Delims.contains(*_token_end))
+            while (_token_end != _end && !delims.contains(*_token_end))
                 ++_token_end;
             return true;
         }
 
-        // Implementation of get_next() for when we have to take quotes into account.
-        template <CharSet auto Delims, CharSet auto Quotes, int Options>
-        constexpr bool full_get_next() noexcept {
+        // Implementation of next() for when we have to take quotes into account.
+        template <int Options>
+        constexpr bool full_get_next(CharSet auto delims, CharSet auto quotes) noexcept {
             advance_state state;
 
             for (;;) {
@@ -243,9 +238,9 @@ namespace webpp {
                     //    ... D T T T T D ...
                     //        ^ ^
                     //        | |
-                    //        | |token_end_| : The next character to look at or |end_|.
+                    //        | |_token_end| : The next character to look at or |end_|.
                     //        |
-                    //        |token_begin_| : Points to delimiter or |token_end_|.
+                    //        |_token_begin| : Points to delimiter or |_token_end|.
                     //
                     // The next token is always a non-delimiting token. It could be empty,
                     // however.
@@ -253,16 +248,18 @@ namespace webpp {
                     _token_begin = _token_end;
 
                     // Slurp all non-delimiter characters into the token.
-                    while (_token_end != _end && advance_one<Delims, Quotes>(&state, *_token_end)) {
+                    while (_token_end != _end && advance_one(delims, quotes, &state, *_token_end)) {
                         ++_token_end;
                     }
 
                     // If it's non-empty, or empty tokens were requested, return the token.
+                    // NOLINTBEGIN(bugprone-branch-clone)
                     if constexpr (Options & static_cast<int>(string_tokenizer_options::return_empty_tokens)) {
-                        return true; // NOLINT(bugprone-branch-clone)
+                        return true;
                     } else if (_token_begin != _token_end) {
                         return true;
                     }
+                    // NOLINTEND(bugprone-branch-clone)
                 }
 
                 assert(!_is_delim);
@@ -271,12 +268,12 @@ namespace webpp {
                 //    ... T T T D T T ...
                 //        ^     ^
                 //        |     |
-                //        |     token_end_ : The next character to look at. Always one
+                //        |     _token_end : The next character to look at. Always one
                 //        |                  char beyond the token boundary.
                 //        |
-                //        token_begin_ : Points to beginning of token. Note: token could
+                //        _token_begin : Points to beginning of token. Note: token could
                 //                       be empty, in which case
-                //                       token_begin_ == token_end_.
+                //                       _token_begin == _token_end.
                 //
                 // The next token is always a delimiter. It could be |end_| however, but
                 // |end_| is also an implicit delimiter.
@@ -300,8 +297,8 @@ namespace webpp {
         };
 
         // Returns true if a delimiter was not hit.
-        template <CharSet auto Delims, CharSet auto Quotes>
-        static constexpr bool advance_one(advance_state* state, char_type c) noexcept {
+        static constexpr bool
+        advance_one(CharSet auto delims, CharSet auto quotes, advance_state* state, char_type c) noexcept {
             if (state->in_quote) {
                 if (state->in_escape) {
                     state->in_escape = false;
@@ -311,9 +308,9 @@ namespace webpp {
                     state->in_quote = false;
                 }
             } else {
-                if (Delims.contains(c))
+                if (delims.contains(c))
                     return false;
-                state->in_quote = Quotes.contains(state->quote_char = c);
+                state->in_quote = quotes.contains(state->quote_char = c);
             }
             return true;
         }
