@@ -96,23 +96,13 @@ namespace webpp {
         static constexpr bool is_raw_pointer_iterator = stl::is_pointer_v<const_iterator>;
 
 
-        constexpr void init(const_iterator string_begin, const_iterator string_end) {
-            _start_pos   = string_begin;
-            _token_begin = string_begin;
-            _token_end   = string_begin;
-            _end         = string_end;
-            _is_delim    = true;
-        }
-
         constexpr string_tokenizer(str_v str) noexcept
-          : _start_pos{str.begin()},
-            _token_begin{str.begin()},
+          : _token_begin{str.begin()},
             _token_end{str.begin()},
             _end{str.end()} {}
 
         constexpr string_tokenizer(const_iterator str_begin, const_iterator str_end) noexcept
-          : _start_pos{str_begin},
-            _token_begin{str_begin},
+          : _token_begin{str_begin},
             _token_end{str_begin},
             _end{str_end} {}
 
@@ -169,9 +159,19 @@ namespace webpp {
         }
 
 
+        constexpr void reset(const_iterator string_begin, const_iterator string_end) noexcept {
+            _token_begin = string_begin;
+            _token_end   = string_begin;
+            _end         = string_end;
+            _is_delim    = true;
+        }
+
         // Start iterating through tokens from the beginning of the string.
-        constexpr void reset() noexcept {
-            _token_end = _start_pos;
+        constexpr void reset(const_iterator string_begin) noexcept {
+            _token_end   = string_begin;
+            _token_begin = string_begin;
+            _token_end   = string_begin;
+            _is_delim    = true;
         }
 
         // Returns true if token is a delimiter.  When the tokenizer is constructed
@@ -318,7 +318,6 @@ namespace webpp {
             return true;
         }
 
-        const_iterator _start_pos;
         const_iterator _token_begin;
         const_iterator _token_end;
         const_iterator _end;
