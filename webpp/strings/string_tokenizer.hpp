@@ -9,7 +9,7 @@
 
 namespace webpp {
 
-    enum struct string_tokenizer_options : stl::uint_fast8_t {
+    enum struct string_tokenizer_options : stl::uint8_t {
         // Specifies the delimiters should be returned as tokens
         return_delims = 1u << 0u,
 
@@ -128,7 +128,7 @@ namespace webpp {
         // Call this method to advance the tokenizer to the next delimiter.  This
         // returns false if the tokenizer is complete.  This method must be called
         // before calling any of the token* methods.
-        template <int Options = 0, CharSet CharSetT = charset<char_type, 1>>
+        template <stl::uint8_t Options = 0, CharSet CharSetT = charset<char_type, 1>>
         [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool
         next(CharSetT delims = NULL_CHAR<char_type>) noexcept {
             if constexpr (Options == 0) {
@@ -138,7 +138,7 @@ namespace webpp {
             }
         }
 
-        template <int Options = 0, CharSet CharSetT = charset<char_type, 1>>
+        template <stl::uint8_t Options = 0, CharSet CharSetT = charset<char_type, 1>>
         [[nodiscard("Don't skip the value of this, you need a while loop")]] constexpr bool
         next(CharSetT delims, CharSet auto quotes) noexcept {
             return full_get_next<Options>(delims, quotes);
@@ -204,6 +204,10 @@ namespace webpp {
             _token_begin = _token_end;
         }
 
+        [[nodiscard]] constexpr bool at_end() const noexcept {
+            return _token_begin == _end;
+        }
+
       private:
         // Implementation of next() for when we have no quote characters. We have
         // two separate implementations because advance_one() is a hot spot in large
@@ -227,7 +231,7 @@ namespace webpp {
         }
 
         // Implementation of next() for when we have to take quotes into account.
-        template <int Options>
+        template <stl::uint8_t Options>
         constexpr bool full_get_next(CharSet auto delims, CharSet auto quotes) noexcept {
             advance_state state;
 
@@ -285,8 +289,9 @@ namespace webpp {
 
                 // Look at the delimiter.
                 ++_token_end;
-                if constexpr (Options & static_cast<int>(string_tokenizer_options::return_delims))
+                if constexpr (Options & static_cast<int>(string_tokenizer_options::return_delims)) {
                     return true;
+                }
             }
         }
 

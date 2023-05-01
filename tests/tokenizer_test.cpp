@@ -37,6 +37,25 @@ TEST(StringTokenizerTest, QuotesTest) {
     EXPECT_EQ("private", t.token()) << t.token();
 }
 
+TEST(StringTokenizerTest, ReturnDelimsOptionTest) {
+    std::string_view const input = R"(no-cache="foo,\" bar", private)";
+    string_tokenizer       t(input);
+
+    static constexpr auto options = static_cast<stl::uint8_t>(string_tokenizer_options::return_delims);
+
+    EXPECT_TRUE(t.next<options>(charset{',', ' '}, charset{'"'}));
+    EXPECT_EQ("no-cache=\"foo,\\\" bar\"", t.token()) << t.token();
+
+    EXPECT_TRUE(t.next<options>(charset{',', ' '}));
+    EXPECT_EQ(",", t.token()) << t.token();
+
+    EXPECT_TRUE(t.next<options>(charset{',', ' '}));
+    EXPECT_EQ(" ", t.token()) << t.token();
+
+    EXPECT_TRUE(t.next<options>(charset{',', ' '}));
+    EXPECT_EQ("private", t.token()) << t.token();
+}
+
 
 // enum struct toker_errors {
 //     ok,
