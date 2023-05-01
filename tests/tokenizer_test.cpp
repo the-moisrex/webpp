@@ -27,14 +27,14 @@ TEST(StringTokenizerTest, EmptyNext) {
 
 
 TEST(StringTokenizerTest, QuotesTest) {
-    std::string_view const input = "no-cache=\"foo, bar\", private";
+    std::string_view const input = R"(no-cache="foo,\" bar", private)";
     string_tokenizer       t(input);
 
     EXPECT_TRUE(t.next(charset{',', ' '}, charset{'"'}));
-    EXPECT_EQ("no-cache=\"foo, bar\"", t.token());
+    EXPECT_EQ("no-cache=\"foo,\\\" bar\"", t.token()) << t.token();
 
     EXPECT_TRUE(t.next(charset{',', ' '}));
-    EXPECT_EQ("private", t.token());
+    EXPECT_EQ("private", t.token()) << t.token();
 }
 
 

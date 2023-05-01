@@ -175,7 +175,7 @@ namespace webpp {
         }
 
         // Returns true if token is a delimiter.  When the tokenizer is constructed
-        // with the return_relims option, this method can be used to check if the
+        // with the return_delims option, this method can be used to check if the
         // returned token is actually a delimiter. Returns true before the first
         // time get_next() has been called, and after get_next() returns false.
         [[nodiscard]] constexpr bool token_is_delim() const noexcept {
@@ -299,18 +299,16 @@ namespace webpp {
         // Returns true if a delimiter was not hit.
         static constexpr bool
         advance_one(CharSet auto delims, CharSet auto quotes, advance_state* state, char_type c) noexcept {
-            if (state->in_quote) {
-                if (state->in_escape) {
-                    state->in_escape = false;
-                } else if (c == '\\') {
-                    state->in_escape = true;
-                } else if (c == state->quote_char) {
-                    state->in_quote = false;
-                }
-            } else {
-                if (delims.contains(c))
+            state->in_escape = !state->in_escape | (c == '\\');
+            if (!state->in_quote) {
+                if (delims.contains(c)) {
                     return false;
-                state->in_quote = quotes.contains(state->quote_char = c);
+                }
+                state->quote_char = c;
+                state->in_quote   = quotes.contains(c);
+            } else {
+                state->in_quote &= !state->in_escape;
+                state->in_quote |= (c != state->quote_char);
             }
             return true;
         }
