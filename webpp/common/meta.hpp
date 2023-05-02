@@ -23,6 +23,10 @@
 #    define CXX20 1
 #endif
 
+#if __cplusplus > 202002L // todo: change the release date of this, when it's known
+#    define CXX23 1
+#endif
+
 // the static_assert alternative based on this article:
 // https://devblogs.microsoft.com/oldnewthing/20200311-00/?p=103553
 // https://devblogs.microsoft.com/oldnewthing/20200319-00/?p=103572

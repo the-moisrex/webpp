@@ -56,6 +56,42 @@ TEST(StringTokenizerTest, ReturnDelimsOptionTest) {
     EXPECT_EQ("private", t.token()) << t.token();
 }
 
+enum struct errors { ok, no_one, no_two };
+
+TEST(StringTokenizerTest, SimpleUsage) {
+    using namespace webpp::stl;
+    static constexpr auto OWS = charset{' ', '\t'};
+
+    string_view const str{"one two; foo=baz1; bar='baz2'"};
+    string_tokenizer  tok{str};
+
+    string                        one, two;
+    map<string_view, string_view> vals;
+    errors                        err = errors::ok;
+
+    tok.expect(ALPHA<>, one, err, errors::no_one);
+    tok.skip_spaces();
+    tok.expect(ALPHA<>, two, err, errors::no_two);
+    tok.skip(charset{';'}, OWS);
+    while (!tok.at_end()) {
+        tok.skip_spaces();
+        string_view name, value;
+        tok.expect(ALPHA<>, name);
+        tok.skip_spaces();
+        tok.skip(charset{'='});
+        tok.skip_spaces();
+        tok.expect(charset(ALPHA<>, DIGIT<>, OWS), charset{'"', '\''}, value);
+        vals[name] = value;
+        tok.skip(charset{';'});
+    }
+
+    EXPECT_EQ(err, errors::ok);
+    EXPECT_EQ(one, "one");
+    EXPECT_EQ(two, "two");
+    ASSERT_EQ(vals.size(), 2);
+    EXPECT_EQ(vals["foo"], "baz1");
+    EXPECT_EQ(vals["bar"], "baz2");
+}
 
 // enum struct toker_errors {
 //     ok,
