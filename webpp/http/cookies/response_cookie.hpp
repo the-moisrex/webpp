@@ -120,27 +120,25 @@ namespace webpp::http {
          * Parse a string response
          */
         bool parse_set_cookie(istl::StringView auto src) noexcept {
-            using string_view_type = stl::remove_cvref_t<decltype(src)>;
-            using strv_char_type   = typename string_view_type::value_type;
-            bool is_valid;
+            using string_view_type          = stl::remove_cvref_t<decltype(src)>;
+            using strv_char_type            = typename string_view_type::value_type;
+            static constexpr auto semicolon = charset<strv_char_type, 2>{';', ' '};
+            static constexpr auto eq_char   = charset<strv_char_type, 2>('=', ' ');
+
+            bool is_valid = true;
             details::parse_SE_value(src, _name, _value, is_valid);
             if (!is_valid)
                 return false;
             string_view_type                   key;
             string_view_type                   value;
             string_tokenizer<string_view_type> tokenizer{src};
-            tokenizer.skip_spaces();
-            tokenizer.template skip<charset(';')>();
-            while (tokenizer.template next<charset<strv_char_type, 1>(';')>()) {
-                tokenizer.skip_spaces();
-                tokenizer.template next_until<details::VALID_COOKIE_NAME<strv_char_type>>();
-                key = tokenizer.token();
-                tokenizer.skip_token();
-                tokenizer.skip_spaces();
-                tokenizer.template skip<charset('=')>();
-                tokenizer.skip_spaces();
-                tokenizer.template next_until_not<charset(';')>();
-                value = tokenizer.token();
+            tokenizer.skip(semicolon);
+            while (!tokenizer.at_end()) {
+                tokenizer.skip(semicolon);
+                tokenizer.expect(details::VALID_COOKIE_NAME<strv_char_type>, key, is_valid, false);
+                if (tokenizer.expect(eq_char)) {
+                    tokenizer.next(charset<strv_char_type, 1>{';'}, value, is_valid, false);
+                }
                 if (key.empty()) {
                     // I'm not putting this after finding the key part because we need to get rid of the value
                     // for the next iteration
@@ -376,7 +374,7 @@ namespace webpp::http {
             }
         }
 
-        void expires_string_to(istl::String auto& result) {
+        void expires_string_to(istl::String auto& result) const {
             if (_expires) {
                 static constexpr auto date_format = "{:%a, %d %b %Y %H:%M:%S} GMT";
 
@@ -392,7 +390,7 @@ namespace webpp::http {
             }
         }
 
-        string_type expires_string(auto&&... args) {
+        string_type expires_string(auto&&... args) const {
             string_type result{stl::forward<decltype(args)>(args)...};
             expires_string_to(result);
             return result;

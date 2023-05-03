@@ -26,7 +26,8 @@ TEST(Cookie, ResponseCookiesCreation) {
 }
 
 TEST(Cookie, SetCookieHeaderParsing) {
-    res_cookie_t c{"_HFID=hfid:86715526; httponly; expires=Fri, 21 Jan 2022 16:08:20 GMT; secure; path=/;"};
+    res_cookie_t const c{
+      "_HFID=hfid:86715526; httponly; expires=Fri, 21 Jan 2022 16:08:20 GMT; secure; path=/;"};
     EXPECT_EQ(c.name(), "_HFID");
     EXPECT_EQ(c.value(), "hfid:86715526");
     EXPECT_EQ(c.path(), "/");
@@ -34,7 +35,7 @@ TEST(Cookie, SetCookieHeaderParsing) {
     EXPECT_TRUE(c.http_only());
     EXPECT_EQ(c.expires_string(), "Fri, 21 Jan 2022 16:08:20 GMT");
 
-    res_cookie_t c1{"name = value ;   HttpOnly; path=/about  "};
+    res_cookie_t const c1{"name = value ;   HttpOnly; path=/about  "};
     EXPECT_EQ(c1.name(), "name");
     EXPECT_EQ(c1.value(), "value");
     EXPECT_TRUE(c1.http_only());
@@ -98,7 +99,7 @@ TEST(ResponseCookies, CookieJar) {
     // be increased here
     jar2.emplace_back("one", "value 1-3");
     jar2.push_back(res_cookie_t("one", "value 1-4"));
-    res_cookie_t c("one", "value 1-5");
+    res_cookie_t const c("one", "value 1-5");
     jar2.push_back(c);
     jar2.push_back(c);
     jar2.push_back(res_cookie_t("one", "value 1-6"));

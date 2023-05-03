@@ -163,6 +163,8 @@ namespace webpp {
 
     // TODO: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
+    template <istl::CharType CharT = char>
+    static constexpr auto NULL_CHAR = charset<CharT, 1>{'\0'};
 
     template <istl::CharType CharT = char>
     static constexpr auto LOWER_ALPHA = charset_range<CharT, 'a', 'z'>();

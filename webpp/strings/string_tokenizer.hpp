@@ -204,6 +204,15 @@ namespace webpp {
             return res;
         }
 
+        template <CharSet AllowedCharsT, typename ErrorType>
+        constexpr bool expect(AllowedCharsT&& allowed_chars, ErrorType& err, ErrorType err_val) noexcept {
+            bool const res = expect(stl::forward<AllowedCharsT>(allowed_chars));
+            if (!res) {
+                err = err_val;
+            }
+            return res;
+        }
+
         // Expect anything but the specified charset
         constexpr void skip_but(CharSet auto&& chars) noexcept {
             while (_token_end != _end && !chars.contains(*_token_end))

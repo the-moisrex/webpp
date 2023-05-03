@@ -95,12 +95,12 @@ namespace webpp::http {
             _allowed_encodings.clear();
 
             string_tokenizer_type tokenizer(data);
-            while (tokenizer.template next<charset<char_type, 1>(',')>()) {
+            while (tokenizer.next(charset<char_type, 1>(','))) {
                 auto entry = tokenizer.token();
                 http::trim_lws(entry);
                 size_t semicolon_pos = entry.find(';');
                 if (semicolon_pos == str_v::npos) {
-                    if (entry.find_first_of(http::http_lws.template string_view()) != str_v::npos) {
+                    if (entry.find_first_of(http::http_lws.string_view()) != str_v::npos) {
                         _is_valid = false;
                         return;
                     }
@@ -115,7 +115,7 @@ namespace webpp::http {
                 }
                 auto encoding = entry.substr(0, semicolon_pos);
                 http::trim_lws(encoding);
-                if (encoding.find_first_of(http::http_lws.template string_view()) != str_v::npos) {
+                if (encoding.find_first_of(http::http_lws.string_view()) != str_v::npos) {
                     _is_valid = false;
                     return;
                 }

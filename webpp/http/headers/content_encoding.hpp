@@ -35,7 +35,7 @@ namespace webpp::http {
             }
 
             string_tokenizer<string_view_type> encoding_tokenizer{content_encoding};
-            while (encoding_tokenizer.template next<charset{','}>()) {
+            while (encoding_tokenizer.next(charset{','})) {
                 auto token = encoding_tokenizer.token();
                 trim_lws(token);
                 if (token.find_first_of(http_lws) != string_view_type::npos)
