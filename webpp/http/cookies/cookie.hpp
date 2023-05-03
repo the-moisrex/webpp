@@ -100,24 +100,22 @@ namespace webpp::http {
      */
     namespace details {
 
-        template <istl::CharType CharT>
         constexpr static auto VALID_COOKIE_NAME = charset(
-          ALPHA_DIGIT<CharT>,
-          charset<CharT, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
+          ALPHA_DIGIT<>,
+          charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
-        template <istl::CharType CharT>
         constexpr static auto VALID_COOKIE_VALUE =
-          charset(ALPHA_DIGIT<CharT>,
-                  charset<CharT, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-                                     '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
+          charset(ALPHA_DIGIT<char>,
+                  charset<char, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+                                    '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
 
+        static constexpr auto COOKIE_VALUE_ILLEGAL_CHARS = charset("()[]/|\\',;");
 
-        void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
+        constexpr void parse_SE_name(istl::StringView auto& str, auto& _name, bool& _valid) noexcept {
             using name_t           = stl::remove_cvref_t<decltype(_name)>;
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
-            using char_type        = typename name_t::value_type;
             ascii::ltrim(str);
-            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME<char_type>.data());
+            if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
                 equal_pos != string_view_type::npos) {
                 // setting the name we found it
                 _name = name_t{str.substr(0, equal_pos)};
@@ -131,11 +129,10 @@ namespace webpp::http {
             }
         }
 
-        void parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
-            using name_t = stl::remove_cvref_t<decltype(_name)>;
-            // using value_t          = stl::remove_cvref_t<decltype(_value)>;
+        // todo: use tokenizer instead of these shenanigans
+        constexpr void
+        parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
-            using char_type        = typename name_t::value_type;
 
             parse_SE_name(str, _name, _valid);
             if (!_valid)
@@ -145,13 +142,13 @@ namespace webpp::http {
                 str.remove_prefix(1);
             ascii::ltrim(str);
             if (ascii::starts_with(str, '"')) {
-                if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE<char_type>.data(), 1);
+                if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
                     d_quote_end != string_view_type::npos) {
                     if (str[d_quote_end] == '"') {
                         _value = str.substr(1, d_quote_end - 1);
                         str.remove_prefix(d_quote_end + 1);
                     } else {
-                        // You can't use non double quote chars when you used
+                        // You can't use non-double-quote chars when you used
                         // one already. You can't even use backslash to escape,
                         // so there's no worry here
                         _valid = false;
@@ -165,7 +162,7 @@ namespace webpp::http {
                 }
             } else {
                 // there's no double quote in the value
-                if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE<char_type>.data());
+                if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE.data());
                     semicolon_pos != string_view_type::npos) {
                     _value = str.substr(0, semicolon_pos);
                     str.remove_prefix(semicolon_pos);
@@ -188,7 +185,6 @@ namespace webpp::http {
         static constexpr void decrypt_to(istl::StringView auto&& value, auto& to) noexcept;
 
 
-        static constexpr auto COOKIE_VALUE_ILLEGAL_CHARS = charset("()[]/|\\',;");
         /*
          * Escapes the given string by replacing all
          * non-alphanumeric characters with escape

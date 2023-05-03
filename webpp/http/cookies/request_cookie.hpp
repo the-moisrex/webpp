@@ -7,13 +7,17 @@
 
 namespace webpp::http {
 
+    /**
+     * todo: do we really need StringView type? char type is always char anyway, right?
+     * @tparam StringViewType
+     */
     template <istl::StringView StringViewType = stl::string_view>
     struct request_cookie {
         using string_view_type = StringViewType;
         using char_type        = istl::char_type_of_t<string_view_type>;
 
-        static constexpr auto valid_cookie_name_chars  = details::VALID_COOKIE_NAME<char_type>;
-        static constexpr auto valid_cookie_value_chars = details::VALID_COOKIE_VALUE<char_type>;
+        static constexpr auto valid_cookie_name_chars  = details::VALID_COOKIE_NAME;
+        static constexpr auto valid_cookie_value_chars = details::VALID_COOKIE_VALUE;
 
         /**
          * There's no point in instantiating this class without any cookies
@@ -33,21 +37,21 @@ namespace webpp::http {
         using name_t  = string_view_type;
         using value_t = string_view_type;
 
-        request_cookie(const request_cookie& c)     = default;
-        request_cookie(request_cookie&& c) noexcept = default;
+        constexpr request_cookie(const request_cookie& c)     = default;
+        constexpr request_cookie(request_cookie&& c) noexcept = default;
 
-        request_cookie(name_t i_name, value_t i_value) noexcept
+        constexpr request_cookie(name_t i_name, value_t i_value) noexcept
           : _name(ascii::trim_copy(i_name)),
             _value(ascii::trim_copy(i_value)) {}
 
-        request_cookie& operator=(const request_cookie& c)     = default;
-        request_cookie& operator=(request_cookie&& c) noexcept = default;
+        constexpr request_cookie& operator=(const request_cookie& c)     = default;
+        constexpr request_cookie& operator=(request_cookie&& c) noexcept = default;
 
-        explicit operator bool() {
+        constexpr explicit operator bool() {
             return is_valid();
         }
 
-        [[nodiscard]] bool is_valid() const noexcept {
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
             // todo
             // The _valid may not catch all the validness conditions, so we have
             // to do other validation checks ourselves.
@@ -57,11 +61,11 @@ namespace webpp::http {
         }
 
 
-        auto name() const noexcept {
+        constexpr auto name() const noexcept {
             // string_view is cheap to copy
             return _name;
         }
-        auto value() const noexcept {
+        constexpr auto value() const noexcept {
             // string_view is cheap to copy
             return _value;
         }

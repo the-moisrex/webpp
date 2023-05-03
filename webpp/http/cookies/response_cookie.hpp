@@ -11,6 +11,7 @@
 #include "../../strings/iequals.hpp"
 #include "../../strings/parser_utils.hpp"
 #include "../../strings/string_tokenizer.hpp"
+#include "../syntax/tokens.hpp"
 #include "cookie.hpp"
 
 #include <iomanip>
@@ -121,9 +122,8 @@ namespace webpp::http {
          */
         bool parse_set_cookie(istl::StringView auto src) noexcept {
             using string_view_type          = stl::remove_cvref_t<decltype(src)>;
-            using strv_char_type            = typename string_view_type::value_type;
-            static constexpr auto semicolon = charset<strv_char_type, 2>{';', ' '};
-            static constexpr auto eq_char   = charset<strv_char_type, 2>('=', ' ');
+            static constexpr auto semicolon = charset{OWS, charset{';'}};
+            static constexpr auto eq_char   = charset{OWS, charset('=', ' ')};
 
             bool is_valid = true;
             details::parse_SE_value(src, _name, _value, is_valid);
@@ -135,9 +135,9 @@ namespace webpp::http {
             tokenizer.skip(semicolon);
             while (!tokenizer.at_end()) {
                 tokenizer.skip(semicolon);
-                tokenizer.expect(details::VALID_COOKIE_NAME<strv_char_type>, key, is_valid, false);
+                tokenizer.expect(details::VALID_COOKIE_NAME, key, is_valid, false);
                 if (tokenizer.expect(eq_char)) {
-                    tokenizer.next(charset<strv_char_type, 1>{';'}, value, is_valid, false);
+                    tokenizer.next(charset{';'}, value, is_valid, false);
                 }
                 if (key.empty()) {
                     // I'm not putting this after finding the key part because we need to get rid of the value
