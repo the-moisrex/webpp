@@ -32,6 +32,7 @@ set(FILE_SOURCES
         headers_has/headers_has.cpp
         valves_vs_routes/valves_vs_routes_benchmark.cpp
         bool_array/bool_array_benchmark.cpp
+        tokenizer/tokenizer_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
