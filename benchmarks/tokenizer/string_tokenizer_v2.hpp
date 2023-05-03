@@ -1,13 +1,13 @@
 // Created by moisrex on 10/8/20.
 
-#ifndef WEBPP_BENCHMARKS_STRING_TOKENIZER_HPP
-#define WEBPP_BENCHMARKS_STRING_TOKENIZER_HPP
+#ifndef WEBPP_BENCHMARKS_STRING_TOKENIZER_V2_HPP
+#define WEBPP_BENCHMARKS_STRING_TOKENIZER_V2_HPP
 
 #include "../../webpp/std/cassert.hpp"
 #include "../../webpp/std/string_view.hpp"
 #include "../../webpp/strings/charset.hpp"
 
-namespace webpp::benchmark::v1 {
+namespace webpp::benchmark::v2 {
 
     enum struct string_tokenizer_options : stl::uint8_t {
         // Specifies the delimiters should be returned as tokens
@@ -58,8 +58,8 @@ namespace webpp::benchmark::v1 {
      *
      *   bool next_is_option = false, next_is_value = false;
      *   std::string input = "text/html; charset=UTF-8; foo=bar";
-     *   string_tokenizer<> t(input);
-     *   while (t.next<{}, string_tokenizer_options::return_delims>("; =")) {
+     *   string_tokenizer t(input);
+     *   while (t.next<string_tokenizer_options::return_delims>("; =")) {
      *     if (t.token_is_delim()) {
      *       switch (*t.token_begin()) {
      *         case ';':
@@ -390,21 +390,21 @@ namespace webpp::benchmark::v1 {
         // text files with large tokens.
         constexpr bool quick_next(CharSet auto&& delims) noexcept {
             _is_delim = false;
-            for (;;) {
-                _token_begin = _token_end;
-                if (_token_end == _end) {
+            for (_token_begin = _token_end;; ++_token_begin) {
+                if (_token_begin == _end) {
                     _is_delim = true;
                     return false;
                 }
-                ++_token_end;
                 if (!delims.contains(*_token_begin))
                     break;
-                // else skip over delimiter.
             }
+            _token_end = _token_begin;
+            ++_token_end;
             while (_token_end != _end && !delims.contains(*_token_end))
                 ++_token_end;
             return true;
         }
+
 
         // Implementation of next() for when we have to take quotes into account.
         template <stl::uint8_t Options>
@@ -422,8 +422,7 @@ namespace webpp::benchmark::v1 {
                     //        |
                     //        |_token_begin| : Points to delimiter or |_token_end|.
                     //
-                    // The next token is always a non-delimiting token. It could be empty,
-                    // however.
+                    // The next token is always a non-delimiting token. It could be empty, however.
                     _is_delim    = false;
                     _token_begin = _token_end;
 
@@ -488,16 +487,18 @@ namespace webpp::benchmark::v1 {
             static
 #endif
               constexpr bool hit = !(Options & static_cast<stl::uint8_t>(hidden_options::allow_chars));
-            state->in_escape     = !state->in_escape | (c == '\\');
-            if (!state->in_quote) {
-                if (delims.contains(c)) {
-                    return !hit;
+            if (state->in_quote) {
+                if (state->in_escape) {
+                    state->in_escape = false;
+                } else if (c == '\\') {
+                    state->in_escape = true;
+                } else if (c == state->quote_char) {
+                    state->in_quote = false;
                 }
-                state->quote_char = c;
-                state->in_quote   = quotes.contains(c);
             } else {
-                state->in_quote &= !state->in_escape;
-                state->in_quote |= (c != state->quote_char);
+                if (delims.contains(c))
+                    return !hit;
+                state->in_quote = quotes.contains(state->quote_char = c);
             }
             return hit;
         }
@@ -508,6 +509,7 @@ namespace webpp::benchmark::v1 {
         bool           _is_delim = true;
     };
 
-} // namespace webpp::benchmark::v1
 
-#endif // WEBPP_BENCHMARKS_STRING_TOKENIZER_HPP
+} // namespace webpp::benchmark::v2
+
+#endif // WEBPP_BENCHMARKS_STRING_TOKENIZER_V2_HPP

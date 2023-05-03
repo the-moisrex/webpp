@@ -1,24 +1,26 @@
 #include "../../webpp/strings/to_case.hpp"
 #include "../../webpp/strings/trim.hpp"
 #include "../benchmark.hpp"
-#include "string_tokenizer.hpp"
+#include "string_tokenizer_v1.hpp"
+#include "string_tokenizer_v2.hpp"
 
 using namespace std;
 
+
+constexpr static auto VALID_COOKIE_NAME = webpp::charset(
+  webpp::ALPHA_DIGIT<>,
+  webpp::charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
+
+
+constexpr static auto VALID_COOKIE_VALUE = webpp::charset(
+  webpp::ALPHA_DIGIT<char>,
+  webpp::charset<char, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+                           '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
+
+static constexpr webpp::charset<char, 2> OWS{0x20, 0x09}; // SP, HTAB
+
 namespace v1 {
     using namespace webpp;
-
-    constexpr static auto VALID_COOKIE_NAME =
-      charset(ALPHA_DIGIT<>,
-              charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
-
-
-    constexpr static auto VALID_COOKIE_VALUE =
-      charset(ALPHA_DIGIT<char>,
-              charset<char, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-                                '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
-
-    static constexpr charset<char, 2> OWS{0x20, 0x09}; // SP, HTAB
 
     template <typename ErrorType>
     constexpr void parse_SE_pair(istl::StringView auto& str,
@@ -107,6 +109,26 @@ namespace v1 {
 
 } // namespace v1
 
+namespace v2 {
+    using namespace webpp;
+
+    template <typename ErrorType>
+    constexpr void parse_SE_pair(istl::StringView auto& str,
+                                 auto&                  name,
+                                 auto&                  value,
+                                 ErrorType&             err,
+                                 ErrorType              err_value) noexcept {
+        using namespace webpp::benchmark::v2;
+        string_tokenizer tok{str};
+        tok.skip(OWS);
+        tok.expect(VALID_COOKIE_NAME, name, err, err_value);
+        tok.skip(OWS);
+        if (err != err_value && tok.expect(charset{'='})) {
+            tok.skip(OWS);
+            tok.expect(VALID_COOKIE_VALUE, charset{'\"'}, value, err, err_value);
+        }
+    }
+} // namespace v2
 
 static void StrViewParser(benchmark::State& state) {
     for (auto _ : state) {
@@ -123,7 +145,7 @@ static void StrViewParser(benchmark::State& state) {
 BENCHMARK(StrViewParser);
 
 
-static void TokenizerParser(benchmark::State& state) {
+static void TokenizerParserV1(benchmark::State& state) {
     for (auto _ : state) {
         string_view str = "_HFID=hfid:86715526";
         string_view name, value;
@@ -135,4 +157,19 @@ static void TokenizerParser(benchmark::State& state) {
         benchmark::DoNotOptimize(is_valid);
     }
 }
-BENCHMARK(TokenizerParser);
+BENCHMARK(TokenizerParserV1);
+
+
+static void TokenizerParserV2(benchmark::State& state) {
+    for (auto _ : state) {
+        string_view str = "_HFID=hfid:86715526";
+        string_view name, value;
+        bool        is_valid = true;
+        v2::parse_SE_pair(str, name, value, is_valid, false);
+        benchmark::DoNotOptimize(str);
+        benchmark::DoNotOptimize(name);
+        benchmark::DoNotOptimize(value);
+        benchmark::DoNotOptimize(is_valid);
+    }
+}
+BENCHMARK(TokenizerParserV2);
