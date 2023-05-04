@@ -89,7 +89,21 @@ namespace webpp {
          *     is in the character set is returned.
          */
         [[nodiscard]] constexpr bool contains(value_type c) const noexcept {
-            return stl::find(super::begin(), super::end(), c) != super::end();
+            // this is just an optimization to let the compiler optimize more
+            if constexpr (N == 0) {
+                return false;
+            } else if constexpr (N == 1) {
+                return c == super::operator[](0);
+            } else if constexpr (N == 2) {
+                return c == super::operator[](0) || c == super::operator[](1);
+            } else if constexpr (N == 3) {
+                return c == super::operator[](0) || c == super::operator[](1) || c == super::operator[](2);
+            } else if constexpr (N == 4) {
+                return c == super::operator[](0) || c == super::operator[](1) || c == super::operator[](2) ||
+                       c == super::                                                          operator[](3);
+            } else {
+                return stl::find(super::begin(), super::end(), c) != super::end();
+            }
         }
 
         /**
