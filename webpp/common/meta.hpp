@@ -23,8 +23,14 @@
 #    define CXX20 1
 #endif
 
-#if __cplusplus > 202002L // todo: change the release date of this, when it's known
+#if __cplusplus >= 202100L // todo: change the release date of this, when it's known
 #    define CXX23 1
+#endif
+
+#if CXX23
+#    define IF_CXX23(val) val
+#else
+#    define IF_CXX23(val)
 #endif
 
 // the static_assert alternative based on this article:
