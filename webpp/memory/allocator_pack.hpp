@@ -8,6 +8,8 @@
 #include "../std/type_traits.hpp"
 #include "allocator_concepts.hpp"
 
+#include <cstdint>
+
 namespace webpp::alloc {
 
     // todo: see if you need to add low&high "variation" and "density" or not

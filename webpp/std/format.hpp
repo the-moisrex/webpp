@@ -73,7 +73,7 @@ namespace webpp::istl {
     }
 
 #    else
-
+    namespace fmt::detail {};
     // A fallback for when the fmt library is not available
 
     namespace details {
@@ -138,7 +138,8 @@ namespace webpp::istl {
     }
 
     inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> time_point) {
-        return localtime(std::chrono::system_clock::to_time_t(time_point));
+        const auto time = std::chrono::system_clock::to_time_t(time_point);
+        return *localtime(stl::addressof(time));
     }
 
 #    endif
