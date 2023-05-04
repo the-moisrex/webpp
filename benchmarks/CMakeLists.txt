@@ -33,6 +33,7 @@ set(FILE_SOURCES
         valves_vs_routes/valves_vs_routes_benchmark.cpp
         bool_array/bool_array_benchmark.cpp
         tokenizer/tokenizer_benchmark.cpp
+        ip_to_string/ip_to_string_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
