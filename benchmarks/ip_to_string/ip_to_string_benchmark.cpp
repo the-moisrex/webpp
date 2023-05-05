@@ -1,6 +1,7 @@
 #include "../../webpp/ip/inet_pton.hpp"
 #include "../benchmark.hpp"
 
+#include <arpa/inet.h> // ntohl
 #include <array>
 #include <cstring>
 using namespace std;
@@ -167,6 +168,191 @@ static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) 
     return strcpy(out, tmp);
 }
 
+#define MAX_IPv4_STR_LEN 16
+#define MAX_IPv6_STR_LEN 64
+
+
+/*
+ * Internet address (a structure for historical reasons)
+ */
+struct apple_in_addr {
+    typedef __uint32_t in_addr_t; /* base type for internet address */
+    in_addr_t          s_addr;
+};
+
+/*
+ * IPv6 address
+ */
+struct apple_in6_addr {
+    union {
+        uint8_t  __u6_addr8[16];
+        uint16_t __u6_addr16[8];
+        uint32_t __u6_addr32[4];
+    } __u6_addr; /* 128-bit IP6 address */
+};
+static const char* hexchars = "0123456789abcdef";
+
+#define s6_addr   __u6_addr.__u6_addr8
+#define s6_addr8  __u6_addr.__u6_addr8
+#define s6_addr16 __u6_addr.__u6_addr16
+#define s6_addr32 __u6_addr.__u6_addr32
+
+/*
+ * IPv4 compatible
+ */
+#define APPLE_IN6_IS_ADDR_V4COMPAT(a)                               \
+    ((*(const uint32_t*) (const void*) (&(a)->s6_addr[0]) == 0) &&  \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[4]) == 0) &&  \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[8]) == 0) &&  \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[12]) != 0) && \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[12]) != ntohl(1)))
+
+/*
+ * Mapped
+ */
+#define APPLE_IN6_IS_ADDR_V4MAPPED(a)                              \
+    ((*(const uint32_t*) (const void*) (&(a)->s6_addr[0]) == 0) && \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[4]) == 0) && \
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+
+static const char* apple_inet_ntop4(const struct apple_in_addr* addr, char* buf, size_t len) {
+    const u_int8_t* ap = (const u_int8_t*) &addr->s_addr;
+    char            tmp[MAX_IPv4_STR_LEN]; /* max length of ipv4 addr string */
+    int             fulllen;
+
+    /*
+     * snprintf returns number of bytes printed (not including NULL) or
+     * number of bytes that would have been printed if more than would
+     * fit
+     */
+    fulllen = snprintf(tmp, sizeof(tmp), "%d.%d.%d.%d", ap[0], ap[1], ap[2], ap[3]);
+    if (fulllen >= (int) len) {
+        return NULL;
+    }
+
+    bcopy(tmp, buf, fulllen + 1);
+
+    return buf;
+}
+
+static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst, size_t size) {
+    char                 hexa[8][5], tmp[MAX_IPv6_STR_LEN];
+    int                  zr[8];
+    size_t               len;
+    int32_t              i, j, k, skip;
+    uint8_t              x8, hx8;
+    uint16_t             x16;
+    struct apple_in_addr a4;
+
+    if (addr == NULL)
+        return NULL;
+
+    bzero(tmp, sizeof(tmp));
+
+    /*  check for mapped or compat addresses */
+    i = APPLE_IN6_IS_ADDR_V4MAPPED(addr);
+    j = APPLE_IN6_IS_ADDR_V4COMPAT(addr);
+    if ((i != 0) || (j != 0)) {
+        char tmp2[16]; /* max length of ipv4 addr string */
+        a4.s_addr = addr->__u6_addr.__u6_addr32[3];
+        len       = snprintf(tmp,
+                       sizeof(tmp),
+                       "::%s%s",
+                       (i != 0) ? "ffff:" : "",
+                       apple_inet_ntop4(&a4, tmp2, sizeof(tmp2)));
+        if (len >= size)
+            return NULL;
+        bcopy(tmp, dst, len + 1);
+        return dst;
+    }
+
+    k = 0;
+    for (i = 0; i < 16; i += 2) {
+        j    = 0;
+        skip = 1;
+
+        bzero(hexa[k], 5);
+
+        x8 = addr->__u6_addr.__u6_addr8[i];
+
+        hx8 = x8 >> 4;
+        if (hx8 != 0) {
+            skip         = 0;
+            hexa[k][j++] = hexchars[hx8];
+        }
+
+        hx8 = x8 & 0x0f;
+        if ((skip == 0) || ((skip == 1) && (hx8 != 0))) {
+            skip         = 0;
+            hexa[k][j++] = hexchars[hx8];
+        }
+
+        x8 = addr->__u6_addr.__u6_addr8[i + 1];
+
+        hx8 = x8 >> 4;
+        if ((skip == 0) || ((skip == 1) && (hx8 != 0))) {
+            hexa[k][j++] = hexchars[hx8];
+        }
+
+        hx8          = x8 & 0x0f;
+        hexa[k][j++] = hexchars[hx8];
+
+        k++;
+    }
+
+    /* find runs of zeros for :: convention */
+    j = 0;
+    for (i = 7; i >= 0; i--) {
+        zr[i] = j;
+        x16   = addr->__u6_addr.__u6_addr16[i];
+        if (x16 == 0)
+            j++;
+        else
+            j = 0;
+        zr[i] = j;
+    }
+
+    /* find longest run of zeros */
+    k = -1;
+    j = 0;
+    for (i = 0; i < 8; i++) {
+        if (zr[i] > j) {
+            k = i;
+            j = zr[i];
+        }
+    }
+
+    for (i = 0; i < 8; i++) {
+        if (i != k)
+            zr[i] = 0;
+    }
+
+    len = 0;
+    for (i = 0; i < 8; i++) {
+        if (zr[i] != 0) {
+            /* check for leading zero */
+            if (i == 0)
+                tmp[len++] = ':';
+            tmp[len++] = ':';
+            i += (zr[i] - 1);
+            continue;
+        }
+        for (j = 0; hexa[i][j] != '\0'; j++)
+            tmp[len++] = hexa[i][j];
+        if (i != 7)
+            tmp[len++] = ':';
+    }
+
+    /* trailing NULL */
+    len++;
+
+    if (len > size)
+        return NULL;
+    bcopy(tmp, dst, len);
+    return dst;
+}
+
+
 
 static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
 using octets8_t                      = array<uint8_t, 16u>;
@@ -283,6 +469,26 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
 
 ////////////////////////////// IPv4 //////////////////////////////
 
+static void IPv4ToStrApple(benchmark::State& state) {
+    array<apple_in_addr, sizeof(valid_ipv4s) / sizeof(string_view)> ips;
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv4s) {
+        inet_pton4(_ip.data(), _ip.data() + _ip.size(), (stl::uint8_t*) (&(ip++)->s_addr));
+    }
+    array<char, sizeof "255.255.255.255"> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            apple_inet_ntop4(&_ip, new_ip.data(), new_ip.size());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv4ToStrApple);
+
+
 static void IPv4ToStrGlibc(benchmark::State& state) {
     array<array<uint8_t, 4>, sizeof(valid_ipv4s) / sizeof(string_view)> ips;
 
@@ -333,6 +539,26 @@ static constexpr array<string_view, 6> valid_ipv6s{"2001:0db8:85a3:0000:0000:8a2
                                                    "2001:0:0:0:0:0:0:1"};
 
 static constexpr auto ipv6_bytes = sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255";
+
+
+static void IPv6ToStrApple(benchmark::State& state) {
+    array<apple_in6_addr, 6> ips{};
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv6s) {
+        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->s6_addr);
+    }
+    array<char, ipv6_bytes> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            apple_inet_ntop6(&_ip, new_ip.data(), new_ip.size());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv6ToStrApple);
 
 
 static void IPv6ToStrGlibc(benchmark::State& state) {
