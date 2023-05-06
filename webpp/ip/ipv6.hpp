@@ -1,8 +1,10 @@
-#ifndef WEBPP_IPV6_H
-#define WEBPP_IPV6_H
+#ifndef WEBPP_IPV6_HPP
+#define WEBPP_IPV6_HPP
 
 #include "../strings/to_case.hpp"
 #include "../validators/validators.hpp"
+#include "inet_ntop.hpp"
+#include "inet_pton.hpp"
 #include "ipv4.hpp"
 
 #include <array>
@@ -26,10 +28,10 @@ namespace webpp {
         // todo: add support for systems that support 128bit integer types
 
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
-        using octets8_t                      = stl::array<uint8_t, 16u>;
-        using octets16_t                     = stl::array<uint16_t, 8u>;
-        using octets32_t                     = stl::array<uint32_t, 4u>;
-        using octets64_t                     = stl::array<uint64_t, 2u>;
+        using octets8_t                      = stl::array<stl::uint8_t, 16u>;
+        using octets16_t                     = stl::array<stl::uint16_t, 8u>;
+        using octets32_t                     = stl::array<stl::uint32_t, 4u>;
+        using octets64_t                     = stl::array<stl::uint64_t, 2u>;
         using octets_t                       = octets8_t;
         using octets_value_t                 = typename octets_t::value_type;
 
@@ -62,7 +64,7 @@ namespace webpp {
         // 255 means it doesn't have prefixed
         // 254 means the ip is not valid
         // 253 means the prefix is not valid (it's not being used for now)
-        uint8_t _prefix = 255u;
+        stl::uint8_t _prefix = 255u;
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -87,124 +89,64 @@ namespace webpp {
             return _data;
         }
 
+
         /**
          * parses the string_view to the uint8 structure
          */
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
-            auto ipv6_data         = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
-            using char_type        = istl::char_type_of_t<decltype(ipv6_data)>;
-            using string_view_type = stl::remove_cvref_t<decltype(ipv6_data)>;
-            constexpr auto hexes   = HEXDIG<char_type>.string_view();
-
-            if (ipv6_data.empty()) {
-                _prefix = 254u;
-                return;
+            auto       ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
+            auto*      inp_ptr = ip_str.data();
+            auto*      out_ptr = data.data();
+            const auto status  = inet_pton6(inp_ptr, inp_ptr + ip_str.size(), out_ptr);
+            switch (status) {
+                case inet_pton6_status::valid: {
+                    _prefix = 255u; // we don't have a prefix
+                    break;
+                }
+                    //                case inet_pton6_status::valid_with_prefix: {
+                    //                    auto prefix_value =
+                    //                      to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() +
+                    //                      ip_str.size()});
+                    //                    _prefix = prefix_value > 128u ? 253u :
+                    //                    static_cast<decltype(_prefix)>(prefix_value); break;
+                    //                }
+                default: {
+                    // The IP is not valid
+                    _prefix = 254u;
+                }
             }
 
-            data                    = {}; // all zero
-            auto it                 = data.begin();
-            auto double_colon_point = data.end();
-
-            do {
-                if (it == data.cend() && !ascii::starts_with(ipv6_data, '/')) {
-                    _prefix = 254u; // the ip has too many octets
-                    return;
-                }
-                auto colon = ipv6_data.find_first_not_of(hexes);
-                if (colon == string_view_type::npos || ipv6_data[colon] == ':' ||
-                    (colon != 0 && ipv6_data[colon] == '/')) {
-                    // it's an octet
-                    switch (colon == string_view_type::npos ? ipv6_data.size() : colon) {
-                        case 4:
-                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(0, 2));
-                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(2, 2));
-                            break;
-                        case 3:
-                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(0, 1));
-                            *(it++) = to<octets_value_t, 16u>(ipv6_data.substr(1, 2));
-                            break;
-                        case 2:
-                        case 1: *((++it)++) = to<octets_value_t, 16u>(ipv6_data.substr(0, colon)); break;
-                        case 0:
-                            // we've reached the double colon rule
-                            if (double_colon_point != data.end()) {
-                                _prefix = 254u; // we can't have two double colons
-                                return;
-                            } else {
-                                double_colon_point = it;
-                                if (it == data.begin())
-                                    ipv6_data.remove_prefix(1);
-                            }
-                            break;
-                        default:
-                            _prefix = 254u; // the ip is invalid
-                            return;
-                    }
-                    if (ipv6_data[colon] == '/')
-                        colon--;
-                } else if (ipv6_data[colon] == '.') {
-                    // we found an ipv4 address
-                    ipv4 ip(ipv6_data);
-                    if (!ip.is_valid()) {
-                        _prefix = 254u; // the ip is not valid
-                        return;
-                    }
-                    for (auto const& octet : ip.octets())
-                        *(it++) = octet;
-                    break;
-                } else if (ipv6_data[colon] == '/') {
-                    // we have a prefix
-                    auto prefix_str = ipv6_data.substr(colon + 1);
-                    if (!ascii::is::digit(prefix_str)) {
-                        _prefix = 253u; // the prefix is invalid
-                        break;          // let's not go all crazy just yet
-                    }
-                    auto prefix_value = to<octets_value_t, 16u>(prefix_str);
-                    // if (ascii::starts_with(prefix_str, '0') && prefix_value != 0) {
-                    //     // there can't be a leading zero in the prefix string
-                    //     _prefix = 253u;
-                    //     return;
-                    // }
-                    _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
-                    ipv6_data.remove_prefix(prefix_str.size() + 1);
-                    if (!ipv6_data.empty()) {
-                        _prefix = 254u; // there can't be more stuff in the ip
-                                        // from now on.
-                        return;
-                    }
-                    break; // there's nothing in the loop for us anymore
-                } else {
-                    _prefix = 254u; // the ip is not valid
-                    return;
-                }
-                if (colon != string_view_type::npos)
-                    ipv6_data.remove_prefix(colon + 1);
-                else
-                    break;
-            } while (!ipv6_data.empty());
-
-            if (double_colon_point != data.end() && it != data.end()) {
-                // XXXX XXXX XXXX XXXX YYYY YYYY 0000 0000
-                //                    ^         ^
-                //               double colon   it
-                // shift the values to the last
-                stl::rotate(double_colon_point, it, data.end());
-            } else if (it != data.end()) {
-                _prefix = 254u; // the string does not contain the whole ip
-                return;
-            }
+            //            auto prefix_str = ip_str.substr(colon + 1);
+            //            if (!ascii::is::digit(prefix_str)) {
+            //                _prefix = 253u; // the prefix is invalid
+            //                break;          // let's not go all crazy just yet
+            //            }
+            //            auto prefix_value = to<octets_value_t, 16u>(prefix_str);
+            //            // if (ascii::starts_with(prefix_str, '0') && prefix_value != 0) {
+            //            //     // there can't be a leading zero in the prefix string
+            //            //     _prefix = 253u;
+            //            //     return;
+            //            // }
+            //            _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
+            //            ip_str.remove_prefix(prefix_str.size() + 1);
+            //            if (!ip_str.empty()) {
+            //                _prefix = 254u; // there can't be more stuff in the ip from now on.
+            //                return;
+            //            }
         }
 
       public:
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename StrT>
             requires(istl::StringViewifiable<StrT> &&
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
-                                                      stl::array> && // it shouldn't be array
+                                                      stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
         constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
           : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
             parse(stl::forward<StrT>(str));
         }
+        // NOLINTEND(bugprone-forwarding-reference-overload)
         constexpr explicit ipv6(octets8_t const& _octets, uint8_t prefix_value = 255u) noexcept
           : data(_octets),
             _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
@@ -221,35 +163,35 @@ namespace webpp {
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept      = default;
 
-        ipv6& operator=(ipv6 const& ip) noexcept = default;
+        constexpr ipv6& operator=(ipv6 const& ip) noexcept = default;
 
         template <typename StrT>
             requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>)
-        ipv6& operator=(StrT&& str) noexcept {
+        constexpr ipv6& operator=(StrT&& str) noexcept {
             parse(stl::forward<StrT>(str));
             _prefix = 255u;
             return *this;
         }
 
-        ipv6& operator=(octets8_t const& _octets) noexcept {
+        constexpr ipv6& operator=(octets8_t const& _octets) noexcept {
             data    = _octets;
             _prefix = 255u;
             return *this;
         }
 
-        ipv6& operator=(octets16_t const& _octets) noexcept {
+        constexpr ipv6& operator=(octets16_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
         }
 
-        ipv6& operator=(octets32_t const& _octets) noexcept {
+        constexpr ipv6& operator=(octets32_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
         }
 
-        ipv6& operator=(octets64_t const& _octets) noexcept {
+        constexpr ipv6& operator=(octets64_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
             _prefix = 255u;
             return *this;
@@ -379,8 +321,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is the
-         * Unspecified Address.
+         * This method indicates whether or not the IPv6 address is the Unspecified Address.
          * Unspecified IPv6 Address == ::0
          *
          * @retval TRUE   If the IPv6 address is the Unspecified Address.
@@ -396,8 +337,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is the Loopback
-         * Address.
+         * This method indicates whether or not the IPv6 address is the Loopback Address.
          *
          * @retval TRUE   If the IPv6 address is the Loopback Address.
          * @retval FALSE  If the IPv6 address is not the Loopback Address.
@@ -412,8 +352,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address scope is
-         * Interface-Local.
+         * This method indicates whether or not the IPv6 address scope is Interface-Local.
          *
          * @retval TRUE   If the IPv6 address scope is Interface-Local.
          * @retval FALSE  If the IPv6 address scope is not Interface-Local.
@@ -425,8 +364,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is multicast
-         * address.
+         * This method indicates whether or not the IPv6 address is multicast address.
          *
          * @retval TRUE   If the IPv6 address is a multicast address.
          * @retval FALSE  If the IPv6 address scope is not a multicast address.
@@ -483,17 +421,6 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address scope is
-         * Interface-Local.
-         *
-         * @retval TRUE   If the IPv6 address scope is Interface-Local.
-         * @retval FALSE  If the IPv6 address scope is not Interface-Local.
-         *
-         * todo: implement this method
-         */
-        [[nodiscard]] constexpr bool is_interface_local() const noexcept;
-
-        /**
          * Determine whether the address is site local
          * @return bool
          */
@@ -514,12 +441,10 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a link-local
-         * multicast address.
+         * This method indicates whether or not the IPv6 address is a link-local multicast address.
          *
          * @retval TRUE   If the IPv6 address is a link-local multicast address.
-         * @retval FALSE  If the IPv6 address scope is not a link-local
-         * multicast address.
+         * @retval FALSE  If the IPv6 address scope is not a link-local multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_link_local_multicast() const noexcept {
@@ -530,10 +455,8 @@ namespace webpp {
          * This method indicates whether or not the IPv6 address is a link-local
          * all nodes multicast address.
          *
-         * @retval TRUE   If the IPv6 address is a link-local all nodes
-         * multicast address.
-         * @retval FALSE  If the IPv6 address is not a link-local all nodes
-         * multicast address.
+         * @retval TRUE   If the IPv6 address is a link-local all nodes multicast address.
+         * @retval FALSE  If the IPv6 address is not a link-local all nodes multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_link_local_all_nodes_multicast() const noexcept {
@@ -548,10 +471,8 @@ namespace webpp {
          * This method indicates whether or not the IPv6 address is a link-local
          * all routers multicast address.
          *
-         * @retval TRUE   If the IPv6 address is a link-local all routers
-         * multicast address.
-         * @retval FALSE  If the IPv6 address is not a link-local all routers
-         * multicast address.
+         * @retval TRUE   If the IPv6 address is a link-local all routers multicast address.
+         * @retval FALSE  If the IPv6 address is not a link-local all routers multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_link_local_all_routers_multicast() const noexcept {
@@ -566,10 +487,8 @@ namespace webpp {
          * This method indicates whether or not the IPv6 address is a
          * realm-local multicast address.
          *
-         * @retval TRUE   If the IPv6 address is a realm-local multicast
-         * address.
-         * @retval FALSE  If the IPv6 address scope is not a realm-local
-         * multicast address.
+         * @retval TRUE   If the IPv6 address is a realm-local multicast address.
+         * @retval FALSE  If the IPv6 address scope is not a realm-local multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_multicast() const noexcept {
@@ -580,10 +499,8 @@ namespace webpp {
          * This method indicates whether or not the IPv6 address is a
          * realm-local all nodes multicast address.
          *
-         * @retval TRUE   If the IPv6 address is a realm-local all nodes
-         * multicast address.
-         * @retval FALSE  If the IPv6 address is not a realm-local all nodes
-         * multicast address.
+         * @retval TRUE   If the IPv6 address is a realm-local all nodes multicast address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all nodes multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_all_nodes_multicast() const noexcept {
@@ -591,13 +508,11 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a
-         * realm-local all routers multicast address.
+         * This method indicates whether or not the IPv6 address is a realm-local all
+         * routers multicast address.
          *
-         * @retval TRUE   If the IPv6 address is a realm-local all routers
-         * multicast address.
-         * @retval FALSE  If the IPv6 address is not a realm-local all routers
-         * multicast address.
+         * @retval TRUE   If the IPv6 address is a realm-local all routers multicast address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all routers multicast address.
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_all_routers_multicast() const noexcept {
@@ -609,13 +524,10 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a
-         * realm-local all MPL forwarders address.
+         * This method indicates whether or not the IPv6 address is a realm-local all MPL forwarders address.
          *
-         * @retval TRUE   If the IPv6 address is a realm-local all MPL
-         * forwarders address.
-         * @retval FALSE  If the IPv6 address is not a realm-local all MPL
-         * forwarders address.
+         * @retval TRUE   If the IPv6 address is a realm-local all MPL forwarders address.
+         * @retval FALSE  If the IPv6 address is not a realm-local all MPL forwarders address.
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_all_mpl_forwarders() const noexcept {
@@ -627,13 +539,10 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is multicast
-         * larger than realm local.
+         * This method indicates whether or not the IPv6 address is multicast larger than realm local.
          *
-         * @retval TRUE   If the IPv6 address is multicast larger than realm
-         * local.
-         * @retval FALSE  If the IPv6 address is not multicast or the scope is
-         * not larger than realm local.
+         * @retval TRUE   If the IPv6 address is multicast larger than realm local.
+         * @retval FALSE  If the IPv6 address is not multicast or the scope is not larger than realm local.
          *
          */
         [[nodiscard]] constexpr bool is_multicast_larger_than_realm_local() const noexcept {
@@ -641,8 +550,7 @@ namespace webpp {
         }
 
         /**
-         * This method indicates whether or not the IPv6 address is a RLOC
-         * address.
+         * This method indicates whether or not the IPv6 address is a RLOC address.
          *
          * @retval TRUE   If the IPv6 address is a RLOC address.
          * @retval FALSE  If the IPv6 address is not a RLOC address.
@@ -698,10 +606,8 @@ namespace webpp {
         /**
          * This method indicates whether or not the IPv6 address is Subnet-Router Anycast (RFC 4291),
          *
-         * @retval TRUE   If the IPv6 address is a Subnet-Router Anycast
-         * address.
-         * @retval FALSE  If the IPv6 address is not a Subnet-Router Anycast
-         * address.
+         * @retval TRUE   If the IPv6 address is a Subnet-Router Anycast address.
+         * @retval FALSE  If the IPv6 address is not a Subnet-Router Anycast address.
          *
          */
         [[nodiscard]] constexpr bool is_subnet_router_anycast() const noexcept {
@@ -751,7 +657,7 @@ namespace webpp {
          * This method returns a pointer to the Interface Identifier.
          * @returns A pointer to the Interface Identifier.
          */
-        octets8_t::iterator iid() noexcept {
+        [[nodiscard]] constexpr octets8_t::iterator iid() noexcept {
             return data.begin() + interface_identifier_offset;
         }
 
@@ -759,7 +665,7 @@ namespace webpp {
          * This method returns a pointer to the Interface Identifier.
          * @returns A pointer to the Interface Identifier.
          */
-        octets8_t::const_iterator iid() const noexcept {
+        [[nodiscard]] constexpr octets8_t::const_iterator iid() const noexcept {
             return data.cbegin() + interface_identifier_offset;
         }
 
@@ -767,7 +673,7 @@ namespace webpp {
          * This method sets the Interface Identifier.
          * @param piid A reference to the Interface Identifier.
          */
-        void iid(const uint8_t* piid) noexcept {
+        constexpr void iid(const uint8_t* piid) noexcept {
             auto _end = piid + interface_identifier_size;
             auto _iid = iid();
             for (auto it = piid; it != _end; it++) {
@@ -779,7 +685,7 @@ namespace webpp {
          * This method sets the Interface Identifier.
          * @param A reference to the Interface Identifier.
          */
-        void iid(const octets8_t::const_iterator& piid) noexcept {
+        constexpr void iid(const octets8_t::const_iterator& piid) noexcept {
             auto _iid = iid();
             auto _end = _iid + interface_identifier_size;
             auto pit  = piid;
@@ -841,125 +747,64 @@ namespace webpp {
         /**
          * @brief long string representation of the ip
          */
-        void str_to(istl::String auto& output) const noexcept {
-            using char_type      = istl::char_type_of_t<decltype(output)>;
-            char_type buffer[40] = {};
-            auto      _octets    = octets16();
-            fmt::format_to(buffer,
-                           "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
-                           _octets[0],
-                           _octets[1],
-                           _octets[2],
-                           _octets[3],
-                           _octets[4],
-                           _octets[5],
-                           _octets[6],
-                           _octets[7]);
-            buffer[39] = '\0';
-            output.append(buffer, 40);
+        constexpr void str_to(istl::String auto& output) const noexcept {
+            using char_type                   = istl::char_type_of_t<decltype(output)>;
+            stl::array<char_type, 40> buffer  = {};
+            auto                      _octets = octets16();
+
+            auto it = fmt::format_to(buffer.data(),
+                                     "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
+                                     _octets[0],
+                                     _octets[1],
+                                     _octets[2],
+                                     _octets[3],
+                                     _octets[4],
+                                     _octets[5],
+                                     _octets[6],
+                                     _octets[7]);
+            // buffer[39]                        = '\0';
+            output.append(buffer.data(), it);
         }
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] StrT string(auto&&... str_args) const noexcept {
+        [[nodiscard]] constexpr StrT string(auto&&... str_args) const noexcept {
             StrT output{stl::forward<decltype(str_args)>(str_args)...};
-            str_to(output);
+            short_str_to(output);
             return output;
         }
 
         /**
          * @brief return the short string representation of ip version 6
-         * TODO: all zero ip prints in a wrong format
          */
-        void short_str_to(istl::String auto& output) const noexcept {
-            using char_type = istl::char_type_of_t<decltype(output)>;
-
-            auto _octets = octets16();
-
-            // finding all of the ranges that are zero filled
-            typename decltype(_octets)::const_iterator range_start = _octets.cend(),
-                                                       range_end   = _octets.cend(), start,
-                                                       finish      = _octets.cbegin();
-            do {
-                start = stl::find(finish, _octets.cend(), 0u);
-                if (start == _octets.cend()) {
-                    break;
+        constexpr void short_str_to(istl::String auto& output) const noexcept {
+            resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
+                const auto _octets = octets();
+                auto       it      = inet_ntop6(data.data(), buf);
+                switch (_prefix) {
+                    case 255u:
+                    case 254u:
+                    case 253u: break;
+                    default:
+                        *it++ = '/';
+                        if (_prefix < 10) {
+                            *it++ = static_cast<char>('0' + _prefix);
+                        } else if (_prefix < 100) {
+                            *it++ = static_cast<char>('0' + _prefix / 10);
+                            *it++ = static_cast<char>('0' + _prefix % 10);
+                        } else {
+                            *it++ = static_cast<char>('0' + _prefix / 100);
+                            *it++ = static_cast<char>('0' + _prefix % 100 / 10);
+                            *it++ = static_cast<char>('0' + _prefix % 10);
+                        }
+                        *it++ = '\0';
                 }
-                finish = stl::find_if(start, _octets.cend(), [](auto const& a) {
-                    return a != 0;
-                });
-                if (range_start == _octets.cend() ||
-                    stl::distance(start, finish) > stl::distance(range_start, range_end)) {
-                    range_start = start;
-                    range_end   = finish;
-                }
-            } while (finish != _octets.cend());
-
-
-
-
-
-            // generating short string representation of the ip version 6
-
-            // I'm not gonna use std::string here because most small object
-            // optimizations are smaller than 48bit (16 or 20 mostly)
-            // I should be using a string with local-allocator in it but I've already written this algo
-            char_type   buffer[IPV6_ADDR_SIZE * 2 + (IPV6_ADDR_SIZE - 1) + 1];
-            stl::size_t index = 0;
-
-
-            auto append_to_buffer = [&](uint16_t octet) {
-                constexpr auto hex_table = "000102030405060708090a0b0c0d0e0f1011"
-                                           "12131415161718191a1b1c1d1e1f20212223"
-                                           "2425262728292a2b2c2d2e2f303132333435"
-                                           "363738393a3b3c3d3e3f4041424344454647"
-                                           "48494a4b4c4d4e4f50515253545556575859"
-                                           "5a5b5c5d5e5f606162636465666768696a6b"
-                                           "6c6d6e6f707172737475767778797a7b7c7d"
-                                           "7e7f808182838485868788898a8b8c8d8e8f"
-                                           "909192939495969798999a9b9c9d9e9fa0a1"
-                                           "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
-                                           "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
-                                           "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
-                                           "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
-                                           "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
-                                           "fcfdfeff";
-                auto           hex_val   = hex_table + octet;
-                if (octet > 0xfu)
-                    buffer[index++] = *hex_val;
-                ++hex_val;
-                buffer[index++] = *hex_val;
-            };
-
-            auto it = _octets.cbegin();
-
-            // [0, range_start)
-            while (it != range_start) {
-                append_to_buffer(*it);
-                if (++it != range_start)
-                    buffer[index++] = ':';
-            }
-
-            // [range_start, range_end)
-            if (it != range_end) {
-                buffer[index++] = ':';
-                buffer[index++] = ':';
-                it              = range_end;
-            }
-
-            // [range_end, end)
-            while (it != _octets.cend()) {
-                append_to_buffer(*it);
-                if (++it != _octets.cend())
-                    buffer[index++] = ':';
-            }
-
-            buffer[index++] = '\0';
-            output.append(buffer, index);
+                return it;
+            });
         }
 
 
         template <istl::String StrT = stl::string>
-        [[nodiscard]] StrT short_str(auto&&... str_args) const noexcept {
+        [[nodiscard]] constexpr StrT short_str(auto&&... str_args) const noexcept {
             StrT output{stl::forward<decltype(str_args)>(str_args)...};
             short_str_to(output);
             return output;
@@ -974,8 +819,7 @@ namespace webpp {
 
         /**
          * Check if the ip has a prefix or not
-         * @return bool an indication of weather or not the ip has a prefix or
-         * not
+         * @return bool an indication of weather or not the ip has a prefix or not
          */
         [[nodiscard]] constexpr bool has_prefix() const noexcept {
             return _prefix <= 128;
@@ -985,7 +829,7 @@ namespace webpp {
          * Set prefix for this ip address
          * @param prefix
          */
-        ipv6& prefix(uint8_t prefix_value) noexcept {
+        constexpr ipv6& prefix(uint8_t prefix_value) noexcept {
             if (prefix_value == 254u) {
                 data = {}; // reset the ip if it was not valid
             }
@@ -996,15 +840,14 @@ namespace webpp {
         /**
          * Clears the prefix from this ip
          */
-        ipv6& clear_prefix() noexcept {
+        constexpr ipv6& clear_prefix() noexcept {
             return prefix(255u);
         }
 
         /**
          * Get the ip in reversed order
-         * @return
          */
-        [[nodiscard]] ipv6 reversed() const noexcept {
+        [[nodiscard]] constexpr ipv6 reversed() const noexcept {
             return ipv6{octets_t{data[14],
                                  data[15],
                                  data[12],
@@ -1029,4 +872,4 @@ namespace webpp {
 
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
-#endif // WEBPP_IPV6_H
+#endif // WEBPP_IPV6_HPP

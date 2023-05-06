@@ -1,13 +1,16 @@
-#ifndef WEBPP_IP_H
-#define WEBPP_IP_H
+#ifndef WEBPP_IP_IPV4_HPP
+#define WEBPP_IP_IPV4_HPP
 
 #include "../convert/casts.hpp"
+#include "../strings/append.hpp"
 #include "../strings/to_case.hpp"
 #include "../validators/validators.hpp"
+#include "inet_ntop.hpp"
 
 #include <array>
 #include <compare>
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
 namespace webpp {
 
     /**
@@ -44,8 +47,8 @@ namespace webpp {
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
-        stl::size_t first_dot = 0u;
-        stl::size_t len       = _data.size();
+        stl::size_t       first_dot = 0u;
+        stl::size_t const len       = _data.size();
         while (_data[first_dot] != '.' && first_dot != len)
             first_dot++;
 
@@ -215,11 +218,13 @@ namespace webpp {
 
         constexpr ipv4(ipv4&& ip) = default;
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
-            requires(!stl::same_as<stl::remove_cvref_t<T>, ipv4> && istl::StringViewifiable<T>)
+            requires(!istl::cvref_as<T, ipv4> && istl::StringViewifiable<T>)
         constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
             parse(stl::forward<decltype(ip)>(ip));
         }
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr ipv4(istl::StringViewifiable auto&& ip, istl::StringViewifiable auto&& subnet) noexcept
           : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
@@ -276,16 +281,17 @@ namespace webpp {
             return integer();
         }
 
-        ipv4& operator=(ipv4 const& ip)     = default;
-        ipv4& operator=(ipv4&& ip) noexcept = default;
+        constexpr ~ipv4() noexcept                    = default;
+        constexpr ipv4& operator=(ipv4 const& ip)     = default;
+        constexpr ipv4& operator=(ipv4&& ip) noexcept = default;
 
-        ipv4& operator=(istl::StringViewifiable auto&& ip) noexcept {
+        constexpr ipv4& operator=(istl::StringViewifiable auto&& ip) noexcept {
             parse(stl::forward<decltype(ip)>(ip));
             _prefix = 255u;
             return *this;
         }
 
-        ipv4& operator=(uint32_t ip) noexcept {
+        constexpr ipv4& operator=(uint32_t ip) noexcept {
             data    = ip;
             _prefix = 255u;
             return *this;
@@ -307,19 +313,18 @@ namespace webpp {
         /**
          * @brief get string representation of the ip
          */
-        [[nodiscard]] auto string() const noexcept {
-            const auto _octets = octets();
-            return fmt::format("{}.{}.{}.{}", _octets[0], _octets[1], _octets[2], _octets[3]);
+        template <typename StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr auto string(Args&&... args) const {
+            StrT str{stl::forward<Args>(args)...};
+            to_string(str);
+            return str;
         }
 
-        void str_to(istl::String auto& str) const noexcept {
-            const auto _octets = octets();
-            fmt::format_to(stl::back_inserter(str),
-                           "{}.{}.{}.{}",
-                           _octets[0],
-                           _octets[1],
-                           _octets[2],
-                           _octets[3]);
+        constexpr void to_string(istl::String auto& out) const {
+            resize_and_append(out, max_ipv4_str_len, [this](auto* buf) constexpr noexcept {
+                const auto _octets = octets();
+                return inet_ntop4(_octets.data(), buf);
+            });
         }
 
         /**
@@ -335,7 +340,7 @@ namespace webpp {
          * @return
          */
         [[nodiscard]] constexpr stl::array<uint8_t, 4u> octets() const noexcept {
-            uint32_t _data = integer();
+            uint32_t const _data = integer();
             return stl::array<uint8_t, 4u>({static_cast<uint8_t>(_data >> 24u),
                                             static_cast<uint8_t>(_data >> 16u & 0x0FFu),
                                             static_cast<uint8_t>(_data >> 8u & 0x0FFu),
@@ -471,17 +476,10 @@ namespace webpp {
                                           static_cast<uint8_t>(data >> 16u & 0xFFu),
                                           static_cast<uint8_t>(data >> 24u & 0xFFu)};
         }
-
-        /**
-         * TODO: implement this thing
-         * @brief get the geographical location of the ip address based on
-         * predefined rules
-         * @return coordinates or string location
-         */
-        // [[nodiscard]] string_type geographic_location() const noexcept;
     };
 
 } // namespace webpp
+// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
 
-#endif // WEBPP_IP_H
+#endif // WEBPP_IP_IPV4_HPP

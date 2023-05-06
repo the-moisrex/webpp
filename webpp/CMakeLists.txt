@@ -100,8 +100,11 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/memory/std_pmr_allocator_pack.hpp
         ${LIB_INCLUDE_DIR}/memory/std_allocator_pack.hpp
 
+        ${LIB_INCLUDE_DIR}/ip/inet_ntop.hpp
+        ${LIB_INCLUDE_DIR}/ip/inet_pton.hpp
         ${LIB_INCLUDE_DIR}/ip/ipv4.hpp
         ${LIB_INCLUDE_DIR}/ip/ipv6.hpp
+        ${LIB_INCLUDE_DIR}/ip/ip.hpp
 
         ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp

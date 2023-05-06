@@ -97,6 +97,26 @@ namespace webpp {
 
 
 
+    /**
+     * This is almost has the same idea as C++23's std::string::resize_and_overwrite, but it appends the
+     * string to the end of the string instead of overwriting the whole thing
+     */
+    template <typename Op>
+    constexpr void resize_and_append(istl::String auto& out,
+                                     stl::size_t        counts,
+                                     Op&&               op) noexcept(noexcept(op(out.data()))) {
+        auto const str_size = out.size();
+        out.resize(out.size() + counts); // unfortunately resize writes zeros!!
+        auto const ret    = stl::forward<Op>(op)(out.data() + str_size);
+        using return_type = stl::remove_cvref_t<decltype(ret)>;
+        if constexpr (stl::is_integral_v<return_type>) {
+            out.erase(ret);
+        } else {
+            out.erase(ret - out.data());
+        }
+    }
+
+
 } // namespace webpp
 
 #endif // WEBPP_STRINGS_APPEND_HPP
