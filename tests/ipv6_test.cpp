@@ -126,13 +126,27 @@ TEST(IPv6Tests, StrTests) {
 TEST(IPv6Tests, IP2NTest) {
 
     // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-    static constexpr stl::string_view valid_ipv6s[]{"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-                                                    "2001:db8:1234::5678",
-                                                    "2001:db8::1",
-                                                    "2001:0:0:0:0:0:0:1",
-                                                    "2001::1",
-                                                    "::1",
-                                                    "::"};
+    static constexpr stl::string_view valid_ipv6s[]{
+      "2001:db8:3333:4444:5555:6666:7777:8888",
+      "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF",
+      "2001:db8::",          // implies that the last six segments are zero
+      "::1234:5678",         // implies that the first six segments are zero
+      "2001:db8::1234:5678", // implies that the middle four segments are zero
+      "2001:0db8:0001:0000:0000:0ab9:C0A8:0102",
+      "2001:db8:1::ab9:C0A8:102",
+      "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+      "2001:db8:1234::5678",
+      "2001:db8::1",
+      "2001:0:0:0:0:0:0:1",
+      "2001::1",
+      "::1234:5678:91.123.4.56", // implies that the first four IPv6 segments are zero
+      "2001:db8:3333:4444:5555:6666:1.2.3.4",
+      "::11.22.33.44",               // implies all six IPv6 segments are zero
+      "2001:db8::123.123.123.123",   // implies that the last four IPv6 segments are zero
+      "::1234:5678:1.2.3.4",         // implies that the first four IPv6 segments are zero
+      "2001:db8::1234:5678:5.6.7.8", // implies that the middle two IPv6 segments are zero
+      "::1",
+      "::"};
 
     static constexpr stl::string_view invalid_ipv6s[]{"2001:0gb8:85a3:0000:0000:8a2e:0370:7334",
                                                       "2001:db8:1234:5678",
@@ -144,11 +158,15 @@ TEST(IPv6Tests, IP2NTest) {
     stl::uint8_t                      ip[16]{};
 
     for (auto const& _ip : valid_ipv6s) {
+        EXPECT_TRUE(is::ipv6(_ip)) << _ip;
+        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
         EXPECT_EQ(inet_pton6(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton6_status::valid)
           << "ip: " << _ip;
     }
 
     for (auto const& _ip : invalid_ipv6s) {
+        EXPECT_FALSE(is::ipv6(_ip)) << _ip;
+        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
         EXPECT_NE(inet_pton6(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton6_status::valid)
           << "ip: " << _ip;
     }
