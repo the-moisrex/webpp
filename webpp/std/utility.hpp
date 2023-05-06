@@ -57,4 +57,17 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
+namespace webpp::stl {
+
+    // polyfill for C++20 (to_underlying is a C++23 feature)
+#ifndef __cpp_lib_to_underlying
+    /// Convert an object of enumeration type to its underlying type.
+    template <typename T>
+    [[nodiscard]] constexpr underlying_type_t<T> to_underlying(T value) noexcept {
+        return static_cast<underlying_type_t<T>>(value);
+    }
+#endif
+
+} // namespace webpp::stl
+
 #endif // WEBPP_UTILITY_HPP
