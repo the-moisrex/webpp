@@ -5,6 +5,7 @@
 
 #include "../common/meta.hpp"
 #include "../std/std.hpp"
+#include "ip.hpp"
 
 #include <cstdint>
 #include <cstring>

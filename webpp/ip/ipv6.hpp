@@ -747,7 +747,7 @@ namespace webpp {
         /**
          * @brief long string representation of the ip
          */
-        constexpr void str_to(istl::String auto& output) const noexcept {
+        constexpr void long_string(istl::String auto& output) const noexcept {
             using char_type                   = istl::char_type_of_t<decltype(output)>;
             stl::array<char_type, 40> buffer  = {};
             auto                      _octets = octets16();
@@ -766,20 +766,19 @@ namespace webpp {
             output.append(buffer.data(), it);
         }
 
-        template <istl::String StrT = stl::string>
-        [[nodiscard]] constexpr StrT string(auto&&... str_args) const noexcept {
-            StrT output{stl::forward<decltype(str_args)>(str_args)...};
-            short_str_to(output);
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT string(Args&&... str_args) const noexcept {
+            StrT output{stl::forward<Args>(str_args)...};
+            to_string(output);
             return output;
         }
 
         /**
          * @brief return the short string representation of ip version 6
          */
-        constexpr void short_str_to(istl::String auto& output) const noexcept {
+        constexpr void to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
-                const auto _octets = octets();
-                auto       it      = inet_ntop6(data.data(), buf);
+                auto it = inet_ntop6(data.data(), buf);
                 switch (_prefix) {
                     case 255u:
                     case 254u:
@@ -803,12 +802,6 @@ namespace webpp {
         }
 
 
-        template <istl::String StrT = stl::string>
-        [[nodiscard]] constexpr StrT short_str(auto&&... str_args) const noexcept {
-            StrT output{stl::forward<decltype(str_args)>(str_args)...};
-            short_str_to(output);
-            return output;
-        }
 
         /**
          * Get the prefix if exists or 255 otherwise

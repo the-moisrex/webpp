@@ -466,6 +466,158 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
 }
 
 
+namespace v2 {
+
+    /**
+     * Determine whether the address is a mapped IPv4 address
+     * @return bool
+     */
+    [[nodiscard]] constexpr bool is_v4_mapped(const stl::uint8_t* octets) noexcept {
+        return (octets[0] == 0) && (octets[1] == 0) && (octets[2] == 0) && (octets[3] == 0) &&
+               (octets[4] == 0) && (octets[5] == 0) && (octets[6] == 0) && (octets[7] == 0) &&
+               (octets[8] == 0) && (octets[9] == 0) && (octets[10] == 0xff) && (octets[11] == 0xff);
+    }
+
+    /**
+     * Determine whether the address is compatible with ipv4
+     * @return bool
+     */
+    [[nodiscard]] constexpr bool is_ipv6_address_v4_compat(const stl::uint8_t* octets) noexcept {
+        return (octets[0] == 0x00) && (octets[1] == 0x00) && (octets[2] == 0x00) && (octets[3] == 0x00) &&
+               (octets[4] == 0x00) && (octets[5] == 0x00) && (octets[6] == 0x00) && (octets[7] == 0x00) &&
+               (octets[8] == 0x00) && (octets[9] == 0x00) && (octets[10] == 0xff) && (octets[11] == 0xff);
+    }
+
+    /**
+     * Convert an IPv4 to string
+     * It's fast, but it's not pretty, I know :)
+     */
+    static constexpr char* inet_ntop4(const stl::uint8_t* src, char* out) noexcept {
+#define WEBPP_PUT_CHAR()                                   \
+    if (*src < 10) {                                       \
+        *out++ = static_cast<char>('0' + *src);            \
+    } else if (*src < 100) {                               \
+        *out++ = static_cast<char>('0' + *src / 10);       \
+        *out++ = static_cast<char>('0' + *src % 10);       \
+    } else {                                               \
+        *out++ = static_cast<char>('0' + *src / 100);      \
+        *out++ = static_cast<char>('0' + *src % 100 / 10); \
+        *out++ = static_cast<char>('0' + *src % 10);       \
+    }
+        WEBPP_PUT_CHAR()
+        ++src;
+        *out++ = '.';
+        WEBPP_PUT_CHAR()
+        ++src;
+        *out++ = '.';
+        WEBPP_PUT_CHAR()
+        ++src;
+        *out++ = '.';
+        WEBPP_PUT_CHAR()
+        return out;
+#undef WEBPP_PUT_CHAR
+    }
+
+    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+        IF_CXX23(static) constexpr const char* hex_chars = "0123456789abcdef";
+
+        if (!src) {
+            return nullptr;
+        }
+
+        *out = '\0';
+
+        // check for mapped or compat addresses
+        if (is_v4_mapped(src) || is_ipv6_address_v4_compat(src)) {
+            *out++ = ':';
+            *out++ = ':';
+            *out++ = 'f';
+            *out++ = 'f';
+            *out++ = 'f';
+            *out++ = 'f';
+            *out++ = ':';
+            return inet_ntop4(src + 12, out);
+        }
+
+        char                hexa[8 * 5];
+        char*               hex_ptr   = hexa;
+        const stl::uint8_t* src_ptr   = src;
+        char*               octet_ptr = hex_ptr;
+        for (int i = 0; i != 8; ++i) {
+            bool skip = true;
+
+            octet_ptr    = hex_ptr;
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            octet_ptr    = hex_ptr;
+
+            stl::uint8_t x8  = *src_ptr++;
+            stl::uint8_t hx8 = x8 >> 4u;
+
+            if (hx8 != 0u) {
+                skip         = false;
+                *octet_ptr++ = hex_chars[hx8];
+            }
+
+            hx8 = x8 & 0x0fu;
+            if (!skip || (hx8 != 0u)) {
+                skip         = false;
+                *octet_ptr++ = hex_chars[hx8];
+            }
+
+            x8 = *src_ptr++;
+
+            hx8 = x8 >> 4u;
+            if (!skip || (hx8 != 0u)) {
+                *octet_ptr++ = hex_chars[hx8];
+            }
+
+            hx8          = x8 & 0x0fu;
+            *octet_ptr++ = hex_chars[hx8];
+            hex_ptr += 5;
+        }
+
+        // find runs of zeros for :: convention
+        int j             = 0;
+        int longest_count = 0;
+        int longest_index = -1;
+        for (stl::int32_t i = 7; i >= 0; i--) {
+            if (src[i + i] == 0 && src[i + i + 1] == 0) {
+                j++;
+                if (j > longest_count) {
+                    longest_index = i;
+                    longest_count = j;
+                }
+            } else {
+                j = 0;
+            }
+        }
+
+        for (int i = 0; i != 8; ++i) {
+            if (i == longest_index) {
+                // check for leading zero
+                if (i == 0) {
+                    *out++ = ':';
+                }
+                *out++ = ':';
+                i += longest_count - 1;
+            } else {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+        }
+
+        *out = '\0';
+        return out;
+    }
+} // namespace v2
 
 ////////////////////////////// IPv4 //////////////////////////////
 
@@ -581,7 +733,7 @@ static void IPv6ToStrGlibc(benchmark::State& state) {
 BENCHMARK(IPv6ToStrGlibc);
 
 
-static void IPv6ToStrManual(benchmark::State& state) {
+static void IPv6ToStrManualV1(benchmark::State& state) {
     array<octets_t, 6> ips{};
 
     auto ip = ips.begin();
@@ -598,4 +750,27 @@ static void IPv6ToStrManual(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv6ToStrManual);
+
+// Disabled because it causes a segfault
+// BENCHMARK(IPv6ToStrManualV1);
+
+
+
+static void IPv6ToStrManualV2(benchmark::State& state) {
+    array<octets_t, 6> ips{};
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv6s) {
+        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+    }
+    array<char, ipv6_bytes> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            v2::inet_ntop6(_ip.data(), new_ip.data());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv6ToStrManualV2);

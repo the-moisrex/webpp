@@ -65,3 +65,35 @@ IPv6ToStrApple         803 ns          801 ns       887275
 IPv6ToStrGlibc        1376 ns         1372 ns       507648
 IPv6ToStrManual        119 ns          119 ns      5852012  <--- Segfault here
 ```
+
+
+### Version 2 is the fastest
+
+Honestly, I don't understand why these 2 great libraries have managed to write the least performant algorithms
+they possibly could!
+
+```
+./a.out --benchmark_min_time=5                           
+2023-05-06T13:47:35-08:00
+Running ./a.out
+Run on (8 X 3400 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x4)
+  L1 Instruction 32 KiB (x4)
+  L2 Unified 256 KiB (x4)
+  L3 Unified 6144 KiB (x1)
+Load Average: 5.02, 6.10, 5.86
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+IPv4ToStrApple         15626 ns        15605 ns       454591
+IPv4ToStrGlibc         18112 ns        18084 ns       388725
+IPv4ToStrManual          920 ns          919 ns      7522516
+IPv6ToStrApple           599 ns          598 ns     11804761
+IPv6ToStrGlibc          1053 ns         1051 ns      6939659
+IPv6ToStrManualV2        248 ns          247 ns     28022775
+```
+
+
+Also: v4 tests are slower than v6 tests because they do more tests, don't compare v4s to v6es.

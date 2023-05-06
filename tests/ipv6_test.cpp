@@ -28,7 +28,7 @@ TEST(IPv6Tests, Creation) {
 
     ipv6_t const ip4("2001:db8:0:85a3::ac1f:8001");
     EXPECT_TRUE(ip4.is_valid());
-    EXPECT_EQ("2001:db8:0:85a3:0:0:ac1f:8001", ip4.string());
+    EXPECT_EQ("2001:db8:0:85a3::ac1f:8001", ip4.string());
 }
 
 TEST(IPv6Tests, Validation) {
@@ -60,18 +60,18 @@ TEST(IPv6Tests, Validation) {
                           "::1:1:2::"};
 
     for (auto const& _ip : valid_ipv6s) {
-        EXPECT_EQ(ipv6_t(ipv6_t(_ip).short_str()), ipv6_t(_ip))
-          << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).short_str()
+        EXPECT_EQ(ipv6_t(ipv6_t(_ip).string()), ipv6_t(_ip))
+          << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).string()
           << "\nlong ip: " << ipv6_t(_ip).string()
-          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).short_str()).string();
+          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).string()).string();
         EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
-          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
-        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
+          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
+        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
     }
 
     for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
-        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).short_str();
+        EXPECT_FALSE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
+        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
     }
 }
 
@@ -85,6 +85,7 @@ TEST(IPv6Tests, CIDR) {
                         "fe00::1/64",
                         "fe80::217:f2ff:fe07:ed62/60",
                         "::1/128",
+                        "::/128",
                         "2001:db8::/48"};
 
     auto invalid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000/",
@@ -95,7 +96,7 @@ TEST(IPv6Tests, CIDR) {
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
         EXPECT_TRUE(is::ipv6_prefix(_ip)) << _ip;
-        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.short_str();
+        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
         EXPECT_TRUE(ipv6_t(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv6_t(_ip).prefix(), 0) << _ip;
         EXPECT_LE(ipv6_t(_ip).prefix(), 128) << _ip;
@@ -116,9 +117,9 @@ TEST(IPV6Tests, SpecialCases) {
 }
 
 TEST(IPv6Tests, StrTests) {
-    EXPECT_EQ(ipv6_t("::").short_str(), "::");
-    EXPECT_EQ(ipv6_t("::1").short_str(), "::1");
-    EXPECT_EQ(ipv6_t("::f0:1").short_str(), "::f0:1");
+    EXPECT_EQ(ipv6_t("::").string(), "::");
+    EXPECT_EQ(ipv6_t("::1").string(), "::1");
+    EXPECT_EQ(ipv6_t("::f0:1").string(), "::f0:1");
 }
 
 
@@ -129,15 +130,17 @@ TEST(IPv6Tests, IP2NTest) {
                                                     "2001:db8:1234::5678",
                                                     "2001:db8::1",
                                                     "2001:0:0:0:0:0:0:1",
+                                                    "2001::1",
                                                     "::1",
                                                     "::"};
 
     static constexpr stl::string_view invalid_ipv6s[]{"2001:0gb8:85a3:0000:0000:8a2e:0370:7334",
                                                       "2001:db8:1234:5678",
                                                       "2001:db8:1",
-                                                      "2001::1",
                                                       "::01",
-                                                      ":::"};
+                                                      ":01",
+                                                      ":::",
+                                                      ":"};
     stl::uint8_t                      ip[16]{};
 
     for (auto const& _ip : valid_ipv6s) {

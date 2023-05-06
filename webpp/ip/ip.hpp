@@ -14,8 +14,6 @@ namespace webpp {
     static constexpr auto ipv4_byte_count   = 4u;
     static constexpr auto ipv6_byte_count   = 16u;
 
-
-
 } // namespace webpp
 
 #endif // WEBPP_IP_CONSTANTS_HPP
