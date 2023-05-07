@@ -734,6 +734,244 @@ namespace v3 {
 
 } // namespace v3
 
+
+namespace v4 {
+    /**
+     * Convert IPv6 binary address into presentation (printable) format
+     */
+    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+
+        if (!src) {
+            return nullptr;
+        }
+
+        *out = '\0';
+
+        char                hexa[8 * 5];
+        char*               hex_ptr   = hexa;
+        const stl::uint8_t* src_ptr   = src;
+        char*               octet_ptr = hex_ptr;
+        for (int i = 0; i != 8; ++i) {
+            bool skip = true;
+
+            octet_ptr    = hex_ptr;
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            octet_ptr    = hex_ptr;
+
+            stl::uint8_t x8  = *src_ptr++;
+            stl::uint8_t hx8 = x8 >> 4u;
+
+            if (hx8 != 0u) {
+                skip         = false;
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            hx8 = x8 & 0x0fu;
+            if (!skip || (hx8 != 0u)) {
+                skip         = false;
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            x8 = *src_ptr++;
+
+            hx8 = x8 >> 4u;
+            if (!skip || (hx8 != 0u)) {
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            hx8          = x8 & 0x0fu;
+            *octet_ptr++ = v3::details::hex_chars[hx8];
+            hex_ptr += 5;
+        }
+
+        // find runs of zeros for :: convention
+        int j             = 0;
+        int longest_count = 0;
+        int longest_index = -1;
+        for (stl::int32_t i = 7; i >= 0; i--) {
+            if (src[i + i] == 0 && src[i + i + 1] == 0) {
+                j++;
+                if (j > longest_count) {
+                    longest_index = i;
+                    longest_count = j;
+                }
+            } else {
+                j = 0;
+            }
+        }
+
+        if (longest_index == 0) {
+            *out++ = ':';
+
+            // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
+            if (longest_count == 6) {
+                *out++ = ':';
+                return v2::inet_ntop4(src + 12, out);
+            } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+                *out++ = ':';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = ':';
+                return v2::inet_ntop4(src + 12, out);
+            }
+        }
+        for (int i = 0; i != 8; ++i) {
+            if (i == longest_index) {
+                // check for leading zero
+                *out++ = ':';
+                i += longest_count - 1;
+            } else {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+        }
+
+        *out = '\0';
+        return out;
+    }
+
+
+} // namespace v4
+
+
+namespace v5 {
+
+    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+
+        if (!src) {
+            return nullptr;
+        }
+
+        *out = '\0';
+
+        char                hexa[8 * 5];
+        char*               hex_ptr   = hexa;
+        const stl::uint8_t* src_ptr   = src;
+        char*               octet_ptr = hex_ptr;
+
+
+        int j             = 0;
+        int longest_count = 0;
+        int longest_index = -1;
+
+        for (int i = 0; i != 8; ++i) {
+            bool skip = true;
+
+            octet_ptr    = hex_ptr;
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            octet_ptr    = hex_ptr;
+
+            stl::uint8_t x8  = *src_ptr++;
+            stl::uint8_t hx8 = x8 >> 4u;
+
+            if (hx8 != 0u) {
+                skip         = false;
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            hx8 = x8 & 0x0fu;
+            if (!skip || (hx8 != 0u)) {
+                skip         = false;
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            x8 = *src_ptr++;
+
+            hx8 = x8 >> 4u;
+            if (!skip || (hx8 != 0u)) {
+                *octet_ptr++ = v3::details::hex_chars[hx8];
+            }
+
+            hx8          = x8 & 0x0fu;
+            *octet_ptr++ = v3::details::hex_chars[hx8];
+            hex_ptr += 5;
+
+
+
+            // find runs of zeros for :: convention
+            if (src[i + i] == 0u && src[i + i + 1] == 0u) {
+                j++;
+                if (j >= longest_count) {
+                    longest_index = i - j + 1;
+                    longest_count = j;
+                }
+            } else {
+                j = 0;
+            }
+        }
+
+
+        if (longest_index == 0) {
+            *out++ = ':';
+
+            // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
+            if (longest_count == 6) {
+                *out++ = ':';
+                return v2::inet_ntop4(src + 12, out);
+            } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+                *out++ = ':';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = ':';
+                return v2::inet_ntop4(src + 12, out);
+            }
+        }
+
+        if (longest_index == -1) {
+            for (int i = 0; i != 7; ++i) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                *out++ = ':';
+            }
+            for (hex_ptr = hexa + 7 * 5; *hex_ptr != '\0'; hex_ptr++) {
+                *out++ = *hex_ptr;
+            }
+        } else {
+            int i = 0;
+            for (; i != longest_index; ++i) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+            // check for leading zero
+            *out++ = ':';
+            i += longest_count;
+            for (; i != 8; ++i) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+        }
+
+
+        *out = '\0';
+        return out;
+    }
+} // namespace v5
+
 ////////////////////////////// IPv4 //////////////////////////////
 
 static void IPv4ToStrApple(benchmark::State& state) {
@@ -1023,3 +1261,42 @@ static void IPv6ToStrManualV3(benchmark::State& state) {
     }
 }
 BENCHMARK(IPv6ToStrManualV3);
+
+
+static void IPv6ToStrManualV4(benchmark::State& state) {
+    array<octets_t, ip_count> ips{};
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv6s) {
+        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+    }
+    array<char, ipv6_bytes> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            v4::inet_ntop6(_ip.data(), new_ip.data());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv6ToStrManualV4);
+
+static void IPv6ToStrManualV5(benchmark::State& state) {
+    array<octets_t, ip_count> ips{};
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv6s) {
+        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+    }
+    array<char, ipv6_bytes> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            v5::inet_ntop6(_ip.data(), new_ip.data());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv6ToStrManualV5);

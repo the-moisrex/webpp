@@ -102,10 +102,9 @@ namespace webpp {
                 case inet_pton6_status::valid: {
                     _prefix = 255u; // we don't have a prefix
 
-                    auto prefix_value =
-                      to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() + ip_str.size()});
-                    _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
-                    break;
+                    // auto prefix_value =
+                    //   to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() + ip_str.size()});
+                    // _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
                     break;
                 }
                 default: {

@@ -112,7 +112,7 @@ TEST(IPv6Tests, CIDR) {
     }
 }
 
-TEST(IPV6Tests, SpecialCases) {
+TEST(IPv6Tests, SpecialCases) {
     EXPECT_EQ(ipv6_t("::0.0.0.1"), ipv6_t("::1"));
     EXPECT_EQ(ipv6_t("::0.0.0.1"), ipv6_t("::1"));
 }
@@ -203,6 +203,7 @@ TEST(IPv6Tests, ShortStrEquality) {
       "::FAFF:129.144.52.38", // not a IPv4-Compatible IPv6 Address, but looks like one
       "1::129.144.52.38",     // not a IPv4-Compatible IPv6 Address, but looks like one
       "::",
+      "::f0:1",
 
       // AI Generated:
       "2001:db8:0:0:0:0:0:1",                   // loopback address

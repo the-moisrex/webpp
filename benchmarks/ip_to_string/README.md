@@ -122,3 +122,33 @@ IPv6ToStrManualV3       9718 ns         9686 ns       713139
 ```
 
 I don't know why it's slower than v2!!!
+
+
+### inet_ntop6 v4, and v5
+
+```
+./a.out                                            
+2023-05-07T09:29:56-08:00
+Running ./a.out
+Run on (8 X 3219.84 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x4)
+  L1 Instruction 32 KiB (x4)
+  L2 Unified 256 KiB (x4)
+  L3 Unified 6144 KiB (x1)
+Load Average: 10.38, 7.64, 6.75
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+IPv4ToStrApple         23445 ns        23279 ns        33279
+IPv4ToStrGlibc         24869 ns        24806 ns        26549
+IPv4ToStrManual         1257 ns         1250 ns       566420
+IPv6ToStrApple         14630 ns        14582 ns        57060
+IPv6ToStrGlibc         47906 ns        47758 ns        14787
+IPv6ToStrManualV2       7977 ns         7885 ns        81219
+IPv6ToStrManualV3      12608 ns        12576 ns        53452
+IPv6ToStrManualV4      11586 ns        11563 ns        59818
+IPv6ToStrManualV5       6544 ns         6507 ns       102980
+```
+
+v5 removes a loop, and unrolls another loop

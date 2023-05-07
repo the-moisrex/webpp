@@ -67,6 +67,12 @@ namespace webpp {
         char*               hex_ptr   = hexa;
         const stl::uint8_t* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
+
+
+        int j             = 0;
+        int longest_count = 0;
+        int longest_index = -1;
+
         for (int i = 0; i != 8; ++i) {
             bool skip = true;
 
@@ -102,17 +108,14 @@ namespace webpp {
             hx8          = x8 & 0x0fu;
             *octet_ptr++ = details::hex_chars[hx8];
             hex_ptr += 5;
-        }
 
-        // find runs of zeros for :: convention
-        int j             = 0;
-        int longest_count = 0;
-        int longest_index = -1;
-        for (stl::int32_t i = 7; i >= 0; i--) {
-            if (src[i + i] == 0 && src[i + i + 1] == 0) {
+
+
+            // find runs of zeros for :: convention
+            if (src[i + i] == 0u && src[i + i + 1] == 0u) {
                 j++;
-                if (j > longest_count) {
-                    longest_index = i;
+                if (j >= longest_count) {
+                    longest_index = i - j + 1;
                     longest_count = j;
                 }
             } else {
@@ -120,29 +123,49 @@ namespace webpp {
             }
         }
 
-        for (int i = 0; i != 8; ++i) {
-            if (i == longest_index) {
-                // check for leading zero
-                if (i == 0) {
-                    *out++ = ':';
 
-                    // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
-                    if (longest_count == 6) {
-                        *out++ = ':';
-                        return inet_ntop4(src + 12, out);
-                    } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
-                        *out++ = ':';
-                        *out++ = 'f';
-                        *out++ = 'f';
-                        *out++ = 'f';
-                        *out++ = 'f';
-                        *out++ = ':';
-                        return inet_ntop4(src + 12, out);
-                    }
+        if (longest_index == 0) {
+            *out++ = ':';
+
+            // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
+            if (longest_count == 6) {
+                *out++ = ':';
+                return inet_ntop4(src + 12, out);
+            } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+                *out++ = ':';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = 'f';
+                *out++ = ':';
+                return inet_ntop4(src + 12, out);
+            }
+        }
+
+        if (longest_index == -1) {
+            for (int i = 0; i != 7; ++i) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
                 }
                 *out++ = ':';
-                i += longest_count - 1;
-            } else {
+            }
+            for (hex_ptr = hexa + 7 * 5; *hex_ptr != '\0'; hex_ptr++) {
+                *out++ = *hex_ptr;
+            }
+        } else {
+            int i = 0;
+            for (; i != longest_index; ++i) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+            // check for leading zero
+            *out++ = ':';
+            i += longest_count;
+            for (; i != 8; ++i) {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
                 }
@@ -151,6 +174,7 @@ namespace webpp {
                 }
             }
         }
+
 
         *out = '\0';
         return out;
