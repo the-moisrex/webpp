@@ -159,7 +159,7 @@ namespace webpp {
         char         ch;           // NOLINT(cppcoreguidelines-init-variables)
         stl::size_t  hex_seen = 0; // Number of hex digits since colon.
         unsigned int val      = 0;
-        while (src < src_endp) {
+        while (src != src_endp) {
             ch              = *src++;
             int const digit = hex_digit_value(ch);
             if (digit >= 0) {

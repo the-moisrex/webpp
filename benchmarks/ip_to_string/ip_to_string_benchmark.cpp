@@ -619,6 +619,121 @@ namespace v2 {
     }
 } // namespace v2
 
+
+namespace v3 {
+
+
+    namespace details {
+        static constexpr const char* hex_chars = "0123456789abcdef";
+    }
+
+    /**
+     * Convert IPv6 binary address into presentation (printable) format
+     */
+    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+
+        if (!src) {
+            return nullptr;
+        }
+
+        *out = '\0';
+
+        char                hexa[8 * 5];
+        char*               hex_ptr   = hexa;
+        const stl::uint8_t* src_ptr   = src;
+        char*               octet_ptr = hex_ptr;
+        for (int i = 0; i != 8; ++i) {
+            bool skip = true;
+
+            octet_ptr    = hex_ptr;
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            *octet_ptr++ = '\0';
+            octet_ptr    = hex_ptr;
+
+            stl::uint8_t x8  = *src_ptr++;
+            stl::uint8_t hx8 = x8 >> 4u;
+
+            if (hx8 != 0u) {
+                skip         = false;
+                *octet_ptr++ = details::hex_chars[hx8];
+            }
+
+            hx8 = x8 & 0x0fu;
+            if (!skip || (hx8 != 0u)) {
+                skip         = false;
+                *octet_ptr++ = details::hex_chars[hx8];
+            }
+
+            x8 = *src_ptr++;
+
+            hx8 = x8 >> 4u;
+            if (!skip || (hx8 != 0u)) {
+                *octet_ptr++ = details::hex_chars[hx8];
+            }
+
+            hx8          = x8 & 0x0fu;
+            *octet_ptr++ = details::hex_chars[hx8];
+            hex_ptr += 5;
+        }
+
+        // find runs of zeros for :: convention
+        int j             = 0;
+        int longest_count = 0;
+        int longest_index = -1;
+        for (stl::int32_t i = 7; i >= 0; i--) {
+            if (src[i + i] == 0 && src[i + i + 1] == 0) {
+                j++;
+                if (j > longest_count) {
+                    longest_index = i;
+                    longest_count = j;
+                }
+            } else {
+                j = 0;
+            }
+        }
+
+        for (int i = 0; i != 8; ++i) {
+            if (i == longest_index) {
+                // check for leading zero
+                if (i == 0) {
+                    *out++ = ':';
+
+                    // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
+                    if (longest_count == 6) {
+                        *out++ = ':';
+                        return v2::inet_ntop4(src + 12, out);
+                    } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+                        *out++ = ':';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = ':';
+                        return v2::inet_ntop4(src + 12, out);
+                    }
+                }
+                *out++ = ':';
+                i += longest_count - 1;
+            } else {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                    *out++ = *hex_ptr;
+                }
+                if (i != 7) {
+                    *out++ = ':';
+                }
+            }
+        }
+
+        *out = '\0';
+        return out;
+    }
+
+
+} // namespace v3
+
 ////////////////////////////// IPv4 //////////////////////////////
 
 static void IPv4ToStrApple(benchmark::State& state) {
@@ -683,18 +798,133 @@ BENCHMARK(IPv4ToStrManual);
 
 ////////////////////////////// IPv6 //////////////////////////////
 
-static constexpr array<string_view, 6> valid_ipv6s{"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-                                                   "2001:db8:1234::5678",
-                                                   "2001:db8::1",
-                                                   "::1",
-                                                   "::2",
-                                                   "2001:0:0:0:0:0:0:1"};
+static constexpr array<string_view, 115> valid_ipv6s{
+  "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+  "2001:db8:1234::5678",
+  "2001:db8::1",
+  "::1",
+  "::2",
+  "2001:0:0:0:0:0:0:1",
+  "2001:db8:3333:4444:5555:6666:7777:8888",
+  "2001:db8:3333:4444:cccc:dddd:eeee:ffff",
+  "2001:db8::",          // implies that the last six segments are zero
+  "::1234:5678",         // implies that the first six segments are zero
+  "2001:db8::1234:5678", // implies that the middle four segments are zero
+  "2001:0db8:0001::0ab9:c0a8:0102",
+  "2001:db8:1::ab9:c0a8:102",
+  "2001:0db8:85a3::8a2e:0370:7334",
+  "2001:db8:1234::5678",
+  "2001:db8::1",
+  "2001::1",
+  "::1234:5678:91.123.4.56", // implies that the first four ipv6 segments are zero
+  "2001:db8:3333:4444:5555:6666:1.2.3.4",
+  "::11.22.33.44",               // implies all six ipv6 segments are zero
+  "2001:db8::123.123.123.123",   // implies that the last four ipv6 segments are zero
+  "::1234:5678:1.2.3.4",         // implies that the first four ipv6 segments are zero
+  "2001:db8::1234:5678:5.6.7.8", // implies that the middle two ipv6 segments are zero
+  "::1",
+  "::ffff:192.0.2.128", // IPv4-mapped IPv6 address
+  "::FFFF:129.144.52.38",
+  "::FAFF:129.144.52.38", // not a IPv4-Compatible IPv6 Address, but looks like one
+  "1::129.144.52.38",     // not a IPv4-Compatible IPv6 Address, but looks like one
+  "::",
 
+  // AI Generated examples:
+
+  "2001:db8:0:0:0:0:0:1",                   // loopback address
+  "2001:db8:ffff:ffff:ffff:ffff:ffff:ffff", // largest address
+  "::",                                     // unspecified address
+  "::1",                                    // loopback address shorthand
+  "2001:db8::",                             // compressed address
+  "2001:db8:0:1:0:0:0:0",                   // sequential address
+  "2001:db8:0:0:0:ff:0:0",                  // multicast address
+  "fe80::1",                                // link-local address
+  "ff01::1",                                // multicast address
+  "ff02::1",                                // multicast address
+  "ff02::2",                                // multicast address
+  "ff02::3",                                // multicast address
+  "ff02::4",                                // multicast address
+  "ff02::5",                                // multicast address
+  "ff02::6",                                // multicast address
+  "ff02::7",                                // multicast address
+  "ff02::8",                                // multicast address
+  "ff02::9",                                // multicast address
+  "ff02::a",                                // multicast address
+  "ff02::b",                                // multicast address
+  "ff02::c",                                // multicast address
+  "ff02::d",                                // multicast address
+  "ff02::e",                                // multicast address
+  "ff02::f",                                // multicast address
+  "fe80::217:f2ff:fe07:ed62",               // link-local address
+  "fe80::217:f2ff:fe07:ed63",               // link-local address
+  "fe80::217:f2ff:fe07:ed64",               // link-local address
+  "fe80::217:f2ff:fe07:ed65",               // link-local address
+  "fe80::217:f2ff:fe07:ed66",               // link-local address
+  "fe80::217:f2ff:fe07:ed67",               // link-local address
+  "fe80::217:f2ff:fe07:ed68",               // link-local address
+  "fe80::217:f2ff:fe07:ed69",               // link-local address
+  "fe80::217:f2ff:fe07:ed6a",               // link-local address
+  "fe80::217:f2ff:fe07:ed6b",               // link-local address
+  "fe80::217:f2ff:fe07:ed6c",               // link-local address
+  "fe80::217:f2ff:fe07:ed6d",               // link-local address
+  "fe80::217:f2ff:fe07:ed6e",               // link-local address
+  "fe80::217:f2ff:fe07:ed6f",               // link-local address
+  "fe80::217:f2ff:fe07:ed70",               // link-local address
+  "fe80::217:f2ff:fe07:ed71",               // link-local address
+  "fe80::217:f2ff:fe07:ed72",               // link-local address
+  "fe80::217:f2ff:fe07:ed73",               // link-local address
+  "fe80::217:f2ff:fe07:ed74",               // link-local address
+  "fe80::217:f2ff:fe07:ed75",               // link-local address
+  "fe80::217:f2ff:fe07:ed76",               // link-local address
+  "fe80::217:f2ff:fe07:ed77",               // link-local address
+  "fe80::217:f2ff:fe07:ed78",               // link-local address
+  "fe80::217:f2ff:fe07:ed79",               // link-local address
+  "fe80::217:f2ff:fe07:ed7a",               // link-local address
+  "fe80::217:f2ff:fe07:ed7b",               // link-local address
+  "fe80::217:f2ff:fe07:ed7c",               // link-local address
+  "fe80::217:f2ff:fe07:ed7d",               // link-local address
+  "fe80::217:f2ff:fe07:ed7e",               // link-local address
+  "fe80::217:f2ff:fe07:ed7f",               // link-local address
+  "fe80::217:f2ff:fe07:ed80",               // link-local address
+  "fe80::217:f2ff:fe07:ed81",               // link-local address
+  "fe80::217:f2ff:fe07:ed82",               // link-local address
+  "fe80::217:f2ff:fe07:ed83",               // link-local address
+  "fe80::217:f2ff:fe07:ed84",               // link-local address
+  "fe80::217:f2ff:fe07:ed85",               // link-local address
+  "fe80::217:f2ff:fe07:ed86",               // link-local address
+  "fe80::217:f2ff:fe07:ed87",               // link-local address
+  "fe80::217:f2ff:fe07:ed88",               // link-local address
+  "fe80::217:f2ff:fe07:ed89",               // link-local address
+  "fe80::217:f2ff:fe07:ed8a",               // link-local address
+  "fe80::217:f2ff:fe07:ed8b",               // link-local address
+  "fe80::217:f2ff:fe07:ed8c",               // link-local address
+  "fe80::217:f2ff:fe07:ed8d",               // link-local address
+  "fe80::217:f2ff:fe07:ed8e",               // link-local address
+  "fe80::217:f2ff:fe07:ed8f",               // link-local address
+  "fe80::217:f2ff:fe07:ed90",               // link-local address
+  "fe80::217:f2ff:fe07:ed91",               // link-local address
+  "fe80::217:f2ff:fe07:ed92",               // link-local address
+  "fe80::217:f2ff:fe07:ed93",               // link-local address
+  "fe80::217:f2ff:fe07:ed94",               // link-local address
+  "fe80::217:f2ff:fe07:ed95",               // link-local address
+  "fe80::217:f2ff:fe07:ed96",               // link-local address
+  "fe80::217:f2ff:fe07:ed97",               // link-local address
+  "fe80::217:f2ff:fe07:ed98",               // link-local address
+  "fe80::217:f2ff:fe07:ed99",               // link-local address
+  "fe80::217:f2ff:fe07:ed9a",               // link-local address
+  "fe80::217:f2ff:fe07:ed9b",               // link-local address
+  "fe80::217:f2ff:fe07:ed9c",               // link-local address
+  "fe80::217:f2ff:fe07:ed9d",               // link-local address
+  "fe80::217:f2ff:fe07:ed9e",               // link-local address
+  "fe80::217:f2ff:fe07:ed9f"                // link-local address
+};
+
+static constexpr auto ip_count   = valid_ipv6s.size();
 static constexpr auto ipv6_bytes = sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255";
 
 
 static void IPv6ToStrApple(benchmark::State& state) {
-    array<apple_in6_addr, 6> ips{};
+    array<apple_in6_addr, ip_count> ips{};
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
@@ -714,7 +944,7 @@ BENCHMARK(IPv6ToStrApple);
 
 
 static void IPv6ToStrGlibc(benchmark::State& state) {
-    array<octets_t, 6> ips{};
+    array<octets_t, ip_count> ips{};
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
@@ -734,7 +964,7 @@ BENCHMARK(IPv6ToStrGlibc);
 
 
 static void IPv6ToStrManualV1(benchmark::State& state) {
-    array<octets_t, 6> ips{};
+    array<octets_t, ip_count> ips{};
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
@@ -757,7 +987,7 @@ static void IPv6ToStrManualV1(benchmark::State& state) {
 
 
 static void IPv6ToStrManualV2(benchmark::State& state) {
-    array<octets_t, 6> ips{};
+    array<octets_t, ip_count> ips{};
 
     auto ip = ips.begin();
     for (auto const& _ip : valid_ipv6s) {
@@ -774,3 +1004,22 @@ static void IPv6ToStrManualV2(benchmark::State& state) {
     }
 }
 BENCHMARK(IPv6ToStrManualV2);
+
+static void IPv6ToStrManualV3(benchmark::State& state) {
+    array<octets_t, ip_count> ips{};
+
+    auto ip = ips.begin();
+    for (auto const& _ip : valid_ipv6s) {
+        inet_pton6(_ip.data(), _ip.data() + _ip.size(), (ip++)->data());
+    }
+    array<char, ipv6_bytes> new_ip{};
+
+    for (auto _ : state) {
+        for (auto _ip : ips) {
+            v3::inet_ntop6(_ip.data(), new_ip.data());
+            benchmark::DoNotOptimize(_ip);
+            benchmark::DoNotOptimize(new_ip);
+        }
+    }
+}
+BENCHMARK(IPv6ToStrManualV3);

@@ -8,6 +8,9 @@
 namespace webpp {
 
     static constexpr auto max_ipv4_str_len = 16u;
+
+    // sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
+    // todo: shouldn't it be 46?
     static constexpr auto max_ipv6_str_len = 64u;
 
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t

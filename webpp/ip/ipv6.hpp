@@ -101,15 +101,13 @@ namespace webpp {
             switch (status) {
                 case inet_pton6_status::valid: {
                     _prefix = 255u; // we don't have a prefix
+
+                    auto prefix_value =
+                      to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() + ip_str.size()});
+                    _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
+                    break;
                     break;
                 }
-                    //                case inet_pton6_status::valid_with_prefix: {
-                    //                    auto prefix_value =
-                    //                      to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() +
-                    //                      ip_str.size()});
-                    //                    _prefix = prefix_value > 128u ? 253u :
-                    //                    static_cast<decltype(_prefix)>(prefix_value); break;
-                    //                }
                 default: {
                     // The IP is not valid
                     _prefix = 254u;
@@ -744,16 +742,23 @@ namespace webpp {
             return _prefix != 254 && _prefix != 253;
         }
 
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT expanded_string(Args&&... str_args) const noexcept {
+            StrT output{stl::forward<Args>(str_args)...};
+            expanded_string_to(output);
+            return output;
+        }
+
         /**
          * @brief long string representation of the ip
          */
-        constexpr void long_string(istl::String auto& output) const noexcept {
+        constexpr void expanded_string_to(istl::String auto& output) const noexcept {
             using char_type                   = istl::char_type_of_t<decltype(output)>;
             stl::array<char_type, 40> buffer  = {};
             auto                      _octets = octets16();
 
             auto it = fmt::format_to(buffer.data(),
-                                     "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
+                                     "{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}",
                                      _octets[0],
                                      _octets[1],
                                      _octets[2],
@@ -762,7 +767,6 @@ namespace webpp {
                                      _octets[5],
                                      _octets[6],
                                      _octets[7]);
-            // buffer[39]                        = '\0';
             output.append(buffer.data(), it);
         }
 
@@ -774,7 +778,7 @@ namespace webpp {
         }
 
         /**
-         * @brief return the short string representation of ip version 6
+         * @brief return the short string representation of ip version 6 + the prefix
          */
         constexpr void to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
@@ -801,6 +805,22 @@ namespace webpp {
             });
         }
 
+
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT ip_string(Args&&... str_args) const noexcept {
+            StrT output{stl::forward<Args>(str_args)...};
+            ip_to_string(output);
+            return output;
+        }
+
+        /**
+         * @brief return the short string representation of ip version 6
+         */
+        constexpr void ip_to_string(istl::String auto& output) const noexcept {
+            resize_and_append(output, max_ipv6_str_len, [this](auto* buf) constexpr noexcept {
+                return inet_ntop6(data.data(), buf);
+            });
+        }
 
 
         /**

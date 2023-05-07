@@ -97,3 +97,28 @@ IPv6ToStrManualV2        248 ns          247 ns     28022775
 
 
 Also: v4 tests are slower than v6 tests because they do more tests, don't compare v4s to v6es.
+
+
+### inet_ntop6 v3
+
+```
+./a.out --benchmark_min_time=5 --benchmark_filter=6
+2023-05-07T08:21:28-08:00
+Running ./a.out
+Run on (8 X 3193.18 MHz CPU s)
+CPU Caches:
+  L1 Data 32 KiB (x4)
+  L1 Instruction 32 KiB (x4)
+  L2 Unified 256 KiB (x4)
+  L3 Unified 6144 KiB (x1)
+Load Average: 2.69, 4.47, 5.01
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+IPv6ToStrApple         11144 ns        11082 ns       635092
+IPv6ToStrGlibc         32045 ns        31816 ns       224492
+IPv6ToStrManualV2       5521 ns         5496 ns      1272118
+IPv6ToStrManualV3       9718 ns         9686 ns       713139
+```
+
+I don't know why it's slower than v2!!!

@@ -112,7 +112,7 @@ namespace webpp {
         if constexpr (stl::is_integral_v<return_type>) {
             out.erase(ret);
         } else {
-            out.erase(ret - out.data());
+            out.erase(static_cast<stl::size_t>(ret - out.data()));
         }
     }
 

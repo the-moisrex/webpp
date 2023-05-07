@@ -40,56 +40,28 @@ namespace webpp {
         ++src;
         *out++ = '.';
         WEBPP_PUT_CHAR()
+        *out = '\0';
         return out;
 #undef WEBPP_PUT_CHAR
     }
     // NOLINTEND(cppcoreguidelines-macro-usage)
 
 
-    /**
-     * Determine whether the address is a mapped IPv4 address
-     * @return bool
-     */
-    [[nodiscard]] constexpr bool is_v4_mapped(const stl::uint8_t* octets) noexcept {
-        return (octets[0] == 0) && (octets[1] == 0) && (octets[2] == 0) && (octets[3] == 0) &&
-               (octets[4] == 0) && (octets[5] == 0) && (octets[6] == 0) && (octets[7] == 0) &&
-               (octets[8] == 0) && (octets[9] == 0) && (octets[10] == 0xff) && (octets[11] == 0xff);
-    }
 
-    /**
-     * Determine whether the address is compatible with ipv4
-     * @return bool
-     */
-    [[nodiscard]] constexpr bool is_ipv6_address_v4_compat(const stl::uint8_t* octets) noexcept {
-        return (octets[0] == 0x00) && (octets[1] == 0x00) && (octets[2] == 0x00) && (octets[3] == 0x00) &&
-               (octets[4] == 0x00) && (octets[5] == 0x00) && (octets[6] == 0x00) && (octets[7] == 0x00) &&
-               (octets[8] == 0x00) && (octets[9] == 0x00) && (octets[10] == 0xff) && (octets[11] == 0xff);
+    namespace details {
+        static constexpr const char* hex_chars = "0123456789abcdef";
     }
-
 
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
     static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-        IF_CXX23(static) constexpr const char* hex_chars = "0123456789abcdef";
 
         if (!src) {
             return nullptr;
         }
 
         *out = '\0';
-
-        // check for mapped or compat addresses
-        if (is_v4_mapped(src) || is_ipv6_address_v4_compat(src)) {
-            *out++ = ':';
-            *out++ = ':';
-            *out++ = 'f';
-            *out++ = 'f';
-            *out++ = 'f';
-            *out++ = 'f';
-            *out++ = ':';
-            return inet_ntop4(src + 12, out);
-        }
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
@@ -111,24 +83,24 @@ namespace webpp {
 
             if (hx8 != 0u) {
                 skip         = false;
-                *octet_ptr++ = hex_chars[hx8];
+                *octet_ptr++ = details::hex_chars[hx8];
             }
 
             hx8 = x8 & 0x0fu;
             if (!skip || (hx8 != 0u)) {
                 skip         = false;
-                *octet_ptr++ = hex_chars[hx8];
+                *octet_ptr++ = details::hex_chars[hx8];
             }
 
             x8 = *src_ptr++;
 
             hx8 = x8 >> 4u;
             if (!skip || (hx8 != 0u)) {
-                *octet_ptr++ = hex_chars[hx8];
+                *octet_ptr++ = details::hex_chars[hx8];
             }
 
             hx8          = x8 & 0x0fu;
-            *octet_ptr++ = hex_chars[hx8];
+            *octet_ptr++ = details::hex_chars[hx8];
             hex_ptr += 5;
         }
 
@@ -153,6 +125,20 @@ namespace webpp {
                 // check for leading zero
                 if (i == 0) {
                     *out++ = ':';
+
+                    // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
+                    if (longest_count == 6) {
+                        *out++ = ':';
+                        return inet_ntop4(src + 12, out);
+                    } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+                        *out++ = ':';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = 'f';
+                        *out++ = ':';
+                        return inet_ntop4(src + 12, out);
+                    }
                 }
                 *out++ = ':';
                 i += longest_count - 1;
