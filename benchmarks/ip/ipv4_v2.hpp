@@ -1,18 +1,18 @@
-#ifndef WEBPP_IP_IPV4_HPP
-#define WEBPP_IP_IPV4_HPP
+#ifndef WEBPP_IP_IPV4_V2_HPP
+#define WEBPP_IP_IPV4_V2_HPP
 
-#include "../convert/casts.hpp"
-#include "../strings/append.hpp"
-#include "../strings/to_case.hpp"
-#include "../validators/validators.hpp"
-#include "inet_ntop.hpp"
-#include "inet_pton.hpp"
+#include "../../webpp/convert/casts.hpp"
+#include "../../webpp/ip/inet_ntop.hpp"
+#include "../../webpp/ip/inet_pton.hpp"
+#include "../../webpp/strings/append.hpp"
+#include "../../webpp/strings/to_case.hpp"
+#include "../../webpp/validators/validators.hpp"
 
 #include <array>
 #include <compare>
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
-namespace webpp {
+namespace webpp::v2 {
 
     /**
      * @brief considers this ip as a subnet and converts it into a int prefix
@@ -43,7 +43,6 @@ namespace webpp {
      * @param octets
      */
     constexpr uint8_t to_prefix(istl::StringViewifiable auto&& m_data) noexcept {
-        // todo: use inet_pton4 to parse this instead of this algo
         const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
 
         if (_data.size() > 15 || _data.size() < 7) {
@@ -395,7 +394,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _prefix != 254u && _prefix != 253u;
+            return _prefix != 254u;
         }
 
         /**
@@ -410,8 +409,8 @@ namespace webpp {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::v2
 // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
 
 
-#endif // WEBPP_IP_IPV4_HPP
+#endif // WEBPP_IP_IPV4_V2_HPP
