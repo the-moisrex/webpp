@@ -85,10 +85,8 @@ namespace webpp {
 
     struct ipv4 {
       private:
-        stl::uint32_t data = 0u; // all bits are used
-
-        // 255 means that the ip doesn't have a prefix
-        ipv4_octet _prefix = prefix_status(inet_pton4_status::valid);
+        stl::uint32_t data    = 0u; // all bits are used
+        ipv4_octet    _prefix = prefix_status(inet_pton4_status::valid);
 
         static constexpr ipv4_octet prefix_status(inet_pton4_status status) noexcept {
             return static_cast<ipv4_octet>(status);

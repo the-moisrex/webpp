@@ -333,3 +333,11 @@ TEST(IPv6Tests, PrefixesTest) {
         }
     }
 }
+
+
+
+TEST(IPv6Tests, ErrorMessages) {
+    EXPECT_EQ(to_string(inet_pton6_status::invalid_character), (ipv6{"::x"}.status_string()));
+    EXPECT_EQ(to_string(inet_pton6_status::valid), (ipv6{"::1"}.status_string()));
+    EXPECT_EQ(to_string(inet_pton6_status::invalid_prefix), (ipv6{"::1", 129}.status_string()));
+}

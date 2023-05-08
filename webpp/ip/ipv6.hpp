@@ -1,6 +1,7 @@
 #ifndef WEBPP_IPV6_HPP
 #define WEBPP_IPV6_HPP
 
+#include "../strings/append.hpp"
 #include "../strings/to_case.hpp"
 #include "../validators/validators.hpp"
 #include "inet_ntop.hpp"
@@ -59,12 +60,12 @@ namespace webpp {
         // byte order. Network's byte order is big endian btw, but here we just
         // have to worry about the host's byte order because we are not sending
         // these data over the network.
-        octets_t data = {}; // filled with zeros
+        octets_t     data    = {}; // filled with zeros
+        stl::uint8_t _prefix = prefix_status(inet_pton6_status::valid);
 
-        // 255 means it doesn't have prefixed
-        // 254 means the ip is not valid
-        // 253 means the prefix is not valid (it's not being used for now)
-        stl::uint8_t _prefix = 255u;
+        static constexpr stl::uint8_t prefix_status(inet_pton6_status status) noexcept {
+            return static_cast<stl::uint8_t>(status);
+        }
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -83,7 +84,7 @@ namespace webpp {
                 for (stl::size_t i = 0u; i < each_octet_size; i++) {
                     _octet >>= i * 8u;
                     _octet |= 0xFFu;
-                    *_data_it++ = static_cast<uint8_t>(*_octets_it);
+                    *_data_it++ = static_cast<stl::uint8_t>(*_octets_it);
                 }
             }
             return _data;
@@ -94,20 +95,16 @@ namespace webpp {
          * parses the string_view to the uint8 structure
          */
         constexpr void parse(istl::StringViewifiable auto&& _ipv6_data) noexcept {
-            auto       ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
-            auto*      inp_ptr = ip_str.data();
-            auto*      out_ptr = data.data();
-            const auto status  = inet_pton6(inp_ptr, inp_ptr + ip_str.size(), out_ptr, _prefix);
-            switch (status) {
-                case inet_pton6_status::valid: break;
-                case inet_pton6_status::invalid_prefix: {
-                    _prefix = 253u;
-                    break;
-                }
-                default: {
-                    // The IP is not valid
-                    _prefix = 254u;
-                }
+            auto  ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
+            auto* inp_ptr = ip_str.data();
+            auto* out_ptr = data.data();
+
+            // set the default value to valid
+            _prefix           = prefix_status(inet_pton6_status::valid);
+            const auto status = inet_pton6(inp_ptr, inp_ptr + ip_str.size(), out_ptr, _prefix);
+            if (status != inet_pton6_status::valid) {
+                // set the status
+                _prefix = prefix_status(status);
             }
         }
 
@@ -118,24 +115,37 @@ namespace webpp {
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
                                                       stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-        constexpr explicit ipv6(StrT&& str, uint8_t prefix_value = 255u) noexcept
-          : _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {
+        constexpr explicit ipv6(
+          StrT&&       str,
+          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept {
             parse(stl::forward<StrT>(str));
+            if (is_valid()) {
+                prefix(prefix_value);
+            }
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)
-        constexpr explicit ipv6(octets8_t const& _octets, uint8_t prefix_value = 255u) noexcept
-          : data(_octets),
-            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
-        constexpr explicit ipv6(octets16_t const& _octets, uint8_t prefix_value = 255u) noexcept
-          : data{to_octets_t(_octets)},
-            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
+        constexpr explicit ipv6(octets8_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data(_octets) {
+            prefix(prefix_value);
+        }
+        constexpr explicit ipv6(octets16_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data{to_octets_t(_octets)} {
+            prefix(prefix_value);
+        }
 
-        constexpr explicit ipv6(octets32_t const& _octets, uint8_t prefix_value = 255u) noexcept
-          : data{to_octets_t(_octets)},
-            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
-        constexpr explicit ipv6(octets64_t const& _octets, uint8_t prefix_value = 255u) noexcept
-          : data{to_octets_t(_octets)},
-            _prefix(prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value) {}
+        constexpr explicit ipv6(octets32_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data{to_octets_t(_octets)} {
+            prefix(prefix_value);
+        }
+
+        constexpr explicit ipv6(octets64_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data{to_octets_t(_octets)} {
+            prefix(prefix_value);
+        }
         constexpr ipv6(ipv6 const& ip) noexcept = default;
         constexpr ipv6(ipv6&& ip) noexcept      = default;
 
@@ -147,31 +157,31 @@ namespace webpp {
             requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>)
         constexpr ipv6& operator=(StrT&& str) noexcept {
             parse(stl::forward<StrT>(str));
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr ipv6& operator=(octets8_t const& _octets) noexcept {
             data    = _octets;
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr ipv6& operator=(octets16_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr ipv6& operator=(octets32_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
         constexpr ipv6& operator=(octets64_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
 
@@ -287,15 +297,15 @@ namespace webpp {
          * This method returns the IPv6 address scope.
          * @returns The IPv6 address scope.
          */
-        [[nodiscard]] constexpr uint8_t scope() const noexcept {
+        [[nodiscard]] constexpr stl::uint8_t scope() const noexcept {
             if (is_multicast()) {
                 return octets8()[1] & 0xfu;
             } else if (is_link_local()) {
-                return static_cast<uint8_t>(scope::link_local);
+                return static_cast<stl::uint8_t>(scope::link_local);
             } else if (is_loopback()) {
-                return static_cast<uint8_t>(scope::node_local);
+                return static_cast<stl::uint8_t>(scope::node_local);
             }
-            return static_cast<uint8_t>(scope::global);
+            return static_cast<stl::uint8_t>(scope::global);
         }
 
         /**
@@ -426,7 +436,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_link_local_multicast() const noexcept {
-            return is_multicast() && scope() == static_cast<uint8_t>(scope::link_local);
+            return is_multicast() && scope() == static_cast<stl::uint8_t>(scope::link_local);
         }
 
         /**
@@ -470,7 +480,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_multicast() const noexcept {
-            return is_multicast() && (scope() == static_cast<uint8_t>(scope::realm_local));
+            return is_multicast() && (scope() == static_cast<stl::uint8_t>(scope::realm_local));
         }
 
         /**
@@ -482,7 +492,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_realm_local_all_nodes_multicast() const noexcept {
-            return is_multicast() && scope() == static_cast<uint8_t>(scope::realm_local);
+            return is_multicast() && scope() == static_cast<stl::uint8_t>(scope::realm_local);
         }
 
         /**
@@ -524,7 +534,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_multicast_larger_than_realm_local() const noexcept {
-            return is_multicast() && scope() > static_cast<uint8_t>(scope::realm_local);
+            return is_multicast() && scope() > static_cast<stl::uint8_t>(scope::realm_local);
         }
 
         /**
@@ -651,7 +661,7 @@ namespace webpp {
          * This method sets the Interface Identifier.
          * @param piid A reference to the Interface Identifier.
          */
-        constexpr void iid(const uint8_t* piid) noexcept {
+        constexpr void iid(const stl::uint8_t* piid) noexcept {
             auto _end = piid + interface_identifier_size;
             auto _iid = iid();
             for (auto it = piid; it != _end; it++) {
@@ -710,7 +720,7 @@ namespace webpp {
         //         * @param[in]  aOther  The IPv6 address to match against.
         //         * @returns The number of IPv6 prefix bits that match.
         //         */
-        //        uint8_t PrefixMatch(const otIp6Address& aOther) const {
+        //        stl::uint8_t PrefixMatch(const otIp6Address& aOther) const {
         //            // TODO
         //        }
 
@@ -719,7 +729,7 @@ namespace webpp {
          * @return true if it is an unspecified ip address.
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _prefix != 254 && _prefix != 253;
+            return _prefix <= 128u || _prefix == prefix_status(inet_pton6_status::valid);
         }
 
         template <istl::String StrT = stl::string, typename... Args>
@@ -763,23 +773,19 @@ namespace webpp {
         constexpr void to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
                 auto it = inet_ntop6(data.data(), buf);
-                switch (_prefix) {
-                    case 255u:
-                    case 254u:
-                    case 253u: break;
-                    default:
-                        *it++ = '/';
-                        if (_prefix < 10) {
-                            *it++ = static_cast<char>('0' + _prefix);
-                        } else if (_prefix < 100) {
-                            *it++ = static_cast<char>('0' + _prefix / 10);
-                            *it++ = static_cast<char>('0' + _prefix % 10);
-                        } else {
-                            *it++ = static_cast<char>('0' + _prefix / 100);
-                            *it++ = static_cast<char>('0' + _prefix % 100 / 10);
-                            *it++ = static_cast<char>('0' + _prefix % 10);
-                        }
-                        *it++ = '\0';
+                if (has_prefix()) {
+                    *it++ = '/';
+                    if (_prefix < 10) {
+                        *it++ = static_cast<char>('0' + _prefix);
+                    } else if (_prefix < 100) {
+                        *it++ = static_cast<char>('0' + _prefix / 10);
+                        *it++ = static_cast<char>('0' + _prefix % 10);
+                    } else {
+                        *it++ = static_cast<char>('0' + _prefix / 100);
+                        *it++ = static_cast<char>('0' + _prefix % 100 / 10);
+                        *it++ = static_cast<char>('0' + _prefix % 10);
+                    }
+                    *it++ = '\0';
                 }
                 return it;
             });
@@ -806,7 +812,7 @@ namespace webpp {
         /**
          * Get the prefix if exists or 255 otherwise
          */
-        [[nodiscard]] constexpr uint8_t prefix() const noexcept {
+        [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
             return _prefix;
         }
 
@@ -822,11 +828,15 @@ namespace webpp {
          * Set prefix for this ip address
          * @param prefix
          */
-        constexpr ipv6& prefix(uint8_t prefix_value) noexcept {
-            if (prefix_value == 254u) {
-                data = {}; // reset the ip if it was not valid
+        constexpr ipv6& prefix(stl::uint8_t prefix_value) noexcept {
+            if (prefix_value == prefix_status(inet_pton6_status::valid)) {
+                _prefix = prefix_status(inet_pton6_status::valid);
+            } else if (prefix_value > 128u) {
+                data    = {}; // reset the ip if it was not valid
+                _prefix = prefix_status(inet_pton6_status::invalid_prefix);
+            } else {
+                _prefix = prefix_value;
             }
-            _prefix = prefix_value > 128u && prefix_value != 255u ? 253u : prefix_value;
             return *this;
         }
 
@@ -834,7 +844,7 @@ namespace webpp {
          * Clears the prefix from this ip
          */
         constexpr ipv6& clear_prefix() noexcept {
-            return prefix(255u);
+            return prefix(prefix_status(inet_pton6_status::valid));
         }
 
         /**
@@ -858,6 +868,27 @@ namespace webpp {
                                  data[0],
                                  data[1]},
                         _prefix};
+        }
+
+
+        [[nodiscard]] constexpr inet_pton6_status status() const noexcept {
+            if (_prefix <= 128u) {
+                return inet_pton6_status::valid;
+            }
+            return static_cast<inet_pton6_status>(_prefix);
+        }
+
+        template <typename StrT>
+        constexpr void status_to(StrT& output) const {
+            set_string(output, webpp::to_string(status()));
+        }
+
+
+        template <typename StrT = stl::string_view, typename... Args>
+        [[nodiscard]] constexpr auto status_string(Args&&... args) const {
+            StrT str{stl::forward<Args>(args)...};
+            status_to(str);
+            return str;
         }
     };
 
