@@ -3,7 +3,8 @@
 #include "../../webpp/traits/std_traits.hpp"
 #include "../benchmark.hpp"
 #include "../boost_pch.hpp"
-
+#include "ipv4_v1.hpp"
+#include "ipv4_v2.hpp"
 
 enum struct inet_pton4_status {
     valid = 0,
@@ -192,3 +193,23 @@ static void IP_webpp_v4_random_inet_pton4_v2(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_webpp_v4_random_inet_pton4_v2);
+
+
+static void IP_webpp_v4_random_ipv4_v1(benchmark::State& state) {
+    ipv4_data();
+    for (auto _ : state) {
+        auto addr = webpp::v1::ipv4(ipv4_data());
+        benchmark::DoNotOptimize(addr);
+    }
+}
+BENCHMARK(IP_webpp_v4_random_ipv4_v1);
+
+
+static void IP_webpp_v4_random_ipv4_v2(benchmark::State& state) {
+    ipv4_data();
+    for (auto _ : state) {
+        auto addr = webpp::v2::ipv4(ipv4_data());
+        benchmark::DoNotOptimize(addr);
+    }
+}
+BENCHMARK(IP_webpp_v4_random_ipv4_v2);
