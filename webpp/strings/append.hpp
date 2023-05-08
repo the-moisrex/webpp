@@ -117,6 +117,26 @@ namespace webpp {
     }
 
 
+    /**
+     * The purpose of this utility is to choose between these 2 types and take action accordingly:
+     *   - String:       append
+     *   - String View:  replace
+     * This means if you `output` is a string, it'll add `input` to it, but if `output` is a string view,
+     * then it'll simply put the `input` into `output`
+     *
+     * String Views simply don't have the ability to append something to them
+     */
+    template <istl::StringView StrT, typename InputStr>
+        requires(!istl::String<StrT>)
+    static constexpr void set_string(StrT& output, InputStr&& input) noexcept {
+        output = stl::forward<InputStr>(input);
+    }
+
+    template <istl::String StrT, typename InputStr>
+    static constexpr void set_string(StrT& output, InputStr&& input) {
+        output += stl::forward<InputStr>(input);
+    }
+
 } // namespace webpp
 
 #endif // WEBPP_STRINGS_APPEND_HPP

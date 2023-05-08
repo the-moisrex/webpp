@@ -166,3 +166,9 @@ TEST(IPv4Tests, InetP2NValidation) {
     }
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 }
+
+TEST(IPv4Tests, ErrorMessages) {
+    EXPECT_EQ(to_string(inet_pton4_status::invalid_character), (ipv4{"1.1.a.1"}.status_string()));
+    EXPECT_EQ(to_string(inet_pton4_status::valid), (ipv4{"1.1.1.1"}.status_string()));
+    EXPECT_EQ(to_string(inet_pton4_status::invalid_prefix), (ipv4{"1.1.1.1", "-1.255.1.3"}.status_string()));
+}

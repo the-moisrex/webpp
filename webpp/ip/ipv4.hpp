@@ -88,27 +88,26 @@ namespace webpp {
         stl::uint32_t data = 0u; // all bits are used
 
         // 255 means that the ip doesn't have a prefix
-        // 254 means the ip is not valid
-        // 253 means the prefix was not valid
-        ipv4_octet _prefix = 255u;
+        ipv4_octet _prefix = prefix_status(inet_pton4_status::valid);
+
+        static constexpr ipv4_octet prefix_status(inet_pton4_status status) noexcept {
+            return static_cast<ipv4_octet>(status);
+        }
 
         template <istl::StringViewifiable StrT>
         constexpr void parse(StrT&& inp_str) noexcept {
-            const auto  str = istl::string_viewify(stl::forward<StrT>(inp_str));
+            const auto str = istl::string_viewify(stl::forward<StrT>(inp_str));
+
+            // make sure prefix is set to mark the ip to be valid:
+            _prefix = prefix_status(inet_pton4_status::valid);
+
             ipv4_octets bin; // NOLINT(cppcoreguidelines-pro-type-member-init)
             auto const  res = inet_pton4(str.data(), str.data() + str.size(), bin.data(), _prefix);
-            switch (res) {
-                case inet_pton4_status::valid: {
-                    data = parse(bin);
-                    break;
-                }
-                case inet_pton4_status::invalid_prefix: {
-                    _prefix = 253u;
-                    break;
-                }
-                default: {
-                    _prefix = 254u;
-                }
+            if (res == inet_pton4_status::valid) {
+                data = parse(bin);
+            } else {
+                // set the error
+                _prefix = prefix_status(res);
             }
         }
 
@@ -118,10 +117,6 @@ namespace webpp {
         }
 
       public:
-        constexpr ipv4(ipv4 const& ip) = default;
-
-        constexpr ipv4(ipv4&& ip) = default;
-
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!istl::cvref_as<T, ipv4> && istl::StringViewifiable<T>)
@@ -131,30 +126,42 @@ namespace webpp {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <istl::StringViewifiable IPStrT, istl::StringViewifiable SubStrT>
-        constexpr ipv4(IPStrT&& ip, SubStrT&& subnet) noexcept
-          : _prefix(is::subnet(subnet) ? to_prefix(stl::forward<SubStrT>(subnet)) : 253u) {
+        constexpr ipv4(IPStrT&& ip, SubStrT&& subnet) noexcept {
             parse(stl::forward<IPStrT>(ip));
+            if (is_valid()) {
+                _prefix = (is::subnet(subnet) ? to_prefix(stl::forward<SubStrT>(subnet))
+                                              : prefix_status(inet_pton4_status::invalid_prefix));
+            }
         }
 
         template <istl::StringViewifiable IPStrT>
-        constexpr ipv4(IPStrT&& ip, ipv4_octets subnet) noexcept
-          : _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {
+        constexpr ipv4(IPStrT&& ip, ipv4_octets subnet) noexcept {
             parse(stl::forward<IPStrT>(ip));
+            if (is_valid()) {
+                _prefix =
+                  is::subnet(subnet) ? to_prefix(subnet) : prefix_status(inet_pton4_status::invalid_prefix);
+            }
         }
 
         template <istl::StringViewifiable IPStrT>
-        constexpr ipv4(IPStrT&& ip, ipv4_octet prefix_val) noexcept
-          : _prefix(prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val) {
+        constexpr ipv4(IPStrT&& ip, ipv4_octet prefix_val) noexcept {
             parse(stl::forward<IPStrT>(ip));
+            if (is_valid()) {
+                _prefix = prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
+                            ? prefix_status(inet_pton4_status::invalid_prefix)
+                            : prefix_val;
+            }
         }
 
         constexpr ipv4(ipv4_octet octet1,
                        ipv4_octet octet2,
                        ipv4_octet octet3,
                        ipv4_octet octet4,
-                       ipv4_octet prefix_val = 255u) noexcept
+                       ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val) {}
+            _prefix(prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
+                      ? prefix_status(inet_pton4_status::invalid_prefix)
+                      : prefix_val) {}
 
         constexpr ipv4(ipv4_octet              octet1,
                        ipv4_octet              octet2,
@@ -162,32 +169,43 @@ namespace webpp {
                        ipv4_octet              octet4,
                        stl::string_view const& subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
-        constexpr explicit ipv4(stl::uint32_t const& ip, ipv4_octet prefix = 255u) noexcept
+        constexpr explicit ipv4(stl::uint32_t const& ip,
+                                ipv4_octet prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(ip),
-            _prefix(prefix > 32u && prefix != 255u ? 253u : prefix) {}
+            _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
+                      ? prefix_status(inet_pton4_status::invalid_prefix)
+                      : prefix) {}
 
         constexpr explicit ipv4(stl::uint32_t const& ip, istl::StringViewifiable auto&& subnet) noexcept
           : data(ip),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr ipv4(ipv4_octets ip, ipv4_octet prefix = 255) noexcept
           : data(parse(ip)),
-            _prefix(prefix > 32u && prefix != 255u ? 253u : prefix) {}
+            _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
+                      ? prefix_status(inet_pton4_status::invalid_prefix)
+                      : prefix) {}
 
         constexpr ipv4(ipv4_octets ip, istl::StringViewifiable auto&& subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr ipv4(ipv4_octets ip, ipv4_octets subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet) : 253u) {}
+            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+                                       : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr explicit operator stl::uint32_t() const noexcept {
             return integer();
         }
 
+        constexpr ipv4(ipv4 const& ip)                = default;
+        constexpr ipv4(ipv4&& ip)                     = default;
         constexpr ~ipv4() noexcept                    = default;
         constexpr ipv4& operator=(ipv4 const& ip)     = default;
         constexpr ipv4& operator=(ipv4&& ip) noexcept = default;
@@ -195,13 +213,13 @@ namespace webpp {
         template <istl::StringViewifiable StrT>
         constexpr ipv4& operator=(StrT&& ip) noexcept {
             parse(stl::forward<StrT>(ip));
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton4_status::valid);
             return *this;
         }
 
         constexpr ipv4& operator=(stl::uint32_t ip) noexcept {
             data    = ip;
-            _prefix = 255u;
+            _prefix = prefix_status(inet_pton4_status::valid);
             return *this;
         }
 
@@ -279,7 +297,9 @@ namespace webpp {
          * @param prefix_val
          */
         constexpr ipv4& prefix(ipv4_octet prefix_val) noexcept {
-            _prefix = prefix_val > 32 && prefix_val != 255u ? 253u : prefix_val;
+            _prefix = prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
+                        ? prefix_status(inet_pton4_status::invalid_prefix)
+                        : prefix_val;
             return *this;
         }
 
@@ -304,7 +324,7 @@ namespace webpp {
          * Remove prefix from the ip address
          */
         constexpr ipv4& clear_prefix() noexcept {
-            return prefix(255u);
+            return prefix(prefix_status(inet_pton4_status::valid));
         }
 
         /**
@@ -320,7 +340,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] constexpr bool has_valid_prefix() const noexcept {
-            return _prefix != 253u;
+            return _prefix != prefix_status(inet_pton4_status::invalid_prefix);
         }
 
         /**
@@ -373,7 +393,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _prefix != 254u && _prefix != 253u;
+            return _prefix <= 32u || _prefix == prefix_status(inet_pton4_status::valid);
         }
 
         /**
@@ -385,6 +405,29 @@ namespace webpp {
                                static_cast<ipv4_octet>(data >> 8u & 0xFFu),
                                static_cast<ipv4_octet>(data >> 16u & 0xFFu),
                                static_cast<ipv4_octet>(data >> 24u & 0xFFu)};
+        }
+
+
+        // Get the parsing result
+        [[nodiscard]] constexpr inet_pton4_status status() const noexcept {
+            if (_prefix <= 32u) {
+                return inet_pton4_status::valid;
+            }
+            return static_cast<inet_pton4_status>(_prefix);
+        }
+
+
+        template <typename StrT>
+        constexpr void status_to(StrT& output) const {
+            set_string(output, webpp::to_string(status()));
+        }
+
+
+        template <typename StrT = stl::string_view, typename... Args>
+        [[nodiscard]] constexpr auto status_string(Args&&... args) const {
+            StrT str{stl::forward<Args>(args)...};
+            status_to(str);
+            return str;
         }
     };
 

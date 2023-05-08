@@ -3,7 +3,6 @@
 #ifndef WEBPP_IP_INET_PTON_HPP
 #define WEBPP_IP_INET_PTON_HPP
 
-#include "../common/meta.hpp"
 #include "../std/std.hpp"
 #include "ip.hpp"
 
@@ -13,24 +12,34 @@
 namespace webpp {
 
 
-    enum struct inet_pton4_status {
-        valid = 0,
-        too_little_octets,    // not enough octets
-        too_many_octets,      // found too many octets
-        invalid_octet_range,  // at least one octet is not in range
-        invalid_leading_zero, // the octet is starting with an invalid leading zero
-        invalid_character,    // found a non-standard character
-        bad_ending,           // The ip ended badly
-        invalid_prefix,       // The ip has and invalid prefix
+    /**
+     * Status of the result of a ipv4 parse.
+     * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
+     * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
+     */
+    enum struct inet_pton4_status : stl::uint_fast8_t {
+        valid                = 255u,
+        too_little_octets    = 254u, // not enough octets
+        too_many_octets      = 253u, // found too many octets
+        invalid_octet_range  = 252u, // at least one octet is not in range
+        invalid_leading_zero = 251u, // the octet is starting with an invalid leading zero
+        invalid_character    = 250u, // found a non-standard character
+        bad_ending           = 249u, // The ip ended badly
+        invalid_prefix       = 248u  // The ip has and invalid prefix
     };
 
-    enum struct inet_pton6_status {
-        valid = 0,
-        invalid_octet_range, // at least one octet is not in range
-        invalid_colon_usage, // the ip is using colon where it shouldn't
-        bad_ending,          // the ip ended badly
-        invalid_character,   // found a non-standard character
-        invalid_prefix,      // The ip has and invalid prefix
+    /**
+     * Status of the result of a ipv6 parse.
+     * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
+     * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
+     */
+    enum struct inet_pton6_status : stl::uint_fast8_t {
+        valid               = 255u,
+        invalid_octet_range = 254u, // at least one octet is not in range
+        invalid_colon_usage = 253u, // the ip is using colon where it shouldn't
+        bad_ending          = 252u, // the ip ended badly
+        invalid_character   = 251u, // found a non-standard character
+        invalid_prefix      = 250u  // The ip has and invalid prefix
     };
 
     /**
@@ -51,7 +60,7 @@ namespace webpp {
             case inet_pton4_status::bad_ending: return "IPv4 ended unexpectedly";
             case inet_pton4_status::invalid_prefix: return "IPv4 has an invalid prefix";
         }
-        return "";
+        return ""; // just to get rid of static analyzers' warning
     }
 
     /**
@@ -67,7 +76,7 @@ namespace webpp {
             case inet_pton6_status::invalid_character: return "Invalid character found in the IPv6";
             case inet_pton6_status::invalid_prefix: return "IPv4 has an invalid prefix";
         }
-        return "";
+        return ""; // just to get rid of static analyzers' warning
     }
 
 
