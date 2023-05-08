@@ -42,51 +42,19 @@ namespace webpp::v2 {
      * Convert string to prefix
      * @param octets
      */
-    constexpr uint8_t to_prefix(istl::StringViewifiable auto&& m_data) noexcept {
-        const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
-
-        if (_data.size() > 15 || _data.size() < 7) {
-            return 0u;
+    template <istl::StringViewifiable StrT>
+    constexpr uint8_t to_prefix(StrT&& inp_str) noexcept {
+        const auto              str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        stl::array<uint8_t, 4u> bin;
+        auto const              res = inet_pton4(str.data(), str.data() + str.size(), bin.data());
+        switch (res) {
+            case inet_pton4_status::valid: {
+                return to_prefix(bin);
+            }
+            default: {
+                return 0u;
+            }
         }
-        stl::size_t       first_dot = 0u;
-        stl::size_t const len       = _data.size();
-        while (_data[first_dot] != '.' && first_dot != len)
-            first_dot++;
-
-        auto octet_1 = _data.substr(0u, first_dot);
-        if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
-            (ascii::starts_with(octet_1, '0') && octet_1 != "0")) {
-            return 0u;
-        }
-
-        stl::size_t second_dot = first_dot + 1;
-        while (_data[second_dot] != '.' && second_dot != len)
-            second_dot++;
-
-        auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
-        if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
-            (ascii::starts_with(octet_2, '0') && octet_2 != "0")) {
-            return 0u;
-        }
-
-        stl::size_t third_dot = second_dot + 1;
-        while (_data[third_dot] != '.' && third_dot != len)
-            third_dot++;
-
-        auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
-        if (first_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
-            (ascii::starts_with(octet_3, '0') && octet_3 != "0")) {
-            return 0u; // parsing failed.
-        }
-
-        auto octet_4 = _data.substr(third_dot + 1u);
-
-        if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
-            (ascii::starts_with(octet_4, '0') && octet_4 != "0")) {
-            return 0u;
-        }
-
-        return to_prefix({to_uint8(octet_1), to_uint8(octet_2), to_uint8(octet_3), to_uint8(octet_4)});
     }
 
     /**

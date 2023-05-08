@@ -213,3 +213,26 @@ static void IP_webpp_v4_random_ipv4_v2(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_webpp_v4_random_ipv4_v2);
+
+
+
+
+////////////////////////////// Prefix //////////////////////////////
+
+
+static void ipv4_prefix_parsing_v1(benchmark::State& state) {
+    ipv4_data();
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(webpp::v1::to_prefix(ipv4_data()));
+    }
+}
+BENCHMARK(ipv4_prefix_parsing_v1);
+
+
+static void ipv4_prefix_parsing_v2(benchmark::State& state) {
+    ipv4_data();
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(webpp::v2::to_prefix(ipv4_data()));
+    }
+}
+BENCHMARK(ipv4_prefix_parsing_v2);
