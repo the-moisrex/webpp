@@ -19,7 +19,9 @@ namespace webpp {
         too_many_octets,      // found too many octets
         invalid_octet_range,  // at least one octet is not in range
         invalid_leading_zero, // the octet is starting with an invalid leading zero
-        invalid_character     // found a non-standard character
+        invalid_character,    // found a non-standard character
+        bad_ending,           // The ip ended badly
+        invalid_prefix,       // The ip has and invalid prefix
     };
 
     enum struct inet_pton6_status {
@@ -27,7 +29,8 @@ namespace webpp {
         invalid_octet_range, // at least one octet is not in range
         invalid_colon_usage, // the ip is using colon where it shouldn't
         bad_ending,          // the ip ended badly
-        invalid_character    // found a non-standard character
+        invalid_character,   // found a non-standard character
+        invalid_prefix,      // The ip has and invalid prefix
     };
 
     /**
@@ -45,7 +48,10 @@ namespace webpp {
             case inet_pton4_status::invalid_leading_zero:
                 return "The IPv4's octet started with a zero which is not valid";
             case inet_pton4_status::invalid_character: return "Invalid character found in the IPv4";
+            case inet_pton4_status::bad_ending: return "IPv4 ended unexpectedly";
+            case inet_pton4_status::invalid_prefix: return "IPv4 has an invalid prefix";
         }
+        return "";
     }
 
     /**
@@ -59,7 +65,9 @@ namespace webpp {
             case inet_pton6_status::invalid_colon_usage: return "The colon is used in the wrong place";
             case inet_pton6_status::bad_ending: return "The IPv6 ended unexpectedly";
             case inet_pton6_status::invalid_character: return "Invalid character found in the IPv6";
+            case inet_pton6_status::invalid_prefix: return "IPv4 has an invalid prefix";
         }
+        return "";
     }
 
 
@@ -81,6 +89,42 @@ namespace webpp {
         return -1;
     }
 
+    namespace details {
+        static constexpr int parse_prefix(const char*& src, const char* src_endp) noexcept {
+            int prefix; // NOLINT(cppcoreguidelines-init-variables)
+            if (src == src_endp || *src < '0' || *src > '9') {
+                return -1;
+            } else {
+                prefix = *src - '0';
+            }
+            ++src;
+            if (src == src_endp) {
+                return prefix;
+            } else if (*src < '0' || *src > '9') {
+                return -1;
+            } else {
+                if (prefix == 0) {
+                    return -1;
+                }
+                prefix *= 10;
+                prefix += *src - '0';
+            }
+            ++src;
+            if (src == src_endp) {
+                return prefix;
+            } else if (*src < '0' || *src > '9') {
+                return -1;
+            } else {
+                prefix *= 10;
+                prefix += *src - '0';
+            }
+            ++src;
+            if (src != src_endp) {
+                return -1;
+            }
+            return prefix;
+        }
+    } // namespace details
 
     /**
      * Converts the string representation of an IPv4 into it's network binary format.
@@ -91,7 +135,7 @@ namespace webpp {
      * @returns status of the parsing
      **/
     static constexpr inet_pton4_status
-    inet_pton4(const char* src, const char* end, stl::uint8_t* out) noexcept {
+    inet_pton4(const char*& src, const char* end, stl::uint8_t* out) noexcept {
         bool saw_digit = false;
         int  octets    = 0;
         *out           = 0;
@@ -114,11 +158,12 @@ namespace webpp {
                 }
             } else if (ch == '.' && saw_digit) {
                 if (octets == 4) {
-                    return inet_pton4_status::too_many_octets;
+                    return inet_pton4_status::bad_ending;
                 }
                 *++out    = 0;
                 saw_digit = false;
             } else {
+                --src;
                 return inet_pton4_status::invalid_character;
             }
         }
@@ -129,6 +174,39 @@ namespace webpp {
     }
 
     /**
+     * Parse IPv4 + prefix
+     */
+    static constexpr inet_pton4_status
+    inet_pton4(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+        auto const res = inet_pton4(src, end, out);
+        if (res == inet_pton4_status::invalid_character && *src == '/') {
+            ++src;
+            int const prefix_tmp = details::parse_prefix(src, end);
+            if (prefix_tmp == -1 || prefix_tmp > 32) {
+                return inet_pton4_status::invalid_prefix;
+            }
+            prefix = static_cast<stl::uint8_t>(prefix_tmp);
+            return inet_pton4_status::valid;
+        }
+        return res;
+    }
+
+    static constexpr inet_pton4_status
+    inet_pton4(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
+        const char* src = inp_src;
+        return inet_pton4(src, src_endp, out);
+    }
+
+    static constexpr inet_pton4_status inet_pton4(const char* const& inp_src,
+                                                  const char*        src_endp,
+                                                  stl::uint8_t*      out,
+                                                  stl::uint8_t&      prefix) noexcept {
+        const char* src = inp_src;
+        return inet_pton4(src, src_endp, out, prefix);
+    }
+
+
+    /**
      * Convert IPv6 Presentation string into network order binary form.
      *
      * This implementation is very similar to the one in glibc, but our version has different side effects.
@@ -136,11 +214,7 @@ namespace webpp {
      * @returns status of the parsing
      **/
     static constexpr inet_pton6_status
-    inet_pton6(const char* src, const char* src_endp, stl::uint8_t* out) noexcept {
-        /**
-         * Some constants of RFC 883, RFC 1034, RFC 1035
-         */
-
+    inet_pton6(const char*& src, const char* src_endp, stl::uint8_t* out) noexcept {
         stl::uint8_t* colonp = nullptr;
         stl::uint8_t* endp   = out + ipv6_byte_count;
 
@@ -156,9 +230,9 @@ namespace webpp {
         }
 
         const char*  current_token = src;
-        char         ch;           // NOLINT(cppcoreguidelines-init-variables)
-        stl::size_t  hex_seen = 0; // Number of hex digits since colon.
-        unsigned int val      = 0;
+        stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
+        unsigned int val           = 0;
+        char         ch; // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
             int const digit = hex_digit_value(ch);
@@ -173,8 +247,7 @@ namespace webpp {
                 }
                 ++hex_seen;
                 continue;
-            }
-            if (ch == ':') {
+            } else if (ch == ':') {
                 current_token = src;
                 if (hex_seen == 0) {
                     if (colonp) {
@@ -193,13 +266,29 @@ namespace webpp {
                 hex_seen = 0;
                 val      = 0;
                 continue;
+            } else if (ch == '.' && (out + ipv4_byte_count) <= endp) {
+                src = current_token;
+                switch (inet_pton4(src, src_endp, out)) {
+                    case inet_pton4_status::valid: {
+                        out += ipv4_byte_count;
+                        hex_seen = 0;
+                        break;
+                    }
+                    case inet_pton4_status::bad_ending:
+                    case inet_pton4_status::too_little_octets:
+                    case inet_pton4_status::too_many_octets: return inet_pton6_status::bad_ending;
+                    case inet_pton4_status::invalid_octet_range:
+                        return inet_pton6_status::invalid_octet_range;
+                    case inet_pton4_status::invalid_leading_zero:
+                    case inet_pton4_status::invalid_character: return inet_pton6_status::invalid_character;
+                    case inet_pton4_status::invalid_prefix: return inet_pton6_status::invalid_prefix;
+                }
+                break;              // '\0' was seen by inet_pton4.
+            } else if (ch == '/') { // handling prefixes
+                --src;
+                break;
             }
-            if (ch == '.' && ((out + ipv4_byte_count) <= endp) &&
-                inet_pton4(current_token, src_endp, out) == inet_pton4_status::valid) {
-                out += ipv4_byte_count;
-                hex_seen = 0;
-                break; // '\0' was seen by inet_pton4.
-            }
+            --src;
             return inet_pton6_status::invalid_character;
         }
         if (hex_seen > 0) {
@@ -223,7 +312,45 @@ namespace webpp {
         if (out != endp) {
             return inet_pton6_status::bad_ending;
         }
+        if (ch == '/') {
+            return inet_pton6_status::invalid_character;
+        }
         return inet_pton6_status::valid;
+    }
+
+
+
+    /**
+     * Parse a ipv6 + prefix
+     */
+    static constexpr inet_pton6_status
+    inet_pton6(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+        auto const res = inet_pton6(src, end, out);
+        if (res == inet_pton6_status::invalid_character && *src == '/') {
+            ++src;
+            int const prefix_tmp = details::parse_prefix(src, end);
+            if (prefix_tmp == -1 || prefix_tmp > 128) {
+                return inet_pton6_status::invalid_prefix;
+            }
+            prefix = static_cast<stl::uint8_t>(prefix_tmp);
+            return inet_pton6_status::valid;
+        }
+        return res;
+    }
+
+
+    static constexpr inet_pton6_status
+    inet_pton6(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
+        const char* src = inp_src;
+        return inet_pton6(src, src_endp, out);
+    }
+
+    static constexpr inet_pton6_status inet_pton6(const char* const& inp_src,
+                                                  const char*        src_endp,
+                                                  stl::uint8_t*      out,
+                                                  stl::uint8_t&      prefix) noexcept {
+        const char* src = inp_src;
+        return inet_pton6(src, src_endp, out, prefix);
     }
 
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

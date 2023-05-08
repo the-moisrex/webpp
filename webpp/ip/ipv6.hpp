@@ -97,14 +97,11 @@ namespace webpp {
             auto       ip_str  = istl::string_viewify(stl::forward<decltype(_ipv6_data)>(_ipv6_data));
             auto*      inp_ptr = ip_str.data();
             auto*      out_ptr = data.data();
-            const auto status  = inet_pton6(inp_ptr, inp_ptr + ip_str.size(), out_ptr);
+            const auto status  = inet_pton6(inp_ptr, inp_ptr + ip_str.size(), out_ptr, _prefix);
             switch (status) {
-                case inet_pton6_status::valid: {
-                    _prefix = 255u; // we don't have a prefix
-
-                    // auto prefix_value =
-                    //   to<octets_value_t, 16u>(stl::string_view{inp_ptr, ip_str.data() + ip_str.size()});
-                    // _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
+                case inet_pton6_status::valid: break;
+                case inet_pton6_status::invalid_prefix: {
+                    _prefix = 253u;
                     break;
                 }
                 default: {
@@ -112,24 +109,6 @@ namespace webpp {
                     _prefix = 254u;
                 }
             }
-
-            //            auto prefix_str = ip_str.substr(colon + 1);
-            //            if (!ascii::is::digit(prefix_str)) {
-            //                _prefix = 253u; // the prefix is invalid
-            //                break;          // let's not go all crazy just yet
-            //            }
-            //            auto prefix_value = to<octets_value_t, 16u>(prefix_str);
-            //            // if (ascii::starts_with(prefix_str, '0') && prefix_value != 0) {
-            //            //     // there can't be a leading zero in the prefix string
-            //            //     _prefix = 253u;
-            //            //     return;
-            //            // }
-            //            _prefix = prefix_value > 128u ? 253u : static_cast<decltype(_prefix)>(prefix_value);
-            //            ip_str.remove_prefix(prefix_str.size() + 1);
-            //            if (!ip_str.empty()) {
-            //                _prefix = 254u; // there can't be more stuff in the ip from now on.
-            //                return;
-            //            }
         }
 
       public:
@@ -161,6 +140,8 @@ namespace webpp {
         constexpr ipv6(ipv6&& ip) noexcept      = default;
 
         constexpr ipv6& operator=(ipv6 const& ip) noexcept = default;
+        constexpr ipv6& operator=(ipv6&&) noexcept         = default;
+        constexpr ~ipv6() noexcept                         = default;
 
         template <typename StrT>
             requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>)
