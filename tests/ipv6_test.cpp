@@ -319,7 +319,7 @@ TEST(IPv6Tests, PrefixesTest) {
             ip_prefixed += stl::to_string(prefix);
             ipv6_t const ip6{ip_prefixed};
             EXPECT_TRUE(ip6.is_valid()) << _ip << "\n" << ip_prefixed;
-            EXPECT_EQ(ip6.prefix(), prefix) << _ip << "\n" << ip_prefixed;
+            EXPECT_EQ(ip6.prefix(), prefix) << _ip << "\n" << ip_prefixed << "\n" << ip6.status_string();
         }
 
         for (auto prefix : invalid_prefixes) {

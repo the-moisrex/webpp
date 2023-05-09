@@ -115,15 +115,23 @@ namespace webpp {
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
                                                       stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-        constexpr explicit ipv6(
-          StrT&&       str,
-          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept {
+        constexpr explicit ipv6(StrT&& str) noexcept {
+            parse(stl::forward<StrT>(str));
+        }
+        // NOLINTEND(bugprone-forwarding-reference-overload)
+
+        template <typename StrT>
+            requires(istl::StringViewifiable<StrT> &&
+                     !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
+                                                      stl::array> && // it shouldn't be an array
+                     !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
+        constexpr explicit ipv6(StrT&& str, stl::uint8_t prefix_value) noexcept {
             parse(stl::forward<StrT>(str));
             if (is_valid()) {
                 prefix(prefix_value);
             }
         }
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+
         constexpr explicit ipv6(octets8_t const& _octets,
                                 stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data(_octets) {
