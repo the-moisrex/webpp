@@ -284,6 +284,24 @@ namespace webpp::views {
             using type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
         };
 
+        enum class tag_type {
+            text,
+            variable,
+            unescaped_variable,
+            section_begin,
+            section_end,
+            section_begin_inverted,
+            comment,
+            partial,
+            set_delimiter
+        };
+
+        enum class render_lambda_escape {
+            escape,
+            unescape,
+            optional,
+        };
+
     } // namespace details
 
 
@@ -468,18 +486,6 @@ namespace webpp::views {
                                              line_buffer{et} {}
     };
 
-    enum class tag_type {
-        text,
-        variable,
-        unescaped_variable,
-        section_begin,
-        section_end,
-        section_begin_inverted,
-        comment,
-        partial,
-        set_delimiter
-    };
-
     template <Traits TraitsType>
     struct mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
         using traits_type = TraitsType;
@@ -489,7 +495,7 @@ namespace webpp::views {
 
         // the name cannot be a string view
         string_type                name;
-        tag_type                   type         = tag_type::text;
+        details::tag_type          type         = details::tag_type::text;
         stl::optional<string_type> section_text = stl::nullopt;
         delimiter_set<traits_type> delim_set;
 
@@ -500,10 +506,11 @@ namespace webpp::views {
                                       delim_set{et} {}
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
-            return type == tag_type::section_begin || type == tag_type::section_begin_inverted;
+            using enum details::tag_type;
+            return type == section_begin || type == section_begin_inverted;
         }
         [[nodiscard]] constexpr bool is_section_end() const noexcept {
-            return type == tag_type::section_end;
+            return type == details::tag_type::section_end;
         }
     };
 
@@ -566,7 +573,7 @@ namespace webpp::views {
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         [[nodiscard]] constexpr bool is_text() const noexcept {
-            return tag.type == tag_type::text;
+            return tag.type == details::tag_type::text;
         }
 
         [[nodiscard]] constexpr bool is_newline() const noexcept {
@@ -855,10 +862,10 @@ namespace webpp::views {
                         return;
                     }
                     current_delimiter_is_brace = delim_set.is_default();
-                    comp.tag.type              = tag_type::set_delimiter;
+                    comp.tag.type              = details::tag_type::set_delimiter;
                     comp.tag.delim_set         = delim_set;
                 }
-                if (comp.tag.type != tag_type::set_delimiter) {
+                if (comp.tag.type != details::tag_type::set_delimiter) {
                     parse_tag_contents(tag_is_unescaped_var, tag_contents, comp.tag);
                 }
                 comp.position = tag_location_start;
@@ -952,23 +959,24 @@ namespace webpp::views {
         constexpr void parse_tag_contents(bool                    is_unescaped_var,
                                           string_view_type        contents,
                                           mstch_tag<traits_type>& tag) const {
+            using enum details::tag_type;
             if (is_unescaped_var) {
-                tag.type = tag_type::unescaped_variable;
+                tag.type = unescaped_variable;
                 tag.name = contents;
             } else if (contents.empty()) {
-                tag.type = tag_type::variable;
+                tag.type = variable;
                 tag.name = {};
             } else {
                 switch (contents.at(0)) {
-                    case '#': tag.type = tag_type::section_begin; break;
-                    case '^': tag.type = tag_type::section_begin_inverted; break;
-                    case '/': tag.type = tag_type::section_end; break;
-                    case '>': tag.type = tag_type::partial; break;
-                    case '&': tag.type = tag_type::unescaped_variable; break;
-                    case '!': tag.type = tag_type::comment; break;
-                    default: tag.type = tag_type::variable; break;
+                    case '#': tag.type = section_begin; break;
+                    case '^': tag.type = section_begin_inverted; break;
+                    case '/': tag.type = section_end; break;
+                    case '>': tag.type = partial; break;
+                    case '&': tag.type = unescaped_variable; break;
+                    case '!': tag.type = comment; break;
+                    default: tag.type = variable; break;
                 }
-                if (tag.type == tag_type::variable) {
+                if (tag.type == variable) {
                     tag.name = contents;
                 } else {
                     tag.name = contents;
@@ -1038,7 +1046,7 @@ namespace webpp::views {
             const mstch_tag<traits_type>& tag{comp.tag};
             const variable_type*          var; // NOLINT(cppcoreguidelines-init-variables)
             switch (tag.type) {
-                using enum tag_type;
+                using enum details::tag_type;
                 case variable:
                 case unescaped_variable:
                     var = ctx.ctx->get(tag.name);
@@ -1055,7 +1063,7 @@ namespace webpp::views {
                             if (!render_lambda(handler,
                                                *lambda_var,
                                                ctx,
-                                               render_lambda_escape::optional,
+                                               details::render_lambda_escape::optional,
                                                *comp.tag.section_text,
                                                true)) {
                                 return walk_control_type::stop;
@@ -1107,16 +1115,10 @@ namespace webpp::views {
             return walk_control_type::walk;
         }
 
-        enum class render_lambda_escape {
-            escape,
-            unescape,
-            optional,
-        };
-
         constexpr bool render_lambda(const render_handler&          handler,
                                      const lambda_type&             var,
                                      context_internal<traits_type>& ctx,
-                                     render_lambda_escape           escape,
+                                     details::render_lambda_escape  escape,
                                      string_view_type               text,
                                      bool                           parse_with_same_context) {
 
@@ -1137,7 +1139,7 @@ namespace webpp::views {
                     }
                     bool do_escape = false;
                     switch (escape) {
-                        using enum render_lambda_escape;
+                        using enum details::render_lambda_escape;
                         case escape: do_escape = true; break;
                         case unescape: do_escape = false; break;
                         case optional: do_escape = escaped; break;
@@ -1169,8 +1171,8 @@ namespace webpp::views {
             if (auto val_str = var->get_if_string()) {
                 ctx.line_buffer.data.append(escaped ? escaper(*val_str) : *val_str);
             } else if (auto val_lambda = var->get_if_lambda()) {
-                const render_lambda_escape escape_opt =
-                  escaped ? render_lambda_escape::escape : render_lambda_escape::unescape;
+                using enum details::render_lambda_escape;
+                const details::render_lambda_escape escape_opt = escaped ? escape : unescape;
                 return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);
             }
             return true;

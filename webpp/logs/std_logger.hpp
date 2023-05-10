@@ -63,11 +63,11 @@ namespace webpp {
                            stl::forward<CatStrT>(category),
                            stl::forward<DetStrT>(details));
 #else
-                stl::printf(stream_getter(),
-                            "[%s, %s]: %s\n",
-                            logging_type_to_string(lt),
-                            stl::forward<CatStrT>(category),
-                            stl::forward<DetStrT>(details));
+                stl::fprintf(stream_getter(),
+                             "[%s, %s]: %s\n",
+                             logging_type_to_string(lt),
+                             istl::string_viewify(stl::forward<CatStrT>(category)).data(),
+                             istl::string_viewify(stl::forward<DetStrT>(details)).data());
 #endif
             }
         }

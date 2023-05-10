@@ -53,8 +53,7 @@ namespace webpp::view {
             }
             return to;
         } else {
-            using type = stl::pair<From, To>;
-            static_assert_false(type, "We're not able to convert the specified type to the desired value.");
+            static_assert_false(From, "We're not able to convert the specified type to the desired value.");
         }
     }
 
@@ -69,8 +68,7 @@ namespace webpp::view {
             (istl::collection::emplace(to, data_view_caster<value_type>(et, from)), ...);
             return to;
         } else {
-            using type = stl::pair<To, From...>;
-            static_assert_false(type, "We're not able to convert the specified type to the desired value.");
+            static_assert_false(To, "We're not able to convert the specified type to the desired value.");
         }
     }
 } // namespace webpp::view
