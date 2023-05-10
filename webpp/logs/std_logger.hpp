@@ -14,6 +14,10 @@
 
 namespace webpp {
 
+    namespace details {
+        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
+    }
+
     /**
      * A logger class
      * @tparam stream_getter is a callable that gets a FILE* (like stderr, stdin, stdout)
@@ -32,98 +36,98 @@ namespace webpp {
 #endif
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
-        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
 
-        static constexpr auto logging_type_to_string(logging_type lt) noexcept {
+        static constexpr auto logging_type_to_string(details::logging_type lt) noexcept {
             switch (lt) {
-                case logging_type::info: return "INFO";
-                case logging_type::warning: return "WARNING";
-                case logging_type::error: return "ERROR";
-                case logging_type::critical: return "CRITICAL";
-                case logging_type::unknown: return "UNKNOWN";
+                using enum details::logging_type;
+                case info: return "INFO";
+                case warning: return "WARNING";
+                case error: return "ERROR";
+                case critical: return "CRITICAL";
+                case unknown: return "UNKNOWN";
             }
             return "UNSPECIFIED";
         }
 
-        static constexpr stl::size_t logging_type_string_size(logging_type lt) noexcept {
+        static constexpr stl::size_t logging_type_string_size(details::logging_type lt) noexcept {
             return stl::string_view{logging_type_to_string(lt)}.size();
         }
 
-        static void log(logging_type                   lt,
-                        istl::StringViewifiable auto&& category,
-                        istl::StringViewifiable auto&& details) noexcept {
+        template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>
+        static void log(details::logging_type lt, CatStrT&& category, DetStrT&& details) noexcept {
             if constexpr (!is_debug) {
 #ifdef WEBPP_FMT_LIB
                 fmt::print(stream_getter(),
                            "[{}, {}]: {}\n",
                            logging_type_to_string(lt),
-                           stl::forward<decltype(category)>(category),
-                           stl::forward<decltype(details)>(details));
+                           stl::forward<CatStrT>(category),
+                           stl::forward<DetStrT>(details));
 #else
                 stl::printf(stream_getter(),
                             "[%s, %s]: %s\n",
                             logging_type_to_string(lt),
-                            stl::forward<decltype(category)>(category),
-                            stl::forward<decltype(details)>(details));
+                            stl::forward<CatStrT>(category),
+                            stl::forward<DetStrT>(details));
 #endif
             }
         }
 
 #define WEBPP_LOGGER_SHORTCUT(logging_name)                                                               \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& details) const noexcept {                            \
-        log(logging_type::logging_name, default_category_name, stl::forward<decltype(details)>(details)); \
+    template <istl::StringViewifiable DetStrT>                                                            \
+    void logging_name(DetStrT&& details) const noexcept {                                                 \
+        log(details::logging_type::logging_name, default_category_name, stl::forward<DetStrT>(details));  \
     }                                                                                                     \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& category, istl::StringViewifiable auto&& details)    \
-      const noexcept {                                                                                    \
-        log(logging_type::logging_name,                                                                   \
-            stl::forward<decltype(category)>(category),                                                   \
-            stl::forward<decltype(details)>(details));                                                    \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
+    void logging_name(CatStrT&& category, DetStrT&& details) const noexcept {                             \
+        log(details::logging_type::logging_name,                                                          \
+            stl::forward<CatStrT>(category),                                                              \
+            stl::forward<DetStrT>(details));                                                              \
     }                                                                                                     \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& category,                                            \
-                      istl::StringViewifiable auto&& details,                                             \
-                      stl::error_code const&         ec) const noexcept {                                         \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::error_code const& ec) const noexcept {  \
         if constexpr (!is_debug) {                                                                        \
-            stl::size_t space_count = 6 + logging_type_string_size(logging_type::logging_name) +          \
+            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
                                       istl::string_viewify(category).size();                              \
-            auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));            \
+            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
             auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                            \
                                            stl::move(space_count),                                        \
                                            "",                                                            \
                                            old_details,                                                   \
                                            ec.message());                                                 \
-            log(logging_type::logging_name,                                                               \
-                stl::forward<decltype(category)>(category),                                               \
+            log(details::logging_type::logging_name,                                                      \
+                stl::forward<CatStrT>(category),                                                          \
                 stl::move(new_details));                                                                  \
         }                                                                                                 \
     }                                                                                                     \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& category,                                            \
-                      istl::StringViewifiable auto&& details,                                             \
-                      stl::exception const&          ex) const noexcept {                                          \
+    template <istl::StringViewifiable CatStrT, istl::StringViewifiable DetStrT>                           \
+    void logging_name(CatStrT&& category, DetStrT&& details, stl::exception const& ex) const noexcept {   \
         if constexpr (!is_debug) {                                                                        \
-            stl::size_t space_count = 6 + logging_type_string_size(logging_type::logging_name) +          \
+            stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
                                       istl::string_viewify(category).size();                              \
-            auto old_details = istl::string_viewify(stl::forward<decltype(details)>(details));            \
+            auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
             auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                            \
                                            stl::move(space_count),                                        \
                                            "",                                                            \
                                            old_details,                                                   \
                                            ex.what());                                                    \
-            log(logging_type::logging_name,                                                               \
-                stl::forward<decltype(category)>(category),                                               \
+            log(details::logging_type::logging_name,                                                      \
+                stl::forward<CatStrT>(category),                                                          \
                 stl::move(new_details));                                                                  \
         }                                                                                                 \
     }                                                                                                     \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& details, stl::error_code const& ec) const noexcept { \
-        return logging_name(default_category_name, stl::forward<decltype(details)>(details), ec);         \
+    template <istl::StringViewifiable StrT>                                                               \
+    void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                         \
+        return logging_name(default_category_name, stl::forward<StrT>(details), ec);                      \
     }                                                                                                     \
                                                                                                           \
-    void logging_name(istl::StringViewifiable auto&& details, stl::exception const& ex) const noexcept {  \
-        return logging_name(default_category_name, stl::forward<decltype(details)>(details), ex);         \
+    template <istl::StringViewifiable StrT>                                                               \
+    void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                          \
+        return logging_name(default_category_name, stl::forward<StrT>(details), ex);                      \
     }
 
 
@@ -131,7 +135,7 @@ namespace webpp {
         WEBPP_LOGGER_SHORTCUT(warning)
         WEBPP_LOGGER_SHORTCUT(error)
         WEBPP_LOGGER_SHORTCUT(critical)
-        WEBPP_LOGGER_SHORTCUT(unkown)
+        WEBPP_LOGGER_SHORTCUT(unknown)
 
 
         [[no_unique_address]] struct std_logger_debugger {
@@ -145,7 +149,7 @@ namespace webpp {
             WEBPP_LOGGER_SHORTCUT(warning)
             WEBPP_LOGGER_SHORTCUT(error)
             WEBPP_LOGGER_SHORTCUT(critical)
-            WEBPP_LOGGER_SHORTCUT(unkown)
+            WEBPP_LOGGER_SHORTCUT(unknown)
         } debug{};
 #undef WEBPP_LOGGER_SHORTCUT
     };

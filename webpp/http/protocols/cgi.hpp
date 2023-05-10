@@ -145,18 +145,19 @@ namespace webpp::http {
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
-                    case communicator_type::nothing: {
+                    using enum communicator_type;
+                    case nothing: {
                         break;
                     }
-                    case communicator_type::cstream_based: {
+                    case cstream_based: {
                         write_cstream(body);
                         break;
                     }
-                    case communicator_type::stream_based: {
+                    case stream_based: {
                         write(body);
                         break;
                     }
-                    case communicator_type::text_based: {
+                    case text_based: {
                         write_text(body);
                         break;
                     }

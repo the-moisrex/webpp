@@ -85,18 +85,19 @@ namespace webpp::alloc {
         constexpr void set_features(FeaturesType... values) noexcept {
             (([this](features feature) {
                  switch (feature) {
-                     case features::sync: set_sync(true); break;
-                     case features::unsync: set_sync(false); break;
-                     case features::noop_dealloc: set_noop_dealloc(true); break;
-                     case features::no_noop_dealloc: set_noop_dealloc(false); break;
-                     case features::stateful: set_stateful(true); break;
-                     case features::stateless: set_stateful(false); break;
-                     case features::high_contention: set_high_contention(true); break;
-                     case features::low_contention: set_high_contention(false); break;
-                     case features::high_utilization: set_high_utilization(true); break;
-                     case features::low_utilization: set_high_utilization(false); break;
-                     case features::high_locality: set_high_locality(true); break;
-                     case features::low_locality: set_high_locality(false); break;
+                     using enum features;
+                     case sync: set_sync(true); break;
+                     case unsync: set_sync(false); break;
+                     case noop_dealloc: set_noop_dealloc(true); break;
+                     case no_noop_dealloc: set_noop_dealloc(false); break;
+                     case stateful: set_stateful(true); break;
+                     case stateless: set_stateful(false); break;
+                     case high_contention: set_high_contention(true); break;
+                     case low_contention: set_high_contention(false); break;
+                     case high_utilization: set_high_utilization(true); break;
+                     case low_utilization: set_high_utilization(false); break;
+                     case high_locality: set_high_locality(true); break;
+                     case low_locality: set_high_locality(false); break;
                  }
              })(values),
              ...);
@@ -104,36 +105,38 @@ namespace webpp::alloc {
 
         [[nodiscard]] constexpr bool is(features feature) const noexcept {
             switch (feature) {
-                case features::sync: return is_sync();
-                case features::unsync: return !is_sync();
-                case features::noop_dealloc: return is_noop_dealloc();
-                case features::no_noop_dealloc: return !is_noop_dealloc();
-                case features::stateful: return is_stateful();
-                case features::stateless: return is_stateless();
-                case features::high_contention: return is_high_contention();
-                case features::low_contention: return !is_high_contention();
-                case features::high_utilization: return is_high_utilization();
-                case features::low_utilization: return !is_high_utilization();
-                case features::high_locality: return is_high_locality();
-                case features::low_locality: return !is_high_locality();
+                using enum features;
+                case sync: return is_sync();
+                case unsync: return !is_sync();
+                case noop_dealloc: return is_noop_dealloc();
+                case no_noop_dealloc: return !is_noop_dealloc();
+                case stateful: return is_stateful();
+                case stateless: return is_stateless();
+                case high_contention: return is_high_contention();
+                case low_contention: return !is_high_contention();
+                case high_utilization: return is_high_utilization();
+                case low_utilization: return !is_high_utilization();
+                case high_locality: return is_high_locality();
+                case low_locality: return !is_high_locality();
             }
             return false;
         }
 
         [[nodiscard]] constexpr bool specified(features feature) const noexcept {
             switch (feature) {
-                case features::sync:
-                case features::unsync: return specified_sync();
-                case features::noop_dealloc:
-                case features::no_noop_dealloc: return specified_noop_dealloc();
-                case features::stateful:
-                case features::stateless: return specified_state();
-                case features::high_contention:
-                case features::low_contention: return specified_contention();
-                case features::high_utilization:
-                case features::low_utilization: return specified_utilization();
-                case features::high_locality:
-                case features::low_locality: return specified_locality();
+                using enum features;
+                case sync:
+                case unsync: return specified_sync();
+                case noop_dealloc:
+                case no_noop_dealloc: return specified_noop_dealloc();
+                case stateful:
+                case stateless: return specified_state();
+                case high_contention:
+                case low_contention: return specified_contention();
+                case high_utilization:
+                case low_utilization: return specified_utilization();
+                case high_locality:
+                case low_locality: return specified_locality();
             }
             return false;
         }
@@ -259,18 +262,19 @@ namespace webpp::alloc {
         [[nodiscard]] constexpr static long long int rank(features feature) noexcept {
             // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
             switch (feature) {
-                case features::sync:
-                case features::unsync: return 200;
-                case features::noop_dealloc:
-                case features::no_noop_dealloc: return 50;
-                case features::stateful:
-                case features::stateless: return 200;
-                case features::high_contention:
-                case features::low_contention: return 20;
-                case features::high_utilization:
-                case features::low_utilization: return 10;
-                case features::high_locality:
-                case features::low_locality: return 30;
+                using enum features;
+                case sync:
+                case unsync: return 200;
+                case noop_dealloc:
+                case no_noop_dealloc: return 50;
+                case stateful:
+                case stateless: return 200;
+                case high_contention:
+                case low_contention: return 20;
+                case high_utilization:
+                case low_utilization: return 10;
+                case high_locality:
+                case low_locality: return 30;
             }
             return 0;
             // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)

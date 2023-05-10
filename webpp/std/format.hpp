@@ -65,6 +65,7 @@ namespace webpp::stl {
 
 
 #ifndef webpp_no_fmt
+#    include <chrono>
 namespace webpp::istl {
 #    if WEBPP_FMT_LIB
     template <typename... Args>

@@ -452,10 +452,11 @@ namespace webpp::http {
                     expires_string_to(result);
                 }
                 switch (_same_site) {
-                    case same_site_value::none: result.append("; SameSite=None"); break;
-                    case same_site_value::lax: result.append("; SameSite=Lax"); break;
-                    case same_site_value::strict: result.append("; SameSite=Strict"); break;
-                    case same_site_value::not_specified: break;
+                    using enum same_site_value;
+                    case none: result.append("; SameSite=None"); break;
+                    case lax: result.append("; SameSite=Lax"); break;
+                    case strict: result.append("; SameSite=Strict"); break;
+                    case not_specified: break;
                 }
                 if (_secure) {
                     result.append("; secure");
@@ -499,10 +500,11 @@ namespace webpp::http {
                 }
 
                 switch (_same_site) {
-                    case same_site_value::none: result.append("; SameSite=None"); break;
-                    case same_site_value::lax: result.append("; SameSite=Lax"); break;
-                    case same_site_value::strict: result.append("; SameSite=Strict"); break;
-                    case same_site_value::not_specified: break;
+                    using enum same_site_value;
+                    case none: result.append("; SameSite=None"); break;
+                    case lax: result.append("; SameSite=Lax"); break;
+                    case strict: result.append("; SameSite=Strict"); break;
+                    case not_specified: break;
                 }
                 if (_secure) {
                     result.append("; secure");

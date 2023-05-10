@@ -83,27 +83,28 @@ namespace webpp::istl {
             using alloc_type = typename new_alloc_traits::allocator_type;
 
             switch (action) {
-                case details::action_list::deallocate: {
+                using enum details::action_list;
+                case deallocate: {
                     alloc_type alloc = func.template get_allocator_for<callable>();
                     new_alloc_traits::deallocate(alloc, func.template functor_ptr<callable>(), 1);
                     break;
                 }
-                case details::action_list::destroy: {
+                case destroy: {
                     alloc_type alloc = func.template get_allocator_for<callable>();
                     new_alloc_traits::destroy(alloc, func.template functor_ptr<callable>());
                     break;
                 }
-                case details::action_list::get_size: {
+                case get_size: {
                     *static_cast<stl::size_t*>(other) = sizeof(functor_object_type);
                     break;
                 }
-                case details::action_list::copy: {
+                case copy: {
                     const auto* source_ptr = func.template callable_ptr<callable>();
                     auto*       to_ptr     = static_cast<function_ptr>(other);
                     to_ptr->template construct<callable>(allocate_caller{}, *source_ptr);
                     break;
                 }
-                case details::action_list::move: {
+                case move: {
                     auto* source_ptr = func.template callable_ptr<callable>();
                     auto* to_ptr     = static_cast<function_ptr>(other);
                     to_ptr->template construct<callable>(allocate_caller{}, stl::move(*source_ptr));

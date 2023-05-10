@@ -1038,16 +1038,17 @@ namespace webpp::views {
             const mstch_tag<traits_type>& tag{comp.tag};
             const variable_type*          var; // NOLINT(cppcoreguidelines-init-variables)
             switch (tag.type) {
-                case tag_type::variable:
-                case tag_type::unescaped_variable:
+                using enum tag_type;
+                case variable:
+                case unescaped_variable:
                     var = ctx.ctx->get(tag.name);
                     if (var != nullptr) {
-                        if (!render_variable(handler, var, ctx, tag.type == tag_type::variable)) {
+                        if (!render_variable(handler, var, ctx, tag.type == variable)) {
                             return walk_control_type::stop;
                         }
                     }
                     break;
-                case tag_type::section_begin:
+                case section_begin:
                     var = ctx.ctx->get(tag.name);
                     if (var != nullptr) {
                         if (auto lambda_var = var->get_if_lambda()) {
@@ -1064,13 +1065,13 @@ namespace webpp::views {
                         }
                     }
                     return walk_control_type::skip;
-                case tag_type::section_begin_inverted:
+                case section_begin_inverted:
                     var = ctx.ctx->get(tag.name);
                     if (var == nullptr || var->is_false()) {
                         render_section(handler, ctx, comp, var);
                     }
                     return walk_control_type::skip;
-                case tag_type::partial:
+                case partial:
                     var = ctx.ctx->get_partial(tag.name);
                     if (var != nullptr && (var->is_partial() || var->is_string())) {
                         const auto& partial_result =
@@ -1099,7 +1100,7 @@ namespace webpp::views {
                           "The mustache template requested a partial which we're not able to find; it's getting ignored.");
                     }
                     break;
-                case tag_type::set_delimiter: ctx.delim_set = comp.tag.delim_set; break;
+                case set_delimiter: ctx.delim_set = comp.tag.delim_set; break;
                 default: break;
             }
 
@@ -1136,9 +1137,10 @@ namespace webpp::views {
                     }
                     bool do_escape = false;
                     switch (escape) {
-                        case render_lambda_escape::escape: do_escape = true; break;
-                        case render_lambda_escape::unescape: do_escape = false; break;
-                        case render_lambda_escape::optional: do_escape = escaped; break;
+                        using enum render_lambda_escape;
+                        case escape: do_escape = true; break;
+                        case unescape: do_escape = false; break;
+                        case optional: do_escape = escaped; break;
                     }
                     return do_escape ? escaper(str) : str;
                 };

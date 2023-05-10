@@ -151,16 +151,17 @@ namespace webpp::http {
         if constexpr (istl::String<type>) {
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
-                    case communicator_type::nothing: break;
-                    case communicator_type::text_based: {
+                    using enum communicator_type;
+                    case nothing: break;
+                    case text_based: {
                         deserialize_text_body(str, body);
                         break;
                     }
-                    case communicator_type::stream_based: {
+                    case stream_based: {
                         deserialize_stream_body(str, body);
                         break;
                     }
-                    case communicator_type::cstream_based: {
+                    case cstream_based: {
                         deserialize_cstream_body(str, body);
                         break;
                     }
@@ -180,10 +181,11 @@ namespace webpp::http {
             if constexpr (TextBasedBodyReader<body_type>) {
                 if constexpr (UnifiedBodyReader<body_type>) {
                     switch (body.which_communicator()) {
-                        case communicator_type::nothing: return;
-                        case communicator_type::text_based: break;
-                        case communicator_type::cstream_based:
-                        case communicator_type::stream_based:
+                        using enum communicator_type;
+                        case nothing: return;
+                        case text_based: break;
+                        case cstream_based:
+                        case stream_based:
                             throw stl::invalid_argument(
                               "You're asking us to get the data of a body type while the body doesn't contain "
                               "a string so we can't get its data to put it in a string view.");
@@ -313,16 +315,17 @@ namespace webpp::http {
         auto const str_view = istl::string_viewify(str);
         if constexpr (UnifiedBodyReader<body_type>) {
             switch (body.which_communicator()) {
-                case communicator_type::nothing: // nothing in the body, we can set a new string there
-                case communicator_type::text_based: {
+                using enum communicator_type;
+                case nothing: // nothing in the body, we can set a new string there
+                case text_based: {
                     serialize_text_body(str_view, body);
                     break;
                 }
-                case communicator_type::cstream_based: {
+                case cstream_based: {
                     serialize_cstream_body(str_view, body);
                     break;
                 }
-                case communicator_type::stream_based: {
+                case stream_based: {
                     serialize_stream_body(str_view, body);
                     break;
                 }

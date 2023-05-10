@@ -494,14 +494,15 @@ namespace webpp::http {
                 return false;
             }
             switch (this_communicator) {
-                case communicator_type::nothing: return true;
-                case communicator_type::text_based: {
+                using enum communicator_type;
+                case nothing: return true;
+                case text_based: {
                     const auto this_size = size();
                     return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
                 }
-                case communicator_type::stream_based: // we can't check equality of streams without
-                                                      // changing them
-                case communicator_type::cstream_based: {
+                case stream_based: // we can't check equality of streams without
+                                   // changing them
+                case cstream_based: {
                     return false; // c-streams don't have a mechanism to read but don't modify, so always
                     // false too
                 }

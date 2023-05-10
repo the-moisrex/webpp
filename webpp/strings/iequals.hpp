@@ -27,30 +27,34 @@ namespace webpp::ascii {
 
     [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case c) noexcept {
         switch (c) {
-            case char_case::lowered: return char_case_side::both_lowered;
-            case char_case::uppered: return char_case_side::both_uppered;
-            case char_case::unknown: return char_case_side::both_unknown;
+            using enum char_case;
+            using enum char_case_side;
+            case lowered: return both_lowered;
+            case uppered: return both_uppered;
+            case unknown: return both_unknown;
         }
     }
 
     // NOLINTBEGIN(bugprone-easily-swappable-parameters)
     [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case a, char_case b) noexcept {
         switch (a) {
-            case char_case::lowered:
+            using enum char_case;
+            using enum char_case_side;
+            case lowered:
                 switch (b) {
-                    case char_case::lowered: return char_case_side::both_lowered;
-                    default: return char_case_side::first_lowered;
+                    case lowered: return both_lowered;
+                    default: return first_lowered;
                 }
-            case char_case::uppered:
+            case uppered:
                 switch (b) {
-                    case char_case::uppered: return char_case_side::both_uppered;
-                    default: return char_case_side::first_uppered;
+                    case uppered: return both_uppered;
+                    default: return first_uppered;
                 }
-            case char_case::unknown:
+            case unknown:
                 switch (b) {
-                    case char_case::lowered: return char_case_side::second_lowered;
-                    case char_case::uppered: return char_case_side::second_uppered;
-                    case char_case::unknown: return char_case_side::both_unknown;
+                    case lowered: return second_lowered;
+                    case uppered: return second_uppered;
+                    case unknown: return both_unknown;
                 }
         }
     }
@@ -63,15 +67,16 @@ namespace webpp::ascii {
      */
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
     [[nodiscard]] static constexpr bool iequals(CharT a, CharT b) noexcept {
-        if constexpr (char_case_side::both_lowered == Side || char_case_side::both_uppered == Side) {
+        using enum char_case_side;
+        if constexpr (both_lowered == Side || both_uppered == Side) {
             return a == b;
-        } else if constexpr (char_case_side::first_lowered == Side) {
+        } else if constexpr (first_lowered == Side) {
             return a == b || a == to_lower_copy(b);
-        } else if constexpr (char_case_side::first_uppered == Side) {
+        } else if constexpr (first_uppered == Side) {
             return a == b || a == to_upper_copy(b);
-        } else if constexpr (char_case_side::second_lowered == Side) {
+        } else if constexpr (second_lowered == Side) {
             return a == b || to_lower_copy(a) == b;
-        } else if constexpr (char_case_side::second_uppered == Side) {
+        } else if constexpr (second_uppered == Side) {
             return a == b || to_upper_copy(a) == b;
         } else {
             if (a == b)
@@ -103,6 +108,7 @@ namespace webpp::ascii {
     template <char_case_side Side = char_case_side::both_unknown>
     [[nodiscard]] static inline bool iequals(istl::StringViewifiable auto&& _str1,
                                              istl::StringViewifiable auto&& _str2) noexcept {
+        using enum char_case_side;
         using str1_type  = decltype(_str1);
         using str2_type  = decltype(_str2);
         using str1_t     = stl::remove_cvref_t<str1_type>;
@@ -117,7 +123,7 @@ namespace webpp::ascii {
         if (_size != size(_str2))
             return false;
 
-        if constexpr (char_case_side::both_lowered == Side || char_case_side::both_uppered == Side) {
+        if constexpr (both_lowered == Side || both_uppered == Side) {
             return istl::string_viewify(_str1) == istl::string_viewify(_str2);
         } else {
 
@@ -157,16 +163,15 @@ namespace webpp::ascii {
                 }
 
                 constexpr auto operator()(simd_utype a, simd_utype b) const noexcept {
-                    if constexpr (char_case_side::first_uppered == Side) {
+                    if constexpr (first_uppered == Side) {
                         return a == to_upper(b);
-                    } else if constexpr (char_case_side::second_uppered == Side) {
+                    } else if constexpr (second_uppered == Side) {
                         return to_upper(a) == b;
-                    } else if constexpr (char_case_side::first_lowered == Side) {
+                    } else if constexpr (first_lowered == Side) {
                         return a == to_lower(b);
-                    } else if constexpr (char_case_side::second_lowered == Side) {
+                    } else if constexpr (second_lowered == Side) {
                         return to_lower(a) == b;
-                    } else if constexpr (char_case_side::both_uppered == Side ||
-                                         char_case_side::both_lowered == Side) {
+                    } else if constexpr (both_uppered == Side || both_lowered == Side) {
                         return a == b; // even though this shouldn't happen at all
                     } else {
                         return to_lower(a) == to_lower(b);
@@ -185,19 +190,19 @@ namespace webpp::ascii {
             for (; it1 != it1_end; ++it1, ++it2) {
                 if (*it1 != *it2) {
                     // compiler seems to be able to optimize this better than us
-                    if constexpr (char_case_side::first_lowered == Side) {
+                    if constexpr (first_lowered == Side) {
                         auto ch2_lowered = to_lower_copy(*it2);
                         if (*it1 != ch2_lowered)
                             return false;
-                    } else if constexpr (char_case_side::second_lowered == Side) {
+                    } else if constexpr (second_lowered == Side) {
                         auto ch1_lowered = to_lower_copy(*it1);
                         if (ch1_lowered != *it2)
                             return false;
-                    } else if constexpr (char_case_side::first_uppered == Side) {
+                    } else if constexpr (first_uppered == Side) {
                         auto ch2_uppered = to_upper_copy(*it2);
                         if (*it1 != ch2_uppered)
                             return false;
-                    } else if constexpr (char_case_side::second_uppered == Side) {
+                    } else if constexpr (second_uppered == Side) {
                         auto ch1_uppered = to_upper_copy(*it1);
                         if (ch1_uppered == *it2)
                             return false;
@@ -212,25 +217,6 @@ namespace webpp::ascii {
             return true;
 #endif
         }
-
-
-        //        if constexpr (istl::String<str1_t> && istl::String<str1_t> &&
-        //        stl::is_rvalue_reference_v<str1_type> &&
-        //                      stl::is_rvalue_reference_v<str2_type>) {
-        //            to_lower(_str1);
-        //            to_lower(_str2);
-        //            return _str1 == _str2;
-        //        } else if constexpr (istl::String<str1_t> && stl::is_rvalue_reference_v<str1_type>) {
-        //            to_lower(_str1);
-        //            return _str1 == to_lower_copy(_str2, _str1.get_allocator());
-        //        } else if constexpr (istl::String<str2_t> && stl::is_rvalue_reference_v<str2_type>) {
-        //            to_lower(_str2);
-        //            return to_lower_copy(_str1, _str2.get_allocator()) == _str2;
-        //        } else {
-        //            return stl::equal(str1.cbegin(), str1.cend(), str2.cbegin(), [](auto&& c1, auto&& c2) {
-        //                return c1 == c2 || to_lower_copy(c1) == to_lower_copy(c2);
-        //            });
-        //        }
     }
 
 } // namespace webpp::ascii

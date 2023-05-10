@@ -130,6 +130,7 @@ namespace webpp::http {
         }
 
         // todo: use tokenizer instead of these shenanigans
+        // todo: In the benchmarks, there's an implementation of this that uses the string_tokenizer
         constexpr void
         parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;

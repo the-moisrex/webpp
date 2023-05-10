@@ -197,10 +197,11 @@ namespace webpp::http::beast_proto {
             using body_type = stl::remove_cvref_t<BodyType>;
             if constexpr (UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
-                    case http::communicator_type::nothing: return;
-                    case http::communicator_type::text_based: set_response_body_string(body); return;
-                    case http::communicator_type::cstream_based: set_response_body_cstream(body); return;
-                    case http::communicator_type::stream_based: set_response_body_stream(body); return;
+                    using enum http::communicator_type;
+                    case nothing: return;
+                    case text_based: set_response_body_string(body); return;
+                    case cstream_based: set_response_body_cstream(body); return;
+                    case stream_based: set_response_body_stream(body); return;
                 }
             } else if constexpr (TextBasedBodyReader<body_type>) {
                 set_response_body_string(body);

@@ -47,18 +47,16 @@ namespace webpp {
      */
     static constexpr const char* to_string(inet_pton4_status status) noexcept {
         switch (status) {
-            case inet_pton4_status::valid: return "Valid IPv4 address";
-            case inet_pton4_status::too_little_octets:
+            using enum inet_pton4_status;
+            case valid: return "Valid IPv4 address";
+            case too_little_octets:
                 return "The IPv4 doesn't have enough octets; it should contain exactly 4 octets";
-            case inet_pton4_status::invalid_octet_range:
-                return "At least one of the octets is of an invalid range";
-            case inet_pton4_status::too_many_octets:
-                return "The IPv4 has too many octets; it should contain exactly 4 octets";
-            case inet_pton4_status::invalid_leading_zero:
-                return "The IPv4's octet started with a zero which is not valid";
-            case inet_pton4_status::invalid_character: return "Invalid character found in the IPv4";
-            case inet_pton4_status::bad_ending: return "IPv4 ended unexpectedly";
-            case inet_pton4_status::invalid_prefix: return "IPv4 has an invalid prefix";
+            case invalid_octet_range: return "At least one of the octets is of an invalid range";
+            case too_many_octets: return "The IPv4 has too many octets; it should contain exactly 4 octets";
+            case invalid_leading_zero: return "The IPv4's octet started with a zero which is not valid";
+            case invalid_character: return "Invalid character found in the IPv4";
+            case bad_ending: return "IPv4 ended unexpectedly";
+            case invalid_prefix: return "IPv4 has an invalid prefix";
         }
         return ""; // just to get rid of static analyzers' warning
     }
@@ -68,13 +66,13 @@ namespace webpp {
      */
     static constexpr const char* to_string(inet_pton6_status status) noexcept {
         switch (status) {
-            case inet_pton6_status::valid: return "Valid IPv6 address";
-            case inet_pton6_status::invalid_octet_range:
-                return "At least one of the octets is of an invalid range.";
-            case inet_pton6_status::invalid_colon_usage: return "The colon is used in the wrong place";
-            case inet_pton6_status::bad_ending: return "The IPv6 ended unexpectedly";
-            case inet_pton6_status::invalid_character: return "Invalid character found in the IPv6";
-            case inet_pton6_status::invalid_prefix: return "IPv4 has an invalid prefix";
+            using enum inet_pton6_status;
+            case valid: return "Valid IPv6 address";
+            case invalid_octet_range: return "At least one of the octets is of an invalid range.";
+            case invalid_colon_usage: return "The colon is used in the wrong place";
+            case bad_ending: return "The IPv6 ended unexpectedly";
+            case invalid_character: return "Invalid character found in the IPv6";
+            case invalid_prefix: return "IPv4 has an invalid prefix";
         }
         return ""; // just to get rid of static analyzers' warning
     }
@@ -145,6 +143,8 @@ namespace webpp {
      **/
     static constexpr inet_pton4_status
     inet_pton4(const char*& src, const char* end, stl::uint8_t* out) noexcept {
+        using enum inet_pton4_status;
+
         bool saw_digit = false;
         int  octets    = 0;
         *out           = 0;
@@ -153,33 +153,33 @@ namespace webpp {
             if (ch >= '0' && ch <= '9') {
                 unsigned int const new_i = *out * 10u + static_cast<unsigned int>(ch - '0');
                 if (saw_digit && *out == 0) {
-                    return inet_pton4_status::invalid_leading_zero;
+                    return invalid_leading_zero;
                 }
                 if (new_i > 255) {
-                    return inet_pton4_status::invalid_octet_range;
+                    return invalid_octet_range;
                 }
                 *out = static_cast<uint8_t>(new_i);
                 if (!saw_digit) {
                     if (++octets > 4) {
-                        return inet_pton4_status::too_many_octets;
+                        return too_many_octets;
                     }
                     saw_digit = true;
                 }
             } else if (ch == '.' && saw_digit) {
                 if (octets == 4) {
-                    return inet_pton4_status::bad_ending;
+                    return bad_ending;
                 }
                 *++out    = 0;
                 saw_digit = false;
             } else {
                 --src;
-                return inet_pton4_status::invalid_character;
+                return invalid_character;
             }
         }
         if (octets < 4) {
-            return inet_pton4_status::too_little_octets;
+            return too_little_octets;
         }
-        return inet_pton4_status::valid;
+        return valid;
     }
 
     /**
@@ -187,15 +187,16 @@ namespace webpp {
      */
     static constexpr inet_pton4_status
     inet_pton4(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+        using enum inet_pton4_status;
         auto const res = inet_pton4(src, end, out);
-        if (res == inet_pton4_status::invalid_character && *src == '/') {
+        if (res == invalid_character && *src == '/') {
             ++src;
             int const prefix_tmp = details::parse_prefix(src, end);
             if (prefix_tmp == -1 || prefix_tmp > 32) {
-                return inet_pton4_status::invalid_prefix;
+                return invalid_prefix;
             }
             prefix = static_cast<stl::uint8_t>(prefix_tmp);
-            return inet_pton4_status::valid;
+            return valid;
         }
         return res;
     }
@@ -224,17 +225,19 @@ namespace webpp {
      **/
     static constexpr inet_pton6_status
     inet_pton6(const char*& src, const char* src_endp, stl::uint8_t* out) noexcept {
+        using enum inet_pton6_status;
+
         stl::uint8_t* colonp = nullptr;
         stl::uint8_t* endp   = out + ipv6_byte_count;
 
         // Handling Leading ::
         if (src == src_endp) {
-            return inet_pton6_status::bad_ending;
+            return bad_ending;
         }
         if (*src == ':') {
             ++src;
             if (src == src_endp || *src != ':') {
-                return inet_pton6_status::invalid_colon_usage;
+                return invalid_colon_usage;
             }
         }
 
@@ -247,12 +250,12 @@ namespace webpp {
             int const digit = hex_digit_value(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
-                    return inet_pton6_status::invalid_octet_range;
+                    return invalid_octet_range;
                 }
                 val <<= 4;
                 val |= static_cast<unsigned int>(digit);
                 if (val > 0xffff) {
-                    return inet_pton6_status::invalid_octet_range; // todo: is this if stmt even possible?
+                    return invalid_octet_range; // todo: is this if stmt even possible?
                 }
                 ++hex_seen;
                 continue;
@@ -260,15 +263,15 @@ namespace webpp {
                 current_token = src;
                 if (hex_seen == 0) {
                     if (colonp) {
-                        return inet_pton6_status::invalid_colon_usage;
+                        return invalid_colon_usage;
                     }
                     colonp = out;
                     continue;
                 } else if (src == src_endp) {
-                    return inet_pton6_status::bad_ending;
+                    return bad_ending;
                 }
                 if (out + uint16_byte_count > endp) {
-                    return inet_pton6_status::invalid_octet_range;
+                    return invalid_octet_range;
                 }
                 *out++   = static_cast<stl::uint8_t>((val >> 8) & 0xff);
                 *out++   = static_cast<stl::uint8_t>(val & 0xff);
@@ -285,12 +288,11 @@ namespace webpp {
                     }
                     case inet_pton4_status::bad_ending:
                     case inet_pton4_status::too_little_octets:
-                    case inet_pton4_status::too_many_octets: return inet_pton6_status::bad_ending;
-                    case inet_pton4_status::invalid_octet_range:
-                        return inet_pton6_status::invalid_octet_range;
+                    case inet_pton4_status::too_many_octets: return bad_ending;
+                    case inet_pton4_status::invalid_octet_range: return invalid_octet_range;
                     case inet_pton4_status::invalid_leading_zero:
-                    case inet_pton4_status::invalid_character: return inet_pton6_status::invalid_character;
-                    case inet_pton4_status::invalid_prefix: return inet_pton6_status::invalid_prefix;
+                    case inet_pton4_status::invalid_character: return invalid_character;
+                    case inet_pton4_status::invalid_prefix: return invalid_prefix;
                 }
                 break;              // '\0' was seen by inet_pton4.
             } else if (ch == '/') { // handling prefixes
@@ -298,11 +300,11 @@ namespace webpp {
                 break;
             }
             --src;
-            return inet_pton6_status::invalid_character;
+            return invalid_character;
         }
         if (hex_seen > 0) {
             if (out + uint16_byte_count > endp) {
-                return inet_pton6_status::invalid_octet_range;
+                return invalid_octet_range;
             }
             *out++ = static_cast<stl::uint8_t>((val >> 8) & 0xff);
             *out++ = static_cast<stl::uint8_t>(val & 0xff);
@@ -311,7 +313,7 @@ namespace webpp {
             // Replace :: with zeros.
             if (out == endp) {
                 // :: would expand to a zero-width field.
-                return inet_pton6_status::bad_ending;
+                return bad_ending;
             }
             auto const n = static_cast<stl::size_t>(out - colonp);
             stl::memmove(endp - n, colonp, n);
@@ -319,12 +321,12 @@ namespace webpp {
             out = endp;
         }
         if (out != endp) {
-            return inet_pton6_status::bad_ending;
+            return bad_ending;
         }
         if (ch == '/') {
-            return inet_pton6_status::invalid_character;
+            return invalid_character;
         }
-        return inet_pton6_status::valid;
+        return valid;
     }
 
 
@@ -334,15 +336,16 @@ namespace webpp {
      */
     static constexpr inet_pton6_status
     inet_pton6(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+        using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
-        if (res == inet_pton6_status::invalid_character && *src == '/') {
+        if (res == invalid_character && *src == '/') {
             ++src;
             int const prefix_tmp = details::parse_prefix(src, end);
             if (prefix_tmp == -1 || prefix_tmp > 128) {
-                return inet_pton6_status::invalid_prefix;
+                return invalid_prefix;
             }
             prefix = static_cast<stl::uint8_t>(prefix_tmp);
-            return inet_pton6_status::valid;
+            return valid;
         }
         return res;
     }
