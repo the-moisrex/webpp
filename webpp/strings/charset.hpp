@@ -118,6 +118,22 @@ namespace webpp {
             return true;
         }
 
+        template <typename Iter>
+        [[nodiscard]] constexpr bool contains(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (!contains(*beg))
+                    return false;
+            return true;
+        }
+
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (!contains(*beg))
+                    return beg;
+            return end;
+        }
+
         template <istl::StringView StrViewType = stl::basic_string_view<value_type>>
         [[nodiscard]] constexpr auto string_view() const noexcept {
             return StrViewType(this->data(), this->size());

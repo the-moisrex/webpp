@@ -109,6 +109,9 @@ namespace webpp {
         }
 
       public:
+        // initialize with ::0
+        constexpr ipv6() noexcept = default;
+
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename StrT>
             requires(istl::StringViewifiable<StrT> &&
@@ -196,6 +199,30 @@ namespace webpp {
         constexpr auto operator<=>(ipv6 const& other) const noexcept = default;
         // todo: add other stuff for operator<=>
 
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
+            return operator==(ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))));
+        }
+
+        [[nodiscard]] constexpr bool operator==(ipv6 ip) const noexcept {
+            return _prefix == ip._prefix && data == ip.data;
+        }
+
+        [[nodiscard]] constexpr bool operator==(octets8_t ip) const noexcept {
+            return data == ip;
+        }
+
+        [[nodiscard]] constexpr bool operator==(octets16_t ip) const noexcept {
+            return octets16() == ip;
+        }
+
+        [[nodiscard]] constexpr bool operator==(octets32_t ip) const noexcept {
+            return octets32() == ip;
+        }
+
+        [[nodiscard]] constexpr bool operator==(octets64_t ip) const noexcept {
+            return octets64() == ip;
+        }
 
 
         explicit operator octets8_t() const noexcept {

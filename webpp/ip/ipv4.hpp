@@ -115,6 +115,9 @@ namespace webpp {
         }
 
       public:
+        // initialize with 0.0.0.0
+        constexpr ipv4() noexcept = default;
+
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!istl::cvref_as<T, ipv4> && istl::StringViewifiable<T>)
@@ -221,18 +224,35 @@ namespace webpp {
             return *this;
         }
 
-        constexpr auto operator<=>(ipv4 const&) const noexcept = default;
-        constexpr auto operator<=>(ipv4_octets other) const noexcept {
+        constexpr stl::strong_ordering operator<=>(ipv4 const&) const noexcept = default;
+        constexpr stl::strong_ordering operator<=>(ipv4_octets other) const noexcept {
             return data <=> parse(other);
         }
 
-        template <istl::StringViewifiable StrT>
-        constexpr auto operator!=(StrT&& ip) const noexcept {
-            return operator<=>(ipv4(stl::forward<StrT>(ip)));
+        constexpr stl::strong_ordering operator<=>(stl::uint32_t const& ip) const noexcept {
+            return data <=> ip;
         }
 
-        constexpr auto operator<=>(stl::uint32_t const& ip) const noexcept {
-            return data <=> ip;
+        template <istl::StringViewifiable StrT>
+        constexpr stl::strong_ordering operator<=>(StrT&& ip) const noexcept {
+            return operator<=>(ipv4(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))));
+        }
+
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
+            return operator==(ipv4(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))));
+        }
+
+        [[nodiscard]] constexpr bool operator==(ipv4 ip) const noexcept {
+            return _prefix == ip._prefix && data == ip.data;
+        }
+
+        [[nodiscard]] constexpr bool operator==(stl::uint32_t ip) const noexcept {
+            return data == ip;
+        }
+
+        [[nodiscard]] constexpr bool operator==(ipv4_octets ip) const noexcept {
+            return data == parse(ip);
         }
 
         /**

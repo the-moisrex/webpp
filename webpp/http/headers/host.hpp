@@ -1,33 +1,350 @@
 #ifndef WEBPP_HEADERS_HOST_HPP
 #define WEBPP_HEADERS_HOST_HPP
 
-#include "../../http/syntax/common.hpp"
-#include "../../std/string_view.hpp"
-#include "../../strings/string_tokenizer.hpp"
+#include "../../convert/casts.hpp"
+#include "../../ip/ipv4.hpp"
+#include "../../ip/ipv6.hpp"
+#include "../../std/utility.hpp" // to_underlying
+#include "../syntax/tokens.hpp"
+
+#include <compare>
+#include <cstdint>
+#include <variant>
 
 namespace webpp::http {
 
-    template <Allocator AllocT, istl::StringView StrViewT = stl::string_view>
-    struct basic_host {
-        using str_v                 = StrViewT;
-        using char_type             = typename str_v::value_type;
-        using str_const_iterator    = typename str_v::const_iterator;
-        using allocator_type        = AllocT;
-        using string_tokenizer_type = string_tokenizer<str_v, str_const_iterator>;
-        // ctor
-        constexpr basic_host(auto&&... args) noexcept : data{stl::forward<decltype(args)>(args)...} {}
-
-
-        void parse() noexcept {
-            // todo
-        }
-
-      private:
-        str_v data;
+    enum struct host_status {
+        valid,              // valid but no port
+        valid_with_port,    // valid + has port
+        invalid_host,       // the host is not a reg-name or an ip addr
+        invalid_port,       // unknown error with the port number
+        invalid_port_range, // the port is not in the valid port range
+        invalid_ipv6        // it's an invalid ipv6 address
     };
 
-    template <Traits TraitsType>
-    using host = basic_host<traits::general_string_allocator<TraitsType>, traits::string_view<TraitsType>>;
+
+
+    template <typename StrT = stl::string_view>
+    struct basic_domain : StrT {
+        using StrT::StrT;
+    };
+
+    /**
+     * HTTP Host Header Field
+     *
+     * Host Field RFC: https://www.rfc-editor.org/rfc/rfc9110#field.host
+     * URI-HOST RFC:   https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2
+     *
+     * RFC 1123 allows the first char to be a digit in a domain name as well:
+     *  https://www.rfc-editor.org/rfc/rfc1123#section-2
+     *
+     * Syntax:
+     *     Host             = uri-host [ ":" port ]
+     *     uri-host         = IP-literal / IPv4address / reg-name
+     *     IP-literal       = "[" ( IPv6address / IPvFuture  ) "]"
+     *     IPvFuture        = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
+     *     IPv6address      =                             6( h16 ":" ) ls32
+     *                       /                       "::" 5( h16 ":" ) ls32
+     *                       / [               h16 ] "::" 4( h16 ":" ) ls32
+     *                       / [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+     *                       / [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+     *                       / [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+     *                       / [ *4( h16 ":" ) h16 ] "::"              ls32
+     *                       / [ *5( h16 ":" ) h16 ] "::"              h16
+     *                       / [ *6( h16 ":" ) h16 ] "::"
+     *
+     *     ls32             = ( h16 ":" h16 ) / IPv4address
+     *                      ; least-significant 32 bits of address
+     *
+     *     h16              = 1*4HEXDIG
+     *                      ; 16 bits of address represented in hexadecimal
+     *
+     *     IPv4address      = dec-octet "." dec-octet "." dec-octet "." dec-octet
+     *
+     *     dec-octet        =  DIGIT                 ; 0-9
+     *                       / %x31-39 DIGIT         ; 10-99
+     *                       / "1" 2DIGIT            ; 100-199
+     *                       / "2" %x30-34 DIGIT     ; 200-249
+     *                       / "25" %x30-35          ; 250-255
+     *
+     *     reg-name         = *( unreserved / pct-encoded / sub-delims )
+     */
+    struct host_authority {
+
+        using domain_type = basic_domain<stl::string_view>;
+
+        static constexpr stl::uint16_t max_port_number    = 65535u;
+        static constexpr stl::uint16_t default_http_port  = 80u;
+        static constexpr stl::uint16_t default_https_port = 443u;
+
+        constexpr ~host_authority() noexcept                                = default;
+        constexpr host_authority(host_authority const&) noexcept            = default;
+        constexpr host_authority(host_authority&&) noexcept                 = default;
+        constexpr host_authority& operator=(host_authority const&) noexcept = default;
+        constexpr host_authority& operator=(host_authority&&) noexcept      = default;
+
+        constexpr host_authority(stl::string_view hostname) noexcept {
+            if (hostname.empty()) {
+                return;
+            }
+
+            if (hostname[0] == '[') {
+                // IPv6 or invalid
+                // If the host starts with a left-bracket, assume the entire host is an
+                // IPv6 literal.  Otherwise, assume none of the host is an IPv6 literal.
+                // This assumption will be overridden if we find a right-bracket.
+                auto ip = hostname;
+                ip.remove_prefix(1);
+                if (const auto ip_end = stl::find(ip.rbegin(), ip.rend(), ']'); ip_end != ip.rend()) {
+                    auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - ip.data());
+                    ip.remove_suffix(bracket_pos);
+                    endpoint.emplace<struct ipv6>(ip); // parse and set ipv6
+                    parse_port(hostname.data() + bracket_pos, hostname.data() + hostname.size());
+                    return;
+                } else {
+                    status_code = host_status::invalid_ipv6;
+                    return;
+                }
+            } else if (DIGIT<char>.contains(hostname[0])) {
+                // might be an IPv4, or it might be a host name
+
+                // first try to parse it as ipv4:
+                ipv4_octets octets;
+                auto        host_ptr = hostname.data();
+                auto const  host_end = host_ptr + hostname.size();
+                auto const  res      = inet_pton4(host_ptr, host_end, octets.data());
+                switch (res) {
+                    using enum inet_pton4_status;
+                    case valid: {
+                        // we assumed right, it is an ipv4
+                        status_code = host_status::valid;
+                        endpoint.emplace<struct ipv4>(octets);
+                        return;
+                    }
+                    case invalid_character: {
+                        // we might have a port
+                        if (':' == *host_ptr) {
+                            if (++host_ptr != host_end) {
+                                parse_port(host_ptr, host_end);
+                                return;
+                            } else {
+                                status_code = host_status::invalid_host;
+                            }
+                        } else {
+                            // it's not ipv4, let's see if it's a domain or not
+                            parse_domain(hostname.data(), hostname.data() + hostname.size());
+                        }
+                        break;
+                    }
+                    default: {
+                        // it's not ipv4, let's see if it's a domain or not
+                        parse_domain(hostname.data(), hostname.data() + hostname.size());
+                        return;
+                    }
+                }
+            } else {
+                // it is not an IP, it's a host name
+                parse_domain(hostname.data(), hostname.data() + hostname.size());
+                return;
+            }
+        }
+
+        [[nodiscard]] constexpr bool has_port() const noexcept {
+            return status_code == host_status::valid_with_port;
+        }
+
+        [[nodiscard]] constexpr stl::uint16_t
+        port_or(stl::uint16_t default_port = default_http_port) const noexcept {
+            return has_port() ? port_value : default_port;
+        }
+
+        [[nodiscard]] constexpr stl::uint16_t port() const noexcept {
+            return port_value;
+        }
+
+        constexpr void status_string(istl::String auto& out) const {
+            switch (status_code) {
+                using enum host_status;
+                case valid:
+                case valid_with_port: break;
+                case invalid_host: {
+                    out += "'";
+                    out += endpoint;
+                    out += "' is not a valid host name or IP address.";
+                    break;
+                }
+                case invalid_port: {
+                    out += "'";
+                    out += port_value;
+                    out += "' is not a valid port number.";
+                    break;
+                }
+                case invalid_port_range: {
+                    out += "Port number '";
+                    out += port_value;
+                    out += "' should be between 0-65,535 inclusive.";
+                    break;
+                }
+                case invalid_ipv6: {
+                    out += "The string '";
+                    get<struct ipv6>(endpoint).to_string(out);
+                    out += "' is not valid: ";
+                    get<struct ipv6>(endpoint).status_to(out);
+                    break;
+                }
+            }
+        }
+
+        [[nodiscard]] constexpr host_status status() const noexcept {
+            return status_code;
+        }
+
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            using enum host_status;
+            return status_code == valid || status_code == valid_with_port;
+        }
+
+        [[nodiscard]] constexpr operator bool() const noexcept {
+            return is_valid();
+        }
+
+        [[nodiscard]] constexpr bool is_ip() const noexcept {
+            return is_ipv4() || is_ipv6();
+        }
+
+        [[nodiscard]] constexpr bool is_ipv4() const noexcept {
+            return stl::holds_alternative<struct ipv4>(endpoint);
+        }
+
+        [[nodiscard]] constexpr bool is_ipv6() const noexcept {
+            return stl::holds_alternative<struct ipv6>(endpoint);
+        }
+
+        [[nodiscard]] constexpr bool is_domain() const noexcept {
+            return stl::holds_alternative<domain_type>(endpoint);
+        }
+
+
+        // returns 0.0.0.0 if not found
+        [[nodiscard]] constexpr struct ipv4 ipv4() const noexcept {
+            if (auto ip_ptr = stl::get_if<struct ipv4>(&endpoint); ip_ptr != nullptr) {
+                return *ip_ptr;
+            }
+            return {};
+        }
+
+        [[nodiscard]] constexpr struct ipv4 ipv4_or(struct ipv4 default_ip) const noexcept {
+            if (auto ip_ptr = stl::get_if<struct ipv4>(&endpoint); ip_ptr != nullptr) {
+                return *ip_ptr;
+            }
+            return default_ip;
+        }
+
+        // returns ::0 if not found
+        [[nodiscard]] constexpr struct ipv6 ipv6() const noexcept {
+            if (auto ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
+                return *ip_ptr;
+            }
+            return {};
+        }
+
+        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 default_ip) const noexcept {
+            if (auto ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
+                return *ip_ptr;
+            }
+            return default_ip;
+        }
+
+        template <typename StrT = stl::string_view>
+        [[nodiscard]] constexpr basic_domain<StrT> domain() const noexcept {
+            if constexpr (stl::convertible_to<basic_domain<StrT>, domain_type>) {
+                return get<domain_type>(endpoint);
+            } else {
+                // todo
+            }
+        }
+
+
+        template <typename StrT = stl::string_view>
+        [[nodiscard]] constexpr basic_domain<StrT> domain_or(StrT&& default_domain) const noexcept {
+            if constexpr (stl::convertible_to<basic_domain<StrT>, domain_type>) {
+                if (auto domain_ptr = stl::get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
+                    return *domain_ptr;
+                }
+                return {stl::forward<StrT>(default_domain)};
+            } else {
+                // todo
+            }
+        }
+
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::uint16_t rhs_port) const noexcept {
+            return port() <=> rhs_port;
+        }
+
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::string_view rhs_host) const noexcept {
+            return *this <=> host_authority{rhs_host};
+        }
+
+        [[nodiscard]] constexpr stl::strong_ordering
+        operator<=>(host_authority const& rhs_host) const noexcept = default;
+
+
+        [[nodiscard]] constexpr operator struct ipv4() const noexcept {
+            return this->ipv4();
+        }
+
+        [[nodiscard]] constexpr operator struct ipv6() const noexcept {
+            return this->ipv6();
+        }
+
+        [[nodiscard]] constexpr operator domain_type() const noexcept {
+            return this->domain();
+        }
+
+
+      private:
+        constexpr void parse_port(char const* port_ptr, char const* port_end) noexcept {
+            if (port_ptr == port_end) {
+                return; // no port here
+            }
+            if (*port_ptr != ':') {
+                status_code = host_status::invalid_host;
+                return;
+            }
+            int value = 0;
+            auto [_, ec]{std::from_chars(port_ptr, port_end, value)};
+
+            if (ec == std::errc::invalid_argument || ec == std::errc::result_out_of_range) {
+                status_code = host_status::invalid_port;
+                return;
+            }
+            if (value < 0 || value > max_port_number) {
+                status_code = host_status::invalid_port;
+                return;
+            }
+
+            port_value  = static_cast<stl::uint16_t>(value);
+            status_code = host_status::valid_with_port;
+        }
+
+        constexpr void parse_domain(char const* host_ptr, char const* host_end) noexcept {
+            if (auto port_ptr = host_charset.contains_until(host_ptr, host_end); port_ptr == host_end) {
+                // no port, it's valid
+                endpoint.emplace<domain_type>(host_ptr, host_end);
+                status_code = host_status::valid;
+            } else if (*port_ptr == ':') {
+                // it's a valid domain + (valid/invalid) port
+                parse_port(port_ptr, host_end);
+            } else {
+                status_code = host_status::invalid_host;
+            }
+        }
+
+        using endpoint_variant_type = stl::variant<stl::monostate, struct ipv4, struct ipv6, domain_type>;
+        endpoint_variant_type endpoint{stl::monostate{}};
+        stl::uint16_t         port_value = 0;
+        host_status           status_code;
+    };
 
 } // namespace webpp::http
 
