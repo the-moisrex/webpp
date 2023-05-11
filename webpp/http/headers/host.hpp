@@ -258,7 +258,10 @@ namespace webpp::http {
         template <typename StrT = stl::string_view>
         [[nodiscard]] constexpr basic_domain<StrT> domain() const noexcept {
             if constexpr (stl::convertible_to<basic_domain<StrT>, domain_type>) {
-                return get<domain_type>(endpoint);
+                if (auto domain_ptr = get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
+                    return *domain_ptr;
+                }
+                return {}; // empty domain
             } else {
                 // todo
             }
@@ -307,7 +310,7 @@ namespace webpp::http {
             if (port_ptr == port_end) {
                 return; // no port here
             }
-            if (*port_ptr != ':') {
+            if (*port_ptr++ != ':') {
                 status_code = host_status::invalid_host;
                 return;
             }
@@ -330,9 +333,10 @@ namespace webpp::http {
         constexpr void parse_domain(char const* host_ptr, char const* host_end) noexcept {
             if (auto port_ptr = host_charset.contains_until(host_ptr, host_end); port_ptr == host_end) {
                 // no port, it's valid
-                endpoint.emplace<domain_type>(host_ptr, host_end);
+                endpoint    = domain_type{host_ptr, host_end};
                 status_code = host_status::valid;
             } else if (*port_ptr == ':') {
+                endpoint = domain_type{host_ptr, port_ptr};
                 // it's a valid domain + (valid/invalid) port
                 parse_port(port_ptr, host_end);
             } else {

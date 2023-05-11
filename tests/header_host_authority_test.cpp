@@ -6,6 +6,7 @@ using namespace webpp::http;
 TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
     host_authority const host{"example.org:80"};
     EXPECT_TRUE(host.is_valid());
+    EXPECT_TRUE(host.is_domain());
     EXPECT_FALSE(host.is_ip());
     EXPECT_FALSE(host.is_ipv4());
     EXPECT_FALSE(host.is_ipv6());
