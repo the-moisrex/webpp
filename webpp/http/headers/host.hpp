@@ -124,11 +124,9 @@ namespace webpp::http {
                     case invalid_character: {
                         // we might have a port
                         if (':' == *host_ptr) {
-                            if (++host_ptr != host_end) {
-                                parse_port(host_ptr, host_end);
-                                return;
-                            } else {
-                                status_code = host_status::invalid_host;
+                            parse_port(host_ptr, host_end);
+                            if (status_code == host_status::valid_with_port) {
+                                endpoint.emplace<struct ipv4>(octets);
                             }
                         } else {
                             // it's not ipv4, let's see if it's a domain or not
