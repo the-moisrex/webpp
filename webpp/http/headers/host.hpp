@@ -98,6 +98,7 @@ namespace webpp::http {
                 if (const auto ip_end = stl::find(ip.rbegin(), ip.rend(), ']'); ip_end != ip.rend()) {
                     ip.remove_suffix(static_cast<stl::size_t>(ip_end - ip.rbegin()) + 1);
                     endpoint.emplace<struct ipv6>(ip); // parse and set ipv6
+                    status_code            = host_status::valid;
                     auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - hostname.data());
                     parse_port(hostname.data() + bracket_pos + 1, hostname.data() + hostname.size());
                     return;
@@ -124,10 +125,10 @@ namespace webpp::http {
                     case invalid_character: {
                         // we might have a port
                         if (':' == *host_ptr) {
+                            // doesn't matter if the port was valid or not, we're just going to add it anyway
+                            endpoint.emplace<struct ipv4>(octets);
+
                             parse_port(host_ptr, host_end);
-                            if (status_code == host_status::valid_with_port) {
-                                endpoint.emplace<struct ipv4>(octets);
-                            }
                         } else {
                             // it's not ipv4, let's see if it's a domain or not
                             parse_domain(hostname.data(), hostname.data() + hostname.size());

@@ -117,6 +117,18 @@ TEST(HdrHostAuthorityTest, ParseDomainHostWithInvalidPort) {
     EXPECT_EQ(host.domain(), "example.com");
 }
 
+TEST(HdrHostAuthorityTest, ParseSeeminglyIpv4ButADomain) {
+    // todo: is this really a valid domain?
+    host_authority const host("192.2.1:8080");
+    EXPECT_FALSE(host.is_ip());
+    EXPECT_FALSE(host.is_ipv4());
+    EXPECT_FALSE(host.is_ipv6());
+    EXPECT_TRUE(host.is_valid());
+    EXPECT_TRUE(host.is_domain());
+    EXPECT_TRUE(host.has_port());
+    EXPECT_EQ(host.domain(), "192.2.1");
+}
+
 TEST(HdrHostAuthorityTest, ParseIpv4HostWithInvalidPort) {
     host_authority const host("192.0.2.0:invalid");
     EXPECT_TRUE(host.is_ip());

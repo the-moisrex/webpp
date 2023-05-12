@@ -25,7 +25,8 @@ namespace webpp {
         invalid_leading_zero = 251u, // the octet is starting with an invalid leading zero
         invalid_character    = 250u, // found a non-standard character
         bad_ending           = 249u, // The ip ended badly
-        invalid_prefix       = 248u  // The ip has and invalid prefix
+        invalid_octet        = 248u, // Found an invalid character in the octets
+        invalid_prefix       = 247u  // The ip has and invalid prefix
     };
 
     /**
@@ -56,6 +57,7 @@ namespace webpp {
             case invalid_leading_zero: return "The IPv4's octet started with a zero which is not valid";
             case invalid_character: return "Invalid character found in the IPv4";
             case bad_ending: return "IPv4 ended unexpectedly";
+            case invalid_octet: return "Found an invalid character in the octets";
             case invalid_prefix: return "IPv4 has an invalid prefix";
         }
         return ""; // just to get rid of static analyzers' warning
@@ -173,10 +175,17 @@ namespace webpp {
                 saw_digit = false;
             } else {
                 --src;
+
+                // we use invalid octet and not invalid character because the invalid character can be used
+                // for parsing the rest of the string; for example to parse a "port number" if "src" points
+                // to a colon character, or parse a subnet if it's pointing to a slash character.
+                if (octets != 4) {
+                    return invalid_octet;
+                }
                 return invalid_character;
             }
         }
-        if (octets < 4) {
+        if (octets != 4) {
             return too_little_octets;
         }
         return valid;
@@ -287,10 +296,11 @@ namespace webpp {
                         break;
                     }
                     case inet_pton4_status::bad_ending:
+                    case inet_pton4_status::invalid_octet:
                     case inet_pton4_status::too_little_octets:
+                    case inet_pton4_status::invalid_leading_zero:
                     case inet_pton4_status::too_many_octets: return bad_ending;
                     case inet_pton4_status::invalid_octet_range: return invalid_octet_range;
-                    case inet_pton4_status::invalid_leading_zero:
                     case inet_pton4_status::invalid_character: return invalid_character;
                     case inet_pton4_status::invalid_prefix: return invalid_prefix;
                 }
