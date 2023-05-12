@@ -201,7 +201,8 @@ namespace webpp {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
-            return operator==(ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))));
+            // only compare the octets and not the prefix
+            return ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))).data == data;
         }
 
         [[nodiscard]] constexpr bool operator==(ipv6 ip) const noexcept {

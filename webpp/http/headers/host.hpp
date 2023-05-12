@@ -96,10 +96,10 @@ namespace webpp::http {
                 auto ip = hostname;
                 ip.remove_prefix(1);
                 if (const auto ip_end = stl::find(ip.rbegin(), ip.rend(), ']'); ip_end != ip.rend()) {
-                    auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - ip.data());
-                    ip.remove_suffix(bracket_pos);
+                    ip.remove_suffix(static_cast<stl::size_t>(ip_end - ip.rbegin()) + 1);
                     endpoint.emplace<struct ipv6>(ip); // parse and set ipv6
-                    parse_port(hostname.data() + bracket_pos, hostname.data() + hostname.size());
+                    auto const bracket_pos = static_cast<stl::size_t>(ip_end.operator->() - hostname.data());
+                    parse_port(hostname.data() + bracket_pos + 1, hostname.data() + hostname.size());
                     return;
                 } else {
                     status_code = host_status::invalid_ipv6;

@@ -38,7 +38,7 @@ TEST(HdrHostAuthorityTest, ParseIpv6Host) {
     EXPECT_FALSE(host.is_domain());
     EXPECT_TRUE(host.has_port());
     EXPECT_EQ(host.port(), 80);
-    EXPECT_EQ(host.ipv6(), "2001:0db8:85a3:0000:0000:8a2e:0370:7334");
+    EXPECT_EQ(host.ipv6(), "2001:0db8:85a3:0000:0000:8a2e:0370:7334") << host.ipv6().string();
 }
 
 TEST(HdrHostAuthorityTest, ParseDomainHostWithoutPort) {
