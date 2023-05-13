@@ -3,8 +3,6 @@
 
 #include "common_pch.hpp"
 
-#include <gtest/gtest.h>
-
 
 
 using namespace webpp;
