@@ -3,9 +3,10 @@
 
 #include "common_pch.hpp"
 
+#include <cstring>
 using namespace webpp;
 
-std::array<std::string_view, 90> valid_domains = {
+static constexpr auto valid_domains = stl::array{
   "example.com",
   "google.com",
   "github.com",
@@ -98,47 +99,47 @@ std::array<std::string_view, 90> valid_domains = {
   "example.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z",
 };
 
-std::array<std::string_view, 48> invalid_domains = {
-  "-example.com",    "example-.com",
-  "example.com-",    "example..com",
-  "example.com.",    "example_.com",
-  "example.com_",    "example_com",
-  "example..com",    "example#com",
-  "example&com",     "example!com",
-  "example+com",     "example=com",
-  "example~com",     "example(com",
-  "example)com",     "example{com",
-  "example}com",     "example[com",
-  "example]com",     "example<com",
-  "example>com",     "example\"com",
-  "example'com",     "example\\com",
-  "example|com",     "example/abc.com",
-  "example@com",     "example.com:80",
-  "example.com:xyz", "example.com:",
-  "example..com",    "example.com..",
-  "example..com..",  "example.com-abc",
-  "example.1234",    "example.-com",
-  "example-.com",    "example-.com.",
-  "example-.com-",   "example.coma",
-  "example.com.",    "example.com..",
-  "example..com",    "example.com...",
-  "example.com1",    "example.com123456789012345678901234567890123456789012345678901234567890"};
+static constexpr auto invalid_domains =
+  stl::array{"-example.com",    "example-.com",
+             "example.com-",    "example..com",
+             "example.com.",    "example_.com",
+             "example.com_",    "example_com",
+             "example..com",    "example#com",
+             "example&com",     "example!com",
+             "example+com",     "example=com",
+             "example~com",     "example(com",
+             "example)com",     "example{com",
+             "example}com",     "example[com",
+             "example]com",     "example<com",
+             "example>com",     "example\"com",
+             "example'com",     "example\\com",
+             "example|com",     "example/abc.com",
+             "example@com",     "example.com:80",
+             "example.com:xyz", "example.com:",
+             "example..com",    "example.com..",
+             "example..com..",  "example.com-abc",
+             "example.1234",    "example.-com",
+             "example-.com",    "example-.com.",
+             "example-.com-",   "example.coma",
+             "example.com.",    "example.com..",
+             "example..com",    "example.com...",
+             "example.com1",    "example.com123456789012345678901234567890123456789012345678901234567890"};
 
 
 
 TEST(DomainsTest, Validity) {
     for (auto domain_str : valid_domains) {
-        auto ptr    = domain_str.data();
-        auto status = parse_domain_name(ptr, ptr + domain_str.size());
-        EXPECT_EQ(status, domain_name_status::valid) << domain_str;
+        auto ptr    = domain_str;
+        auto status = parse_domain_name(ptr, ptr + std::strlen(ptr));
+        EXPECT_EQ(status, domain_name_status::valid) << domain_str << "\n" << to_string(status);
     }
 }
 
 
 TEST(DomainsTest, InValidity) {
     for (auto domain_str : invalid_domains) {
-        auto ptr    = domain_str.data();
-        auto status = parse_domain_name(ptr, ptr + domain_str.size());
-        EXPECT_NE(status, domain_name_status::valid) << domain_str;
+        auto ptr    = domain_str;
+        auto status = parse_domain_name(ptr, ptr + std::strlen(ptr));
+        EXPECT_NE(status, domain_name_status::valid) << domain_str << "\n" << to_string(status);
     }
 }

@@ -23,6 +23,27 @@ namespace webpp {
         long_subdomain,    // there's a subdomain which is longer than 63 characters
     };
 
+    /**
+     * Get the error message as a string view
+     */
+    static constexpr stl::string_view to_string(domain_name_status status) noexcept {
+        switch (status) {
+            using enum domain_name_status;
+            case valid: return "Valid ascii domain name";
+            case valid_punycode: return "Valid unicode domain name which contains punycode";
+            case invalid_character: return "Found an invalid character in the domain name";
+            case too_long: return "The domain is too long, max allowed character is 255";
+            case dot_at_end:
+                return "The domain ended unexpectedly; domains cannot have a dot at the end (this is not a dns record)";
+            case begin_with_hyphen: return "The domain cannot start with hyphens";
+            case end_with_hyphen: return "The domain cannot end with hyphens";
+            case double_hyphen: return "The domain cannot have double hyphens unless it's a punycode";
+            case empty_subdomain: return "A domain/sub-domain cannot be empty (no double dotting)";
+            case long_subdomain: return "There's a subdomain which is longer than 63 characters";
+        }
+        return ""; // just to get rid of static analyzers' warning
+    }
+
     namespace details {
         static constexpr auto domain_name_threshold = 255;
     }
