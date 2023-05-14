@@ -11,16 +11,17 @@
 namespace webpp {
 
     enum struct domain_name_status {
-        valid,             // valid ascii domain name
-        valid_punycode,    // valid domain name which is a punycode
-        invalid_character, // found an invalid character
-        too_long,          // the domain is too long
-        dot_at_end,        // the domain ended unexpectedly
-        begin_with_hyphen, // the domain cannot start with hyphens
-        end_with_hyphen,   // the domain cannot end with hyphens
-        double_hyphen,     // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain,   // a domain/sub-domain cannot be empty (no double dotting)
-        long_subdomain,    // there's a subdomain which is longer than 63 characters
+        valid,              // valid ascii domain name
+        valid_punycode,     // valid domain name which is a punycode
+        invalid_character,  // found an invalid character
+        too_long,           // the domain is too long
+        subdomain_too_long, // the subdomain is too long
+        dot_at_end,         // the domain ended unexpectedly
+        begin_with_hyphen,  // the domain cannot start with hyphens
+        end_with_hyphen,    // the domain cannot end with hyphens
+        double_hyphen,      // the domain cannot have double hyphens unless it's a punycode
+        empty_subdomain,    // a domain/sub-domain cannot be empty (no double dotting)
+        long_subdomain,     // there's a subdomain which is longer than 63 characters
     };
 
     /**
@@ -33,6 +34,8 @@ namespace webpp {
             case valid_punycode: return "Valid unicode domain name which contains punycode";
             case invalid_character: return "Found an invalid character in the domain name";
             case too_long: return "The domain is too long, max allowed character is 255";
+            case subdomain_too_long:
+                return "The subdomain is too long, max allowed character in a sub-domain is 63";
             case dot_at_end:
                 return "The domain ended unexpectedly; domains cannot have a dot at the end (this is not a dns record)";
             case begin_with_hyphen: return "The domain cannot start with hyphens";
@@ -46,7 +49,8 @@ namespace webpp {
 
     namespace details {
         static constexpr auto domain_name_threshold = 255;
-    }
+        static constexpr auto subdomain_threshold   = 63;
+    } // namespace details
 
 
     constexpr domain_name_status parse_domain_name(const char*& pos, const char* end) noexcept {
@@ -63,7 +67,16 @@ namespace webpp {
             return begin_with_hyphen;
         }
 
+        bool has_punycode    = false;
+        auto subdomain_start = pos;
         while (pos != end) {
+
+            if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
+                has_punycode = true;
+                pos          = charset{ALPHA_DIGIT<char>, charset{'-'}}.contains_until(pos, end);
+                continue;
+            }
+
             const char ch = *pos++;
 
             switch (ch) {
@@ -74,21 +87,31 @@ namespace webpp {
                         return empty_subdomain;
                     } else if (*pos == '-') {
                         return begin_with_hyphen;
+                    } else if (pos - subdomain_start > details::subdomain_threshold) {
+                        return subdomain_too_long;
                     }
-                    break;
+                    subdomain_start = pos;
+                    continue;
                 case '-':
                     if (pos == end || *pos == '.') {
                         return end_with_hyphen;
-                    } else if (*pos == '-') { // todo
+                    } else if (*pos == '-') {
                         return double_hyphen;
                     }
                     break;
+                default: {
+                    if (!ALPHA_DIGIT<char>.contains(ch)) {
+                        return invalid_character;
+                    }
+                }
             }
-
             pos = ALPHA_DIGIT<char>.contains_until(pos, end);
         }
-
-        return valid;
+        // checking if the TLD is of valid length
+        if (end - subdomain_start > details::subdomain_threshold) {
+            return subdomain_too_long;
+        }
+        return has_punycode ? valid_punycode : valid;
     }
 
 
