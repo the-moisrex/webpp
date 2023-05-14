@@ -5,6 +5,7 @@
 #include "../../ip/ipv4.hpp"
 #include "../../ip/ipv6.hpp"
 #include "../../std/utility.hpp" // to_underlying
+#include "../../uri/domain.hpp"
 #include "../syntax/tokens.hpp"
 
 #include <compare>
@@ -23,11 +24,6 @@ namespace webpp::http {
     };
 
 
-
-    template <typename StrT = stl::string_view>
-    struct basic_domain : StrT {
-        using StrT::StrT;
-    };
 
     /**
      * HTTP Host Header Field
@@ -71,7 +67,7 @@ namespace webpp::http {
      */
     struct host_authority {
 
-        using domain_type = basic_domain<stl::string_view>;
+        using domain_type = domain_name;
 
         static constexpr stl::uint16_t max_port_number    = 65535u;
         static constexpr stl::uint16_t default_http_port  = 80u;
@@ -254,29 +250,19 @@ namespace webpp::http {
             return default_ip;
         }
 
-        template <typename StrT = stl::string_view>
-        [[nodiscard]] constexpr basic_domain<StrT> domain() const noexcept {
-            if constexpr (stl::convertible_to<basic_domain<StrT>, domain_type>) {
-                if (auto domain_ptr = get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
-                    return *domain_ptr;
-                }
-                return {}; // empty domain
-            } else {
-                // todo
+        [[nodiscard]] constexpr domain_type domain() const noexcept {
+            if (auto domain_ptr = get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
+                return *domain_ptr;
             }
+            return {}; // empty domain
         }
 
 
-        template <typename StrT = stl::string_view>
-        [[nodiscard]] constexpr basic_domain<StrT> domain_or(StrT&& default_domain) const noexcept {
-            if constexpr (stl::convertible_to<basic_domain<StrT>, domain_type>) {
-                if (auto domain_ptr = stl::get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
-                    return *domain_ptr;
-                }
-                return {stl::forward<StrT>(default_domain)};
-            } else {
-                // todo
+        [[nodiscard]] constexpr domain_type domain_or(domain_type default_domain) const noexcept {
+            if (auto domain_ptr = stl::get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
+                return *domain_ptr;
             }
+            return {default_domain};
         }
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::uint16_t rhs_port) const noexcept {
@@ -330,16 +316,30 @@ namespace webpp::http {
         }
 
         constexpr void parse_domain(char const* host_ptr, char const* host_end) noexcept {
-            if (auto port_ptr = host_charset.contains_until(host_ptr, host_end); port_ptr == host_end) {
-                // no port, it's valid
-                endpoint    = domain_type{host_ptr, host_end};
-                status_code = host_status::valid;
-            } else if (*port_ptr == ':') {
-                endpoint = domain_type{host_ptr, port_ptr};
-                // it's a valid domain + (valid/invalid) port
-                parse_port(port_ptr, host_end);
-            } else {
-                status_code = host_status::invalid_host;
+            auto       domain_ptr = host_ptr;
+            auto const status     = parse_domain_name(domain_ptr, host_end);
+            switch (status) {
+                using enum domain_name_status;
+                case valid:
+                case valid_punycode: {
+                    // no port, it's valid
+                    endpoint    = domain_type{host_ptr, host_end};
+                    status_code = host_status::valid;
+                    break;
+                }
+                case invalid_character: {
+                    if (*domain_ptr == ':') {
+                        endpoint = domain_type{host_ptr, domain_ptr};
+                        // it's a valid domain + (valid/invalid) port
+                        parse_port(domain_ptr, host_end);
+                    } else {
+                        status_code = host_status::invalid_host;
+                    }
+                    break;
+                }
+                default: {
+                    status_code = host_status::invalid_host;
+                }
             }
         }
 

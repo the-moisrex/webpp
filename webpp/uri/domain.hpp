@@ -108,6 +108,7 @@ namespace webpp {
                     break;
                 default: {
                     if (!ALPHA_DIGIT<char>.contains(ch)) {
+                        --pos; // make sure the invalid character is selected
                         return invalid_character;
                     }
                 }
@@ -128,9 +129,7 @@ namespace webpp {
      * Domain Name
      */
     struct domain_name : stl::string_view {
-        constexpr domain_name(const char* start, const char* end) noexcept {
-            parse_domain_name(start, end);
-        }
+        using stl::string_view::basic_string_view;
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return !empty();
