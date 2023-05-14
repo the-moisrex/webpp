@@ -53,6 +53,13 @@ namespace webpp {
     } // namespace details
 
 
+    /**
+     * Parse a domain name
+     *
+     * @param pos begin
+     * @param end end
+     * @return status of the parsing
+     */
     constexpr domain_name_status parse_domain_name(const char*& pos, const char* end) noexcept {
         using enum domain_name_status;
         if (pos == end) {
@@ -117,6 +124,9 @@ namespace webpp {
 
 
 
+    /**
+     * Domain Name
+     */
     struct domain_name : stl::string_view {
         constexpr domain_name(const char* start, const char* end) noexcept {
             parse_domain_name(start, end);

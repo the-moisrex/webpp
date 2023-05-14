@@ -94,22 +94,73 @@ static constexpr auto valid_domains =
              "example.coma",
              "example.travel",
              "example.1234",
-             "example.xxx"
+             "example.xxx",
+             "14159265358979323846264338327950288419716939937510582097494459.com",
              "example.abcdefghijklmnopqrstuvwxyz0123456789",
              "example.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z",
              "example.com1",
              "example.com123456789012345678901234567890123456789012345678901234567890"};
 
 static constexpr auto invalid_domains = stl::array{
-  "-example.com",  "example-.com",     "example.com-",    "example..com", "example.com.",
-  "example_.com",  "example.com_",     "example_com",     "example..com", "example#com",
-  "example&com",   "example!com",      "example+com",     "example=com",  "example~com",
-  "example(com",   "example)com",      "example{com",     "example}com",  "example[com",
-  "example]com",   "example<com",      "example>com",     "example\"com", "example'com",
-  "example\\com",  "example|com",      "example/abc.com", "example@com",  "example.com:80",
-  "example.com.",  "example.com:8080", "example.com:xyz", "example.com:", "example..com",
-  "example.com..", "example..com..",   "example.-com",    "example-.com", "example-.com.",
-  "example-.com-", "example.com.",     "example.com..",   "example..com", "example.com...",
+  "-example.com",
+  "example-.com",
+  "example.com-",
+  "example..com",
+  "example.com.",
+  "example_.com",
+  "example.com_",
+  "example_com",
+  "example..com",
+  "example#com",
+  "example&com",
+  "example!com",
+  "example+com",
+  "example=com",
+  "example~com",
+  "example(com",
+  "example)com",
+  "example{com",
+  "example}com",
+  "example[com",
+  "example]com",
+  "example<com",
+  "example>com",
+  "example\"com",
+  "example'com",
+  "example\\com",
+  "example|com",
+  "example/abc.com",
+  "example@com",
+  "example.com:80",
+  "example.com.",
+  "example.com:8080",
+  "example.com:xyz",
+  "example.com:",
+  "example..com",
+  "example.com..",
+  "example..com..",
+  "example.-com",
+  "example-.com",
+  "example-.com.",
+  "example-.com-",
+  "example.com.",
+  "example.com..",
+  "example..com",
+  "example.com...",
+  "0123456789"      // 10
+  "0123456789"      // 20
+  "0123456789"      // 30
+  "0123456789"      // 40
+  "0123456789"      // 50
+  "0123456789"      // 60
+  "0123456789.com", // 70 (only 63 chars are allowed in one subdomain)
+  "dev.0123456789"  // 10
+  "0123456789"      // 20
+  "0123456789"      // 30
+  "0123456789"      // 40
+  "0123456789"      // 50
+  "0123456789"      // 60
+  "0123456789"      // 70 (only 63 chars are allowed in one subdomain)
 };
 
 std::array<std::pair<std::string_view, std::string_view>, 60> puny_domains = {
