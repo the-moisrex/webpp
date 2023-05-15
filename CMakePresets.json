@@ -86,11 +86,13 @@
                 "test-convert",
                 "test-cookies",
                 "test-crypto",
+                "test-domain",
                 "test-dynamic-router",
                 "test-extensions",
                 "test-find-str",
                 "test-functional",
                 "test-header-accept-encoding",
+                "test-header-host-authority",
                 "test-http-parser",
                 "test-ipv4",
                 "test-ipv6",
@@ -106,6 +108,7 @@
                 "test-server",
                 "test-sql",
                 "test-string",
+                "test-tokenizer",
                 "test-traits",
                 "test-tuple",
                 "test-type-traits",
@@ -167,6 +170,11 @@
             "inherits": "default-build"
         },
         {
+            "name": "test-domain",
+            "targets": "test-domain",
+            "inherits": "default-build"
+        },
+        {
             "name": "test-dynamic-router",
             "targets": "test-dynamic-router",
             "inherits": "default-build"
@@ -189,6 +197,11 @@
         {
             "name": "test-header-accept-encoding",
             "targets": "test-header-accept-encoding",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-header-host-authority",
+            "targets": "test-header-host-authority",
             "inherits": "default-build"
         },
         {
@@ -264,6 +277,11 @@
         {
             "name": "test-string",
             "targets": "test-string",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-tokenizer",
+            "targets": "test-tokenizer",
             "inherits": "default-build"
         },
         {
@@ -418,6 +436,10 @@
             "inherits": "test-default"
         },
         {
+            "name": "test-domain",
+            "inherits": "test-default"
+        },
+        {
             "name": "test-dynamic-router",
             "inherits": "test-default"
         },
@@ -435,6 +457,10 @@
         },
         {
             "name": "test-header-accept-encoding",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-header-host-authority",
             "inherits": "test-default"
         },
         {
@@ -495,6 +521,10 @@
         },
         {
             "name": "test-string",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-tokenizer",
             "inherits": "test-default"
         },
         {
