@@ -4,7 +4,6 @@
 #include "../../convert/casts.hpp"
 #include "../../ip/ipv4.hpp"
 #include "../../ip/ipv6.hpp"
-#include "../../std/utility.hpp" // to_underlying
 #include "../../uri/domain.hpp"
 #include "../syntax/tokens.hpp"
 

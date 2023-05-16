@@ -292,7 +292,10 @@ namespace webpp::http {
                 // case 451:
                 //   return "Redirect";
 
-            default: return "";
+            default:
+                // Some Microsoft clients behave badly if the reason string is left empty.
+                // Thus, return a non-empty string here.
+                return "-";
         }
     }
 

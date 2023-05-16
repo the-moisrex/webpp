@@ -163,6 +163,7 @@ static constexpr auto invalid_domains = stl::array{
   "0123456789"      // 70 (only 63 chars are allowed in one subdomain)
 };
 
+// fixme: since these are AI generated, they have the wrong values.
 std::array<std::pair<std::string_view, std::string_view>, 60> puny_domains = {
   {{"xn--4gbrim.xn----rmckbbajlc6dj7bxne2c.xn--wgbh1c", "موقع.وزارة-الأتصالات.مصر"},
    {"xn--80ahbprimd0a.xn--p1ai", "мдпанитпд.рф"},
