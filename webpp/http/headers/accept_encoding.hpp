@@ -3,7 +3,7 @@
 #ifndef WEBPP_ACCEPT_ENCODING_HPP
 #define WEBPP_ACCEPT_ENCODING_HPP
 
-#include "../../http/syntax/common.hpp"
+#include "../../http/codec/common.hpp"
 #include "../../std/string_view.hpp"
 #include "../../std/vector.hpp"
 #include "../../strings/iequals.hpp"

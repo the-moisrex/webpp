@@ -1,6 +1,6 @@
 // Created by moisrex on 9/24/20.
-#include "../webpp/http/syntax/http_lexer.hpp"
-#include "../webpp/http/syntax/request_parser.hpp"
+#include "../webpp/http/codec/http_lexer.hpp"
+#include "../webpp/http/codec/request_parser.hpp"
 #include "common_pch.hpp"
 
 

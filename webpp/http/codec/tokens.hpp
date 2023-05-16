@@ -1,5 +1,5 @@
-#ifndef WEBPP_HTTP_SYNTAX_TOKENS_HPP
-#define WEBPP_HTTP_SYNTAX_TOKENS_HPP
+#ifndef WEBPP_HTTP_CODEC_TOKENS_HPP
+#define WEBPP_HTTP_CODEC_TOKENS_HPP
 
 #include "../../strings/charset.hpp"
 

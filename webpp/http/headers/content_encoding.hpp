@@ -7,7 +7,7 @@
 #include "../../std/string.hpp"
 #include "../../strings/string_tokenizer.hpp"
 #include "../../strings/trim.hpp"
-#include "../syntax/common.hpp"
+#include "../codec/common.hpp"
 
 namespace webpp::http {
 

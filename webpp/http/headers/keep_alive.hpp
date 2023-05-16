@@ -3,7 +3,7 @@
 #ifndef WEBPP_KEEP_ALIVE_HPP
 #define WEBPP_KEEP_ALIVE_HPP
 
-#include "../../http/syntax/common.hpp"
+#include "../../http/codec/common.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/string_tokenizer.hpp"
 

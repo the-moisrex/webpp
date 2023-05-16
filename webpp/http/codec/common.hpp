@@ -1,7 +1,7 @@
 // Created by moisrex on 10/8/20.
 
-#ifndef WEBPP_COMMON_HPP
-#define WEBPP_COMMON_HPP
+#ifndef WEBPP_CODEC_COMMON_HPP
+#define WEBPP_CODEC_COMMON_HPP
 
 #include "../../strings/trim.hpp"
 
@@ -100,4 +100,4 @@ namespace webpp::http {
     }
 } // namespace webpp::http
 
-#endif // WEBPP_COMMON_HPP
+#endif // WEBPP_CODEC_COMMON_HPP

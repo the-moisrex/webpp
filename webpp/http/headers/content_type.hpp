@@ -1,7 +1,7 @@
 #ifndef WEBPP_CONTENT_TYPE_HPP
 #define WEBPP_CONTENT_TYPE_HPP
 
-#include "../../http/syntax/common.hpp"
+#include "../../http/codec/common.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/string_tokenizer.hpp"
 

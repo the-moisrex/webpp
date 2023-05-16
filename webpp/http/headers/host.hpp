@@ -5,7 +5,7 @@
 #include "../../ip/ipv4.hpp"
 #include "../../ip/ipv6.hpp"
 #include "../../uri/domain.hpp"
-#include "../syntax/tokens.hpp"
+#include "../codec/tokens.hpp"
 
 #include <compare>
 #include <cstdint>
