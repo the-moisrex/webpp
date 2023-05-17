@@ -379,9 +379,53 @@ namespace webpp {
         }
 
         /**
-         * @brief checks if the ip is in private range or not regardless of the
-         * prefix
-         * @return
+         * Is Loopback
+         */
+        [[nodiscard]] constexpr bool is_loopback() const noexcept {
+            return is_in_subnet({127, 0, 0, 0, 8});
+        }
+
+
+        /**
+         * Is Link Local
+         */
+        [[nodiscard]] constexpr bool is_link_local() const noexcept {
+            return is_in_subnet({169, 254, 0, 0, 16});
+        }
+
+        /**
+         * Returns true if the IP address is qualifies as broadcast
+         */
+        [[nodiscard]] constexpr bool is_broadcast() const noexcept {
+            return 0xFFFFFFFFu == integer();
+        }
+
+        /**
+         * Return true if the IP address is a special purpose address, as defined per
+         * RFC 6890 (i.e. 0.0.0.0 or 255.255.255.255).
+         */
+        [[nodiscard]] constexpr bool is_nonroutable() const noexcept {
+            auto const ip = integer();
+            return is_private() ||
+                ( /* --- align --- */ ip <= 0x00FFFFFFu) || // 0.0.0.0      - 0.255.255.255
+                (ip >= 0xC0000000u && ip <= 0xC00000FFu) || // 192.0.0.0    - 192.0.0.255
+                (ip >= 0xC0000200u && ip <= 0xC00002FFu) || // 192.0.2.0    - 192.0.2.255
+                (ip >= 0xC6120000u && ip <= 0xC613FFFFu) || // 198.18.0.0   - 198.19.255.255
+                (ip >= 0xC6336400u && ip <= 0xC63364FFu) || // 198.51.100.0 - 198.51.100.255
+                (ip >= 0xCB007100u && ip <= 0xCB0071FFu) || // 203.0.113.0  - 203.0.113.255
+                (ip >= 0xE0000000u && ip <= 0xFFFFFFFFu);   // 224.0.0.0    - 255.255.255.255
+        }
+
+
+        /**
+         * Return true if the IP address is a multicast address
+         */
+        [[nodiscard]] constexpr bool is_multicast() const noexcept {
+              return (integer() & 0xf0000000u) == 0xe0000000u;
+        }
+
+        /**
+         * @brief checks if the ip is in private range or not regardless of the prefix
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
             constexpr ipv4 class_C(ipv4_octets{192, 168, 0, 0}, 16);
