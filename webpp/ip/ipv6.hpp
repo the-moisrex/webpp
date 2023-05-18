@@ -3,7 +3,6 @@
 
 #include "../strings/append.hpp"
 #include "../strings/to_case.hpp"
-#include "../validators/validators.hpp"
 #include "inet_ntop.hpp"
 #include "inet_pton.hpp"
 #include "ipv4.hpp"
@@ -72,6 +71,8 @@ namespace webpp {
          * @tparam OCTET
          * @param _octets
          * @return octets8_t so I could put it in the "data"
+         *
+         * todo: optimize this
          */
         template <typename OCTET>
         [[nodiscard]] static constexpr octets_t to_octets_t(OCTET const& _octets) noexcept {
@@ -109,7 +110,6 @@ namespace webpp {
         }
 
       public:
-
         static constexpr ipv6 invalid() noexcept {
             return {prefix_status(inet_pton6_status::invalid_prefix)};
         }
@@ -140,31 +140,31 @@ namespace webpp {
             }
         }
 
-        constexpr explicit ipv6(octets8_t const& _octets,
-                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : data(_octets) {
+        constexpr ipv6(octets8_t const& _octets,
+                       stl::uint8_t     prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data{_octets} {
             prefix(prefix_value);
         }
-        constexpr explicit ipv6(octets16_t const& _octets,
-                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr ipv6(octets16_t const& _octets,
+                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
-        constexpr explicit ipv6(octets32_t const& _octets,
-                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr ipv6(octets32_t const& _octets,
+                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
-        constexpr explicit ipv6(octets64_t const& _octets,
-                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr ipv6(octets64_t const& _octets,
+                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
 
-        constexpr explicit ipv6(stl::uint8_t prefix_value) noexcept {
+        constexpr ipv6(stl::uint8_t prefix_value) noexcept {
             prefix(prefix_value);
         }
 
@@ -279,7 +279,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto         const         _octets = octets8();
+            auto const            _octets = octets8();
             octets16_t            ndata   = {};
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint16_t;
@@ -300,7 +300,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto          const        _octets = octets8();
+            auto const            _octets = octets8();
             octets32_t            ndata   = {};
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint32_t;
@@ -323,7 +323,7 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto         const         _octets = octets8();
+            auto const            _octets = octets8();
             octets64_t            ndata   = {};
             constexpr stl::size_t len     = ndata.size();
             using t                       = uint64_t;
@@ -346,13 +346,21 @@ namespace webpp {
          */
         [[nodiscard]] constexpr stl::uint8_t scope() const noexcept {
             if (is_multicast()) {
-                return octets8()[1] & 0xfu;
+                return multicast_scope();
             } else if (is_link_local()) {
                 return static_cast<stl::uint8_t>(scope::link_local);
             } else if (is_loopback()) {
                 return static_cast<stl::uint8_t>(scope::node_local);
             }
             return static_cast<stl::uint8_t>(scope::global);
+        }
+
+        /**
+         * Return the scope for a multicast address.
+         * This method may only be called on multicast addresses.
+         */
+        [[nodiscard]] constexpr stl::uint8_t multicast_scope() const noexcept {
+            return octets8()[1] & 0xfu;
         }
 
 
@@ -362,39 +370,30 @@ namespace webpp {
          * @param [in] num_bits number of bits to mask
          * @return ipv6 instance with bits set to 0
          */
-        constexpr ipv6 mask(stl::size_t num_bits) const noexcept {
-            if (numBits > 128u) {
-                return invalid();
-            }
-            if (numBits == 0) {
-                return {};
-            }
-            constexpr auto _0s = uint64_t(0);
-            constexpr auto _1s = ~_0s;
-            auto const fragment = Endian::big(_1s << ((128 - num_bits) % 64));
-            auto const hi = num_bits <= 64 ? fragment : _1s;
-            auto const lo = num_bits <= 64 ? _0s : fragment;
-            uint64_t const parts[] = {hi, lo};
-            octets8_t arr;
-            std::memcpy(arr.data(), parts, sizeof(parts));
+        [[nodiscard]] constexpr ipv6 mask(stl::size_t num_bits) const noexcept {
+            num_bits                = stl::min<stl::size_t>(num_bits, 128u);
+            constexpr auto _0s      = uint64_t(0);
+            constexpr auto _1s      = ~_0s;
+            auto const     fragment = _1s << ((128u - num_bits) % 64u);
+            auto const     hi       = num_bits <= 64 ? fragment : _1s;
+            auto const     lo       = num_bits <= 64 ? _0s : fragment;
 
-            octets8_t const ba{
-                arr[0] & data[0],
-                arr[1] & data[1],
-                arr[2] & data[2],
-                arr[3] & data[3],
-                arr[4] & data[4],
-                arr[5] & data[5],
-                arr[6] & data[6],
-                arr[8] & data[8],
-                arr[9] & data[9],
-                arr[10] & data[10],
-                arr[11] & data[11],
-                arr[12] & data[12],
-                arr[13] & data[13],
-                arr[14] & data[14],
-                arr[15] & data[15]
-            };
+            octets8_t const ba{static_cast<stl::uint8_t>(hi >> 7u & data[0]),
+                               static_cast<stl::uint8_t>(hi >> 6u & data[1]),
+                               static_cast<stl::uint8_t>(hi >> 5u & data[2]),
+                               static_cast<stl::uint8_t>(hi >> 4u & data[3]),
+                               static_cast<stl::uint8_t>(hi >> 3u & data[4]),
+                               static_cast<stl::uint8_t>(hi >> 2u & data[5]),
+                               static_cast<stl::uint8_t>(hi >> 1u & data[6]),
+                               static_cast<stl::uint8_t>(hi >> 0u & data[7]),
+                               static_cast<stl::uint8_t>(lo >> 7u & data[8]),
+                               static_cast<stl::uint8_t>(lo >> 6u & data[9]),
+                               static_cast<stl::uint8_t>(lo >> 5u & data[10]),
+                               static_cast<stl::uint8_t>(lo >> 4u & data[11]),
+                               static_cast<stl::uint8_t>(lo >> 3u & data[12]),
+                               static_cast<stl::uint8_t>(lo >> 2u & data[13]),
+                               static_cast<stl::uint8_t>(lo >> 1u & data[14]),
+                               static_cast<stl::uint8_t>(lo >> 0u & data[15])};
             return {ba};
         }
 
@@ -634,7 +633,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_routing_locator() const noexcept {
             constexpr auto aloc_16_mask             = 0xFCu; // The mask for Aloc16
             constexpr auto rloc16_reserved_bit_mask = 0x02u; // The mask for the reserved bit of Rloc16
-            auto     const      _octets                  = octets();
+            auto const     _octets                  = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
             // --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
@@ -651,7 +650,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_anycast_routing_locator() const noexcept {
             constexpr auto aloc_16_mask = 0xFC; // The mask for Aloc16
-            auto     const      _octets      = octets();
+            auto const     _octets      = octets();
 
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 FC XX
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -670,7 +669,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
             constexpr auto aloc8_service_end   = 0x2f;
-            auto    const       _octets             = octets();
+            auto const     _octets             = octets();
             return is_anycast_routing_locator() && (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
                    (_octets[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
                    (_octets[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
@@ -743,8 +742,8 @@ namespace webpp {
          * @param piid A reference to the Interface Identifier.
          */
         constexpr void iid(const stl::uint8_t* piid) noexcept {
-            auto _end = piid + interface_identifier_size;
-            auto _iid = iid();
+            auto const _end = piid + interface_identifier_size;
+            auto       _iid = iid();
             for (auto it = piid; it != _end; it++) {
                 *_iid++ = *it;
             }
@@ -755,9 +754,9 @@ namespace webpp {
          * @param A reference to the Interface Identifier.
          */
         constexpr void iid(const octets8_t::const_iterator& piid) noexcept {
-            auto _iid = iid();
-            auto _end = _iid + interface_identifier_size;
-            auto pit  = piid;
+            auto       _iid = iid();
+            auto const _end = _iid + interface_identifier_size;
+            auto       pit  = piid;
             for (auto it = _iid; it != _end; it++) {
                 *it = *pit++;
             }
@@ -814,15 +813,85 @@ namespace webpp {
         }
 
         /**
+         * Get the ipv4 part of the ipv6 if it's v4-mapped.
+         */
+        [[nodiscard]] constexpr ipv4 mapped_v4() const noexcept {
+            if (!is_valid() || !is_v4_mapped()) {
+                return {};
+            }
+            return {data[12], data[13], data[14], data[15]};
+        }
+
+        /**
          * Return true if the IP address is private, as per RFC 1918 and RFC 4193.
          * For example, 192.168.xxx.xxx or fc00::/7 addresses.
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
-            if (is_v4_mapped() && createIPv4().isPrivate()) {
+            const ipv4 v4 = mapped_v4();
+            // we check is_zero instead of is_v4_mapped because mapped_v4 already checks that.
+            if (!v4.is_zero() && v4.is_private()) {
                 return true;
             }
-            return is_loopback() || inBinarySubnet({{0xfc, 0x00}}, 7);
+            return is_loopback() || starts_with(stl::array<stl::uint8_t, 2>{0xfcu, 0x00u}, 7);
         }
+
+        /**
+         * Check if the IP is all zero
+         */
+        [[nodiscard]] constexpr bool is_zero() const noexcept {
+            auto const _octets = octets8();
+            return stl::all_of(_octets.begin(),
+                               _octets.end(),
+                               [](stl::uint8_t item) constexpr noexcept -> bool {
+                                   return item == 0;
+                               });
+        }
+
+        /**
+         * Check if Link Local Broadcast (ff02::1)
+         */
+        [[nodiscard]] constexpr bool is_broadcast() const noexcept {
+            return octets64_t{0xff02'0000'0000'0000ull, 0x1ull} == octets64();
+        }
+
+
+        /**
+         * Is Routable
+         */
+        [[nodiscard]] constexpr bool is_routable() const noexcept {
+            return
+              // 2000::/3 is the only assigned global unicast block
+              starts_with(stl::array<stl::uint8_t, 2>{0x20u, 0x00u}, 3u) ||
+              // ffxe::/16 are global scope multicast addresses,
+              // which are eligible to be routed over the internet
+              (is_multicast() && multicast_scope() == 0xeu);
+        }
+
+        /**
+         * Return true if the IP address is a special purpose address, as defined per RFC 6890.
+         */
+        [[nodiscard]] constexpr bool is_nonroutable() const noexcept {
+            return !is_routable();
+        }
+
+        /**
+         * Check if the specified ipv6 binary starts with the specified inp_octets up to inp_prefix bits.
+         */
+        template <stl::size_t N>
+            requires(N <= 16u)
+        [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> inp_octets,
+                                                 stl::size_t                 inp_prefix) const noexcept {
+            const auto masked = mask(inp_prefix);
+            return stl::equal(inp_octets.data(), inp_octets.data() + N, masked.octets8().data());
+        }
+
+
+        [[nodiscard]] constexpr bool starts_with(ipv6 const& ip, stl::size_t inp_prefix) const noexcept {
+            const auto masked    = mask(inp_prefix).octets8();
+            const auto ip_octets = ip.mask(inp_prefix).octets8();
+            return stl::equal(ip_octets.begin(), ip_octets.end(), masked.begin());
+        }
+
 
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT expanded_string(Args&&... str_args) const noexcept {
@@ -837,7 +906,7 @@ namespace webpp {
         constexpr void expanded_string_to(istl::String auto& output) const noexcept {
             using char_type                   = istl::char_type_of_t<decltype(output)>;
             stl::array<char_type, 40> buffer  = {};
-            auto      const                _octets = octets16();
+            auto const                _octets = octets16();
 
             auto it = fmt::format_to(buffer.data(),
                                      "{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}",

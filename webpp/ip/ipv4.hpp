@@ -153,7 +153,7 @@ namespace webpp {
                             : prefix_val;
             }
         }
-
+        // NOLINTBEGIN(bugprone-easily-swappable-parameters)
         constexpr ipv4(ipv4_octet octet1,
                        ipv4_octet octet2,
                        ipv4_octet octet3,
@@ -164,23 +164,23 @@ namespace webpp {
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix_val) {}
 
-        constexpr ipv4(ipv4_octet              octet1,
-                       ipv4_octet              octet2,
-                       ipv4_octet              octet3,
-                       ipv4_octet              octet4,
-                       stl::string_view const& subnet) noexcept
+        constexpr ipv4(ipv4_octet       octet1,
+                       ipv4_octet       octet2,
+                       ipv4_octet       octet3,
+                       ipv4_octet       octet4,
+                       stl::string_view subnet) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
             _prefix(is::subnet(subnet) ? to_prefix(subnet)
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
-        constexpr explicit ipv4(stl::uint32_t const& ip,
-                                ipv4_octet prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        constexpr explicit ipv4(stl::uint32_t ip,
+                                ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(ip),
             _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
-        constexpr explicit ipv4(stl::uint32_t const& ip, istl::StringViewifiable auto&& subnet) noexcept
+        constexpr explicit ipv4(stl::uint32_t ip, istl::StringViewifiable auto&& subnet) noexcept
           : data(ip),
             _prefix(is::subnet(subnet) ? to_prefix(subnet)
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
@@ -200,6 +200,8 @@ namespace webpp {
           : data(parse(ip)),
             _prefix(is::subnet(subnet) ? to_prefix(subnet)
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
+
+        // NOLINTEND(bugprone-easily-swappable-parameters)
 
         constexpr explicit operator stl::uint32_t() const noexcept {
             return integer();
@@ -406,14 +408,13 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_nonroutable() const noexcept {
             auto const ip = integer();
-            return is_private() ||
-                ( /* --- align --- */ ip <= 0x00FFFFFFu) || // 0.0.0.0      - 0.255.255.255
-                (ip >= 0xC0000000u && ip <= 0xC00000FFu) || // 192.0.0.0    - 192.0.0.255
-                (ip >= 0xC0000200u && ip <= 0xC00002FFu) || // 192.0.2.0    - 192.0.2.255
-                (ip >= 0xC6120000u && ip <= 0xC613FFFFu) || // 198.18.0.0   - 198.19.255.255
-                (ip >= 0xC6336400u && ip <= 0xC63364FFu) || // 198.51.100.0 - 198.51.100.255
-                (ip >= 0xCB007100u && ip <= 0xCB0071FFu) || // 203.0.113.0  - 203.0.113.255
-                (ip >= 0xE0000000u && ip <= 0xFFFFFFFFu);   // 224.0.0.0    - 255.255.255.255
+            return is_private() || (ip <= 0x00FFFFFFu) ||      // 0.0.0.0      - 0.255.255.255
+                   (ip >= 0xC0000000u && ip <= 0xC00000FFu) || // 192.0.0.0    - 192.0.0.255
+                   (ip >= 0xC0000200u && ip <= 0xC00002FFu) || // 192.0.2.0    - 192.0.2.255
+                   (ip >= 0xC6120000u && ip <= 0xC613FFFFu) || // 198.18.0.0   - 198.19.255.255
+                   (ip >= 0xC6336400u && ip <= 0xC63364FFu) || // 198.51.100.0 - 198.51.100.255
+                   (ip >= 0xCB007100u && ip <= 0xCB0071FFu) || // 203.0.113.0  - 203.0.113.255
+                   (ip >= 0xE0000000u && ip <= 0xFFFFFFFFu);   // 224.0.0.0    - 255.255.255.255
         }
 
 
@@ -421,7 +422,7 @@ namespace webpp {
          * Return true if the IP address is a multicast address
          */
         [[nodiscard]] constexpr bool is_multicast() const noexcept {
-              return (integer() & 0xf0000000u) == 0xe0000000u;
+            return (integer() & 0xf0000000u) == 0xe0000000u;
         }
 
         /**
@@ -461,14 +462,14 @@ namespace webpp {
         }
 
         /**
-         * Get the ip in reversed order
-         * @return
+         * Get the ip in reversed order; the prefix is unchanged
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return ipv4_octets{static_cast<ipv4_octet>(data & 0xFFu),
-                               static_cast<ipv4_octet>(data >> 8u & 0xFFu),
-                               static_cast<ipv4_octet>(data >> 16u & 0xFFu),
-                               static_cast<ipv4_octet>(data >> 24u & 0xFFu)};
+            return {static_cast<ipv4_octet>(data & 0xFFu),
+                    static_cast<ipv4_octet>(data >> 8u & 0xFFu),
+                    static_cast<ipv4_octet>(data >> 16u & 0xFFu),
+                    static_cast<ipv4_octet>(data >> 24u & 0xFFu),
+                    _prefix};
         }
 
 
