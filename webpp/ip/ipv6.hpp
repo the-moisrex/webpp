@@ -406,11 +406,7 @@ namespace webpp {
          *
          */
         [[nodiscard]] constexpr bool is_unspecified() const noexcept {
-            auto const _octets = octets8();
-            return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0);
+            return is_zero();
         }
 
         /**
@@ -420,12 +416,10 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not the Loopback Address.
          */
         [[nodiscard]] constexpr bool is_loopback() const noexcept {
-            // todo: check for is_v4_mapped' loopback too
             auto const _octets = octets8();
-            return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
-                   (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 1);
+            // either ::1 or v4-mapped of ipv4 loopback address (::ffff:127.0.0.1)
+            return _octets == octets8_t{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1} ||
+                   _octets == octets8_t{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x7f, 0, 0, 1};
         }
 
         /**
@@ -840,11 +834,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_zero() const noexcept {
             auto const _octets = octets8();
-            return stl::all_of(_octets.begin(),
-                               _octets.end(),
-                               [](stl::uint8_t item) constexpr noexcept -> bool {
-                                   return item == 0;
-                               });
+            return _octets == octets8_t{};
         }
 
         /**

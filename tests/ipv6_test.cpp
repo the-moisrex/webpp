@@ -341,3 +341,8 @@ TEST(IPv6Tests, ErrorMessages) {
     EXPECT_EQ(to_string(inet_pton6_status::valid), (ipv6{"::1"}.status_string()));
     EXPECT_EQ(to_string(inet_pton6_status::invalid_prefix), (ipv6{"::1", 129}.status_string()));
 }
+
+TEST(IPv6Tests, LoopbackCheck) {
+    ipv6_t ip6{"::ffff:127.0.0.1"};
+    EXPECT_TRUE(ip6.is_loopback()) << ip6.string() << "\n" << ip6.expanded_string();
+}
