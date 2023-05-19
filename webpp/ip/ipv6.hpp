@@ -2,14 +2,12 @@
 #define WEBPP_IPV6_HPP
 
 #include "../strings/append.hpp"
-#include "../strings/to_case.hpp"
 #include "inet_ntop.hpp"
 #include "inet_pton.hpp"
 #include "ipv4.hpp"
 
 #include <array>
 #include <compare>
-#include <variant>
 
 // There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
 // them, so we're disabling this warning for this file.
@@ -23,6 +21,14 @@ namespace webpp {
                                     WEBPP_SINGLE_ARG(typename T, stl::size_t N),
                                     WEBPP_SINGLE_ARG(T, N))
     };
+
+    /**
+     * This utility will get you the uint8_t representation of status result of ipv6 parsing
+     * so you can store it in a uint8_t storage along with the prefix.
+     */
+    static constexpr stl::uint8_t prefix_status(inet_pton6_status status) noexcept {
+        return static_cast<stl::uint8_t>(status);
+    }
 
     struct ipv6 {
         // todo: add support for systems that support 128bit integer types
@@ -61,10 +67,6 @@ namespace webpp {
         // these data over the network.
         octets_t     data    = {}; // filled with zeros
         stl::uint8_t _prefix = prefix_status(inet_pton6_status::valid);
-
-        static constexpr stl::uint8_t prefix_status(inet_pton6_status status) noexcept {
-            return static_cast<stl::uint8_t>(status);
-        }
 
         /**
          * converts 16/32/64/... bit arrays to 8bit
@@ -868,7 +870,7 @@ namespace webpp {
          * Check if the specified ipv6 binary starts with the specified inp_octets up to inp_prefix bits.
          */
         template <stl::size_t N>
-            requires(N <= 16u)
+            requires(N <= IPV6_ADDR_SIZE)
         [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> inp_octets,
                                                  stl::size_t                 inp_prefix) const noexcept {
             const auto masked = mask(inp_prefix);

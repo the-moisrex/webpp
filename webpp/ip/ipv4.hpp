@@ -83,14 +83,18 @@ namespace webpp {
                 static_cast<ipv4_octet>(subnet & 0xFFu)};
     }
 
+    /**
+     * This class gets you the uint8_t representation of the status enum result so
+     * you can store the status and the prefix value in the same uint8_t storage.
+     */
+    static constexpr ipv4_octet prefix_status(inet_pton4_status status) noexcept {
+        return static_cast<ipv4_octet>(status);
+    }
+
     struct ipv4 {
       private:
         stl::uint32_t data    = 0u; // all bits are used
         ipv4_octet    _prefix = prefix_status(inet_pton4_status::valid);
-
-        static constexpr ipv4_octet prefix_status(inet_pton4_status status) noexcept {
-            return static_cast<ipv4_octet>(status);
-        }
 
         template <istl::StringViewifiable StrT>
         constexpr void parse(StrT&& inp_str) noexcept {
@@ -180,20 +184,22 @@ namespace webpp {
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
-        constexpr explicit ipv4(stl::uint32_t ip, istl::StringViewifiable auto&& subnet) noexcept
+        template <istl::StringViewifiable StrT>
+        constexpr explicit ipv4(stl::uint32_t ip, StrT&& subnet) noexcept
           : data(ip),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+            _prefix(is::subnet(subnet) ? to_prefix(stl::forward<StrT>(subnet))
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
-        constexpr ipv4(ipv4_octets ip, ipv4_octet prefix = 255) noexcept
+        constexpr ipv4(ipv4_octets ip, ipv4_octet prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(parse(ip)),
             _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
-        constexpr ipv4(ipv4_octets ip, istl::StringViewifiable auto&& subnet) noexcept
+        template <istl::StringViewifiable StrT>
+        constexpr ipv4(ipv4_octets ip, StrT&& subnet) noexcept
           : data(parse(ip)),
-            _prefix(is::subnet(subnet) ? to_prefix(subnet)
+            _prefix(is::subnet(subnet) ? to_prefix(stl::forward<StrT>(subnet))
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
         constexpr ipv4(ipv4_octets ip, ipv4_octets subnet) noexcept
