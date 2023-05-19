@@ -19,6 +19,7 @@
 #include "path.hpp"
 #include "queries.hpp"
 
+#include <variant>
 
 /**
  * URI features that we might need separately:
@@ -816,6 +817,7 @@ namespace webpp::uri {
          * include a valid ip/hostname you'll get an empty string. this method
          * will only return the hostname/ip if it's in the correct format and
          * doesn't include invalid syntax.
+         * todo: return a host_authority maybe? or a variant<address, string_view>?
          */
         [[nodiscard]] constexpr stl::variant<ipv4, ipv6, string_view_type> host_structured() const noexcept {
             auto _host = host_raw();
