@@ -62,3 +62,10 @@ TEST(IPAddressTests, Equality) {
         EXPECT_TRUE(addr < addr2);
     }
 }
+
+
+TEST(IPAddressTests, Methods) {
+    address addr{"::0fff:1/127"};
+    EXPECT_TRUE(addr.is_valid());
+    EXPECT_EQ(addr.prefix(), 127u);
+}

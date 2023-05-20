@@ -44,6 +44,9 @@ namespace webpp {
         [[nodiscard]] constexpr bool has_prefix() const noexcept {
             return false;
         }
+        [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
+            return 0u;
+        }
         // NOLINTEND(readability-convert-member-functions-to-static)
     };
 
@@ -274,6 +277,12 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_loopback() const noexcept {
             return pick([](auto&& ip) constexpr noexcept {
                 return ip.is_loopback();
+            });
+        }
+
+        [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
+            return pick([](auto&& ip) constexpr noexcept -> stl::uint8_t {
+                return ip.prefix();
             });
         }
     };
