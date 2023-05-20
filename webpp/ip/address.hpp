@@ -9,70 +9,60 @@
 
 namespace webpp {
 
-
-    // this is a boilerplate utility to let the users of "address" class easily and without any exceptions
-    // use the .pick member function.
-    struct invalid_ip_address {
-        // NOLINTBEGIN(readability-convert-member-functions-to-static)
-        [[nodiscard]] constexpr operator bool() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_zero() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_loopback() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_link_local() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_broadcast() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_nonroutable() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_private() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool is_multicast() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr bool has_prefix() const noexcept {
-            return false;
-        }
-        [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
-            return 0u;
-        }
-        // NOLINTEND(readability-convert-member-functions-to-static)
+    /**
+     * This is the combination of both of ipv4 and ipv6 parsing status enums:
+     *   - inet_pton4_status
+     *   - inet_pton6_status
+     */
+    enum struct ip_address_status : stl::uint_fast8_t {
+        valid                = 255u,
+        too_little_octets    = 254u, // not enough octets
+        too_many_octets      = 253u, // found too many octets
+        invalid_octet_range  = 252u, // at least one octet is not in range
+        invalid_leading_zero = 251u, // the octet is starting with an invalid leading zero
+        invalid_character    = 250u, // found a non-standard character
+        bad_ending           = 249u, // The ip ended badly
+        invalid_octet        = 248u, // Found an invalid character in the octets
+        invalid_prefix       = 247u, // The ip has and invalid prefix
+        invalid_colon_usage  = 246u  // the ip is using colon where it shouldn't
     };
+
 
 
     /**
      * Represents an IPv4 or IPv6
      */
-    struct address : stl::variant<stl::monostate, ipv4, ipv6> {
-        using variant_type = stl::variant<stl::monostate, ipv4, ipv6>;
+    struct address : stl::variant<ipv4, ipv6> {
+        using variant_type = stl::variant<ipv4, ipv6>;
 
         // variant ctor
-        using stl::variant<stl::monostate, ipv4, ipv6>::variant;
+        using stl::variant<ipv4, ipv6>::variant;
 
-        ////////////////////////////// Common Constructors //////////////////////////////
-
-        template <istl::StringViewifiable StrT>
-        constexpr address(StrT&& ip) noexcept {
+      private:
+        constexpr void parse(stl::string_view ip) noexcept {
             // first, let's try parsing it as an ipv4 address
             if (ipv4 ip4{ip}; ip4.is_valid()) {
                 // it's ipv4
                 this->emplace<ipv4>(ip4);
-            } else if (ipv6 ip6{ip}; ip6.is_valid()) {
-                this->emplace<ipv6>(ip6);
+            } else if (ip4.status() == inet_pton4_status::invalid_octet) {
+                this->emplace<ipv6>(ip);
             } else {
-                // monostate it is then.
+                this->emplace<ipv4>(ip4);
             }
+        }
+
+      public:
+        ////////////////////////////// Common Constructors //////////////////////////////
+
+        template <istl::StringViewifiable StrT>
+        constexpr address(StrT&& ip) noexcept {
+            parse(istl::string_viewify(stl::forward<StrT>(ip)));
+        }
+
+        template <istl::StringViewifiable StrT>
+        constexpr address& operator=(StrT&& ip) noexcept {
+            parse(istl::string_viewify(stl::forward<StrT>(ip)));
+            return *this;
         }
 
         ////////////////////////////// IPv4 Constructors //////////////////////////////
@@ -161,11 +151,7 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(address const& ip) const noexcept {
-            if (stl::holds_alternative<stl::monostate>(as_variant())) {
-                if (stl::holds_alternative<stl::monostate>(ip.as_variant())) {
-                    return stl::partial_ordering::equivalent;
-                }
-            } else if (is_v4()) {
+            if (is_v4()) {
                 if (ip.is_v4()) {
                     return as_v4() <=> ip.as_v4();
                 }
@@ -187,15 +173,9 @@ namespace webpp {
         constexpr auto pick(Func&& func) const noexcept(noexcept(func(ipv4{})) && noexcept(func(ipv6{}))) {
             if (auto* v4 = get_if<ipv4>(&as_variant())) {
                 return func(*v4);
-            } else if (auto* v6 = get_if<ipv6>(&as_variant())) {
-                return func(*v6);
             } else {
-                return func(as_none());
+                return func(get<ipv6>(as_variant()));
             }
-        }
-
-        [[nodiscard]] static constexpr invalid_ip_address as_none() noexcept {
-            return {};
         }
 
         [[nodiscard]] constexpr ipv4 const& as_v4() const {
@@ -283,6 +263,40 @@ namespace webpp {
         [[nodiscard]] constexpr stl::uint8_t prefix() const noexcept {
             return pick([](auto&& ip) constexpr noexcept -> stl::uint8_t {
                 return ip.prefix();
+            });
+        }
+
+        [[nodiscard]] constexpr ip_address_status status() const noexcept {
+            auto const prefix_val = prefix();
+            if (prefix_val <= 128) {
+                return ip_address_status::valid;
+            }
+            return static_cast<ip_address_status>(prefix_val);
+        }
+
+        template <typename StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT string(Args&&... args) const {
+            return pick([&](auto&& ip) constexpr {
+                return ip.template string<StrT>(stl::forward<Args>(args)...);
+            });
+        }
+
+        constexpr void to_string(istl::String auto& out) const {
+            return pick([&](auto&& ip) constexpr {
+                return ip.to_string(out);
+            });
+        }
+
+        template <typename StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT status_string(Args&&... args) const {
+            return pick([&](auto&& ip) constexpr {
+                return ip.template status_string<StrT>(stl::forward<Args>(args)...);
+            });
+        }
+
+        constexpr void status_to(istl::String auto& out) const {
+            return pick([&](auto&& ip) constexpr {
+                return ip.status_to(out);
             });
         }
     };

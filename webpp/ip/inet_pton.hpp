@@ -36,11 +36,11 @@ namespace webpp {
      */
     enum struct inet_pton6_status : stl::uint_fast8_t {
         valid               = 255u,
-        invalid_octet_range = 254u, // at least one octet is not in range
-        invalid_colon_usage = 253u, // the ip is using colon where it shouldn't
-        bad_ending          = 252u, // the ip ended badly
-        invalid_character   = 251u, // found a non-standard character
-        invalid_prefix      = 250u  // The ip has and invalid prefix
+        invalid_character   = 250u, // found a non-standard character
+        bad_ending          = 249u, // the ip ended badly
+        invalid_prefix      = 247u, // The ip has and invalid prefix
+        invalid_octet_range = 252u, // at least one octet is not in range
+        invalid_colon_usage = 246u  // the ip is using colon where it shouldn't
     };
 
     /**
@@ -52,12 +52,12 @@ namespace webpp {
             case valid: return "Valid IPv4 address";
             case too_little_octets:
                 return "The IPv4 doesn't have enough octets; it should contain exactly 4 octets";
-            case invalid_octet_range: return "At least one of the octets is of an invalid range";
+            case invalid_octet_range: return "At least one of the IPv4 octets is of an invalid range";
             case too_many_octets: return "The IPv4 has too many octets; it should contain exactly 4 octets";
             case invalid_leading_zero: return "The IPv4's octet started with a zero which is not valid";
             case invalid_character: return "Invalid character found in the IPv4";
             case bad_ending: return "IPv4 ended unexpectedly";
-            case invalid_octet: return "Found an invalid character in the octets";
+            case invalid_octet: return "Found an invalid character in the IPv4 octets";
             case invalid_prefix: return "IPv4 has an invalid prefix";
         }
         return ""; // just to get rid of static analyzers' warning
@@ -70,11 +70,11 @@ namespace webpp {
         switch (status) {
             using enum inet_pton6_status;
             case valid: return "Valid IPv6 address";
-            case invalid_octet_range: return "At least one of the octets is of an invalid range.";
-            case invalid_colon_usage: return "The colon is used in the wrong place";
+            case invalid_octet_range: return "At least one of the IPv6 octets is of an invalid range.";
+            case invalid_colon_usage: return "The colon is used in the wrong place in IPv6";
             case bad_ending: return "The IPv6 ended unexpectedly";
             case invalid_character: return "Invalid character found in the IPv6";
-            case invalid_prefix: return "IPv4 has an invalid prefix";
+            case invalid_prefix: return "IPv6 has an invalid prefix";
         }
         return ""; // just to get rid of static analyzers' warning
     }
