@@ -4,6 +4,7 @@
 #include "ipv4.hpp"
 #include "ipv6.hpp"
 
+#include <compare>
 #include <variant>
 
 namespace webpp {
@@ -128,6 +129,55 @@ namespace webpp {
           : address{ipv6{_octets, prefix_value}} {}
 
         ////////////////////////////// Common Functions //////////////////////////////
+
+        [[nodiscard]] constexpr bool operator==(ipv4 ip) const noexcept {
+            return is_v4() && as_v4() == ip;
+        }
+
+        [[nodiscard]] constexpr bool operator==(ipv6 ip) const noexcept {
+            return is_v6() && as_v6() == ip;
+        }
+
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
+            return *this == address{stl::forward<StrT>(ip)};
+        }
+
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv4 ip) const noexcept {
+            if (!is_v4()) {
+                return stl::partial_ordering::unordered;
+            }
+            return as_v4() <=> ip;
+        }
+
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv6 ip) const noexcept {
+            if (!is_v6()) {
+                return stl::partial_ordering::unordered;
+            }
+            return as_v6() <=> ip;
+        }
+
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(address const& ip) const noexcept {
+            if (stl::holds_alternative<stl::monostate>(as_variant())) {
+                if (stl::holds_alternative<stl::monostate>(ip.as_variant())) {
+                    return stl::partial_ordering::equivalent;
+                }
+            } else if (is_v4()) {
+                if (ip.is_v4()) {
+                    return as_v4() <=> ip.as_v4();
+                }
+            } else if (is_v6()) {
+                if (ip.is_v6()) {
+                    return as_v6() <=> ip.as_v6();
+                }
+            }
+            return stl::partial_ordering::unordered;
+        }
+
+        template <istl::StringViewifiable StrT>
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(StrT&& ip) const noexcept {
+            return *this <=> address{stl::forward<StrT>(ip)};
+        }
 
         // Run the specified function/lambda with the right pick
         template <typename Func>
