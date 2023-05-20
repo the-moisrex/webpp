@@ -56,6 +56,21 @@ namespace webpp {
         // variant ctor
         using stl::variant<stl::monostate, ipv4, ipv6>::variant;
 
+        ////////////////////////////// Common Constructors //////////////////////////////
+
+        template <istl::StringViewifiable StrT>
+        constexpr address(StrT&& ip) noexcept {
+            // first, let's try parsing it as an ipv4 address
+            if (ipv4 ip4{ip}; ip4.is_valid()) {
+                // it's ipv4
+                this->emplace<ipv4>(ip4);
+            } else if (ipv6 ip6{ip}; ip6.is_valid()) {
+                this->emplace<ipv6>(ip6);
+            } else {
+                // monostate it is then.
+            }
+        }
+
         ////////////////////////////// IPv4 Constructors //////////////////////////////
 
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
