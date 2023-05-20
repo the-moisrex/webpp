@@ -94,6 +94,7 @@
                 "test-header-accept-encoding",
                 "test-header-host-authority",
                 "test-http-parser",
+                "test-ip-address",
                 "test-ipv4",
                 "test-ipv6",
                 "test-istring",
@@ -207,6 +208,11 @@
         {
             "name": "test-http-parser",
             "targets": "test-http-parser",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-ip-address",
+            "targets": "test-ip-address",
             "inherits": "default-build"
         },
         {
@@ -465,6 +471,10 @@
         },
         {
             "name": "test-http-parser",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-ip-address",
             "inherits": "test-default"
         },
         {
