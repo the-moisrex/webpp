@@ -54,6 +54,14 @@ namespace webpp {
       public:
         ////////////////////////////// Common Constructors //////////////////////////////
 
+        // return an invalid address
+        static constexpr address invalid() noexcept {
+            return {ipv4::invalid()};
+        }
+
+        // invalid ipv4
+        constexpr address() noexcept : address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
+
         template <istl::StringViewifiable StrT>
         constexpr address(StrT&& ip) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip)));

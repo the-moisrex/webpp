@@ -193,8 +193,7 @@ yet since we're still working on this project.
 Some of these dependencies can replace other dependencies; the difference is usually in 
 their performance but other factors are in play as well.
 
-- `boost` (you don't need it for the core)
-- `boost::asio` or `asio` (for FastCGI and Self-Hosted interfaces only)
+- `boost::asio` or `asio` (for FastCGI)
 - `boost::beast` _(optional)_ (for benchmarking only)
 - `fmt`: as a fallback for `std::format`
 - `eve` _(optional|Disabled)_: for better performance with SIMD
@@ -206,8 +205,6 @@ their performance but other factors are in play as well.
   - `libdeflate` _(optional)_
 - `zstd` _(optional)_: for `zstd` compression support
 - `brotli` _(optional)_: for `br` compression support
-- `CTRE` _(optional|Disabled)_: compile-time-regular-expression
-- `modp_64`: modified version is included in the sources
 
 ## Development
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if you're not really good at web development but you know C++ very well, specially C++17 and C++20 (clang and gcc c++2a is enough), then we have lots of things that you can help with which doesn't have anything to do with web development directly.

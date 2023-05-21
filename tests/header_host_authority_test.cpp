@@ -1,6 +1,8 @@
 #include "../webpp/http/headers/host.hpp"
+#include "../webpp/ip/ipv4.hpp"
 #include "common_pch.hpp"
 
+using namespace webpp;
 using namespace webpp::http;
 
 TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
@@ -12,6 +14,16 @@ TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
     EXPECT_FALSE(host.is_ipv6());
     EXPECT_EQ(host.port(), 80);
     EXPECT_EQ(host.domain(), "example.org");
+    EXPECT_FALSE(host.address().is_valid()) << host.address().status_string();
+    EXPECT_FALSE(address::invalid().is_valid()) << address::invalid().status_string();
+}
+
+TEST(HdrHostAuthorityTest, AddressTest) {
+    static constinit const ipv4 localhost{"127.0.0.1"};
+    host_authority const        host{"127.0.0.1:80"};
+    EXPECT_TRUE(host.address().is_valid());
+    EXPECT_EQ(host.address(), "127.0.0.1");
+    EXPECT_EQ(host.address(), localhost);
 }
 
 

@@ -2,6 +2,7 @@
 #define WEBPP_HEADERS_HOST_HPP
 
 #include "../../convert/casts.hpp"
+#include "../../ip/address.hpp"
 #include "../../ip/ipv4.hpp"
 #include "../../ip/ipv6.hpp"
 #include "../../uri/domain.hpp"
@@ -247,6 +248,15 @@ namespace webpp::http {
                 return *ip_ptr;
             }
             return default_ip;
+        }
+
+        [[nodiscard]] constexpr struct address address() const noexcept {
+            if (auto ip4_ptr = stl::get_if<struct ipv4>(&endpoint); ip4_ptr != nullptr) {
+                return {*ip4_ptr};
+            } else if (auto ip6_ptr = stl::get_if<struct ipv6>(&endpoint); ip6_ptr != nullptr) {
+                return {*ip6_ptr};
+            }
+            return address::invalid();
         }
 
         [[nodiscard]] constexpr domain_type domain() const noexcept {

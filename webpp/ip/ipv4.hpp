@@ -119,6 +119,12 @@ namespace webpp {
         }
 
       public:
+        constexpr static ipv4 invalid() noexcept {
+            ipv4 ip;
+            ip._prefix = prefix_status(inet_pton4_status::invalid_prefix);
+            return ip;
+        }
+
         // initialize with 0.0.0.0
         constexpr ipv4() noexcept = default;
 
