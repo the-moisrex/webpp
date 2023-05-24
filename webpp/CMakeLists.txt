@@ -106,6 +106,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/ip/ipv6.hpp
         ${LIB_INCLUDE_DIR}/ip/ip.hpp
         ${LIB_INCLUDE_DIR}/ip/address.hpp
+        ${LIB_INCLUDE_DIR}/ip/ip_validators.hpp
 
         ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp

@@ -4,9 +4,9 @@
 #include "../convert/casts.hpp"
 #include "../strings/append.hpp"
 #include "../strings/to_case.hpp"
-#include "../validators/validators.hpp"
 #include "inet_ntop.hpp"
 #include "inet_pton.hpp"
+#include "ip_validators.hpp"
 
 #include <array>
 #include <compare>

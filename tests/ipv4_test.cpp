@@ -2,6 +2,7 @@
 
 #include "../webpp/ip/inet_ntop.hpp"
 #include "../webpp/ip/inet_pton.hpp"
+#include "../webpp/ip/ip_validators.hpp"
 #include "common_pch.hpp"
 
 
@@ -69,6 +70,7 @@ TEST(IPv4Tests, Validation) {
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4(_ip)));
         EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
+        EXPECT_TRUE(is::ipv4(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         ipv4_t const ip{_ip};
         (void) ip.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip.is_valid());
@@ -90,6 +92,7 @@ TEST(IPv4Tests, CIDR) {
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4_prefix(_ip))) << _ip;
         EXPECT_TRUE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
+        EXPECT_TRUE(is::ipv4_prefix(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
         EXPECT_TRUE(ipv4_t(_ip).has_prefix()) << _ip;
         EXPECT_GE(ipv4_t(_ip).prefix(), 0) << _ip;
         EXPECT_LE(ipv4_t(_ip).prefix(), 32) << _ip;
@@ -98,6 +101,7 @@ TEST(IPv4Tests, CIDR) {
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
         EXPECT_FALSE(ipv4_t(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(is::ipv4_prefix(_ip)) << _ip;
         EXPECT_FALSE(ipv4_t(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
     }
@@ -149,6 +153,7 @@ TEST(IPv4Tests, InetP2NValidation) {
     stl::uint8_t ip[4]{};
 
     for (auto const& _ip : valid_ipv4s) {
+        EXPECT_TRUE(is::ipv4(_ip)) << _ip;
         EXPECT_EQ(inet_pton4(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton4_status::valid)
           << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
           << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
@@ -160,6 +165,7 @@ TEST(IPv4Tests, InetP2NValidation) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
+        EXPECT_FALSE(is::ipv4(_ip)) << _ip;
         EXPECT_NE(inet_pton4(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton4_status::valid)
           << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
           << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
