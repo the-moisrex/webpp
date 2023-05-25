@@ -142,6 +142,14 @@ namespace webpp {
         [[nodiscard]] constexpr operator bool() const noexcept {
             return is_valid();
         }
+
+        // Top-Level-Domain
+        [[nodiscard]] constexpr stl::string_view tld() const noexcept {
+            if (const auto pos = this->rfind('.'); pos != npos) {
+                return this->substr(pos + 1);
+            }
+            return *this; // the whole thing is a TLD
+        }
     };
 
 } // namespace webpp

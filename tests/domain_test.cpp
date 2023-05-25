@@ -252,3 +252,8 @@ TEST(DomainsTest, InValidity) {
         EXPECT_NE(status, domain_name_status::valid) << domain_str << "\n" << to_string(status);
     }
 }
+
+TEST(DomainsTest, TLDTest) {
+    domain_name domain{"example.com"};
+    EXPECT_EQ(domain.tld(), "com");
+}
