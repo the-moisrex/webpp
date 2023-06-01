@@ -3,12 +3,12 @@
 #ifndef WEBPP_CGI_REQUEST_HPP
 #define WEBPP_CGI_REQUEST_HPP
 
-#include "../../../std/string_view.hpp"
-#include "../../../traits/traits.hpp"
-#include "../../bodies/string.hpp" // for setting the request body; CGI uses string views for body
-#include "../../http_concepts.hpp"
-#include "../../request_headers.hpp"
-#include "../../request_view.hpp"
+#include "../http/bodies/string.hpp" // for setting the request body; CGI uses string views for body
+#include "../http/http_concepts.hpp"
+#include "../http/request_headers.hpp"
+#include "../http/request_view.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/traits.hpp"
 
 // TODO: use GetEnvironmentVariableA for Windows operating system
 #include <unistd.h> // for environ

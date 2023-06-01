@@ -3,8 +3,8 @@
 #ifndef WEBPP_CGI_REQUEST_BODY_COMMUNICATOR_HPP
 #define WEBPP_CGI_REQUEST_BODY_COMMUNICATOR_HPP
 
-#include "../../../std/type_traits.hpp"
-#include "../../../traits/traits.hpp"
+#include "../std/type_traits.hpp"
+#include "../traits/traits.hpp"
 
 #include <iostream>
 

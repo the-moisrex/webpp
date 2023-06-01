@@ -149,11 +149,12 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/bodies/string.hpp
         ${LIB_INCLUDE_DIR}/http/bodies/file.hpp
 
-        ${LIB_INCLUDE_DIR}/http/protocols/cgi.hpp
+        ${LIB_INCLUDE_DIR}/http/cgi/cgi.hpp
+        ${LIB_INCLUDE_DIR}/http/cgi/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/http/cgi/cgi_request_body_communicator.hpp
+
         ${LIB_INCLUDE_DIR}/http/protocols/fcgi.hpp
         ${LIB_INCLUDE_DIR}/http/protocols/self_hosted.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/cgi_proto/cgi_request.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/cgi_proto/cgi_request_body_communicator.hpp
         ${LIB_INCLUDE_DIR}/http/protocols/fastcgi/fcgi_request.hpp
         ${LIB_INCLUDE_DIR}/http/protocols/shosted/self_hosted_request.hpp
         ${LIB_INCLUDE_DIR}/http/protocols/shosted/self_hosted_session_manager.hpp

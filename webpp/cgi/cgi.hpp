@@ -1,15 +1,15 @@
 #ifndef WEBPP_PROTOCOLS_CGI_HPP
 #define WEBPP_PROTOCOLS_CGI_HPP
 
-#include "../../convert/casts.hpp"
-#include "../../std/string_view.hpp"
-#include "../../traits/default_traits.hpp"
-#include "../request.hpp"
-#include "../request_body.hpp"
-#include "../response.hpp"
-#include "cgi_proto/cgi_request.hpp"
-#include "cgi_proto/cgi_request_body_communicator.hpp"
-#include "common/common_http_protocol.hpp"
+#include "../convert/casts.hpp"
+#include "../http/protocols/common/common_http_protocol.hpp"
+#include "../http/request.hpp"
+#include "../http/request_body.hpp"
+#include "../http/response.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/default_traits.hpp"
+#include "./cgi_request.hpp"
+#include "./cgi_request_body_communicator.hpp"
 
 #include <iostream>
 

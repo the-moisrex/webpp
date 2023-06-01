@@ -1,5 +1,5 @@
+#include <webpp/cgi/cgi.hpp>
 #include <webpp/http/http.hpp>
-#include <webpp/http/protocols/cgi.hpp>
 
 using namespace webpp;
 using namespace webpp::http;
