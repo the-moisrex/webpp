@@ -36,26 +36,57 @@ namespace webpp::time {
 
         // Stops or pauses the stopwatch.
         constexpr stopwatch& stop() noexcept {
-            clock_type current;
-            _elapsed += current - _start;
+            _elapsed += clock_type::now() - _start;
+            return *this;
+        }
+
+        template <typename NDuration>
+        constexpr stopwatch& stop(std::chrono::time_point<clock_type, NDuration> time) noexcept {
+            _elapsed += std::chrono::time_point_cast<duration>(time) - _start;
+            return *this;
+        }
+
+        template <typename NDuration>
+        constexpr stopwatch& operator+=(std::chrono::time_point<clock_type, NDuration> time) noexcept {
+            _elapsed += std::chrono::time_point_cast<duration>(time) - _start;
+            return *this;
+        }
+
+        template <typename NDuration = duration>
+            requires requires(NDuration n_dur, duration dur) { dur.operator+=(n_dur); }
+        constexpr stopwatch& operator+=(NDuration dur) noexcept {
+            _elapsed += std::chrono::duration_cast<duration>(dur);
             return *this;
         }
 
         // Resets the stopwatch.
         constexpr stopwatch& reset() noexcept {
-            _elapsed = 0;
+            _elapsed = duration{};
             return *this;
         }
 
-        constexpr stopwatch& reset(time_point time) noexcept {
-            _elapsed = 0;
-            _start   = time;
+        template <typename NDuration>
+        constexpr stopwatch& operator=(std::chrono::time_point<clock_type, NDuration> time) noexcept {
+            _elapsed = duration{};
+            _start   = std::chrono::time_point_cast<duration>(time);
             return *this;
+        }
+
+        template <typename NDuration = duration>
+            requires requires(NDuration n_dur, duration dur) { dur.operator+=(n_dur); }
+        constexpr stopwatch& operator=(NDuration dur) noexcept {
+            _elapsed = std::chrono::duration_cast<duration>(dur);
+            return *this;
+        }
+
+        template <typename NDuration>
+        constexpr stopwatch& reset(std::chrono::time_point<clock_type, NDuration> time) noexcept {
+            return operator=(time);
         }
 
         // Resets and starts the stopwatch.
         constexpr stopwatch& restart() noexcept {
-            _elapsed = 0;
+            _elapsed = duration{};
             _start   = clock_type::now();
             return *this;
         }
@@ -63,14 +94,37 @@ namespace webpp::time {
         /**
          * Returns the elapsed time since the stopwatch started.
          */
+        [[nodiscard]] constexpr duration elapse_now() const noexcept {
+            return clock_type::now() - _start;
+        }
+
+        /**
+         * Duration till the specified time
+         */
+        template <typename NDuration>
+        [[nodiscard]] constexpr duration
+        elapse(std::chrono::time_point<clock_type, NDuration> new_time) const noexcept {
+            return new_time - _start;
+        }
+
+        /**
+         * Get current elapsed duration
+         */
         [[nodiscard]] constexpr duration elapsed() const noexcept {
-            return _elapsed + (clock_type::now() - _start);
+            return _elapsed;
         }
 
         /**
          * Returns the number of seconds elapsed since the stopwatch started.
          */
         [[nodiscard]] constexpr auto elapsed_seconds() const noexcept {
+            return elapsed() / period::num / period::den;
+        }
+
+        /**
+         * Elapsed now, seconds.
+         */
+        [[nodiscard]] constexpr auto elapse_now_seconds() const noexcept {
             return elapsed() / period::num / period::den;
         }
 
