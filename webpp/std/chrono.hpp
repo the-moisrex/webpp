@@ -11,14 +11,26 @@
 #    include <date/date.h>
 #    include <date/tz.h>
 namespace webpp::stl::chrono {
-    // using namespace ::std::chrono;
+    using namespace ::std::chrono;
     using ::std::chrono::duration;
+    using ::std::chrono::high_resolution_clock;
+    using ::std::chrono::microseconds;
+    using ::std::chrono::milliseconds;
+    using ::std::chrono::nanoseconds;
+    using ::std::chrono::seconds;
     using ::std::chrono::system_clock;
     using ::std::chrono::time_point;
     using namespace ::date;
+
+    namespace chrono_literals {
+        using namespace ::date::literals;
+    }
 } // namespace webpp::stl::chrono
 #else
 #    include <chrono>
+namespace webpp::stl::chrono {
+    using namespace ::std::chrono;
+}
 #endif
 
 #endif // WEBPP_STD_CHRONO_HPP

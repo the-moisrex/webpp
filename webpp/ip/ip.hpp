@@ -17,9 +17,9 @@ namespace webpp {
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t
 
     // ipv4 octet/byte count
-    static constexpr auto ipv4_byte_count   = 4u;
+    static constexpr auto ipv4_byte_count = 4u;
     // ipv6 octet/byte count
-    static constexpr auto ipv6_byte_count   = 16u;
+    static constexpr auto ipv6_byte_count = 16u;
 
 } // namespace webpp
 
