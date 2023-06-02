@@ -11,7 +11,7 @@
 #    include <date/date.h>
 #    include <date/tz.h>
 namespace webpp::stl::chrono {
-    using namespace ::std::chrono;
+    // using namespace ::std::chrono;
     using ::std::chrono::duration;
     using ::std::chrono::high_resolution_clock;
     using ::std::chrono::microseconds;

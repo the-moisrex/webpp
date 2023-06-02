@@ -94,6 +94,7 @@
                 "test-header-accept-encoding",
                 "test-header-host-authority",
                 "test-http-parser",
+                "test-io",
                 "test-ip-address",
                 "test-ipv4",
                 "test-ipv6",
@@ -108,6 +109,7 @@
                 "test-routes",
                 "test-server",
                 "test-sql",
+                "test-stopwatch",
                 "test-string",
                 "test-tokenizer",
                 "test-traits",
@@ -211,6 +213,11 @@
             "inherits": "default-build"
         },
         {
+            "name": "test-io",
+            "targets": "test-io",
+            "inherits": "default-build"
+        },
+        {
             "name": "test-ip-address",
             "targets": "test-ip-address",
             "inherits": "default-build"
@@ -278,6 +285,11 @@
         {
             "name": "test-sql",
             "targets": "test-sql",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-stopwatch",
+            "targets": "test-stopwatch",
             "inherits": "default-build"
         },
         {
@@ -474,6 +486,10 @@
             "inherits": "test-default"
         },
         {
+            "name": "test-io",
+            "inherits": "test-default"
+        },
+        {
             "name": "test-ip-address",
             "inherits": "test-default"
         },
@@ -527,6 +543,10 @@
         },
         {
             "name": "test-sql",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-stopwatch",
             "inherits": "test-default"
         },
         {
