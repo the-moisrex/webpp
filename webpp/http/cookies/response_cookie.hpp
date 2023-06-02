@@ -56,6 +56,7 @@ namespace webpp::http {
 
 
         static constexpr max_age_t MAX_AGE_EXISTENCE_VALUE = stl::numeric_limits<max_age_t>::min();
+        static constexpr auto      date_format             = "{:%a, %d %b %Y %T} GMT";
 
       private:
         name_t             _name;
@@ -103,8 +104,9 @@ namespace webpp::http {
          * There are not many reasons to use this constructor
          * @param source
          */
-        explicit response_cookie(istl::StringViewifiable auto&& source,
-                                 string_allocator_type const&   alloc = {}) noexcept
+        template <istl::StringViewifiable StrVT>
+            requires(!istl::cvref_as<StrVT, response_cookie>)
+        constexpr explicit response_cookie(StrVT&& source, string_allocator_type const& alloc = {}) noexcept
           : _name{alloc},
             _value{alloc},
             _domain{alloc},
@@ -117,13 +119,16 @@ namespace webpp::http {
             // todo: deal with the error
         }
 
+      private:
+        static constexpr auto semicolon = charset{OWS, charset{';'}};
+        static constexpr auto eq_char   = charset{OWS, charset('=', ' ')};
+
+      public:
         /**
          * Parse a string response
          */
-        bool parse_set_cookie(istl::StringView auto src) noexcept {
-            using string_view_type          = stl::remove_cvref_t<decltype(src)>;
-            static constexpr auto semicolon = charset{OWS, charset{';'}};
-            static constexpr auto eq_char   = charset{OWS, charset('=', ' ')};
+        constexpr bool parse_set_cookie(istl::StringView auto src) noexcept {
+            using string_view_type = stl::remove_cvref_t<decltype(src)>;
 
             bool is_valid = true;
             details::parse_SE_value(src, _name, _value, is_valid);
@@ -241,26 +246,29 @@ namespace webpp::http {
             return is_valid;
         }
 
-        auto get_allocator() const noexcept {
+        constexpr auto get_allocator() const noexcept {
             return name().get_allocator(); // what? you've got a better solution? :)
         }
 
-        auto& remove(bool i_remove = true) noexcept {
+        constexpr auto& remove(bool i_remove = true) noexcept {
+            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+
+            // difference between year_dur and std::chrono::year is the integer type
+            using year_dur = stl::chrono::duration<int, std::ratio<31556952>>;
             if (i_remove) {
-                // set the expire date 10 year before now:
-                _expires =
-                  (clock_type::now() - stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(10));
+                // set the 'expire' date 10 year before now:
+                _expires = (clock_type::now() - year_dur(10));
             } else if (is_removed()) {
-                // set the expire date 1 year from now:
-                _expires =
-                  (clock_type::now() + stl::chrono::duration<int, stl::ratio<60 * 60 * 24 * 365>>(1));
+                // set the 'expire' date 1 year from now:
+                _expires = (clock_type::now() + year_dur(1));
             }
             // remove max-age if it exists because we're going with expires
             _max_age = 0;
             return *this;
+            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
         }
 
-        [[nodiscard]] bool is_removed() const noexcept {
+        [[nodiscard]] constexpr bool is_removed() const noexcept {
             // todo: clang-tidy says "Use nullptr"; why?
             return has_max_age() ? max_age() <= 0 : (_expires && _expires.value() < clock_type::now());
         }
@@ -269,25 +277,25 @@ namespace webpp::http {
          * @brief sets expiration time relative to now.
          */
         template <typename D, typename T>
-        inline auto& expires_in(stl::chrono::duration<D, T> const& i_dur) noexcept {
+        constexpr inline auto& expires_in(stl::chrono::duration<D, T> const& i_dur) noexcept {
             _expires = clock_type::now() + i_dur;
             return *this;
         }
 
-#define WEBPP_METHOD_TRIM(name)     \
-    auto& trim_##name() noexcept {  \
-        ascii::trim(_##name);       \
-        return *this;               \
-    }                               \
-                                    \
-    auto& ltrim_##name() noexcept { \
-        ascii::ltrim(_##name);      \
-        return *this;               \
-    }                               \
-                                    \
-    auto& rtrim_##name() noexcept { \
-        ascii::rtrim(_##name);      \
-        return *this;               \
+#define WEBPP_METHOD_TRIM(name)               \
+    constexpr auto& trim_##name() noexcept {  \
+        ascii::trim(_##name);                 \
+        return *this;                         \
+    }                                         \
+                                              \
+    constexpr auto& ltrim_##name() noexcept { \
+        ascii::ltrim(_##name);                \
+        return *this;                         \
+    }                                         \
+                                              \
+    constexpr auto& rtrim_##name() noexcept { \
+        ascii::rtrim(_##name);                \
+        return *this;                         \
     }
 
         WEBPP_METHOD_TRIM(name)
@@ -298,17 +306,17 @@ namespace webpp::http {
         WEBPP_METHOD_TRIM(priority)
 
 #undef WEBPP_METHOD_TRIM
-#define WEBPP_METHOD_STRS(name)                           \
-    auto const& name() const noexcept { return _##name; } \
-                                                          \
-    auto& name(name##_t&& i_##name) noexcept {            \
-        _##name = stl::move(i_##name);                    \
-        return *this;                                     \
-    }                                                     \
-                                                          \
-    auto& name(name##_t const& i_##name) noexcept {       \
-        _##name = i_##name;                               \
-        return *this;                                     \
+#define WEBPP_METHOD_STRS(name)                                     \
+    constexpr auto const& name() const noexcept { return _##name; } \
+                                                                    \
+    constexpr auto& name(name##_t&& i_##name) noexcept {            \
+        _##name = stl::move(i_##name);                              \
+        return *this;                                               \
+    }                                                               \
+                                                                    \
+    constexpr auto& name(name##_t const& i_##name) noexcept {       \
+        _##name = i_##name;                                         \
+        return *this;                                               \
     }
 
         WEBPP_METHOD_STRS(name)
@@ -321,12 +329,12 @@ namespace webpp::http {
         WEBPP_METHOD_STRS(expires)
 
 #undef WEBPP_METHOD_STRS
-#define WEBPP_METHOD_OTHERS(type, name)            \
-    type name() const noexcept { return _##name; } \
-                                                   \
-    auto& name(type i_##name) noexcept {           \
-        _##name = i_##name;                        \
-        return *this;                              \
+#define WEBPP_METHOD_OTHERS(type, name)                                    \
+    [[nodiscard]] constexpr type name() const noexcept { return _##name; } \
+                                                                           \
+    constexpr auto& name(type i_##name) noexcept {                         \
+        _##name = i_##name;                                                \
+        return *this;                                                      \
     }
 
         WEBPP_METHOD_OTHERS(secure_t, secure);
@@ -340,96 +348,103 @@ namespace webpp::http {
         /**
          * Check if the specified domain is a valid domain for this cookie
          */
-        [[nodiscard]] bool in_domain(istl::StringViewifiable auto&& the_domain) const noexcept {
+        [[nodiscard]] constexpr bool in_domain(istl::StringViewifiable auto&& the_domain) const noexcept {
             // todo
+            return false;
         }
 
 
         /**
          * Check if the specified path is valid for this cookie
          */
-        [[nodiscard]] bool in_path(istl::StringViewifiable auto&& the_path) const noexcept {
+        [[nodiscard]] constexpr bool in_path(istl::StringViewifiable auto&& the_path) const noexcept {
             // todo
+            return false;
         }
 
-        [[nodiscard]] bool has_expires() const noexcept {
+        [[nodiscard]] constexpr bool has_expires() const noexcept {
             return static_cast<bool>(_expires); // we can cast optional<...> to bool
         }
 
-        [[nodiscard]] bool has_max_age() const noexcept {
+        [[nodiscard]] constexpr bool has_max_age() const noexcept {
             return _max_age == MAX_AGE_EXISTENCE_VALUE;
         }
 
-        [[nodiscard]] max_age_t max_age() const noexcept {
+        [[nodiscard]] constexpr max_age_t max_age() const noexcept {
             return _max_age;
         }
 
         /**
          * If both Expires and Max-Age are set, Max-Age has precedence.
          */
-        void max_age(max_age_t val) noexcept {
+        constexpr void max_age(max_age_t val) noexcept {
             _max_age = val;
             if (has_expires()) {
                 _expires = stl::nullopt;
             }
         }
 
-        void expires_string_to(istl::String auto& result) const {
+        constexpr void expires_string_to(istl::String auto& result) const {
             if (_expires) {
-                static constexpr auto date_format = "{:%a, %d %b %Y %H:%M:%S} GMT";
 
                 // we have to do this because currently STL implementers have not yet specialized
                 // std::formatter for utc_clock type
                 if constexpr (requires { typename fmt::formatter<date_t, char_type>::type; }) {
                     fmt::format_to(stl::back_inserter(result), date_format, _expires.value());
                 } else {
-                    const stl::time_t expires_c =
-                      stl::chrono::system_clock::to_time_t(clock_type::to_sys(*_expires));
-                    fmt::format_to(stl::back_inserter(result), date_format, *stl::gmtime(&expires_c));
+                    fmt::format_to(
+                      stl::back_inserter(result),
+                      date_format,
+                      std::chrono::time_point_cast<std::chrono::seconds>(clock_type::to_sys(*_expires)));
                 }
             }
         }
 
-        string_type expires_string(auto&&... args) const {
-            string_type result{stl::forward<decltype(args)>(args)...};
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT expires_string(auto&&... args) const {
+            StrT result{stl::forward<decltype(args)>(args)...};
             expires_string_to(result);
             return result;
         }
 
-        auto encrypted_value() const noexcept {
-            string_type encrypted_value{this->get_allocator()};
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT encrypted_value() const noexcept {
+            StrT encrypted_value{this->get_allocator()};
             details::encrypt_to(value(), encrypted_value);
             return encrypted_value;
         }
 
-        auto decrypted_value() const noexcept {
-            string_type decrypted_value{this->get_allocator()};
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT decrypted_value() const noexcept {
+            StrT decrypted_value{this->get_allocator()};
             details::decrypt_to(value(), decrypted_value);
             return decrypted_value;
         }
 
-        auto escaped_value() const noexcept {
-            string_type encrypted_value{this->get_allocator()};
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT escaped_value() const noexcept {
+            StrT encrypted_value{this->get_allocator()};
             details::cookie_value_escape_to(value(), encrypted_value);
             return encrypted_value;
         }
 
-        auto unescaped_value() const noexcept {
-            string_type decrypted_value{this->get_allocator()};
+        template <istl::String StrT = string_type>
+        [[nodiscard]] constexpr StrT unescaped_value() const noexcept {
+            StrT decrypted_value{this->get_allocator()};
             details::cookie_value_unescape_to(value(), decrypted_value); // todo: do something if it fails!
             return decrypted_value;
         }
 
-        string_type to_string() const {
+        constexpr string_type to_string() const {
             string_type res{get_allocator()};
             to_string(res);
             return res;
         }
 
-        void to_string(string_type& result) const {
+        constexpr void to_string(string_type& result) const {
             using namespace stl::chrono;
 
-            result.reserve(result.size() + 256);
+            result.reserve(result.size() + 256); // NOLINT(cppcoreguidelines-avoid-magic-numbers)
             result.append(_name);
             result.append("=");
             if (_version == cookie_version::version_0) {
@@ -575,7 +590,7 @@ namespace webpp::http {
                    _path == c._path && c._domain == _domain;
         }
 
-        friend inline void swap(response_cookie& first, response_cookie& second) noexcept {
+        friend constexpr inline void swap(response_cookie& first, response_cookie& second) noexcept {
             using stl::swap;
             swap(first._name, second._name);
             swap(first._value, second._value);
