@@ -35,3 +35,10 @@ TEST(StopWatch, Duration) {
     watch += 10s;
     EXPECT_EQ(watch.elapsed(), 10s);
 }
+
+
+TEST(StopWatch, DurationSeconds) {
+    time::stopwatch watch;
+    watch += 10s;
+    EXPECT_EQ(watch.elapsed_seconds(), 10s);
+}

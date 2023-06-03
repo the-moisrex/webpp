@@ -117,15 +117,15 @@ namespace webpp::time {
         /**
          * Returns the number of seconds elapsed since the stopwatch started.
          */
-        [[nodiscard]] constexpr auto elapsed_seconds() const noexcept {
-            return elapsed() / period::num / period::den;
+        [[nodiscard]] constexpr std::chrono::seconds elapsed_seconds() const noexcept {
+            return std::chrono::duration_cast<std::chrono::seconds>(elapsed());
         }
 
         /**
          * Elapsed now, seconds.
          */
-        [[nodiscard]] constexpr auto elapse_now_seconds() const noexcept {
-            return elapsed() / period::num / period::den;
+        [[nodiscard]] constexpr std::chrono::seconds elapse_now_seconds() const noexcept {
+            return std::chrono::duration_cast<std::chrono::seconds>(elapse_now());
         }
 
       private:
