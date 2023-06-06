@@ -528,6 +528,46 @@ jobs:
         run: cmake --build --preset test-dynamic-router
       - name: Run test-dynamic-router
         run: ./build/test-dynamic-router
+  build-test-endpoint:
+    name: Build test-endpoint
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-endpoint
+        run: cmake --build --preset test-endpoint
+  run-test-endpoint:
+    name: Run test-endpoint
+    needs: build-test-endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-endpoint
+        run: cmake --build --preset test-endpoint
+      - name: Run test-endpoint
+        run: ./build/test-endpoint
   build-test-extensions:
     name: Build test-extensions
     needs: install

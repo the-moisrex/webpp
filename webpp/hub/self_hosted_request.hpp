@@ -3,7 +3,7 @@
 #ifndef WEBPP_SELF_HOSTED_REQUEST_HPP
 #define WEBPP_SELF_HOSTED_REQUEST_HPP
 
-#include "../../http_concepts.hpp"
+#include "../http/http_concepts.hpp"
 
 namespace webpp::http::shosted {
 

@@ -3,15 +3,15 @@
 #ifndef WEBPP_SELF_HOSTED_HPP
 #define WEBPP_SELF_HOSTED_HPP
 
-#include "../../server/default_server_traits.hpp"
-#include "../../server/server_concepts.hpp"
-#include "../../std/string_view.hpp"
-#include "../app_wrapper.hpp"
-#include "../request.hpp"
-#include "../response.hpp"
-#include "common/common_http_protocol.hpp"
-#include "shosted/self_hosted_request.hpp"
-#include "shosted/self_hosted_session_manager.hpp"
+#include "../http/app_wrapper.hpp"
+#include "../http/protocols/common/common_http_protocol.hpp"
+#include "../http/request.hpp"
+#include "../http/response.hpp"
+#include "../server/default_server_traits.hpp"
+#include "../server/server_concepts.hpp"
+#include "../std/string_view.hpp"
+#include "self_hosted_request.hpp"
+#include "self_hosted_session_manager.hpp"
 
 namespace webpp::http::inline shosted {
 

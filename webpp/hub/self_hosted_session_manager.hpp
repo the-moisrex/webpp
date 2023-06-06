@@ -3,11 +3,11 @@
 #ifndef WEBPP_SELF_HOSTED_SESSION_MANAGER_HPP
 #define WEBPP_SELF_HOSTED_SESSION_MANAGER_HPP
 
-#include "../../../configs/constants.hpp"
-#include "../../../server/server_concepts.hpp"
-#include "../../../traits/enable_traits.hpp"
-#include "../../../traits/traits.hpp"
-#include "../../status_code.hpp"
+#include "../configs/constants.hpp"
+#include "../http/status_code.hpp"
+#include "../server/server_concepts.hpp"
+#include "../traits/enable_traits.hpp"
+#include "../traits/traits.hpp"
 
 #include <array>
 

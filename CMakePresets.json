@@ -88,6 +88,7 @@
                 "test-crypto",
                 "test-domain",
                 "test-dynamic-router",
+                "test-endpoint",
                 "test-extensions",
                 "test-find-str",
                 "test-functional",
@@ -180,6 +181,11 @@
         {
             "name": "test-dynamic-router",
             "targets": "test-dynamic-router",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-endpoint",
+            "targets": "test-endpoint",
             "inherits": "default-build"
         },
         {
@@ -459,6 +465,10 @@
         },
         {
             "name": "test-dynamic-router",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-endpoint",
             "inherits": "test-default"
         },
         {
