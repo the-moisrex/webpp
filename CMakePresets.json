@@ -109,9 +109,11 @@
                 "test-router",
                 "test-routes",
                 "test-server",
+                "test-sockets",
                 "test-sql",
                 "test-stopwatch",
                 "test-string",
+                "test-time",
                 "test-tokenizer",
                 "test-traits",
                 "test-tuple",
@@ -289,6 +291,11 @@
             "inherits": "default-build"
         },
         {
+            "name": "test-sockets",
+            "targets": "test-sockets",
+            "inherits": "default-build"
+        },
+        {
             "name": "test-sql",
             "targets": "test-sql",
             "inherits": "default-build"
@@ -301,6 +308,11 @@
         {
             "name": "test-string",
             "targets": "test-string",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-time",
+            "targets": "test-time",
             "inherits": "default-build"
         },
         {
@@ -552,6 +564,10 @@
             "inherits": "test-default"
         },
         {
+            "name": "test-sockets",
+            "inherits": "test-default"
+        },
+        {
             "name": "test-sql",
             "inherits": "test-default"
         },
@@ -561,6 +577,10 @@
         },
         {
             "name": "test-string",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-time",
             "inherits": "test-default"
         },
         {
