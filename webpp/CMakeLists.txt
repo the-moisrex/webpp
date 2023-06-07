@@ -63,7 +63,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/std/net.hpp
         ${LIB_INCLUDE_DIR}/std/netfwd.hpp
         ${LIB_INCLUDE_DIR}/std/set.hpp
-        ${LIB_INCLUDE_DIR}/std/socket.hpp
         ${LIB_INCLUDE_DIR}/std/std.hpp
         ${LIB_INCLUDE_DIR}/std/string.hpp
         ${LIB_INCLUDE_DIR}/std/string_view.hpp
