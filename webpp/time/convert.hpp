@@ -6,6 +6,12 @@
 // todo: test on windows
 #ifdef _WIN32
 #    include <winsock2.h>
+
+#    ifndef _SUSECONDS_T
+#        define _SUSECONDS_T
+typedef long suseconds_t; // signed # of microseconds in timeval
+#    endif                // _SUSECONDS_T
+
 #else
 #    include <sys/time.h>
 #endif
