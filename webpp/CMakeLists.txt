@@ -81,6 +81,14 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/std/collection.hpp
         ${LIB_INCLUDE_DIR}/std/expected.hpp
 
+        ${LIB_INCLUDE_DIR}/io/io_concepts.hpp
+        ${LIB_INCLUDE_DIR}/io/io_uring.hpp
+
+        ${LIB_INCLUDE_DIR}/socket/socket.hpp
+
+        ${LIB_INCLUDE_DIR}/time/stopwatch.hpp
+        ${LIB_INCLUDE_DIR}/time/convert.hpp
+
         ${LIB_INCLUDE_DIR}/validators/validators.hpp
         ${LIB_INCLUDE_DIR}/validators/email.hpp
 
