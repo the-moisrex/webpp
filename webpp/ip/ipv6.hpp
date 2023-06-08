@@ -142,6 +142,28 @@ namespace webpp {
             }
         }
 
+        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+        constexpr ipv6(const stl::uint8_t (&_octets)[16],
+                       stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : data{_octets[0],
+                 _octets[1],
+                 _octets[2],
+                 _octets[3],
+                 _octets[4],
+                 _octets[5],
+                 _octets[6],
+                 _octets[7],
+                 _octets[8],
+                 _octets[9],
+                 _octets[10],
+                 _octets[11],
+                 _octets[12],
+                 _octets[13],
+                 _octets[14],
+                 _octets[15]} {
+            prefix(prefix_value);
+        }
+        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
         constexpr ipv6(octets8_t const& _octets,
                        stl::uint8_t     prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{_octets} {
@@ -190,6 +212,14 @@ namespace webpp {
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
+
+        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+        constexpr ipv6& operator=(const stl::uint8_t (&_octets)[16]) noexcept {
+            stl::copy_n(stl::begin(_octets), 16u, std::begin(data));
+            _prefix = prefix_status(inet_pton6_status::valid);
+            return *this;
+        }
+        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 
         constexpr ipv6& operator=(octets16_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
@@ -733,6 +763,8 @@ namespace webpp {
             return data.cbegin() + interface_identifier_offset;
         }
 
+        // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+
         /**
          * This method sets the Interface Identifier.
          * @param piid A reference to the Interface Identifier.
@@ -757,48 +789,42 @@ namespace webpp {
                 *it = *pit++;
             }
         }
+        // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
-        //        /**
-        //         * This method sets the Interface Identifier.
-        //         *
-        //         * @param[in]  aExtAddress  A reference to the extended
-        //         address.
-        //         *
-        //         */
-        //        void SetIid(const Mac::ExtAddress& aExtAddress) {
-        //            // TODO
-        //        }
+        // /**
+        //  * This method sets the Interface Identifier.
+        //  * @param[in]  aExtAddress  A reference to the extended address.
+        //  */
+        // void set_iid(const Mac::ExtAddress& aExtAddress) {
+        //     // TODO
+        // }
         //
-        //        /**
-        //         * This method converts the IPv6 Interface Identifier to an
-        //         IEEE
-        //         * 802.15.4 Extended Address.
-        //         * @param[out]  aExtAddress  A reference to the extended
-        //         address.
-        //         */
-        //        void ToExtAddress(Mac::ExtAddress& aExtAddress) const {
-        //            // TODO
-        //        }
+        // /**
+        //  * This method converts the IPv6 Interface Identifier to an IEEE
+        //  * 802.15.4 Extended Address.
+        //  * @param[out]  aExtAddress  A reference to the extended address.
+        //  */
+        // void to_ext_address(Mac::ExtAddress& aExtAddress) const {
+        //     // TODO
+        // }
         //
-        //        /**
-        //         * This method converts the IPv6 Interface Identifier to an
-        //         IEEE
-        //         * 802.15.4 MAC Address.
-        //         * @param[out]  aMacAddress  A reference to the MAC address.
-        //         */
-        //        void ToExtAddress(Mac::Address& aMacAddress) const {
-        //            // TODO
-        //        }
+        // /**
+        //  * This method converts the IPv6 Interface Identifier to an IEEE
+        //  * 802.15.4 MAC Address.
+        //  * @param[out]  aMacAddress  A reference to the MAC address.
+        //  */
+        // void to_ext_address(Mac::Address& aMacAddress) const {
+        //     // TODO
+        // }
         //
-        //        /**
-        //         * This method returns the number of IPv6 prefix bits that
-        //         match.
-        //         * @param[in]  aOther  The IPv6 address to match against.
-        //         * @returns The number of IPv6 prefix bits that match.
-        //         */
-        //        stl::uint8_t PrefixMatch(const otIp6Address& aOther) const {
-        //            // TODO
-        //        }
+        // /**
+        //  * This method returns the number of IPv6 prefix bits that match.
+        //  * @param[in]  other  The IPv6 address to match against.
+        //  * @returns The number of IPv6 prefix bits that match.
+        //  */
+        // stl::uint8_t prefix_match(const otIp6Address& other) const {
+        //     // TODO
+        // }
 
         /**
          * @brief checks if the specified ip is valid or not
