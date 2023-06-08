@@ -46,6 +46,8 @@ struct iovec {
 #    endif
 #    include <cerrno>  // io result
 #    include <csignal> // for ignoring the signals
+#    include <cstdio>  // perror
+#    include <cstdlib> // EXIT_FAILURE
 #    include <netdb.h>
 #endif
 
@@ -150,13 +152,29 @@ namespace webpp {
     class socket_initializer {
 
         constexpr socket_initializer() noexcept {
+            // do nothing if it's called in a consteval environment
             if !consteval {
 #if defined(_WIN32)
                 WSADATA wsadata;
                 ::WSAStartup(MAKEWORD(2, 0), &wsadata);
+#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
+                // ignoring the signal the new way
+                // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
+                // Set up the signal handler using sigaction()
+                struct sigaction sa;     // NOLINT(cppcoreguidelines-pro-type-member-init)
+                sa.sa_handler = SIG_IGN; // Set the signal handler to SIG_IGN to ignore the signal
+                ::sigemptyset(&sa.sa_mask);
+                sa.sa_flags = SA_RESTART; // Set the SA_RESTART flag to automatically restart system calls
+                                          // interrupted by the signal
+
+                if (::sigaction(SIGPIPE, &sa, nullptr) == -1) {
+                    perror("sigaction");
+                    exit(EXIT_FAILURE);
+                }
+
 #else
                 // ignore signals on socket write errors.
-                std::signal(SIGPIPE, SIG_IGN);
+                static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
 #endif
             }
         }
@@ -174,7 +192,7 @@ namespace webpp {
          * reverse order as they were created
          */
         static void initialize() noexcept {
-            [[maybe_unused]] static socket_initializer sock_init;
+            [[maybe_unused]] static socket_initializer const sock_init;
         }
 
         constexpr ~socket_initializer() noexcept
