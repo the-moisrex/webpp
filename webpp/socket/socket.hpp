@@ -300,7 +300,7 @@ namespace webpp {
          *  	   socket is bound. If the socket is not bound, or the address
          *  	   is not known, returns AF_UNSPEC.
          */
-        [[nodiscard]] constexpr sa_family_t family() const noexcept {
+        [[nodiscard]] sa_family_t family() const noexcept {
             return address().family();
         }
 
