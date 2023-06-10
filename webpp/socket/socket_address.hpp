@@ -7,6 +7,7 @@
 #include "./os.hpp"
 
 namespace webpp {
+    //////////////////////////////////////// To ipv4/ipv6/addresses ////////////////////////////////////////
 
     static constexpr void to_addr(ipv4& to_ip, sockaddr_in from_in) noexcept {
         to_ip = from_in.sin_addr.s_addr; // s_addr is uint32_t
@@ -24,28 +25,161 @@ namespace webpp {
         to_ip = ipv6{from_in.sin6_addr.s6_addr};
     }
 
+    static constexpr void to_addr(address& to_ip, in_addr from_in) noexcept {
+        to_ip = ipv4{static_cast<stl::uint32_t>(from_in.s_addr)};
+    }
+
+    static constexpr void to_addr(ipv4& to_ip, in_addr from_in) noexcept {
+        to_ip = static_cast<stl::uint32_t>(from_in.s_addr);
+    }
+
+    static constexpr void to_addr(address& to_ip, in6_addr const& from_in) noexcept {
+        to_ip = ipv6{from_in.s6_addr};
+    }
+
+    static constexpr void to_addr(ipv6& to_ip, in6_addr const& from_in) noexcept {
+        to_ip = ipv6{from_in.s6_addr};
+    }
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+
+    // technically sockaddr should not be able to hold ipv6 addresses thus this should be undefined behaviour
+    //    static inline void to_addr(address& to_ip, sockaddr const& from_in) noexcept {
+    //        switch (from_in.sa_family) {
+    //            case AF_INET: to_addr(to_ip, reinterpret_cast<sockaddr_in const&>(from_in)); break;
+    //            case AF_INET6: to_addr(to_ip, reinterpret_cast<sockaddr_in6 const&>(from_in)); break;
+    //            default: to_ip = address::invalid();
+    //        }
+    //    }
+
+    // technically sockaddr should not be able to hold ipv6 addresses thus this should be undefined behaviour
+    //    static inline void to_addr(ipv6& to_ip, sockaddr const& from_in) noexcept {
+    //        switch (from_in.sa_family) {
+    //            case AF_INET6: to_addr(to_ip, reinterpret_cast<sockaddr_in6 const&>(from_in)); break;
+    //            default: to_ip = ipv6::invalid();
+    //        }
+    //    }
+
+    //    static inline void to_addr(ipv4& to_ip, sockaddr const& from_in) noexcept {
+    //        switch (from_in.sa_family) {
+    //            case AF_INET: to_addr(to_ip, reinterpret_cast<sockaddr_in const&>(from_in)); break;
+    //            default: to_ip = ipv4::invalid();
+    //        }
+    //    }
+
+    static inline void to_addr(address& to_ip, sockaddr_storage const& from_in) noexcept {
+        switch (from_in.ss_family) {
+            case AF_INET: to_addr(to_ip, reinterpret_cast<sockaddr_in const&>(from_in)); break;
+            case AF_INET6: to_addr(to_ip, reinterpret_cast<sockaddr_in6 const&>(from_in)); break;
+            default: to_ip = address::invalid();
+        }
+    }
+
+    static inline void to_addr(ipv4& to_ip, sockaddr_storage const& from_in) noexcept {
+        switch (from_in.ss_family) {
+            case AF_INET: to_addr(to_ip, reinterpret_cast<sockaddr_in const&>(from_in)); break;
+            default: to_ip = ipv4::invalid();
+        }
+    }
+
+    static inline void to_addr(ipv6& to_ip, sockaddr_storage const& from_in) noexcept {
+        switch (from_in.ss_family) {
+            case AF_INET6: to_addr(to_ip, reinterpret_cast<sockaddr_in6 const&>(from_in)); break;
+            default: to_ip = ipv6::invalid();
+        }
+    }
+    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+
 
     /**
-     * Generate a ipv4/ipv6/address from the specified sockaddr_in
+     * Generate a ipv4/ipv6/address from the specified sockaddr/sockaddr_in/...
      */
-    template <typename Addr = address>
-    static constexpr Addr from_addr(sockaddr_in from_in) noexcept {
+    template <typename Addr = address, typename SocketIPType>
+        requires istl::
+          part_of<SocketIPType, sockaddr, sockaddr_in, sockaddr_in6, in_addr, in6_addr, sockaddr_storage>
+      static constexpr Addr make_addr(SocketIPType const& from_in) noexcept {
         Addr to_ip;
         to_addr(to_ip, from_in);
         return to_ip;
     }
 
-    /**
-     * Generate a ipv4/ipv6/address from the specified sockaddr_in6
-     */
-    template <typename Addr = address>
-        requires(std::same_as<Addr, ipv4>) // it's ipv6, can't be put into ipv4
-    static constexpr Addr from_addr(sockaddr_in6 const& from_in) noexcept {
-        Addr to_ip;
-        to_addr(to_ip, from_in);
-        return to_ip;
+
+    //////////////////////////////////////// To Socket Addresses ////////////////////////////////////////
+
+    static constexpr void to_sock(sockaddr_in& to_addr, ipv4 from_ip) noexcept {
+        to_addr.sin_family      = AF_INET;
+        to_addr.sin_addr.s_addr = from_ip.integer(); // s_addr is uint32_t
     }
 
+    static constexpr void to_sock(in_addr& to_addr, ipv4 from_ip) noexcept {
+        to_addr.s_addr = from_ip.integer();
+    }
+
+    static constexpr void to_sock(in6_addr& to_addr, ipv6 const& from_ip) noexcept {
+        // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+        const auto octets   = from_ip.octets8();
+        to_addr.s6_addr[0]  = octets[0];
+        to_addr.s6_addr[1]  = octets[1];
+        to_addr.s6_addr[2]  = octets[2];
+        to_addr.s6_addr[3]  = octets[3];
+        to_addr.s6_addr[4]  = octets[4];
+        to_addr.s6_addr[5]  = octets[5];
+        to_addr.s6_addr[6]  = octets[6];
+        to_addr.s6_addr[7]  = octets[7];
+        to_addr.s6_addr[8]  = octets[8];
+        to_addr.s6_addr[9]  = octets[9];
+        to_addr.s6_addr[10] = octets[10];
+        to_addr.s6_addr[11] = octets[11];
+        to_addr.s6_addr[12] = octets[12];
+        to_addr.s6_addr[13] = octets[13];
+        to_addr.s6_addr[14] = octets[14];
+        to_addr.s6_addr[15] = octets[15];
+        // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+    }
+
+    static constexpr void to_sock(sockaddr_in6& to_addr, ipv6 const& from_ip) noexcept {
+        to_addr.sin6_family = AF_INET6;
+        to_sock(to_addr.sin6_addr, from_ip);
+    }
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+    static inline void to_sock(sockaddr_storage& to_addr, address const& from_ip) noexcept {
+        if (from_ip.is_v4()) {
+            to_sock(reinterpret_cast<sockaddr_in&>(to_addr), from_ip.as_v4());
+        } else if (from_ip.is_v6()) {
+            to_sock(reinterpret_cast<sockaddr_in6&>(to_addr), from_ip.as_v6());
+        } else {
+            // invalid ip address
+        }
+    }
+
+    static inline void to_sock(sockaddr_storage& to_addr, ipv4 from_ip) noexcept {
+        to_sock(reinterpret_cast<sockaddr_in&>(to_addr), from_ip);
+    }
+
+    static inline void to_sock(sockaddr_storage& to_addr, ipv6 const& from_ip) noexcept {
+        to_sock(reinterpret_cast<sockaddr_in6&>(to_addr), from_ip);
+    }
+
+    // technically sockaddr cannot hold ipv6 addresses
+    //    static inline void to_sock(sockaddr& to_addr, address const& from_ip) noexcept {
+    //        to_sock(reinterpret_cast<sockaddr_storage&>(to_addr), from_ip.as_v4());
+    //    }
+
+    //    static inline void to_sock(sockaddr& to_addr, ipv4 from_ip) noexcept {
+    //        to_sock(reinterpret_cast<sockaddr_in&>(to_addr), from_ip);
+    //    }
+
+    // technically sockaddr cannot hold ipv6 addresses
+    //    static inline void to_sock(sockaddr& to_addr, ipv6 const& from_ip) noexcept {
+    //        to_sock(reinterpret_cast<sockaddr_in6&>(to_addr), from_ip);
+    //    }
+
+    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+
+
+
+    //////////////////////////////////////// Address Wrappers ////////////////////////////////////////
 
     /**
      * Generic socket address.
@@ -77,7 +211,7 @@ namespace webpp {
          * @param n The number of valid bytes in the address
          */
         sock_address_any(const sockaddr* addr, socklen_t n) noexcept : addr_len{n} {
-            std::memcpy(&addr_, addr, n);
+            std::memcpy(&addr_storage, addr, n);
         }
 
 
@@ -87,7 +221,7 @@ namespace webpp {
          * @param n The number of valid bytes in the address
          */
         sock_address_any(const sockaddr_storage& addr, socklen_t n) noexcept : addr_len{n} {
-            std::memcpy(&addr_, &addr, n);
+            std::memcpy(&addr_storage, &addr, n);
         }
 
         /**
@@ -105,32 +239,35 @@ namespace webpp {
         }
 
         [[nodiscard]] constexpr sa_family_t family() const noexcept {
-            return addr_.ss_family;
+            return addr_storage.ss_family;
         }
 
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
         /**
          * Gets a pointer to this object cast to a sockaddr.
          */
         [[nodiscard]] const sockaddr* sockaddr_ptr() const noexcept {
-            return reinterpret_cast<const sockaddr*>(&addr_);
+            return reinterpret_cast<const sockaddr*>(&addr_storage);
         }
 
         /**
          * Gets a pointer to this object cast to a sockaddr.
          */
         [[nodiscard]] sockaddr* sockaddr_ptr() noexcept {
-            return reinterpret_cast<sockaddr*>(&addr_);
+            return reinterpret_cast<sockaddr*>(&addr_storage);
         }
+        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
-        [[nodiscard]] socklen_t* socklen_ptr() noexcept {
+        [[nodiscard]] constexpr socklen_t* socklen_ptr() noexcept {
             return &addr_len;
         }
 
-        [[nodiscard]] socklen_t const* socklen_ptr() const noexcept {
+        [[nodiscard]] constexpr socklen_t const* socklen_ptr() const noexcept {
             return &addr_len;
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
+            // should we check the validity of the sockaddr_storage as well?
             return addr_len <= max_address_size;
         }
 
@@ -138,9 +275,21 @@ namespace webpp {
             return is_valid();
         }
 
+        operator address() const noexcept {
+            return make_addr<address>(addr_storage);
+        }
+
+        operator ipv4() const noexcept {
+            return make_addr<ipv4>(addr_storage);
+        }
+
+        operator ipv6() const noexcept {
+            return make_addr<ipv6>(addr_storage);
+        }
+
       private:
         // Storage for any kind of socket address
-        sockaddr_storage addr_{};
+        sockaddr_storage addr_storage{};
 
         // Length of the address (in bytes)
         socklen_t addr_len{max_address_size};

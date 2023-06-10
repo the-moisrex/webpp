@@ -180,17 +180,21 @@ namespace webpp {
 
         basic_socket(int domain, int type, int protocol = 0) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
+
         constexpr basic_socket() noexcept {
             socket_initializer::initialize();
         }
+
         constexpr basic_socket(native_handle_type d) noexcept : fd(d) {
             // no need to initialize, they already got a socket!
         }
+
         constexpr basic_socket(basic_socket const& other) noexcept {
             socket_initializer::initialize();
             auto cloned = other.clone();
             fd          = std::exchange(cloned.fd, invalid_handle_value);
         }
+
         constexpr basic_socket(basic_socket&&) noexcept = default;
 
 
@@ -264,7 +268,7 @@ namespace webpp {
          * Gets the local address to which the socket is bound.
          * @return The local address to which the socket is bound.
          */
-        [[nodiscard]] constexpr sock_address_any address() const noexcept {
+        [[nodiscard]] sock_address_any address() const noexcept {
             sock_address_any addr;
             // todo: check for errno
             if (::getsockname(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) == -1) {
@@ -278,7 +282,7 @@ namespace webpp {
          * Gets the address of the remote peer, if this socket is connected.
          * @return The address of the remote peer, if this socket is connected.
          */
-        [[nodiscard]] constexpr sock_address_any peer_address() const noexcept {
+        [[nodiscard]] sock_address_any peer_address() const noexcept {
             sock_address_any addr;
             // todo: check for errno
             if (::getpeername(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) != -1) {
