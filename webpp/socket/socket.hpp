@@ -195,7 +195,8 @@ namespace webpp {
             fd          = std::exchange(cloned.fd, invalid_handle_value);
         }
 
-        constexpr basic_socket(basic_socket&&) noexcept = default;
+        constexpr basic_socket(basic_socket&& other) noexcept
+          : fd{std::exchange(other.fd, invalid_handle_value)} {}
 
 
         constexpr basic_socket& operator=(basic_socket const& other) noexcept {
