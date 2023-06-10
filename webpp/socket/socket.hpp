@@ -3,55 +3,10 @@
 #ifndef WEBPP_SOCKET_HPP
 #define WEBPP_SOCKET_HPP
 
-#include <cstdint>
+#include "./os.hpp"
+#include "./socket_address.hpp"
 
-#if defined(_WIN32)
-#    include <winsock2.h>
-// #include <ws2tcpip.h>
-
-using socket_t = SOCKET;
-
-using socklen_t = int;
-using in_port_t = uint16_t;
-using in_addr_t = uint32_t;
-
-using sa_family_t = u_short;
-
-#    ifndef _SSIZE_T_DEFINED
-#        define _SSIZE_T_DEFINED
-#        undef ssize_t
-using ssize_t = SSIZE_T;
-#    endif // _SSIZE_T_DEFINED
-
-#    ifndef _SUSECONDS_T
-#        define _SUSECONDS_T
-typedef long suseconds_t; // signed # of microseconds in timeval
-#    endif                // _SUSECONDS_T
-
-#    define SHUT_RD   SD_RECEIVE
-#    define SHUT_WR   SD_SEND
-#    define SHUT_RDWR SD_BOTH
-
-struct iovec {
-    void*       iov_base;
-    std::size_t iov_len;
-};
-
-#else
-#    include <arpa/inet.h>
-#    include <sys/socket.h>
-#    include <unistd.h> // dup
-#    ifdef __FreeBSD__
-#        include <netinet/in.h>
-#    endif
-#    include <cerrno>  // io result
-#    include <csignal> // for ignoring the signals
-#    include <cstdio>  // perror
-#    include <cstdlib> // EXIT_FAILURE
-#    include <netdb.h>
-#endif
-
-
+#include <utility>
 
 namespace webpp {
 
@@ -191,8 +146,10 @@ namespace webpp {
          * It'll get destructed on program termination with the other static objects in
          * reverse order as they were created
          */
-        static void initialize() noexcept {
-            [[maybe_unused]] static socket_initializer const sock_init;
+        constexpr static void initialize() noexcept {
+            if !consteval {
+                [[maybe_unused]] static socket_initializer const sock_init;
+            }
         }
 
         constexpr ~socket_initializer() noexcept
@@ -221,26 +178,63 @@ namespace webpp {
         static constexpr native_handle_type invalid_handle_value = -1;
 #endif
 
-        basic_socket(int domain, int type, int protocol = 0) noexcept {
+        basic_socket(int domain, int type, int protocol = 0) noexcept
+          : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
+        constexpr basic_socket() noexcept {
             socket_initializer::initialize();
-            fd = ::socket(domain, type, protocol);
         }
-        constexpr basic_socket() noexcept = default;
-        constexpr basic_socket(native_handle_type d) : fd(d) {}
+        constexpr basic_socket(native_handle_type d) noexcept : fd(d) {
+            // no need to initialize, they already got a socket!
+        }
+        constexpr basic_socket(basic_socket const& other) noexcept {
+            socket_initializer::initialize();
+            auto cloned = other.clone();
+            fd          = std::exchange(cloned.fd, invalid_handle_value);
+        }
+        constexpr basic_socket(basic_socket&&) noexcept = default;
 
-        bool close() noexcept {
-            if (!is_valid()) {
+
+        constexpr basic_socket& operator=(basic_socket const& other) noexcept {
+            if (this != &other && other.fd != fd) {
+                other.clone().swap(*this);
+            }
+            return *this;
+        }
+        constexpr basic_socket& operator=(basic_socket&&) noexcept = default;
+        constexpr basic_socket& operator=(native_handle_type d) noexcept {
+            if (d != fd) {
+                close();
+                fd = d;
+            }
+            return *this;
+        }
+        constexpr ~basic_socket() noexcept {
+            close();
+        }
+
+        constexpr basic_socket& swap(basic_socket& other) noexcept {
+            using std::swap;
+            swap(fd, other.fd);
+            return *this;
+        }
+
+        constexpr bool close() noexcept {
+            if consteval {
                 return true;
-            }
+            } else {
+                if (!is_open()) {
+                    return true;
+                }
 #if defined(_WIN32)
-            bool const val = ::closesocket(fd) >= 0;
+                bool const val = ::closesocket(fd) >= 0;
 #else
-            bool const val = ::close(fd) >= 0;
+                bool const val = ::close(fd) >= 0;
 #endif
-            if (val) {
-                fd = invalid_handle_value;
+                if (val) {
+                    fd = invalid_handle_value;
+                }
+                return val;
             }
-            return val;
         }
 
         /**
@@ -248,7 +242,7 @@ namespace webpp {
          * This creates a new object with an independent lifetime, but refers back to this same socket.
          * A typical use of this is to have separate threads for using the socket.
          */
-        [[nodiscard]] constexpr basic_socket clone() const {
+        [[nodiscard]] constexpr basic_socket clone() const noexcept {
             if consteval {
                 return {invalid_handle_value};
             } else {
@@ -266,6 +260,44 @@ namespace webpp {
             }
         }
 
+        /**
+         * Gets the local address to which the socket is bound.
+         * @return The local address to which the socket is bound.
+         */
+        [[nodiscard]] constexpr sock_address_any address() const noexcept {
+            sock_address_any addr;
+            // todo: check for errno
+            if (::getsockname(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) == -1) {
+                return sock_address_any::invalid();
+            }
+            return addr;
+        }
+
+
+        /**
+         * Gets the address of the remote peer, if this socket is connected.
+         * @return The address of the remote peer, if this socket is connected.
+         */
+        [[nodiscard]] constexpr sock_address_any peer_address() const noexcept {
+            sock_address_any addr;
+            // todo: check for errno
+            if (::getpeername(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) != -1) {
+                return sock_address_any::invalid();
+            }
+            return addr;
+        }
+
+
+
+        /**
+         * Gets the network family of the address to which the socket is bound.
+         * @return The network family of the address (AF_INET, etc) to which the
+         *  	   socket is bound. If the socket is not bound, or the address
+         *  	   is not known, returns AF_UNSPEC.
+         */
+        [[nodiscard]] constexpr sa_family_t family() const noexcept {
+            return address().family();
+        }
 
         [[nodiscard]] constexpr native_handle_type native_handle() const noexcept {
             return fd;
@@ -279,12 +311,12 @@ namespace webpp {
             return fd != other.fd;
         }
 
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
+        [[nodiscard]] constexpr bool is_open() const noexcept {
             return fd != invalid_handle_value;
         }
 
         [[nodiscard]] constexpr operator bool() const noexcept {
-            return is_valid();
+            return is_open();
         }
 
       private:
