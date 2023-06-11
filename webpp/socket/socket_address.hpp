@@ -10,11 +10,11 @@ namespace webpp {
     //////////////////////////////////////// To ipv4/ipv6/addresses ////////////////////////////////////////
 
     static constexpr void to_addr(ipv4& to_ip, sockaddr_in from_in) noexcept {
-        to_ip = from_in.sin_addr.s_addr; // s_addr is uint32_t
+        to_ip = ::ntohl(from_in.sin_addr.s_addr); // s_addr is uint32_t
     }
 
     static constexpr void to_addr(address& to_ip, sockaddr_in from_in) noexcept {
-        to_ip = ipv4{from_in.sin_addr.s_addr}; // s_addr is uint32_t
+        to_ip = ipv4{::ntohl(from_in.sin_addr.s_addr)}; // s_addr is uint32_t
     }
 
     static constexpr void to_addr(ipv6& to_ip, sockaddr_in6 const& from_in) noexcept {
@@ -26,11 +26,11 @@ namespace webpp {
     }
 
     static constexpr void to_addr(address& to_ip, in_addr from_in) noexcept {
-        to_ip = ipv4{static_cast<stl::uint32_t>(from_in.s_addr)};
+        to_ip = ipv4{::ntohl(static_cast<stl::uint32_t>(from_in.s_addr))};
     }
 
     static constexpr void to_addr(ipv4& to_ip, in_addr from_in) noexcept {
-        to_ip = static_cast<stl::uint32_t>(from_in.s_addr);
+        to_ip = ::ntohl(static_cast<stl::uint32_t>(from_in.s_addr));
     }
 
     static constexpr void to_addr(address& to_ip, in6_addr const& from_in) noexcept {
@@ -110,11 +110,11 @@ namespace webpp {
 
     static constexpr void to_sock_addr(sockaddr_in& to_addr, ipv4 from_ip) noexcept {
         to_addr.sin_family      = AF_INET;
-        to_addr.sin_addr.s_addr = from_ip.integer(); // s_addr is uint32_t
+        to_addr.sin_addr.s_addr = ::htonl(from_ip.integer()); // s_addr is uint32_t
     }
 
     static constexpr void to_sock_addr(in_addr& to_addr, ipv4 from_ip) noexcept {
-        to_addr.s_addr = from_ip.integer();
+        to_addr.s_addr = ::htonl(from_ip.integer());
     }
 
     static constexpr void to_sock_addr(in6_addr& to_addr, ipv6 const& from_ip) noexcept {

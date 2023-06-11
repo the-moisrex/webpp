@@ -39,7 +39,7 @@ struct iovec {
 };
 
 #else
-#    include <arpa/inet.h>
+#    include <arpa/inet.h> // htonl, ...
 #    include <sys/socket.h>
 #    include <unistd.h> // dup
 #    ifdef __FreeBSD__
