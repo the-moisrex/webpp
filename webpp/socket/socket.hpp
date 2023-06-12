@@ -23,20 +23,19 @@ namespace webpp {
      */
     class io_result {
         // Byte count, or 0 on error or EOF
-        std::size_t cnt_ = 0;
+        stl::size_t byte_count = 0;
 
         // errno value (0 if no error or EOF)
-        int err_ = 0;
+        int err_value = 0;
 
       public:
         /**
          * OS-specific means to retrieve the last error from an operation.
-         * This should be called after a failed system call to get the caue of
-         * the error.
+         * This should be called after a failed system call to get the cause of the error.
          */
-        constexpr static int get_last_error() noexcept {
+        constexpr static int last_error() noexcept {
             if !consteval {
-#if defined(_WIN32)
+#ifdef _WIN32
                 return ::WSAGetLastError();
 #else
                 return errno;
@@ -52,48 +51,46 @@ namespace webpp {
 
         /**
          * Creates a result from the return value of a low-level I/O function.
-         * @param n The number of bytes read or written. If <0, then an error is
-         *  		assumed and obtained from socket::get_last_error().
+         * @param n The number of bytes read or written. If <0, then an error is obtained
          */
         constexpr explicit io_result(ssize_t n) noexcept {
             if (n < 0) {
-                err_ = get_last_error();
+                err_value = last_error();
             } else {
-                cnt_ = std::size_t(n);
+                byte_count = stl::size_t(n);
             }
         }
 
         // Set the error value
         constexpr void set_error(int e) noexcept {
-            err_ = e;
+            err_value = e;
         }
 
         // Increments the count
-        constexpr void incr(std::size_t n) noexcept {
-            cnt_ += n;
+        constexpr void incr(stl::size_t n) noexcept {
+            byte_count += n;
         }
 
         // Determines if the result is OK (not an error)
         [[nodiscard]] constexpr bool is_ok() const noexcept {
-            return err_ == 0;
+            return err_value == 0;
         }
 
         // Check if it's an error
         [[nodiscard]] constexpr bool is_error() const noexcept {
-            return err_ != 0;
+            return err_value != 0;
         }
 
-        // is_ok
         [[nodiscard]] constexpr operator bool() const noexcept {
             return is_ok();
         }
 
-        [[nodiscard]] constexpr std::size_t count() const noexcept {
-            return cnt_;
+        [[nodiscard]] constexpr stl::size_t count() const noexcept {
+            return byte_count;
         }
 
         [[nodiscard]] constexpr int error() const noexcept {
-            return err_;
+            return err_value;
         }
     };
 
@@ -109,7 +106,7 @@ namespace webpp {
         constexpr socket_initializer() noexcept {
             // do nothing if it's called in a consteval environment
             if !consteval {
-#if defined(_WIN32)
+#ifdef _WIN32
                 WSADATA wsadata;
                 ::WSAStartup(MAKEWORD(2, 0), &wsadata);
 #elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
@@ -129,7 +126,7 @@ namespace webpp {
 
 #else
                 // ignore signals on socket write errors.
-                static_cast<void>(std::signal(SIGPIPE, SIG_IGN));
+                static_cast<void>(stl::signal(SIGPIPE, SIG_IGN));
 #endif
             }
         }
@@ -153,7 +150,7 @@ namespace webpp {
         }
 
         constexpr ~socket_initializer() noexcept
-#if defined(_WIN32)
+#ifdef _WIN32
         {
             ::WSACleanup();
         }
@@ -183,6 +180,16 @@ namespace webpp {
             return {};
         }
 
+      private:
+        /**
+         * Checks the value and if less than zero, sets last error.
+         */
+        [[nodiscard]] constexpr bool check_ret_bool(stl::integral auto ret) const noexcept {
+            last_errno = (ret < 0) ? io_result::last_error() : 0;
+            return ret >= 0;
+        }
+
+      public:
         basic_socket(int domain, int type, int protocol = 0) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
@@ -211,6 +218,7 @@ namespace webpp {
             if (d != fd) {
                 close();
                 fd = d;
+                clear_error();
             }
             return *this;
         }
@@ -219,8 +227,9 @@ namespace webpp {
         }
 
         constexpr basic_socket& swap(basic_socket& other) noexcept {
-            using std::swap;
+            using stl::swap;
             swap(fd, other.fd);
+            swap(last_errno, other.last_errno);
             return *this;
         }
 
@@ -239,7 +248,7 @@ namespace webpp {
                 if (!is_open()) {
                     return true;
                 }
-#if defined(_WIN32)
+#ifdef _WIN32
                 bool const val = ::closesocket(fd) >= 0;
 #else
                 bool const val = ::close(fd) >= 0;
@@ -261,7 +270,7 @@ namespace webpp {
                 return {invalid_handle_value};
             } else {
                 native_handle_type h = invalid_handle_value;
-#if defined(_WIN32)
+#ifdef _WIN32
                 WSAPROTOCOL_INFOW protInfo;
                 if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0) {
                     h =
@@ -280,8 +289,7 @@ namespace webpp {
          */
         [[nodiscard]] sock_address_any address() const noexcept {
             sock_address_any addr;
-            // todo: check for errno
-            if (::getsockname(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) == -1) {
+            if (check_ret_bool(::getsockname(fd, addr.sockaddr_ptr(), addr.socklen_ptr()))) {
                 return sock_address_any::invalid();
             }
             return addr;
@@ -294,20 +302,182 @@ namespace webpp {
          */
         [[nodiscard]] sock_address_any peer_address() const noexcept {
             sock_address_any addr;
-            // todo: check for errno
-            if (::getpeername(fd, addr.sockaddr_ptr(), addr.socklen_ptr()) != -1) {
+            if (check_ret_bool(::getpeername(fd, addr.sockaddr_ptr(), addr.socklen_ptr()))) {
                 return sock_address_any::invalid();
             }
             return addr;
         }
 
+        /**
+         * Binds the socket to the specified address.
+         */
+        bool bind(const sock_address_any& addr) noexcept {
+            return check_ret_bool(::bind(fd, addr.sockaddr_ptr(), addr.size()));
+        }
+
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+        bool bind(ipv4 ip, stl::uint16_t port) noexcept {
+            auto addr     = make_sock_addr<sockaddr_in>(ip);
+            addr.sin_port = static_cast<in_port_t>(hton(port));
+            return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in)));
+        }
+
+        bool bind(ipv6 const& ip, stl::uint16_t port) noexcept {
+            auto addr      = make_sock_addr<sockaddr_in6>(ip);
+            addr.sin6_port = static_cast<in_port_t>(hton(port));
+            return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in6)));
+        }
+        // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+
+
+        /**
+         * Gets the value of a socket option.
+         * This is a thin wrapper for the system `getsockopt`.
+         *
+         * @param level The protocol level at which the option resides, such as SOL_SOCKET.
+         * @param optname The option passed directly to the protocol module.
+         * @param optval The buffer for the value to retrieve
+         * @param optlen length of the buffer as input, and the length of the value retrieved on return.
+         *
+         * @return bool true if the value was retrieved, false on error.
+         */
+        bool get_option(int level, int optname, void* optval, socklen_t* optlen) const noexcept {
+#ifdef _WIN32
+            if (optval && optlen) {
+                int len = static_cast<int>(*optlen);
+                if (check_ret_bool(::getsockopt(fd, level, optname, static_cast<char*>(optval), &len))) {
+                    *optlen = static_cast<socklen_t>(len);
+                    return true;
+                }
+            }
+            return false;
+#else
+            return check_ret_bool(::getsockopt(fd, level, optname, optval, optlen));
+#endif
+        }
+
+        /**
+         * Gets the value of a socket option.
+         *
+         * @param level The protocol level at which the option resides, such as SOL_SOCKET.
+         * @param optname The option passed directly to the protocol module.
+         * @param val The value to retrieve
+         *
+         * @return bool true if the value was retrieved, false on error.
+         */
+        template <typename T>
+        bool get_option(int level, int optname, T* val) const noexcept {
+            socklen_t len = sizeof(T);
+            return get_option(level, optname, (void*) val, &len);
+        }
+
+        /**
+         * Sets the value of a socket option.
+         * This is a thin wrapper for the system `setsockopt`.
+         *
+         * @param level The protocol level at which the option resides, such as SOL_SOCKET.
+         * @param optname The option passed directly to the protocol module.
+         * @param optval The buffer with the value to set.
+         * @param optlen Contains the length of the buffer.
+         *
+         * @return bool true if the value was set, false on error.
+         */
+        bool set_option(int level, int optname, const void* optval, socklen_t optlen) noexcept {
+#ifdef _WIN32
+            return check_ret_bool(
+              ::setsockopt(fd, level, optname, static_cast<const char*>(optval), static_cast<int>(optlen)));
+#else
+            return check_ret_bool(::setsockopt(fd, level, optname, optval, optlen));
+#endif
+        }
+
+        /**
+         * Sets the value of a socket option.
+         *
+         * @param level The protocol level at which the option resides, such as SOL_SOCKET.
+         * @param optname The option passed directly to the protocol module.
+         * @param val The value
+         *
+         * @return bool true if the value was set, false on error
+         */
+        template <typename T>
+        bool set_option(int level, int optname, const T& val) noexcept {
+            return set_option(level, optname, (void*) &val, sizeof(T));
+        }
+
+
+        bool set_non_blocking(bool on = true) noexcept {
+#ifdef _WIN32
+            unsigned long mode = on ? 1 : 0;
+            return check_ret_bool(::ioctlsocket(fd, FIONBIO, &mode));
+#else
+            return set_flag(O_NONBLOCK, on);
+#endif
+        }
+#ifndef _WIN32
+
+        int get_flags() const noexcept {
+            int const flags = ::fcntl(fd, F_GETFL, 0); // NOLINT(cppcoreguidelines-pro-type-vararg)
+            last_errno      = (flags == -1) ? io_result::last_error() : 0;
+            return flags;
+        }
+
+        bool set_flags(int flags) noexcept {
+            if (::fcntl(fd, F_SETFL, flags) == -1) { // NOLINT(cppcoreguidelines-pro-type-vararg)
+                last_errno = io_result::last_error();
+                return false;
+            }
+            return true;
+        }
+
+        bool set_flag(int flag, bool on = true) noexcept {
+            int const flags = get_flags();
+            if (flags == -1) {
+                return false;
+            }
+            return set_flags(on ? (flags | flag) : (flags & ~flag));
+        }
+
+        [[nodiscard]] bool is_non_blocking() const noexcept {
+            int const flags = get_flags();
+            return (flags == -1) ? false : ((flags & O_NONBLOCK) != 0);
+        }
+
+#endif
+
+        /**
+         * Shuts down all or part of the full-duplex connection.
+         * @param how Which part of the connection should be shut:
+         *  	@li SHUT_RD   (0) Further reads disallowed.
+         *  	@li SHUT_WR   (1) Further writes disallowed
+         *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
+         * @return true on success, false on error.
+         */
+        bool shutdown(int how = SHUT_RDWR) noexcept {
+            if (is_open()) {
+                return check_ret_bool(::shutdown(release(), how));
+            }
+            return false;
+        }
+
+        /**
+         * Replaces the underlying managed socket object.
+         * @param h The new socket handle to manage.
+         */
+        void reset(native_handle_type d = invalid_handle_value) {
+            if (d != fd) {
+                close();
+                fd = d;
+            }
+            clear_error();
+        }
 
 
         /**
          * Gets the network family of the address to which the socket is bound.
-         * @return The network family of the address (AF_INET, etc) to which the
-         *  	   socket is bound. If the socket is not bound, or the address
-         *  	   is not known, returns AF_UNSPEC.
+         *
+         * @return The network family of the address (AF_INET, etc) to which the socket is bound.
+         * If the socket is not bound, or the address is not known, returns AF_UNSPEC.
          */
         [[nodiscard]] sa_family_t family() const noexcept {
             return address().family();
@@ -329,12 +499,29 @@ namespace webpp {
             return fd != invalid_handle_value;
         }
 
+        [[nodiscard]] constexpr bool is_error_free() const noexcept {
+            return last_errno == 0;
+        }
+
         [[nodiscard]] constexpr operator bool() const noexcept {
-            return is_open();
+            return is_open() && is_error_free();
+        }
+
+        [[nodiscard]] constexpr int last_error() const noexcept {
+            return last_errno;
+        }
+
+        /**
+         * Clears the error flag for the object.
+         * @param val The value to set the flag, normally zero.
+         */
+        constexpr void clear_error(int val = 0) noexcept {
+            last_errno = val;
         }
 
       private:
-        native_handle_type fd = invalid_handle_value;
+        native_handle_type fd         = invalid_handle_value;
+        mutable int        last_errno = 0;
     };
 
 } // namespace webpp
@@ -344,8 +531,8 @@ namespace std {
 
     template <>
     struct hash<webpp::basic_socket> {
-        constexpr std::size_t operator()(const webpp::basic_socket& s) const noexcept {
-            return std::hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
+        stl::size_t operator()(const webpp::basic_socket& s) const noexcept {
+            return stl::hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
         }
     };
 

@@ -101,7 +101,7 @@ namespace webpp {
             part_of<SocketIPType, sockaddr, sockaddr_in, sockaddr_in6, in_addr, in6_addr, sockaddr_storage> &&
           istl::part_of<Addr, address, ipv4, ipv6>)
     static inline Addr make_addr(SocketIPType const& from_in) noexcept {
-        Addr to_ip;
+        Addr to_ip{};
         to_addr(to_ip, from_in);
         return to_ip;
     }
@@ -199,9 +199,10 @@ namespace webpp {
      * contain the right size as well.
      */
     template <typename SocketIPType, typename Addr>
-        requires(istl::part_of<SocketIPType, sockaddr_storage> && istl::part_of<Addr, address, ipv4, ipv6>)
+        requires(istl::part_of<SocketIPType, sockaddr_storage> &&
+                 istl::part_of<stl::remove_cvref_t<Addr>, address, ipv4, ipv6>)
     [[nodiscard]] static inline SocketIPType make_sock_addr(Addr&& from_in) noexcept {
-        SocketIPType sock_addr;
+        SocketIPType sock_addr{}; // init with zeros
         to_sock_addr(sock_addr, std::forward<Addr>(from_in));
         return sock_addr;
     }
@@ -209,9 +210,9 @@ namespace webpp {
     // some of these functions are constexpr-friendly
     template <typename SocketIPType, typename Addr>
         requires(istl::part_of<SocketIPType, sockaddr_in, sockaddr_in6, in_addr, in6_addr> &&
-                 istl::part_of<Addr, address, ipv4, ipv6>)
+                 istl::part_of<stl::remove_cvref_t<Addr>, address, ipv4, ipv6>)
     [[nodiscard]] static constexpr SocketIPType make_sock_addr(Addr&& from_in) noexcept {
-        SocketIPType sock_addr;
+        SocketIPType sock_addr{}; // initialize with zeros
         to_sock_addr(sock_addr, std::forward<Addr>(from_in));
         return sock_addr;
     }
@@ -309,7 +310,7 @@ namespace webpp {
             return addr_len <= max_address_size;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
         }
 
@@ -325,6 +326,14 @@ namespace webpp {
             return make_addr<ipv6>(addr_storage);
         }
 
+        [[nodiscard]] constexpr bool operator==(const sock_address_any& rhs) const noexcept {
+            return size() == rhs.size() && std::memcmp(sockaddr_ptr(), rhs.sockaddr_ptr(), size()) == 0;
+        }
+
+        [[nodiscard]] constexpr bool operator!=(const sock_address_any& rhs) const noexcept {
+            return !operator==(rhs);
+        }
+
       private:
         // Storage for any kind of socket address
         sockaddr_storage addr_storage{};
@@ -332,17 +341,6 @@ namespace webpp {
         // Length of the address (in bytes)
         socklen_t addr_len{max_address_size};
     };
-
-    [[nodiscard]] static constexpr bool operator==(const sock_address_any& lhs,
-                                                   const sock_address_any& rhs) noexcept {
-        return lhs.size() == rhs.size() &&
-               std::memcmp(lhs.sockaddr_ptr(), rhs.sockaddr_ptr(), lhs.size()) == 0;
-    }
-
-    [[nodiscard]] static constexpr bool operator!=(const sock_address_any& lhs,
-                                                   const sock_address_any& rhs) noexcept {
-        return !operator==(lhs, rhs);
-    }
 
 } // namespace webpp
 
