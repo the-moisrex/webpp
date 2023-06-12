@@ -178,6 +178,11 @@ namespace webpp {
         static constexpr native_handle_type invalid_handle_value = -1;
 #endif
 
+        // get an invalid socket
+        constexpr static basic_socket invalid() noexcept {
+            return {};
+        }
+
         basic_socket(int domain, int type, int protocol = 0) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
@@ -189,14 +194,10 @@ namespace webpp {
             // no need to initialize, they already got a socket!
         }
 
-        constexpr basic_socket(basic_socket const& other) noexcept {
-            socket_initializer::initialize();
-            auto cloned = other.clone();
-            fd          = std::exchange(cloned.fd, invalid_handle_value);
-        }
+        constexpr basic_socket(basic_socket const& other) noexcept
+          : fd{(socket_initializer::initialize(), other.clone().release())} {}
 
-        constexpr basic_socket(basic_socket&& other) noexcept
-          : fd{std::exchange(other.fd, invalid_handle_value)} {}
+        constexpr basic_socket(basic_socket&& other) noexcept : fd{other.release()} {}
 
 
         constexpr basic_socket& operator=(basic_socket const& other) noexcept {
@@ -221,6 +222,14 @@ namespace webpp {
             using std::swap;
             swap(fd, other.fd);
             return *this;
+        }
+
+        /**
+         * Releases the ownership of the socket handle.
+         * This member function puts this class into the "invalid" state.
+         */
+        constexpr native_handle_type release() noexcept {
+            return stl::exchange(fd, invalid_handle_value);
         }
 
         constexpr bool close() noexcept {
@@ -335,7 +344,7 @@ namespace std {
 
     template <>
     struct hash<webpp::basic_socket> {
-        std::size_t operator()(const webpp::basic_socket& s) const noexcept {
+        constexpr std::size_t operator()(const webpp::basic_socket& s) const noexcept {
             return std::hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
         }
     };

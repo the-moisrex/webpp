@@ -32,6 +32,7 @@ namespace webpp {
 
     struct ipv6 {
         // todo: add support for systems that support 128bit integer types
+        static constexpr stl::uint8_t max_prefix_value = 128u;
 
         static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
         using octets8_t                      = stl::array<stl::uint8_t, 16u>;
@@ -403,10 +404,10 @@ namespace webpp {
          * @return ipv6 instance with bits set to 0
          */
         [[nodiscard]] constexpr ipv6 mask(stl::size_t num_bits) const noexcept {
-            num_bits                = stl::min<stl::size_t>(num_bits, 128u);
+            num_bits                = stl::min<stl::size_t>(num_bits, max_prefix_value);
             constexpr auto _0s      = uint64_t(0);
             constexpr auto _1s      = ~_0s;
-            auto const     fragment = _1s << ((128u - num_bits) % 64u);
+            auto const     fragment = _1s << ((max_prefix_value - num_bits) % 64u);
             auto const     hi       = num_bits <= 64 ? fragment : _1s;
             auto const     lo       = num_bits <= 64 ? _0s : fragment;
 
@@ -831,7 +832,7 @@ namespace webpp {
          * @return true if it is an unspecified ip address.
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _prefix <= 128u || _prefix == prefix_status(inet_pton6_status::valid);
+            return _prefix <= max_prefix_value || _prefix == prefix_status(inet_pton6_status::valid);
         }
 
         /**
@@ -1000,7 +1001,7 @@ namespace webpp {
          * @return bool an indication of weather or not the ip has a prefix or not
          */
         [[nodiscard]] constexpr bool has_prefix() const noexcept {
-            return _prefix <= 128;
+            return _prefix <= max_prefix_value;
         }
 
         /**
@@ -1010,7 +1011,7 @@ namespace webpp {
         constexpr ipv6& prefix(stl::uint8_t prefix_value) noexcept {
             if (prefix_value == prefix_status(inet_pton6_status::valid)) {
                 _prefix = prefix_status(inet_pton6_status::valid);
-            } else if (prefix_value > 128u) {
+            } else if (prefix_value > max_prefix_value) {
                 data    = {}; // reset the ip if it was not valid
                 _prefix = prefix_status(inet_pton6_status::invalid_prefix);
             } else {
@@ -1051,7 +1052,7 @@ namespace webpp {
 
 
         [[nodiscard]] constexpr inet_pton6_status status() const noexcept {
-            if (_prefix <= 128u) {
+            if (_prefix <= max_prefix_value) {
                 return inet_pton6_status::valid;
             }
             return static_cast<inet_pton6_status>(_prefix);

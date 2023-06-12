@@ -9,7 +9,7 @@ namespace webpp {
 
     /**
      * Host byte-order TO Network byte-order
-     * Host byte-order == std::endian::big
+     * Network byte-order == std::endian::big
      */
     template <typename T>
     [[nodiscard]] constexpr static T hton(T value) noexcept {
@@ -22,6 +22,7 @@ namespace webpp {
 
     /**
      * Network byte-order TO Host byte-order
+     * Network byte-order == std::endian::big
      */
     template <typename T>
     [[nodiscard]] constexpr static T ntoh(T value) noexcept {

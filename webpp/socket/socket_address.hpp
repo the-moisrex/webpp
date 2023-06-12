@@ -199,10 +199,18 @@ namespace webpp {
      * contain the right size as well.
      */
     template <typename SocketIPType, typename Addr>
-        requires(
-          istl::part_of<SocketIPType, sockaddr_in, sockaddr_in6, in_addr, in6_addr, sockaddr_storage> &&
-          istl::part_of<Addr, address, ipv4, ipv6>)
-    static inline SocketIPType make_sock_addr(Addr&& from_in) noexcept {
+        requires(istl::part_of<SocketIPType, sockaddr_storage> && istl::part_of<Addr, address, ipv4, ipv6>)
+    [[nodiscard]] static inline SocketIPType make_sock_addr(Addr&& from_in) noexcept {
+        SocketIPType sock_addr;
+        to_sock_addr(sock_addr, std::forward<Addr>(from_in));
+        return sock_addr;
+    }
+
+    // some of these functions are constexpr-friendly
+    template <typename SocketIPType, typename Addr>
+        requires(istl::part_of<SocketIPType, sockaddr_in, sockaddr_in6, in_addr, in6_addr> &&
+                 istl::part_of<Addr, address, ipv4, ipv6>)
+    [[nodiscard]] static constexpr SocketIPType make_sock_addr(Addr&& from_in) noexcept {
         SocketIPType sock_addr;
         to_sock_addr(sock_addr, std::forward<Addr>(from_in));
         return sock_addr;

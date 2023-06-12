@@ -41,13 +41,13 @@ namespace webpp {
       private:
         constexpr void parse(stl::string_view ip) noexcept {
             // first, let's try parsing it as an ipv4 address
-            if (ipv4 ip4{ip}; ip4.is_valid()) {
-                // it's ipv4
-                this->emplace<ipv4>(ip4);
-            } else if (ip4.status() == inet_pton4_status::invalid_octet) {
-                this->emplace<ipv6>(ip);
+            if (ipv4 const ip4{ip}; ip4.status() == inet_pton4_status::invalid_octet) {
+                *this = ipv6{ip};
             } else {
-                this->emplace<ipv4>(ip4);
+                // either it's a valid ipv4, or it's completely invalid ip address,
+                // but either way, we store the ipv4 version because it contains the error message,
+                // and that's what the user may want
+                *this = ip4;
             }
         }
 
@@ -62,12 +62,16 @@ namespace webpp {
         // invalid ipv4
         constexpr address() noexcept : address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
 
+        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <istl::StringViewifiable StrT>
+            requires(!istl::cvref_as<StrT, address>)
         constexpr address(StrT&& ip) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip)));
         }
+        // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <istl::StringViewifiable StrT>
+            requires(!istl::cvref_as<StrT, address>)
         constexpr address& operator=(StrT&& ip) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip)));
             return *this;
@@ -141,7 +145,17 @@ namespace webpp {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
-            return *this == address{stl::forward<StrT>(ip)};
+            // this implementation works too, but it's not "noexcept":
+            //   *this == address{stl::forward<StrT>(ip)};
+            address const addr{stl::forward<StrT>(ip)};
+            if (addr.index() == index()) {
+                if (auto const* ip4 = get_if<ipv4>(&as_variant())) {
+                    return *ip4 == addr.as_v4();
+                } else if (auto const* ip6 = get_if<ipv6>(&as_variant())) {
+                    return *ip6 == addr.as_v6();
+                }
+            }
+            return false;
         }
 
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv4 ip) const noexcept {
@@ -276,7 +290,9 @@ namespace webpp {
 
         [[nodiscard]] constexpr ip_address_status status() const noexcept {
             auto const prefix_val = prefix();
-            if (prefix_val <= 128) {
+            // technically if it's ipv4 and the prefix is between 32-128, then it's invalid, but that's
+            // not going to happen, so it's unnecessary to check that condition
+            if (prefix_val <= ipv6::max_prefix_value) {
                 return ip_address_status::valid;
             }
             return static_cast<ip_address_status>(prefix_val);
