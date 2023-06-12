@@ -26,8 +26,8 @@ TEST(SocketTest, HandleCtor) {
 
 
 TEST(SocketTest, MoveCtor) {
-    constexpr auto HANDLE = basic_socket::native_handle_type(3);
-    basic_socket   org_sock(HANDLE);
+    constexpr auto     HANDLE = basic_socket::native_handle_type(3);
+    basic_socket       org_sock(HANDLE);
     basic_socket const sock(std::move(org_sock));
 
     // Make sure the new socket got the handle
