@@ -531,8 +531,8 @@ namespace std {
 
     template <>
     struct hash<webpp::basic_socket> {
-        stl::size_t operator()(const webpp::basic_socket& s) const noexcept {
-            return stl::hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
+        size_t operator()(const webpp::basic_socket& s) const noexcept {
+            return hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
         }
     };
 
