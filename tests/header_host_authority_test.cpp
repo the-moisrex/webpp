@@ -15,7 +15,7 @@ TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
     EXPECT_EQ(host.port(), 80);
     EXPECT_EQ(host.domain(), "example.org");
     EXPECT_FALSE(host.address().is_valid()) << host.address().status_string();
-    EXPECT_FALSE(address::invalid().is_valid()) << address::invalid().status_string();
+    EXPECT_FALSE(ip_address::invalid().is_valid()) << ip_address::invalid().status_string();
 }
 
 TEST(HdrHostAuthorityTest, AddressTest) {

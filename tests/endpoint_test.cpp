@@ -6,9 +6,16 @@
 #include "common_pch.hpp"
 using namespace webpp;
 
+static constexpr ipv4          ipv4_localhost{127, 0, 0, 1};
+static constexpr ipv6          ipv6_localhost{"::1"};
+static constexpr stl::uint16_t test_port = 12332;
 
 TEST(EndPoint, Concept) {
     EXPECT_TRUE(Endpoint<endpoint>);
 }
 
-TEST(EndPoint, SimpleUsage) {}
+TEST(EndPoint, IsBindable) {
+    // testing localhost
+    endpoint const ep{endpoint::tcp, ipv4_localhost, test_port};
+    EXPECT_TRUE(ep.is_bindable());
+}

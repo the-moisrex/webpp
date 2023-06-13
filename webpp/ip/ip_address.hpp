@@ -32,7 +32,7 @@ namespace webpp {
     /**
      * Represents an IPv4 or IPv6
      */
-    struct address : stl::variant<ipv4, ipv6> {
+    struct ip_address : stl::variant<ipv4, ipv6> {
         using variant_type = stl::variant<ipv4, ipv6>;
 
         // variant ctor
@@ -55,24 +55,25 @@ namespace webpp {
         ////////////////////////////// Common Constructors //////////////////////////////
 
         // return an invalid address
-        static constexpr address invalid() noexcept {
+        static constexpr ip_address invalid() noexcept {
             return {ipv4::invalid()};
         }
 
         // invalid ipv4
-        constexpr address() noexcept : address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
+        constexpr ip_address() noexcept
+          : ip_address{ipv4{prefix_status(inet_pton4_status::invalid_character)}} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <istl::StringViewifiable StrT>
-            requires(!istl::cvref_as<StrT, address>)
-        constexpr address(StrT&& ip) noexcept {
+            requires(!istl::cvref_as<StrT, ip_address>)
+        constexpr ip_address(StrT&& ip) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip)));
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <istl::StringViewifiable StrT>
-            requires(!istl::cvref_as<StrT, address>)
-        constexpr address& operator=(StrT&& ip) noexcept {
+            requires(!istl::cvref_as<StrT, ip_address>)
+        constexpr ip_address& operator=(StrT&& ip) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip)));
             return *this;
         }
@@ -80,58 +81,58 @@ namespace webpp {
         ////////////////////////////// IPv4 Constructors //////////////////////////////
 
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
-        constexpr address(ipv4_octet octet1,
-                          ipv4_octet octet2,
-                          ipv4_octet octet3,
-                          ipv4_octet octet4,
-                          ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
-          : address{ipv4{octet1, octet2, octet3, octet4, prefix_val}} {}
+        constexpr ip_address(ipv4_octet octet1,
+                             ipv4_octet octet2,
+                             ipv4_octet octet3,
+                             ipv4_octet octet4,
+                             ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
+          : ip_address{ipv4{octet1, octet2, octet3, octet4, prefix_val}} {}
 
-        constexpr address(ipv4_octet       octet1,
-                          ipv4_octet       octet2,
-                          ipv4_octet       octet3,
-                          ipv4_octet       octet4,
-                          stl::string_view subnet) noexcept
-          : address{ipv4{octet1, octet2, octet3, octet4, subnet}} {}
+        constexpr ip_address(ipv4_octet       octet1,
+                             ipv4_octet       octet2,
+                             ipv4_octet       octet3,
+                             ipv4_octet       octet4,
+                             stl::string_view subnet) noexcept
+          : ip_address{ipv4{octet1, octet2, octet3, octet4, subnet}} {}
 
-        constexpr explicit address(stl::uint32_t ip,
-                                   ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
-          : address{ipv4{ip, prefix}} {}
-
-        template <istl::StringViewifiable StrT>
-        constexpr explicit address(stl::uint32_t ip, StrT&& subnet) noexcept
-          : address{ipv4{ip, stl::forward<StrT>(subnet)}} {}
-
-        constexpr address(ipv4_octets ip,
-                          ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
-          : address{ipv4{ip, prefix}} {}
+        constexpr explicit ip_address(stl::uint32_t ip,
+                                      ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
+          : ip_address{ipv4{ip, prefix}} {}
 
         template <istl::StringViewifiable StrT>
-        constexpr address(ipv4_octets ip, StrT&& subnet) noexcept
-          : address{ipv4{ip, stl::forward<StrT>(subnet)}} {}
+        constexpr explicit ip_address(stl::uint32_t ip, StrT&& subnet) noexcept
+          : ip_address{ipv4{ip, stl::forward<StrT>(subnet)}} {}
 
-        constexpr address(ipv4_octets ip, ipv4_octets subnet) noexcept : address{ipv4{ip, subnet}} {}
+        constexpr ip_address(ipv4_octets ip,
+                             ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
+          : ip_address{ipv4{ip, prefix}} {}
+
+        template <istl::StringViewifiable StrT>
+        constexpr ip_address(ipv4_octets ip, StrT&& subnet) noexcept
+          : ip_address{ipv4{ip, stl::forward<StrT>(subnet)}} {}
+
+        constexpr ip_address(ipv4_octets ip, ipv4_octets subnet) noexcept : ip_address{ipv4{ip, subnet}} {}
 
         // NOLINTEND(bugprone-easily-swappable-parameters)
 
 
         ////////////////////////////// IPv6 Constructors //////////////////////////////
 
-        constexpr address(ipv6::octets8_t const& _octets,
-                          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : address{ipv6{_octets, prefix_value}} {}
+        constexpr ip_address(ipv6::octets8_t const& _octets,
+                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : ip_address{ipv6{_octets, prefix_value}} {}
 
-        constexpr address(ipv6::octets16_t const& _octets,
-                          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : address{ipv6{_octets, prefix_value}} {}
+        constexpr ip_address(ipv6::octets16_t const& _octets,
+                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : ip_address{ipv6{_octets, prefix_value}} {}
 
-        constexpr address(ipv6::octets32_t const& _octets,
-                          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : address{ipv6{_octets, prefix_value}} {}
+        constexpr ip_address(ipv6::octets32_t const& _octets,
+                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : ip_address{ipv6{_octets, prefix_value}} {}
 
-        constexpr address(ipv6::octets64_t const& _octets,
-                          stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : address{ipv6{_octets, prefix_value}} {}
+        constexpr ip_address(ipv6::octets64_t const& _octets,
+                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+          : ip_address{ipv6{_octets, prefix_value}} {}
 
         ////////////////////////////// Common Functions //////////////////////////////
 
@@ -147,7 +148,7 @@ namespace webpp {
         [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
             // this implementation works too, but it's not "noexcept":
             //   *this == address{stl::forward<StrT>(ip)};
-            address const addr{stl::forward<StrT>(ip)};
+            ip_address const addr{stl::forward<StrT>(ip)};
             if (addr.index() == index()) {
                 if (auto const* ip4 = get_if<ipv4>(&as_variant())) {
                     return *ip4 == addr.as_v4();
@@ -172,7 +173,7 @@ namespace webpp {
             return as_v6() <=> ip;
         }
 
-        [[nodiscard]] constexpr stl::partial_ordering operator<=>(address const& ip) const noexcept {
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ip_address const& ip) const noexcept {
             if (is_v4()) {
                 if (ip.is_v4()) {
                     return as_v4() <=> ip.as_v4();
@@ -187,7 +188,7 @@ namespace webpp {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(StrT&& ip) const noexcept {
-            return *this <=> address{stl::forward<StrT>(ip)};
+            return *this <=> ip_address{stl::forward<StrT>(ip)};
         }
 
         // Run the specified function/lambda with the right pick

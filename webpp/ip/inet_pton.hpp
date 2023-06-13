@@ -325,9 +325,21 @@ namespace webpp {
                 // :: would expand to a zero-width field.
                 return bad_ending;
             }
-            auto const n = static_cast<stl::size_t>(out - colonp);
-            stl::memmove(endp - n, colonp, n);
-            stl::memset(colonp, 0, static_cast<stl::size_t>(endp - n - colonp));
+
+            // constexpr-friendly equivalent of:
+            // auto const n      = static_cast<stl::size_t>(out - colonp);
+            // stl::memmove(endp - n, colonp, n);
+            // stl::memset(colonp, 0, static_cast<stl::size_t>(endp - n - colonp));
+            auto rightp = endp;
+            for (auto leftp = out; leftp != colonp;) {
+                *--rightp = *--leftp;
+                *leftp    = 0;
+            }
+            if (out < rightp) {
+                *out++ = 0;
+                for (; out != rightp; *out++ = 0)
+                    ;
+            }
             out = endp;
         }
         if (out != endp) {

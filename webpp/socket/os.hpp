@@ -8,7 +8,8 @@
 
 #if defined(_WIN32)
 #    include <winsock2.h>
-// #include <ws2tcpip.h>
+#    include <ws2tcpip.h>
+#    pragma comment(lib, "Ws2_32.lib")
 
 using socket_t = SOCKET;
 

@@ -10,7 +10,6 @@
 
 namespace webpp {
 
-
     /**
      * Result of socket I/O syscalls.
      *   - Returned result
@@ -193,6 +192,18 @@ namespace webpp {
         basic_socket(int domain, int type, int protocol = 0) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
+        basic_socket(ip_address addr, int type, int protocol = 0) noexcept
+          : fd{(socket_initializer::initialize(),
+                addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol)
+                                : invalid_handle_value)} {}
+
+        basic_socket(ip_address addr, int type, int protocol, in_port_t port) noexcept
+          : basic_socket{addr, type, protocol} {
+            if (is_valid()) {
+                this->bind(addr, port);
+            }
+        }
+
         constexpr basic_socket() noexcept {
             socket_initializer::initialize();
         }
@@ -326,6 +337,15 @@ namespace webpp {
             auto addr      = make_sock_addr<sockaddr_in6>(ip);
             addr.sin6_port = static_cast<in_port_t>(hton(port));
             return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in6)));
+        }
+
+        bool bind(struct ip_address const& ip, stl::uint16_t port) noexcept {
+            if (ip.is_valid()) {
+                return ip.pick([this, port](auto inp_ip) noexcept {
+                    return this->bind(inp_ip, port);
+                });
+            }
+            return false;
         }
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
@@ -499,12 +519,16 @@ namespace webpp {
             return fd != invalid_handle_value;
         }
 
+        [[nodiscard]] constexpr bool is_valid() const noexcept {
+            return is_open() && is_error_free();
+        }
+
         [[nodiscard]] constexpr bool is_error_free() const noexcept {
             return last_errno == 0;
         }
 
         [[nodiscard]] constexpr operator bool() const noexcept {
-            return is_open() && is_error_free();
+            return is_valid();
         }
 
         [[nodiscard]] constexpr int last_error() const noexcept {

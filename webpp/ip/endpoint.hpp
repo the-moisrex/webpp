@@ -3,29 +3,19 @@
 #ifndef WEBPP_IP_ENDPOINT_HPP
 #define WEBPP_IP_ENDPOINT_HPP
 
+#include "../socket/socket.hpp"
 #include "../std/concepts.hpp"
 #include "../std/vector.hpp"
-#include "address.hpp"
+#include "ip_address.hpp"
 
 
-#ifdef _WIN32
-#    include <winsock2.h>
-#    include <ws2tcpip.h>
-#    pragma comment(lib, "Ws2_32.lib")
-#else
-#    include <arpa/inet.h>
-#    include <netdb.h>
-#    include <netinet/in.h>
-#    include <sys/socket.h>
-#    include <unistd.h>
-#endif
 
 namespace webpp {
 
     template <typename T>
     concept Endpoint = requires(T ep) {
                            requires stl::destructible<T>;
-                           requires stl::derived_from<address, T>;
+                           requires stl::derived_from<ip_address, T>;
 
                            // it should be noexcept, even if you have to use "try-catch"
                            { ep.is_bindable() } noexcept -> stl::same_as<bool>;
@@ -52,22 +42,13 @@ namespace webpp {
      *            which is read from the database; like some typical blogging websites that each username
      *            has a sub-domain for him/herself.
      */
-    struct endpoint : public address {
-        enum protocol {
-            tcp = 6,
-            udp = 17,
-            // icmp   = 1,
-            // igmp   = 2,
-            // sctp   = 132,
-            // gre    = 47,
-            // esp    = 50,
-            // ah     = 51,
-            // icmpv6 = 58
-        };
+    struct endpoint : public ip_address {
+        enum protocol { tcp = SOCK_STREAM, udp = SOCK_DGRAM };
 
-        constexpr endpoint(protocol inp_proto, address inp_addr) noexcept
-          : address{inp_addr},
-            proto{inp_proto} {}
+        constexpr endpoint(protocol inp_proto, ip_address inp_addr, stl::uint16_t inp_port) noexcept
+          : ip_address{inp_addr},
+            proto{inp_proto},
+            port_num{inp_port} {}
         constexpr endpoint(endpoint const&) noexcept            = default;
         constexpr endpoint(endpoint&&) noexcept                 = default;
         constexpr endpoint& operator=(endpoint const&) noexcept = default;
@@ -90,36 +71,23 @@ namespace webpp {
             return port_num;
         }
 
+        [[nodiscard]] constexpr ip_address& as_address() noexcept {
+            return static_cast<ip_address&>(*this);
+        }
+
+        [[nodiscard]] constexpr ip_address const& as_address() const noexcept {
+            return static_cast<ip_address const&>(*this);
+        }
+
 
         [[nodiscard]] bool is_bindable() const noexcept {
-            if (!this->is_valid()) {
-                return false;
-            }
-            if (this->is_loopback() || this->is_zero()) {
-                return true;
-            }
-            /*
-                        if (int sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol); sockfd == -1) {
-                            return false;
-                        } else {
-
-                            int bind_status = bind(sockfd, p->ai_addr, p->ai_addrlen);
-            #ifdef _WIN32
-                            closesocket(sockfd);
-            #else
-                            close(sockfd);
-            #endif
-                            if (bind_status == 0) {
-                                return true;
-                            }
-                        }
-            */
-            return false;
+            return this->is_valid() &&
+                   basic_socket{as_address(), static_cast<int>(proto), 0, port_num}.is_valid();
         }
 
       private:
-        protocol      proto;
-        stl::uint16_t port_num;
+        protocol      proto    = udp;
+        stl::uint16_t port_num = 0;
     };
 
 
