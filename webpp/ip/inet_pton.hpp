@@ -330,16 +330,22 @@ namespace webpp {
             // auto const n      = static_cast<stl::size_t>(out - colonp);
             // stl::memmove(endp - n, colonp, n);
             // stl::memset(colonp, 0, static_cast<stl::size_t>(endp - n - colonp));
+
+            // auto count = endp - out;
+            // auto p = out + count;
+            // for (; out != colonp - 1; ) {
+            //     *--p = *--out;
+            // }
+            // for (; count-- != 0; *colonp++ = 0)
+            //     ;
+
+            // another constexpr-friendly way of doing the same thing:
             auto rightp = endp;
-            for (auto leftp = out; leftp != colonp;) {
-                *--rightp = *--leftp;
-                *leftp    = 0;
+            for (; out != colonp;) {
+                *--rightp = *--out;
             }
-            if (out < rightp) {
-                *out++ = 0;
-                for (; out != rightp; *out++ = 0)
-                    ;
-            }
+            for (; colonp != rightp; *colonp++ = 0)
+                ;
             out = endp;
         }
         if (out != endp) {

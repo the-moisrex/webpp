@@ -50,7 +50,7 @@ ipv4_prefix_parsing_v2       32.8 ns         32.7 ns    219151299
 The results:
 
 ```
-./a.out --benchmark_filter="v6_random"                                                                                                                 dev ✱ ➜
+./a.out --benchmark_filter="v6_random"
 2023-06-13T09:14:38-08:00
 Running ./a.out
 Run on (8 X 3253.44 MHz CPU s)
@@ -67,4 +67,21 @@ IP_asio_v6_random                61.0 ns         60.8 ns     12870159
 IP_webpp_v6_random               51.5 ns         51.5 ns     13885846
 IP_webpp_v6_random_normal        48.4 ns         48.3 ns     14232084 <-- new algo
 IP_webpp_v6_random_memmove       53.9 ns         53.6 ns     13064038 <-- what it used to be
+```
+
+unfortunately for clang, it's the opposite:
+
+```
+IP_webpp_v6_random_normal        47.1 ns         47.0 ns     14871149
+IP_webpp_v6_random_memmove       44.2 ns         44.2 ns     15820764
+```
+
+I changed it again and now it doesn't seem to be the best, but it's cleaner:
+
+```
+IP_asio_v6_random                66.4 ns         66.3 ns     12001580
+IP_webpp_v6_random               57.0 ns         56.9 ns     12541255
+IP_webpp_v6_random_normal        56.2 ns         56.1 ns     12476946 <-- new new algo
+IP_webpp_v6_random_manual        55.4 ns         55.3 ns     12059806
+IP_webpp_v6_random_memmove       53.2 ns         53.1 ns     12919261
 ```
