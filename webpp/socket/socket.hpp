@@ -161,6 +161,55 @@ namespace webpp {
     };
 
 
+    using ipproto_type = int;
+    /**
+     * Standard well-defined IP protocols
+     *
+     * The ones that start with WIN32 are from here:
+     *   https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-socket
+     * The rest are from <netinet/in.h>
+     *
+     * This is a struct >> enum and not "enum struct" because ipproto can have other values as well,
+     * and we don't want you to keep casting around.
+     */
+    struct ipproto {
+        enum : ipproto_type {
+            ip       = 0,  // Dummy protocol for TCP.
+            icmp     = 1,  // Internet Control Message Protocol.
+            igmp     = 2,  // Internet Group Management Protocol.
+            rfcomm   = 3,  // WIN32 - The Bluetooth Radio Frequency Communications (Bluetooth RFCOMM) protocol
+            ipip     = 4,  // IPIP tunnels (older KA9Q tunnels use 94).
+            tcp      = 6,  // Transmission Control Protocol.
+            egp      = 8,  // Exterior Gateway Protocol.
+            pup      = 12, // PUP protocol.
+            udp      = 17, // User Datagram Protocol.
+            idp      = 22, // XNS IDP protocol.
+            tp       = 29, // SO Transport Protocol Class 4.
+            dccp     = 33, // Datagram Congestion Control Protocol.
+            ipv6     = 41, // IPv6 header.
+            rsvp     = 46, // Reservation Protocol.
+            gre      = 47, // General Routing Encapsulation.
+            esp      = 50, // encapsulating security payload.
+            ah       = 51, // authentication header.
+            icmpv6   = 58, // WIN32 - The Internet Control Message Protocol Version 6 (ICMPv6).
+            mtp      = 92, // Multicast Transport Protocol.
+            beetph   = 94, // IP option pseudo header for BEET.
+            encap    = 98, // Encapsulation Header.
+            pim      = 103, // Protocol Independent Multicast.
+            comp     = 108, // Compression Header Protocol.
+            rm       = 113, // WIN32 - The PGM protocol for reliable multicast.
+            l2tp     = 115, // Layer 2 Tunnelling Protocol.
+            sctp     = 132, // Stream Control Transmission Protocol.
+            udplite  = 136, // UDP-Lite protocol.
+            mpls     = 137, // MPLS in IP.
+            ethernet = 143, // Ethernet-within-IPv6 Encapsulation.
+            raw      = 255, // Raw IP packets.
+            mptcp    = 262, // Multipath TCP connection.
+            max             // just to indicate the max value
+        };
+    };
+
+
     /**
      * Basic Socket is just a wrapper around either a file descriptor or a SOCKET based on the platform.
      */
@@ -176,39 +225,6 @@ namespace webpp {
         using native_handle_type = int;
         static constexpr native_handle_type invalid_handle_value = -1;
 #endif
-
-        // from <netinet/in.h>
-        enum ipproto {
-            ip          = IPPROTO_IP,       // Dummy protocol for TCP.
-            icmp        = IPPROTO_ICMP,     // Internet Control Message Protocol.
-            igmp        = IPPROTO_IGMP,     // Internet Group Management Protocol.
-            ipip        = IPPROTO_IPIP,     // IPIP tunnels (older KA9Q tunnels use 94).
-            tcp         = IPPROTO_TCP,      // Transmission Control Protocol.
-            egp         = IPPROTO_EGP,      // Exterior Gateway Protocol.
-            pup         = IPPROTO_PUP,      // PUP protocol.
-            udp         = IPPROTO_UDP,      // User Datagram Protocol.
-            idp         = IPPROTO_IDP,      // XNS IDP protocol.
-            tp          = IPPROTO_TP,       // SO Transport Protocol Class 4.
-            dccp        = IPPROTO_DCCP,     // Datagram Congestion Control Protocol.
-            ipv6_header = IPPROTO_IPV6,     // IPv6 header.
-            rsvp        = IPPROTO_RSVP,     // Reservation Protocol.
-            gre         = IPPROTO_GRE,      // General Routing Encapsulation.
-            esp         = IPPROTO_ESP,      // encapsulating security payload.
-            ah          = IPPROTO_AH,       // authentication header.
-            mtp         = IPPROTO_MTP,      // Multicast Transport Protocol.
-            beetph      = IPPROTO_BEETPH,   // IP option pseudo header for BEET.
-            encap       = IPPROTO_ENCAP,    // Encapsulation Header.
-            pim         = IPPROTO_PIM,      // Protocol Independent Multicast.
-            comp        = IPPROTO_COMP,     // Compression Header Protocol.
-            l2tp        = IPPROTO_L2TP,     // Layer 2 Tunnelling Protocol.
-            sctp        = IPPROTO_SCTP,     // Stream Control Transmission Protocol.
-            udplite     = IPPROTO_UDPLITE,  // UDP-Lite protocol.
-            mpls        = IPPROTO_MPLS,     // MPLS in IP.
-            ethernet    = IPPROTO_ETHERNET, // Ethernet-within-IPv6 Encapsulation.
-            raw         = IPPROTO_RAW,      // Raw IP packets.
-            mptcp       = IPPROTO_MPTCP,    // Multipath TCP connection.
-            max         = IPPROTO_MAX
-        };
 
         // get an invalid socket
         constexpr static basic_socket invalid() noexcept {
@@ -230,15 +246,15 @@ namespace webpp {
         }
 
       public:
-        basic_socket(int domain, int type, ipproto protocol = ipproto::ip) noexcept
+        basic_socket(int domain, int type, ipproto_type protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
-        basic_socket(ip_address addr, int type, ipproto protocol = ipproto::ip) noexcept
+        basic_socket(ip_address addr, int type, ipproto_type protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(),
                 addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol)
                                 : invalid_handle_value)} {}
 
-        basic_socket(ip_address addr, int type, ipproto protocol, in_port_t port) noexcept
+        basic_socket(ip_address addr, int type, ipproto_type protocol, in_port_t port) noexcept
           : basic_socket{addr, type, protocol} {
             if (is_valid()) {
                 this->bind(addr, port);
