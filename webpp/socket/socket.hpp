@@ -107,7 +107,10 @@ namespace webpp {
             if !consteval {
 #ifdef _WIN32
                 WSADATA wsadata;
-                ::WSAStartup(MAKEWORD(2, 0), &wsadata);
+                if (inet iResult = ::WSAStartup(MAKEWORD(2, 0), &wsadata); iResult != NO_ERROR) {
+                    wprintf(L"WSAStartup() failed with error: %d\n", iResult);
+                    exit(EXIT_FAILURE);
+                }
 #elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
                 // ignoring the signal the new way
                 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
@@ -148,24 +151,24 @@ namespace webpp {
             }
         }
 
-        constexpr ~socket_initializer() noexcept
 #ifdef _WIN32
-        {
+        ~socket_initializer() noexcept {
             ::WSACleanup();
         }
 #else
-          = default;
+        constexpr ~socket_initializer() noexcept = default;
 #endif
     };
 
 
     /**
-     * basic_socket is just a wrapper around either a file descriptor or
-     * a SOCKET based on the platform.
-     *
-     * All of the classes can be used at compile-time as well, not that it's useful though!
+     * Basic Socket is just a wrapper around either a file descriptor or a SOCKET based on the platform.
      */
     struct basic_socket {
+        // Default listener Queue Size (backlog)
+        // The value of the file "/proc/sys/net/core/somaxconn" (or sysctl one) relates to this value.
+        static constexpr int default_queue_size = SOMAXCONN;
+
 #ifdef _WIN32
         using native_handle_type                                 = SOCKET;
         static constexpr native_handle_type invalid_handle_value = INVALID_SOCKET;
@@ -173,6 +176,39 @@ namespace webpp {
         using native_handle_type = int;
         static constexpr native_handle_type invalid_handle_value = -1;
 #endif
+
+        // from <netinet/in.h>
+        enum ipproto {
+            ip          = IPPROTO_IP,       // Dummy protocol for TCP.
+            icmp        = IPPROTO_ICMP,     // Internet Control Message Protocol.
+            igmp        = IPPROTO_IGMP,     // Internet Group Management Protocol.
+            ipip        = IPPROTO_IPIP,     // IPIP tunnels (older KA9Q tunnels use 94).
+            tcp         = IPPROTO_TCP,      // Transmission Control Protocol.
+            egp         = IPPROTO_EGP,      // Exterior Gateway Protocol.
+            pup         = IPPROTO_PUP,      // PUP protocol.
+            udp         = IPPROTO_UDP,      // User Datagram Protocol.
+            idp         = IPPROTO_IDP,      // XNS IDP protocol.
+            tp          = IPPROTO_TP,       // SO Transport Protocol Class 4.
+            dccp        = IPPROTO_DCCP,     // Datagram Congestion Control Protocol.
+            ipv6_header = IPPROTO_IPV6,     // IPv6 header.
+            rsvp        = IPPROTO_RSVP,     // Reservation Protocol.
+            gre         = IPPROTO_GRE,      // General Routing Encapsulation.
+            esp         = IPPROTO_ESP,      // encapsulating security payload.
+            ah          = IPPROTO_AH,       // authentication header.
+            mtp         = IPPROTO_MTP,      // Multicast Transport Protocol.
+            beetph      = IPPROTO_BEETPH,   // IP option pseudo header for BEET.
+            encap       = IPPROTO_ENCAP,    // Encapsulation Header.
+            pim         = IPPROTO_PIM,      // Protocol Independent Multicast.
+            comp        = IPPROTO_COMP,     // Compression Header Protocol.
+            l2tp        = IPPROTO_L2TP,     // Layer 2 Tunnelling Protocol.
+            sctp        = IPPROTO_SCTP,     // Stream Control Transmission Protocol.
+            udplite     = IPPROTO_UDPLITE,  // UDP-Lite protocol.
+            mpls        = IPPROTO_MPLS,     // MPLS in IP.
+            ethernet    = IPPROTO_ETHERNET, // Ethernet-within-IPv6 Encapsulation.
+            raw         = IPPROTO_RAW,      // Raw IP packets.
+            mptcp       = IPPROTO_MPTCP,    // Multipath TCP connection.
+            max         = IPPROTO_MAX
+        };
 
         // get an invalid socket
         constexpr static basic_socket invalid() noexcept {
@@ -184,20 +220,25 @@ namespace webpp {
          * Checks the value and if less than zero, sets last error.
          */
         [[nodiscard]] constexpr bool check_ret_bool(stl::integral auto ret) const noexcept {
-            last_errno = (ret < 0) ? io_result::last_error() : 0;
+            // doesn't really matter if we use SOCKET_ERROR or not!
+#ifdef _WIN32
+            last_errno = ret == SOCKET_ERROR ? io_result::last_error() : 0;
+#else
+            last_errno = ret == -1 ? io_result::last_error() : 0;
+#endif
             return ret >= 0;
         }
 
       public:
-        basic_socket(int domain, int type, int protocol = 0) noexcept
+        basic_socket(int domain, int type, ipproto protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
-        basic_socket(ip_address addr, int type, int protocol = 0) noexcept
+        basic_socket(ip_address addr, int type, ipproto protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(),
                 addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol)
                                 : invalid_handle_value)} {}
 
-        basic_socket(ip_address addr, int type, int protocol, in_port_t port) noexcept
+        basic_socket(ip_address addr, int type, ipproto protocol, in_port_t port) noexcept
           : basic_socket{addr, type, protocol} {
             if (is_valid()) {
                 this->bind(addr, port);
@@ -252,6 +293,11 @@ namespace webpp {
             return stl::exchange(fd, invalid_handle_value);
         }
 
+        /**
+         * close the socket if it's open;
+         *  - on error,   the last_error will be filled
+         *  - on success, the socket's state is the same as `basic_socket::invalid()`
+         */
         constexpr bool close() noexcept {
             if consteval {
                 return true;
@@ -260,9 +306,9 @@ namespace webpp {
                     return true;
                 }
 #ifdef _WIN32
-                bool const val = ::closesocket(fd) >= 0;
+                bool const val = check_ret_bool(::closesocket(fd));
 #else
-                bool const val = ::close(fd) >= 0;
+                bool const val = check_ret_bool(::close(fd));
 #endif
                 if (val) {
                     fd = invalid_handle_value;
@@ -349,6 +395,13 @@ namespace webpp {
         }
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
+        /**
+         * Start listening
+         * @param queue_size The listener queue size
+         */
+        bool listen(int queue_size = default_queue_size) noexcept {
+            return check_ret_bool(::listen(fd, queue_size));
+        };
 
         /**
          * Gets the value of a socket option.
