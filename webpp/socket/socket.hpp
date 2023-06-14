@@ -401,7 +401,43 @@ namespace webpp {
          */
         bool listen(int queue_size = default_queue_size) noexcept {
             return check_ret_bool(::listen(fd, queue_size));
-        };
+        }
+
+
+        /**
+         * Bind and Listen
+         * @param ip
+         * @param port
+         * @param queue_size
+         * @return true if successful
+         */
+        bool listen(ipv4 ip, stl::uint16_t port, int queue_size = default_queue_size) noexcept {
+            return bind(ip, port) && listen(queue_size);
+        }
+
+        /**
+         * Bind and Listen
+         * @param ip
+         * @param port
+         * @param queue_size
+         * @return true if successful
+         */
+        bool listen(ipv6 const& ip, stl::uint16_t port, int queue_size = default_queue_size) noexcept {
+            return bind(ip, port) && listen(queue_size);
+        }
+
+        /**
+         * Bind and Listen
+         * @param ip
+         * @param port
+         * @param queue_size
+         * @return true if successful
+         */
+        bool listen(struct ip_address const& ip,
+                    stl::uint16_t            port,
+                    int                      queue_size = default_queue_size) noexcept {
+            return bind(ip, port) && listen(queue_size);
+        }
 
         /**
          * Gets the value of a socket option.
