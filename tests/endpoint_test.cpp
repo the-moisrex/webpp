@@ -11,11 +11,11 @@ static constexpr ipv6          ipv6_localhost{"::1"};
 static constexpr stl::uint16_t test_port = 12332;
 
 TEST(EndPoint, Concept) {
-    EXPECT_TRUE(Endpoint<endpoint>);
+    EXPECT_TRUE(Endpoint<ip_endpoint>);
 }
 
 TEST(EndPoint, IsBindable) {
     // testing localhost
-    endpoint const ep{endpoint::tcp, ipv4_localhost, test_port};
+    ip_endpoint const ep{ip_endpoint::tcp, ipv4_localhost, test_port};
     EXPECT_TRUE(ep.is_bindable());
 }

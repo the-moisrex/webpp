@@ -325,6 +325,12 @@ namespace webpp {
             });
         }
     };
+
+
+
+    template <typename T>
+    concept IPAddress = istl::part_of<stl::remove_cvref_t<T>, ipv4, ipv6, ip_address>;
+
 } // namespace webpp
 
 #endif // WEBPP_IP_ADDRESS_HPP

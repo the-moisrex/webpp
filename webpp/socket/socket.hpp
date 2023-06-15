@@ -15,19 +15,12 @@ namespace webpp {
      *   - Returned result
      *   - Read/Wrote counts
      *
-     * Most I/O operations in the OS will return >=0 on sccess and -1 on error.
-     * In the case of an error, the calling thread must read an `errno` variable
-     * immediately, before any other system calls, to get the cause of an error
-     * as an integer value defined by the constants ENOENT, EINTR, EBUSY, etc.
+     * Most I/O operations in the OS will return >=0 on success and -1 on error.
+     * In the case of an error, the calling thread must read an `errno` variable immediately,
+     * before any other system calls, to get the cause of an error as an integer value defined
+     * by the constants ENOENT, EINTR, EBUSY, etc.
      */
-    class io_result {
-        // Byte count, or 0 on error or EOF
-        stl::size_t byte_count = 0;
-
-        // errno value (0 if no error or EOF)
-        int err_value = 0;
-
-      public:
+    struct io_result {
         /**
          * OS-specific means to retrieve the last error from an operation.
          * This should be called after a failed system call to get the cause of the error.
@@ -45,7 +38,7 @@ namespace webpp {
         }
 
         // Creates an empty result
-        constexpr io_result() = default;
+        constexpr io_result() noexcept = default;
 
 
         /**
@@ -91,6 +84,13 @@ namespace webpp {
         [[nodiscard]] constexpr int error() const noexcept {
             return err_value;
         }
+
+      private:
+        // Byte count, or 0 on error or EOF
+        stl::size_t byte_count = 0;
+
+        // errno value (0 if no error or EOF)
+        int err_value = 0;
     };
 
 

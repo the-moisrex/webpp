@@ -115,6 +115,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/ip/ip_address.hpp
         ${LIB_INCLUDE_DIR}/ip/endpoint.hpp
         ${LIB_INCLUDE_DIR}/ip/ip_validators.hpp
+        ${LIB_INCLUDE_DIR}/ip/default_endpoints.hpp
 
         ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp

@@ -8,7 +8,7 @@
 #include "../std/vector.hpp"
 #include "ip_address.hpp"
 
-
+#include <array>
 
 namespace webpp {
 
@@ -32,28 +32,31 @@ namespace webpp {
                            };
 
     /**
-     * Endpoint is a combination of
+     * IP Endpoint is a combination of
      *   - Protocol (TCP/UDP/...)
      *   - Bind-able IP-Address
      *   - Port Number
+     *
+     * This is IP-Endpoint and you should not and cannot use it for e.g. unix domain socket.
      *
      * Attention: endpoint does not include a domain name because the developer may like to use custom-routing
      *            to manage the domains; for example he/she may want to the sub-domain to be a username
      *            which is read from the database; like some typical blogging websites that each username
      *            has a sub-domain for him/herself.
      */
-    struct endpoint : public ip_address {
+    struct ip_endpoint : public ip_address {
         enum protocol { tcp = SOCK_STREAM, udp = SOCK_DGRAM };
 
-        constexpr endpoint(protocol inp_proto, ip_address inp_addr, stl::uint16_t inp_port) noexcept
+        constexpr ip_endpoint(protocol inp_proto, ip_address inp_addr, stl::uint16_t inp_port) noexcept
           : ip_address{inp_addr},
             proto{inp_proto},
             port_num{inp_port} {}
-        constexpr endpoint(endpoint const&) noexcept            = default;
-        constexpr endpoint(endpoint&&) noexcept                 = default;
-        constexpr endpoint& operator=(endpoint const&) noexcept = default;
-        constexpr endpoint& operator=(endpoint&&) noexcept      = default;
-        constexpr ~endpoint() noexcept                          = default;
+        constexpr ip_endpoint(ip_endpoint const&) noexcept            = default;
+        constexpr ip_endpoint(ip_endpoint&&) noexcept                 = default;
+        constexpr ip_endpoint& operator=(ip_endpoint const&) noexcept = default;
+        constexpr ip_endpoint& operator=(ip_endpoint&&) noexcept      = default;
+        constexpr ip_endpoint() noexcept                              = default;
+        constexpr ~ip_endpoint() noexcept                             = default;
 
         [[nodiscard]] constexpr bool is_udp() const noexcept {
             return proto == udp;
@@ -96,26 +99,14 @@ namespace webpp {
 
 
 
-    template <typename Vec = stl::vector<endpoint>>
-    struct endpoint_list : Vec {
+    template <typename Vec = stl::vector<ip_endpoint>>
+    struct ip_endpoint_list : Vec {
         using Vec::Vec;
     };
 
 
     template <stl::size_t N>
-    struct endpoint_array : endpoint_list<stl::array<endpoint, N>> {
-        using endpoint_list<stl::array<endpoint, N>>::endpoint_list;
-    };
-
-
-
-    template <typename... Up>
-        requires((stl::same_as<endpoint, Up> && ...))
-    endpoint_array(endpoint, Up...) -> endpoint_array<(1 + sizeof...(Up))>;
-
-    template <stl::size_t N>
-    endpoint_array(const endpoint (&)[N]) -> endpoint_array<N>;
-
+    using ip_endpoint_array = stl::array<ip_endpoint, N>;
 
 } // namespace webpp
 
