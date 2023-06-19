@@ -141,6 +141,7 @@ namespace webpp::views {
                         this->logger.error(logging_category,
                                            fmt::format("Cannot read dir {}", dir.string()),
                                            ec);
+                        continue;
                     }
                     fs::recursive_directory_iterator       it     = fs::begin(iter);
                     const fs::recursive_directory_iterator it_end = fs::end(iter);
@@ -149,6 +150,7 @@ namespace webpp::views {
                             this->logger.error(logging_category,
                                                fmt::format("Cannot traverse directory {}", dir.string()),
                                                ec);
+                            continue;
                         }
                         const path_type file      = *it;
                         const auto      file_stem = file.stem();
@@ -186,6 +188,7 @@ namespace webpp::views {
                         this->logger.error(logging_category,
                                            fmt::format("Cannot check file type of {}", dir.string()),
                                            ec);
+                        // no need to "continue"
                     }
 
 
