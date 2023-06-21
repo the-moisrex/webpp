@@ -1,6 +1,6 @@
 #include "app.hpp"
 
-#include <webpp/http/protocols/beast.hpp>
+#include <webpp/http/protocol/beast.hpp>
 
 int main() {
     webpp::http::beast<website::app> app;

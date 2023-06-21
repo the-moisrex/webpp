@@ -4,7 +4,7 @@
 #define WEBPP_SELF_HOSTED_HPP
 
 #include "../http/app_wrapper.hpp"
-#include "../http/protocols/common/common_http_protocol.hpp"
+#include "../http/protocol/common_http_protocol.hpp"
 #include "../http/request.hpp"
 #include "../http/response.hpp"
 #include "../server/default_server_traits.hpp"
@@ -13,10 +13,10 @@
 #include "self_hosted_request.hpp"
 #include "self_hosted_session_manager.hpp"
 
-namespace webpp::http::inline shosted {
+namespace webpp {
 
-    template <Application App, ServerTraits ServerTraitsType = default_server_traits>
-    struct self_hosted : public common_http_protocol<typename ServerTraitsType::traits_type, App> {
+    template <Application App, Traits TraitsType = default_traits>
+    struct host : public common_http_protocol<TraitsType, App> {
 
         using server_traits_type = ServerTraitsType;
         using traits_type        = typename server_traits_type::traits_type;
@@ -51,6 +51,6 @@ namespace webpp::http::inline shosted {
     //    template <Traits TraitsType, Application App>
     //    using server =
 
-} // namespace webpp::http::inline shosted
+} // namespace webpp
 
 #endif // WEBPP_SELF_HOSTED_HPP

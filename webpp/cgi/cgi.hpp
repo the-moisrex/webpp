@@ -2,7 +2,7 @@
 #define WEBPP_PROTOCOLS_CGI_HPP
 
 #include "../convert/casts.hpp"
-#include "../http/protocols/common/common_http_protocol.hpp"
+#include "../http/protocol/common_http_protocol.hpp"
 #include "../http/request.hpp"
 #include "../http/request_body.hpp"
 #include "../http/response.hpp"

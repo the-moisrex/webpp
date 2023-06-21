@@ -3,7 +3,7 @@
 
 #include "../webpp/convert/casts.hpp"
 #include "../webpp/http/app_wrapper.hpp"
-#include "../webpp/http/protocols/common/common_http_protocol.hpp"
+#include "../webpp/http/protocol/common_http_protocol.hpp"
 #include "../webpp/http/request.hpp"
 #include "../webpp/http/request_view.hpp"
 #include "../webpp/http/response.hpp"

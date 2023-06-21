@@ -171,12 +171,12 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/fcgi/fcgi_protocols.hpp
         ${LIB_INCLUDE_DIR}/http/fcgi/fcgi_manager.hpp
 
-        ${LIB_INCLUDE_DIR}/http/protocols/beast.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/beast_proto/beast_request.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/beast_proto/beast_server.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/beast_proto/beast_request_body_communicator.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/beast_proto/beast_string_body.hpp
-        ${LIB_INCLUDE_DIR}/http/protocols/common/common_http_protocol.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/beast.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/beast_proto/beast_request.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/beast_proto/beast_server.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/beast_proto/beast_request_body_communicator.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/beast_proto/beast_string_body.hpp
+        ${LIB_INCLUDE_DIR}/http/protocol/common_http_protocol.hpp
 
         ${LIB_INCLUDE_DIR}/http/response_body.hpp
         ${LIB_INCLUDE_DIR}/http/body.hpp

@@ -4,7 +4,7 @@
 #define WEBPP_HTTP_SERVER_HPP
 
 #include "../traits/default_traits.hpp"
-#include "./protocols/common/common_http_protocol.hpp"
+#include "./protocol/common_http_protocol.hpp"
 #include "http_concepts.hpp"
 
 namespace webpp::http {
