@@ -3,14 +3,14 @@
 #ifndef WEBPP_BEAST_STRING_BODY_HPP
 #define WEBPP_BEAST_STRING_BODY_HPP
 
-#include "../../../libs/asio.hpp"
-#include "../../../std/string.hpp"
+#include "../libs/asio.hpp"
+#include "../std/string.hpp"
 
 #include <boost/beast/core/buffers_range.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
 
-namespace webpp::http::beast_proto {
+namespace webpp::beast_proto {
 
 
     /**
@@ -116,6 +116,6 @@ namespace webpp::http::beast_proto {
             }
         };
     };
-} // namespace webpp::http::beast_proto
+} // namespace webpp::beast_proto
 
 #endif // WEBPP_BEAST_STRING_BODY_HPP

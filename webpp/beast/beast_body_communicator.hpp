@@ -3,8 +3,8 @@
 #ifndef WEBPP_BEAST_BODY_COMMUNICATOR_HPP
 #define WEBPP_BEAST_BODY_COMMUNICATOR_HPP
 
-#include "../../../std/type_traits.hpp"
-#include "../../../traits/traits.hpp"
+#include "../std/type_traits.hpp"
+#include "../traits/traits.hpp"
 #include "beast_string_body.hpp"
 
 #include <boost/beast/core.hpp>
@@ -12,7 +12,7 @@
 #include <boost/beast/http/write.hpp>
 
 
-namespace webpp::http::beast_proto {
+namespace webpp::beast_proto {
 
     /**
      * The middle man between beast request body and the framework's request body.
@@ -78,6 +78,6 @@ namespace webpp::http::beast_proto {
     };
 
 
-} // namespace webpp::http::beast_proto
+} // namespace webpp::beast_proto
 
 #endif // WEBPP_BEAST_BODY_COMMUNICATOR_HPP

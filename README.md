@@ -176,7 +176,7 @@ struct app_controller {
 };
 
 int main() {
-    webpp::http::beast<app_controller> server;
+    webpp::beast<app_controller> server;
     server
       .enable_sync()        // call the app in a thread-safe manner (might be removed in the future)
       .address("127.0.0.1") // listen on localhost

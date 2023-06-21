@@ -1,16 +1,16 @@
 #ifndef WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 #define WEBPP_HTTP_PROTO_BEAST_SERVER_HPP
 
-#include "../../../configs/constants.hpp"
-#include "../../../libs/asio.hpp"
-#include "../../../memory/object.hpp"
-#include "../../../std/format.hpp"
-#include "../../../std/string_view.hpp"
-#include "../../../traits/enable_traits.hpp"
-#include "../../../uri/uri.hpp"
-#include "../../http_concepts.hpp"
-#include "../../request.hpp"
-#include "../../version.hpp"
+#include "../configs/constants.hpp"
+#include "../http/http_concepts.hpp"
+#include "../http/request.hpp"
+#include "../http/version.hpp"
+#include "../libs/asio.hpp"
+#include "../memory/object.hpp"
+#include "../std/format.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/enable_traits.hpp"
+#include "../uri/uri.hpp"
 #include "beast_request.hpp"
 #include "beast_string_body.hpp"
 
@@ -38,7 +38,7 @@
 #include <boost/beast/http/read.hpp>
 #include <boost/beast/http/write.hpp>
 
-namespace webpp::http::beast_proto {
+namespace webpp::beast_proto {
 
 
     template <typename ServerT>
@@ -76,9 +76,9 @@ namespace webpp::http::beast_proto {
         static constexpr auto log_cat = "BeastWorker";
 
 
-        static_assert(HTTPRequestHeaders<request_header_type>,
+        static_assert(http::HTTPRequestHeaders<request_header_type>,
                       "Mistakes has been made in request headers type.");
-        static_assert(HTTPRequest<request_type>, "Request type should match HTTPRequest concept.");
+        static_assert(http::HTTPRequest<request_type>, "Request type should match HTTPRequest concept.");
 
 
 
@@ -133,7 +133,7 @@ namespace webpp::http::beast_proto {
         }
 
       private:
-        template <TextBasedBodyReader BodyType>
+        template <http::TextBasedBodyReader BodyType>
         void set_response_body_string(BodyType& body) {
             using body_type              = stl::remove_cvref_t<BodyType>;
             using beast_body_string_type = typename beast_body_type::value_type;
@@ -154,7 +154,7 @@ namespace webpp::http::beast_proto {
             }
         }
 
-        template <CStreamBasedBodyReader BodyType>
+        template <http::CStreamBasedBodyReader BodyType>
         void set_response_body_cstream(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
             using byte_type = typename body_type::byte_type;
@@ -170,7 +170,7 @@ namespace webpp::http::beast_proto {
         }
 
 
-        template <StreamBasedBodyReader BodyType>
+        template <http::StreamBasedBodyReader BodyType>
         void set_response_body_stream(BodyType& body) {
             using body_type              = stl::remove_cvref_t<BodyType>;
             using beast_body_string_type = typename beast_body_type::value_type;
@@ -195,7 +195,7 @@ namespace webpp::http::beast_proto {
         template <typename BodyType>
         void set_response_body(BodyType& body) {
             using body_type = stl::remove_cvref_t<BodyType>;
-            if constexpr (UnifiedBodyReader<body_type>) {
+            if constexpr (http::UnifiedBodyReader<body_type>) {
                 switch (body.which_communicator()) {
                     using enum http::communicator_type;
                     case nothing: return;
@@ -203,11 +203,11 @@ namespace webpp::http::beast_proto {
                     case cstream_based: set_response_body_cstream(body); return;
                     case stream_based: set_response_body_stream(body); return;
                 }
-            } else if constexpr (TextBasedBodyReader<body_type>) {
+            } else if constexpr (http::TextBasedBodyReader<body_type>) {
                 set_response_body_string(body);
-            } else if constexpr (CStreamBasedBodyReader<body_type>) {
+            } else if constexpr (http::CStreamBasedBodyReader<body_type>) {
                 set_response_body_cstream(body);
-            } else if constexpr (StreamBasedBodyReader<body_type>) {
+            } else if constexpr (http::StreamBasedBodyReader<body_type>) {
                 set_response_body_stream(body);
             } else {
                 static_assert_false(body_type,
@@ -221,7 +221,7 @@ namespace webpp::http::beast_proto {
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
 
-            HTTPResponse auto res = server->call_app(*req);
+            http::HTTPResponse auto res = server->call_app(*req);
 
             // putting the user's response into beast's response
             bres.emplace();
@@ -400,6 +400,6 @@ namespace webpp::http::beast_proto {
         stl::mutex                           worker_mutex;
     };
 
-} // namespace webpp::http::beast_proto
+} // namespace webpp::beast_proto
 
 #endif // WEBPP_HTTP_PROTO_BEAST_SERVER_HPP

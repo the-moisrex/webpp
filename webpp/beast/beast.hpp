@@ -3,22 +3,22 @@
 #ifndef WEBPP_BEAST_HPP
 #define WEBPP_BEAST_HPP
 
-#include "../../std/string_view.hpp"
-#include "beast_proto/beast_body_communicator.hpp"
-#include "beast_proto/beast_server.hpp"
-#include "common_http_protocol.hpp"
+#include "../http/protocol/common_http_protocol.hpp"
+#include "../std/string_view.hpp"
+#include "beast_body_communicator.hpp"
+#include "beast_server.hpp"
 
 
-namespace webpp::http {
+namespace webpp {
 
     /**
      * Beast Server
      */
     template <Application App, Traits TraitsType = default_traits>
-    struct beast : public common_http_protocol<TraitsType, App> {
+    struct beast : public http::common_http_protocol<TraitsType, App> {
         using application_type          = stl::remove_cvref_t<App>;
         using traits_type               = TraitsType;
-        using common_http_protocol_type = common_http_protocol<TraitsType, App>;
+        using common_http_protocol_type = http::common_http_protocol<TraitsType, App>;
         using etraits                   = typename common_http_protocol_type::etraits;
         using protocol_type             = beast<application_type, traits_type>;
         using duration                  = typename stl::chrono::steady_clock::duration;
@@ -41,13 +41,13 @@ namespace webpp::http {
         using fields_allocator_type =
           typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
         // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
+        using fields_provider           = http::header_fields_provider<http::header_field_of<traits_type>>;
         using request_body_communicator = beast_proto::beast_request_body_communicator<protocol_type>;
-        using request_headers_type      = request_headers<fields_provider>;
-        using request_body_type         = request_body<traits_type, request_body_communicator>;
+        using request_headers_type      = http::request_headers<fields_provider>;
+        using request_body_type         = http::request_body<traits_type, request_body_communicator>;
         using request_type =
-          simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
-        using response_type = simple_response<traits_type>;
+          http::simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
+        using response_type = http::simple_response<traits_type>;
 
         // each request should finish before this
         duration timeout{stl::chrono::seconds(3)};
@@ -59,7 +59,7 @@ namespace webpp::http {
         static constexpr stl::size_t default_http_worker_count = 20;
 
       private:
-        using super = common_http_protocol<TraitsType, App>;
+        using super = http::common_http_protocol<TraitsType, App>;
 
         friend http_worker_type;
         friend thread_worker_type;
@@ -91,7 +91,7 @@ namespace webpp::http {
         }
 
         // call the app
-        HTTPResponse auto call_app(request_type& req) noexcept {
+        http::HTTPResponse auto call_app(request_type& req) noexcept {
             if (synced) {
                 stl::scoped_lock lock{app_call_mutex};
                 return stl::invoke(this->app, req);
@@ -100,7 +100,7 @@ namespace webpp::http {
             }
         }
 
-        template <typename ServerT>
+        template <typename>
         friend struct http_worker;
 
 
@@ -304,6 +304,6 @@ namespace webpp::http {
         }
     };
 
-} // namespace webpp::http
+} // namespace webpp
 
 #endif // WEBPP_BEAST_HPP

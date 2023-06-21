@@ -3,25 +3,25 @@
 #ifndef WEBPP_BEAST_REQUEST_HPP
 #define WEBPP_BEAST_REQUEST_HPP
 
-#include "../../../std/string.hpp"
-#include "../../../std/string_view.hpp"
-#include "../../../traits/traits.hpp"
-#include "../../http_concepts.hpp"
-#include "../../request_view.hpp"
-#include "../../version.hpp"
+#include "../http/http_concepts.hpp"
+#include "../http/request_view.hpp"
+#include "../http/version.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
+#include "../traits/traits.hpp"
 #include "beast_string_body.hpp"
 
 #include <boost/beast/http/fields.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/parser.hpp>
 
-namespace webpp::http::beast_proto {
+namespace webpp::beast_proto {
 
 
     template <typename CommonHTTPRequest>
     struct beast_request final
       : public CommonHTTPRequest,
-        protected details::request_view_interface<typename CommonHTTPRequest::traits_type> {
+        protected http::details::request_view_interface<typename CommonHTTPRequest::traits_type> {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
@@ -64,7 +64,7 @@ namespace webpp::http::beast_proto {
         }
 
       protected:
-        using pstring_type = typename request_view::string_type;
+        using pstring_type = typename http::request_view::string_type;
 
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
@@ -73,8 +73,8 @@ namespace webpp::http::beast_proto {
         }
 
         // get the dynamic request object
-        [[nodiscard]] inline request_view const& dreq() const noexcept {
-            return static_cast<request_view const&>(*this);
+        [[nodiscard]] inline http::request_view const& dreq() const noexcept {
+            return static_cast<http::request_view const&>(*this);
         }
 
         [[nodiscard]] pstring_type get_method() const override {
@@ -126,6 +126,6 @@ namespace webpp::http::beast_proto {
         }
     };
 
-} // namespace webpp::http::beast_proto
+} // namespace webpp::beast_proto
 
 #endif // WEBPP_BEAST_REQUEST_HPP
