@@ -3,7 +3,7 @@
 #ifndef WEBPP_FCGI_REQUEST_MANAGER_HPP
 #define WEBPP_FCGI_REQUEST_MANAGER_HPP
 
-namespace webpp::http::fastcgi {
+namespace webpp::fastcgi {
 
     /**
      * Since in the FCGI protocol the session manager has to handle multiple clients (multiple requests
@@ -14,6 +14,6 @@ namespace webpp::http::fastcgi {
      */
     struct fcgi_request_manager {};
 
-} // namespace webpp::http::fastcgi
+} // namespace webpp::fastcgi
 
 #endif // WEBPP_FCGI_REQUEST_MANAGER_HPP

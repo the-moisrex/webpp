@@ -1,17 +1,17 @@
 #ifndef WEBPP_INTERFACE_FCGI
 #define WEBPP_INTERFACE_FCGI
 
-#include "../../server/default_server_traits.hpp"
-#include "../../server/server_concepts.hpp"
-#include "../../std/internet.hpp"
-#include "../../std/set.hpp"
-#include "../../traits/enable_traits.hpp"
-#include "../app_wrapper.hpp"
-#include "../request.hpp"
-#include "fastcgi/fcgi_manager.hpp"
-#include "fastcgi/fcgi_request.hpp"
+#include "../http/app_wrapper.hpp"
+#include "../http/request.hpp"
+#include "../server/default_server_traits.hpp"
+#include "../server/server_concepts.hpp"
+#include "../std/internet.hpp"
+#include "../std/set.hpp"
+#include "../traits/enable_traits.hpp"
+#include "fcgi_manager.hpp"
+#include "fcgi_request.hpp"
 
-namespace webpp::http::inline fastcgi {
+namespace webpp::fastcgi {
 
 
     template <typename App, ServerTraits ReqT = default_server_traits>
@@ -67,6 +67,6 @@ namespace webpp::http::inline fastcgi {
     };
 
 
-} // namespace webpp::http::inline fastcgi
+} // namespace webpp::fastcgi
 
 #endif

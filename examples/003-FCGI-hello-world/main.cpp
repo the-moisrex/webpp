@@ -1,6 +1,6 @@
 #include "app.h"
 
-#include <webpp/http/protocols/fcgi.hpp>
+#include <webpp/fcgi/fcgi.hpp>
 
 int main() {
     webpp::http::fastcgi::fcgi<app> my_app;
