@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_ROUTE_PATH_HPP
 #define WEBPP_HTTP_ROUTE_PATH_HPP
 
+#include "../../webpp/extensions/extension.hpp"
 #include "../../webpp/std/optional.hpp"
 #include "../../webpp/std/tuple.hpp"
 #include "../../webpp/uri/path.hpp"

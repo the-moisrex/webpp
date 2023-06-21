@@ -21,7 +21,8 @@ static void LexicalCast_Default(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(lexical::cast<std::string>(ints[i++ % ints.size()]));
+        auto res = lexical::cast<std::string>(ints[i++ % ints.size()]);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_Default);
@@ -31,7 +32,8 @@ static void LexicalCast_Boost(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(boost::lexical_cast<std::string>(ints[i++ % ints.size()]));
+        auto res = boost::lexical_cast<std::string>(ints[i++ % ints.size()]);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_Boost);
@@ -41,7 +43,8 @@ static void LexicalCast_ToString(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(std::to_string(ints[i++ % ints.size()]));
+        auto res = std::to_string(ints[i++ % ints.size()]);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_ToString);
@@ -51,7 +54,8 @@ static void LexicalCast_FMT(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(fmt::format("{}", ints[i++ % ints.size()]));
+        auto res = ::fmt::format("{}", ints[i++ % ints.size()]);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_FMT);
@@ -60,7 +64,8 @@ static void LexicalCast_FMT_Compile(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(fmt::format("{}", ints[i++ % ints.size()]));
+        auto res = ::fmt::format("{}", ints[i++ % ints.size()]);
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_FMT_Compile);
@@ -70,7 +75,7 @@ static void LexicalCast_FMT_FormatTo(benchmark::State& state) {
     int        i    = 0;
     for (auto _ : state) {
         std::string str;
-        fmt::format_to(std::back_inserter(str), "{}", ints[i++ % ints.size()]);
+        ::fmt::format_to(std::back_inserter(str), "{}", ints[i++ % ints.size()]);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -81,7 +86,8 @@ static void LexicalCast_FMT_vformat(benchmark::State& state) {
     const auto ints = the_ints;
     int        i    = 0;
     for (auto _ : state) {
-        benchmark::DoNotOptimize(fmt::vformat("{}", fmt::make_format_args(ints[i++ % ints.size()])));
+        auto res = ::fmt::vformat("{}", ::fmt::make_format_args(ints[i++ % ints.size()]));
+        benchmark::DoNotOptimize(res);
     }
 }
 BENCHMARK(LexicalCast_FMT_vformat);

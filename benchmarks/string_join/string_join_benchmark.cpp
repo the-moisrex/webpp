@@ -20,7 +20,7 @@ static void StrJoin_Webpp(benchmark::State& state) {
         std::string_view str2 = "two ";
         std::pmr::string str3 = str_generator<std::pmr::string>();
 
-        auto res = string::join(str1, str2, str3, "; done");
+        auto res = strings::join(str1, str2, str3, "; done");
         benchmark::DoNotOptimize(res);
     }
 }
@@ -52,7 +52,7 @@ static void StrJoin_FMT(benchmark::State& state) {
         std::string_view str2 = "two ";
         std::pmr::string str3 = str_generator<std::pmr::string>();
 
-        auto res = fmt::format("{}{}{}{}", str1, str2, str3, "; done");
+        auto res = ::fmt::format("{}{}{}{}", str1, str2, str3, "; done");
         benchmark::DoNotOptimize(res);
     }
 }

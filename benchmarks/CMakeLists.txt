@@ -13,7 +13,7 @@ endif ()
 
 
 set(FILE_SOURCES
-        str_find/str_find_benchmark.cpp
+        # str_find/str_find_benchmark.cpp
         equals/equals_benchmark.cpp
         iequals/iequals_benchmark.cpp
         function/function_benchmark.cpp
@@ -30,7 +30,7 @@ set(FILE_SOURCES
         allocator_packs/allocator_packs_benchmark.cpp
         strview_find_method/strview_find_method_benchmark.cpp
         headers_has/headers_has.cpp
-        valves_vs_routes/valves_vs_routes_benchmark.cpp
+        # valves_vs_routes/valves_vs_routes_benchmark.cpp
         bool_array/bool_array_benchmark.cpp
         tokenizer/tokenizer_benchmark.cpp
         ip_to_string/ip_to_string_benchmark.cpp

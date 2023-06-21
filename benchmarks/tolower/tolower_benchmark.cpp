@@ -256,7 +256,7 @@ BENCHMARK(TLR_WebppToLowerString);
         }                                                        \
     }                                                            \
     BENCHMARK(TLR_##name##str_count);
-
+/*
 TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 1)
 TEST_SUITE(NJohnString, to_lower_string_john, 1)
 
@@ -286,7 +286,7 @@ TEST_SUITE(NJohnString, to_lower_string_john, 2001)
 
 TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 10000)
 TEST_SUITE(NJohnString, to_lower_string_john, 10000)
-
+*/
 
 
 
@@ -651,6 +651,7 @@ BENCHMARK(TLR_SIMDToLowerString2);
 // }
 // BENCHMARK(TLR_EveToLowerString5);
 
+/*
 static void TLR_EveToLowerStringFixed(benchmark::State& state) {
     auto str = str_generator();
     for (auto _ : state) {
@@ -660,7 +661,7 @@ static void TLR_EveToLowerStringFixed(benchmark::State& state) {
     }
 }
 BENCHMARK(TLR_EveToLowerStringFixed);
-
+*/
 
 
 
