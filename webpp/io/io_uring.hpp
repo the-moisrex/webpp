@@ -5,8 +5,13 @@
 
 #include "../std/optional.hpp"
 
+#include <cstdint>
+#include <liburing.h> // http://git.kernel.dk/liburing
+#include <string_view>
+#include <system_error>
+
+// https://wg21.link/P2300
 #include <coroutine>
-#include <liburing.h>
 
 namespace webpp::io {
 
@@ -91,6 +96,122 @@ namespace webpp::io {
 
       private:
         io_uring_sqe* sqe;
+    };
+
+
+
+    enum struct io_uring_service_state {
+        success      = 0,
+        init_failure = 1, // cannot initialize the parameters of a new io_uring
+    };
+
+
+    /**
+     * I/O Service Class
+     */
+    struct io_uring_service {
+        static constexpr unsigned default_entries_value = 64;
+
+      private:
+        [[nodiscard]] constexpr bool error_on_res(stl::integral auto     ret,
+                                                  io_uring_service_state err_cat) noexcept {
+            if (ret < 0 && ret != -ETIME) {
+                last_err_val = -ret;
+                last_err_cat = err_cat;
+                return false;
+            } else {
+                last_err_val = 0;
+                last_err_cat = io_uring_service_state::success;
+                return true;
+            }
+        }
+
+        [[nodiscard]] constexpr bool error_on_errno(stl::integral auto     ret,
+                                                    io_uring_service_state err_cat) noexcept {
+            if (ret < 0) {
+                last_err_val = errno;
+                last_err_cat = err_cat;
+                return false;
+            } else {
+                last_err_val = 0;
+                last_err_cat = io_uring_service_state::success;
+                return true;
+            }
+        }
+
+      public:
+        /**
+         * Init io_service
+         *
+         * io_uring is NOT thread safe. When used in a multi-threaded program, it's highly recommended
+         * to create instances per thread, and set IORING_SETUP_ATTACH_WQ flag to make sure that kernel
+         * shares the only async worker thread pool.
+         */
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
+        io_uring_service(unsigned entries, io_uring_params inp_params) : params{inp_params} {
+            static_cast<void>(error_on_res(io_uring_queue_init_params(entries, &ring, &params),
+                                           io_uring_service_state::init_failure));
+        }
+        // NOLINTEND(cppcoreguidelines-pro-type-member-init)
+        io_uring_service(unsigned entries) : io_uring_service{entries, {}} {}
+
+        /**
+         * Create a copy of the io_service which shares the same kernel worker thread.
+         *
+         * IORING_SETUP_ATTACH_WQ
+         *   This flag should be set in conjunction with struct io_uring_params.wq_fd being set to an
+         *   existing io_uring ring file descriptor. When set, the io_uring instance being created will
+         *   share the asynchronous worker thread backend of the specified io_uring ring, rather than create
+         *   a new separate thread pool.
+         */
+        [[nodiscard]] io_uring_service copy() const {
+            return {default_entries_value,
+                    io_uring_params{.flags = IORING_SETUP_ATTACH_WQ, .wq_fd = params.wq_fd}};
+        }
+
+        // The io service is not copyable because we don't want accidental copying. Use .copy() for
+        // explicit copying
+        io_uring_service(io_uring_service const&)            = delete;
+        io_uring_service& operator=(io_uring_service const&) = delete;
+
+        // moving is perfectly fine
+        io_uring_service(io_uring_service&&) noexcept            = default;
+        io_uring_service& operator=(io_uring_service&&) noexcept = default;
+
+        ~io_uring_service() noexcept {
+            io_uring_queue_exit(&ring);
+        }
+
+        [[nodiscard]] io_uring& get_handle() noexcept {
+            return ring;
+        }
+
+        [[nodiscard]] constexpr bool is_success() const noexcept {
+            return last_err_cat == io_uring_service_state::success;
+        }
+
+        [[nodiscard]] constexpr operator bool() const noexcept {
+            return is_success();
+        }
+
+        [[nodiscard]] constexpr int last_error() const noexcept {
+            return last_err_val;
+        }
+
+        [[nodiscard]] constexpr io_uring_service_state last_error_cat() const noexcept {
+            return last_err_cat;
+        }
+
+
+      private:
+        io_uring_params params;
+        io_uring        ring;
+
+        // error handling:
+        // the system error is stored in "last_err_val", and the category of the error is
+        // stored in "last_err_cat"
+        int                    last_err_val = 0;
+        io_uring_service_state last_err_cat = io_uring_service_state::success;
     };
 
 } // namespace webpp::io
