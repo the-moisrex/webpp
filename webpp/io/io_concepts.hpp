@@ -1,7 +1,8 @@
 #ifndef WEBPP_IO_IO_CONCEPTS_HPP
 #define WEBPP_IO_IO_CONCEPTS_HPP
 
-#include <concepts>
+#include "../std/coroutine.hpp"
+
 #include <ranges>
 
 namespace webpp::io {

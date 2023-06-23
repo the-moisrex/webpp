@@ -50,6 +50,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/std/types.hpp
         ${LIB_INCLUDE_DIR}/std/function_ref.hpp
+        ${LIB_INCLUDE_DIR}/std/coroutine.hpp
         ${LIB_INCLUDE_DIR}/std/functional.hpp
         ${LIB_INCLUDE_DIR}/std/enum.hpp
         ${LIB_INCLUDE_DIR}/std/algorithm.hpp
