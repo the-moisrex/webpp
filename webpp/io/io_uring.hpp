@@ -3,6 +3,7 @@
 #ifndef WEBPP_IO_URING_HPP
 #define WEBPP_IO_URING_HPP
 
+#include "../std/coroutine.hpp"
 #include "../std/optional.hpp"
 
 #include <cstdint>
@@ -90,6 +91,8 @@ namespace webpp::io {
                     return resolver.result;
                 }
             };
+
+            static_assert(istl::CoroutineAwaiter<await_sqe>, "Not a fully qualified coroutine awaitable.");
 
             return await_sqe(sqe);
         }

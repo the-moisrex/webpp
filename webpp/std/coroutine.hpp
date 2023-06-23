@@ -16,6 +16,9 @@ namespace webpp::istl {
           istl::part_of<T, void, bool> || istl::is_specialization_of_v<T, stl::coroutine_handle>;
     }
 
+    /**
+     * A type that we can call "co_await" on.
+     */
     template <typename T>
     concept CoroutineAwaiter = requires(T awaiter, std::coroutine_handle<> handle) {
                                    awaiter.await_resume();
