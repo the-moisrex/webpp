@@ -14,8 +14,8 @@ namespace webpp::io {
     template <typename T>
     concept IOTask = std::ranges::view<T> && istl::CoroutineAwaiter<T> && requires(T task) {
                                                                               task.then([] {}); // then
-                                                                              task | [] {};
-                                                                              task | [](auto) {};
+                                                                              task >> [] {};
+                                                                              task >> [](auto) {};
                                                                           };
 
     template <typename T>
