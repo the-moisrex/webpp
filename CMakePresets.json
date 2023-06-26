@@ -18,12 +18,11 @@
         },
         {
             "name": "clang",
+            "inherits": "default",
             "displayName": "Clang debug",
             "description": "Clang build using Ninja generator",
-            "generator": "Ninja",
             "binaryDir": "${sourceDir}/build-clang",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_C_COMPILER": "clang"
             }
