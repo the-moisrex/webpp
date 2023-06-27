@@ -5,7 +5,16 @@
 
 #include "valves.hpp"
 
+#include <atomic>
+
 namespace webpp::http {
+
+    template <typename T>
+    concept BooleanLike = requires(T val) {
+                              val = true;
+                              { !!val } noexcept -> stl::same_as<bool>;
+                          };
+
 
     /**
      * Simple Route Disabler Valve
@@ -19,7 +28,8 @@ namespace webpp::http {
      *  router += root / "pages" >> disabler >> &pages::index;
      * @endcode
      */
-    struct route_disabler : valve<route_disabler> {
+    template <BooleanLike ConditionType = bool>
+    struct route_disabler : valve<route_disabler<ConditionType>> {
 
         constexpr route_disabler() noexcept = default;
         constexpr route_disabler(bool inp_is_enabled) noexcept : is_enabled_value{inp_is_enabled} {}
@@ -72,8 +82,16 @@ namespace webpp::http {
         }
 
       private:
-        bool is_enabled_value = true;
+        ConditionType is_enabled_value = true;
     };
+
+    /**
+     * Atomic Route Disabler is the same route disabler but operates in an atomic way which means,
+     * this is probably what you need in the routing system that is operating in a "concurrent" manner;
+     * (you might be able to get away with it in parallel system but not in a concurrent system with
+     * multiple threads).
+     */
+    using atomic_route_disabler = route_disabler<std::atomic_bool>;
 
 } // namespace webpp::http
 
