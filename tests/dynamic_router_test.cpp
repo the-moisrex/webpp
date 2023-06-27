@@ -527,7 +527,7 @@ TEST(DynamicRouter, ContextCallChaining) {
 TEST(DynamicRouter, RouteDisabler) {
     enable_owner_traits<default_dynamic_traits> et;
 
-    route_disabler home_enabler;
+    route_disabler<> home_enabler;
 
     dynamic_router router{et};
     router += router / "home" >> &home_enabler >> [] {
