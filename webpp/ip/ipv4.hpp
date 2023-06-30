@@ -119,7 +119,13 @@ namespace webpp {
         }
 
       public:
-        constexpr static ipv4 invalid() noexcept {
+        // Create an ipv4 at compile-time; a simple consteval constructor helper
+        template <typename... Args>
+        static consteval ipv4 create(Args&&... args) noexcept {
+            return {stl::forward<Args>(args)...};
+        }
+
+        static consteval ipv4 invalid() noexcept {
             ipv4 ip;
             ip._prefix = prefix_status(inet_pton4_status::invalid_prefix);
             return ip;
@@ -131,7 +137,7 @@ namespace webpp {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!istl::cvref_as<T, ipv4> && istl::StringViewifiable<T>)
-        constexpr explicit ipv4(T&& ip) noexcept {
+        constexpr ipv4(T&& ip) noexcept {
             parse(stl::forward<T>(ip));
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)

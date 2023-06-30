@@ -11,6 +11,11 @@ using namespace webpp;
 
 using ipv4_t = ipv4;
 
+TEST(IPv4Tests, ConstEvalCraetion) {
+    EXPECT_FALSE(ipv4::invalid().is_valid());
+    EXPECT_TRUE(ipv4::create("127.0.0.1").is_loopback());
+}
+
 TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_prefix("255.255.255.0"), 24);
     EXPECT_EQ(to_prefix("255.255.255.128"), 25);

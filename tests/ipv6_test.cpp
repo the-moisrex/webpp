@@ -11,6 +11,11 @@ using namespace webpp;
 
 using ipv6_t = ipv6;
 
+TEST(IPv6Tests, ConstEvalCraetion) {
+    EXPECT_FALSE(ipv6::invalid().is_valid());
+    EXPECT_TRUE(ipv6::create("::ffff:127.0.0.1").is_loopback());
+}
+
 TEST(IPv6Tests, Creation) {
     ipv6_t const ip1{"::"};
     EXPECT_TRUE(ip1.is_valid());

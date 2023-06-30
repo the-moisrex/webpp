@@ -113,9 +113,16 @@ namespace webpp {
         }
 
       public:
-        static constexpr ipv6 invalid() noexcept {
+        static consteval ipv6 invalid() noexcept {
             return {prefix_status(inet_pton6_status::invalid_prefix)};
         }
+
+        // Create an ipv6 at compile-time; a simple consteval constructor helper
+        template <typename... Args>
+        static consteval ipv6 create(Args&&... args) noexcept {
+            return {stl::forward<Args>(args)...};
+        }
+
 
         // initialize with ::0
         constexpr ipv6() noexcept = default;
@@ -126,7 +133,7 @@ namespace webpp {
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
                                                       stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-        constexpr explicit ipv6(StrT&& str) noexcept {
+        constexpr ipv6(StrT&& str) noexcept {
             parse(stl::forward<StrT>(str));
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -136,7 +143,7 @@ namespace webpp {
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
                                                       stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-        constexpr explicit ipv6(StrT&& str, stl::uint8_t prefix_value) noexcept {
+        constexpr ipv6(StrT&& str, stl::uint8_t prefix_value) noexcept {
             parse(stl::forward<StrT>(str));
             if (is_valid()) {
                 prefix(prefix_value);
