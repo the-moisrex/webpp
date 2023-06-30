@@ -1,11 +1,14 @@
 // Created by moisrex on 6/2/23.
 #include "../webpp/io/io_concepts.hpp"
+#include "../webpp/io/io_task.hpp"
+#include "../webpp/io/io_uring.hpp"
 #include "common_pch.hpp"
 
 #include <array>
 #include <sstream>
 
 using namespace webpp;
+using namespace webpp::io;
 using namespace std;
 
 
@@ -14,9 +17,10 @@ TEST(IO, IOConcepts) {
 }
 
 
+#ifdef WEBPP_IO_URING_SUPPORT
 TEST(IO, BasicIdea) {
-    io_service   io;
-    stringstream fake_file;
+    io_uring_service io;
+    stringstream     fake_file;
     fake_file << "content";
 
     array<char, 100> buf{};
@@ -34,7 +38,7 @@ TEST(IO, BasicIdea) {
           throw io.error();
       };
 }
-
+#endif
 
 TEST(IO, IOTraits) {
     //

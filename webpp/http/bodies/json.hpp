@@ -71,7 +71,7 @@ namespace webpp::http {
 
         // todo: encoding support
         // todo: don't insert into headers directly
-        res.headers.emplace_back("Content-Type", "application/json; charset=utf-8");
+        res.headers.set("Content-Type", "application/json; charset=utf-8");
 
         serialize_body<DocT>(stl::forward<DocT>(doc), res.body);
     }

@@ -2,6 +2,7 @@
 #ifndef WEBPP_TRAITS_H
 #define WEBPP_TRAITS_H
 
+#include "../io/io_concepts.hpp"
 #include "../logs/log_concepts.hpp"
 #include "../memory/allocator_concepts.hpp"
 #include "../memory/allocator_pack.hpp"
@@ -10,40 +11,6 @@
 #include "../std/string_concepts.hpp"
 
 namespace webpp {
-
-    /**
-     * Thread pool class helps to implement a vector/list of threads and push
-     * tasks into this thread pool.
-     *
-     * List of features I'd like to see in the future:
-     * - [ ] Fewer run-time overhead features:
-     *   - [ ] Register methods before using them multiple times.
-     *     Use cases:
-     *     - [ ] Buffering the requests
-     *     - [ ] Processing user requests (even parsing the request)
-     * - [ ] Priority scheduling:
-     *   - [ ] defer
-     *   - [ ] dispatch
-     *   - [ ] post
-     * - [ ] Run in a specific thread
-     *   - [ ] By thread id
-     *   - [ ] By thread index
-     *   - [ ] In the last thread which that function was processed on
-     * - [ ] Stop, Pause, Continue, Start methods
-     * - [ ] Join threads
-     * - [ ] Underlying thread class:
-     *   - [ ] std::thread
-     *   - [ ] std::jthread
-     *   - [ ] boost::thread
-     *   - [ ] POSIX
-     * - [ ] Constexpr way to hash a function object into a known number in the thread pool
-     */
-    template <typename T>
-    concept ThreadPool = requires(T tp, stl::true_type lambda) {
-                             tp.post(lambda);
-                             tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
-                             tp.dispatch(lambda);
-                         };
 
     /**
      * Included traits:
@@ -62,7 +29,6 @@ namespace webpp {
      *   - [ ] Unicode String Type
      *
      * Proposed types:
-     *   - [ ] Thread Pool
      *   - [ ] Encryption algorithms and their keys
      *   - [ ] Date and Time systems: stl::chrono types
      *   - [ ] String formatting types (fmt/printf/...)
@@ -131,10 +97,6 @@ namespace webpp {
      *   logger_type:
      *     The logging system.
      *
-     *   thread_pool:
-     *     The Thread Pool system.
-     *     todo: we don't really need this for CGI. See how you can remove this.
-     *
      *   allocator_descriptors:
      *     A Pack of allocators.
      *
@@ -164,6 +126,9 @@ namespace webpp {
 
           // todo: add String<typename T::string_type>; without adding a circular dependency
           // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
+
+          // typename T::execution_context;
+          // requires io::ExecutionContext<typename T::execution_context>;
       };
 
 
@@ -179,6 +144,7 @@ namespace webpp {
           requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
           t.logger;
           t.alloc_pack;
+          // { t.io } -> io::IOScheduler;
           stl::remove_cvref_t<T>::is_resource_owner;
           t.get_traits();
       };

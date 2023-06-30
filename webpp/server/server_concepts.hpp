@@ -40,7 +40,7 @@ namespace webpp {
     template <typename T>
     concept Server = requires(T server) {
                          typename T::connection_type;
-                         requires ThreadPool<typename T::thread_pool_type>;
+                         requires io::ThreadPool<typename T::thread_pool_type>;
                          { server() } -> stl::same_as<int>;
                      };
 
@@ -138,7 +138,7 @@ namespace webpp {
                                typename T::traits_type;
                                typename T::thread_pool_type;
                                requires Traits<typename T::traits_type>;
-                               requires ThreadPool<typename T::thread_pool_type>;
+                               requires io::ThreadPool<typename T::thread_pool_type>;
                                T::template server_type; // <session_manager, thread_pool_type>
                            };
 
