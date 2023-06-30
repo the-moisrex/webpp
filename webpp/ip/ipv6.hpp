@@ -416,25 +416,10 @@ namespace webpp {
             constexpr auto _1s      = ~_0s;
             auto const     fragment = _1s << ((max_prefix_value - num_bits) % 64u);
             auto const     hi       = num_bits <= 64 ? fragment : _1s;
-            auto const     lo       = num_bits <= 64 ? _0s : fragment;
+            auto const     lo       = num_bits <= 64 ? 0ull : fragment;
 
-            octets8_t const ba{static_cast<stl::uint8_t>(hi >> 7u & data[0]),
-                               static_cast<stl::uint8_t>(hi >> 6u & data[1]),
-                               static_cast<stl::uint8_t>(hi >> 5u & data[2]),
-                               static_cast<stl::uint8_t>(hi >> 4u & data[3]),
-                               static_cast<stl::uint8_t>(hi >> 3u & data[4]),
-                               static_cast<stl::uint8_t>(hi >> 2u & data[5]),
-                               static_cast<stl::uint8_t>(hi >> 1u & data[6]),
-                               static_cast<stl::uint8_t>(hi >> 0u & data[7]),
-                               static_cast<stl::uint8_t>(lo >> 7u & data[8]),
-                               static_cast<stl::uint8_t>(lo >> 6u & data[9]),
-                               static_cast<stl::uint8_t>(lo >> 5u & data[10]),
-                               static_cast<stl::uint8_t>(lo >> 4u & data[11]),
-                               static_cast<stl::uint8_t>(lo >> 3u & data[12]),
-                               static_cast<stl::uint8_t>(lo >> 2u & data[13]),
-                               static_cast<stl::uint8_t>(lo >> 1u & data[14]),
-                               static_cast<stl::uint8_t>(lo >> 0u & data[15])};
-            return {ba};
+            auto const _octets = octets64();
+            return {octets64_t{hi & _octets[0], lo & _octets[1]}};
         }
 
         /**

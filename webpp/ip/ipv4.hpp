@@ -92,6 +92,8 @@ namespace webpp {
     }
 
     struct ipv4 {
+        static constexpr stl::size_t max_prefix_value = 32u;
+
       private:
         stl::uint32_t data    = 0u; // all bits are used
         ipv4_octet    _prefix = prefix_status(inet_pton4_status::valid);
@@ -164,9 +166,10 @@ namespace webpp {
         constexpr ipv4(IPStrT&& ip, ipv4_octet prefix_val) noexcept {
             parse(stl::forward<IPStrT>(ip));
             if (is_valid()) {
-                _prefix = prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
-                            ? prefix_status(inet_pton4_status::invalid_prefix)
-                            : prefix_val;
+                _prefix =
+                  prefix_val > max_prefix_value && prefix_val != prefix_status(inet_pton4_status::valid)
+                    ? prefix_status(inet_pton4_status::invalid_prefix)
+                    : prefix_val;
             }
         }
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
@@ -176,7 +179,7 @@ namespace webpp {
                        ipv4_octet octet4,
                        ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
           : data(parse({octet1, octet2, octet3, octet4})),
-            _prefix(prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
+            _prefix(prefix_val > max_prefix_value && prefix_val != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix_val) {}
 
@@ -192,7 +195,7 @@ namespace webpp {
         constexpr explicit ipv4(stl::uint32_t ip,
                                 ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(ip),
-            _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
+            _prefix(prefix > max_prefix_value && prefix != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
@@ -204,7 +207,7 @@ namespace webpp {
 
         constexpr ipv4(ipv4_octets ip, ipv4_octet prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(parse(ip)),
-            _prefix(prefix > 32u && prefix != prefix_status(inet_pton4_status::valid)
+            _prefix(prefix > max_prefix_value && prefix != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
                       : prefix) {}
 
@@ -337,7 +340,7 @@ namespace webpp {
          * @param prefix_val
          */
         constexpr ipv4& prefix(ipv4_octet prefix_val) noexcept {
-            _prefix = prefix_val > 32 && prefix_val != prefix_status(inet_pton4_status::valid)
+            _prefix = prefix_val > max_prefix_value && prefix_val != prefix_status(inet_pton4_status::valid)
                         ? prefix_status(inet_pton4_status::invalid_prefix)
                         : prefix_val;
             return *this;
@@ -372,7 +375,7 @@ namespace webpp {
          * @return bool an indication on weather or not the ip contains a prefix or not
          */
         [[nodiscard]] constexpr bool has_prefix() const noexcept {
-            return _prefix <= 32;
+            return _prefix <= max_prefix_value;
         }
 
         /**
@@ -393,8 +396,8 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_in_subnet(ipv4 const& ip) const noexcept {
             auto uint_val = integer();
             auto uint_ip  = ip.integer();
-            uint_val &= 0xFFFFFFFFu << (32u - ip.prefix());
-            uint_ip &= 0xFFFFFFFFu << (32u - ip.prefix());
+            uint_val &= 0xFFFFFFFFu << (max_prefix_value - ip.prefix());
+            uint_ip &= 0xFFFFFFFFu << (max_prefix_value - ip.prefix());
             return uint_val == uint_ip;
         }
 
@@ -476,7 +479,7 @@ namespace webpp {
          * @return bool
          */
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return _prefix <= 32u || _prefix == prefix_status(inet_pton4_status::valid);
+            return _prefix <= max_prefix_value || _prefix == prefix_status(inet_pton4_status::valid);
         }
 
         /**
@@ -490,10 +493,47 @@ namespace webpp {
                     _prefix};
         }
 
+        /**
+         * Creates an ipv4 instance with all but most significant num_bits set to 0.
+         *
+         * @param [in] num_bits number of bits to mask
+         * @return ipv6 instance with bits set to 0
+         */
+        [[nodiscard]] constexpr ipv4 mask(stl::size_t num_bits) const noexcept {
+            num_bits                     = stl::min<stl::size_t>(num_bits, max_prefix_value);
+            stl::uint32_t const fragment = ~0u << (max_prefix_value - num_bits);
+            return ipv4{data & fragment};
+        }
+
+        /**
+         * Check if the specified ipv6 binary starts with the specified inp_octets up to inp_prefix bits.
+         */
+        template <stl::size_t N>
+            requires(N <= 4)
+        [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> inp_octets,
+                                                 stl::size_t                 inp_prefix) const noexcept {
+            if constexpr (N == 0) {
+                return is_zero();
+            } else if constexpr (N == 1) {
+                return starts_with({inp_octets[0], 0, 0, 0}, inp_prefix);
+            } else if constexpr (N == 2) {
+                return starts_with({inp_octets[0], inp_octets[1], 0, 0}, inp_prefix);
+            } else if constexpr (N == 3) {
+                return starts_with({inp_octets[0], inp_octets[1], inp_octets[2], 0}, inp_prefix);
+            } else if constexpr (N == 4) {
+                return starts_with({inp_octets[0], inp_octets[1], inp_octets[2], inp_octets[3]}, inp_prefix);
+            }
+        }
+
+
+        [[nodiscard]] constexpr bool starts_with(ipv4 const& ip, stl::size_t inp_prefix) const noexcept {
+            return mask(inp_prefix) == ip.mask(inp_prefix);
+        }
+
 
         // Get the parsing result
         [[nodiscard]] constexpr inet_pton4_status status() const noexcept {
-            if (_prefix <= 32u) {
+            if (_prefix <= max_prefix_value) {
                 return inet_pton4_status::valid;
             }
             return static_cast<inet_pton4_status>(_prefix);

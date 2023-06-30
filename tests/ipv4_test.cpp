@@ -183,3 +183,11 @@ TEST(IPv4Tests, ErrorMessages) {
     EXPECT_EQ(to_string(inet_pton4_status::valid), (ipv4{"1.1.1.1"}.status_string()));
     EXPECT_EQ(to_string(inet_pton4_status::invalid_prefix), (ipv4{"1.1.1.1", "-1.255.1.3"}.status_string()));
 }
+
+
+TEST(IPv6Tests, StartsWith) {
+    EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with<1>({127u}, 8));
+    EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with(ipv4{127, 0, 0, 0}, 8));
+    EXPECT_EQ(ipv4::create("127.0.0.1").mask(8), ipv4(127u, 0u, 0u, 0u));
+    EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127u, 2u, 3u, 0u));
+}
