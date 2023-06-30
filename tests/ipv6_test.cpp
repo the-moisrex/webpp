@@ -353,11 +353,10 @@ TEST(IPv6Tests, LoopbackCheck) {
 
 TEST(IPv6Tests, StartsWith) {
     auto const ip = ipv6::create("10::ffff:127.0.0.1");
-    EXPECT_TRUE(ip.starts_with({10}, 16));
+    EXPECT_TRUE(ip.starts_with(ipv6::create("10::"), 16));
     EXPECT_EQ(ip.mask(120), ipv6::create("10::ffff:127.0.0.0"))
       << ip.mask(120).expanded_string() << "\n"
       << ipv6::create("10::ffff:127.0.0.0").expanded_string();
     EXPECT_EQ(ip.mask(16), ipv6::create("10::")) << ip.expanded_string() << "\n"
-                                                 << ip.mask(32).expanded_string() << "\n"
                                                  << ip.mask(16).expanded_string();
 }

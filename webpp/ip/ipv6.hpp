@@ -74,24 +74,81 @@ namespace webpp {
          * @tparam OCTET
          * @param _octets
          * @return octets8_t so I could put it in the "data"
-         *
-         * todo: optimize this
          */
-        template <typename OCTET>
-        [[nodiscard]] static constexpr octets_t to_octets_t(OCTET const& _octets) noexcept {
-            octets_t _data           = {};
-            auto     _octets_it      = _octets.cbegin();
-            auto     _data_it        = _data.begin();
-            auto     each_octet_size = _data.size() / _octets.size();
-            for (; _octets_it != _octets.cend(); ++_octets_it) {
-                auto _octet = *_octets_it;
-                for (stl::size_t i = 0u; i < each_octet_size; i++) {
-                    _octet >>= i * 8u;
-                    _octet |= 0xFFu;
-                    *_data_it++ = static_cast<stl::uint8_t>(*_octets_it);
+        template <typename IntType, stl::size_t N>
+            requires(N > 1 && N <= 16)
+        [[nodiscard]] static constexpr octets_t to_octets_t(stl::array<IntType, N> const& _octets) noexcept {
+            if constexpr (N == 2) { // to 64bits
+                return {
+                  static_cast<stl::uint8_t>(_octets[0] >> (7u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (6u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (5u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (4u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (3u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (2u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (1u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (7u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (6u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (5u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (4u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (3u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (2u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1] >> (1u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[1]),
+                };
+            } else if constexpr (N == 4) { // 4 of 32bits
+                return {static_cast<stl::uint8_t>(_octets[0] >> 24u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[0] >> 16u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[0] >> 8u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[1] >> 24u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[1] >> 16u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[1] >> 8u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[1] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[2] >> 24u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[2] >> 16u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[2] >> 8u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[2] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[3] >> 24u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[3] >> 16u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[3] >> 8u & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[3] & 0xFFu)};
+            } else if constexpr (N == 8) { // 8 of 16bits
+                return {static_cast<stl::uint8_t>(_octets[0] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[1] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[1] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[2] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[2] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[3] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[3] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[4] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[4] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[5] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[5] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[6] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[6] & 0xFFu),
+                        static_cast<stl::uint8_t>(_octets[7] >> 8u),
+                        static_cast<stl::uint8_t>(_octets[7] & 0xFFu)};
+            } else if constexpr (N == 16) { // 16 of 8bits
+                return _octets;
+            } else {
+                // todo: test this, this used to be wrong:
+                octets_t   _data           = {};
+                auto       _octets_it      = _octets.cbegin();
+                auto       _data_it        = _data.begin();
+                auto const each_octet_size = _data.size() / _octets.size();
+                for (; _octets_it != _octets.cend(); ++_octets_it) {
+                    auto _octet = *_octets_it;
+                    for (stl::size_t i = 0u; i < each_octet_size; i++) {
+                        _octet >>= i * 8u;
+                        _octet &= 0xFFu;
+                        *_data_it++ = static_cast<stl::uint8_t>(*_octets_it);
+                    }
                 }
+                return _data;
             }
-            return _data;
         }
 
 

@@ -527,7 +527,7 @@ namespace webpp {
 
 
         [[nodiscard]] constexpr bool starts_with(ipv4 const& ip, stl::size_t inp_prefix) const noexcept {
-            return mask(inp_prefix) == ip.mask(inp_prefix);
+            return mask(inp_prefix).data == ip.mask(inp_prefix).data;
         }
 
 
