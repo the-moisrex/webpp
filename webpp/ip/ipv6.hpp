@@ -376,15 +376,36 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto const            _octets = octets8();
-            octets16_t            ndata   = {};
-            constexpr stl::size_t len     = ndata.size();
-            using t                       = uint16_t;
-            for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] = static_cast<uint16_t>((static_cast<t>(_octets[i * 2u + 0u]) << (16u - 8u * 1u)) |
-                                                 (static_cast<t>(_octets[i * 2u + 1u]) << (16u - 8u * 2u)));
-            }
-            return ndata;
+            auto const _octets = octets8();
+            using t            = stl::uint16_t;
+            return {
+
+              // octet 1
+              static_cast<t>((static_cast<t>(_octets[0u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[1u]) << (16u - 8u * 2u))),
+              // octet 2
+              static_cast<t>((static_cast<t>(_octets[2u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[3u]) << (16u - 8u * 2u))),
+              // octet 3
+              static_cast<t>((static_cast<t>(_octets[4u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[5u]) << (16u - 8u * 2u))),
+              // octet 4
+              static_cast<t>((static_cast<t>(_octets[6u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[7u]) << (16u - 8u * 2u))),
+              // octet 5
+              static_cast<t>((static_cast<t>(_octets[8u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[9u]) << (16u - 8u * 2u))),
+              // octet 6
+              static_cast<t>((static_cast<t>(_octets[10u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[11u]) << (16u - 8u * 2u))),
+              // octet 7
+              static_cast<t>((static_cast<t>(_octets[12u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[13u]) << (16u - 8u * 2u))),
+              // octet 8
+              static_cast<t>((static_cast<t>(_octets[14u]) << (16u - 8u * 1u)) |
+                             (static_cast<t>(_octets[15u]) << (16u - 8u * 2u)))
+
+            };
         }
 
         /**
@@ -397,17 +418,33 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
 
-            auto const            _octets = octets8();
-            octets32_t            ndata   = {};
-            constexpr stl::size_t len     = ndata.size();
-            using t                       = uint32_t;
-            for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (32u - 8u * 1u)) |
-                           (static_cast<t>(_octets[i * 2u + 1u]) << (32u - 8u * 2u)) |
-                           (static_cast<t>(_octets[i * 2u + 2u]) << (32u - 8u * 3u)) |
-                           (static_cast<t>(_octets[i * 2u + 3u]) << (32u - 8u * 4u));
-            }
-            return ndata;
+            auto const _octets = octets8();
+            using t            = stl::uint32_t;
+            return {
+
+              // octet 1
+              (static_cast<t>(_octets[0u]) << (32u - 8u * 1u)) |
+                (static_cast<t>(_octets[1u]) << (32u - 8u * 2u)) |
+                (static_cast<t>(_octets[2u]) << (32u - 8u * 3u)) |
+                (static_cast<t>(_octets[3u]) << (32u - 8u * 4u)),
+
+              // octet 2
+              (static_cast<t>(_octets[4u]) << (32u - 8u * 1u)) |
+                (static_cast<t>(_octets[5u]) << (32u - 8u * 2u)) |
+                (static_cast<t>(_octets[6u]) << (32u - 8u * 3u)) |
+                (static_cast<t>(_octets[7u]) << (32u - 8u * 4u)),
+
+              // octet 3
+              (static_cast<t>(_octets[8u]) << (32u - 8u * 1u)) |
+                (static_cast<t>(_octets[9u]) << (32u - 8u * 2u)) |
+                (static_cast<t>(_octets[10u]) << (32u - 8u * 3u)) |
+                (static_cast<t>(_octets[11u]) << (32u - 8u * 4u)),
+
+              // octet 4
+              (static_cast<t>(_octets[12u]) << (32u - 8u * 1u)) |
+                (static_cast<t>(_octets[13u]) << (32u - 8u * 2u)) |
+                (static_cast<t>(_octets[14u]) << (32u - 8u * 3u)) |
+                (static_cast<t>(_octets[15u]) << (32u - 8u * 4u))};
         }
 
         /**
@@ -419,22 +456,29 @@ namespace webpp {
             // 16: --0-- --1-- --2-- --3-- --4-- --5-- --6-- --7--
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
+            using t            = stl::uint64_t;
+            auto const _octets = octets8();
+            return {
 
-            auto const            _octets = octets8();
-            octets64_t            ndata   = {};
-            constexpr stl::size_t len     = ndata.size();
-            using t                       = uint64_t;
-            for (stl::size_t i = 0; i < len; i++) {
-                ndata[i] = (static_cast<t>(_octets[i * 2u + 0u]) << (64u - 8u * 1u)) |
-                           (static_cast<t>(_octets[i * 2u + 1u]) << (64u - 8u * 2u)) |
-                           (static_cast<t>(_octets[i * 2u + 2u]) << (64u - 8u * 3u)) |
-                           (static_cast<t>(_octets[i * 2u + 3u]) << (64u - 8u * 4u)) |
-                           (static_cast<t>(_octets[i * 2u + 4u]) << (64u - 8u * 5u)) |
-                           (static_cast<t>(_octets[i * 2u + 5u]) << (64u - 8u * 6u)) |
-                           (static_cast<t>(_octets[i * 2u + 6u]) << (64u - 8u * 7u)) |
-                           (static_cast<t>(_octets[i * 2u + 7u]) << (64u - 8u * 8u));
-            }
-            return ndata;
+              // octet 1
+              (static_cast<t>(_octets[0u]) << (64u - 8u * 1u)) |
+                (static_cast<t>(_octets[1u]) << (64u - 8u * 2u)) |
+                (static_cast<t>(_octets[2u]) << (64u - 8u * 3u)) |
+                (static_cast<t>(_octets[3u]) << (64u - 8u * 4u)) |
+                (static_cast<t>(_octets[4u]) << (64u - 8u * 5u)) |
+                (static_cast<t>(_octets[5u]) << (64u - 8u * 6u)) |
+                (static_cast<t>(_octets[6u]) << (64u - 8u * 7u)) |
+                (static_cast<t>(_octets[7u]) << (64u - 8u * 8u)),
+
+              // octet 2
+              (static_cast<t>(_octets[8u]) << (64u - 8u * 1u)) |
+                (static_cast<t>(_octets[9u]) << (64u - 8u * 2u)) |
+                (static_cast<t>(_octets[10u]) << (64u - 8u * 3u)) |
+                (static_cast<t>(_octets[11u]) << (64u - 8u * 4u)) |
+                (static_cast<t>(_octets[12u]) << (64u - 8u * 5u)) |
+                (static_cast<t>(_octets[13u]) << (64u - 8u * 6u)) |
+                (static_cast<t>(_octets[14u]) << (64u - 8u * 7u)) |
+                (static_cast<t>(_octets[15u]) << (64u - 8u * 8u))};
         }
 
         /**

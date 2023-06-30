@@ -360,3 +360,10 @@ TEST(IPv6Tests, StartsWith) {
     EXPECT_EQ(ip.mask(16), ipv6::create("10::")) << ip.expanded_string() << "\n"
                                                  << ip.mask(16).expanded_string();
 }
+
+TEST(IPv6Tests, ConversionTest) {
+    auto const ip = ipv6::create("10::ffff:127.0.0.1");
+    EXPECT_EQ(ipv6{ip.octets16()}, ip);
+    EXPECT_EQ(ipv6{ip.octets32()}, ip);
+    EXPECT_EQ(ipv6{ip.octets64()}, ip);
+}
