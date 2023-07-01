@@ -182,11 +182,11 @@ TEST(IPv6Tests, IP2NTest) {
 
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+
 static constexpr stl::string_view some_valid_ipv6s[]{
   "2001:db8:3333:4444:5555:6666:7777:8888",
   "2001:db8:3333:4444:cccc:dddd:eeee:ffff",
   "2001:db8::",          // implies that the last six segments are zero
-  "::1234:5678",         // implies that the first six segments are zero
   "2001:db8::1234:5678", // implies that the middle four segments are zero
   "2001:0db8:0001::0ab9:c0a8:0102",
   "2001:db8:1::ab9:c0a8:102",
@@ -196,7 +196,6 @@ static constexpr stl::string_view some_valid_ipv6s[]{
   "2001::1",
   "::1234:5678:91.123.4.56", // implies that the first four ipv6 segments are zero
   "2001:db8:3333:4444:5555:6666:1.2.3.4",
-  "::11.22.33.44",               // implies all six ipv6 segments are zero
   "2001:db8::123.123.123.123",   // implies that the last four ipv6 segments are zero
   "::1234:5678:1.2.3.4",         // implies that the first four ipv6 segments are zero
   "2001:db8::1234:5678:5.6.7.8", // implies that the middle two ipv6 segments are zero
@@ -206,7 +205,6 @@ static constexpr stl::string_view some_valid_ipv6s[]{
   "::FAFF:129.144.52.38", // not a IPv4-Compatible IPv6 Address, but looks like one
   "1::129.144.52.38",     // not a IPv4-Compatible IPv6 Address, but looks like one
   "::",
-  "::f0:1",
 
   // AI Generated:
   "2001:db8:0:0:0:0:0:1",                   // loopback address
@@ -311,6 +309,20 @@ TEST(IPv6Tests, ShortStrEquality) {
 }
 #endif
 
+static constexpr stl::string_view ipv4_deprecated_mapped[]{
+  "::1234:5678",   // implies that the first six segments are zero
+  "::11.22.33.44", // implies all six ipv6 segments are zero
+  "::f0:1",        // OS considers this as ::0.240.0.1 while this notation is deprecated.
+};
+TEST(IPv6Tests, IPv4MappedDeprecated) {
+    for (auto const& _ip : ipv4_deprecated_mapped) {
+        auto const ip6 = ipv6_t{_ip};
+        EXPECT_TRUE(ip6.is_valid()) << _ip;
+    }
+    EXPECT_EQ(ipv6::create("::f0:1").string(), "::f0:1"); // and not ::0.240.0.1
+    EXPECT_EQ(ipv6::create("::11.22.33.44").string(), "::b16:212c");
+    EXPECT_EQ(ipv6::create("::1234:5678").string(), "::1234:5678");
+}
 
 TEST(IPv6Tests, PrefixesTest) {
     stl::array<int, 7> const              valid_prefixes{0, 1, 2, 10, 99, 100, 128};

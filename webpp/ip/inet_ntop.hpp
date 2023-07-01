@@ -128,10 +128,11 @@ namespace webpp {
             *out++ = ':';
 
             // check for ipv4-mapped or ipv4-compatible addresses (which is deprecated now)
-            if (longest_count == 6) {
-                *out++ = ':';
-                return inet_ntop4(src + 12, out);
-            } else if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+            // if (longest_count == 6) {
+            //     *out++ = ':';
+            //     return inet_ntop4(src + 12, out);
+            // } else
+            if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
                 *out++ = ':';
                 *out++ = 'f';
                 *out++ = 'f';
