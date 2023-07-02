@@ -133,6 +133,21 @@ namespace webpp {
             return ip;
         }
 
+        // 0.0.0.0
+        static consteval ipv4 any() noexcept {
+            return ipv4{0x00000000u};
+        }
+
+        // 127.0.0.1
+        static consteval ipv4 loopback() noexcept {
+            return ipv4{0x7F000001u};
+        }
+
+        // 255.255.255.255
+        static consteval ipv4 broadcast() noexcept {
+            return ipv4{0xFFFFFFFFu};
+        }
+
         // initialize with 0.0.0.0
         constexpr ipv4() noexcept = default;
 

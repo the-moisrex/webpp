@@ -174,6 +174,16 @@ namespace webpp {
             return {prefix_status(inet_pton6_status::invalid_prefix)};
         }
 
+        // ::
+        static consteval ipv6 any() noexcept {
+            return ipv6{};
+        }
+
+        // ::1
+        static consteval ipv6 loopback() noexcept {
+            return ipv6{{0x0ull, 0x1ull}};
+        }
+
         // Create an ipv6 at compile-time; a simple consteval constructor helper
         template <typename... Args>
         static consteval ipv6 create(Args&&... args) noexcept {
