@@ -601,7 +601,7 @@ namespace webpp::istl {
     [[nodiscard]] constexpr auto move_element_to(T&& tup) {
         return stl::tuple_cat(sub_tuple<0, From>(tup),
                               sub_tuple<From + 1, To>(tup),
-                              stl::make_tuple(get<From>(tup)),
+                              stl::make_tuple(stl::forward_like<T>(get<From>(tup))),
                               sub_tuple<To, stl::tuple_size_v<stl::remove_cvref_t<T>>>(tup));
     }
 
@@ -609,7 +609,7 @@ namespace webpp::istl {
         requires(From > To)
     [[nodiscard]] constexpr auto move_element_to(T&& tup) {
         return stl::tuple_cat(sub_tuple<0, To>(tup),
-                              stl::make_tuple(get<From>(tup)),
+                              stl::make_tuple(stl::forward_like<T>(get<From>(tup))),
                               sub_tuple<To, From>(tup),
                               sub_tuple<From + 1, stl::tuple_size_v<stl::remove_cvref_t<T>>>(tup));
     }
@@ -632,7 +632,7 @@ namespace webpp::istl {
      */
     template <typename Tup, stl::size_t... I>
     [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&& tup, stl::index_sequence<I...>) {
-        return stl::make_tuple(get<I>(tup)...);
+        return stl::make_tuple(stl::forward_like<Tup>(get<I>(tup))...);
     }
 
 
@@ -641,7 +641,8 @@ namespace webpp::istl {
         template <typename TupleT, typename F, stl::size_t... Indices>
         static constexpr void for_each_impl(F&& f, TupleT&& tup, stl::index_sequence<Indices...>) {
             using swallow = int[];
-            (void) swallow{1, (f(get<Indices>(stl::forward<TupleT>(tup))), void(), int{})...};
+            (void) swallow{1,
+                           (stl::forward<F>(f)(get<Indices>(stl::forward<TupleT>(tup))), void(), int{})...};
         }
     } // namespace details
 

@@ -35,24 +35,62 @@ namespace webpp::istl {
 
 
     namespace details {
-        template <stl::size_t Start, stl::size_t End, stl::size_t... I>
-        struct make_index_range_maker : make_index_range_maker<Start + 1, End, I..., Start> {};
+        template <typename IntegerT, IntegerT Start, IntegerT End, IntegerT... I>
+        struct integer_range_inclusive_maker
+          : integer_range_inclusive_maker<IntegerT, End >= Start ? Start + 1 : Start - 1, End, I..., Start> {
+        };
 
-        // last element is ignored
-        template <stl::size_t End, stl::size_t... I>
-        struct make_index_range_maker<End, End, I...> {
+        // last element is not ignored
+        template <typename IntegerT, IntegerT End, IntegerT... I>
+        struct integer_range_inclusive_maker<IntegerT, End, End, I...> {
+            using type = stl::index_sequence<I..., End>;
+        };
+
+        // Start and End are the same, it'll contain the Start itself
+        template <typename IntegerT, IntegerT Start>
+        struct integer_range_inclusive_maker<IntegerT, Start, Start> {
+            using type = stl::index_sequence<Start>;
+        };
+
+        /////////////////// Non inclusive version:
+
+
+        template <typename IntegerT, IntegerT Start, IntegerT End, IntegerT... I>
+        struct integer_range_maker
+          : integer_range_maker<IntegerT, End >= Start ? Start + 1 : Start - 1, End, I..., Start> {};
+
+        // last element is not ignored
+        template <typename IntegerT, IntegerT End, IntegerT... I>
+        struct integer_range_maker<IntegerT, End, End, I...> {
             using type = stl::index_sequence<I...>;
         };
 
-        // Start and End are the same, it's an empty range
-        template <stl::size_t Start>
-        struct make_index_range_maker<Start, Start> {
+        // Start and End are the same, it'll be empty
+        template <typename IntegerT, IntegerT Start>
+        struct integer_range_maker<IntegerT, Start, Start> {
             using type = stl::index_sequence<>;
         };
+
+
     } // namespace details
 
+    // Make integer range inclusively [Start, End].
+    template <typename IntegerT, IntegerT Start, IntegerT End>
+    using make_integer_inclusive_range =
+      typename details::integer_range_inclusive_maker<IntegerT, Start, End>::type;
+
+    // Make index range inclusively [Start, End].
     template <stl::size_t Start, stl::size_t End>
-    using make_index_range = typename details::make_index_range_maker<Start, End>::type;
+    using make_index_inclusive_range =
+      typename details::integer_range_inclusive_maker<stl::size_t, Start, End>::type;
+
+    // Make integer range non-inclusively [Start, End).
+    template <typename IntegerT, IntegerT Start, IntegerT End>
+    using make_integer_range = typename details::integer_range_maker<IntegerT, Start, End>::type;
+
+    // Make index range non-inclusively [Start, End).
+    template <stl::size_t Start, stl::size_t End>
+    using make_index_range = typename details::integer_range_maker<stl::size_t, Start, End>::type;
 
 
 } // namespace webpp::istl
@@ -65,6 +103,27 @@ namespace webpp::stl {
     template <typename T>
     [[nodiscard]] constexpr underlying_type_t<T> to_underlying(T value) noexcept {
         return static_cast<underlying_type_t<T>>(value);
+    }
+#endif
+
+    // polyfill for C++20 (forward_like is a C++23 feature)
+#ifndef __cpp_lib_forward_like
+    template <class T, class U>
+    [[nodiscard]] constexpr auto&& forward_like(U&& x) noexcept {
+        constexpr bool is_adding_const = std::is_const_v<std::remove_reference_t<T>>;
+        if constexpr (std::is_lvalue_reference_v<T&&>) {
+            if constexpr (is_adding_const) {
+                return std::as_const(x);
+            } else {
+                return static_cast<U&>(x);
+            }
+        } else {
+            if constexpr (is_adding_const) {
+                return std::move(std::as_const(x));
+            } else {
+                return std::move(x);
+            }
+        }
     }
 #endif
 
