@@ -3,7 +3,7 @@
 ![Web++ Logo](./assets/logo-bordered.svg)
 
 
-This is a web framework written in C++ and hopefully will be used by other programming languages other than C++ too.
+This is a web framework written in C++ that uses multiple underlying protocols.
 
 It's being developed. News will be shared on [Telegram](https://t.me/webpp).
 
@@ -187,28 +187,6 @@ int main() {
 }
 ```
 
-## Somewhat Dependencies
-
-These are the dependencies this project requires for certain parts of the project
-to function properly. Some of these libraries haven't been integrated into the project
-yet since we're still working on this project.
-
-Some of these dependencies can replace other dependencies; the difference is usually in 
-their performance but other factors are in play as well.
-
-- `boost::asio` or `asio` (for FastCGI)
-- `boost::beast` _(optional)_ (for benchmarking only)
-- `fmt`: as a fallback for `std::format`
-- `eve` _(optional|Disabled)_: for better performance with SIMD
-- `openssl` (used by asio)
-- _(optional)_ for `gzip` support one of these:
-  - `zlib` _(optional)_
-  - `zlib-ng` _(optional)_
-  - `crypto++` _(optional)_
-  - `libdeflate` _(optional)_
-- `zstd` _(optional)_: for `zstd` compression support
-- `brotli` _(optional)_: for `br` compression support
-
 ## Development
 You can help us develop this project if you're familiar with C++ programming language and web development. Even if you're not really good at web development but you know C++ very well, specially C++17 and C++20 (clang and gcc c++2a is enough), then we have lots of things that you can help with which doesn't have anything to do with web development directly.
 
@@ -226,13 +204,18 @@ I'd appreciate any help of any kind. Even if you're not interested in coding, he
 
 
 ### Examples
-In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint. Take a look at them and you can be sure that we'll try to write tests for all of them; so if you read tests, you'll learn even more about the project.
+In the `examples` directory you can find examples. That's not much but it'll give you they high level viewpoint.
+Take a look at them, and you can be sure that we'll try to write tests for all of them; so if you read tests,
+you'll learn even more about the project.
 
 ### Benchmarks
-Benchmarks are done for us developers so we know which tool/class/implementation/library/framework/solution that we choose is the best. Currently we are using Googles' mini-benchmark library for this purpose.
+Benchmarks are done for us developers so we know which tool/class/implementation/library/framework/solution that
+we choose is the best. Currently, we are using Googles' mini-benchmark library for this purpose.
 
 ### Documentation
-We don't have a documentation/tutorial/guide at this point. You can help us write one. We're just too busy writing the code that we don't have much time writing documentations at this point. But you can be sure from the point that this project becomes production-ready, we'll have documentations.
+We don't have a documentation/tutorial/guide at this point. You can help us write one. We're just too busy writing
+the code that we don't have much time writing documentations at this point. But you can be sure from the point
+that this project becomes production-ready, we'll have documentations.
 
 ### Build
 
