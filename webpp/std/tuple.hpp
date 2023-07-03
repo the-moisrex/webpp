@@ -170,7 +170,7 @@ namespace webpp::istl {
     template <stl::size_t From, stl::size_t... indices, typename T1, typename T2, typename Func>
     void tuple_transform(T1&& s, T2& t, Func f, stl::index_sequence<indices...>) {
         (void) stl::initializer_list<int>{
-          (stl::get<indices + From>(t) = f(stl::get<indices>(stl::forward<T1>(s))), 0)...};
+          (stl::get<indices + From>(t) = f(stl::forward_like<T1>(get<indices>(s))), 0)...};
     }
 
 
@@ -182,7 +182,7 @@ namespace webpp::istl {
 
     template <stl::size_t... indices, typename Tup, typename Func>
     [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f, stl::index_sequence<indices...>) {
-        return stl::tuple{(f(stl::get<indices>(stl::forward<Tup>(s))), ...)};
+        return stl::tuple{(f(stl::forward_like<Tup>(get<indices>(s))), ...)};
     }
 
 
@@ -266,12 +266,13 @@ namespace webpp::istl {
         constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
 
         template <template <typename...> typename Tup, typename... Args>
-        constexpr ituple(ituple<Args...>&& tup) : this_tuple{stl::forward<Args>(stl::get<Args>(tup))...} {}
+        constexpr ituple(ituple<Args...>&& tup)
+          : this_tuple{stl::forward<Args>(stl::move(stl::get<Args>(tup)))...} {}
 
         template <typename... TupT>
         constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
             ([this, &tup]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
-                ((stl::get<I>(as_tuple()) = stl::get<I>(tup)), ...);
+                ((stl::get<I>(as_tuple()) = stl::move(stl::get<I>(tup))), ...);
             })(stl::make_index_sequence<native_tuple_size>{});
         }
 
@@ -502,7 +503,9 @@ namespace webpp::istl {
     constexpr void adjacent_apply(Tuple&& tup, FuncT&& func) {
         using tuple_type = stl::remove_cvref_t<Tuple>;
         ([&]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
-            ((func(stl::get<I>(tup), stl::get<I + 1>(tup))), ...);
+            ((func(stl::forward_like<Tuple>(stl::get<I>(tup)),
+                   stl::forward_like<Tuple>(stl::get<I + 1>(tup)))),
+             ...);
         })(stl::make_index_sequence<stl::tuple_size_v<tuple_type> - 1>{});
     }
 
@@ -519,7 +522,7 @@ namespace webpp::istl {
 
         template <typename T, stl::size_t... Is>
         constexpr auto explode(T&& t, stl::index_sequence<Is...>) {
-            return tuple_cat(explode(get<Is>(stl::forward<T>(t)), 0)...);
+            return tuple_cat(explode(stl::forward_like<T>(get<Is>(t)), 0)...);
         }
 
         template <typename T, stl::size_t I>
@@ -529,7 +532,7 @@ namespace webpp::istl {
 
         template <typename T, stl::size_t... Is>
         constexpr auto decay_tuple(T&& t, stl::index_sequence<Is...>) {
-            return stl::make_tuple(get<Is>(stl::forward<T>(t))...);
+            return stl::make_tuple(stl::forward_like<T>(get<Is>(t))...);
         }
 
         template <typename T>
@@ -540,7 +543,7 @@ namespace webpp::istl {
 
         template <typename T, stl::size_t... Is>
         constexpr auto flatten_tuple(T&& t, stl::index_sequence<Is...>) {
-            return decay_tuple(tuple_cat(explode(get<Is>(stl::forward<T>(t)), 0)...));
+            return decay_tuple(tuple_cat(explode(stl::forward_like<T>(get<Is>(t)), 0)...));
         }
 
     } // namespace details
@@ -641,8 +644,9 @@ namespace webpp::istl {
         template <typename TupleT, typename F, stl::size_t... Indices>
         static constexpr void for_each_impl(F&& f, TupleT&& tup, stl::index_sequence<Indices...>) {
             using swallow = int[];
-            (void) swallow{1,
-                           (stl::forward<F>(f)(get<Indices>(stl::forward<TupleT>(tup))), void(), int{})...};
+            (void) swallow{
+              1,
+              (stl::forward<F>(f)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...};
         }
     } // namespace details
 
