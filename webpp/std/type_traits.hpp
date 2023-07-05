@@ -10,7 +10,7 @@
 
 namespace webpp::istl {
 
-    // Used where a tuple is needed but you don't really want the any features of tuple
+    // Used where a tuple is needed, but you don't really want all features of tuple
     template <typename...>
     struct type_list {};
 
@@ -184,7 +184,7 @@ namespace webpp::istl {
             }
 
             template <typename NextType>
-            constexpr auto operator|(NextType&& next) const noexcept {
+            constexpr auto operator|(NextType next) const noexcept {
                 if constexpr (rank < NextType::rank) {
                     return *this;
                 } else {
@@ -193,7 +193,7 @@ namespace webpp::istl {
             }
 
             template <typename NextType>
-            constexpr auto operator&(NextType&& next) const noexcept {
+            constexpr auto operator&(NextType next) const noexcept {
                 if constexpr (rank > NextType::rank) {
                     return *this;
                 } else {
