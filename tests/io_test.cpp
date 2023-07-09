@@ -16,6 +16,14 @@ TEST(IO, IOConcepts) {
     //
 }
 
+TEST(IO, TaskChain) {
+    auto chain = task() >> [] {
+        return "Hello World.";
+    } >> [] (string_view str) {
+        return str.substr(str.find(' '));
+    };
+    EXPECT_EQ(chain(), "Hello");
+}
 
 #ifdef WEBPP_IO_URING_SUPPORT
 TEST(IO, BasicIdea) {
@@ -24,13 +32,13 @@ TEST(IO, BasicIdea) {
     fake_file << "content";
 
     array<char, 100> buf{};
-    io.read(fake_file, buf.data(), buf.size()) >>
+    io >> read(fake_file, buf.data(), buf.size()) >>
         [&buf]() {
             string const str{buf.data(), ::strlen(buf.data())};
             EXPECT_EQ(str, "content");
             return str;
         } >>
-        io.write(fake_file) >>
+        write(fake_file) >>
         [&] {
             EXPECT_EQ(fake_file.str(), "content");
         } ||
