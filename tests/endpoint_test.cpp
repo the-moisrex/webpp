@@ -3,15 +3,15 @@
 
 #include "../webpp/ip/endpoint.hpp"
 
+#include "../webpp/ip/default_endpoints.hpp"
 #include "common_pch.hpp"
 using namespace webpp;
 
-static constexpr ipv4          ipv4_localhost{127, 0, 0, 1};
-static constexpr ipv6          ipv6_localhost{"::1"};
 static constexpr stl::uint16_t test_port = 12332;
 
 TEST(EndPoint, Concept) {
     EXPECT_TRUE(Endpoint<ip_endpoint>);
+    EXPECT_TRUE(EndpointList<decltype(localhost_endpoints)>);
 }
 
 TEST(EndPoint, IsBindable) {
