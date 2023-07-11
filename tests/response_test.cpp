@@ -121,6 +121,19 @@ TEST(Response, ResHeadersMultiGet) {
     EXPECT_EQ(encoding, "gzip, deflate, br");
 }
 
+#if __cpp_multidimensional_subscript
+TEST(Response, ResHeadersMultiGetCPP23MultiSubsOp) {
+    enable_owner_traits<default_traits> et;
+    HTTPResponse auto                   res = res_t::create(et);
+    res.headers["Content-Length"]           = "10";
+    res.headers["Accept-Encoding"]          = "gzip, deflate, br";
+
+    auto const [length, encoding] = res.headers["Content-Length", "Accept-Encoding"];
+    EXPECT_EQ(length, "10");
+    EXPECT_EQ(encoding, "gzip, deflate, br");
+}
+#endif
+
 TEST(Response, File) {
     enable_owner_traits<default_traits> et;
     std::filesystem::path               file = std::filesystem::temp_directory_path();

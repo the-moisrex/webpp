@@ -161,6 +161,21 @@ namespace webpp::http {
             return reference_type{*this, name, get(name)};
         }
 
+// This is a C++23 feature
+#if __cpp_multidimensional_subscript
+        /**
+         * Get multiple header values as a tuple
+         * This is the same as ".get(...)" member function
+         * returns stl::tuple<value_type, value_type, ...> if you give multiple names
+         */
+        template <typename... NameType>
+            requires(sizeof...(NameType) > 1)
+        [[nodiscard]] constexpr auto operator[](NameType&&... name) const noexcept {
+            return stl::make_tuple(get(name)...);
+        }
+#endif
+
+
         /**
          * Check if the specified names are in headers
          * returns stl::tuple<bool, bool, ...> if you give multiple names
