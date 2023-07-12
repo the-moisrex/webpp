@@ -123,30 +123,21 @@ namespace webpp::http {
     segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
 
     template <istl::StringLiteral StrT>
-    struct valvify<StrT> {
-        template <istl::cvref_as<StrT> TT>
-        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
-            return segment_string{istl::string_viewify(stl::forward<TT>(next))};
-        }
-    };
+    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, StrT&& next) noexcept {
+        return segment_string{istl::string_viewify(stl::forward<StrT>(next))};
+    }
 
     // String Views Valvifier
     template <istl::StringView T>
-    struct valvify<T> {
-        template <istl::cvref_as<T> TT>
-        [[nodiscard]] static constexpr auto call(TT&& next) noexcept {
-            return segment_string{stl::forward<TT>(next)};
-        }
-    };
+    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, T&& next) noexcept {
+        return segment_string{stl::forward<T>(next)};
+    }
 
     // String object is passed
     template <istl::String T>
-    struct valvify<T> {
-        template <istl::cvref_as<T> TT>
-        [[nodiscard]] static constexpr auto call(TT&& next) {
-            return segment_string{stl::forward<TT>(next)};
-        }
-    };
+    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, T&& next) {
+        return segment_string{stl::forward<T>(next)};
+    }
 
 } // namespace webpp::http
 

@@ -6,6 +6,7 @@
 #include "../../std/function_ref.hpp"
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
+#include "../../std/tag_invoke.hpp"
 #include "../../std/types.hpp"
 #include "../../traits/default_traits.hpp"
 #include "../http_concepts.hpp"
@@ -40,7 +41,6 @@ namespace webpp::http {
     concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
 
 
-
     template <istl::String StrT, typename Callable>
     static constexpr void valve_to_string(StrT& out, Callable& func) {
         using mem_traits = istl::member_function_pointer_traits<Callable>;
@@ -65,23 +65,30 @@ namespace webpp::http {
     }
 
 
-    // General Valvifier
-    template <typename T>
-    struct valvify {
+    // General Valvifier Tag, and its default implementation
+    inline constexpr struct valvify_tag {
 
-        template <istl::cvref_as<T> TT>
-        [[nodiscard]] static constexpr decltype(auto) call(TT&& next) noexcept {
-            return stl::forward<TT>(next);
+        // Customization Point
+        template <typename T>
+            requires stl::tag_invocable<valvify_tag, T>
+        [[nodiscard]] constexpr stl::tag_invoke_result_t<valvify_tag, T> operator()(T&& next) const
+          noexcept(stl::nothrow_tag_invocable<valvify_tag, T>) {
+            return stl::tag_invoke(*this, stl::forward<T>(next));
         }
-    };
+
+        // default impl
+        template <typename T>
+        [[nodiscard]] friend constexpr decltype(auto) tag_invoke(valvify_tag, T&& next) noexcept {
+            return stl::forward<T>(next);
+        }
+    } valvify;
+
+    // get the type of the valvified value
+    template <typename T>
+    using valvified_type = stl::tag_invoke_result_t<valvify_tag, T>;
 
     template <typename T>
-    concept Valvifiable = requires(T obj) { valvify<stl::remove_cvref_t<T>>::call(obj); };
-
-    template <typename T>
-    [[nodiscard]] static constexpr decltype(auto) valvify_or(T&& next) noexcept {
-        return valvify<stl::remove_cvref_t<T>>::call(stl::forward<T>(next));
-    }
+    concept Valvifiable = stl::tag_invocable<valvify_tag, T>;
 
 
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
@@ -100,7 +107,7 @@ namespace webpp::http {
             requires(!stl::is_pointer_v<stl::remove_cvref_t<C>> && invocable_inorder_type::value)
         static constexpr return_type
           call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
-            return istl::invoke_inorder(callable, ctx, ctx.request, ctx.response);
+            return istl::invoke_inorder(stl::forward<C>(callable), ctx, ctx.request, ctx.response);
         }
 
         template <istl::cvref_as<callable_type> C>
@@ -111,7 +118,7 @@ namespace webpp::http {
         }
 
         template <typename R>
-        static constexpr bool is_positive(R&& ret) noexcept {
+        static constexpr bool is_positive(R const& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
             if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
@@ -128,7 +135,7 @@ namespace webpp::http {
         }
 
         template <typename R>
-        static constexpr bool should_continue(R&& ret) noexcept {
+        static constexpr bool should_continue(R const& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
             if constexpr (stl::same_as<ret_type, bool>) {
                 return ret;
@@ -209,8 +216,6 @@ namespace webpp::http {
     };
 
 
-
-
     // Get the valves_group's routes_type
     template <typename T>
     struct routes_type_of_valve {
@@ -221,7 +226,6 @@ namespace webpp::http {
     struct routes_type_of_valve<valves_group<Pres, Posts, Manglers, Routes>> {
         using type = Routes;
     };
-
 
 
     /**

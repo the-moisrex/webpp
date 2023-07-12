@@ -19,7 +19,7 @@ TEST(IO, IOConcepts) {
 TEST(IO, TaskChain) {
     auto chain = task() >> [] {
         return "Hello World.";
-    } >> [] (string_view str) {
+    } >> [](string_view str) {
         return str.substr(str.find(' '));
     };
     EXPECT_EQ(chain(), "Hello");
