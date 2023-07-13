@@ -450,11 +450,8 @@ struct custom_type {
     constexpr custom_callable& get_cc() noexcept {
         return cc;
     }
-};
 
-template <>
-struct webpp::http::valvify<custom_type> {
-    static constexpr custom_callable& call(custom_type& ct) noexcept {
+    constexpr friend custom_callable& tag_invoke(stl::tag_t<valvify>, custom_type& ct) noexcept {
         return ct.get_cc();
     }
 };

@@ -9,7 +9,7 @@ using namespace std;
 using namespace webpp;
 
 int ipv4_fuzz(string_view data) {
-    ipv4 ip{data};
+    ipv4 ip{data}; // from string
     ip.clear_prefix();
     [[maybe_unused]] bool res   = ip.has_prefix();
     res                         = ip.is_loopback();
