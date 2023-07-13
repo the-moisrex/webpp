@@ -2,8 +2,8 @@
 #include "../webpp/http/routes/context.hpp"
 
 #include "../webpp/http/bodies/string.hpp"
-#include "common_pch.hpp"
-#include "fake_protocol.hpp"
+#include "common/fake_protocol.hpp"
+#include "common/tests_common_pch.hpp"
 
 using namespace webpp;
 using namespace webpp::http;

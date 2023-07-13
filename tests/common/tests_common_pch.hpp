@@ -1,7 +1,7 @@
 // Created by moisrex on 11/12/20.
 
-#ifndef WEBPP_COMMON_PCH_HPP
-#define WEBPP_COMMON_PCH_HPP
+#ifndef WEBPP_TESTS_COMMON_PCH_HPP
+#define WEBPP_TESTS_COMMON_PCH_HPP
 
 #if __has_include(<gtest/gtest.h>)
 #    include <gtest/gtest.h>
@@ -30,4 +30,4 @@
 #include <utility>
 #include <vector>
 
-#endif // WEBPP_COMMON_PCH_HPP
+#endif // WEBPP_TESTS_COMMON_PCH_HPP

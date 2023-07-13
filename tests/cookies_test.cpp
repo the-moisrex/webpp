@@ -1,7 +1,7 @@
 #include "../webpp/http/cookies/request_cookie_jar.hpp"
 #include "../webpp/http/cookies/response_cookie_jar.hpp"
 #include "../webpp/traits/std_traits.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 using namespace webpp;
 using namespace webpp::http;

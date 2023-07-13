@@ -7,13 +7,13 @@
 #include "../webpp/memory/std_pmr_allocator_pack.hpp"
 #include "../webpp/std/memory_resource.hpp"
 #include "../webpp/std/string.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 #include <vector>
 
 using namespace webpp;
 
-#ifdef webpp_has_memory_resource
+#ifdef __cpp_lib_polymorphic_allocator
 
 TEST(MemoryTest, PMRAllocatorPackTest) {
     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
@@ -58,6 +58,7 @@ TEST(MemoryTest, AvailableMemory) {
     EXPECT_TRUE(available_memory() > 0);
 }
 
+#ifdef __cpp_lib_polymorphic_allocator
 TEST(MemoryTest, DynamicType) {
     using webpp::istl::dynamic;
 
@@ -123,6 +124,7 @@ TEST(MemoryTest, DynamicType) {
     EXPECT_EQ(daddy.val, 23);
     EXPECT_EQ(daddy.baby->val, 24);
 }
+#endif
 
 TEST(MemoryTest, PolymorphicTestForDynamicType) {
     using webpp::istl::dynamic;

@@ -1,7 +1,7 @@
 // Created by moisrex on 8/16/20.
 
 #include "../webpp/logs/std_logger.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 #include <cstdio>
 

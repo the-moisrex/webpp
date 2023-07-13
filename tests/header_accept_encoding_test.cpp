@@ -1,7 +1,7 @@
 // Created by moisrex on 10/9/20.
 #include "../webpp/http/headers/accept_encoding.hpp"
 #include "../webpp/traits/std_traits.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 
 using namespace webpp::http;

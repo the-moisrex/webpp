@@ -1,6 +1,6 @@
 #include "../webpp/ip/ip_address.hpp"
 
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 using namespace webpp;
 

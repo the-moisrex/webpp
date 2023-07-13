@@ -1,7 +1,7 @@
 #include "../webpp/db/sql_database.hpp"
 #include "../webpp/db/sqlite/sqlite.hpp"
 #include "../webpp/traits/std_traits.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 
 using namespace webpp;

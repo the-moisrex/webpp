@@ -3,7 +3,7 @@
 #include "../webpp/crypto/base64.hpp"
 #include "../webpp/crypto/base64_url.hpp"
 #include "../webpp/crypto/gzip.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 
 using namespace webpp;

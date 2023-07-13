@@ -61,15 +61,7 @@ namespace webpp {
 
     template <typename ValueType, typename... R>
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
-        using value_type                 = stl::remove_cvref_t<ValueType>;
-        constexpr stl::size_t value_size = sizeof(value_type);
-
-        // converting any value type to 3 possible float value types
-        using float_type =
-          stl::conditional_t<(value_size <= sizeof(float)),
-                             float,
-                             stl::conditional_t<(value_size == sizeof(double)), double, long double>>;
-
+        using value_type = stl::remove_cvref_t<ValueType>;
 
         if constexpr (istl::StringViewifiable<value_type>) {
             str.append(value);
@@ -77,6 +69,13 @@ namespace webpp {
             return true;
         } else {
 #ifdef __cpp_lib_to_chars
+            constexpr stl::size_t value_size = sizeof(value_type);
+            // converting any value type to 3 possible float value types
+            using float_type =
+              stl::conditional_t<(value_size <= sizeof(float)),
+                                 float,
+                                 stl::conditional_t<(value_size == sizeof(double)), double, long double>>;
+
             constexpr stl::size_t   _size = ascii::digit_count<value_type>() + 1;
             stl::array<char, _size> chars;
             if (auto res = stl::to_chars(chars.data(),

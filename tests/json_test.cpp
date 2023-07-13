@@ -2,7 +2,7 @@
 
 
 #include "../webpp/json/defaultjson.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 using namespace webpp;
 using namespace webpp::json;

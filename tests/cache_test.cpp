@@ -3,7 +3,7 @@
 #include "../webpp/storage/directory_gate.hpp"
 #include "../webpp/storage/file_gate.hpp"
 #include "../webpp/storage/lru_cache.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 using namespace webpp;
 

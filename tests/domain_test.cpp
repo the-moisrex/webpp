@@ -1,7 +1,7 @@
 // Created by moisrex on 5/12/23.
 #include "../webpp/uri/domain.hpp"
 
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 #include <cstring>
 using namespace webpp;

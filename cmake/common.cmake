@@ -2,7 +2,7 @@
 function(setup_target name)
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
     target_compile_features(${name} PUBLIC
-        cxx_std_23
+        cxx_std_20
         cxx_auto_type
         cxx_lambdas
         cxx_constexpr

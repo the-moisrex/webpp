@@ -6,7 +6,7 @@
 #include "../webpp/http/routes/disabler.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 
 using namespace webpp;

@@ -7,7 +7,7 @@
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/response_body.hpp"
 #include "../webpp/traits/enable_traits.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 #include "extensions/extension.hpp"
 #include "traits/default_traits.hpp"
 

@@ -5,7 +5,7 @@
 #include "../webpp/views/mustache_view.hpp"
 #include "../webpp/views/view_concepts.hpp"
 #include "../webpp/views/view_manager.hpp"
-#include "common_pch.hpp"
+#include "common/tests_common_pch.hpp"
 
 
 using namespace webpp;

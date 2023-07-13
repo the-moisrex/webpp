@@ -1,6 +1,7 @@
 #ifndef WEBPP_STD_MEMORY_HPP
 #define WEBPP_STD_MEMORY_HPP
 
+#include "./memory_resource.hpp"
 #include "./type_traits.hpp"
 #include "./utility.hpp"
 
@@ -85,7 +86,7 @@ namespace webpp::istl {
             }
 
             constexpr explicit operator bool() const noexcept {
-                return !!p;
+                return static_cast<bool>(p);
             }
 
             constexpr bool operator!() const noexcept {
@@ -120,7 +121,7 @@ namespace webpp::istl {
             }
 
             constexpr explicit operator bool() const noexcept {
-                return !!p;
+                return static_cast<bool>(p);
             }
 
             constexpr bool operator!() const noexcept {
@@ -156,7 +157,7 @@ namespace webpp::istl {
             }
 
             constexpr explicit operator bool() const noexcept {
-                return !!p;
+                return static_cast<bool>(p);
             }
 
             constexpr bool operator!() const noexcept {
@@ -198,12 +199,12 @@ namespace webpp::istl {
 
         template <class T, class P>
         constexpr bool operator!=(const sp_alloc_ptr<T, P>& lhs, stl::nullptr_t) noexcept {
-            return !!lhs.ptr();
+            return static_cast<bool>(lhs.ptr());
         }
 
         template <class T, class P>
         constexpr bool operator!=(stl::nullptr_t, const sp_alloc_ptr<T, P>& rhs) noexcept {
-            return !!rhs.ptr();
+            return static_cast<bool>(rhs.ptr());
         }
 
         template <class A>
