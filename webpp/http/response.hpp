@@ -178,14 +178,10 @@ namespace webpp::http {
         template <typename T>
         constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_response_body<T>(*this) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_response_body<T>(*this);
-            } else if constexpr (requires {
-                                     { deserialize_response_body<T>(this->body) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_response_body<T>(this->body);
+            if constexpr (DeserializableResponseBody<T, common_http_response>) {
+                return deserialize_response_body(stl::type_identity<T>{}, *this);
+            } else if constexpr (DeserializableResponseBody<T, body_type>) {
+                return deserialize_response_body(stl::type_identity<T>{}, this->body);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return as<requested_type>();
             } else {

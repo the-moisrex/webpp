@@ -190,6 +190,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/request_headers.hpp
         ${LIB_INCLUDE_DIR}/http/response_headers.hpp
         ${LIB_INCLUDE_DIR}/http/http_concepts.hpp
+        ${LIB_INCLUDE_DIR}/http/body_concepts.hpp
         ${LIB_INCLUDE_DIR}/http/response.hpp
         ${LIB_INCLUDE_DIR}/http/app_wrapper.hpp
         ${LIB_INCLUDE_DIR}/http/http.hpp

@@ -15,7 +15,7 @@ namespace webpp::http {
 
     template <typename T, HTTPBody BodyType>
         requires(stl::same_as<stl::remove_cvref_t<T>, stl::filesystem::path>)
-    constexpr void serialize_body(T&& path, BodyType& body) {
+    constexpr void tag_invoke(serialize_body_tag, T&& path, BodyType& body) {
         using body_type   = stl::remove_cvref_t<BodyType>;
         using traits_type = typename body_type::traits_type;
         using string_type = traits::general_string<traits_type>;

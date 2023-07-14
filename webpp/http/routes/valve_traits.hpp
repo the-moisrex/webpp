@@ -151,7 +151,7 @@ namespace webpp::http {
             if constexpr (stl::is_void_v<ret_t> || istl::part_of<ret_t, bool, istl::nothing_type>) {
                 // ignore the result
             } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t> ||
-                                 HTTPSerializableBody<ret_t, response_body_type>) {
+                                 HTTPGenerallySerializableBody<ret_t, response_body_type>) {
                 ctx.response = stl::forward<R>(ret);
             } else if constexpr (stl::same_as<ret_t, http::status_code>) {
                 ctx.response = ret;

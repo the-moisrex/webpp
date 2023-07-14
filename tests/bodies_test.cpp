@@ -22,6 +22,28 @@ TEST(Body, Concepts) {
     EXPECT_TRUE(bool(BodyWriter<body_writer<default_traits>>));
 }
 
+
+struct custom_body_type {
+
+    friend void tag_invoke(serialize_body_tag, custom_body_type, HTTPBody auto& body) {
+        body = "custom body type";
+    }
+};
+
+static_assert(SerializableBody<custom_body_type, body_type>,
+              "custom body is not serializable but it should be.");
+static_assert(DeserializableBody<stl::string_view, body_type>,
+              "string view is not deserializable but it should be.");
+static_assert(DeserializableBody<char const*, body_type>, "c-string is not deserializable but it should be.");
+
+TEST(Body, CustomBodyTypeSerializerTest) {
+    enable_owner_traits<default_traits> et;
+    body_type                           body{et};
+    body = custom_body_type{};
+    EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
+}
+
+
 TEST(Body, Text) {
     enable_owner_traits<default_traits> et;
     body_type                           b{et, "Testing"};
@@ -100,19 +122,6 @@ TEST(Body, StringCustomBody) {
     EXPECT_EQ("nice", body_str2);
 }
 
-
-struct custom_body_type {};
-
-void serialize_body(custom_body_type, HTTPBody auto& body) {
-    body = "custom body type";
-}
-
-TEST(Body, CustomBodyTypeSerializerTest) {
-    enable_owner_traits<default_traits> et;
-    body_type                           body{et};
-    body = custom_body_type{};
-    EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
-}
 
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)

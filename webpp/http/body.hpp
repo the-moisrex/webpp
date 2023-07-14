@@ -87,14 +87,10 @@ namespace webpp::http {
         template <typename T, typename Obj>
         constexpr T get_as(Obj&& obj) {
             using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_response_body<T>(obj) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_response_body<T>(obj);
-            } else if constexpr (requires {
-                                     { deserialize_body<T>(obj) } -> stl::same_as<T>;
-                                 }) {
-                return deserialize_body<T>(obj);
+            if constexpr (DeserializableResponseBody<T, Obj>) {
+                return deserialize_response_body(stl::type_identity<T>{}, obj);
+            } else if constexpr (DeserializableBody<T, Obj>) {
+                return deserialize_body(stl::type_identity<T>{}, obj);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return get_as<requested_type>();
             } else {
@@ -449,13 +445,13 @@ namespace webpp::http {
 
 
         template <typename T>
-        // requires(HTTPDeserializableBody<T, body_reader>)
+        // requires(HTTPGenerallyDeserializableBody<T, body_reader>)
         constexpr T as() {
             return details::get_as<T>(*this);
         }
 
         template <typename T>
-            requires(HTTPDeserializableBody<T, body_reader>)
+            requires(HTTPGenerallyDeserializableBody<T, body_reader>)
         constexpr T as() const {
             return details::get_as<T>(*this);
         }
@@ -630,9 +626,9 @@ namespace webpp::http {
 
         template <typename T>
         constexpr body_writer& add(T&& obj) {
-            if constexpr (requires { serialize_response_body(stl::forward<T>(obj), *this); }) {
+            if constexpr (SerializableResponseBody<T, body_writer>) {
                 serialize_response_body(stl::forward(obj), *this);
-            } else if constexpr (requires { serialize_body(stl::forward<T>(obj), *this); }) {
+            } else if constexpr (SerializableBody<T, body_writer>) {
                 serialize_body(stl::forward<T>(obj), *this);
             } else {
                 static_assert_false(T,

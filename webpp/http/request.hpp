@@ -74,13 +74,11 @@ namespace webpp::http {
 
 
         template <typename T>
-            requires(HTTPDeserializableBody<T, common_http_request>)
+            requires(HTTPGenerallyDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() const {
             using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_request_body<T>(*this);
+            if constexpr (DeserializableRequestBody<T, common_http_request>) {
+                return deserialize_request_body(stl::type_identity<T>{}, *this);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return as<requested_type>();
             } else {
@@ -89,13 +87,11 @@ namespace webpp::http {
         }
 
         template <typename T>
-        // requires(HTTPDeserializableBody<T, common_http_request>)
+        // requires(HTTPGenerallyDeserializableBody<T, common_http_request>)
         [[nodiscard]] constexpr T as() {
             using requested_type = stl::remove_cvref_t<T>;
-            if constexpr (requires {
-                              { deserialize_request_body<T>(*this) } -> stl::same_as<T>;
-                          }) {
-                return deserialize_request_body<T>(*this);
+            if constexpr (DeserializableRequestBody<T, common_http_request>) {
+                return deserialize_request_body(stl::type_identity<T>{}, *this);
             } else if constexpr (!stl::same_as<T, requested_type>) {
                 return as<requested_type>();
             } else {
