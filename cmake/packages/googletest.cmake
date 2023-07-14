@@ -1,17 +1,17 @@
 if (IS_DEBUG)
-    find_package(GTest QUIET)
-    if (NOT gtest_FOUND)
-        include(CPM)
-        CPMAddPackage(
-                NAME googletest
-                URL https://github.com/google/googletest/archive/refs/tags/release-1.12.0.tar.gz
-                GIT_TAG release-1.12.0
-                VERSION 1.12.0
-                OPTIONS
-                    "INSTALL_GTEST OFF"
-                    "gtest_force_shared_crt ON"
-                    "BUILD_GMOCK OFF"
-                    "BUILD_TESTING OFF"
-        )
-    endif ()
+    include(CPM)
+    CPMAddPackage(
+            NAME googletest
+            URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.tar.gz
+            GIT_TAG v1.13.0
+            VERSION 1.13.0
+            OPTIONS
+                "INSTALL_GTEST OFF"
+                "gtest_force_shared_crt ON"
+                "BUILD_GMOCK ON"
+                "BUILD_TESTING OFF"
+    )
+    add_library(GTest::GTest ALIAS gtest)
+    add_library(GTest::Main ALIAS gtest_main)
+    add_library(GTest::GMock ALIAS gmock)
 endif ()

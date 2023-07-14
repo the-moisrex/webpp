@@ -3,7 +3,7 @@ if (USE_CTRE)
     include(CPM)
     CPMAddPackage(
             NAME ctre
-            URL https://github.com/hanickadot/compile-time-regular-expressions/archive/refs/tags/v3.7.tar.gz
+            URL https://github.com/hanickadot/compile-time-regular-expressions/archive/refs/tags/v3.7.2.tar.gz
             OPTIONS
                     "CTRE_BUILD_TESTS OFF"
                     "CTRE_BUILD_PACKAGE OFF"

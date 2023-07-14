@@ -1,4 +1,5 @@
 enable_testing()
+include(GoogleTest)
 
 include(../cmake/coverage.cmake)
 include(../cmake/common.cmake)
@@ -7,47 +8,52 @@ add_library(test-commons)
 set_target_properties(test-commons PROPERTIES EXCLUDE_FROM_ALL TRUE)
 target_sources(test-commons PUBLIC common/tests_common_pch.hpp)
 target_precompile_headers(test-commons PUBLIC common/tests_common_pch.hpp)
+if (TARGET gtest AND TARGET gtest_main)
+    target_link_libraries(test-commons
+            PUBLIC gtest         # GTest::GTest
+            PUBLIC gtest_main    # GTest::Main
+    )
+elseif (TARGET GTest::GTest AND TARGET GTest::Main)
+    target_link_libraries(test-commons
+            PUBLIC GTest::GTest
+            PUBLIC GTest::Main
+    )
+endif ()
 setup_library(test-commons)
+
 
 function(setup_fuzz name)
     target_link_libraries(${name}
             PRIVATE ${LIB_NAME}
-            -fsanitize=fuzzer,address
-            -coverage
+            PRIVATE test-commons
+            	-fsanitize=fuzzer,address
+	    	-coverage
     )
-    target_compile_options(${name} PRIVATE -fsanitize=fuzzer,address)
+    # link_fuzztest(${name})
     add_test(
             NAME ${name}
             COMMAND $<TARGET_FILE:${name}> -max_total_time=10) # run for 10 seconds
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
     setup_executable(${name})
     target_code_coverage("${name}")
+    # gtest_discover_tests(${name})
 
     message(STATUS "Fuzz Test available: ${name}")
 endfunction()
 
 
 function(setup_test name)
-    if (TARGET gtest AND TARGET gtest_main)
-            target_link_libraries(${name}
-                    PRIVATE ${LIB_NAME}
-                    PRIVATE gtest         # GTest::GTest
-                    PRIVATE gtest_main    # GTest::Main
-                    )
-    elseif (TARGET GTest::GTest AND TARGET GTest::Main)
-            target_link_libraries(${name}
-                    PRIVATE ${LIB_NAME}
-                    PRIVATE GTest::GTest
-                    PRIVATE GTest::Main
-                    PRIVATE test-commons
-                    )
-    endif ()
+    target_link_libraries(${name}
+            PRIVATE ${LIB_NAME}
+            PRIVATE test-commons
+    )
     add_test(
         NAME ${name}
         COMMAND $<TARGET_FILE:${name}>)
     set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
     setup_executable(${name})
     target_code_coverage("${name}")
+    gtest_discover_tests(${name})
 
     message(STATUS "Test available: ${name}")
 endfunction()
@@ -86,7 +92,11 @@ endforeach()
 
 ############################## Fuzzing Tests ##############################
 
-if (IS_CLANG)
+if (IS_CLANG AND FUZZ_TESTS)
+    # Setting up fuzztest: https://github.com/google/fuzztest/blob/main/doc/quickstart-cmake.md
+    # set(FUZZTEST_FUZZING_MODE ON)
+    # fuzztest_setup_fuzzing_flags()
+
     # All the fuzzz tests in one single executable
     file(GLOB FUZZ_SOURCES *_fuzz.cpp)
     set(FUZZ_NAME ${PROJECT_NAME}-fuzzes)

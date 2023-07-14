@@ -1,26 +1,28 @@
 #ifndef WEBPP_FIXED_STRING_H
 #define WEBPP_FIXED_STRING_H
 
-#include <fixed_string.hpp>
-
+#if __has_include(<fixed_string.hpp>)
+#    include <fixed_string.hpp>
 
 namespace webpp::istl {
     using namespace fixstr;
 }
-
-/*
-#include "../std/string_view.hpp"
-
-#include <cstddef>
-#include <cstdint>
-#include <utility>
-
-#if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
-#    warning \
-      "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
 #else
-#    define FIXED_STRING_SUPPORT 1
-#endif
+
+
+
+#    include "../std/string_view.hpp"
+
+#    include <cstddef>
+#    include <cstdint>
+#    include <utility>
+
+#    if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
+#        warning \
+          "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
+#    else
+#        define FIXED_STRING_SUPPORT 1
+#    endif
 
 namespace webpp {
 
@@ -71,7 +73,7 @@ namespace webpp {
         template <typename T>
         constexpr fixed_string(const T (&input)[N + 1]) noexcept {
             if constexpr (stl::is_same_v<T, char>) {
-#if WEBPP_STRING_IS_UTF8
+#    if WEBPP_STRING_IS_UTF8
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
                     if ((i == (N - 1)) && (input[i] == 0))
@@ -110,15 +112,15 @@ namespace webpp {
                         default: correct_flag = false; return;
                     }
                 }
-#else
+#    else
                 for (size_t i{0}; i < N; ++i) {
                     content[i] = static_cast<uint8_t>(input[i]);
                     if ((i == (N - 1)) && (input[i] == 0))
                         break;
                     real_size++;
                 }
-#endif
-#if __cpp_char8_t
+#    endif
+#    if __cpp_char8_t
             } else if constexpr (stl::is_same_v<T, char8_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
@@ -158,7 +160,7 @@ namespace webpp {
                         default: correct_flag = false; return;
                     }
                 }
-#endif
+#    endif
             } else if constexpr (stl::is_same_v<T, char16_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
@@ -262,6 +264,7 @@ namespace webpp {
 
 } // namespace webpp
 
-*/
+
+#endif // has_include
 
 #endif // WEBPP_FIXED_STRING_H

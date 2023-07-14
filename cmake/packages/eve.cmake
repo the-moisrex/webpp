@@ -5,7 +5,7 @@ if (USE_EVE)
     # disabling building of the tests bug report: https://github.com/jfalcou/eve/issues/1126
     CPMAddPackage(
             NAME eve
-            URL https://github.com/jfalcou/eve/archive/refs/tags/v2023.02.15.zip
+            URL https://github.com/jfalcou/eve/archive/refs/tags/v2023.02.15.tar.gz
             VERSION 2023.02.15
             # URL https://github.com/jfalcou/eve/archive/refs/heads/develop.zip
             OPTIONS

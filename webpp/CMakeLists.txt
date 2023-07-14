@@ -308,13 +308,13 @@ target_sources(${LIB_NAME} INTERFACE
 
 target_link_libraries(${LIB_NAME}
         PUBLIC Boost::asio
-        PUBLIC Boost::container
         PUBLIC fmt::fmt
+        # PUBLIC Boost::container
         # PUBLIC magic_enum::magic_enum
+        # PUBLIC fixed_string::fixed_string
         PUBLIC date::date
         PUBLIC date::date-tz
         PUBLIC ${PROJECT_NAME}::json
-        PUBLIC fixed_string::fixed_string
         ${BROTLI_SHARED_LIBS}
         PUBLIC ZLIB::ZLIB
         # PUBLIC ctre::ctre

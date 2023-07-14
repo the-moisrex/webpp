@@ -3,18 +3,16 @@
 #include "../webpp/ip/ipv4.hpp"
 #include "common/fuzz_common.hpp"
 
-#include <string>
-
 using namespace std;
 using namespace webpp;
 
-int ipv4_fuzz(string_view data) {
+void ipv4_fuzz(string_view data) {
     ipv4 ip{data}; // from string
     ip.clear_prefix();
-    [[maybe_unused]] bool res   = ip.has_prefix();
-    res                         = ip.is_loopback();
-    [[maybe_unused]] string str = ip.string();
-    return static_cast<int>(str.size());
+    [[maybe_unused]] volatile bool res = ip.has_prefix();
+    res                                = ip.is_loopback();
+    const string str                   = ip.string();
+    ASSERT_NE(str.size(), 0);
 }
 
-register_fuzz(ipv4_fuzz)
+register_fuzz(ipv4_fuzz);

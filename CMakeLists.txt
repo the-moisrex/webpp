@@ -11,12 +11,6 @@ set(BIN_SOVERSION 1)
 set(LIB_VERSION 1.0.0)
 set(BIN_VERSION 1.0.0)
 
-#option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
-option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)
-option(VERBOSE "Verbose printing" OFF)
-option(USE_EVE "Use Eve Library for vectorization" OFF)
-option(USE_CTRE "Use CTRE Library for compile-time-regular-expressions" OFF)
-
 # output the libraries and executables in the cmake home directory instead of
 # their own folders
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -72,6 +66,17 @@ endif ()
 set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+#option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
+option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)
+option(VERBOSE "Verbose printing" OFF)
+option(USE_EVE "Use Eve Library for vectorization" OFF)
+option(USE_CTRE "Use CTRE Library for compile-time-regular-expressions" OFF)
+if (IS_CLANG AND IS_DEBUG)
+    option(FUZZ_TESTS "Enable Building of fuzz tests" ON)
+else ()
+    option(FUZZ_TESTS "Enable Building of fuzz tests" OFF)
+endif ()
+
 message(STATUS "CMake Version                  : ${CMAKE_VERSION}")
 message(STATUS "Project name                   : ${PROJECT_NAME}")
 message(STATUS "C++ Standard Version           : C++${CMAKE_CXX_STANDARD}")
@@ -92,6 +97,7 @@ message(STATUS "Install lib dir expression     : ${INSTALL_LIBDIR}")
 message(STATUS "Install archive dir expression : ${INSTALL_ARCHIVEDIR}")
 message(STATUS "Install bin dir expression     : ${INSTALL_BINDIR}")
 message(STATUS "Install include dir expression : ${INSTALL_INCLUDEDIR}")
+message(STATUS "Building Fuzz Tests            : ${FUZZ_TESTS}")
 
 
 add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
