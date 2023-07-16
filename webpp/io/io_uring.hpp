@@ -3,109 +3,28 @@
 #ifndef WEBPP_IO_URING_HPP
 #define WEBPP_IO_URING_HPP
 
-#include "../std/coroutine.hpp"
-#include "../std/optional.hpp"
+// check if we have io_uring library
+// we're hoping that liburing would be standardised, so we don't have to include a library or implement it
+// on our own
+#if __has_include(<liburing.h>)
+#    define WEBPP_IO_URING_SUPPORT 1
 
-#include <cstdint>
-#include <liburing.h> // http://git.kernel.dk/liburing
-#include <string_view>
-#include <system_error>
+#    include "../std/coroutine.hpp"
+#    include "../std/optional.hpp"
 
-// https://wg21.link/P2300
-#include <coroutine>
+#    include <coroutine>
+#    include <cstdint>
+#    include <liburing.h> // http://git.kernel.dk/liburing
+#    include <string_view>
+#    include <system_error>
 
 namespace webpp::io {
 
-    struct resume_resolver final : resolver {
-        friend struct sqe_awaitable;
-
-        void resolve(int result) noexcept override {
-            this->result = result;
-            handle.resume();
-        }
-
-      private:
-        std::coroutine_handle<> handle;
-        int                     result = 0;
-    };
-    static_assert(std::is_trivially_destructible_v<resume_resolver>);
-
-    struct deferred_resolver final : resolver {
-        void resolve(int result) noexcept override {
-            this->result = result;
-        }
-
-#ifndef NDEBUG
-        ~deferred_resolver() {
-            assert(!!result && "deferred_resolver is destructed before it's resolved");
-        }
-#endif
-
-        std::optional<int> result;
-    };
-
-
-    struct callback_resolver final : resolver {
-        constexpr callback_resolver(std::function<void(int result)>&& cb) : cb(std::move(cb)) {}
-
-        constexpr void resolve(int result) noexcept override {
-            this->cb(result);
-            delete this;
-        }
-
-      private:
-        std::function<void(int result)> cb;
-    };
-
-
-    struct sqe_awaitable {
-        // TODO: use cancel_token to implement cancellation
-        constexpr sqe_awaitable(io_uring_sqe* sqe) noexcept : sqe(sqe) {}
-
-        // User MUST keep resolver alive before the operation is finished
-        constexpr void set_deferred(deferred_resolver& resolver) {
-            io_uring_sqe_set_data(sqe, &resolver);
-        }
-
-        constexpr void set_callback(std::function<void(int result)> cb) {
-            io_uring_sqe_set_data(sqe, new callback_resolver(std::move(cb)));
-        }
-
-        constexpr auto operator co_await() {
-            struct await_sqe {
-                resume_resolver resolver{};
-                io_uring_sqe*   sqe;
-
-                constexpr await_sqe(io_uring_sqe* sqe) : sqe(sqe) {}
-
-                [[nodiscard]] constexpr bool await_ready() const noexcept {
-                    return false;
-                }
-
-                constexpr void await_suspend(std::coroutine_handle<> handle) noexcept {
-                    resolver.handle = handle;
-                    io_uring_sqe_set_data(sqe, &resolver);
-                }
-
-                [[nodiscard]] constexpr int await_resume() const noexcept {
-                    return resolver.result;
-                }
-            };
-
-            static_assert(istl::CoroutineAwaiter<await_sqe>, "Not a fully qualified coroutine awaitable.");
-
-            return await_sqe(sqe);
-        }
-
-      private:
-        io_uring_sqe* sqe;
-    };
-
-
 
     enum struct io_uring_service_state {
-        success      = 0,
-        init_failure = 1, // cannot initialize the parameters of a new io_uring
+        success          = 0,
+        init_failure     = 1, // cannot initialize the parameters of a new io_uring
+        SQE_init_failure = 2, // couldn't get a new Submission Queue Entry
     };
 
 
@@ -129,8 +48,7 @@ namespace webpp::io {
             }
         }
 
-        [[nodiscard]] constexpr bool error_on_errno(stl::integral auto     ret,
-                                                    io_uring_service_state err_cat) noexcept {
+        constexpr bool error_on_errno(stl::integral auto ret, io_uring_service_state err_cat) noexcept {
             if (ret < 0) {
                 last_err_val = errno;
                 last_err_cat = err_cat;
@@ -205,10 +123,35 @@ namespace webpp::io {
             return last_err_cat;
         }
 
-
       private:
+        /**
+         * Get a sqe pointer that can never be null
+         *
+         * @param ring pointer to initialized io_uring struct
+         * @return pointer to `io_uring_sqe` struct (not nullptr)
+         */
+        [[nodiscard]] io_uring_sqe* safe_sqe() noexcept {
+            auto* sqe = io_uring_get_sqe(&ring);
+            if (!!sqe) [[likely]] {
+                return sqe;
+            } else {
+                // SQ is full, flushing some SQE(s):
+                io_uring_cq_advance(&ring, cqe_count);
+                cqe_count = 0;
+                io_uring_submit(&ring);
+                sqe = io_uring_get_sqe(&ring);
+                if (!!sqe) [[likely]] {
+                    return sqe;
+                }
+                error_on_errno(ENOMEM, io_uring_service_state::SQE_init_failure);
+            }
+        }
+
+
         io_uring_params params;
         io_uring        ring;
+
+        unsigned cqe_count = 0;
 
         // error handling:
         // the system error is stored in "last_err_val", and the category of the error is
@@ -218,5 +161,7 @@ namespace webpp::io {
     };
 
 } // namespace webpp::io
+
+#endif // io_uring support
 
 #endif // WEBPP_IO_URING_HPP
