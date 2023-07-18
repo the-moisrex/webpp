@@ -73,11 +73,7 @@ namespace webpp::io {
      * Scheduler is something that the user will enqueue their work with it. This should be light weight.
      */
     template <typename T>
-    concept IOScheduler = requires(T sched) {
-                              requires stl::destructible<T>;
-                              requires stl::copy_constructible<T>;
-                              requires stl::equality_comparable<T>;
-                          };
+    concept IOScheduler = requires(T sched) { requires stl::regular<T>; };
 
     /**
      * Execution Context is where the I/O operations and Async Tasks are processed.
