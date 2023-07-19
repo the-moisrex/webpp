@@ -84,6 +84,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/io/io_concepts.hpp
         ${LIB_INCLUDE_DIR}/io/io_uring.hpp
+        ${LIB_INCLUDE_DIR}/io/io_task.hpp
 
         ${LIB_INCLUDE_DIR}/socket/socket.hpp
 
