@@ -156,7 +156,7 @@ namespace webpp {
             ::WSACleanup();
         }
 #else
-        constexpr ~socket_initializer() noexcept                 = default;
+        constexpr ~socket_initializer() noexcept = default;
 #endif
     };
 
@@ -222,7 +222,7 @@ namespace webpp {
         using native_handle_type                                 = SOCKET;
         static constexpr native_handle_type invalid_handle_value = INVALID_SOCKET;
 #else
-        using native_handle_type                                 = int;
+        using native_handle_type = int;
         static constexpr native_handle_type invalid_handle_value = -1;
 #endif
 
@@ -350,7 +350,7 @@ namespace webpp {
                       check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
                 }
 #else
-                h              = ::dup(fd);
+                h = ::dup(fd);
 #endif
                 return {h};
             }

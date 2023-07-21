@@ -573,9 +573,9 @@ namespace webpp::istl {
      */
     template <typename T, template <typename> typename Replacer>
         requires requires {
-            typename Replacer<void>::type;
-            { Replacer<void>::value };
-        }
+                     typename Replacer<void>::type;
+                     { Replacer<void>::value };
+                 }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
 

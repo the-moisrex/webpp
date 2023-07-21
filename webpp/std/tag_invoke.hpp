@@ -17,8 +17,8 @@ namespace webpp::stl {
         struct tag_invoke_fn {
             template <typename Tag, typename... Args>
                 requires requires(Tag tag, Args&&... args) {
-                    tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...);
-                }
+                             tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...);
+                         }
             constexpr auto operator()(Tag tag, Args&&... args) const
               noexcept(noexcept(tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...)))
                 -> decltype(tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...)) {
@@ -33,12 +33,13 @@ namespace webpp::stl {
 
     template <typename Tag, typename... Args>
     concept tag_invocable =
-      requires(Tag tag, Args... args) { stl::tag_invoke((Tag&&) tag, (Args&&) args...); };
+      requires(Tag tag, Args... args) { stl::tag_invoke((Tag &&) tag, (Args &&) args...); };
 
     template <typename Tag, typename... Args>
-    concept nothrow_tag_invocable = tag_invocable<Tag, Args...> && requires(Tag tag, Args... args) {
-        { stl::tag_invoke((Tag&&) tag, (Args&&) args...) } noexcept;
-    };
+    concept nothrow_tag_invocable =
+      tag_invocable<Tag, Args...> && requires(Tag tag, Args... args) {
+                                         { stl::tag_invoke((Tag &&) tag, (Args &&) args...) } noexcept;
+                                     };
 
     template <typename Tag, typename... Args>
     using tag_invoke_result = invoke_result<decltype(stl::tag_invoke), Tag, Args...>;

@@ -644,8 +644,10 @@ namespace webpp::http {
         constexpr body_writer& set(T&& obj) {
             clear();
             if constexpr (BodyReader<T> && requires {
-                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
-                          }) {
+                                               {
+                                                   obj.as_string_communicator()
+                                                   } -> stl::same_as<string_communicator_type>;
+                                           }) {
                 this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
             } else if constexpr (stl::constructible_from<string_communicator_type, T>) {
                 this->communicator().template emplace<string_communicator_type>(stl::forward<T>(obj));

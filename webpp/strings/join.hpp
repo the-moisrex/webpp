@@ -38,11 +38,12 @@ namespace webpp::strings {
          */
         template <typename T>
         struct string_type_ranker {
-            static constexpr int has_std_allocator = requires {
-                typename T::allocator_type;
-                typename T::value_type;
-                requires stl::same_as<typename T::allocator_type, stl::allocator<typename T::value_type>>;
-            };
+            static constexpr int has_std_allocator =
+              requires {
+                  typename T::allocator_type;
+                  typename T::value_type;
+                  requires stl::same_as<typename T::allocator_type, stl::allocator<typename T::value_type>>;
+              };
             static constexpr int is_string = istl::String<T>;
             static constexpr int value     = !is_string ? -1 : ((is_string * 2) + !has_std_allocator);
         };

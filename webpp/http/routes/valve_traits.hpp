@@ -105,15 +105,15 @@ namespace webpp::http {
 
         template <istl::cvref_as<Callable> C>
             requires(!stl::is_pointer_v<stl::remove_cvref_t<C>> && invocable_inorder_type::value)
-        static constexpr return_type call(C&&           callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type
+          call(C&& callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(stl::forward<C>(callable), ctx, ctx.request, ctx.response);
         }
 
         template <istl::cvref_as<callable_type> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type call(C*            callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type
+          call(C* callable, context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
             return istl::invoke_inorder(*callable, ctx, ctx.request, ctx.response);
         }
 

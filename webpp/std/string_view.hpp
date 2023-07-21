@@ -13,30 +13,30 @@ namespace webpp::istl {
 
     template <typename T>
     concept StringView = requires(stl::remove_cvref_t<T> str) {
-        //        { T{"str"} };
-        str.empty();
-        str.at(0);
-        str.data();
-        str.size();
-        str.remove_suffix(1);
-        str.remove_prefix(1);
-        str.starts_with('a');
-        str.ends_with('a');
-        str.substr('a');
-        str.begin();
-        str.end();
-        str.cbegin();
-        str.cend();
-        stl::remove_cvref_t<T>::npos;
+                             //        { T{"str"} };
+                             str.empty();
+                             str.at(0);
+                             str.data();
+                             str.size();
+                             str.remove_suffix(1);
+                             str.remove_prefix(1);
+                             str.starts_with('a');
+                             str.ends_with('a');
+                             str.substr('a');
+                             str.begin();
+                             str.end();
+                             str.cbegin();
+                             str.cend();
+                             stl::remove_cvref_t<T>::npos;
 
-        typename stl::remove_cvref_t<T>::value_type;
-    } && !requires(stl::remove_cvref_t<T> str) {
-        // the things that std::string has
-        str.clear();
-        str.shrink_to_fit();
-        str.capacity();
-        { str = "str" };
-    };
+                             typename stl::remove_cvref_t<T>::value_type;
+                         } && !requires(stl::remove_cvref_t<T> str) {
+                                   // the things that std::string has
+                                   str.clear();
+                                   str.shrink_to_fit();
+                                   str.capacity();
+                                   { str = "str" };
+                               };
 
     namespace details::string_view {
         /**
@@ -50,21 +50,22 @@ namespace webpp::istl {
 
     namespace details {
         template <typename StrViewType, typename T>
-        concept StringViewifiableOf =
-          !stl::is_void_v<StrViewType> && !stl::is_void_v<char_type_of_t<T>> && requires(T str) {
+        concept StringViewifiableOf = !
+        stl::is_void_v<StrViewType> && !stl::is_void_v<char_type_of_t<T>> &&
+          requires(T str) {
               typename StrViewType::value_type;
               requires stl::is_trivial_v<typename StrViewType::value_type>;
               requires stl::is_standard_layout_v<typename StrViewType::value_type>;
               requires !stl::is_pointer_v<typename StrViewType::value_type>; // exclude array<char const*, N>
               requires requires { StrViewType{str}; } || requires {
-                  str.data();
-                  str.size();
-                  StrViewType{str.data(), str.size()};
-              } || requires {
-                  str.c_str();
-                  str.size();
-                  StrViewType{str.c_str(), str.size()};
-              };
+                                                             str.data();
+                                                             str.size();
+                                                             StrViewType{str.data(), str.size()};
+                                                         } || requires {
+                                                                  str.c_str();
+                                                                  str.size();
+                                                                  StrViewType{str.c_str(), str.size()};
+                                                              };
           };
     } // namespace details
 

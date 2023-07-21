@@ -77,9 +77,7 @@ namespace webpp::json::rapidjson {
         constexpr rapidjson_allocator_wrapper& operator=(rapidjson_allocator_wrapper const&) = default;
 
 #    define RENAME(old_name, new_sig) \
-        new_sig {                     \
-            return alloc->old_name(); \
-        }
+        new_sig { return alloc->old_name(); }
 
         RENAME(Capacity, auto capacity() const)
         RENAME(Size, stl::size_t size() const)
@@ -451,30 +449,24 @@ namespace webpp::json::rapidjson {
                 return val_handle.template Get<T>();
             }
 
-#    define IS_METHOD(real_type, type_name, is_func, get_func, set_func) \
-        [[nodiscard]] bool is_##type_name() const {                      \
-            return val_handle.is_func();                                 \
-        }                                                                \
-                                                                         \
-        value_ref_holder set_##type_name(real_type const& val) {         \
-            val_handle.set_func(val);                                    \
-            return *this;                                                \
-        }                                                                \
-                                                                         \
-        value_ref_holder set_##type_name(real_type&& val) {              \
-            val_handle.set_func(stl::move(val));                         \
-            return *this;                                                \
-        }                                                                \
-                                                                         \
-        [[nodiscard]] real_type as_##type_name() const {                 \
-            return val_handle.get_func();                                \
-        }
+#    define IS_METHOD(real_type, type_name, is_func, get_func, set_func)           \
+        [[nodiscard]] bool is_##type_name() const { return val_handle.is_func(); } \
+                                                                                   \
+        value_ref_holder set_##type_name(real_type const& val) {                   \
+            val_handle.set_func(val);                                              \
+            return *this;                                                          \
+        }                                                                          \
+                                                                                   \
+        value_ref_holder set_##type_name(real_type&& val) {                        \
+            val_handle.set_func(stl::move(val));                                   \
+            return *this;                                                          \
+        }                                                                          \
+                                                                                   \
+        [[nodiscard]] real_type as_##type_name() const { return val_handle.get_func(); }
 
 
 #    define WEBPP_IS_OPERATOR(real_type, type_name) \
-        [[nodiscard]] operator real_type() const {  \
-            return as_##type_name();                \
-        }
+        [[nodiscard]] operator real_type() const { return as_##type_name(); }
 
             // WEBPP_IS_METHOD(null, IsNull, SetNull)
             IS_METHOD(bool, bool, IsBool, GetBool, SetBool)
@@ -516,9 +508,7 @@ namespace webpp::json::rapidjson {
 #    undef WEBPP_IS_OPERATOR
 
 #    define RENAME(ret_type, orig_name, new_name, details) \
-        ret_type new_name() details {                      \
-            return val_handle.orig_name();                 \
-        }
+        ret_type new_name() details { return val_handle.orig_name(); }
 
             RENAME(bool, IsNull, is_null, const);
             RENAME(bool, IsString, is_string, const);
@@ -665,8 +655,8 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename ObjectType>
             requires requires {
-                typename stl::remove_cvref_t<ObjectType>::AllocatorType;
-            } // GenericAllocator has an Allocator itself.
+                         typename stl::remove_cvref_t<ObjectType>::AllocatorType;
+                     } // GenericAllocator has an Allocator itself.
         struct generic_object
           : public allocator_holder<
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
@@ -857,9 +847,7 @@ namespace webpp::json::rapidjson {
             //            }
 
 #    define RENAME(ret_type, orig_name, new_name, details) \
-        ret_type new_name() details {                      \
-            return this->val_handle.orig_name();           \
-        }
+        ret_type new_name() details { return this->val_handle.orig_name(); }
 
             RENAME(stl::size_t, Size, size, const);
             RENAME(bool, Empty, empty, const);

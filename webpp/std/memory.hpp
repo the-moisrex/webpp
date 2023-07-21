@@ -307,8 +307,9 @@ namespace webpp::istl {
 
     template <class T, class A>
         requires(!stl::is_array_v<T>)
-    constexpr stl::unique_ptr<T, alloc_deleter<T, A>>
-    allocate_unique(const A& alloc, typename stl::type_identity<T>::type&& value) {
+    constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
+      const A&                               alloc,
+      typename stl::type_identity<T>::type&& value) {
         details::sp_alloc_make<T, A> c(alloc, 1);
         stl::allocator_traits<A>::construct(c.state(), c.get(), stl::move(value));
         return c.release();
@@ -326,8 +327,8 @@ namespace webpp::istl {
 
     template <class T, class A>
         requires(stl::is_unbounded_array_v<T>)
-    constexpr stl::unique_ptr<typename details::sp_alloc_result<T>::type, alloc_deleter<T, A>>
-    allocate_unique(const A& alloc) {
+    constexpr stl::unique_ptr<typename details::sp_alloc_result<T>::type,
+                              alloc_deleter<T, A>> allocate_unique(const A& alloc) {
         details::sp_alloc_make<T, A> c(alloc, stl::extent<T>::value);
         stl::allocator_traits<A>::construct_n(c.state(),
                                               first_scalar(c.get()),

@@ -922,16 +922,18 @@ namespace webpp::alloc {
 
     // Check if the specified type is an allocator_pack
     template <typename AllocPackType>
-    concept AllocatorPack = requires {
-        typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
-        requires stl::same_as<
-          stl::remove_cvref_t<AllocPackType>,
-          allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
-    };
+    concept AllocatorPack =
+      requires {
+          typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors;
+          requires stl::same_as<
+            stl::remove_cvref_t<AllocPackType>,
+            allocator_pack<typename stl::remove_cvref_t<AllocPackType>::allocator_descriptors>>;
+      };
 
 
     template <typename AllocType, typename AllocPack>
-    concept HasAllocator = AllocatorPack<AllocPack> && AllocPack::template has_allocator<AllocType>;
+    concept HasAllocator = AllocatorPack<AllocPack> && AllocPack::template
+    has_allocator<AllocType>;
 
     template <typename T, typename AllocPack>
     concept HasAllocatorFor =

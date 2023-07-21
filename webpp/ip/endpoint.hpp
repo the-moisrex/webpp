@@ -14,23 +14,23 @@ namespace webpp {
 
     template <typename T>
     concept Endpoint = requires(stl::remove_cvref_t<T> ep) {
-        requires stl::destructible<stl::remove_cvref_t<T>>;
-        requires stl::derived_from<stl::remove_cvref_t<T>, ip_address>;
+                           requires stl::destructible<stl::remove_cvref_t<T>>;
+                           requires stl::derived_from<stl::remove_cvref_t<T>, ip_address>;
 
-        // it should be noexcept, even if you have to use "try-catch"
-        { ep.is_bindable() } noexcept -> stl::same_as<bool>;
+                           // it should be noexcept, even if you have to use "try-catch"
+                           { ep.is_bindable() } noexcept -> stl::same_as<bool>;
 
-        { ep.is_tcp() } noexcept -> stl::same_as<bool>;
-        { ep.is_udp() } noexcept -> stl::same_as<bool>;
-        { ep.port() } noexcept -> stl::same_as<stl::uint16_t>;
-    };
+                           { ep.is_tcp() } noexcept -> stl::same_as<bool>;
+                           { ep.is_udp() } noexcept -> stl::same_as<bool>;
+                           { ep.port() } noexcept -> stl::same_as<stl::uint16_t>;
+                       };
 
     template <typename T>
     concept EndpointList = requires(T ep) {
-        { stl::begin(ep) } -> stl::random_access_iterator;
-        { stl::end(ep) } -> stl::random_access_iterator;
-        { *stl::begin(ep) } -> Endpoint;
-    };
+                               { stl::begin(ep) } -> stl::random_access_iterator;
+                               { stl::end(ep) } -> stl::random_access_iterator;
+                               { *stl::begin(ep) } -> Endpoint;
+                           };
 
     /**
      * IP Endpoint is a combination of

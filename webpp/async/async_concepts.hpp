@@ -15,10 +15,10 @@ namespace webpp::async {
      */
     template <typename T>
     concept AsyncPromise = requires(T awaitable, stl::true_type lambda) {
-        { awaitable.then(lambda) } noexcept -> stl::same_as<T&>;
-        { awaitable.except(lambda) } noexcept -> stl::same_as<T&>;
-        { awaitable >> lambda } noexcept -> stl::same_as<T&>;
-    };
+                               { awaitable.then(lambda) } noexcept -> stl::same_as<T&>;
+                               { awaitable.except(lambda) } noexcept -> stl::same_as<T&>;
+                               { awaitable >> lambda } noexcept -> stl::same_as<T&>;
+                           };
 
 
     /**
@@ -50,10 +50,10 @@ namespace webpp::async {
      */
     template <typename T>
     concept ThreadPool = requires(T tp, stl::true_type lambda) {
-        tp.post(lambda);
-        tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
-        tp.dispatch(lambda);
-    };
+                             tp.post(lambda);
+                             tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
+                             tp.dispatch(lambda);
+                         };
 
 
     /**
@@ -68,14 +68,14 @@ namespace webpp::async {
      */
     template <typename T>
     concept ExecutionContext = requires(T async) {
-        requires stl::is_nothrow_default_constructible_v<T>;
+                                   requires stl::is_nothrow_default_constructible_v<T>;
 
-        // Run all the tasks
-        async.run();
+                                   // Run all the tasks
+                                   async.run();
 
-        // This is what gets stored in the "enabled_traits" objects.
-        { async.scheduler() } -> Scheduler;
-    };
+                                   // This is what gets stored in the "enabled_traits" objects.
+                                   { async.scheduler() } -> Scheduler;
+                               };
 
 
     namespace details {
@@ -91,14 +91,14 @@ namespace webpp::async {
 
     template <typename T>
     concept YieldableTask = details::BasicTask<T> && requires(T task) {
-        { stl::begin(task) } noexcept -> TaskYielder;
-        { stl::end(task) } noexcept -> TaskYielder;
-    };
+                                                         { stl::begin(task) } noexcept -> TaskYielder;
+                                                         { stl::end(task) } noexcept -> TaskYielder;
+                                                     };
 
     template <typename T>
     concept OneShotTask = details::BasicTask<T> && requires(T task) {
-        { task() };
-    };
+                                                       { task() };
+                                                   };
 
     template <typename T>
     concept Task = YieldableTask<T> || OneShotTask<T>;
@@ -108,25 +108,25 @@ namespace webpp::async {
      */
     template <typename T>
     concept Chainable = stl::regular<T> && requires(T task, stl::true_type lambda) {
-        task.then(lambda);
-        task.on_error(lambda);
-        task.finally(lambda);
-        task >> lambda; // same as then
-        task | lambda;  // on error
-        task& lambda;   // finally
-    };
+                                               task.then(lambda);
+                                               task.on_error(lambda);
+                                               task.finally(lambda);
+                                               task >> lambda; // same as then
+                                               task | lambda;  // on error
+                                               task& lambda;   // finally
+                                           };
 
     /**
      * Event Chain is an intrusive list of tasks (callbacks/io-operations/...).
      */
     template <typename T>
     concept TaskChain = Chainable<T> && requires(T task) {
-        // For convenience, nobody should be calling this
-        task(); // run the task chain fully
+                                            // For convenience, nobody should be calling this
+                                            task(); // run the task chain fully
 
-        // Iterate the task, hopefully in a non-blocking way
-        task.advance();
-    };
+                                            // Iterate the task, hopefully in a non-blocking way
+                                            task.advance();
+                                        };
 
     /**
      * Event Loop can hold a list of Event-Chains and will call their "continuation"s.

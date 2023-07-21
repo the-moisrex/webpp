@@ -51,19 +51,19 @@ namespace webpp::object {
 
         template <typename... Args>
         static constexpr bool support_alloc_args = requires(allocator_type const& the_alloc, Args... args) {
-            super{the_alloc, stl::forward<Args>(args)...};
-        };
+                                                       super{the_alloc, stl::forward<Args>(args)...};
+                                                   };
 
         template <typename... Args>
         static constexpr bool support_args_alloc = requires(allocator_type const& the_alloc, Args... args) {
-            super{stl::forward<Args>(args)..., the_alloc};
-        };
+                                                       super{stl::forward<Args>(args)..., the_alloc};
+                                                   };
 
 
         template <typename... Args>
         static constexpr bool support_tag_args = requires(Args... args) {
-            super{stl::allocator_arg, stl::forward<Args>(args)...};
-        };
+                                                     super{stl::allocator_arg, stl::forward<Args>(args)...};
+                                                 };
 
         template <typename... Args>
         static constexpr bool support_args = requires(Args... args) { super{stl::forward<Args>(args)...}; };

@@ -21,8 +21,8 @@ namespace webpp::stl {
 
         template <typename T>
         concept dereferenceable = requires(T& t) {
-            { *t } -> can_reference;
-        };
+                                      { *t } -> can_reference;
+                                  };
     } // namespace details
 
 
@@ -195,8 +195,8 @@ namespace webpp::stl {
 
     template <details::dereferenceable _Tp>
         requires requires(_Tp& __t) {
-            { ranges::iter_move(__t) } -> details::can_reference;
-        }
+                     { ranges::iter_move(__t) } -> details::can_reference;
+                 }
     using iter_rvalue_reference_t = decltype(ranges::iter_move(declval<_Tp&>()));
 
 
@@ -288,7 +288,8 @@ namespace webpp::stl {
         concept cv_bool = same_as<const volatile T, const volatile bool>;
 
         template <typename T>
-        concept integral_nonbool = integral<T> && !cv_bool<T>;
+        concept integral_nonbool = integral<T> && !
+        cv_bool<T>;
 
         template <typename T>
         concept is_int128 = is_signed_int128<T> || is_unsigned_int128<T>;
@@ -322,22 +323,23 @@ namespace webpp::stl {
 
     /// Requirements on types that can be incremented with ++.
     template <typename Iter>
-    concept weakly_incrementable = movable<Iter> && requires(Iter i) {
-        typename iter_difference_t<Iter>;
-        requires details::is_signed_integer_like<iter_difference_t<Iter>>;
-        { ++i } -> same_as<Iter&>;
-        i++;
-    };
+    concept weakly_incrementable =
+      movable<Iter> && requires(Iter i) {
+                           typename iter_difference_t<Iter>;
+                           requires details::is_signed_integer_like<iter_difference_t<Iter>>;
+                           { ++i } -> same_as<Iter&>;
+                           i++;
+                       };
 
     template <typename Iter>
     concept incrementable = regular<Iter> && weakly_incrementable<Iter> && requires(Iter i) {
-        { i++ } -> same_as<Iter>;
-    };
+                                                                               { i++ } -> same_as<Iter>;
+                                                                           };
 
     template <typename Iter>
     concept input_or_output_iterator = requires(Iter i) {
-        { *i } -> details::can_reference;
-    } && weakly_incrementable<Iter>;
+                                           { *i } -> details::can_reference;
+                                       } && weakly_incrementable<Iter>;
 
     template <typename Sent, typename Iter>
     concept sentinel_for = semiregular<Sent> && input_or_output_iterator<Iter> &&
@@ -347,28 +349,29 @@ namespace webpp::stl {
     inline constexpr bool disable_sized_sentinel_for = false;
 
     template <typename Sent, typename Iter>
-    concept sized_sentinel_for =
-      sentinel_for<Sent, Iter> && !disable_sized_sentinel_for<remove_cv_t<Sent>, remove_cv_t<Iter>> &&
-      requires(const Iter& i, const Sent& s) {
-          { s - i } -> same_as<iter_difference_t<Iter>>;
-          { i - s } -> same_as<iter_difference_t<Iter>>;
-      };
+    concept sized_sentinel_for = sentinel_for<Sent, Iter> && !
+    disable_sized_sentinel_for<remove_cv_t<Sent>,
+                               remove_cv_t<Iter>>&& requires(const Iter& i, const Sent& s) {
+                                                        { s - i } -> same_as<iter_difference_t<Iter>>;
+                                                        { i - s } -> same_as<iter_difference_t<Iter>>;
+                                                    };
 
     // [iterator.concept.writable]
     template <class _Out, class _Tp>
-    concept indirectly_writable = requires(_Out&& __o, _Tp&& __t) {
-        *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*__o) =
-          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
-          _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-    };
+    concept indirectly_writable =
+      requires(_Out&& __o, _Tp&& __t) {
+          *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          const_cast<const iter_reference_t<_Out>&&>(*__o) =
+            _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+          const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
+            _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
+      };
 
     template <typename Iter>
-    concept input_iterator = input_or_output_iterator<Iter> && indirectly_readable<Iter> && requires {
-        typename details::iter_concept<Iter>;
-    } && derived_from<details::iter_concept<Iter>, input_iterator_tag>;
+    concept input_iterator = input_or_output_iterator<Iter> && indirectly_readable<Iter> &&
+                             requires { typename details::iter_concept<Iter>; } &&
+                             derived_from<details::iter_concept<Iter>, input_iterator_tag>;
 
     template <typename Iter, typename T>
     concept output_iterator = input_or_output_iterator<Iter> && indirectly_writable<Iter, T> &&

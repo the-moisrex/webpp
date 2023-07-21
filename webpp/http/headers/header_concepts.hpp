@@ -7,10 +7,10 @@ namespace webpp::http {
 
     template <typename T>
     concept Header = requires(T h) {
-        T{""};
-        h.is_valid();
-        static_cast<bool>(h); // is_valid
-    };
+                         T{""};
+                         h.is_valid();
+                         static_cast<bool>(h); // is_valid
+                     };
 
 } // namespace webpp::http
 

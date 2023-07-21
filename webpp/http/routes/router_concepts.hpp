@@ -16,11 +16,11 @@ namespace webpp::http {
 
     template <typename T>
     concept Context = requires(stl::remove_cvref_t<T> c) {
-        requires EnabledTraits<typename stl::remove_cvref_t<T>>;
-        requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
-        requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
-        { c.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
-    };
+                          requires EnabledTraits<typename stl::remove_cvref_t<T>>;
+                          requires HTTPRequest<typename stl::remove_cvref_t<T>::request_type>;
+                          requires HTTPResponse<typename stl::remove_cvref_t<T>::response_type>;
+                          { c.request } -> stl::same_as<typename stl::remove_cvref_t<T>::request_ref>;
+                      };
 
 
 
@@ -43,24 +43,24 @@ namespace webpp::http {
 
     template <typename T, typename C>
     concept PotentialRoute = requires(T route, C& ctx, typename C::request_type const& req) {
-        requires requires {
-            { route() };
-        } || requires {
-            { route(ctx) };
-        } || requires {
-            { route(req) };
-        } || requires {
-            { route(ctx, req) };
-        } || requires {
-            { route(req, ctx) };
-        };
-    };
+                                 requires requires {
+                                              { route() };
+                                          } || requires {
+                                                   { route(ctx) };
+                                               } || requires {
+                                                        { route(req) };
+                                                    } || requires {
+                                                             { route(ctx, req) };
+                                                         } || requires {
+                                                                  { route(req, ctx) };
+                                                              };
+                             };
 
     template <typename T, typename C>
     concept Route = requires(T obj) {
-        requires CallableWithContext<T, typename T::template switched_context_type<C>>;
-        typename T::template switched_context_type<C>;
-    };
+                        requires CallableWithContext<T, typename T::template switched_context_type<C>>;
+                        typename T::template switched_context_type<C>;
+                    };
 
 
 

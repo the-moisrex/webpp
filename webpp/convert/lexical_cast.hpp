@@ -124,7 +124,8 @@ namespace webpp::lexical {
         if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> &&
                       requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); }) {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
-        } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> && requires {
+        } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> &&
+                             requires {
                                  istl::stringify_of<Target>(stl::forward<Source>(source),
                                                             extract_allocator_or_default(allocs..., source));
                              }) {
@@ -158,8 +159,8 @@ namespace webpp::lexical {
 
     template <typename T, typename To>
     concept CastableTo = requires(T obj, enable_owner_traits<default_traits> et) {
-        { cast<To>(obj, et) } -> stl::same_as<To>;
-    };
+                             { cast<To>(obj, et) } -> stl::same_as<To>;
+                         };
 } // namespace webpp::lexical
 
 #endif // WEBPP_LEXICAL_CAST_HPP

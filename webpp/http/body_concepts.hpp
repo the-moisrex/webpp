@@ -11,35 +11,37 @@ namespace webpp::http {
 
     template <typename T>
     concept SizableBody = requires(T body) {
-        { body.size() } -> stl::same_as<stl::size_t>;
-    };
+                              { body.size() } -> stl::same_as<stl::size_t>;
+                          };
 
     /**
      * @brief C Stream Based Body Reader
      */
     template <typename T>
-    concept CStreamBasedBodyReader = requires {
-        // requires stl::copy_constructible<T>;
-        typename T::byte_type;
-        requires requires(T communicator, typename T::byte_type* data, stl::streamsize size) {
-            { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
-            { communicator.empty() } -> stl::same_as<bool>;
-        };
-    };
+    concept CStreamBasedBodyReader =
+      requires {
+          // requires stl::copy_constructible<T>;
+          typename T::byte_type;
+          requires requires(T communicator, typename T::byte_type * data, stl::streamsize size) {
+                       { communicator.read(data, size) } -> stl::same_as<stl::streamsize>;
+                       { communicator.empty() } -> stl::same_as<bool>;
+                   };
+      };
 
     /**
      * @brief C Stream Based Body Writer
      */
     template <typename T>
-    concept CStreamBasedBodyWriter = requires {
-        // requires stl::copy_constructible<T>;
-        typename T::byte_type;
-        requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
-            { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
-            communicator.seek(size);
-            communicator.clear();
-        };
-    };
+    concept CStreamBasedBodyWriter =
+      requires {
+          // requires stl::copy_constructible<T>;
+          typename T::byte_type;
+          requires requires(T communicator, typename T::byte_type const* data, stl::streamsize size) {
+                       { communicator.write(data, size) } -> stl::same_as<stl::streamsize>;
+                       communicator.seek(size);
+                       communicator.clear();
+                   };
+      };
 
     /**
      * @brief C Stream Based Body Communicator (CBBC);
@@ -54,24 +56,25 @@ namespace webpp::http {
      */
     template <typename T>
     concept TextBasedBodyReader = requires(T body) {
-        // requires stl::copy_constructible<T>;
-        requires SizableBody<T>;
-        body.data();
-        { body.empty() } -> stl::same_as<bool>;
-    };
+                                      // requires stl::copy_constructible<T>;
+                                      requires SizableBody<T>;
+                                      body.data();
+                                      { body.empty() } -> stl::same_as<bool>;
+                                  };
 
     /**
      * @brief Text Based Body Writer
      */
     template <typename T>
-    concept TextBasedBodyWriter = requires(T body) {
-        // requires stl::copy_constructible<T>;
-        typename T::value_type;
-        requires requires(typename T::value_type const* data, stl::size_t count) {
-            body.append(data, count); // Append a string
-            body.clear();
-        };
-    };
+    concept TextBasedBodyWriter =
+      requires(T body) {
+          // requires stl::copy_constructible<T>;
+          typename T::value_type;
+          requires requires(typename T::value_type const* data, stl::size_t count) {
+                       body.append(data, count); // Append a string
+                       body.clear();
+                   };
+      };
 
     /**
      * @brief Text Based Body Communicator (TBBC);
@@ -99,10 +102,10 @@ namespace webpp::http {
           body.seekg(0);
           { body.eof() } -> stl::same_as<bool>;
           typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
-          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type* data,
-                            stl::streamsize                                                          count) {
-              { body.readsome(data, count) } -> stl::same_as<stl::streamsize>;
-          };
+          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
+                            stl::streamsize count) {
+                       { body.readsome(data, count) } -> stl::same_as<stl::streamsize>;
+                   };
       };
 
     /**
@@ -117,7 +120,7 @@ namespace webpp::http {
           body.ignore(INT_MAX); // clear the content inside the stream
           body.clear();         // clear the state
           typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type;
-          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type* data,
+          requires requires(typename istl::remove_shared_ptr_t<stl::remove_pointer_t<T>>::char_type * data,
                             stl::streamsize count) { body.write(data, count); };
       };
 
@@ -148,22 +151,23 @@ namespace webpp::http {
      */
     template <typename T>
     concept CallbackBasedBodyCommunicator = requires(T communicator) {
-        requires requires {
-            // Returns a primitive
-            { communicator() } -> BodyCommunicatorPrimitives;
-        };
-    };
+                                                requires requires {
+                                                             // Returns a primitive
+                                                             { communicator() } -> BodyCommunicatorPrimitives;
+                                                         };
+                                            };
 
 
     /**
      * @brief Optional Based Body Communicator (OBBC);
      */
     template <typename T>
-    concept OptionalBasedBodyCommunicator = istl::Optional<T> && requires {
-        typename T::value_type;
-        requires BodyCommunicatorPrimitives<typename T::value_type> ||
-                   CallbackBasedBodyCommunicator<typename T::value_type>;
-    };
+    concept OptionalBasedBodyCommunicator =
+      istl::Optional<T> && requires {
+                               typename T::value_type;
+                               requires BodyCommunicatorPrimitives<typename T::value_type> ||
+                                          CallbackBasedBodyCommunicator<typename T::value_type>;
+                           };
 
 
     /**
@@ -232,8 +236,10 @@ namespace webpp::http {
 
     template <typename T>
     concept UnifiedBodyReader = BodyReader<T> && requires(T body) {
-        { body.which_communicator() } -> stl::same_as<communicator_type>;
-    };
+                                                     {
+                                                         body.which_communicator()
+                                                         } -> stl::same_as<communicator_type>;
+                                                 };
 
 
     ////////////////////////////// Deserialize //////////////////////////////
