@@ -4,19 +4,21 @@
 #define WEBPP_HTTP_ROUTES_NUMBER_HPP
 
 #include "../../std/string_view.hpp"
-#include "../../validators/validators.hpp"
+#include "../../strings/charset.hpp"
 #include "context.hpp"
 
-namespace webpp::http::routes {
+namespace webpp::http {
 
+    template <typename T = long double>
+        requires(stl::is_integral_v<T> || stl::regular<T>)
     struct number {
         template <typename TraitsType>
         [[nodiscard]] bool operator()(basic_context<TraitsType>& ctx) const noexcept {
-            return is::number(*ctx.path_traverser());
+            using char_type = traits::char_type<TraitsType>;
+            // todo: -+ are okay too
+            return DIGIT<char_type>.contains(*ctx.path_traverser());
         }
 
-        template <typename T>
-            requires(stl::is_integral_v<T> || stl::is_constructible_v<T, long double>)
         [[nodiscard]] stl::optional<T> parse(Context auto const& ctx) const noexcept {
             using context_type     = decltype(ctx);
             using traits_type      = typename context_type::traits_type;
@@ -37,6 +39,6 @@ namespace webpp::http::routes {
     // todo: other types including:
     // double, float, unsigned, short, ...
 
-} // namespace webpp::http::routes
+} // namespace webpp::http
 
 #endif // WEBPP_HTTP_ROUTES_NUMBER_HPP
