@@ -4,6 +4,7 @@
 #define WEBPP_ASYNC_CONCEPTS_HPP
 
 #include "../std/type_traits.hpp"
+#include "../std/iterator.hpp"
 
 namespace webpp::async {
 
@@ -58,7 +59,7 @@ namespace webpp::async {
      * Scheduler is something that the user will enqueue their work with it. This should be light weight.
      */
     template <typename T>
-    concept Scheduler = stl::regular<T>;
+    concept Scheduler = stl::regular<T> && (sizeof(T) <= sizeof(void*));
 
 
     /**
@@ -75,7 +76,18 @@ namespace webpp::async {
                                    { async.scheduler() } -> Scheduler;
                                };
 
+    /**
+     * Task Yeilder, yeilds values
+     */
+    template <typename T>
+    concept TaskYeilder = stl::forward_iterator<T>;
 
+    template <typename T>
+    concept Task = stl::movable<T> &&  stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
+      requires (T task) {
+                       { stl::begin(task) } noexcept -> TaskYeilder;
+                       { stl::end(task) } noexcept -> TaskYeilder;
+                   };
 
     /**
      * Any type that has the ability to be chained up with other types of callables.
