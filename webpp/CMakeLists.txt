@@ -235,23 +235,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/concurrency/task_manager.hpp
         ${LIB_INCLUDE_DIR}/concurrency/thread_pool.hpp
 
-        ${LIB_INCLUDE_DIR}/server/server_concepts.hpp
-        ${LIB_INCLUDE_DIR}/server/default_server_traits.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_thread_pool.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_traits.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_connection.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_constants.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_server.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_std_traits.hpp
-        ${LIB_INCLUDE_DIR}/server/asio/asio_std_pmr_traits.hpp
-
-        ${LIB_INCLUDE_DIR}/server/posix/posix_thread_pool.hpp
-        ${LIB_INCLUDE_DIR}/server/posix/posix_traits.hpp
-        ${LIB_INCLUDE_DIR}/server/posix/posix_connection.hpp
-        ${LIB_INCLUDE_DIR}/server/posix/posix_server.hpp
-        ${LIB_INCLUDE_DIR}/server/posix/posix_std_traits.hpp
-        ${LIB_INCLUDE_DIR}/server/posix/posix_std_pmr_traits.hpp
-
         ${LIB_INCLUDE_DIR}/json/json_concepts.hpp
         ${LIB_INCLUDE_DIR}/json/defaultjson.hpp
         ${LIB_INCLUDE_DIR}/json/json_common.hpp

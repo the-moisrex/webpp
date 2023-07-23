@@ -3,7 +3,6 @@
 #ifndef WEBPP_COMMON_HTTP_PROTOCOL_HPP
 #define WEBPP_COMMON_HTTP_PROTOCOL_HPP
 
-#include "../../server/server_concepts.hpp"
 #include "../../traits/enable_traits.hpp"
 #include "../app_wrapper.hpp"
 #include "../http_concepts.hpp"
