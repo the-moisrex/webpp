@@ -16,7 +16,7 @@ TEST(IO, IOConcepts) {
 }
 #ifdef WEBPP_IO_URING_SUPPORT
 TEST(IO, BasicIdea) {
-    io_uring_service io;
+    io_uring_service  io;
     std::stringstream fake_file;
     fake_file << "content";
 

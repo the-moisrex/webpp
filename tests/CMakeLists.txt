@@ -26,8 +26,8 @@ function(setup_fuzz name)
     target_link_libraries(${name}
             PRIVATE ${LIB_NAME}
             PRIVATE test-commons
-            	-fsanitize=fuzzer,address
-	    	-coverage
+                -fsanitize=fuzzer,address
+                -coverage
     )
     # link_fuzztest(${name})
     add_test(

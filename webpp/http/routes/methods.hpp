@@ -30,6 +30,11 @@ namespace webpp::http {
             return operator()(ctx.request);
         }
 
+        /**
+         * @brief Converts the object to a string representation.
+         * This function appends the string representation of the object to the given output string.
+         * @param out The output string to which the string representation is appended.
+         */
         void to_string(istl::String auto& out) const {
             append_to(out, method_str);
         }

@@ -41,6 +41,7 @@ namespace webpp::http {
         constexpr member_function_valve& operator=(member_function_valve const&) noexcept = default;
         constexpr member_function_valve& operator=(member_function_valve&&) noexcept      = default;
         constexpr member_function_valve() noexcept                                        = default;
+        constexpr ~member_function_valve() noexcept                                       = default;
 
         constexpr member_function_valve(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
 
@@ -58,6 +59,18 @@ namespace webpp::http {
         }
 
 
+        /**
+         * @brief Set up the router with the specified router.
+         *
+         * If the router is a static router, it sets the object to the specified object type.
+         * If the router is a dynamic router, it searches for an object of the specified type in the router's
+         * objects. If a matching object is found, it sets the object to that type. If no matching object is
+         * found, it either default constructs the object (if the object type is default constructible), or
+         * constructs the object using the router as a parameter (if the object type is constructible with the
+         * router). If none of these conditions are met, an error message is logged.
+         *
+         * @tparam RouterType The type of the router.
+         */
         template <typename RouterType>
         constexpr void setup(RouterType& router) {
             using objects_type = typename RouterType::objects_type;
@@ -102,6 +115,15 @@ namespace webpp::http {
         }
 
 
+        /**
+         * @brief Converts the member function to a string representation.
+         *
+         * This function converts the value of a variable to its string representation and
+         * stores it in the provided output string.
+         *
+         * @param out The output string where the converted value will be stored.
+         * @tparam T The type of the variable.
+         */
         constexpr void to_string(istl::String auto& out) const {
             valve_to_string(out, holder.mem_ptr);
         }

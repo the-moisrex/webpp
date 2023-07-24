@@ -81,6 +81,15 @@ namespace webpp::http {
                 return error(static_cast<http::status_code_type>(error_code), stl::forward<DataType>(data));
             }
 
+            /**
+             * @brief Generate an HTTP response with an error message.
+             *
+             * This function generates an HTTP response with an error message based on the given error code.
+             *
+             * @param error_code The error code indicating the type of error.
+             *
+             * @return An HTTP response with the error message.
+             */
             [[nodiscard]] constexpr HTTPResponse auto
             error(http::status_code_type error_code) const noexcept {
                 using str_t = traits::general_string<traits_type>;
@@ -105,20 +114,32 @@ namespace webpp::http {
 
 
 
+            /**
+             * @brief Generates an HTTP response for a given error code and data.
+             *
+             * This function generates an HTTP response based on the provided error code and data.
+             *
+             * @param error_code The error code to use for the response.
+             * @param data The data to be used to construct the response.
+             * @return An HTTP response generated based on the provided error code and data.
+             */
             [[nodiscard]] constexpr HTTPResponse auto error(http::status_code_type error_code,
                                                             auto&&                 data) const noexcept {
                 using data_type = stl::remove_cvref_t<decltype(data)>;
                 if constexpr (istl::StringViewifiable<data_type>) {
+                    // data type is a string
                     auto res = create_response(istl::string_viewify(data));
                     res.headers.status_code(error_code);
                     return res;
                 } else if constexpr (requires {
                                          { data.what() } -> istl::StringViewifiable;
                                      }) {
+                    // standard exception, use .what to get the error message
                     auto res = create_response(data.what());
                     res.headers.status_code(error_code);
                     return res;
                 } else {
+                    // we don't know what the error message is, ignoring it
                     auto res = create_response();
                     res.headers.status_code(error_code);
                     return res;
@@ -230,6 +251,9 @@ namespace webpp::http {
             return basic_context{*this};
         }
 
+        /**
+         * @brief Check if a given variable is a valid path slug.
+         */
         template <typename T>
         [[nodiscard]] constexpr bool check_segment(T&& slug) noexcept {
             return traverser.check_segment(stl::forward<T>(slug));

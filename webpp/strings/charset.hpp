@@ -107,9 +107,10 @@ namespace webpp {
         }
 
         /**
-         * @brief checks if all the chars in the _cs is in the chars list or not
-         * @param _cs
-         * @return
+         * @brief Checks if all the characters in the string view are present in the list of characters.
+         *
+         * @param _cs The string view to check.
+         * @return True if all characters are present in the list, false otherwise.
          */
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<value_type> const& _cs) const noexcept {
             for (auto const& c : _cs)
@@ -118,6 +119,32 @@ namespace webpp {
             return true;
         }
 
+        /**
+         * @brief Checks if a given range contains all elements in a container.
+         *
+         * This function iterates over the given range and checks if each element
+         * exists in the container. It returns true if all elements exist in the
+         * container, and false otherwise.
+         *
+         * @tparam Iter The iterator type of the range.
+         * @param beg The iterator pointing to the beginning of the range.
+         * @param end The iterator pointing to the end of the range.
+         * @return True if all elements exist in the container, false otherwise.
+         *
+         * @note The elements are checked for containment using the contains() member function
+         *       of the container class.
+         *
+         * @par Example:
+         * \code
+         * std::string_view str {"this is a string"};
+         *
+         * bool result = DIGIT<char>.contains(str.begin(), str.end());
+         *
+         * // result = true
+         * \endcode
+         *
+         * @see contains
+         */
         template <typename Iter>
         [[nodiscard]] constexpr bool contains(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg)
@@ -126,6 +153,19 @@ namespace webpp {
             return true;
         }
 
+        /**
+         * @brief Finds the first element in a range that is not contained in the container.
+         *
+         * This function searches for the first element in the range [beg, end) that is not contained
+         * in the container. The function uses the `contains` method of the container to check for
+         * containment.
+         *
+         * @tparam Iter The iterator type of the range.
+         * @param beg Iterator to the beginning of the range.
+         * @param end Iterator to the end of the range.
+         * @return Iterator to the first element in the range that is not contained in the container.
+         *         If all elements are contained, returns the `end` iterator.
+         */
         template <typename Iter>
         [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg)
@@ -134,15 +174,41 @@ namespace webpp {
             return end;
         }
 
+        /**
+         * @brief Creates a string view of the given charset
+         *
+         * The template parameter `StrViewType` is the type of the string view to be returned. It defaults to
+         * `std::basic_string_view<value_type>`, which is a string view of characters of the underlying string
+         * type.
+         *
+         * @returns A string view of the current string object.
+         *
+         * @tparam StrViewType The type of the string view to be returned.
+         *
+         */
         template <istl::StringView StrViewType = stl::basic_string_view<value_type>>
-        [[nodiscard]] constexpr auto string_view() const noexcept {
+        [[nodiscard]] consteval auto string_view() const noexcept {
             return StrViewType(this->data(), this->size());
         }
 
+        /**
+         * @brief Create a new string from the charsets.
+         *
+         * This method creates a new string from the existing string by copying the data and using the
+         * specified allocator.
+         *
+         * @tparam StrType The type of string to be created. It should be a specialization of
+         * `std::basic_string` or `istl::String`.
+         * @param alloc The allocator to be used for the new string. Default is the default allocator of the
+         * target string type.
+         * @return The new string created from the existing string, with the specified allocator.
+         *
+         * @see istl::String
+         */
         template <istl::String StrType = stl::basic_string<value_type>>
-        [[nodiscard]] StrType string(
+        [[nodiscard]] constexpr StrType string(
           typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
-            return StrType{super::data(), super::size(), alloc};
+            return StrType{this->data(), this->size(), alloc};
         }
     };
 
@@ -234,11 +300,11 @@ namespace webpp {
 
 
     /**
-     * This is a Bolean Map of the specified characters.
+     * This is a Boolean Map of the specified characters.
      * This is faster to query than charset but might take more memory
      *
      * Attention: if your table is more than 256 cells, you're doing it wrong
-     **/
+     */
     template <stl::size_t N>
         requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
     struct charmap : public stl::array<bool, N> {
