@@ -14,6 +14,7 @@
 
 #    include <coroutine>
 #    include <cstdint>
+#    include <iterator>
 #    include <liburing.h> // http://git.kernel.dk/liburing
 #    include <string_view>
 #    include <system_error>
@@ -123,7 +124,6 @@ namespace webpp::io {
             return last_err_cat;
         }
 
-      private:
         /**
          * Get a sqe pointer that can never be null
          *
@@ -148,6 +148,17 @@ namespace webpp::io {
         }
 
 
+        /**
+         * Get a sqe pointer; might be null
+         *
+         * @param ring pointer to initialized io_uring struct
+         * @return pointer to `io_uring_sqe` struct
+         */
+        [[nodiscard]] io_uring_sqe* sqe() noexcept {
+            return io_uring_get_sqe(&ring);
+        }
+
+      private:
         io_uring_params params;
         io_uring        ring;
 
@@ -158,6 +169,59 @@ namespace webpp::io {
         // stored in "last_err_cat"
         int                    last_err_val = 0;
         io_uring_service_state last_err_cat = io_uring_service_state::success;
+    };
+
+
+    enum struct syscall_state : int {
+        idle,      // nothing has been done yet
+        requested, // the operation is requested
+        cancelled, // operation is cancelled, nothing to do
+        done       // we're done, nothing more to do
+    };
+
+    template <typename ValueType = int>
+    struct io_uring_syscall_iterator {
+        using value_type         = ValueType;
+        using reference          = value_type&;
+        using pointer            = value_type*;
+        using different_type     = syscall_state; // todo
+        using itereator_category = stl::input_iterator_tag;
+        using iterator_concept   = stl::input_iterator_tag;
+
+        io_uring_syscall_iterator() noexcept = default;
+
+        reference operator*() const noexcept {
+            return *value;
+        }
+
+        reference operator*() noexcept {
+            return *value;
+        }
+
+        pointer operator->() const noexcept {
+            return stl::addressof(*value);
+        }
+
+        pointer operator->() noexcept {
+            return stl::addressof(*value);
+        }
+
+        io_uring_syscall_iterator& operator++() noexcept {
+            // todo
+        }
+
+        // multi-pass is not allowed
+        [[noreturn]] void operator++(value_type) const noexcept { // NOLINT(*-dcl21-cpp)
+            stl::terminate();
+        }
+
+        [[nodiscard]] constexpr bool operator==(io_uring_syscall_iterator const& other) const noexcept {
+            return state == other.state;
+        }
+
+      private:
+        stl::optional<value_type> value;
+        syscall_state             state = syscall_state::idle;
     };
 
 } // namespace webpp::io

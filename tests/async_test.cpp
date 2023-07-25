@@ -1,7 +1,7 @@
 // Created by moisrex on 7/22/23.
 
 #include "../webpp/async/async_concepts.hpp"
-#include "../webpp/async/task.hpp"
+#include "../webpp/async/task_chain.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <array>
@@ -13,7 +13,7 @@ using namespace webpp::async;
 static_assert(Task<decltype([] {})>, "A lambda is a task");
 
 TEST(AsyncTest, TaskChain) {
-    auto chain = task() >> [] {
+    auto chain = task_chain() >> [] {
         return "Hello World.";
     } >> [](stl::string_view str) {
         return str.substr(str.find(' '));
@@ -47,6 +47,6 @@ struct custom_consumer {
 };
 
 TEST(AsyncTest, YeildingTest) {
-    auto chain = task() >> custom_yielder() >> custom_consumer();
+    auto chain = task_chain() >> custom_yielder() >> custom_consumer();
     EXPECT_eq(chain(), "Hello World");
 }
