@@ -139,7 +139,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/crypto/gzip.hpp
         ${LIB_INCLUDE_DIR}/crypto/encoded_word.hpp
 
-        ${LIB_INCLUDE_DIR}/http/routes/router.hpp
         ${LIB_INCLUDE_DIR}/http/routes/dynamic_router.hpp
         ${LIB_INCLUDE_DIR}/http/routes/dynamic_route.hpp
         ${LIB_INCLUDE_DIR}/http/routes/valves.hpp
@@ -148,7 +147,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/routes/grouping_valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/member_function_valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/path_valves.hpp
-        ${LIB_INCLUDE_DIR}/http/routes/route.hpp
         ${LIB_INCLUDE_DIR}/http/routes/methods.hpp
         ${LIB_INCLUDE_DIR}/http/routes/path.hpp
         ${LIB_INCLUDE_DIR}/http/routes/tpath.hpp
@@ -160,23 +158,23 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/bodies/string.hpp
         ${LIB_INCLUDE_DIR}/http/bodies/file.hpp
 
-        ${LIB_INCLUDE_DIR}/http/cgi/cgi.hpp
-        ${LIB_INCLUDE_DIR}/http/cgi/cgi_request.hpp
-        ${LIB_INCLUDE_DIR}/http/cgi/cgi_request_body_communicator.hpp
+        ${LIB_INCLUDE_DIR}/cgi/cgi.hpp
+        ${LIB_INCLUDE_DIR}/cgi/cgi_request.hpp
+        ${LIB_INCLUDE_DIR}/cgi/cgi_request_body_communicator.hpp
 
-        ${LIB_INCLUDE_DIR}/http/hub/self_hosted.hpp
-        ${LIB_INCLUDE_DIR}/http/hub/self_hosted_request.hpp
-        ${LIB_INCLUDE_DIR}/http/hub/self_hosted_session_manager.hpp
+        ${LIB_INCLUDE_DIR}/hub/self_hosted.hpp
+        ${LIB_INCLUDE_DIR}/hub/self_hosted_request.hpp
+        ${LIB_INCLUDE_DIR}/hub/self_hosted_session_manager.hpp
 
-        ${LIB_INCLUDE_DIR}/http/fcgi/fcgi.hpp
-        ${LIB_INCLUDE_DIR}/http/fcgi/fcgi_request.hpp
-        ${LIB_INCLUDE_DIR}/http/fcgi/fcgi_protocols.hpp
-        ${LIB_INCLUDE_DIR}/http/fcgi/fcgi_manager.hpp
+        ${LIB_INCLUDE_DIR}/fcgi/fcgi.hpp
+        ${LIB_INCLUDE_DIR}/fcgi/fcgi_request.hpp
+        ${LIB_INCLUDE_DIR}/fcgi/fcgi_protocols.hpp
+        ${LIB_INCLUDE_DIR}/fcgi/fcgi_manager.hpp
 
         ${LIB_INCLUDE_DIR}/beast/beast.hpp
         ${LIB_INCLUDE_DIR}/beast/beast_request.hpp
         ${LIB_INCLUDE_DIR}/beast/beast_server.hpp
-        ${LIB_INCLUDE_DIR}/beast/beast_request_body_communicator.hpp
+        ${LIB_INCLUDE_DIR}/beast/beast_body_communicator.hpp
         ${LIB_INCLUDE_DIR}/beast/beast_string_body.hpp
 
         ${LIB_INCLUDE_DIR}/http/protocol/common_http_protocol.hpp
@@ -287,7 +285,7 @@ endif ()
 
 add_library(${LIB_NAME} STATIC)
 add_library("${PROJECT_NAME}::${LIB_NAME}" ALIAS ${LIB_NAME})
-target_sources(${LIB_NAME} INTERFACE
+target_sources(${LIB_NAME} PUBLIC
         FILE_SET HEADERS
         FILES ${ALL_SOURCES})
 
