@@ -10,8 +10,9 @@
 using namespace webpp;
 using namespace webpp::async;
 
+static_assert(Task<decltype([] {})>, "A lambda is a task");
 
-TEST(IO, TaskChain) {
+TEST(AsyncTest, TaskChain) {
     auto chain = task() >> [] {
         return "Hello World.";
     } >> [](stl::string_view str) {
@@ -21,18 +22,16 @@ TEST(IO, TaskChain) {
 }
 
 
-struct custom_yeilder {
+struct custom_yielder {
   private:
-    stl::string_view data  = "Hello World";
-    stl::size_t      index = 0;
+    stl::string_view data = "Hello World";
 
   public:
-    char yeilder() {
-        return data[index++];
+    [[nodiscard]] auto begin() const noexcept {
+        return data.begin();
     }
-
-    [[nodiscard]] bool is_done() const noexcept {
-        return index == data.size();
+    [[nodiscard]] auto end() const noexcept {
+        return data.end();
     }
 };
 
@@ -41,16 +40,13 @@ struct custom_consumer {
     stl::string data;
 
   public:
-    void resume(char ch) {
-        data.push_back(ch);
-    }
-
-    [[nodiscard]] stl::string_view operator()() const noexcept {
-        return {data.data(), data.size()};
+    template <typename Iter>
+    [[nodiscard]] stl::string_view operator()(Iter beg, Iter end) const noexcept {
+        return {beg, end};
     }
 };
 
-TEST(IO, YeildingTest) {
-    auto chain = task() >> custom_yeilder() >> custom_consumer();
+TEST(AsyncTest, YeildingTest) {
+    auto chain = task() >> custom_yielder() >> custom_consumer();
     EXPECT_eq(chain(), "Hello World");
 }

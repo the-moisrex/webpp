@@ -3,29 +3,33 @@
 #ifndef WEBPP_TASKS_HPP
 #define WEBPP_TASKS_HPP
 
-#include "async_concepts.hpp"
 #include "../std/tuple.hpp"
+#include "async_concepts.hpp"
 
 namespace webpp {
 
     template <typename TaskType>
     struct tasks_iterator {
         using task_type = TaskType;
+
       private:
         task_type* task_ptr;
     };
 
 
-    template <async::Task ...T>
+    template <async::Task... T>
     struct task {
-        using iterator = tasks_iterator<task>;
+        using iterator       = tasks_iterator<task>;
         using const_iterator = const tasks_iterator<task>;
+
       private:
         using tuple_type = stl::tuple<T...>;
 
         tuple_type tasks;
-      public:
 
+      public:
+        constexpr task() noexcept = default;
+        constexpr task(tuple_type&& tasks_tup) noexcept : tasks{stl::move(tasks_tup)} {};
         constexpr task(task const&) noexcept            = default;
         constexpr task(task&&) noexcept                 = default;
         constexpr task& operator=(task const&) noexcept = default;
@@ -49,7 +53,7 @@ namespace webpp {
             return then(stl::forward<F>(func));
         }
 
-        constexpr iterator bgin() noexcept {
+        constexpr iterator begin() noexcept {
             return {*this};
         }
     };

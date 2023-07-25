@@ -1,5 +1,6 @@
 // Created by moisrex on 11/7/19.
 #include "../webpp/http/routes/methods.hpp"
+#include "../webpp/http/routes/number.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/valves.hpp"
 #include "common/fake_protocol.hpp"
@@ -17,17 +18,17 @@ struct fake_app {
     }
 };
 
-// using request_type = fake_proto_request<std_traits>;
-// using context_type = simple_context<request_type>;
+using request_type = basic_request<default_traits>;
 
 TEST(Routes, Path) {
-    //    request_type req;
-    //    context_type ctx{};
+    enable_owner_traits<default_traits> et;
+    request_type                        req{et};
+    context                             ctx{req};
 
 
-    //    EXPECT_TRUE((root / number{"integer name"})(ctx));
-    //    EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
-    //    EXPECT_TRUE((root / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
+    //  EXPECT_TRUE((root / number{"integer name"})(ctx));
+    //  EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
+    //  EXPECT_TRUE((root / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
 }
 
 

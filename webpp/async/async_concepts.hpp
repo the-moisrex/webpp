@@ -3,8 +3,9 @@
 #ifndef WEBPP_ASYNC_CONCEPTS_HPP
 #define WEBPP_ASYNC_CONCEPTS_HPP
 
-#include "../std/type_traits.hpp"
+#include "../std/concepts.hpp"
 #include "../std/iterator.hpp"
+#include "../std/type_traits.hpp"
 
 namespace webpp::async {
 
@@ -76,18 +77,31 @@ namespace webpp::async {
                                    { async.scheduler() } -> Scheduler;
                                };
 
+
+    namespace details {
+        template <typename T>
+        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T>;
+    }
+
     /**
-     * Task Yeilder, yeilds values
+     * Task Yielder, yields values
      */
     template <typename T>
-    concept TaskYeilder = stl::forward_iterator<T>;
+    concept TaskYielder = stl::forward_iterator<T>;
 
     template <typename T>
-    concept Task = stl::movable<T> &&  stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
-      requires (T task) {
-                       { stl::begin(task) } noexcept -> TaskYeilder;
-                       { stl::end(task) } noexcept -> TaskYeilder;
-                   };
+    concept YieldableTask = details::BasicTask<T> && requires(T task) {
+                                                         { stl::begin(task) } noexcept -> TaskYielder;
+                                                         { stl::end(task) } noexcept -> TaskYielder;
+                                                     };
+
+    template <typename T>
+    concept OneShotTask = details::BasicTask<T> && requires(T task) {
+                                                       { task() };
+                                                   };
+
+    template <typename T>
+    concept Task = YieldableTask<T> || OneShotTask<T>;
 
     /**
      * Any type that has the ability to be chained up with other types of callables.
