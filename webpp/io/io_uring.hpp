@@ -175,7 +175,7 @@ namespace webpp::io {
     enum struct syscall_state : int {
         idle,      // nothing has been done yet
         requested, // the operation is requested
-        cancelled, // operation is cancelled, nothing to do
+        canceled,  // operation is canceled, nothing to do
         done       // we're done, nothing more to do
     };
 

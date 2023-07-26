@@ -86,6 +86,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/io/io_uring.hpp
         ${LIB_INCLUDE_DIR}/io/io_task.hpp
 
+        ${LIB_INCLUDE_DIR}/async/async_concepts.hpp
+        ${LIB_INCLUDE_DIR}/async/task_chain.hpp
+
         ${LIB_INCLUDE_DIR}/socket/socket.hpp
 
         ${LIB_INCLUDE_DIR}/time/stopwatch.hpp
