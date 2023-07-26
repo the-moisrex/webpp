@@ -9,6 +9,7 @@
 #include "../std/type_traits.hpp"
 #include "../std/vector.hpp"
 #include "../traits/traits.hpp"
+#include "./bodies/string.hpp"
 #include "./http_concepts.hpp"
 
 #include <exception>
@@ -445,7 +446,7 @@ namespace webpp::http {
 
 
         template <typename T>
-        // requires(HTTPGenerallyDeserializableBody<T, body_reader>)
+            requires(HTTPGenerallyDeserializableBody<T, body_reader>)
         constexpr T as() {
             return details::get_as<T>(*this);
         }

@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_BODIES_STRING_HPP
 #define WEBPP_HTTP_BODIES_STRING_HPP
 
+// note: we should not import body itself here, strings are used directly there
 #include "../../common/meta.hpp"
 #include "../../configs/constants.hpp"
 #include "../../std/string.hpp"
