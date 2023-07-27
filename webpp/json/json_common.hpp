@@ -16,8 +16,8 @@ namespace webpp::json {
      */
     template <typename T, typename ObjT>
         requires requires(ObjT json_obj) {
-                     { json_obj.template as<T>() } -> stl::same_as<T>;
-                 }
+            { json_obj.template as<T>() } -> stl::same_as<T>;
+        }
     [[nodiscard]] static constexpr T as(ObjT&& obj) {
         return obj.template as<T>();
     }
@@ -27,8 +27,8 @@ namespace webpp::json {
      */
     template <typename T, typename ObjT>
         requires requires(ObjT json_obj) {
-                     { json_obj.template is<T>() } -> stl::same_as<bool>;
-                 }
+            { json_obj.template is<T>() } -> stl::same_as<bool>;
+        }
     [[nodiscard]] static constexpr bool is(ObjT const& obj) {
         return obj.template is<T>();
     }
@@ -83,8 +83,8 @@ namespace webpp::json {
 
         template <typename ObjHolder>
             requires requires(ObjHolder holder) {
-                         { holder.as_object() } -> JSONObject;
-                     }
+                { holder.as_object() } -> JSONObject;
+            }
         field_pack& operator=(ObjHolder&& obj) {
             return operator=(obj.as_object());
         }

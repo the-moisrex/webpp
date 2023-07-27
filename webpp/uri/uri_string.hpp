@@ -2022,14 +2022,13 @@ namespace webpp::uri {
 
 
     template <typename T>
-    concept URIString =
-      requires {
-          typename stl::remove_cvref_t<T>::specified_string_type;
-          typename stl::remove_cvref_t<T>::specified_string_view_type;
-          requires stl::same_as<stl::remove_cvref_t<T>,
-                                uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
-                                           typename stl::remove_cvref_t<T>::specified_string_view_type>>;
-      };
+    concept URIString = requires {
+        typename stl::remove_cvref_t<T>::specified_string_type;
+        typename stl::remove_cvref_t<T>::specified_string_view_type;
+        requires stl::same_as<stl::remove_cvref_t<T>,
+                              uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
+                                         typename stl::remove_cvref_t<T>::specified_string_view_type>>;
+    };
 
 
     template <typename Str1T, typename StrView1T, typename Str2T, typename StrView2T>

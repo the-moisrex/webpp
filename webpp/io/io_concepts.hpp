@@ -3,8 +3,8 @@
 
 #include "../async/async_concepts.hpp"
 #include "../std/coroutine.hpp"
+#include "../std/ranges.hpp"
 
-#include <ranges>
 
 namespace webpp::io {
 
@@ -14,17 +14,23 @@ namespace webpp::io {
      */
     template <typename T>
     concept IOTask =
-      std::ranges::view<T> && istl::CoroutineAwaiter<T> && requires(T task, stl::true_type lambda) {
-                                                               task.then(lambda);
-                                                               task >> lambda;
-                                                           };
+#ifdef __cpp_lib_ranges
+      std::ranges::view<T> &&
+#endif
+#ifdef __cpp_lib_coroutine
+      istl::CoroutineAwaiter<T> &&
+#endif
+      requires(T task, stl::true_type lambda) {
+          task.then(lambda);
+          task >> lambda;
+      };
 
     template <typename T>
     concept IOScheduler =
       async::Scheduler<T> && requires(T sched, char* data, unsigned long long size, int fd) {
-                                 { sched.read(fd, data, size) } noexcept -> IOTask;
-                                 { sched.write(fd, data, size) } noexcept -> IOTask;
-                             };
+          { sched.read(fd, data, size) } noexcept -> IOTask;
+          { sched.write(fd, data, size) } noexcept -> IOTask;
+      };
 
 
 } // namespace webpp::io

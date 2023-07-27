@@ -16,9 +16,9 @@ namespace webpp::istl {
 
     template <typename T>
     concept Iterable = requires(T iter) {
-                           iter.begin();
-                           iter.end();
-                       };
+        iter.begin();
+        iter.end();
+    };
 
 }
 

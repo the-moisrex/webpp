@@ -11,9 +11,9 @@ namespace webpp::http {
 
     template <typename T>
     concept BooleanLike = requires(T val) {
-                              val = true;
-                              { !val } noexcept -> stl::same_as<bool>;
-                          };
+        val = true;
+        { !val } noexcept -> stl::same_as<bool>;
+    };
 
 
     /**

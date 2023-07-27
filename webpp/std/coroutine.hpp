@@ -5,7 +5,8 @@
 
 #include "./concepts.hpp"
 
-#include <coroutine>
+#ifdef __cpp_lib_coroutine
+#    include <coroutine>
 
 namespace webpp::istl {
 
@@ -21,13 +22,14 @@ namespace webpp::istl {
      */
     template <typename T>
     concept CoroutineAwaiter = requires(T awaiter, std::coroutine_handle<> handle) {
-                                   awaiter.await_resume();
-                                   { awaiter.await_ready() } -> std::same_as<bool>;
-                                   {
-                                       awaiter.await_suspend(handle)
-                                       } -> details::is_valid_await_suspend_return_value;
-                               };
+        awaiter.await_resume();
+        { awaiter.await_ready() } -> std::same_as<bool>;
+        { awaiter.await_suspend(handle) } -> details::is_valid_await_suspend_return_value;
+    };
 
 } // namespace webpp::istl
+
+
+#endif // __cpp_lib_coroutine
 
 #endif // WEBPP_COROUTINE_HPP

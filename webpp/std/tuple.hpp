@@ -127,7 +127,7 @@ namespace webpp::istl {
             return TupleT{stl::forward<T>(args)...};
         } else {
             // re-order, and default-construct those that don't exist in the args
-            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T && ... sub_args) constexpr {
+            return ([]<stl::size_t... ints>(stl::index_sequence<ints...>, T&&... sub_args) constexpr {
                 no_order_tuple bad_tuple{stl::forward<T>(sub_args)...};
                 // It's a free function and not a lambda because C++ is stupid and doesn't
                 // understand that "ints" in the lambda template is a parameter pack
@@ -200,10 +200,10 @@ namespace webpp::istl {
 
     template <typename T>
     concept ItupleOptions = requires(T o) {
-                                typename T::default_type;
-                                T::size;
-                                typename T::template resize<2>;
-                            };
+        typename T::default_type;
+        T::size;
+        typename T::template resize<2>;
+    };
 
     template <typename T>
     struct is_ituple_options {

@@ -55,8 +55,12 @@ namespace webpp::sql {
         expr_data m_data;                                                                                     \
                                                                                                               \
       public:                                                                                                 \
-        constexpr expr_data&       data() noexcept { return m_data; }                                         \
-        constexpr expr_data const& data() const noexcept { return m_data; }                                   \
+        constexpr expr_data& data() noexcept {                                                                \
+            return m_data;                                                                                    \
+        }                                                                                                     \
+        constexpr expr_data const& data() const noexcept {                                                    \
+            return m_data;                                                                                    \
+        }                                                                                                     \
                                                                                                               \
         constexpr name(expr_data&& input_data) noexcept : m_data{stl::move(input_data)} {}                    \
         constexpr name(name const&)                = default;                                                 \

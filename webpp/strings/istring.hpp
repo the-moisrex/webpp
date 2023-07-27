@@ -47,9 +47,9 @@ namespace webpp {
 #endif
 
         static constexpr bool has_allocator = requires(string_type str) {
-                                                  typename string_type::allocator_type;
-                                                  str.get_allocator();
-                                              };
+            typename string_type::allocator_type;
+            str.get_allocator();
+        };
         static constexpr bool is_mutable = requires(string_type str) { str.clear(); };
 
       private:

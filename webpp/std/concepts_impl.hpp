@@ -110,9 +110,9 @@ namespace webpp::stl {
     //    .... If A and B are both rvalue reference types, C is well-formed, and
     //    is_convertible_v<A, C> && is_convertible_v<B, C> is true, then COMMON-REF(A, B) is C.
     template <class Ap, class Bp, class Xp, class Yp>
-        requires requires { typename __common_ref_C<Xp, Yp>; } &&
-                 is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> &&
-                 is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
+        requires requires {
+            typename __common_ref_C<Xp, Yp>;
+        } && is_convertible_v<Ap&&, __common_ref_C<Xp, Yp>> && is_convertible_v<Bp&&, __common_ref_C<Xp, Yp>>
     struct __common_ref<Ap&&, Bp&&, Xp, Yp> {
         using __type = __common_ref_C<Xp, Yp>;
     };
@@ -302,10 +302,8 @@ namespace webpp::stl {
 
         template <class B>
         concept boolean_testable = boolean_testable_impl<B> && requires(B&& b) {
-                                                                   {
-                                                                       !forward<B>(b)
-                                                                       } -> boolean_testable_impl;
-                                                               };
+            { !forward<B>(b) } -> boolean_testable_impl;
+        };
 
 
         template <class T, class U>
@@ -357,24 +355,22 @@ namespace webpp::stl {
 
         // [1]
         template <class Tp, class Up>
-        concept __unqualified_swappable_with = (__class_or_enum<remove_cvref_t<Tp>> ||
-                                                __class_or_enum<remove_cvref_t<Up>>) &&
-                                               requires(Tp&& __t, Up&& __u) {
-                                                   swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
-                                               };
+        concept __unqualified_swappable_with =
+          (__class_or_enum<remove_cvref_t<Tp>> || __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp&& __t,
+                                                                                                  Up&& __u) {
+              swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
+          };
 
         struct __fn;
 
         template <class Tp, class Up, size_t _Size>
-        concept __swappable_arrays = !
-        __unqualified_swappable_with<Tp (&)[_Size], Up (&)[_Size]>&& extent_v<Tp> ==
-          extent_v<Up>&& requires(Tp (&__t)[_Size], Up (&__u)[_Size], const __fn& __swap) {
-                             __swap(__t[0], __u[0]);
-                         };
+        concept __swappable_arrays =
+          !__unqualified_swappable_with<Tp (&)[_Size], Up (&)[_Size]> && extent_v<Tp> == extent_v<Up> &&
+          requires(Tp (&__t)[_Size], Up (&__u)[_Size], const __fn& __swap) { __swap(__t[0], __u[0]); };
 
         template <class Tp>
-        concept __exchangeable = !
-        __unqualified_swappable_with<Tp&, Tp&>&& move_constructible<Tp>&& assignable_from<Tp&, Tp>;
+        concept __exchangeable =
+          !__unqualified_swappable_with<Tp&, Tp&> && move_constructible<Tp> && assignable_from<Tp&, Tp>;
 
         struct __fn {
             // 2.1   `S` is `(void)swap(E1, E2)`* if `E1` or `E2` has class or enumeration type and...
@@ -414,13 +410,12 @@ namespace webpp::stl {
     concept swappable = requires(Tp& __a, Tp& __b) { ranges::swap(__a, __b); };
 
     template <class Tp, class Up>
-    concept swappable_with =
-      common_reference_with<Tp, Up> && requires(Tp&& __t, Up&& __u) {
-                                           ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Tp>(__t));
-                                           ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Up>(__u));
-                                           ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
-                                           ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Tp>(__t));
-                                       };
+    concept swappable_with = common_reference_with<Tp, Up> && requires(Tp&& __t, Up&& __u) {
+        ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Tp>(__t));
+        ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Up>(__u));
+        ranges::swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
+        ranges::swap(_VSTD::forward<Up>(__u), _VSTD::forward<Tp>(__t));
+    };
 
 
 

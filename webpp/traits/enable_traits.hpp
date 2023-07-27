@@ -247,9 +247,9 @@ namespace webpp {
 
     template <typename T>
         requires requires {
-                     typename T::traits_type;
-                     requires Traits<typename T::traits_type>;
-                 }
+            typename T::traits_type;
+            requires Traits<typename T::traits_type>;
+        }
     struct enable_traits_access<T> : public enable_traits_with<typename T::traits_type, T> {
         using enable_traits_with<typename T::traits_type, T>::enable_traits_with;
     };
@@ -332,19 +332,16 @@ namespace webpp {
 
 
     template <typename T>
-    concept TraitsAccess =
-      Traits<T> ||
-      requires {
-          typename T::traits_type;
-          requires Traits<typename T::traits_type>;
-          requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
-                     stl::same_as<T, enable_owner_traits<typename T::traits_type>> ||
-                     requires {
-                         typename T::enabled_type;
-                         requires stl::
-                           same_as<T, enable_traits_with<typename T::traits_type, typename T::enabled_type>>;
-                     };
-      };
+    concept TraitsAccess = Traits<T> || requires {
+        typename T::traits_type;
+        requires Traits<typename T::traits_type>;
+        requires stl::same_as<T, enable_traits<typename T::traits_type>> ||
+                   stl::same_as<T, enable_owner_traits<typename T::traits_type>> || requires {
+                       typename T::enabled_type;
+                       requires stl::
+                         same_as<T, enable_traits_with<typename T::traits_type, typename T::enabled_type>>;
+                   };
+    };
 
     // I added these here because they are traits' related and also allocator pack related, but their intent
     // is to simplify the users of the traits not allocator packs directly
@@ -355,10 +352,10 @@ namespace webpp {
          */
         template <typename T>
         concept AllocatorHolder = requires(T holder) {
-                                      typename T::allocator_pack_type;
-                                      requires AllocatorPack<typename T::allocator_pack_type>;
-                                      { holder.alloc_pack } -> AllocatorPack;
-                                  };
+            typename T::allocator_pack_type;
+            requires AllocatorPack<typename T::allocator_pack_type>;
+            { holder.alloc_pack } -> AllocatorPack;
+        };
 
         template <typename T, AllocatorHolder AllocHolder>
         static constexpr auto local_allocator(AllocHolder& holder) noexcept {

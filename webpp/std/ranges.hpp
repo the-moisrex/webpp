@@ -1,3 +1,5 @@
 #include "std.hpp"
 
-#include <ranges>
+#ifdef __cpp_lib_ranges
+#    include <ranges>
+#endif

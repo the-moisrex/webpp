@@ -38,11 +38,10 @@ namespace webpp {
     } // namespace details
 
     template <typename T>
-    concept Logger = details::SimpleLogger<T> &&
-                     requires(T logger) {
-                         logger.debug;
-                         requires details::SimpleLogger<stl::remove_cvref_t<decltype(logger.debug)>>;
-                     };
+    concept Logger = details::SimpleLogger<T> && requires(T logger) {
+        logger.debug;
+        requires details::SimpleLogger<stl::remove_cvref_t<decltype(logger.debug)>>;
+    };
 
 } // namespace webpp
 
