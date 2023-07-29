@@ -9,22 +9,56 @@
         {
             "name": "default",
             "displayName": "Debug Default",
-            "description": "Default build using Ninja generator",
-            "generator": "Ninja",
+            "description": "Default build using default cmake generator",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
+            "name": "gcc",
+            "displayName": "Debug GCC",
+            "description": "Default build using Ninja generator",
+            "generator": "Ninja",
+            "inherits": "default",
+            "binaryDir": "${sourceDir}/build-gcc",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_C_COMPILER": "gcc"
+            }
+        },
+        {
+            "name": "gcc-vcpkg",
+            "displayName": "Debug GCC VCPkg",
+            "generator": "Unix Makefiles",
+            "description": "GCC build using vcpkg as the package manager",
+            "inherits": "gcc",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "CPM_USE_LOCAL_PACKAGES": "ON"
+            }
+        },
+        {
             "name": "clang",
             "inherits": "default",
+            "generator": "Ninja",
             "displayName": "Clang debug",
             "description": "Clang build using Ninja generator",
             "binaryDir": "${sourceDir}/build-clang",
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_C_COMPILER": "clang"
+            }
+        },
+        {
+            "name": "clang-vcpkg",
+            "displayName": "Debug Clang VCPkg",
+            "generator": "Unix Makefiles",
+            "description": "Clang build using vcpkg as the package manager",
+            "inherits": "clang",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "cacheVariables": {
+                "CPM_USE_LOCAL_PACKAGES": "ON"
             }
         },
         {

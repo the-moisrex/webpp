@@ -1,0 +1,12 @@
+{
+    "name": "webpp",
+    "version": "0.0.1",
+    "dependencies": [
+        "brotli",
+        "zlib",
+        "fmt",
+        "gtest",
+        "rapidjson",
+        "date"
+    ]
+}
