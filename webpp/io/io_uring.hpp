@@ -188,21 +188,21 @@ namespace webpp::io {
         using itereator_category = stl::input_iterator_tag;
         using iterator_concept   = stl::input_iterator_tag;
 
-        io_uring_syscall_iterator() noexcept = default;
+        constexpr io_uring_syscall_iterator() noexcept = default;
 
-        reference operator*() const noexcept {
+        constexpr reference operator*() const noexcept {
             return *value;
         }
 
-        reference operator*() noexcept {
+        constexpr reference operator*() noexcept {
             return *value;
         }
 
-        pointer operator->() const noexcept {
+        constexpr pointer operator->() const noexcept {
             return stl::addressof(*value);
         }
 
-        pointer operator->() noexcept {
+        constexpr pointer operator->() noexcept {
             return stl::addressof(*value);
         }
 

@@ -48,5 +48,5 @@ struct custom_consumer {
 
 TEST(AsyncTest, YeildingTest) {
     auto chain = task_chain() >> custom_yielder() >> custom_consumer();
-    EXPECT_eq(chain(), "Hello World");
+    EXPECT_EQ(chain(), "Hello World");
 }

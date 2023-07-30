@@ -4,7 +4,9 @@
 #define WEBPP_ASYNC_CONCEPTS_HPP
 
 #include "../std/concepts.hpp"
+#include "../std/coroutine.hpp"
 #include "../std/iterator.hpp"
+#include "../std/ranges.hpp"
 #include "../std/type_traits.hpp"
 
 namespace webpp::async {
@@ -57,7 +59,7 @@ namespace webpp::async {
 
 
     /**
-     * Scheduler is something that the user will enqueue their work with it. This should be light weight.
+     * Scheduler is something that the user will enqueue their work with it. This should be lightweight.
      */
     template <typename T>
     concept Scheduler = stl::regular<T> && (sizeof(T) <= sizeof(void*));
@@ -87,7 +89,14 @@ namespace webpp::async {
      * Task Yielder, yields values
      */
     template <typename T>
-    concept TaskYielder = stl::forward_iterator<T>;
+    concept TaskYielder = stl::input_iterator<T>
+#ifdef __cpp_lib_ranges
+                          && std::ranges::view<T>
+#endif
+#ifdef __cpp_lib_coroutine
+                          && istl::CoroutineAwaiter<T>
+#endif
+      ;
 
     template <typename T>
     concept YieldableTask = details::BasicTask<T> && requires(T task) {
