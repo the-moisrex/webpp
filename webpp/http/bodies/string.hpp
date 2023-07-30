@@ -6,6 +6,7 @@
 // note: we should not import body itself here, strings are used directly there
 #include "../../common/meta.hpp"
 #include "../../configs/constants.hpp"
+#include "../../memory/object.hpp"
 #include "../../std/string.hpp"
 #include "../../std/string_view.hpp"
 #include "../../storage/file.hpp"

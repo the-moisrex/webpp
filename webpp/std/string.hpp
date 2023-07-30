@@ -1,10 +1,9 @@
 // Created by moisrex on 4/23/20.
 
-#ifndef WEBPP_STRING_H
-#define WEBPP_STRING_H
+#ifndef WEBPP_STD_STRING_HPP
+#define WEBPP_STD_STRING_HPP
 
-#include "../traits/traits.hpp"
-#include "std.hpp"
+#include "string_concepts.hpp"
 
 #include <string>
 
@@ -178,4 +177,4 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
-#endif // WEBPP_STRING_H
+#endif // WEBPP_STD_STRING_HPP

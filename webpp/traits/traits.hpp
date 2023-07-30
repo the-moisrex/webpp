@@ -1,14 +1,10 @@
 // Created by moisrex on 4/22/20.
-#ifndef WEBPP_TRAITS_H
-#define WEBPP_TRAITS_H
+#ifndef WEBPP_TRAITS_TRAITS_HPP
+#define WEBPP_TRAITS_TRAITS_HPP
 
-#include "../io/io_concepts.hpp"
 #include "../logs/log_concepts.hpp"
-#include "../memory/allocator_concepts.hpp"
 #include "../memory/allocator_pack.hpp"
-#include "../memory/object.hpp"
 #include "../std/concepts.hpp"
-#include "../std/string_concepts.hpp"
 
 namespace webpp {
 
@@ -180,7 +176,7 @@ namespace webpp {
         using string_view = typename TT::string_view;
 
         template <Traits TT>
-        using char_type = istl::char_type_of_t<string_view<TT>>;
+        using char_type = typename string_view<TT>::value_type; // we could use istl::char_type_of_t
 
         template <Traits TT>
         using local_string_allocator = local_allocator<TT, char_type<TT>>;
@@ -214,11 +210,11 @@ namespace webpp {
         using localify_allocators = replace_allocators<TT, T, alloc::local_features>;
 
 
-        template <Traits TT, typename T>
-        using general_object = object::general<T, allocator_descriptors<TT>>;
+        // template <Traits TT, typename T>
+        // using general_object = object::general<T, allocator_descriptors<TT>>;
 
     } // namespace traits
 
 } // namespace webpp
 
-#endif // WEBPP_TRAITS_H
+#endif // WEBPP_TRAITS_TRAITS_HPP
