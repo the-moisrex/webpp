@@ -3,6 +3,7 @@
 
 #include "../convert/lexical_cast.hpp"
 #include "../crypto/base64.hpp"
+#include "../memory/object.hpp"
 #include "../storage/file.hpp"
 #include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"

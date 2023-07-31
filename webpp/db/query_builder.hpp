@@ -1,6 +1,7 @@
 #ifndef WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP
 #define WEBPP_DATABASE_SQL_QUERY_BUILDER_HPP
 
+#include "../memory/object.hpp"
 #include "../std/collection.hpp"
 #include "../std/functional.hpp"
 #include "../std/ranges.hpp"
