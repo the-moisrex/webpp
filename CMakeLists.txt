@@ -1,5 +1,21 @@
 cmake_minimum_required(VERSION 3.23...3.27)
 
+if (IS_CLANG AND LIBCXX)
+    # This is not the perfect way to do this, but ...
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif ()
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (IS_CLANG)
+    set(CMAKE_CXX_STANDARD 20)
+else ()
+    set(CMAKE_CXX_STANDARD 23)
+endif ()
+
+set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 project(webpp
         VERSION 1.0.0
         LANGUAGES CXX
@@ -50,21 +66,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         message(FATAL_ERROR "This version of Clang is not supported. We need at least version ${clang_min_version}.")
     endif ()
 endif ()
-
-if (IS_CLANG AND LIBCXX)
-    # This is not the perfect way to do this, but ...
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif ()
-
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if (IS_CLANG)
-    set(CMAKE_CXX_STANDARD 20)
-else ()
-    set(CMAKE_CXX_STANDARD 23)
-endif ()
-set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 #option(SHARED_LIBRARY_EXECUTABLE "Make the shared library executable." OFF)
 option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OFF)

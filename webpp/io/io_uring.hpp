@@ -10,6 +10,7 @@
 #    define WEBPP_IO_URING_SUPPORT 1
 
 #    include "../std/coroutine.hpp"
+#    include "../std/expected.hpp"
 #    include "../std/optional.hpp"
 
 #    include <coroutine>
@@ -144,6 +145,7 @@ namespace webpp::io {
                     return sqe;
                 }
                 error_on_errno(ENOMEM, io_uring_service_state::SQE_init_failure);
+                return nullptr; // todo
             }
         }
 
@@ -180,48 +182,31 @@ namespace webpp::io {
     };
 
     template <typename ValueType = int>
-    struct io_uring_syscall_iterator {
-        using value_type         = ValueType;
-        using reference          = value_type&;
-        using pointer            = value_type*;
-        using different_type     = syscall_state; // todo
-        using itereator_category = stl::input_iterator_tag;
-        using iterator_concept   = stl::input_iterator_tag;
-
-        constexpr io_uring_syscall_iterator() noexcept = default;
-
-        constexpr reference operator*() const noexcept {
-            return *value;
-        }
-
-        constexpr reference operator*() noexcept {
-            return *value;
-        }
-
-        constexpr pointer operator->() const noexcept {
-            return stl::addressof(*value);
-        }
-
-        constexpr pointer operator->() noexcept {
-            return stl::addressof(*value);
-        }
-
-        io_uring_syscall_iterator& operator++() noexcept {
-            // todo
-        }
-
-        // multi-pass is not allowed
-        [[noreturn]] void operator++(value_type) const noexcept { // NOLINT(*-dcl21-cpp)
-            stl::terminate();
-        }
-
-        [[nodiscard]] constexpr bool operator==(io_uring_syscall_iterator const& other) const noexcept {
-            return state == other.state;
-        }
+    struct io_uring_syscall_iterator : stl::expected<ValueType, syscall_state> {
+        using value_type = ValueType;
 
       private:
-        stl::optional<value_type> value;
-        syscall_state             state = syscall_state::idle;
+        using super = stl::expected<ValueType, syscall_state>;
+
+      public:
+        constexpr io_uring_syscall_iterator() noexcept : super{syscall_state::idle} {}
+
+        io_uring_syscall_iterator& operator++() noexcept {
+            using enum syscall_state;
+            if (!this->has_value()) {
+                switch (this->error()) {
+                    case idle: {
+
+                        this->emplace(requested);
+                        break;
+                    }
+                    case requested: {
+
+                        break;
+                    }
+                }
+            }
+        }
     };
 
 } // namespace webpp::io

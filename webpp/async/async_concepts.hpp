@@ -87,16 +87,25 @@ namespace webpp::async {
 
     /**
      * Task Yielder, yields values
+     * It's kinda an iterator
      */
     template <typename T>
-    concept TaskYielder = stl::input_iterator<T>
-#ifdef __cpp_lib_ranges
-                          && std::ranges::view<T>
-#endif
-#ifdef __cpp_lib_coroutine
-                          && istl::CoroutineAwaiter<T>
-#endif
-      ;
+    concept TaskYielder = stl::movable<T> &&
+                          requires(T iter) {
+                              // almost weakly incrementable
+                              { ++iter } noexcept -> stl::same_as<T&>;
+                              // almost indirectly readable
+                              { *iter } noexcept;
+                              // is_done
+                              { static_cast<bool>(iter) } noexcept;
+                          }
+    // #ifdef __cpp_lib_ranges
+    //                           && std::ranges::view<T>
+    // #endif
+    // #ifdef __cpp_lib_coroutine
+    //                           && istl::CoroutineAwaiter<T>
+    // #endif
+    ;
 
     template <typename T>
     concept YieldableTask = details::BasicTask<T> && requires(T task) {
