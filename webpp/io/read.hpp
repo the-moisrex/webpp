@@ -13,7 +13,7 @@ namespace webpp::io {
 
         void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
             // request a read, and set a callback
-            const auto val = io.request_read(file_descriptor, *this);
+            const auto val = io.request_read(file_descriptor, amount, buf, *this);
             if (val != 0) {
                 set_error(io, val);
                 status = done;
@@ -55,8 +55,8 @@ namespace webpp::io {
     struct async_file_stats {
         void operator()(auto io, int file_descriptor) const noexcept {
             const auto stats = io.request_file_stats();
-            if (val != 0) {
-                set_error(io, val);
+            if (stats != 0) {
+                set_error(io, stats);
             }
             set_value(io, stats);
         }
@@ -64,7 +64,7 @@ namespace webpp::io {
 
 
     constexpr auto read(int file_descriptor) noexcept {
-        return get_file_stats{} >> let_value([](auto stats) {
+        return just(file_descriptor) >> async_file_stats{} >> let_value([](auto stats) {
                    return stats.size();
                }) >>
                async_do_until(async_read_some{});
