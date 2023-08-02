@@ -23,10 +23,30 @@ TEST(IO, BasicIdea) {
     std::array<char, 100> buf{};
     io >> read(fake_file, buf.data(), buf.size()) >>
         [&buf]() {
-            stl:
-                string const str{buf.data(), ::strlen(buf.data())};
-                EXPECT_EQ(str, "content");
-                return str;
+            std::string const str{buf.data(), ::strlen(buf.data())};
+            EXPECT_EQ(str, "content");
+            return str;
+        } >>
+        write(fake_file) >>
+        [&] {
+            EXPECT_EQ(fake_file.str(), "content");
+        } ||
+      [](auto io) {
+          throw io.error();
+      };
+}
+
+
+TEST(IO, BasicIdea2) {
+    io_uring_service  io;
+    std::stringstream fake_file;
+    fake_file << "content";
+
+    io >> read(fake_file, io.buffer()) >>
+        [](auto buf) {
+            std::string const str{buf.data(), ::strlen(buf.data())};
+            EXPECT_EQ(str, "content");
+            return str;
         } >>
         write(fake_file) >>
         [&] {

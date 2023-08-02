@@ -9,26 +9,31 @@
 namespace webpp::io {
 
     struct async_read_some {
-        enum read_status { idle, requested, done } status;
+        struct async_read_some_state {
+            enum read_status { idle, requested, done } status = read_status::idle;
 
-        void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
-            // request a read, and set a callback
-            const auto val = io.request_read(file_descriptor, amount, buf, *this);
-            if (val != 0) {
-                set_error(io, val);
-                status = done;
-                return;
+            void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
+                // request a read, and set a callback
+                const auto val = io.request_read(file_descriptor, amount, buf, *this);
+                if (val != 0) {
+                    set_error(io, val);
+                    status = done;
+                    return;
+                }
+                status = requested;
             }
-            status = requested;
-        }
 
-        // callback from io
-        void operator()(auto io, int read) noexcept {
-            status = done;
-            set_done(io, read);
+            // callback from io
+            void operator()(auto io, int read) noexcept {
+                status = done;
+                set_done(io, read);
+            }
+        };
+
+        constexpr async_read_some_state begin() const noexcept {
+            return {};
         }
     };
-
 
     template <typename Task>
     struct async_read_until {

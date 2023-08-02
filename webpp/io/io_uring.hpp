@@ -12,16 +12,17 @@
 #    include "../std/coroutine.hpp"
 #    include "../std/expected.hpp"
 #    include "../std/optional.hpp"
+#    include "./buffer.hpp"
 
 #    include <coroutine>
 #    include <cstdint>
 #    include <iterator>
 #    include <liburing.h> // http://git.kernel.dk/liburing
 #    include <string_view>
+#    include <sys/uio.h> // iovec
 #    include <system_error>
 
 namespace webpp::io {
-
 
     enum struct io_uring_service_state {
         success          = 0,
@@ -158,6 +159,10 @@ namespace webpp::io {
          */
         [[nodiscard]] io_uring_sqe* sqe() noexcept {
             return io_uring_get_sqe(&ring);
+        }
+
+        [[nodiscard]] io::buffer buffer() noexcept {
+            // todo
         }
 
       private:

@@ -55,7 +55,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/std/enum.hpp
         ${LIB_INCLUDE_DIR}/std/algorithm.hpp
         ${LIB_INCLUDE_DIR}/std/array.hpp
-        ${LIB_INCLUDE_DIR}/std/buffer.hpp
         ${LIB_INCLUDE_DIR}/std/executor.hpp
         ${LIB_INCLUDE_DIR}/std/format.hpp
         ${LIB_INCLUDE_DIR}/std/internet.hpp
