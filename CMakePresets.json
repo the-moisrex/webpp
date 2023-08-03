@@ -12,7 +12,8 @@
             "description": "Default build using default cmake generator",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_STANDARD": "20"
             }
         },
         {
@@ -24,7 +25,8 @@
             "binaryDir": "${sourceDir}/build-gcc",
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_C_COMPILER": "gcc"
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_STANDARD": "23"
             }
         },
         {
@@ -47,7 +49,8 @@
             "binaryDir": "${sourceDir}/build-clang",
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_C_COMPILER": "clang"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_STANDARD": "20"
             }
         },
         {
@@ -93,7 +96,8 @@
                 "BUILD_SHARED_LIBS": true,
                 "CMAKE_BUILD_TYPE": "Debug",
                 "VCPKG_TARGET_TRIPLET": "x64-windows",
-                "CMAKE_SYSTEM_VERSION": "10.0.19041.0"
+                "CMAKE_SYSTEM_VERSION": "10.0.19041.0",
+                "CMAKE_CXX_STANDARD": "20"
             },
             "condition": {
                 "type": "equals",

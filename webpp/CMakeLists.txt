@@ -298,8 +298,8 @@ target_link_libraries(${LIB_NAME}
         # PUBLIC Boost::container
         # PUBLIC magic_enum::magic_enum
         # PUBLIC fixed_string::fixed_string
-        PUBLIC date::date
-        PUBLIC date::date-tz
+        # PUBLIC date::date
+        # PUBLIC date::date-tz
         PUBLIC ${PROJECT_NAME}::json
         ${BROTLI_SHARED_LIBS}
         PUBLIC ZLIB::ZLIB

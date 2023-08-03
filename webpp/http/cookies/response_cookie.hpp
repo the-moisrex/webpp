@@ -29,7 +29,11 @@ namespace webpp::http {
 
         static constexpr auto illegal_chars = charset("()[]/|\\',;");
 
+#ifdef WEBPP_UTC_CLOCK_SUPPORTED
         using clock_type         = stl::chrono::utc_clock;
+#else
+        using clock_type = stl::chrono::system_clock;
+#endif
         using date_t             = stl::chrono::time_point<clock_type>;
         using name_t             = string_type;
         using value_t            = string_type;
@@ -159,7 +163,13 @@ namespace webpp::http {
                               basic_istringstream<string_char_type, char_traits_type, string_allocator_type>
                                       is{istl::stringify_of<string_type>(value, this->get_allocator())};
                             expires_t new_expires;
+#ifdef WEBPP_UTC_CLOCK_SUPPORTED
                             stl::chrono::from_stream(is, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
+#else
+                            tm t{};
+                            is >> stl::get_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
+                            new_expires = clock_type::from_time_t(stl::mktime(&t));
+#endif
                             _expires = new_expires;
                         } else {
                             attrs.emplace(key, value);
@@ -392,10 +402,15 @@ namespace webpp::http {
                 if constexpr (requires { typename fmt::formatter<date_t, char_type>::type; }) {
                     fmt::format_to(stl::back_inserter(result), date_format, _expires.value());
                 } else {
-                    fmt::format_to(
-                      stl::back_inserter(result),
-                      date_format,
-                      std::chrono::time_point_cast<std::chrono::seconds>(clock_type::to_sys(*_expires)));
+                    fmt::format_to(stl::back_inserter(result),
+                                   date_format,
+                                   std::chrono::time_point_cast<std::chrono::seconds>(
+#ifdef WEBPP_UTC_CLOCK_SUPPORTED
+                                     clock_type::to_sys(*_expires)
+#else
+                                     *_expires
+#endif
+                                       ));
                 }
             }
         }

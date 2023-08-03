@@ -1,20 +1,14 @@
 cmake_minimum_required(VERSION 3.23...3.27)
 
-if (IS_CLANG AND LIBCXX)
-    # This is not the perfect way to do this, but ...
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-endif ()
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# if (IS_CLANG)
+#     set(CMAKE_CXX_STANDARD 20)
+# else ()
+#     set(CMAKE_CXX_STANDARD 23)
+# endif ()
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if (IS_CLANG)
-    set(CMAKE_CXX_STANDARD 20)
-else ()
-    set(CMAKE_CXX_STANDARD 23)
-endif ()
-
-set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
-set(CMAKE_CXX_EXTENSIONS OFF)
+# set(CXX_STANDARD ${CMAKE_CXX_STANDARD})
+# set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(webpp
         VERSION 1.0.0
@@ -106,6 +100,12 @@ add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
 if (IS_DEBUG)
     enable_testing()
 endif ()
+
+# if (IS_CLANG AND LIBCXX)
+#     # This is not the perfect way to do this, but ...
+#     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++abi")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+# endif ()
 
 if (IS_GCC AND IS_DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g3 -fconcepts-diagnostics-depth=10 -ftemplate-backtrace-limit=0 -Wall -Wpedantic -Wextra -Wconversion -Wshadow")

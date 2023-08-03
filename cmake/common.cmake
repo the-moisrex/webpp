@@ -1,6 +1,12 @@
 
 function(setup_target name)
     set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
+    # set_target_properties(${name} PROPERTIES CXX_STANDARD ${CXX_STANDARD})
+    if (IS_GCC)
+        target_compile_features(${name} PUBLIC
+                cxx_std_23
+        )
+    endif ()
     target_compile_features(${name} PUBLIC
         cxx_std_20
         cxx_auto_type
