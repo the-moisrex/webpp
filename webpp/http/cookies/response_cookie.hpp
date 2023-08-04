@@ -30,7 +30,7 @@ namespace webpp::http {
         static constexpr auto illegal_chars = charset("()[]/|\\',;");
 
 #ifdef WEBPP_UTC_CLOCK_SUPPORTED
-        using clock_type         = stl::chrono::utc_clock;
+        using clock_type = stl::chrono::utc_clock;
 #else
         using clock_type = stl::chrono::system_clock;
 #endif

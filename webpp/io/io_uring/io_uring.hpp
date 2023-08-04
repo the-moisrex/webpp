@@ -34,7 +34,12 @@ namespace webpp::io {
     /**
      * I/O Service Class
      */
+    template <typename Allocator = stl::allocator<stl::byte>>
     struct io_uring_service {
+        using allocator_type      = Allocator;
+        using buffer_manager_type = buffer_manager<allocator_type>;
+        using buffer_type         = typename buffer_manager_type::buffer_type;
+
         static constexpr unsigned default_entries_value = 64;
 
       private:
@@ -161,13 +166,14 @@ namespace webpp::io {
             return io_uring_get_sqe(&ring);
         }
 
-        [[nodiscard]] io::buffer buffer() noexcept {
+        [[nodiscard]] buffer_type buffer() noexcept {
             // todo
         }
 
       private:
-        io_uring_params params;
-        io_uring        ring;
+        io_uring_params     params;
+        io_uring            ring;
+        buffer_manager_type buf_pack;
 
         unsigned cqe_count = 0;
 
