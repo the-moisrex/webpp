@@ -21,16 +21,6 @@ namespace webpp::io {
                                  { sched.write(fd, data, size) } noexcept -> IOTask;
                              };
 
-
-    template <typename T>
-    concept IOIterator = requires {
-
-                         };
-
-    template <typename T>
-    concept IOTraits = requires { requires IOIterator<typename T::iterator>; };
-
-
 } // namespace webpp::io
 
 #endif // WEBPP_IO_IO_CONCEPTS_HPP

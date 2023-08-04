@@ -30,6 +30,16 @@
             }
         },
         {
+            "name": "dev-gcc",
+            "inherits": "gcc",
+            "displayName": "GCC Dev",
+            "description": "Development using GCC",
+            "binaryDir": "${sourceDir}/build-dev-gcc",
+            "cacheVariables": {
+                "WEBPP_DEV": "ON"
+            }
+        },
+        {
             "name": "gcc-vcpkg",
             "displayName": "Debug GCC VCPkg",
             "generator": "Unix Makefiles",
@@ -51,6 +61,16 @@
                 "CMAKE_CXX_COMPILER": "clang++",
                 "CMAKE_C_COMPILER": "clang",
                 "CMAKE_CXX_STANDARD": "20"
+            }
+        },
+        {
+            "name": "dev-clang",
+            "inherits": "clang",
+            "displayName": "Clang Dev",
+            "description": "Development using clang",
+            "binaryDir": "${sourceDir}/build-dev-clang",
+            "cacheVariables": {
+                "WEBPP_DEV": "ON"
             }
         },
         {

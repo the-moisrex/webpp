@@ -1,7 +1,7 @@
 // Created by moisrex on 6/2/23.
 #include "../webpp/io/io_concepts.hpp"
-#include "../webpp/io/io_task.hpp"
-#include "../webpp/io/io_uring.hpp"
+// #include "../webpp/io/io_task.hpp"
+#include "../webpp/io/io_uring/io_uring.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <array>
@@ -57,6 +57,10 @@ TEST(IO, BasicIdea2) {
       };
 }
 #endif
+
+TEST(IO, IOBuffersTest) {
+    buffer_manager buf_man;
+}
 
 TEST(IO, IOTraits) {
     //

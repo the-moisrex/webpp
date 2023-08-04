@@ -51,7 +51,7 @@
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-union-access, cppcoreguidelines-macro-usage)
 // NOLINTBEGIN
-namespace webpp::istl {
+namespace webpp::stl {
 
 #ifndef WEBPP_THROW_OR_ABORT
 #    if __cpp_exceptions
@@ -299,7 +299,7 @@ namespace webpp::istl {
     template <typename T, typename E>
     class expected {
         static_assert(!std::is_reference_v<T>);
-        static_assert(!is_function_v<T>);
+        static_assert(!std::is_function_v<T>);
         static_assert(!std::is_same_v<std::remove_cv_t<T>, std::in_place_t>);
         static_assert(!std::is_same_v<std::remove_cv_t<T>, unexpect_t>);
         static_assert(!detail_expected::is_unexpected<std::remove_cv_t<T>>);
@@ -1042,7 +1042,7 @@ namespace webpp::istl {
     /// @}
 
 
-} // namespace webpp::istl
+} // namespace webpp::stl
 
 // NOLINTEND
 // NOLINTEND(cppcoreguidelines-pro-type-union-access, cppcoreguidelines-macro-usage)
