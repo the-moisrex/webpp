@@ -49,9 +49,6 @@ namespace webpp {
           http::simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
         using response_type = http::simple_response<traits_type>;
 
-        // each request should finish before this
-        duration timeout{stl::chrono::seconds(3)};
-
 
         static constexpr auto        log_cat                   = "Beast";
         static constexpr port_type   default_http_port         = 80u;
@@ -74,6 +71,9 @@ namespace webpp {
         thread_worker_type thread_workers;
         stl::mutex         app_call_mutex;
         bool               synced = false;
+
+        // each request should finish before this
+        duration timeout_val{stl::chrono::seconds(3)};
 
 
 
@@ -131,6 +131,15 @@ namespace webpp {
         beast& port(port_type p) noexcept {
             bind_port = p;
             return *this;
+        }
+
+        beast& timeout(duration t) noexcept {
+            timeout_val = t;
+            return *this;
+        }
+
+        [[nodiscard]] duration timeout() const noexcept {
+            return timeout_val;
         }
 
         beast& set_worker_count(stl::size_t val) {

@@ -240,7 +240,7 @@ namespace webpp::beast_proto {
 
         // Asynchronously receive a complete request message.
         void async_read_request() noexcept {
-            stream->expires_after(server->timeout);
+            stream->expires_after(server->timeout());
             boost::beast::http::async_read(
               *stream,
               buf,
