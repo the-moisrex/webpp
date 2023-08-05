@@ -1,0 +1,9 @@
+# If:
+#    PathMatch: webpp/.*
+CompileFlags:
+  Add: [-std=c++20, -I./, -W, -Wall, -Wextra, -Wpedantic, -Wno-unused-variable,-Wno-infinite-recursion,-Werror=implicit-function-declaration,-Wshadow,-Wno-shadow-field-in-constructor-modified,-Wno-shadow-ivar,-Wuninitialized,-Wunused-label,-Wunused-lambda-capture]
+Index:
+  Background: Build
+  StandardLibrary: Yes
+Hover:
+  ShowAKA: Yes
