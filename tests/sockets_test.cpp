@@ -3,7 +3,7 @@
 
 using namespace webpp;
 
-static constexpr in_port_t test_port   = 12332;
+inline constexpr in_port_t test_port   = 12332;
 constexpr auto             test_handle = basic_socket::native_handle_type(3);
 
 

@@ -306,11 +306,11 @@ namespace webpp::alloc {
 
     // common allocator features
     // todo: complete this list
-    static constexpr auto monotonic_features   = feature_pack{stateful, noop_dealloc, unsync};
-    static constexpr auto sync_pool_features   = feature_pack{sync, stateful};
-    static constexpr auto unsync_pool_features = feature_pack{stateful, unsync};
-    static constexpr auto local_features       = monotonic_features;
-    static constexpr auto general_features     = feature_pack{stateless, sync};
+    inline constexpr auto monotonic_features   = feature_pack{stateful, noop_dealloc, unsync};
+    inline constexpr auto sync_pool_features   = feature_pack{sync, stateful};
+    inline constexpr auto unsync_pool_features = feature_pack{stateful, unsync};
+    inline constexpr auto local_features       = monotonic_features;
+    inline constexpr auto general_features     = feature_pack{stateless, sync};
 
 
 

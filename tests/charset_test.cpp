@@ -8,16 +8,16 @@
 using namespace webpp;
 
 
-static constexpr auto LOWER_ALPHA_MAP = charmap_range<'a', 'z'>();
-static constexpr auto UPPER_ALPHA_MAP = charmap_range<'A', 'Z'>();
-static constexpr auto ALPHA_MAP       = charmap(LOWER_ALPHA_MAP, UPPER_ALPHA_MAP);
-static constexpr auto DIGIT_MAP       = charmap_range<'0', '9'>();
-static constexpr auto HEXDIG_MAP = charmap(DIGIT_MAP, charmap_range<'A', 'F'>(), charmap_range<'a', 'f'>());
-static constexpr auto ALPHA_DIGIT_MAP = charmap{ALPHA_MAP, DIGIT_MAP};
+inline constexpr auto LOWER_ALPHA_MAP = charmap_range<'a', 'z'>();
+inline constexpr auto UPPER_ALPHA_MAP = charmap_range<'A', 'Z'>();
+inline constexpr auto ALPHA_MAP       = charmap(LOWER_ALPHA_MAP, UPPER_ALPHA_MAP);
+inline constexpr auto DIGIT_MAP       = charmap_range<'0', '9'>();
+inline constexpr auto HEXDIG_MAP = charmap(DIGIT_MAP, charmap_range<'A', 'F'>(), charmap_range<'a', 'f'>());
+inline constexpr auto ALPHA_DIGIT_MAP = charmap{ALPHA_MAP, DIGIT_MAP};
 
 
-static constexpr charset<char, 2> CRLF{0x0D, 0x0A}; // CR(\r), LF(\n)
-static constexpr charset<char, 2> OWS{0x20, 0x09};  // SP, HTAB
+inline constexpr charset<char, 2> CRLF{0x0D, 0x0A}; // CR(\r), LF(\n)
+inline constexpr charset<char, 2> OWS{0x20, 0x09};  // SP, HTAB
 
 
 

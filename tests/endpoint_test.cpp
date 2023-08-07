@@ -7,7 +7,7 @@
 #include "common/tests_common_pch.hpp"
 using namespace webpp;
 
-static constexpr stl::uint16_t test_port = 12332;
+inline constexpr stl::uint16_t test_port = 12332;
 
 TEST(EndPoint, Concept) {
     EXPECT_TRUE(Endpoint<ip_endpoint>);
