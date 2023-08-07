@@ -42,7 +42,7 @@ TEST(IO, BasicIdea2) {
     std::stringstream fake_file;
     fake_file << "content";
 
-    io >> read(fake_file, io.buffer()) >>
+    io >> read(fake_file) >>
         [](auto buf) {
             std::string const str{buf.data(), ::strlen(buf.data())};
             EXPECT_EQ(str, "content");

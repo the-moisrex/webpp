@@ -113,9 +113,6 @@ namespace webpp {
         constexpr iterator begin() noexcept {
             return {*this};
         }
-        constexpr iterator end() const noexcept {
-            return {};
-        }
     };
 
 } // namespace webpp

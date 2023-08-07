@@ -5,6 +5,11 @@
 
 #include "../buffer.hpp"
 
-namespace webpp::io {}
+namespace webpp::io {
+
+    template <typename Allocator = stl::allocator<stl::byte>>
+    struct io_uring_buffer_manager {};
+
+} // namespace webpp::io
 
 #endif // WEBPP_IO_URING_BUFFERS_HPP

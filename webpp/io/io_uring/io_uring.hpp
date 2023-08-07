@@ -139,7 +139,7 @@ namespace webpp::io {
          */
         [[nodiscard]] io_uring_sqe* safe_sqe() noexcept {
             auto* sqe = io_uring_get_sqe(&ring);
-            if (!!sqe) [[likely]] {
+            if (sqe != nullptr) [[likely]] {
                 return sqe;
             } else {
                 // SQ is full, flushing some SQE(s):
@@ -147,7 +147,7 @@ namespace webpp::io {
                 cqe_count = 0;
                 io_uring_submit(&ring);
                 sqe = io_uring_get_sqe(&ring);
-                if (!!sqe) [[likely]] {
+                if (sqe != nullptr) [[likely]] {
                     return sqe;
                 }
                 error_on_errno(ENOMEM, io_uring_service_state::SQE_init_failure);
@@ -166,8 +166,8 @@ namespace webpp::io {
             return io_uring_get_sqe(&ring);
         }
 
-        [[nodiscard]] buffer_type buffer() noexcept {
-            // todo
+        [[nodiscard]] buffer_type buffer(stl::size_t len) noexcept {
+            return buf_pack.new_buffer(len);
         }
 
       private:
