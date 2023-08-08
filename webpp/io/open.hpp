@@ -7,7 +7,7 @@
 
 #include <filesystem>
 
-namespace webpp::io::inline syscall {
+namespace webpp::io {
 
     struct async_open : syscall_operation<async_open> {
         //
@@ -17,6 +17,6 @@ namespace webpp::io::inline syscall {
         return async_open{}; // todo
     }
 
-} // namespace webpp::io::inline syscall
+} // namespace webpp::io
 
 #endif // WEBPP_OPEN_HPP

@@ -3,34 +3,32 @@
 #ifndef WEBPP_IO_READ_HPP
 #define WEBPP_IO_READ_HPP
 
+#include "../std/ranges.hpp"
+#include "../std/tag_invoke.hpp"
 #include "./io_traits.hpp"
+#include "./syscalls.hpp"
 #include "open.hpp"
 
 namespace webpp::io {
 
     struct async_read_some {
         struct async_read_some_state {
-            enum read_status { idle, requested, done } status = read_status::idle;
-
             void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
                 // request a read, and set a callback
-                const auto val = io.request_read(file_descriptor, amount, buf, *this);
+                const auto val = syscall(read, io, file_descriptor, buf, amount, *this);
                 if (val != 0) {
                     set_error(io, val);
-                    status = done;
                     return;
                 }
-                status = requested;
             }
 
             // callback from io
-            void operator()(auto io, int read) noexcept {
-                status = done;
-                set_done(io, read);
+            void operator()(auto io, int read_amount) noexcept {
+                set_done(io, read_amount);
             }
         };
 
-        constexpr async_read_some_state begin() const noexcept {
+        [[nodiscard]] constexpr async_read_some_state start() const noexcept {
             return {};
         }
     };
