@@ -29,7 +29,7 @@ jobs:
           packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
           version: 1
       - name: Configure CMake
-        run: cmake --preset=default
+        run: cmake --preset=dev-default
   benchmarks:
     needs: install
     runs-on: ubuntu-latest
@@ -88,6 +88,46 @@ jobs:
           version: 1
       - name: Run All Tests
         run: ctest --preset tests
+  build-test-async:
+    name: Build test-async
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-async
+        run: cmake --build --preset test-async
+  run-test-async:
+    name: Run test-async
+    needs: build-test-async
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-async
+        run: cmake --build --preset test-async
+      - name: Run test-async
+        run: ./build/test-async
   build-test-bodies:
     name: Build test-bodies
     needs: install

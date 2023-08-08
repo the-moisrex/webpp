@@ -36,9 +36,11 @@ namespace webpp::io::inline syscall_operations {
                               stl::size_t    amount,
                               CallbackType&& callback) noexcept {
             if constexpr (requires {
-                              { sched.read(buf, amount, callback) } noexcept -> stl::same_as<int>;
+                              {
+                                  sched.read(buf, amount, stl::forward<CallbackType>(callback))
+                                  } noexcept -> stl::same_as<int>;
                           }) {
-                return sched.read(buf, amount, callback);
+                return sched.read(buf, amount, stl::forward<CallbackType>(callback));
             } else {
                 static_assert_false(Sched, "IO operation is not implemented.");
             }

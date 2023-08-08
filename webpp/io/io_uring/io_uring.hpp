@@ -13,6 +13,7 @@
 #    include "../../std/expected.hpp"
 #    include "../../std/optional.hpp"
 #    include "../buffer.hpp"
+#    include "../syscalls.hpp"
 
 #    include <coroutine>
 #    include <cstdint>
@@ -30,6 +31,10 @@ namespace webpp::io {
         SQE_init_failure = 2, // couldn't get a new Submission Queue Entry
     };
 
+    struct io_uring_scheduler {
+        // todo
+    };
+
 
     /**
      * I/O Service Class
@@ -39,6 +44,7 @@ namespace webpp::io {
         using allocator_type      = Allocator;
         using buffer_manager_type = buffer_manager<allocator_type>;
         using buffer_type         = typename buffer_manager_type::buffer_type;
+        using scheduler_type      = io_uring_scheduler;
 
         static constexpr unsigned default_entries_value = 64;
 
@@ -170,6 +176,22 @@ namespace webpp::io {
             return buf_pack.new_buffer(len);
         }
 
+        [[nodiscard]] constexpr scheduler_type scheduler() noexcept {
+            return {this};
+        }
+
+        /// read
+        template <typename CallbackType>
+        [[nodiscard]] friend int tag_invoke(read_tag,
+                                            scheduler_type self,
+                                            int            file_descriptor,
+                                            char*          buf,
+                                            stl::size_t    len,
+                                            CallbackType&& callback) noexcept {
+            auto req = self.sqe();
+            return io_uring_prep_read(file_descriptor, buf, len, );
+        }
+
       private:
         io_uring_params     params;
         io_uring            ring;
@@ -184,41 +206,6 @@ namespace webpp::io {
         io_uring_service_state last_err_cat = io_uring_service_state::success;
     };
 
-
-    enum struct syscall_state : int {
-        idle,      // nothing has been done yet
-        requested, // the operation is requested
-        canceled,  // operation is canceled, nothing to do
-        done       // we're done, nothing more to do
-    };
-
-    template <typename ValueType = int>
-    struct io_uring_syscall_iterator : stl::expected<ValueType, syscall_state> {
-        using value_type = ValueType;
-
-      private:
-        using super = stl::expected<ValueType, syscall_state>;
-
-      public:
-        constexpr io_uring_syscall_iterator() noexcept : super{syscall_state::idle} {}
-
-        io_uring_syscall_iterator& operator++() noexcept {
-            using enum syscall_state;
-            if (!this->has_value()) {
-                switch (this->error()) {
-                    case idle: {
-
-                        this->emplace(requested);
-                        break;
-                    }
-                    case requested: {
-
-                        break;
-                    }
-                }
-            }
-        }
-    };
 
 } // namespace webpp::io
 

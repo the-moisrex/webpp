@@ -17,6 +17,17 @@
             }
         },
         {
+            "name": "dev-default",
+            "inherits": "default",
+            "displayName": "Default Dev",
+            "description": "Library Development",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "WEBPP_DEV": "ON",
+                "CMAKE_CXX_STANDARD": "23"
+            }
+        },
+        {
             "name": "gcc",
             "displayName": "Debug GCC",
             "description": "Default build using Ninja generator",
@@ -129,12 +140,13 @@
     "buildPresets": [
         {
             "name": "default-build",
-            "configurePreset": "default",
+            "configurePreset": "dev-default",
             "hidden": true
         },
         {
             "name": "tests",
             "targets": [
+                "test-async",
                 "test-bodies",
                 "test-cache",
                 "test-charset",
@@ -186,6 +198,11 @@
                 "test-valves",
                 "test-views"
             ],
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-async",
+            "targets": "test-async",
             "inherits": "default-build"
         },
         {
@@ -483,7 +500,7 @@
     "testPresets": [
         {
             "name": "test-default",
-            "configurePreset": "default",
+            "configurePreset": "dev-default",
             "hidden": true,
             "output": {
                 "outputOnFailure": true
@@ -492,6 +509,10 @@
                 "noTestsAction": "error",
                 "stopOnFailure": false
             }
+        },
+        {
+            "name": "test-async",
+            "inherits": "test-default"
         },
         {
             "name": "test-bodies",

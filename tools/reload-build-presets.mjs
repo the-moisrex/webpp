@@ -58,13 +58,13 @@ async function reloadPresets() {
     ];
     pr.buildPresets = [{
         name: "default-build",
-        configurePreset: "default",
+        configurePreset: "dev-default",
         hidden: true
     }];
 
     pr.testPresets = [{
         name: "test-default",
-        configurePreset: "default",
+        configurePreset: "dev-default",
         hidden: true,
         output: {
             outputOnFailure: true
@@ -288,7 +288,7 @@ async function reloadGithubActions() {
             ...jobDefaultSteps,
             {
                 name: `Configure CMake`,
-                run: `cmake --preset=default`
+                run: `cmake --preset=dev-default`
             }
         ]
     };
