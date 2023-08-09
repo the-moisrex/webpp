@@ -15,24 +15,48 @@ namespace webpp::async {
         // Customization Point
         template <typename T>
             requires stl::tag_invocable<set_done_tag, T>
-        [[nodiscard]] constexpr stl::tag_invoke_result_t<set_done_tag, T> operator()(T&& next) const
+        constexpr stl::tag_invoke_result_t<set_done_tag, T> operator()(T&& next) const
           noexcept(stl::nothrow_tag_invocable<set_done_tag, T>) {
             return stl::tag_invoke(*this, stl::forward<T>(next));
         }
 
         // default impl
         template <typename T>
-        [[nodiscard]] friend constexpr decltype(auto) tag_invoke(set_done_tag, T&& next) noexcept {
+        friend constexpr decltype(auto) tag_invoke(set_done_tag, T&& next) noexcept {
             if constexpr (requires { next.set_done(); }) {
                 return stl::forward<T>(next).set_done();
             } else {
-                return stl::forward<T>(next);
+                // nothing to do
             }
         }
     } set_done;
 
 
-    // todo: set_value
+    /**
+     * Set Value
+     */
+    inline constexpr struct set_value_tag {
+
+        // Customization Point
+        template <typename T, typename... Args>
+            requires stl::tag_invocable<set_value_tag, T, Args...>
+        constexpr stl::tag_invoke_result_t<set_value_tag, T> operator()(T&& next, Args&&... args) const
+          noexcept(stl::nothrow_tag_invocable<set_value_tag, T, Args...>) {
+            return stl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
+        }
+
+        // default impl
+        template <typename T, typename... Args>
+        friend constexpr decltype(auto) tag_invoke(set_value_tag, T&& next, Args&&... args) noexcept {
+            if constexpr (requires { next.set_value(stl::forward<Args>(args)...); }) {
+                return stl::forward<T>(next).set_value(stl::forward<Args>(args)...);
+            } else {
+                // ignoring setting values
+            }
+        }
+    } set_value;
+
+
     // todo: set_error
 
 } // namespace webpp::async
