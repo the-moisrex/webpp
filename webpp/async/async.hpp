@@ -7,6 +7,34 @@
 
 namespace webpp::async {
 
+    inline constexpr struct create_instance_tag {
+        template <typename T, typename ExecContextType, typename PreviousType>
+        constexpr auto
+        operator()(stl::type_identity<T>, ExecContextType&& ctx, PreviousType&& previous) const noexcept {
+            if constexpr (stl::tag_invocable<stl::type_identity<T>,
+                                             create_instance_tag,
+                                             ExecContextType,
+                                             PreviousType>) {
+                return stl::tag_invoke(*this, ctx, stl::forward<PreviousType>(previous));
+            } else if constexpr (stl::is_constructible_v<T,
+                                                         create_instance_tag,
+                                                         ExecContextType,
+                                                         PreviousType>) {
+                return T{*this, ctx, stl::forward<PreviousType>(previous)};
+            } else if constexpr (stl::is_constructible_v<T, ExecContextType, PreviousType>) {
+                return T{ctx, stl::forward<PreviousType>(previous)};
+            } else if constexpr (stl::is_constructible_v<T, PreviousType>) {
+                return T{stl::forward<PreviousType>(previous)};
+            } else if constexpr (stl::is_constructible_v<T, ExecContextType>) {
+                return T{ctx};
+            } else if constexpr (stl::is_default_constructible_v<T>) {
+                return T{};
+            } else {
+                static_assert_false(T, "Cannot create the obejct.");
+            }
+        }
+    } create_instance;
+
     /**
      * Set Done
      */

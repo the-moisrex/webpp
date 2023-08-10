@@ -5,7 +5,6 @@
 
 #include "../std/ranges.hpp"
 #include "../std/tag_invoke.hpp"
-#include "./io_traits.hpp"
 #include "./syscalls.hpp"
 #include "open.hpp"
 
@@ -15,10 +14,8 @@ namespace webpp::io {
         struct async_read_some_state {
             void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
                 // request a read, and set a callback
-                const auto val = syscall(read, io, file_descriptor, buf, amount, *this);
-                if (val != 0) {
+                if (const auto val = syscall(read, io, file_descriptor, buf, amount, *this); val != 0) {
                     set_error(io, val);
-                    return;
                 }
             }
 
