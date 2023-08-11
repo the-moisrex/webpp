@@ -26,26 +26,27 @@ namespace webpp {
         // default implementation for the last two task
         template <async::Task TaskT1, async::Task TaskT2>
         constexpr auto operator()(TaskT1&& tsk1, TaskT2&& tsk2) noexcept {
-            if constexpr (async::YieldableTask<TaskT1>) {
-                using value_type = typename stl::iterator_traits<typename TaskT1::iterator>::value_type;
-                // It's an iterable
-                if constexpr (async::ConsumesIterators<TaskT2>) {
-                    // let's get its iterator and give it to the next task
-                    return tsk2(tsk1.begin(), tsk1.end());
-                } else if constexpr (async::ConsumesValuesOf<TaskT2, value_type>) {
-                    // we can call the second task with each of the values of the first task
-                    for (auto&& val : tsk1) {
-                        tsk2(stl::move(val));
-                    }
-                    // todo: what to do with the return value of task2?
-                } else {
-                    static_assert_false(TaskT2, "Task 1 and Task 2 are not compatible");
-                }
-            } else if constexpr (async::OneShotTask<TaskT1>) {
-                // Returns a value
-            } else {
-                static_assert_false(TaskT1, "This is not possible");
-            }
+            //     if constexpr (async::YieldableTask<TaskT1>) {
+            //         using value_type = typename stl::iterator_traits<typename
+            //         TaskT1::iterator>::value_type;
+            //         // It's an iterable
+            //         if constexpr (async::ConsumesIterators<TaskT2>) {
+            //             // let's get its iterator and give it to the next task
+            //             return tsk2(tsk1.begin(), tsk1.end());
+            //         } else if constexpr (async::ConsumesValuesOf<TaskT2, value_type>) {
+            //             // we can call the second task with each of the values of the first task
+            //             for (auto&& val : tsk1) {
+            //                 tsk2(stl::move(val));
+            //             }
+            //             // todo: what to do with the return value of task2?
+            //         } else {
+            //             static_assert_false(TaskT2, "Task 1 and Task 2 are not compatible");
+            //         }
+            //     } else if constexpr (async::OneShotTask<TaskT1>) {
+            //         // Returns a value
+            //     } else {
+            //         static_assert_false(TaskT1, "This is not possible");
+            //     }
         }
 
         // default implementation for the last task
