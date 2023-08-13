@@ -2,85 +2,72 @@
 
 #include "./create_project.hpp"
 
-#include <boost/program_options.hpp>
-#include <functional>
-#include <iostream>
-#include <tuple>
+#include <webpp/std/string.hpp>
+#include <webpp/std/utility.hpp>
 #include <webpp/strings/join.hpp>
+#include <webpp/strings/string_tokenizer.hpp>
 
 
 namespace webpp::sdk {
 
-    using namespace boost::program_options;
     using namespace webpp::stl;
 
+    stl::string_view to_string(command_status status) noexcept {
+        using enum command_status;
+        switch (status) {
+            // success status:
+            case success: return "Command ran successfully.";
+            case empty_command:
+                return "The specified command was empty; nothing to do.";
 
-
-    struct command_description {
-      public:
-        int                 argc;
-        char const* const*  argv;
-        options_description root_desc{"Program options"};
-
-      public:
-        command_description(int input_argc, char const* const* input_argv)
-          : argc{input_argc},
-            argv{input_argv} {}
-
-        int process_args() {
-
-            root_desc.add_options() // start of options
-              ("help,h",
-               bool_switch()->default_value(false)->implicit_value(true),
-               "print this help") // help
-              ("cmd",
-               value<string>()->default_value("help")->required(),
-               "The command") // command
-              ("cmd_opts", value<vector<string>>()->multitoken(), "The command options.");
-
-            positional_options_description pos;
-            pos.add("cmd", 1);
-            pos.add("cmd_opts", -1);
-
-            variables_map vm;
-            store(command_line_parser(argc, argv).options(root_desc).positional(pos).run(), vm);
-            notify(vm);
-
-            if (vm.count("new")) {
-                auto create_args = vm["cmd_opts"].template as<vector<string>>();
-                create_args.erase(create_args.begin()); // remove "new"
-                create_project creator{.command_desc = *this};
-                return creator.handle(create_args);
-            }
-
-            if (vm.count("help")) {
-                return print_help();
-            }
-
-
-            // running default action
-            cout << "Please specify a command; here's the help:" << endl;
-            print_help();
-            return 1;
+                // filures:
+            case unknown_error: return "Failed: Unknown error happened while trying to run a command.";
         }
+        unreachable();
+    }
 
-        // this is also the default action
-        int print_help() const {
-            cout << root_desc << endl;
+    struct command_options {
+        stl::uint16_t verbose = 0;
+    };
+
+
+    struct command_parser {
+      private:
+        string_view cmd;
+
+      public:
+        command_parser(string_view str) noexcept : cmd{str} {}
+
+        int operator()() {
             return 0;
-        }
-
-        void session_manager() {
-            // TODO: complete me
-            // TODO: clean the sessions
-            // TODO: clean session data for a specific user
         }
     };
 
 
-    int command_manager::run_command(int argc, char const** argv) {
-        command_description description{argc, argv};
-        return description.process_args();
+    command_status run_command(stl::string_view) noexcept {
+        using enum command_status;
+        return success;
+    }
+
+    command_status command_manager::run_command(int argc, char const** argv) noexcept {
+        using enum command_status;
+        if (argc == 0) {
+            return empty_command;
+        }
+
+        try {
+            stl::string command{};
+
+            command += *argv--;
+            for (; argc != 0; --argc) {
+                command += ' ';
+                command += *argv--;
+            }
+
+            return run_command(stl::string_view{command.data(), command.size()});
+        } catch (...) {
+            return unknown_error;
+        }
     }
 
 

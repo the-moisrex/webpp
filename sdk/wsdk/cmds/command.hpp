@@ -1,13 +1,23 @@
 #ifndef WEBPP_SDK_CMDS_CMD
 #define WEBPP_SDK_CMDS_CMD
 
-#include <webpp/std/string.hpp>
 #include <webpp/std/string_view.hpp>
 #include <webpp/std/vector.hpp>
 
 
 namespace webpp::sdk {
 
+    enum struct command_status {
+        // success status:
+        success,       // done
+        empty_command, // empty command
+
+        // failures:
+        unknown_error
+    };
+
+    /// Get the string message of the command status
+    stl::string_view to_string(command_status status) noexcept;
 
     struct command {
 
@@ -35,12 +45,17 @@ namespace webpp::sdk {
     };
 
     /**
-     * @brief Add the list of the commands
+     * Command Manager
+     * This class manages all the commands, you should use this class
+     * to run your commands
      */
     struct command_manager {
 
         // parse the args, and run the command
-        int run_command(int argc, char const** argv);
+        command_status run_command(int argc, char const** argv) noexcept;
+
+        // run a command from a string view
+        command_status run_command(stl::string_view) noexcept;
     };
 
 } // namespace webpp::sdk

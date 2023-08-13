@@ -5,7 +5,7 @@ set(EXEC_NAME wpp)
 add_executable(${EXEC_NAME})
 target_sources(${EXEC_NAME} 
     PRIVATE ${EXEC_SOURCES})
-target_include_directories(${EXEC_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
+# target_include_directories(${EXEC_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${PROJECT_NAME}::sdk
         )

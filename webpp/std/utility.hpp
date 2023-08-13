@@ -127,6 +127,17 @@ namespace webpp::stl {
     }
 #endif
 
+    // polyfill for C++23 feature named unreachable
+#ifndef __cpp_lib_unreachable
+    [[noreturn]] inline void unreachable() {
+#    ifdef __GNUC__ // GCC, Clang, ICC
+        __builtin_unreachable();
+#    elifdef _MSC_VER // MSVC
+        __assume(false);
+#    endif
+    }
+#endif // __cpp_lib_unreachable
+
 } // namespace webpp::stl
 
 #endif // WEBPP_UTILITY_HPP
