@@ -3,9 +3,7 @@
 
 #include "command.hpp"
 
-
 namespace webpp::sdk {
-
 
     /**
      * Create a new project
@@ -15,10 +13,14 @@ namespace webpp::sdk {
      *
      *   MySite is the project name
      */
-    struct create_project {
-        command_description& command_desc;
+    struct create_project : command {
 
-        stl::string_view desc() const noexcept;
+        create_project() {}
+
+        [[nodiscard]] stl::string_view name() const noexcept override {
+            return {"project"};
+        }
+        [[nodiscard]] stl::string_view desc() const noexcept override;
 
         // wpp new ....
         int handle(stl::vector<stl::string>);

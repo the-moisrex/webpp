@@ -1,4 +1,4 @@
-#include "../../include/wsdk/cmds/create_project.hpp"
+#include "./create_project.hpp"
 
 #include <boost/program_options.hpp>
 #include <filesystem>
