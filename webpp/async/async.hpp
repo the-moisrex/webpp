@@ -41,7 +41,7 @@ namespace webpp::async {
             } else if constexpr (stl::is_default_constructible_v<T>) {
                 return T{};
             } else {
-                static_assert_false(T, "Cannot create the obejct.");
+                static_assert_false(T, "Cannot create the object.");
             }
         }
     } connect;

@@ -8,6 +8,11 @@
 namespace webpp::async {
 
 
+    /**
+     * Run Loop
+     * This class stores, and runs the [possibly chained] sub-tasks.
+     * This class doesn't know if the tasks have sub-tasks of their own.
+     */
     struct basic_run_loop {
 
         /// start running
@@ -15,6 +20,7 @@ namespace webpp::async {
             // todo
         }
 
+        /// Schedule a new task(-chain) to be run
         template <typename TaskT>
         constexpr basic_run_loop& operator+=(TaskT&& task) noexcept {
             // todo

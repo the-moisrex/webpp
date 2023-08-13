@@ -73,7 +73,7 @@ namespace webpp::async {
                                    requires stl::is_nothrow_default_constructible_v<T>;
 
                                    // Run all the tasks
-                                   async.run();
+                                   async();
 
                                    // This is what gets stored in the "enabled_traits" objects.
                                    { async.scheduler() } -> Scheduler;
@@ -151,7 +151,7 @@ namespace webpp::async {
      * Event loops are supposed to be run inside an Execution Context (a thread-pool or something).
      */
     template <typename T>
-    concept EventLoop = requires(T loop) { loop(); };
+    concept EventLoop = ExecutionContext<T> && requires(T loop) { loop(); };
 
 
 } // namespace webpp::async

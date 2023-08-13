@@ -8,6 +8,15 @@
 
 namespace webpp {
 
+    // template <typename T>
+    // concept ExecutionContextPack = requires {
+    //     requires IOExecutionContext<typename T::io_execution_context>;
+    //     requires EventLoopExecutionContext<typename T::event_loop_execution_context>;
+    //     requires TaskChainExecutionContext<typename T::task_chain_execution_context>;
+    //     requires TimerExecutionContext<typename T::timer_chain_execution_context>;
+    // };
+
+
     /**
      * Included traits:
      *   - [ ] allocator: allocator type
