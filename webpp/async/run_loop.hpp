@@ -16,10 +16,16 @@ namespace webpp::async {
     /**
      * Run Loop Scheduler
      * @tparam Allocator
+     * @implements Scheduler concept
      */
     template <typename Allocator>
     struct run_loop_scheduler {
 
+        constexpr run_loop_scheduler(run_loop_scheduler const&) noexcept            = default;
+        constexpr run_loop_scheduler(run_loop_scheduler&&) noexcept                 = default;
+        constexpr run_loop_scheduler& operator=(run_loop_scheduler const&) noexcept = default;
+        constexpr run_loop_scheduler& operator=(run_loop_scheduler&&) noexcept      = default;
+        constexpr ~run_loop_scheduler() noexcept                                    = default;
 
       private:
         using allocator_type = Allocator;
@@ -35,6 +41,8 @@ namespace webpp::async {
         basic_run_loop<allocator_type>* loop;
     };
 
+
+
     /**
      * Run Loop
      * This class stores, and runs the [possibly chained] sub-tasks.
@@ -46,7 +54,7 @@ namespace webpp::async {
         using allocator_type = typename stl::allocator_traits<Allocator>::template rebind_alloc<task_type>;
         using scheduler_type = run_loop_scheduler<allocator_type>;
 
-        static_assert(Scheduler<scheduler_type>, "Run Loop Scheduler is not a valid scheduler.");
+        static_assert(Scheduler<scheduler_type>, "Run Loop's Scheduler is not a valid scheduler.");
 
       private:
         using tasks_vector_type = stl::vector<task_type, allocator_type>;
@@ -63,6 +71,7 @@ namespace webpp::async {
         template <typename TaskT>
         constexpr basic_run_loop& append(TaskT&& task) {
             if (!advance(task)) {
+                // the task still needs some love, adding it to the list of tasks to continue them later
                 tasks.emplace_back(stl::forward<TaskT>(task));
             }
             return *this;
