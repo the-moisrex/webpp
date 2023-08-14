@@ -1,6 +1,7 @@
 // Created by moisrex on 7/22/23.
 
 #include "../webpp/async/async_concepts.hpp"
+#include "../webpp/async/run_loop.hpp"
 #include "../webpp/async/task_chain.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -10,6 +11,7 @@
 using namespace webpp;
 using namespace webpp::async;
 
+static_assert(ExecutionContext<basic_run_loop<>>, "A Run Loop is an execution context");
 static_assert(Task<decltype([] {})>, "A lambda is a task");
 
 TEST(AsyncTest, TaskChain) {

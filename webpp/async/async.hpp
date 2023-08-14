@@ -49,26 +49,26 @@ namespace webpp::async {
 
     /**
      * Start Operation
-     * This CPO (Customization Point Object) helps to start a connected task
+     * This CPO (Customization Point Object) helps to advance a connected task
      */
-    inline constexpr struct start_tag {
+    inline constexpr struct advance_tag {
 
-        /// calls tag_invoke(start, task)
+        /// calls tag_invoke(advance, task)
         template <typename T>
-            requires(stl::tag_invocable<start_tag, T>)
-        [[nodiscard]] constexpr decltype(auto) operator()(T&& task) const
-          noexcept(noexcept(stl::nothrow_tag_invocable<start_tag, T>)) {
+            requires(stl::tag_invocable<advance_tag, T>)
+        [[nodiscard]] constexpr bool operator()(T&& task) const
+          noexcept(noexcept(stl::nothrow_tag_invocable<advance_tag, T>)) {
             return stl::tag_invoke(*this, stl::forward<T>(task));
         }
 
-        /// calls task.start()
+        /// calls task.advance()
         template <typename T>
-            requires requires(T task) { task.start(); }
-        [[nodiscard]] constexpr decltype(auto) operator()(T&& task) const
-          noexcept(noexcept(stl::forward<T>(task).start())) {
-            return stl::forward<T>(task).start();
+            requires requires(T task) { task.advance(); }
+        [[nodiscard]] constexpr bool operator()(T&& task) const
+          noexcept(noexcept(stl::forward<T>(task).advance())) {
+            return stl::forward<T>(task).advance();
         }
-    } start;
+    } advance;
 
 
     /**

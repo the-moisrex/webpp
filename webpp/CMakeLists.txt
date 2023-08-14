@@ -89,6 +89,7 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/async/async_concepts.hpp
         ${LIB_INCLUDE_DIR}/async/async.hpp
+        ${LIB_INCLUDE_DIR}/async/run_loop.hpp
         ${LIB_INCLUDE_DIR}/async/task_chain.hpp
 
         ${LIB_INCLUDE_DIR}/socket/socket.hpp
