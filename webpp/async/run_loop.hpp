@@ -77,8 +77,8 @@ namespace webpp::async {
         constexpr ~run_loop_scheduler() noexcept                                    = default;
 
         // iterate all tasks
-        [[nodiscard]] constexpr bool advance() const {
-            return loop->iterate();
+        constexpr bool advance() const { // NOLINT(*-use-nodiscard)
+            return async::advance(*loop);
         }
 
       private:
@@ -123,7 +123,7 @@ namespace webpp::async {
 
         /// Schedule a new task(-chain) to be run
         template <Task TaskT>
-        constexpr basic_run_loop& append(TaskT&& task) {
+        constexpr basic_run_loop& connect(TaskT&& task) {
             if (!async::advance(task)) {
                 // the task still needs some love, adding it to the list of tasks to continue them later
                 tasks.emplace_back(stl::forward<TaskT>(task));

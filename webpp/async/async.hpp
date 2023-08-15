@@ -19,16 +19,12 @@ namespace webpp::async {
     inline constexpr struct connect_tag {
         template <typename PrevTask, typename NewTask>
         constexpr auto operator()(PrevTask&& prev_task, NewTask&& new_task) const {
-            if constexpr (stl::tag_invocable<connect_tag, PrevTask, NewTask>) {
+            if constexpr (requires { prev_task.connect(stl::forward<NewTask>(new_task)); }) {
+                return prev_task.connect(stl::forward<PrevTask>(prev_task));
+            } else if constexpr (stl::tag_invocable<connect_tag, PrevTask, NewTask>) {
                 return stl::tag_invoke(*this,
                                        stl::forward<PrevTask>(prev_task),
                                        stl::forward<NewTask>(new_task));
-            } else if constexpr (requires { prev_task.connect(stl::forward<NewTask>(new_task)); }) {
-                return prev_task.connect(stl::forward<PrevTask>(prev_task));
-            } else if constexpr (stl::is_constructible_v<NewTask, connect_tag, PrevTask>) {
-                return NewTask{*this, stl::forward<PrevTask>(prev_task)};
-            } else if constexpr (stl::is_constructible_v<NewTask, PrevTask>) {
-                return NewTask{stl::forward<PrevTask>(prev_task)};
             } else {
                 static_assert_false(T, "Cannot create the object.");
             }
@@ -53,9 +49,18 @@ namespace webpp::async {
         /// calls task.advance()
         template <typename T>
             requires requires(T task) { task.advance(); }
-        [[nodiscard]] constexpr bool operator()(T&& task) const
-          noexcept(noexcept(stl::forward<T>(task).advance())) {
-            return stl::forward<T>(task).advance();
+        [[nodiscard]] friend constexpr bool
+        tag_invoke(advance_tag, T&& task) noexcept(noexcept(stl::forward<T>(task).advance())) {
+            using return_type = stl::remove_cvref_t<decltype(stl::forward<T>(task).advance())>;
+            if constexpr (stl::same_as<return_type, bool>) {
+                return stl::forward<T>(task).advance();
+            } else if constexpr (stl::is_void_v<return_type>) {
+                stl::forward<T>(task).advance();
+                return false; // don't continue
+            } else {
+                static_cast<void>(stl::forward<T>(task).advance());
+                return false;
+            }
         }
     } advance;
 
@@ -143,7 +148,10 @@ namespace webpp::async {
 
     namespace details {
         template <typename T>
-        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T>;
+        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
+                            requires(T task1, T task2) {
+                                { connect(task1, task2) }; // todo: inspect the returned type
+                            };
     }
 
     /**
