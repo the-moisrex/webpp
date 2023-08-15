@@ -3,6 +3,9 @@
 
 #include "command.hpp"
 
+#include <webpp/std/string_view.hpp>
+#include <webpp/std/vector.hpp>
+
 namespace webpp::sdk {
 
     /**
@@ -15,7 +18,7 @@ namespace webpp::sdk {
      */
     struct create_project : command {
 
-        create_project() {}
+        constexpr create_project() = default;
 
         [[nodiscard]] stl::string_view name() const noexcept override {
             return {"project"};

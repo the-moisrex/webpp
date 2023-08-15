@@ -4,12 +4,12 @@
 #define WEBPP_ASYNC_TASK_CHAIN_HPP
 
 #include "../common/meta.hpp"
-#include "../std/tag_invoke.hpp"
 #include "../std/tuple.hpp"
+#include "async.hpp"
 
 #include <iterator>
 
-namespace webpp {
+namespace webpp::async {
 
 
     template <typename TaskList>
@@ -23,16 +23,16 @@ namespace webpp {
         constexpr task_chain_iterator(task_list_type* inp_tasks = nullptr) noexcept : tasks{inp_tasks} {}
 
         // default implementation for the last two task
-        template <async::Task TaskT1, async::Task TaskT2>
+        template <Task TaskT1, Task TaskT2>
         constexpr auto operator()(TaskT1&& tsk1, TaskT2&& tsk2) noexcept {
-            //     if constexpr (async::YieldableTask<TaskT1>) {
+            //     if constexpr (YieldableTask<TaskT1>) {
             //         using value_type = typename stl::iterator_traits<typename
             //         TaskT1::iterator>::value_type;
             //         // It's an iterable
-            //         if constexpr (async::ConsumesIterators<TaskT2>) {
+            //         if constexpr (ConsumesIterators<TaskT2>) {
             //             // let's get its iterator and give it to the next task
             //             return tsk2(tsk1.begin(), tsk1.end());
-            //         } else if constexpr (async::ConsumesValuesOf<TaskT2, value_type>) {
+            //         } else if constexpr (ConsumesValuesOf<TaskT2, value_type>) {
             //             // we can call the second task with each of the values of the first task
             //             for (auto&& val : tsk1) {
             //                 tsk2(stl::move(val));
@@ -41,7 +41,7 @@ namespace webpp {
             //         } else {
             //             static_assert_false(TaskT2, "Task 1 and Task 2 are not compatible");
             //         }
-            //     } else if constexpr (async::OneShotTask<TaskT1>) {
+            //     } else if constexpr (OneShotTask<TaskT1>) {
             //         // Returns a value
             //     } else {
             //         static_assert_false(TaskT1, "This is not possible");
@@ -49,13 +49,13 @@ namespace webpp {
         }
 
         // default implementation for the last task
-        template <async::Task TaskT>
+        template <Task TaskT>
         constexpr auto operator()(TaskT&& tsk) noexcept {
-            if constexpr (async::YieldableTask<TaskT>) {
+            if constexpr (IterableTask<TaskT>) {
                 // It's an iterable
                 // let's get its iterator and give it to the next task
 
-            } else if constexpr (async::OneShotTask<TaskT>) {
+            } else if constexpr (AdvancableTask<TaskT>) {
                 // Returns a value
             } else {
                 static_assert_false(TaskT, "This is not possible");
@@ -74,7 +74,7 @@ namespace webpp {
 
 
 
-    template <async::Task... T>
+    template <Task... T>
     struct task_chain {
         using iterator = task_chain_iterator<task_chain>;
 
@@ -93,19 +93,19 @@ namespace webpp {
 
         constexpr ~task_chain() noexcept = default;
 
-        template <async::Task F>
+        template <Task F>
         [[nodiscard]] constexpr auto then(F&& func) && noexcept {
             return task_chain<T..., F>{
               stl::tuple_cat(stl::move(tasks), stl::make_tuple(stl::forward<F>(func)))};
         }
 
-        template <async::Task F>
+        template <Task F>
             requires(stl::copy_constructible<T> && ...)
         [[nodiscard]] constexpr auto then(F&& func) const {
             return task_chain<T..., F>{stl::tuple_cat(tasks, stl::make_tuple(stl::forward<F>(func)))};
         }
 
-        template <async::Task F>
+        template <Task F>
         [[nodiscard]] constexpr auto operator>>(F&& func) const noexcept {
             return then(stl::forward<F>(func));
         }
@@ -113,8 +113,15 @@ namespace webpp {
         constexpr iterator begin() noexcept {
             return {*this};
         }
+
+
+        // CPO for connecting (appending) a sub-task to this task chain
+        template <Task TaskT>
+        constexpr auto connect(TaskT&& new_task) noexcept {
+            // todo
+        }
     };
 
-} // namespace webpp
+} // namespace webpp::async
 
 #endif // WEBPP_ASYNC_TASK_CHAIN_HPP

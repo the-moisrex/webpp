@@ -10,7 +10,56 @@ namespace webpp::async {
     template <typename>
     struct basic_run_loop;
 
-    struct dynamic_task {};
+    /**
+     * Dynamic Task
+     * This templated class will help the dynamic execution contexts to hold their
+     * tasks in a simple vector-like container.
+     */
+    template <typename T = void>
+    struct dynamic_task;
+
+    /// Interface for all dynamic tasks
+    template <>
+    struct dynamic_task<void> {
+        constexpr dynamic_task(dynamic_task const&) noexcept  = default;
+        constexpr dynamic_task(dynamic_task&&) noexcept       = default;
+        dynamic_task& operator=(dynamic_task&&) noexcept      = default;
+        dynamic_task& operator=(dynamic_task const&) noexcept = default;
+        virtual ~dynamic_task()                               = default;
+
+        virtual bool advance() = 0;
+    };
+
+    /// Implementation of the tasks
+    template <Task T>
+    struct dynamic_task<T> final : dynamic_task<void> {
+        using task_type = T;
+
+        constexpr dynamic_task(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>)
+          : task{stl::move(inp_task)} {}
+        constexpr dynamic_task(task_type const& inp_task) noexcept
+            requires(stl::is_nothrow_copy_constructible_v<task_type>)
+          : task{inp_task} {}
+        constexpr dynamic_task&
+        operator=(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
+            task = stl::move(inp_task);
+            return *this;
+        }
+        constexpr dynamic_task&
+        operator=(task_type const& inp_task) noexcept(stl::is_nothrow_copy_assignable_v<task_type>) {
+            if (this != stl::addressof(inp_task)) {
+                task = inp_task;
+            }
+            return *this;
+        }
+
+        bool advance() override {
+            return async::advance(task);
+        }
+
+      private:
+        task_type task;
+    };
 
 
     /**
@@ -26,6 +75,11 @@ namespace webpp::async {
         constexpr run_loop_scheduler& operator=(run_loop_scheduler const&) noexcept = default;
         constexpr run_loop_scheduler& operator=(run_loop_scheduler&&) noexcept      = default;
         constexpr ~run_loop_scheduler() noexcept                                    = default;
+
+        // iterate all tasks
+        [[nodiscard]] constexpr bool advance() const {
+            return loop->iterate();
+        }
 
       private:
         using allocator_type = Allocator;
@@ -48,9 +102,9 @@ namespace webpp::async {
      * This class stores, and runs the [possibly chained] sub-tasks.
      * This class doesn't know if the tasks have sub-tasks of their own.
      */
-    template <typename Allocator = stl::allocator<dynamic_task>>
+    template <typename Allocator = stl::allocator<dynamic_task<>>>
     struct basic_run_loop {
-        using task_type      = dynamic_task;
+        using task_type      = dynamic_task<>;
         using allocator_type = typename stl::allocator_traits<Allocator>::template rebind_alloc<task_type>;
         using scheduler_type = run_loop_scheduler<allocator_type>;
 
@@ -62,15 +116,15 @@ namespace webpp::async {
       public:
         constexpr basic_run_loop(allocator_type const& alloc = {}) noexcept : tasks{alloc} {}
 
-        /// Run one iteration of the tasks
-        constexpr void iterate() {
-            tasks.erase(stl::remove_if(tasks.begin(), tasks.end(), advance));
+        /// Run one iteration of all the tasks
+        constexpr bool advance() {
+            return tasks.erase(stl::remove_if(tasks.begin(), tasks.end(), async::advance)) != tasks.end();
         }
 
         /// Schedule a new task(-chain) to be run
-        template <typename TaskT>
+        template <Task TaskT>
         constexpr basic_run_loop& append(TaskT&& task) {
-            if (!advance(task)) {
+            if (!async::advance(task)) {
                 // the task still needs some love, adding it to the list of tasks to continue them later
                 tasks.emplace_back(stl::forward<TaskT>(task));
             }

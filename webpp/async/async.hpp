@@ -8,38 +8,27 @@
 namespace webpp::async {
 
     /**
-     * Create an Instance of the specified async operation
+     * Connect two tasks together and (depending on the implementation) get either a task chain,
+     * or get an intrusive list of tasks if possible.
      *
      * Usage:
      * @code
-     *           connect(stl::type_identity<algorithm>{},
-     *                   execution_context,
-     *                   previous_algorithm,
-     *                   args...);
+     *    connect(previous_task, new_task);
      * @endcode
      */
     inline constexpr struct connect_tag {
-        template <typename T, typename ExecContextType, typename PreviousType>
-        constexpr auto
-        operator()(stl::type_identity<T>, ExecContextType&& ctx, PreviousType&& previous) const {
-            if constexpr (stl::tag_invocable<connect_tag,
-                                             stl::type_identity<T>,
-                                             ExecContextType,
-                                             PreviousType>) {
+        template <typename PrevTask, typename NewTask>
+        constexpr auto operator()(PrevTask&& prev_task, NewTask&& new_task) const {
+            if constexpr (stl::tag_invocable<connect_tag, PrevTask, NewTask>) {
                 return stl::tag_invoke(*this,
-                                       stl::type_identity<T>{},
-                                       ctx,
-                                       stl::forward<PreviousType>(previous));
-            } else if constexpr (stl::is_constructible_v<T, connect_tag, ExecContextType, PreviousType>) {
-                return T{*this, ctx, stl::forward<PreviousType>(previous)};
-            } else if constexpr (stl::is_constructible_v<T, ExecContextType, PreviousType>) {
-                return T{ctx, stl::forward<PreviousType>(previous)};
-            } else if constexpr (stl::is_constructible_v<T, PreviousType>) {
-                return T{stl::forward<PreviousType>(previous)};
-            } else if constexpr (stl::is_constructible_v<T, ExecContextType>) {
-                return T{ctx};
-            } else if constexpr (stl::is_default_constructible_v<T>) {
-                return T{};
+                                       stl::forward<PrevTask>(prev_task),
+                                       stl::forward<NewTask>(new_task));
+            } else if constexpr (requires { prev_task.connect(stl::forward<NewTask>(new_task)); }) {
+                return prev_task.connect(stl::forward<PrevTask>(prev_task));
+            } else if constexpr (stl::is_constructible_v<NewTask, connect_tag, PrevTask>) {
+                return NewTask{*this, stl::forward<PrevTask>(prev_task)};
+            } else if constexpr (stl::is_constructible_v<NewTask, PrevTask>) {
+                return NewTask{stl::forward<PrevTask>(prev_task)};
             } else {
                 static_assert_false(T, "Cannot create the object.");
             }
@@ -154,10 +143,7 @@ namespace webpp::async {
 
     namespace details {
         template <typename T>
-        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
-                            requires(T task) {
-                                { advance(task) } -> stl::same_as<bool>;
-                            };
+        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T>;
     }
 
     /**
@@ -183,25 +169,25 @@ namespace webpp::async {
     ;
 
     template <typename T>
-    concept YieldableTask = details::BasicTask<T> && requires(T task) {
-                                                         { stl::begin(task) } noexcept -> TaskYielder;
-                                                         { stl::end(task) } noexcept -> TaskYielder;
-                                                     };
+    concept IterableTask = details::BasicTask<T> && requires(T task) {
+                                                        { stl::begin(task) } noexcept -> TaskYielder;
+                                                        { stl::end(task) } noexcept -> TaskYielder;
+                                                    };
 
     template <typename T>
-    concept OneShotTask = details::BasicTask<T> && requires(T task) {
-                                                       { task() };
-                                                   };
+    concept AdvancableTask = details::BasicTask<T> && requires(T task) {
+                                                          { advance(task) } -> stl::same_as<bool>;
+                                                      };
 
     template <typename T>
-    concept Task = YieldableTask<T> || OneShotTask<T>;
+    concept Task = IterableTask<T> || AdvancableTask<T>;
 
     /**
      * Scheduler is something that the user will enqueue their work with it. This should be lightweight.
      */
     template <typename T>
     concept Scheduler = Task<T> && (sizeof(T) <= sizeof(void*)) && stl::copyable<T> && stl::movable<T> &&
-                        stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_constructible_v<T>;
+                        stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_move_constructible_v<T>;
 
     /**
      * Execution Context is where the I/O operations and Async Tasks are processed.
