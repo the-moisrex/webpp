@@ -11,22 +11,16 @@
 namespace webpp::io {
 
     struct async_read_some {
-        struct async_read_some_state {
-            void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
-                // request a read, and set a callback
-                if (const auto val = syscall(read, io, file_descriptor, buf, amount, *this); val != 0) {
-                    set_error(io, val);
-                }
+        void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
+            // request a read, and set a callback
+            if (const auto val = syscall(read, io, file_descriptor, buf, amount, *this); val != 0) {
+                set_error(io, val);
             }
+        }
 
-            // callback from io
-            void operator()(auto io, int read_amount) noexcept {
-                set_done(io, read_amount);
-            }
-        };
-
-        [[nodiscard]] constexpr async_read_some_state start() const noexcept {
-            return {};
+        // callback from io
+        void operator()(auto io, int read_amount) noexcept {
+            set_done(io, read_amount);
         }
     };
 

@@ -19,14 +19,16 @@ namespace webpp::async {
     inline constexpr struct connect_tag {
         template <typename PrevTask, typename NewTask>
         constexpr auto operator()(PrevTask&& prev_task, NewTask&& new_task) const {
-            if constexpr (requires { prev_task.connect(stl::forward<NewTask>(new_task)); }) {
-                return prev_task.connect(stl::forward<PrevTask>(prev_task));
+            if constexpr (requires {
+                              stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
+                          }) {
+                return stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
             } else if constexpr (stl::tag_invocable<connect_tag, PrevTask, NewTask>) {
                 return stl::tag_invoke(*this,
                                        stl::forward<PrevTask>(prev_task),
                                        stl::forward<NewTask>(new_task));
             } else {
-                static_assert_false(T, "Cannot create the object.");
+                static_assert_false(NewTask, "Cannot create the object.");
             }
         }
     } connect;
@@ -62,6 +64,26 @@ namespace webpp::async {
                 return false;
             }
         }
+
+
+        /// calls task()
+        template <typename T>
+            requires(stl::is_invocable_v<T> && !requires(T task) { task.advance(); })
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag,
+                                                       T&& task) noexcept(stl::is_nothrow_invocable_v<T>) {
+            using return_type = stl::remove_cvref_t<stl::invoke_result_t<T>>;
+            if constexpr (stl::same_as<return_type, bool>) {
+                return stl::invoke(stl::forward<T>(task));
+            } else if constexpr (stl::is_void_v<return_type>) {
+                stl::invoke(stl::forward<T>(task));
+                return false; // don't continue
+            } else {
+                static_cast<void>(stl::invoke(stl::forward<T>(task)));
+                return false;
+            }
+        }
+
+        // todo: add iterators support
     } advance;
 
 
@@ -191,26 +213,6 @@ namespace webpp::async {
     concept Task = IterableTask<T> || AdvancableTask<T>;
 
     /**
-     * Scheduler is something that the user will enqueue their work with it. This should be lightweight.
-     */
-    template <typename T>
-    concept Scheduler = Task<T> && (sizeof(T) <= sizeof(void*)) && stl::copyable<T> && stl::movable<T> &&
-                        stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_move_constructible_v<T>;
-
-    /**
-     * Execution Context is where the I/O operations and Async Tasks are processed.
-     * An execution context is also a task, this way it'll be possible to chain the execution contexts up,
-     * and so each execution context's "advance"ments are synchronized with the parent execution context
-     * because it's being called by the parent execution context.
-     */
-    template <typename T>
-    concept ExecutionContext = Task<T> && requires(T async) {
-                                              // This is what gets stored in the "enabled_traits" objects.
-                                              { async.scheduler() } -> Scheduler;
-                                          };
-
-
-    /**
      * Any type that has the ability to be chained up with other types of callables.
      */
     template <typename T>
@@ -228,6 +230,28 @@ namespace webpp::async {
      */
     template <typename T>
     concept ChainableTask = Chainable<T> && Task<T>;
+
+    /**
+     * Scheduler is something that the user will enqueue their work with it. This should be lightweight.
+     */
+    template <typename T>
+    concept Scheduler = ChainableTask<T> &&
+                        (sizeof(T) <= sizeof(void*)) && stl::copyable<T> && stl::movable<T> &&
+                        stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_move_constructible_v<T> &&
+                        stl::is_nothrow_copy_constructible_v<T> && stl::is_nothrow_copy_assignable_v<T>;
+
+    /**
+     * Execution Context is where the I/O operations and Async Tasks are processed.
+     * An execution context is also a task, this way it'll be possible to chain the execution contexts up,
+     * and so each execution context's "advance"ments are synchronized with the parent execution context
+     * because it's being called by the parent execution context.
+     */
+    template <typename T>
+    concept ExecutionContext = Task<T> && requires(T async) {
+                                              // This is what gets stored in the "enabled_traits" objects.
+                                              { async.scheduler() } -> Scheduler;
+                                          };
+
 
     /**
      * Event Loop can hold a list of Event-Chains and will call their "continuation"s.
