@@ -11,6 +11,59 @@
 
 namespace webpp::async {
 
+    /**
+     * Dynamic Task
+     * This templated class will help the dynamic execution contexts to hold their
+     * tasks in a simple vector-like container.
+     */
+    template <typename T = void>
+    struct dynamic_task;
+
+    /// Interface for all dynamic tasks
+    template <>
+    struct dynamic_task<void> {
+        constexpr dynamic_task(dynamic_task const&) noexcept  = default;
+        constexpr dynamic_task(dynamic_task&&) noexcept       = default;
+        dynamic_task& operator=(dynamic_task&&) noexcept      = default;
+        dynamic_task& operator=(dynamic_task const&) noexcept = default;
+        virtual ~dynamic_task()                               = default;
+
+        virtual bool advance() = 0;
+    };
+
+    /// Implementation of the tasks
+    template <Task T>
+    struct dynamic_task<T> final : dynamic_task<void> {
+        using task_type = T;
+
+        constexpr dynamic_task(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>)
+          : task{stl::move(inp_task)} {}
+        constexpr dynamic_task(task_type const& inp_task) noexcept
+            requires(stl::is_nothrow_copy_constructible_v<task_type>)
+          : task{inp_task} {}
+        constexpr dynamic_task&
+        operator=(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
+            task = stl::move(inp_task);
+            return *this;
+        }
+        constexpr dynamic_task&
+        operator=(task_type const& inp_task) noexcept(stl::is_nothrow_copy_assignable_v<task_type>) {
+            if (this != stl::addressof(inp_task)) {
+                task = inp_task;
+            }
+            return *this;
+        }
+
+        bool advance() override {
+            return async::advance(task);
+        }
+
+      private:
+        task_type task;
+    };
+
+
+
 
     template <typename TaskList>
     struct task_chain_iterator {
@@ -121,6 +174,10 @@ namespace webpp::async {
             // todo
         }
     };
+
+
+
+
 
 } // namespace webpp::async
 

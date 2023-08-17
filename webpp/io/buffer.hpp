@@ -3,6 +3,7 @@
 #ifndef WEBPP_IO_BUFFER_HPP
 #define WEBPP_IO_BUFFER_HPP
 
+#include "../std/span.hpp"
 #include "../std/tag_invoke.hpp"
 #include "../std/vector.hpp"
 
@@ -16,7 +17,11 @@ struct iovec {
 #endif
 
 
+
+
 namespace webpp::io {
+
+    using buffer_span = stl::span<stl::byte>;
 
 
     /**

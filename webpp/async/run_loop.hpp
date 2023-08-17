@@ -8,60 +8,6 @@
 #include "./task_chain.hpp"
 
 namespace webpp::async {
-    template <typename, typename>
-    struct basic_run_loop;
-
-    /**
-     * Dynamic Task
-     * This templated class will help the dynamic execution contexts to hold their
-     * tasks in a simple vector-like container.
-     */
-    template <typename T = void>
-    struct dynamic_task;
-
-    /// Interface for all dynamic tasks
-    template <>
-    struct dynamic_task<void> {
-        constexpr dynamic_task(dynamic_task const&) noexcept  = default;
-        constexpr dynamic_task(dynamic_task&&) noexcept       = default;
-        dynamic_task& operator=(dynamic_task&&) noexcept      = default;
-        dynamic_task& operator=(dynamic_task const&) noexcept = default;
-        virtual ~dynamic_task()                               = default;
-
-        virtual bool advance() = 0;
-    };
-
-    /// Implementation of the tasks
-    template <Task T>
-    struct dynamic_task<T> final : dynamic_task<void> {
-        using task_type = T;
-
-        constexpr dynamic_task(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>)
-          : task{stl::move(inp_task)} {}
-        constexpr dynamic_task(task_type const& inp_task) noexcept
-            requires(stl::is_nothrow_copy_constructible_v<task_type>)
-          : task{inp_task} {}
-        constexpr dynamic_task&
-        operator=(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
-            task = stl::move(inp_task);
-            return *this;
-        }
-        constexpr dynamic_task&
-        operator=(task_type const& inp_task) noexcept(stl::is_nothrow_copy_assignable_v<task_type>) {
-            if (this != stl::addressof(inp_task)) {
-                task = inp_task;
-            }
-            return *this;
-        }
-
-        bool advance() override {
-            return async::advance(task);
-        }
-
-      private:
-        task_type task;
-    };
-
 
     /**
      * Run Loop Scheduler
@@ -70,8 +16,7 @@ namespace webpp::async {
      */
     template <typename RunLoopType>
     struct run_loop_scheduler : public RunLoopType::task_chain_type {
-        using run_loop_type   = RunLoopType;
-        using task_chain_type = typename run_loop_scheduler::task_chain_type;
+        using run_loop_type = RunLoopType;
 
         constexpr run_loop_scheduler(run_loop_scheduler const&) noexcept            = default;
         constexpr run_loop_scheduler(run_loop_scheduler&&) noexcept                 = default;
@@ -150,7 +95,7 @@ namespace webpp::async {
         }
 
         /// Get a scheduler that points to this run loop
-        constexpr scheduler_type scheduler() const noexcept {
+        [[nodiscard]] constexpr scheduler_type scheduler() noexcept {
             return {*this};
         }
 

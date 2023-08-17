@@ -9,6 +9,7 @@
 #if __has_include(<liburing.h>)
 #    define WEBPP_IO_URING_SUPPORT 1
 
+#    include "../../async/async.hpp"
 #    include "../../std/coroutine.hpp"
 #    include "../../std/expected.hpp"
 #    include "../../std/optional.hpp"
@@ -25,14 +26,40 @@
 
 namespace webpp::io {
 
+    template <typename>
+    struct io_uring_service;
+
     enum struct io_uring_service_state {
         success          = 0,
         init_failure     = 1, // cannot initialize the parameters of a new io_uring
         SQE_init_failure = 2, // couldn't get a new Submission Queue Entry
     };
 
+    template <typename Allocator>
     struct io_uring_scheduler {
-        // todo
+        using allocator_type = Allocator;
+        using service_type   = io_uring_service<allocator_type>;
+
+
+        constexpr io_uring_scheduler(io_uring_scheduler const&) noexcept            = default;
+        constexpr io_uring_scheduler(io_uring_scheduler&&) noexcept                 = default;
+        constexpr io_uring_scheduler& operator=(io_uring_scheduler const&) noexcept = default;
+        constexpr io_uring_scheduler& operator=(io_uring_scheduler&&) noexcept      = default;
+        constexpr ~io_uring_scheduler() noexcept                                    = default;
+
+        // iterate all tasks
+        constexpr bool advance() const { // NOLINT(*-use-nodiscard)
+            return async::advance(*service);
+        }
+
+
+      private:
+        friend service_type;
+
+        constexpr io_uring_scheduler(service_type& inp_service) noexcept
+          : service{stl::addressof(inp_service)} {}
+
+        service_type* service;
     };
 
 
@@ -44,7 +71,7 @@ namespace webpp::io {
         using allocator_type      = Allocator;
         using buffer_manager_type = buffer_manager<allocator_type>;
         using buffer_type         = typename buffer_manager_type::buffer_type;
-        using scheduler_type      = io_uring_scheduler;
+        using scheduler_type      = io_uring_scheduler<allocator_type>;
 
         static constexpr unsigned default_entries_value = 64;
 
@@ -177,19 +204,19 @@ namespace webpp::io {
         }
 
         [[nodiscard]] constexpr scheduler_type scheduler() noexcept {
-            return {this};
+            return {*this};
         }
 
         /// read
         template <typename CallbackType>
-        [[nodiscard]] friend int tag_invoke(read_tag,
+        [[nodiscard]] friend int tag_invoke(stl::tag_t<io::read>,
                                             scheduler_type self,
                                             int            file_descriptor,
-                                            char*          buf,
-                                            stl::size_t    len,
+                                            buffer_span    buf,
                                             CallbackType&& callback) noexcept {
             auto req = self.sqe();
-            return io_uring_prep_read(file_descriptor, buf, len, );
+            io_uring_sqe_set_data(req, stl::addressof(callback)); // todo
+            return io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
         }
 
       private:

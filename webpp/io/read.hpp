@@ -5,15 +5,16 @@
 
 #include "../std/ranges.hpp"
 #include "../std/tag_invoke.hpp"
+#include "./buffer.hpp"
 #include "./syscalls.hpp"
 #include "open.hpp"
 
 namespace webpp::io {
 
     struct async_read_some {
-        void set_value(auto io, int file_descriptor, stl::size_t amount, char* buf) noexcept {
+        void set_value(auto io, int file_descriptor, buffer_span buf) noexcept {
             // request a read, and set a callback
-            if (const auto val = syscall(read, io, file_descriptor, buf, amount, *this); val != 0) {
+            if (const auto val = syscall(read, io, file_descriptor, buf, *this); val != 0) {
                 set_error(io, val);
             }
         }
@@ -28,19 +29,20 @@ namespace webpp::io {
     struct async_read_until {
         Task task;
 
-        void operator()(auto io, int file_descriptor, stl::size_t amount, char* buf) const noexcept {
+        void operator()(auto io, int file_descriptor, buffer_span buf) const noexcept {
             int read_size = 0;
+            auto it        = buf.begin();
             for (;;) {
-                read_size = task(io, file_descriptor, amount, buf);
+                read_size = task(io, file_descriptor, buf);
                 if (read_size <= -1) [[unlikely]] {
                     set_error(io, read_size);
                     return;
                 } else if (read_size == 0) {
                     set_done(io);
                 } else {
-                    set_value(io, file_descriptor, buf, read_size);
+                    set_value(io, file_descriptor, buffer_span{it, static_cast<stl::size_t>(read_size)});
                 }
-                buf += read_size;
+                it += read_size;
             }
         }
     };
