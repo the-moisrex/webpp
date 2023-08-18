@@ -127,6 +127,9 @@ namespace webpp::async {
 
 
 
+    /**
+     * Unified, non-dynamic, Tuple-like Task Chain
+     */
     template <Task... T>
     struct task_chain {
         using iterator = task_chain_iterator<task_chain>;

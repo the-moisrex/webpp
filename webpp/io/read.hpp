@@ -30,7 +30,7 @@ namespace webpp::io {
         Task task;
 
         void operator()(auto io, int file_descriptor, buffer_span buf) const noexcept {
-            int read_size = 0;
+            int  read_size = 0;
             auto it        = buf.begin();
             for (;;) {
                 read_size = task(io, file_descriptor, buf);
@@ -48,19 +48,17 @@ namespace webpp::io {
     };
 
 
-    struct async_file_stats {
-        void operator()(auto io, int file_descriptor) const noexcept {
-            const auto stats = io.request_file_stats();
-            if (stats != 0) {
-                set_error(io, stats);
-            }
-            set_value(io, stats);
+    inline constexpr void async_file_stats(auto io, int file_descriptor) noexcept {
+        const auto stats = io.request_file_stats(file_descriptor);
+        if (stats != 0) {
+            set_error(io, stats);
         }
-    };
+        set_value(io, stats);
+    }
 
 
     constexpr auto read(int file_descriptor) noexcept {
-        return just(file_descriptor) >> async_file_stats{} >> let_value([](auto stats) {
+        return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();
                }) >>
                async_do_until(async_read_some{});

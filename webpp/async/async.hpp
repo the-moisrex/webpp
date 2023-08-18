@@ -137,6 +137,8 @@ namespace webpp::async {
 
     /**
      * Set Value
+     * Setting value is a pushing technique used by producer algorithms to push the data to the consumers,
+     * and immediately run their algorithms if they want to.
      */
     inline constexpr struct set_value_tag {
 
@@ -159,6 +161,85 @@ namespace webpp::async {
         }
     } set_value;
 
+    /**
+     * Get Value
+     * Getting a value has nothing to do with the setting values.
+     * Getting a value is a pulling technique that helps the consumers to pull the data out of the
+     * parent tasks/schedulers/... and use them.
+     * Usage:
+     * @code
+     *
+     *   // producer:
+     *   struct producer {
+     *       struct data_tag{};
+     *       int data = 1;
+     *
+     *       void operator()(auto task) {
+     *          // ...
+     *       }
+     *
+     *       // Provide the "data_tag" value
+     *       int get_value(data_tag) {
+     *           return data;
+     *       }
+     *   };
+     *
+     *
+     *   struct consumer {
+     *       void operator()(auto task) {
+     *          // Get the value from the parent task
+     *          int data_value = get_value(task, producer::data_tag{});
+     *          // ...
+     *       }
+     *   };
+     *
+     * @endcode
+     */
+    inline constexpr struct get_value_tag {
+
+        // Customization Point
+        template <typename T, typename... Args>
+            requires stl::tag_invocable<get_value_tag, T, Args...>
+        constexpr stl::tag_invoke_result_t<get_value_tag, T> operator()(T&& next, Args&&... args) const
+          noexcept(stl::nothrow_tag_invocable<get_value_tag, T, Args...>) {
+            return stl::tag_invoke(*this, stl::forward<T>(next), stl::forward<Args>(args)...);
+        }
+
+        // default impl
+        template <typename T, typename... Args>
+            requires requires(T next, Args... args) { next.get_value(args...); }
+        friend constexpr decltype(auto) tag_invoke(get_value_tag, T&& next, Args&&... args) noexcept(
+          noexcept(stl::forward<T>(next).get_value(stl::forward<Args>(args)...))) {
+            return stl::forward<T>(next).get_value(stl::forward<Args>(args)...);
+        }
+    } get_value;
+
+    // todo: get_value_or (get_value with default value which may or may not be a lambda to be called)
+
+
+    /**
+     * Check if the specified task provides the customization points for getting the values corresponding to
+     * the specified types.
+     */
+    template <typename TaskT, typename... Args>
+    concept HasValue = requires(TaskT task, Args... args) { get_value(task, args...); };
+
+    /**
+     * Simple utility to remove the necessity of dealing with types
+     *
+     * usage:
+     * @code
+     *   void consumer(auto&& task) {
+     *       if constexpr (has_value(task)) {
+     *          auto value = get_value(task, data_tag{});
+     *       }
+     *   }
+     * @endcode
+     */
+    template <typename TaskT, typename... Args>
+    static consteval bool has_value(TaskT const&, Args const&...) noexcept {
+        return HasValue<TaskT, Args...>;
+    }
 
     // todo: set_error
 
