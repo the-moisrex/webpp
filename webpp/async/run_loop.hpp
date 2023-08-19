@@ -29,6 +29,15 @@ namespace webpp::async {
             return async::advance(*loop);
         }
 
+        template <typename... Args>
+        constexpr void set_value(Args&&... args) const noexcept {
+            async::set_value(*next(), stl::forward<Args>(args)...);
+        }
+
+        constexpr task_type* next() const noexcept {
+            // todo
+        }
+
 
       private:
         // only the basic_run_loop should be allowed to initialize this struct

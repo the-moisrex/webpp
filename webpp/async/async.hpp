@@ -33,6 +33,9 @@ namespace webpp::async {
         }
     } connect;
 
+    template <typename PrevTask, typename NewTask>
+    using connected_type = decltype(connect(stl::declval<PrevTask>(), stl::declval<NewTask>()));
+
 
     /**
      * Start/Continue Operation
@@ -220,6 +223,22 @@ namespace webpp::async {
     /**
      * Check if the specified task provides the customization points for getting the values corresponding to
      * the specified types.
+     *
+     * usage:
+     * @code
+     *   struct data_tag{};
+     *   struct consumer {
+     *       template <Task Parent>
+     *       void operator()(Parent&& parent) requires(HasValue<Parent, data_tag>) {
+     *           auto value = get_value(parent, data_tag{});
+     *       }
+     *
+     *       // using "set_value"
+     *       void operator()(auto&& parent, auto value) {
+     *           // use value...
+     *       }
+     *   };
+     * @endcode
      */
     template <typename TaskT, typename... Args>
     concept HasValue = requires(TaskT task, Args... args) { get_value(task, args...); };
@@ -241,9 +260,27 @@ namespace webpp::async {
         return HasValue<TaskT, Args...>;
     }
 
-    // todo: set_error
 
 
+
+    inline constexpr struct set_error_tag {
+
+        // Customization Point
+        template <typename T, typename... Args>
+            requires stl::tag_invocable<set_error_tag, T, Args...>
+        constexpr void operator()(T&& chain, Args&&... args) const
+          noexcept(stl::nothrow_tag_invocable<set_error_tag, T, Args...>) {
+            return stl::tag_invoke(*this, stl::forward<T>(chain), stl::forward<Args>(args)...);
+        }
+
+        // default impl
+        template <typename T, typename... Args>
+            requires requires(T chain, Args... args) { chain.set_error(args...); }
+        friend constexpr void tag_invoke(set_error_tag, T&& chain, Args&&... args) noexcept(
+          noexcept(stl::forward<T>(chain).set_error(stl::forward<Args>(args)...))) {
+            stl::forward<T>(chain).set_error(stl::forward<Args>(args)...);
+        }
+    } set_error;
 
     ////////////////////////////// Async Concepts //////////////////////////////
 

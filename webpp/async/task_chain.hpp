@@ -176,6 +176,18 @@ namespace webpp::async {
         constexpr auto connect(TaskT&& new_task) noexcept {
             // todo
         }
+
+        constexpr auto next() noexcept {
+            // todo
+        }
+
+        constexpr auto prev() noexcept {}
+
+        template <typename... Args>
+        constexpr auto set_error(Args&&... args) noexcept(
+          noexcept(async::set_error(this->next(), stl::forward<Args>(args)...))) {
+            async::set_error(this->next(), stl::forward<Args>(args)...);
+        }
     };
 
 
