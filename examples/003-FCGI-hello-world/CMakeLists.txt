@@ -1,5 +1,5 @@
 
-set(EXEC_NAME webpp_fcgi_hello_world)
+set(EXEC_NAME fcgi-hello-world)
 file(GLOB BIN_SOURCES *.cpp)
 
 #file(READ index.html INDEX_HTML)

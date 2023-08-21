@@ -3,10 +3,9 @@
 
 #include "../http/app_wrapper.hpp"
 #include "../http/request.hpp"
-#include "../server/default_server_traits.hpp"
-#include "../server/server_concepts.hpp"
 #include "../std/internet.hpp"
 #include "../std/set.hpp"
+#include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
 #include "fcgi_manager.hpp"
 #include "fcgi_request.hpp"
@@ -14,10 +13,9 @@
 namespace webpp::fastcgi {
 
 
-    template <typename App, ServerTraits ReqT = default_server_traits>
+    template <typename App, Traits TraitsType = default_traits_type>
     struct fcgi : public enable_traits<typename ReqT::traits_type> {
-        using server_type      = ReqT;
-        using traits_type      = typename server_type::traits_type;
+        using traits_type      = TraitsType;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
         using application_type = stl::remove_cvref_t<App>;
         using interface_type   = fcgi<server_type, application_type>;
