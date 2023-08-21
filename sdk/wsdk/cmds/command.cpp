@@ -2,6 +2,7 @@
 
 #include "./create_project.hpp"
 
+#include <iterator>
 #include <webpp/std/string.hpp>
 #include <webpp/std/utility.hpp>
 #include <webpp/strings/join.hpp>
@@ -19,7 +20,7 @@ stl::string_view to_string(command_status status) noexcept {
         case empty_command:
             return "The specified command was empty; nothing to do.";
 
-            // filures:
+            // failures:
         case unknown_error: return "Failed: Unknown error happened while trying to run a command.";
     }
     stl::unreachable();
@@ -43,7 +44,7 @@ struct command_parser {
 };
 
 
-command_status run_command(stl::string_view) noexcept {
+command_status command_manager::run_command(stl::string_view) noexcept {
     using enum command_status;
     return success;
 }
@@ -57,14 +58,22 @@ command_status command_manager::run_command(int argc, char const** argv) noexcep
     try {
         stl::string command{};
 
-        command += *argv--;
+        command += *stl::prev(argv);
         for (; argc != 0; --argc) {
             command += ' ';
-            command += *argv--;
+            command += *stl::prev(argv);
         }
 
         return run_command(stl::string_view{command.data(), command.size()});
     } catch (...) {
         return unknown_error;
+    }
+}
+
+int webpp::sdk::to_exit_status(command_status status) noexcept {
+    using enum command_status;
+    switch (status) {
+        case success: return EXIT_SUCCESS;
+        default: return EXIT_FAILURE;
     }
 }

@@ -18,7 +18,12 @@ namespace webpp::sdk {
      */
     struct create_project : command {
 
-        constexpr create_project() = default;
+        create_project()                                     = default;
+        create_project(create_project&&) noexcept            = default;
+        create_project(create_project const&)                = delete;
+        create_project& operator=(create_project&&) noexcept = default;
+        create_project& operator=(create_project const&)     = delete;
+        ~create_project() override                           = default;
 
         [[nodiscard]] stl::string_view name() const noexcept override {
             return {"project"};

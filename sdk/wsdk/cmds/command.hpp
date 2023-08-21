@@ -18,6 +18,7 @@ namespace webpp::sdk {
 
     /// Get the string message of the command status
     stl::string_view to_string(command_status status) noexcept;
+    int              to_exit_status(command_status) noexcept;
 
     struct command {
 
@@ -26,6 +27,7 @@ namespace webpp::sdk {
         command(command&&) noexcept                 = default;
         command& operator=(command const&) noexcept = delete;
         command& operator=(command&&) noexcept      = default;
+        virtual ~command()                          = default;
 
         /// Get the command's name
         [[nodiscard]] virtual stl::string_view name() const noexcept = 0;

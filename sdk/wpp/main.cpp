@@ -1,6 +1,7 @@
 #include <wsdk/cmds/command.hpp>
 
 auto main(int argc, char const** argv) -> int {
-    webpp::sdk::command_manager manager;
-    return manager.run_command(argc, argv);
+    using namespace webpp::sdk;
+    command_manager manager;
+    return to_exit_status(manager.run_command(argc, argv));
 }

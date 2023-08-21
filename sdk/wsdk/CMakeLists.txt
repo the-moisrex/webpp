@@ -13,7 +13,11 @@ target_link_libraries(${sdk_lib}
         # PRIVATE Boost::boost
         # PRIVATE Boost::program_options
 )
-target_include_directories(${sdk_lib} PUBLIC include/)
+target_include_directories(${sdk_lib} PUBLIC ../)
 add_library("${PROJECT_NAME}::sdk" ALIAS ${sdk_lib})
 
-# todo: install scripts
+# install scripts
+install(TARGETS ${sdk_lib}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+)
