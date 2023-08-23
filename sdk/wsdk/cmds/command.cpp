@@ -1,6 +1,6 @@
 #include "./command.hpp"
 
-#include "./create_project.hpp"
+#include "./create.hpp"
 
 #include <iterator>
 #include <webpp/std/memory.hpp>
@@ -23,13 +23,10 @@ stl::string_view to_string(command_status status) noexcept {
 
             // failures:
         case unknown_error: return "Failed: Unknown error happened while trying to run a command.";
+        case invalid_command: return "Failed: the specified command is invalid.";
     }
     stl::unreachable();
 }
-
-struct command_options {
-    stl::uint16_t verbose = 0;
-};
 
 
 struct command_parser {
@@ -44,58 +41,45 @@ struct command_parser {
     }
 };
 
-bool process_arg(stl::string_view arg, stl::shared_ptr<command>& command) noexcept {
-    switch (arg[0]) {
-        case 'c': {
-            if (arg == "create") {
-                command = stl::make_shared<create_project>();
-            }
-            break;
-        }
-        case 'n':
-            if (arg == "new") {
-                command = stl::make_shared<create_project>();
-            }
-    }
-}
 
-command_status command_manager::run_command(stl::string_view cmd) noexcept {
+command_status command_manager::run_command(stl::string_view cmd_str) {
     using enum command_status;
 
-    string_tokenizer         tokenizer{cmd};
-    stl::shared_ptr<command> command = nullptr;
-
-    command_options options;
+    command_options cmd{cmd_str};
 
     // extract the command from the arguments
-    while (tokenizer.next(charset{' '})) {
-        stl::string_view const arg = tokenizer.token();
-        if (!process_arg(arg, command)) {
-            // todo
-        }
-    }
+    if (cmd.tokenizer().next(WHITESPACES)) {
 
-    // run the command
-    if (!command) {
-        return invalid_command;
+        auto const root_cmd_str = cmd.tokenizer().token();
+        if (root_cmd_str == "create" || root_cmd_str == "new") {
+            create_command crt_cmd;
+            return crt_cmd.start(stl::move(cmd));
+        } else {
+            return invalid_command;
+        }
+
     } else {
-        return command->start(options);
+        return empty_command;
     }
 }
 
-command_status command_manager::run_command(int argc, char const** argv) noexcept {
+command_status command_manager::run_command(int argc, char const** argv) {
     using enum command_status;
     if (argc == 0) {
         return empty_command;
     }
 
+    stl::advance(argv, 1); // skip the first one
     try {
         stl::string command{};
 
-        command += *stl::prev(argv);
-        for (; argc != 0; --argc) {
-            command += ' ';
-            command += *stl::prev(argv);
+        if (*argv) {
+            command += *argv;
+            for (; argc != 0 && *argv; --argc) {
+                command += ' ';
+                command += *argv;
+                stl::advance(argv, 1); // next argument
+            }
         }
 
         return run_command(stl::string_view{command.data(), command.size()});

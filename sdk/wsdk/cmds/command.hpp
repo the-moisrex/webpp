@@ -50,10 +50,10 @@ namespace webpp::sdk {
     struct command_manager {
 
         // parse the args, and run the command
-        command_status run_command(int argc, char const** argv) noexcept;
+        command_status run_command(int argc, char const** argv);
 
         // run a command from a string view
-        command_status run_command(stl::string_view) noexcept;
+        command_status run_command(stl::string_view);
     };
 
 } // namespace webpp::sdk

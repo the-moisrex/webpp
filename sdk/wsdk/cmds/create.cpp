@@ -4,6 +4,12 @@
 
 using namespace webpp::sdk;
 
-create_command::create_command() {
-    this->add_child<create_project>();
+std::string_view create_command::name() const noexcept {
+    return "create";
+}
+std::string_view create_command::desc() const noexcept {
+    return "Create a a new ...";
+}
+command_status create_command::start(command_options options) {
+    return command_status::empty_command;
 }

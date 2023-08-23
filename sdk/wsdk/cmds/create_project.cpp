@@ -64,34 +64,6 @@ command_status create_project::start(command_options args) {
 }
 
 int create_project::handle_project(stl::span<std::string> args) {
-    webpp::default_logger logger;
-
-    if (args.empty()) {
-        logger.error("Please specify a project name.");
-        return 1;
-    }
-
-    stl::string proj_name{args.front()};
-
-    if (proj_name.empty()) {
-        logger.error("Please specify a valid name for the project.");
-        return 1;
-    }
-
-    const project_template tmpl = get_project_template();
-    if (!tmpl.is_valid()) {
-        logger.error("The specified template is not valid.");
-        return 1;
-    }
-
-    // check if the project's directory exists or not:
-
-    // create the project directory:
-    const stl::string_view project_dir;
-
-    tmpl.scan(); // scan for files to find templates.
-    tmpl.map_files_to_directory(project_dir);
-
     return 0;
 }
 stl::string_view create_project::desc() const noexcept {
