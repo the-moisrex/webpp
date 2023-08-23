@@ -233,6 +233,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/logs/spdlog_logger.hpp
         ${LIB_INCLUDE_DIR}/logs/std_logger.hpp
         ${LIB_INCLUDE_DIR}/logs/default_logger.hpp
+        ${LIB_INCLUDE_DIR}/logs/dynamic_logger.hpp
 
         ${LIB_INCLUDE_DIR}/concurrency/atomic_counter.hpp
         ${LIB_INCLUDE_DIR}/concurrency/task_manager.hpp
