@@ -3,8 +3,8 @@
 
 #include "command.hpp"
 
+#include <webpp/std/span.hpp>
 #include <webpp/std/string_view.hpp>
-#include <webpp/std/vector.hpp>
 
 namespace webpp::sdk {
 
@@ -31,11 +31,11 @@ namespace webpp::sdk {
         [[nodiscard]] stl::string_view desc() const noexcept override;
 
         // wpp new ....
-        int handle(stl::vector<stl::string>);
+        command_status start(command_options) override;
 
       private:
         // wpp new project ....
-        int handle_project(stl::vector<stl::string>);
+        int handle_project(stl::span<stl::string>);
     };
 
 } // namespace webpp::sdk

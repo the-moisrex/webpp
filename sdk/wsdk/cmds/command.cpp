@@ -3,6 +3,7 @@
 #include "./create_project.hpp"
 
 #include <iterator>
+#include <webpp/std/memory.hpp>
 #include <webpp/std/string.hpp>
 #include <webpp/std/utility.hpp>
 #include <webpp/strings/join.hpp>
@@ -43,10 +44,43 @@ struct command_parser {
     }
 };
 
+bool process_arg(stl::string_view arg, stl::shared_ptr<command>& command) noexcept {
+    switch (arg[0]) {
+        case 'c': {
+            if (arg == "create") {
+                command = stl::make_shared<create_project>();
+            }
+            break;
+        }
+        case 'n':
+            if (arg == "new") {
+                command = stl::make_shared<create_project>();
+            }
+    }
+}
 
-command_status command_manager::run_command(stl::string_view) noexcept {
+command_status command_manager::run_command(stl::string_view cmd) noexcept {
     using enum command_status;
-    return success;
+
+    string_tokenizer         tokenizer{cmd};
+    stl::shared_ptr<command> command = nullptr;
+
+    command_options options;
+
+    // extract the command from the arguments
+    while (tokenizer.next(charset{' '})) {
+        stl::string_view const arg = tokenizer.token();
+        if (!process_arg(arg, command)) {
+            // todo
+        }
+    }
+
+    // run the command
+    if (!command) {
+        return invalid_command;
+    } else {
+        return command->start(options);
+    }
 }
 
 command_status command_manager::run_command(int argc, char const** argv) noexcept {
