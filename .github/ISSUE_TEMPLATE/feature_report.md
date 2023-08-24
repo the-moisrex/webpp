@@ -1,6 +1,6 @@
 ---
 name: Feature Report
-about: Request a feature
+about: Report a harmful feature
 title: "Harmful Feature: "
 labels: bug,enhancement
 assignees: the-moisrex
