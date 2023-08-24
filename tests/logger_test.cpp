@@ -2,6 +2,7 @@
 
 #include "../webpp/logs/spdlog_logger.hpp"
 #include "../webpp/logs/std_logger.hpp"
+#include "../webpp/logs/void_logger.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <cstdio>
@@ -18,6 +19,7 @@ TEST(LoggerTests, LoggerConcepts) {
     EXPECT_TRUE(Logger<stdout_logger>);
     EXPECT_TRUE(Logger<stderr_logger>);
     EXPECT_TRUE(Logger<spdlog_logger<>>);
+    EXPECT_TRUE(Logger<void_logger>);
 }
 
 TEST(LoggerTests, STDLoggerTeat) {
