@@ -26,7 +26,6 @@ namespace webpp {
         using logger_ref  = logger_type;  // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*; // there's a syntax difference, so we can't copy
 
-        static constexpr bool enabled               = true; // todo: make this configurable by the user
         static constexpr bool is_debug              = IsDebug;
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
@@ -116,12 +115,20 @@ namespace webpp {
                                                                                                           \
     template <istl::StringViewifiable StrT>                                                               \
     void logging_name(StrT&& details, stl::error_code const& ec) const noexcept {                         \
-        return logging_name(default_category_name, stl::forward<StrT>(details), ec);                      \
+        logging_name(default_category_name, stl::forward<StrT>(details), ec);                             \
     }                                                                                                     \
                                                                                                           \
     template <istl::StringViewifiable StrT>                                                               \
     void logging_name(StrT&& details, stl::exception const& ex) const noexcept {                          \
-        return logging_name(default_category_name, stl::forward<StrT>(details), ex);                      \
+        logging_name(default_category_name, stl::forward<StrT>(details), ex);                             \
+    }                                                                                                     \
+                                                                                                          \
+    template <typename... OptsT>                                                                          \
+        requires requires(std_logger logger, OptsT... opts) { logger.logging_name(opts...); }             \
+    void logging_name(if_debug_tag, OptsT&&... opts) const noexcept {                                     \
+        if constexpr (is_debug) {                                                                         \
+            this->logging_name(stl::forward<OptsT>(opts)...);                                             \
+        }                                                                                                 \
     }
 
 
@@ -132,19 +139,6 @@ namespace webpp {
         WEBPP_LOGGER_SHORTCUT(unknown)
 
 
-        [[no_unique_address]] struct std_logger_debugger {
-
-            using logger_type             = std_logger;
-            using logger_ref              = logger_type const; // copy the logger, there's nothing to copy
-            using logger_ptr              = logger_type*; // there's a syntax difference, so we can't copy
-            static constexpr bool enabled = true;         // todo: make this configurable by the user
-
-            WEBPP_LOGGER_SHORTCUT(info)
-            WEBPP_LOGGER_SHORTCUT(warning)
-            WEBPP_LOGGER_SHORTCUT(error)
-            WEBPP_LOGGER_SHORTCUT(critical)
-            WEBPP_LOGGER_SHORTCUT(unknown)
-        } debug{};
 #undef WEBPP_LOGGER_SHORTCUT
     };
 

@@ -33,7 +33,7 @@ namespace webpp {
         basic_dynamic_logger(basic_dynamic_logger&&) noexcept            = default;
         basic_dynamic_logger& operator=(basic_dynamic_logger const&)     = default;
         basic_dynamic_logger& operator=(basic_dynamic_logger&&) noexcept = default;
-        ~basic_dynamic_logger()                                          = default;
+        ~basic_dynamic_logger() override                                 = default;
 
         basic_dynamic_logger(logger_type&& logger) noexcept : actual_logger{stl::move(logger)} {}
         basic_dynamic_logger(logger_type const& logger) noexcept : actual_logger{logger} {}

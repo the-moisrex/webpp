@@ -10,6 +10,12 @@
 
 namespace webpp {
 
+    /**
+     * A simple helper to do the logging only if it's being run on debug build
+     */
+    inline constexpr struct if_debug_tag {
+    } if_debug;
+
     namespace details {
 
         template <typename T>
@@ -18,14 +24,18 @@ namespace webpp {
                                    typename T::logger_ptr;
                                    typename T::logger_type;
 
-                                   requires stl::same_as<stl::remove_cvref_t<decltype(logger.enabled)>, bool>;
 
-#define WEBPP_LOGGER_CONCEPT(logger_name)            \
-    logger.logger_name("log something");             \
-    logger.logger_name("category", "log something"); \
-    logger.logger_name("category", "Error.");        \
-    logger.logger_name("category", "Error.", ec);    \
-    logger.logger_name("category", "Error.", ex);
+#define WEBPP_LOGGER_CONCEPT(logger_name)                      \
+    logger.logger_name("log something");                       \
+    logger.logger_name("category", "log something");           \
+    logger.logger_name("category", "Error.");                  \
+    logger.logger_name("category", "Error.", ec);              \
+    logger.logger_name("category", "Error.", ex);              \
+    logger.logger_name(if_debug, "log something");             \
+    logger.logger_name(if_debug, "category", "log something"); \
+    logger.logger_name(if_debug, "category", "Error.");        \
+    logger.logger_name(if_debug, "category", "Error.", ec);    \
+    logger.logger_name(if_debug, "category", "Error.", ex);
 
                                    WEBPP_LOGGER_CONCEPT(info)
                                    WEBPP_LOGGER_CONCEPT(warning)
@@ -37,11 +47,8 @@ namespace webpp {
     } // namespace details
 
     template <typename T>
-    concept Logger = details::SimpleLogger<stl::remove_cvref_t<T>> &&
-                     requires(T logger) {
-                         logger.debug;
-                         requires details::SimpleLogger<stl::remove_cvref_t<decltype(logger.debug)>>;
-                     };
+    concept Logger = details::SimpleLogger<stl::remove_cvref_t<T>>;
+
 
 } // namespace webpp
 

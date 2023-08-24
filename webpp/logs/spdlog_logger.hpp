@@ -23,29 +23,31 @@ namespace webpp {
         using logger_ref  = logger_type const&;
         using logger_ptr  = logger_type*;
 
-        static constexpr bool enabled = true;
-#    if defined(DEBUG) && DEBUG
-        using debugger_type            = spdlog_logger<true>;
-        static constexpr bool is_debug = true;
-#    else
-        struct debugger_type {
-            debugger_type(auto) = default;
-            void log(auto...);
-            void info(auto...);
-            void warning(auto...);
-            void error(auto...);
-            void critical(auto...);
-            void trace(auto...);
-        };
-        static constexpr bool is_debug = false;
-#    endif
+        static constexpr bool is_debug = IsDebug;
 
-        stl::shared_ptr<spdlog::logger> const spdlogger;
+      private:
+        stl::shared_ptr<spdlog::logger> spdlogger;
 
+      public:
         spdlog_logger() : spdlogger{spdlog::default_logger()} {}
-        spdlog_logger(stl::shared_ptr<spdlog::logger> logger) noexcept : spdlogger{logger} {}
-        spdlog_logger(istl::StringViewifiable auto&& logger_name)
-          : spdlogger{spdlog::get(istl::string_viewify(logger_name).c_str())} {}
+        spdlog_logger(stl::shared_ptr<spdlog::logger> logger) noexcept : spdlogger{stl::move(logger)} {}
+
+        template <istl::StringViewifiable LogT>
+        spdlog_logger(LogT&& logger_name)
+          : spdlogger{spdlog::get(istl::string_viewify(stl::forward<LogT>(logger_name)).c_str())} {}
+
+
+        spdlog_logger(spdlog_logger const&)                = default;
+        spdlog_logger(spdlog_logger&&) noexcept            = default;
+        spdlog_logger& operator=(spdlog_logger const&)     = default;
+        spdlog_logger& operator=(spdlog_logger&&) noexcept = default;
+        ~spdlog_logger()                                   = default;
+
+
+        /// Get a handle to the underlying spdlog logger
+        spdlog::logger& get_handle() noexcept {
+            return *spdlogger;
+        }
 
 #    define WEBPP_LOGGER_SHORTCUT(func_name, logging_name)                                                 \
                                                                                                            \
@@ -100,7 +102,16 @@ namespace webpp {
                                         stl::forward<decltype(details)>(details),                          \
                                         ex.what());                                                        \
             }                                                                                              \
+        }                                                                                                  \
+                                                                                                           \
+        template <typename... OptsT>                                                                       \
+            requires requires(spdlog_logger logger, OptsT... opts) { logger.func_name(opts...); }          \
+        void func_name(if_debug_tag, OptsT&&... opts) const noexcept {                                     \
+            if constexpr (is_debug) {                                                                      \
+                this->logging_name(stl::forward<OptsT>(opts)...);                                          \
+            }                                                                                              \
         }
+
 
 
         WEBPP_LOGGER_SHORTCUT(info, info)
@@ -109,7 +120,6 @@ namespace webpp {
         WEBPP_LOGGER_SHORTCUT(critical, critical)
         WEBPP_LOGGER_SHORTCUT(trace, trace)
 
-        [[no_unique_address]] debugger_type debug{spdlogger};
 
 #    undef WEBPP_LOGGER_SHORTCUT
     };
