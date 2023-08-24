@@ -13,9 +13,11 @@
 #endif
 
 #ifdef WEBPP_SPDLOG
+#    include "../common/meta.hpp"
+
 namespace webpp {
 
-    template <bool IsDebug = false>
+    template <bool IsDebug = is_debug_build>
     struct spdlog_logger {
         using logger_type = spdlog_logger;
         using logger_ref  = logger_type const&;

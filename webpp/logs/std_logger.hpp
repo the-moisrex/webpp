@@ -3,14 +3,12 @@
 #ifndef WEBPP_STD_LOGGER_HPP
 #define WEBPP_STD_LOGGER_HPP
 
+#include "../common/meta.hpp"
 #include "../std/format.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/traits.hpp"
 
 #include <cstdio>
-#ifndef WEBPP_FMT_LIB
-#    include <stdio.h>
-#endif
 
 namespace webpp {
 
@@ -22,18 +20,14 @@ namespace webpp {
      * A logger class
      * @tparam stream_getter is a callable that gets a FILE* (like stderr, stdin, stdout)
      */
-    template <auto stream_getter, bool IsDebug = false>
+    template <auto stream_getter, bool IsDebug = is_debug_build>
     struct std_logger {
         using logger_type = std_logger;
         using logger_ref  = logger_type;  // copy the logger, there's nothing to copy
         using logger_ptr  = logger_type*; // there's a syntax difference, so we can't copy
 
-        static constexpr bool enabled = true; // todo: make this configurable by the user
-#if defined(DEBUG) && DEBUG
-        static constexpr bool is_debug = true;
-#else
-        static constexpr bool is_debug = false;
-#endif
+        static constexpr bool enabled               = true; // todo: make this configurable by the user
+        static constexpr bool is_debug              = IsDebug;
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
 

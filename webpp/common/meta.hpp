@@ -70,4 +70,19 @@ namespace webpp::details {
 #    define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
 #endif
 
+
+
+#if defined(NDEBUG) || !defined(DEBUG) || !defined(_DEBUG)
+#    define NDEBUG 1
+namespace webpp {
+    static constexpr bool is_debug_build = false;
+}
+#else
+#    define DEBUG 1
+namespace webpp {
+    static constexpr bool is_debug_build = true;
+}
+#endif
+
+
 #endif // WEBPP_META_HPP
