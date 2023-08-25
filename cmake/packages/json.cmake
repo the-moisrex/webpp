@@ -27,13 +27,13 @@ if (IS_CLANG)
 endif()
 
 
-if (NOT RAPIDJSON_FOUND AND EXISTS "/usr/include/rapidjson")
+if ((NOT TARGET RapidJSON) AND (EXISTS "/usr/include/rapidjson"))
         # Adding custom code for rapidjson because it seems like we don't have access to the original cmake
         # file provided by rapidjson itself
         message(STATUS "Adding custom library for RapidJSON.")
         set(json_target RapidJSON)
         add_library(${json_target} "/usr/include/rapidjson/rapidjson.h")
-        target_include_directories(${json_target} PUBLIC "/usr/include")
+        target_include_directories(${json_target} INTERFACE "/usr/include")
         set_target_properties(${json_target} PROPERTIES LANGUAGE CXX)
         set_target_properties(${json_target} PROPERTIES LINKER_LANGUAGE CXX)
 
