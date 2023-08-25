@@ -18,8 +18,10 @@ inline auto* output_getter() {
 TEST(LoggerTests, LoggerConcepts) {
     EXPECT_TRUE(Logger<stdout_logger>);
     EXPECT_TRUE(Logger<stderr_logger>);
-    EXPECT_TRUE(Logger<spdlog_logger<>>);
     EXPECT_TRUE(Logger<void_logger>);
+#ifdef WEBPP_SPDLOG
+    EXPECT_TRUE(Logger<spdlog_logger<>>);
+#endif
 }
 
 TEST(LoggerTests, STDLoggerTeat) {
