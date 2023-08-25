@@ -19,31 +19,33 @@ namespace webpp {
     namespace details {
 
         template <typename T>
-        concept SimpleLogger = requires(T logger, stl::error_code ec, stl::exception ex) {
-                                   typename T::logger_ref;
-                                   typename T::logger_ptr;
-                                   typename T::logger_type;
+        concept SimpleLogger = stl::movable<T> && requires(T logger, stl::error_code ec, stl::exception ex) {
+                                                      typename T::logger_ref;
+                                                      typename T::logger_ptr;
+                                                      typename T::logger_type;
 
 
-#define WEBPP_LOGGER_CONCEPT(logger_name)                      \
-    logger.logger_name("log something");                       \
-    logger.logger_name("category", "log something");           \
-    logger.logger_name("category", "Error.");                  \
-    logger.logger_name("category", "Error.", ec);              \
-    logger.logger_name("category", "Error.", ex);              \
-    logger.logger_name(if_debug, "log something");             \
-    logger.logger_name(if_debug, "category", "log something"); \
-    logger.logger_name(if_debug, "category", "Error.");        \
-    logger.logger_name(if_debug, "category", "Error.", ec);    \
-    logger.logger_name(if_debug, "category", "Error.", ex);
+#define WEBPP_LOGGER_CONCEPT(logger_name)                \
+    logger.logger_name("msg");                           \
+    logger.logger_name("category", "msg");               \
+    logger.logger_name("category", "msg", ec);           \
+    logger.logger_name("category", "msg", ex);           \
+    logger.logger_name("msg", ec);                       \
+    logger.logger_name("msg", ex);                       \
+    logger.logger_name(if_debug, "msg");                 \
+    logger.logger_name(if_debug, "category", "msg");     \
+    logger.logger_name(if_debug, "category", "msg", ec); \
+    logger.logger_name(if_debug, "category", "msg", ex); \
+    logger.logger_name(if_debug, "msg", ec);             \
+    logger.logger_name(if_debug, "msg", ex);
 
-                                   WEBPP_LOGGER_CONCEPT(info)
-                                   WEBPP_LOGGER_CONCEPT(warning)
-                                   WEBPP_LOGGER_CONCEPT(error)
-                                   WEBPP_LOGGER_CONCEPT(critical)
+                                                      WEBPP_LOGGER_CONCEPT(info)
+                                                      WEBPP_LOGGER_CONCEPT(warning)
+                                                      WEBPP_LOGGER_CONCEPT(error)
+                                                      WEBPP_LOGGER_CONCEPT(critical)
 
 #undef WEBPP_LOGGER_CONCEPT
-                               };
+                                                  };
     } // namespace details
 
     template <typename T>

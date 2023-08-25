@@ -124,7 +124,6 @@ namespace webpp {
     }                                                                                                     \
                                                                                                           \
     template <typename... OptsT>                                                                          \
-        requires requires(std_logger logger, OptsT... opts) { logger.logging_name(opts...); }             \
     void logging_name(if_debug_tag, OptsT&&... opts) const noexcept {                                     \
         if constexpr (is_debug) {                                                                         \
             this->logging_name(stl::forward<OptsT>(opts)...);                                             \

@@ -6,6 +6,9 @@
 namespace webpp {
 
     using default_logger = stderr_logger;
+
+    /// Default non-dynamic logger, this is being used as the default logger for the dynamic loggers.
+    using default_static_logger = stderr_logger;
 }
 
 #endif // WEBPP_LOGGER_DEFAULT_HPP

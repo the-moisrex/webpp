@@ -1,5 +1,6 @@
 // Created by moisrex on 8/16/20.
 
+#include "../webpp/logs/dynamic_logger.hpp"
 #include "../webpp/logs/spdlog_logger.hpp"
 #include "../webpp/logs/std_logger.hpp"
 #include "../webpp/logs/void_logger.hpp"
@@ -38,4 +39,16 @@ TEST(LoggerTests, STDLoggerTeat) {
     logger.error(if_debug, "debugging");
 
     std::fclose(output);
+}
+
+TEST(LoggerTest, DynamicLogger) {
+    dynamic_logger logger;
+
+    logger.template emplace_logger<stdout_logger>();
+    logger.disable();
+
+    logger.error("one");
+    logger.warning("one");
+    logger.info("wow", "one");
+    logger.error(if_debug, "debugging");
 }
