@@ -20,6 +20,7 @@ TEST(LoggerTests, LoggerConcepts) {
     EXPECT_TRUE(Logger<stdout_logger>);
     EXPECT_TRUE(Logger<stderr_logger>);
     EXPECT_TRUE(Logger<void_logger>);
+    EXPECT_TRUE(Logger<dynamic_logger>);
 #ifdef WEBPP_SPDLOG
     EXPECT_TRUE(Logger<spdlog_logger<>>);
 #endif

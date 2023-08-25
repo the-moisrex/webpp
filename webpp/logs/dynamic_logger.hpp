@@ -22,8 +22,14 @@ namespace webpp {
     /// dynamic interface
     template <>
     struct basic_dynamic_logger<details::dynamic_logger_interface> {
-        using string_view_type          = stl::string_view;
-        virtual ~basic_dynamic_logger() = default;
+        using string_view_type = stl::string_view;
+
+        basic_dynamic_logger() noexcept                                       = default;
+        basic_dynamic_logger(basic_dynamic_logger const&) noexcept            = default;
+        basic_dynamic_logger(basic_dynamic_logger&&) noexcept                 = default;
+        basic_dynamic_logger& operator=(basic_dynamic_logger const&) noexcept = default;
+        basic_dynamic_logger& operator=(basic_dynamic_logger&&) noexcept      = default;
+        virtual ~basic_dynamic_logger()                                       = default;
 
 #define WEBPP_DEFINE_METHOD(method_name)                                                             \
     virtual void method_name(string_view_type msg)                                              = 0; \
