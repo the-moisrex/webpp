@@ -3,6 +3,7 @@
 
 #include "root_commands.hpp"
 
+#include <webpp/logs/dynamic_logger.hpp>
 #include <webpp/std/string_view.hpp>
 #include <webpp/std/vector.hpp>
 
@@ -49,11 +50,21 @@ namespace webpp::sdk {
      */
     struct command_manager {
 
+        command_manager(dynamic_logger logger = {});
+        command_manager(command_manager&&) noexcept            = default;
+        command_manager(command_manager const&)                = delete;
+        command_manager& operator=(command_manager&&) noexcept = default;
+        command_manager& operator=(command_manager const&)     = delete;
+        ~command_manager()                                     = default;
+
         // parse the args, and run the command
         command_status run_command(int argc, char const** argv);
 
         // run a command from a string view
         command_status run_command(stl::string_view);
+
+      private:
+        dynamic_logger logger;
     };
 
 } // namespace webpp::sdk

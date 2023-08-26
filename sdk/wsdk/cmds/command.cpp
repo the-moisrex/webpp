@@ -9,11 +9,14 @@
 #include <webpp/strings/join.hpp>
 #include <webpp/strings/string_tokenizer.hpp>
 
+inline constexpr auto log_cat = "command";
 
 using namespace webpp::sdk;
 using namespace webpp;
 
-stl::string_view to_string(command_status status) noexcept {
+command_manager::command_manager(dynamic_logger inp_logger) : logger{stl::move(inp_logger)} {}
+
+stl::string_view webpp::sdk::to_string(command_status status) noexcept {
     using enum command_status;
     switch (status) {
         // success status:
@@ -29,18 +32,6 @@ stl::string_view to_string(command_status status) noexcept {
 }
 
 
-struct command_parser {
-  private:
-    stl::string_view cmd;
-
-  public:
-    command_parser(stl::string_view str) noexcept : cmd{str} {}
-
-    int operator()() {
-        return 0;
-    }
-};
-
 
 command_status command_manager::run_command(stl::string_view cmd_str) {
     using enum command_status;
@@ -55,10 +46,16 @@ command_status command_manager::run_command(stl::string_view cmd_str) {
             create_command crt_cmd;
             return crt_cmd.start(stl::move(cmd));
         } else {
+            this->logger.error(
+              log_cat,
+              stl::format("The string '{}' in the specified command '{}' is not a valid root command.",
+                          root_cmd_str,
+                          cmd_str));
             return invalid_command;
         }
 
     } else {
+        this->logger.warning(log_cat, "You've tried to run an empty command that does nothing.");
         return empty_command;
     }
 }
@@ -84,6 +81,7 @@ command_status command_manager::run_command(int argc, char const** argv) {
 
         return run_command(stl::string_view{command.data(), command.size()});
     } catch (...) {
+        this->logger.error(log_cat, "Unknown Error while handling the command line arguments.");
         return unknown_error;
     }
 }
