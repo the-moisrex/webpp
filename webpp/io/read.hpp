@@ -21,7 +21,7 @@ namespace webpp::io {
         }
 
         // callback from io
-        void operator()(auto io, int read_amount) noexcept {
+        void operator()(IOScheduler auto io, int read_amount) noexcept {
             set_done(io, read_amount);
         }
     };
@@ -36,18 +36,22 @@ namespace webpp::io {
 
       private:
         struct operation_status {
-            [[no_unique_address]] connected_type<Task> task;
+            [[no_unique_address]] async::connected_type<Task> task_state;
             int                                        read_size = 0;
 
             template <typename... Args>
             [[nodiscard]] constexpr bool operator()(IOScheduler auto io, Args&&... args) noexcept {
-                async::advance(task, io, stl::forward<Args>(args)...);
+                // todo: how we're supposed to call this in an async way?
+                async::advance(io, task_state, stl::forward<Args>(args)...);
                 if (read_size <= -1) [[unlikely]] {
+                    set_error(task_state, read_size);
                     set_error(io, read_size);
                     return false;
                 } else if (read_size == 0) {
+                    set_done(task_state);
                     set_done(io);
                 } else {
+                    set_value(task_state, read_size);
                     set_value(io, file_descriptor, buffer_span{it, static_cast<stl::size_t>(read_size)});
                 }
                 return true;
@@ -66,6 +70,16 @@ namespace webpp::io {
 
 
     constexpr auto read(int file_descriptor) noexcept {
+        // todo: how to pass the buffer?
+        return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
+                   return stats.size();
+               }) >>
+               async_until(async_read_some{});
+    }
+
+    /// read the file/... check by chunk
+    constexpr auto read_chunked(int file_descriptor) noexcept {
+        // todo: how to pass the buffer?
         return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();
                }) >>

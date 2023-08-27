@@ -1,6 +1,7 @@
 #include "./command.hpp"
 
 #include "./create.hpp"
+#include "./help.hpp"
 
 #include <iterator>
 #include <webpp/std/memory.hpp>
@@ -14,7 +15,9 @@ inline constexpr auto log_cat = "command";
 using namespace webpp::sdk;
 using namespace webpp;
 
-command_manager::command_manager(dynamic_logger inp_logger) : logger{stl::move(inp_logger)} {}
+command_manager::command_manager(stl::shared_ptr<output_port> inp_output, dynamic_logger inp_logger)
+  : output{stl::move(inp_output)},
+    logger{stl::move(inp_logger)} {}
 
 stl::string_view webpp::sdk::to_string(command_status status) noexcept {
     using enum command_status;
@@ -36,7 +39,7 @@ stl::string_view webpp::sdk::to_string(command_status status) noexcept {
 command_status command_manager::run_command(stl::string_view cmd_str) {
     using enum command_status;
 
-    command_options cmd{cmd_str};
+    command_options cmd{cmd_str, output, logger};
 
     // extract the command from the arguments
     if (cmd.tokenizer().next(WHITESPACES)) {
@@ -45,6 +48,9 @@ command_status command_manager::run_command(stl::string_view cmd_str) {
         if (root_cmd_str == "create" || root_cmd_str == "new") {
             create_command crt_cmd;
             return crt_cmd.start(stl::move(cmd));
+        } else if (root_cmd_str == "help") {
+            help_command help_cmd;
+            return help_cmd.start(stl::move(cmd));
         } else {
             this->logger.error(
               log_cat,
@@ -67,16 +73,18 @@ command_status command_manager::run_command(int argc, char const** argv) {
     }
 
     stl::advance(argv, 1); // skip the first one
+    --argc;
     try {
         stl::string command{};
 
-        if (*argv) {
+        command += *argv;
+        stl::advance(argv, 1); // next argument
+        --argc;
+
+        for (; argc != 0 && *argv; --argc) {
+            command += ' ';
             command += *argv;
-            for (; argc != 0 && *argv; --argc) {
-                command += ' ';
-                command += *argv;
-                stl::advance(argv, 1); // next argument
-            }
+            stl::advance(argv, 1); // next argument
         }
 
         return run_command(stl::string_view{command.data(), command.size()});

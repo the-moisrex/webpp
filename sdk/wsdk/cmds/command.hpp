@@ -1,7 +1,7 @@
 #ifndef WEBPP_SDK_CMDS_CMD
 #define WEBPP_SDK_CMDS_CMD
 
-#include "root_commands.hpp"
+#include "command_options.hpp"
 
 #include <webpp/logs/dynamic_logger.hpp>
 #include <webpp/std/string_view.hpp>
@@ -50,7 +50,8 @@ namespace webpp::sdk {
      */
     struct command_manager {
 
-        command_manager(dynamic_logger logger = {});
+        command_manager(stl::shared_ptr<output_port> inp_output = stl::make_shared<stdout_output_port>(),
+                        dynamic_logger               logger     = {});
         command_manager(command_manager&&) noexcept            = default;
         command_manager(command_manager const&)                = delete;
         command_manager& operator=(command_manager&&) noexcept = default;
@@ -64,7 +65,8 @@ namespace webpp::sdk {
         command_status run_command(stl::string_view);
 
       private:
-        dynamic_logger logger;
+        stl::shared_ptr<output_port> output;
+        dynamic_logger               logger;
     };
 
 } // namespace webpp::sdk
