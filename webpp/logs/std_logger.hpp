@@ -146,7 +146,7 @@ namespace webpp {
     }
 
     inline auto stdout_functor() noexcept {
-        return stderr;
+        return stdout;
     }
 
     using stderr_logger = std_logger<stderr_functor>;
