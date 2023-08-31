@@ -26,7 +26,7 @@ namespace webpp::sdk {
 
       private:
         class impl;
-        impl* pimpl;
+        stl::unique_ptr<impl> pimpl;
     };
 
 

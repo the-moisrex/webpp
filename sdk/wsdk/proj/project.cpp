@@ -14,7 +14,7 @@ class project::impl {
     fs::path    path{};
 };
 
-webpp::sdk::project::project() : pimpl{new impl} {}
+webpp::sdk::project::project() : pimpl{stl::make_unique<impl>()} {}
 
 std::filesystem::path webpp::sdk::project::path() const {
     return pimpl->path;
@@ -28,13 +28,11 @@ std::string_view webpp::sdk::project::name() const noexcept {
 void webpp::sdk::project::name(std::string_view new_name) {
     pimpl->name = stl::string{new_name.data(), new_name.size()};
 }
-webpp::sdk::project::~project() {
-    delete pimpl;
-}
 webpp::sdk::project::project(project&& other) noexcept : pimpl{stl::exchange(other.pimpl, nullptr)} {}
 project& webpp::sdk::project::operator=(project&& other) noexcept {
     if (stl::addressof(other) != this) {
-        pimpl = stl::exchange(other.pimpl, nullptr);
+        pimpl = stl::move(other.pimpl);
     }
     return *this;
 }
+webpp::sdk::project::~project() = default;

@@ -15,12 +15,17 @@ namespace webpp::sdk {
     struct proj_template {
 
         proj_template(stl::shared_ptr<command_options>);
+        proj_template(proj_template const&) = delete;
+        proj_template(proj_template&&) noexcept;
+        proj_template& operator=(proj_template const&) = delete;
+        proj_template& operator=(proj_template&&) noexcept;
+        ~proj_template();
 
-        [[nodiscard]] bool operator==(proj_template) const noexcept;
+        // [[nodiscard]] bool operator==(proj_template) const noexcept;
 
       private:
         class impl;
-        impl* tmpl;
+        stl::unique_ptr<impl> pimpl;
     };
 
 } // namespace webpp::sdk

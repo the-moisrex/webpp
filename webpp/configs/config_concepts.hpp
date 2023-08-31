@@ -35,7 +35,7 @@
  * - [ ] should support encrypted configs
  *    - [ ] the whole file (if supported in the specified format)
  *    - [ ] the name of the config (if supported in the specified format)
- *    - [ ] the value (probabely in all of the formats)
+ *    - [ ] the value (probably in all of the formats)
  *
  *
  * So what we need in order to implement those features?
