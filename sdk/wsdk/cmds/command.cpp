@@ -68,7 +68,7 @@ command_status command_manager::run_command(stl::string_view cmd_str) {
 
 command_status command_manager::run_command(int argc, char const** argv) {
     using enum command_status;
-    if (argc == 0) {
+    if (argc <= 1) {
         return empty_command;
     }
 
