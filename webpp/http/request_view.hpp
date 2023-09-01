@@ -7,8 +7,8 @@
 #include "../traits/default_traits.hpp"
 #include "header_fields.hpp"
 #include "http_concepts.hpp"
+#include "http_version.hpp"
 #include "request_headers.hpp"
-#include "version.hpp"
 
 #include <variant>
 

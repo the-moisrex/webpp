@@ -1,27 +1,43 @@
-#ifndef WEBPP_CASTS_H
-#define WEBPP_CASTS_H
+#ifndef WEBPP_CASTS_HPP
+#define WEBPP_CASTS_HPP
 
-#include "../std/string.hpp"
 #include "../std/string_view.hpp"
-#include "../strings/size.hpp"
-#include "../traits/traits.hpp"
+#include "../utils/error_handling.hpp"
 
+// NOLINTBEGIN(*-avoid-magic-numbers)
 namespace webpp {
+
+    enum struct integer_casting_errors {
+        invalid_character, // includes an invalid character
+        invalid_base       // not a valid character in the specified base
+    };
+
+    constexpr stl::string_view to_string(integer_casting_errors err) noexcept {
+        using enum integer_casting_errors;
+        switch (err) {
+            case invalid_character: return "Invalid character found";
+            case invalid_base:
+                return "The specified string contains characters that are not in the valid base";
+        }
+    }
 
     /**
      * In this algorithm we're using begin, end, ... because in some string types (like utf-8), the chars
      * are not exactly stored the way we want them to be for that.
      *
      * todo: check overflows as well
-     * todo: add another error system as well (that is not using exceptions)
      */
-    template <typename T, T base = 10, bool throw_mistakes = false>
-    constexpr T to(istl::StringViewifiable auto&& _str) noexcept(!throw_mistakes) {
+    template <typename T,
+              T                       base     = 10,
+              error_handling_strategy strategy = error_handling_strategy::assume_safe,
+              istl::StringViewifiable StrT     = stl::string_view>
+    constexpr expected_strategy_t<strategy, T, integer_casting_errors>
+    to(StrT&& _str) noexcept(is_noexcept(strategy)) {
         /**
-         * glib's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
+         * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
 
-        const auto str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+        const auto str = istl::string_viewify(stl::forward<StrT>(_str));
         T          ret = 0;
         if (!str.size())
             return ret;
@@ -33,9 +49,15 @@ namespace webpp {
             auto ch = *c;
             if constexpr (base <= 10) {
                 ch -= '0';
-                if constexpr (throw_mistakes) {
-                    if (ch <= '0' || ch >= '9')
-                        throw stl::invalid_argument("The specified string is not a number");
+                if constexpr (strategy == error_handling_strategy::throw_errors) {
+                    if (ch <= '0' || ch >= '9') {
+                        throw stl::invalid_argument(
+                          to_string(integer_casting_errors::invalid_character).data());
+                    }
+                } else if constexpr (strategy == error_handling_strategy::use_expected) {
+                    if (ch <= '0' || ch >= '9') {
+                        return stl::unexpected(integer_casting_errors::invalid_character);
+                    }
                 }
             } else if (base > 10) {
                 if (ch >= 'a')
@@ -44,9 +66,13 @@ namespace webpp {
                     ch -= 'A' - 10;
                 else
                     ch -= '0';
-                if constexpr (throw_mistakes) {
+                if constexpr (strategy == error_handling_strategy::throw_errors) {
                     if (ch > base) {
-                        throw stl::invalid_argument("The specified string is not a number");
+                        throw stl::invalid_argument(to_string(integer_casting_errors::invalid_base).data());
+                    }
+                } else if constexpr (strategy == error_handling_strategy::use_expected) {
+                    if (ch > base) {
+                        return stl::unexpected(integer_casting_errors::invalid_base);
                     }
                 }
             }
@@ -57,10 +83,12 @@ namespace webpp {
         return ret;
     }
 
-#define WEBPP_TO_FUNCTION(name, type)                                            \
-    template <type base = 10, bool throw_mistakes = false>                       \
-    constexpr auto to_##name(istl::StringViewifiable auto&& str) noexcept {      \
-        return to<type, base, throw_mistakes>(stl::forward<decltype(str)>(str)); \
+#define WEBPP_TO_FUNCTION(name, type)                                                  \
+    template <type                    base     = 10,                                   \
+              error_handling_strategy strategy = error_handling_strategy::assume_safe, \
+              istl::StringViewifiable StrT     = stl::string_view>                     \
+    constexpr auto to_##name(StrT&& str) noexcept {                                    \
+        return to<type, base, strategy, StrT>(stl::forward<StrT>(str));                \
     }
 
     WEBPP_TO_FUNCTION(int, int)
@@ -79,5 +107,6 @@ namespace webpp {
 
 
 } // namespace webpp
+// NOLINTEND(*-avoid-magic-numbers)
 
-#endif // WEBPP_CASTS_H
+#endif // WEBPP_CASTS_HPP

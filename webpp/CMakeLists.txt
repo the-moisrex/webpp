@@ -107,6 +107,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/utils/debounce.hpp
         ${LIB_INCLUDE_DIR}/utils/property.hpp
+        ${LIB_INCLUDE_DIR}/utils/version.hpp
+        ${LIB_INCLUDE_DIR}/utils/error_handling.hpp
 
         ${LIB_INCLUDE_DIR}/memory/allocator_concepts.hpp
         ${LIB_INCLUDE_DIR}/memory/allocator_pack.hpp
@@ -201,7 +203,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/http.hpp
         ${LIB_INCLUDE_DIR}/http/mime_types.hpp
         ${LIB_INCLUDE_DIR}/http/status_code.hpp
-        ${LIB_INCLUDE_DIR}/http/version.hpp
+        ${LIB_INCLUDE_DIR}/http/http_version.hpp
         ${LIB_INCLUDE_DIR}/http/verbs.hpp
         ${LIB_INCLUDE_DIR}/http/request.hpp
 

@@ -4,8 +4,8 @@
 #define WEBPP_BEAST_REQUEST_HPP
 
 #include "../http/http_concepts.hpp"
+#include "../http/http_version.hpp"
 #include "../http/request_view.hpp"
-#include "../http/version.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/traits.hpp"

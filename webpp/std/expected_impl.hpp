@@ -168,9 +168,9 @@ namespace webpp::stl {
         constexpr bool is_unexpected<unexpected<T>> = true;
 
         template <typename E>
-        concept can_be_unexpected = std::is_object_v<E> && (!std::is_array_v<E>) &&
-                                    (!detail_expected::is_unexpected<E>) && (!std::is_const_v<E>) &&
-                                    (!std::is_volatile_v<E>);
+        concept can_be_unexpected =
+          std::is_object_v<E> && (!std::is_array_v<E>) &&(!detail_expected::is_unexpected<E>) &&(
+                                   !std::is_const_v<E>) &&(!std::is_volatile_v<E>);
     } // namespace detail_expected
     /// @endcond
 
@@ -1030,11 +1030,10 @@ namespace webpp::stl {
                 m_unex = std::forward<V>(v);
         }
 
-
+        struct some_void_type {};
         union {
-            struct {
-            } m_void;
-            E m_unex;
+            some_void_type m_void;
+            E              m_unex;
         };
 
         bool m_has_value;
