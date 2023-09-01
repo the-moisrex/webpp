@@ -4,6 +4,9 @@
 #include "../std/string_view.hpp"
 #include "../utils/error_handling.hpp"
 
+#include <cstdint>
+#include <stdexcept>
+
 // NOLINTBEGIN(*-avoid-magic-numbers)
 namespace webpp {
 
@@ -19,6 +22,7 @@ namespace webpp {
             case invalid_base:
                 return "The specified string contains characters that are not in the valid base";
         }
+        return ""; // to get rid of warnings; it's 2023 for God sake!
     }
 
     /**

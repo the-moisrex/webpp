@@ -20,7 +20,7 @@ TEST(Casts, ToInt) {
         // EXPECT_EQ(to<int>(c), 0);
         // EXPECT_EQ(to_uint64(c), 0);
         try {
-            to<int, true, true>(c);
+            to<int, true, error_handling_strategy::throw_errors>(c);
             EXPECT_TRUE(false) << c;
         } catch (std::exception const& err) {
             EXPECT_TRUE(true);
