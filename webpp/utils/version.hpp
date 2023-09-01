@@ -11,6 +11,23 @@
 #include <cstdint>
 
 namespace webpp {
+    template <stl::uint8_t, stl::integral>
+    struct basic_version;
+
+
+    namespace details {
+        define_is_specialization_of(is_specialization_of_basic_version_impl,
+                                    WEBPP_SINGLE_ARG(stl::uint8_t, typename),
+                                    WEBPP_SINGLE_ARG(stl::uint8_t N, stl::integral DataType),
+                                    WEBPP_SINGLE_ARG(N, DataType))
+    }
+
+    template <typename T>
+    using is_specialization_of_basic_version =
+      details::is_specialization_of_basic_version_impl<stl::remove_cvref_t<T>, basic_version>;
+
+    template <typename T>
+    concept is_specialization_of_basic_version_v = is_specialization_of_basic_version<T>::value;
 
     /**
      * General Version
@@ -35,6 +52,7 @@ namespace webpp {
 
       private:
         static constexpr auto bits_count = sizeof(integer_type) * 8u;
+
 
       public:
 #define WEBPP_DEFINE_OPERATOR(op, short_op)                                                      \
@@ -78,22 +96,23 @@ namespace webpp {
 
 #undef WEBPP_DEFINE_OPERATOR
 
-#define WEBPP_DEFINE_OPERATOR(op)                                                              \
+#define WEBPP_DEFINE_OPERATOR(op, alt_op)                                                      \
     template <stl::uint8_t NewCounts, stl::integral NewType>                                   \
+        requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )              \
     [[nodiscard]] constexpr basic_version op(basic_version<NewCounts, NewType> const& new_val) \
       const noexcept {                                                                         \
         basic_version val{*this};                                                              \
-        val.op## = (new_val);                                                                  \
+        val.alt_op(new_val);                                                                   \
         return val;                                                                            \
     }
 
 
 
-        WEBPP_DEFINE_OPERATOR(operator+)
-        WEBPP_DEFINE_OPERATOR(operator*)
-        WEBPP_DEFINE_OPERATOR(operator-)
-        WEBPP_DEFINE_OPERATOR(operator/)
-        WEBPP_DEFINE_OPERATOR(operator%)
+        WEBPP_DEFINE_OPERATOR(operator+, operator+=)
+        WEBPP_DEFINE_OPERATOR(operator*, operator*=)
+        WEBPP_DEFINE_OPERATOR(operator-, operator-=)
+        WEBPP_DEFINE_OPERATOR(operator/, operator/=)
+        WEBPP_DEFINE_OPERATOR(operator%, operator%=)
 
 #undef WEBPP_DEFINE_OPERATOR
 
@@ -103,6 +122,7 @@ namespace webpp {
         /// Attention: don't use this member function if you're not sure the specified string contains
         ///            valid version; for those cases, use "from_string" member function.
         template <istl::StringViewifiable StrT>
+            requires(!is_specialization_of_basic_version_v<StrT>)
         constexpr void from_safe_string(StrT&& inp_str) noexcept {
             auto str    = istl::string_viewify(stl::forward<StrT>(inp_str));
             using str_v = decltype(str);
@@ -132,6 +152,7 @@ namespace webpp {
          * @return bool, whether or not the parsing of the string value was a success or not.
          */
         template <istl::StringViewifiable StrT>
+            requires(!is_specialization_of_basic_version_v<StrT>)
         [[nodiscard("If you're discarding the result of this member function, "
                     "that means you're not handling the case in which "
                     "the specified string is not a valid version.")]] constexpr bool
@@ -175,6 +196,7 @@ namespace webpp {
         }
 
         template <istl::StringViewifiable StrT>
+            requires(!is_specialization_of_basic_version_v<StrT>)
         [[nodiscard]] constexpr inline bool operator==(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
@@ -184,6 +206,7 @@ namespace webpp {
         }
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
+            requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )
         [[nodiscard]] constexpr bool
         operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
             for (auto it = other.begin(); auto const& item : *this) {
@@ -200,6 +223,7 @@ namespace webpp {
         }
 
         template <istl::StringViewifiable StrT>
+            requires(!is_specialization_of_basic_version_v<StrT>)
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
@@ -209,11 +233,15 @@ namespace webpp {
         }
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
+            requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )
         [[nodiscard]] constexpr stl::partial_ordering
         operator<=>(basic_version<NewCounts, NewType> const& other) const noexcept {
-            auto it = other.begin();
-            for (auto const& item : *this) {
-                auto const res = item <=> static_cast<integer_type>(*it++);
+            if (other.empty()) {
+                return stl::partial_ordering::unordered;
+            }
+            auto rhs = other.begin();
+            for (auto lhs = this->begin(); lhs != this->end(); ++lhs) {
+                auto const res = *lhs <=> static_cast<integer_type>(*rhs++);
                 if (stl::is_gt(res)) {
                     return stl::partial_ordering::greater;
                 } else if (stl::is_lt(res)) {
@@ -221,8 +249,28 @@ namespace webpp {
                 } else if (!stl::is_eq(res)) {
                     return stl::partial_ordering::unordered;
                 }
+                if (rhs == other.end()) {
+                    // if the remaining items are zero, then both of them are equal
+                    for (; lhs != this->end(); ++lhs) {
+                        if (*lhs != NewType{0}) {
+                            return stl::partial_ordering::greater;
+                        }
+                    }
+                    return stl::partial_ordering::equivalent;
+                }
             }
-            return it == other.end() ? stl::partial_ordering::equivalent : stl::partial_ordering::less;
+            if (rhs == other.end()) {
+                // all items have checked and all are equal
+                return stl::partial_ordering::equivalent;
+            } else {
+                // if the remaining items are zero, then both of them are equal
+                for (; rhs != other.end(); ++rhs) {
+                    if (*rhs != NewType{0}) {
+                        return stl::partial_ordering::less;
+                    }
+                }
+                return stl::partial_ordering::equivalent;
+            }
         }
 
 #endif

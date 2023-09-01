@@ -54,8 +54,12 @@ TEST(BasicVersion, OperatorsTest) {
     ver = ver123 + basic_version{2, 1, 1};
     EXPECT_EQ(ver, (basic_version{3, 3, 4}));
 
-    EXPECT_LT(ver, (basic_version{3}));
+    EXPECT_GT(ver, (basic_version{3}));
+    EXPECT_LT(ver, (basic_version{4}));
     EXPECT_GT(ver, (basic_version{3, 1}));
+    EXPECT_LT(ver, (basic_version{3, 3, 4, 1}));
+    EXPECT_EQ(ver, (basic_version{3, 3, 4, 0, 0}));
+    EXPECT_TRUE(stl::is_eq(ver <=> basic_version{3, 3, 4, 0, 0}));
 }
 
 // NOLINTEND(*-avoid-magic-numbers)
