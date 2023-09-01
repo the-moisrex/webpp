@@ -194,6 +194,7 @@
                 "test-ustring",
                 "test-utils-casts",
                 "test-utils-strings",
+                "test-utils",
                 "test-validations",
                 "test-valves",
                 "test-views"
@@ -438,6 +439,11 @@
         {
             "name": "test-utils-strings",
             "targets": "test-utils-strings",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-utils",
+            "targets": "test-utils",
             "inherits": "default-build"
         },
         {
@@ -700,6 +706,10 @@
         },
         {
             "name": "test-utils-strings",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-utils",
             "inherits": "test-default"
         },
         {

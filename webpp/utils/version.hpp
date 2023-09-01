@@ -236,19 +236,8 @@ namespace webpp {
             requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )
         [[nodiscard]] constexpr stl::partial_ordering
         operator<=>(basic_version<NewCounts, NewType> const& other) const noexcept {
-            if (other.empty()) {
-                return stl::partial_ordering::unordered;
-            }
             auto rhs = other.begin();
             for (auto lhs = this->begin(); lhs != this->end(); ++lhs) {
-                auto const res = *lhs <=> static_cast<integer_type>(*rhs++);
-                if (stl::is_gt(res)) {
-                    return stl::partial_ordering::greater;
-                } else if (stl::is_lt(res)) {
-                    return stl::partial_ordering::less;
-                } else if (!stl::is_eq(res)) {
-                    return stl::partial_ordering::unordered;
-                }
                 if (rhs == other.end()) {
                     // if the remaining items are zero, then both of them are equal
                     for (; lhs != this->end(); ++lhs) {
@@ -257,6 +246,14 @@ namespace webpp {
                         }
                     }
                     return stl::partial_ordering::equivalent;
+                }
+                auto const res = *lhs <=> static_cast<integer_type>(*rhs++);
+                if (stl::is_gt(res)) {
+                    return stl::partial_ordering::greater;
+                } else if (stl::is_lt(res)) {
+                    return stl::partial_ordering::less;
+                } else if (!stl::is_eq(res)) {
+                    return stl::partial_ordering::unordered;
                 }
             }
             if (rhs == other.end()) {
