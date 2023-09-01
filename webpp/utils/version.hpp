@@ -37,32 +37,67 @@ namespace webpp {
         static constexpr auto bits_count = sizeof(integer_type) * 8u;
 
       public:
-#define WEBPP_DEFINE_OPERATOR(op)                                                           \
-    template <stl::integral IntType>                                                        \
-    constexpr basic_version& op(IntType new_value) noexcept {                               \
-        if constexpr (sizeof(IntType) == sizeof(integer_type) * 2) {                        \
-            (*this)[1].op(static_cast<integer_type>(new_value & ~integer_type{0}));         \
-            new_value >>= bits_count;                                                       \
-            (*this)[0].op(static_cast<integer_type>(new_value & ~integer_type{0}));         \
-        } else if constexpr (sizeof(IntType) > sizeof(integer_type)) {                      \
-            for (integer_type index = OctetCount - 1; index != -1; --index) {               \
-                (*this)[index].op(static_cast<integer_type>(new_value & ~integer_type{0})); \
-                new_value >>= bits_count;                                                   \
-            }                                                                               \
-        } else {                                                                            \
-            this->back() = static_cast<integer_type>(new_value & ~integer_type{0});         \
-        }                                                                                   \
-        return *this;                                                                       \
+#define WEBPP_DEFINE_OPERATOR(op, short_op)                                                      \
+    template <stl::integral IntType>                                                             \
+    constexpr basic_version& op(IntType new_value) noexcept {                                    \
+        if constexpr (sizeof(IntType) == sizeof(integer_type) * 2) {                             \
+            (*this)[1] short_op static_cast<integer_type>(new_value & ~integer_type{0});         \
+            new_value >>= bits_count;                                                            \
+            (*this)[0] short_op static_cast<integer_type>(new_value & ~integer_type{0});         \
+        } else if constexpr (sizeof(IntType) > sizeof(integer_type)) {                           \
+            for (integer_type index = OctetCount - 1; index != -1; --index) {                    \
+                (*this)[index] short_op static_cast<integer_type>(new_value & ~integer_type{0}); \
+                new_value >>= bits_count;                                                        \
+            }                                                                                    \
+        } else {                                                                                 \
+            this->back() = static_cast<integer_type>(new_value & ~integer_type{0});              \
+        }                                                                                        \
+        return *this;                                                                            \
+    }                                                                                            \
+                                                                                                 \
+    template <stl::uint8_t NewCounts, stl::integral NewType>                                     \
+    constexpr basic_version& op(basic_version<NewCounts, NewType> const& new_val) noexcept {     \
+        if constexpr (NewCounts >= OctetCount) {                                                 \
+            for (auto it = new_val.begin(); auto& item : *this) {                                \
+                item short_op static_cast<integer_type>(*it++);                                  \
+            }                                                                                    \
+        } else {                                                                                 \
+            for (auto it = this->begin(); auto const& item : new_val) {                          \
+                (*it++) short_op static_cast<integer_type>(item);                                \
+            }                                                                                    \
+        }                                                                                        \
+        return *this;                                                                            \
     }
 
-        WEBPP_DEFINE_OPERATOR(operator=)
-        WEBPP_DEFINE_OPERATOR(operator+=)
-        WEBPP_DEFINE_OPERATOR(operator*=)
-        WEBPP_DEFINE_OPERATOR(operator-=)
-        WEBPP_DEFINE_OPERATOR(operator/=)
-        WEBPP_DEFINE_OPERATOR(operator%=)
+        WEBPP_DEFINE_OPERATOR(operator=, =)
+        WEBPP_DEFINE_OPERATOR(operator+=, +=)
+        WEBPP_DEFINE_OPERATOR(operator*=, *=)
+        WEBPP_DEFINE_OPERATOR(operator-=, -=)
+        WEBPP_DEFINE_OPERATOR(operator/=, /=)
+        WEBPP_DEFINE_OPERATOR(operator%=, %=)
 
 #undef WEBPP_DEFINE_OPERATOR
+
+#define WEBPP_DEFINE_OPERATOR(op)                                                              \
+    template <stl::uint8_t NewCounts, stl::integral NewType>                                   \
+    [[nodiscard]] constexpr basic_version op(basic_version<NewCounts, NewType> const& new_val) \
+      const noexcept {                                                                         \
+        basic_version val{*this};                                                              \
+        val.op## = (new_val);                                                                  \
+        return val;                                                                            \
+    }
+
+
+
+        WEBPP_DEFINE_OPERATOR(operator+)
+        WEBPP_DEFINE_OPERATOR(operator*)
+        WEBPP_DEFINE_OPERATOR(operator-)
+        WEBPP_DEFINE_OPERATOR(operator/)
+        WEBPP_DEFINE_OPERATOR(operator%)
+
+#undef WEBPP_DEFINE_OPERATOR
+
+
 
         /// Read from ALREADY-CHECKED string
         /// Attention: don't use this member function if you're not sure the specified string contains
@@ -146,9 +181,20 @@ namespace webpp {
             if (!other_ver.from_string(stl::forward<StrT>(other)))
                 return false;
             return std::equal(this->begin(), this->end(), other_ver.begin());
-        };
+        }
 
-#if __cpp_lib_three_way_comparison && __cpp_lib_concepts
+        template <stl::uint8_t NewCounts, stl::integral NewType>
+        [[nodiscard]] constexpr bool
+        operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
+            for (auto it = other.begin(); auto const& item : *this) {
+                if (item != static_cast<integer_type>(*it++)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+#ifdef __cpp_lib_three_way_comparison
         [[nodiscard]] constexpr auto operator<=>(const basic_version& other) const noexcept {
             return as_array() <=> other.as_array();
         }
@@ -161,6 +207,24 @@ namespace webpp {
                 return std::partial_ordering::unordered;
             return as_array() <=> other_ver.as_array();
         }
+
+        template <stl::uint8_t NewCounts, stl::integral NewType>
+        [[nodiscard]] constexpr stl::partial_ordering
+        operator<=>(basic_version<NewCounts, NewType> const& other) const noexcept {
+            auto it = other.begin();
+            for (auto const& item : *this) {
+                auto const res = item <=> static_cast<integer_type>(*it++);
+                if (stl::is_gt(res)) {
+                    return stl::partial_ordering::greater;
+                } else if (stl::is_lt(res)) {
+                    return stl::partial_ordering::less;
+                } else if (!stl::is_eq(res)) {
+                    return stl::partial_ordering::unordered;
+                }
+            }
+            return it == other.end() ? stl::partial_ordering::equivalent : stl::partial_ordering::less;
+        }
+
 #endif
     };
 

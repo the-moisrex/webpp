@@ -42,4 +42,20 @@ TEST(BasicVersion, FromString) {
     EXPECT_EQ(ver, "1.2");
 }
 
+TEST(BasicVersion, OperatorsTest) {
+    basic_version<3, stl::uint16_t> const ver123{stl::uint16_t{1}, 2, 3};
+
+    basic_version ver{};
+    ver = ver123;
+    EXPECT_EQ(ver, "1.2.3");
+    ver += ver123;
+    EXPECT_EQ(ver, "2.4.6");
+
+    ver = ver123 + basic_version{2, 1, 1};
+    EXPECT_EQ(ver, (basic_version{3, 3, 4}));
+
+    EXPECT_LT(ver, (basic_version{3}));
+    EXPECT_GT(ver, (basic_version{3, 1}));
+}
+
 // NOLINTEND(*-avoid-magic-numbers)
