@@ -29,6 +29,17 @@ TEST(BasicVersion, FromString) {
     basic_version ver{};
     EXPECT_TRUE(ver.from_string("1.2.3"));
     EXPECT_EQ(ver, ver123);
+    EXPECT_EQ(ver, "1.2.3");
+    EXPECT_GE(ver, "0.2.3");
+    EXPECT_LE(ver, "1.2.3.1");
+    EXPECT_GT(ver, "1.2");
+
+    EXPECT_TRUE(ver.from_string("1.2"));
+    EXPECT_EQ(ver, "1.2");
+
+
+    ver.from_safe_string("1.2");
+    EXPECT_EQ(ver, "1.2");
 }
 
 // NOLINTEND(*-avoid-magic-numbers)

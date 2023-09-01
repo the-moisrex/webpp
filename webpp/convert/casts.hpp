@@ -48,17 +48,17 @@ namespace webpp {
         for (; c != str.end(); c++) {
             auto ch = *c;
             if constexpr (base <= 10) {
-                ch -= '0';
                 if constexpr (strategy == error_handling_strategy::throw_errors) {
-                    if (ch <= '0' || ch >= '9') {
+                    if (ch < '0' || ch > '9') {
                         throw stl::invalid_argument(
                           to_string(integer_casting_errors::invalid_character).data());
                     }
                 } else if constexpr (strategy == error_handling_strategy::use_expected) {
-                    if (ch <= '0' || ch >= '9') {
+                    if (ch < '0' || ch > '9') {
                         return stl::unexpected(integer_casting_errors::invalid_character);
                     }
                 }
+                ch -= '0';
             } else if (base > 10) {
                 if (ch >= 'a')
                     ch -= 'a' - 10;
