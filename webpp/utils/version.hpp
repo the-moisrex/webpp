@@ -5,6 +5,7 @@
 
 #include "../convert/casts.hpp"
 #include "../std/array.hpp"
+#include "../std/string.hpp"
 #include "../std/string_view.hpp"
 
 #include <compare>
@@ -188,6 +189,32 @@ namespace webpp {
 
         [[nodiscard]] constexpr array_type const& as_array() const noexcept {
             return static_cast<array_type const&>(*this);
+        }
+
+        template <istl::String StrT>
+        constexpr void to_string(StrT& out) {
+            if (this->empty())
+                return;
+            for (auto it = this->begin();;) {
+                auto num = *it;
+                while (num != 0) {
+                    out += (num % 10) + '0'; // NOLINT(*-avoid-magic-numbers)
+                    num /= 10;               // NOLINT(*-avoid-magic-numbers)
+                }
+
+                if (++it == this->end()) {
+                    break;
+                }
+                out += '.';
+            }
+        }
+
+        template <istl::String StrT = stl::string, typename... Args>
+            requires((!istl::cvref_as<StrT, Args> && ...) && stl::is_constructible_v<StrT, Args...>)
+        [[nodiscard]] constexpr StrT to_string(Args&&... args) {
+            StrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
 
         // Array comparison

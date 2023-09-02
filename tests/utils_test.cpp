@@ -65,4 +65,10 @@ TEST(BasicVersion, OperatorsTest) {
     EXPECT_TRUE(stl::is_eq(basic_version{} <=> basic_version{}));
 }
 
+
+TEST(BasicVersion, ToStringTest) {
+    basic_version ver{1, 2, 3, 4, 5, 6};
+    EXPECT_EQ(ver.to_string(), "1.2.3.4.5.6");
+}
+
 // NOLINTEND(*-avoid-magic-numbers)
