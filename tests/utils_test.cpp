@@ -69,6 +69,10 @@ TEST(BasicVersion, OperatorsTest) {
 TEST(BasicVersion, ToStringTest) {
     basic_version ver{1, 2, 3, 4, 5, 6};
     EXPECT_EQ(ver.to_string(), "1.2.3.4.5.6");
+    EXPECT_EQ(basic_version<0>{}.to_string(), "");
+    EXPECT_EQ(basic_version{0}.to_string(), "0");
+    EXPECT_EQ((basic_version{0, 1}.to_string()), "0.1");
+    EXPECT_EQ((basic_version{0, 0}.to_string()), "0.0");
 }
 
 // NOLINTEND(*-avoid-magic-numbers)

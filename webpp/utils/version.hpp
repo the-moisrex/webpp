@@ -197,9 +197,11 @@ namespace webpp {
                 return;
             for (auto it = this->begin();;) {
                 auto num = *it;
-                while (num != 0) {
+                for (;;) {
                     out += (num % 10) + '0'; // NOLINT(*-avoid-magic-numbers)
                     num /= 10;               // NOLINT(*-avoid-magic-numbers)
+                    if (num == 0)
+                        break; // for some weired reason, do-while is considered bad practice!!!
                 }
 
                 if (++it == this->end()) {
