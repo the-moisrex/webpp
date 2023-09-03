@@ -318,14 +318,14 @@ namespace webpp::async {
 
     template <typename T>
     concept IterableTask = details::BasicTask<T> && requires(T task) {
-                                                        { stl::begin(task) } noexcept -> TaskYielder;
-                                                        { stl::end(task) } noexcept -> TaskYielder;
-                                                    };
+        { stl::begin(task) } noexcept -> TaskYielder;
+        { stl::end(task) } noexcept -> TaskYielder;
+    };
 
     template <typename T>
     concept AdvancableTask = details::BasicTask<T> && requires(T task) {
-                                                          { advance(task) } -> stl::same_as<bool>;
-                                                      };
+        { advance(task) } -> stl::same_as<bool>;
+    };
 
     template <typename T>
     concept Task = IterableTask<T> || AdvancableTask<T>;
@@ -335,13 +335,13 @@ namespace webpp::async {
      */
     template <typename T>
     concept Chainable = requires(T task, stl::true_type lambda) {
-                            task.then(lambda);
-                            task.on_error(lambda);
-                            task.finally(lambda);
-                            task >> lambda; // same as then
-                            task | lambda;  // on error
-                            task& lambda;   // finally
-                        };
+        task.then(lambda);
+        task.on_error(lambda);
+        task.finally(lambda);
+        task >> lambda; // same as then
+        task | lambda;  // on error
+        task& lambda;   // finally
+    };
 
     /**
      * Chainable Task is a list of tasks (callbacks/io-operations/...).
@@ -353,10 +353,10 @@ namespace webpp::async {
      * Scheduler is something that the user will enqueue their work with it. This should be lightweight.
      */
     template <typename T>
-    concept Scheduler = ChainableTask<T> &&
-                        (sizeof(T) <= sizeof(void*)) && stl::copyable<T> && stl::movable<T> &&
-                        stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_move_constructible_v<T> &&
-                        stl::is_nothrow_copy_constructible_v<T> && stl::is_nothrow_copy_assignable_v<T>;
+    concept Scheduler =
+      ChainableTask<T> && (sizeof(T) <= sizeof(void*)) && stl::copyable<T> && stl::movable<T> &&
+      stl::is_nothrow_move_assignable_v<T> && stl::is_nothrow_move_constructible_v<T> &&
+      stl::is_nothrow_copy_constructible_v<T> && stl::is_nothrow_copy_assignable_v<T>;
 
     /**
      * Execution Context is where the I/O operations and Async Tasks are processed.
@@ -366,9 +366,9 @@ namespace webpp::async {
      */
     template <typename T>
     concept ExecutionContext = Task<T> && requires(T async) {
-                                              // This is what gets stored in the "enabled_traits" objects.
-                                              { async.scheduler() } -> Scheduler;
-                                          };
+        // This is what gets stored in the "enabled_traits" objects.
+        { async.scheduler() } -> Scheduler;
+    };
 
 
     /**
@@ -378,9 +378,9 @@ namespace webpp::async {
     template <typename T>
     concept EventLoop =
       ExecutionContext<T> && requires(T loop, stl::true_type event, stl::false_type lambda) {
-                                 loop.on(event, lambda);
-                                 loop.call(event);
-                             };
+          loop.on(event, lambda);
+          loop.call(event);
+      };
 
     /**
      * Thread pool class helps to implement a vector/list of threads and push
@@ -411,11 +411,32 @@ namespace webpp::async {
      */
     template <typename T>
     concept ThreadPool = requires(T tp, stl::true_type lambda) {
-                             tp.post(lambda);
-                             tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
-                             tp.dispatch(lambda);
-                         };
+        tp.post(lambda);
+        tp.defer(lambda); // todo: fix these 3; I don't think they have the correct args
+        tp.dispatch(lambda);
+    };
 
+    /**
+     * This utility will help you synchronise an async task
+     *
+     * @param main_task the main task to sync
+     * @param idle_tasks these are the tasks/task-chains/execution-contexts that you donate your time to
+     * @return the main task's return value
+     */
+    template <Task MainTask, Task... IdleTasks>
+    constexpr auto sync(MainTask&& main_task, IdleTasks&&... idle_tasks) noexcept {
+        if constexpr (sizeof...(IdleTasks) == 0) { // No donations? this is not a charity I guess
+            while (!advance(main_task))
+                ;
+            return get_value(main_task);
+        } else { // Donate idle times to other tasks
+            while (!advance(main_task)) {
+                // todo: run one main task, then one idle task, not a whole bunch of them, it's too much donation
+                (advance(idle_tasks), ...);
+            }
+            return get_value(main_task);
+        }
+    }
 } // namespace webpp::async
 
 #endif // WEBPP_ASYNC_ASYNC_HPP
