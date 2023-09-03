@@ -3,36 +3,36 @@
 
 #include "./project.hpp"
 
+#include <webpp/json/defaultjson.hpp>
+
 using namespace webpp::sdk;
+using namespace webpp::json;
 
 
 class project::impl {
   private:
     friend struct project;
 
-    stl::string name{};
-    fs::path    path{};
+    fs::path   path{};
+    document<> conf_doc;
 };
 
-webpp::sdk::project::project() : pimpl{stl::make_unique<impl>()} {}
+project::project() : pimpl{stl::make_unique<impl>()} {
+    // todo: read the config file
+}
+project::project(project&& other) noexcept            = default;
+project& project::operator=(project&& other) noexcept = default;
+webpp::sdk::project::~project()                       = default;
 
-std::filesystem::path webpp::sdk::project::path() const {
+std::filesystem::path project::path() const {
     return pimpl->path;
 }
-void webpp::sdk::project::path(std::filesystem::path new_path) {
+void project::path(std::filesystem::path new_path) {
     pimpl->path = stl::move(new_path);
 }
-std::string_view webpp::sdk::project::name() const noexcept {
-    return {pimpl->name.data(), pimpl->name.size()};
+std::string_view project::name() const noexcept {
+    return pimpl->conf_doc["name"].as_string_view();
 }
-void webpp::sdk::project::name(std::string_view new_name) {
-    pimpl->name = stl::string{new_name.data(), new_name.size()};
+void project::name(std::string_view new_name) {
+    pimpl->conf_doc["name"] = stl::string{new_name.data(), new_name.size()};
 }
-webpp::sdk::project::project(project&& other) noexcept : pimpl{stl::exchange(other.pimpl, nullptr)} {}
-project& webpp::sdk::project::operator=(project&& other) noexcept {
-    if (stl::addressof(other) != this) {
-        pimpl = stl::move(other.pimpl);
-    }
-    return *this;
-}
-webpp::sdk::project::~project() = default;

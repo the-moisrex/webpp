@@ -6,8 +6,11 @@
 #include <webpp/std/filesystem.hpp>
 #include <webpp/std/memory.hpp>
 #include <webpp/std/string_view.hpp>
+#include <webpp/utils/version.hpp>
 
 namespace webpp::sdk {
+
+    using project_version = basic_version<>;
 
     struct project {
         project();
