@@ -108,7 +108,7 @@ namespace webpp::async {
                 // It's an iterable
                 // let's get its iterator and give it to the next task
 
-            } else if constexpr (AdvancableTask<TaskT>) {
+            } else if constexpr (RootTask<TaskT>) {
                 // Returns a value
             } else {
                 static_assert_false(TaskT, "This is not possible");

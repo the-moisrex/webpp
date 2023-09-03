@@ -14,9 +14,7 @@ static_assert(ExecutionContext<basic_run_loop<>>, "A Run Loop is an execution co
 static_assert(Task<decltype([] {})>, "A lambda is a task");
 
 TEST(AsyncTest, ChainableTask) {
-    basic_run_loop<> loop;
-
-    auto chain = loop.scheduler() >> [] {
+    auto chain = task_chain{} >> [] {
         return "Hello World.";
     } >> [](stl::string_view str) {
         return str.substr(str.find(' '));
@@ -24,8 +22,9 @@ TEST(AsyncTest, ChainableTask) {
         EXPECT_EQ(str, "Hello");
     };
 
-    connect(loop, chain);
-    loop.exhaust();
+    auto op_state = connect(chain);
+    while (!advance(op_state))
+        ;
 }
 
 

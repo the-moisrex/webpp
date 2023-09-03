@@ -11,11 +11,14 @@ namespace webpp::async {
      * Connect two tasks together and (depending on the implementation) get either a task chain,
      * or get an intrusive list of tasks if possible.
      *
-     * If the user provides multiple ways, calling connect on it will result in ambiguity error, this
+     * If the user provides multiple ways, calling connect on it will result in ambiguity error, this is
+     * intentional so it would produce an error message and also to make the implementation of
+     * noexcept-correctness easier.
      *
      * Usage:
      * @code
      *    connect(previous_task, new_task);
+     *    connect(new_task);
      * @endcode
      */
     inline constexpr struct connect_tag {
@@ -342,12 +345,12 @@ namespace webpp::async {
     };
 
     template <typename T>
-    concept AdvancableTask = details::BasicTask<T> && requires(T task) {
+    concept RootTask = details::BasicTask<T> && requires(T task) {
         { advance(task) } -> stl::same_as<bool>;
     };
 
     template <typename T>
-    concept Task = IterableTask<T> || AdvancableTask<T>;
+    concept Task = IterableTask<T> || RootTask<T>;
 
     /**
      * Any type that has the ability to be chained up with other types of callables.
