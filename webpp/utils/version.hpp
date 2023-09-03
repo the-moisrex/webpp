@@ -193,13 +193,14 @@ namespace webpp {
 
         template <istl::String StrT>
         constexpr void to_string(StrT& out) {
+            using char_type = istl::char_type_of_t<StrT>;
             if (this->empty())
                 return;
             for (auto it = this->begin();;) {
                 auto num = *it;
                 for (;;) {
-                    out += (num % 10) + '0'; // NOLINT(*-avoid-magic-numbers)
-                    num /= 10;               // NOLINT(*-avoid-magic-numbers)
+                    out += static_cast<char_type>(num % 10) + char_type{'0'}; // NOLINT(*-avoid-magic-numbers)
+                    num /= 10;                                                // NOLINT(*-avoid-magic-numbers)
                     if (num == 0)
                         break; // for some weired reason, do-while is considered bad practice!!!
                 }
@@ -207,7 +208,7 @@ namespace webpp {
                 if (++it == this->end()) {
                     break;
                 }
-                out += '.';
+                out += char_type{'.'};
             }
         }
 
