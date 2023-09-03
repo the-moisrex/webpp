@@ -11,6 +11,8 @@ namespace webpp::async {
      * Connect two tasks together and (depending on the implementation) get either a task chain,
      * or get an intrusive list of tasks if possible.
      *
+     * If the user provides multiple ways, calling connect on it will result in ambiguity error, this
+     *
      * Usage:
      * @code
      *    connect(previous_task, new_task);
@@ -18,23 +20,40 @@ namespace webpp::async {
      */
     inline constexpr struct connect_tag {
         template <typename PrevTask, typename NewTask>
-        constexpr auto operator()(PrevTask&& prev_task, NewTask&& new_task) const {
-            if constexpr (requires {
-                              stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
-                          }) {
-                return stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
-            } else if constexpr (stl::tag_invocable<connect_tag, PrevTask, NewTask>) {
-                return stl::tag_invoke(*this,
-                                       stl::forward<PrevTask>(prev_task),
-                                       stl::forward<NewTask>(new_task));
-            } else {
-                static_assert_false(NewTask, "Cannot create the object.");
+            requires requires(PrevTask prev_task, NewTask new_task) {
+                stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
             }
+        constexpr decltype(auto) operator()(PrevTask&& prev_task, NewTask&& new_task) const {
+            return stl::forward<PrevTask>(prev_task).connect(stl::forward<NewTask>(new_task));
+        }
+
+        template <typename NewTask>
+        constexpr decltype(auto) operator()(auto&&, NewTask&& new_task) const noexcept {
+            return stl::forward<NewTask>(new_task);
+        }
+
+        template <typename NewTask>
+        constexpr decltype(auto) operator()(NewTask&& new_task) const noexcept {
+            return stl::forward<NewTask>(new_task);
+        }
+
+        template <typename NewTask>
+            requires requires(NewTask task) { task.connect(); }
+        constexpr decltype(auto) operator()(NewTask&& new_task) const
+          noexcept(noexcept(stl::forward<NewTask>(new_task).connect())) {
+            return stl::forward<NewTask>(new_task).connect();
+        }
+
+        template <typename PrevTask, typename NewTask>
+            requires stl::tag_invocable<connect_tag, PrevTask, NewTask>
+        constexpr decltype(auto) operator()(PrevTask&& prev_task, NewTask&& new_task) const
+          noexcept(stl::nothrow_tag_invocable<connect_tag, PrevTask, NewTask>) {
+            return stl::tag_invoke(*this, stl::forward<PrevTask>(prev_task), stl::forward<NewTask>(new_task));
         }
     } connect;
 
-    template <typename PrevTask, typename NewTask>
-    using connected_type = decltype(connect(stl::declval<PrevTask>(), stl::declval<NewTask>()));
+    template <typename... Tasks>
+    using connected_type = decltype(connect(stl::declval<Tasks>()...));
 
 
     /**
@@ -424,7 +443,7 @@ namespace webpp::async {
      * @return the main task's return value
      */
     template <Task MainTask, Task... IdleTasks>
-    constexpr auto sync(MainTask&& main_task, IdleTasks&&... idle_tasks) noexcept {
+    constexpr auto sync(MainTask& main_task, IdleTasks&... idle_tasks) noexcept {
         if constexpr (sizeof...(IdleTasks) == 0) { // No donations? this is not a charity I guess
             while (!advance(main_task))
                 ;

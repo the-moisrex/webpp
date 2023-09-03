@@ -27,6 +27,10 @@ namespace webpp::sdk {
         [[nodiscard]] stl::string_view name() const noexcept;
         void                           name(stl::string_view);
 
+        project_version version() const noexcept;
+        void            version(project_version) noexcept;
+        bool            version(stl::string_view) noexcept;
+
       private:
         class impl;
         stl::unique_ptr<impl> pimpl;
