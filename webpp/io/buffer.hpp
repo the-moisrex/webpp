@@ -35,6 +35,7 @@ namespace webpp::io {
     struct buffer {
         using allocator_type = Allocator;
         using alloc_traits   = stl::allocator_traits<allocator_type>;
+        using pointer        = typename alloc_traits::pointer;
 
         buffer(buffer const&)                          = delete;
         buffer& operator=(buffer const&)               = delete;
@@ -46,7 +47,7 @@ namespace webpp::io {
             iov{.iov_base = alloc_traits::allocate(allocator, iov.iov_len), .iov_len = len} {}
 
         ~buffer() {
-            alloc_traits::deallocate(allocator, iov.iov_base, iov.iov_len);
+            alloc_traits::deallocate(allocator, reinterpret_cast<pointer>(iov.iov_base), iov.iov_len);
         }
 
         operator iovec() const noexcept {
@@ -70,10 +71,10 @@ namespace webpp::io {
 
     template <typename Allocator = stl::allocator<buffer<>>>
     struct buffer_manager {
-        using allocator_type = Allocator;
         using buffer_allocator_type =
-          typename stl::allocator_traits<allocator_type>::template rebind_alloc<stl::byte>;
-        using buffer_type = buffer<buffer_allocator_type>;
+          typename stl::allocator_traits<Allocator>::template rebind_alloc<stl::byte>;
+        using buffer_type    = buffer<buffer_allocator_type>;
+        using allocator_type = stl::allocator_traits<Allocator>::template rebind_alloc<buffer_type>;
 
         constexpr buffer_manager(allocator_type const& inp_alloc = {}) noexcept : buffers{inp_alloc} {}
 

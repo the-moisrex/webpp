@@ -15,6 +15,28 @@ TEST(IO, IOConcepts) {
     //
 }
 #ifdef WEBPP_IO_URING_SUPPORT
+
+TEST(IO, BasicIOUring) {
+    io_uring_service<> io;
+
+    std::array<char, 100> buf{};
+
+    auto                   file = io.open(); // open temp file
+    std::string_view const data = "this is a text";
+    io.write(file, data.data(), data.size(), [data](int result) {
+        ASSERT_NE(result, -1);
+        ASSERT_EQ(result, data.size());
+    });
+    io.read(file, buf.data(), buf.size(), [data, &buf](int result) {
+        ASSERT_NE(result, -1);
+        std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result)};
+        EXPECT_EQ(data, buf_value);
+    });
+    io.close(file);
+    io.remove(file);
+}
+
+#    if 0
 TEST(IO, BasicIdea) {
     io_uring_service<> io;
     std::stringstream  fake_file;
@@ -56,6 +78,8 @@ TEST(IO, BasicIdea2) {
           throw io.error();
       };
 }
+#    endif // 0
+
 #endif
 
 TEST(IO, IOBuffersTest) {

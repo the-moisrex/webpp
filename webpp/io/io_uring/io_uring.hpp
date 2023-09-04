@@ -7,7 +7,7 @@
 // we're hoping that liburing would be standardised, so we don't have to include a library or implement it
 // on our own
 #if __has_include(<liburing.h>)
-#    define WEBPP_IO_URING_SUPPORT 1
+#    define WEBPP_IO_URING_SUPPORT
 
 #    include "../../async/async.hpp"
 #    include "../../std/coroutine.hpp"
@@ -115,7 +115,7 @@ namespace webpp::io {
                                            io_uring_service_state::init_failure));
         }
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        io_uring_service(unsigned entries) : io_uring_service{entries, {}} {}
+        io_uring_service(unsigned entries = default_entries_value) : io_uring_service{entries, {}} {}
 
         /**
          * Create a copy of the io_service which shares the same kernel worker thread.

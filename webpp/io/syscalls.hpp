@@ -27,7 +27,7 @@ namespace webpp::io::inline syscall_operations {
 
 
 
-    inline struct read_t {
+    inline constexpr struct read_t {
         template <typename Sched, typename CallbackType>
         friend int tag_invoke(syscall_tag,
                               read_t,
