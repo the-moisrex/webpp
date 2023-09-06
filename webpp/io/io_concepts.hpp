@@ -3,13 +3,14 @@
 
 #include "../async/async.hpp"
 #include "./buffer.hpp"
+#include "./file_handle.hpp"
 
 
 namespace webpp::io {
 
     template <typename T>
     concept IOService = requires(T io) {
-        requires requires(int handle, buffer_span buf, stl::true_type lambda) {
+        requires requires(file_handle handle, buffer_span buf, stl::true_type lambda) {
             // { io.open(, buf, lambda) } noexcept;
             { io.write(handle, buf, lambda) } noexcept;
             { io.read(handle, buf, lambda) } noexcept;
