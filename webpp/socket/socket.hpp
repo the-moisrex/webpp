@@ -565,7 +565,7 @@ namespace webpp {
 
         [[nodiscard]] bool is_non_blocking() const noexcept {
             int const flags = get_flags();
-            return (flags == -1) ? false : ((flags & O_NONBLOCK) != 0);
+            return flags != -1 && ((flags & O_NONBLOCK) != 0);
         }
 
 #endif

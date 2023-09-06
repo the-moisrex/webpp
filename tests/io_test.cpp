@@ -12,8 +12,12 @@ using namespace webpp::io;
 
 
 TEST(IO, IOConcepts) {
-    //
+#ifdef WEBPP_IO_URING_SUPPORT
+    EXPECT_TRUE(IOService<io_uring_service<>>);
+#endif
 }
+
+
 #ifdef WEBPP_IO_URING_SUPPORT
 
 TEST(IO, BasicIOUring) {
