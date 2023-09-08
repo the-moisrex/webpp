@@ -1,6 +1,7 @@
 // Created by moisrex on 6/2/23.
 #include "../webpp/io/io_concepts.hpp"
 // #include "../webpp/io/io_task.hpp"
+#include "../webpp/io/file_options.hpp"
 #include "../webpp/io/io_uring/io_uring.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -10,6 +11,9 @@
 using namespace webpp;
 using namespace webpp::io;
 
+TEST(IO, FileOptionsTest) {
+    file_options options = "rw";
+}
 
 TEST(IO, IOConcepts) {
 #ifdef WEBPP_IO_URING_SUPPORT
