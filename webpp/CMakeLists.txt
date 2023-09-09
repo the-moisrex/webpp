@@ -271,6 +271,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/storage/non_evicting_cache.hpp
         ${LIB_INCLUDE_DIR}/storage/unified_caches.hpp
 
+        ${LIB_INCLUDE_DIR}/common/meta.hpp
+        ${LIB_INCLUDE_DIR}/common/os.hpp
+
         ${LIB_INCLUDE_DIR}/main.hpp
         ${LIB_INCLUDE_DIR}/webpp.hpp
         )
