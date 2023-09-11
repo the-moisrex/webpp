@@ -13,6 +13,7 @@ using namespace webpp::io;
 
 TEST(IO, FileOptionsTest) {
     file_options options = "rw";
+    EXPECT_EQ(options, "rw");
 }
 
 TEST(IO, IOConcepts) {

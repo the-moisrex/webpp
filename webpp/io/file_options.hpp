@@ -14,8 +14,14 @@ namespace webpp::io {
 
     struct file_options {
 
-        using flags_type = OS_VALUE(int, DWORD);
+        using flags_type = OS_VALUE(int, int); // since we plan to use _sopen_s instead of CreateFileA in
+                                               // windows, we can use int for windows instead of DWORD
+
 #define def static constexpr flags_type
+        // _sopen_s documentation:
+        // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/sopen-s-wsopen-s?view=msvc-170
+
+
         // Linux(https://www.man7.org/linux/man-pages/man2/open.2.html):
         //    File access mode
         //       Unlike the other values that can be specified in flags, the
@@ -53,29 +59,52 @@ namespace webpp::io {
 
         constexpr file_options() noexcept = default;
 
-        constexpr file_options(flags_type inp_flags) noexcept : oflags{inp_flags} {}
-
         template <typename... FlagsT>
             requires(stl::same_as<FlagsT, flags_type> && ...)
-        constexpr file_options(FlagsT&&... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
+        constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
 
         template <typename CharT = char>
         constexpr file_options(CharT const* mode) noexcept {
             parse(mode);
         }
 
-        constexpr file_options operator|(file_options other) const noexcept {
-            // todo
-            return {};
+#define def(the_op)                                                                             \
+    [[nodiscard]] constexpr file_options operator the_op(file_options other) const noexcept {   \
+        return {oflags the_op other.oflags};                                                    \
+    }                                                                                           \
+                                                                                                \
+    [[nodiscard]] constexpr file_options operator the_op(flags_type inp_flags) const noexcept { \
+        return {oflags the_op inp_flags};                                                       \
+    }
+
+        def(|) def(&) def(+) def(-) def(*) def(/) def(%)
+
+#undef def
+
+          [[nodiscard]] constexpr file_options
+          operator~() const noexcept {
+            return {~oflags};
         }
 
+
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return oflags & invalid == 0;
+            return (oflags & invalid) == 0;
+        }
+
+        [[nodiscard]] constexpr bool operator==(file_options other) const noexcept {
+            return oflags == other.oflags;
+        }
+
+        [[nodiscard]] constexpr flags_type native_flags() const noexcept {
+            return oflags;
         }
 
       private:
         template <typename CharT = char>
         constexpr void parse(CharT const* mode) noexcept {
+            // fopen doc:
+            // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/fopen-wfopen?view=msvc-170
+            // https://github.com/bminor/glibc/blob/5324d258427fd11ca0f4f595c94016e568b26d6b/libio/fileops.c#L211
             if (!mode) {
                 return;
             }
