@@ -1,10 +1,12 @@
 #ifndef WEBPP_TIME_CONVERT_HPP
 #define WEBPP_TIME_CONVERT_HPP
 
+#include "../common/os.hpp"
+
 #include <chrono>
 
 // todo: test on windows
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
 #    include <winsock2.h>
 
 #    ifndef _SUSECONDS_T
@@ -30,7 +32,7 @@ namespace webpp {
         const seconds sec = duration_cast<seconds>(dur);
 
         timeval tv;
-#if defined(_WIN32)
+#ifdef MSVC_COMPILER
         tv.tv_sec = long{sec.count()};
 #else
         tv.tv_sec = time_t{sec.count()};

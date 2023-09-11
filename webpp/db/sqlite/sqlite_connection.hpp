@@ -1,6 +1,7 @@
 #ifndef WEBPP_DATABASE_SQLITE_CONNECTION_HPP
 #define WEBPP_DATABASE_SQLITE_CONNECTION_HPP
 
+#include "../../common/os.hpp"
 #include "../../libs/sqlite.hpp"
 #include "sqlite_statement.hpp"
 
@@ -23,7 +24,7 @@ namespace webpp::sql {
         std::string_view filename = ":memory:";
         int              flags    = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
         std::string_view password{};
-#ifdef __WIN32__
+#ifdef WINDOWS_SYSTEM
         std::string_view vfs = "win32";
 #else
         std::string_view vfs = "unix";

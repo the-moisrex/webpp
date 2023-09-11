@@ -4,9 +4,11 @@
 #define WEBPP_SOCKET_OS_HPP
 
 
+#include "../common/os.hpp"
+
 #include <cstdint>
 
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
 
 // reduce the included stuff with this macro:
 #    define WIN32_LEAN_AND_MEAN

@@ -3,8 +3,9 @@
 #ifndef WEBPP_FILE_HANDLE_HPP
 #define WEBPP_FILE_HANDLE_HPP
 
+#include "../common/os.hpp"
 
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
 #    include <Windows.h>
 #else
 #    include <fcntl.h>
@@ -15,7 +16,7 @@ namespace webpp::io {
 
 
     struct file_handle {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
         using handle_type                              = HANDLE;
         static constexpr bool        is_unix_handle    = false;
         static constexpr bool        is_windows_handle = true;

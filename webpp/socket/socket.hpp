@@ -27,7 +27,7 @@ namespace webpp {
          */
         constexpr static int last_error() noexcept {
             if !consteval {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
                 return ::WSAGetLastError();
 #else
                 return errno;
@@ -105,7 +105,7 @@ namespace webpp {
         constexpr socket_initializer() noexcept {
             // do nothing if it's called in a consteval environment
             if !consteval {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
                 WSADATA wsadata;
                 if (inet iResult = ::WSAStartup(MAKEWORD(2, 0), &wsadata); iResult != NO_ERROR) {
                     wprintf(L"WSAStartup() failed with error: %d\n", iResult);
@@ -151,7 +151,7 @@ namespace webpp {
             }
         }
 
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
         ~socket_initializer() noexcept {
             ::WSACleanup();
         }
@@ -218,7 +218,7 @@ namespace webpp {
         // The value of the file "/proc/sys/net/core/somaxconn" (or sysctl one) relates to this value.
         static constexpr int default_queue_size = SOMAXCONN;
 
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
         using native_handle_type                                 = SOCKET;
         static constexpr native_handle_type invalid_handle_value = INVALID_SOCKET;
 #else
@@ -237,7 +237,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool check_ret_bool(stl::integral auto ret) const noexcept {
             // doesn't really matter if we use SOCKET_ERROR or not!
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
             last_errno = ret == SOCKET_ERROR ? io_result::last_error() : 0;
 #else
             last_errno = ret == -1 ? io_result::last_error() : 0;
@@ -321,7 +321,7 @@ namespace webpp {
                 if (!is_open()) {
                     return true;
                 }
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
                 bool const val = check_ret_bool(::closesocket(fd));
 #else
                 bool const val = check_ret_bool(::close(fd));
@@ -343,7 +343,7 @@ namespace webpp {
                 return {invalid_handle_value};
             } else {
                 native_handle_type h = invalid_handle_value;
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
                 WSAPROTOCOL_INFOW protInfo;
                 if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0) {
                     h =
@@ -467,7 +467,7 @@ namespace webpp {
          * @return bool true if the value was retrieved, false on error.
          */
         bool get_option(int level, int optname, void* optval, socklen_t* optlen) const noexcept {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
             if (optval && optlen) {
                 int len = static_cast<int>(*optlen);
                 if (check_ret_bool(::getsockopt(fd, level, optname, static_cast<char*>(optval), &len))) {
@@ -508,7 +508,7 @@ namespace webpp {
          * @return bool true if the value was set, false on error.
          */
         bool set_option(int level, int optname, const void* optval, socklen_t optlen) noexcept {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
             return check_ret_bool(
               ::setsockopt(fd, level, optname, static_cast<const char*>(optval), static_cast<int>(optlen)));
 #else
@@ -532,14 +532,14 @@ namespace webpp {
 
 
         bool set_non_blocking(bool on = true) noexcept {
-#ifdef _WIN32
+#ifdef MSVC_COMPILER
             unsigned long mode = on ? 1 : 0;
             return check_ret_bool(::ioctlsocket(fd, FIONBIO, &mode));
 #else
             return set_flag(O_NONBLOCK, on);
 #endif
         }
-#ifndef _WIN32
+#ifndef MSVC_COMPILER
 
         int get_flags() const noexcept {
             int const flags = ::fcntl(fd, F_GETFL, 0); // NOLINT(cppcoreguidelines-pro-type-vararg)
