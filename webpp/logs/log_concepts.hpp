@@ -20,9 +20,9 @@ namespace webpp {
 
         template <typename T>
         concept SimpleLogger = stl::movable<T> && requires(T logger, stl::error_code ec, stl::exception ex) {
-                                                      typename T::logger_ref;
-                                                      typename T::logger_ptr;
-                                                      typename T::logger_type;
+            typename T::logger_ref;
+            typename T::logger_ptr;
+            typename T::logger_type;
 
 
 #define WEBPP_LOGGER_CONCEPT(logger_name)                \
@@ -39,13 +39,13 @@ namespace webpp {
     logger.logger_name(if_debug, "msg", ec);             \
     logger.logger_name(if_debug, "msg", ex);
 
-                                                      WEBPP_LOGGER_CONCEPT(info)
-                                                      WEBPP_LOGGER_CONCEPT(warning)
-                                                      WEBPP_LOGGER_CONCEPT(error)
-                                                      WEBPP_LOGGER_CONCEPT(critical)
+            WEBPP_LOGGER_CONCEPT(info)
+            WEBPP_LOGGER_CONCEPT(warning)
+            WEBPP_LOGGER_CONCEPT(error)
+            WEBPP_LOGGER_CONCEPT(critical)
 
 #undef WEBPP_LOGGER_CONCEPT
-                                                  };
+        };
     } // namespace details
 
     template <typename T>

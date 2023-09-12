@@ -70,7 +70,9 @@ namespace webpp {
 
 
 #define WEBPP_DEFINE_METHOD(method_name)                                                              \
-    void method_name(string_view_type msg) override { actual_logger.method_name(msg); }               \
+    void method_name(string_view_type msg) override {                                                 \
+        actual_logger.method_name(msg);                                                               \
+    }                                                                                                 \
     void method_name(string_view_type cat, string_view_type msg) override {                           \
         actual_logger.method_name(cat, msg);                                                          \
     }                                                                                                 \

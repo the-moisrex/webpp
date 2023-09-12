@@ -1,7 +1,7 @@
 // Created by moisrex on 6/2/23.
 
-#ifndef WEBPP_IO_URING_HPP
-#define WEBPP_IO_URING_HPP
+#ifndef WEBPP_IO_IO_URING_HPP
+#define WEBPP_IO_IO_URING_HPP
 
 // check if we have io_uring library
 // we're hoping that liburing would be standardised, so we don't have to include a library or implement it
@@ -14,6 +14,8 @@
 #    include "../../std/expected.hpp"
 #    include "../../std/optional.hpp"
 #    include "../buffer.hpp"
+#    include "../file_handle.hpp"
+#    include "../file_options.hpp"
 #    include "../syscalls.hpp"
 
 #    include <coroutine>
@@ -110,12 +112,12 @@ namespace webpp::io {
          * shares the only async worker thread pool.
          */
         // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
-        io_uring_service(unsigned entries, io_uring_params inp_params) : params{inp_params} {
+        io_uring_service(unsigned entries, io_uring_params inp_params) noexcept : params{inp_params} {
             static_cast<void>(error_on_res(io_uring_queue_init_params(entries, &ring, &params),
                                            io_uring_service_state::init_failure));
         }
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        io_uring_service(unsigned entries = default_entries_value) : io_uring_service{entries, {}} {}
+        io_uring_service(unsigned entries = default_entries_value) noexcept : io_uring_service{entries, {}} {}
 
         /**
          * Create a copy of the io_service which shares the same kernel worker thread.
@@ -238,4 +240,4 @@ namespace webpp::io {
 
 #endif // io_uring support
 
-#endif // WEBPP_IO_URING_HPP
+#endif // WEBPP_IO_IO_URING_HPP

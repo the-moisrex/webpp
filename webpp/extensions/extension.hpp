@@ -15,9 +15,9 @@ namespace webpp {
 
     // todo: check this, it's old
     template <typename T>
-    concept Extension = stl::copy_constructible<T> && !
-    stl::is_final_v<T>&& stl::is_default_constructible_v<T>&& stl::is_move_constructible_v<T> &&
-      !stl::is_integral_v<T>;
+    concept Extension =
+      stl::copy_constructible<T> && !stl::is_final_v<T> && stl::is_default_constructible_v<T> &&
+      stl::is_move_constructible_v<T> && !stl::is_integral_v<T>;
 
     template <typename TraitsType, typename T>
     concept MotherExtension = Extension<T> && requires { typename T::template type<TraitsType>; };
@@ -405,14 +405,13 @@ namespace webpp {
 
     template <typename E>
     concept ExtensionList = requires {
-                                typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
-                                // typename E::template is_all<fake_extensie_descriptor::template
-                                // has_related_extension_pack>;
-                            };
+        typename E::template extensie_type<default_traits, fake_extensie_descriptor>;
+        // typename E::template is_all<fake_extensie_descriptor::template
+        // has_related_extension_pack>;
+    };
 
     template <typename E, template <typename> typename IF>
-    concept ExtensionListOf = ExtensionList<E> && E::template
-    is_all<IF>::value;
+    concept ExtensionListOf = ExtensionList<E> && E::template is_all<IF>::value;
 
 
     /**

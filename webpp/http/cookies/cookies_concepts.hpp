@@ -9,18 +9,18 @@ namespace webpp::http {
 
     template <typename T>
     concept Cookie = requires(T cookie) {
-                         cookie.name();
-                         cookie.value();
-                     };
+        cookie.name();
+        cookie.value();
+    };
 
     template <typename T>
     concept ResponseCookie = Cookie<T> && requires(T cookie) {
-                                              cookie.max_age();
-                                              cookie.expires();
-                                              cookie.path();
-                                              cookie.secure();
-                                              cookie.http_only();
-                                          };
+        cookie.max_age();
+        cookie.expires();
+        cookie.path();
+        cookie.secure();
+        cookie.http_only();
+    };
 
     template <typename T>
     concept RequestCookie = Cookie<T> && requires(T cookie) { cookie.is_valid(); };
@@ -36,10 +36,10 @@ namespace webpp::http {
      */
     template <typename T>
     concept CookieCryptor = requires(T encryptor) {
-                                encryptor.encrypt_value("value");
-                                encryptor.encrypt_name("name");
-                                // encryptor.encrypt(Cookie);
-                            };
+        encryptor.encrypt_value("value");
+        encryptor.encrypt_name("name");
+        // encryptor.encrypt(Cookie);
+    };
 
 } // namespace webpp::http
 

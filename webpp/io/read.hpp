@@ -37,7 +37,7 @@ namespace webpp::io {
       private:
         struct operation_status {
             [[no_unique_address]] async::connected_type<Task> task_state;
-            int                                        read_size = 0;
+            int                                               read_size = 0;
 
             template <typename... Args>
             [[nodiscard]] constexpr bool operator()(IOScheduler auto io, Args&&... args) noexcept {

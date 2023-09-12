@@ -119,22 +119,21 @@ namespace webpp {
      *     todo: implement these two
      */
     template <typename T>
-    concept Traits =
-      requires {
-          requires AllocatorDescriptorList<typename T::allocator_descriptors>; // allocator pack
-          requires Logger<typename T::logger_type>;                            // logger type
-          // requires ThreadPool<typename T::thread_pool>;   // thread pool
+    concept Traits = requires {
+        requires AllocatorDescriptorList<typename T::allocator_descriptors>; // allocator pack
+        requires Logger<typename T::logger_type>;                            // logger type
+        // requires ThreadPool<typename T::thread_pool>;   // thread pool
 
-          typename T::string_view;
-          typename T::template string<typename alloc::allocator_pack<typename T::allocator_descriptors>::
-                                        template general_allocator_type<typename T::string_view::value_type>>;
+        typename T::string_view;
+        typename T::template string<typename alloc::allocator_pack<typename T::allocator_descriptors>::
+                                      template general_allocator_type<typename T::string_view::value_type>>;
 
-          // todo: add String<typename T::string_type>; without adding a circular dependency
-          // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
+        // todo: add String<typename T::string_type>; without adding a circular dependency
+        // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
 
-          // typename T::execution_context;
-          // requires io::ExecutionContext<typename T::execution_context>;
-      };
+        // typename T::execution_context;
+        // requires io::ExecutionContext<typename T::execution_context>;
+    };
 
 
     /**
@@ -142,17 +141,16 @@ namespace webpp {
      * This will probably have a run-time cost to instantiate.
      */
     template <typename T>
-    concept EnabledTraits =
-      requires(stl::remove_cvref_t<T> t) {
-          requires alloc::AllocatorPack<typename stl::remove_cvref_t<T>::allocator_pack_type>;
-          requires Logger<typename stl::remove_cvref_t<T>::logger_type>;
-          requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
-          t.logger;
-          t.alloc_pack;
-          // { t.io } -> io::IOScheduler;
-          stl::remove_cvref_t<T>::is_resource_owner;
-          t.get_traits();
-      };
+    concept EnabledTraits = requires(stl::remove_cvref_t<T> t) {
+        requires alloc::AllocatorPack<typename stl::remove_cvref_t<T>::allocator_pack_type>;
+        requires Logger<typename stl::remove_cvref_t<T>::logger_type>;
+        requires Traits<typename stl::remove_cvref_t<T>::traits_type>;
+        t.logger;
+        t.alloc_pack;
+        // { t.io } -> io::IOScheduler;
+        stl::remove_cvref_t<T>::is_resource_owner;
+        t.get_traits();
+    };
 
 
     template <typename TraitsType, typename T>

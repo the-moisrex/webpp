@@ -100,7 +100,7 @@ namespace webpp {
                 return c == super::operator[](0) || c == super::operator[](1) || c == super::operator[](2);
             } else if constexpr (N == 4) {
                 return c == super::operator[](0) || c == super::operator[](1) || c == super::operator[](2) ||
-                       c == super::                                                          operator[](3);
+                       c == super::operator[](3);
             } else {
                 return stl::find(super::begin(), super::end(), c) != super::end();
             }
@@ -213,14 +213,13 @@ namespace webpp {
     };
 
     template <typename T>
-    concept CharSet =
-      requires(T cs) {
-          typename stl::remove_cvref_t<T>::value_type;
-          stl::remove_cvref_t<T>::array_size;
-          requires stl::same_as<
-            stl::remove_cvref_t<T>,
-            charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
-      };
+    concept CharSet = requires(T cs) {
+        typename stl::remove_cvref_t<T>::value_type;
+        stl::remove_cvref_t<T>::array_size;
+        requires stl::same_as<
+          stl::remove_cvref_t<T>,
+          charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
+    };
 
     /**
      * This constructs a character set that contains all the characters between the given
@@ -248,7 +247,7 @@ namespace webpp {
      */
     template <typename Tp, typename... Up>
         requires((stl::same_as<Tp, Up> && ...)) // T and Us should be same
-    charset(Tp, Up...)->charset<Tp, (1 + sizeof...(Up))>;
+    charset(Tp, Up...) -> charset<Tp, (1 + sizeof...(Up))>;
 
     template <istl::CharType CharT = char, stl::size_t N>
     charset(const CharT (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
@@ -425,9 +424,9 @@ namespace webpp {
 
     template <typename T>
     concept CharMap = requires(T cs) {
-                          stl::remove_cvref_t<T>::array_size;
-                          requires istl::cvref_as<T, charmap<stl::remove_cvref_t<T>::array_size>>;
-                      };
+        stl::remove_cvref_t<T>::array_size;
+        requires istl::cvref_as<T, charmap<stl::remove_cvref_t<T>::array_size>>;
+    };
 
     /**
      * This constructs a character map that contains all the characters between the given

@@ -240,8 +240,7 @@ namespace webpp::http {
         if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
                       istl::StringifiableOf<type, BodyType>) {
             return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
-                             requires {
+        } else if constexpr (istl::String<type> && EnabledTraits<BodyType> && requires {
                                  requires alloc::HasAllocatorFor<
                                    type,
                                    traits::allocator_pack_type<typename BodyType::traits_type>>;

@@ -12,30 +12,30 @@ namespace webpp::istl {
 
     template <typename T>
     concept String = requires(stl::remove_cvref_t<T> str) {
-                         //        { T{"str"} };
-                         str.empty();
-                         str.at(0);
-                         str.data();
-                         str.c_str();
-                         { str = "str" };
-                         str.size();
-                         str.capacity();
-                         str.shrink_to_fit();
-                         str.clear();
-                         str.append("str");
-                         str.starts_with('a');
-                         str.ends_with('a');
-                         str.substr('a');
-                         str.resize(1);
-                         str.begin();
-                         str.end();
-                         str.cbegin();
-                         str.cend();
-                         stl::remove_cvref_t<T>::npos;
+        //        { T{"str"} };
+        str.empty();
+        str.at(0);
+        str.data();
+        str.c_str();
+        { str = "str" };
+        str.size();
+        str.capacity();
+        str.shrink_to_fit();
+        str.clear();
+        str.append("str");
+        str.starts_with('a');
+        str.ends_with('a');
+        str.substr('a');
+        str.resize(1);
+        str.begin();
+        str.end();
+        str.cbegin();
+        str.cend();
+        stl::remove_cvref_t<T>::npos;
 
-                         typename stl::remove_cvref_t<T>::value_type;
-                         typename stl::remove_cvref_t<T>::allocator_type;
-                     };
+        typename stl::remove_cvref_t<T>::value_type;
+        typename stl::remove_cvref_t<T>::allocator_type;
+    };
 
     namespace details::string {
         /**
@@ -48,22 +48,21 @@ namespace webpp::istl {
     } // namespace details::string
 
     template <typename StrT, typename T>
-    concept StringifiableOf = !
-    stl::is_void_v<StrT> && !istl::CharType<stl::remove_cvref_t<T>> &&
-      requires { stl::remove_cvref_t<T>{}; } && !stl::is_void_v<char_type_of_t<T>> &&
-      requires(stl::remove_cvref_t<T> str) {
-          stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
-          stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
-          requires requires { StrT{str}; } || requires {
-                                                  str.data();
-                                                  str.size();
-                                                  StrT{str.data(), str.size()};
-                                              } || requires {
-                                                       str.c_str();
-                                                       str.size();
-                                                       StrT{str.c_str(), str.size()};
-                                                   };
-      };
+    concept StringifiableOf = !stl::is_void_v<StrT> && !istl::CharType<stl::remove_cvref_t<T>> && requires {
+        stl::remove_cvref_t<T>{};
+    } && !stl::is_void_v<char_type_of_t<T>> && requires(stl::remove_cvref_t<T> str) {
+        stl::is_trivial_v<typename stl::remove_cvref_t<StrT>::value_type>;
+        stl::is_standard_layout_v<typename stl::remove_cvref_t<StrT>::value_type>;
+        requires requires { StrT{str}; } || requires {
+            str.data();
+            str.size();
+            StrT{str.data(), str.size()};
+        } || requires {
+            str.c_str();
+            str.size();
+            StrT{str.c_str(), str.size()};
+        };
+    };
 
 
     template <template <typename...> typename StrType, typename T>
@@ -141,10 +140,10 @@ namespace webpp::istl {
 
     template <typename T>
     concept ComparableToString = requires(T obj) {
-                                     { obj == "" };
-                                 } || requires(T obj) {
-                                          { "" == obj };
-                                      };
+        { obj == "" };
+    } || requires(T obj) {
+        { "" == obj };
+    };
 
 
 

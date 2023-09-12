@@ -26,6 +26,8 @@ namespace webpp::io::inline syscall_operations {
     } syscall;
 
 
+    inline constexpr struct open_tag {
+    } open;
 
     inline constexpr struct read_t {
         template <typename Sched, typename CallbackType>
@@ -38,7 +40,7 @@ namespace webpp::io::inline syscall_operations {
             if constexpr (requires {
                               {
                                   sched.read(buf, amount, stl::forward<CallbackType>(callback))
-                                  } noexcept -> stl::same_as<int>;
+                              } noexcept -> stl::same_as<int>;
                           }) {
                 return sched.read(buf, amount, stl::forward<CallbackType>(callback));
             } else {

@@ -171,13 +171,9 @@ namespace webpp::istl {
             template <typename Callable>
             static constexpr bool is_convertible_v =
               (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable>&, Args...>
-                          : stl::is_invocable_v<
-                              stl::decay_t<Callable>&,
-                              Args...>) and requires {
-                                                requires is_safely_convertible_v<
-                                                  stl::invoke_result_t<stl::decay_t<Callable>&, Args...>,
-                                                  R>;
-                                            };
+                          : stl::is_invocable_v<stl::decay_t<Callable>&, Args...>) and requires {
+                  requires is_safely_convertible_v<stl::invoke_result_t<stl::decay_t<Callable>&, Args...>, R>;
+              };
         };
 
         template <typename Function, bool IsNoexcept, typename R, typename... Args>
@@ -212,15 +208,12 @@ namespace webpp::istl {
 
             template <typename Callable>
             static constexpr bool is_convertible_v =
-              (IsNoexcept
-                 ? stl::is_nothrow_invocable_v<const stl::decay_t<Callable>&, Args...>
-                 : stl::is_invocable_v<
-                     const stl::decay_t<Callable>&,
-                     Args...>) and requires {
-                                       requires is_safely_convertible_v<
-                                         stl::invoke_result_t<const stl::decay_t<Callable>&, Args...>,
-                                         R>;
-                                   };
+              (IsNoexcept ? stl::is_nothrow_invocable_v<const stl::decay_t<Callable>&, Args...>
+                          : stl::is_invocable_v<const stl::decay_t<Callable>&, Args...>) and requires {
+                  requires is_safely_convertible_v<
+                    stl::invoke_result_t<const stl::decay_t<Callable>&, Args...>,
+                    R>;
+              };
         };
 
     } // namespace details
@@ -304,14 +297,12 @@ namespace webpp::istl {
         static constexpr bool not_alloc_v = !stl::is_same_v<stl::decay_t<Alloc>, stl::decay_t<Alloc2>>;
 
         template <typename Func>
-        static constexpr bool is_compatible_function_v =
-          is_function_v<Func> &&
-          requires {
-              typename stl::remove_cvref_t<Func>::allocator_type;
-              requires stl::same_as<typename stl::remove_cvref_t<Func>::allocator_type, allocator_type>;
-              typename stl::remove_cvref_t<Func>::signature;
-              requires is_convertible_v<typename stl::remove_cvref_t<Func>::signature>;
-          };
+        static constexpr bool is_compatible_function_v = is_function_v<Func> && requires {
+            typename stl::remove_cvref_t<Func>::allocator_type;
+            requires stl::same_as<typename stl::remove_cvref_t<Func>::allocator_type, allocator_type>;
+            typename stl::remove_cvref_t<Func>::signature;
+            requires is_convertible_v<typename stl::remove_cvref_t<Func>::signature>;
+        };
 
         template <typename T>
         static constexpr bool compatible_allocator_v =

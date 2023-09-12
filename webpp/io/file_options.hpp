@@ -2,6 +2,7 @@
 #define WEBPP_OP_FILE_OPTIONS_HPP
 
 #include "../common/os.hpp"
+#include "../std/string_view.hpp"
 #include "../std/utility.hpp"
 
 #include <cstdint>
@@ -12,6 +13,27 @@
 
 namespace webpp::io {
 
+    /**
+     * A view of a file path
+     */
+    template <typename CharT = char>
+    struct basic_path_view : stl::basic_string_view<CharT> {
+        using stl::basic_string_view<CharT>::basic_string_view;
+
+        template <istl::StringViewifiable StrT>
+            requires(!stl::is_constructible_v<stl::string_view, StrT>)
+        constexpr basic_path_view(StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
+          : stl::string_view{istl::string_viewify(stl::forward<StrT>(inp_path))} {}
+    };
+
+    using wpath_view = basic_path_view<wchar_t>;
+    using path_view  = basic_path_view<char>;
+
+
+
+    /**
+     *
+     */
     struct file_options {
 
         using flags_type = OS_VALUE(int, int); // since we plan to use _sopen_s instead of CreateFileA in

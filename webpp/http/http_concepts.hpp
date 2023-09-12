@@ -30,15 +30,15 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeaderField = requires(T f) {
-                                  typename T::string_type;
-                                  typename T::name_type;
-                                  typename T::value_type;
-                                  requires requires(typename T::name_type name) {
-                                               { f.is_name(name) } -> stl::same_as<bool>;
-                                           };
-                                  { f.name } -> istl::StringViewifiable;
-                                  { f.value } -> istl::StringViewifiable;
-                              };
+        typename T::string_type;
+        typename T::name_type;
+        typename T::value_type;
+        requires requires(typename T::name_type name) {
+            { f.is_name(name) } -> stl::same_as<bool>;
+        };
+        { f.name } -> istl::StringViewifiable;
+        { f.value } -> istl::StringViewifiable;
+    };
 
 
     /**
@@ -48,12 +48,12 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequestHeaderFieldsProvider = requires(T obj) {
-                                                  obj.begin();
-                                                  obj.end();
-                                                  typename T::field_type;
-                                                  typename T::name_type;
-                                                  typename T::value_type;
-                                              };
+        obj.begin();
+        obj.end();
+        typename T::field_type;
+        typename T::name_type;
+        typename T::value_type;
+    };
 
     template <typename T>
     concept HTTPResponseHeaderFieldsProvider = HTTPRequestHeaderFieldsProvider<T>;
@@ -87,9 +87,9 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeaderFieldsProvider = requires(T provider) {
-                                           provider.begin();
-                                           provider.end();
-                                       };
+        provider.begin();
+        provider.end();
+    };
 
 
 
@@ -105,21 +105,21 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPRequest = requires(stl::remove_cvref_t<T> req) {
-                              requires EnabledTraits<stl::remove_cvref_t<T>>;
-                              typename stl::remove_cvref_t<T>::headers_type;
-                              typename stl::remove_cvref_t<T>::body_type;
-                              requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
-                              requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
-                              req.headers;
-                              req.body;
-                              req.uri();
+        requires EnabledTraits<stl::remove_cvref_t<T>>;
+        typename stl::remove_cvref_t<T>::headers_type;
+        typename stl::remove_cvref_t<T>::body_type;
+        requires HTTPRequestHeaders<typename stl::remove_cvref_t<T>::headers_type>;
+        requires HTTPRequestBody<typename stl::remove_cvref_t<T>::body_type>;
+        req.headers;
+        req.body;
+        req.uri();
 
-                              // so we can make a copy of it (initial request)
-                              // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
+        // so we can make a copy of it (initial request)
+        // requires stl::copy_constructible<stl::remove_cvref_t<T>>;
 
 
-                              // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
-                          };
+        // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
+    };
 
 
 
@@ -128,18 +128,16 @@ namespace webpp::http {
     namespace details {
 
         template <typename ResType>
-        concept HTTPResponse =
-          requires(ResType res) {
-              typename ResType::body_type;
-              typename ResType::headers_type;
-              requires HTTPResponseBody<typename ResType::body_type>;
-              requires HTTPHeaders<typename ResType::headers_type>;
-              res.body;
-              res.headers;
-              requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
-              requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>,
-                                    typename ResType::headers_type>;
-          };
+        concept HTTPResponse = requires(ResType res) {
+            typename ResType::body_type;
+            typename ResType::headers_type;
+            requires HTTPResponseBody<typename ResType::body_type>;
+            requires HTTPHeaders<typename ResType::headers_type>;
+            res.body;
+            res.headers;
+            requires stl::same_as<stl::remove_cvref_t<decltype(res.body)>, typename ResType::body_type>;
+            requires stl::same_as<stl::remove_cvref_t<decltype(res.headers)>, typename ResType::headers_type>;
+        };
 
         template <typename T>
         concept good_response_types =
@@ -161,8 +159,8 @@ namespace webpp::http {
 
 
     template <typename T>
-    concept ConvertibleToResponse = !
-    stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
+    concept ConvertibleToResponse =
+      !stl::is_same_v<T, bool> && !stl::is_integral_v<T> &&
       (HTTPResponse<T> || istl::StringViewifiable<T> || istl::StringViewifiable<T>);
 
 
@@ -172,14 +170,14 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeadersHolder = requires(stl::remove_cvref_t<T> server) {
-                                    { server.headers } -> HTTPHeaders;
-                                };
+        { server.headers } -> HTTPHeaders;
+    };
 
 
     template <typename T>
     concept HTTPBodyHolder = requires(stl::remove_cvref_t<T> server) {
-                                 { server.body } -> HTTPBody;
-                             };
+        { server.body } -> HTTPBody;
+    };
 
 
     ////////////////////////////// Protocols //////////////////////////////
@@ -196,12 +194,11 @@ namespace webpp::http {
      * use HTTPProtocol for the users and other places where the Protocol's type is fully known.
      */
     template <typename T>
-    concept HTTPCommunicator =
-      requires(T proto) {
-          requires EnabledTraits<T>;
-          requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
-          // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
-      };
+    concept HTTPCommunicator = requires(T proto) {
+        requires EnabledTraits<T>;
+        requires HTTPRequestBodyCommunicator<typename T::request_body_communicator>;
+        // requires HTTPResponseBodyCommunicator<typename T::response_body_communicator>;
+    };
 
     /**
      * Protocol is a "Protocol Type" based on the information that I said in the "server/server_concepts"
@@ -209,16 +206,16 @@ namespace webpp::http {
      */
     template <typename T>
     concept HTTPProtocol = requires(T proto) {
-                               requires HTTPCommunicator<T>;
-                               requires HTTPRequest<typename T::request_type>;
-                               requires Application<typename T::application_type>;
-                               requires ApplicationWrapper<typename T::app_wrapper_type>;
-                               { proto.app } -> ApplicationWrapper; // get the app
-                               // should be able to pass an app to it as well
+        requires HTTPCommunicator<T>;
+        requires HTTPRequest<typename T::request_type>;
+        requires Application<typename T::application_type>;
+        requires ApplicationWrapper<typename T::app_wrapper_type>;
+        { proto.app } -> ApplicationWrapper; // get the app
+        // should be able to pass an app to it as well
 
-                               { proto.is_ssl_available() } -> stl::same_as<bool>;
-                               { proto() } -> stl::same_as<int>;
-                           };
+        { proto.is_ssl_available() } -> stl::same_as<bool>;
+        { proto() } -> stl::same_as<int>;
+    };
 
 
 
@@ -261,9 +258,9 @@ namespace webpp::http {
 
 
     template <typename T, typename BodyType, typename... NotThese>
-    concept HTTPConvertibleBody = istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> && !
-    istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...>&&
-      HTTPGenerallyDeserializableBody<T, BodyType>;
+    concept HTTPConvertibleBody = istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
+                                  !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> &&
+                                  HTTPGenerallyDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 
