@@ -209,17 +209,20 @@ namespace webpp::io {
             return {*this};
         }
 
-        /// read
+#    define define_syscall(op, ...)                                                \
+        [[nodiscard]] friend auto tag_invoke(io::syscall_operations::syscall_##op, \
+                                             scheduler_type self,                  \
+                                             __VA_ARGS__)
+
         template <typename CallbackType>
-        [[nodiscard]] friend int tag_invoke(stl::tag_t<io::read>,
-                                            scheduler_type self,
-                                            int            file_descriptor,
-                                            buffer_span    buf,
-                                            CallbackType&& callback) noexcept {
+        define_syscall(read, file_handle file_descriptor, buffer_span buf, CallbackType&& callback) noexcept
+          -> int {
             auto req = self.sqe();
             io_uring_sqe_set_data(req, stl::addressof(callback)); // todo
             return io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
         }
+
+#    undef define_syscall
 
       private:
         io_uring_params     params;

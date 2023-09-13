@@ -3,6 +3,7 @@
 // #include "../webpp/io/io_task.hpp"
 #include "../webpp/io/file_options.hpp"
 #include "../webpp/io/io_uring/io_uring.hpp"
+#include "../webpp/io/open.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <array>
@@ -30,7 +31,7 @@ TEST(IO, BasicIOUring) {
 
     std::array<char, 100> buf{};
 
-    auto                   file = io.open(); // open temp file
+    auto                   file = io::open(io); // open temp file
     std::string_view const data = "this is a text";
     io.write(file, data.data(), data.size(), [data](int result) {
         ASSERT_NE(result, -1);

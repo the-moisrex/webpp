@@ -32,7 +32,7 @@ namespace webpp::io {
 
 
     /**
-     *
+     * File options used to open a file descriptor
      */
     struct file_options {
 
@@ -69,14 +69,14 @@ namespace webpp::io {
         def trunc     = OS_VALUE(O_TRUNC, _O_TRUNC);                 // clear the file's content first
         def append    = OS_VALUE(O_APPEND, _O_APPEND);               // append to the end of the file
         def direct    = OS_VALUE(O_DIRECT, FILE_FLAG_WRITE_THROUGH); // direct access to file; no cache
+        def temporary = OS_VALUE(O_CREAT | O_TMPFILE, _O_CREAT | _O_TEMPORARY); // temp file
 
         // windows specific things:
         def binary     = OS_VALUE(0, _O_BINARY); // binary mode, no effect on posix
         def text       = OS_VALUE(0, _O_TEXT);   // text mode, no effect on posix
         def sequential = OS_VALUE(0, _O_SEQUENTIAL);
         def random     = OS_VALUE(0, _O_RANDOM);
-        def shortlived = OS_VALUE(0, _O_SHORTLIVED);
-        def temporary  = OS_VALUE(0, _O_TEMPORARY);
+        def shortlived = OS_VALUE(0, _O_CREAT | _O_SHORT_LIVED);
 #undef def
 
         constexpr file_options() noexcept = default;

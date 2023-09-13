@@ -1015,10 +1015,9 @@ namespace webpp::istl {
     struct name<Primary<names>, Primary> : stl::true_type {};             \
                                                                           \
     template <typename T, template <types> typename Primary>              \
-    inline constexpr bool name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
+    concept name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
 
     define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...)
-
 
       // valued specialization is exactly the same as above, but it supports some auto values as well
       // this has a very limited use case, so don't worry about it if it seems useless to you.
@@ -1029,7 +1028,7 @@ namespace webpp::istl {
     struct is_valued_specialization_of<Primary<Val, Args...>, Primary> : stl::true_type {};
 
     template <typename T, template <auto, typename...> typename Primary>
-    inline constexpr bool is_valued_specialization_of_v = is_valued_specialization_of<T, Primary>::value;
+    concept is_valued_specialization_of_v = is_valued_specialization_of<T, Primary>::value;
 
 
     namespace details {

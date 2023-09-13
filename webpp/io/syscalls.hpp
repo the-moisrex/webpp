@@ -17,38 +17,33 @@
 /// scheduler_ref is a reference to the "(a)sync I/O interface"'s scheduler
 namespace webpp::io::inline syscall_operations {
 
-    /// Customization Point Object for read
+    /// Customization Point Object for syscalls
     inline constexpr struct syscall_tag {
+
         template <typename SyscallOperation, typename Sched, typename... Args>
-        constexpr decltype(auto) operator()(SyscallOperation, Sched& sched, Args&&... args) const noexcept {
-            return stl::tag_invoke(syscall_tag{}, SyscallOperation{}, sched, stl::forward<Args>(args)...);
+        static constexpr bool is_supported = stl::tag_invocable<SyscallOperation, Sched&, Args...>;
+
+        template <typename SyscallOperation, typename Sched, typename... Args>
+        constexpr decltype(auto) operator()(SyscallOperation, Sched& sched, Args&&... args) const
+          noexcept(stl::nothrow_tag_invocable<SyscallOperation, Sched&, Args...>) {
+
+            // a nice error message
+            static_assert(is_supported<SyscallOperation, Sched, Args...>, "IO operation is not implemented.");
+
+            return stl::tag_invoke(SyscallOperation{}, sched, stl::forward<Args>(args)...);
         }
+
+
     } syscall;
 
 
-    inline constexpr struct open_tag {
-    } open;
 
-    inline constexpr struct read_t {
-        template <typename Sched, typename CallbackType>
-        friend int tag_invoke(syscall_tag,
-                              read_t,
-                              Sched&         sched,
-                              char*          buf,
-                              stl::size_t    amount,
-                              CallbackType&& callback) noexcept {
-            if constexpr (requires {
-                              {
-                                  sched.read(buf, amount, stl::forward<CallbackType>(callback))
-                              } noexcept -> stl::same_as<int>;
-                          }) {
-                return sched.read(buf, amount, stl::forward<CallbackType>(callback));
-            } else {
-                static_assert_false(Sched, "IO operation is not implemented.");
-            }
-            return 0;
-        }
-    } read;
+    struct syscall_open {};
+    struct syscall_read {};
+
+
+#undef webpp_define_tag
+
 } // namespace webpp::io::inline syscall_operations
 
 #endif // WEBPP_IO_SYSCALLS_HPP
