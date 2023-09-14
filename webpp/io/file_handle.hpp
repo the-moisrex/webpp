@@ -41,6 +41,10 @@ namespace webpp::io {
             return {ec.value()};
         }
 
+        [[nodiscard]] static file_handle check(handle_type inp_handle) noexcept {
+            return inp_handle >= 0 ? file_handle{inp_handle} : invalid(errno);
+        }
+
         file_handle(stl::error_code ec) noexcept : handle{ec.value()} {}
         constexpr file_handle() noexcept                              = default;
         constexpr file_handle(file_handle const&) noexcept            = default;
@@ -75,6 +79,7 @@ namespace webpp::io {
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
+            // Win32's INVALID_HANDLE_VALUE is defined as -1 too, so we're ok
             return handle >= 0;
         }
 

@@ -25,38 +25,35 @@
 namespace webpp::io {
 
     template <typename CharT = char>
-    [[nodiscard]] file_handle open(IOService auto&        io,
-                                   basic_path_view<CharT> file_path,
-                                   file_options           options,
-                                   stl::filesystem::perms permissions) noexcept {
-        if constexpr (syscall_tag::
-                        is_supported<basic_path_view<CharT>, file_options, stl::filesystem::perms>) {
+    [[nodiscard]] file_handle
+    open(IOService auto&        io,
+         basic_path_view<CharT> file_path,
+         file_options           options     = file_options::readwrite | file_options::create,
+         stl::filesystem::perms permissions = stl::filesystem::perms::unknown) noexcept {
+        if constexpr (is_supported<syscall_open>(io, file_path, options, permissions)) {
             return syscall(io, syscall_open{}, file_path, options, permissions);
         } else {
             // fallback implementation
 #ifdef MSVC_COMPILER
-            int fd{-1};
+            int        fd{-1};
+            const auto shflag = _SH_DENYNO;
+            const auto pmode  = options.is_readonly() ? _S_IREAD : _S_IREAD | _S_IWRITE;
             if constexpr (stl::same_as<CharT, wchar_t>) {
-                _wsopen_s(file_path.data(), optioins.native_flags());
+                _wsopen_s(&fd, file_path.data(), optioins.native_flags(), shflag, pmode);
             } else {
-                _sopen_s(&fd, file_path.data(), optioins.native_flags());
+                _sopen_s(&fd, file_path.data(), optioins.native_flags(), shflag, pmode);
             }
             // https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/sopen-s-wsopen-s?view=msvc-170#return-value
-            return fd != -1 ? fd : file_handle::invalid();
+            return file_handle::check(fd);
 #else
-            if (auto const fd = ::open(file_path.data(),
-                                       options.native_flags(),
-                                       static_cast<mode_t>(stl::to_underlying(permissions)));
-                fd == -1) {
-                return file_handle::invalid();
-            } else {
-                return fd;
-            }
+            return file_handle::check(::open(file_path.data(), // NOLINT(*-pro-type-vararg)
+                                             options.native_flags(),
+                                             static_cast<mode_t>(stl::to_underlying(permissions))));
 #endif
         }
     }
 
-    [[nodiscard]] auto open(IOService auto& io, stl::filesystem::path const& file_path) noexcept {
+    [[nodiscard]] file_handle open(IOService auto& io, stl::filesystem::path const& file_path) noexcept {
         return open(io, file_path);
     }
 

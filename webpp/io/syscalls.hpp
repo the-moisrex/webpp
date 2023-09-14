@@ -28,15 +28,19 @@ namespace webpp::io::inline syscall_operations {
           noexcept(stl::nothrow_tag_invocable<SyscallOperation, Sched&, Args...>) {
 
             // a nice error message
-            static_assert(is_supported<SyscallOperation, Sched, Args...>, "IO operation is not implemented.");
+            static_assert(stl::tag_invocable<SyscallOperation, Sched&, Args...>,
+                          "IO operation is not implemented.");
 
             return stl::tag_invoke(SyscallOperation{}, sched, stl::forward<Args>(args)...);
         }
-
-
     } syscall;
 
 
+    /// Helper class to check if the specified scheduler/execution-context supports the syscall operation
+    template <typename SyscallOp, typename Sched, typename... Args>
+    [[nodiscard]] consteval bool is_supported(Sched& io, Args&&... args) noexcept {
+        return syscall_tag::is_supported<SyscallOp, Sched, Args...>;
+    }
 
     struct syscall_open {};
     struct syscall_read {};

@@ -2,6 +2,7 @@
 #define WEBPP_OP_FILE_OPTIONS_HPP
 
 #include "../common/os.hpp"
+#include "../std/filesystem.hpp"
 #include "../std/string_view.hpp"
 #include "../std/utility.hpp"
 
@@ -19,11 +20,15 @@ namespace webpp::io {
     template <typename CharT = char>
     struct basic_path_view : stl::basic_string_view<CharT> {
         using stl::basic_string_view<CharT>::basic_string_view;
+        using str_v = stl::basic_string_view<CharT>;
 
         template <istl::StringViewifiable StrT>
-            requires(!stl::is_constructible_v<stl::string_view, StrT>)
+            requires(!stl::is_constructible_v<str_v, StrT>)
         constexpr basic_path_view(StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
-          : stl::string_view{istl::string_viewify(stl::forward<StrT>(inp_path))} {}
+          : stl::basic_string_view<CharT>{istl::string_viewify_of<str_v>(stl::forward<StrT>(inp_path))} {}
+
+        constexpr basic_path_view(stl::filesystem::path const& inp_path) noexcept
+          : stl::basic_string_view<CharT>{inp_path.native().data(), inp_path.native().size()} {}
     };
 
     using wpath_view = basic_path_view<wchar_t>;
@@ -119,6 +124,14 @@ namespace webpp::io {
 
         [[nodiscard]] constexpr flags_type native_flags() const noexcept {
             return oflags;
+        }
+
+        [[nodiscard]] constexpr bool is_readonly() const noexcept {
+            return (oflags & (readonly | writeonly | readwrite)) == readonly;
+        }
+
+        [[nodiscard]] constexpr bool is_writeable() const noexcept {
+            return (oflags & (writeonly | readwrite)) != 0;
         }
 
       private:
