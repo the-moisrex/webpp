@@ -3,19 +3,24 @@
 #ifndef WEBPP_IO_READ_HPP
 #define WEBPP_IO_READ_HPP
 
-#include "../std/ranges.hpp"
-#include "../std/tag_invoke.hpp"
 #include "./buffer.hpp"
-#include "./io_concepts.hpp"
 #include "./open.hpp"
-#include "./syscalls.hpp"
 
 namespace webpp::io {
 
+    template <IOService SchedT>
+    void read(SchedT& io, file_handle file, buffer_span buf) noexcept {
+        if constexpr (syscall_tag::is_supported<SchedT, file_handle, buffer_span>) {
+            const auto val = syscall(syscall_read{}, io, file, buf, *this);
+        } else {
+            ::read(file.native_handle(), buf.data(), buf.size());
+        }
+    }
+
     struct async_read_some {
-        void set_value(IOScheduler auto io, int file_descriptor, buffer_span buf) noexcept {
+        void set_value(IOScheduler auto io, file_handle file_descriptor, buffer_span buf) noexcept {
             // request a read, and set a callback
-            if (const auto val = syscall(read, io, file_descriptor, buf, *this); val != 0) {
+            if (const auto val = syscall(syscall_read{}, io, file_descriptor, buf, *this); val != 0) {
                 set_error(io, val);
             }
         }
@@ -60,7 +65,7 @@ namespace webpp::io {
     };
 
 
-    inline constexpr void async_file_stats(IOScheduler auto io, int file_descriptor) noexcept {
+    inline constexpr void async_file_stats(IOScheduler auto io, file_handle file_descriptor) noexcept {
         const auto stats = io.request_file_stats(file_descriptor);
         if (stats != 0) {
             set_error(io, stats);
@@ -69,7 +74,7 @@ namespace webpp::io {
     }
 
 
-    constexpr auto read(int file_descriptor) noexcept {
+    constexpr auto read(file_handle file_descriptor) noexcept {
         // todo: how to pass the buffer?
         return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();
@@ -78,7 +83,7 @@ namespace webpp::io {
     }
 
     /// read the file/... check by chunk
-    constexpr auto read_chunked(int file_descriptor) noexcept {
+    constexpr auto read_chunked(file_handle file_descriptor) noexcept {
         // todo: how to pass the buffer?
         return just(file_descriptor) >> async_file_stats >> let_value([](auto stats) {
                    return stats.size();

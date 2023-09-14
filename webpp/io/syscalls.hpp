@@ -35,18 +35,11 @@ namespace webpp::io::inline syscall_operations {
         }
     } syscall;
 
-
-    /// Helper class to check if the specified scheduler/execution-context supports the syscall operation
-    template <typename SyscallOp, typename Sched, typename... Args>
-    [[nodiscard]] consteval bool is_supported(Sched& io, Args&&... args) noexcept {
-        return syscall_tag::is_supported<SyscallOp, Sched, Args...>;
-    }
-
     struct syscall_open {};
     struct syscall_read {};
 
 
-#undef webpp_define_tag
+#undef impl_syscall
 
 } // namespace webpp::io::inline syscall_operations
 

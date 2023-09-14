@@ -76,6 +76,10 @@ namespace webpp::io {
         def direct    = OS_VALUE(O_DIRECT, FILE_FLAG_WRITE_THROUGH); // direct access to file; no cache
         def temporary = OS_VALUE(O_CREAT | O_TMPFILE, _O_CREAT | _O_TEMPORARY); // temp file
 
+        // posix only flags:
+        def closeonexec = OS_VALUE(O_CLOEXEC, 0);
+        def excl        = OS_VALUE(O_EXCL, 0);
+
         // windows specific things:
         def binary     = OS_VALUE(0, _O_BINARY); // binary mode, no effect on posix
         def text       = OS_VALUE(0, _O_TEXT);   // text mode, no effect on posix
@@ -164,18 +168,29 @@ namespace webpp::io {
                         oflags &= writeonly;
                         oflags |= readwrite;
                         continue;
+#ifdef MSVC_COMPILER
+                    case 't': oflags |= text; continue;
                     case 'b':
                         // From cppreference(https://en.cppreference.com/w/cpp/io/c/fopen):
                         //  File access mode flag "b" can optionally be specified to open a file in binary
                         //  mode. This flag has no effect on POSIX systems, but on Windows, for example, it
                         //  disables special handling of '\n' and '\x1A'.
-                        //
-                        // So: nothing to do, binary mode is a C/C++ thing, not Posix, nor Windows
-                        [[fallthrough]];
+                        oflags |= binary;
+                        continue;
+                    case 'S': oflags |= sequential; continue;
+                    case 'T': oflags |= shortlived; continue;
+#else
+                    case 'x': oflags |= excl; continue;
+                    case 'e': oflags |= closeonexec; continue;
+                    case 'c':
+                    case 'm': [[fallthrough]];
+#endif
                     default: continue; // ignore
                 }
                 break;
             }
+
+            // todo: handle unicode options
         }
 
 

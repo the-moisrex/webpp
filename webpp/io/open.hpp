@@ -24,13 +24,17 @@
 
 namespace webpp::io {
 
-    template <typename CharT = char>
+    template <IOService Sched, typename CharT = char>
     [[nodiscard]] file_handle
-    open(IOService auto&        io,
+    open(Sched&                 io,
          basic_path_view<CharT> file_path,
          file_options           options     = file_options::readwrite | file_options::create,
          stl::filesystem::perms permissions = stl::filesystem::perms::unknown) noexcept {
-        if constexpr (is_supported<syscall_open>(io, file_path, options, permissions)) {
+        if constexpr (syscall_tag::is_supported<syscall_open,
+                                                Sched,
+                                                basic_path_view<CharT>,
+                                                file_options,
+                                                stl::filesystem::perms>) {
             return syscall(io, syscall_open{}, file_path, options, permissions);
         } else {
             // fallback implementation
