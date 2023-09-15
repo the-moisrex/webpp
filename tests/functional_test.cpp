@@ -37,6 +37,13 @@ struct MyCallable {
     }
 };
 
+
+TEST(FunctionalTests, Concepts) {
+    EXPECT_TRUE(stl::is_trivially_copy_constructible_v<function_ref<void()>>);
+    EXPECT_FALSE(stl::is_trivially_copy_constructible_v<istl::function<void()>>);
+    EXPECT_FALSE(stl::is_trivially_copy_constructible_v<::std::function<void()>>);
+}
+
 TEST(FunctionalTests, DebouncedFunctions) {
     using namespace stl::chrono;
 
@@ -132,11 +139,11 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
     EXPECT_EQ(13, func());
 }
 
-
+#ifdef __cpp_lib_memory_resource
 TEST(FunctionalTests, FunctionWithPMRAllocators) {
-    stl::array<stl::byte, 500>            buff{};
-    stl::pmr::monotonic_buffer_resource   res{buff.begin(), buff.size()};
-    stl::pmr::polymorphic_allocator const alloc{&res};
+    stl::array<stl::byte, 500>                       buff{};
+    stl::pmr::monotonic_buffer_resource              res{buff.begin(), buff.size()};
+    stl::pmr::polymorphic_allocator<stl::byte> const alloc{&res};
 
     istl::pmr::function<int()> func{[i = 0]() mutable {
                                         return ++i;
@@ -189,6 +196,7 @@ TEST(FunctionalTests, FunctionWithPMRAllocators) {
     EXPECT_EQ(12, func());
     EXPECT_EQ(13, func());
 }
+#endif
 
 TEST(FunctionalTests, DoubleFreeFunction) {
     stl::function<int()> func = [] {
@@ -204,9 +212,9 @@ TEST(FunctionalTests, DoubleFreeFunction) {
         return 100;
     };
 
-    stl::array<stl::byte, 1000>           buf{};
-    stl::pmr::monotonic_buffer_resource   res{buf.begin(), buf.size()};
-    stl::pmr::polymorphic_allocator const alloc{&res};
+    stl::array<stl::byte, 1000>                      buf{};
+    stl::pmr::monotonic_buffer_resource              res{buf.begin(), buf.size()};
+    stl::pmr::polymorphic_allocator<stl::byte> const alloc{&res};
 
     istl::pmr::function<int()> ifunc2{stl::allocator_arg_t{}, alloc, [i = 9]() mutable {
                                           return ++i;
