@@ -12,6 +12,8 @@
 #    include "../../async/async.hpp"
 #    include "../../std/coroutine.hpp"
 #    include "../../std/expected.hpp"
+#    include "../../std/function_ref.hpp"
+#    include "../../std/functional.hpp"
 #    include "../../std/optional.hpp"
 #    include "../buffer.hpp"
 #    include "../file_handle.hpp"
@@ -28,19 +30,15 @@
 
 namespace webpp::io {
 
-    template <typename>
-    struct io_uring_service;
-
     enum struct io_uring_service_state {
         success          = 0,
         init_failure     = 1, // cannot initialize the parameters of a new io_uring
         SQE_init_failure = 2, // couldn't get a new Submission Queue Entry
     };
 
-    template <typename Allocator>
+    template <typename IOUringService>
     struct io_uring_scheduler {
-        using allocator_type = Allocator;
-        using service_type   = io_uring_service<allocator_type>;
+        using service_type = IOUringService;
 
 
         constexpr io_uring_scheduler(io_uring_scheduler const&) noexcept            = default;
@@ -68,16 +66,31 @@ namespace webpp::io {
     /**
      * I/O Service Class
      */
-    template <typename Allocator = stl::allocator<stl::byte>>
+    template <typename Callback = istl::function_ref<void()>, typename Allocator = stl::allocator<Callback>>
     struct io_uring_service {
         using allocator_type      = Allocator;
+        using callback_type       = Callback;
         using buffer_manager_type = buffer_manager<allocator_type>;
         using buffer_type         = typename buffer_manager_type::buffer_type;
-        using scheduler_type      = io_uring_scheduler<allocator_type>;
+        using scheduler_type      = io_uring_scheduler<io_uring_service>;
 
         static constexpr unsigned default_entries_value = 64;
 
+
+        /// if the callback's size is less than the io_uring's data type (which is u64 or same as void*),
+        /// then we can put the whole thing inside the user_data itself
+        static constexpr bool is_callback_optimizable = sizeof(callback_type) >
+                                                        sizeof(decltype(io_uring_sqe::user_data));
+
+        /// check if the callback is nullable, if it is, we don't need to use std::optional
+        static constexpr bool nullable_callback = stl::constructible_from<callback_type, stl::nullptr_t> &&
+                                                  stl::is_convertible_v<callback_type, bool>;
+
       private:
+        using rvalue_callback = stl::conditional_t<stl::is_trivially_copy_constructible_v<callback_type>,
+                                                   callback_type,
+                                                   callback_type&&>;
+
         [[nodiscard]] constexpr bool error_on_res(stl::integral auto     ret,
                                                   io_uring_service_state err_cat) noexcept {
             if (ret < 0 && ret != -ETIME) {
@@ -201,6 +214,26 @@ namespace webpp::io {
             return io_uring_get_sqe(&ring);
         }
 
+        [[nodiscard]] io_uring_sqe* sqe(rvalue_callback callback) noexcept {
+            auto req = io_uring_get_sqe(&ring);
+            if constexpr (is_callback_optimizable) {
+                io_uring_sqe_set_data(req, reinterpret_cast<void*>(callback));
+            } else {
+                auto const iter = stl::find_if_not(stl::begin(callback_storage),
+                                                   stl::end(callback_storage),
+                                                   [](callback_type const& c) constexpr noexcept -> bool {
+                                                       return c;
+                                                   });
+                if (iter == stl::end(callback_storage)) {
+                    // todo
+                } else {
+                    iter = stl::move(callback);
+                    io_uring_sqe_set_data(req, static_cast<void*>(iter));
+                }
+            }
+            return req;
+        }
+
         [[nodiscard]] buffer_type buffer(stl::size_t len) noexcept {
             return buf_pack.new_buffer(len);
         }
@@ -209,17 +242,19 @@ namespace webpp::io {
             return {*this};
         }
 
+      private:
+        void set_error(callback_type&& callback, int res) noexcept {}
+
 #    define define_syscall(op, ...)                                                \
         [[nodiscard]] friend auto tag_invoke(io::syscall_operations::syscall_##op, \
                                              scheduler_type self,                  \
-                                             __VA_ARGS__)
-
-        template <typename CallbackType>
-        define_syscall(read, file_handle file_descriptor, buffer_span buf, CallbackType&& callback) noexcept
-          -> int {
-            auto req = self.sqe();
-            io_uring_sqe_set_data(req, stl::addressof(callback)); // todo
-            return io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
+                                             file_handle    file_descriptor,       \
+                                             __VA_ARGS__,                          \
+                                             callback_type callback)
+      public:
+        define_syscall(read, buffer_view buf) noexcept -> void {
+            auto req = self.sqe(stl::move(callback));
+            io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
         }
 
 #    undef define_syscall
@@ -236,8 +271,19 @@ namespace webpp::io {
         // stored in "last_err_cat"
         int                    last_err_val = 0;
         io_uring_service_state last_err_cat = io_uring_service_state::success;
+
+        using callback_storage_type =
+          stl::array<stl::conditional_t<nullable_callback, callback_type, stl::optional<callback_type>>,
+                     default_entries_value / 2>;
+        using small_object_optimization_array =
+          stl::conditional_t<is_callback_optimizable, callback_storage_type, istl::nothing_type>;
+
+        [[no_unique_address]] small_object_optimization_array callback_storage;
     };
 
+
+    template <typename Allocator = stl::allocator<stl::byte>>
+    using managed_io_uring_service = io_uring_service<istl::function<void(), Allocator>, Allocator>;
 
 } // namespace webpp::io
 

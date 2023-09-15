@@ -42,6 +42,9 @@ TEST(FunctionalTests, Concepts) {
     EXPECT_TRUE(stl::is_trivially_copy_constructible_v<function_ref<void()>>);
     EXPECT_FALSE(stl::is_trivially_copy_constructible_v<istl::function<void()>>);
     EXPECT_FALSE(stl::is_trivially_copy_constructible_v<::std::function<void()>>);
+    EXPECT_EQ(sizeof(void*) * 2, sizeof(function_ref<void()>));
+    EXPECT_EQ(sizeof(void*), sizeof(istl::function<void()>));
+    // EXPECT_EQ(sizeof(void*), sizeof(stl::function<void()>));
 }
 
 TEST(FunctionalTests, DebouncedFunctions) {

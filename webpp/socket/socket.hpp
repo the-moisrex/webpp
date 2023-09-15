@@ -28,6 +28,7 @@ namespace webpp {
         constexpr static int last_error() noexcept {
             if !consteval {
 #ifdef MSVC_COMPILER
+                // todo: doesn't MSVC have errno too?
                 return ::WSAGetLastError();
 #else
                 return errno;
