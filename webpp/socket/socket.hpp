@@ -6,93 +6,10 @@
 #include "./os.hpp"
 #include "./socket_address.hpp"
 
+#include <cerrno>
 #include <utility>
 
 namespace webpp {
-
-    /**
-     * Result of socket I/O syscalls.
-     *   - Returned result
-     *   - Read/Wrote counts
-     *
-     * Most I/O operations in the OS will return >=0 on success and -1 on error.
-     * In the case of an error, the calling thread must read an `errno` variable immediately,
-     * before any other system calls, to get the cause of an error as an integer value defined
-     * by the constants ENOENT, EINTR, EBUSY, etc.
-     */
-    struct io_result {
-        /**
-         * OS-specific means to retrieve the last error from an operation.
-         * This should be called after a failed system call to get the cause of the error.
-         */
-        constexpr static int last_error() noexcept {
-            if !consteval {
-#ifdef MSVC_COMPILER
-                // todo: doesn't MSVC have errno too?
-                return ::WSAGetLastError();
-#else
-                return errno;
-#endif
-            } else {
-                return 0;
-            }
-        }
-
-        // Creates an empty result
-        constexpr io_result() noexcept = default;
-
-
-        /**
-         * Creates a result from the return value of a low-level I/O function.
-         * @param n The number of bytes read or written. If <0, then an error is obtained
-         */
-        constexpr explicit io_result(ssize_t n) noexcept {
-            if (n < 0) {
-                err_value = last_error();
-            } else {
-                byte_count = stl::size_t(n);
-            }
-        }
-
-        // Set the error value
-        constexpr void set_error(int e) noexcept {
-            err_value = e;
-        }
-
-        // Increments the count
-        constexpr void incr(stl::size_t n) noexcept {
-            byte_count += n;
-        }
-
-        // Determines if the result is OK (not an error)
-        [[nodiscard]] constexpr bool is_ok() const noexcept {
-            return err_value == 0;
-        }
-
-        // Check if it's an error
-        [[nodiscard]] constexpr bool is_error() const noexcept {
-            return err_value != 0;
-        }
-
-        [[nodiscard]] constexpr operator bool() const noexcept {
-            return is_ok();
-        }
-
-        [[nodiscard]] constexpr stl::size_t count() const noexcept {
-            return byte_count;
-        }
-
-        [[nodiscard]] constexpr int error() const noexcept {
-            return err_value;
-        }
-
-      private:
-        // Byte count, or 0 on error or EOF
-        stl::size_t byte_count = 0;
-
-        // errno value (0 if no error or EOF)
-        int err_value = 0;
-    };
 
 
     /**
@@ -103,42 +20,39 @@ namespace webpp {
      */
     class socket_initializer {
 
-        constexpr socket_initializer() noexcept {
-            // do nothing if it's called in a consteval environment
-            if !consteval {
+        socket_initializer() noexcept {
 #ifdef MSVC_COMPILER
-                WSADATA wsadata;
-                if (inet iResult = ::WSAStartup(MAKEWORD(2, 0), &wsadata); iResult != NO_ERROR) {
-                    wprintf(L"WSAStartup() failed with error: %d\n", iResult);
-                    exit(EXIT_FAILURE);
-                }
+            WSADATA wsadata;
+            if (inet iResult = ::WSAStartup(MAKEWORD(2, 0), &wsadata); iResult != NO_ERROR) {
+                wprintf(L"WSAStartup() failed with error: %d\n", iResult);
+                exit(EXIT_FAILURE);
+            }
 #elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
-                // ignoring the signal the new way
-                // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
-                // Set up the signal handler using sigaction()
-                struct sigaction sa;     // NOLINT(cppcoreguidelines-pro-type-member-init)
-                sa.sa_handler = SIG_IGN; // Set the signal handler to SIG_IGN to ignore the signal
-                ::sigemptyset(&sa.sa_mask);
-                sa.sa_flags = SA_RESTART; // Set the SA_RESTART flag to automatically restart system calls
-                                          // interrupted by the signal
+            // ignoring the signal the new way
+            // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
+            // Set up the signal handler using sigaction()
+            struct sigaction sa;     // NOLINT(cppcoreguidelines-pro-type-member-init)
+            sa.sa_handler = SIG_IGN; // Set the signal handler to SIG_IGN to ignore the signal
+            ::sigemptyset(&sa.sa_mask);
+            sa.sa_flags = SA_RESTART; // Set the SA_RESTART flag to automatically restart system calls
+                                      // interrupted by the signal
 
-                if (::sigaction(SIGPIPE, &sa, nullptr) == -1) {
-                    perror("sigaction");
-                    exit(EXIT_FAILURE);
-                }
+            if (::sigaction(SIGPIPE, &sa, nullptr) == -1) {
+                perror("sigaction");
+                exit(EXIT_FAILURE);
+            }
 
 #else
-                // ignore signals on socket write errors.
-                static_cast<void>(stl::signal(SIGPIPE, SIG_IGN));
+            // ignore signals on socket write errors.
+            static_cast<void>(stl::signal(SIGPIPE, SIG_IGN));
 #endif
-            }
         }
 
       public:
-        constexpr socket_initializer(const socket_initializer&)            = delete;
-        constexpr socket_initializer(socket_initializer&&)                 = delete;
-        constexpr socket_initializer& operator=(const socket_initializer&) = delete;
-        constexpr socket_initializer& operator=(socket_initializer&&)      = delete;
+        socket_initializer(const socket_initializer&)            = delete;
+        socket_initializer(socket_initializer&&)                 = delete;
+        socket_initializer& operator=(const socket_initializer&) = delete;
+        socket_initializer& operator=(socket_initializer&&)      = delete;
 
 
         /**
@@ -146,10 +60,8 @@ namespace webpp {
          * It'll get destructed on program termination with the other static objects in
          * reverse order as they were created
          */
-        constexpr static void initialize() noexcept {
-            if !consteval {
-                [[maybe_unused]] static socket_initializer const sock_init;
-            }
+        static void initialize() noexcept {
+            [[maybe_unused]] static socket_initializer const sock_init;
         }
 
 #ifdef MSVC_COMPILER
@@ -157,7 +69,7 @@ namespace webpp {
             ::WSACleanup();
         }
 #else
-        constexpr ~socket_initializer() noexcept                 = default;
+        ~socket_initializer() noexcept                           = default;
 #endif
     };
 
@@ -228,7 +140,7 @@ namespace webpp {
 #endif
 
         // get an invalid socket
-        constexpr static basic_socket invalid() noexcept {
+        static basic_socket invalid() noexcept {
             return {};
         }
 
@@ -236,12 +148,12 @@ namespace webpp {
         /**
          * Checks the value and if less than zero, sets last error.
          */
-        [[nodiscard]] constexpr bool check_ret_bool(stl::integral auto ret) const noexcept {
+        [[nodiscard]] bool check_ret_bool(stl::integral auto ret) const noexcept {
             // doesn't really matter if we use SOCKET_ERROR or not!
 #ifdef MSVC_COMPILER
-            last_errno = ret == SOCKET_ERROR ? io_result::last_error() : 0;
+            last_errno = ret == SOCKET_ERROR ? errno : 0;
 #else
-            last_errno = ret == -1 ? io_result::last_error() : 0;
+            last_errno     = ret == -1 ? errno : 0;
 #endif
             return ret >= 0;
         }
@@ -262,7 +174,7 @@ namespace webpp {
             }
         }
 
-        constexpr basic_socket() noexcept {
+        basic_socket() noexcept {
             socket_initializer::initialize();
         }
 
@@ -270,7 +182,7 @@ namespace webpp {
             // no need to initialize, they already got a socket!
         }
 
-        constexpr basic_socket(basic_socket const& other) noexcept
+        basic_socket(basic_socket const& other) noexcept
           : fd{(socket_initializer::initialize(), other.clone().release())} {}
 
         constexpr basic_socket(basic_socket&& other) noexcept : fd{other.release()} {}
@@ -315,23 +227,19 @@ namespace webpp {
          *  - on error,   the last_error will be filled
          *  - on success, the socket's state is the same as `basic_socket::invalid()`
          */
-        constexpr bool close() noexcept {
-            if consteval {
+        bool close() noexcept {
+            if (!is_open()) {
                 return true;
-            } else {
-                if (!is_open()) {
-                    return true;
-                }
-#ifdef MSVC_COMPILER
-                bool const val = check_ret_bool(::closesocket(fd));
-#else
-                bool const val = check_ret_bool(::close(fd));
-#endif
-                if (val) {
-                    fd = invalid_handle_value;
-                }
-                return val;
             }
+#ifdef MSVC_COMPILER
+            bool const val = check_ret_bool(::closesocket(fd));
+#else
+            bool const val = check_ret_bool(::close(fd));
+#endif
+            if (val) {
+                fd = invalid_handle_value;
+            }
+            return val;
         }
 
         /**
@@ -339,22 +247,17 @@ namespace webpp {
          * This creates a new object with an independent lifetime, but refers back to this same socket.
          * A typical use of this is to have separate threads for using the socket.
          */
-        [[nodiscard]] constexpr basic_socket clone() const noexcept {
-            if consteval {
-                return {invalid_handle_value};
-            } else {
-                native_handle_type h = invalid_handle_value;
+        [[nodiscard]] basic_socket clone() const noexcept {
+            native_handle_type h = invalid_handle_value;
 #ifdef MSVC_COMPILER
-                WSAPROTOCOL_INFOW protInfo;
-                if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0) {
-                    h =
-                      check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
-                }
-#else
-                h              = ::dup(fd);
-#endif
-                return {h};
+            WSAPROTOCOL_INFOW protInfo;
+            if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0) {
+                h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
             }
+#else
+            h              = ::dup(fd);
+#endif
+            return {h};
         }
 
         /**
@@ -364,9 +267,9 @@ namespace webpp {
         [[nodiscard]] sock_address_any address() const noexcept {
             sock_address_any addr;
             if (check_ret_bool(::getsockname(fd, addr.sockaddr_ptr(), addr.socklen_ptr()))) {
-                return sock_address_any::invalid();
+                return addr;
             }
-            return addr;
+            return sock_address_any::invalid();
         }
 
 
@@ -377,9 +280,9 @@ namespace webpp {
         [[nodiscard]] sock_address_any peer_address() const noexcept {
             sock_address_any addr;
             if (check_ret_bool(::getpeername(fd, addr.sockaddr_ptr(), addr.socklen_ptr()))) {
-                return sock_address_any::invalid();
+                return addr;
             }
-            return addr;
+            return sock_address_any::invalid();
         }
 
         /**
@@ -544,13 +447,13 @@ namespace webpp {
 
         int get_flags() const noexcept {
             int const flags = ::fcntl(fd, F_GETFL, 0); // NOLINT(cppcoreguidelines-pro-type-vararg)
-            last_errno      = (flags == -1) ? io_result::last_error() : 0;
+            last_errno      = (flags == -1) ? errno : 0;
             return flags;
         }
 
         bool set_flags(int flags) noexcept {
             if (::fcntl(fd, F_SETFL, flags) == -1) { // NOLINT(cppcoreguidelines-pro-type-vararg)
-                last_errno = io_result::last_error();
+                last_errno = errno;
                 return false;
             }
             return true;

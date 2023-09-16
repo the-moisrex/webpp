@@ -18,6 +18,7 @@
 #    include "../buffer.hpp"
 #    include "../file_handle.hpp"
 #    include "../file_options.hpp"
+#    include "../io_result.hpp"
 #    include "../syscalls.hpp"
 
 #    include <coroutine>
@@ -66,7 +67,9 @@ namespace webpp::io {
     /**
      * I/O Service Class
      */
-    template <typename Callback = istl::function_ref<void()>, typename Allocator = stl::allocator<Callback>>
+    template <typename Callback  = istl::function_ref<void(io_result)>,
+              typename Allocator = stl::allocator<Callback>>
+        requires(stl::is_invocable_v<Callback, io_result>)
     struct io_uring_service {
         using allocator_type      = Allocator;
         using callback_type       = Callback;
@@ -216,6 +219,7 @@ namespace webpp::io {
 
         [[nodiscard]] io_uring_sqe* sqe(rvalue_callback callback) noexcept {
             auto req = io_uring_get_sqe(&ring);
+            // NOLINTBEGIN(*-pro-type-reinterpret-cast)
             if constexpr (is_callback_optimizable) {
                 io_uring_sqe_set_data(req, reinterpret_cast<void*>(callback));
             } else {
@@ -231,6 +235,7 @@ namespace webpp::io {
                     io_uring_sqe_set_data(req, static_cast<void*>(iter));
                 }
             }
+            // NOLINTEND(*-pro-type-reinterpret-cast)
             return req;
         }
 
@@ -243,14 +248,12 @@ namespace webpp::io {
         }
 
       private:
-        void set_error(callback_type&& callback, int res) noexcept {}
-
-#    define define_syscall(op, ...)                                                \
-        [[nodiscard]] friend auto tag_invoke(io::syscall_operations::syscall_##op, \
-                                             scheduler_type self,                  \
-                                             file_handle    file_descriptor,       \
-                                             __VA_ARGS__,                          \
-                                             callback_type callback)
+#    define define_syscall(op, ...)                                  \
+        friend auto tag_invoke(io::syscall_operations::syscall_##op, \
+                               scheduler_type self,                  \
+                               file_handle    file_descriptor,       \
+                               __VA_ARGS__,                          \
+                               callback_type callback)
       public:
         define_syscall(read, buffer_view buf) noexcept -> void {
             auto req = self.sqe(stl::move(callback));
@@ -260,8 +263,8 @@ namespace webpp::io {
 #    undef define_syscall
 
       private:
-        io_uring_params     params;
-        io_uring            ring;
+        io_uring_params     params{};
+        io_uring            ring{};
         buffer_manager_type buf_pack;
 
         unsigned cqe_count = 0;
@@ -283,7 +286,7 @@ namespace webpp::io {
 
 
     template <typename Allocator = stl::allocator<stl::byte>>
-    using managed_io_uring_service = io_uring_service<istl::function<void(), Allocator>, Allocator>;
+    using managed_io_uring_service = io_uring_service<istl::function<void(io_result), Allocator>, Allocator>;
 
 } // namespace webpp::io
 

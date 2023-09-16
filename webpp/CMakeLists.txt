@@ -87,6 +87,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/io/open.hpp
         ${LIB_INCLUDE_DIR}/io/read.hpp
         ${LIB_INCLUDE_DIR}/io/file_handle.hpp
+        ${LIB_INCLUDE_DIR}/io/io_result.hpp
         ${LIB_INCLUDE_DIR}/io/file_options.hpp
         ${LIB_INCLUDE_DIR}/io/buffer.hpp
         ${LIB_INCLUDE_DIR}/io/syscalls.hpp

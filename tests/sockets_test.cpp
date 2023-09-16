@@ -118,21 +118,26 @@ TEST(SocketTest, FamilyOfBoundSocket) {
     auto       sock = basic_socket(AF_INET, SOCK_STREAM);
     ipv4 const addr;
 
-    int reuse = 1;
+    int const reuse = 1;
     EXPECT_TRUE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
     EXPECT_TRUE(sock.bind(addr, test_port));
 }
 
 TEST(SocketTest, AddressOfUninitializedSocket) {
-    // Uninitialized socket should have empty address
+    // Uninitialized socket should have invalid address
     basic_socket const sock;
-    EXPECT_EQ(sock.address(), sock_address_any{});
+    EXPECT_EQ(sock.address(), sock_address_any::invalid());
 }
 
 // The address has the specified family but all zeros
 TEST(SocketTest, AddressOfNonBoundSocket) {
-    auto sock = basic_socket(AF_INET, SOCK_STREAM);
-    EXPECT_EQ(sock.address(), sock_address_any{});
+    auto                   sock = basic_socket(AF_INET, SOCK_STREAM);
+    sock_address_any const zero_addr{};
+    EXPECT_TRUE(zero_addr.is_valid());
+    EXPECT_TRUE(zero_addr.operator ipv4().is_zero());
+    EXPECT_FALSE(zero_addr.operator ipv4().is_valid()); // family of zero_addr is AF_UNSPEC
+    EXPECT_NE(sock.address(), zero_addr)
+      << ip_address{sock.address()}.status_string() << " != " << ip_address{zero_addr}.status_string();
 }
 
 TEST(SocketTest, AddressOfBoundSocket) {
@@ -140,12 +145,13 @@ TEST(SocketTest, AddressOfBoundSocket) {
     auto       sock = basic_socket(AF_INET, SOCK_STREAM);
     const ipv4 addr;
 
-    int reuse = 1;
+    int const reuse = 1;
     EXPECT_TRUE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));
 
     EXPECT_TRUE(sock.bind(addr, test_port));
     EXPECT_TRUE(ipv4{sock.address()}.is_valid());
     EXPECT_TRUE(addr.is_valid());
+    EXPECT_TRUE(sock.is_error_free());
     EXPECT_EQ(ipv4{sock.address()}, addr) << ipv4{sock.address()}.string() << " != " << addr.string();
 }
 
