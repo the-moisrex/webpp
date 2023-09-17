@@ -12,7 +12,6 @@
 #    include "../../async/async.hpp"
 #    include "../../std/coroutine.hpp"
 #    include "../../std/expected.hpp"
-#    include "../../std/function_ref.hpp"
 #    include "../../std/functional.hpp"
 #    include "../../std/optional.hpp"
 #    include "../buffer.hpp"
@@ -21,12 +20,10 @@
 #    include "../io_result.hpp"
 #    include "../syscalls.hpp"
 
-#    include <coroutine>
+#    include <atomic>
 #    include <cstdint>
 #    include <iterator>
 #    include <liburing.h> // http://git.kernel.dk/liburing
-#    include <string_view>
-#    include <sys/uio.h> // iovec
 #    include <system_error>
 
 namespace webpp::io {
@@ -67,16 +64,15 @@ namespace webpp::io {
     /**
      * I/O Service Class
      */
-    template <typename Callback  = istl::function_ref<void(io_result)>,
-              typename Allocator = stl::allocator<Callback>>
+    template <typename Callback = void (*)(io_result), typename Allocator = stl::allocator<Callback>>
         requires(stl::is_invocable_v<Callback, io_result>)
-    struct io_uring_service {
+    struct basic_io_uring_service {
         using callback_type = Callback;
         using allocator_type =
           typename stl::allocator_traits<Allocator>::template rebind_alloc<callback_type>;
         using buffer_manager_type = buffer_manager<allocator_type>;
         using buffer_type         = typename buffer_manager_type::buffer_type;
-        using scheduler_type      = io_uring_scheduler<io_uring_service>;
+        using scheduler_type      = io_uring_scheduler<basic_io_uring_service>;
 
         static constexpr unsigned default_entries_value = 64;
 
@@ -131,7 +127,7 @@ namespace webpp::io {
          * shares the only async worker thread pool.
          */
         // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
-        io_uring_service(
+        basic_io_uring_service(
           unsigned         entries,
           io_uring_params  inp_params,
           Allocator const& inp_alloc = {}) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
@@ -141,12 +137,14 @@ namespace webpp::io {
                                            io_uring_service_state::init_failure));
         }
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        io_uring_service(unsigned entries = default_entries_value, Allocator const& inp_alloc = {}) noexcept(
-          stl::is_nothrow_copy_constructible_v<Allocator>)
-          : io_uring_service{entries, {}, inp_alloc} {}
+        basic_io_uring_service(
+          unsigned         entries   = default_entries_value,
+          Allocator const& inp_alloc = {}) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
+          : basic_io_uring_service{entries, {}, inp_alloc} {}
 
-        io_uring_service(Allocator const& inp_alloc) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
-          : io_uring_service{default_entries_value, {}, inp_alloc} {}
+        basic_io_uring_service(Allocator const& inp_alloc) noexcept(
+          stl::is_nothrow_copy_constructible_v<Allocator>)
+          : basic_io_uring_service{default_entries_value, {}, inp_alloc} {}
 
 
         /**
@@ -158,21 +156,21 @@ namespace webpp::io {
          *   share the asynchronous worker thread backend of the specified io_uring ring, rather than create
          *   a new separate thread pool.
          */
-        [[nodiscard]] io_uring_service copy() const {
+        [[nodiscard]] basic_io_uring_service copy() const {
             return {default_entries_value,
                     io_uring_params{.flags = IORING_SETUP_ATTACH_WQ, .wq_fd = params.wq_fd}};
         }
 
         // The io service is not copyable because we don't want accidental copying. Use .copy() for
         // explicit copying
-        io_uring_service(io_uring_service const&)            = delete;
-        io_uring_service& operator=(io_uring_service const&) = delete;
+        basic_io_uring_service(basic_io_uring_service const&)            = delete;
+        basic_io_uring_service& operator=(basic_io_uring_service const&) = delete;
 
         // moving is perfectly fine
-        io_uring_service(io_uring_service&&) noexcept            = default;
-        io_uring_service& operator=(io_uring_service&&) noexcept = default;
+        basic_io_uring_service(basic_io_uring_service&&) noexcept            = default;
+        basic_io_uring_service& operator=(basic_io_uring_service&&) noexcept = default;
 
-        ~io_uring_service() {
+        ~basic_io_uring_service() {
             // todo: deallocate unfinished requests
             io_uring_queue_exit(&ring);
         }
@@ -240,11 +238,8 @@ namespace webpp::io {
 
         void set_callback(io_uring_sqe* req, rvalue_callback callback) noexcept(is_callback_optimizable) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
-            using user_data_type = decltype(io_uring_sqe::user_data);
             if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
                 io_uring_sqe_set_data(req, reinterpret_cast<void*>(callback));
-            } else if constexpr (sizeof(rvalue_callback) <= sizeof(user_data_type)) {
-                io_uring_sqe_set_data64(req, reinterpret_cast<user_data_type>(callback));
             } else {
                 auto const iter = stl::find_if_not(stl::begin(callback_storage),
                                                    stl::end(callback_storage),
@@ -257,7 +252,7 @@ namespace webpp::io {
                     alloc_traits::construct(alloc, pointer, stl::move(callback));
                     io_uring_sqe_set_data(req, pointer);
                 } else {
-                    iter = stl::move(callback);
+                    *iter = stl::move(callback);
                     io_uring_sqe_set_data(req, static_cast<void*>(iter));
                 }
             }
@@ -267,12 +262,8 @@ namespace webpp::io {
         void call_callback(io_uring_cqe* response,
                            io_result     result) noexcept(is_callback_optimizable&& is_callback_nothrow) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
-            using user_data_type = decltype(io_uring_sqe::user_data);
             if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
                 auto callback = reinterpret_cast<callback_type>(io_uring_cqe_get_data(response));
-                stl::invoke(stl::move(callback), result);
-            } else if constexpr (sizeof(rvalue_callback) <= sizeof(user_data_type)) {
-                auto callback = reinterpret_cast<callback_type>(io_uring_cqe_get_data64(response));
                 stl::invoke(stl::move(callback), result);
             } else {
                 auto callback_ptr = reinterpret_cast<callback_type*>(io_uring_cqe_get_data(response));
@@ -288,6 +279,7 @@ namespace webpp::io {
 
                     // deallocating
                     using alloc_traits = stl::allocator_traits<allocator_type>;
+                    alloc_traits::destroy(alloc, callback_ptr);
                     alloc_traits::deallocate(alloc, callback_ptr, sizeof(callback_type));
                 } else {
                     // todo: is it even possible?
@@ -302,6 +294,40 @@ namespace webpp::io {
 
         [[nodiscard]] constexpr scheduler_type scheduler() noexcept {
             return {*this};
+        }
+
+        constexpr void stop() noexcept {
+            should_stop = true;
+        }
+
+        void operator()() {
+            should_stop       = false;
+            io_uring_cqe* cqe = nullptr;
+            for (;;) {
+                int const ret = io_uring_wait_cqe(&ring, &cqe);
+                if (ret == 0) {
+                    call_callback(cqe, cqe->res);
+                } else {
+                    call_callback(cqe, io_result::invalid(-ret)); // -errno is saved in the return value
+                }
+
+                // mark the request as processed
+                io_uring_cqe_seen(&ring, cqe);
+
+                if (should_stop) {
+                    break;
+                }
+            }
+        }
+
+        void run_wait() noexcept {
+            for (;;) {
+                try {
+
+                } catch (...) {
+                    // todo
+                }
+            }
         }
 
       private:
@@ -324,6 +350,7 @@ namespace webpp::io {
         io_uring_params                      params{};
         io_uring                             ring{};
         buffer_manager_type                  buf_pack;
+        stl::atomic_bool                     should_stop = false;
 
         unsigned cqe_count = 0;
 
@@ -342,9 +369,13 @@ namespace webpp::io {
         [[no_unique_address]] small_object_optimization_array callback_storage;
     };
 
+    template <typename Allocator = stl::allocator<stl::byte>>
+    using io_uring_service = basic_io_uring_service<void (*)(io_result), Allocator>;
+
 
     template <typename Allocator = stl::allocator<stl::byte>>
-    using managed_io_uring_service = io_uring_service<istl::function<void(io_result), Allocator>, Allocator>;
+    using managed_io_uring_service =
+      basic_io_uring_service<istl::function<void(io_result), Allocator>, Allocator>;
 
 } // namespace webpp::io
 

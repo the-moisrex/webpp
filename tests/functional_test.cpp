@@ -43,6 +43,13 @@ TEST(FunctionalTests, Concepts) {
     EXPECT_FALSE(stl::is_trivially_copy_constructible_v<istl::function<void()>>);
     EXPECT_FALSE(stl::is_trivially_copy_constructible_v<::std::function<void()>>);
     EXPECT_EQ(sizeof(void*) * 2, sizeof(function_ref<void()>));
+
+    EXPECT_EQ(sizeof(void*), sizeof(stl::uint64_t));
+    EXPECT_EQ(sizeof(unsigned long long), sizeof(function_ref<void()>))
+      << "__u64 is the size of io_uring_sqe::user_data, "
+         "so it's important for the io_uring's service Small Object Optimization (SOO) "
+         "to know it can just store function_ref in the user_data directly";
+
     EXPECT_EQ(sizeof(void*), sizeof(istl::function<void()>));
     // EXPECT_EQ(sizeof(void*), sizeof(stl::function<void()>));
 }

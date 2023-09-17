@@ -19,7 +19,7 @@ TEST(IO, FileOptionsTest) {
 
 TEST(IO, IOConcepts) {
 #ifdef WEBPP_IO_URING_SUPPORT
-    EXPECT_TRUE(IOService<io_uring_service<>>);
+    EXPECT_TRUE(IOService<basic_io_uring_service<>>);
 #endif
 }
 
@@ -27,7 +27,7 @@ TEST(IO, IOConcepts) {
 #ifdef WEBPP_IO_URING_SUPPORT
 
 TEST(IO, BasicIOUring) {
-    io_uring_service<> io;
+    basic_io_uring_service<> io;
 
     std::array<char, 100> buf{};
 
