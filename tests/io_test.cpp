@@ -13,8 +13,10 @@ using namespace webpp;
 using namespace webpp::io;
 
 TEST(IO, FileOptionsTest) {
-    file_options options = "rw";
+    file_options const options = "rw";
     EXPECT_EQ(options, "rw");
+    EXPECT_TRUE(options.is_writeable());
+    EXPECT_FALSE(options.is_readonly());
 }
 
 TEST(IO, IOConcepts) {
@@ -27,23 +29,37 @@ TEST(IO, IOConcepts) {
 #ifdef WEBPP_IO_URING_SUPPORT
 
 TEST(IO, BasicIOUring) {
-    basic_io_uring_service<> io;
+    managed_io_uring_service<> io;
 
     std::array<char, 100> buf{};
 
     auto                   file = io::open(io); // open temp file
     std::string_view const data = "this is a text";
-    io.write(file, data.data(), data.size(), [data](int result) {
-        ASSERT_NE(result, -1);
-        ASSERT_EQ(result, data.size());
-    });
-    io.read(file, buf.data(), buf.size(), [data, &buf](int result) {
-        ASSERT_NE(result, -1);
-        std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result)};
-        EXPECT_EQ(data, buf_value);
-    });
-    io.close(file);
-    io.remove(file);
+    static_assert(stl::tag_invocable<syscall_write,
+                                     managed_io_uring_service<>,
+                                     io::file_handle,
+                                     buffer_view,
+                                     std::function<void(io_result)>>,
+                  "Should be invocable");
+    io::syscall(syscall_write{},
+                io,
+                file,
+                buffer_view{reinterpret_cast<stl::byte const*>(data.data()), data.size()},
+                stl::function<void(io_result)>{[data](int result) {
+                    ASSERT_NE(result, -1);
+                    ASSERT_EQ(result, data.size());
+                }});
+    io::syscall(syscall_read{},
+                io,
+                file,
+                buffer_view{reinterpret_cast<stl::byte const*>(buf.data()), buf.size()},
+                [data, &buf](int result) {
+                    ASSERT_NE(result, -1);
+                    std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result)};
+                    EXPECT_EQ(data, buf_value);
+                });
+    io::syscall(syscall_close{}, io, file);
+    // io::syscall(syscall_remove{}, io, file);
 }
 
 #    if 0

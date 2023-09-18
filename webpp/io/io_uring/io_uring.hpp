@@ -236,6 +236,10 @@ namespace webpp::io {
             return req;
         }
 
+        void submit() noexcept {
+            io_uring_submit(&ring);
+        }
+
         void set_callback(io_uring_sqe* req, rvalue_callback callback) noexcept(is_callback_optimizable) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
             if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
@@ -264,7 +268,9 @@ namespace webpp::io {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
             if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
                 auto callback = reinterpret_cast<callback_type>(io_uring_cqe_get_data(response));
-                stl::invoke(stl::move(callback), result);
+                if (callback) {
+                    stl::invoke(stl::move(callback), result);
+                }
             } else {
                 auto callback_ptr = reinterpret_cast<callback_type*>(io_uring_cqe_get_data(response));
                 if (callback_ptr) {
@@ -281,8 +287,6 @@ namespace webpp::io {
                     using alloc_traits = stl::allocator_traits<allocator_type>;
                     alloc_traits::destroy(alloc, callback_ptr);
                     alloc_traits::deallocate(alloc, callback_ptr, sizeof(callback_type));
-                } else {
-                    // todo: is it even possible?
                 }
             }
             // NOLINTEND(*-pro-type-reinterpret-cast)
@@ -333,14 +337,31 @@ namespace webpp::io {
       private:
 #    define define_syscall(op, ...)                                  \
         friend auto tag_invoke(io::syscall_operations::syscall_##op, \
-                               scheduler_type self,                  \
-                               file_handle    file_descriptor,       \
-                               __VA_ARGS__,                          \
-                               callback_type callback)
+                               scheduler_type              self,     \
+                               file_handle file_descriptor __VA_OPT__(, ) __VA_ARGS__)
       public:
-        define_syscall(read, buffer_view buf) noexcept -> void {
+        define_syscall(read, buffer_view buf, callback_type callback) noexcept -> void {
             auto req = self.sqe(stl::move(callback));
             io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
+            self.submit();
+        }
+
+        define_syscall(write, buffer_view buf, callback_type callback) noexcept -> void {
+            auto req = self.sqe(stl::move(callback));
+            io_uring_prep_write(req, file_descriptor, buf.data(), buf.size());
+            self.submit();
+        }
+
+        define_syscall(close, callback_type callback) noexcept -> void {
+            auto req = self.sqe(stl::move(callback));
+            io_uring_prep_close(req, file_descriptor);
+            self.submit();
+        }
+
+        define_syscall(close) noexcept -> void {
+            auto req = self.sqe();
+            io_uring_prep_close(req, file_descriptor);
+            self.submit();
         }
 
 #    undef define_syscall

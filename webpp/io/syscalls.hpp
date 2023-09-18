@@ -37,6 +37,9 @@ namespace webpp::io::inline syscall_operations {
 
     struct syscall_open {};
     struct syscall_read {};
+    struct syscall_write {};
+    struct syscall_close {};
+    struct syscall_remove {};
 
 
 #undef impl_syscall
