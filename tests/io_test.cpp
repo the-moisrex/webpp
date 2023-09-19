@@ -33,33 +33,46 @@ TEST(IO, BasicIOUring) {
 
     std::array<char, 100> buf{};
 
+    int executed = 0;
+
     auto                   file = io::open(io); // open temp file
     std::string_view const data = "this is a text";
     static_assert(stl::tag_invocable<syscall_write,
-                                     managed_io_uring_service<>,
+                                     managed_io_uring_service<>&,
                                      io::file_handle,
                                      buffer_view,
+                                     stl::size_t,
                                      std::function<void(io_result)>>,
                   "Should be invocable");
     io::syscall(syscall_write{},
                 io,
                 file,
                 buffer_view{reinterpret_cast<stl::byte const*>(data.data()), data.size()},
-                stl::function<void(io_result)>{[data](int result) {
+                0ull,
+                stl::function<void(io_result)>{[data, &executed](int result) {
+                    stl::cout << "Working 1" << stl::endl;
+                    ++executed;
                     ASSERT_NE(result, -1);
                     ASSERT_EQ(result, data.size());
                 }});
     io::syscall(syscall_read{},
                 io,
                 file,
-                buffer_view{reinterpret_cast<stl::byte const*>(buf.data()), buf.size()},
-                [data, &buf](int result) {
+                buffer_span{reinterpret_cast<stl::byte*>(buf.data()), buf.size()},
+                0ull,
+                [data, &buf, &executed](int result) {
+                    stl::cout << "Working 2" << stl::endl;
+                    ++executed;
                     ASSERT_NE(result, -1);
                     std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result)};
                     EXPECT_EQ(data, buf_value);
                 });
     io::syscall(syscall_close{}, io, file);
     // io::syscall(syscall_remove{}, io, file);
+
+    io(2);
+
+    EXPECT_EQ(executed, 2) << "Some of the callback functions didn't run";
 }
 
 #    if 0

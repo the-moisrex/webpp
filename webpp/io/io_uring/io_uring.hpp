@@ -21,6 +21,7 @@
 #    include "../syscalls.hpp"
 
 #    include <atomic>
+#    include <bit>
 #    include <cstdint>
 #    include <iterator>
 #    include <liburing.h> // http://git.kernel.dk/liburing
@@ -79,8 +80,8 @@ namespace webpp::io {
 
         /// if the callback's size is less than the io_uring's data type (which is u64 or same as void*),
         /// then we can put the whole thing inside the user_data itself
-        static constexpr bool is_callback_optimizable = sizeof(callback_type) >
-                                                        sizeof(decltype(io_uring_sqe::user_data));
+        static constexpr bool is_callback_optimizable =
+          sizeof(callback_type) <= sizeof(decltype(io_uring_sqe::user_data));
 
         /// check if the callback is nullable, if it is, we don't need to use std::optional
         static constexpr bool nullable_callback = stl::constructible_from<callback_type, stl::nullptr_t> &&
@@ -232,7 +233,7 @@ namespace webpp::io {
 
         [[nodiscard]] io_uring_sqe* sqe(rvalue_callback callback) noexcept(is_callback_optimizable) {
             auto req = io_uring_get_sqe(&ring);
-            set_callback(stl::move(callback));
+            set_callback(req, stl::move(callback));
             return req;
         }
 
@@ -242,13 +243,15 @@ namespace webpp::io {
 
         void set_callback(io_uring_sqe* req, rvalue_callback callback) noexcept(is_callback_optimizable) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
-            if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
-                io_uring_sqe_set_data(req, reinterpret_cast<void*>(callback));
+            if constexpr (is_callback_optimizable) {
+                __u64 value{};
+                new (&value) callback_type(stl::move(callback));
+                io_uring_sqe_set_data64(req, value);
             } else {
                 auto const iter = stl::find_if_not(stl::begin(callback_storage),
                                                    stl::end(callback_storage),
-                                                   [](callback_type const& c) constexpr noexcept -> bool {
-                                                       return c;
+                                                   [](auto const& c) constexpr noexcept -> bool {
+                                                       return static_cast<bool>(c);
                                                    });
                 if (iter == stl::end(callback_storage)) {
                     using alloc_traits = stl::allocator_traits<allocator_type>;
@@ -266,22 +269,22 @@ namespace webpp::io {
         void call_callback(io_uring_cqe* response,
                            io_result     result) noexcept(is_callback_optimizable&& is_callback_nothrow) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
-            if constexpr (sizeof(rvalue_callback) <= sizeof(void*)) {
-                auto callback = reinterpret_cast<callback_type>(io_uring_cqe_get_data(response));
-                if (callback) {
-                    stl::invoke(stl::move(callback), result);
+            if constexpr (is_callback_optimizable) {
+                auto callback_data = io_uring_cqe_get_data64(response);
+                auto callback_ptr  = stl::launder(reinterpret_cast<callback_type*>(&callback_data));
+                if (*callback_ptr) {
+                    stl::invoke(*callback_ptr, result);
+                    stl::destroy_at(callback_ptr);
                 }
             } else {
                 auto callback_ptr = reinterpret_cast<callback_type*>(io_uring_cqe_get_data(response));
                 if (callback_ptr) {
                     stl::invoke(stl::move(*callback_ptr), result);
 
-                    if constexpr (is_callback_optimizable) {
-                        // don't deallocate if our kinda-SOO (Small Object Optimization) has kicked in
-                        if (callback_ptr >= callback_storage.data() &&
-                            callback_ptr < (callback_ptr.data() + callback_storage.size()))
-                            return;
-                    }
+                    // don't deallocate if our kinda-SOO (Small Object Optimization) has kicked in
+                    if (callback_ptr >= callback_storage.data() &&
+                        callback_ptr < (callback_ptr.data() + callback_storage.size()))
+                        return;
 
                     // deallocating
                     using alloc_traits = stl::allocator_traits<allocator_type>;
@@ -304,10 +307,10 @@ namespace webpp::io {
             should_stop = true;
         }
 
-        void operator()() {
+        void operator()(stl::size_t count = 1) {
             should_stop       = false;
             io_uring_cqe* cqe = nullptr;
-            for (;;) {
+            for (; count; --count) {
                 int const ret = io_uring_wait_cqe(&ring, &cqe);
                 if (ret == 0) {
                     call_callback(cqe, cqe->res);
@@ -337,18 +340,18 @@ namespace webpp::io {
       private:
 #    define define_syscall(op, ...)                                  \
         friend auto tag_invoke(io::syscall_operations::syscall_##op, \
-                               scheduler_type              self,     \
+                               basic_io_uring_service&     self,     \
                                file_handle file_descriptor __VA_OPT__(, ) __VA_ARGS__)
       public:
-        define_syscall(read, buffer_view buf, callback_type callback) noexcept -> void {
+        define_syscall(read, buffer_span buf, stl::size_t offset, callback_type callback) noexcept -> void {
             auto req = self.sqe(stl::move(callback));
-            io_uring_prep_read(req, file_descriptor, buf.data(), buf.size());
+            io_uring_prep_read(req, file_descriptor, buf.data(), static_cast<unsigned>(buf.size()), offset);
             self.submit();
         }
 
-        define_syscall(write, buffer_view buf, callback_type callback) noexcept -> void {
+        define_syscall(write, buffer_view buf, stl::size_t offset, callback_type callback) noexcept -> void {
             auto req = self.sqe(stl::move(callback));
-            io_uring_prep_write(req, file_descriptor, buf.data(), buf.size());
+            io_uring_prep_write(req, file_descriptor, buf.data(), static_cast<unsigned>(buf.size()), offset);
             self.submit();
         }
 
@@ -385,7 +388,7 @@ namespace webpp::io {
           stl::array<stl::conditional_t<nullable_callback, callback_type, stl::optional<callback_type>>,
                      default_entries_value / 2>;
         using small_object_optimization_array =
-          stl::conditional_t<is_callback_optimizable, callback_storage_type, istl::nothing_type>;
+          stl::conditional_t<is_callback_optimizable, istl::nothing_type, callback_storage_type>;
 
         [[no_unique_address]] small_object_optimization_array callback_storage;
     };
