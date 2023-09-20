@@ -3,7 +3,10 @@
 #ifndef WEBPP_IO_RESULT_HPP
 #define WEBPP_IO_RESULT_HPP
 
+#include "../std/string.hpp"
+
 #include <cerrno>
+#include <cstring> // strerror
 
 namespace webpp::io {
 
@@ -65,6 +68,19 @@ namespace webpp::io {
 
         [[nodiscard]] constexpr int error() const noexcept {
             return -val;
+        }
+
+        template <typename StrT = stl::string, typename... Args>
+            requires(!istl::cvref_as<Args, StrT> && ...)
+        [[nodiscard]] constexpr StrT to_string(Args&&... args) const {
+            StrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
+        }
+
+        template <typename StrT>
+        constexpr void to_string(StrT& out) const {
+            out += stl::strerror(this->error());
         }
 
       private:

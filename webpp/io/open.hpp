@@ -62,7 +62,10 @@ namespace webpp::io {
     }
 
     [[nodiscard]] file_handle open(IOService auto& io) noexcept {
-        return open(io, {}, file_options::readwrite | file_options::temporary);
+        return open(io,
+                    {},
+                    file_options::readwrite | file_options::trunc | file_options::create |
+                      file_options::temporary);
     }
 
 } // namespace webpp::io

@@ -49,22 +49,21 @@ TEST(IO, BasicIOUring) {
                 file,
                 buffer_view{reinterpret_cast<stl::byte const*>(data.data()), data.size()},
                 0ull,
-                stl::function<void(io_result)>{[data, &executed](int result) {
-                    stl::cout << "Working 1" << stl::endl;
+                stl::function<void(io_result)>{[data, &executed](io_result result) {
                     ++executed;
-                    ASSERT_NE(result, -1);
-                    ASSERT_EQ(result, data.size());
+                    EXPECT_TRUE(result.is_ok());
+                    EXPECT_FALSE(result.is_error()) << result.to_string();
+                    EXPECT_EQ(data.size(), result.value());
                 }});
     io::syscall(syscall_read{},
                 io,
                 file,
                 buffer_span{reinterpret_cast<stl::byte*>(buf.data()), buf.size()},
                 0ull,
-                [data, &buf, &executed](int result) {
-                    stl::cout << "Working 2" << stl::endl;
+                [data, &buf, &executed](io_result result) {
                     ++executed;
-                    ASSERT_NE(result, -1);
-                    std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result)};
+                    EXPECT_TRUE(result.is_ok());
+                    std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result.value())};
                     EXPECT_EQ(data, buf_value);
                 });
     io::syscall(syscall_close{}, io, file);

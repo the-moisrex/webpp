@@ -83,8 +83,12 @@ namespace webpp::io {
             return handle >= 0;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
+        }
+
+        [[nodiscard]] constexpr operator handle_type() const noexcept {
+            return handle;
         }
 
         template <istl::String StrT>
