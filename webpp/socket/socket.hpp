@@ -178,24 +178,24 @@ namespace webpp {
             socket_initializer::initialize();
         }
 
-        constexpr basic_socket(native_handle_type d) noexcept : fd(d) {
+        basic_socket(native_handle_type d) noexcept : fd(d) {
             // no need to initialize, they already got a socket!
         }
 
         basic_socket(basic_socket const& other) noexcept
           : fd{(socket_initializer::initialize(), other.clone().release())} {}
 
-        constexpr basic_socket(basic_socket&& other) noexcept : fd{other.release()} {}
+        basic_socket(basic_socket&& other) noexcept : fd{other.release()} {}
 
 
-        constexpr basic_socket& operator=(basic_socket const& other) noexcept {
+        basic_socket& operator=(basic_socket const& other) noexcept {
             if (this != &other && other.fd != fd) {
                 other.clone().swap(*this);
             }
             return *this;
         }
-        constexpr basic_socket& operator=(basic_socket&&) noexcept = default;
-        constexpr basic_socket& operator=(native_handle_type d) noexcept {
+        basic_socket& operator=(basic_socket&&) noexcept = default;
+        basic_socket& operator=(native_handle_type d) noexcept {
             if (d != fd) {
                 close();
                 fd = d;
@@ -203,11 +203,11 @@ namespace webpp {
             }
             return *this;
         }
-        constexpr ~basic_socket() noexcept {
+        ~basic_socket() noexcept {
             close();
         }
 
-        constexpr basic_socket& swap(basic_socket& other) noexcept {
+        basic_socket& swap(basic_socket& other) noexcept {
             using stl::swap;
             swap(fd, other.fd);
             swap(last_errno, other.last_errno);
@@ -218,7 +218,7 @@ namespace webpp {
          * Releases the ownership of the socket handle.
          * This member function puts this class into the "invalid" state.
          */
-        constexpr native_handle_type release() noexcept {
+        native_handle_type release() noexcept {
             return stl::exchange(fd, invalid_handle_value);
         }
 
@@ -512,35 +512,35 @@ namespace webpp {
             return address().family();
         }
 
-        [[nodiscard]] constexpr native_handle_type native_handle() const noexcept {
+        [[nodiscard]] native_handle_type native_handle() const noexcept {
             return fd;
         }
 
-        [[nodiscard]] constexpr bool operator==(const basic_socket& other) const noexcept {
+        [[nodiscard]] bool operator==(const basic_socket& other) const noexcept {
             return fd == other.fd;
         }
 
-        [[nodiscard]] constexpr bool operator!=(const basic_socket& other) const noexcept {
+        [[nodiscard]] bool operator!=(const basic_socket& other) const noexcept {
             return fd != other.fd;
         }
 
-        [[nodiscard]] constexpr bool is_open() const noexcept {
+        [[nodiscard]] bool is_open() const noexcept {
             return fd != invalid_handle_value;
         }
 
-        [[nodiscard]] constexpr bool is_valid() const noexcept {
+        [[nodiscard]] bool is_valid() const noexcept {
             return is_open() && is_error_free();
         }
 
-        [[nodiscard]] constexpr bool is_error_free() const noexcept {
+        [[nodiscard]] bool is_error_free() const noexcept {
             return last_errno == 0;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] operator bool() const noexcept {
             return is_valid();
         }
 
-        [[nodiscard]] constexpr int last_error() const noexcept {
+        [[nodiscard]] int last_error() const noexcept {
             return last_errno;
         }
 
@@ -548,7 +548,7 @@ namespace webpp {
          * Clears the error flag for the object.
          * @param val The value to set the flag, normally zero.
          */
-        constexpr void clear_error(int val = 0) noexcept {
+        void clear_error(int val = 0) noexcept {
             last_errno = val;
         }
 
