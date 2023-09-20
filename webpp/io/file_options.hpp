@@ -64,8 +64,6 @@ namespace webpp::io {
         //       writing.  This nonstandard access mode is used by some Linux
         //       drivers to return a file descriptor that is to be used only for
         //       device-specific ioctl(2) operations.
-        def invalid = OS_VALUE(O_RDONLY | O_WRONLY,
-                               0); // fixme: both 0 (for win32), and 0b11 (for unix) have usages
 
         def readonly  = OS_VALUE(O_RDONLY, _O_RDONLY);
         def writeonly = OS_VALUE(O_WRONLY, _O_WRONLY);
@@ -86,6 +84,10 @@ namespace webpp::io {
         def sequential = OS_VALUE(0, _O_SEQUENTIAL);
         def random     = OS_VALUE(0, _O_RANDOM);
         def shortlived = OS_VALUE(0, _O_CREAT | _O_SHORT_LIVED);
+
+        def invalid = ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct &
+                      ~temporary & ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random &
+                      ~shortlived;
 #undef def
 
         constexpr file_options() noexcept = default;

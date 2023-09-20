@@ -13,8 +13,8 @@ using namespace webpp;
 using namespace webpp::io;
 
 TEST(IO, FileOptionsTest) {
-    file_options const options = "rw";
-    EXPECT_EQ(options, "rw");
+    file_options const options = "r+";
+    EXPECT_EQ(options, "r+");
     EXPECT_TRUE(options.is_writeable());
     EXPECT_FALSE(options.is_readonly());
 }
