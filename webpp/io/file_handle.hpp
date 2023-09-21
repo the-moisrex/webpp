@@ -109,6 +109,35 @@ namespace webpp::io {
         handle_type handle{};
     };
 
+
+
+    /**
+     * In async I/O operations, there will be time where you need the async operations for a to be synced
+     * so the problems like this wouldn't happen:
+     *    In io_uring, the OS may decide to reorder
+     *      -      [ open > write > read > close ]
+     *      - into [ close > read > write > open ]
+     *    which is a load of errors happening all over the place.
+     *
+     * To solve this issue, we introduce synced file handles that let the I/O execution contexts like
+     * io_uring to synchronize these operations and keep the order of executions.
+     */
+    struct synced_file_handle {
+
+        constexpr synced_file_handle() noexcept = default;
+        constexpr synced_file_handle(file_handle inp_fh) noexcept : fh{inp_fh} {}
+        constexpr synced_file_handle(synced_file_handle&&) noexcept            = default;
+        synced_file_handle(synced_file_handle const&)                          = delete;
+        synced_file_handle&           operator=(synced_file_handle const&)     = delete;
+        constexpr synced_file_handle& operator=(synced_file_handle&&) noexcept = default;
+        constexpr ~synced_file_handle()                                        = default;
+
+      private:
+        file_handle fh;
+    };
+
+    // todo: multi-file-descriptor version of synced_file_handle (basic_synced_file_handle<Size>??)
+
 } // namespace webpp::io
 
 #endif // WEBPP_FILE_HANDLE_HPP
