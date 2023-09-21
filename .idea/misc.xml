@@ -3,6 +3,7 @@
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
     <excludeRoots>
+      <file path="$PROJECT_DIR$/build-dev-clang" />
       <file path="$PROJECT_DIR$/build-dev-gcc" />
     </excludeRoots>
   </component>
