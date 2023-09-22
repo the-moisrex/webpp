@@ -38,14 +38,6 @@ static inline bool IS_ERR(const void* ptr) {
 #elif defined(__riscv) && __riscv_xlen == 64
 #    include "arch/riscv64/syscall.h"
 #else
-/*
- * We don't have native syscall wrappers
- * for this arch. Must use libc!
- */
-#    ifdef CONFIG_NOLIBC
-#        error "This arch doesn't support building liburing without libc"
-#    endif
-/* libc syscall wrappers. */
 #    include "arch/generic/syscall.h"
 #endif
 #endif

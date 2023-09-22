@@ -21,17 +21,17 @@ namespace webpp {
      *
      * See: https://stackoverflow.com/a/2513561
      */
-    static inline unsigned long long available_memory() noexcept {
+    static inline stl::size_t available_memory() noexcept {
 #ifdef MSVC_COMPILER
         // TODO: test this part on windows too
         // https://docs.microsoft.com/en-us/windows/win32/api/sysinfoapi/nf-sysinfoapi-globalmemorystatusex?redirectedfrom=MSDN
         MEMORYSTATUSEX statex;
         statex.dwLength = sizeof(statex);
         GlobalMemoryStatusEx(&statex);
-        return statex.ullAvailPhys;
+        return static_cast<stl::size_t>(statex.ullAvailPhys);
 #else
         static auto page_size = get_page_size();
-        return static_cast<unsigned long long int>(sysconf(_SC_AVPHYS_PAGES) * page_size);
+        return static_cast<stl::size_t>(sysconf(_SC_AVPHYS_PAGES)) * page_size;
 #endif
     }
 } // namespace webpp

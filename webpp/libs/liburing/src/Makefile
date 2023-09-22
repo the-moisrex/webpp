@@ -43,13 +43,6 @@ all: $(all_targets)
 
 liburing_srcs := setup.c queue.c register.c syscall.c version.c
 
-ifeq ($(CONFIG_NOLIBC),y)
-	liburing_srcs += nolibc.c
-	override CFLAGS += -nostdlib -nodefaultlibs -ffreestanding -fno-builtin -fno-stack-protector
-	override CPPFLAGS += -nostdlib -nodefaultlibs -ffreestanding -fno-builtin -fno-stack-protector
-	override LINK_FLAGS += -nostdlib -nodefaultlibs -lgcc
-endif
-
 override CPPFLAGS += -MT "$@" -MMD -MP -MF "$@.d"
 liburing_objs := $(patsubst %.c,%.ol,$(liburing_srcs))
 liburing_sobjs := $(patsubst %.c,%.os,$(liburing_srcs))
