@@ -7,7 +7,7 @@
 #    define WEBPP_RAPIDJSON_READY
 #    include "../common/meta.hpp"
 #    include "../memory/allocators.hpp"
-#    include "../memory/buffer.hpp"
+#    include "../memory/stack.hpp"
 #    include "../std/array.hpp"
 #    include "../std/collection.hpp"
 #    include "../std/string.hpp"

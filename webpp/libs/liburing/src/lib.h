@@ -6,23 +6,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined(__x86_64__) || defined(__i386__)
-#    include "arch/x86/lib.h"
-#elif defined(__aarch64__)
-#    include "arch/aarch64/lib.h"
-#elif defined(__riscv) && __riscv_xlen == 64
-#    include "arch/riscv64/lib.h"
-#else
-/*
- * We don't have nolibc support for this arch. Must use libc!
- */
-#    ifdef CONFIG_NOLIBC
-#        error "This arch doesn't support building liburing without libc"
-#    endif
-/* libc wrappers. */
-#    include "arch/generic/lib.h"
-#endif
-
 
 #ifndef offsetof
 #    define offsetof(TYPE, FIELD) ((size_t) & ((TYPE*) 0)->FIELD)

@@ -121,6 +121,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/memory/available_memory.hpp
         ${LIB_INCLUDE_DIR}/memory/std_pmr_allocator_pack.hpp
         ${LIB_INCLUDE_DIR}/memory/std_allocator_pack.hpp
+        ${LIB_INCLUDE_DIR}/memory/object.hpp
+        ${LIB_INCLUDE_DIR}/memory/stack.hpp
+        ${LIB_INCLUDE_DIR}/memory/memory_pages.hpp
 
         ${LIB_INCLUDE_DIR}/ip/inet_ntop.hpp
         ${LIB_INCLUDE_DIR}/ip/inet_pton.hpp

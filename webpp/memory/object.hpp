@@ -4,7 +4,7 @@
 #define WEBPP_OBJECT_HPP
 
 #include "allocator_pack.hpp"
-#include "buffer.hpp"
+#include "stack.hpp"
 
 namespace webpp::object {
 
