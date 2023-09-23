@@ -2,6 +2,8 @@
 #ifndef LIB_URING_H
 #define LIB_URING_H
 
+// #define _POSIX_C_SOURCE 200112L
+
 #ifndef _XOPEN_SOURCE
 #    define _XOPEN_SOURCE 500 /* Required for glibc to expose sigset_t */
 #endif
@@ -10,11 +12,11 @@
 #    define _GNU_SOURCE /* Required for musl to expose cpu_set_t */
 #endif
 
-#include "liburing/barrier.h"
-#include "liburing/compat.h"
-#include "liburing/io_uring.h"
-#include "liburing/io_uring_version.h"
+#include "barrier.hpp"
+#include "compat.hpp"
+#include "io_uring_types.hpp"
 
+extern "C" {
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -71,6 +73,32 @@
 #        define __NR_io_uring_register 427
 #    endif
 #endif
+
+
+
+enum {
+    INT_FLAG_REG_RING     = 1,
+    INT_FLAG_REG_REG_RING = 2,
+    INT_FLAG_APP_MEM      = 4,
+};
+
+
+#ifndef offsetof
+#    define offsetof(TYPE, FIELD) ((size_t) & ((TYPE*) 0)->FIELD)
+#endif
+
+#ifndef container_of
+#    define container_of(PTR, TYPE, FIELD)                         \
+        ({                                                         \
+            __typeof__(((TYPE*) 0)->FIELD)* __FIELD_PTR = (PTR);   \
+            (TYPE*) ((char*) __FIELD_PTR - offsetof(TYPE, FIELD)); \
+        })
+#endif
+
+#define __maybe_unused __attribute__((__unused__))
+#define __hot          __attribute__((__hot__))
+#define __cold         __attribute__((__cold__))
+
 
 
 /*
@@ -361,19 +389,19 @@ static inline void __io_uring_set_target_fixed_file(struct io_uring_sqe* sqe, un
 
 static inline void
 io_uring_prep_rw(int op, struct io_uring_sqe* sqe, int fd, const void* addr, unsigned len, __u64 offset) {
-    sqe->opcode      = (__u8) op;
-    sqe->flags       = 0;
-    sqe->ioprio      = 0;
-    sqe->fd          = fd;
-    sqe->off         = offset;
-    sqe->addr        = (unsigned long) addr;
-    sqe->len         = len;
-    sqe->rw_flags    = 0;
-    sqe->buf_index   = 0;
-    sqe->personality = 0;
-    sqe->file_index  = 0;
-    sqe->addr3       = 0;
-    sqe->__pad2[0]   = 0;
+    sqe->opcode        = (__u8) op;
+    sqe->flags         = 0;
+    sqe->ioprio        = 0;
+    sqe->fd            = fd;
+    sqe->off           = offset;
+    sqe->addr          = (unsigned long) addr;
+    sqe->len           = len;
+    sqe->rw_flags      = 0;
+    sqe->buf_index     = 0;
+    sqe->personality   = 0;
+    sqe->file_index    = 0;
+    sqe->addr3.addr3   = 0;
+    sqe->addr3.pad2[0] = 0;
 }
 
 /*
@@ -704,8 +732,8 @@ io_uring_prep_send(struct io_uring_sqe* sqe, int sockfd, const void* buf, size_t
 
 static inline void
 io_uring_prep_send_set_addr(struct io_uring_sqe* sqe, const struct sockaddr* dest_addr, __u16 addr_len) {
-    sqe->addr2    = (unsigned long) (const void*) dest_addr;
-    sqe->addr_len = addr_len;
+    sqe->addr2             = (unsigned long) (const void*) dest_addr;
+    sqe->addr_len.addr_len = addr_len;
 }
 
 static inline void io_uring_prep_sendto(struct io_uring_sqe*   sqe,
@@ -939,7 +967,7 @@ static inline void io_uring_prep_msg_ring_fd(struct io_uring_sqe* sqe,
                                              __u64                data,
                                              unsigned int         flags) {
     io_uring_prep_rw(IORING_OP_MSG_RING, sqe, fd, (void*) (uintptr_t) IORING_MSG_SEND_FD, 0, data);
-    sqe->addr3 = source_fd;
+    sqe->addr3.addr3 = source_fd;
     /* offset by 1 for allocation */
     if ((unsigned int) target_fd == IORING_FILE_INDEX_ALLOC)
         target_fd--;
@@ -961,7 +989,7 @@ static inline void io_uring_prep_getxattr(struct io_uring_sqe* sqe,
                                           const char*          path,
                                           unsigned int         len) {
     io_uring_prep_rw(IORING_OP_GETXATTR, sqe, 0, name, len, (__u64) (uintptr_t) value);
-    sqe->addr3       = (__u64) (uintptr_t) path;
+    sqe->addr3.addr3 = (__u64) (uintptr_t) path;
     sqe->xattr_flags = 0;
 }
 
@@ -972,7 +1000,7 @@ static inline void io_uring_prep_setxattr(struct io_uring_sqe* sqe,
                                           int                  flags,
                                           unsigned int         len) {
     io_uring_prep_rw(IORING_OP_SETXATTR, sqe, 0, name, len, (__u64) (uintptr_t) value);
-    sqe->addr3       = (__u64) (uintptr_t) path;
+    sqe->addr3.addr3 = (__u64) (uintptr_t) path;
     sqe->xattr_flags = flags;
 }
 
@@ -1041,7 +1069,7 @@ static inline void io_uring_prep_cmd_sock(struct io_uring_sqe* sqe,
     UNUSED(level);
     UNUSED(optname);
     io_uring_prep_rw(IORING_OP_URING_CMD, sqe, fd, NULL, 0, 0);
-    sqe->cmd_op = cmd_op;
+    sqe->cmd_op.cmd_op = cmd_op;
 }
 
 /*
@@ -1250,7 +1278,7 @@ static inline int io_uring_buf_ring_mask(__u32 ring_entries) {
 }
 
 static inline void io_uring_buf_ring_init(struct io_uring_buf_ring* br) {
-    br->tail = 0;
+    br->tail.tail = 0;
 }
 
 /*
@@ -1262,7 +1290,7 @@ static inline void io_uring_buf_ring_add(struct io_uring_buf_ring* br,
                                          unsigned short            bid,
                                          int                       mask,
                                          int                       buf_offset) {
-    struct io_uring_buf* buf = &br->bufs[(br->tail + buf_offset) & mask];
+    struct io_uring_buf* buf = &br->bufs[(br->tail.tail + buf_offset) & mask];
 
     buf->addr = (unsigned long) (uintptr_t) addr;
     buf->len  = len;
@@ -1275,16 +1303,16 @@ static inline void io_uring_buf_ring_add(struct io_uring_buf_ring* br,
  * buffers.
  */
 static inline void io_uring_buf_ring_advance(struct io_uring_buf_ring* br, int count) {
-    unsigned short new_tail = br->tail + count;
+    unsigned short new_tail = br->tail.tail + count;
 
-    io_uring_smp_store_release(&br->tail, new_tail);
+    io_uring_smp_store_release(&br->tail.tail, new_tail);
 }
 
 static inline void __io_uring_buf_ring_cq_advance(struct io_uring*          ring,
                                                   struct io_uring_buf_ring* br,
                                                   int                       cq_count,
                                                   int                       buf_count) {
-    br->tail += buf_count;
+    br->tail.tail += buf_count;
     io_uring_cq_advance(ring, cq_count);
 }
 
@@ -1312,5 +1340,9 @@ ssize_t io_uring_mlock_size(unsigned entries, unsigned flags);
 ssize_t io_uring_mlock_size_params(unsigned entries, struct io_uring_params* p);
 
 
-
+#include "queue.hpp"
+#include "register.hpp"
+#include "setup.hpp"
+#include "syscall.hpp"
+}
 #endif

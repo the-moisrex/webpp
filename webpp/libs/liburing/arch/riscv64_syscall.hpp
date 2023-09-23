@@ -88,11 +88,11 @@
             __do_syscallN("r"(a7), "0"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5)); \
         })
 
-#    include "../syscall-defs.h"
+#    include "./syscall-defs.hpp"
 
 #else /* #if defined(__riscv) && __riscv_xlen == 64 */
 
-#    include "../generic/syscall.h"
+#    include "./generic_syscall.hpp"
 
 #endif /*  #if defined(__riscv) && __riscv_xlen == 64 */
 

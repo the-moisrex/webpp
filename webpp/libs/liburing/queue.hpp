@@ -1,12 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#define _POSIX_C_SOURCE 200112L
 
-#include "int_flags.h"
-#include "lib.h"
-#include "liburing.h"
-#include "liburing/compat.h"
-#include "liburing/io_uring.h"
-#include "syscall.h"
 
 /*
  * Returns true if we're not using SQ thread (thus nobody submits but us)
@@ -91,7 +84,7 @@ static int _io_uring_get_cqe(struct io_uring* ring, struct io_uring_cqe** cqe_pt
         if (!need_enter)
             break;
         if (looped && data->has_ts) {
-            struct io_uring_getevents_arg* arg = data->arg;
+            auto* arg = reinterpret_cast<io_uring_getevents_arg*>(data->arg);
 
             if (!cqe && arg->ts && !err)
                 err = -ETIME;

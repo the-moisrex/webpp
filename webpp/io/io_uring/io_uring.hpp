@@ -6,9 +6,8 @@
 // check if we have io_uring library
 // we're hoping that liburing would be standardised, so we don't have to include a library or implement it
 // on our own
-#if __has_include(<liburing.h>)
-#    define WEBPP_IO_URING_SUPPORT
-
+#include "../../libs/ioring.hpp"
+#ifdef WEBPP_IO_URING_SUPPORT
 #    include "../../async/async.hpp"
 #    include "../../std/coroutine.hpp"
 #    include "../../std/expected.hpp"
@@ -24,7 +23,6 @@
 #    include <bit>
 #    include <cstdint>
 #    include <iterator>
-#    include <liburing.h> // http://git.kernel.dk/liburing
 #    include <system_error>
 
 namespace webpp::io {

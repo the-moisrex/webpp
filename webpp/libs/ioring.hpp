@@ -4,15 +4,12 @@
 #define WEBPP_URING_HPP
 
 #ifdef __linux__
-
-#    if defined(USE_LIBURING) && __has_include(<liburing.h>)
+#    if 1 || defined(USE_LIBURING) && __has_include(<liburing.h>)
 #        include <liburing.h>
 #    else
 #        include "./liburing/liburing.hpp"
 #    endif
-
-namespace webpp::ioring {}
-
+#    define WEBPP_IO_URING_SUPPORT
 #endif
 
 #endif // WEBPP_URING_HPP

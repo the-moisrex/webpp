@@ -1,12 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#define _DEFAULT_SOURCE
+// #define _DEFAULT_SOURCE
 
-#include "compat.hpp"
-#include "int_flags.h"
-#include "lib.h"
-#include "liburing.h"
-#include "liburing/io_uring.h"
-#include "syscall.h"
 
 #define KERN_MAX_ENTRIES    32768
 #define KERN_MAX_CQ_ENTRIES (2 * KERN_MAX_ENTRIES)

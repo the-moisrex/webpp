@@ -129,12 +129,12 @@
             rax;                                                     \
         })
 
-#    include "../syscall-defs.h"
+#    include "./syscall-defs.hpp"
 
 #else /* #if defined(__x86_64__) */
 
 
-#    include "../generic/syscall.h"
+#    include "./generic_syscall.hpp"
 
 
 #endif /* #if defined(__x86_64__) */

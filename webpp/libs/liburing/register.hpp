@@ -1,12 +1,4 @@
 /* SPDX-License-Identifier: MIT */
-#define _POSIX_C_SOURCE 200112L
-
-#include "int_flags.h"
-#include "lib.h"
-#include "liburing.h"
-#include "liburing/compat.h"
-#include "liburing/io_uring.h"
-#include "syscall.h"
 
 static inline int
 do_register(struct io_uring* ring, unsigned int opcode, const void* arg, unsigned int nr_args) {
