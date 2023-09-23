@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.23...3.27)
 project(webpp
         VERSION 1.0.0
         LANGUAGES CXX
-        )
+)
 enable_language(CXX)
 set(LIB_NAME ${PROJECT_NAME})
 set(LIB_SOVERSION 1)
@@ -97,6 +97,8 @@ if (WEBPP_DEV)
     message(STATUS "Install bin dir expression     : ${INSTALL_BINDIR}")
     message(STATUS "Install include dir expression : ${INSTALL_INCLUDEDIR}")
     message(STATUS "Building Fuzz Tests            : ${FUZZ_TESTS}")
+    message(STATUS "Use eve library                : ${USE_EVE}")
+    message(STATUS "Use CTRE library               : ${USE_CTRE}")
 
 
     add_compile_definitions(WEBPP_PROJECT_ROOT=${CMAKE_CURRENT_SOURCE_DIR})
@@ -133,21 +135,20 @@ if (WEBPP_DEV)
     endif ()
 
 
-    option (FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
+    option(FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
 
     if (${FORCE_COLORED_OUTPUT})
         if (IS_GCC)
-           add_compile_options (-fdiagnostics-color=always)
+            add_compile_options(-fdiagnostics-color=always)
         elseif (IS_CLANG)
-           add_compile_options (-fcolor-diagnostics)
+            add_compile_options(-fcolor-diagnostics)
         endif ()
     endif ()
 
 
-endif() # Development
+endif () # Development
 
 include(./cmake/import.cmake)
-
 
 
 add_subdirectory(${LIB_DIR})

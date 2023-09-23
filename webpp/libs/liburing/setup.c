@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #define _DEFAULT_SOURCE
 
+#include "compat.hpp"
 #include "int_flags.h"
 #include "lib.h"
 #include "liburing.h"
-#include "liburing/compat.h"
 #include "liburing/io_uring.h"
 #include "syscall.h"
 

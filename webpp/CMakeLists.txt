@@ -14,6 +14,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/configs/constants.hpp
 
         ${LIB_INCLUDE_DIR}/libs/asio.hpp
+        ${LIB_INCLUDE_DIR}/libs/ioring.hpp
         ${LIB_INCLUDE_DIR}/libs/brotli.hpp
         ${LIB_INCLUDE_DIR}/libs/eve.hpp
         ${LIB_INCLUDE_DIR}/libs/ctre.hpp
