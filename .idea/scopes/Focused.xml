@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Focused" pattern="file[webpp]:webpp//*||file[webpp]:tests//*||file[webpp]:examples//*||file:CMakeLists.txt" />
+</component>
