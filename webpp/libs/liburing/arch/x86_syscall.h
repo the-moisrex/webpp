@@ -129,7 +129,7 @@
             rax;                                                     \
         })
 
-#    include "./syscall-defs.hpp"
+#    include "./syscall-defs.h"
 
 #else /* #if defined(__x86_64__) */
 

@@ -93,14 +93,14 @@ struct io_uring_sqe {
         __u64                  addr3;
         [[maybe_unused]] __u64 pad2[1];
     };
-    union {
-        addr3_t addr3;
-        /*
-         * If the ring is initialized with IORING_SETUP_SQE128, then
-         * this field is used for 80 bytes of arbitrary command data
-         */
-        __u8 cmd[0];
-    };
+    // union {
+    addr3_t addr3;
+    /*
+     * If the ring is initialized with IORING_SETUP_SQE128, then
+     * this field is used for 80 bytes of arbitrary command data
+     */
+    //    __u8 cmd[0];
+    //};
 };
 
 /*
@@ -381,7 +381,7 @@ struct io_uring_cqe {
      * If the ring is initialized with IORING_SETUP_CQE32, then this field
      * contains 16-bytes of padding, doubling the size of the CQE.
      */
-    __u64 big_cqe[];
+    // __u64 big_cqe[];
 };
 
 /*
@@ -605,7 +605,7 @@ struct io_uring_probe {
     __u8                     ops_len; /* length of ops[] array below */
     [[maybe_unused]] __u16   resv;
     [[maybe_unused]] __u32   resv2[3];
-    struct io_uring_probe_op ops[];
+    struct io_uring_probe_op ops[0];
 };
 
 struct io_uring_restriction {
@@ -633,6 +633,7 @@ struct io_uring_buf_ring {
         [[maybe_unused]] __u16 resv3;
         __u16                  tail;
     };
+
     union {
         tail_t tail;
         /*

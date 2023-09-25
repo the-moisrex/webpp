@@ -86,7 +86,7 @@
 
 #else /* #if defined(__aarch64__) */
 
-#    include "./generic_syscall.hpp"
+#    include "./generic_syscall.h"
 
 #endif /* #if defined(__aarch64__) */
 

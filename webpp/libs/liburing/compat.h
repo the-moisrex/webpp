@@ -1,7 +1,7 @@
 // Created by moisrex on 9/23/23.
 
-#ifndef WEBPP_COMPAT_HPP
-#define WEBPP_COMPAT_HPP
+#ifndef WEBPP_COMPAT_H
+#define WEBPP_COMPAT_H
 
 #include <linux/version.h>
 
@@ -48,4 +48,4 @@ struct open_how {
 
 /// Since webpp itself is using C++20,23 feature, glibc will have statx, so we don't need to check.
 
-#endif // WEBPP_COMPAT_HPP
+#endif // WEBPP_COMPAT_H

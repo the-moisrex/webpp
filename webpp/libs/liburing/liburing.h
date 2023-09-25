@@ -12,11 +12,12 @@
 #    define _GNU_SOURCE /* Required for musl to expose cpu_set_t */
 #endif
 
-#include "barrier.hpp"
-#include "compat.hpp"
-#include "io_uring_types.hpp"
+
 
 extern "C" {
+#include "compat.h"
+#include "io_uring_types.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -24,10 +25,15 @@ extern "C" {
 #include <sched.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/uio.h>
 #include <time.h>
+#include <unistd.h>
 
 #ifndef uring_unlikely
 #    define uring_unlikely(cond) __builtin_expect(!!(cond), 0)
@@ -76,6 +82,110 @@ extern "C" {
 
 
 
+/*
+ * Don't put this below the #include "arch/$arch_syscall.hpp", that
+ * file may need it.
+ */
+struct io_uring_params;
+
+static inline void* ERR_PTR(intptr_t n) {
+    return (void*) n;
+}
+
+static inline int PTR_ERR(const void* ptr) {
+    return (int) (intptr_t) ptr;
+}
+
+static inline bool IS_ERR(const void* ptr) {
+    return uring_unlikely((uintptr_t) ptr >= (uintptr_t) -4095UL);
+}
+
+#if defined(__x86_64__) || defined(__i386__)
+#    include "arch/x86_syscall.h"
+#elif defined(__aarch64__)
+#    include "arch/aarch64_syscall.hpp"
+#elif defined(__riscv) && __riscv_xlen == 64
+#    include "arch/riscv64_syscall.hpp"
+#else
+#    include "arch/generic_syscall.hpp"
+#endif
+
+
+#include "barrier.h"
+static inline int __sys_open(const char* pathname, int flags, mode_t mode) {
+    /*
+     * Some architectures don't have __NR_open, but __NR_openat.
+     */
+#ifdef __NR_open
+    return (int) __do_syscall3(__NR_open, pathname, flags, mode);
+#else
+    return (int) __do_syscall4(__NR_openat, AT_FDCWD, pathname, flags, mode);
+#endif
+}
+
+static inline ssize_t __sys_read(int fd, void* buffer, size_t size) {
+    return (ssize_t) __do_syscall3(__NR_read, fd, buffer, size);
+}
+
+static inline void* __sys_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
+    int nr;
+
+#if defined(__NR_mmap2)
+    nr = __NR_mmap2;
+    offset >>= 12;
+#else
+    nr = __NR_mmap;
+#endif
+    return (void*) __do_syscall6(nr, addr, length, prot, flags, fd, offset);
+}
+
+static inline int __sys_munmap(void* addr, size_t length) {
+    return (int) __do_syscall2(__NR_munmap, addr, length);
+}
+
+static inline int __sys_madvise(void* addr, size_t length, int advice) {
+    return (int) __do_syscall3(__NR_madvise, addr, length, advice);
+}
+
+static inline int __sys_getrlimit(int resource, struct rlimit* rlim) {
+    return (int) __do_syscall2(__NR_getrlimit, resource, rlim);
+}
+
+static inline int __sys_setrlimit(int resource, const struct rlimit* rlim) {
+    return (int) __do_syscall2(__NR_setrlimit, resource, rlim);
+}
+
+static inline int __sys_close(int fd) {
+    return (int) __do_syscall1(__NR_close, fd);
+}
+
+static inline int
+__sys_io_uring_register(unsigned int fd, unsigned int opcode, const void* arg, unsigned int nr_args) {
+    return (int) __do_syscall4(__NR_io_uring_register, fd, opcode, arg, nr_args);
+}
+
+static inline int __sys_io_uring_setup(unsigned int entries, struct io_uring_params* p) {
+    return (int) __do_syscall2(__NR_io_uring_setup, entries, p);
+}
+
+static inline int __sys_io_uring_enter2(unsigned int fd,
+                                        unsigned int to_submit,
+                                        unsigned int min_complete,
+                                        unsigned int flags,
+                                        sigset_t*    sig,
+                                        size_t       sz) {
+    return (int) __do_syscall6(__NR_io_uring_enter, fd, to_submit, min_complete, flags, sig, sz);
+}
+
+static inline int __sys_io_uring_enter(unsigned int fd,
+                                       unsigned int to_submit,
+                                       unsigned int min_complete,
+                                       unsigned int flags,
+                                       sigset_t*    sig) {
+    return __sys_io_uring_enter2(fd, to_submit, min_complete, flags, sig, _NSIG / 8);
+}
+
+
 enum {
     INT_FLAG_REG_RING     = 1,
     INT_FLAG_REG_REG_RING = 2,
@@ -100,6 +210,30 @@ enum {
 #define __cold         __attribute__((__cold__))
 
 
+int io_uring_enter(unsigned int fd,
+                   unsigned int to_submit,
+                   unsigned int min_complete,
+                   unsigned int flags,
+                   sigset_t*    sig) {
+    return __sys_io_uring_enter(fd, to_submit, min_complete, flags, sig);
+}
+
+int io_uring_enter2(unsigned int fd,
+                    unsigned int to_submit,
+                    unsigned int min_complete,
+                    unsigned int flags,
+                    sigset_t*    sig,
+                    size_t       sz) {
+    return __sys_io_uring_enter2(fd, to_submit, min_complete, flags, sig, sz);
+}
+
+int io_uring_setup(unsigned int entries, struct io_uring_params* p) {
+    return __sys_io_uring_setup(entries, p);
+}
+
+int io_uring_register(unsigned int fd, unsigned int opcode, const void* arg, unsigned int nr_args) {
+    return __sys_io_uring_register(fd, opcode, arg, nr_args);
+}
 
 /*
  * Library interface to io_uring
@@ -1340,9 +1474,1314 @@ ssize_t io_uring_mlock_size(unsigned entries, unsigned flags);
 ssize_t io_uring_mlock_size_params(unsigned entries, struct io_uring_params* p);
 
 
-#include "queue.hpp"
-#include "register.hpp"
-#include "setup.hpp"
-#include "syscall.hpp"
+/*
+ * Returns true if we're not using SQ thread (thus nobody submits but us)
+ * or if IORING_SQ_NEED_WAKEUP is set, so submit thread must be explicitly
+ * awakened. For the latter case, we set the thread wakeup flag.
+ * If no SQEs are ready for submission, returns false.
+ */
+static inline bool sq_ring_needs_enter(struct io_uring* ring, unsigned submit, unsigned* flags) {
+    if (!submit)
+        return false;
+
+    if (!(ring->flags & IORING_SETUP_SQPOLL))
+        return true;
+
+    /*
+     * Ensure the kernel can see the store to the SQ tail before we read
+     * the flags.
+     */
+    io_uring_smp_mb();
+
+    if (uring_unlikely(IO_URING_READ_ONCE(*ring->sq.kflags) & IORING_SQ_NEED_WAKEUP)) {
+        *flags |= IORING_ENTER_SQ_WAKEUP;
+        return true;
+    }
+
+    return false;
+}
+
+static inline bool cq_ring_needs_flush(struct io_uring* ring) {
+    return IO_URING_READ_ONCE(*ring->sq.kflags) & (IORING_SQ_CQ_OVERFLOW | IORING_SQ_TASKRUN);
+}
+
+static inline bool cq_ring_needs_enter(struct io_uring* ring) {
+    return (ring->flags & IORING_SETUP_IOPOLL) || cq_ring_needs_flush(ring);
+}
+
+struct get_data {
+    unsigned submit;
+    unsigned wait_nr;
+    unsigned get_flags;
+    int      sz;
+    int      has_ts;
+    void*    arg;
+};
+
+static int _io_uring_get_cqe(struct io_uring* ring, struct io_uring_cqe** cqe_ptr, struct get_data* data) {
+    struct io_uring_cqe* cqe    = NULL;
+    bool                 looped = false;
+    int                  err    = 0;
+
+    do {
+        bool     need_enter = false;
+        unsigned flags      = 0;
+        unsigned nr_available;
+        int      ret;
+
+        ret = __io_uring_peek_cqe(ring, &cqe, &nr_available);
+        if (ret) {
+            if (!err)
+                err = ret;
+            break;
+        }
+        if (!cqe && !data->wait_nr && !data->submit) {
+            /*
+             * If we already looped once, we already entered
+             * the kernel. Since there's nothing to submit or
+             * wait for, don't keep retrying.
+             */
+            if (looped || !cq_ring_needs_enter(ring)) {
+                if (!err)
+                    err = -EAGAIN;
+                break;
+            }
+            need_enter = true;
+        }
+        if (data->wait_nr > nr_available || need_enter) {
+            flags      = IORING_ENTER_GETEVENTS | data->get_flags;
+            need_enter = true;
+        }
+        if (sq_ring_needs_enter(ring, data->submit, &flags))
+            need_enter = true;
+        if (!need_enter)
+            break;
+        if (looped && data->has_ts) {
+            auto* arg = (io_uring_getevents_arg*) data->arg;
+
+            if (!cqe && arg->ts && !err)
+                err = -ETIME;
+            break;
+        }
+
+        if (ring->int_flags & INT_FLAG_REG_RING)
+            flags |= IORING_ENTER_REGISTERED_RING;
+        ret =
+          __sys_io_uring_enter2(ring->enter_ring_fd, data->submit, data->wait_nr, flags, data->arg, data->sz);
+        if (ret < 0) {
+            if (!err)
+                err = ret;
+            break;
+        }
+
+        data->submit -= ret;
+        if (cqe)
+            break;
+        if (!looped) {
+            looped = true;
+            err    = ret;
+        }
+    } while (1);
+
+    *cqe_ptr = cqe;
+    return err;
+}
+
+int __io_uring_get_cqe(struct io_uring*      ring,
+                       struct io_uring_cqe** cqe_ptr,
+                       unsigned              submit,
+                       unsigned              wait_nr,
+                       sigset_t*             sigmask) {
+    struct get_data data = {
+      .submit    = submit,
+      .wait_nr   = wait_nr,
+      .get_flags = 0,
+      .sz        = _NSIG / 8,
+      .arg       = sigmask,
+    };
+
+    return _io_uring_get_cqe(ring, cqe_ptr, &data);
+}
+
+int io_uring_get_events(struct io_uring* ring) {
+    int flags = IORING_ENTER_GETEVENTS;
+
+    if (ring->int_flags & INT_FLAG_REG_RING)
+        flags |= IORING_ENTER_REGISTERED_RING;
+    return __sys_io_uring_enter(ring->enter_ring_fd, 0, 0, flags, NULL);
+}
+
+/*
+ * Fill in an array of IO completions up to count, if any are available.
+ * Returns the amount of IO completions filled.
+ */
+unsigned io_uring_peek_batch_cqe(struct io_uring* ring, struct io_uring_cqe** cqes, unsigned count) {
+    unsigned ready;
+    bool     overflow_checked = false;
+    int      shift            = 0;
+
+    if (ring->flags & IORING_SETUP_CQE32)
+        shift = 1;
+
+again:
+    ready = io_uring_cq_ready(ring);
+    if (ready) {
+        unsigned head = *ring->cq.khead;
+        unsigned mask = ring->cq.ring_mask;
+        unsigned last;
+        int      i = 0;
+
+        count = count > ready ? ready : count;
+        last  = head + count;
+        for (; head != last; head++, i++)
+            cqes[i] = &ring->cq.cqes[(head & mask) << shift];
+
+        return count;
+    }
+
+    if (overflow_checked)
+        return 0;
+
+    if (cq_ring_needs_flush(ring)) {
+        io_uring_get_events(ring);
+        overflow_checked = true;
+        goto again;
+    }
+
+    return 0;
+}
+
+/*
+ * Sync internal state with kernel ring state on the SQ side. Returns the
+ * number of pending items in the SQ ring, for the shared ring.
+ */
+static unsigned __io_uring_flush_sq(struct io_uring* ring) {
+    struct io_uring_sq* sq   = &ring->sq;
+    unsigned            tail = sq->sqe_tail;
+
+    if (sq->sqe_head != tail) {
+        sq->sqe_head = tail;
+        /*
+         * Ensure kernel sees the SQE updates before the tail update.
+         */
+        if (!(ring->flags & IORING_SETUP_SQPOLL))
+            IO_URING_WRITE_ONCE(*sq->ktail, tail);
+        else
+            io_uring_smp_store_release(sq->ktail, tail);
+    }
+    /*
+     * This _may_ look problematic, as we're not supposed to be reading
+     * SQ->head without acquire semantics. When we're in SQPOLL mode, the
+     * kernel submitter could be updating this right now. For non-SQPOLL,
+     * task itself does it, and there's no potential race. But even for
+     * SQPOLL, the load is going to be potentially out-of-date the very
+     * instant it's done, regardless or whether or not it's done
+     * atomically. Worst case, we're going to be over-estimating what
+     * we can submit. The point is, we need to be able to deal with this
+     * situation regardless of any perceived atomicity.
+     */
+    return tail - *sq->khead;
+}
+
+/*
+ * If we have kernel support for IORING_ENTER_EXT_ARG, then we can use that
+ * more efficiently than queueing an internal timeout command.
+ */
+static int io_uring_wait_cqes_new(struct io_uring*          ring,
+                                  struct io_uring_cqe**     cqe_ptr,
+                                  unsigned                  wait_nr,
+                                  struct __kernel_timespec* ts,
+                                  sigset_t*                 sigmask) {
+    struct io_uring_getevents_arg arg  = {.sigmask    = (unsigned long) sigmask,
+                                          .sigmask_sz = _NSIG / 8,
+                                          .ts         = (unsigned long) ts};
+    struct get_data               data = {.wait_nr   = wait_nr,
+                                          .get_flags = IORING_ENTER_EXT_ARG,
+                                          .sz        = sizeof(arg),
+                                          .has_ts    = ts != NULL,
+                                          .arg       = &arg};
+
+    return _io_uring_get_cqe(ring, cqe_ptr, &data);
+}
+
+/*
+ * Like io_uring_wait_cqe(), except it accepts a timeout value as well. Note
+ * that an sqe is used internally to handle the timeout. For kernel doesn't
+ * support IORING_FEAT_EXT_ARG, applications using this function must never
+ * set sqe->user_data to LIBURING_UDATA_TIMEOUT!
+ *
+ * For kernels without IORING_FEAT_EXT_ARG (5.10 and older), if 'ts' is
+ * specified, the application need not call io_uring_submit() before
+ * calling this function, as we will do that on its behalf. From this it also
+ * follows that this function isn't safe to use for applications that split SQ
+ * and CQ handling between two threads and expect that to work without
+ * synchronization, as this function manipulates both the SQ and CQ side.
+ *
+ * For kernels with IORING_FEAT_EXT_ARG, no implicit submission is done and
+ * hence this function is safe to use for applications that split SQ and CQ
+ * handling between two threads.
+ */
+static int __io_uring_submit_timeout(struct io_uring* ring, unsigned wait_nr, struct __kernel_timespec* ts) {
+    struct io_uring_sqe* sqe;
+    int                  ret;
+
+    /*
+     * If the SQ ring is full, we may need to submit IO first
+     */
+    sqe = io_uring_get_sqe(ring);
+    if (!sqe) {
+        ret = io_uring_submit(ring);
+        if (ret < 0)
+            return ret;
+        sqe = io_uring_get_sqe(ring);
+        if (!sqe)
+            return -EAGAIN;
+    }
+    io_uring_prep_timeout(sqe, ts, wait_nr, 0);
+    sqe->user_data = LIBURING_UDATA_TIMEOUT;
+    return __io_uring_flush_sq(ring);
+}
+
+int io_uring_wait_cqes(struct io_uring*          ring,
+                       struct io_uring_cqe**     cqe_ptr,
+                       unsigned                  wait_nr,
+                       struct __kernel_timespec* ts,
+                       sigset_t*                 sigmask) {
+    int to_submit = 0;
+
+    if (ts) {
+        if (ring->features & IORING_FEAT_EXT_ARG)
+            return io_uring_wait_cqes_new(ring, cqe_ptr, wait_nr, ts, sigmask);
+        to_submit = __io_uring_submit_timeout(ring, wait_nr, ts);
+        if (to_submit < 0)
+            return to_submit;
+    }
+
+    return __io_uring_get_cqe(ring, cqe_ptr, to_submit, wait_nr, sigmask);
+}
+
+int io_uring_submit_and_wait_timeout(struct io_uring*          ring,
+                                     struct io_uring_cqe**     cqe_ptr,
+                                     unsigned                  wait_nr,
+                                     struct __kernel_timespec* ts,
+                                     sigset_t*                 sigmask) {
+    int to_submit;
+
+    if (ts) {
+        if (ring->features & IORING_FEAT_EXT_ARG) {
+            struct io_uring_getevents_arg arg  = {.sigmask    = (unsigned long) sigmask,
+                                                  .sigmask_sz = _NSIG / 8,
+                                                  .ts         = (unsigned long) ts};
+            struct get_data               data = {.submit    = __io_uring_flush_sq(ring),
+                                                  .wait_nr   = wait_nr,
+                                                  .get_flags = IORING_ENTER_EXT_ARG,
+                                                  .sz        = sizeof(arg),
+                                                  .has_ts    = ts != NULL,
+                                                  .arg       = &arg};
+
+            return _io_uring_get_cqe(ring, cqe_ptr, &data);
+        }
+        to_submit = __io_uring_submit_timeout(ring, wait_nr, ts);
+        if (to_submit < 0)
+            return to_submit;
+    } else
+        to_submit = __io_uring_flush_sq(ring);
+
+    return __io_uring_get_cqe(ring, cqe_ptr, to_submit, wait_nr, sigmask);
+}
+
+/*
+ * See io_uring_wait_cqes() - this function is the same, it just always uses
+ * '1' as the wait_nr.
+ */
+int io_uring_wait_cqe_timeout(struct io_uring*          ring,
+                              struct io_uring_cqe**     cqe_ptr,
+                              struct __kernel_timespec* ts) {
+    return io_uring_wait_cqes(ring, cqe_ptr, 1, ts, NULL);
+}
+
+/*
+ * Submit sqes acquired from io_uring_get_sqe() to the kernel.
+ *
+ * Returns number of sqes submitted
+ */
+static int __io_uring_submit(struct io_uring* ring, unsigned submitted, unsigned wait_nr, bool getevents) {
+    bool     cq_needs_enter = getevents || wait_nr || cq_ring_needs_enter(ring);
+    unsigned flags;
+    int      ret;
+
+    flags = 0;
+    if (sq_ring_needs_enter(ring, submitted, &flags) || cq_needs_enter) {
+        if (cq_needs_enter)
+            flags |= IORING_ENTER_GETEVENTS;
+        if (ring->int_flags & INT_FLAG_REG_RING)
+            flags |= IORING_ENTER_REGISTERED_RING;
+
+        ret = __sys_io_uring_enter(ring->enter_ring_fd, submitted, wait_nr, flags, NULL);
+    } else
+        ret = submitted;
+
+    return ret;
+}
+
+static int __io_uring_submit_and_wait(struct io_uring* ring, unsigned wait_nr) {
+    return __io_uring_submit(ring, __io_uring_flush_sq(ring), wait_nr, false);
+}
+
+/*
+ * Submit sqes acquired from io_uring_get_sqe() to the kernel.
+ *
+ * Returns number of sqes submitted
+ */
+int io_uring_submit(struct io_uring* ring) {
+    return __io_uring_submit_and_wait(ring, 0);
+}
+
+/*
+ * Like io_uring_submit(), but allows waiting for events as well.
+ *
+ * Returns number of sqes submitted
+ */
+int io_uring_submit_and_wait(struct io_uring* ring, unsigned wait_nr) {
+    return __io_uring_submit_and_wait(ring, wait_nr);
+}
+
+int io_uring_submit_and_get_events(struct io_uring* ring) {
+    return __io_uring_submit(ring, __io_uring_flush_sq(ring), 0, true);
+}
+
+#ifdef LIBURING_INTERNAL
+struct io_uring_sqe* io_uring_get_sqe(struct io_uring* ring) {
+    return _io_uring_get_sqe(ring);
+}
+#endif
+
+int __io_uring_sqring_wait(struct io_uring* ring) {
+    int flags = IORING_ENTER_SQ_WAIT;
+
+    if (ring->int_flags & INT_FLAG_REG_RING)
+        flags |= IORING_ENTER_REGISTERED_RING;
+
+    return __sys_io_uring_enter(ring->enter_ring_fd, 0, 0, flags, NULL);
+}
+static inline int
+do_register(struct io_uring* ring, unsigned int opcode, const void* arg, unsigned int nr_args) {
+    int fd;
+
+    if (ring->int_flags & INT_FLAG_REG_REG_RING) {
+        opcode |= IORING_REGISTER_USE_REGISTERED_RING;
+        fd = ring->enter_ring_fd;
+    } else {
+        fd = ring->ring_fd;
+    }
+
+    return __sys_io_uring_register(fd, opcode, arg, nr_args);
+}
+
+int io_uring_register_buffers_update_tag(struct io_uring*    ring,
+                                         unsigned            off,
+                                         const struct iovec* iovecs,
+                                         const __u64*        tags,
+                                         unsigned            nr) {
+    struct io_uring_rsrc_update2 up = {
+      .offset = off,
+      .data   = (unsigned long) iovecs,
+      .tags   = (unsigned long) tags,
+      .nr     = nr,
+    };
+
+    return do_register(ring, IORING_REGISTER_BUFFERS_UPDATE, &up, sizeof(up));
+}
+
+int io_uring_register_buffers_tags(struct io_uring*    ring,
+                                   const struct iovec* iovecs,
+                                   const __u64*        tags,
+                                   unsigned            nr) {
+    struct io_uring_rsrc_register reg = {
+      .nr   = nr,
+      .data = (unsigned long) iovecs,
+      .tags = (unsigned long) tags,
+    };
+
+    return do_register(ring, IORING_REGISTER_BUFFERS2, &reg, sizeof(reg));
+}
+
+int io_uring_register_buffers_sparse(struct io_uring* ring, unsigned nr) {
+    struct io_uring_rsrc_register reg = {
+      .flags = IORING_RSRC_REGISTER_SPARSE,
+      .nr    = nr,
+    };
+
+    return do_register(ring, IORING_REGISTER_BUFFERS2, &reg, sizeof(reg));
+}
+
+int io_uring_register_buffers(struct io_uring* ring, const struct iovec* iovecs, unsigned nr_iovecs) {
+    return do_register(ring, IORING_REGISTER_BUFFERS, iovecs, nr_iovecs);
+}
+
+int io_uring_unregister_buffers(struct io_uring* ring) {
+    return do_register(ring, IORING_UNREGISTER_BUFFERS, NULL, 0);
+}
+
+int io_uring_register_files_update_tag(struct io_uring* ring,
+                                       unsigned         off,
+                                       const int*       files,
+                                       const __u64*     tags,
+                                       unsigned         nr_files) {
+    struct io_uring_rsrc_update2 up = {
+      .offset = off,
+      .data   = (unsigned long) files,
+      .tags   = (unsigned long) tags,
+      .nr     = nr_files,
+    };
+
+    return do_register(ring, IORING_REGISTER_FILES_UPDATE2, &up, sizeof(up));
+}
+
+/*
+ * Register an update for an existing file set. The updates will start at
+ * 'off' in the original array, and 'nr_files' is the number of files we'll
+ * update.
+ *
+ * Returns number of files updated on success, -ERROR on failure.
+ */
+int io_uring_register_files_update(struct io_uring* ring, unsigned off, const int* files, unsigned nr_files) {
+    struct io_uring_files_update up = {
+      .offset = off,
+      .fds    = (unsigned long) files,
+    };
+
+    return do_register(ring, IORING_REGISTER_FILES_UPDATE, &up, nr_files);
+}
+
+static int increase_rlimit_nofile(unsigned nr) {
+    int           ret;
+    struct rlimit rlim;
+
+    ret = __sys_getrlimit(RLIMIT_NOFILE, &rlim);
+    if (ret < 0)
+        return ret;
+
+    if (rlim.rlim_cur < nr) {
+        rlim.rlim_cur += nr;
+        __sys_setrlimit(RLIMIT_NOFILE, &rlim);
+    }
+
+    return 0;
+}
+
+int io_uring_register_files_sparse(struct io_uring* ring, unsigned nr) {
+    struct io_uring_rsrc_register reg = {
+      .flags = IORING_RSRC_REGISTER_SPARSE,
+      .nr    = nr,
+    };
+    int ret, did_increase = 0;
+
+    do {
+        ret = do_register(ring, IORING_REGISTER_FILES2, &reg, sizeof(reg));
+        if (ret >= 0)
+            break;
+        if (ret == -EMFILE && !did_increase) {
+            did_increase = 1;
+            increase_rlimit_nofile(nr);
+            continue;
+        }
+        break;
+    } while (1);
+
+    return ret;
+}
+
+int io_uring_register_files_tags(struct io_uring* ring, const int* files, const __u64* tags, unsigned nr) {
+    struct io_uring_rsrc_register reg = {
+      .nr   = nr,
+      .data = (unsigned long) files,
+      .tags = (unsigned long) tags,
+    };
+    int ret, did_increase = 0;
+
+    do {
+        ret = do_register(ring, IORING_REGISTER_FILES2, &reg, sizeof(reg));
+        if (ret >= 0)
+            break;
+        if (ret == -EMFILE && !did_increase) {
+            did_increase = 1;
+            increase_rlimit_nofile(nr);
+            continue;
+        }
+        break;
+    } while (1);
+
+    return ret;
+}
+
+int io_uring_register_files(struct io_uring* ring, const int* files, unsigned nr_files) {
+    int ret, did_increase = 0;
+
+    do {
+        ret = do_register(ring, IORING_REGISTER_FILES, files, nr_files);
+        if (ret >= 0)
+            break;
+        if (ret == -EMFILE && !did_increase) {
+            did_increase = 1;
+            increase_rlimit_nofile(nr_files);
+            continue;
+        }
+        break;
+    } while (1);
+
+    return ret;
+}
+
+int io_uring_unregister_files(struct io_uring* ring) {
+    return do_register(ring, IORING_UNREGISTER_FILES, NULL, 0);
+}
+
+int io_uring_register_eventfd(struct io_uring* ring, int event_fd) {
+    return do_register(ring, IORING_REGISTER_EVENTFD, &event_fd, 1);
+}
+
+int io_uring_unregister_eventfd(struct io_uring* ring) {
+    return do_register(ring, IORING_UNREGISTER_EVENTFD, NULL, 0);
+}
+
+int io_uring_register_eventfd_async(struct io_uring* ring, int event_fd) {
+    return do_register(ring, IORING_REGISTER_EVENTFD_ASYNC, &event_fd, 1);
+}
+
+int io_uring_register_probe(struct io_uring* ring, struct io_uring_probe* p, unsigned int nr_ops) {
+    return do_register(ring, IORING_REGISTER_PROBE, p, nr_ops);
+}
+
+int io_uring_register_personality(struct io_uring* ring) {
+    return do_register(ring, IORING_REGISTER_PERSONALITY, NULL, 0);
+}
+
+int io_uring_unregister_personality(struct io_uring* ring, int id) {
+    return do_register(ring, IORING_UNREGISTER_PERSONALITY, NULL, id);
+}
+
+int io_uring_register_restrictions(struct io_uring*             ring,
+                                   struct io_uring_restriction* res,
+                                   unsigned int                 nr_res) {
+    return do_register(ring, IORING_REGISTER_RESTRICTIONS, res, nr_res);
+}
+
+int io_uring_enable_rings(struct io_uring* ring) {
+    return do_register(ring, IORING_REGISTER_ENABLE_RINGS, NULL, 0);
+}
+
+int io_uring_register_iowq_aff(struct io_uring* ring, size_t cpusz, const cpu_set_t* mask) {
+    if (cpusz >= (1U << 31))
+        return -EINVAL;
+
+    return do_register(ring, IORING_REGISTER_IOWQ_AFF, mask, (int) cpusz);
+}
+
+int io_uring_unregister_iowq_aff(struct io_uring* ring) {
+    return do_register(ring, IORING_UNREGISTER_IOWQ_AFF, NULL, 0);
+}
+
+int io_uring_register_iowq_max_workers(struct io_uring* ring, unsigned int* val) {
+    return do_register(ring, IORING_REGISTER_IOWQ_MAX_WORKERS, val, 2);
+}
+
+int io_uring_register_ring_fd(struct io_uring* ring) {
+    struct io_uring_rsrc_update up = {
+      .data   = ring->ring_fd,
+      .offset = -1U,
+    };
+    int ret;
+
+    if (ring->int_flags & INT_FLAG_REG_RING)
+        return -EEXIST;
+
+    ret = do_register(ring, IORING_REGISTER_RING_FDS, &up, 1);
+    if (ret == 1) {
+        ring->enter_ring_fd = up.offset;
+        ring->int_flags |= INT_FLAG_REG_RING;
+        if (ring->features & IORING_FEAT_REG_REG_RING) {
+            ring->int_flags |= INT_FLAG_REG_REG_RING;
+        }
+    }
+    return ret;
+}
+
+
+int io_uring_unregister_ring_fd(struct io_uring* ring) {
+    struct io_uring_rsrc_update up = {
+      .offset = ring->enter_ring_fd,
+    };
+    int ret;
+
+    if (!(ring->int_flags & INT_FLAG_REG_RING))
+        return -EINVAL;
+
+    ret = do_register(ring, IORING_UNREGISTER_RING_FDS, &up, 1);
+    if (ret == 1) {
+        ring->enter_ring_fd = ring->ring_fd;
+        ring->int_flags &= ~(INT_FLAG_REG_RING | INT_FLAG_REG_REG_RING);
+    }
+    return ret;
+}
+
+int io_uring_close_ring_fd(struct io_uring* ring) {
+    if (!(ring->features & IORING_FEAT_REG_REG_RING))
+        return -EOPNOTSUPP;
+    if (!(ring->int_flags & INT_FLAG_REG_RING))
+        return -EINVAL;
+    if (ring->ring_fd == -1)
+        return -EBADF;
+
+    __sys_close(ring->ring_fd);
+    ring->ring_fd = -1;
+    return 1;
+}
+
+int io_uring_register_buf_ring(struct io_uring*            ring,
+                               struct io_uring_buf_reg*    reg,
+                               unsigned int __maybe_unused flags) {
+    return do_register(ring, IORING_REGISTER_PBUF_RING, reg, 1);
+}
+
+int io_uring_unregister_buf_ring(struct io_uring* ring, int bgid) {
+    struct io_uring_buf_reg reg = {.bgid = bgid};
+
+    return do_register(ring, IORING_UNREGISTER_PBUF_RING, &reg, 1);
+}
+
+int io_uring_register_sync_cancel(struct io_uring* ring, struct io_uring_sync_cancel_reg* reg) {
+    return do_register(ring, IORING_REGISTER_SYNC_CANCEL, reg, 1);
+}
+
+int io_uring_register_file_alloc_range(struct io_uring* ring, unsigned off, unsigned len) {
+    struct io_uring_file_index_range range = {.off = off, .len = len};
+
+    return do_register(ring, IORING_REGISTER_FILE_ALLOC_RANGE, &range, 0);
+}
+
+
+
+#define KERN_MAX_ENTRIES    32768
+#define KERN_MAX_CQ_ENTRIES (2 * KERN_MAX_ENTRIES)
+
+static inline int __fls(int x) {
+    if (!x)
+        return 0;
+    return 8 * sizeof(x) - __builtin_clz(x);
+}
+
+static unsigned roundup_pow2(unsigned depth) {
+    return 1U << __fls(depth - 1);
+}
+
+static int get_sq_cq_entries(unsigned entries, struct io_uring_params* p, unsigned* sq, unsigned* cq) {
+    unsigned cq_entries;
+
+    if (!entries)
+        return -EINVAL;
+    if (entries > KERN_MAX_ENTRIES) {
+        if (!(p->flags & IORING_SETUP_CLAMP))
+            return -EINVAL;
+        entries = KERN_MAX_ENTRIES;
+    }
+
+    entries = roundup_pow2(entries);
+    if (p->flags & IORING_SETUP_CQSIZE) {
+        if (!p->cq_entries)
+            return -EINVAL;
+        cq_entries = p->cq_entries;
+        if (cq_entries > KERN_MAX_CQ_ENTRIES) {
+            if (!(p->flags & IORING_SETUP_CLAMP))
+                return -EINVAL;
+            cq_entries = KERN_MAX_CQ_ENTRIES;
+        }
+        cq_entries = roundup_pow2(cq_entries);
+        if (cq_entries < entries)
+            return -EINVAL;
+    } else {
+        cq_entries = 2 * entries;
+    }
+
+    *sq = entries;
+    *cq = cq_entries;
+    return 0;
+}
+
+static void io_uring_unmap_rings(struct io_uring_sq* sq, struct io_uring_cq* cq) {
+    if (sq->ring_sz)
+        __sys_munmap(sq->ring_ptr, sq->ring_sz);
+    if (cq->ring_ptr && cq->ring_sz && cq->ring_ptr != sq->ring_ptr)
+        __sys_munmap(cq->ring_ptr, cq->ring_sz);
+}
+
+static void
+io_uring_setup_ring_pointers(struct io_uring_params* p, struct io_uring_sq* sq, struct io_uring_cq* cq) {
+    sq->khead         = sq->ring_ptr + p->sq_off.head;
+    sq->ktail         = sq->ring_ptr + p->sq_off.tail;
+    sq->kring_mask    = sq->ring_ptr + p->sq_off.ring_mask;
+    sq->kring_entries = sq->ring_ptr + p->sq_off.ring_entries;
+    sq->kflags        = sq->ring_ptr + p->sq_off.flags;
+    sq->kdropped      = sq->ring_ptr + p->sq_off.dropped;
+    sq->array         = sq->ring_ptr + p->sq_off.array;
+
+    cq->khead         = cq->ring_ptr + p->cq_off.head;
+    cq->ktail         = cq->ring_ptr + p->cq_off.tail;
+    cq->kring_mask    = cq->ring_ptr + p->cq_off.ring_mask;
+    cq->kring_entries = cq->ring_ptr + p->cq_off.ring_entries;
+    cq->koverflow     = cq->ring_ptr + p->cq_off.overflow;
+    cq->cqes          = cq->ring_ptr + p->cq_off.cqes;
+    if (p->cq_off.flags)
+        cq->kflags = cq->ring_ptr + p->cq_off.flags;
+
+    sq->ring_mask    = *sq->kring_mask;
+    sq->ring_entries = *sq->kring_entries;
+    cq->ring_mask    = *cq->kring_mask;
+    cq->ring_entries = *cq->kring_entries;
+}
+
+static int io_uring_mmap(int fd, struct io_uring_params* p, struct io_uring_sq* sq, struct io_uring_cq* cq) {
+    size_t size;
+    int    ret;
+
+    size = sizeof(struct io_uring_cqe);
+    if (p->flags & IORING_SETUP_CQE32)
+        size += sizeof(struct io_uring_cqe);
+
+    sq->ring_sz = p->sq_off.array + p->sq_entries * sizeof(unsigned);
+    cq->ring_sz = p->cq_off.cqes + p->cq_entries * size;
+
+    if (p->features & IORING_FEAT_SINGLE_MMAP) {
+        if (cq->ring_sz > sq->ring_sz)
+            sq->ring_sz = cq->ring_sz;
+        cq->ring_sz = sq->ring_sz;
+    }
+    sq->ring_ptr =
+      __sys_mmap(0, sq->ring_sz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd, IORING_OFF_SQ_RING);
+    if (IS_ERR(sq->ring_ptr))
+        return PTR_ERR(sq->ring_ptr);
+
+    if (p->features & IORING_FEAT_SINGLE_MMAP) {
+        cq->ring_ptr = sq->ring_ptr;
+    } else {
+        cq->ring_ptr = __sys_mmap(0,
+                                  cq->ring_sz,
+                                  PROT_READ | PROT_WRITE,
+                                  MAP_SHARED | MAP_POPULATE,
+                                  fd,
+                                  IORING_OFF_CQ_RING);
+        if (IS_ERR(cq->ring_ptr)) {
+            ret          = PTR_ERR(cq->ring_ptr);
+            cq->ring_ptr = NULL;
+            goto err;
+        }
+    }
+
+    size = sizeof(struct io_uring_sqe);
+    if (p->flags & IORING_SETUP_SQE128)
+        size += 64;
+    sq->sqes = __sys_mmap(0,
+                          size * p->sq_entries,
+                          PROT_READ | PROT_WRITE,
+                          MAP_SHARED | MAP_POPULATE,
+                          fd,
+                          IORING_OFF_SQES);
+    if (IS_ERR(sq->sqes)) {
+        ret = PTR_ERR(sq->sqes);
+    err:
+        io_uring_unmap_rings(sq, cq);
+        return ret;
+    }
+
+    io_uring_setup_ring_pointers(p, sq, cq);
+    return 0;
+}
+
+/*
+ * For users that want to specify sq_thread_cpu or sq_thread_idle, this
+ * interface is a convenient helper for mmap()ing the rings.
+ * Returns -errno on error, or zero on success.  On success, 'ring'
+ * contains the necessary information to read/write to the rings.
+ */
+__cold int io_uring_queue_mmap(int fd, struct io_uring_params* p, struct io_uring* ring) {
+    memset(ring, 0, sizeof(*ring));
+    return io_uring_mmap(fd, p, &ring->sq, &ring->cq);
+}
+
+/*
+ * Ensure that the mmap'ed rings aren't available to a child after a fork(2).
+ * This uses madvise(..., MADV_DONTFORK) on the mmap'ed ranges.
+ */
+__cold int io_uring_ring_dontfork(struct io_uring* ring) {
+    size_t len;
+    int    ret;
+
+    if (!ring->sq.ring_ptr || !ring->sq.sqes || !ring->cq.ring_ptr)
+        return -EINVAL;
+
+    len = sizeof(struct io_uring_sqe);
+    if (ring->flags & IORING_SETUP_SQE128)
+        len += 64;
+    len *= ring->sq.ring_entries;
+    ret = __sys_madvise(ring->sq.sqes, len, MADV_DONTFORK);
+    if (ret < 0)
+        return ret;
+
+    len = ring->sq.ring_sz;
+    ret = __sys_madvise(ring->sq.ring_ptr, len, MADV_DONTFORK);
+    if (ret < 0)
+        return ret;
+
+    if (ring->cq.ring_ptr != ring->sq.ring_ptr) {
+        len = ring->cq.ring_sz;
+        ret = __sys_madvise(ring->cq.ring_ptr, len, MADV_DONTFORK);
+        if (ret < 0)
+            return ret;
+    }
+
+    return 0;
+}
+
+/* FIXME */
+static size_t huge_page_size = 2 * 1024 * 1024;
+
+/*
+ * Returns negative for error, or number of bytes used in the buffer on success
+ */
+static int io_uring_alloc_huge(unsigned                entries,
+                               struct io_uring_params* p,
+                               struct io_uring_sq*     sq,
+                               struct io_uring_cq*     cq,
+                               void*                   buf,
+                               size_t                  buf_size) {
+    unsigned long page_size = get_page_size();
+    unsigned      sq_entries, cq_entries;
+    size_t        ring_mem, sqes_mem;
+    unsigned long mem_used = 0;
+    void*         ptr;
+    int           ret;
+
+    ret = get_sq_cq_entries(entries, p, &sq_entries, &cq_entries);
+    if (ret)
+        return ret;
+
+    sqes_mem = sq_entries * sizeof(struct io_uring_sqe);
+    sqes_mem = (sqes_mem + page_size - 1) & ~(page_size - 1);
+    ring_mem = cq_entries * sizeof(struct io_uring_cqe);
+    if (p->flags & IORING_SETUP_CQE32)
+        ring_mem *= 2;
+    ring_mem += sq_entries * sizeof(unsigned);
+    mem_used = sqes_mem + ring_mem;
+    mem_used = (mem_used + page_size - 1) & ~(page_size - 1);
+
+    /*
+     * A maxed-out number of CQ entries with IORING_SETUP_CQE32 fills a 2MB
+     * huge page by itself, so the SQ entries won't fit in the same huge
+     * page. For SQEs, that shouldn't be possible given KERN_MAX_ENTRIES,
+     * but check that too to future-proof (e.g. against different huge page
+     * sizes). Bail out early so we don't overrun.
+     */
+    if (!buf && (sqes_mem > huge_page_size || ring_mem > huge_page_size))
+        return -ENOMEM;
+
+    if (buf) {
+        if (mem_used > buf_size)
+            return -ENOMEM;
+        ptr = buf;
+    } else {
+        int map_hugetlb = 0;
+        if (sqes_mem <= page_size)
+            buf_size = page_size;
+        else {
+            buf_size    = huge_page_size;
+            map_hugetlb = MAP_HUGETLB;
+        }
+        ptr =
+          __sys_mmap(NULL, buf_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | map_hugetlb, -1, 0);
+        if (IS_ERR(ptr))
+            return PTR_ERR(ptr);
+    }
+
+    sq->sqes = ptr;
+    if (mem_used <= buf_size) {
+        sq->ring_ptr = (void*) sq->sqes + sqes_mem;
+        /* clear ring sizes, we have just one mmap() to undo */
+        cq->ring_sz = 0;
+        sq->ring_sz = 0;
+    } else {
+        int map_hugetlb = 0;
+        if (ring_mem <= page_size)
+            buf_size = page_size;
+        else {
+            buf_size    = huge_page_size;
+            map_hugetlb = MAP_HUGETLB;
+        }
+        ptr =
+          __sys_mmap(NULL, buf_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS | map_hugetlb, -1, 0);
+        if (IS_ERR(ptr)) {
+            __sys_munmap(sq->sqes, 1);
+            return PTR_ERR(ptr);
+        }
+        sq->ring_ptr = ptr;
+        sq->ring_sz  = buf_size;
+        cq->ring_sz  = 0;
+    }
+
+    cq->ring_ptr        = (void*) sq->ring_ptr;
+    p->sq_off.user_addr = (unsigned long) sq->sqes;
+    p->cq_off.user_addr = (unsigned long) sq->ring_ptr;
+    return (int) mem_used;
+}
+
+static int __io_uring_queue_init_params(unsigned                entries,
+                                        struct io_uring*        ring,
+                                        struct io_uring_params* p,
+                                        void*                   buf,
+                                        size_t                  buf_size) {
+    int       fd, ret = 0;
+    unsigned* sq_array;
+    unsigned  sq_entries, index;
+
+    memset(ring, 0, sizeof(*ring));
+
+    /*
+     * The kernel does this check already, but checking it here allows us
+     * to avoid handling it below.
+     */
+    if (p->flags & IORING_SETUP_REGISTERED_FD_ONLY && !(p->flags & IORING_SETUP_NO_MMAP))
+        return -EINVAL;
+
+    if (p->flags & IORING_SETUP_NO_MMAP) {
+        ret = io_uring_alloc_huge(entries, p, &ring->sq, &ring->cq, buf, buf_size);
+        if (ret < 0)
+            return ret;
+        if (buf)
+            ring->int_flags |= INT_FLAG_APP_MEM;
+    }
+
+    fd = __sys_io_uring_setup(entries, p);
+    if (fd < 0) {
+        if ((p->flags & IORING_SETUP_NO_MMAP) && !(ring->int_flags & INT_FLAG_APP_MEM)) {
+            __sys_munmap(ring->sq.sqes, 1);
+            io_uring_unmap_rings(&ring->sq, &ring->cq);
+        }
+        return fd;
+    }
+
+    if (!(p->flags & IORING_SETUP_NO_MMAP)) {
+        ret = io_uring_queue_mmap(fd, p, ring);
+        if (ret) {
+            __sys_close(fd);
+            return ret;
+        }
+    } else {
+        io_uring_setup_ring_pointers(p, &ring->sq, &ring->cq);
+    }
+
+    /*
+     * Directly map SQ slots to SQEs
+     */
+    sq_array   = ring->sq.array;
+    sq_entries = ring->sq.ring_entries;
+    for (index = 0; index < sq_entries; index++)
+        sq_array[index] = index;
+
+    ring->features      = p->features;
+    ring->flags         = p->flags;
+    ring->enter_ring_fd = fd;
+    if (p->flags & IORING_SETUP_REGISTERED_FD_ONLY) {
+        ring->ring_fd = -1;
+        ring->int_flags |= INT_FLAG_REG_RING | INT_FLAG_REG_REG_RING;
+    } else {
+        ring->ring_fd = fd;
+    }
+
+    return ret;
+}
+
+/*
+ * Like io_uring_queue_init_params(), except it allows the application to pass
+ * in a pre-allocated memory range that is used for the shared data between
+ * the kernel and the application. This includes the sqes array, and the two
+ * rings. The memory must be contigious, the use case here is that the app
+ * allocates a huge page and passes it in.
+ *
+ * Returns the number of bytes used in the buffer, the app can then reuse
+ * the buffer with the returned offset to put more rings in the same huge
+ * page. Returns -ENOMEM if there's not enough room left in the buffer to
+ * host the ring.
+ */
+int io_uring_queue_init_mem(unsigned                entries,
+                            struct io_uring*        ring,
+                            struct io_uring_params* p,
+                            void*                   buf,
+                            size_t                  buf_size) {
+    /* should already be set... */
+    p->flags |= IORING_SETUP_NO_MMAP;
+    return __io_uring_queue_init_params(entries, ring, p, buf, buf_size);
+}
+
+int io_uring_queue_init_params(unsigned entries, struct io_uring* ring, struct io_uring_params* p) {
+    int ret;
+
+    ret = __io_uring_queue_init_params(entries, ring, p, NULL, 0);
+    return ret >= 0 ? 0 : ret;
+}
+
+/*
+ * Returns -errno on error, or zero on success. On success, 'ring'
+ * contains the necessary information to read/write to the rings.
+ */
+__cold int io_uring_queue_init(unsigned entries, struct io_uring* ring, unsigned flags) {
+    struct io_uring_params p;
+
+    memset(&p, 0, sizeof(p));
+    p.flags = flags;
+
+    return io_uring_queue_init_params(entries, ring, &p);
+}
+
+__cold void io_uring_queue_exit(struct io_uring* ring) {
+    struct io_uring_sq* sq = &ring->sq;
+    struct io_uring_cq* cq = &ring->cq;
+    size_t              sqe_size;
+
+    if (!sq->ring_sz) {
+        sqe_size = sizeof(struct io_uring_sqe);
+        if (ring->flags & IORING_SETUP_SQE128)
+            sqe_size += 64;
+        __sys_munmap(sq->sqes, sqe_size * sq->ring_entries);
+        io_uring_unmap_rings(sq, cq);
+    } else {
+        if (!(ring->int_flags & INT_FLAG_APP_MEM)) {
+            __sys_munmap(sq->sqes, *sq->kring_entries * sizeof(struct io_uring_sqe));
+            io_uring_unmap_rings(sq, cq);
+        }
+    }
+
+    /*
+     * Not strictly required, but frees up the slot we used now rather
+     * than at process exit time.
+     */
+    if (ring->int_flags & INT_FLAG_REG_RING)
+        io_uring_unregister_ring_fd(ring);
+    if (ring->ring_fd != -1)
+        __sys_close(ring->ring_fd);
+}
+
+__cold struct io_uring_probe* io_uring_get_probe_ring(struct io_uring* ring) {
+    struct io_uring_probe* probe;
+    size_t                 len;
+    int                    r;
+
+    len   = sizeof(*probe) + 256 * sizeof(struct io_uring_probe_op);
+    probe = malloc(len);
+    if (!probe)
+        return NULL;
+    memset(probe, 0, len);
+
+    r = io_uring_register_probe(ring, probe, 256);
+    if (r >= 0)
+        return probe;
+
+    free(probe);
+    return NULL;
+}
+
+__cold struct io_uring_probe* io_uring_get_probe(void) {
+    struct io_uring        ring;
+    struct io_uring_probe* probe;
+    int                    r;
+
+    r = io_uring_queue_init(2, &ring, 0);
+    if (r < 0)
+        return NULL;
+
+    probe = io_uring_get_probe_ring(&ring);
+    io_uring_queue_exit(&ring);
+    return probe;
+}
+
+__cold void io_uring_free_probe(struct io_uring_probe* probe) {
+    free(probe);
+}
+
+static size_t npages(size_t size, long page_size) {
+    size--;
+    size /= page_size;
+    return __fls((int) size);
+}
+
+#define KRING_SIZE 320
+
+static size_t rings_size(struct io_uring_params* p, unsigned entries, unsigned cq_entries, long page_size) {
+    size_t pages, sq_size, cq_size;
+
+    cq_size = sizeof(struct io_uring_cqe);
+    if (p->flags & IORING_SETUP_CQE32)
+        cq_size += sizeof(struct io_uring_cqe);
+    cq_size *= cq_entries;
+    cq_size += KRING_SIZE;
+    cq_size = (cq_size + 63) & ~63UL;
+    pages   = (size_t) 1 << npages(cq_size, page_size);
+
+    sq_size = sizeof(struct io_uring_sqe);
+    if (p->flags & IORING_SETUP_SQE128)
+        sq_size += 64;
+    sq_size *= entries;
+    pages += (size_t) 1 << npages(sq_size, page_size);
+    return pages * page_size;
+}
+
+/*
+ * Return the required ulimit -l memlock memory required for a given ring
+ * setup, in bytes. May return -errno on error. On newer (5.12+) kernels,
+ * io_uring no longer requires any memlock memory, and hence this function
+ * will return 0 for that case. On older (5.11 and prior) kernels, this will
+ * return the required memory so that the caller can ensure that enough space
+ * is available before setting up a ring with the specified parameters.
+ */
+__cold ssize_t io_uring_mlock_size_params(unsigned entries, struct io_uring_params* p) {
+    struct io_uring_params lp;
+    struct io_uring        ring;
+    unsigned               cq_entries, sq;
+    long                   page_size;
+    ssize_t                ret;
+    int                    cret;
+
+    memset(&lp, 0, sizeof(lp));
+
+    /*
+     * We only really use this inited ring to see if the kernel is newer
+     * or not. Newer kernels don't require memlocked memory. If we fail,
+     * it's most likely because it's an older kernel and we have no
+     * available memlock space. Just continue on, lp.features will still
+     * be zeroed at this point and we'll do the right thing.
+     */
+    ret = io_uring_queue_init_params(entries, &ring, &lp);
+    if (!ret)
+        io_uring_queue_exit(&ring);
+
+    /*
+     * Native workers imply using cgroup memory accounting, and hence no
+     * memlock memory is needed for the ring allocations.
+     */
+    if (lp.features & IORING_FEAT_NATIVE_WORKERS)
+        return 0;
+
+    if (!entries)
+        return -EINVAL;
+    if (entries > KERN_MAX_ENTRIES) {
+        if (!(p->flags & IORING_SETUP_CLAMP))
+            return -EINVAL;
+        entries = KERN_MAX_ENTRIES;
+    }
+
+    cret = get_sq_cq_entries(entries, p, &sq, &cq_entries);
+    if (cret)
+        return cret;
+
+    page_size = get_page_size();
+    return rings_size(p, sq, cq_entries, page_size);
+}
+
+/*
+ * Return required ulimit -l memory space for a given ring setup. See
+ * @io_uring_mlock_size_params().
+ */
+__cold ssize_t io_uring_mlock_size(unsigned entries, unsigned flags) {
+    struct io_uring_params p;
+
+    memset(&p, 0, sizeof(p));
+    p.flags = flags;
+    return io_uring_mlock_size_params(entries, &p);
+}
+
+#if defined(__hppa__)
+static struct io_uring_buf_ring*
+br_setup(struct io_uring* ring, unsigned int nentries, int bgid, unsigned int flags, int* ret) {
+    struct io_uring_buf_ring* br;
+    struct io_uring_buf_reg   reg;
+    size_t                    ring_size;
+    off_t                     off;
+    int                       lret;
+
+    memset(&reg, 0, sizeof(reg));
+    reg.ring_entries = nentries;
+    reg.bgid         = bgid;
+    reg.flags        = IOU_PBUF_RING_MMAP;
+
+    *ret = 0;
+    lret = io_uring_register_buf_ring(ring, &reg, flags);
+    if (lret) {
+        *ret = lret;
+        return NULL;
+    }
+
+    off       = IORING_OFF_PBUF_RING | (unsigned long long) bgid << IORING_OFF_PBUF_SHIFT;
+    ring_size = nentries * sizeof(struct io_uring_buf);
+    br = __sys_mmap(NULL, ring_size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, ring->ring_fd, off);
+    if (IS_ERR(br)) {
+        *ret = PTR_ERR(br);
+        return NULL;
+    }
+
+    return br;
+}
+#else
+static struct io_uring_buf_ring*
+br_setup(struct io_uring* ring, unsigned int nentries, int bgid, unsigned int flags, int* ret) {
+    struct io_uring_buf_ring* br;
+    struct io_uring_buf_reg   reg;
+    size_t                    ring_size;
+    int                       lret;
+
+    memset(&reg, 0, sizeof(reg));
+    ring_size = nentries * sizeof(struct io_uring_buf);
+    br        = __sys_mmap(NULL, ring_size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+    if (IS_ERR(br)) {
+        *ret = PTR_ERR(br);
+        return NULL;
+    }
+
+    reg.ring_addr    = (unsigned long) (uintptr_t) br;
+    reg.ring_entries = nentries;
+    reg.bgid         = bgid;
+
+    *ret = 0;
+    lret = io_uring_register_buf_ring(ring, &reg, flags);
+    if (lret) {
+        __sys_munmap(br, ring_size);
+        *ret = lret;
+        br   = NULL;
+    }
+
+    return br;
+}
+#endif
+
+struct io_uring_buf_ring* io_uring_setup_buf_ring(struct io_uring* ring,
+                                                  unsigned int     nentries,
+                                                  int              bgid,
+                                                  unsigned int     flags,
+                                                  int*             ret) {
+    struct io_uring_buf_ring* br = br_setup(ring, nentries, bgid, flags, ret);
+    if (br)
+        io_uring_buf_ring_init(br);
+
+    return br;
+}
+
+int io_uring_free_buf_ring(struct io_uring*          ring,
+                           struct io_uring_buf_ring* br,
+                           unsigned int              nentries,
+                           int                       bgid) {
+    int ret = io_uring_unregister_buf_ring(ring, bgid);
+    if (ret)
+        return ret;
+
+    __sys_munmap(br, nentries * sizeof(struct io_uring_buf));
+    return 0;
+}
 }
 #endif

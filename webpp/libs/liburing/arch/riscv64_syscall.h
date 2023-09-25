@@ -92,7 +92,7 @@
 
 #else /* #if defined(__riscv) && __riscv_xlen == 64 */
 
-#    include "./generic_syscall.hpp"
+#    include "./generic_syscall.h"
 
 #endif /*  #if defined(__riscv) && __riscv_xlen == 64 */
 
