@@ -67,6 +67,9 @@ option(NATIVE_ARCH "Optimize the binaries for this system architecture only." OF
 option(VERBOSE "Verbose printing" OFF)
 option(USE_EVE "Use Eve Library for vectorization" OFF)
 option(USE_CTRE "Use CTRE Library for compile-time-regular-expressions" OFF)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    option(USE_OS_LIBURING "Use OS liburing instead of our own header-only liburing" OFF)
+endif ()
 
 if (WEBPP_DEV)
 
