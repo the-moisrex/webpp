@@ -42,7 +42,8 @@ namespace webpp::io {
         constexpr io_uring_scheduler(io_uring_scheduler&&) noexcept                 = default;
         constexpr io_uring_scheduler& operator=(io_uring_scheduler const&) noexcept = default;
         constexpr io_uring_scheduler& operator=(io_uring_scheduler&&) noexcept      = default;
-        constexpr ~io_uring_scheduler() noexcept                                    = default;
+
+        constexpr ~io_uring_scheduler() noexcept = default;
 
         // iterate all tasks
         constexpr bool advance() const { // NOLINT(*-use-nodiscard)
@@ -157,7 +158,16 @@ namespace webpp::io {
          */
         [[nodiscard]] basic_io_uring_service copy() const {
             return {default_entries_value,
-                    io_uring_params{.flags = IORING_SETUP_ATTACH_WQ, .wq_fd = params.wq_fd}};
+                    io_uring_params{.sq_entries     = 0,
+                                    .cq_entries     = 0,
+                                    .flags          = IORING_SETUP_ATTACH_WQ,
+                                    .sq_thread_cpu  = 0,
+                                    .sq_thread_idle = 0,
+                                    .features       = 0,
+                                    .wq_fd          = params.wq_fd,
+                                    .resv           = {},
+                                    .sq_off         = {},
+                                    .cq_off         = {}}};
         }
 
         // The io service is not copyable because we don't want accidental copying. Use .copy() for
@@ -401,6 +411,6 @@ namespace webpp::io {
 
 } // namespace webpp::io
 
-#endif // io_uring support
+#endif // WEBPP_IO_URING_SUPPORT
 
 #endif // WEBPP_IO_IO_URING_HPP
