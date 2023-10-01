@@ -32,6 +32,8 @@ TEST(IO, IOConcepts) {
 TEST(IO, BasicIOUring) {
     managed_io_uring_service<> io;
 
+    ASSERT_TRUE(io.is_success());
+
     std::array<char, 100> buf{};
 
     int executed = 0;
