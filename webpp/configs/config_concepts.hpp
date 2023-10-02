@@ -88,7 +88,7 @@ namespace webpp {
         { config.get("key", "default_value") };
         { config.get("section", "key", "default_value") };
         { config.get("file.ini", "section", "key", "default_value") };
-#ifdef false and CXX23
+#ifdef false && CXX23
         { config["section", "key", "default_value"] };
 #endif
 

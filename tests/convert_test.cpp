@@ -19,5 +19,7 @@ TEST(Convert, LexicalCast) {
     EXPECT_EQ("-43", lexical::cast<std::string>("-43"));
     EXPECT_EQ("-43", lexical::cast<std::string>(-43));
 
-    // todo: test for floating points as well
+    EXPECT_FLOAT_EQ(-43.3, lexical::cast<float>("-43.3"));
+    EXPECT_FLOAT_EQ(0.1233, lexical::cast<float>(".1233"));
+    EXPECT_FLOAT_EQ(0.1233, lexical::cast<double>(".1233"));
 }
