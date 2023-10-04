@@ -443,9 +443,7 @@ namespace webpp::istl {
         //     allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         // }
 
-        constexpr dynamic(dynamic const& other, allocator_type const& new_alloc)
-          : alloc{new_alloc},
-            ptr{nullptr} {
+        constexpr dynamic(dynamic const& other, allocator_type const& new_alloc) : alloc{new_alloc} {
             if (other.ptr) {
                 // todo: if T is a virtual type, then this will call a copy constructor on a virtual type:
                 // https://isocpp.org/wiki/faq/virtual-functions#virtual-ctors
@@ -459,8 +457,7 @@ namespace webpp::istl {
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
         constexpr dynamic(dynamic<DerivedT, NewAllocT> const& other, allocator_type const& new_alloc)
-          : alloc{new_alloc},
-            ptr{nullptr} {
+          : alloc{new_alloc} {
             if (other.get_pointer()) {
                 init<DerivedT>(*other.get_pointer());
             }
@@ -568,11 +565,13 @@ namespace webpp::istl {
             destroy();
         }
 
-        constexpr void swap(dynamic& other) noexcept(noexcept(stl::swap(alloc, other.alloc))) {
+        constexpr void swap(dynamic& other) noexcept {
+            static_assert(stl::allocator_traits<Allocator>::propagate_on_container_swap::value ||
+                            stl::allocator_traits<Allocator>::is_always_equal::value,
+                          "Allocator is not swappable in a nothrow manner.");
             stl::swap(ptr, other.ptr);
             stl::swap(alloc, other.alloc);
         }
-
 
         constexpr T& operator*() & noexcept {
             return *ptr;
