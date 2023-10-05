@@ -137,6 +137,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/ip/default_endpoints.hpp
 
         ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
+        ${LIB_INCLUDE_DIR}/uri/details/uri_status.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/fragment.hpp
         ${LIB_INCLUDE_DIR}/uri/host.hpp

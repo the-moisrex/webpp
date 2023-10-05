@@ -3,25 +3,26 @@
 #ifndef WEBPP_URI_DOMAIN_HPP
 #define WEBPP_URI_DOMAIN_HPP
 
-#include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "./details/uri_status.hpp"
 
 #include <cstdint>
 
 namespace webpp {
 
     enum struct domain_name_status {
-        valid,              // valid ascii domain name
-        valid_punycode,     // valid domain name which is a punycode
-        invalid_character,  // found an invalid character
-        too_long,           // the domain is too long
-        subdomain_too_long, // the subdomain is too long
-        dot_at_end,         // the domain ended unexpectedly
-        begin_with_hyphen,  // the domain cannot start with hyphens
-        end_with_hyphen,    // the domain cannot end with hyphens
-        double_hyphen,      // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain,    // a domain/sub-domain cannot be empty (no double dotting)
-        long_subdomain,     // there's a subdomain which is longer than 63 characters
+#define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
+        webpp_def(valid),              // valid ascii domain name
+        webpp_def(valid_punycode),     // valid domain name which is a punycode
+        webpp_def(invalid_character),  // found an invalid character
+        webpp_def(too_long),           // the domain is too long
+        webpp_def(subdomain_too_long), // the subdomain is too long
+        webpp_def(dot_at_end),         // the domain ended unexpectedly
+        webpp_def(begin_with_hyphen),  // the domain cannot start with hyphens
+        webpp_def(end_with_hyphen),    // the domain cannot end with hyphens
+        webpp_def(double_hyphen),      // the domain cannot have double hyphens unless it's a punycode
+        webpp_def(empty_subdomain),    // a domain/subdomain cannot be empty (no double dotting)
+#undef webpp_def
     };
 
     /**
@@ -42,9 +43,8 @@ namespace webpp {
             case end_with_hyphen: return "The domain cannot end with hyphens";
             case double_hyphen: return "The domain cannot have double hyphens unless it's a punycode";
             case empty_subdomain: return "A domain/sub-domain cannot be empty (no double dotting)";
-            case long_subdomain: return "There's a subdomain which is longer than 63 characters";
         }
-        return ""; // just to get rid of static analyzers' warning
+        stl::unreachable();
     }
 
     namespace details {
@@ -61,6 +61,7 @@ namespace webpp {
      * @return status of the parsing
      */
     constexpr domain_name_status parse_domain_name(const char*& pos, const char* end) noexcept {
+        // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
         using enum domain_name_status;
         if (pos == end) {
             return empty_subdomain;
@@ -120,6 +121,7 @@ namespace webpp {
             return subdomain_too_long;
         }
         return has_punycode ? valid_punycode : valid;
+        // NOLINTEND(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
     }
 
 

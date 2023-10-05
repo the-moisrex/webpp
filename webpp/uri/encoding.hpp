@@ -27,10 +27,10 @@ namespace webpp {
                 decoded_char <<= 4;
                 if (c >= '0' && c <= '9') { // DIGITS
                     decoded_char += static_cast<char_type>(c - '0');
-                } else if (c >= 'A' && c <= 'F') { // UPPER_HEX
-                    decoded_char += static_cast<char_type>(c - 'A' + 10);
-                } else if (c >= 'a' && c <= 'f') { // LOWER_HEX
-                    decoded_char += static_cast<char_type>(c - 'a' + 10);
+                } else if (c >= 'A' && c <= 'F') {                        // UPPER_HEX
+                    decoded_char += static_cast<char_type>(c - 'A' + 10); // NOLINT(*-avoid-magic-numbers)
+                } else if (c >= 'a' && c <= 'f') {                        // LOWER_HEX
+                    decoded_char += static_cast<char_type>(c - 'a' + 10); // NOLINT(*-avoid-magic-numbers)
                 } else {
                     return false;
                 }
@@ -87,10 +87,10 @@ namespace webpp {
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
         static constexpr auto make_hex_digit = [](auto value) constexpr noexcept -> char_type {
-            if (value < 10) {
+            if (value < 10) { // NOLINT(*-avoid-magic-numbers)
                 return static_cast<char_type>(value + '0');
             } else {
-                return static_cast<char_type>(value - 10 + 'A');
+                return static_cast<char_type>(value - 10 + 'A'); // NOLINT(*-avoid-magic-numbers)
             }
         };
 
@@ -106,18 +106,15 @@ namespace webpp {
                 output.reserve(new_capacity);
         }
         for (; it != input_end; ++it) {
-            bool need_conversion;
-            if constexpr (uri_encoding_policy::allowed_chars == Policy) {
-                need_conversion = chars.contains(*it);
-            } else {
-                need_conversion = !chars.contains(*it);
-            }
+            bool const need_conversion = (uri_encoding_policy::allowed_chars == Policy) // constexpr
+                                         && chars.contains(*it);
             if (need_conversion) {
                 output += *it;
             } else {
                 output += '%';
                 output += make_hex_digit(static_cast<uchar_type>(*it) >> 4u);
-                output += make_hex_digit(static_cast<uchar_type>(*it) & 0x0Fu);
+                output +=
+                  make_hex_digit(static_cast<uchar_type>(*it) & 0x0Fu); // NOLINT(*-avoid-magic-numbers)
             }
         }
         output.shrink_to_fit();

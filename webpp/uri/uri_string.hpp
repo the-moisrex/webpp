@@ -213,26 +213,35 @@ namespace webpp::uri {
 
             // finding the username
             user_info_end = user_info_section.find_first_of(":[@");
-            if (user_info_end == string_view_type::npos) {
-                user_info_end = data.size();
-            } else if (user_info_end == 0 && user_info_section.front() == '[') {
-                // It's an IPv6
-                user_info_end = data.size();
-            } else if (user_info_section[user_info_end] == '@') {
-                // no password; we only have username
-                // nothing to do
-                user_info_end += authority_start;
-                return;
-            } else if (user_info_section[user_info_end] == ':') {
-                // finding the password
-                user_info_end = user_info_section.find_first_of('@', user_info_end);
-                if (user_info_end == string_view_type::npos) {
-                    // it was a port
-                    user_info_end = data.size();
-                } else {
-                    user_info_end += authority_start;
+            switch (user_info_end) {
+                case 0:
+                    if (user_info_section.front() != '[')
+                        break; // todo: what about : and @ ??
+                    // It's an IPv6
+                    [[fallthrough]];
+                case string_view_type::npos: user_info_end = data.size(); break;
+                default: {
+                    switch (user_info_section[user_info_end]) {
+                        case '@': {
+                            // no password; we only have username
+                            // nothing to do
+                            user_info_end += authority_start;
+                            break;
+                        }
+                        case ':': {
+                            // finding the password
+                            user_info_end = user_info_section.find_first_of('@', user_info_end);
+                            if (user_info_end == string_view_type::npos) {
+                                // it was a port
+                                user_info_end = data.size();
+                            } else {
+                                user_info_end += authority_start;
+                            }
+                            // todo: evaluate the user info here
+                            break;
+                        }
+                    }
                 }
-                // todo: evaluate the user info here
             }
         }
 
@@ -1534,7 +1543,8 @@ namespace webpp::uri {
 
         /**
          * @brief checks if the uri path is normalized or not (contains relative . or .. paths)
-         * @details since this is supposed to be a URI, this check doesn't care if the path is relative or not
+         * @details since this is supposed to be a URI, this check doesn't care if the path is relative or
+         * not
          * @return bool
          */
         [[nodiscard]] constexpr bool is_normalized() const noexcept {
