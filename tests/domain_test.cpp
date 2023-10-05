@@ -253,6 +253,31 @@ TEST(DomainsTest, InValidity) {
     }
 }
 
+TEST(DomainsTest, SubDomainTooLongError) {
+    std::string str = "";
+    for (int i = 0; i <= 64; ++i) {
+        str += 'd';
+    }
+    str += "example.com";
+    auto       str_beg = static_cast<char const*>(str.data());
+    auto const str_end = str_beg + str.size();
+    auto       status  = parse_domain_name(str_beg, str_end);
+    EXPECT_EQ(status, domain_name_status::subdomain_too_long) << str << "\n" << to_string(status);
+}
+
+TEST(DomainsTest, DomainTooLongError) {
+    std::string str = "";
+    for (int i = 0; i <= 255 / 2; ++i) {
+        str += 'd';
+        str += '.';
+    }
+    str += "com";
+    auto       str_beg = static_cast<char const*>(str.data());
+    auto const str_end = str_beg + str.size();
+    auto       status  = parse_domain_name(str_beg, str_end);
+    EXPECT_EQ(status, domain_name_status::too_long) << str << "\n" << to_string(status);
+}
+
 TEST(DomainsTest, TLDTest) {
     domain_name domain{"example.com"};
     EXPECT_EQ(domain.tld(), "com");
