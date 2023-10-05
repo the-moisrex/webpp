@@ -1375,9 +1375,9 @@ namespace webpp::uri {
             auto _path = path_raw();
             if (_path.empty())
                 return *this;
-            //            if (_path.front() == '/') {
-            //                container.emplace_back(); // empty string
-            //            }
+            // if (_path.front() == '/') {
+            //     container.emplace_back(); // empty string
+            // }
             for (;;) {
                 const stl::size_t slash_start = _path.find('/');
                 const stl::size_t the_size    = stl::min(slash_start, _path.size());
@@ -1397,10 +1397,11 @@ namespace webpp::uri {
          */
         template <typename Container = basic_path<string_type>>
         [[nodiscard]] constexpr bool extract_slugs_to(Container& container) const noexcept {
-            using vec_str_t = typename Container::value_type;
+            using vec_str_t       = typename Container::value_type;
+            using difference_type = typename Container::difference_type;
             static_assert(istl::String<vec_str_t>,
                           "The specified container doesn't hold a value type that we can understand.");
-            const auto beg_it = container.size();
+            const auto beg_it = static_cast<difference_type>(container.size());
             extract_raw_slugs_to(container);
             for (auto it = container.begin() + beg_it; it != container.end(); ++it) {
                 vec_str_t tmp(container.get_allocator());
@@ -1440,7 +1441,7 @@ namespace webpp::uri {
          */
         template <typename Iter>
         constexpr uri_string& path(const Iter& _start, const Iter& _end) noexcept {
-            constexpr double string_reserve_scale = 1.5; // todo: make static in C++23
+            IF_CXX23(static) constexpr double string_reserve_scale = 1.5;
 
             const auto  almost_end = stl::prev(_end);
             string_type new_path{this->get_allocator()};
@@ -1450,7 +1451,7 @@ namespace webpp::uri {
             for (auto it = _start; it != _end; ++it) {
                 new_path_size += ascii::size(*it);
             }
-            new_path_size += stl::distance(_start, _end);
+            new_path_size += static_cast<stl::size_t>(stl::distance(_start, _end));
             new_path.reserve(static_cast<stl::size_t>(
               static_cast<double>(new_path_size) *
               string_reserve_scale)); // add 1.5 because encoding is going to need space
@@ -1474,7 +1475,7 @@ namespace webpp::uri {
             for (auto it = _start; it != _end; ++it) {
                 new_path_size += ascii::size(*it);
             }
-            new_path_size += stl::distance(_start, _end);
+            new_path_size += static_cast<stl::size_t>(stl::distance(_start, _end));
             if (new_path_size == 0)
                 return *this;
             new_path.reserve(new_path_size);
