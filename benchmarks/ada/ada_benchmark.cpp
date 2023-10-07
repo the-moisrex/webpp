@@ -295,9 +295,8 @@ BENCHMARK(WebppV3OptimizedSerializeIPv4);
 static void WebppSerializeIPv4(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
-        auto        ip = ipv4s_ipv4[i++ % ipv4s_ipv4.size()];
-        std::string out;
-        ip.to_string(out);
+        auto        ip  = ipv4s_ipv4[i++ % ipv4s_ipv4.size()];
+        std::string out = ip.string();
         benchmark::DoNotOptimize(out);
     }
 }

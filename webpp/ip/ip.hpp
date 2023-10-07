@@ -7,12 +7,12 @@
 
 namespace webpp {
 
-    // Maximum IPv4 dotted-decimal string (same as INET_ADDRSTRLEN)
-    static constexpr auto max_ipv4_str_len = 16u;
+    // Maximum IPv4 dotted-decimal string (same as INET_ADDRSTRLEN - 1)
+    static constexpr auto max_ipv4_str_len = 15u;
 
-    // sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
-    // Maximum IPv6 hexadecimal string (same as INET6_ADDRSTRLEN)
-    static constexpr auto max_ipv6_str_len = 46u;
+    // length of "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
+    // Maximum IPv6 hexadecimal string (same as INET6_ADDRSTRLEN - 1)
+    static constexpr auto max_ipv6_str_len = 45u;
 
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t
 
