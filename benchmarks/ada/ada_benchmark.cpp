@@ -330,13 +330,23 @@ BENCHMARK(AdaSerializeIPv6);
 static void WebppSerializeIPv6(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
+        auto        ip  = ipv6s_ipv6[i++ % ipv6s_ipv6.size()];
+        std::string out = ip.ip_string();
+        benchmark::DoNotOptimize(out);
+    }
+}
+BENCHMARK(WebppSerializeIPv6);
+
+static void WebppSerializeIPv6Append(benchmark::State& state) {
+    std::size_t i = 0;
+    for (auto _ : state) {
         auto        ip = ipv6s_ipv6[i++ % ipv6s_ipv6.size()];
         std::string out;
         ip.ip_to_string(out);
         benchmark::DoNotOptimize(out);
     }
 }
-BENCHMARK(WebppSerializeIPv6);
+BENCHMARK(WebppSerializeIPv6Append);
 
 
 static void WebppV1SerializeIPv6Optimized(benchmark::State& state) {

@@ -1046,7 +1046,29 @@ namespace webpp {
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT string(Args&&... str_args) const noexcept {
             StrT output{stl::forward<Args>(str_args)...};
+#ifdef __cpp_lib_string_resize_and_overwrite
+            output.resize_and_overwrite(max_ipv6_str_len + 5,
+                                        [this](auto* buf, stl::size_t) constexpr noexcept {
+                                            auto it = inet_ntop6(data.data(), buf);
+                                            if (has_prefix()) {
+                                                *it++ = '/';
+                                                if (_prefix < 10) {
+                                                    *it++ = static_cast<char>('0' + _prefix);
+                                                } else if (_prefix < 100) {
+                                                    *it++ = static_cast<char>('0' + _prefix / 10);
+                                                    *it++ = static_cast<char>('0' + _prefix % 10);
+                                                } else {
+                                                    *it++ = static_cast<char>('0' + _prefix / 100);
+                                                    *it++ = static_cast<char>('0' + _prefix % 100 / 10);
+                                                    *it++ = static_cast<char>('0' + _prefix % 10);
+                                                }
+                                                *it++ = '\0';
+                                            }
+                                            return static_cast<stl::size_t>(it - buf);
+                                        });
+#else
             to_string(output);
+#endif
             return output;
         }
 
@@ -1078,7 +1100,13 @@ namespace webpp {
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT ip_string(Args&&... str_args) const noexcept {
             StrT output{stl::forward<Args>(str_args)...};
+#ifdef __cpp_lib_string_resize_and_overwrite
+            output.resize_and_overwrite(max_ipv6_str_len, [this](auto* buf, stl::size_t) constexpr noexcept {
+                return static_cast<stl::size_t>(inet_ntop6(data.data(), buf) - buf);
+            });
+#else
             ip_to_string(output);
+#endif
             return output;
         }
 
