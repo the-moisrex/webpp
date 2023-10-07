@@ -34,6 +34,7 @@ set(FILE_SOURCES
         bool_array/bool_array_benchmark.cpp
         tokenizer/tokenizer_benchmark.cpp
         ip_to_string/ip_to_string_benchmark.cpp
+        ada/ada_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 

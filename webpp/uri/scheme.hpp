@@ -25,6 +25,46 @@ namespace webpp::uri {
         stl::unreachable();
     }
 
+    /**
+     * parse the scheme
+     * this method will fill the "authority_start" and "scheme_end" vars
+     */
+    constexpr scheme_status parse_scheme(const char*& pos, const char* end) noexcept {
+        if (scheme_end != string_view_type::npos)
+            return; // It's already parsed
+
+        auto const _data = this->string_view();
+
+        // extracting scheme
+        if (ascii::starts_with(_data, "//")) {
+            authority_start = 2;
+            scheme_end      = data.size(); // so we don't have to check again
+            return;
+        } else if (const auto colon = _data.find(':'); colon != string_view_type::npos) {
+            auto m_scheme = _data.substr(0, colon);
+            if (ALPHA<char_type>.contains(m_scheme[0]) &&
+                m_scheme.substr(1).find_first_not_of(details::SCHEME_NOT_FIRST<char_type>.string_view())) {
+                scheme_end = colon;
+
+                if (_data.substr(colon + 1, 2) == "//") {
+                    authority_start = colon + 3;
+                } else {
+                    // it should be a URN or an invalid URI at this point
+                    authority_start = data.size();
+                    if (!ascii::iequals<ascii::char_case_side::second_lowered>(_data.substr(0, scheme_end),
+                                                                               "urn")) {
+                        errors.scheme = true;
+                    }
+                }
+                return;
+            } else {
+                errors.scheme = true;
+            }
+        }
+
+        scheme_end = authority_start = data.size();
+    }
+
 
 
 

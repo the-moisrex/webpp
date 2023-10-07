@@ -1,8 +1,8 @@
 // Created by moisrex on 10/7/23.
 // source of this file: ada project / scheme-inl.h
 
-#ifndef WEBPP_ADA_SCHEME_HPP
-#define WEBPP_ADA_SCHEME_HPP
+#ifndef WEBPP_BENCH_ADA_SCHEME_HPP
+#define WEBPP_BENCH_ADA_SCHEME_HPP
 
 #include <cstdint>
 #include <string_view>
@@ -45,4 +45,4 @@ namespace ada::scheme {
 
 } // namespace ada::scheme
 
-#endif // WEBPP_ADA_SCHEME_HPP
+#endif // WEBPP_BENCH_ADA_SCHEME_HPP

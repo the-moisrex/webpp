@@ -1,7 +1,7 @@
 // Created by moisrex on 10/7/23.
 
-#ifndef WEBPP_WEBPP_SCHEME_HPP
-#define WEBPP_WEBPP_SCHEME_HPP
+#ifndef WEBPP_BENCH_WEBPP_SCHEME_HPP
+#define WEBPP_BENCH_WEBPP_SCHEME_HPP
 
 #include "../../webpp/std/string.hpp"
 #include "../../webpp/std/string_view.hpp"
@@ -59,4 +59,4 @@ namespace webpp::v1 {
 
 } // namespace webpp::v1
 
-#endif // WEBPP_WEBPP_SCHEME_HPP
+#endif // WEBPP_BENCH_WEBPP_SCHEME_HPP
