@@ -252,4 +252,28 @@ namespace webpp::v2 {
 
 } // namespace webpp::v2
 
+namespace webpp::v3 {
+
+    /**
+     * Convert an IPv4 to string
+     * It's fast, but it's not pretty, I know :)
+     */
+    static constexpr char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+#define WEBPP_PUT_CHAR(inp) out = std::to_chars(out, out + 3, inp).ptr;
+
+        WEBPP_PUT_CHAR(src[0])
+        *out++ = '.';
+        WEBPP_PUT_CHAR(src[1])
+        *out++ = '.';
+        WEBPP_PUT_CHAR(src[2])
+        *out++ = '.';
+        WEBPP_PUT_CHAR(src[3])
+        *out = '\0';
+        return out;
+#undef WEBPP_PUT_CHAR
+    }
+    // NOLINTEND(cppcoreguidelines-macro-usage)
+
+} // namespace webpp::v3
+
 #endif // WEBPP_BENCH_IP_INET_NTOP_HPP

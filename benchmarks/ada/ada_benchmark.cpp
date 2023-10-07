@@ -280,6 +280,18 @@ static void WebppV2OptimizedSerializeIPv4(benchmark::State& state) {
 }
 BENCHMARK(WebppV2OptimizedSerializeIPv4);
 
+static void WebppV3OptimizedSerializeIPv4(benchmark::State& state) {
+    std::size_t i = 0;
+    for (auto _ : state) {
+        auto        ip = ipv4s_octets[i++ % ipv4s_octets.size()];
+        std::string out{15, '\0'};
+        auto        res = webpp::v3::inet_ntop4(ip.data(), out.data());
+        out.resize(static_cast<std::size_t>(res - out.data()));
+        benchmark::DoNotOptimize(out);
+    }
+}
+BENCHMARK(WebppV3OptimizedSerializeIPv4);
+
 static void WebppSerializeIPv4(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
