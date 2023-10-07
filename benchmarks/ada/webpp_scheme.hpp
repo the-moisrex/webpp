@@ -1,34 +1,17 @@
-// Created by moisrex on 10/30/20.
+// Created by moisrex on 10/7/23.
 
-#ifndef WEBPP_SCHEME_HPP
-#define WEBPP_SCHEME_HPP
+#ifndef WEBPP_WEBPP_SCHEME_HPP
+#define WEBPP_WEBPP_SCHEME_HPP
 
-#include "../std/string.hpp"
-#include "./details/uri_status.hpp"
+#include "../../webpp/std/string.hpp"
+#include "../../webpp/std/string_view.hpp"
 
-namespace webpp::uri {
+#include <cstdint>
 
-    enum struct scheme_status {
-#define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
-        webpp_def(valid), // valid scheme
-#undef webpp_def
-    };
+namespace webpp::v1 {
 
-    /**
-     * Get the error message as a string view
-     */
-    static constexpr stl::string_view to_string(scheme_status status) noexcept {
-        switch (status) {
-            using enum scheme_status;
-            case valid: return "Valid Scheme";
-        }
-        stl::unreachable();
-    }
-
-
-
-
-    template <istl::String StringType = stl::string>
+    template <typename StringType = stl::string>
+        requires(istl::String<StringType> || istl::StringView<StringType>)
     struct basic_scheme : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
@@ -72,23 +55,8 @@ namespace webpp::uri {
             return 0u;
             // NOLINTEND(*-avoid-magic-numbers)
         }
-
-        [[nodiscard]] constexpr bool is_known() const noexcept {
-            return known_port() != 0u;
-        }
-
-        void append_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                // out.reserve(out.size() + this->size() + 1);
-                out.append(*this);
-                out.push_back(':');
-                out.append("//");
-            } else {
-                out.append("//");
-            }
-        }
     };
 
-} // namespace webpp::uri
+} // namespace webpp::v1
 
-#endif // WEBPP_SCHEME_HPP
+#endif // WEBPP_WEBPP_SCHEME_HPP

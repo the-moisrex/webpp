@@ -108,7 +108,7 @@ namespace webpp::http {
                 // first try to parse it as ipv4:
                 ipv4_octets octets;
                 auto        host_ptr = hostname.data();
-                auto const  host_end = host_ptr + hostname.size();
+                auto const  host_end = host_ptr + hostname.size(); // NOLINT(*-pro-bounds-pointer-arithmetic)
                 auto const  res      = inet_pton4(host_ptr, host_end, octets.data());
                 switch (res) {
                     using enum inet_pton4_status;
@@ -304,7 +304,7 @@ namespace webpp::http {
             if (port_ptr == port_end) {
                 return; // no port here
             }
-            if (*port_ptr++ != ':') {
+            if (*port_ptr++ != ':') { // NOLINT(*-pro-bounds-pointer-arithmetic)
                 status_code = host_status::invalid_host;
                 return;
             }
@@ -354,8 +354,8 @@ namespace webpp::http {
 
         using endpoint_variant_type = stl::variant<stl::monostate, struct ipv4, struct ipv6, domain_type>;
         endpoint_variant_type endpoint{stl::monostate{}};
-        stl::uint16_t         port_value = 0;
-        host_status           status_code;
+        stl::uint16_t         port_value  = 0;
+        host_status           status_code = host_status::invalid_host;
     };
 
 } // namespace webpp::http
