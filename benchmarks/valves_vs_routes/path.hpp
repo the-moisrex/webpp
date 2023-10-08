@@ -17,8 +17,8 @@ namespace webpp::http {
 
     template <typename T>
     concept has_variable_name = requires(T seg) {
-                                    { seg.variable_name } -> stl::convertible_to<stl::string_view>;
-                                };
+        { seg.variable_name } -> stl::convertible_to<stl::string_view>;
+    };
 
     /**
      * Check if the specified segment can parse a uri segment into the
@@ -28,8 +28,8 @@ namespace webpp::http {
      */
     template <typename ContextType, typename SegType, typename T>
     concept can_parse_to = requires(SegType seg, ContextType ctx) {
-                               { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
-                           };
+        { seg.template parse<T>(ctx) } -> stl::same_as<stl::optional<T>>;
+    };
 
     template <typename CtxT>
     concept HasPathExtension = Context<CtxT> && requires(CtxT ctx) { ctx.path; };

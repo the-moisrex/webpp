@@ -18,12 +18,11 @@
 #define mem_call(member_name)                                                                               \
     (                                                                                                       \
       [this]<typename... Args> requires requires(stl::remove_cvref_t<decltype(*this)> that, Args... args) { \
-                                            that.member_name(::webpp::stl::forward<Args>(args)...);         \
-                                        }(                                                                  \
-        Args &&                                                                                             \
+          that.member_name(::webpp::stl::forward<Args>(args)...);                                           \
+      }(Args &&                                                                                             \
         ... args) constexpr noexcept(noexcept(this->member_name(::webpp::stl::forward<Args>(args)...))) {   \
-                                            return this->member_name(::webpp::stl::forward<Args>(args)...); \
-                                        })
+          return this->member_name(::webpp::stl::forward<Args>(args)...);                                   \
+      })
 
 namespace webpp::http {
 
@@ -52,12 +51,11 @@ namespace webpp::http {
      */
 
     template <typename Route, typename... Args>
-    concept is_callable_route =
-      requires(stl::remove_cvref_t<Route> route) {
-          requires requires(Args... args) { route(args...); } ||
-                     requires(stl::add_lvalue_reference_t<Args>... args) { route(args...); } ||
-                     requires(stl::remove_cvref_t<Args>... args) { route(args...); };
-      };
+    concept is_callable_route = requires(stl::remove_cvref_t<Route> route) {
+        requires requires(Args... args) { route(args...); } ||
+                   requires(stl::add_lvalue_reference_t<Args>... args) { route(args...); } ||
+                   requires(stl::remove_cvref_t<Args>... args) { route(args...); };
+    };
 
     template <typename Route, typename... Args>
     concept is_nothrow_callable_route =

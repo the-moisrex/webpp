@@ -1909,9 +1909,9 @@ constexpr _R __concat(_Tp a_, _Tp b_) {
     using _Up                 = __vector_type_t<_W, sizeof(_R) / sizeof(_W)>;
 #        else
     constexpr int input_width = _TVT::_S_full_size;
-    const _Tp& __a = a_;
-    const _Tp& __b = b_;
-    using _Up = _R;
+    const _Tp&    __a         = a_;
+    const _Tp&    __b         = b_;
+    using _Up                 = _R;
 #        endif
     if constexpr (input_width == 2)
         return reinterpret_cast<_R>(_Up{__a[0], __a[1], __b[0], __b[1]});
@@ -2034,8 +2034,8 @@ _GLIBCXX_SIMD_INTRINSIC constexpr _R __extract(_Tp __in) {
         using _Up                    = __vector_type_t<_W, __return_width>;
         const auto __x               = __vector_bitcast<_W>(__in);
 #        else
-        constexpr int __return_width = _TVT::_S_full_size / _SplitBy;
-        using _Up = _R;
+        constexpr int __return_width                               = _TVT::_S_full_size / _SplitBy;
+        using _Up                                                  = _R;
         const __vector_type_t<value_type, _TVT::_S_full_size>& __x = __in;
 #        endif
         constexpr int _O = _Offset * __return_width;
@@ -3311,9 +3311,9 @@ _GLIBCXX_SIMD_ALWAYS_INLINE std::tuple<simd<_Tp, simd_abi::deduce_t<_Tp, _Sizes>
     });
 #        else
     return __generate_from_n_evaluations<sizeof...(_Sizes), _Tuple>([&](auto __i) constexpr {
-        using _Vi = __deduced_simd<_Tp, _SL::_S_at(__i)>;
+        using _Vi        = __deduced_simd<_Tp, _SL::_S_at(__i)>;
         const auto& __xx = __data(__x);
-        using _Offset = decltype(_SL::_S_before(__i));
+        using _Offset    = decltype(_SL::_S_before(__i));
         return _Vi([&](auto __j) constexpr {
             constexpr _SizeConstant<_Offset::value + __j> __k;
             return __xx[__k];
@@ -3380,8 +3380,8 @@ class _SmartReference {
     _GLIBCXX_SIMD_INTRINSIC constexpr _SmartReference(_Up& __o, int __i) noexcept
       : _M_index(__i),
         _M_obj(__o) {}
-    using value_type                                                          = _ValueType;
-    _GLIBCXX_SIMD_INTRINSIC           _SmartReference(const _SmartReference&) = delete;
+    using value_type                                                = _ValueType;
+    _GLIBCXX_SIMD_INTRINSIC _SmartReference(const _SmartReference&) = delete;
     _GLIBCXX_SIMD_INTRINSIC constexpr operator value_type() const noexcept {
         return _M_read();
     }
@@ -6931,8 +6931,8 @@ struct simd_abi::_VecBuiltin {
     using _MaskImpl   = _MaskImplX86<_VecBuiltin<_UsedBytes>>;
 #        elif _GLIBCXX_SIMD_HAVE_NEON
     using _CommonImpl = _CommonImplNeon;
-    using _SimdImpl = _SimdImplNeon<_VecBuiltin<_UsedBytes>>;
-    using _MaskImpl = _MaskImplNeon<_VecBuiltin<_UsedBytes>>;
+    using _SimdImpl   = _SimdImplNeon<_VecBuiltin<_UsedBytes>>;
+    using _MaskImpl   = _MaskImplNeon<_VecBuiltin<_UsedBytes>>;
 #        else
     using _CommonImpl = _CommonImplBuiltin;
 #            ifdef __ALTIVEC__
@@ -7021,8 +7021,8 @@ struct simd_abi::_VecBltnBtmsk {
     template <int>
     struct _MissingImpl;
     using _CommonImpl = _MissingImpl<_UsedBytes>;
-    using _SimdImpl = _MissingImpl<_UsedBytes>;
-    using _MaskImpl = _MissingImpl<_UsedBytes>;
+    using _SimdImpl   = _MissingImpl<_UsedBytes>;
+    using _MaskImpl   = _MissingImpl<_UsedBytes>;
 #        endif
     template <typename _Tp>
     using _MaskMember = _SimdWrapper<bool, _S_size<_Tp>>;
@@ -7129,7 +7129,7 @@ struct _CommonImplBuiltin {
                 return __r;
             } else
 #        else
-            using _V = _Rp;
+            using _V                            = _Rp;
 #        endif
             {
                 _V __r{};
@@ -7861,7 +7861,7 @@ struct _SimdImplBuiltin {
         _GLIBCXX_SIMD_USE_CONSTEXPR _UV __alltrue = ~_UV();
         return __alltrue;
 #        else
-        using _Ip = __int_for_sizeof_t<_Tp>;
+        using _Ip         = __int_for_sizeof_t<_Tp>;
         const auto __absn = __vector_bitcast<_Ip>(_SuperImpl::_S_abs(__x));
         const auto __maxn = __vector_bitcast<_Ip>(__vector_broadcast<_Np>(__finite_max_v<_Tp>));
         return __absn <= __maxn;
@@ -10721,7 +10721,7 @@ struct _CommonImplX86 : _CommonImplBuiltin {
         using _Tp = typename _VectorTraits<_TV>::value_type;
         static_assert(sizeof(_TV) >= 16);
         static_assert(sizeof(_Tp) <= 8);
-        using _IntT = conditional_t<(sizeof(_Tp) > 2),
+        using _IntT                      = conditional_t<(sizeof(_Tp) > 2),
                                     conditional_t<sizeof(_Tp) == 4, int, long long>,
                                     conditional_t<sizeof(_Tp) == 1, char, short>>;
         [[maybe_unused]] const auto __aa = __vector_bitcast<_IntT>(__a);
@@ -14512,18 +14512,18 @@ __r._M_x - __y*__pi0 - __y*__pi1 - __y*__pi2 - __y*__pi3
     if (_GLIBCXX_SIMD_IS_UNLIKELY(all_of(__r._M_x < __pi_over_4)))
         __r._M_quadrant = 0;
     else if (_GLIBCXX_SIMD_IS_LIKELY(all_of(__r._M_x < 6 * __pi_over_4))) {
-        const _V __y = nearbyint(__r._M_x * __2_over_pi);
+        const _V __y    = nearbyint(__r._M_x * __2_over_pi);
         __r._M_quadrant = static_simd_cast<_IV>(__y) & 3;
         __r._M_x -= __y * __pi_2_5bits0;
         __r._M_x -= __y * __pi_2_5bits0_rem;
     } else {
         using __math_double::__2_over_pi;
         using __math_double::__pi_2;
-        using _VD = rebind_simd_t<double, _V>;
-        _VD __xd = static_simd_cast<_VD>(__r._M_x);
-        _VD __y = nearbyint(__xd * __2_over_pi);
+        using _VD       = rebind_simd_t<double, _V>;
+        _VD __xd        = static_simd_cast<_VD>(__r._M_x);
+        _VD __y         = nearbyint(__xd * __2_over_pi);
         __r._M_quadrant = static_simd_cast<_IV>(__y) & 3;
-        __r._M_x = static_simd_cast<_V>(__xd - __y * __pi_2);
+        __r._M_x        = static_simd_cast<_V>(__xd - __y * __pi_2);
     }
 #        endif
     return __r;
@@ -14760,7 +14760,7 @@ enable_if_t<std::is_floating_point_v<_Tp>, simd<_Tp, _Abi>> frexp(const simd<_Tp
         const auto __iszero_inf_nan = __x == 0;
 #        else
         const auto __as_int = __bit_cast<rebind_simd_t<__int_for_sizeof_t<_Tp>, _V>>(abs(__x));
-        const auto __inf = __bit_cast<rebind_simd_t<__int_for_sizeof_t<_Tp>, _V>>(_V(__infinity_v<_Tp>));
+        const auto __inf    = __bit_cast<rebind_simd_t<__int_for_sizeof_t<_Tp>, _V>>(_V(__infinity_v<_Tp>));
         const auto __iszero_inf_nan =
           static_simd_cast<typename _V::mask_type>(__as_int == 0 || __as_int >= __inf);
 #        endif

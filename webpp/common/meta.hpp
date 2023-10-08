@@ -27,10 +27,19 @@
 #    define CXX23 1
 #endif
 
-#if CXX23
+#ifdef CXX23
 #    define IF_CXX23(val) val
 #else
 #    define IF_CXX23(val)
+#endif
+
+// For usage in a constexpr function, C++20 doesn't allow for usage of "static constexpr" stuff inside
+// "constexpr" functions, but C++23 does.
+// https://wg21.link/P2647#feature-test-macro
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 202300L
+#    define webpp_static_constexpr static constexpr
+#else
+#    define webpp_static_constexpr constexpr
 #endif
 
 // the static_assert alternative based on this article:

@@ -4,14 +4,17 @@
 #define WEBPP_SCHEME_HPP
 
 #include "../std/string.hpp"
+#include "../strings/charset.hpp"
 #include "./details/uri_status.hpp"
 
 namespace webpp::uri {
 
     enum struct scheme_status {
 #define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
-        webpp_def(valid), // valid scheme
+        webpp_def(valid),                     // valid scheme
+        webpp_def(scheme_ended_unexpectedly), // scheme ended in an unexpected way
 #undef webpp_def
+        no_scheme = stl::to_underlying(uri::uri_status::last), // no scheme is specified
     };
 
     /**
@@ -21,6 +24,9 @@ namespace webpp::uri {
         switch (status) {
             using enum scheme_status;
             case valid: return "Valid Scheme";
+            case no_scheme: return "This URL doesn't have a scheme.";
+            case scheme_ended_unexpectedly:
+                return "This URL doesn't seem to have enough information, not even a qualified scheme.";
         }
         stl::unreachable();
     }
@@ -29,40 +35,38 @@ namespace webpp::uri {
      * parse the scheme
      * this method will fill the "authority_start" and "scheme_end" vars
      */
-    constexpr scheme_status parse_scheme(const char*& pos, const char* end) noexcept {
-        if (scheme_end != string_view_type::npos)
-            return; // It's already parsed
+    template <typename CharT = char>
+    static constexpr scheme_status parse_scheme(const CharT*& pos, const CharT* end) noexcept {
+        using char_type = CharT;
+        using enum scheme_status;
 
-        auto const _data = this->string_view();
+        webpp_static_constexpr auto alnum_plus =
+          charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
 
-        // extracting scheme
-        if (ascii::starts_with(_data, "//")) {
-            authority_start = 2;
-            scheme_end      = data.size(); // so we don't have to check again
-            return;
-        } else if (const auto colon = _data.find(':'); colon != string_view_type::npos) {
-            auto m_scheme = _data.substr(0, colon);
-            if (ALPHA<char_type>.contains(m_scheme[0]) &&
-                m_scheme.substr(1).find_first_not_of(details::SCHEME_NOT_FIRST<char_type>.string_view())) {
-                scheme_end = colon;
+        // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
+        while (pos != end) {
+            if (ALPHA<CharT>.contains(*pos)) {
+                ++pos;
 
-                if (_data.substr(colon + 1, 2) == "//") {
-                    authority_start = colon + 3;
-                } else {
-                    // it should be a URN or an invalid URI at this point
-                    authority_start = data.size();
-                    if (!ascii::iequals<ascii::char_case_side::second_lowered>(_data.substr(0, scheme_end),
-                                                                               "urn")) {
-                        errors.scheme = true;
+                // scheme state (https://url.spec.whatwg.org/#scheme-state)
+                {
+                    // handling alpha, num, +, -, .
+                    for (;;) {
+                        if (*pos != end) [[unlikely]] {
+                            return scheme_ended_unexpectedly;
+                        }
+                        if (!alnum_plus.contains(*pos))
+                            break;
+                        ++pos;
                     }
+
+                    // handling ":" character
+                    if (*pos == ':') {}
                 }
-                return;
             } else {
-                errors.scheme = true;
+                return no_scheme;
             }
         }
-
-        scheme_end = authority_start = data.size();
     }
 
 

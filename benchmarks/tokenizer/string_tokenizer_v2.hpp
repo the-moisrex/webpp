@@ -164,8 +164,7 @@ namespace webpp::benchmark::v2 {
         template <CharSet AllowedCharsT, CharSet QuotesT, typename StrT>
         constexpr bool
         expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out) noexcept(noexcept(token(out))) {
-            IF_CXX23(static)
-            constexpr stl::uint8_t Options = hidden_options::allow_chars;
+            webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
             return next<Options>(stl::forward<AllowedCharsT>(allowed_chars),
                                  stl::forward<QuotesT>(quotes),
                                  out);
@@ -178,8 +177,7 @@ namespace webpp::benchmark::v2 {
                               StrT&           out,
                               ErrorType&      err,
                               ErrorType       err_val) noexcept(noexcept(token(out))) {
-            IF_CXX23(static)
-            constexpr stl::uint8_t Options = hidden_options::allow_chars;
+            webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
             return next<Options>(stl::forward<AllowedCharsT>(allowed_chars),
                                  stl::forward<QuotesT>(quotes),
                                  out,
@@ -479,8 +477,8 @@ namespace webpp::benchmark::v2 {
                                           CharSet auto&& quotes,
                                           advance_state* state,
                                           char_type      c) noexcept {
-            IF_CXX23(static)
-            constexpr bool hit = !(Options & static_cast<stl::uint8_t>(hidden_options::allow_chars));
+            webpp_static_constexpr bool hit =
+              !(Options & static_cast<stl::uint8_t>(hidden_options::allow_chars));
             if (state->in_quote) {
                 if (state->in_escape) {
                     state->in_escape = false;

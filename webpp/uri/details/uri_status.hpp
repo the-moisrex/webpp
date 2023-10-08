@@ -17,6 +17,9 @@ namespace webpp::uri {
         invalid_character, // found an invalid character
         too_long,          // the URI is too long
 
+        // scheme-specific errors:
+        scheme_ended_unexpectedly,
+
         // domain-specific errors:
         subdomain_too_long, // the subdomain is too long
         dot_at_end,         // the domain ended unexpectedly
@@ -24,6 +27,9 @@ namespace webpp::uri {
         end_with_hyphen,    // the domain cannot end with hyphens
         double_hyphen,      // the domain cannot have double hyphens unless it's a punycode
         empty_subdomain,    // a domain/subdomain cannot be empty (no double dotting)
+
+        last // to identify the last value of the uri_status, from this number forward, the values are used
+             // during parsing, and parsing is not finished yet.
     };
 
     /**
@@ -43,6 +49,10 @@ namespace webpp::uri {
             case too_long:
                 return "The URI is too long, max allowed character is 255";
 
+                // scheme-specific errors:
+            case scheme_ended_unexpectedly:
+                return "This URL doesn't seem to have enough information, not even a qualified scheme.";
+
                 // domain-specific errors:
             case subdomain_too_long:
                 return "The subdomain is too long, max allowed character in a sub-domain is 63";
@@ -52,6 +62,7 @@ namespace webpp::uri {
             case end_with_hyphen: return "The domain cannot end with hyphens";
             case double_hyphen: return "The domain cannot have double hyphens unless it's a punycode";
             case empty_subdomain: return "A domain/sub-domain cannot be empty (no double dotting)";
+            case last: return "Invalid state of URL parsing";
         }
         stl::unreachable();
     }

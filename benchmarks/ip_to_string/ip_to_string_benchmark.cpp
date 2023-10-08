@@ -84,10 +84,10 @@ static constexpr string_view valid_ipv4s[]{
  *	Paul Vixie, 1996.
  */
 static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) noexcept {
-    IF_CXX23(static)
-    constexpr auto uint16_byte_count = sizeof(stl::uint16_t); // Number of bytes of data in an uint16_t
-    IF_CXX23(static) constexpr auto ipv4_byte_count = 4;
-    IF_CXX23(static) constexpr auto ipv6_byte_count = 16;
+    webpp_static_constexpr auto uint16_byte_count =
+      sizeof(stl::uint16_t); // Number of bytes of data in an uint16_t
+    webpp_static_constexpr auto ipv4_byte_count = 4;
+    webpp_static_constexpr auto ipv6_byte_count = 16;
     /*
      * Note that int32_t and int16_t need only be "at least" large enough
      * to contain a value of the specified size.  On some systems, like
@@ -520,7 +520,7 @@ namespace v2 {
     }
 
     static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-        IF_CXX23(static) constexpr const char* hex_chars = "0123456789abcdef";
+        webpp_static_constexpr const char* hex_chars = "0123456789abcdef";
 
         if (!src) {
             return nullptr;

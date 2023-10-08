@@ -1450,7 +1450,7 @@ namespace webpp::uri {
          */
         template <typename Iter>
         constexpr uri_string& path(const Iter& _start, const Iter& _end) noexcept {
-            IF_CXX23(static) constexpr double string_reserve_scale = 1.5;
+            webpp_static_constexpr double string_reserve_scale = 1.5;
 
             const auto  almost_end = stl::prev(_end);
             string_type new_path{this->get_allocator()};
