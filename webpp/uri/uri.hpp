@@ -181,6 +181,18 @@ namespace webpp::uri {
         }
 
 
+        template <istl::StringViewifiable StrT>
+        scheme_status set_scheme(StrT&& inp_str) noexcept {
+            auto const str     = istl::string_viewify(stl::forward<StrT>(inp_str));
+            auto       ptr     = str.data();
+            auto const ptr_end = ptr + str.size();
+            switch (auto const status = scheme.parse_from(stl::forward<StrT>(inp_str))) {
+                using enum scheme_status;
+                case valid:
+                default: return status;
+            }
+        }
+
         template <URIString URIType>
         constexpr basic_uri& extract_from(URIType const& uri_str) {
             scheme             = uri_str.scheme();
@@ -207,7 +219,7 @@ namespace webpp::uri {
         template <typename T>
             requires(URIString<T> || istl::StringViewifiable<T>)
         constexpr basic_uri& operator=(T&& uri_str) {
-            extract_from(uri_str);
+            extract_from(stl::forward<T>(uri_str));
             return *this;
         }
     };

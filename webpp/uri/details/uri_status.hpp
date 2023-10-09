@@ -16,6 +16,7 @@ namespace webpp::uri {
         // common errors:
         invalid_character, // found an invalid character
         too_long,          // the URI is too long
+        empty_string,      // the URI/URL/.. is empty
 
         // scheme-specific errors:
         scheme_ended_unexpectedly,
@@ -46,8 +47,9 @@ namespace webpp::uri {
 
                 // common errors:
             case invalid_character: return "Found an invalid character in the URI";
-            case too_long:
-                return "The URI is too long, max allowed character is 255";
+            case too_long: return "The URI is too long, max allowed character is 255";
+            case empty_string:
+                return "The URI is empty.";
 
                 // scheme-specific errors:
             case scheme_ended_unexpectedly:

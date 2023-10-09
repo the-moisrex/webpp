@@ -12,6 +12,8 @@ namespace webpp::uri {
     enum struct scheme_status {
 #define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
         webpp_def(valid),                     // valid scheme
+        webpp_def(invalid_character),         // Invalid character found
+        webpp_def(empty_string),              // The specified string is empty
         webpp_def(scheme_ended_unexpectedly), // scheme ended in an unexpected way
 #undef webpp_def
         no_scheme = stl::to_underlying(uri::uri_status::last), // no scheme is specified
@@ -24,6 +26,8 @@ namespace webpp::uri {
         switch (status) {
             using enum scheme_status;
             case valid: return "Valid Scheme";
+            case invalid_character: return "Invalid character found where there should be a scheme.";
+            case empty_string: return "The specified string is empty and not a URI.";
             case no_scheme: return "This URL doesn't have a scheme.";
             case scheme_ended_unexpectedly:
                 return "This URL doesn't seem to have enough information, not even a qualified scheme.";
@@ -35,50 +39,59 @@ namespace webpp::uri {
      * parse the scheme
      * this method will fill the "authority_start" and "scheme_end" vars
      */
-    template <typename CharT = char>
-    static constexpr scheme_status parse_scheme(const CharT*& pos, const CharT* end) noexcept {
+    template <typename CharT = char, typename OutT = CharT*&>
+    [[nodiscard]] static constexpr scheme_status
+    parse_scheme(CharT const*& pos, const CharT* end, [[maybe_unused]] OutT out) noexcept {
         using char_type = CharT;
         using enum scheme_status;
 
+        webpp_static_constexpr bool should_override = stl::same_as<OutT, CharT*&>;
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
-        while (pos != end) {
-            if (ALPHA<CharT>.contains(*pos)) {
-                ++pos;
+        if (pos != end)
+            return no_scheme;
 
-                // scheme state (https://url.spec.whatwg.org/#scheme-state)
-                {
-                    // handling alpha, num, +, -, .
-                    for (;;) {
-                        if (*pos != end) [[unlikely]] {
-                            return scheme_ended_unexpectedly;
-                        }
-                        if (!alnum_plus.contains(*pos))
-                            break;
-                        ++pos;
+        if (ALPHA<CharT>.contains(*pos)) {
+            if constexpr (should_override)
+                *out++ = ascii::to_lower_copy(*pos);
+            ++pos;
+
+            // scheme state (https://url.spec.whatwg.org/#scheme-state)
+            {
+                // handling alpha, num, +, -, .
+                for (;;) {
+                    if (*pos != end) [[unlikely]] {
+                        return scheme_ended_unexpectedly;
                     }
+                    if (!alnum_plus.contains(*pos))
+                        break;
 
-                    // handling ":" character
-                    if (*pos == ':') {}
+                    if constexpr (should_override)
+                        *out++ = ascii::to_lower_copy(*pos);
+                    ++pos;
                 }
-            } else {
-                return no_scheme;
+
+                // handling ":" character
+                if (*pos == ':') {
+                    ++pos;
+                    return valid;
+                }
             }
         }
+        return invalid_character;
     }
 
 
 
 
     template <istl::String StringType = stl::string>
-    struct basic_scheme : stl::remove_cvref_t<StringType> {
-        using string_type = stl::remove_cvref_t<StringType>;
+    struct basic_scheme : StringType {
+        using string_type = StringType;
 
         template <typename... T>
         constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
-
 
 
         /**
