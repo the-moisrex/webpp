@@ -42,26 +42,27 @@ namespace webpp::uri {
      */
     template <typename CharT = char, stl::integral SegType = stl::uint32_t>
     [[nodiscard]] static constexpr scheme_status
-    parse_scheme(CharT const*& pos, const CharT* end, uri::uri_components<SegType>& comps) noexcept {
-        using char_type = CharT;
+    parse_scheme(CharT*& pos, const CharT* end, uri::uri_components<SegType>& comps) noexcept {
+        using char_type = stl::remove_const_t<CharT>;
+        using seg_type  = SegType;
         using enum scheme_status;
 
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
-        if (pos != end)
+        if (pos == end)
             return no_scheme;
 
         auto const beg = pos;
-        if (ALPHA<CharT>.contains(*pos)) {
+        if (ALPHA<char_type>.contains(*pos)) {
             ++pos;
 
             // scheme state (https://url.spec.whatwg.org/#scheme-state)
             {
                 // handling alpha, num, +, -, .
                 for (;;) {
-                    if (*pos != end) [[unlikely]] {
+                    if (pos == end) [[unlikely]] {
                         return scheme_ended_unexpectedly;
                     }
                     if (!alnum_plus.contains(*pos))
@@ -72,7 +73,7 @@ namespace webpp::uri {
 
                 // handling ":" character
                 if (*pos == ':') {
-                    comps.scheme_end = pos - beg;
+                    comps.scheme_end = static_cast<seg_type>(pos - beg);
                     ++pos;
                     return valid;
                 }

@@ -45,3 +45,15 @@ TEST(URITests, QueryParamGeneration) {
       url.to_string(),
       "https://localhost/api/v2/content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
 }
+
+
+TEST(URITests, SchemeTest) {
+    uri::uri_components_u32  components;
+    stl::string_view         str     = "http://";
+    auto                     pos     = str.data();
+    auto const               pos_end = pos + str.size();
+    const uri::scheme_status res     = uri::parse_scheme<const char>(pos, pos_end, components);
+    EXPECT_EQ(res, uri::scheme_status::valid);
+    EXPECT_EQ(components.scheme_end, 4);
+    EXPECT_EQ(pos - str.data(), 5);
+}

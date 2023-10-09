@@ -100,7 +100,7 @@ namespace webpp::uri {
           .port     = string_type{beg + comps.port_start, comps.authority_end - comps.port_start, alloc},
           .path     = string_type{beg + comps.authority_end, comps.query_start - comps.authority_end, alloc},
           .queries  = string_type{beg + comps.query_start, comps.fragment_start - comps.query_start, alloc},
-          .fragment = string_type{beg + comps.fragment_start, source.size() - comp.fragment_start, alloc}};
+          .fragment = string_type{beg + comps.fragment_start, source.size() - comps.fragment_start, alloc}};
     }
 
     template <istl::StringView StrT, stl::integral SegType, istl::StringLike SourceStr>
@@ -117,7 +117,7 @@ namespace webpp::uri {
                 .port     = string_type{beg + comps.port_start, comps.authority_end - comps.port_start},
                 .path     = string_type{beg + comps.authority_end, comps.query_start - comps.authority_end},
                 .queries  = string_type{beg + comps.query_start, comps.fragment_start - comps.query_start},
-                .fragment = string_type{beg + comps.fragment_start, source.size() - comp.fragment_start}};
+                .fragment = string_type{beg + comps.fragment_start, source.size() - comps.fragment_start}};
     }
 
 
