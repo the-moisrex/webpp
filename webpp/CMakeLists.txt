@@ -68,6 +68,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/std/std.hpp
         ${LIB_INCLUDE_DIR}/std/string.hpp
         ${LIB_INCLUDE_DIR}/std/string_view.hpp
+        ${LIB_INCLUDE_DIR}/std/string_like.hpp
+        ${LIB_INCLUDE_DIR}/std/string_concepts.hpp
         ${LIB_INCLUDE_DIR}/std/timer.hpp
         ${LIB_INCLUDE_DIR}/std/tuple.hpp
         ${LIB_INCLUDE_DIR}/std/unordered_map.hpp

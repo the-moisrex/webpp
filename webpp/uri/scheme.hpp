@@ -6,6 +6,7 @@
 #include "../std/string.hpp"
 #include "../strings/charset.hpp"
 #include "./details/uri_status.hpp"
+#include "./uri_components.hpp"
 
 namespace webpp::uri {
 
@@ -39,13 +40,12 @@ namespace webpp::uri {
      * parse the scheme
      * this method will fill the "authority_start" and "scheme_end" vars
      */
-    template <typename CharT = char, typename OutT = CharT*&>
+    template <typename CharT = char, stl::integral SegType = stl::uint32_t>
     [[nodiscard]] static constexpr scheme_status
-    parse_scheme(CharT const*& pos, const CharT* end, [[maybe_unused]] OutT out) noexcept {
+    parse_scheme(CharT const*& pos, const CharT* end, uri::uri_components<SegType>& comps) noexcept {
         using char_type = CharT;
         using enum scheme_status;
 
-        webpp_static_constexpr bool should_override = stl::same_as<OutT, CharT*&>;
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
 
@@ -53,9 +53,8 @@ namespace webpp::uri {
         if (pos != end)
             return no_scheme;
 
+        auto const beg = pos;
         if (ALPHA<CharT>.contains(*pos)) {
-            if constexpr (should_override)
-                *out++ = ascii::to_lower_copy(*pos);
             ++pos;
 
             // scheme state (https://url.spec.whatwg.org/#scheme-state)
@@ -68,16 +67,16 @@ namespace webpp::uri {
                     if (!alnum_plus.contains(*pos))
                         break;
 
-                    if constexpr (should_override)
-                        *out++ = ascii::to_lower_copy(*pos);
                     ++pos;
                 }
 
                 // handling ":" character
                 if (*pos == ':') {
+                    comps.scheme_end = pos - beg;
                     ++pos;
                     return valid;
                 }
+                // else: invalid char
             }
         }
         return invalid_character;
