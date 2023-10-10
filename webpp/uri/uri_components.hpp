@@ -14,6 +14,17 @@ namespace webpp::uri {
     template <typename SegType = stl::uint32_t>
     struct uri_components;
 
+    template <typename T>
+    struct is_uri_component : stl::false_type {};
+
+    template <typename SegType>
+    struct is_uri_component<uri_components<SegType>> : stl::true_type {};
+
+    template <typename T>
+    concept OptionalURIComponent =
+      stl::same_as<T, istl::nothing_type> ||
+      (is_uri_component<stl::remove_reference_t<T>>::value && stl::is_reference_v<T>);
+
     /**
      * URL Components
      * @tparam SegType defines the size of each component, for example if you specify uint32_t, then this
@@ -38,6 +49,9 @@ namespace webpp::uri {
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
 
+        /// resetting the values of integer types are always noexcept
+        static constexpr bool is_nothrow = true;
+
         seg_type scheme_end      = 0;
         seg_type authority_start = 0;
         seg_type password_start  = 0;
@@ -46,14 +60,64 @@ namespace webpp::uri {
         seg_type authority_end   = 0;
         seg_type query_start     = 0;
         seg_type fragment_start  = 0;
+
+        template <typename CharT = char>
+        constexpr void set_scheme(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+            scheme_end = static_cast<seg_type>(end - beg);
+        }
+
+        // template <typename CharT = char>
+        // constexpr void set_username(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     authority_start = static_cast<seg_type>(beg);
+        //     password_start = static_cast<seg_type>(end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_password(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(password, beg, end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_host(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(host, beg, end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_port(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(port, beg, end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_path(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(path, beg, end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_queries(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(queries, beg, end);
+        // }
+
+        // template <typename CharT = char>
+        // constexpr void set_fragment(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        //     istl::assign(fragment, beg, end);
+        // }
     };
 
 
     template <istl::StringLike StrT>
     struct uri_components<StrT> {
-        using string_type = StrT;
-        using seg_type    = string_type;
-        using char_type   = typename string_type::value_type;
+        using string_type   = StrT;
+        using seg_type      = string_type;
+        using char_type     = typename string_type::value_type;
+        using size_type     = typename string_type::size_type;
+        using pointer       = typename string_type::pointer;
+        using const_pointer = typename string_type::const_pointer;
+
+        /// maximum number that this url component class supports
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+
+        /// is resetting the values are noexcept or not
+        static constexpr bool is_nothrow = stl::is_nothrow_assignable_v<string_type, char_type const*>;
 
         string_type scheme{};
         string_type username{};
@@ -63,6 +127,38 @@ namespace webpp::uri {
         string_type path{};
         string_type queries{};
         string_type fragment{};
+
+        constexpr void set_scheme(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(scheme, beg, end);
+        }
+
+        constexpr void set_username(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(username, beg, end);
+        }
+
+        constexpr void set_password(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(password, beg, end);
+        }
+
+        constexpr void set_host(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(host, beg, end);
+        }
+
+        constexpr void set_port(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(port, beg, end);
+        }
+
+        constexpr void set_path(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(path, beg, end);
+        }
+
+        constexpr void set_queries(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(queries, beg, end);
+        }
+
+        constexpr void set_fragment(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+            istl::assign(fragment, beg, end);
+        }
     };
 
     /// Create a URI Component using an allocator
@@ -123,6 +219,7 @@ namespace webpp::uri {
 
     using uri_components_view = uri_components<stl::string_view>;
     using uri_components_u32  = uri_components<stl::uint32_t>;
+
 
 } // namespace webpp::uri
 

@@ -40,11 +40,14 @@ namespace webpp::uri {
      * parse the scheme
      * this method will fill the "authority_start" and "scheme_end" vars
      */
-    template <typename CharT = char, stl::integral SegType = stl::uint32_t>
-    [[nodiscard]] static constexpr scheme_status
-    parse_scheme(CharT*& pos, const CharT* end, uri::uri_components<SegType>& comps) noexcept {
+    template <typename CharT                  = char,
+              stl::integral        OutSegType = stl::uint32_t,
+              OptionalURIComponent InURIComp  = istl::nothing_type>
+    [[nodiscard]] static constexpr scheme_status parse_scheme(CharT*&                          pos,
+                                                              const CharT*                     end,
+                                                              uri::uri_components<OutSegType>& out,
+                                                              [[maybe_unused]] InURIComp in = {}) noexcept {
         using char_type = stl::remove_const_t<CharT>;
-        using seg_type  = SegType;
         using enum scheme_status;
 
         webpp_static_constexpr auto alnum_plus =
@@ -73,7 +76,7 @@ namespace webpp::uri {
 
                 // handling ":" character
                 if (*pos == ':') {
-                    comps.scheme_end = static_cast<seg_type>(pos - beg);
+                    out.set_scheme(beg, pos);
                     ++pos;
                     return valid;
                 }
@@ -86,13 +89,40 @@ namespace webpp::uri {
 
 
 
-    template <istl::String StringType = stl::string>
+    template <istl::StringLike StringType = stl::string>
     struct basic_scheme : StringType {
         using string_type = StringType;
+        using char_type   = istl::char_type_of_t<string_type>;
 
         template <typename... T>
         constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
 
+        template <stl::integral SegType>
+        [[nodiscard(
+          "If you're not handling the response, you're doing something stupid.")]] constexpr uri::uri_status
+        parse_from(char_type*& pos, char_type const* end, uri::uri_components<SegType>& components) noexcept {
+            using enum uri::uri_status;
+
+            auto const            beg = pos;
+            const uri::uri_status res = parse_scheme(pos, end, components);
+            if (res == valid) {
+
+                // Scheme State (https://url.spec.whatwg.org/#scheme-state)
+                // 1. If url’s scheme is a special scheme and buffer is not a special scheme, then return.
+                // 2. If url’s scheme is not a special scheme and buffer is a special scheme, then return.
+                // 3. If url includes credentials or has a non-null port, and buffer is "file", then return.
+                // 4. If url’s scheme is "file" and its host is an empty host, then return.
+
+                // todo
+
+                if constexpr (istl::ModifiableString<string_type>) {
+                    this->assign(beg, components.scheme_end);
+                } else {
+                    *this = string_type{beg, components.scheme_end};
+                }
+            }
+            return res;
+        }
 
         /**
          * @brief checks if the URI is a relative reference

@@ -21,6 +21,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/libs/cryptopp.hpp
         ${LIB_INCLUDE_DIR}/libs/zlib.hpp
         ${LIB_INCLUDE_DIR}/libs/fmt.hpp
+        ${LIB_INCLUDE_DIR}/libs/sqlite.hpp
         ${LIB_INCLUDE_DIR}/libs/modp_b64/modp_b64.hpp
         ${LIB_INCLUDE_DIR}/libs/modp_b64/modp_b64_data.hpp
 
@@ -43,6 +44,8 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/strings/splits.hpp
         ${LIB_INCLUDE_DIR}/strings/strings_concepts.hpp
         ${LIB_INCLUDE_DIR}/strings/append.hpp
+        ${LIB_INCLUDE_DIR}/strings/size.hpp
+        ${LIB_INCLUDE_DIR}/strings/join.hpp
 
         ${LIB_INCLUDE_DIR}/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/traits/enable_traits.hpp
@@ -84,6 +87,16 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/std/string_concepts.hpp
         ${LIB_INCLUDE_DIR}/std/collection.hpp
         ${LIB_INCLUDE_DIR}/std/expected.hpp
+        ${LIB_INCLUDE_DIR}/std/expected_impl.hpp
+        ${LIB_INCLUDE_DIR}/std/memory.hpp
+        ${LIB_INCLUDE_DIR}/std/memory_resource.hpp
+        ${LIB_INCLUDE_DIR}/std/span.hpp
+        ${LIB_INCLUDE_DIR}/std/ranges.hpp
+        ${LIB_INCLUDE_DIR}/std/tag_invoke.hpp
+        ${LIB_INCLUDE_DIR}/std/utility.hpp
+        ${LIB_INCLUDE_DIR}/std/concepts.hpp
+        ${LIB_INCLUDE_DIR}/std/bit.hpp
+        ${LIB_INCLUDE_DIR}/std/cassert.hpp
 
         ${LIB_INCLUDE_DIR}/io/io_concepts.hpp
         ${LIB_INCLUDE_DIR}/io/io_task.hpp
@@ -101,6 +114,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/async/task_chain.hpp
 
         ${LIB_INCLUDE_DIR}/socket/socket.hpp
+        ${LIB_INCLUDE_DIR}/socket/os.hpp
+        ${LIB_INCLUDE_DIR}/socket/socket_address.hpp
+        ${LIB_INCLUDE_DIR}/socket/socket_bytes.hpp
 
         ${LIB_INCLUDE_DIR}/time/stopwatch.hpp
         ${LIB_INCLUDE_DIR}/time/convert.hpp
@@ -162,6 +178,8 @@ set(ALL_SOURCES
 
         ${LIB_INCLUDE_DIR}/http/routes/dynamic_router.hpp
         ${LIB_INCLUDE_DIR}/http/routes/dynamic_route.hpp
+        ${LIB_INCLUDE_DIR}/http/routes/static_router.hpp
+        ${LIB_INCLUDE_DIR}/http/routes/router_concepts.hpp
         ${LIB_INCLUDE_DIR}/http/routes/valves.hpp
         ${LIB_INCLUDE_DIR}/http/routes/valve_traits.hpp
         ${LIB_INCLUDE_DIR}/http/routes/logical_valves.hpp
@@ -183,6 +201,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/cgi/cgi_request.hpp
         ${LIB_INCLUDE_DIR}/cgi/cgi_request_body_communicator.hpp
 
+        ${LIB_INCLUDE_DIR}/hub/limits.hpp
         ${LIB_INCLUDE_DIR}/hub/self_hosted.hpp
         ${LIB_INCLUDE_DIR}/hub/self_hosted_request.hpp
         ${LIB_INCLUDE_DIR}/hub/self_hosted_session_manager.hpp
@@ -262,6 +281,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/json/rapidjson.hpp
 
         ${LIB_INCLUDE_DIR}/db/sql_concepts.hpp
+        ${LIB_INCLUDE_DIR}/db/sql_database.hpp
         ${LIB_INCLUDE_DIR}/db/sql_statement.hpp
         ${LIB_INCLUDE_DIR}/db/sql_row.hpp
         ${LIB_INCLUDE_DIR}/db/sql_cell.hpp
