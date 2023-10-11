@@ -20,6 +20,7 @@ namespace webpp::uri {
 
         // scheme-specific errors:
         scheme_ended_unexpectedly,
+        incompatible_schemes,
 
         // domain-specific errors:
         subdomain_too_long, // the subdomain is too long
@@ -53,7 +54,9 @@ namespace webpp::uri {
 
                 // scheme-specific errors:
             case scheme_ended_unexpectedly:
-                return "This URL doesn't seem to have enough information, not even a qualified scheme.";
+                return "This URI doesn't seem to have enough information, not even a qualified scheme.";
+            case incompatible_schemes:
+                return "The new URI Scheme is not compatible with the old one; can't merge them.";
 
                 // domain-specific errors:
             case subdomain_too_long:

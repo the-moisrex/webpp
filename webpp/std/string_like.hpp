@@ -27,6 +27,15 @@ namespace webpp::istl {
     }
 
 
+    template <istl::StringLike StrT>
+    constexpr void clear(StrT& str) noexcept {
+        if constexpr (istl::StringView<StrT>) {
+            str = StrT{};
+        } else {
+            str.clear(); // doesn't deallocate actually, so it's nothrow
+        }
+    }
+
 } // namespace webpp::istl
 
 #endif // WEBPP_STRING_LIKE_HPP

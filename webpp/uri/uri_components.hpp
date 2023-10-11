@@ -49,21 +49,61 @@ namespace webpp::uri {
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
 
+        static constexpr seg_type omitted = stl::numeric_limits<seg_type>::max();
+
         /// resetting the values of integer types are always noexcept
         static constexpr bool is_nothrow = true;
 
-        seg_type scheme_end      = 0;
-        seg_type authority_start = 0;
-        seg_type password_start  = 0;
-        seg_type host_start      = 0;
-        seg_type port_start      = 0;
-        seg_type authority_end   = 0;
-        seg_type query_start     = 0;
-        seg_type fragment_start  = 0;
+        static constexpr bool is_overridable = false;
+
+        seg_type scheme_end      = omitted; // excluding :// stuff
+        seg_type authority_start = omitted; // username/host start
+        seg_type password_start  = omitted;
+        seg_type host_start      = omitted;
+        seg_type port_start      = omitted;
+        seg_type authority_end   = omitted; // path start
+        seg_type query_start     = omitted; // path end
+        seg_type fragment_start  = omitted; // query end
 
         template <typename CharT = char>
         constexpr void set_scheme(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
             scheme_end = static_cast<seg_type>(end - beg);
+        }
+
+        constexpr void clear_port() noexcept {
+            port_start = omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_scheme() const noexcept {
+            return scheme_end != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_username() const noexcept {
+            return authority_start != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_password() const noexcept {
+            return password_start != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_credentials() const noexcept {
+            return authority_start != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_port() const noexcept {
+            return port_start != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_path() const noexcept {
+            return authority_end != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_query() const noexcept {
+            return query_start != omitted;
+        }
+
+        [[nodiscard]] constexpr bool has_fragment() const noexcept {
+            return fragment_start != omitted;
         }
 
         // template <typename CharT = char>
@@ -119,6 +159,9 @@ namespace webpp::uri {
         /// is resetting the values are noexcept or not
         static constexpr bool is_nothrow = stl::is_nothrow_assignable_v<string_type, char_type const*>;
 
+        static constexpr bool is_overridable = false;
+
+
         string_type scheme{};
         string_type username{};
         string_type password{};
@@ -158,6 +201,46 @@ namespace webpp::uri {
 
         constexpr void set_fragment(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
             istl::assign(fragment, beg, end);
+        }
+
+        constexpr void clear_port() noexcept {
+            istl::clear(port);
+        }
+
+        [[nodiscard]] constexpr bool has_scheme() const noexcept {
+            return !scheme.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_username() const noexcept {
+            return !username.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_password() const noexcept {
+            return !password.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_credentials() const noexcept {
+            return has_username(); // password cannot exist without the username
+        }
+
+        [[nodiscard]] constexpr bool has_host() const noexcept {
+            return !host.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_port() const noexcept {
+            return !port.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_path() const noexcept {
+            return !path.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_queries() const noexcept {
+            return !queries.empty();
+        }
+
+        [[nodiscard]] constexpr bool has_fragment() const noexcept {
+            return !fragment.empty();
         }
     };
 
