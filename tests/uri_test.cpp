@@ -48,24 +48,23 @@ TEST(URITests, QueryParamGeneration) {
 
 
 TEST(URITests, IntegralSchemeParsing) {
-    uri::uri_components_u32  components;
-    stl::string_view         str     = "http://";
-    auto                     pos     = str.data();
-    auto const               pos_end = pos + str.size();
-    const uri::scheme_status res     = uri::parse_scheme<const char>(pos, pos_end, components);
+    stl::string_view                        str = "http://";
+    uri::parsing_uri_components<char const> context{.pos = str.data(), .end = str.data() + str.size()};
+    const uri::scheme_status                res = uri::parse_scheme(context);
     EXPECT_EQ(res, uri::scheme_status::valid);
-    EXPECT_EQ(components.scheme_end, 4);
-    EXPECT_EQ(pos - str.data(), 5);
+    EXPECT_EQ(context.out.scheme_end, 4);
+    EXPECT_EQ(context.pos - str.data(), 5);
 }
 
 
 TEST(URITests, StringSchemeParsing) {
-    uri::uri_components<stl::string> components;
-    stl::string_view                 str     = "urn:testing";
-    auto                             pos     = str.data();
-    auto const                       pos_end = pos + str.size();
-    const uri::scheme_status         res     = uri::parse_scheme<const char>(pos, pos_end, components);
+    stl::string_view str = "urn:testing";
+
+    uri::parsing_uri_components<const char, stl::string_view> context{.pos = str.data(),
+                                                                      .end = str.data() + str.size()};
+
+    const uri::scheme_status res = uri::parse_scheme(context);
     EXPECT_EQ(res, uri::scheme_status::valid);
-    EXPECT_EQ(components.scheme, "urn");
-    EXPECT_EQ(pos - str.data(), 4);
+    EXPECT_EQ(context.out.scheme, "urn");
+    EXPECT_EQ(context.pos - str.data(), 4);
 }

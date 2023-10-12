@@ -20,10 +20,10 @@ namespace webpp::uri {
     template <typename SegType>
     struct is_uri_component<uri_components<SegType>> : stl::true_type {};
 
-    template <typename T>
-    concept OptionalURIComponent =
-      stl::same_as<T, istl::nothing_type> ||
-      (is_uri_component<stl::remove_reference_t<T>>::value && stl::is_reference_v<T>);
+    /// == nothing_type
+    template <>
+    struct uri_components<void> {};
+
 
     /**
      * URL Components
@@ -303,6 +303,60 @@ namespace webpp::uri {
     using uri_components_view = uri_components<stl::string_view>;
     using uri_components_u32  = uri_components<stl::uint32_t>;
 
+
+
+    /**
+     * A class used during parsing a URI
+     */
+    template <typename CharT       = const char,
+              typename OutSegType  = stl::uint32_t,
+              typename InSegType   = void,
+              typename BaseSegType = void>
+    struct parsing_uri_components {
+        using char_type     = stl::remove_const_t<CharT>;
+        using pointer       = CharT*;
+        using const_pointer = char_type const*;
+        using out_seg_type  = OutSegType;
+        using in_seg_type   = InSegType;
+        using base_seg_type = BaseSegType;
+        using out_type      = uri::uri_components<out_seg_type>;
+        using in_type       = uri::uri_components<in_seg_type>;
+        using base_type     = uri::uri_components<base_seg_type>;
+
+        static constexpr bool is_nothrow     = out_type::is_nothrow;
+        static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_overridable = out_type::is_overridable;
+
+        const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
+        pointer       pos = nullptr; // current position
+        const_pointer end = nullptr; // the end of the string
+        out_type      out{};         // the output uri components
+    };
+
+    template <typename CharT, istl::StringLike OutSegType, typename InSegType, typename BaseSegType>
+    struct parsing_uri_components<CharT, OutSegType, InSegType, BaseSegType> {
+        using char_type     = stl::remove_const_t<CharT>;
+        using pointer       = CharT*;
+        using const_pointer = char_type const*;
+        using out_seg_type  = OutSegType;
+        using in_seg_type   = InSegType;
+        using base_seg_type = BaseSegType;
+        using out_type      = uri::uri_components<out_seg_type>;
+        using in_type       = uri::uri_components<in_seg_type>;
+        using base_type     = uri::uri_components<base_seg_type>;
+
+        static constexpr bool is_nothrow     = out_type::is_nothrow;
+        static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_overridable = out_type::is_overridable;
+
+        // we don't need to know the beginning of the string("beg" field), because the output uri components
+        // ("out") are required to know each segment themselves.
+        pointer                         pos = nullptr;
+        const_pointer                   end = nullptr;
+        out_type                        out{};
+        [[no_unique_address]] in_type   in{};
+        [[no_unique_address]] base_type base{};
+    };
 
 } // namespace webpp::uri
 

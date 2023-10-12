@@ -91,62 +91,58 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <typename CharT                 = const char,
-              typename OutSegType            = stl::uint32_t,
-              OptionalURIComponent InURIComp = istl::nothing_type>
-    [[nodiscard]] static constexpr scheme_status
-    parse_scheme(CharT*&                          pos,
-                 const CharT*                     end,
-                 uri::uri_components<OutSegType>& out,
-                 [[maybe_unused]] InURIComp in = {}) noexcept(uri::uri_components<OutSegType>::is_nothrow) {
-        using char_type = stl::remove_const_t<CharT>;
+    template <typename... T>
+    [[nodiscard]] static constexpr scheme_status parse_scheme(
+      uri::parsing_uri_components<T...>& ctx) noexcept(uri::parsing_uri_components<T...>::is_nothrow) {
+        using out_type  = uri::parsing_uri_components<T...>;
+        using char_type = typename out_type::char_type;
         using enum scheme_status;
 
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
-        webpp_static_constexpr bool is_overridable = uri_components<OutSegType>::is_overridable;
+        webpp_static_constexpr bool is_overridable = out_type::is_overridable;
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
-        if (pos == end)
+        if (ctx.pos == ctx.end)
             return empty_string;
 
-        auto const beg = pos;
-        if (ALPHA<char_type>.contains(*pos)) {
-            ++pos;
+        auto const beg = ctx.pos;
+        if (ALPHA<char_type>.contains(*ctx.pos)) {
+            ++ctx.pos;
 
             // scheme state (https://url.spec.whatwg.org/#scheme-state)
             {
                 // handling alpha, num, +, -, .
                 for (;;) {
-                    if (pos == end) [[unlikely]] {
+                    if (ctx.pos == ctx.end) [[unlikely]] {
                         return scheme_ended_unexpectedly;
                     }
-                    if (!alnum_plus.contains(*pos))
+                    if (!alnum_plus.contains(*ctx.pos))
                         break;
 
-                    ++pos;
+                    ++ctx.pos;
                 }
 
                 // handling ":" character
-                if (*pos == ':') {
+                if (*ctx.pos == ':') {
 
                     if constexpr (is_overridable) {
                         const auto url_scheme =
-                          stl::basic_string_view<char_type>{pos, static_cast<stl::size_t>(pos - beg)};
-                        if (is_known(url_scheme) != is_known(out.scheme)) {
+                          stl::basic_string_view<char_type>{ctx.pos, static_cast<stl::size_t>(ctx.pos - beg)};
+                        if (is_known(url_scheme) != is_known(ctx.out.scheme)) {
                             return incompatible_schemes;
                         }
 
-                        if (in.scheme == "file" &&
-                            (in.has_credentials() || out.has_port() || in.has_host())) {
+                        if (ctx.in.scheme == "file" &&
+                            (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host())) {
                             return incompatible_schemes;
                         }
 
-                        out.clear_port();
+                        ctx.out.clear_port();
                     }
 
-                    out.set_scheme(beg, pos);
-                    ++pos;
+                    ctx.out.set_scheme(beg, ctx.pos);
+                    ++ctx.pos;
                     return valid;
                 }
                 // else: invalid char
@@ -155,6 +151,13 @@ namespace webpp::uri {
         return invalid_character;
     }
 
+
+
+
+    /**
+     * Scheme or Protocol
+     * @tparam StringType
+     */
     template <istl::StringLike StringType = stl::string>
     struct basic_scheme : StringType {
         using string_type = StringType;
@@ -162,37 +165,6 @@ namespace webpp::uri {
 
         template <typename... T>
         constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
-
-        template <stl::integral SegType>
-        [[nodiscard("If you're not handling the response, you're doing something "
-                    "stupid.")]] constexpr uri::uri_status
-        parse_from(char_type*& pos, char_type const* end, uri::uri_components<SegType>& components) noexcept {
-            using enum uri::uri_status;
-
-            auto const            beg = pos;
-            const uri::uri_status res = parse_scheme(pos, end, components);
-            if (res == valid) {
-
-                // Scheme State (https://url.spec.whatwg.org/#scheme-state)
-                // 1. If url’s scheme is a special scheme and buffer is not a special
-                // scheme, then return.
-                // 2. If url’s scheme is not a special scheme and buffer is a special
-                // scheme, then return.
-                // 3. If url includes credentials or has a non-null port, and buffer is
-                // "file", then return.
-                // 4. If url’s scheme is "file" and its host is an empty host, then
-                // return.
-
-                // todo
-
-                if constexpr (istl::ModifiableString<string_type>) {
-                    this->assign(beg, components.scheme_end);
-                } else {
-                    *this = string_type{beg, components.scheme_end};
-                }
-            }
-            return res;
-        }
 
         /**
          * @brief checks if the URI is a relative reference

@@ -20,7 +20,8 @@ namespace webpp::istl {
                           typename StrT::const_pointer beg,
                           typename StrT::const_pointer end) noexcept(istl::StringView<StrT>) {
         if constexpr (istl::StringView<StrT>) {
-            str = StrT{beg, end - beg};
+            using size_type = typename StrT::size_type;
+            str             = StrT{beg, static_cast<size_type>(end - beg)};
         } else {
             str.assign(beg, end);
         }
