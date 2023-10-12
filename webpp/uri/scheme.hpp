@@ -19,9 +19,16 @@ namespace webpp::uri {
         webpp_def(scheme_ended_unexpectedly), // Scheme ended in an unexpected way
         webpp_def(incompatible_schemes),      // The new scheme is not compatible with the
                                               // old one
+        webpp_def(missing_following_solidus), // Missing '//' after 'file:'
+
 #undef webpp_def
-        no_scheme = stl::to_underlying(uri::uri_status::last), // no scheme is specified
+        no_scheme = stl::to_underlying(uri::uri_status::last) + 1, // no scheme is specified
     };
+
+    [[nodiscard]] static constexpr bool is_valid(scheme_status status) noexcept {
+        using enum scheme_status;
+        return status == valid || status == no_scheme;
+    }
 
     /**
      * Get the error message as a string view
@@ -34,11 +41,14 @@ namespace webpp::uri {
             case empty_string: return "The specified string is empty and not a URI.";
             case no_scheme: return "This URL doesn't have a scheme.";
             case scheme_ended_unexpectedly:
-                return "This URI doesn't seem to have enough information, not even a "
-                       "qualified scheme.";
+                return "This URI doesn't seem to have enough information, "
+                       "not even a qualified scheme.";
             case incompatible_schemes:
-                return "The new URI Scheme is not compatible with the old one; can't merge "
-                       "them.";
+                return "The new URI Scheme is not compatible with the old one; "
+                       "can't merge them.";
+            case missing_following_solidus:
+                return "The URI's scheme is not followed by \"//\"; "
+                       "more information: https://url.spec.whatwg.org/#special-scheme-missing-following-solidus";
         }
         stl::unreachable();
     }
@@ -98,7 +108,7 @@ namespace webpp::uri {
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (pos == end)
-            return no_scheme;
+            return empty_string;
 
         auto const beg = pos;
         if (ALPHA<char_type>.contains(*pos)) {

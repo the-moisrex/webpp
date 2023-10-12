@@ -21,6 +21,8 @@ namespace webpp::uri {
         // scheme-specific errors:
         scheme_ended_unexpectedly,
         incompatible_schemes,
+        missing_following_solidus, // Missing '//' after 'file:'
+                                   // (https://url.spec.whatwg.org/#special-scheme-missing-following-solidus)
 
         // domain-specific errors:
         subdomain_too_long, // the subdomain is too long
@@ -57,6 +59,8 @@ namespace webpp::uri {
                 return "This URI doesn't seem to have enough information, not even a qualified scheme.";
             case incompatible_schemes:
                 return "The new URI Scheme is not compatible with the old one; can't merge them.";
+            case missing_following_solidus:
+                return "The URI's scheme is not followed by \"//\".";
 
                 // domain-specific errors:
             case subdomain_too_long:
