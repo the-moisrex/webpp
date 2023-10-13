@@ -106,6 +106,43 @@ namespace webpp::uri {
             return fragment_start != omitted;
         }
 
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_scheme(StrT whole) const noexcept {
+            return whole.substr(0, scheme_end);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_username(StrT whole) const noexcept {
+            return whole.substr(authority_start, host_start - authority_start);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_password(StrT whole) const noexcept {
+            return whole.substr(password_start, host_start - password_start);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_host(StrT whole) const noexcept {
+            return whole.substr(host_start, stl::min(port_start, authority_end) - host_start);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_path(StrT whole) const noexcept {
+            return whole.substr(authority_end,
+                                stl::min(stl::min(query_start, fragment_start), whole.size()) -
+                                  authority_end);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_query(StrT whole) const noexcept {
+            return whole.substr(query_start, stl::min(fragment_start, whole.size()) - query_start);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_fragment(StrT whole) const noexcept {
+            return whole.substr(fragment_start);
+        }
+
         // template <typename CharT = char>
         // constexpr void set_username(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
         //     authority_start = static_cast<seg_type>(beg);
@@ -351,12 +388,14 @@ namespace webpp::uri {
 
         // we don't need to know the beginning of the string("beg" field), because the output uri components
         // ("out") are required to know each segment themselves.
-        pointer                         pos = nullptr;
-        const_pointer                   end = nullptr;
-        out_type                        out{};
+        const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
+        pointer       pos = nullptr;
+        const_pointer end = nullptr;
+        out_type      out{};
         [[no_unique_address]] in_type   in{};
         [[no_unique_address]] base_type base{};
     };
+
 
 } // namespace webpp::uri
 

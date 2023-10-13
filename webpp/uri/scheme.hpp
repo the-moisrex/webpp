@@ -106,7 +106,6 @@ namespace webpp::uri {
         if (ctx.pos == ctx.end)
             return empty_string;
 
-        auto const beg = ctx.pos;
         if (ALPHA<char_type>.contains(*ctx.pos)) {
             ++ctx.pos;
 
@@ -128,7 +127,8 @@ namespace webpp::uri {
 
                     if constexpr (is_overridable) {
                         const auto url_scheme =
-                          stl::basic_string_view<char_type>{ctx.pos, static_cast<stl::size_t>(ctx.pos - beg)};
+                          stl::basic_string_view<char_type>{ctx.pos,
+                                                            static_cast<stl::size_t>(ctx.pos - ctx.beg)};
                         if (is_known(url_scheme) != is_known(ctx.out.scheme)) {
                             return incompatible_schemes;
                         }
@@ -141,7 +141,7 @@ namespace webpp::uri {
                         ctx.out.clear_port();
                     }
 
-                    ctx.out.set_scheme(beg, ctx.pos);
+                    ctx.out.set_scheme(ctx.beg, ctx.pos);
                     ++ctx.pos;
                     return valid;
                 }
