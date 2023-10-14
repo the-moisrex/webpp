@@ -3,8 +3,8 @@
 #ifndef WEBPP_URL_COMPONENTS_HPP
 #define WEBPP_URL_COMPONENTS_HPP
 
-#include "../std/concepts.hpp"
-#include "../std/string_like.hpp"
+#include "../../std/concepts.hpp"
+#include "../../std/string_like.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -98,7 +98,7 @@ namespace webpp::uri {
             return authority_end != omitted;
         }
 
-        [[nodiscard]] constexpr bool has_query() const noexcept {
+        [[nodiscard]] constexpr bool has_queries() const noexcept {
             return query_start != omitted;
         }
 
@@ -208,7 +208,24 @@ namespace webpp::uri {
         string_type queries{};
         string_type fragment{};
 
-        constexpr void set_scheme(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
+#define webpp_def(field)                                             \
+    template <istl::StringView StrVT>                                \
+    [[nodiscard]] constexpr StrT get_##field(StrVT) const noexcept { \
+        return {field.data(), field.size()};                         \
+    }
+
+        webpp_def(scheme)     //
+          webpp_def(username) //
+          webpp_def(password) //
+          webpp_def(host)     //
+          webpp_def(port)     //
+          webpp_def(path)     //
+          webpp_def(queries)  //
+          webpp_def(fragment) //
+
+#undef webpp_def
+
+          constexpr void set_scheme(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
             istl::assign(scheme, beg, end);
         }
 
@@ -368,6 +385,13 @@ namespace webpp::uri {
         pointer       pos = nullptr; // current position
         const_pointer end = nullptr; // the end of the string
         out_type      out{};         // the output uri components
+
+
+        template <istl::StringView StrVT = stl::string_view>
+        [[nodiscard]] constexpr StrVT whole() const noexcept {
+            using size_type = typename StrVT::size_type;
+            return {beg, static_cast<size_type>(end - beg)};
+        }
     };
 
     template <typename CharT, istl::StringLike OutSegType, typename InSegType, typename BaseSegType>
@@ -394,6 +418,12 @@ namespace webpp::uri {
         out_type      out{};
         [[no_unique_address]] in_type   in{};
         [[no_unique_address]] base_type base{};
+
+        template <istl::StringView StrVT = stl::string_view>
+        [[nodiscard]] constexpr StrVT whole() const noexcept {
+            using size_type = typename StrVT::size_type;
+            return {beg, static_cast<size_type>(end - beg)};
+        }
     };
 
 

@@ -3,11 +3,11 @@
 #ifndef WEBPP_SCHEME_HPP
 #define WEBPP_SCHEME_HPP
 
+#include "../common/meta.hpp"
 #include "../std/string.hpp"
 #include "../strings/charset.hpp"
-#include "./common/meta.hpp"
+#include "./details/uri_components.hpp"
 #include "./details/uri_status.hpp"
-#include "./uri_components.hpp"
 
 namespace webpp::uri {
 
@@ -22,12 +22,24 @@ namespace webpp::uri {
         webpp_def(missing_following_solidus), // Missing '//' after 'file:'
 
 #undef webpp_def
-        no_scheme = stl::to_underlying(uri::uri_status::last) + 1, // no scheme is specified
+        valid_no_scheme = stl::to_underlying(uri::uri_status::last) + 1, // no scheme is specified
+        valid_file,                                                      // Valid scheme "file://"
+        valid_path_or_authority,
+        valid_opaque_path,
     };
+
 
     [[nodiscard]] static constexpr bool is_valid(scheme_status status) noexcept {
         using enum scheme_status;
-        return status == valid || status == no_scheme;
+        switch (status) {
+            case valid:
+            case valid_no_scheme:
+            case valid_file:
+            case valid_path_or_authority:
+            case valid_opaque_path: return true;
+            default: return false;
+        }
+        stl::unreachable();
     }
 
     /**
@@ -39,7 +51,7 @@ namespace webpp::uri {
             case valid: return "Valid Scheme";
             case invalid_character: return "Invalid character found where there should be a scheme.";
             case empty_string: return "The specified string is empty and not a URI.";
-            case no_scheme: return "This URL doesn't have a scheme.";
+            case valid_no_scheme: return "This URL doesn't have a scheme.";
             case scheme_ended_unexpectedly:
                 return "This URI doesn't seem to have enough information, "
                        "not even a qualified scheme.";
@@ -49,6 +61,10 @@ namespace webpp::uri {
             case missing_following_solidus:
                 return "The URI's scheme is not followed by \"//\"; "
                        "more information: https://url.spec.whatwg.org/#special-scheme-missing-following-solidus";
+            case valid_file: return "Valid file scheme (starts with file://)";
+            case valid_path_or_authority:
+                return "Valid scheme that should be followed by a path or an authority.";
+            case valid_opaque_path: return "Valid scheme that should be followed by an opaque path.";
         }
         stl::unreachable();
     }
@@ -94,13 +110,13 @@ namespace webpp::uri {
     template <typename... T>
     [[nodiscard]] static constexpr scheme_status parse_scheme(
       uri::parsing_uri_components<T...>& ctx) noexcept(uri::parsing_uri_components<T...>::is_nothrow) {
-        using out_type  = uri::parsing_uri_components<T...>;
-        using char_type = typename out_type::char_type;
+        using ctx_type  = uri::parsing_uri_components<T...>;
+        using char_type = typename ctx_type::char_type;
         using enum scheme_status;
 
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
-        webpp_static_constexpr bool is_overridable = out_type::is_overridable;
+        webpp_static_constexpr bool is_overridable = ctx_type::is_overridable;
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end)
@@ -133,9 +149,11 @@ namespace webpp::uri {
                             return incompatible_schemes;
                         }
 
-                        if (ctx.in.scheme == "file" &&
-                            (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host())) {
-                            return incompatible_schemes;
+
+                        if (ctx.in.get_scheme(ctx.whole()) == "file") {
+                            if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
+                                return incompatible_schemes;
+                            }
                         }
 
                         ctx.out.clear_port();
@@ -143,9 +161,57 @@ namespace webpp::uri {
 
                     ctx.out.set_scheme(ctx.beg, ctx.pos);
                     ++ctx.pos;
-                    return valid;
+
+                    if (ctx.out.get_scheme(ctx.whole()) == "file") {
+                        // If remaining does not start with "//", special-scheme-missing-following-solidus
+                        // validation error.
+                        if (ctx.end - ctx.pos < 2 || (ctx.pos[0] != '/' && ctx.pos[1] != '/')) {
+                            ctx.pos += 2;
+                            return missing_following_solidus;
+                        }
+
+                        return valid_file;
+                    } else if (is_known(ctx.out.get_scheme(ctx.whole()))) {
+                        if constexpr (ctx_type::has_base_uri) {
+                            if (ctx.out.get_scheme(ctx.whole()) == ctx.base.get_scheme(ctx.whole())) {
+                                // Otherwise, if url is special, base is non-null, and base’s scheme is url’s
+                                // scheme:
+                                //  1. todo: Assert: base is special (and therefore does not have an opaque
+                                //  path).
+                                //  2. Set state to special relative or authority state.
+
+                                // special relative or authority state
+                                // (https://url.spec.whatwg.org/#special-relative-or-authority-state)
+                                if (ctx.end - ctx.pos < 2 || (ctx.pos[0] != '/' && ctx.pos[1] != '/')) {
+                                    ctx.pos += 2;
+
+                                    // todo: relative scheme
+                                }
+                            }
+                        }
+
+                        // special authority ignore slashes state
+                        // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
+                        if (ctx.pos != ctx.end) {
+                            switch (*ctx.pos) {
+                                case '\\':
+                                case '/': return missing_following_solidus;
+                            }
+                            ++ctx.pos;
+                            return valid; // next characters are authority now.
+                        }
+                    } else if (ctx.pos != ctx.end && *ctx.pos == '/') {
+                        return valid_path_or_authority;
+                    } else {
+                        return valid_opaque_path;
+                    }
+                } else {
+                    // Otherwise, if state override is not given, set buffer to the empty string, state to no
+                    // scheme state, and start over (from the first code point in input).
+                    //
+                    // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+                    return valid_no_scheme;
                 }
-                // else: invalid char
             }
         }
         return invalid_character;

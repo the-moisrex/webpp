@@ -53,7 +53,7 @@ TEST(URITests, IntegralSchemeParsing) {
                                                     .pos = str.data(),
                                                     .end = str.data() + str.size()};
     const uri::scheme_status                res = uri::parse_scheme(context);
-    EXPECT_EQ(res, uri::scheme_status::valid);
+    EXPECT_EQ(res, uri::scheme_status::valid) << to_string(res);
     EXPECT_EQ(context.out.scheme_end, 4);
     EXPECT_EQ(context.pos - str.data(), 5);
 }
@@ -67,7 +67,7 @@ TEST(URITests, StringSchemeParsing) {
                                                                       .end = str.data() + str.size()};
 
     const uri::scheme_status res = uri::parse_scheme(context);
-    EXPECT_EQ(res, uri::scheme_status::valid);
+    EXPECT_EQ(res, uri::scheme_status::valid) << to_string(res);
     EXPECT_EQ(context.out.scheme, "urn");
     EXPECT_EQ(context.pos - str.data(), 4);
 }
