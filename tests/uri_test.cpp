@@ -48,12 +48,12 @@ TEST(URITests, QueryParamGeneration) {
 
 
 TEST(URITests, IntegralSchemeParsing) {
-    stl::string_view                        str = "http://";
-    uri::parsing_uri_components<char const> context{.beg = str.data(),
-                                                    .pos = str.data(),
-                                                    .end = str.data() + str.size()};
+    stl::string_view                     str = "http://";
+    uri::parsing_uri_context<char const> context{.beg = str.data(),
+                                                 .pos = str.data(),
+                                                 .end = str.data() + str.size()};
     uri::parse_scheme(context);
-    uri::uri_status const res = static_cast<uri::uri_status>(context.status);
+    auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_path_or_authority) << to_string(res);
     EXPECT_EQ(context.out.scheme_end, 4);
     EXPECT_EQ(context.pos - str.data(), 5);
@@ -63,12 +63,12 @@ TEST(URITests, IntegralSchemeParsing) {
 TEST(URITests, StringSchemeParsing) {
     stl::string_view str = "urn:testing";
 
-    uri::parsing_uri_components<const char, stl::string_view> context{.beg = str.data(),
-                                                                      .pos = str.data(),
-                                                                      .end = str.data() + str.size()};
+    uri::parsing_uri_context<const char, stl::string_view> context{.beg = str.data(),
+                                                                   .pos = str.data(),
+                                                                   .end = str.data() + str.size()};
 
     uri::parse_scheme(context);
-    uri::uri_status const res = static_cast<uri::uri_status>(context.status);
+    auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
     EXPECT_EQ(context.out.scheme, "urn");
     EXPECT_EQ(context.pos - str.data(), 4);

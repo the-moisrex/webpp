@@ -367,7 +367,7 @@ namespace webpp::uri {
               typename OutSegType  = stl::uint32_t,
               typename InSegType   = void,
               typename BaseSegType = void>
-    struct parsing_uri_components {
+    struct parsing_uri_context {
         using char_type     = stl::remove_const_t<CharT>;
         using pointer       = CharT*;
         using const_pointer = char_type const*;
@@ -398,7 +398,7 @@ namespace webpp::uri {
     };
 
     template <typename CharT, istl::StringLike OutSegType, typename InSegType, typename BaseSegType>
-    struct parsing_uri_components<CharT, OutSegType, InSegType, BaseSegType> {
+    struct parsing_uri_context<CharT, OutSegType, InSegType, BaseSegType> {
         using char_type     = stl::remove_const_t<CharT>;
         using pointer       = CharT*;
         using const_pointer = char_type const*;

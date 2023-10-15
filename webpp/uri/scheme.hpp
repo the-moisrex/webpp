@@ -49,11 +49,21 @@ namespace webpp::uri {
     namespace details { // states
 
         template <typename... T>
-        static constexpr void relative_state(uri::parsing_uri_components<T...>& ctx) noexcept {}
+        static constexpr void relative_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+            // relative scheme state (https://url.spec.whatwg.org/#relative-state)
+
+            using ctx_type = uri::parsing_uri_context<T...>;
+
+            if constexpr (ctx_type::has_base_uri) {
+                // Assert base's scheme is not file
+                assert(ctx.base.get_scheme(ctx.whole()) != "file");
+
+                ctx.out.set_scheme(ctx.base.get_scheme(ctx.whole()));
+            }
+        }
 
         template <typename... T>
-        static constexpr void
-        special_authority_slashes_state(uri::parsing_uri_components<T...>& ctx) noexcept {
+        static constexpr void special_authority_slashes_state(uri::parsing_uri_context<T...>& ctx) noexcept {
             /// https://url.spec.whatwg.org/#special-authority-slashes-state
 
             if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) {
@@ -66,7 +76,7 @@ namespace webpp::uri {
 
         template <typename... T>
         static constexpr void
-        special_authority_ignore_slashes_state(uri::parsing_uri_components<T...>& ctx) noexcept {
+        special_authority_ignore_slashes_state(uri::parsing_uri_context<T...>& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
             if (ctx.pos != ctx.end) {
@@ -77,6 +87,7 @@ namespace webpp::uri {
                 ++ctx.pos;
 
                 // todo: set authority
+                ctx.status |= stl::to_underlying(uri_status::valid_authority);
                 return;
             }
             ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
@@ -84,7 +95,7 @@ namespace webpp::uri {
 
         template <typename... T>
         static constexpr void
-        special_relative_or_authority_state(uri::parsing_uri_components<T...>& ctx) noexcept {
+        special_relative_or_authority_state(uri::parsing_uri_context<T...>& ctx) noexcept {
 
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -102,9 +113,9 @@ namespace webpp::uri {
      * Parse scheme (or sometimes called Protocol)
      */
     template <typename... T>
-    static constexpr void parse_scheme(uri::parsing_uri_components<T...>& ctx) noexcept(
-      uri::parsing_uri_components<T...>::is_nothrow) {
-        using ctx_type  = uri::parsing_uri_components<T...>;
+    static constexpr void
+    parse_scheme(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        using ctx_type  = uri::parsing_uri_context<T...>;
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
 
@@ -169,7 +180,7 @@ namespace webpp::uri {
                         } else {
                             ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
                         }
-                        ctx.status = stl::to_underlying(valid_file);
+                        ctx.status |= stl::to_underlying(valid_file);
                         return;
                     } else if (is_known(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
                         if constexpr (ctx_type::has_base_uri) {
@@ -181,10 +192,10 @@ namespace webpp::uri {
                     }
 
                     if (ctx.pos != ctx.end && *ctx.pos == '/') {
-                        ctx.status = stl::to_underlying(valid_path_or_authority);
+                        ctx.status |= stl::to_underlying(valid_path_or_authority);
                         return;
                     } else {
-                        ctx.status = stl::to_underlying(valid_opaque_path);
+                        ctx.status |= stl::to_underlying(valid_opaque_path);
                         return;
                     }
                 } else {
@@ -192,7 +203,7 @@ namespace webpp::uri {
                     // scheme state, and start over (from the first code point in input).
                     //
                     // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                    ctx.status = stl::to_underlying(valid_no_scheme);
+                    ctx.status |= stl::to_underlying(valid_no_scheme);
                     return;
                 }
             }
