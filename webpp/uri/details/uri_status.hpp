@@ -16,32 +16,44 @@ namespace webpp::uri {
     ///   - see if there's a warning
     ///   - which warnings we have found
     ///   - distinguish between a warning flag and an error flag or a success flag
-    static constexpr stl::uint_fast32_t warning_bit = (1u << 31);
-    static constexpr stl::uint_fast32_t valid_bit   = (1u << 30);
-    static constexpr stl::uint_fast32_t error_bit   = 0u;
+    ///
+    /// integer: [ B B W W W W ... N N N N ]
+    ///            ^ ^ -------     -------
+    ///            | |   ^            ^
+    ///            | |   |            |
+    ///            | |   |      valid/error number
+    ///            | |   |
+    ///            | |   ----> Each warning bit
+    ///            | |
+    ///            | ----> warning bit
+    ///            |
+    ///         error bit
+    using uri_status_type                        = stl::uint_fast16_t;
+    static constexpr uri_status_type valid_bit   = 0u;
+    static constexpr uri_status_type error_bit   = (1u << 15);
+    static constexpr uri_status_type warning_bit = (1u << 14);
 
     /// sucesses are exclusive
     /// errors are exclusive,
     /// warnings are not exclusive,
-    enum struct uri_status : stl::uint_fast32_t {
+    enum struct uri_status : uri_status_type {
+        unparsed = 0, // not parsed at all
+
         // success:
         valid          = valid_bit | 1u, // valid URI
         valid_punycode = valid_bit | 2u, // valid URI which contains a punycode
 
         // common errors:
-        invalid_character = warning_bit | (1u << 0u), // found an invalid character
-        too_long          = error_bit | 1u,           // the URI is too long
-        empty_string      = error_bit | 2u,           // the URI/URL/.. is empty
+        invalid_character = warning_bit >> 1u, // found an invalid character
+        too_long          = error_bit | 1u,    // the URI is too long
+        empty_string      = error_bit | 2u,    // the URI/URL/.. is empty
 
         // scheme-specific errors/warnings:
-        valid_no_scheme                 = valid_bit | 3u, // no scheme is specified
-        valid_file                      = valid_bit | 4u, // Valid scheme "file://"
-        valid_path_or_authority         = valid_bit | 5u,
-        valid_authority                 = valid_bit | 6u,
-        valid_opaque_path               = valid_bit | 7u,
+        valid_path_or_authority         = valid_bit | 3u,
+        valid_authority                 = valid_bit | 4u,
         scheme_ended_unexpectedly       = error_bit | 3u,
         incompatible_schemes            = error_bit | 4u,
-        missing_following_solidus       = warning_bit | (1u << 1u), // Missing '//' after 'file:'
+        missing_following_solidus       = warning_bit >> 2u, // Missing '//' after 'file:'
         missing_scheme_non_relative_url = error_bit | 5u,
 
         // domain-specific errors:
@@ -58,9 +70,13 @@ namespace webpp::uri {
         port_invalid      = error_bit | 14u, // invalid characters and what not
 
         // path-specific errors/warnings:
-        reverse_solidus_used         = warning_bit | (1u << 2u),
-        windows_drive_letter_used    = warning_bit | (1u << 3u),
-        windows_drive_letter_as_host = warning_bit | (1u << 4u),
+        valid_path                   = valid_bit | 5u,
+        reverse_solidus_used         = warning_bit >> 3u,
+        windows_drive_letter_used    = warning_bit >> 4u,
+        windows_drive_letter_as_host = warning_bit >> 5u,
+
+        // fragment-specific errors/warnings:
+        valid_fragment = valid_bit | 6u,
     };
 
     /**
@@ -69,6 +85,8 @@ namespace webpp::uri {
     static constexpr stl::string_view to_string(uri_status status) noexcept {
         switch (status) {
             using enum uri_status;
+
+            case unparsed: return "The URI is not parsed.";
 
             // success:
             case valid: return "Valid URI";
@@ -84,12 +102,9 @@ namespace webpp::uri {
                 return "The URI is empty.";
 
                 // scheme-specific errors:
-            case valid_no_scheme: return "This URL doesn't have a scheme.";
-            case valid_file: return "Valid file scheme (starts with file://)";
             case valid_path_or_authority:
                 return "Valid scheme that should be followed by a path or an authority.";
             case valid_authority: return "Valid scheme that should be followed by an authority.";
-            case valid_opaque_path: return "Valid scheme that should be followed by an opaque path.";
             case scheme_ended_unexpectedly:
                 return "This URI doesn't seem to have enough information, not even a qualified scheme.";
             case incompatible_schemes:
@@ -123,6 +138,7 @@ namespace webpp::uri {
                        "more info: https://url.spec.whatwg.org/#port-invalid";
 
                 // path-specific errors/warnings:
+            case valid_path: return "Valid URI until path; parsing is not done yet.";
             case reverse_solidus_used:
                 return "The URI is using backslash instead of a forward slash; "
                        "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus";
@@ -132,6 +148,9 @@ namespace webpp::uri {
             case windows_drive_letter_as_host:
                 return "A 'file:' URI cannot have a Windows Drive Letter as a host; "
                        "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter-host";
+
+                // fragment-specific errors/warnings:
+            case valid_fragment: return "Valid URI until fragment, parsing is not done yet.";
         }
         stl::unreachable();
     }

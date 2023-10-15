@@ -48,6 +48,8 @@ namespace webpp::uri {
 
     namespace details { // states
 
+
+
         template <typename... T>
         static constexpr void relative_state(uri::parsing_uri_context<T...>& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
@@ -61,6 +63,71 @@ namespace webpp::uri {
                 ctx.out.set_scheme(ctx.base.get_scheme(ctx.whole()));
             }
         }
+
+        template <typename... T>
+        static constexpr void file_slash_state(uri::parsing_uri_context<T...>& ctx) noexcept(
+          uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#file-slash-state
+
+            using ctx_type = uri::parsing_uri_context<T...>;
+        }
+
+        template <typename... T>
+        static constexpr void
+        file_state(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#file-state
+
+            using ctx_type = uri::parsing_uri_context<T...>;
+
+            if constexpr (ctx_type::has_base_uri) {
+                // set scheme to "file"
+                ctx.set_scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
+            }
+            ctx.out.clear_host();
+
+            switch (*ctx.pos) {
+                case '\\':
+                    ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
+                    [[fallthrough]];
+                case '/': file_slash_state(ctx); return;
+            }
+
+            if constexpr (ctx_type::has_base_uri) {
+                if (ctx.base.get_scheme() == "file") {}
+            }
+
+            ctx.status |= stl::to_underlying(uri_status::valid_path);
+        }
+
+
+        template <typename... T>
+        static constexpr void no_scheme_state(uri::parsing_uri_context<T...>& ctx) noexcept(
+          uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#no-scheme-state
+
+            using ctx_type = uri::parsing_uri_context<T...>;
+
+            if constexpr (ctx_type::has_base_uri) {
+                if (ctx.base.has_opaque_path()) {
+                    if (*ctx.pos == '#') {
+                        ctx.out.set_scheme(ctx.base.get_scheme(ctx.whole()));
+                        ctx.out.set_path(ctx.base.get_path(ctx.whole()));
+                        ctx.out.set_query(ctx.base.get_query(ctx.whole()));
+                        ctx.out.clear_fragment();
+                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                        return;
+                    }
+                } else if (ctx.base.get_scheme() != "file") {
+                    relative_state(ctx);
+                    return;
+                } else {
+                    file_state(ctx);
+                    return;
+                }
+            }
+            ctx.status = stl::to_underlying(uri_status::missing_scheme_non_relative_url);
+        }
+
 
         template <typename... T>
         static constexpr void special_authority_slashes_state(uri::parsing_uri_context<T...>& ctx) noexcept {
@@ -107,6 +174,22 @@ namespace webpp::uri {
             ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
             relative_state(ctx);
         }
+
+        template <typename... T>
+        static constexpr void path_or_authority_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+            // https://url.spec.whatwg.org/#path-or-authority-state
+
+            // todo
+        }
+
+        template <typename... T>
+        static constexpr void opaque_path_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+            // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
+
+            // todo
+        }
+
+
     } // namespace details
 
     /**
@@ -121,7 +204,6 @@ namespace webpp::uri {
 
         webpp_static_constexpr auto alnum_plus =
           charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
-        webpp_static_constexpr bool is_overridable = ctx_type::is_overridable;
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end) {
@@ -149,7 +231,7 @@ namespace webpp::uri {
                 // handling ":" character
                 if (*ctx.pos == ':') {
 
-                    if constexpr (is_overridable) {
+                    if constexpr (ctx_type::is_overridable) {
                         const auto url_scheme =
                           stl::basic_string_view<char_type>{ctx.pos,
                                                             static_cast<stl::size_t>(ctx.pos - ctx.beg)};
@@ -180,7 +262,7 @@ namespace webpp::uri {
                         } else {
                             ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
                         }
-                        ctx.status |= stl::to_underlying(valid_file);
+                        details::file_state(ctx);
                         return;
                     } else if (is_known(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
                         if constexpr (ctx_type::has_base_uri) {
@@ -192,10 +274,10 @@ namespace webpp::uri {
                     }
 
                     if (ctx.pos != ctx.end && *ctx.pos == '/') {
-                        ctx.status |= stl::to_underlying(valid_path_or_authority);
+                        details::path_or_authority_state(ctx);
                         return;
                     } else {
-                        ctx.status |= stl::to_underlying(valid_opaque_path);
+                        details::opaque_path_state(ctx);
                         return;
                     }
                 } else {
@@ -203,7 +285,9 @@ namespace webpp::uri {
                     // scheme state, and start over (from the first code point in input).
                     //
                     // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                    ctx.status |= stl::to_underlying(valid_no_scheme);
+                    ctx.pos = ctx.beg;
+                    ctx.out.clear_scheme();
+                    details::no_scheme_state(ctx);
                     return;
                 }
             }

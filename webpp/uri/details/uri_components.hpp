@@ -71,8 +71,36 @@ namespace webpp::uri {
             scheme_end = static_cast<seg_type>(end - beg);
         }
 
+        constexpr void clear_scheme() noexcept {
+            scheme_end = omitted;
+        }
+
+        constexpr void clear_host() noexcept {
+            host_start = omitted; // todo: should we reset authority_start and password_start as well?
+        }
+
         constexpr void clear_port() noexcept {
             port_start = omitted;
+        }
+
+        constexpr void clear_username() noexcept {
+            authority_start = omitted;
+        }
+
+        constexpr void clear_password() noexcept {
+            password_start = omitted;
+        }
+
+        constexpr void clear_path() noexcept {
+            authority_end = omitted;
+        }
+
+        constexpr void clear_queries() noexcept {
+            query_start = omitted;
+        }
+
+        constexpr void clear_fragment() noexcept {
+            fragment_start = omitted;
         }
 
         [[nodiscard]] constexpr bool has_scheme() const noexcept {
@@ -213,7 +241,17 @@ namespace webpp::uri {
     template <istl::StringView StrVT>                                \
     [[nodiscard]] constexpr StrT get_##field(StrVT) const noexcept { \
         return {field.data(), field.size()};                         \
+    }                                                                \
+                                                                     \
+    constexpr void clear_##field() noexcept {                        \
+        istl::clear(field);                                          \
+    }                                                                \
+                                                                     \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {      \
+        return !field.empty();                                       \
     }
+
+
 
         webpp_def(scheme)     //
           webpp_def(username) //
@@ -258,44 +296,8 @@ namespace webpp::uri {
             istl::assign(fragment, beg, end);
         }
 
-        constexpr void clear_port() noexcept {
-            istl::clear(port);
-        }
-
-        [[nodiscard]] constexpr bool has_scheme() const noexcept {
-            return !scheme.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_username() const noexcept {
-            return !username.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_password() const noexcept {
-            return !password.empty();
-        }
-
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username(); // password cannot exist without the username
-        }
-
-        [[nodiscard]] constexpr bool has_host() const noexcept {
-            return !host.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_port() const noexcept {
-            return !port.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_path() const noexcept {
-            return !path.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_queries() const noexcept {
-            return !queries.empty();
-        }
-
-        [[nodiscard]] constexpr bool has_fragment() const noexcept {
-            return !fragment.empty();
         }
     };
 
@@ -363,19 +365,14 @@ namespace webpp::uri {
     /**
      * A class used during parsing a URI
      */
-    template <typename CharT       = const char,
-              typename OutSegType  = stl::uint32_t,
-              typename InSegType   = void,
-              typename BaseSegType = void>
+    template <typename CharT = const char, typename OutSegType = stl::uint32_t, typename BaseSegType = void>
     struct parsing_uri_context {
         using char_type     = stl::remove_const_t<CharT>;
         using pointer       = CharT*;
         using const_pointer = char_type const*;
         using out_seg_type  = OutSegType;
-        using in_seg_type   = InSegType;
         using base_seg_type = BaseSegType;
         using out_type      = uri::uri_components<out_seg_type>;
-        using in_type       = uri::uri_components<in_seg_type>;
         using base_type     = uri::uri_components<base_seg_type>;
         using state_type    = stl::underlying_type_t<uri_status>;
 
@@ -387,7 +384,7 @@ namespace webpp::uri {
         pointer       pos = nullptr; // current position
         const_pointer end = nullptr; // the end of the string
         out_type      out{};         // the output uri components
-        state_type    status{};
+        state_type    status = stl::to_underlying(uri_status::unparsed);
 
 
         template <istl::StringView StrVT = stl::string_view>
@@ -397,16 +394,14 @@ namespace webpp::uri {
         }
     };
 
-    template <typename CharT, istl::StringLike OutSegType, typename InSegType, typename BaseSegType>
-    struct parsing_uri_context<CharT, OutSegType, InSegType, BaseSegType> {
+    template <typename CharT, istl::StringLike OutSegType, typename BaseSegType>
+    struct parsing_uri_context<CharT, OutSegType, BaseSegType> {
         using char_type     = stl::remove_const_t<CharT>;
         using pointer       = CharT*;
         using const_pointer = char_type const*;
         using out_seg_type  = OutSegType;
-        using in_seg_type   = InSegType;
         using base_seg_type = BaseSegType;
         using out_type      = uri::uri_components<out_seg_type>;
-        using in_type       = uri::uri_components<in_seg_type>;
         using base_type     = uri::uri_components<base_seg_type>;
         using state_type    = stl::underlying_type_t<uri_status>;
 
@@ -414,15 +409,21 @@ namespace webpp::uri {
         static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
         static constexpr bool is_overridable = out_type::is_overridable;
 
+        // static_assert(has_base_uri && !is_overridable,
+        //               "If you have Base URI, then you need to make sure the output is overridable "
+        //               "(because output's URI's components may come from different places, "
+        //               "for example the scheme and domain may come from the base URI while the path "
+        //               "is comming from the new string.)");
+
+
         // we don't need to know the beginning of the string("beg" field), because the output uri components
         // ("out") are required to know each segment themselves.
         const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
         pointer       pos = nullptr;
         const_pointer end = nullptr;
         out_type      out{};
-        [[no_unique_address]] in_type   in{};
         [[no_unique_address]] base_type base{};
-        state_type                      status{};
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
 
         template <istl::StringView StrVT = stl::string_view>
         [[nodiscard]] constexpr StrVT whole() const noexcept {

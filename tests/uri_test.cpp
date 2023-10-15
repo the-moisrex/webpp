@@ -69,7 +69,7 @@ TEST(URITests, StringSchemeParsing) {
 
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
-    EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
+    EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
     EXPECT_EQ(context.out.scheme, "urn");
     EXPECT_EQ(context.pos - str.data(), 4);
 }
