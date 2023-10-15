@@ -182,15 +182,12 @@ namespace webpp::uri {
 
 
         template <istl::StringViewifiable StrT>
-        scheme_status set_scheme(StrT&& inp_str) noexcept {
+        uri_status set_scheme(StrT&& inp_str) noexcept {
             auto const str     = istl::string_viewify(stl::forward<StrT>(inp_str));
             auto       ptr     = str.data();
             auto const ptr_end = ptr + str.size();
-            switch (auto const status = scheme.parse_from(stl::forward<StrT>(inp_str))) {
-                using enum scheme_status;
-                case valid:
-                default: return status;
-            }
+            auto const status  = scheme.parse_from(stl::forward<StrT>(inp_str));
+            return status;
         }
 
         template <URIString URIType>

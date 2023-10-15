@@ -5,6 +5,7 @@
 
 #include "../../std/concepts.hpp"
 #include "../../std/string_like.hpp"
+#include "./uri_status.hpp"
 
 #include <cstdint>
 #include <limits>
@@ -376,6 +377,7 @@ namespace webpp::uri {
         using out_type      = uri::uri_components<out_seg_type>;
         using in_type       = uri::uri_components<in_seg_type>;
         using base_type     = uri::uri_components<base_seg_type>;
+        using state_type    = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow     = out_type::is_nothrow;
         static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
@@ -385,6 +387,7 @@ namespace webpp::uri {
         pointer       pos = nullptr; // current position
         const_pointer end = nullptr; // the end of the string
         out_type      out{};         // the output uri components
+        state_type    status{};
 
 
         template <istl::StringView StrVT = stl::string_view>
@@ -405,6 +408,7 @@ namespace webpp::uri {
         using out_type      = uri::uri_components<out_seg_type>;
         using in_type       = uri::uri_components<in_seg_type>;
         using base_type     = uri::uri_components<base_seg_type>;
+        using state_type    = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow     = out_type::is_nothrow;
         static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
@@ -418,6 +422,7 @@ namespace webpp::uri {
         out_type      out{};
         [[no_unique_address]] in_type   in{};
         [[no_unique_address]] base_type base{};
+        state_type                      status{};
 
         template <istl::StringView StrVT = stl::string_view>
         [[nodiscard]] constexpr StrVT whole() const noexcept {

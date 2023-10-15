@@ -52,8 +52,9 @@ TEST(URITests, IntegralSchemeParsing) {
     uri::parsing_uri_components<char const> context{.beg = str.data(),
                                                     .pos = str.data(),
                                                     .end = str.data() + str.size()};
-    const uri::scheme_status                res = uri::parse_scheme(context);
-    EXPECT_EQ(res, uri::scheme_status::valid) << to_string(res);
+    uri::parse_scheme(context);
+    uri::uri_status const res = static_cast<uri::uri_status>(context.status);
+    EXPECT_EQ(res, uri::uri_status::valid_path_or_authority) << to_string(res);
     EXPECT_EQ(context.out.scheme_end, 4);
     EXPECT_EQ(context.pos - str.data(), 5);
 }
@@ -66,8 +67,9 @@ TEST(URITests, StringSchemeParsing) {
                                                                       .pos = str.data(),
                                                                       .end = str.data() + str.size()};
 
-    const uri::scheme_status res = uri::parse_scheme(context);
-    EXPECT_EQ(res, uri::scheme_status::valid) << to_string(res);
+    uri::parse_scheme(context);
+    uri::uri_status const res = static_cast<uri::uri_status>(context.status);
+    EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
     EXPECT_EQ(context.out.scheme, "urn");
     EXPECT_EQ(context.pos - str.data(), 4);
 }
