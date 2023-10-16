@@ -48,6 +48,47 @@ namespace webpp::uri {
 
     namespace details { // states
 
+        // /// A leading surrogate is a code point that is in the range U+D800 to U+DBFF, inclusive.
+        // /// https://infra.spec.whatwg.org/#leading-surrogate
+        // template <typename CharT = char>
+        // static constexpr auto leading_surrogate = charset_range<CharT, 0xD800, 0xDBFF>();
+
+        // /// A trailing surrogate is a code point that is in the range U+DC00 to U+DFFF, inclusive.
+        // /// https://infra.spec.whatwg.org/#trailing-surrogate
+        // template <typename CharT = char>
+        // static constexpr auto trailing_surrogate = charset_range<CharT, 0xDC00, 0xDFFF>();
+
+        // /// A surrogate is a leading surrogate or a trailing surrogate.
+        // /// https://infra.spec.whatwg.org/#surrogate
+        // template <typename CharT = char>
+        // static constexpr auto surrogate = charset(leading_surrogate<CharT>, trailing_surrogate<CharT>);
+
+
+        // template <typename CharT = char>
+        // static constexpr auto url_code_points =
+        //   charset(ALPHA_DIGIT<CharT>,
+        //           charset<CharT, 19>('!',
+        //                              '$',
+        //                              '&',
+        //                              '(',
+        //                              ')',
+        //                              '\'',
+        //                              '*',
+        //                              '+',
+        //                              ',',
+        //                              '-',
+        //                              '.',
+        //                              '/',
+        //                              ':',
+        //                              ';',
+        //                              '=',
+        //                              '?',
+        //                              '@',
+        //                              '_',
+        //                              '~'),
+        //           // and code points in the range U+00A0 to U+10FFFD,
+        //           // inclusive, excluding surrogates and noncharacters.
+        //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
 
         template <typename... T>
@@ -64,12 +105,43 @@ namespace webpp::uri {
             }
         }
 
+
+
+        template <typename... T>
+        static constexpr void file_host_state(uri::parsing_uri_context<T...>& ctx) noexcept(
+          uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#file-slash-state
+
+            // todo
+        }
+
+
         template <typename... T>
         static constexpr void file_slash_state(uri::parsing_uri_context<T...>& ctx) noexcept(
           uri::parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
 
             using ctx_type = uri::parsing_uri_context<T...>;
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    case '\\':
+                        ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
+                        [[fallthrough]];
+                    case '/': file_host_state(ctx); return;
+                }
+            }
+            if constexpr (ctx_type::has_base_uri) {
+                if (ctx.base.get_scheme() == "file") {
+                    ctx.out.set_scheme(ctx.base.get_scheme());
+
+                    // todo:
+                    // 2. If the code point substring from pointer to the end of input does not
+                    //    start with a Windows drive letter and base's path[0] is a normalized
+                    //    Windows drive letter, then append base's path[0] to url's path.
+                    //    This is a (platform-independent) Windows drive letter quirk.
+                }
+            }
+            ctx.status |= stl::to_underlying(uri_status::valid_path);
         }
 
         template <typename... T>
@@ -85,6 +157,7 @@ namespace webpp::uri {
             }
             ctx.out.clear_host();
 
+            // todo: check for end
             switch (*ctx.pos) {
                 case '\\':
                     ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
@@ -93,7 +166,9 @@ namespace webpp::uri {
             }
 
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.get_scheme() == "file") {}
+                if (ctx.base.get_scheme() == "file") {
+                    // todo
+                }
             }
 
             ctx.status |= stl::to_underlying(uri_status::valid_path);
@@ -179,14 +254,32 @@ namespace webpp::uri {
         static constexpr void path_or_authority_state(uri::parsing_uri_context<T...>& ctx) noexcept {
             // https://url.spec.whatwg.org/#path-or-authority-state
 
-            // todo
+            if (ctx.pos != ctx.end && *ctx.pos == '/') {
+                ++ctx.pos;
+                ctx.status |= stl::to_underlying(uri_status::valid_authority);
+                return;
+            }
+            ctx.status |= stl::to_underlying(uri_status::valid_path);
         }
 
         template <typename... T>
         static constexpr void opaque_path_state(uri::parsing_uri_context<T...>& ctx) noexcept {
             // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
-            // todo
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    case '?':
+                        ctx.out.clear_queries();
+                        ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                        break;
+                    case '#':
+                        ctx.out.clear_fragment();
+                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                        break;
+                }
+
+                // todo: validate uri_status::invalid_character here
+            }
         }
 
 
@@ -265,6 +358,7 @@ namespace webpp::uri {
                         details::file_state(ctx);
                         return;
                     } else if (is_known(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
+                        // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {
                             if (ctx.out.get_scheme(ctx.whole()) == ctx.base.get_scheme(ctx.whole())) {
                                 // todo: Assert: base is special (and therefore does not have an opaque path).
@@ -274,6 +368,7 @@ namespace webpp::uri {
                     }
 
                     if (ctx.pos != ctx.end && *ctx.pos == '/') {
+                        ++ctx.pos;
                         details::path_or_authority_state(ctx);
                         return;
                     } else {

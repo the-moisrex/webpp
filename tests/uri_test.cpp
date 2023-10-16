@@ -54,9 +54,9 @@ TEST(URITests, IntegralSchemeParsing) {
                                                  .end = str.data() + str.size()};
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
-    EXPECT_EQ(res, uri::uri_status::valid_path_or_authority) << to_string(res);
+    EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
     EXPECT_EQ(context.out.scheme_end, 4);
-    EXPECT_EQ(context.pos - str.data(), 5);
+    EXPECT_EQ(context.pos - str.data(), 7);
 }
 
 

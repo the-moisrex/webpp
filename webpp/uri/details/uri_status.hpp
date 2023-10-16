@@ -49,21 +49,21 @@ namespace webpp::uri {
         empty_string      = error_bit | 2u,    // the URI/URL/.. is empty
 
         // scheme-specific errors/warnings:
-        valid_path_or_authority         = valid_bit | 3u,
-        valid_authority                 = valid_bit | 4u,
         scheme_ended_unexpectedly       = error_bit | 3u,
         incompatible_schemes            = error_bit | 4u,
         missing_following_solidus       = warning_bit >> 2u, // Missing '//' after 'file:'
         missing_scheme_non_relative_url = error_bit | 5u,
 
         // domain-specific errors:
-        subdomain_too_long = error_bit | 6u,  // the subdomain is too long
-        dot_at_end         = error_bit | 7u,  // the domain ended unexpectedly
-        begin_with_hyphen  = error_bit | 8u,  // the domain cannot start with hyphens
-        end_with_hyphen    = error_bit | 9u,  // the domain cannot end with hyphens
-        double_hyphen      = error_bit | 10u, // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain    = error_bit | 11u, // a domain/subdomain cannot be empty (no double dotting)
-        host_missing       = error_bit | 12u,
+        valid_path_or_authority = valid_bit | 3u,
+        valid_authority         = valid_bit | 4u,
+        subdomain_too_long      = error_bit | 6u, // the subdomain is too long
+        dot_at_end              = error_bit | 7u, // the domain ended unexpectedly
+        begin_with_hyphen       = error_bit | 8u, // the domain cannot start with hyphens
+        end_with_hyphen         = error_bit | 9u, // the domain cannot end with hyphens
+        double_hyphen   = error_bit | 10u, // the domain cannot have double hyphens unless it's a punycode
+        empty_subdomain = error_bit | 11u, // a domain/subdomain cannot be empty (no double dotting)
+        host_missing    = error_bit | 12u,
 
         // port-specific errors:
         port_out_of_range = error_bit | 13u,
@@ -75,8 +75,11 @@ namespace webpp::uri {
         windows_drive_letter_used    = warning_bit >> 4u,
         windows_drive_letter_as_host = warning_bit >> 5u,
 
+        // queries-specific errors/warnings:
+        valid_queries = valid_bit | 6u,
+
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 6u,
+        valid_fragment = valid_bit | 7u,
     };
 
     /**
@@ -148,6 +151,10 @@ namespace webpp::uri {
             case windows_drive_letter_as_host:
                 return "A 'file:' URI cannot have a Windows Drive Letter as a host; "
                        "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter-host";
+
+            // queries-specific errors/warnings:
+            case valid_queries:
+                return "Valid URI until queries, parsing is not done yet.";
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return "Valid URI until fragment, parsing is not done yet.";
