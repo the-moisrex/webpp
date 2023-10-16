@@ -1,4 +1,3 @@
-
 #include "../webpp/strings/charset.hpp"
 
 #include "common/tests_common_pch.hpp"
@@ -93,4 +92,10 @@ TEST(CharsetTest, CharMapExpectation) {
     for (stl::size_t index = 0; index != token_charmap.size(); ++index) {
         EXPECT_EQ(token_charmap[index], token_char_map[index]) << index;
     }
+}
+
+TEST(CharsetTest, CharsetExcept) {
+    auto const excluded = ALPHA_DIGIT<char>.except(charset('b'));
+    EXPECT_EQ(excluded.size(), ALPHA_DIGIT<char>.size() - 1);
+    EXPECT_FALSE(excluded.contains('b'));
 }

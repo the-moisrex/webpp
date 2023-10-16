@@ -175,6 +175,23 @@ namespace webpp {
         }
 
         /**
+         * Exclude these charsets from the original one; all of these sets MUST be in the original charset.
+         */
+        template <stl::size_t... NN>
+        [[nodiscard]] constexpr charset<value_type, array_size - (NN + ...)>
+        except(charset<value_type, NN> const&... sets) const noexcept {
+            charset<value_type, array_size - (NN + ...)> chars;
+            stl::size_t                                  index = 0;
+            for (auto const c : *this) {
+                if ((sets.contains(c) && ...))
+                    continue;
+                chars[index] = c;
+                ++index;
+            }
+            return chars;
+        }
+
+        /**
          * @brief Creates a string view of the given charset
          *
          * The template parameter `StrViewType` is the type of the string view to be returned. It defaults to
@@ -443,7 +460,7 @@ namespace webpp {
         constexpr auto    the_size = static_cast<stl::size_t>(Last) + 1;
         charmap<the_size> data{}; // all false
         for (auto it = First; it != Last + 1; ++it)
-            data[it] = true;
+            data[static_cast<stl::size_t>(it)] = true;
         return data;
     }
 
