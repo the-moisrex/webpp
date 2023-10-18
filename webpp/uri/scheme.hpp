@@ -48,48 +48,6 @@ namespace webpp::uri {
 
     namespace details { // states
 
-        // /// A leading surrogate is a code point that is in the range U+D800 to U+DBFF, inclusive.
-        // /// https://infra.spec.whatwg.org/#leading-surrogate
-        // template <typename CharT = char>
-        // static constexpr auto leading_surrogate = charset_range<CharT, 0xD800, 0xDBFF>();
-
-        // /// A trailing surrogate is a code point that is in the range U+DC00 to U+DFFF, inclusive.
-        // /// https://infra.spec.whatwg.org/#trailing-surrogate
-        // template <typename CharT = char>
-        // static constexpr auto trailing_surrogate = charset_range<CharT, 0xDC00, 0xDFFF>();
-
-        // /// A surrogate is a leading surrogate or a trailing surrogate.
-        // /// https://infra.spec.whatwg.org/#surrogate
-        // template <typename CharT = char>
-        // static constexpr auto surrogate = charset(leading_surrogate<CharT>, trailing_surrogate<CharT>);
-
-
-        // template <typename CharT = char>
-        // static constexpr auto url_code_points =
-        //   charset(ALPHA_DIGIT<CharT>,
-        //           charset<CharT, 19>('!',
-        //                              '$',
-        //                              '&',
-        //                              '(',
-        //                              ')',
-        //                              '\'',
-        //                              '*',
-        //                              '+',
-        //                              ',',
-        //                              '-',
-        //                              '.',
-        //                              '/',
-        //                              ':',
-        //                              ';',
-        //                              '=',
-        //                              '?',
-        //                              '@',
-        //                              '_',
-        //                              '~'),
-        //           // and code points in the range U+00A0 to U+10FFFD,
-        //           // inclusive, excluding surrogates and noncharacters.
-        //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
-
 
         template <typename... T>
         static constexpr void relative_state(uri::parsing_uri_context<T...>& ctx) noexcept {

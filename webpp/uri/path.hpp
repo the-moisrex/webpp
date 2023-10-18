@@ -8,12 +8,99 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "details/constants.hpp"
+#include "details/uri_components.hpp"
 #include "encoding.hpp"
 
 #include <compare>
 #include <numeric>
 
 namespace webpp::uri {
+
+    namespace details {
+
+
+        // /// A leading surrogate is a code point that is in the range U+D800 to U+DBFF, inclusive.
+        // /// https://infra.spec.whatwg.org/#leading-surrogate
+        // template <typename CharT = char>
+        // static constexpr auto leading_surrogate = charset_range<CharT, 0xD800, 0xDBFF>();
+
+        // /// A trailing surrogate is a code point that is in the range U+DC00 to U+DFFF, inclusive.
+        // /// https://infra.spec.whatwg.org/#trailing-surrogate
+        // template <typename CharT = char>
+        // static constexpr auto trailing_surrogate = charset_range<CharT, 0xDC00, 0xDFFF>();
+
+        // /// A surrogate is a leading surrogate or a trailing surrogate.
+        // /// https://infra.spec.whatwg.org/#surrogate
+        // template <typename CharT = char>
+        // static constexpr auto surrogate = charset(leading_surrogate<CharT>, trailing_surrogate<CharT>);
+
+
+        // template <typename CharT = char>
+        // static constexpr auto url_code_points =
+        //   charset(ALPHA_DIGIT<CharT>,
+        //           charset<CharT, 19>('!',
+        //                              '$',
+        //                              '&',
+        //                              '(',
+        //                              ')',
+        //                              '\'',
+        //                              '*',
+        //                              '+',
+        //                              ',',
+        //                              '-',
+        //                              '.',
+        //                              '/',
+        //                              ':',
+        //                              ';',
+        //                              '=',
+        //                              '?',
+        //                              '@',
+        //                              '_',
+        //                              '~'),
+        //           // and code points in the range U+00A0 to U+10FFFD,
+        //           // inclusive, excluding surrogates and noncharacters.
+        //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
+
+
+
+        template <typename... T>
+        static constexpr void opaque_path_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+            // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
+
+            auto path_end = ctx.pos;
+            while (path_end != ctx.end) {
+                switch (*ctx.pos) {
+                    case '?':
+                        ctx.out.clear_queries();
+                        ++path_end;
+                        ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                        break;
+                    case '#':
+                        ctx.out.clear_fragment();
+                        ++path_end;
+                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                        break;
+                    default: {
+
+                        // todo: validate uri_status::invalid_character here
+                        // 1. If c is not the EOF code point, not a URL code point, and not U+0025 (%),
+                        // invalid-URL-unit validation error.
+                        // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits,
+                        // invalid-URL-unit validation error.
+                        // 3. If c is not the EOF code point, UTF-8 percent-encode c using the C0 control
+                        // percent-encode set and append the result to url’s path.
+
+                        ++path_end;
+                        continue;
+                    }
+                }
+                break;
+            }
+            ctx.out.set_path(ctx.pos, path_end);
+            ctx.pos = path_end;
+        }
+
+    } // namespace details
 
     /**
      * Including normal string and string view types
