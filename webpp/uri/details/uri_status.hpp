@@ -71,15 +71,16 @@ namespace webpp::uri {
 
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 5u,
+        valid_opaque_path            = valid_bit | 6u,
         reverse_solidus_used         = warning_bit >> 3u,
         windows_drive_letter_used    = warning_bit >> 4u,
         windows_drive_letter_as_host = warning_bit >> 5u,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 6u,
+        valid_queries = valid_bit | 7u,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 7u,
+        valid_fragment = valid_bit | 8u,
     };
 
     /**
@@ -142,6 +143,7 @@ namespace webpp::uri {
 
                 // path-specific errors/warnings:
             case valid_path: return "Valid URI until path; parsing is not done yet.";
+            case valid_opaque_path: return "Valid URI until opaque path; parsing is not done yet.";
             case reverse_solidus_used:
                 return "The URI is using backslash instead of a forward slash; "
                        "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus";

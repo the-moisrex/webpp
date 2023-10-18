@@ -262,26 +262,6 @@ namespace webpp::uri {
             ctx.status |= stl::to_underlying(uri_status::valid_path);
         }
 
-        template <typename... T>
-        static constexpr void opaque_path_state(uri::parsing_uri_context<T...>& ctx) noexcept {
-            // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
-
-            if (ctx.pos != ctx.end) {
-                switch (*ctx.pos) {
-                    case '?':
-                        ctx.out.clear_queries();
-                        ctx.status |= stl::to_underlying(uri_status::valid_queries);
-                        break;
-                    case '#':
-                        ctx.out.clear_fragment();
-                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
-                        break;
-                }
-
-                // todo: validate uri_status::invalid_character here
-            }
-        }
-
 
     } // namespace details
 
@@ -372,7 +352,8 @@ namespace webpp::uri {
                         details::path_or_authority_state(ctx);
                         return;
                     } else {
-                        details::opaque_path_state(ctx);
+                        ctx.out.clear_path();
+                        ctx.status |= stl::to_underlying(uri_status::valid_opaque_path);
                         return;
                     }
                 } else {
