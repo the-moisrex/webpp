@@ -361,7 +361,6 @@ namespace webpp::uri {
     using uri_components_u32  = uri_components<stl::uint32_t>;
 
 
-
     /**
      * A class used during parsing a URI
      */

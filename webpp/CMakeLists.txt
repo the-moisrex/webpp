@@ -160,6 +160,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/fragment.hpp
         ${LIB_INCLUDE_DIR}/uri/host.hpp
+        ${LIB_INCLUDE_DIR}/uri/host_authority.hpp
         ${LIB_INCLUDE_DIR}/uri/path.hpp
         ${LIB_INCLUDE_DIR}/uri/path_traverser.hpp
         ${LIB_INCLUDE_DIR}/uri/port.hpp
@@ -250,7 +251,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/http/headers/accept_encoding.hpp
         ${LIB_INCLUDE_DIR}/http/headers/content_encoding.hpp
         ${LIB_INCLUDE_DIR}/http/headers/content_type.hpp
-        ${LIB_INCLUDE_DIR}/http/headers/host.hpp
         ${LIB_INCLUDE_DIR}/http/headers/keep_alive.hpp
         ${LIB_INCLUDE_DIR}/http/headers/accept.hpp
         ${LIB_INCLUDE_DIR}/http/headers/allow.hpp

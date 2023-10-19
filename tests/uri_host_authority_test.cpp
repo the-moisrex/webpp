@@ -1,9 +1,8 @@
-#include "../webpp/http/headers/host.hpp"
-#include "../webpp/ip/ipv4.hpp"
+#include "../webpp/uri/host_authority.hpp"
 #include "common/tests_common_pch.hpp"
 
 using namespace webpp;
-using namespace webpp::http;
+using namespace webpp::uri;
 
 TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
     host_authority const host{"example.org:80"};

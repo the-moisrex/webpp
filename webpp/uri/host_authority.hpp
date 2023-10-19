@@ -1,18 +1,16 @@
 #ifndef WEBPP_HEADERS_HOST_HPP
 #define WEBPP_HEADERS_HOST_HPP
 
-#include "../../convert/casts.hpp"
-#include "../../ip/ip_address.hpp"
-#include "../../ip/ipv4.hpp"
-#include "../../ip/ipv6.hpp"
-#include "../../uri/domain.hpp"
-#include "../codec/tokens.hpp"
+#include "../convert/casts.hpp"
+#include "../http/codec/tokens.hpp"
+#include "../ip/ip_address.hpp"
+#include "./domain.hpp"
 
 #include <compare>
 #include <cstdint>
 #include <variant>
 
-namespace webpp::http {
+namespace webpp::uri {
 
     enum struct host_status {
         valid,              // valid but no port
@@ -27,9 +25,14 @@ namespace webpp::http {
 
     /**
      * HTTP Host Header Field
+     * Host authority is a combination of:
+     *   - Domain / IPv4 / IPv6
+     *   - Port number
+     * This can be directly used as a HTTP "Host: " header field's value.
      *
-     * Host Field RFC: https://www.rfc-editor.org/rfc/rfc9110#field.host
-     * URI-HOST RFC:   https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2
+     * Host Field RFC:      https://www.rfc-editor.org/rfc/rfc9110#field.host
+     * URI-HOST RFC:        https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2
+     * WHATWG Host Parsing: https://url.spec.whatwg.org/#host-parsing
      *
      * RFC 1123 allows the first char to be a digit in a domain name as well:
      *  https://www.rfc-editor.org/rfc/rfc1123#section-2
@@ -358,6 +361,6 @@ namespace webpp::http {
         host_status           status_code = host_status::invalid_host;
     };
 
-} // namespace webpp::http
+} // namespace webpp::uri
 
 #endif // WEBPP_HEADERS_HOST_HPP

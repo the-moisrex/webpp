@@ -12,10 +12,37 @@
 namespace webpp::uri {
 
 
+    namespace details {
+
+        template <typename... T>
+        static constexpr void host_parsing_state(uri::parsing_uri_context<T...>& ctx) noexcept(
+          uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#host-parsing
+        }
+    } // namespace details
+
     template <typename... T>
     static constexpr void
     parse_host(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#host-state
         // todo
+
+        if (ctx.pos == ctx.end) {
+            ctx.status = stl::to_underlying(uri_status::host_missing);
+            return;
+        }
+
+        switch (*ctx.pos) {
+            case ':':
+            case '\\':
+            case '\0':
+            case '/':
+            case '?':
+            case '#': ctx.status = stl::to_underlying(uri_status::host_missing); return;
+        }
+
+        bool       inside_brackets = false;
+        auto const beg             = ctx.pos;
     }
 
 
