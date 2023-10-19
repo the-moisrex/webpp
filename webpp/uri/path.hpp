@@ -63,44 +63,45 @@ namespace webpp::uri {
 
 
 
-        template <typename... T>
-        static constexpr void opaque_path_state(uri::parsing_uri_context<T...>& ctx) noexcept {
-            // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
-
-            auto path_end = ctx.pos;
-            while (path_end != ctx.end) {
-                switch (*ctx.pos) {
-                    case '?':
-                        ctx.out.clear_queries();
-                        ++path_end;
-                        ctx.status |= stl::to_underlying(uri_status::valid_queries);
-                        break;
-                    case '#':
-                        ctx.out.clear_fragment();
-                        ++path_end;
-                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
-                        break;
-                    default: {
-
-                        // todo: validate uri_status::invalid_character here
-                        // 1. If c is not the EOF code point, not a URL code point, and not U+0025 (%),
-                        // invalid-URL-unit validation error.
-                        // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits,
-                        // invalid-URL-unit validation error.
-                        // 3. If c is not the EOF code point, UTF-8 percent-encode c using the C0 control
-                        // percent-encode set and append the result to url’s path.
-
-                        ++path_end;
-                        continue;
-                    }
-                }
-                break;
-            }
-            ctx.out.set_path(ctx.pos, path_end);
-            ctx.pos = path_end;
-        }
-
     } // namespace details
+
+    template <typename... T>
+    static constexpr void parse_opaque_path(uri::parsing_uri_context<T...>& ctx) noexcept(
+      uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
+
+        auto path_end = ctx.pos;
+        while (path_end != ctx.end) {
+            switch (*ctx.pos) {
+                case '?':
+                    ctx.out.clear_queries();
+                    ++path_end;
+                    ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                    break;
+                case '#':
+                    ctx.out.clear_fragment();
+                    ++path_end;
+                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    break;
+                default: {
+
+                    // todo: validate uri_status::invalid_character here
+                    // 1. If c is not the EOF code point, not a URL code point, and not U+0025 (%),
+                    // invalid-URL-unit validation error.
+                    // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits,
+                    // invalid-URL-unit validation error.
+                    // 3. If c is not the EOF code point, UTF-8 percent-encode c using the C0 control
+                    // percent-encode set and append the result to url’s path.
+
+                    ++path_end;
+                    continue;
+                }
+            }
+            break;
+        }
+        ctx.out.set_path(ctx.pos, path_end);
+        ctx.pos = path_end;
+    }
 
     /**
      * Including normal string and string view types

@@ -17,7 +17,7 @@ namespace webpp::uri {
     ///   - which warnings we have found
     ///   - distinguish between a warning flag and an error flag or a success flag
     ///
-    /// integer: [ B B W W W W ... N N N N ]
+    /// integer: [ B B W W W W     N N N N ]
     ///            ^ ^ -------     -------
     ///            | |   ^            ^
     ///            | |   |            |
@@ -33,7 +33,7 @@ namespace webpp::uri {
     static constexpr uri_status_type error_bit   = (1u << 15);
     static constexpr uri_status_type warning_bit = (1u << 14);
 
-    /// sucesses are exclusive
+    /// successes are exclusive
     /// errors are exclusive,
     /// warnings are not exclusive,
     enum struct uri_status : uri_status_type {
@@ -57,6 +57,8 @@ namespace webpp::uri {
         // domain-specific errors:
         valid_path_or_authority = valid_bit | 3u,
         valid_authority         = valid_bit | 4u,
+        valid_host              = valid_bit | 5u,
+        valid_port              = valid_bit | 6u,
         subdomain_too_long      = error_bit | 6u, // the subdomain is too long
         dot_at_end              = error_bit | 7u, // the domain ended unexpectedly
         begin_with_hyphen       = error_bit | 8u, // the domain cannot start with hyphens
@@ -70,17 +72,17 @@ namespace webpp::uri {
         port_invalid      = error_bit | 14u, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 5u,
-        valid_opaque_path            = valid_bit | 6u,
+        valid_path                   = valid_bit | 7u,
+        valid_opaque_path            = valid_bit | 8u,
         reverse_solidus_used         = warning_bit >> 3u,
         windows_drive_letter_used    = warning_bit >> 4u,
         windows_drive_letter_as_host = warning_bit >> 5u,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 7u,
+        valid_queries = valid_bit | 9u,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 8u,
+        valid_fragment = valid_bit | 10u,
     };
 
     /**
@@ -109,6 +111,8 @@ namespace webpp::uri {
             case valid_path_or_authority:
                 return "Valid scheme that should be followed by a path or an authority.";
             case valid_authority: return "Valid scheme that should be followed by an authority.";
+            case valid_host: return "Valid URI until host; parsing is not done yet.";
+            case valid_port: return "Valid URI until port, there's a port but parsing is not done yet.";
             case scheme_ended_unexpectedly:
                 return "This URI doesn't seem to have enough information, not even a qualified scheme.";
             case incompatible_schemes:
@@ -165,7 +169,7 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr bool is_valid(stl::underlying_type_t<uri_status> status) noexcept {
-        return valid_bit & status;
+        return ((error_bit | warning_bit) & status) == 0;
     }
 
     [[nodiscard]] static constexpr bool is_valid(uri_status status) noexcept {
@@ -178,6 +182,26 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr bool has_warnings(uri_status status) noexcept {
         return has_warnings(stl::to_underlying(status));
+    }
+
+    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> status) noexcept {
+        return (error_bit & status) == error_bit;
+    }
+
+    [[nodiscard]] static constexpr bool has_error(uri_status status) noexcept {
+        return has_error(stl::to_underlying(status));
+    }
+
+    /// get the error/valid value without the warnings if available
+    [[nodiscard]] static constexpr stl::underlying_type_t<uri_status>
+    get_value(stl::underlying_type_t<uri_status> status) noexcept {
+        // maximum number between errors and valids must go here,
+        // or you can find out (error_bit | warning_bit) + all the warning bits, and then negate that
+        return status & (0b0000'1111 | valid_bit | error_bit); // NOLINT(*-avoid-magic-numbers)
+    }
+
+    [[nodiscard]] static constexpr uri_status get_value(uri_status status) noexcept {
+        return static_cast<uri_status>(get_value(stl::to_underlying(status)));
     }
 
 

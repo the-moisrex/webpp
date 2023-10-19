@@ -1,14 +1,23 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_HOST_HPP
-#define WEBPP_HOST_HPP
+#ifndef WEBPP_URI_HOST_HPP
+#define WEBPP_URI_HOST_HPP
 
 #include "../memory/allocators.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
+#include "./details/uri_components.hpp"
 
 namespace webpp::uri {
+
+
+    template <typename... T>
+    static constexpr void
+    parse_host(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        // todo
+    }
+
 
     template <istl::String StringType = stl::string>
     struct basic_host : stl::vector<stl::remove_cvref_t<StringType>,
@@ -47,4 +56,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_HOST_HPP
+#endif // WEBPP_URI_HOST_HPP

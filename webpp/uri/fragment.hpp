@@ -1,13 +1,20 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_FRAGMENT_HPP
-#define WEBPP_FRAGMENT_HPP
+#ifndef WEBPP_URI_FRAGMENT_HPP
+#define WEBPP_URI_FRAGMENT_HPP
 
 #include "../std/string.hpp"
-#include "details/constants.hpp"
+#include "./details/constants.hpp"
+#include "./details/uri_components.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
+
+    template <typename... T>
+    static constexpr void
+    parse_fragment(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        // todo
+    }
 
     template <istl::String StringType = stl::string>
     struct basic_fragment : stl::remove_cvref_t<StringType> {
@@ -34,4 +41,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_FRAGMENT_HPP
+#endif // WEBPP_URI_FRAGMENT_HPP

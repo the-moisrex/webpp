@@ -9,6 +9,39 @@
 
 namespace webpp::uri {
 
+
+    template <typename... T>
+    static constexpr void parse_authority(uri::parsing_uri_context<T...>& ctx) noexcept(
+      uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#authority-state
+
+        bool at_char_seen = false;
+        for (; ctx.pos != ctx.end; ++ctx.pos) {
+            switch (*ctx.pos) {
+                case '@':
+                    // ctx.status = stl::to_underlying(uri_status::invalid_credentials);
+                    at_char_seen = true;
+                    // todo: continue
+                    break;
+                case '\\':
+                    if (!is_known(ctx.out.get_scheme(ctx.whole())))
+                        break;
+                    [[fallthrough]];
+                case '/':
+                case '?':
+                case '#':
+                case '\0':
+                    if (at_char_seen && ctx.out.empty()) {
+                        ctx.status = stl::to_underlying(uri_status::host_missing);
+                        return;
+                    }
+                    ctx.status |= stl::to_underlying(uri_status::valid_host);
+                    return;
+            }
+        }
+    }
+
+
     template <istl::String StringType = stl::string>
     struct basic_user_info {
         using string_type = stl::remove_cvref_t<StringType>;

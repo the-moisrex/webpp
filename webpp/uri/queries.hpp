@@ -5,10 +5,19 @@
 
 #include "../memory/allocators.hpp"
 #include "../std/map.hpp"
-#include "details/constants.hpp"
+#include "./details/constants.hpp"
+#include "./details/uri_components.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
+
+
+    template <typename... T>
+    static constexpr void
+    parse_queries(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        // todo
+    }
+
 
     template <typename StringType = stl::string,
               typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>

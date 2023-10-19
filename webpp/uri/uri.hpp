@@ -15,6 +15,34 @@
 
 namespace webpp::uri {
 
+    template <typename... T>
+    static constexpr void continue_parsing_uri(uri::parsing_uri_context<T...>& ctx) noexcept(
+      uri::parsing_uri_context<T...>::is_nothrow) {
+        // todo: it's cool and all, but remove the while loop for more possible optimizations by the compiler
+        while (!has_error(ctx.status)) {
+            switch (get_value(ctx.status)) {
+                using enum uri_status;
+                case valid: return; // we're done parsing
+                case valid_punycode: break;
+                case valid_authority: parse_authority(ctx); break;
+                case valid_host: parse_host(ctx); break;
+                case valid_port: parse_port(ctx); break;
+                case valid_opaque_path: parse_opaque_path(ctx); break;
+                case valid_path: parse_path(ctx); break;
+                case valid_queries: parse_queries(ctx); break;
+                case valid_fragment: parse_fragment(ctx); break;
+                default: stl::unreachable();
+            }
+        }
+    }
+
+    template <typename... T>
+    static constexpr void
+    parse_uri(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        parse_scheme(ctx);
+        continue_parsing_uri(ctx);
+    }
+
 
     template <istl::String StringType>
     struct basic_uri {
