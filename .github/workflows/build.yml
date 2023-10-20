@@ -768,46 +768,6 @@ jobs:
         run: cmake --build --preset test-header-accept-encoding
       - name: Run test-header-accept-encoding
         run: ./build/test-header-accept-encoding
-  build-test-header-host-authority:
-    name: Build test-header-host-authority
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Build test-header-host-authority
-        run: cmake --build --preset test-header-host-authority
-  run-test-header-host-authority:
-    name: Run test-header-host-authority
-    needs: build-test-header-host-authority
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: build
-          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
-            hashFiles('**/CMakeLists.txt') }}-${{
-            hashFiles('./CMakePresets.json')}}
-          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
-          version: 1
-      - name: Run test-header-host-authority
-        run: cmake --build --preset test-header-host-authority
-      - name: Run test-header-host-authority
-        run: ./build/test-header-host-authority
   build-test-http-parser:
     name: Build test-http-parser
     needs: install
@@ -1808,6 +1768,46 @@ jobs:
         run: cmake --build --preset test-unicode
       - name: Run test-unicode
         run: ./build/test-unicode
+  build-test-uri-host-authority:
+    name: Build test-uri-host-authority
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-uri-host-authority
+        run: cmake --build --preset test-uri-host-authority
+  run-test-uri-host-authority:
+    name: Run test-uri-host-authority
+    needs: build-test-uri-host-authority
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-uri-host-authority
+        run: cmake --build --preset test-uri-host-authority
+      - name: Run test-uri-host-authority
+        run: ./build/test-uri-host-authority
   build-test-uri-string:
     name: Build test-uri-string
     needs: install

@@ -163,7 +163,6 @@
                 "test-find-str",
                 "test-functional",
                 "test-header-accept-encoding",
-                "test-header-host-authority",
                 "test-http-parser",
                 "test-io",
                 "test-ip-address",
@@ -189,6 +188,7 @@
                 "test-tuple",
                 "test-type-traits",
                 "test-unicode",
+                "test-uri-host-authority",
                 "test-uri-string",
                 "test-uri",
                 "test-ustring",
@@ -284,11 +284,6 @@
         {
             "name": "test-header-accept-encoding",
             "targets": "test-header-accept-encoding",
-            "inherits": "default-build"
-        },
-        {
-            "name": "test-header-host-authority",
-            "targets": "test-header-host-authority",
             "inherits": "default-build"
         },
         {
@@ -414,6 +409,11 @@
         {
             "name": "test-unicode",
             "targets": "test-unicode",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-uri-host-authority",
+            "targets": "test-uri-host-authority",
             "inherits": "default-build"
         },
         {
@@ -585,10 +585,6 @@
             "inherits": "test-default"
         },
         {
-            "name": "test-header-host-authority",
-            "inherits": "test-default"
-        },
-        {
             "name": "test-http-parser",
             "inherits": "test-default"
         },
@@ -686,6 +682,10 @@
         },
         {
             "name": "test-unicode",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-uri-host-authority",
             "inherits": "test-default"
         },
         {

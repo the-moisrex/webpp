@@ -80,3 +80,45 @@ TEST(URITests, URIParsingWithWarnings) {
     url = "https:this-is-stupid";
     EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
 }
+
+TEST(URITests, URIStatusIterator) {
+    uri::uri_status_type status = 0;
+    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status |= stl::to_underlying(uri::uri_status::invalid_character);
+
+    uri::uri_status_type const original = status;
+
+    int i = 0;
+    for (auto item : uri::uri_status_iterator{status}) {
+        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
+                    item == uri::uri_status::invalid_character)
+          << "Index: " << i << "\n"
+          << "Value: " << stl::to_underlying(item) << "\n"
+          << "Original: " << original << "\n"
+          << to_string(item);
+        ++i;
+    }
+    EXPECT_EQ(i, 2);
+}
+
+
+TEST(URITests, URIStatusIteratorWithValue) {
+    uri::uri_status_type status = 0;
+    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status |= stl::to_underlying(uri::uri_status::invalid_character);
+    status |= stl::to_underlying(uri::uri_status::valid_queries);
+
+    uri::uri_status_type const original = status;
+
+    int i = 0;
+    for (auto item : uri::uri_status_iterator{status}) {
+        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
+                    item == uri::uri_status::invalid_character || item == uri::uri_status::valid_queries)
+          << "Index: " << i << "\n"
+          << "Value: " << stl::to_underlying(item) << "\n"
+          << "Original: " << original << "\n"
+          << to_string(item);
+        ++i;
+    }
+    EXPECT_EQ(i, 3);
+}
