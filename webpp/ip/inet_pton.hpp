@@ -3,7 +3,7 @@
 #ifndef WEBPP_IP_INET_PTON_HPP
 #define WEBPP_IP_INET_PTON_HPP
 
-#include "../std/std.hpp"
+#include "../std/string_view.hpp"
 #include "ip.hpp"
 
 #include <cstdint>
@@ -46,42 +46,43 @@ namespace webpp {
     /**
      * Get the error message as a string view
      */
-    static constexpr const char* to_string(inet_pton4_status status) noexcept {
+    static constexpr stl::string_view to_string(inet_pton4_status status) noexcept {
         switch (status) {
             using enum inet_pton4_status;
-            case valid: return "Valid IPv4 address";
+            case valid: return {"Valid IPv4 address"};
             case too_little_octets:
-                return "The IPv4 doesn't have enough octets; it should contain exactly 4 octets";
-            case invalid_octet_range: return "At least one of the IPv4 octets is of an invalid range";
-            case too_many_octets: return "The IPv4 has too many octets; it should contain exactly 4 octets";
-            case invalid_leading_zero: return "The IPv4's octet started with a zero which is not valid";
-            case invalid_character: return "Invalid character found in the IPv4";
-            case bad_ending: return "IPv4 ended unexpectedly";
-            case invalid_octet: return "Found an invalid character in the IPv4 octets";
-            case invalid_prefix: return "IPv4 has an invalid prefix";
+                return {"The IPv4 doesn't have enough octets; it should contain exactly 4 octets"};
+            case invalid_octet_range: return {"At least one of the IPv4 octets is of an invalid range"};
+            case too_many_octets: return {"The IPv4 has too many octets; it should contain exactly 4 octets"};
+            case invalid_leading_zero: return {"The IPv4's octet started with a zero which is not valid"};
+            case invalid_character: return {"Invalid character found in the IPv4"};
+            case bad_ending: return {"IPv4 ended unexpectedly"};
+            case invalid_octet: return {"Found an invalid character in the IPv4 octets"};
+            case invalid_prefix: return {"IPv4 has an invalid prefix"};
         }
-        return ""; // just to get rid of static analyzers' warning
+        stl::unreachable();
     }
 
     /**
      * Get the error message as a string view
      */
-    static constexpr const char* to_string(inet_pton6_status status) noexcept {
+    static constexpr stl::string_view to_string(inet_pton6_status status) noexcept {
         switch (status) {
             using enum inet_pton6_status;
-            case valid: return "Valid IPv6 address";
-            case invalid_octet_range: return "At least one of the IPv6 octets is of an invalid range.";
-            case invalid_colon_usage: return "The colon is used in the wrong place in IPv6";
-            case bad_ending: return "The IPv6 ended unexpectedly";
-            case invalid_character: return "Invalid character found in the IPv6";
-            case invalid_prefix: return "IPv6 has an invalid prefix";
+            case valid: return {"Valid IPv6 address"};
+            case invalid_octet_range: return {"At least one of the IPv6 octets is of an invalid range."};
+            case invalid_colon_usage: return {"The colon is used in the wrong place in IPv6"};
+            case bad_ending: return {"The IPv6 ended unexpectedly"};
+            case invalid_character: return {"Invalid character found in the IPv6"};
+            case invalid_prefix: return {"IPv6 has an invalid prefix"};
         }
-        return ""; // just to get rid of static analyzers' warning
+        stl::unreachable();
     }
 
 
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    // NOLINTBEGIN(*-easily-swappable-parameters)
+    // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
+    // NOLINTBEGIN(*-avoid-magic-numbers)
 
     //
     /**
@@ -223,7 +224,6 @@ namespace webpp {
         const char* src = inp_src;
         return inet_pton4(src, src_endp, out, prefix);
     }
-
 
     /**
      * Convert IPv6 Presentation string into network order binary form.
@@ -393,8 +393,9 @@ namespace webpp {
         return inet_pton6(src, src_endp, out, prefix);
     }
 
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // NOLINTEND(*-avoid-magic-numbers)
+    // NOLINTEND(*-pro-bounds-pointer-arithmetic)
+    // NOLINTEND(*-easily-swappable-parameters)
 
 } // namespace webpp
 

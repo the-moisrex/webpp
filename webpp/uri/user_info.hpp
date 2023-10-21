@@ -24,7 +24,7 @@ namespace webpp::uri {
                     // todo: continue
                     break;
                 case '\\':
-                    if (!is_known(ctx.out.get_scheme(ctx.whole())))
+                    if (!is_special_scheme(ctx.out.get_scheme(ctx.whole())))
                         break;
                     [[fallthrough]];
                 case '/':

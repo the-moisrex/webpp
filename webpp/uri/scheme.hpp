@@ -1,50 +1,16 @@
 // Created by moisrex on 10/30/20.
 
-#ifndef WEBPP_SCHEME_HPP
-#define WEBPP_SCHEME_HPP
+#ifndef WEBPP_URI_SCHEME_HPP
+#define WEBPP_URI_SCHEME_HPP
 
 #include "../common/meta.hpp"
 #include "../std/string.hpp"
 #include "../strings/charset.hpp"
+#include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "./details/uri_status.hpp"
 
 namespace webpp::uri {
-
-    /**
-     * @return 0 if unknown, otherwise return the port
-     */
-    template <istl::StringView StrT>
-    [[nodiscard]] constexpr stl::uint16_t known_port(StrT scheme) noexcept {
-        // NOLINTBEGIN(*-avoid-magic-numbers)
-        switch (scheme.size()) {
-            case 2:
-                if (scheme[0] == 'w' && scheme[1] == 's')
-                    return 80u;
-                break;
-            case 3:
-                if (scheme == "wss")
-                    return 443u;
-                else if (scheme == "ftp")
-                    return 21;
-                break;
-            case 4:
-                if (scheme == "http")
-                    return 80u;
-                break;
-            case 5:
-                if (scheme == "https")
-                    return 443;
-                break;
-        }
-        return 0u;
-        // NOLINTEND(*-avoid-magic-numbers)
-    }
-
-    template <istl::StringView StrT>
-    [[nodiscard]] constexpr bool is_known(StrT scheme) noexcept {
-        return known_port(scheme) != 0u;
-    }
 
     namespace details { // states
 
@@ -266,7 +232,7 @@ namespace webpp::uri {
                         const auto url_scheme =
                           stl::basic_string_view<char_type>{ctx.pos,
                                                             static_cast<stl::size_t>(ctx.pos - ctx.beg)};
-                        if (is_known(url_scheme) != is_known(ctx.out.scheme)) {
+                        if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
                             ctx.status = stl::to_underlying(incompatible_schemes);
                             return;
                         }
@@ -295,7 +261,7 @@ namespace webpp::uri {
                         }
                         details::file_state(ctx);
                         return;
-                    } else if (is_known(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
+                    } else if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
                         // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {
                             if (ctx.out.get_scheme(ctx.whole()) == ctx.base.get_scheme(ctx.whole())) {
@@ -365,4 +331,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_SCHEME_HPP
+#endif // WEBPP_URI_SCHEME_HPP

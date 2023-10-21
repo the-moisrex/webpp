@@ -64,7 +64,7 @@ namespace webpp::uri {
         missing_following_solidus       = warning_bit >> 1u, // Missing '//' after 'file:'
         missing_scheme_non_relative_url = error_bit | 5u,
 
-        // domain-specific errors:
+        // host-specific errors:
         valid_path_or_authority = valid_bit | 3u,
         valid_authority         = valid_bit | 4u,
         valid_host              = valid_bit | 5u,
@@ -76,6 +76,11 @@ namespace webpp::uri {
         double_hyphen   = error_bit | 10u, // the domain cannot have double hyphens unless it's a punycode
         empty_subdomain = error_bit | 11u, // a domain/subdomain cannot be empty (no double dotting)
         host_missing    = error_bit | 12u,
+        invalid_host_code_point   = error_bit | 13u, // non-special (opaque) host contains invalid character
+        invalid_domain_code_point = error_bit | 14u, // domain name contains invalid chars
+
+        // ipv4-specific errors and warnings:
+        // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
 
         // port-specific errors:
         port_out_of_range = error_bit | 13u,

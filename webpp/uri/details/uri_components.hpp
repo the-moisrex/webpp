@@ -67,8 +67,14 @@ namespace webpp::uri {
         seg_type fragment_start  = omitted; // query end
 
         template <typename CharT = char>
-        constexpr void set_scheme(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
+        constexpr void set_scheme(CharT const* beg, CharT const* end) noexcept {
             scheme_end = static_cast<seg_type>(end - beg);
+        }
+
+
+        constexpr void set_port(seg_type start, seg_type end) noexcept {
+            port_start    = start;
+            authority_end = end;
         }
 
         constexpr void clear_scheme() noexcept {
@@ -412,7 +418,7 @@ namespace webpp::uri {
         //               "If you have Base URI, then you need to make sure the output is overridable "
         //               "(because output's URI's components may come from different places, "
         //               "for example the scheme and domain may come from the base URI while the path "
-        //               "is comming from the new string.)");
+        //               "is coming from the new string.)");
 
 
         // we don't need to know the beginning of the string("beg" field), because the output uri components
