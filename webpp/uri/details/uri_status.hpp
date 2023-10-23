@@ -69,6 +69,7 @@ namespace webpp::uri {
         valid_authority         = valid_bit | 4u,
         valid_host              = valid_bit | 5u,
         valid_port              = valid_bit | 6u,
+        valid_authority_end     = valid_bit | 7u,
         subdomain_too_long      = error_bit | 6u, // the subdomain is too long
         dot_at_end              = error_bit | 7u, // the domain ended unexpectedly
         begin_with_hyphen       = error_bit | 8u, // the domain cannot start with hyphens
@@ -83,21 +84,21 @@ namespace webpp::uri {
         // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
 
         // port-specific errors:
-        port_out_of_range = error_bit | 13u,
-        port_invalid      = error_bit | 14u, // invalid characters and what not
+        port_out_of_range = error_bit | 15u,
+        port_invalid      = error_bit | 16u, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 7u,
-        valid_opaque_path            = valid_bit | 8u,
+        valid_path                   = valid_bit | 8u,
+        valid_opaque_path            = valid_bit | 9u,
         reverse_solidus_used         = warning_bit >> 2u,
         windows_drive_letter_used    = warning_bit >> 3u,
         windows_drive_letter_as_host = warning_bit >> 4u,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 9u,
+        valid_queries = valid_bit | 10u,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 10u,
+        valid_fragment = valid_bit | 11u,
     };
 
     /**
@@ -128,6 +129,11 @@ namespace webpp::uri {
             case valid_authority: return {"Valid scheme that should be followed by an authority."};
             case valid_host: return {"Valid URI until host; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
+            case valid_authority_end:
+                return {"Valid URI until the authority ends "
+                        "(meaning the next part of the URI should be a path, query, "
+                        "fragment, or a combination of them); "
+                        "parsing is not done yet."};
             case scheme_ended_unexpectedly:
                 return {"This URI doesn't seem to have enough information, not even a qualified scheme."};
             case incompatible_schemes:
@@ -153,6 +159,15 @@ namespace webpp::uri {
             case host_missing:
                 return {"Based on the URI's scheme, this URL must have a host; "
                         "more info: https://url.spec.whatwg.org/#host-missing"};
+            case invalid_host_code_point:
+                return {"Invalid character found in the "
+                        "opaque host (opaque means that URI is not ftp, http, https, ws, or wss); "
+                        "more info: https://url.spec.whatwg.org/#host-invalid-code-point"};
+            case invalid_domain_code_point:
+                return {"Invalid character found in the domain name "
+                        "(domain name is not host; "
+                        "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
+                        "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
 
                 // port-specific errors:
             case port_out_of_range:

@@ -21,7 +21,6 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#port-state
 
         using ctx_type  = uri::parsing_uri_context<T...>;
-        using char_type = typename ctx_type::char_type;
         using seg_type  = typename ctx_type::out_seg_type;
 
         auto const    beg        = ctx.pos;
@@ -72,9 +71,8 @@ namespace webpp::uri {
                         ctx.out.set_port(beg, ctx.pos);
                     }
 
-                    // todo:
                     // https://url.spec.whatwg.org/#path-start-state
-                    ctx.status |= stl::to_underlying(uri_status::valid_path);
+                    ctx.status |= stl::to_underlying(uri_status::valid_authority_end);
                     return;
             }
         }

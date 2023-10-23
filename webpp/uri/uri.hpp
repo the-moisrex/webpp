@@ -27,6 +27,7 @@ namespace webpp::uri {
                 case valid_authority: parse_authority(ctx); break;
                 case valid_host: parse_host(ctx); break;
                 case valid_port: parse_port(ctx); break;
+                case valid_authority_end: parse_authority_end(ctx); break;
                 case valid_opaque_path: parse_opaque_path(ctx); break;
                 case valid_path: parse_path(ctx); break;
                 case valid_queries: parse_queries(ctx); break;
@@ -41,6 +42,42 @@ namespace webpp::uri {
     parse_uri(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
         parse_scheme(ctx);
         continue_parsing_uri(ctx);
+    }
+
+
+    template <istl::StringView StrV>
+    static constexpr auto parse_uri(StrV str) noexcept {
+        using context_type = uri::parsing_uri_context<istl::char_type_of_t<StrV>, StrV>;
+        context_type context{.beg = str.data(),
+                             .pos = str.data(), // current position is start
+                             .end = str.data() + str.size()};
+        parse_uri(context);
+        return context;
+    }
+
+    template <istl::StringLike StrT, istl::StringViewifiable OStrV>
+    static constexpr auto parse_uri(StrT const& the_url,
+                                    OStrV&&     origin_url) noexcept(istl::StringView<StrT>) {
+        using char_type = istl::char_type_of_t<StrT>;
+        static_assert(
+          stl::same_as<char_type, istl::char_type_of_t<OStrV>>,
+          "Origin's string's char type must be the same as the specified URI's string's char type.");
+        auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
+        using base_context_type = uri::parsing_uri_context<char_type>;
+        using base_seg_type     = typename base_context_type::base_seg_type;
+
+        base_context_type origin_context{.beg = origin.data(),
+                                         .pos = origin.data(),
+                                         .end = origin.data() + origin.size()};
+        parse_uri(origin_context);
+
+        using context_type = uri::parsing_uri_context<istl::char_type_of_t<StrT>, StrT, base_seg_type>;
+        context_type context{.beg  = the_url.data(),
+                             .pos  = the_url.data(), // current position is start
+                             .end  = the_url.data() + the_url.size(),
+                             .base = origin_context};
+        parse_uri(context);
+        return context;
     }
 
 

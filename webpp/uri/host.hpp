@@ -14,6 +14,7 @@ namespace webpp::uri {
 
     namespace details {
 
+
         template <typename... T>
         static constexpr void host_parsing_state(uri::parsing_uri_context<T...>& ctx) noexcept(
           uri::parsing_uri_context<T...>::is_nothrow) {
@@ -21,6 +22,15 @@ namespace webpp::uri {
         }
     } // namespace details
 
+    /// Path start state (I like to call it authority end because it's more RFC like to say that,
+    /// but WHATWG likes to call it "path start state")
+    template <typename... T>
+    static constexpr void parse_authority_end(uri::parsing_uri_context<T...>& ctx) noexcept(
+      uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#path-start-state
+    }
+
+    /// Parse the host port
     template <typename... T>
     static constexpr void
     parse_host(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
