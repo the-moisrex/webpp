@@ -7,6 +7,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
+#include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 
 namespace webpp::uri {
@@ -28,6 +29,37 @@ namespace webpp::uri {
     static constexpr void parse_authority_end(uri::parsing_uri_context<T...>& ctx) noexcept(
       uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
+
+        if (ctx.pos == ctx.end) {
+            // todo: I'm guessing
+            ctx.status |= stl::to_underlying(uri_status::valid);
+            return;
+        }
+        if (is_special(ctx.out.get_scheme(ctx.whole()))) {
+            switch (*ctx.pos) {
+                case '\\':
+                    ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
+                    [[fallthrough]];
+                case '/': ++ctx.pos; break;
+            }
+        } else {
+            switch (*ctx.pos) {
+                case '?':
+                    ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                    ++ctx.pos;
+                    ctx.out.clear_queries();
+                    return;
+                case '#':
+                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    ++ctx.pos;
+                    ctx.out.clear_fragment();
+                    return;
+                default:
+                    ctx.status |= stl::to_underlying(uri_status::valid_path);
+                    ctx.out.clear_path();
+                    return;
+            }
+        }
     }
 
     /// Parse the host port
