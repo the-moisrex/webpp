@@ -1,10 +1,11 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_USER_INFO_HPP
-#define WEBPP_USER_INFO_HPP
+#ifndef WEBPP_AUTHORITY_HPP
+#define WEBPP_AUTHORITY_HPP
 
 #include "../std/string.hpp"
 #include "details/constants.hpp"
+#include "details/uri_components.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
@@ -15,13 +16,35 @@ namespace webpp::uri {
       uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#authority-state
 
-        bool at_char_seen = false;
+        using ctx_type = uri::parsing_uri_context<T...>;
+
+        bool at_char_seen        = false;
+        bool password_token_seen = false;
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             switch (*ctx.pos) {
                 case '@':
-                    // ctx.status = stl::to_underlying(uri_status::invalid_credentials);
+                    ctx.status = stl::to_underlying(uri_status::has_credentials);
+
+                    if constexpr (ctx_type::is_modifiable) {
+                        if (at_char_seen) {
+                            if (password_token_seen) {
+                                ctx.out.append_password("%40");
+                            } else {
+
+                                ctx.out.append_username("%40");
+                            }
+                        }
+                    }
                     at_char_seen = true;
+
                     // todo: continue
+
+
+                    break;
+                case ':':
+                    if (password_token_seen) {
+                        // todo
+                    }
                     break;
                 case '\\':
                     if (!is_special_scheme(ctx.out.get_scheme(ctx.whole())))
@@ -101,4 +124,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_USER_INFO_HPP
+#endif // WEBPP_AUTHORITY_HPP

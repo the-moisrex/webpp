@@ -55,7 +55,7 @@ namespace webpp::uri {
         /// resetting the values of integer types are always noexcept
         static constexpr bool is_nothrow = true;
 
-        static constexpr bool is_overridable = false;
+        static constexpr bool is_modifiable = false;
 
         seg_type scheme_end      = omitted; // excluding :// stuff
         seg_type authority_start = omitted; // username/host start
@@ -231,8 +231,7 @@ namespace webpp::uri {
         /// is resetting the values are noexcept or not
         static constexpr bool is_nothrow = stl::is_nothrow_assignable_v<string_type, char_type const*>;
 
-        static constexpr bool is_overridable = false;
-
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
         string_type scheme{};
         string_type username{};
@@ -381,9 +380,9 @@ namespace webpp::uri {
         using base_type     = uri::uri_components<base_seg_type>;
         using state_type    = stl::underlying_type_t<uri_status>;
 
-        static constexpr bool is_nothrow     = out_type::is_nothrow;
-        static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
-        static constexpr bool is_overridable = out_type::is_overridable;
+        static constexpr bool is_nothrow    = out_type::is_nothrow;
+        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_modifiable = out_type::is_modifiable;
 
         const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
         pointer       pos = nullptr; // current position
@@ -410,11 +409,11 @@ namespace webpp::uri {
         using base_type     = uri::uri_components<base_seg_type>;
         using state_type    = stl::underlying_type_t<uri_status>;
 
-        static constexpr bool is_nothrow     = out_type::is_nothrow;
-        static constexpr bool has_base_uri   = !stl::is_void_v<BaseSegType>;
-        static constexpr bool is_overridable = out_type::is_overridable;
+        static constexpr bool is_nothrow    = out_type::is_nothrow;
+        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_modifiable = out_type::is_modifiable;
 
-        // static_assert(has_base_uri && !is_overridable,
+        // static_assert(has_base_uri && !is_modifiable,
         //               "If you have Base URI, then you need to make sure the output is overridable "
         //               "(because output's URI's components may come from different places, "
         //               "for example the scheme and domain may come from the base URI while the path "

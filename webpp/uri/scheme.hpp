@@ -37,6 +37,15 @@ namespace webpp::uri {
             // https://url.spec.whatwg.org/#file-slash-state
 
             // todo
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    case '\0':
+                    case '/':
+                    case '\\':
+                    case '?':
+                    case '#': break;
+                }
+            }
         }
 
 
@@ -228,25 +237,25 @@ namespace webpp::uri {
                 // handling ":" character
                 if (*ctx.pos == ':') {
 
-                    if constexpr (ctx_type::is_overridable) {
-                        const auto url_scheme =
-                          stl::basic_string_view<char_type>{ctx.pos,
-                                                            static_cast<stl::size_t>(ctx.pos - ctx.beg)};
-                        if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
-                            ctx.status = stl::to_underlying(incompatible_schemes);
-                            return;
-                        }
+                    // if constexpr (ctx_type::is_overridable) {
+                    //     const auto url_scheme =
+                    //       stl::basic_string_view<char_type>{ctx.pos,
+                    //                                         static_cast<stl::size_t>(ctx.pos - ctx.beg)};
+                    //     if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
+                    //         ctx.status = stl::to_underlying(incompatible_schemes);
+                    //         return;
+                    //     }
 
 
-                        if (ctx.in.get_scheme(ctx.whole()) == "file") {
-                            if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
-                                ctx.status = stl::to_underlying(incompatible_schemes);
-                                return;
-                            }
-                        }
+                    //     if (ctx.in.get_scheme(ctx.whole()) == "file") {
+                    //         if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
+                    //             ctx.status = stl::to_underlying(incompatible_schemes);
+                    //             return;
+                    //         }
+                    //     }
 
-                        ctx.out.clear_port();
-                    }
+                    //     ctx.out.clear_port();
+                    // }
 
                     ctx.out.set_scheme(ctx.beg, ctx.pos);
                     ++ctx.pos;

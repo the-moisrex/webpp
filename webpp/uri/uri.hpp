@@ -4,6 +4,7 @@
 #define WEBPP_URI_HPP
 
 #include "../std/string_view.hpp"
+#include "authority.hpp"
 #include "fragment.hpp"
 #include "host.hpp"
 #include "path.hpp"
@@ -11,7 +12,6 @@
 #include "queries.hpp"
 #include "scheme.hpp"
 #include "uri_string.hpp"
-#include "user_info.hpp"
 
 namespace webpp::uri {
 

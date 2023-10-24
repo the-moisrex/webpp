@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <bitset>
 #include <cassert>
 #include <concepts>
 #include <initializer_list>
@@ -229,15 +230,6 @@ namespace webpp {
         }
     };
 
-    template <typename T>
-    concept CharSet = requires(T cs) {
-        typename stl::remove_cvref_t<T>::value_type;
-        stl::remove_cvref_t<T>::array_size;
-        requires stl::same_as<
-          stl::remove_cvref_t<T>,
-          charset<typename stl::remove_cvref_t<T>::value_type, stl::remove_cvref_t<T>::array_size>>;
-    };
-
     /**
      * This constructs a character set that contains all the characters between the given
      * "first" and "last" characters, inclusive.
@@ -439,12 +431,6 @@ namespace webpp {
 #undef webpp_or_set
     };
 
-    template <typename T>
-    concept CharMap = requires(T cs) {
-        stl::remove_cvref_t<T>::array_size;
-        requires istl::cvref_as<T, charmap<stl::remove_cvref_t<T>::array_size>>;
-    };
-
     /**
      * This constructs a character map that contains all the characters between the given
      * "first" and "last" characters, inclusive.
@@ -476,6 +462,78 @@ namespace webpp {
     using charmap_half =
       charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative chars)
     using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
+
+
+
+
+
+    template <stl::size_t N>
+    struct bitmap : stl::bitset<N> {
+        using bitset_type                       = stl::bitset<N>;
+        static constexpr stl::size_t array_size = N;
+
+        using stl::bitset<N>::bitset;
+
+        template <stl::size_t N1, stl::size_t... NN>
+            requires((N1 <= N) && ((NN <= N) && ...)) // todo
+        constexpr bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept : bitset_type{set1} {
+            ((*this |= sets), ...);
+        }
+
+
+        template <typename... T>
+            requires((requires(T set) { set.string_view(); }) && ...)
+        constexpr bitmap(T const&... sets) noexcept {
+            (([this](T const& set) constexpr noexcept {
+                 for (auto ch : set) {
+                     this->set(static_cast<stl::size_t>(ch));
+                 }
+             })(sets),
+             ...);
+        }
+
+
+        template <typename CharT>
+        [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
+            return this->operator[](static_cast<stl::size_t>(c));
+        }
+
+
+        template <typename CharT>
+        [[nodiscard]] constexpr bool contains(stl::basic_string_view<CharT> set) const noexcept {
+            for (auto const ch : set) {
+                if (!this->contains(ch))
+                    return false;
+            }
+            return true;
+        }
+    };
+
+    template <istl::CharType CharT = char, stl::size_t... N>
+    bitmap(const CharT (&... str)[N]) -> bitmap<stl::max(N...) - 1>;
+
+    template <typename... SetN>
+        requires(requires { SetN::array_size; } && ...)
+    bitmap(SetN&&...) -> bitmap<stl::max({SetN::array_size...})>;
+
+
+
+    template <auto First, auto Last, stl::size_t Size = static_cast<stl::size_t>(Last) + 1>
+    [[nodiscard]] static consteval auto bitmap_range() noexcept {
+        bitmap<Size> data{}; // all false
+        for (auto it = static_cast<stl::size_t>(First); it != static_cast<stl::size_t>(Last) + 1; ++it)
+            data.set(it);
+        return data;
+    }
+
+    template <typename T>
+    concept CharSet = requires(stl::remove_cvref_t<T> cs) {
+        stl::remove_cvref_t<T>::array_size;
+
+        { cs.size() } noexcept -> stl::same_as<stl::size_t>;
+        { cs.contains('a') } noexcept -> stl::same_as<bool>;
+        { cs.contains("") } noexcept -> stl::same_as<bool>;
+    };
 
 
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays)

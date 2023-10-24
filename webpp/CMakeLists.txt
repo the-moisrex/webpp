@@ -169,7 +169,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/scheme.hpp
         ${LIB_INCLUDE_DIR}/uri/uri.hpp
         ${LIB_INCLUDE_DIR}/uri/uri_string.hpp
-        ${LIB_INCLUDE_DIR}/uri/user_info.hpp
+        ${LIB_INCLUDE_DIR}/uri/authority.hpp
         ${LIB_INCLUDE_DIR}/uri/domain.hpp
 
         ${LIB_INCLUDE_DIR}/crypto/base64.hpp

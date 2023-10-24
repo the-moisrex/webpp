@@ -101,6 +101,52 @@ namespace webpp::uri::details {
       charset(PCHAR_NOT_PCT_ENCODED<char_type>, charset<char_type, 1>('/'));
 
 
+
+    /// https://infra.spec.whatwg.org/#c0-control
+    static constexpr auto C0_CONTROL_SET = bitmap_range<0x0ull, 0x001Full>();
+
+
+
+    /// https://url.spec.whatwg.org/#c0-control-percent-encode-set
+    /// C0 controls and all code points greater than U+007E (~)
+    static constexpr bitmap<256u> C0_CONTROL_ENCODE_SET{bitmap_range<0x0ull, 0x001Full, 256u>(),
+                                                        bitmap_range<0x007Eull, 0x00FFull>()};
+
+    /// https://url.spec.whatwg.org/#fragment-percent-encode-set
+    /// C0 control percent-encode set and U+0020 SPACE, U+0022 ("), U+003C (<), U+003E (>), and U+0060 (`)
+    static constexpr bitmap<256u> FRAGMENT_ENCODE_SET{C0_CONTROL_ENCODE_SET,
+                                                      bitmap<256u>{charset(' ', '"', '<', '>', '`')}};
+
+
+    /// https://url.spec.whatwg.org/#query-percent-encode-set
+    /// C0 control percent-encode set and U+0020 SPACE, U+0022 ("), U+0023 (#), U+003C (<), and U+003E (>).
+    static constexpr bitmap<256u> QUERIES_ENCODE_SET{C0_CONTROL_ENCODE_SET,
+                                                     bitmap<256u>{charset(' ', '"', '<', '>', '#')}};
+
+    /// https://url.spec.whatwg.org/#special-query-percent-encode-set
+    /// query percent-encode set and U+0027 (').
+    static constexpr bitmap<256u> SPECIAL_QUERIES_ENCODE_SET{QUERIES_ENCODE_SET, bitmap<256u>{charset('\'')}};
+
+    /// https://url.spec.whatwg.org/#path-percent-encode-set
+    /// query percent-encode set and U+003F (?), U+0060 (`), U+007B ({), and U+007D (}).
+    static constexpr bitmap<256u> PATH_ENCODE_SET{QUERIES_ENCODE_SET,
+                                                  bitmap<256u>{charset('?', '`', '{', '}')}};
+
+    /// https://url.spec.whatwg.org/#userinfo-percent-encode-set
+    /// path percent-encode set and U+002F (/), U+003A (:), U+003B (;), U+003D (=), U+0040 (@), U+005B ([) to
+    /// U+005E (^), inclusive, and U+007C (|).
+    static constexpr bitmap<256u> USER_INFO_ENCODE_SET{PATH_ENCODE_SET,
+                                                       bitmap<256u>{charset('/', ':', ';', '=', '@', '|')},
+                                                       bitmap_range<'[', '^', 256u>()};
+
+    /// https://url.spec.whatwg.org/#component-percent-encode-set
+    /// userinfo percent-encode set and U+0024 ($) to U+0026 (&), inclusive, U+002B (+), and U+002C (,).
+    static constexpr bitmap<256u> COMPONENT_ENCODE_SET{USER_INFO_ENCODE_SET,
+                                                       bitmap<256u>{charset('+', ',')},
+                                                       bitmap_range<'$', '&', 256u>()};
+
+
+
 } // namespace webpp::uri::details
 
 #endif // WEBPP_URI_CONSTANTS_HPP

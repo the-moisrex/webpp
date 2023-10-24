@@ -4,6 +4,7 @@
 #define WEBPP_URI_ENCODING_HPP
 
 #include "../common/meta.hpp"
+#include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
 
@@ -189,6 +190,14 @@ namespace webpp {
         }
         output.shrink_to_fit();
     }
+
+
+
+    /// https://url.spec.whatwg.org/#string-percent-encode-after-encoding
+    static constexpr bool percent_encode() noexcept {
+        return true;
+    }
+
 
 } // namespace webpp
 

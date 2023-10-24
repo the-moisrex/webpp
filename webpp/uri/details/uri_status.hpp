@@ -79,6 +79,7 @@ namespace webpp::uri {
         host_missing    = error_bit | 12u,
         invalid_host_code_point   = error_bit | 13u, // non-special (opaque) host contains invalid character
         invalid_domain_code_point = error_bit | 14u, // domain name contains invalid chars
+        has_credentials           = warning_bit >> 2u,
 
         // ipv4-specific errors and warnings:
         // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
@@ -90,9 +91,9 @@ namespace webpp::uri {
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 8u,
         valid_opaque_path            = valid_bit | 9u,
-        reverse_solidus_used         = warning_bit >> 2u,
-        windows_drive_letter_used    = warning_bit >> 3u,
-        windows_drive_letter_as_host = warning_bit >> 4u,
+        reverse_solidus_used         = warning_bit >> 3u,
+        windows_drive_letter_used    = warning_bit >> 4u,
+        windows_drive_letter_as_host = warning_bit >> 5u,
 
         // queries-specific errors/warnings:
         valid_queries = valid_bit | 10u,
@@ -168,6 +169,9 @@ namespace webpp::uri {
                         "(domain name is not host; "
                         "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
                         "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
+            case has_credentials:
+                return {"The input has credentials (username or password); "
+                        "more info: https://url.spec.whatwg.org/#invalid-credentials"};
 
                 // port-specific errors:
             case port_out_of_range:
