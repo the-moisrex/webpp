@@ -228,6 +228,14 @@ namespace webpp {
           typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
             return StrType{this->data(), this->size(), alloc};
         }
+
+
+
+        /// default value is for compatiblity
+        constexpr charset& set(stl::size_t pos, value_type val = '\0') noexcept {
+            this->operator[](pos) = val;
+            return *this;
+        }
     };
 
     /**
@@ -317,6 +325,7 @@ namespace webpp {
         requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
     struct charmap : public stl::array<bool, N> {
         static constexpr stl::size_t array_size = N;
+        using value_type                        = bool;
 
       private:
         using super = stl::array<bool, N>;
@@ -428,6 +437,12 @@ namespace webpp {
             return StrType{super::data(), super::size(), alloc};
         }
 
+
+        constexpr charmap& set(stl::size_t pos, bool val = true) noexcept {
+            this->operator[](pos) = val;
+            return *this;
+        }
+
 #undef webpp_or_set
     };
 
@@ -466,7 +481,12 @@ namespace webpp {
 
 
 
+#ifndef __cpp_lib_constexpr_bitset
 
+    template <stl::size_t N>
+    struct bitmap = charmap<N>;
+
+#else
     template <stl::size_t N>
     struct bitmap : stl::bitset<N> {
         using bitset_type                       = stl::bitset<N>;
@@ -515,7 +535,7 @@ namespace webpp {
     template <typename... SetN>
         requires(requires { SetN::array_size; } && ...)
     bitmap(SetN&&...) -> bitmap<stl::max({SetN::array_size...})>;
-
+#endif
 
 
     template <auto First, auto Last, stl::size_t Size = static_cast<stl::size_t>(Last) + 1>
@@ -533,6 +553,7 @@ namespace webpp {
         { cs.size() } noexcept -> stl::same_as<stl::size_t>;
         { cs.contains('a') } noexcept -> stl::same_as<bool>;
         { cs.contains("") } noexcept -> stl::same_as<bool>;
+        cs.set(1);
     };
 
 

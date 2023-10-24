@@ -20,6 +20,12 @@ inline constexpr charset<char, 2> OWS{0x20, 0x09};  // SP, HTAB
 
 
 
+TEST(CharsetTest, CharsetConcepts) {
+    EXPECT_TRUE((CharSet<charset<char, 1>>) );
+    EXPECT_TRUE((CharSet<charmap<1>>) );
+    EXPECT_TRUE((CharSet<bitmap<1>>) );
+}
+
 TEST(CharsetTest, CharsetCreation) {
     constexpr auto chars = charset_range<char, 'a', 'z'>();
     EXPECT_TRUE(chars.contains('a')) << "contains 'a'";
