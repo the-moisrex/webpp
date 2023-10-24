@@ -484,7 +484,7 @@ namespace webpp {
 #ifndef __cpp_lib_constexpr_bitset
 
     template <stl::size_t N>
-    struct bitmap = charmap<N>;
+    using bitmap = charmap<N>;
 
 #else
     template <stl::size_t N>
