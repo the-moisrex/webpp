@@ -4,6 +4,7 @@
 #define WEBPP_IP_INET_PTON_HPP
 
 #include "../std/string_view.hpp"
+#include "../strings/hex.hpp"
 #include "ip.hpp"
 
 #include <cstdint>
@@ -83,21 +84,6 @@ namespace webpp {
     // NOLINTBEGIN(*-easily-swappable-parameters)
     // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
     // NOLINTBEGIN(*-avoid-magic-numbers)
-
-    //
-    /**
-     * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
-     */
-    template <typename IntegerType = int>
-    static constexpr IntegerType hex_digit_value(char ch) noexcept {
-        if ('0' <= ch && ch <= '9')
-            return ch - '0';
-        if ('a' <= ch && ch <= 'f')
-            return ch - 'a' + char{10};
-        if ('A' <= ch && ch <= 'F')
-            return ch - 'A' + char{10};
-        return -1;
-    }
 
     namespace details {
         static constexpr int parse_prefix(const char*& src, const char* src_endp) noexcept {
@@ -256,7 +242,7 @@ namespace webpp {
         char         ch; // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
-            int const digit = hex_digit_value(ch);
+            int const digit = ascii::hex_digit_value(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;

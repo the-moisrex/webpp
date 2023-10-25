@@ -330,11 +330,13 @@ namespace webpp {
       private:
         using super = stl::array<bool, N>;
 
+        // NOLINTBEGIN(*-avoid-do-while)
 #define webpp_or_set(set, out)                                      \
     do {                                                            \
         for (stl::size_t index = 0; index != (set).size(); ++index) \
             (out)[static_cast<stl::size_t>((set)[index])] |= true;  \
     } while (false)
+        // NOLINTEND(*-avoid-do-while)
 
 
       public:
@@ -489,7 +491,9 @@ namespace webpp {
 #else
     template <stl::size_t N>
     struct bitmap : stl::bitset<N> {
-        using bitset_type                       = stl::bitset<N>;
+        using value_type  = bool;
+        using bitset_type = stl::bitset<N>;
+
         static constexpr stl::size_t array_size = N;
 
         using stl::bitset<N>::bitset;
@@ -515,6 +519,7 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
+            // [[assume(c >= 0 && c <= N)]];
             return this->operator[](static_cast<stl::size_t>(c));
         }
 

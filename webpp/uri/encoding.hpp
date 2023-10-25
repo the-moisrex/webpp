@@ -7,6 +7,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/hex.hpp"
 
 namespace webpp {
 
@@ -19,13 +20,10 @@ namespace webpp {
      * longer than or equal to the decoded version thus we don't need allocations.
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
-              stl::size_t         N,
-              typename Iter      = char*,
-              typename ConstIter = char const*>
+              typename Iter              = char*,
+              typename ConstIter         = char const*>
     [[nodiscard]] bool
-    decode_uri_component_inplace(Iter&                                       pos,
-                                 ConstIter                                   end,
-                                 charset<istl::char_type_of<Iter>, N> const& chars) noexcept {
+    decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
         using char_type = istl::char_type_of<Iter>;
 
         static_assert(stl::same_as<char_type, istl::char_type_of<ConstIter>>,
@@ -85,11 +83,10 @@ namespace webpp {
      * @brief this function will decode parts of uri
      * @details this function is almost the same as "decodeURIComponent" in javascript
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
-    [[nodiscard]] bool
-    decode_uri_component(istl::StringViewifiable auto&&                                 encoded_str,
-                         istl::String auto&                                             output,
-                         charset<istl::char_type_of_t<decltype(encoded_str)>, N> const& chars) {
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars>
+    [[nodiscard]] bool decode_uri_component(istl::StringViewifiable auto&& encoded_str,
+                                            istl::String auto&             output,
+                                            CharSet auto const&            chars) {
         using char_type          = istl::char_type_of_t<decltype(encoded_str)>;
         stl::size_t digits_left  = 0;
         char_type   decoded_char = 0;
@@ -128,6 +125,24 @@ namespace webpp {
         return true;
     }
 
+    /// encode one character and add it to the output
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, istl::CharType CharT>
+    static constexpr void
+    encode_uri_component(CharT ch, istl::String auto& output, CharSet auto const& chars) {
+        using char_type   = CharT;
+        using string_type = stl::remove_cvref_t<decltype(output)>;
+        static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
+                      "The specified string do not have the same char type.");
+
+        if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+            if (chars.contains(ch)) {
+                output += ch;
+                return;
+            }
+        }
+        output += ascii::to_percent_hex<char_type>(ch);
+    }
+
     /**
      * This method encodes the given URI element.
      * What we are calling a "URI element" is any part of the URI
@@ -148,22 +163,11 @@ namespace webpp {
      *
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, stl::size_t N>
-    static constexpr void encode_uri_component(istl::StringViewifiable auto&&                         src,
-                                               istl::String auto&                                     output,
-                                               charset<istl::char_type_of_t<decltype(src)>, N> const& chars) {
-        using char_type   = istl::char_type_of_t<decltype(src)>;
-        using uchar_type  = stl::make_unsigned_t<char_type>;
-        using string_type = stl::remove_cvref_t<decltype(output)>;
-        static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
-                      "The specified string do not have the same char type.");
-        webpp_static_constexpr auto make_hex_digit = [](auto value) constexpr noexcept -> char_type {
-            if (value < 10) { // NOLINT(*-avoid-magic-numbers)
-                return static_cast<char_type>(value + '0');
-            } else {
-                return static_cast<char_type>(value - 10 + 'A'); // NOLINT(*-avoid-magic-numbers)
-            }
-        };
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars>
+    static constexpr void encode_uri_component(istl::StringViewifiable auto&& src,
+                                               istl::String auto&             output,
+                                               CharSet auto const&            chars) {
+        using char_type = istl::char_type_of_t<decltype(src)>;
 
         const auto input      = istl::string_viewify(src);
         const auto input_size = input.size();
@@ -177,26 +181,11 @@ namespace webpp {
                 output.reserve(new_capacity);
         }
         for (; it != input_end; ++it) {
-            bool const need_conversion = (uri_encoding_policy::allowed_chars == Policy) // constexpr
-                                         && chars.contains(*it);
-            if (need_conversion) {
-                output += *it;
-            } else {
-                output += '%';
-                output += make_hex_digit(static_cast<uchar_type>(*it) >> 4u);
-                output +=
-                  make_hex_digit(static_cast<uchar_type>(*it) & 0x0Fu); // NOLINT(*-avoid-magic-numbers)
-            }
+            encode_uri_component<Policy>(*it, output, chars);
         }
         output.shrink_to_fit();
     }
 
-
-
-    /// https://url.spec.whatwg.org/#string-percent-encode-after-encoding
-    static constexpr bool percent_encode() noexcept {
-        return true;
-    }
 
 
 } // namespace webpp

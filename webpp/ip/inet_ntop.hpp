@@ -3,6 +3,7 @@
 #ifndef WEBPP_IP_INET_NTOP_HPP
 #define WEBPP_IP_INET_NTOP_HPP
 
+#include "../strings/hex.hpp"
 #include "ip.hpp"
 
 #include <cstring>
@@ -48,14 +49,13 @@ namespace webpp {
 
 
 
-    namespace details {
-        static constexpr const char* hex_chars = "0123456789abcdef";
-    }
 
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
     static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+
+        using namespace ascii::details;
 
         if (!src) {
             return nullptr;
@@ -89,24 +89,24 @@ namespace webpp {
 
             if (hx8 != 0u) {
                 skip         = false;
-                *octet_ptr++ = details::hex_chars[hx8];
+                *octet_ptr++ = hex_chars<char>[hx8];
             }
 
             hx8 = x8 & 0x0fu;
             if (!skip || (hx8 != 0u)) {
                 skip         = false;
-                *octet_ptr++ = details::hex_chars[hx8];
+                *octet_ptr++ = hex_chars<char>[hx8];
             }
 
             x8 = *src_ptr++;
 
             hx8 = x8 >> 4u;
             if (!skip || (hx8 != 0u)) {
-                *octet_ptr++ = details::hex_chars[hx8];
+                *octet_ptr++ = hex_chars<char>[hx8];
             }
 
             hx8          = x8 & 0x0fu;
-            *octet_ptr++ = details::hex_chars[hx8];
+            *octet_ptr++ = hex_chars<char>[hx8];
             hex_ptr += 5;
 
 

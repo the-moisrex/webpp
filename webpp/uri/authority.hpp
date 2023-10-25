@@ -30,7 +30,6 @@ namespace webpp::uri {
                             if (password_token_seen) {
                                 ctx.out.append_password("%40");
                             } else {
-
                                 ctx.out.append_username("%40");
                             }
                         }

@@ -46,6 +46,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/strings/append.hpp
         ${LIB_INCLUDE_DIR}/strings/size.hpp
         ${LIB_INCLUDE_DIR}/strings/join.hpp
+        ${LIB_INCLUDE_DIR}/strings/hex.hpp
 
         ${LIB_INCLUDE_DIR}/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/traits/enable_traits.hpp
