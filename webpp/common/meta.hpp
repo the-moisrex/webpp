@@ -23,7 +23,7 @@
 #    define CXX20 1
 #endif
 
-#if __cplusplus >= 202100L // todo: change the release date of this, when it's known
+#if __cplusplus >= 202302L
 #    define CXX23 1
 #endif
 
@@ -144,13 +144,13 @@ namespace webpp::details {
 
 } // namespace webpp::details
 
-#    ifdef __cpp_if_consteval
+#    if defined(__cpp_if_consteval) && CXX23
 #        define webpp_assume(...)                                   \
             do {                                                    \
                 if consteval {                                      \
                     webpp::details::constexpr_only_if(__VA_ARGS__); \
                 } else {                                            \
-                    webpp_assume_func(__VA_ARGS__)                  \
+                    webpp_assume_func(__VA_ARGS__);                 \
                 }                                                   \
             } while (false)
 #    elif defined(__cpp_lib_is_constant_evaluated)
