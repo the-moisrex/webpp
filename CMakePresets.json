@@ -172,6 +172,7 @@
                 "test-json",
                 "test-logger",
                 "test-memory",
+                "test-meta",
                 "test-properties",
                 "test-request",
                 "test-response",
@@ -329,6 +330,11 @@
         {
             "name": "test-memory",
             "targets": "test-memory",
+            "inherits": "default-build"
+        },
+        {
+            "name": "test-meta",
+            "targets": "test-meta",
             "inherits": "default-build"
         },
         {
@@ -618,6 +624,10 @@
         },
         {
             "name": "test-memory",
+            "inherits": "test-default"
+        },
+        {
+            "name": "test-meta",
             "inherits": "test-default"
         },
         {

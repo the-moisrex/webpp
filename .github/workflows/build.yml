@@ -1128,6 +1128,46 @@ jobs:
         run: cmake --build --preset test-memory
       - name: Run test-memory
         run: ./build/test-memory
+  build-test-meta:
+    name: Build test-meta
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-meta
+        run: cmake --build --preset test-meta
+  run-test-meta:
+    name: Run test-meta
+    needs: build-test-meta
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-meta
+        run: cmake --build --preset test-meta
+      - name: Run test-meta
+        run: ./build/test-meta
   build-test-properties:
     name: Build test-properties
     needs: install

@@ -519,7 +519,7 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
-            // [[assume(c >= 0 && c <= N)]];
+            webpp_assume(c >= 0 && c <= N);
             return this->operator[](static_cast<stl::size_t>(c));
         }
 

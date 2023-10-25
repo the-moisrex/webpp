@@ -94,6 +94,8 @@ namespace webpp {
 #endif
 
 
+////////////////////////////// [[assume(...)]] fallback: //////////////////////////////
+
 #ifdef __has_cpp_attribute
 #    define WEBPP_HAS_CPP_ATTRIBUTE(name) __has_cpp_attribute(name)
 #else
@@ -114,12 +116,56 @@ namespace webpp {
 
 /// Use `webpp_assume(expr);` to inform the compiler that the `expr` is true.
 /// Do not rely on side-effects of the `expr` being run.
-#if WEBPP_HAS_CPP_ATTRIBUTE(assume)
+/// Attention: DO NOT call (specially `extern`) functions with side-effects inside this, it's "potentially
+// NOLINTBEGIN(*-avoid-do-while)
+#if WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
-#elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume)
-#    define webpp_assume(...) __builtin_assume(__VA_ARGS__)
-#elif defined(_MSC_VER)
-#    define webpp_assume(...) __assume(__VA_ARGS__)
+#elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \
+  defined(_MSC_VER) || defined(__ICC)
+#    if defined(_MSC_VER) || defined(__ICC) // ICC seems to support both __builtin_assume and __assume
+#        define webpp_assume_func(...) __assume(__VA_ARGS__)
+#    else
+#        define webpp_assume_func(...) __builtin_assume(__VA_ARGS__)
+#    endif
+
+namespace webpp::details {
+
+    auto non_constexpr() -> void {}
+
+    template <typename BoolLike>
+#    ifdef __cpp_concepts
+        requires requires(BoolLike val) { static_cast<bool>(val); }
+#    endif
+    constexpr auto constexpr_only_if(BoolLike const& condition) noexcept -> void {
+        if (!condition) {
+            non_constexpr();
+        }
+    }
+
+} // namespace webpp::details
+
+#    ifdef __cpp_if_consteval
+#        define webpp_assume(...)                                   \
+            do {                                                    \
+                if consteval {                                      \
+                    webpp::details::constexpr_only_if(__VA_ARGS__); \
+                } else {                                            \
+                    webpp_assume_func(__VA_ARGS__)                  \
+                }                                                   \
+            } while (false)
+#    elif defined(__cpp_lib_is_constant_evaluated)
+#        include <type_traits>
+#        define webpp_assume(...)                                   \
+            do {                                                    \
+                if (std::is_constant_evaluated()) {                 \
+                    webpp::details::constexpr_only_if(__VA_ARGS__); \
+                } else {                                            \
+                    webpp_assume_func(__VA_ARGS__);                 \
+                }                                                   \
+            } while (false)
+#    else
+#        define webpp_assume(...) webpp_assume_func(__VA_ARGS__)
+#    endif
 #elif WEBPP_HAS_ATTR(assume)
 //   https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html#index-assume-statement-attribute
 #    define webpp_assume(...) __attribute__((assume(__VA_ARGS__)))
@@ -128,7 +174,7 @@ namespace webpp {
 #elif defined(__GNUC__)
 #    define webpp_assume(...)            \
         do {                             \
-            if (false && (__VA_ARGS__))  \
+            if (!(__VA_ARGS__))          \
                 __builtin_unreachable(); \
         } while (false)
 #else
@@ -141,5 +187,6 @@ namespace webpp {
                 webpp::invoke_undefined_behaviour(); \
         } while (false)
 #endif
+// NOLINTEND(*-avoid-do-while)
 
 #endif // WEBPP_META_HPP
