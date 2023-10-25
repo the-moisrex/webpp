@@ -3,6 +3,8 @@
 #ifndef WEBPP_STRING_HEX_HPP
 #define WEBPP_STRING_HEX_HPP
 
+#include "../common/meta.hpp"
+
 namespace webpp::ascii {
 
     // NOLINTBEGIN(*-avoid-magic-numbers)
@@ -87,12 +89,14 @@ namespace webpp::ascii {
         return -1;
     }
 
+    /// attention: this only supports up to 2 hex characters
     template <typename CharT = char, typename IntType = int>
     [[nodiscard]] static constexpr const CharT* to_percent_hex(IntType inp) noexcept {
         // Equal to:
         //   output += '%';
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
+        webpp_assume(inp <= 0xFFu);
         return details::percent_hex_table<CharT> + static_cast<uint8_t>(inp * 4);
     }
 

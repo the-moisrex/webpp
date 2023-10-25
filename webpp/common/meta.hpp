@@ -94,4 +94,52 @@ namespace webpp {
 #endif
 
 
+#ifdef __has_cpp_attribute
+#    define WEBPP_HAS_CPP_ATTRIBUTE(name) __has_cpp_attribute(name)
+#else
+#    define WEBPP_HAS_CPP_ATTRIBUTE(name) 0
+#endif
+
+#if defined(__has_attribute)
+#    define WEBPP_HAS_ATTR(attr) __has_attribute(attr)
+#else
+#    define WEBPP_HAS_ATTR(attr) 0
+#endif
+
+#ifdef __has_builtin
+#    define WEBPP_HAS_BUILTIN(name) __has_builtin(name)
+#else
+#    define WEBPP_HAS_BUILTIN(name) 0
+#endif
+
+/// Use `webpp_assume(expr);` to inform the compiler that the `expr` is true.
+/// Do not rely on side-effects of the `expr` being run.
+#if WEBPP_HAS_CPP_ATTRIBUTE(assume)
+#    define webpp_assume(...) [[assume(__VA_ARGS__)]]
+#elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume)
+#    define webpp_assume(...) __builtin_assume(__VA_ARGS__)
+#elif defined(_MSC_VER)
+#    define webpp_assume(...) __assume(__VA_ARGS__)
+#elif WEBPP_HAS_ATTR(assume)
+//   https://gcc.gnu.org/onlinedocs/gcc/Statement-Attributes.html#index-assume-statement-attribute
+#    define webpp_assume(...) __attribute__((assume(__VA_ARGS__)))
+#elif WEBPP_HAS_ATTR(__assume__) // GCC 13, but GCC 13 should support [[assume]]; I don't know if it's needed
+#    define webpp_assume(...) __attribute__((__assume__(__VA_ARGS__)))
+#elif defined(__GNUC__)
+#    define webpp_assume(...)            \
+        do {                             \
+            if (false && (__VA_ARGS__))  \
+                __builtin_unreachable(); \
+        } while (false)
+#else
+namespace webpp {
+    [[noreturn]] inline void invoke_undefined_behaviour() {}
+} // namespace webpp
+#    define webpp_assume(...)                        \
+        do {                                         \
+            if (!(__VA_ARGS__))                      \
+                webpp::invoke_undefined_behaviour(); \
+        } while (false)
+#endif
+
 #endif // WEBPP_META_HPP
