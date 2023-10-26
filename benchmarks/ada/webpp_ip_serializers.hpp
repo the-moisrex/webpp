@@ -51,7 +51,7 @@ namespace webpp::v1 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static constexpr char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR()                                   \
     if (*src < 10) {                                       \
         *out++ = static_cast<char>('0' + *src);            \
@@ -88,7 +88,7 @@ namespace webpp::v1 {
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
-    static constexpr char* inet_ntop6(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop6(const std::uint8_t* src, char* out) noexcept {
 
         if (!src) {
             return nullptr;
@@ -225,7 +225,7 @@ namespace webpp::v2 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static constexpr char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR(inp)                               \
     if (*src < 10) {                                      \
         *out++ = static_cast<char>('0' + inp);            \
@@ -258,7 +258,7 @@ namespace webpp::v3 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static constexpr char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR(inp) out = std::to_chars(out, out + 3, inp).ptr;
 
         WEBPP_PUT_CHAR(src[0])
