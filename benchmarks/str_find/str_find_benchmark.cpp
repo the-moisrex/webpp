@@ -1,8 +1,11 @@
 #include "../benchmark.hpp"
 
 #include <algorithm>
-#include <eve/function/any.hpp>
-#include <eve/wide.hpp>
+#if __has_include(<eve/wide.hpp>)
+#    include <eve/function/any.hpp>
+#    include <eve/wide.hpp>
+#    define webpp_has_eve
+#endif
 #include <random>
 #include <string>
 #include <string_view>
@@ -11,7 +14,7 @@
 using namespace std;
 
 
-
+#ifdef webpp_has_eve
 bool find_char(auto&& str, auto&& ch) noexcept {
     using char_type = typename std::remove_cvref_t<decltype(str)>::value_type;
     using ch_type   = std::remove_cvref_t<decltype(ch)>;
@@ -40,7 +43,6 @@ bool find_char(auto&& str, auto&& ch) noexcept {
 
     return true;
 }
-
 
 
 std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
@@ -156,6 +158,7 @@ std::size_t find_str_simple(std::string_view str1, std::string_view str2) noexce
 
     return string_type::npos;
 }
+#endif
 
 
 static void StrFind_FindCharString(benchmark::State& state) {
@@ -166,6 +169,7 @@ static void StrFind_FindCharString(benchmark::State& state) {
 }
 BENCHMARK(StrFind_FindCharString);
 
+#ifdef webpp_has_eve
 static void StrFind_FindCharSIMD(benchmark::State& state) {
     for (auto _ : state) {
         auto str1 = str_generator();
@@ -173,6 +177,7 @@ static void StrFind_FindCharSIMD(benchmark::State& state) {
     }
 }
 BENCHMARK(StrFind_FindCharSIMD);
+#endif
 
 //////////////////// String /////////////////////////////
 
@@ -196,6 +201,7 @@ BENCHMARK(StrFind_FindStringString);
 //}
 // BENCHMARK(StrFind_FindStringSimple);
 
+#ifdef webpp_has_eve
 static void StrFind_FindStringSIMD(benchmark::State& state) {
     auto str1 = str_generator();
     int  i    = str1.size() / 3;
@@ -205,3 +211,4 @@ static void StrFind_FindStringSIMD(benchmark::State& state) {
     }
 }
 BENCHMARK(StrFind_FindStringSIMD);
+#endif

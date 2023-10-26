@@ -2,8 +2,11 @@
 
 #include <algorithm>
 #include <cstring>
-#include <eve/function/any.hpp>
-#include <eve/wide.hpp>
+#if __has_include(<eve/wide.hpp>)
+#    include <eve/function/any.hpp>
+#    include <eve/wide.hpp>
+#    define webpp_has_eve
+#endif
 #include <random>
 #include <string>
 #include <type_traits>
@@ -12,6 +15,7 @@ using namespace std;
 
 
 
+#ifdef webpp_has_eve
 bool cmp(auto&& str1, auto&& str2) noexcept {
     using char_type                 = typename std::remove_cvref_t<decltype(str1)>::value_type;
     using simd_type                 = eve::wide<char_type>;
@@ -39,7 +43,7 @@ bool cmp(auto&& str1, auto&& str2) noexcept {
 
     return true;
 }
-
+#endif
 
 static void EQ_STD(benchmark::State& state) {
     for (auto _ : state) {
@@ -59,6 +63,7 @@ static void EQ_STRcmp(benchmark::State& state) {
 }
 BENCHMARK(EQ_STRcmp);
 
+#ifdef webpp_has_eve
 static void EQ_SIMD(benchmark::State& state) {
     for (auto _ : state) {
         auto str1 = str_generator();
@@ -67,3 +72,4 @@ static void EQ_SIMD(benchmark::State& state) {
     }
 }
 BENCHMARK(EQ_SIMD);
+#endif
