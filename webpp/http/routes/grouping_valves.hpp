@@ -54,7 +54,7 @@ namespace webpp::http {
             // to make sure it matches the "basic_next_route"'s return type
             template <Traits TraitsType>
             constexpr void call_next(basic_context<TraitsType>& ctx) const {
-                valve_traits<NextCallable, basic_context<TraitsType>>::call_set_get(*next, ctx);
+                valve_traits<NextCallable, basic_context<TraitsType>>::call_set(*next, ctx);
             }
 
             template <Traits TraitsType, stl::size_t Index = 0>
@@ -158,11 +158,11 @@ namespace webpp::http {
         using valve_type::operator();
 
         template <Traits TraitsType>
-        constexpr void operator()(basic_context<TraitsType>& ctx) {
+        constexpr bool operator()(basic_context<TraitsType>& ctx) {
             using context_type = basic_context<TraitsType>;
-            stl::apply(
+            return stl::apply(
               [&ctx]<typename... T>(T&&... funcs) constexpr {
-                  (valve_traits<T, context_type>::call_then(stl::forward<T>(funcs), ctx) && ...);
+                  return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(funcs), ctx) && ...);
               },
               as_tuple());
         }
@@ -264,9 +264,9 @@ namespace webpp::http {
             using pre_traits   = valve_traits<pre_type, context_type>;
             using post_traits  = valve_traits<post_type, context_type>;
             if constexpr (sizeof...(Pres) > 0) {
-                if (!pre_traits::call_then(pres, ctx)) {
+                if (!pre_traits::call_set_get(pres, ctx)) {
                     return;
-                };
+                }
             }
             if (!manglers(ctx, routes)) {
                 return;

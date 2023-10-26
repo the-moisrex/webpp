@@ -28,6 +28,7 @@ namespace webpp::http {
     concept ValveOf = Traits<TraitsType> &&
                       (stl::is_invocable_v<T, basic_context<TraitsType>&> || istl::StringViewifiable<T>);
 
+    /// A single valve
     template <typename T>
     concept Valve = ValveOf<default_dynamic_traits, T>;
 
@@ -41,6 +42,7 @@ namespace webpp::http {
     concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
 
 
+    /// Get the string representation of the value and append it to the output
     template <istl::String StrT, typename Callable>
     static constexpr void valve_to_string(StrT& out, Callable& func) {
         using mem_traits = istl::member_function_pointer_traits<Callable>;
@@ -65,10 +67,13 @@ namespace webpp::http {
     }
 
 
-    // General Valvifier Tag, and its default implementation
+    /// General Valvifier Tag, and its default implementation
+    /// We use this Customization Point Object to let the users customize their types that they
+    /// use as "valves", hence the name "valvify", because you're converting your random object
+    /// type into a valve-compliant object.
     inline constexpr struct valvify_tag {
 
-        // Customization Point
+        /// Customization Point
         template <typename T>
             requires stl::tag_invocable<valvify_tag, T>
         [[nodiscard]] constexpr stl::tag_invoke_result_t<valvify_tag, T> operator()(T&& next) const
@@ -76,14 +81,17 @@ namespace webpp::http {
             return stl::tag_invoke(*this, stl::forward<T>(next));
         }
 
-        // default impl
+        /// default impl
         template <typename T>
         [[nodiscard]] friend constexpr decltype(auto) tag_invoke(valvify_tag, T&& next) noexcept {
             return stl::forward<T>(next);
         }
     } valvify;
 
-    // get the type of the valvified value
+    /// get the type of the valvified value
+    /// We remove constness and references of the returned type
+    /// because it'll be the root of a load of evil things if we don't.
+    /// Use Pointers if you need lvalue references, we know how to call pointers.
     template <typename T>
     using valvified_type = stl::remove_cvref_t<stl::tag_invoke_result_t<valvify_tag, T>>;
 
@@ -91,6 +99,10 @@ namespace webpp::http {
     concept Valvifiable = stl::tag_invocable<valvify_tag, T>;
 
 
+    /**
+     * The valve traits
+     * Central place for dealing with all valves
+     */
     template <typename Callable, typename ContextType = basic_context<default_dynamic_traits>>
     struct valve_traits {
         using callable_type      = stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<Callable>>>;
@@ -103,20 +115,24 @@ namespace webpp::http {
         using traits_type = typename context_type::traits_type;
         using return_type = stl::remove_cvref_t<typename invocable_inorder_type::result>;
 
+        static constexpr bool is_nothrow = invocable_inorder_type::is_nothrow;
+
+        /// Call the valve with the specified context
         template <istl::cvref_as<Callable> C>
             requires(!stl::is_pointer_v<stl::remove_cvref_t<C>> && invocable_inorder_type::value)
-        static constexpr return_type call(C&&           callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type call(C&& callable, context_type& ctx) noexcept(is_nothrow) {
             return istl::invoke_inorder(stl::forward<C>(callable), ctx, ctx.request, ctx.response);
         }
 
+        /// Call the valve with the specified context
         template <istl::cvref_as<callable_type> C>
             requires(invocable_inorder_type::value)
-        static constexpr return_type call(C*            callable,
-                                          context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr return_type call(C* callable, context_type& ctx) noexcept(is_nothrow) {
             return istl::invoke_inorder(*callable, ctx, ctx.request, ctx.response);
         }
 
+        /// Should we consider the return type as a positive value or a false value,
+        /// You can use this information in your routing decisions
         template <typename R>
         static constexpr bool is_positive(R const& ret) noexcept {
             using ret_type = stl::remove_cvref_t<R>;
@@ -134,15 +150,16 @@ namespace webpp::http {
             }
         }
 
-        template <typename R>
-        static constexpr bool should_continue(R const& ret) noexcept {
-            using ret_type = stl::remove_cvref_t<R>;
-            if constexpr (stl::same_as<ret_type, bool>) {
-                return ret;
-            } else {
-                return true;
-            }
-        }
+        /// Should we go ahead and run the next route or not
+        // template <typename R>
+        // static constexpr bool should_continue(R const& ret) noexcept {
+        //     using ret_type = stl::remove_cvref_t<R>;
+        //     if constexpr (stl::same_as<ret_type, bool>) {
+        //         return ret;
+        //     } else {
+        //         return true;
+        //     }
+        // }
 
 
         template <typename R>
@@ -171,10 +188,10 @@ namespace webpp::http {
         }
 
 
+        /// Call the valve, and then set the response if there's any
         template <typename C>
             requires istl::cvref_as<C, Callable>
-        static constexpr void call_set(C&&           segment,
-                                       context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        static constexpr void call_set(C&& segment, context_type& ctx) noexcept(is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
                 call(stl::forward<C>(segment), ctx);
             } else {
@@ -183,10 +200,11 @@ namespace webpp::http {
         }
 
 
+        /// Call the valve, and then set the response if there's any, and then tell me if we should continue
         template <typename C>
             requires istl::cvref_as<C, Callable>
-        static constexpr bool call_set_get(C&&           segment,
-                                           context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
+        [[nodiscard]] static constexpr bool call_set_get(C&&           segment,
+                                                         context_type& ctx) noexcept(is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
                 call(stl::forward<C>(segment), ctx);
                 return true;
@@ -199,20 +217,19 @@ namespace webpp::http {
         }
 
 
-        template <typename C>
-            requires istl::cvref_as<C, Callable>
-        static constexpr bool call_then(C&&           callable,
-                                        context_type& ctx) noexcept(invocable_inorder_type::is_nothrow) {
-            if constexpr (stl::is_void_v<return_type>) {
-                call(stl::forward<C>(callable), ctx);
-                return true;
-            } else {
-                auto       ret = call(stl::forward<C>(callable), ctx);
-                bool const res = should_continue(ret);
-                set_response(stl::move(ret), ctx);
-                return res;
-            }
-        }
+        // template <typename C>
+        //     requires istl::cvref_as<C, Callable>
+        // static constexpr bool call_then(C&& callable, context_type& ctx) noexcept(is_nothrow) {
+        //     if constexpr (stl::is_void_v<return_type>) {
+        //         call(stl::forward<C>(callable), ctx);
+        //         return true;
+        //     } else {
+        //         auto       ret = call(stl::forward<C>(callable), ctx);
+        //         bool const res = should_continue(ret);
+        //         set_response(stl::move(ret), ctx);
+        //         return res;
+        //     }
+        // }
     };
 
 
