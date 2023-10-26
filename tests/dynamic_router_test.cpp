@@ -379,7 +379,7 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
     static_router _router{root % "about" >> []() {
-        return {"about page"};
+        return "about page";
     }};
 
     enable_owner_traits<default_dynamic_traits> et;
@@ -437,21 +437,21 @@ struct custom_callable {
 
 struct custom_type {
   private:
-    custom_callable cc;
+    custom_callable* cc;
 
   public:
-    constexpr custom_type(custom_callable c) : cc{c} {}
+    constexpr custom_type(custom_callable* c) : cc{c} {}
     constexpr custom_type(custom_type const&) noexcept            = default;
     constexpr custom_type(custom_type&&) noexcept                 = default;
     constexpr custom_type& operator=(custom_type&&) noexcept      = default;
     constexpr custom_type& operator=(custom_type const&) noexcept = default;
     constexpr ~custom_type() noexcept                             = default;
 
-    constexpr custom_callable& get_cc() noexcept {
+    constexpr custom_callable* get_cc() noexcept {
         return cc;
     }
 
-    constexpr friend custom_callable& tag_invoke(stl::tag_t<valvify>, custom_type& ct) noexcept {
+    constexpr friend custom_callable* tag_invoke(stl::tag_t<valvify>, custom_type& ct) noexcept {
         return ct.get_cc();
     }
 };
@@ -460,8 +460,8 @@ struct custom_type {
 TEST(DynamicRouter, CustomValvifier) {
     enable_owner_traits<default_dynamic_traits> et;
 
-    custom_callable const cc;
-    custom_type           ct{cc};
+    custom_callable cc;
+    custom_type     ct{&cc};
 
     dynamic_router router{et};
     router += router / "home" >> ct >> [] {
@@ -473,7 +473,7 @@ TEST(DynamicRouter, CustomValvifier) {
     req.uri("/home");
 
     HTTPResponse auto const res = router(req);
-    EXPECT_EQ(ct.get_cc().get_res(), 1);
+    EXPECT_EQ(cc.get_res(), 1);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
     EXPECT_EQ(as<std::string>(res.body), "home sweet home") << as<std::string>(res.body);
 }

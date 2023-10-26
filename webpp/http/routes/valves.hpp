@@ -243,7 +243,7 @@ namespace webpp::http {
         // Attention: This means we will be calling `valvify` multiple times for each element
         template <template <typename...> typename Templ, typename... T, typename... TupT>
         [[nodiscard]] constexpr auto rebind_self(stl::tuple<TupT...>&& nexts) const {
-            using valve_type = Templ<T..., stl::remove_cvref_t<valvified_type<TupT>>...>;
+            using valve_type = Templ<T..., valvified_type<TupT>...>;
             if constexpr (is_self_of<valves_group>) {
                 return self()->replace_route(
                   ([&nexts]<stl::size_t... I>(stl::index_sequence<I...>) constexpr {
@@ -262,8 +262,8 @@ namespace webpp::http {
                           "We're not able to valvify the valve, "
                           "did you include the required headers "
                           "that defines the right valvify function?");
-            using valve_type = Templ<T..., stl::remove_cvref_t<valvified_type<Args>>...>;
-            static_assert(stl::is_constructible_v<valve_type, stl::remove_cvref_t<valvified_type<Args>>...>,
+            using valve_type = Templ<T..., valvified_type<Args>...>;
+            static_assert(stl::is_constructible_v<valve_type, valvified_type<Args>...>,
                           "The specified valves are unknown even after valvifying them, "
                           "did you forget to include the required headers that define "
                           "the right valvify functions to convert your valves to the right type?");

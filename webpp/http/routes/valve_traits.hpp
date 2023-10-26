@@ -85,7 +85,7 @@ namespace webpp::http {
 
     // get the type of the valvified value
     template <typename T>
-    using valvified_type = stl::tag_invoke_result_t<valvify_tag, T>;
+    using valvified_type = stl::remove_cvref_t<stl::tag_invoke_result_t<valvify_tag, T>>;
 
     template <typename T>
     concept Valvifiable = stl::tag_invocable<valvify_tag, T>;

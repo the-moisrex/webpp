@@ -87,7 +87,7 @@ namespace webpp::uri {
             }
         }
 
-        constexpr string_type to_string() const {
+        [[nodiscard]] constexpr string_type to_string() const {
             string_type res{username.get_allocator()};
             append_to(res);
             return res;
@@ -113,7 +113,7 @@ namespace webpp::uri {
         /**
          * Convert to string without encoding it
          */
-        constexpr string_type to_raw_string() const {
+        [[nodiscard]] constexpr string_type to_raw_string() const {
             string_type res{username.get_allocator()};
             append_raw_to(res);
             return res;
