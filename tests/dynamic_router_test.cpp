@@ -379,7 +379,7 @@ TEST(DynamicRouter, PrePostRoutingTest) {
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
     static_router _router{root % "about" >> []() {
-        return "about page";
+        return {"about page"};
     }};
 
     enable_owner_traits<default_dynamic_traits> et;
@@ -408,7 +408,7 @@ TEST(DynamicRouter, ContextCurrentRoute) {
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
-    EXPECT_TRUE(as<std::string>(res.body).contains("home")) << as<std::string>(res.body);
+    EXPECT_TRUE(as<std::string>(res.body).find("/home") != std::string::npos) << as<std::string>(res.body);
 }
 
 

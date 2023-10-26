@@ -5,6 +5,8 @@
 
 #include "../common/meta.hpp"
 
+#include <cstdint>
+
 namespace webpp::ascii {
 
     // NOLINTBEGIN(*-avoid-magic-numbers)
@@ -55,10 +57,30 @@ namespace webpp::ascii {
     } // namespace details
 
     /// convert hex to it's integral value
+    /// Attention: use this utility where you KNOW the input is valid hex character,
+    /// otherwise use hex_digit_value
     template <typename ResType = unsigned, typename CharT = char>
     [[nodiscard]] static constexpr ResType hex_to_binary(CharT c) noexcept {
+        webpp_assume(c >= '0' && c <= 'f');
         return details::hex_to_binary_table<ResType>[static_cast<unsigned>(c - '0')];
     }
+
+    /**
+     * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
+     * Almost the same as hex_to_binary
+     */
+    template <typename IntegerType = int, typename CharT = char>
+    [[nodiscard]] static constexpr IntegerType
+    hex_digit_value(CharT ch, IntegerType default_value = static_cast<IntegerType>(-1)) noexcept {
+        if ('0' <= ch && ch <= '9')
+            return static_cast<IntegerType>(ch - '0');
+        if ('a' <= ch && ch <= 'f')
+            return static_cast<IntegerType>(ch - 'a' + static_cast<CharT>(10));
+        if ('A' <= ch && ch <= 'F')
+            return static_cast<IntegerType>(ch - 'A' + static_cast<CharT>(10));
+        return default_value;
+    }
+
 
     template <typename CharT = char>
     [[nodiscard]] static constexpr bool is_lowercase_hex(CharT c) noexcept {
@@ -75,20 +97,6 @@ namespace webpp::ascii {
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
     }
 
-    /**
-     * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
-     */
-    template <typename IntegerType = int, typename CharT = char>
-    [[nodiscard]] static constexpr IntegerType hex_digit_value(CharT ch) noexcept {
-        if ('0' <= ch && ch <= '9')
-            return ch - '0';
-        if ('a' <= ch && ch <= 'f')
-            return ch - 'a' + static_cast<CharT>(10);
-        if ('A' <= ch && ch <= 'F')
-            return ch - 'A' + static_cast<CharT>(10);
-        return -1;
-    }
-
     /// attention: this only supports up to 2 hex characters
     template <typename CharT = char, typename IntType = int>
     [[nodiscard]] static constexpr const CharT* to_percent_hex(IntType inp) noexcept {
@@ -96,7 +104,7 @@ namespace webpp::ascii {
         //   output += '%';
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
-        webpp_assume(inp <= 0xFFu);
+        webpp_assume(inp <= static_cast<IntType>(0xFFu) && inp >= static_cast<IntType>(0u));
         return details::percent_hex_table<CharT> + static_cast<uint8_t>(inp * 4);
     }
 

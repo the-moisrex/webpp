@@ -22,39 +22,30 @@ namespace webpp {
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
               typename Iter              = char*,
               typename ConstIter         = char const*>
-    [[nodiscard]] bool
+    [[nodiscard]] static constexpr bool
     decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
-        using char_type = istl::char_type_of<Iter>;
+        using char_type = istl::char_type_of_t<Iter>;
 
-        static_assert(stl::same_as<char_type, istl::char_type_of<ConstIter>>,
+        static_assert(stl::same_as<char_type, istl::char_type_of_t<ConstIter>>,
                       "The beginning and the end of the same string are required.");
 
-        stl::size_t digits_left  = 0;
-        char_type   decoded_char = 0;
-        char_type*  out          = pos;
+        char_type* out = pos;
         for (; pos != end; ++pos) {
-            if (digits_left) {
-                decoded_char <<= 4;
-                if (*pos >= '0' && *pos <= '9') { // DIGITS
-                    decoded_char += static_cast<char_type>(*pos - '0');
-                } else if (*pos >= 'A' && *pos <= 'F') {                     // UPPER_HEX
-                    decoded_char += static_cast<char_type>(*pos - 'A' + 10); // NOLINT(*-avoid-magic-numbers)
-                } else if (*pos >= 'a' && *pos <= 'f') {                     // LOWER_HEX
-                    decoded_char += static_cast<char_type>(*pos - 'a' + 10); // NOLINT(*-avoid-magic-numbers)
+            if (*pos == '%') {
+                if (pos++ >= end - 2) [[unlikely]] {
+                    return false;
+                }
+
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, -1);
+
+                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                    *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
                     *pos = '\0';
                     return false;
                 }
-                --digits_left;
-
-                if (digits_left == 0) {
-                    *out++ = decoded_char;
-                }
-            } else if (*pos == '%') {
-                // resetting:
-                digits_left  = 2;
-                decoded_char = 0;
             } else {
                 if constexpr (uri_encoding_policy::allowed_chars == Policy) {
                     if (!chars.contains(*pos)) {
@@ -84,42 +75,36 @@ namespace webpp {
      * @details this function is almost the same as "decodeURIComponent" in javascript
      */
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars>
-    [[nodiscard]] bool decode_uri_component(istl::StringViewifiable auto&& encoded_str,
-                                            istl::String auto&             output,
-                                            CharSet auto const&            chars) {
-        using char_type          = istl::char_type_of_t<decltype(encoded_str)>;
-        stl::size_t digits_left  = 0;
-        char_type   decoded_char = 0;
-        for (const auto c : istl::string_viewify(encoded_str)) {
-            if (digits_left) {
-                decoded_char <<= 4;
-                if (c >= '0' && c <= '9') { // DIGITS
-                    decoded_char += static_cast<char_type>(c - '0');
-                } else if (c >= 'A' && c <= 'F') {                        // UPPER_HEX
-                    decoded_char += static_cast<char_type>(c - 'A' + 10); // NOLINT(*-avoid-magic-numbers)
-                } else if (c >= 'a' && c <= 'f') {                        // LOWER_HEX
-                    decoded_char += static_cast<char_type>(c - 'a' + 10); // NOLINT(*-avoid-magic-numbers)
+    [[nodiscard]] static constexpr bool decode_uri_component(istl::StringViewifiable auto&& encoded_str,
+                                                             istl::String auto&             output,
+                                                             CharSet auto const&            chars) {
+        using char_type = istl::char_type_of_t<decltype(encoded_str)>;
+        auto const str  = istl::string_viewify(encoded_str);
+        for (auto it = str.begin(); it != str.end(); ++it) {
+            if (*it == '%') {
+                if (it++ >= str.end() - 2) [[unlikely]] {
+                    return false;
+                }
+
+                int decoded_char = ascii::hex_digit_value<int>(*it++, -1) << 4u;
+                decoded_char |= ascii::hex_digit_value<int>(*it, -1);
+
+                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                    output += static_cast<char_type>(decoded_char);
                 } else {
                     return false;
                 }
-                --digits_left;
-
-                if (digits_left == 0) {
-                    output += static_cast<char_type>(decoded_char);
-                }
-            } else if (c == '%') {
-                // resetting:
-                digits_left  = 2;
-                decoded_char = 0;
             } else {
                 if constexpr (uri_encoding_policy::allowed_chars == Policy) {
-                    if (!chars.contains(c))
+                    if (!chars.contains(*it)) [[unlikely]] {
                         return false; // bad chars
+                    }
                 } else {
-                    if (chars.contains(c))
+                    if (chars.contains(*it)) [[unlikely]] {
                         return false; // bad chars
+                    }
                 }
-                output += c;
+                output += *it;
             }
         }
         return true;
@@ -167,8 +152,6 @@ namespace webpp {
     static constexpr void encode_uri_component(istl::StringViewifiable auto&& src,
                                                istl::String auto&             output,
                                                CharSet auto const&            chars) {
-        using char_type = istl::char_type_of_t<decltype(src)>;
-
         const auto input      = istl::string_viewify(src);
         const auto input_size = input.size();
         auto       it         = input.data();
