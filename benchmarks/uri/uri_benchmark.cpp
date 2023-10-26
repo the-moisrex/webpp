@@ -177,6 +177,68 @@ namespace v2 {
 
 } // namespace v2
 
+namespace v3 {
+    using namespace webpp;
+    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
+
+
+    /**
+     * in-place version of uri component decoding, this is also nothrow since encoded version is always
+     * longer than or equal to the decoded version thus we don't need allocations.
+     */
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
+              typename Iter              = char*,
+              typename ConstIter         = char const*>
+    [[nodiscard]] static constexpr bool
+    decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
+        using char_type = istl::char_type_of_t<Iter>;
+
+        static_assert(stl::same_as<char_type, istl::char_type_of_t<ConstIter>>,
+                      "The beginning and the end of the same string are required.");
+
+        char_type* out = pos;
+        for (; pos != end; ++pos) {
+            if (*pos == '%') {
+                if (pos++ >= end - 2) [[unlikely]] {
+                    return false;
+                }
+
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, ~0);
+
+                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                    *out++ = static_cast<char_type>(decoded_char);
+                } else {
+                    pos  = out;
+                    *pos = '\0';
+                    return false;
+                }
+            } else {
+                if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+                    if (!chars.contains(*pos)) {
+                        pos  = out;
+                        *pos = '\0';
+                        return false; // bad chars
+                    }
+                } else {
+                    if (chars.contains(*pos)) {
+                        pos  = out;
+                        *pos = '\0';
+                        return false; // bad chars
+                    }
+                }
+                *out++ += *pos;
+            }
+        }
+        pos = out;
+        if (pos != end)
+            *pos = '\0';
+        return true;
+    }
+
+
+} // namespace v3
+
 static void URIDecodeV1(benchmark::State& state) {
     for (auto _ : state) {
         std::string out{encoded_str.data(), encoded_str.size()};
@@ -201,3 +263,16 @@ static void URIDecodeV2(benchmark::State& state) {
     }
 }
 BENCHMARK(URIDecodeV2);
+
+
+static void URIDecodeV3(benchmark::State& state) {
+    for (auto _ : state) {
+        std::string out{encoded_str.data(), encoded_str.size()};
+        auto        ptr = out.data();
+        auto        res = v3::decode_uri_component_inplace(ptr, ptr + out.size(), webpp::ALPHA_DIGIT<char>);
+        out.resize(static_cast<std::size_t>(ptr - out.data()));
+        benchmark::DoNotOptimize(out);
+        benchmark::DoNotOptimize(res);
+    }
+}
+BENCHMARK(URIDecodeV3);

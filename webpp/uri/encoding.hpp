@@ -36,10 +36,10 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, -1);
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, ~0);
 
-                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
@@ -86,10 +86,10 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*it++, -1) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*it, -1);
+                int decoded_char = ascii::hex_digit_value<int>(*it++, ~0) << 4u;
+                decoded_char |= ascii::hex_digit_value<int>(*it, ~0);
 
-                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
                     output += static_cast<char_type>(decoded_char);
                 } else {
                     return false;
