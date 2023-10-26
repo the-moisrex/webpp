@@ -105,7 +105,7 @@ namespace webpp::ascii {
         //   output += make_hex_digit(ch >> 4u);
         //   output += make_hex_digit(ch & 0x0Fu);
         webpp_assume(inp <= static_cast<IntType>(0xFFu) && inp >= static_cast<IntType>(0u));
-        return details::percent_hex_table<CharT> + static_cast<uint8_t>(inp * 4);
+        return details::percent_hex_table<CharT> + static_cast<uint8_t>(inp) * 4;
     }
 
     // NOLINTEND(*-avoid-c-arrays)
