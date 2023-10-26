@@ -112,8 +112,11 @@ namespace v2 {
 
 
 using namespace std;
+#ifdef webpp_has_boost
 using namespace boost::asio;
+#endif
 
+#ifdef webpp_has_boost
 static void IP_asio_v4(benchmark::State& state) {
     for (auto _ : state) {
         auto addr = ip::make_address_v4("192.168.1.8");
@@ -121,6 +124,7 @@ static void IP_asio_v4(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_asio_v4);
+#endif
 
 static void IP_webpp_v4(benchmark::State& state) {
     for (auto _ : state) {
@@ -150,6 +154,7 @@ auto ipv4_data() {
     return *it;
 }
 
+#ifdef webpp_has_boost
 static void IP_asio_v4_random(benchmark::State& state) {
     ipv4_data();
     for (auto _ : state) {
@@ -158,6 +163,7 @@ static void IP_asio_v4_random(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_asio_v4_random);
+#endif
 
 static void IP_webpp_v4_random(benchmark::State& state) {
     ipv4_data();

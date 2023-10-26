@@ -39,7 +39,7 @@ namespace using_memmove {
         char         ch; // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
-            int const digit = hex_digit_value(ch);
+            int const digit = ascii::hex_digit_value(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;
@@ -198,7 +198,7 @@ namespace manual_algorithm {
         char         ch; // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
-            int const digit = hex_digit_value(ch);
+            int const digit = ascii::hex_digit_value(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;
@@ -333,10 +333,13 @@ namespace manual_algorithm {
 } // namespace manual_algorithm
 
 using namespace std;
+#ifdef webpp_has_boost
 using namespace boost::asio;
+#endif
 
 ///////////////////// IPv6 ///////////////////////////
 
+#ifdef webpp_has_boost
 static void IP_asio_v6(benchmark::State& state) {
     for (auto _ : state) {
         auto addr = ip::make_address_v6("::1");
@@ -344,6 +347,7 @@ static void IP_asio_v6(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_asio_v6);
+#endif
 
 static void IP_webpp_v6(benchmark::State& state) {
     for (auto _ : state) {
@@ -373,6 +377,7 @@ auto ipv6_data() {
     return *it;
 }
 
+#ifdef webpp_has_boost
 static void IP_asio_v6_random(benchmark::State& state) {
     ipv6_data();
     for (auto _ : state) {
@@ -381,6 +386,7 @@ static void IP_asio_v6_random(benchmark::State& state) {
     }
 }
 BENCHMARK(IP_asio_v6_random);
+#endif
 
 static void IP_webpp_v6_random(benchmark::State& state) {
     ipv6_data();

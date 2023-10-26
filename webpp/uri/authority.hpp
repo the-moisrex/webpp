@@ -1,9 +1,10 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_AUTHORITY_HPP
-#define WEBPP_AUTHORITY_HPP
+#ifndef WEBPP_URI_AUTHORITY_HPP
+#define WEBPP_URI_AUTHORITY_HPP
 
 #include "../std/string.hpp"
+#include "../std/utility.hpp"
 #include "details/constants.hpp"
 #include "details/uri_components.hpp"
 #include "encoding.hpp"
@@ -123,4 +124,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_AUTHORITY_HPP
+#endif // WEBPP_URI_AUTHORITY_HPP
