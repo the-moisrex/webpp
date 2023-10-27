@@ -3,6 +3,8 @@
 #ifndef WEBPP_STD_STRING_HPP
 #define WEBPP_STD_STRING_HPP
 
+#include "../common/meta.hpp"
+#include "../std/type_traits.hpp"
 #include "string_concepts.hpp"
 
 #include <string>
@@ -84,7 +86,7 @@ namespace webpp::istl {
         if constexpr (String<Strifiable> &&
                       (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
                        stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) ) {
-            return str;
+            return stl::forward<Strifiable>(str);
         } else if constexpr (requires { StrT{str, allocator}; }) {
             return StrT{str, allocator};
         } else if constexpr (requires {
@@ -104,8 +106,7 @@ namespace webpp::istl {
         } else if constexpr (requires { str.string(); }) {
             return stringify_of<StrT>(str.string(), allocator);
         } else {
-            // means static_assert(false, ...)
-            static_assert(false && sizeof(StrT), "The specified input is not convertible to string");
+            static_assert_false(StrT, "The specified input is not convertible to string");
         }
     }
 
@@ -155,7 +156,7 @@ namespace webpp::istl {
         using char_type        = typename string_type::value_type;
         using std_string_type  = stl::basic_string<char_type, char_traits_type, allocator_type>;
         if constexpr (stl::is_same_v<string_type, std_string_type>) {
-            return str;
+            return stl::forward<StrT>(str);
         } else {
             return std_string_type{str.data(), str.size(), str.get_allocator()};
         }
@@ -165,9 +166,13 @@ namespace webpp::istl {
 
     template <istl::String StrT>
     stl::size_t replace_all(StrT& inout, stl::string_view what, stl::string_view with) {
+        using inout_string_type = StrT;
         stl::size_t count{};
-        for (typename StrT::size_type pos{}; inout.npos != (pos = inout.find(what.data(), pos, what.size()));
-             pos += with.size(), ++count) {
+        for (typename StrT::size_type pos{};; pos += with.size(), ++count) {
+            pos = inout.find(what.data(), pos, what.size());
+            if (pos == inout_string_type::npos) {
+                break;
+            }
             inout.replace(pos, what.size(), with.data(), with.size());
         }
         return count;

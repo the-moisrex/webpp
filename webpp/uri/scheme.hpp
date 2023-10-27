@@ -5,10 +5,14 @@
 
 #include "../common/meta.hpp"
 #include "../std/string.hpp"
+#include "../std/string_like.hpp"
+#include "../std/utility.hpp"
 #include "../strings/charset.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "./details/uri_status.hpp"
+
+#include <cassert>
 
 namespace webpp::uri {
 
@@ -228,8 +232,9 @@ namespace webpp::uri {
                         ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
                         return;
                     }
-                    if (!alnum_plus.contains(*ctx.pos))
+                    if (!alnum_plus.contains(*ctx.pos)) {
                         break;
+                    }
 
                     ++ctx.pos;
                 }
@@ -270,7 +275,8 @@ namespace webpp::uri {
                         }
                         details::file_state(ctx);
                         return;
-                    } else if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
+                    }
+                    if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
                         // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {
                             if (ctx.out.get_scheme(ctx.whole()) == ctx.base.get_scheme(ctx.whole())) {
@@ -284,21 +290,20 @@ namespace webpp::uri {
                         ++ctx.pos;
                         details::path_or_authority_state(ctx);
                         return;
-                    } else {
-                        ctx.out.clear_path();
-                        ctx.status |= stl::to_underlying(uri_status::valid_opaque_path);
-                        return;
                     }
-                } else {
-                    // Otherwise, if state override is not given, set buffer to the empty string, state to no
-                    // scheme state, and start over (from the first code point in input).
-                    //
-                    // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                    ctx.pos = ctx.beg;
-                    ctx.out.clear_scheme();
-                    details::no_scheme_state(ctx);
+                    ctx.out.clear_path();
+                    ctx.status |= stl::to_underlying(uri_status::valid_opaque_path);
                     return;
                 }
+
+                // Otherwise, if state override is not given, set buffer to the empty string, state to no
+                // scheme state, and start over (from the first code point in input).
+                //
+                // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+                ctx.pos = ctx.beg;
+                ctx.out.clear_scheme();
+                details::no_scheme_state(ctx);
+                return;
             }
         }
         ctx.status = stl::to_underlying(invalid_character);

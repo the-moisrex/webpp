@@ -5,10 +5,13 @@
 
 #include "std.hpp"
 
+#include <cstdint> // for std::size_t and what not
 #include <type_traits>
 #include <utility> // for move and forward
 
 namespace webpp::istl {
+
+    // NOLINTBEGIN(cppcoreguidelines-macro-usage)
 
     // Used where a tuple is needed, but you don't really want all features of tuple
     template <typename...>
@@ -166,7 +169,7 @@ namespace webpp::istl {
 
         template <typename T, stl::size_t Index = 0>
         struct a_type {
-            static constexpr long long int rank  = ConditionOp<T>::value;
+            static constexpr stl::uint64_t rank  = ConditionOp<T>::value;
             static constexpr stl::size_t   index = Index;
             using type                           = T;
 
@@ -349,7 +352,7 @@ namespace webpp::istl {
                   typename T2>
         struct parameter_replacer;
 
-
+// NOLINTBEGIN(bugprone-macro-parentheses)
 #define WEBPP_REMOVE_CVREF(CVREF)                                                                           \
     template <template <typename...> typename T,                                                            \
               template <typename>                                                                           \
@@ -407,6 +410,7 @@ namespace webpp::istl {
         WEBPP_REMOVE_CVREF(const volatile&)
         WEBPP_REMOVE_CVREF(const volatile&&)
 
+// NOLINTEND(bugprone-macro-parentheses)
 #undef WEBPP_REMOVE_CVREF
 
         template <template <typename...> typename T, template <typename> typename Replacer, typename... Heads>
@@ -799,12 +803,14 @@ namespace webpp::istl {
             // use TagT as the last type
             template <typename Tag>
                 requires(all_size < Limit)
-            constexpr tag<typename Tag::last, all> operator|(Tag&&) const noexcept {
+            constexpr tag<typename Tag::last, all>
+            operator|([[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
                 return {};
             }
 
             template <typename Tag>
-            constexpr tag operator|(Tag&&) const noexcept {
+            constexpr tag
+            operator|([[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
                 return {};
             }
         };
@@ -1190,7 +1196,7 @@ namespace webpp::istl {
         using result                     = void;
 
         template <typename C>
-        static constexpr auto call(C, Args...) {
+        static constexpr auto call([[maybe_unused]] C callable, [[maybe_unused]] Args... args) {
             // static_assert_false
             static_assert(false && !sizeof(C*),
                           "The specified callable cannot be called with the specified arguments.");
@@ -1430,6 +1436,7 @@ namespace webpp::istl {
 
 
     namespace details {
+        // NOLINTBEGIN(*-runtime-int)
         template <typename T>
         struct remove_unsigned {
             using type = T;
@@ -1459,6 +1466,7 @@ namespace webpp::istl {
         struct remove_unsigned<unsigned long long> {
             using type = long long;
         };
+        // NOLINTEND(*-runtime-int)
     } // namespace details
 
     /**
@@ -1485,6 +1493,7 @@ namespace webpp::istl {
     template <typename T>
     using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
 
+    // NOLINTEND(cppcoreguidelines-macro-usage)
 } // namespace webpp::istl
 
 #endif // WEBPP_TYPE_TRAITS_HPP

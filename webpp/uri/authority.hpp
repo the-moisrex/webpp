@@ -7,6 +7,7 @@
 #include "../std/utility.hpp"
 #include "details/constants.hpp"
 #include "details/uri_components.hpp"
+#include "details/uri_status.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
@@ -46,10 +47,11 @@ namespace webpp::uri {
                         // todo
                     }
                     break;
-                case '\\':
+                case '\\': {
                     if (!is_special_scheme(ctx.out.get_scheme(ctx.whole())))
                         break;
                     [[fallthrough]];
+                }
                 case '/':
                 case '?':
                 case '#':

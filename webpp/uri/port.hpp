@@ -13,7 +13,7 @@
 
 namespace webpp::uri {
 
-    static constexpr stl::uint16_t max_port_number = 65535u;
+    static constexpr stl::uint16_t max_port_number = 65535U;
 
     template <typename... T>
     static constexpr void
@@ -37,7 +37,7 @@ namespace webpp::uri {
                 case '7':
                 case '8':
                 case '9':
-                    port_value *= 10; // NOLINT(*-avoid-magic-numbers)
+                    port_value *= 10; // NOLINT(*-magic-numbers)
                     port_value += *ctx.pos - '0';
                     ++ctx.pos;
                     break;
@@ -107,9 +107,10 @@ namespace webpp::uri {
             requires(stl::is_integral_v<stl::remove_cvref_t<T>> &&
                      (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
                      !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
-        constexpr basic_port(T port_num) : string_type{} {
-            if (port_num < 0 || port_num > max_port_number)
+        constexpr explicit basic_port(T port_num) : string_type{} {
+            if (port_num < 0 || port_num > max_port_number) {
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
+            }
 
             webpp::append_to(*this, port_num, stl::chars_format::fixed);
         }
@@ -121,8 +122,9 @@ namespace webpp::uri {
         }
 
         void append_to(istl::String auto& out) {
-            if (this->empty())
+            if (this->empty()) {
                 return; // nothing to add
+            }
             // out.reserve(out.size() + this->size() + 1);
             out.push_back(':');
             out.append(*this);
@@ -138,7 +140,7 @@ namespace webpp::uri {
             return val >= 0 && val < well_known_upper_port;
         }
 
-        [[nodiscard]] constexpr uint16_t value() const noexcept {
+        [[nodiscard]] constexpr stl::uint16_t value() const noexcept {
             return to_uint16(*this);
         }
     };

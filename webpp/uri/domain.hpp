@@ -9,8 +9,8 @@
 #include <cstdint>
 
 namespace webpp {
-
-    enum struct domain_name_status {
+    enum struct domain_name_status : stl::underlying_type_t<uri::uri_status> { // NOLINT(*-enum-size)
+    // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
         webpp_def(valid),              // valid ascii domain name
         webpp_def(valid_punycode),     // valid domain name which is a punycode
@@ -23,6 +23,7 @@ namespace webpp {
         webpp_def(double_hyphen),      // the domain cannot have double hyphens unless it's a punycode
         webpp_def(empty_subdomain),    // a domain/subdomain cannot be empty (no double dotting)
 #undef webpp_def
+        // NOLINTEND(*-macro-usage)
     };
 
     /**
@@ -31,18 +32,19 @@ namespace webpp {
     static constexpr stl::string_view to_string(domain_name_status status) noexcept {
         switch (status) {
             using enum domain_name_status;
-            case valid: return "Valid ascii domain name";
-            case valid_punycode: return "Valid unicode domain name which contains punycode";
-            case invalid_character: return "Found an invalid character in the domain name";
-            case too_long: return "The domain is too long, max allowed character is 255";
+            case valid: return {"Valid ascii domain name"};
+            case valid_punycode: return {"Valid unicode domain name which contains punycode"};
+            case invalid_character: return {"Found an invalid character in the domain name"};
+            case too_long: return {"The domain is too long, max allowed character is 255"};
             case subdomain_too_long:
-                return "The subdomain is too long, max allowed character in a sub-domain is 63";
+                return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
             case dot_at_end:
-                return "The domain ended unexpectedly; domains cannot have a dot at the end (this is not a dns record)";
-            case begin_with_hyphen: return "The domain cannot start with hyphens";
-            case end_with_hyphen: return "The domain cannot end with hyphens";
-            case double_hyphen: return "The domain cannot have double hyphens unless it's a punycode";
-            case empty_subdomain: return "A domain/sub-domain cannot be empty (no double dotting)";
+                return {
+                  "The domain ended unexpectedly; domains cannot have a dot at the end (this is not a dns record)"};
+            case begin_with_hyphen: return {"The domain cannot start with hyphens"};
+            case end_with_hyphen: return {"The domain cannot end with hyphens"};
+            case double_hyphen: return {"The domain cannot have double hyphens unless it's a punycode"};
+            case empty_subdomain: return {"A domain/sub-domain cannot be empty (no double dotting)"};
         }
         stl::unreachable();
     }
@@ -65,18 +67,19 @@ namespace webpp {
         using enum domain_name_status;
         if (pos == end) {
             return empty_subdomain;
-        } else if (end - pos > details::domain_name_threshold) {
+        }
+        if (end - pos > details::domain_name_threshold) {
             return too_long;
         }
 
-        if (*pos == '.') {
-            return empty_subdomain;
-        } else if (*pos == '-') {
-            return begin_with_hyphen;
+        switch (*pos) {
+            case '.': return empty_subdomain;
+            case '-': return begin_with_hyphen;
+            default: break;
         }
 
-        bool has_punycode    = false;
-        auto subdomain_start = pos;
+        bool        has_punycode    = false;
+        const auto* subdomain_start = pos;
         while (pos != end) {
 
             if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
@@ -85,9 +88,9 @@ namespace webpp {
                 continue;
             }
 
-            const char ch = *pos++;
+            const char cur_char = *pos++;
 
-            switch (ch) {
+            switch (cur_char) {
                 case '.':
                     if (pos == end) {
                         return dot_at_end;
@@ -108,7 +111,7 @@ namespace webpp {
                     }
                     break;
                 default: {
-                    if (!ALPHA_DIGIT<char>.contains(ch)) {
+                    if (!ALPHA_DIGIT<char>.contains(cur_char)) {
                         --pos; // make sure the invalid character is selected
                         return invalid_character;
                     }
@@ -141,7 +144,7 @@ namespace webpp {
             return starts_with("xn--");
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
         }
 

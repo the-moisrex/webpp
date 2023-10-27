@@ -163,11 +163,9 @@ namespace webpp::http {
         using context_methods = details::common_context_methods<RequestType>;
 
       public:
-        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         request_ref request;
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
-        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
         constexpr common_context_view(request_ref inp_req) noexcept
           : context_methods{inp_req},
@@ -205,12 +203,10 @@ namespace webpp::http {
         using dynamic_route_type  = dynamic_route<traits_type>;
         using dynamic_route_ptr   = dynamic_route_type*;
 
-        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         request_type  request;
         response_type response;
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
-        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
 
       private:

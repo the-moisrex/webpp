@@ -19,7 +19,7 @@ namespace webpp::time {
         using time_point = typename clock_type::time_point;
 
         template <typename NDuration>
-        constexpr stopwatch(std::chrono::time_point<clock_type, NDuration> time) noexcept
+        constexpr explicit stopwatch(std::chrono::time_point<clock_type, NDuration> time) noexcept
           : _start{std::chrono::time_point_cast<duration>(time)} {}
         constexpr stopwatch() noexcept                            = default;
         constexpr stopwatch(const stopwatch&) noexcept            = default;

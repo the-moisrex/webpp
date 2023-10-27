@@ -31,7 +31,7 @@ namespace webpp::http {
             }
         }
 
-        return "application/octet-stream";
+        return {"application/octet-stream"};
     }
 
 
