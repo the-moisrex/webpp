@@ -8,11 +8,11 @@
 #include <filesystem>
 
 namespace webpp::stl::filesystem {
-    using namespace ::std::filesystem;
-}
+    using namespace ::std::filesystem; // NOLINT(*-build-using-namespace)
+} // namespace webpp::stl::filesystem
 
 namespace webpp::fs {
-    using namespace ::std::filesystem;
-}
+    using namespace ::std::filesystem; // NOLINT(*-build-using-namespace)
+} // namespace webpp::fs
 
 #endif // WEBPP_STD_FILESYSTEM_HPP

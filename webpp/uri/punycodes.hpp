@@ -40,7 +40,7 @@ namespace webpp::uri {
      *    an output that might exceed 63 bytes.
      */
     constexpr int utf8_to_punycode(const char* input, stl::size_t input_length, char* output) noexcept {
-        // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 
@@ -255,7 +255,7 @@ namespace webpp::uri {
         }
         return static_cast<int>(output - init_output + 4);
         // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-        // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+        // NOLINTEND(*-magic-numbers)
     }
 
 } // namespace webpp::uri

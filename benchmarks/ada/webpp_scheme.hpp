@@ -31,7 +31,7 @@ namespace webpp::v1 {
          * @return 0 if unknown, otherwise return the port
          */
         [[nodiscard]] constexpr stl::uint16_t known_port() const noexcept {
-            // NOLINTBEGIN(*-avoid-magic-numbers)
+            // NOLINTBEGIN(*-magic-numbers)
             switch (this->size()) {
                 case 2:
                     if (this->operator[](0) == 'w' && this->operator[](1) == 's')
@@ -53,7 +53,7 @@ namespace webpp::v1 {
                     break;
             }
             return 0u;
-            // NOLINTEND(*-avoid-magic-numbers)
+            // NOLINTEND(*-magic-numbers)
         }
     };
 

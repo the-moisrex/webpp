@@ -36,10 +36,10 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, ~0);
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, static_cast<int>(~0UL)) << 4U;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, static_cast<int>(~0UL));
 
-                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if (decoded_char != static_cast<int>(~0UL)) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
@@ -64,8 +64,9 @@ namespace webpp {
             }
         }
         pos = out;
-        if (pos != end)
+        if (pos != end) {
             *pos = '\0';
+        }
         return true;
     }
 
@@ -89,7 +90,7 @@ namespace webpp {
                 int decoded_char = ascii::hex_digit_value<int>(*it++, ~0) << 4u;
                 decoded_char |= ascii::hex_digit_value<int>(*it, ~0);
 
-                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if (decoded_char != ~0) [[likely]] { // NOLINT(*-magic-numbers)
                     output += static_cast<char_type>(decoded_char);
                 } else {
                     return false;
@@ -113,19 +114,19 @@ namespace webpp {
     /// encode one character and add it to the output
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, istl::CharType CharT>
     static constexpr void
-    encode_uri_component(CharT ch, istl::String auto& output, CharSet auto const& chars) {
+    encode_uri_component(CharT inp_char, istl::String auto& output, CharSet auto const& chars) {
         using char_type   = CharT;
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
 
         if constexpr (uri_encoding_policy::allowed_chars == Policy) {
-            if (chars.contains(ch)) {
-                output += ch;
+            if (chars.contains(inp_char)) {
+                output += inp_char;
                 return;
             }
         }
-        output += ascii::to_percent_hex<char_type>(ch);
+        output += ascii::to_percent_hex<char_type>(inp_char);
     }
 
     /**
@@ -160,8 +161,9 @@ namespace webpp {
             const auto new_capacity =
               output.size() +
               static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
-            if (output.capacity() < new_capacity)
+            if (output.capacity() < new_capacity) {
                 output.reserve(new_capacity);
+            }
         }
         for (; it != input_end; ++it) {
             encode_uri_component<Policy>(*it, output, chars);

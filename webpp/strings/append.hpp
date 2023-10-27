@@ -51,7 +51,10 @@ namespace webpp {
     constexpr auto append_to(char* ptr, ValueType value, [[maybe_unused]] R&&... args) noexcept {
 #ifdef __cpp_lib_to_chars
         constexpr stl::size_t _size = ascii::digit_count<ValueType>() + 1;
-        return stl::to_chars(ptr, ptr + _size, value, stl::forward<R>(args)...);
+        return stl::to_chars(ptr,
+                             ptr + _size, // NOLINT(*-pointer-arithmetic)
+                             value,
+                             stl::forward<R>(args)...);
 #else
         // todo: use floating point format options feom "args"
         fmt::format_to(ptr, "{}", value);
@@ -103,10 +106,10 @@ namespace webpp {
     template <typename Op>
     constexpr void resize_and_append(istl::String auto& out,
                                      stl::size_t        counts,
-                                     Op&&               op) noexcept(noexcept(op(out.data()))) {
+                                     Op&&               operation) noexcept(noexcept(operation(out.data()))) {
         auto const str_size = out.size();
         out.resize(out.size() + counts); // unfortunately resize writes zeros!!
-        auto const ret    = stl::forward<Op>(op)(out.data() + str_size);
+        auto const ret    = stl::forward<Op>(operation)(out.data() + str_size);
         using return_type = stl::remove_cvref_t<decltype(ret)>;
         if constexpr (stl::is_integral_v<return_type>) {
             out.erase(ret);

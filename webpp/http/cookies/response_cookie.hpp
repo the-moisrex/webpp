@@ -261,7 +261,7 @@ namespace webpp::http {
         }
 
         constexpr auto& remove(bool i_remove = true) noexcept {
-            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTBEGIN(*-magic-numbers)
 
             // difference between year_dur and std::chrono::year is the integer type
             using year_dur = stl::chrono::duration<int, std::ratio<31556952>>;
@@ -275,7 +275,7 @@ namespace webpp::http {
             // remove max-age if it exists because we're going with expires
             _max_age = 0;
             return *this;
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTEND(*-magic-numbers)
         }
 
         [[nodiscard]] constexpr bool is_removed() const noexcept {
@@ -463,7 +463,7 @@ namespace webpp::http {
         constexpr void to_string(string_type& result) const {
             using namespace stl::chrono;
 
-            result.reserve(result.size() + 256); // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+            result.reserve(result.size() + 256); // NOLINT(*-magic-numbers)
             result.append(_name);
             result.append("=");
             if (_version == cookie_version::version_0) {

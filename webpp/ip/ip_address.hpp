@@ -301,27 +301,27 @@ namespace webpp {
 
         template <typename StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT string(Args&&... args) const {
-            return pick([&](auto&& ip) constexpr {
-                return ip.template string<StrT>(stl::forward<Args>(args)...);
+            return pick([&](auto&& ip_addr) constexpr {
+                return ip_addr.template string<StrT>(stl::forward<Args>(args)...);
             });
         }
 
         constexpr void to_string(istl::String auto& out) const {
-            return pick([&](auto&& ip) constexpr {
-                return ip.to_string(out);
+            return pick([&](auto&& ip_addr) constexpr {
+                return ip_addr.to_string(out);
             });
         }
 
         template <typename StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT status_string(Args&&... args) const {
-            return pick([&](auto&& ip) constexpr {
-                return ip.template status_string<StrT>(stl::forward<Args>(args)...);
+            return pick([&](auto&& ip_addr) constexpr {
+                return ip_addr.template status_string<StrT>(stl::forward<Args>(args)...);
             });
         }
 
         constexpr void status_to(istl::String auto& out) const {
-            return pick([&](auto&& ip) constexpr {
-                return ip.status_to(out);
+            return pick([&](auto&& ip_addr) constexpr {
+                return ip_addr.status_to(out);
             });
         }
     };

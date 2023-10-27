@@ -157,8 +157,8 @@ namespace webpp::lexical {
 
 
     template <typename T, typename To>
-    concept CastableTo = requires(T obj, enable_owner_traits<default_traits> et) {
-        { cast<To>(obj, et) } -> stl::same_as<To>;
+    concept CastableTo = requires(T obj, enable_owner_traits<default_traits> etraits) {
+        { cast<To>(obj, etraits) } -> stl::same_as<To>;
     };
 } // namespace webpp::lexical
 

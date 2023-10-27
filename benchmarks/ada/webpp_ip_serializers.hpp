@@ -44,7 +44,7 @@ namespace webpp::v1 {
     static constexpr auto ipv6_byte_count = 16u;
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    // NOLINTBEGIN(*-magic-numbers)
 
     // NOLINTBEGIN(cppcoreguidelines-macro-usage)
     /**
@@ -214,7 +214,7 @@ namespace webpp::v1 {
         return out;
     }
 
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
     // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 } // namespace webpp::v1

@@ -12,7 +12,7 @@
 using namespace webpp;
 using namespace webpp::istl;
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 void test(int limit) {
     static auto i = 0;
@@ -846,4 +846,4 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
 }
 
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

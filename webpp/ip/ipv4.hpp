@@ -11,7 +11,7 @@
 #include <array>
 #include <compare>
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 namespace webpp {
 
     using ipv4_octet  = stl::uint8_t;
@@ -577,7 +577,7 @@ namespace webpp {
     };
 
 } // namespace webpp
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 
 #endif // WEBPP_IP_IPV4_HPP

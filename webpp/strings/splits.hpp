@@ -43,10 +43,10 @@ namespace webpp::strings {
         using iterator_category = stl::forward_iterator_tag;
         using iterator_concept  = stl::forward_iterator_tag;
 
-        constexpr splitter_iterator(splitter_ptr    ptr,
-                                    difference_type start_pos_val   = 0ul,
-                                    difference_type finish_pos_val  = 0ul,
-                                    stl::size_t     delim_index_val = 0ul) noexcept
+        constexpr explicit splitter_iterator(splitter_ptr    ptr,
+                                             difference_type start_pos_val   = 0,
+                                             difference_type finish_pos_val  = 0,
+                                             stl::size_t     delim_index_val = 0) noexcept
           : spltr{ptr},
             start_pos{start_pos_val},
             finish_pos{finish_pos_val},
@@ -66,9 +66,10 @@ namespace webpp::strings {
                 spltr = nullptr;
                 return *this;
             }
-            spltr->on_delimiter(delim_index++, [this, len]<Delimiter DT>(DT&& delim) {
-                if (finish_pos != 0ul)
+            spltr->on_delimiter(delim_index++, [this, len]<Delimiter DT>(DT delim) {
+                if (finish_pos != 0) {
                     finish_pos += ascii::size(delim);
+                }
                 start_pos = finish_pos;
                 if constexpr (istl::CharType<DT> || istl::StringView<DT>) {
                     finish_pos = stl::min(len, spltr->str.find(delim, finish_pos));
@@ -92,8 +93,9 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
-            if (spltr == nullptr && other.spltr == nullptr)
+            if (spltr == nullptr && other.spltr == nullptr) {
                 return true;
+            }
             return start_pos == other.start_pos && finish_pos == other.finish_pos && spltr == other.spltr &&
                    delim_index == other.delim_index;
         }
@@ -111,9 +113,9 @@ namespace webpp::strings {
 
       private:
         splitter_ptr    spltr       = nullptr;
-        difference_type start_pos   = 0ul;
-        difference_type finish_pos  = 0ul;
-        stl::size_t     delim_index = 0ul;
+        difference_type start_pos   = 0;
+        difference_type finish_pos  = 0;
+        stl::size_t     delim_index = 0;
     };
 
 
@@ -124,7 +126,7 @@ namespace webpp::strings {
      */
     template <typename StrV = stl::string_view, Delimiter... DelimT>
         requires((istl::StringView<StrV> || istl::String<StrV>) && // it can be a string or string view
-                 sizeof...(DelimT) > 0ul)                          // we must have at least one delimiter
+                 sizeof...(DelimT) > 0)                            // we must have at least one delimiter
     struct basic_splitter {
 
         static constexpr auto delim_count = sizeof...(DelimT);
@@ -134,7 +136,7 @@ namespace webpp::strings {
         using self_type               = basic_splitter;
         using iterator_type           = splitter_iterator<self_type>;
         using default_collection_type = stl::vector<string_view_type>;
-        using default_array_type      = stl::array<string_view_type, delim_count + 1ul>;
+        using default_array_type      = stl::array<string_view_type, delim_count + 1>;
 
         friend iterator_type;
 
@@ -144,7 +146,7 @@ namespace webpp::strings {
 
 
       public:
-        constexpr basic_splitter(string_view_type str_val, DelimT&&... delims_input) noexcept
+        constexpr explicit basic_splitter(string_view_type str_val, DelimT&&... delims_input) noexcept
           : str{str_val},
             delims{stl::forward<DelimT>(delims_input)...} {}
 
@@ -168,7 +170,7 @@ namespace webpp::strings {
         template <typename Vec = default_collection_type, typename... Args>
         [[nodiscard]] constexpr Vec split(Args&&... args) const {
             Vec vec{stl::forward<Args>(args)...};
-            vec.reserve(delim_count + 1ul); // we're gambling here
+            vec.reserve(delim_count + 1UL); // we're gambling here
             split<Vec>(vec);
             return vec;
         }
@@ -176,16 +178,17 @@ namespace webpp::strings {
         template <typename Arr = default_array_type>
         constexpr void split_array(Arr& data) const noexcept {
             constexpr auto array_size = stl::tuple_size<Arr>::value;
-            auto pos_finder = [this, last_pos = 0ul]<stl::size_t Index>(istl::value_holder<Index>) mutable {
-                constexpr auto delim_index = stl::clamp(Index, 0ul, delim_count - 1ul);
-                const auto     delim       = stl::get<delim_index>(delims);
-                const auto     pos         = stl::min(str.size(), str.find(delim, last_pos));
-                const auto     ret         = str.substr(last_pos, pos - last_pos);
-                last_pos                   = pos;
-                last_pos += ascii::size(delim);
-                return ret;
-            };
-            ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
+            ([&, this]<stl::size_t... I>(stl::index_sequence<I...>) {
+                auto pos_finder = [this,
+                                   last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {
+                    constexpr auto delim_index = stl::clamp(Index, 0UL, delim_count - 1UL);
+                    const auto     delim       = stl::get<delim_index>(delims);
+                    const auto     pos         = stl::min(str.size(), str.find(delim, last_pos));
+                    const auto     ret         = str.substr(last_pos, pos - last_pos);
+                    last_pos                   = pos;
+                    last_pos += ascii::size(delim);
+                    return ret;
+                };
                 ((data[I] = pos_finder(istl::value_holder<I>{})), ...); // call the func
             })(stl::make_index_sequence<array_size>());
         }
@@ -212,7 +215,7 @@ namespace webpp::strings {
         }
 
         [[nodiscard]] static constexpr auto delimiter_clamp(stl::size_t index) noexcept {
-            return stl::clamp(index, 0ul, sizeof...(DelimT) - 1ul);
+            return stl::clamp(index, 0UL, sizeof...(DelimT) - 1UL);
         }
 
         template <typename FuncT>
@@ -231,7 +234,7 @@ namespace webpp::strings {
 
 
     template <Delimiter... DelimT>
-        requires(sizeof...(DelimT) > 0ul) // we must have at least one delimiter
+        requires(sizeof...(DelimT) > 0) // we must have at least one delimiter
     struct splitter : basic_splitter<stl::string_view, DelimT...> {
         using basic_splitter<stl::string_view, DelimT...>::basic_splitter;
     };

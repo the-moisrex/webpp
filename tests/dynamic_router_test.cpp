@@ -14,7 +14,7 @@ using namespace webpp::http;
 using namespace std;
 
 
-template <typename Iter, char Num = 13> // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+template <typename Iter, char Num = 13> // NOLINT(*-magic-numbers)
 void rot13(Iter begin, const Iter& end) noexcept {
     while (begin != end) {
         char& c = *begin;
@@ -336,7 +336,7 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
     int num = 0;
 
     auto const set_num = [&] {
-        num = 10; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+        num = 10; // NOLINT(*-magic-numbers)
     };
 
     auto const add_num = [&](context& ctx) {

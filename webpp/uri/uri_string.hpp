@@ -1182,7 +1182,7 @@ namespace webpp::uri {
         [[nodiscard]] constexpr uint16_t default_port() const noexcept {
             // todo: use /etc/services instead of manually doing this and revert to manually for constexpr
 
-            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTBEGIN(*-magic-numbers)
             auto _scheme = scheme();
             if (_scheme == "http")
                 return 80u;
@@ -1196,7 +1196,7 @@ namespace webpp::uri {
                 return 23u;
             if (_scheme == "ftps")
                 return 990u;
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTEND(*-magic-numbers)
 
             // TODO: add more protocols here
             return 0u;

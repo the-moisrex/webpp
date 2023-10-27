@@ -14,7 +14,7 @@ namespace webpp::uri {
      */
     template <istl::StringView StrT>
     [[nodiscard]] constexpr stl::uint16_t known_port(StrT scheme) noexcept {
-        // NOLINTBEGIN(*-avoid-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         switch (scheme.size()) {
             case 2:
                 if (scheme[0] == 'w' && scheme[1] == 's')
@@ -36,7 +36,7 @@ namespace webpp::uri {
                 break;
         }
         return 0u;
-        // NOLINTEND(*-avoid-magic-numbers)
+        // NOLINTEND(*-magic-numbers)
     }
 
     /**

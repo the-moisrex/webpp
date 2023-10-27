@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Configs" pattern="file:*CMakeLists.txt||file[webpp]:tools//*||file:.clang||file:.clang-format||file:.clang-tidy||file:.clangd||file:.gitignore||file:.gitlab-ci.yml||file:.project_alt.json||file:.travis.yml||file:CMakePresets.json||file:Dockerfile||file:vcpkg.json||file:.ccls||file[webpp]:cmake//*||file[webpp]:.github//*||file[webpp]:.idea//*||file[webpp]:.task//*||file[webpp]:.vscode//*||file[webpp]:assets//*||file[webpp]:assets/*||file:gtask-markdown||file:gtask" />
+</component>

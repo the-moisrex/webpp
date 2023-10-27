@@ -5,7 +5,7 @@
 
 // There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
 // them, so we're disabling this warning for this file.
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 #include "../std/std.hpp"
 
@@ -326,6 +326,6 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 #endif // WEBPP_STATUS_CODE_HPP

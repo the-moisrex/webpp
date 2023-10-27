@@ -7,7 +7,7 @@
 using namespace webpp;
 using namespace webpp::json;
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 using doc_type    = document<>;
 using value_type  = typename doc_type::value_type;
@@ -108,4 +108,4 @@ TEST(JSONTest, Create) {
       json_impls());
 }
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

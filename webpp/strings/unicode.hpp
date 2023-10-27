@@ -6,7 +6,7 @@
 #include "../std/type_traits.hpp"
 
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 namespace webpp::unicode {
 
     template <typename T>
@@ -352,6 +352,6 @@ namespace webpp::unicode {
 
 } // namespace webpp::unicode
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 #endif // WEBPP_UNICODE_HPP

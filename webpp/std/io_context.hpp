@@ -17,7 +17,7 @@
 #    define STD_IO_CONTEXT STLLIB_BOOST
 namespace webpp::stl {
     namespace net = boost::asio;
-}
+} // namespace webpp::stl
 #elif __has_include(<experimental/io_context>)
 #    include <experimental/io_context>
 #    define STD_IO_CONTEXT STLLIB_EXPERIMENTAL

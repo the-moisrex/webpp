@@ -16,13 +16,13 @@
 #    include <boost/asio/ts/timer.hpp>
 namespace webpp::stl {
     namespace net = boost::asio;
-}
+} // namespace webpp::stl
 #elif __has_include(<experimental/timer>)
 #    define STD_TIMER STLLIB_EXPERIMENTAL
 #    include <experimental/timer>
 namespace webpp::stl {
     namespace net = experimental::net;
-}
+} // namespace webpp::stl
 #else
 #    error STLLIB_NETWORKING_ERROR
 #endif

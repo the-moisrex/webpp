@@ -83,7 +83,7 @@ namespace webpp {
 
     // NOLINTBEGIN(*-easily-swappable-parameters)
     // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
-    // NOLINTBEGIN(*-avoid-magic-numbers)
+    // NOLINTBEGIN(*-magic-numbers)
 
     namespace details {
         static constexpr int parse_prefix(const char*& src, const char* src_endp) noexcept {
@@ -379,7 +379,7 @@ namespace webpp {
         return inet_pton6(src, src_endp, out, prefix);
     }
 
-    // NOLINTEND(*-avoid-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
     // NOLINTEND(*-pro-bounds-pointer-arithmetic)
     // NOLINTEND(*-easily-swappable-parameters)
 

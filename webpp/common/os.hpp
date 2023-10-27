@@ -3,6 +3,7 @@
 #ifndef WEBPP_OS_HPP
 #define WEBPP_OS_HPP
 
+// NOLINTBEGIN(*-macro-usage)
 #if defined(_WIN32) || defined(_WIN64)
 #    define WINDOWS_SYSTEM
 #else
@@ -16,6 +17,6 @@
 #else
 #    define OS_VALUE(unix, windows) unix
 #endif
-
+// NOLINTEND(*-macro-usage)
 
 #endif // WEBPP_OS_HPP

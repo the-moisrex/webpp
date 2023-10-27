@@ -9,7 +9,7 @@
 using namespace webpp;
 using namespace webpp::istl;
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 
 // The test fixture
@@ -101,4 +101,4 @@ TEST_F(TupleTest, MoveElements) {
 }
 
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

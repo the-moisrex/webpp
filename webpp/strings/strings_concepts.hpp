@@ -8,6 +8,6 @@ namespace webpp::strings {
     template <typename D>
     concept Delimiter = istl::StringViewifiable<D> || istl::CharType<D>;
 
-}
+} // namespace webpp::strings
 
 #endif // WEBPP_STRINGS_CONCEPTS_HPP

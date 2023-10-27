@@ -73,9 +73,9 @@ namespace v1 {
                 if (*pos >= '0' && *pos <= '9') { // DIGITS
                     decoded_char += static_cast<char_type>(*pos - '0');
                 } else if (*pos >= 'A' && *pos <= 'F') {                     // UPPER_HEX
-                    decoded_char += static_cast<char_type>(*pos - 'A' + 10); // NOLINT(*-avoid-magic-numbers)
+                    decoded_char += static_cast<char_type>(*pos - 'A' + 10); // NOLINT(*-magic-numbers)
                 } else if (*pos >= 'a' && *pos <= 'f') {                     // LOWER_HEX
-                    decoded_char += static_cast<char_type>(*pos - 'a' + 10); // NOLINT(*-avoid-magic-numbers)
+                    decoded_char += static_cast<char_type>(*pos - 'a' + 10); // NOLINT(*-magic-numbers)
                 } else {
                     pos  = out;
                     *pos = '\0';
@@ -144,7 +144,7 @@ namespace v2 {
                 int decoded_char = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
                 decoded_char |= ascii::hex_digit_value<int>(*pos, -1);
 
-                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
@@ -206,7 +206,7 @@ namespace v3 {
                 int decoded_char = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
                 decoded_char |= ascii::hex_digit_value<int>(*pos, ~0);
 
-                if (decoded_char != ~0) [[likely]] { // NOLINT(*-avoid-magic-numbers)
+                if (decoded_char != ~0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;

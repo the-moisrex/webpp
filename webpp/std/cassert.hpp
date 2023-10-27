@@ -3,6 +3,8 @@
 #ifndef WEBPP_CASSERT_HPP
 #define WEBPP_CASSERT_HPP
 
+// NOLINTBEGIN(*-macro-usage)
+
 #include <cassert>
 
 // see this tweet: https://twitter.com/incomputable/status/1247235812271497216
@@ -49,5 +51,8 @@ namespace webpp::details {
                : ::webpp::detail::assert_fail(__FILE__, __LINE__, (message)))
 #    endif
 #endif
+
+
+// NOLINTEND(*-macro-usage)
 
 #endif // WEBPP_CASSERT_HPP

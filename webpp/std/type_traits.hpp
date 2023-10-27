@@ -169,7 +169,7 @@ namespace webpp::istl {
 
         template <typename T, stl::size_t Index = 0>
         struct a_type {
-            static constexpr stl::uint64_t rank  = ConditionOp<T>::value;
+            static constexpr stl::int64_t  rank  = ConditionOp<T>::value;
             static constexpr stl::size_t   index = Index;
             using type                           = T;
 

@@ -12,12 +12,12 @@ namespace webpp {
 
     enum struct string_tokenizer_options : stl::uint8_t {
         // Specifies the delimiters should be returned as tokens
-        return_delims = 1u << 0u,
+        return_delims = 1U << 0U,
 
         // Specifies that empty tokens should be returned. Treats the beginning and
         // ending of the string as implicit delimiters, though doesn't return them
         // as tokens if "return_delims" is also used.
-        return_empty_tokens = 1u << 1u,
+        return_empty_tokens = 1U << 1U,
     };
 
     /*
@@ -94,7 +94,7 @@ namespace webpp {
         enum hidden_options : stl::uint8_t {
             // Enabled = Expect anything until you find the delimiter
             // Disabled = Expect the delimiters until you find anything else
-            allow_chars = 1u << 2u
+            allow_chars = 1U << 2U
         };
 
       public:
@@ -105,7 +105,7 @@ namespace webpp {
         static constexpr bool is_raw_pointer_iterator = stl::is_pointer_v<const_iterator>;
 
 
-        constexpr string_tokenizer(str_v str) noexcept
+        constexpr explicit string_tokenizer(str_v str) noexcept
           : _token_begin{str.begin()},
             _token_end{str.begin()},
             _end{str.end()} {}
@@ -137,7 +137,7 @@ namespace webpp {
          * Expect the allowed characters and put them in the specified output if found.
          */
         template <CharSet AllowedCharsT>
-        constexpr bool expect(AllowedCharsT&& allowed_chars) noexcept {
+        constexpr bool expect(AllowedCharsT const& allowed_chars) noexcept {
             bool found   = false;
             _token_begin = _token_end;
             if (_token_end != _end && allowed_chars.contains(*_token_end)) {
@@ -210,14 +210,16 @@ namespace webpp {
 
         // Expect anything but the specified charset
         constexpr void skip_but(CharSet auto&& chars) noexcept {
-            while (_token_end != _end && !chars.contains(*_token_end))
+            while (_token_end != _end && !chars.contains(*_token_end)) {
                 ++_token_end;
+            }
             _token_begin = _token_end;
         }
 
         constexpr void skip(CharSet auto&& chars) noexcept {
-            while (_token_end != _end && chars.contains(*_token_end))
+            while (_token_end != _end && chars.contains(*_token_end)) {
                 ++_token_end;
+            }
             _token_begin = _token_end;
         }
 
@@ -276,10 +278,9 @@ namespace webpp {
             if (next<Options>(stl::forward<DelimsT>(delims))) {
                 token(out);
                 return true;
-            } else {
+            }
                 err = err_value;
                 return false;
-            }
         }
 
         // same as other "next", except that it gets a "quotes" as well
@@ -296,10 +297,9 @@ namespace webpp {
             if (next<Options>(stl::forward<DelimsT>(delims), stl::forward<QuotedCharsT>(quotes))) {
                 token(out);
                 return true;
-            } else {
+            }
                 err = err_value;
                 return false;
-            }
         }
 
         /**
@@ -390,13 +390,15 @@ namespace webpp {
                     _is_delim = true;
                     return false;
                 }
-                if (!delims.contains(*_token_begin))
+                if (!delims.contains(*_token_begin)) {
                     break;
+                }
             }
             _token_end = _token_begin;
             ++_token_end;
-            while (_token_end != _end && !delims.contains(*_token_end))
+            while (_token_end != _end && !delims.contains(*_token_end)) {
                 ++_token_end;
+            }
             return true;
         }
 
@@ -477,21 +479,22 @@ namespace webpp {
         static constexpr bool advance_one(CharSet auto&& delims,
                                           CharSet auto&& quotes,
                                           advance_state* state,
-                                          char_type      c) noexcept {
+                                          char_type      inp_char) noexcept {
             webpp_static_constexpr bool hit =
               !(Options & static_cast<stl::uint8_t>(hidden_options::allow_chars));
             if (state->in_quote) {
                 if (state->in_escape) {
                     state->in_escape = false;
-                } else if (c == '\\') {
+                } else if (inp_char == '\\') {
                     state->in_escape = true;
-                } else if (c == state->quote_char) {
+                } else if (inp_char == state->quote_char) {
                     state->in_quote = false;
                 }
             } else {
-                if (delims.contains(c))
+                if (delims.contains(inp_char)) {
                     return !hit;
-                state->in_quote = quotes.contains(state->quote_char = c);
+                }
+                state->in_quote = quotes.contains(state->quote_char = inp_char);
             }
             return hit;
         }

@@ -22,7 +22,7 @@ static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, int>,
 static_assert(stl::is_same_v<traits::generalify_allocators<default_traits, double>, double>);
 static_assert(stl::is_same_v<traits::generalify_allocators<std_traits, std::string_view>, std::string_view>);
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 TEST(Cache, LRUCacheTest) {
     enable_owner_traits<default_traits> t;
@@ -117,4 +117,4 @@ TEST(Cache, ReferenceTest) {
     EXPECT_EQ("new new value", c.get("one").value());
 }
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

@@ -13,7 +13,7 @@ namespace webpp::istl {
 
     template <>
     constexpr std::string_view type_name<void>() noexcept {
-        return "void";
+        return {"void"};
     }
 
     namespace details {

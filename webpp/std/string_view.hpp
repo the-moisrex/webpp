@@ -95,7 +95,7 @@ namespace webpp::istl {
         requires(StringViewifiableOf<StrViewT, StrT>)
     [[nodiscard]] constexpr StrViewT string_viewify_of(StrT&& str) noexcept {
         if constexpr (stl::is_convertible_v<StrT, StrViewT>) {
-            return str;
+            return stl::forward<StrT>(str);
         } else if constexpr (requires { StrViewT{str}; }) {
             return StrViewT{str};
         } else if constexpr (requires {

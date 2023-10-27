@@ -8,6 +8,7 @@ namespace webpp::istl {
 
     namespace details {
 
+// NOLINTBEGIN(*-macro-usage)
 #define webpp_support_func(method, val_type) \
     template <typename T>                    \
     concept supports_##method = requires(val_type val, T obj) { obj.method(val); };
@@ -21,6 +22,7 @@ namespace webpp::istl {
         webpp_support_func(insert, typename T::value_type);
 
 #undef webpp_support_func
+        // NOLINTEND(*-macro-usage)
     } // namespace details
 
     template <typename T>

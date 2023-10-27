@@ -9,7 +9,7 @@
 using namespace webpp;
 using namespace webpp::stl;
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 TEST(ConcurrencyTest, AtomicCounter) {
 
@@ -51,4 +51,4 @@ TEST(ConcurrencyTest, STDAtomicCounter) {
 
 
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

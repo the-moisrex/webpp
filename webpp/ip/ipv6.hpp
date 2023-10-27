@@ -11,7 +11,7 @@
 
 // There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
 // them, so we're disabling this warning for this file.
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 namespace webpp {
 
@@ -1205,6 +1205,6 @@ namespace webpp {
 
 } // namespace webpp
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 #endif // WEBPP_IPV6_HPP

@@ -21,7 +21,7 @@ namespace webpp {
                                     WEBPP_SINGLE_ARG(stl::uint8_t, typename),
                                     WEBPP_SINGLE_ARG(stl::uint8_t N, stl::integral DataType),
                                     WEBPP_SINGLE_ARG(N, DataType))
-    }
+    } // namespace details
 
     template <typename T>
     using is_specialization_of_basic_version =
@@ -52,10 +52,11 @@ namespace webpp {
         ///            the equality is just simply false.
 
       private:
-        static constexpr auto bits_count = sizeof(integer_type) * 8u;
+        static constexpr auto bits_count = sizeof(integer_type) * 8U;
 
 
       public:
+        // NOLINTBEGIN(*-macro-usage)
 #define WEBPP_DEFINE_OPERATOR(op, short_op)                                                      \
     template <stl::integral IntType>                                                             \
     constexpr basic_version& op(IntType new_value) noexcept {                                    \
@@ -117,6 +118,7 @@ namespace webpp {
 
 #undef WEBPP_DEFINE_OPERATOR
 
+        // NOLINTEND(*-macro-usage)
 
 
         /// Read from ALREADY-CHECKED string
@@ -135,8 +137,9 @@ namespace webpp {
                     // fill the rest with zeros
                     for (;;) {
                         *octet = integer_type{0};
-                        if (++octet == this->end())
+                        if (++octet == this->end()) {
                             return;
+                        }
                     }
                 }
 
@@ -168,8 +171,9 @@ namespace webpp {
                     // fill the rest with zeros
                     for (;;) {
                         *octet = integer_type{0};
-                        if (++octet == this->end())
+                        if (++octet == this->end()) {
                             return true;
+                        }
                     }
                 }
                 auto const val_str = str.substr(0, stl::min(dot, str.size()));
@@ -194,15 +198,17 @@ namespace webpp {
         template <istl::String StrT>
         constexpr void to_string(StrT& out) {
             using char_type = istl::char_type_of_t<StrT>;
-            if (this->empty())
+            if (this->empty()) {
                 return;
+            }
             for (auto it = this->begin();;) {
                 auto num = *it;
                 for (;;) {
-                    out += static_cast<char_type>(num % 10) + char_type{'0'}; // NOLINT(*-avoid-magic-numbers)
-                    num /= 10;                                                // NOLINT(*-avoid-magic-numbers)
-                    if (num == 0)
+                    out += static_cast<char_type>(num % 10) + char_type{'0'}; // NOLINT(*-magic-numbers)
+                    num /= 10;                                                // NOLINT(*-magic-numbers)
+                    if (num == 0) {
                         break; // for some weired reason, do-while is considered bad practice!!!
+                    }
                 }
 
                 if (++it == this->end()) {
@@ -230,13 +236,14 @@ namespace webpp {
         [[nodiscard]] constexpr inline bool operator==(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
-            if (!other_ver.from_string(stl::forward<StrT>(other)))
+            if (!other_ver.from_string(stl::forward<StrT>(other))) {
                 return false;
+            }
             return std::equal(this->begin(), this->end(), other_ver.begin());
         }
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
-            requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )
+            requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
         [[nodiscard]] constexpr bool
         operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
             for (auto it = other.begin(); auto const& item : *this) {
@@ -257,13 +264,14 @@ namespace webpp {
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
-            if (!other_ver.from_string(stl::forward<StrT>(other)))
+            if (!other_ver.from_string(stl::forward<StrT>(other))) {
                 return std::partial_ordering::unordered;
+            }
             return as_array() <=> other_ver.as_array();
         }
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
-            requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )
+            requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
         [[nodiscard]] constexpr stl::partial_ordering
         operator<=>(basic_version<NewCounts, NewType> const& other) const noexcept {
             auto rhs = other.begin();
@@ -280,24 +288,26 @@ namespace webpp {
                 auto const res = *lhs <=> static_cast<integer_type>(*rhs++);
                 if (stl::is_gt(res)) {
                     return stl::partial_ordering::greater;
-                } else if (stl::is_lt(res)) {
+                }
+                if (stl::is_lt(res)) {
                     return stl::partial_ordering::less;
-                } else if (!stl::is_eq(res)) {
+                }
+                if (!stl::is_eq(res)) {
                     return stl::partial_ordering::unordered;
                 }
             }
             if (rhs == other.end()) {
                 // all items have checked and all are equal
                 return stl::partial_ordering::equivalent;
-            } else {
-                // if the remaining items are zero, then both of them are equal
-                for (; rhs != other.end(); ++rhs) {
-                    if (*rhs != NewType{0}) {
-                        return stl::partial_ordering::less;
-                    }
-                }
-                return stl::partial_ordering::equivalent;
             }
+
+            // if the remaining items are zero, then both of them are equal
+            for (; rhs != other.end(); ++rhs) {
+                if (*rhs != NewType{0}) {
+                    return stl::partial_ordering::less;
+                }
+            }
+            return stl::partial_ordering::equivalent;
         }
 
 #endif

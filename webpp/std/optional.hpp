@@ -31,7 +31,7 @@ namespace webpp::istl {
           typename stl::remove_cvref_t<T>::value_type;
           { obj.value() } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
           { obj.value_or(obj) } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-          { obj == true } -> stl::same_as<bool>; // convertible to bool
+          { static_cast<bool>(obj) } -> stl::same_as<bool>; // convertible to bool
       });
 
     template <typename Q, typename T>

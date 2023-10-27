@@ -10,6 +10,8 @@
 
 namespace webpp::uri {
 
+    // NOLINTBEGIN(*-magic-numbers)
+
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
     /// only one error is possible.
     /// This warning bit helps with:
@@ -50,56 +52,56 @@ namespace webpp::uri {
         unparsed = 0, // not parsed at all
 
         // success:
-        valid          = valid_bit | 1u, // valid URI
-        valid_punycode = valid_bit | 2u, // valid URI which contains a punycode
+        valid          = valid_bit | 1U, // valid URI
+        valid_punycode = valid_bit | 2U, // valid URI which contains a punycode
 
         // common errors:
-        invalid_character = warning_bit >> 0u, // found an invalid character
-        too_long          = error_bit | 1u,    // the URI is too long
-        empty_string      = error_bit | 2u,    // the URI/URL/.. is empty
+        invalid_character = warning_bit >> 0U, // found an invalid character
+        too_long          = error_bit | 1U,    // the URI is too long
+        empty_string      = error_bit | 2U,    // the URI/URL/.. is empty
 
         // scheme-specific errors/warnings:
-        scheme_ended_unexpectedly       = error_bit | 3u,
-        incompatible_schemes            = error_bit | 4u,
-        missing_following_solidus       = warning_bit >> 1u, // Missing '//' after 'file:'
-        missing_scheme_non_relative_url = error_bit | 5u,
+        scheme_ended_unexpectedly       = error_bit | 3U,
+        incompatible_schemes            = error_bit | 4U,
+        missing_following_solidus       = warning_bit >> 1U, // Missing '//' after 'file:'
+        missing_scheme_non_relative_url = error_bit | 5U,
 
         // host-specific errors:
-        valid_path_or_authority = valid_bit | 3u,
-        valid_authority         = valid_bit | 4u,
-        valid_host              = valid_bit | 5u,
-        valid_port              = valid_bit | 6u,
-        valid_authority_end     = valid_bit | 7u,
-        subdomain_too_long      = error_bit | 6u, // the subdomain is too long
-        dot_at_end              = error_bit | 7u, // the domain ended unexpectedly
-        begin_with_hyphen       = error_bit | 8u, // the domain cannot start with hyphens
-        end_with_hyphen         = error_bit | 9u, // the domain cannot end with hyphens
-        double_hyphen   = error_bit | 10u, // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain = error_bit | 11u, // a domain/subdomain cannot be empty (no double dotting)
-        host_missing    = error_bit | 12u,
-        invalid_host_code_point   = error_bit | 13u, // non-special (opaque) host contains invalid character
-        invalid_domain_code_point = error_bit | 14u, // domain name contains invalid chars
-        has_credentials           = warning_bit >> 2u,
+        valid_path_or_authority = valid_bit | 3U,
+        valid_authority         = valid_bit | 4U,
+        valid_host              = valid_bit | 5U,
+        valid_port              = valid_bit | 6U,
+        valid_authority_end     = valid_bit | 7U,
+        subdomain_too_long      = error_bit | 6U, // the subdomain is too long
+        dot_at_end              = error_bit | 7U, // the domain ended unexpectedly
+        begin_with_hyphen       = error_bit | 8U, // the domain cannot start with hyphens
+        end_with_hyphen         = error_bit | 9U, // the domain cannot end with hyphens
+        double_hyphen   = error_bit | 10U, // the domain cannot have double hyphens unless it's a punycode
+        empty_subdomain = error_bit | 11U, // a domain/subdomain cannot be empty (no double dotting)
+        host_missing    = error_bit | 12U,
+        invalid_host_code_point   = error_bit | 13U, // non-special (opaque) host contains invalid character
+        invalid_domain_code_point = error_bit | 14U, // domain name contains invalid chars
+        has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
         // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
 
         // port-specific errors:
-        port_out_of_range = error_bit | 15u,
-        port_invalid      = error_bit | 16u, // invalid characters and what not
+        port_out_of_range = error_bit | 15U,
+        port_invalid      = error_bit | 16U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 8u,
-        valid_opaque_path            = valid_bit | 9u,
-        reverse_solidus_used         = warning_bit >> 3u,
-        windows_drive_letter_used    = warning_bit >> 4u,
-        windows_drive_letter_as_host = warning_bit >> 5u,
+        valid_path                   = valid_bit | 8U,
+        valid_opaque_path            = valid_bit | 9U,
+        reverse_solidus_used         = warning_bit >> 3U,
+        windows_drive_letter_used    = warning_bit >> 4U,
+        windows_drive_letter_as_host = warning_bit >> 5U,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 10u,
+        valid_queries = valid_bit | 10U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 11u,
+        valid_fragment = valid_bit | 11U,
     };
 
     /**
@@ -269,9 +271,9 @@ namespace webpp::uri {
 
 
         constexpr uri_status_iterator() noexcept = default;
-        constexpr uri_status_iterator(uri_status inp_status) noexcept
+        constexpr explicit uri_status_iterator(uri_status inp_status) noexcept
           : status{stl::to_underlying(inp_status)} {}
-        constexpr uri_status_iterator(value_type inp_status) noexcept : status{inp_status} {}
+        constexpr explicit uri_status_iterator(value_type inp_status) noexcept : status{inp_status} {}
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;
         constexpr uri_status_iterator(uri_status_iterator&&) noexcept                 = default;
         constexpr uri_status_iterator& operator=(uri_status_iterator const&) noexcept = default;
@@ -281,7 +283,7 @@ namespace webpp::uri {
         constexpr uri_status_iterator& operator++() noexcept {
             if (has_warnings(status)) {
                 // remove the first warning
-                auto const new_warnings = ((warnings_mask & status) << 1u) & warnings_mask;
+                auto const new_warnings = ((warnings_mask & status) << 1U) & warnings_mask;
 
                 // remove the warnings
                 status &= ~warnings_mask;
@@ -291,14 +293,14 @@ namespace webpp::uri {
             } else {
                 // the error or valid value will be the last element, and there only can be one of them, so
                 // after that we zero it out
-                status = 0u;
+                status = 0U;
             }
             return *this;
         }
 
         [[nodiscard]] constexpr uri_status_iterator operator++(int) const noexcept {
             uri_status_iterator iter{*this};
-            ++iter;
+            ++(*this);
             return iter;
         }
 
@@ -332,24 +334,28 @@ namespace webpp::uri {
         }
 
       private:
-        value_type status = 0u;
+        value_type status = 0U;
     };
 
     [[nodiscard]] static constexpr uri_status_iterator begin(uri_status_iterator status) noexcept {
         return {status};
     }
 
-    [[nodiscard]] static constexpr uri_status_iterator end(uri_status_iterator) noexcept {
+    [[nodiscard]] static constexpr uri_status_iterator
+    end([[maybe_unused]] uri_status_iterator iter) noexcept {
         return {};
     }
 
     [[nodiscard]] static constexpr uri_status_iterator begin(uri_status status) noexcept {
-        return {status};
+        return uri_status_iterator{status};
     }
 
-    [[nodiscard]] static constexpr uri_status_iterator end(uri_status) noexcept {
+    [[nodiscard]] static constexpr uri_status_iterator end([[maybe_unused]] uri_status status) noexcept {
         return {};
     }
+
+    // NOLINTBEGIN(*-magic-numbers)
+
 } // namespace webpp::uri
 
 

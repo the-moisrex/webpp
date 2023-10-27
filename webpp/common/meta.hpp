@@ -3,28 +3,30 @@
 #ifndef WEBPP_META_HPP
 #define WEBPP_META_HPP
 
+// NOLINTBEGIN(*-avoid-do-while, *-macro-usage)
+
 #if __cplusplus >= 199711L
-#    define CXX98 1
+#    define CXX98
 #endif
 
 #if __cplusplus >= 201103L
-#    define CXX11 1
+#    define CXX11
 #endif
 
 #if __cplusplus >= 201402L
-#    define CXX14 1
+#    define CXX14
 #endif
 
 #if __cplusplus >= 201703L
-#    define CXX17 1
+#    define CXX17
 #endif
 
 #if __cplusplus >= 202002L
-#    define CXX20 1
+#    define CXX20
 #endif
 
 #if __cplusplus >= 202302L
-#    define CXX23 1
+#    define CXX23
 #endif
 
 #ifdef CXX23
@@ -51,7 +53,7 @@
 namespace webpp::details {
     template <bool err>
     struct constexpr_assert_type {
-        constexpr void operator()(auto) const noexcept {}
+        constexpr void operator()([[maybe_unused]] auto anything) const noexcept {}
     };
 
     template <>
@@ -82,12 +84,12 @@ namespace webpp::details {
 
 
 #if defined(NDEBUG) || !defined(DEBUG) || !defined(_DEBUG)
-#    define NDEBUG 1
+#    define NDEBUG
 namespace webpp {
     static constexpr bool is_debug_build = false;
 }
 #else
-#    define DEBUG 1
+#    define DEBUG
 namespace webpp {
     static constexpr bool is_debug_build = true;
 }
@@ -117,7 +119,6 @@ namespace webpp {
 /// Use `webpp_assume(expr);` to inform the compiler that the `expr` is true.
 /// Do not rely on side-effects of the `expr` being run.
 /// Attention: DO NOT call (specially `extern`) functions with side-effects inside this, it's "potentially
-// NOLINTBEGIN(*-avoid-do-while)
 #if WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
 #elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \
@@ -187,6 +188,6 @@ namespace webpp {
                 webpp::invoke_undefined_behaviour(); \
         } while (false)
 #endif
-// NOLINTEND(*-avoid-do-while)
+// NOLINTEND(*-avoid-do-while, *-macro-usage)
 
 #endif // WEBPP_META_HPP

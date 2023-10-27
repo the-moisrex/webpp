@@ -11,10 +11,10 @@
 
 namespace webpp {
 
-    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+    // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
+    // NOLINTBEGIN(*-magic-numbers)
 
-    // NOLINTBEGIN(cppcoreguidelines-macro-usage)
+    // NOLINTBEGIN(*-macro-usage)
     /**
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
@@ -45,7 +45,7 @@ namespace webpp {
         return out;
 #undef WEBPP_PUT_CHAR
     }
-    // NOLINTEND(cppcoreguidelines-macro-usage)
+    // NOLINTEND(*-macro-usage)
 
 
 
@@ -55,16 +55,16 @@ namespace webpp {
      */
     static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
 
-        using namespace ascii::details;
+        using ascii::details::hex_chars;
 
-        if (!src) {
+        if (src == nullptr) {
             return nullptr;
         }
 
         *out = '\0';
 
         char                hexa[8 * 5];
-        char*               hex_ptr   = hexa;
+        char*               hex_ptr   = static_cast<char*>(hexa);
         const stl::uint8_t* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
 
@@ -181,8 +181,8 @@ namespace webpp {
         return out;
     }
 
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
-    // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    // NOLINTEND(*-magic-numbers)
+    // NOLINTEND(*-pro-bounds-pointer-arithmetic)
 
 } // namespace webpp
 

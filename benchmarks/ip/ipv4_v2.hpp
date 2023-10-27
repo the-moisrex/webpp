@@ -11,7 +11,7 @@
 #include <array>
 #include <compare>
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 namespace webpp::v2 {
 
     /**
@@ -378,7 +378,7 @@ namespace webpp::v2 {
     };
 
 } // namespace webpp::v2
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 
 #endif // WEBPP_IP_IPV4_V2_HPP

@@ -21,10 +21,12 @@ namespace webpp::istl {
 #        warning \
           "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
 #    else
-#        define FIXED_STRING_SUPPORT 1
+#        define FIXED_STRING_SUPPORT
 #    endif
 
 namespace webpp {
+
+    // NOLINTBEGIN(*-magic-numbers)
 
     struct length_value_t {
         uint32_t value;
@@ -32,36 +34,40 @@ namespace webpp {
     };
 
     constexpr length_value_t length_and_value_of_utf8_code_point(uint8_t first_unit) noexcept {
-        if ((first_unit & 0b1000'0000) == 0b0000'0000)
+        if ((first_unit & 0b1000'0000) == 0b0000'0000) {
             return {static_cast<uint32_t>(first_unit), 1};
-        else if ((first_unit & 0b1110'0000) == 0b1100'0000)
+        }
+        if ((first_unit & 0b1110'0000) == 0b1100'0000) {
             return {static_cast<uint32_t>(first_unit & 0b0001'1111), 2};
-        else if ((first_unit & 0b1111'0000) == 0b1110'0000)
+        }
+        if ((first_unit & 0b1111'0000) == 0b1110'0000) {
             return {static_cast<uint32_t>(first_unit & 0b0000'1111), 3};
-        else if ((first_unit & 0b1111'1000) == 0b1111'0000)
+        }
+        if ((first_unit & 0b1111'1000) == 0b1111'0000) {
             return {static_cast<uint32_t>(first_unit & 0b0000'0111), 4};
-        else if ((first_unit & 0b1111'1100) == 0b1111'1000)
+        }
+        if ((first_unit & 0b1111'1100) == 0b1111'1000) {
             return {static_cast<uint32_t>(first_unit & 0b0000'0011), 5};
-        else if ((first_unit & 0b1111'1100) == 0b1111'1100)
+        }
+        if ((first_unit & 0b1111'1100) == 0b1111'1100) {
             return {static_cast<uint32_t>(first_unit & 0b0000'0001), 6};
-        else
-            return {0, 0};
+        }
+        return {0, 0};
     }
 
     constexpr char32_t value_of_trailing_utf8_code_point(uint8_t unit, bool& correct) noexcept {
-        if ((unit & 0b1100'0000) == 0b1000'0000)
+        if ((unit & 0b1100'0000) == 0b1000'0000) {
             return unit & 0b0011'1111;
-        else {
-            correct = false;
-            return 0;
         }
+        correct = false;
+        return 0;
     }
 
     constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
-        if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000)
+        if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000) {
             return {static_cast<uint32_t>(first_unit & 0b0000001111111111), 2};
-        else
-            return {first_unit, 1};
+        }
+        return {first_unit, 1};
     }
 
     template <size_t N>
@@ -73,7 +79,7 @@ namespace webpp {
         template <typename T>
         constexpr fixed_string(const T (&input)[N + 1]) noexcept {
             if constexpr (stl::is_same_v<T, char>) {
-#    if WEBPP_STRING_IS_UTF8
+#    ifdef WEBPP_STRING_IS_UTF8
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
                     if ((i == (N - 1)) && (input[i] == 0))
@@ -120,7 +126,7 @@ namespace webpp {
                     real_size++;
                 }
 #    endif
-#    if __cpp_char8_t
+#    ifdef __cpp_char8_t
             } else if constexpr (stl::is_same_v<T, char8_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
@@ -261,6 +267,8 @@ namespace webpp {
 
     template <size_t N>
     fixed_string(fixed_string<N>) -> fixed_string<N>;
+
+    // NOLINTEND(*-magic-numbers)
 
 } // namespace webpp
 

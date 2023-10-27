@@ -260,7 +260,7 @@ namespace webpp::alloc {
         // only for those that are not a required feature; only include one of conflicting features.
         // the feature that if it's present it's usually better should be present here.
         [[nodiscard]] constexpr static long long int rank(features feature) noexcept {
-            // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTBEGIN(*-magic-numbers)
             switch (feature) {
                 using enum features;
                 case sync:
@@ -277,12 +277,12 @@ namespace webpp::alloc {
                 case low_locality: return 30;
             }
             return 0;
-            // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+            // NOLINTEND(*-magic-numbers)
         }
 
 
         [[nodiscard]] constexpr long long int rank(feature_pack asked_features) const noexcept {
-            long long int res = 100; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+            long long int res = 100; // NOLINT(*-magic-numbers)
 
             // Checking required features first:
             if ((asked_features.specified_state() && specified_state()) ||

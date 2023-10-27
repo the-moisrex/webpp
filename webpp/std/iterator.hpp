@@ -19,6 +19,6 @@ namespace webpp::istl {
         iter.begin();
         iter.end();
     };
-}
+} // namespace webpp::istl
 
 #endif // WEBPP_STD_ITERATOR_HPP

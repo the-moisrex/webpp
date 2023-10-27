@@ -20,7 +20,7 @@
 using namespace std;
 using namespace webpp::istl;
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 ///////////////////////////////////////////// replace_parameter /////////////////////////////////////////////
 
@@ -208,7 +208,7 @@ TEST(TypeTraits, ITupleIteratorTestWithTuple) {
     int    i = 0;
     double d = 1.0;
     for (auto [int_val, double_val] : vecs) {
-        d += 0.1; // NOLINT(cppcoreguidelines-avoid-magic-numbers)
+        d += 0.1; // NOLINT(*-magic-numbers)
         ++i;
         static_assert(is_same_v<remove_cvref_t<decltype(int_val)>, int>, "it should be int");
         static_assert(is_same_v<remove_cvref_t<decltype(double_val)>, double>, "it should be double");
@@ -299,4 +299,4 @@ TEST(TypeTraits, RmoeveUnsignedTest) {
     EXPECT_TRUE(bool(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
 }
 
-// NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

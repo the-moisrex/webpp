@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <stdexcept>
 
-// NOLINTBEGIN(*-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 namespace webpp {
 
     enum struct integer_casting_errors {
@@ -18,11 +18,11 @@ namespace webpp {
     constexpr stl::string_view to_string(integer_casting_errors err) noexcept {
         using enum integer_casting_errors;
         switch (err) {
-            case invalid_character: return "Invalid character found";
+            case invalid_character: return {"Invalid character found"};
             case invalid_base:
-                return "The specified string contains characters that are not in the valid base";
+                return {"The specified string contains characters that are not in the valid base"};
         }
-        return ""; // to get rid of warnings; it's 2023 for God sake!
+        return {}; // to get rid of warnings; it's 2023 for God sake!
     }
 
     /**
@@ -111,6 +111,6 @@ namespace webpp {
 
 
 } // namespace webpp
-// NOLINTEND(*-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)
 
 #endif // WEBPP_CASTS_HPP

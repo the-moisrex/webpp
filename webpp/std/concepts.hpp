@@ -12,10 +12,12 @@
 #    include "./concepts_impl.hpp"
 #endif
 
+// NOLINTBEGIN(*-macro-usage)
+
 namespace webpp::istl {
     template <typename D>
-    concept Destructible = requires(D u) {
-        { u.~D() } noexcept;
+    concept Destructible = requires(D obj) {
+        { obj.~D() } noexcept;
     };
 
     template <typename T>
@@ -51,7 +53,7 @@ namespace webpp::istl {
     namespace details {
         template <typename T>
         struct returnable {
-            T operator()() {}
+            explicit T operator()() {}
         };
 
 
@@ -59,7 +61,7 @@ namespace webpp::istl {
         struct requires_arg_op {
             template <typename T>
                 requires(Constraint.template operator()<T>())
-            operator T() {}
+            explicit operator T() {}
         };
 
 
@@ -67,11 +69,11 @@ namespace webpp::istl {
         struct requires_arg_op_cvref {
             template <typename T>
                 requires(Constraint.template operator()<T>())
-            operator T() {}
+            explicit operator T() {}
 
             template <typename T>
                 requires(Constraint.template operator()<T&>())
-            operator T&() {}
+            explicit operator T&() {}
         };
     } // namespace details
 
@@ -244,5 +246,6 @@ namespace webpp::istl {
     concept cvref_as = same_as_all<stl::remove_cvref_t<T>...>;
 
 } // namespace webpp::istl
+// NOLINTEND(*-macro-usage)
 
 #endif // WEBPP_STD_CONCEPTS_H

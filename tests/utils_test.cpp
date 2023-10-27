@@ -4,7 +4,7 @@
 #include "common/tests_common_pch.hpp"
 
 using namespace webpp;
-// NOLINTBEGIN(*-avoid-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers)
 
 TEST(BasicVersion, Concepts) {
     EXPECT_TRUE(stl::regular<basic_version<>>);
@@ -75,4 +75,4 @@ TEST(BasicVersion, ToStringTest) {
     EXPECT_EQ((basic_version{0, 0}.to_string()), "0.0");
 }
 
-// NOLINTEND(*-avoid-magic-numbers)
+// NOLINTEND(*-magic-numbers)

@@ -119,7 +119,7 @@ namespace webpp {
     }
 
     static constexpr void to_sock_addr(in6_addr& to_addr, ipv6 const& from_ip) noexcept {
-        // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+        // NOLINTBEGIN(*-magic-numbers)
         const auto octets   = from_ip.octets8();
         to_addr.s6_addr[0]  = octets[0];
         to_addr.s6_addr[1]  = octets[1];
@@ -137,7 +137,7 @@ namespace webpp {
         to_addr.s6_addr[13] = octets[13];
         to_addr.s6_addr[14] = octets[14];
         to_addr.s6_addr[15] = octets[15];
-        // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
+        // NOLINTEND(*-magic-numbers)
     }
 
     static constexpr void to_sock_addr(sockaddr_in6& to_addr, ipv6 const& from_ip) noexcept {

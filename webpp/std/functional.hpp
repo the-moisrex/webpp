@@ -41,12 +41,14 @@ namespace webpp::istl {
             using action_runner_ptr  = stl::add_pointer_t<action_runner_type>;
             using object_type        = stl::decay_t<CallableObject>;
 
+            // NOLINTBEGIN(*-non-private-member-variables-in-classes)
             call_ptr                          caller = FunctionType::template call_stub<CallableObject>;
             action_runner_ptr                 action_runner = run_action<FunctionType, CallableObject>;
             [[no_unique_address]] object_type obj;
+            // NOLINTEND(*-non-private-member-variables-in-classes)
 
-            constexpr explicit functor_object(functor_object const&)     = default;
-            constexpr explicit functor_object(functor_object&&) noexcept = default;
+            constexpr functor_object(functor_object const&)     = default;
+            constexpr functor_object(functor_object&&) noexcept = default;
             constexpr explicit functor_object(allocate_caller, object_type const& input_obj)
               : caller{FunctionType::template call_stub<CallableObject>},
                 action_runner{run_action<FunctionType, CallableObject>},
@@ -799,20 +801,20 @@ namespace webpp::istl {
         template <typename FunctionType, typename Callable>
         friend constexpr void details::run_action(FunctionType const&, void*, details::action_list);
 
-        constexpr friend bool operator==(const function& f, stl::nullptr_t) noexcept {
-            return !f;
+        constexpr friend bool operator==(const function& func, stl::nullptr_t) noexcept {
+            return !func;
         }
 
-        constexpr friend bool operator==(stl::nullptr_t, const function& f) noexcept {
-            return !f;
+        constexpr friend bool operator==(stl::nullptr_t, const function& func) noexcept {
+            return !func;
         }
 
-        constexpr friend bool operator!=(const function& f, stl::nullptr_t) noexcept {
-            return static_cast<bool>(f);
+        constexpr friend bool operator!=(const function& func, stl::nullptr_t) noexcept {
+            return static_cast<bool>(func);
         }
 
-        constexpr friend bool operator!=(stl::nullptr_t, const function& f) noexcept {
-            return static_cast<bool>(f);
+        constexpr friend bool operator!=(stl::nullptr_t, const function& func) noexcept {
+            return static_cast<bool>(func);
         }
 
         template <Allocator Alloc2>

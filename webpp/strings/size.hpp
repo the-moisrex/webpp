@@ -17,11 +17,12 @@ namespace webpp::ascii {
 
     template <typename INT>
     constexpr auto digit_count() noexcept {
-        stl::uint_fast8_t t = 0;
-        INT               a = stl::numeric_limits<INT>::max();
-        while (a /= INT(10))
-            ++t;
-        return t;
+        stl::uint_fast8_t count = 0;
+        INT               val   = stl::numeric_limits<INT>::max();
+        while (val /= static_cast<INT>(10)) { // NOLINT(*-magic-numbers)
+            ++count;
+        }
+        return count;
     }
 
 
@@ -59,8 +60,7 @@ namespace webpp::ascii {
         } else {
             // todo: is it possible to optimize this with SIMD?
             const T* end = str;
-            while (*end++ != 0)
-                ;
+            while (*end++ != 0) {}
             return end - str - 1;
         }
     }

@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Standard" pattern="file[webpp]:webpp/std//*||file[webpp]:webpp/strings//*||file[webpp]:webpp/ip//*||file[webpp]:webpp/common//*||file[webpp]:webpp/convert//*||file[webpp]:webpp/utils//*||file[webpp]:webpp/uri//*||file[webpp]:webpp/time//*||file[webpp]:webpp/memory//*||file[webpp]:webpp/socket//*" />
+</component>

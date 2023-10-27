@@ -9,7 +9,7 @@
 
 namespace webpp::ascii {
 
-    // NOLINTBEGIN(*-avoid-magic-numbers)
+    // NOLINTBEGIN(*-magic-numbers)
     // NOLINTBEGIN(*-avoid-c-arrays)
     namespace details {
         template <typename CharT = char>
@@ -109,7 +109,7 @@ namespace webpp::ascii {
     }
 
     // NOLINTEND(*-avoid-c-arrays)
-    // NOLINTEND(*-avoid-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
 
 } // namespace webpp::ascii
 
