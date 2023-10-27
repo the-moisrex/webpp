@@ -53,7 +53,7 @@ namespace webpp::istl {
     namespace details {
         template <typename T>
         struct returnable {
-            explicit T operator()() {}
+            T operator()() {}
         };
 
 

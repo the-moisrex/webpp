@@ -298,7 +298,7 @@ namespace webpp::uri {
             return *this;
         }
 
-        [[nodiscard]] constexpr uri_status_iterator operator++(int) const noexcept {
+        [[nodiscard]] constexpr uri_status_iterator operator++(int) noexcept {
             uri_status_iterator iter{*this};
             ++(*this);
             return iter;

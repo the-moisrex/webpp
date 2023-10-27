@@ -96,7 +96,7 @@ namespace webpp::ascii {
     // trim from end (in place)
     template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
     static inline void rtrim(StrT& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        const auto pos = s.find_last_not_of(whitespaces.data());
+        const auto pos = inp_str.find_last_not_of(whitespaces.data());
         if (pos == StrT::npos) {
             inp_str.clear();
         } else {
