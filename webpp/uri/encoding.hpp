@@ -11,7 +11,10 @@
 
 namespace webpp {
 
-    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
+    enum struct uri_encoding_policy : stl::uint_fast8_t {
+        allowed_chars,   // allow the specified chars
+        disallowed_chars // allow all the chars except these
+    };
 
 
 
@@ -29,6 +32,8 @@ namespace webpp {
         static_assert(stl::same_as<char_type, istl::char_type_of_t<ConstIter>>,
                       "The beginning and the end of the same string are required.");
 
+        webpp_static_constexpr auto ones = static_cast<int>(~0UL);
+
         char_type* out = pos;
         for (; pos != end; ++pos) {
             if (*pos == '%') {
@@ -36,10 +41,10 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, static_cast<int>(~0UL)) << 4U;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, static_cast<int>(~0UL));
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, ones);
 
-                if (decoded_char != static_cast<int>(~0UL)) [[likely]] { // NOLINT(*-magic-numbers)
+                if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
@@ -80,17 +85,20 @@ namespace webpp {
                                                              istl::String auto&             output,
                                                              CharSet auto const&            chars) {
         using char_type = istl::char_type_of_t<decltype(encoded_str)>;
-        auto const str  = istl::string_viewify(encoded_str);
+
+        webpp_static_constexpr auto ones = static_cast<int>(~0UL);
+
+        auto const str = istl::string_viewify(encoded_str);
         for (auto it = str.begin(); it != str.end(); ++it) {
             if (*it == '%') {
                 if (it++ >= str.end() - 2) [[unlikely]] {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*it++, ~0) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*it, ~0);
+                int decoded_char = ascii::hex_digit_value<int>(*it++, ones) << 4U;
+                decoded_char |= ascii::hex_digit_value<int>(*it, ones);
 
-                if (decoded_char != ~0) [[likely]] { // NOLINT(*-magic-numbers)
+                if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
                     output += static_cast<char_type>(decoded_char);
                 } else {
                     return false;
@@ -149,14 +157,11 @@ namespace webpp {
      *
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars>
-    static constexpr void encode_uri_component(istl::StringViewifiable auto&& src,
-                                               istl::String auto&             output,
-                                               CharSet auto const&            chars) {
-        const auto input      = istl::string_viewify(src);
+    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
+              istl::StringViewifiable InpStrT = stl::string_view>
+    static constexpr void
+    encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& chars) {
         const auto input_size = input.size();
-        auto       it         = input.data();
-        const auto input_end  = it + input_size;
         { // todo: see if this is necessary/performant
             const auto new_capacity =
               output.size() +
@@ -165,8 +170,8 @@ namespace webpp {
                 output.reserve(new_capacity);
             }
         }
-        for (; it != input_end; ++it) {
-            encode_uri_component<Policy>(*it, output, chars);
+        for (auto const ith_char : istl::string_viewify(stl::forward<InpStrT>(src))) {
+            encode_uri_component<Policy>(ith_char, output, chars);
         }
         output.shrink_to_fit();
     }

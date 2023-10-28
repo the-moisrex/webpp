@@ -1,7 +1,7 @@
 // Created by moisrex on 10/8/20.
 
-#ifndef WEBPP_TRIM_HPP
-#define WEBPP_TRIM_HPP
+#ifndef WEBPP_STRING_TRIM_HPP
+#define WEBPP_STRING_TRIM_HPP
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
@@ -139,4 +139,4 @@ namespace webpp::ascii {
     }
 } // namespace webpp::ascii
 
-#endif // WEBPP_TRIM_HPP
+#endif // WEBPP_STRING_TRIM_HPP

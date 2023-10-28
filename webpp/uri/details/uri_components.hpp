@@ -77,6 +77,10 @@ namespace webpp::uri {
             authority_end = end;
         }
 
+        constexpr void set_fragment(seg_type start, [[maybe_unused]] seg_type end) noexcept {
+            fragment_start = start;
+        }
+
         constexpr void clear_scheme() noexcept {
             scheme_end = omitted;
         }
@@ -299,6 +303,14 @@ namespace webpp::uri {
 
         constexpr void set_fragment(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
             istl::assign(fragment, beg, end);
+        }
+
+        constexpr string_type& get_fragment_ref() noexcept {
+            return fragment;
+        }
+
+        constexpr string_type const& get_fragment_ref() const noexcept {
+            return fragment;
         }
 
         [[nodiscard]] constexpr bool has_credentials() const noexcept {

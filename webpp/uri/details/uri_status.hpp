@@ -32,15 +32,15 @@ namespace webpp::uri {
     ///         error bit == 1
     ///         valid bit == 0
     using uri_status_type                        = stl::uint_fast16_t;
-    static constexpr uri_status_type valid_bit   = 0u;
-    static constexpr uri_status_type error_bit   = (1u << 15);
-    static constexpr uri_status_type warning_bit = error_bit >> 1u;
+    static constexpr uri_status_type valid_bit   = 0U;
+    static constexpr uri_status_type error_bit   = (1U << 15U);
+    static constexpr uri_status_type warning_bit = error_bit >> 1U;
 
     /// maximum number between errors and valids must go here,
     /// or you can find out (error_bit | warning_bit) + all the warning bits, and then negate that
     /// considering the IPv4 and IPv6 values that need to match special prefix values, we're going with
     /// all 8 bits even though it's possible to do it with even 4 bits.
-    static constexpr uri_status_type values_mask = 0b0000'0000'1111'1111 | error_bit | valid_bit;
+    static constexpr uri_status_type values_mask = 0b0000'0000'1111'1111U | error_bit | valid_bit;
 
     /// warnings mask
     static constexpr uri_status_type warnings_mask = ~values_mask; // Warnings' bits
@@ -354,7 +354,7 @@ namespace webpp::uri {
         return {};
     }
 
-    // NOLINTBEGIN(*-magic-numbers)
+    // NOLINTEND(*-magic-numbers)
 
 } // namespace webpp::uri
 

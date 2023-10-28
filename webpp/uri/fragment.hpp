@@ -13,7 +13,21 @@ namespace webpp::uri {
     template <typename... T>
     static constexpr void
     parse_fragment(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-        // todo
+        // https://url.spec.whatwg.org/#fragment-state
+        using ctx_type = uri::parsing_uri_context<T...>;
+
+        if constexpr (ctx_type::is_modifiable) {
+            auto&      output = ctx.out.get_fragment_ref();
+            bool const is_valid =
+              decode_uri_component(ctx.whole(), output, uri::details::FRAGMENT_ENCODE_SET);
+            if (!is_valid) {
+                ctx.status = stl::to_underlying(uri_status::invalid_character);
+                return;
+            }
+        } else {
+            ctx.out.set_fragment(ctx.pos, ctx.end);
+        }
+        ctx.status |= stl::to_underlying(uri_status::valid);
     }
 
     template <istl::String StringType = stl::string>
