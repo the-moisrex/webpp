@@ -161,6 +161,7 @@ namespace webpp {
               istl::StringViewifiable InpStrT = stl::string_view>
     static constexpr void
     encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& chars) {
+        const auto input      = istl::string_viewify(stl::forward<InpStrT>(src));
         const auto input_size = input.size();
         { // todo: see if this is necessary/performant
             const auto new_capacity =
@@ -170,7 +171,7 @@ namespace webpp {
                 output.reserve(new_capacity);
             }
         }
-        for (auto const ith_char : istl::string_viewify(stl::forward<InpStrT>(src))) {
+        for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, chars);
         }
         output.shrink_to_fit();

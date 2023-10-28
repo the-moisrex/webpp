@@ -15,7 +15,7 @@ namespace webpp::uri {
     template <typename... T>
     static constexpr void
     parse_queries(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-        // todo
+        // https://url.spec.whatwg.org/#query-state
     }
 
 
