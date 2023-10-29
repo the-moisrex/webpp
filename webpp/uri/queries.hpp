@@ -1,7 +1,7 @@
 // Created by moisrex on 11/4/20.
 
-#ifndef WEBPP_QUERIES_HPP
-#define WEBPP_QUERIES_HPP
+#ifndef WEBPP_URI_QUERIES_HPP
+#define WEBPP_URI_QUERIES_HPP
 
 #include "../memory/allocators.hpp"
 #include "../std/map.hpp"
@@ -16,6 +16,53 @@ namespace webpp::uri {
     static constexpr void
     parse_queries(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
+        using ctx_type         = uri::parsing_uri_context<T...>;
+        using char_type        = typename ctx_type::char_type;
+        using string_view_type = stl::basic_string_view<char_type>;
+
+        if (ctx.pos == ctx.end) {
+            // todo
+            return;
+        }
+
+        auto* const beg = ctx.pos;
+
+        // find the end of the queries
+        for (;;) {
+
+            // find the next non-query character:
+            ctx.pos =
+              uri::details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>.contains_until(ctx.pos, ctx.end);
+
+            if (ctx.pos == ctx.end) {
+                break; // the end of the queries, is the end of the URI
+            }
+
+            switch (*ctx.pos) {
+                case '#':
+                    ctx.out.clear_fragment();
+                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    ++ctx.pos;
+                    break;
+                default:
+                    ctx.status |= stl::to_underlying(uri_status::invalid_character);
+                    ++ctx.pos;
+                    // invalid characters are not errors
+                    continue;
+            }
+            break;
+        }
+
+        if constexpr (ctx_type::is_modifiable) {
+            auto const query_percent_encode_set = is_special_scheme(ctx.out.get_scheme(ctx.whole()))
+                                                    ? uri::details::SPECIAL_QUERIES_ENCODE_SET
+                                                    : uri::details::QUERIES_ENCODE_SET;
+            string_view_type const input{beg, ctx.pos};
+            auto&                  output = ctx.out.get_query();
+            encode_uri_component(input, output, query_percent_encode_set);
+        } else {
+            ctx.out.set_queries(beg, ctx.pos);
+        }
     }
 
 
@@ -66,4 +113,4 @@ namespace webpp::uri {
 
 } // namespace webpp::uri
 
-#endif // WEBPP_QUERIES_HPP
+#endif // WEBPP_URI_QUERIES_HPP
