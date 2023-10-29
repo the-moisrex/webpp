@@ -12,7 +12,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(EXEC_NAME cgi-hello-world)
 
-add_executable(${EXEC_NAME} ${BIN_SOURCES})
+add_executable(${EXEC_NAME})
+target_sources(${EXEC_NAME}
+        PRIVATE ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
         )

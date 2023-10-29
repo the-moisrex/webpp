@@ -11,7 +11,9 @@ generate_config_file(${CMAKE_CURRENT_BINARY_DIR}/config.h index.html)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(${EXEC_NAME} ${BIN_SOURCES})
+add_executable(${EXEC_NAME})
+target_sources(${EXEC_NAME}
+        PRIVATE ${BIN_SOURCES})
 target_link_libraries(${EXEC_NAME}
         PRIVATE ${LIB_NAME}
         )

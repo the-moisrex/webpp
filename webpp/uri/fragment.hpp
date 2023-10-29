@@ -18,6 +18,7 @@ namespace webpp::uri {
 
         if constexpr (ctx_type::is_modifiable) {
             auto&      output = ctx.out.get_fragment_ref();
+            // todo: this is encode, not decode
             bool const is_valid =
               decode_uri_component(ctx.whole(), output, uri::details::FRAGMENT_ENCODE_SET);
             if (!is_valid) {
