@@ -6,9 +6,7 @@
 #include <vector>
 
 
-static const auto str_size = 5000;
-
-const auto strs = str_array_generator<200>(5, "123456789abcdefghijklmopqrstuvwzyz:/?[");
+const auto strs = str_array_generator<200>(5000, "123456789abcdefghijklmopqrstuvwzyz:/?[");
 
 void AdaAutoVectorizedSolution(benchmark::State& state) {
     std::size_t i = 0;
