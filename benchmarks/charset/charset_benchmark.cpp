@@ -26,7 +26,7 @@ void WebppSimpleCharsetSearch(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
         auto str = strs[i++ % strs.size()];
-        auto res = v1_chars.find_first_not_of(str.begin(), str.end());
+        auto res = v1_chars.find_first_of(str.begin(), str.end());
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(str);
     }
@@ -40,7 +40,7 @@ void WebppSimpleCharmapSearch(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
         auto str = strs[i++ % strs.size()];
-        auto res = v1_chars_table.find_first_not_of(str.begin(), str.end());
+        auto res = v1_chars_table.find_first_of(str.begin(), str.end());
         benchmark::DoNotOptimize(res);
         benchmark::DoNotOptimize(str);
     }

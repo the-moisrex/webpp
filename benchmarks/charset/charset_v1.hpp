@@ -176,7 +176,7 @@ namespace webpp::charset_v1 {
         }
 
         template <typename Iter>
-        [[nodiscard]] constexpr Iter find_first_not_of(Iter beg, Iter end) const noexcept {
+        [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg)
                 if (contains(*beg))
                     return beg;
@@ -458,7 +458,7 @@ namespace webpp::charset_v1 {
         }
 
         template <typename Iter>
-        [[nodiscard]] constexpr Iter find_first_not_of(Iter beg, Iter end) const noexcept {
+        [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg)
                 if (contains(*beg))
                     return beg;
