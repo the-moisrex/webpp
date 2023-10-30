@@ -32,7 +32,7 @@ namespace webpp::uri {
 
             // find the next non-query character:
             ctx.pos =
-              uri::details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>.contains_until(ctx.pos, ctx.end);
+              uri::details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>.find_first_not_in(ctx.pos, ctx.end);
 
             if (ctx.pos == ctx.end) {
                 break; // the end of the queries, is the end of the URI

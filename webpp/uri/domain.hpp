@@ -84,7 +84,7 @@ namespace webpp {
 
             if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
                 has_punycode = true;
-                pos          = charset{ALPHA_DIGIT<char>, charset{'-'}}.contains_until(pos, end);
+                pos          = charset{ALPHA_DIGIT<char>, charset{'-'}}.find_first_not_in(pos, end);
                 continue;
             }
 
@@ -117,7 +117,7 @@ namespace webpp {
                     }
                 }
             }
-            pos = ALPHA_DIGIT<char>.contains_until(pos, end);
+            pos = ALPHA_DIGIT<char>.find_first_not_in(pos, end);
         }
         // checking if the TLD is of valid length
         if (end - subdomain_start > details::subdomain_threshold) {

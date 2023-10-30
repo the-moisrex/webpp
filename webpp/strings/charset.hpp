@@ -173,7 +173,7 @@ namespace webpp {
          *         If all elements are contained, returns the `end` iterator.
          */
         template <typename Iter>
-        [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
+        [[nodiscard]] constexpr Iter find_first_not_in(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg) {
                 if (!contains(*beg)) {
                     return beg;
@@ -182,11 +182,24 @@ namespace webpp {
             return end;
         }
 
+
+        /// find the first character that's in the range
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_in(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
+                    return beg;
+                }
+            }
+            return end;
+        }
+
+
         /**
          * Exclude these charsets from the original one; all of these sets MUST be in the original charset.
          */
         template <stl::size_t... NN>
-        [[nodiscard]] constexpr charset<value_type, array_size - (NN + ...)>
+        [[nodiscard]] consteval charset<value_type, array_size - (NN + ...)>
         except(charset<value_type, NN> const&... sets) const noexcept {
             charset<value_type, array_size - (NN + ...)> chars;
             stl::size_t                                  index = 0;
@@ -239,7 +252,7 @@ namespace webpp {
 
 
 
-        /// default value is for compatiblity
+        /// default value is for compatibility
         constexpr charset& set(stl::size_t pos, value_type val = '\0') noexcept {
             this->operator[](pos) = val;
             return *this;
@@ -452,9 +465,20 @@ namespace webpp {
          *         If all elements are contained, returns the `end` iterator.
          */
         template <typename Iter>
-        [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
+        [[nodiscard]] constexpr Iter find_first_not_in(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg) {
                 if (!contains(*beg)) {
+                    return beg;
+                }
+            }
+            return end;
+        }
+
+        /// find the first character that's in the range
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_in(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
                     return beg;
                 }
             }
@@ -534,15 +558,20 @@ namespace webpp {
 
         template <stl::size_t N1, stl::size_t... NN>
             requires((N1 <= N) && ((NN <= N) && ...)) // todo
-        explicit constexpr bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept
+        explicit consteval bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept
           : bitset_type{set1} {
             ((*this |= sets), ...);
+        }
+
+        template <istl::CharType... CharT>
+        explicit consteval bitmap(CharT... chars) noexcept {
+            (this->set(static_cast<stl::size_t>(chars)), ...);
         }
 
 
         template <typename... T>
             requires((requires(T set) { set.string_view(); }) && ...)
-        explicit constexpr bitmap(T const&... sets) noexcept {
+        explicit consteval bitmap(T const&... sets) noexcept {
             (([this](T const& set) constexpr noexcept {
                  for (auto const character : set) {
                      this->set(static_cast<stl::size_t>(character));
@@ -567,6 +596,41 @@ namespace webpp {
                 }
             }
             return true;
+        }
+
+
+        /**
+         * @brief Finds the first element in a range that is not contained in the container.
+         *
+         * This function searches for the first element in the range [beg, end) that is not contained
+         * in the container. The function uses the `contains` method of the container to check for
+         * containment.
+         *
+         * @tparam Iter The iterator type of the range.
+         * @param beg Iterator to the beginning of the range.
+         * @param end Iterator to the end of the range.
+         * @return Iterator to the first element in the range that is not contained in the container.
+         *         If all elements are contained, returns the `end` iterator.
+         */
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_not_in(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg) {
+                if (!contains(*beg)) {
+                    return beg;
+                }
+            }
+            return end;
+        }
+
+        /// find the first character that's is in the range
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_in(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
+                    return beg;
+                }
+            }
+            return end;
         }
     };
 

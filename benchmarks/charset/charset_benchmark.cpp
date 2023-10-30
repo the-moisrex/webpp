@@ -6,7 +6,7 @@
 #include <vector>
 
 
-const auto strs = str_array_generator<200>(10, "123456789abcdefghijklmopqrstuvwzyz:/?[");
+const auto strs = str_array_generator<200>(5000, "123456789abcdefghijklmopqrstuvwzyz:/?[");
 
 void AdaAutoVectorizedSolution(benchmark::State& state) {
     std::size_t i = 0;
@@ -46,3 +46,19 @@ void WebppSimpleCharmapSearch(benchmark::State& state) {
     }
 }
 BENCHMARK(WebppSimpleCharmapSearch);
+
+
+
+// bitmap and charmap are the same if bitset doesn't support constexpr stuff
+static auto v1_bit_table = webpp::charset_v1::bitmap<256U>{':', '/', '?', '['};
+
+void WebppSimpleBitmapSearch(benchmark::State& state) {
+    std::size_t i = 0;
+    for (auto _ : state) {
+        auto str = strs[i++ % strs.size()];
+        auto res = v1_bit_table.find_first_of(str.begin(), str.end());
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(str);
+    }
+}
+BENCHMARK(WebppSimpleBitmapSearch);

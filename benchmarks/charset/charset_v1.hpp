@@ -520,12 +520,6 @@ namespace webpp::charset_v1 {
 
 
 
-#ifndef __cpp_lib_constexpr_bitset
-
-    template <stl::size_t N>
-    using bitmap = charmap<N>;
-
-#else
     template <stl::size_t N>
     struct bitmap : stl::bitset<N> {
         using value_type  = bool;
@@ -539,6 +533,11 @@ namespace webpp::charset_v1 {
             requires((N1 <= N) && ((NN <= N) && ...)) // todo
         constexpr bitmap(bitmap<N1> const& set1, bitmap<NN> const&... sets) noexcept : bitset_type{set1} {
             ((*this |= sets), ...);
+        }
+
+        template <istl::CharType... CharT>
+        constexpr bitmap(CharT... chars) noexcept {
+            (this->set(chars), ...);
         }
 
 
@@ -561,6 +560,36 @@ namespace webpp::charset_v1 {
         }
 
 
+
+        /**
+         * @brief Finds the first element in a range that is not contained in the container.
+         *
+         * This function searches for the first element in the range [beg, end) that is not contained
+         * in the container. The function uses the `contains` method of the container to check for
+         * containment.
+         *
+         * @tparam Iter The iterator type of the range.
+         * @param beg Iterator to the beginning of the range.
+         * @param end Iterator to the end of the range.
+         * @return Iterator to the first element in the range that is not contained in the container.
+         *         If all elements are contained, returns the `end` iterator.
+         */
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (!contains(*beg))
+                    return beg;
+            return end;
+        }
+
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (contains(*beg))
+                    return beg;
+            return end;
+        }
+
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<CharT> set) const noexcept {
             for (auto const ch : set) {
@@ -577,7 +606,6 @@ namespace webpp::charset_v1 {
     template <typename... SetN>
         requires(requires { SetN::array_size; } && ...)
     bitmap(SetN&&...) -> bitmap<stl::max({SetN::array_size...})>;
-#endif
 
 
     template <auto First, auto Last, stl::size_t Size = static_cast<stl::size_t>(Last) + 1>
