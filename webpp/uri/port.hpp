@@ -20,8 +20,8 @@ namespace webpp::uri {
     parse_port(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
 
-        using ctx_type  = uri::parsing_uri_context<T...>;
-        using seg_type  = typename ctx_type::out_seg_type;
+        using ctx_type = uri::parsing_uri_context<T...>;
+        using seg_type = typename ctx_type::out_seg_type;
 
         auto const    beg        = ctx.pos;
         stl::uint16_t port_value = 0;

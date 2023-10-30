@@ -70,8 +70,9 @@ namespace webpp::uri {
         valid_path_or_authority = valid_bit | 3U,
         valid_authority         = valid_bit | 4U,
         valid_host              = valid_bit | 5U,
-        valid_port              = valid_bit | 6U,
-        valid_authority_end     = valid_bit | 7U,
+        valid_file_host         = valid_bit | 6U,
+        valid_port              = valid_bit | 7U,
+        valid_authority_end     = valid_bit | 8U,
         subdomain_too_long      = error_bit | 6U, // the subdomain is too long
         dot_at_end              = error_bit | 7U, // the domain ended unexpectedly
         begin_with_hyphen       = error_bit | 8U, // the domain cannot start with hyphens
@@ -91,17 +92,17 @@ namespace webpp::uri {
         port_invalid      = error_bit | 16U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 8U,
-        valid_opaque_path            = valid_bit | 9U,
+        valid_path                   = valid_bit | 9U,
+        valid_opaque_path            = valid_bit | 10U,
         reverse_solidus_used         = warning_bit >> 3U,
         windows_drive_letter_used    = warning_bit >> 4U,
         windows_drive_letter_as_host = warning_bit >> 5U,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 10U,
+        valid_queries = valid_bit | 11U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 11U,
+        valid_fragment = valid_bit | 12U,
     };
 
     /**
@@ -131,6 +132,8 @@ namespace webpp::uri {
                 return {"Valid scheme that should be followed by a path or an authority."};
             case valid_authority: return {"Valid scheme that should be followed by an authority."};
             case valid_host: return {"Valid URI until host; parsing is not done yet."};
+            case valid_file_host:
+                return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
             case valid_authority_end:
                 return {"Valid URI until the authority ends "

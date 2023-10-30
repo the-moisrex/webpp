@@ -126,7 +126,7 @@ TEST(URITests, URIStatusIteratorWithValue) {
 
 TEST(URITests, PercentEncodeDecode) {
     stl::string            out;
-    stl::string_view const in = "%D8%B3%D9%84%D8%A7%D9%85";
+    stl::string_view const in      = "%D8%B3%D9%84%D8%A7%D9%85";
     stl::string_view const decoded = "سلام";
     EXPECT_TRUE(decode_uri_component(in, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);

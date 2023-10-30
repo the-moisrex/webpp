@@ -3,7 +3,9 @@
 #ifndef WEBPP_ADA_FIND_CHAR_HPP
 #define WEBPP_ADA_FIND_CHAR_HPP
 
+#include <cstdint>
 #include <cstring>
+#include <string_view>
 
 /// source: https://github.com/ada-url/ada/blob/a9dd0d427e965ade856306c0e4b0afca04292db1/src/helpers.cpp#L268
 namespace ada_v1 {

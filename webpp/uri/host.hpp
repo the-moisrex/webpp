@@ -15,7 +15,6 @@ namespace webpp::uri {
 
     namespace details {
 
-
         template <typename... T>
         static constexpr void host_parsing_state(uri::parsing_uri_context<T...>& ctx) noexcept(
           uri::parsing_uri_context<T...>::is_nothrow) {
@@ -62,6 +61,24 @@ namespace webpp::uri {
         }
     }
 
+    template <typename... T>
+    static constexpr void parse_file_host(uri::parsing_uri_context<T...>& ctx) noexcept(
+      uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#file-host-state
+
+        // todo
+        if (ctx.pos != ctx.end) {
+            switch (*ctx.pos) {
+                case '\0':
+                case '/':
+                case '\\':
+                case '?':
+                case '#': break;
+            }
+        }
+    }
+
+
     /// Parse the host port
     template <typename... T>
     static constexpr void
@@ -74,13 +91,23 @@ namespace webpp::uri {
             return;
         }
 
+        if (ctx.out.get_scheme(ctx.whole()) == "file") {
+            parse_file_host(ctx);
+            return;
+        }
+
         switch (*ctx.pos) {
             case ':':
             case '\\':
             case '\0':
             case '/':
             case '?':
-            case '#': ctx.status = stl::to_underlying(uri_status::host_missing); return;
+            case '#':
+                if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) {
+                    ctx.status = stl::to_underlying(uri_status::host_missing);
+                    return;
+                }
+                break;
         }
 
         bool       inside_brackets = false;

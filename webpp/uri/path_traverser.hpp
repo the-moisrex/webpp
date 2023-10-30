@@ -22,7 +22,9 @@ namespace webpp::uri {
         path_iterator fin; // end
 
       public:
-        constexpr path_traverser(path_type const& path) noexcept : it{path.begin()}, fin{path.end()} {}
+        constexpr explicit path_traverser(path_type const& path) noexcept
+          : it{path.begin()},
+            fin{path.end()} {}
 
         constexpr path_traverser& operator=(path_type const& path) noexcept {
             it  = path.begin();
@@ -115,7 +117,7 @@ namespace webpp::uri {
         iterator  fin; // todo: technically it's possible to remove this
 
       public:
-        constexpr basic_path_iterator(string_type const& path)
+        constexpr explicit basic_path_iterator(string_type const& path)
           : seg{path.get_allocator()},
             it{stl::begin(path)},
             fin{stl::end(path)} {}
@@ -186,7 +188,7 @@ namespace webpp::uri {
             return slug;
         }
 
-        constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return !at_end();
         }
 

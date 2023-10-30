@@ -35,23 +35,6 @@ namespace webpp::uri {
 
 
 
-        template <typename... T>
-        static constexpr void file_host_state(uri::parsing_uri_context<T...>& ctx) noexcept(
-          uri::parsing_uri_context<T...>::is_nothrow) {
-            // https://url.spec.whatwg.org/#file-slash-state
-
-            // todo
-            if (ctx.pos != ctx.end) {
-                switch (*ctx.pos) {
-                    case '\0':
-                    case '/':
-                    case '\\':
-                    case '?':
-                    case '#': break;
-                }
-            }
-        }
-
 
         template <typename... T>
         static constexpr void file_slash_state(uri::parsing_uri_context<T...>& ctx) noexcept(
@@ -64,7 +47,7 @@ namespace webpp::uri {
                     case '\\':
                         ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
                         [[fallthrough]];
-                    case '/': file_host_state(ctx); return;
+                    case '/': ctx.status |= stl::to_underlying(uri_status::valid_file_host); return;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {

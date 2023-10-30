@@ -279,8 +279,8 @@ namespace webpp {
                 token(out);
                 return true;
             }
-                err = err_value;
-                return false;
+            err = err_value;
+            return false;
         }
 
         // same as other "next", except that it gets a "quotes" as well
@@ -298,8 +298,8 @@ namespace webpp {
                 token(out);
                 return true;
             }
-                err = err_value;
-                return false;
+            err = err_value;
+            return false;
         }
 
         /**

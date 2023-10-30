@@ -26,6 +26,7 @@ namespace webpp::uri {
                 case valid_punycode: break;
                 case valid_authority: parse_authority(ctx); break;
                 case valid_host: parse_host(ctx); break;
+                case valid_file_host: parse_file_host(ctx); break;
                 case valid_port: parse_port(ctx); break;
                 case valid_authority_end: parse_authority_end(ctx); break;
                 case valid_opaque_path: parse_opaque_path(ctx); break;
