@@ -175,6 +175,14 @@ namespace webpp::charset_v1 {
             return end;
         }
 
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_not_of(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (contains(*beg))
+                    return beg;
+            return end;
+        }
+
         /**
          * Exclude these charsets from the original one; all of these sets MUST be in the original charset.
          */
@@ -445,6 +453,14 @@ namespace webpp::charset_v1 {
         [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
             for (; beg != end; ++beg)
                 if (!contains(*beg))
+                    return beg;
+            return end;
+        }
+
+        template <typename Iter>
+        [[nodiscard]] constexpr Iter find_first_not_of(Iter beg, Iter end) const noexcept {
+            for (; beg != end; ++beg)
+                if (contains(*beg))
                     return beg;
             return end;
         }
