@@ -39,7 +39,7 @@ TEST(HTTPResponseTest, Type) {
     EXPECT_STREQ("Hello", return_callback().body.as<const char*>());
 }
 
-TEST(Response, VariantCopyAssignment) {
+TEST(HTTPResponseTest, VariantCopyAssignment) {
     using data_type = std::variant<std::monostate, std::string>;
     data_type one;
     data_type two;
@@ -50,7 +50,7 @@ TEST(Response, VariantCopyAssignment) {
     EXPECT_EQ(get<std::string>(two), "hello world");
 }
 
-TEST(Response, ResponseBodyCopyCtor) {
+TEST(HTTPResponseTest, ResponseBodyCopyCtor) {
     using body_type = response_body<default_dynamic_traits>;
     enable_owner_traits<default_dynamic_traits> et;
 
@@ -62,7 +62,7 @@ TEST(Response, ResponseBodyCopyCtor) {
     EXPECT_EQ(as<std::string>(two), "hello world");
 }
 
-TEST(Response, ResponseBodyCopyAssignment) {
+TEST(HTTPResponseTest, ResponseBodyCopyAssignment) {
     using body_type = response_body<default_dynamic_traits>;
     enable_owner_traits<default_dynamic_traits> et;
 
@@ -76,7 +76,7 @@ TEST(Response, ResponseBodyCopyAssignment) {
 }
 
 
-TEST(Response, Init) {
+TEST(HTTPResponseTest, Init) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res  = res_t::create(et);
     HTTPResponse auto                   res2 = res_t::create(et);
@@ -93,7 +93,7 @@ TEST(Response, Init) {
     EXPECT_EQ(res, res2);
 }
 
-TEST(Response, ResHeaders) {
+TEST(HTTPResponseTest, ResHeaders) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res = res_t::create(et);
     res.headers.set("one", "1");
@@ -103,14 +103,14 @@ TEST(Response, ResHeaders) {
     EXPECT_EQ(res.headers.has("one", "two", "three"), stl::make_tuple(true, true, false));
 }
 
-TEST(Response, ResHeadersReference) {
+TEST(HTTPResponseTest, ResHeadersReference) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res = res_t::create(et);
     res.headers["Content-Length"]           = "10";
     EXPECT_EQ(res.headers["Content-Length"], "10");
 }
 
-TEST(Response, ResHeadersMultiGet) {
+TEST(HTTPResponseTest, ResHeadersMultiGet) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res = res_t::create(et);
     res.headers["Content-Length"]           = "10";
@@ -122,7 +122,7 @@ TEST(Response, ResHeadersMultiGet) {
 }
 
 #if __cpp_multidimensional_subscript
-TEST(Response, ResHeadersMultiGetCPP23MultiSubsOp) {
+TEST(HTTPResponseTest, ResHeadersMultiGetCPP23MultiSubsOp) {
     enable_owner_traits<default_traits> et;
     HTTPResponse auto                   res = res_t::create(et);
     res.headers["Content-Length"]           = "10";
@@ -134,7 +134,7 @@ TEST(Response, ResHeadersMultiGetCPP23MultiSubsOp) {
 }
 #endif
 
-TEST(Response, File) {
+TEST(HTTPResponseTest, File) {
     enable_owner_traits<default_traits> et;
     std::filesystem::path               file = std::filesystem::temp_directory_path();
     file.append("webpp_test_file");
@@ -146,7 +146,7 @@ TEST(Response, File) {
 }
 
 
-TEST(Response, DynamicResponse) {
+TEST(HTTPResponseTest, DynamicResponse) {
     enable_owner_traits<default_dynamic_traits> et;
 
     response       res{et};

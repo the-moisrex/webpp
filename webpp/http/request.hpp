@@ -45,7 +45,7 @@ namespace webpp::http {
         template <typename ServerT>
             requires(EnabledTraits<ServerT> && !HTTPHeadersHolder<ServerT> && !HTTPBodyHolder<ServerT> &&
                      !istl::cvref_as<ServerT, common_http_request>)
-        constexpr common_http_request(ServerT& inp_server) noexcept
+        constexpr explicit common_http_request(ServerT& inp_server) noexcept
           : etraits{inp_server},
             headers{inp_server},
             body{inp_server} {}
@@ -53,7 +53,7 @@ namespace webpp::http {
         template <typename ReqT>
             requires(HTTPRequest<ReqT> && HTTPHeadersHolder<ReqT> && HTTPBodyHolder<ReqT> &&
                      EnabledTraits<ReqT> && !istl::cvref_as<ReqT, common_http_request>)
-        constexpr common_http_request(ReqT& inp_req)
+        constexpr explicit common_http_request(ReqT& inp_req)
           : etraits{inp_req},
             headers{inp_req.headers},
             body{inp_req.get_traits(), inp_req.body} {}
@@ -109,13 +109,13 @@ namespace webpp::http {
 
         template <typename T>
             requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
-        constexpr operator T() const {
+        explicit constexpr operator T() const {
             return as<T>();
         }
 
         template <typename T>
             requires(HTTPConvertibleBody<T, common_http_request, headers_type, body_type, request_view>)
-        constexpr operator T() {
+        explicit constexpr operator T() {
             return as<T>();
         }
     };
@@ -183,7 +183,7 @@ namespace webpp::http {
       public:
         template <HTTPRequest ReqType>
             requires(!istl::cvref_as<ReqType, basic_request>)
-        constexpr basic_request(ReqType& req)
+        constexpr explicit basic_request(ReqType& req)
           : common_request_type{req},
             requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
             requested_method{req.method(), alloc::general_alloc_for<string_type>(*this)},
@@ -193,10 +193,10 @@ namespace webpp::http {
         template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
             requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
-        constexpr basic_request(ET&&          et,
-                                MStrT&&       inp_method = "GET",
-                                UStrT&&       url        = "/",
-                                http::version ver        = http::http_2_0)
+        constexpr explicit basic_request(ET&&          et,
+                                         MStrT&&       inp_method = "GET",
+                                         UStrT&&       url        = "/",
+                                         http::version ver        = http::http_2_0)
           : common_request_type{et},
             requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
                                                           alloc::general_alloc_for<string_type>(*this))},
@@ -224,7 +224,8 @@ namespace webpp::http {
         template <typename T>
             requires(istl::StringifiableOf<string_type, T>)
         constexpr basic_request& uri(T&& str) {
-            requested_uri = istl::stringify_of<string_type>(str, requested_uri.get_allocator());
+            requested_uri =
+              istl::stringify_of<string_type>(stl::forward<T>(str), requested_uri.get_allocator());
             return *this;
         }
 
@@ -239,7 +240,8 @@ namespace webpp::http {
         template <typename T>
             requires(istl::StringifiableOf<string_type, T>)
         constexpr basic_request& method(T&& str) {
-            requested_method = istl::stringify_of<string_type>(str, requested_method.get_allocator());
+            requested_method =
+              istl::stringify_of<string_type>(stl::forward<T>(str), requested_method.get_allocator());
             return *this;
         }
 
