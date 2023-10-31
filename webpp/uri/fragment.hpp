@@ -14,13 +14,16 @@ namespace webpp::uri {
     static constexpr void
     parse_fragment(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
-        using ctx_type = uri::parsing_uri_context<T...>;
+        using ctx_type         = uri::parsing_uri_context<T...>;
+        using char_type        = typename ctx_type::char_type;
+        using string_view_type = stl::basic_string_view<char_type>;
 
         if constexpr (ctx_type::is_modifiable) {
             auto& output = ctx.out.get_fragment_ref();
             // todo: this is encode, not decode
-            bool const is_valid =
-              decode_uri_component(ctx.whole(), output, uri::details::FRAGMENT_ENCODE_SET);
+            bool const is_valid = decode_uri_component(string_view_type{ctx.beg, ctx.end},
+                                                       output,
+                                                       uri::details::FRAGMENT_ENCODE_SET);
             if (!is_valid) {
                 ctx.status = stl::to_underlying(uri_status::invalid_character);
                 return;

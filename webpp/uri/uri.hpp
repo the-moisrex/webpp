@@ -248,12 +248,8 @@ namespace webpp::uri {
 
 
         template <istl::StringViewifiable StrT>
-        uri_status set_scheme(StrT&& inp_str) noexcept {
-            auto const str     = istl::string_viewify(stl::forward<StrT>(inp_str));
-            auto       ptr     = str.data();
-            auto const ptr_end = ptr + str.size();
-            auto const status  = scheme.parse_from(stl::forward<StrT>(inp_str));
-            return status;
+        constexpr uri_status set_scheme(StrT&& inp_str) noexcept {
+            return scheme.parse_from(stl::forward<StrT>(inp_str));
         }
 
         template <URIString URIType>

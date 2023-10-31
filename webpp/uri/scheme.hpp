@@ -27,9 +27,9 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 // Assert base's scheme is not file
-                assert(ctx.base.get_scheme(ctx.whole()) != "file");
+                assert(ctx.base.scheme() != "file");
 
-                ctx.out.set_scheme(ctx.base.get_scheme(ctx.whole()));
+                ctx.out.scheme(ctx.base.scheme());
             }
         }
 
@@ -51,8 +51,8 @@ namespace webpp::uri {
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.get_scheme() == "file") {
-                    ctx.out.set_scheme(ctx.base.get_scheme());
+                if (ctx.base.scheme() == "file") {
+                    ctx.out.scheme(ctx.base.scheme());
 
                     // todo:
                     // 2. If the code point substring from pointer to the end of input does not
@@ -73,7 +73,7 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 // set scheme to "file"
-                ctx.set_scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
+                ctx.scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
             }
             ctx.out.clear_host();
 
@@ -86,7 +86,7 @@ namespace webpp::uri {
             }
 
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.get_scheme() == "file") {
+                if (ctx.base.scheme() == "file") {
                     // todo
                 }
             }
@@ -105,14 +105,14 @@ namespace webpp::uri {
             if constexpr (ctx_type::has_base_uri) {
                 if (ctx.base.has_opaque_path()) {
                     if (*ctx.pos == '#') {
-                        ctx.out.set_scheme(ctx.base.get_scheme(ctx.whole()));
-                        ctx.out.set_path(ctx.base.get_path(ctx.whole()));
-                        ctx.out.set_query(ctx.base.get_query(ctx.whole()));
+                        ctx.out.scheme(ctx.base.scheme());
+                        ctx.out.set_path(ctx.base.get_path());
+                        ctx.out.set_query(ctx.base.get_query());
                         ctx.out.clear_fragment();
                         ctx.status |= stl::to_underlying(uri_status::valid_fragment);
                         return;
                     }
-                } else if (ctx.base.get_scheme() != "file") {
+                } else if (ctx.base.scheme() != "file") {
                     relative_state(ctx);
                     return;
                 } else {
@@ -235,7 +235,7 @@ namespace webpp::uri {
                     //     }
 
 
-                    //     if (ctx.in.get_scheme(ctx.whole()) == "file") {
+                    //     if (ctx.in.scheme() == "file") {
                     //         if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
                     //             ctx.status = stl::to_underlying(incompatible_schemes);
                     //             return;
@@ -245,10 +245,10 @@ namespace webpp::uri {
                     //     ctx.out.clear_port();
                     // }
 
-                    ctx.out.set_scheme(ctx.beg, ctx.pos);
+                    ctx.out.scheme(ctx.beg, ctx.pos);
                     ++ctx.pos;
 
-                    if (ctx.out.get_scheme(ctx.whole()) == "file") {
+                    if (ctx.out.scheme() == "file") {
                         // If remaining does not start with "//", special-scheme-missing-following-solidus
                         // validation error.
                         if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
@@ -259,10 +259,10 @@ namespace webpp::uri {
                         details::file_state(ctx);
                         return;
                     }
-                    if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) [[likely]] {
+                    if (is_special_scheme(ctx.out.scheme())) [[likely]] {
                         // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {
-                            if (ctx.out.get_scheme(ctx.whole()) == ctx.base.get_scheme(ctx.whole())) {
+                            if (ctx.out.scheme() == ctx.base.scheme()) {
                                 // todo: Assert: base is special (and therefore does not have an opaque path).
                                 details::special_relative_or_authority_state(ctx);
                             }

@@ -34,7 +34,7 @@ namespace webpp::uri {
             ctx.status |= stl::to_underlying(uri_status::valid);
             return;
         }
-        if (is_special(ctx.out.get_scheme(ctx.whole()))) {
+        if (is_special(ctx.out.scheme())) {
             switch (*ctx.pos) {
                 case '\\':
                     ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
@@ -86,32 +86,55 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#host-state
         // todo
 
+        using details::ascii_bitmap;
+
+
         if (ctx.pos == ctx.end) {
             ctx.status = stl::to_underlying(uri_status::host_missing);
             return;
         }
 
-        if (ctx.out.get_scheme(ctx.whole()) == "file") {
+        auto const scheme     = ctx.out.scheme();
+        const bool is_special = is_special_scheme(scheme);
+
+        if (scheme == "file") {
             parse_file_host(ctx);
             return;
         }
 
-        switch (*ctx.pos) {
-            case ':':
-            case '\\':
-            case '\0':
-            case '/':
-            case '?':
-            case '#':
-                if (is_special_scheme(ctx.out.get_scheme(ctx.whole()))) {
-                    ctx.status = stl::to_underlying(uri_status::host_missing);
-                    return;
-                }
-                break;
-        }
+        const auto invalid_charsets = is_special
+                                        ? ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
+                                            ascii_bitmap{':', '\\', '\0', '/', '?', '#', '['})
+                                        : ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
+                                            ascii_bitmap{':', '\0', '/', '?', '#', '['});
 
-        bool       inside_brackets = false;
-        auto const beg             = ctx.pos;
+
+        auto const beg = ctx.pos;
+        for (;;) {
+            ctx.pos = invalid_charsets.find_first_in(ctx.pos, ctx.end);
+
+            switch (*ctx.pos) {
+                case ':':
+                case '\\':
+                case '\0':
+                case '/':
+                case '?':
+                case '#':
+                    if (is_special) {
+                        ctx.status = stl::to_underlying(uri_status::host_missing);
+                        return;
+                    }
+                    break;
+                case '[':
+                    // todo
+                    break;
+                [[unlikely]] default:
+                    ctx.status |= stl::to_underlying(uri_status::invalid_character);
+                    ++ctx.pos;
+                    continue;
+            }
+            break;
+        }
     }
 
 

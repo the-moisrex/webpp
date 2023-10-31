@@ -48,8 +48,9 @@ namespace webpp::uri {
                     }
                     break;
                 case '\\': {
-                    if (!is_special_scheme(ctx.out.get_scheme(ctx.whole())))
+                    if (!is_special_scheme(ctx.out.scheme())) {
                         break;
+                    }
                     [[fallthrough]];
                 }
                 case '/':

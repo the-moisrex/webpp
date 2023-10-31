@@ -3,7 +3,7 @@
 #ifndef WEBPP_META_HPP
 #define WEBPP_META_HPP
 
-// NOLINTBEGIN(*-avoid-do-while, *-macro-usage)
+// NOLINTBEGIN(*-avoid-do-while, *-macro-usage, *-trailing-return)
 
 #if __cplusplus >= 199711L
 #    define CXX98
@@ -87,12 +87,12 @@ namespace webpp::details {
 #    define NDEBUG
 namespace webpp {
     static constexpr bool is_debug_build = false;
-}
+} // namespace webpp
 #else
 #    define DEBUG
 namespace webpp {
     static constexpr bool is_debug_build = true;
-}
+} // namespace webpp
 #endif
 
 
@@ -188,6 +188,18 @@ namespace webpp {
                 webpp::invoke_undefined_behaviour(); \
         } while (false)
 #endif
-// NOLINTEND(*-avoid-do-while, *-macro-usage)
+
+
+////////////////////////////// End of [[assume(...)]] //////////////////////////////
+
+// this is a clang thing
+#if WEBPP_HAS_ATTR(nodebug)
+#    define webpp_nodebug __attribute__((nodebug))
+#else
+#    define webpp_nodebug
+#endif
+
+
+// NOLINTEND(*-avoid-do-while, *-macro-usage, *-trailing-return)
 
 #endif // WEBPP_META_HPP

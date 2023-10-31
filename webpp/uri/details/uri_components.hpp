@@ -12,18 +12,19 @@
 
 namespace webpp::uri {
 
-    template <typename SegType = stl::uint32_t>
+    template <typename SegType = stl::uint32_t, typename Iter = const char*>
     struct uri_components;
 
     template <typename T>
     struct is_uri_component : stl::false_type {};
 
-    template <typename SegType>
-    struct is_uri_component<uri_components<SegType>> : stl::true_type {};
+    template <typename SegType, typename Iter>
+    struct is_uri_component<uri_components<SegType, Iter>> : stl::true_type {};
 
     /// == nothing_type
-    template <>
-    struct uri_components<void> {};
+    /// Iterator type has no effect
+    template <typename Iter>
+    struct uri_components<void, Iter> {};
 
 
     /**
@@ -43,9 +44,10 @@ namespace webpp::uri {
      *
      *  [protocol"://"[username[":"password]"@"]hostname[":"port]"/"?][path]["?"querystring]["#"fragment]
      */
-    template <stl::integral SegType>
-    struct uri_components<SegType> {
+    template <stl::integral SegType, typename Iter>
+    struct uri_components<SegType, Iter> {
         using seg_type = SegType;
+        using iterator = Iter;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -57,29 +59,87 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = false;
 
+      private:
+        iterator uri_beg         = nullptr;
         seg_type scheme_end      = omitted; // excluding :// stuff
         seg_type authority_start = omitted; // username/host start
         seg_type password_start  = omitted;
         seg_type host_start      = omitted;
         seg_type port_start      = omitted;
         seg_type authority_end   = omitted; // path start
-        seg_type query_start     = omitted; // path end
+        seg_type queries_start   = omitted; // path end
         seg_type fragment_start  = omitted; // query end
+        seg_type uri_end         = omitted; // string end
 
-        template <typename CharT = char>
-        constexpr void set_scheme(CharT const* beg, CharT const* end) noexcept {
-            scheme_end = static_cast<seg_type>(end - beg);
+      public:
+        constexpr void scheme(iterator beg, iterator end) noexcept {
+            uri_beg    = beg;
+            scheme_end = uri_end = static_cast<seg_type>(end - beg);
         }
 
+        constexpr void path(seg_type beg, seg_type end) noexcept {
+            authority_end = beg;
+            uri_end       = end;
+        }
 
-        constexpr void set_port(seg_type start, seg_type end) noexcept {
+        constexpr void path(iterator beg, iterator end) noexcept {
+            path(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
+        constexpr void username(seg_type beg, seg_type end) noexcept {
+            authority_start = beg;
+            uri_end = authority_end = end;
+        }
+
+        constexpr void username(iterator beg, iterator end) noexcept {
+            username(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
+        constexpr void password(seg_type beg, seg_type end) noexcept {
+            password_start = beg;
+            uri_end = authority_end = end;
+        }
+
+        constexpr void password(iterator beg, iterator end) noexcept {
+            password(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
+        constexpr void host(seg_type beg, seg_type end) noexcept {
+            host_start = beg;
+            uri_end    = end;
+        }
+
+        constexpr void host(iterator beg, iterator end) noexcept {
+            host(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
+        constexpr void port(seg_type start, seg_type end) noexcept {
             port_start    = start;
-            authority_end = end;
+            authority_end = uri_end = end;
         }
 
-        constexpr void set_fragment(seg_type start, [[maybe_unused]] seg_type end) noexcept {
-            fragment_start = start;
+        constexpr void port(iterator beg, iterator end) noexcept {
+            port(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
+
+        constexpr void queries(seg_type start, seg_type end) noexcept {
+            queries_start = start;
+            uri_end       = end;
+        }
+
+        constexpr void queries(iterator beg, iterator end) noexcept {
+            queries(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
+        constexpr void fragment(seg_type start, seg_type end) noexcept {
+            fragment_start = start;
+            uri_end        = end;
+        }
+
+        constexpr void fragment(iterator beg, iterator end) noexcept {
+            fragment(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        }
+
 
         constexpr void clear_scheme() noexcept {
             scheme_end = omitted;
@@ -106,7 +166,7 @@ namespace webpp::uri {
         }
 
         constexpr void clear_queries() noexcept {
-            query_start = omitted;
+            queries_start = omitted;
         }
 
         constexpr void clear_fragment() noexcept {
@@ -138,90 +198,61 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_queries() const noexcept {
-            return query_start != omitted;
+            return queries_start != omitted;
         }
 
         [[nodiscard]] constexpr bool has_fragment() const noexcept {
             return fragment_start != omitted;
         }
 
+      private:
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_scheme(StrT whole) const noexcept {
-            return whole.substr(0, scheme_end);
+        [[nodiscard]] constexpr StrT view(seg_type beg, seg_type size) const noexcept {
+            return StrT{uri_beg + beg, size};
+        }
+
+      public:
+        template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT scheme() const noexcept {
+            return view<StrT>(0, scheme_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_username(StrT whole) const noexcept {
-            return whole.substr(authority_start, host_start - authority_start);
+        [[nodiscard]] constexpr StrT username() const noexcept {
+            return view<StrT>(authority_start, host_start - authority_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_password(StrT whole) const noexcept {
-            return whole.substr(password_start, host_start - password_start);
+        [[nodiscard]] constexpr StrT password() const noexcept {
+            return view<StrT>(password_start, host_start - password_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_host(StrT whole) const noexcept {
-            return whole.substr(host_start, stl::min(port_start, authority_end) - host_start);
+        [[nodiscard]] constexpr StrT host() const noexcept {
+            return view<StrT>(host_start, stl::min(port_start, authority_end) - host_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_path(StrT whole) const noexcept {
-            return whole.substr(authority_end,
-                                stl::min(stl::min(query_start, fragment_start), whole.size()) -
-                                  authority_end);
+        [[nodiscard]] constexpr StrT path() const noexcept {
+            return view<StrT>(authority_end,
+                              stl::min(stl::min(queries_start, fragment_start), view<StrT>().size()) -
+                                authority_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_query(StrT whole) const noexcept {
-            return whole.substr(query_start, stl::min(fragment_start, whole.size()) - query_start);
+        [[nodiscard]] constexpr StrT queries() const noexcept {
+            return view<StrT>(queries_start, stl::min(fragment_start, view<StrT>().size()) - queries_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_fragment(StrT whole) const noexcept {
-            return whole.substr(fragment_start);
+        [[nodiscard]] constexpr StrT fragment() const noexcept {
+            return view<StrT>(fragment_start, uri_end);
         }
-
-        // template <typename CharT = char>
-        // constexpr void set_username(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     authority_start = static_cast<seg_type>(beg);
-        //     password_start = static_cast<seg_type>(end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_password(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(password, beg, end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_host(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(host, beg, end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_port(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(port, beg, end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_path(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(path, beg, end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_queries(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(queries, beg, end);
-        // }
-
-        // template <typename CharT = char>
-        // constexpr void set_fragment(CharT const* beg, CharT const* end) noexcept(is_nothrow) {
-        //     istl::assign(fragment, beg, end);
-        // }
     };
 
 
-    template <istl::StringLike StrT>
-    struct uri_components<StrT> {
+    template <istl::StringLike StrT, typename Iter>
+    struct uri_components<StrT, Iter> {
         using string_type   = StrT;
         using seg_type      = string_type;
         using char_type     = typename string_type::value_type;
@@ -237,27 +268,46 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
-        string_type scheme{};
-        string_type username{};
-        string_type password{};
-        string_type host{};
-        string_type port{};
-        string_type path{};
-        string_type queries{};
-        string_type fragment{};
+      private:
+        string_type m_scheme{};
+        string_type m_username{};
+        string_type m_password{};
+        string_type m_host{};
+        string_type m_port{};
+        string_type m_path{};
+        string_type m_queries{};
+        string_type m_fragment{};
 
-#define webpp_def(field)                                             \
-    template <istl::StringView StrVT>                                \
-    [[nodiscard]] constexpr StrT get_##field(StrVT) const noexcept { \
-        return {field.data(), field.size()};                         \
-    }                                                                \
-                                                                     \
-    constexpr void clear_##field() noexcept {                        \
-        istl::clear(field);                                          \
-    }                                                                \
-                                                                     \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {      \
-        return !field.empty();                                       \
+      public:
+        // NOLINTBEGIN(*-macro-usage)
+#define webpp_def(field)                                                              \
+    template <istl::StringView StrVT = stl::string_view>                              \
+    [[nodiscard]] constexpr StrT field() const noexcept {                             \
+        return {m_##field.data(), m_##field.size()};                                  \
+    }                                                                                 \
+                                                                                      \
+    constexpr void clear_##field() noexcept {                                         \
+        istl::clear(m_##field);                                                       \
+    }                                                                                 \
+                                                                                      \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                       \
+        return !m_##field.empty();                                                    \
+    }                                                                                 \
+                                                                                      \
+    constexpr void field(const_pointer beg, const_pointer end) noexcept(is_nothrow) { \
+        istl::assign(m_##field, beg, end);                                            \
+    }                                                                                 \
+                                                                                      \
+    constexpr void field(string_type str) noexcept(is_nothrow) {                      \
+        m_##field = stl::move(str);                                                   \
+    }                                                                                 \
+                                                                                      \
+    constexpr string_type& field##_ref() noexcept {                                   \
+        return m_##field;                                                             \
+    }                                                                                 \
+                                                                                      \
+    constexpr string_type const& field##_ref() const noexcept {                       \
+        return m_##field;                                                             \
     }
 
 
@@ -271,155 +321,111 @@ namespace webpp::uri {
           webpp_def(queries)  //
           webpp_def(fragment) //
 
+        // NOLINTEND(*-macro-usage)
 #undef webpp_def
 
-          constexpr void set_scheme(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(scheme, beg, end);
-        }
-
-        constexpr void set_username(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(username, beg, end);
-        }
-
-        constexpr void set_password(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(password, beg, end);
-        }
-
-        constexpr void set_host(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(host, beg, end);
-        }
-
-        constexpr void set_port(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(port, beg, end);
-        }
-
-        constexpr void set_path(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(path, beg, end);
-        }
-
-        constexpr void set_queries(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(queries, beg, end);
-        }
-
-        constexpr void set_fragment(const_pointer beg, const_pointer end) noexcept(is_nothrow) {
-            istl::assign(fragment, beg, end);
-        }
-
-        constexpr string_type& get_fragment_ref() noexcept {
-            return fragment;
-        }
-
-        constexpr string_type const& get_fragment_ref() const noexcept {
-            return fragment;
-        }
-
-        [[nodiscard]] constexpr bool has_credentials() const noexcept {
+          [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username(); // password cannot exist without the username
+        }
+
+
+
+        /// Create a URI Component using an allocator
+        template <istl::String StringType = StrT>
+        [[nodiscard]] friend constexpr uri_components<StringType>
+        uri_components_from(typename StringType::allocator_type const& alloc) noexcept(
+          stl::is_nothrow_constructible_v<StringType, typename StringType::allocator_type>) {
+            return {.scheme   = StringType{alloc},
+                    .username = StringType{alloc},
+                    .password = StringType{alloc},
+                    .host     = StringType{alloc},
+                    .port     = StringType{alloc},
+                    .path     = StringType{alloc},
+                    .queries  = StringType{alloc},
+                    .fragment = StringType{alloc}};
+        }
+
+        template <istl::String StringType, stl::integral SegType, istl::StringLike SourceStr>
+            requires(stl::same_as<istl::char_type_of_t<StringType>, istl::char_type_of_t<SourceStr>>)
+        [[nodiscard]] friend constexpr uri_components<StringType> uri_components_from(
+          uri_components<SegType> const&             comps,
+          SourceStr const&                           source,
+          typename StringType::allocator_type const& alloc =
+            {}) noexcept(stl::is_nothrow_constructible_v<StringType, typename StringType::allocator_type>) {
+            auto const beg = source.data();
+            return {
+              .scheme = StringType{beg, comps.scheme_end, alloc},
+              .username =
+                StringType{beg + comps.authority_start, comps.host_start - comps.authority_start, alloc},
+              .password =
+                StringType{beg + comps.password_start, comps.host_start - comps.password_start, alloc},
+              .host = StringType{beg + comps.host_start, comps.port_start - comps.host_start, alloc},
+              .port = StringType{beg + comps.port_start, comps.authority_end - comps.port_start, alloc},
+              .path = StringType{beg + comps.authority_end, comps.queries_start - comps.authority_end, alloc},
+              .queries =
+                StringType{beg + comps.queries_start, comps.fragment_start - comps.queries_start, alloc},
+              .fragment =
+                StringType{beg + comps.fragment_start, source.size() - comps.fragment_start, alloc}};
+        }
+
+        template <istl::StringView StringType, stl::integral SegType, istl::StringLike SourceStr>
+            requires(stl::same_as<istl::char_type_of_t<StringType>, istl::char_type_of_t<SourceStr>>)
+        [[nodiscard]] friend constexpr uri_components<StringType>
+        uri_components_from(uri_components<SegType> const& comps, SourceStr const& source) noexcept {
+            auto const beg = source.data();
+            return {
+              .scheme   = StringType{beg, comps.scheme_end},
+              .username = StringType{beg + comps.authority_start, comps.host_start - comps.authority_start},
+              .password = StringType{beg + comps.password_start, comps.host_start - comps.password_start},
+              .host     = StringType{beg + comps.host_start, comps.port_start - comps.host_start},
+              .port     = StringType{beg + comps.port_start, comps.authority_end - comps.port_start},
+              .path     = StringType{beg + comps.authority_end, comps.queries_start - comps.authority_end},
+              .queries  = StringType{beg + comps.queries_start, comps.fragment_start - comps.queries_start},
+              .fragment = StringType{beg + comps.fragment_start, source.size() - comps.fragment_start}};
         }
     };
 
-    /// Create a URI Component using an allocator
-    template <istl::String StrT>
-    [[nodiscard]] constexpr uri_components<StrT>
-    uri_components_from(typename StrT::allocator_type const& alloc) noexcept(
-      stl::is_nothrow_constructible_v<StrT, typename StrT::allocator_type>) {
-        using string_type = StrT;
-        return {.scheme   = string_type{alloc},
-                .username = string_type{alloc},
-                .password = string_type{alloc},
-                .host     = string_type{alloc},
-                .port     = string_type{alloc},
-                .path     = string_type{alloc},
-                .queries  = string_type{alloc},
-                .fragment = string_type{alloc}};
-    }
 
 
-    template <istl::String StrT, stl::integral SegType, istl::StringLike SourceStr>
-        requires(stl::same_as<istl::char_type_of_t<StrT>, istl::char_type_of_t<SourceStr>>)
-    [[nodiscard]] constexpr uri_components<StrT>
-    uri_components_from(uri_components<SegType> const&       comps,
-                        SourceStr const&                     source,
-                        typename StrT::allocator_type const& alloc =
-                          {}) noexcept(stl::is_nothrow_constructible_v<StrT, typename StrT::allocator_type>) {
-        using string_type = StrT;
-        auto const beg    = source.data();
-        return {
-          .scheme = string_type{beg, comps.scheme_end, alloc},
-          .username =
-            string_type{beg + comps.authority_start, comps.host_start - comps.authority_start, alloc},
-          .password = string_type{beg + comps.password_start, comps.host_start - comps.password_start, alloc},
-          .host     = string_type{beg + comps.host_start, comps.port_start - comps.host_start, alloc},
-          .port     = string_type{beg + comps.port_start, comps.authority_end - comps.port_start, alloc},
-          .path     = string_type{beg + comps.authority_end, comps.query_start - comps.authority_end, alloc},
-          .queries  = string_type{beg + comps.query_start, comps.fragment_start - comps.query_start, alloc},
-          .fragment = string_type{beg + comps.fragment_start, source.size() - comps.fragment_start, alloc}};
-    }
-
-    template <istl::StringView StrT, stl::integral SegType, istl::StringLike SourceStr>
-        requires(stl::same_as<istl::char_type_of_t<StrT>, istl::char_type_of_t<SourceStr>>)
-    [[nodiscard]] constexpr uri_components<StrT> uri_components_from(uri_components<SegType> const& comps,
-                                                                     SourceStr const& source) noexcept {
-        using string_type = StrT;
-        auto const beg    = source.data();
-        return {.scheme = string_type{beg, comps.scheme_end},
-                .username =
-                  string_type{beg + comps.authority_start, comps.host_start - comps.authority_start},
-                .password = string_type{beg + comps.password_start, comps.host_start - comps.password_start},
-                .host     = string_type{beg + comps.host_start, comps.port_start - comps.host_start},
-                .port     = string_type{beg + comps.port_start, comps.authority_end - comps.port_start},
-                .path     = string_type{beg + comps.authority_end, comps.query_start - comps.authority_end},
-                .queries  = string_type{beg + comps.query_start, comps.fragment_start - comps.query_start},
-                .fragment = string_type{beg + comps.fragment_start, source.size() - comps.fragment_start}};
-    }
-
-
-    using uri_components_view = uri_components<stl::string_view>;
-    using uri_components_u32  = uri_components<stl::uint32_t>;
+    using uri_components_view = uri_components<stl::string_view, stl::string_view::const_pointer>;
+    using uri_components_u32  = uri_components<stl::uint32_t, const char*>;
 
 
     /**
      * A class used during parsing a URI
      */
-    template <typename CharT = const char, typename OutSegType = stl::uint32_t, typename BaseSegType = void>
+    template <typename Iter = const char*, typename OutSegType = stl::uint32_t, typename BaseSegType = void>
     struct parsing_uri_context {
-        using char_type     = stl::remove_const_t<CharT>;
-        using pointer       = CharT*;
-        using const_pointer = char_type const*;
-        using out_seg_type  = OutSegType;
-        using base_seg_type = BaseSegType;
-        using out_type      = uri::uri_components<out_seg_type>;
-        using base_type     = uri::uri_components<base_seg_type>;
-        using state_type    = stl::underlying_type_t<uri_status>;
+        using iterator        = Iter;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using out_seg_type    = OutSegType;
+        using base_seg_type   = BaseSegType;
+        using out_type        = uri::uri_components<out_seg_type, iterator>;
+        using base_type       = uri::uri_components<base_seg_type, iterator>;
+        using state_type      = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
         static constexpr bool is_modifiable = out_type::is_modifiable;
 
-        const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
-        pointer       pos = nullptr; // current position
-        const_pointer end = nullptr; // the end of the string
-        out_type      out{};         // the output uri components
-        state_type    status = stl::to_underlying(uri_status::unparsed);
-
-
-        template <istl::StringView StrVT = stl::string_view>
-        [[nodiscard]] constexpr StrVT whole() const noexcept {
-            using size_type = typename StrVT::size_type;
-            return {beg, static_cast<size_type>(end - beg)};
-        }
+        iterator   beg{}; // the beginning of the string, not going to change during parsing
+        iterator   pos{}; // current position
+        iterator   end{}; // the end of the string
+        out_type   out{}; // the output uri components
+        state_type status = stl::to_underlying(uri_status::unparsed);
     };
 
-    template <typename CharT, istl::StringLike OutSegType, typename BaseSegType>
-    struct parsing_uri_context<CharT, OutSegType, BaseSegType> {
-        using char_type     = stl::remove_const_t<CharT>;
-        using pointer       = CharT*;
-        using const_pointer = char_type const*;
-        using out_seg_type  = OutSegType;
-        using base_seg_type = BaseSegType;
-        using out_type      = uri::uri_components<out_seg_type>;
-        using base_type     = uri::uri_components<base_seg_type>;
-        using state_type    = stl::underlying_type_t<uri_status>;
+    template <typename Iter, istl::StringLike OutSegType, typename BaseSegType>
+    struct parsing_uri_context<Iter, OutSegType, BaseSegType> {
+        using iterator        = Iter;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using out_seg_type    = OutSegType;
+        using base_seg_type   = BaseSegType;
+        using out_type        = uri::uri_components<out_seg_type, iterator>;
+        using base_type       = uri::uri_components<base_seg_type, iterator>;
+        using state_type      = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -434,18 +440,12 @@ namespace webpp::uri {
 
         // we don't need to know the beginning of the string("beg" field), because the output uri components
         // ("out") are required to know each segment themselves.
-        const_pointer beg = nullptr; // the beginning of the string, not going to change during parsing
-        pointer       pos = nullptr;
-        const_pointer end = nullptr;
-        out_type      out{};
+        iterator beg{}; // the beginning of the string, not going to change during parsing
+        iterator pos{};
+        iterator end{};
+        out_type out{};
         [[no_unique_address]] base_type base{};
         state_type                      status = stl::to_underlying(uri_status::unparsed);
-
-        template <istl::StringView StrVT = stl::string_view>
-        [[nodiscard]] constexpr StrVT whole() const noexcept {
-            using size_type = typename StrVT::size_type;
-            return {beg, static_cast<size_type>(end - beg)};
-        }
     };
 
 

@@ -18,6 +18,22 @@
 namespace webpp {
     // NOLINTBEGIN(*-avoid-c-arrays)
 
+    template <typename T>
+    concept CharSet = requires(stl::remove_cvref_t<T> set, char const* beg, char const* end) {
+        stl::remove_cvref_t<T>::array_size;
+
+        { set.size() } noexcept -> stl::same_as<stl::size_t>;
+        { set.contains('a') } noexcept -> stl::same_as<bool>;
+        { set.contains("") } noexcept -> stl::same_as<bool>;
+        { set.find_first_in(beg, end) } noexcept -> stl::same_as<char const*>;
+        { set.find_first_not_in(beg, end) } noexcept -> stl::same_as<char const*>;
+        set.set(1);
+
+
+        // Depends on CharSet itself:
+        // { set.except(set) } noexcept;
+    };
+
     /**
      * This represents a set of characters which can be queried
      * to find out if a character is in the set or not.
@@ -423,6 +439,20 @@ namespace webpp {
 
 
         /**
+         * Exclude these charsets from the original one
+         */
+        [[nodiscard]] consteval charmap<array_size> except(CharSet auto const&... sets) const noexcept {
+            charmap<array_size> chars{};
+            for (auto const character : *this) {
+                if ((sets.contains(character) && ...)) {
+                    continue;
+                }
+                chars.set(character);
+            }
+            return chars;
+        }
+
+        /**
          * This method checks to see if the given character
          * is in the character map.
          *
@@ -580,6 +610,20 @@ namespace webpp {
              ...);
         }
 
+        /**
+         * Exclude these charsets from the original one
+         */
+        [[nodiscard]] consteval bitmap<array_size> except(CharSet auto const&... sets) const noexcept {
+            bitmap<array_size> chars{};
+            for (stl::size_t character = 0ULL; character != array_size; ++character) {
+                if ((sets.contains(character) && ...)) {
+                    continue;
+                }
+                chars.set(character);
+            }
+            return chars;
+        }
+
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
@@ -651,16 +695,6 @@ namespace webpp {
         }
         return data;
     }
-
-    template <typename T>
-    concept CharSet = requires(stl::remove_cvref_t<T> set) {
-        stl::remove_cvref_t<T>::array_size;
-
-        { set.size() } noexcept -> stl::same_as<stl::size_t>;
-        { set.contains('a') } noexcept -> stl::same_as<bool>;
-        { set.contains("") } noexcept -> stl::same_as<bool>;
-        set.set(1);
-    };
 
 
     // NOLINTEND(*-avoid-c-arrays)

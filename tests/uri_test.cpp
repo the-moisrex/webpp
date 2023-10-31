@@ -48,29 +48,29 @@ TEST(URITests, QueryParamGeneration) {
 
 
 TEST(URITests, IntegralSchemeParsing) {
-    stl::string_view                     str = "http://";
-    uri::parsing_uri_context<char const> context{.beg = str.data(),
-                                                 .pos = str.data(),
-                                                 .end = str.data() + str.size()};
+    stl::string_view const                                     str = "http://";
+    uri::parsing_uri_context<stl::string_view::const_iterator> context{.beg = str.begin(),
+                                                                       .pos = str.begin(),
+                                                                       .end = str.end()};
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
-    EXPECT_EQ(context.out.scheme_end, 4);
-    EXPECT_EQ(context.pos - str.data(), 7);
+    EXPECT_EQ(context.out.scheme(), "http");
+    EXPECT_EQ(context.pos - str.begin(), 7);
 }
 
 
 TEST(URITests, StringSchemeParsing) {
-    stl::string_view str = "urn:testing";
+    stl::string_view const str = "urn:testing";
 
-    uri::parsing_uri_context<const char, stl::string_view> context{.beg = str.data(),
-                                                                   .pos = str.data(),
-                                                                   .end = str.data() + str.size()};
+    uri::parsing_uri_context<const char*, stl::string_view> context{.beg = str.data(),
+                                                                    .pos = str.data(),
+                                                                    .end = str.data() + str.size()};
 
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
-    EXPECT_EQ(context.out.scheme, "urn");
+    EXPECT_EQ(context.out.scheme(), "urn");
     EXPECT_EQ(context.pos - str.data(), 4);
 }
 
@@ -126,20 +126,20 @@ TEST(URITests, URIStatusIteratorWithValue) {
 
 TEST(URITests, PercentEncodeDecode) {
     stl::string            out;
-    stl::string_view const in      = "%D8%B3%D9%84%D8%A7%D9%85";
+    stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     stl::string_view const decoded = "سلام";
-    EXPECT_TRUE(decode_uri_component(in, out, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);
 
-    out      = in;
-    auto ptr = out.data();
+    out       = inp;
+    auto* ptr = out.data();
     EXPECT_TRUE(decode_uri_component_inplace(ptr, ptr + out.size(), ALPHA_DIGIT<char>));
     out.resize(static_cast<stl::size_t>(ptr - out.data()));
     EXPECT_EQ(out, decoded);
 
     std::string out2;
     encode_uri_component(out, out2, ALPHA_DIGIT<char>);
-    EXPECT_EQ(out2, in) << out;
+    EXPECT_EQ(out2, inp) << out;
 
     out.clear();
     EXPECT_TRUE(decode_uri_component(out2, out, ALPHA_DIGIT<char>));

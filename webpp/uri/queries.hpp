@@ -54,9 +54,9 @@ namespace webpp::uri {
         }
 
         if constexpr (ctx_type::is_modifiable) {
-            auto const query_percent_encode_set = is_special_scheme(ctx.out.get_scheme(ctx.whole()))
-                                                    ? uri::details::SPECIAL_QUERIES_ENCODE_SET
-                                                    : uri::details::QUERIES_ENCODE_SET;
+            auto const             query_percent_encode_set = is_special_scheme(ctx.out.scheme())
+                                                                ? uri::details::SPECIAL_QUERIES_ENCODE_SET
+                                                                : uri::details::QUERIES_ENCODE_SET;
             string_view_type const input{beg, ctx.pos};
             auto&                  output = ctx.out.get_query();
             encode_uri_component(input, output, query_percent_encode_set);

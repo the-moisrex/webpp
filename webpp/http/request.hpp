@@ -229,7 +229,7 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr uri::path_iterator<traits_type> path_iterator() const noexcept {
-            return {uri()};
+            return uri::path_iterator<traits_type>{uri()};
         }
 
         [[nodiscard]] constexpr string_type const& method() const noexcept {
