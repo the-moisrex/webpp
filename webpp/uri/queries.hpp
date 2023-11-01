@@ -58,10 +58,10 @@ namespace webpp::uri {
                                                                 ? uri::details::SPECIAL_QUERIES_ENCODE_SET
                                                                 : uri::details::QUERIES_ENCODE_SET;
             string_view_type const input{beg, ctx.pos};
-            auto&                  output = ctx.out.get_query();
+            auto&                  output = ctx.out.queries();
             encode_uri_component(input, output, query_percent_encode_set);
         } else {
-            ctx.out.set_queries(beg, ctx.pos);
+            ctx.out.queries(beg, ctx.pos);
         }
     }
 

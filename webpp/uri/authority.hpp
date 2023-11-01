@@ -6,6 +6,7 @@
 #include "../std/string.hpp"
 #include "../std/utility.hpp"
 #include "details/constants.hpp"
+#include "details/special_schemes.hpp"
 #include "details/uri_components.hpp"
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
@@ -25,7 +26,7 @@ namespace webpp::uri {
         for (; ctx.pos != ctx.end; ++ctx.pos) {
             switch (*ctx.pos) {
                 case '@':
-                    ctx.status = stl::to_underlying(uri_status::has_credentials);
+                    ctx.status |= stl::to_underlying(uri_status::has_credentials);
 
                     if constexpr (ctx_type::is_modifiable) {
                         if (at_char_seen) {
@@ -57,7 +58,7 @@ namespace webpp::uri {
                 case '?':
                 case '#':
                 case '\0':
-                    if (at_char_seen && ctx.out.empty()) {
+                    if (at_char_seen /*&& ctx.out.empty()*/) {
                         ctx.status = stl::to_underlying(uri_status::host_missing);
                         return;
                     }

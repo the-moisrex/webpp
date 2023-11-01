@@ -237,13 +237,12 @@ namespace webpp::uri {
     }
 
     /// get the error/valid value without the warnings if available
-    [[nodiscard]] static constexpr stl::underlying_type_t<uri_status>
-    get_value(stl::underlying_type_t<uri_status> status) noexcept {
-        return status & values_mask;
+    [[nodiscard]] static constexpr uri_status get_value(stl::underlying_type_t<uri_status> status) noexcept {
+        return static_cast<uri_status>(status & values_mask);
     }
 
     [[nodiscard]] static constexpr uri_status get_value(uri_status status) noexcept {
-        return static_cast<uri_status>(get_value(stl::to_underlying(status)));
+        return get_value(stl::to_underlying(status));
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status,

@@ -29,7 +29,7 @@ namespace webpp::uri {
                 return;
             }
         } else {
-            ctx.out.set_fragment(ctx.pos, ctx.end);
+            ctx.out.fragment(ctx.pos, ctx.end);
         }
         ctx.status |= stl::to_underlying(uri_status::valid);
     }

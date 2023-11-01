@@ -18,7 +18,6 @@ namespace webpp::uri {
     template <typename... T>
     static constexpr void continue_parsing_uri(uri::parsing_uri_context<T...>& ctx) noexcept(
       uri::parsing_uri_context<T...>::is_nothrow) {
-        // todo: it's cool and all, but remove the while loop for more possible optimizations by the compiler
         while (!has_error(ctx.status)) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
@@ -33,7 +32,8 @@ namespace webpp::uri {
                 case valid_path: parse_path(ctx); break;
                 case valid_queries: parse_queries(ctx); break;
                 case valid_fragment: parse_fragment(ctx); break;
-                default: stl::unreachable();
+                case unparsed: parse_scheme(ctx); break; // start from the beginning
+                default: stl::unreachable(); break;      // should be impossible
             }
         }
     }
@@ -41,8 +41,43 @@ namespace webpp::uri {
     template <typename... T>
     static constexpr void
     parse_uri(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-        parse_scheme(ctx);
-        continue_parsing_uri(ctx);
+        using enum uri_status;
+
+        // NOLINTBEGIN(*-macro-usage, *-avoid-do-while)
+#define webpp_parse_component(component, ...)                \
+    do {                                                     \
+        parse_##component(ctx);                              \
+        if (has_error(ctx.status)) {                         \
+            return;                                          \
+        }                                                    \
+        switch (get_value(ctx.status)) {                     \
+            case valid: return; __VA_ARGS__ default : break; \
+        }                                                    \
+    } while (false)
+
+        webpp_parse_component(
+          scheme,
+          case valid_authority: {
+              webpp_parse_component(
+                authority,
+                case valid_host: {
+                    webpp_parse_component(host);
+                    break;
+                }
+                case valid_file_host: {
+                    webpp_parse_component(file_host);
+                    break;
+                });
+              break;
+          }
+          case valid_opaque_path: {
+              webpp_parse_component(opaque_path);
+              break;
+          });
+
+
+#undef webpp_parse_component
+        // NOLINTEND(*-macro-usage, *-avoid-do-while)
     }
 
 
@@ -142,7 +177,7 @@ namespace webpp::uri {
         = default;
         constexpr basic_uri(basic_uri const&)                = default;
         constexpr basic_uri(basic_uri&&) noexcept            = default;
-        constexpr basic_uri& operator=(basic_uri&)           = default;
+        constexpr basic_uri& operator=(basic_uri const&)     = default;
         constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
         constexpr ~basic_uri()                               = default;
 

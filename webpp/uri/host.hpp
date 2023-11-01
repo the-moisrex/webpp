@@ -34,7 +34,7 @@ namespace webpp::uri {
             ctx.status |= stl::to_underlying(uri_status::valid);
             return;
         }
-        if (is_special(ctx.out.scheme())) {
+        if (is_special_scheme(ctx.out.scheme())) {
             switch (*ctx.pos) {
                 case '\\':
                     ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);

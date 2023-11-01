@@ -73,10 +73,19 @@ TEST(URITests, StringSchemeParsing) {
     EXPECT_EQ(context.pos - str.data(), 4);
 }
 
+TEST(URITests, ParseURI) {
+    stl::string_view const str = "urn:testing";
+
+    auto       context = uri::parse_uri(str);
+    auto const res     = static_cast<uri::uri_status>(context.status);
+    EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
+    EXPECT_EQ(context.out.scheme(), "urn");
+    EXPECT_EQ(context.out.path(), "testing");
+}
+
 
 TEST(URITests, URIParsingWithWarnings) {
-    uri::uri url;
-    url = "https:this-is-stupid";
+    uri::uri url = "https:this-is-stupid";
     EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
 }
 

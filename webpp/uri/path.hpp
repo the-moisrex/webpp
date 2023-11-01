@@ -99,8 +99,14 @@ namespace webpp::uri {
             }
             break;
         }
-        ctx.out.set_path(ctx.pos, path_end);
+        ctx.out.path(ctx.pos, path_end);
         ctx.pos = path_end;
+    }
+
+    template <typename... T>
+    static constexpr void
+    parse_path(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#path-state
     }
 
     /**
@@ -134,26 +140,27 @@ namespace webpp::uri {
             requires(stl::is_constructible_v<container_type, T...>)
         constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
+        // NOLINTBEGIN(*-forwarding-reference-overload)
         template <istl::StringViewifiable T>
-            requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path>)
+            requires(!istl::cvref_as<T, basic_path>)
         constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
 
         template <istl::String T>
-            requires(!stl::is_same_v<stl::remove_cvref_t<T>, basic_path> &&
+            requires(!istl::cvref_as<T, basic_path> &&
                      istl::cvref_as<typename T::allocator_type, allocator_type>)
         constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+        // NOLINTEND(*-forwarding-reference-overload)
 
         constexpr bool parse(istl::StringifiableOf<string_view_type> auto&& str) {
             auto path = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
-            if (path.empty())
+            if (path.empty()) {
                 return true;
+            }
 
             for (;;) {
                 const stl::size_t slash_start = path.find(separator);
@@ -177,8 +184,9 @@ namespace webpp::uri {
         template <istl::StringViewifiable SegStrT>
         constexpr basic_path& operator/=(SegStrT&& seg_str) {
             auto path = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(seg_str));
-            if (path.empty())
+            if (path.empty()) {
                 return *this;
+            }
 
             for (;;) {
                 const stl::size_t slash_start = path.find(separator);
@@ -205,13 +213,13 @@ namespace webpp::uri {
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
             const auto lhs_size = this->size();
             const auto rhs_size = rhs.size();
-            if (lhs_size != rhs_size)
+            if (lhs_size != rhs_size) {
                 return stl::compare_partial_order_fallback(lhs_size, rhs_size);
+            }
             if (stl::equal(this->begin(), this->end(), rhs.begin(), rhs.end())) {
                 return stl::partial_ordering::equivalent;
-            } else {
-                return stl::partial_ordering::unordered;
             }
+            return stl::partial_ordering::unordered;
         }
 
 
@@ -243,54 +251,58 @@ namespace webpp::uri {
          * Refer to uri_normalize_benchmark for more related algorithms of this
          */
         constexpr void remove_dot_segments(bool remove_leading) {
-            if (this->empty())
+            if (this->empty()) {
                 return;
+            }
 
-            auto it = this->begin();
+            auto pos = this->begin();
 
             // handle the first part
-            while (it < this->end()) {
-                if (*it == current_dir) {
-                    this->erase(it);
+            while (pos < this->end()) {
+                if (*pos == current_dir) {
+                    this->erase(pos);
                     continue;
-                } else if (*it == parent_dir) {
-                    if (it != this->begin()) {
-                        const auto p = std::prev(it);
+                }
+                if (*pos == parent_dir) {
+                    if (pos != this->begin()) {
+                        const auto p = std::prev(pos);
                         if (p->empty()) {
                             // remove just this one
-                            this->erase(it);
+                            this->erase(pos);
                             continue;
-                        } else if (*p != parent_dir) {
+                        }
+                        if (*p != parent_dir) {
                             // remove the previous one and this one
-                            this->erase(p, std::next(it));
-                            --it;
+                            this->erase(p, std::next(pos));
+                            --pos;
                             continue;
                         }
                     } else if (remove_leading) {
-                        this->erase(it);
+                        this->erase(pos);
                         continue;
                     }
                 }
-                it++;
+                pos++;
             }
         }
 
         constexpr basic_path const& append_to(istl::String auto& str) const {
-            if (this->size() == 0)
+            if (this->size() == 0) {
                 return *this;
+            }
 
-            auto it = this->cbegin();
+            auto pos = this->cbegin();
 
             // handling empty this special path: "/"
-            if (it->empty() && this->size() == 1) {
+            if (pos->empty() && this->size() == 1) {
                 str.append(separator);
                 return *this;
             }
 
-            str.append(*it++);
-            for (; it != this->cend(); ++it) {
+            str.append(*pos++);
+            for (; pos != this->cend(); ++pos) {
                 str.append(separator);
-                encode_uri_component(*it, str, allowed_chars);
+                encode_uri_component(*pos, str, allowed_chars);
             }
             return *this;
         }
@@ -311,8 +323,9 @@ namespace webpp::uri {
             // http://www.boost.org/doc/libs/1_64_0/libs/iterator/doc/transform_iterator.html
             return [this]() noexcept -> stl::size_t {
                 stl::size_t sum = 0;
-                for (auto const& slug : *this)
+                for (auto const& slug : *this) {
                     sum += slug.size();
+                }
                 return sum;
             }() + this->size() - 1;
         }

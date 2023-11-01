@@ -289,6 +289,7 @@ namespace webpp::uri {
                 return;
             }
         }
+        // todo: invalid character is not an error
         ctx.status = stl::to_underlying(invalid_character);
     }
 
