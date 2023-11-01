@@ -35,8 +35,7 @@ TEST(URITests, PathFromString) {
 }
 
 TEST(URITests, QueryParamGeneration) {
-    uri::uri url;
-    url                   = "https://localhost/api/v2/content";
+    uri::uri url          = "https://localhost/api/v2/content";
     url.queries["model"]  = "Encode this";
     url.queries["locale"] = "English is a locale";
     url.queries["text"]   = "This text has a \n newline in it.";

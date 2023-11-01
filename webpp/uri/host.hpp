@@ -142,27 +142,27 @@ namespace webpp::uri {
     struct basic_host : stl::vector<stl::remove_cvref_t<StringType>,
                                     rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
                                                      stl::remove_cvref_t<StringType>>> {
-        using super       = stl::vector<stl::remove_cvref_t<StringType>,
-                                  rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
-                                                   stl::remove_cvref_t<StringType>>>;
         using string_type = stl::remove_cvref_t<StringType>;
+        using super =
+          stl::vector<string_type, rebind_allocator<typename string_type::allocator_type, string_type>>;
 
         template <typename... T>
-        constexpr basic_host(T&&... args) : super{stl::forward<T>(args)...} {}
+        explicit constexpr basic_host(T&&... args) : super{stl::forward<T>(args)...} {}
 
 
         template <istl::StringViewifiable StrT>
-        constexpr basic_host& operator=(StrT&& str) {
-            const auto s = istl::stringify_of<string_type>(stl::forward<StrT>(str), this->get_allocator());
+        constexpr basic_host& operator=(StrT&& inp_str) {
+            const auto str =
+              istl::stringify_of<string_type>(stl::forward<StrT>(inp_str), this->get_allocator());
             // todo: split it based on the domains
-            this->push_back(s);
+            this->push_back(str);
             return *this;
         }
 
         /**
          * Top Level Domain; sometimes called the extension
          */
-        auto tld() const {
+        [[nodiscard]] constexpr auto tld() const {
             return this->back();
         }
 

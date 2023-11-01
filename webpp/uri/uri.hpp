@@ -46,9 +46,10 @@ namespace webpp::uri {
     }
 
 
-    template <istl::StringView StrV>
+    template <istl::StringView StrV = stl::string_view>
     static constexpr auto parse_uri(StrV str) noexcept {
-        using context_type = uri::parsing_uri_context<istl::char_type_of_t<StrV>, StrV>;
+        using iterator     = typename StrV::const_iterator;
+        using context_type = uri::parsing_uri_context<iterator, StrV>;
         context_type context{.beg = str.data(),
                              .pos = str.data(), // current position is start
                              .end = str.data() + str.size()};
@@ -56,29 +57,40 @@ namespace webpp::uri {
         return context;
     }
 
-    template <istl::StringLike StrT, istl::StringViewifiable OStrV>
-    static constexpr auto parse_uri(StrT const& the_url,
-                                    OStrV&&     origin_url) noexcept(istl::StringView<StrT>) {
-        using char_type = istl::char_type_of_t<StrT>;
-        static_assert(
-          stl::same_as<char_type, istl::char_type_of_t<OStrV>>,
-          "Origin's string's char type must be the same as the specified URI's string's char type.");
-        auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
-        using base_context_type = uri::parsing_uri_context<char_type>;
-        using base_seg_type     = typename base_context_type::base_seg_type;
 
-        base_context_type origin_context{.beg = origin.data(),
-                                         .pos = origin.data(),
-                                         .end = origin.data() + origin.size()};
-        parse_uri(origin_context);
+    template <istl::StringLike StrT, typename SegType>
+    static constexpr auto
+    parse_uri(StrT const&                         the_url,
+              uri::uri_components<SegType> const& origin_context) noexcept(istl::StringView<StrT>) {
+        using iterator             = typename StrT::const_iterator;
+        using base_components_type = uri::uri_components<SegType>;
+        using base_seg_type        = typename base_components_type::seg_type;
+        using context_type         = uri::parsing_uri_context<iterator, StrT, base_seg_type>;
 
-        using context_type = uri::parsing_uri_context<istl::char_type_of_t<StrT>, StrT, base_seg_type>;
         context_type context{.beg  = the_url.data(),
                              .pos  = the_url.data(), // current position is start
                              .end  = the_url.data() + the_url.size(),
                              .base = origin_context};
         parse_uri(context);
         return context;
+    }
+
+    template <istl::StringLike StrT, istl::StringViewifiable OStrV>
+    static constexpr auto parse_uri(StrT const& the_url,
+                                    OStrV&&     origin_url) noexcept(istl::StringView<StrT>) {
+        using iterator = typename StrT::const_iterator;
+        static_assert(
+          stl::same_as<iterator, typename OStrV::const_iterator>,
+          "Origin's string's char type must be the same as the specified URI's string's char type.");
+        auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
+        using base_context_type = uri::parsing_uri_context<iterator>;
+
+        base_context_type origin_context{.beg = origin.data(),
+                                         .pos = origin.data(),
+                                         .end = origin.data() + origin.size()};
+        parse_uri(origin_context);
+
+        return parse_uri(the_url, origin_context.out);
     }
 
 
@@ -88,30 +100,59 @@ namespace webpp::uri {
         using char_type      = typename string_type::value_type;
         using allocator_type = typename string_type::allocator_type;
 
-        using scheme_type    = basic_scheme<string_type>;
-        using user_info_type = basic_user_info<string_type>;
-        using host_type      = basic_host<string_type>;
-        using port_type      = basic_port<string_type>;
-        using path_type      = basic_path<string_type>;
-        using queries_type   = basic_queries<string_type>;
-        using fragment_type  = basic_fragment<string_type>;
+        using scheme_type   = basic_scheme<string_type>;
+        using username_type = basic_username<string_type>;
+        using password_type = basic_password<string_type>;
+        using host_type     = basic_host<string_type>;
+        using port_type     = basic_port<string_type>;
+        using path_type     = basic_path<string_type>;
+        using queries_type  = basic_queries<string_type>;
+        using fragment_type = basic_fragment<string_type>;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        scheme_type    scheme{};
-        user_info_type user_info{};
-        host_type      host{};
-        port_type      port{};
-        path_type      path{};
-        queries_type   queries{};
-        fragment_type  fragment{};
+        scheme_type   scheme{};
+        username_type username{};
+        password_type password{};
+        host_type     host{};
+        port_type     port{};
+        path_type     path{};
+        queries_type  queries{};
+        fragment_type fragment{};
         // NOLINTEND(misc-non-private-member-variables-in-classes)
+
+
+        template <typename T, typename Allocator = allocator_type>
+            requires((URIString<T> || istl::StringViewifiable<T>) &&
+                     stl::is_constructible_v<allocator_type, Allocator>)
+        constexpr basic_uri(T&& uri_str, Allocator const& alloc = {})
+          : scheme{alloc},
+            username{alloc},
+            password{alloc},
+            host{alloc},
+            port{alloc},
+            path{alloc},
+            queries{alloc},
+            fragment{alloc} {
+            extract_from(stl::forward<T>(uri_str));
+        }
+
+
+        constexpr basic_uri()
+            requires(stl::is_default_constructible_v<string_type>)
+        = default;
+        constexpr basic_uri(basic_uri const&)                = default;
+        constexpr basic_uri(basic_uri&&) noexcept            = default;
+        constexpr basic_uri& operator=(basic_uri&)           = default;
+        constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
+        constexpr ~basic_uri()                               = default;
 
         template <istl::String StrT      = StringType,
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
         [[nodiscard]] static constexpr auto create(AllocatorType const& alloc = AllocatorType{}) {
             using str_t = stl::remove_cvref_t<StrT>;
             return basic_uri<str_t>{.scheme{alloc},
-                                    .user_info{.username = str_t{alloc}, .password = str_t{alloc}},
+                                    .username{alloc},
+                                    .password{alloc},
                                     .host{alloc},
                                     .port{alloc},
                                     .path{alloc},
@@ -123,8 +164,8 @@ namespace webpp::uri {
         template <typename DefaultAlloc = allocator_type>
         constexpr auto get_allocator() const noexcept {
             return extract_allocator_of_or_default<DefaultAlloc>(scheme,
-                                                                 user_info.username,
-                                                                 user_info.password,
+                                                                 username,
+                                                                 password,
                                                                  host,
                                                                  port,
                                                                  path,
@@ -136,18 +177,19 @@ namespace webpp::uri {
         constexpr void append_to(istl::String auto& out) {
             // estimate the size
             // todo: check if it has a good impact on performance or it's just in the way
-            out.reserve(out.size() +                    // the size of out itself
-                        scheme.size() +                 // the scheme size
-                        user_info.username.size() +     // the username size
-                        user_info.password.size() + 1 + // the password size + 1 character for @
-                        host.size() +                   // host size
-                        port.size() + 1 +               // port size + 1 character for :
-                        path.raw_string_size() +        // path size
-                        queries.raw_string_size() +     // queries size
-                        fragment.size()                 // fragments size
+            out.reserve(out.size() +                // the size of out itself
+                        scheme.size() +             // the scheme size
+                        username.size() +           // the username size
+                        password.size() + 1 +       // the password size + 1 character for @
+                        host.size() +               // host size
+                        port.size() + 1 +           // port size + 1 character for :
+                        path.raw_string_size() +    // path size
+                        queries.raw_string_size() + // queries size
+                        fragment.size()             // fragments size
             );
             scheme.append_to(out);
-            user_info.append_to(out);
+            username.append_to(out);
+            password.append_to(out);
             host.append_to(out);
             port.append_to(out);
             path.append_to(out);
@@ -170,7 +212,7 @@ namespace webpp::uri {
          * @return bool
          */
         [[nodiscard]] constexpr bool has_authority() const noexcept {
-            return !host.empty() || !user_info.empty() || !port.empty();
+            return !host.empty() || !username.empty() || !password.empty() || !port.empty();
         }
 
 
@@ -254,14 +296,14 @@ namespace webpp::uri {
 
         template <URIString URIType>
         constexpr basic_uri& extract_from(URIType const& uri_str) {
-            scheme             = uri_str.scheme();
-            user_info.username = uri_str.username().value_or("");
-            user_info.password = uri_str.password().value_or("");
-            host               = uri_str.host();
-            port               = uri_str.port();
-            path               = uri_str.path();
-            queries            = uri_str.queries();
-            fragment           = uri_str.fragment();
+            scheme   = uri_str.scheme();
+            username = uri_str.username().value_or("");
+            password = uri_str.password().value_or("");
+            host     = uri_str.host();
+            port     = uri_str.port();
+            path     = uri_str.path();
+            queries  = uri_str.queries();
+            fragment = uri_str.fragment();
             return *this;
         }
 

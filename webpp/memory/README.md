@@ -239,5 +239,3 @@ struct heavy_pen {
     }
 };
 ```
-
-

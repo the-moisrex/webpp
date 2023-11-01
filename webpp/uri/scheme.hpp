@@ -304,8 +304,8 @@ namespace webpp::uri {
         using string_type = StringType;
         using char_type   = istl::char_type_of_t<string_type>;
 
-        template <typename... T>
-        constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
+        using StringType::StringType;
+        using StringType::operator=;
 
         /**
          * @brief checks if the URI is a relative reference

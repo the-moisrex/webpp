@@ -69,48 +69,39 @@ namespace webpp::uri {
 
 
     template <istl::String StringType = stl::string>
-    struct basic_user_info {
-        using string_type = stl::remove_cvref_t<StringType>;
+    struct basic_username : StringType {
+        using string_type = StringType;
         using char_type   = typename string_type::value_type;
 
+        using StringType::StringType;
+        using StringType::operator=;
 
-        string_type username{};
-        string_type password{};
+        [[nodiscard]] constexpr string_type const& as_string() const noexcept {
+            return static_cast<string_type const&>(*this);
+        }
+
+        [[nodiscard]] constexpr string_type& as_string() noexcept {
+            return static_cast<string_type&>(*this);
+        }
 
         /**
          * Get the string in the encoded shape
          */
         constexpr void append_to(istl::String auto& out) const {
-            if (!username.empty()) {
-                encode_uri_component(username, out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
-            }
-            if (!password.empty()) {
-                // out.reserve(password.size() + 1); // much better chance of removing one memory allocation
-                out += '@';
-                encode_uri_component(password, out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
+            if (!this->empty()) {
+                encode_uri_component(as_string(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             }
         }
 
         [[nodiscard]] constexpr string_type to_string() const {
-            string_type res{username.get_allocator()};
+            string_type res{this->get_allocator()};
             append_to(res);
             return res;
         }
 
         constexpr void append_raw_to(istl::String auto& out) const {
-            const bool user_empty = !username.empty();
-            const bool pass_empty = !password.empty();
-            if (user_empty && pass_empty) {
-                // out.reserve(out.size() + username.size() + password.size() + 1);
-                out.append(username);
-                out.push_back('@');
-                out.append(password);
-            } else if (pass_empty) {
-                out.append(username);
-            } else if (user_empty) {
-                // out.reserve(out.size() + password.size() + 1);
-                out.push_back('@');
-                out.append(password);
+            if (!this->empty()) {
+                out.append(as_string());
             }
         }
 
@@ -118,7 +109,59 @@ namespace webpp::uri {
          * Convert to string without encoding it
          */
         [[nodiscard]] constexpr string_type to_raw_string() const {
-            string_type res{username.get_allocator()};
+            string_type res{this->get_allocator()};
+            append_raw_to(res);
+            return res;
+        }
+    };
+
+    template <istl::String StringType = stl::string>
+    struct basic_password : StringType {
+        using string_type = StringType;
+        using char_type   = typename string_type::value_type;
+
+        using StringType::StringType;
+        using StringType::operator=;
+
+        [[nodiscard]] constexpr string_type const& as_string() const noexcept {
+            return static_cast<string_type const&>(*this);
+        }
+
+        [[nodiscard]] constexpr string_type& as_string() noexcept {
+            return static_cast<string_type&>(*this);
+        }
+
+
+        /**
+         * Get the string in the encoded shape
+         */
+        constexpr void append_to(istl::String auto& out) const {
+            if (!this->empty()) {
+                // out.reserve(password.size() + 1); // much better chance of removing one memory allocation
+                out += '@';
+                encode_uri_component(as_string(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
+            }
+        }
+
+        [[nodiscard]] constexpr string_type to_string() const {
+            string_type res{this->get_allocator()};
+            append_to(res);
+            return res;
+        }
+
+        constexpr void append_raw_to(istl::String auto& out) const {
+            if (!this->empty()) {
+                // out.reserve(out.size() + password.size() + 1);
+                out.push_back('@');
+                out.append(as_string());
+            }
+        }
+
+        /**
+         * Convert to string without encoding it
+         */
+        [[nodiscard]] constexpr string_type to_raw_string() const {
+            string_type res{this->get_allocator()};
             append_raw_to(res);
             return res;
         }
