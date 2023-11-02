@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_HOST_HPP
 #define WEBPP_URI_HOST_HPP
 
+#include "../ip/inet_pton.hpp"
 #include "../memory/allocators.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
@@ -88,6 +89,7 @@ namespace webpp::uri {
 
         using details::ascii_bitmap;
 
+        using ctx_type = uri::parsing_uri_context<T...>;
 
         if (ctx.pos == ctx.end) {
             ctx.status = stl::to_underlying(uri_status::host_missing);
@@ -98,35 +100,86 @@ namespace webpp::uri {
         const bool is_special = is_special_scheme(scheme);
 
         if (scheme == "file") {
+            // todo: should we set the status instead?
             parse_file_host(ctx);
             return;
         }
 
-        const auto invalid_charsets = is_special
-                                        ? ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                            ascii_bitmap{':', '\\', '\0', '/', '?', '#', '['})
-                                        : ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                            ascii_bitmap{':', '\0', '/', '?', '#', '['});
+        const auto end_of_host_chars = is_special
+                                         ? ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
+                                             ascii_bitmap{':', '\\', '\0', '/', '?', '#', '['})
+                                         : ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
+                                             ascii_bitmap{':', '\0', '/', '?', '#', '['});
 
 
         auto const beg = ctx.pos;
+
+        // handle missing host situation:
+        switch (*ctx.pos) {
+            case '[': {
+                ++ctx.pos;
+                stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
+                auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data());
+                switch (ipv6_parsing_result) {
+                    case inet_pton6_status::valid:
+                        // todo: host missing end of ] char
+                        // ctx.status = stl::to_underlying(uri_status::);
+                        break;
+                    case inet_pton6_status::invalid_character:
+                        if (*ctx.pos == ']') {
+                            ++ctx.pos;
+                            // todo: valid
+                            break;
+                        }
+                        // todo
+                        break;
+                    case inet_pton6_status::bad_ending: break;
+                    case inet_pton6_status::invalid_prefix: break;
+                    case inet_pton6_status::invalid_octet_range: break;
+                    case inet_pton6_status::invalid_colon_usage: break;
+                }
+                break;
+            }
+            case '\\':
+            case '#':
+            case '\0':
+            case '/':
+            case '?':
+                if (is_special) {
+                    break;
+                }
+                [[fallthrough]];
+            case ':': ctx.status = stl::to_underlying(uri_status::host_missing); return;
+        }
+
+        bool inside_brackets = false;
         for (;;) {
-            ctx.pos = invalid_charsets.find_first_in(ctx.pos, ctx.end);
+            ctx.pos = end_of_host_chars.find_first_in(ctx.pos, ctx.end);
 
             switch (*ctx.pos) {
                 case ':':
-                case '\\':
-                case '\0':
-                case '/':
-                case '?':
+                    if (!inside_brackets) {
+                        ctx.status |= stl::to_underlying(uri_status::valid_port);
+                    }
+                    break;
                 case '#':
-                    if (is_special) {
+                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    break;
+                [[unlikely]] case '\0':
+                    if (is_special && ctx.pos == beg) {
                         ctx.status = stl::to_underlying(uri_status::host_missing);
                         return;
                     }
+                    ctx.status |= stl::to_underlying(uri_status::valid);
                     break;
-                case '[':
-                    // todo
+                case '[': {
+                    inside_brackets = true;
+                    continue;
+                }
+                case '\\':
+                case '/':
+                case '?':
+                    ctx.status |= stl::to_underlying(uri_status::valid_path);
                     break;
                 [[unlikely]] default:
                     ctx.status |= stl::to_underlying(uri_status::invalid_character);
@@ -134,6 +187,12 @@ namespace webpp::uri {
                     continue;
             }
             break;
+        }
+
+        if constexpr (ctx_type::is_modifiable) {
+            // todo
+        } else {
+            // todo
         }
     }
 

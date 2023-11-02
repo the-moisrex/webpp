@@ -61,7 +61,17 @@ namespace webpp::uri {
               webpp_parse_component(
                 authority,
                 case valid_host: {
-                    webpp_parse_component(host);
+                    webpp_parse_component(
+                      host,
+                      case valid_port: {
+                          webpp_parse_component(port);
+                      }
+                      case valid_path: {
+                          webpp_parse_component(path);
+                      }
+                      case valid_fragment: {
+                          webpp_parse_component(fragment);
+                      });
                     break;
                 }
                 case valid_file_host: {
