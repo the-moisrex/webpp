@@ -16,6 +16,7 @@ Checks: >
   portability-*,
   mpi-*,
   cert-*,
+    -cert-dcl21-cpp,
   clang-analyzer-*,
   -llvmlibc-*,
   llvm-*,

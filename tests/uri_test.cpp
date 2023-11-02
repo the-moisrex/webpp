@@ -96,17 +96,17 @@ TEST(URITests, URIStatusIterator) {
 
     uri::uri_status_type const original = status;
 
-    int i = 0;
+    int index = 0;
     for (auto item : uri::uri_status_iterator{status}) {
         EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
                     item == uri::uri_status::invalid_character)
-          << "Index: " << i << "\n"
+          << "Index: " << index << "\n"
           << "Value: " << stl::to_underlying(item) << "\n"
           << "Original: " << original << "\n"
           << to_string(item);
-        ++i;
+        ++index;
     }
-    EXPECT_EQ(i, 2);
+    EXPECT_EQ(index, 2);
 }
 
 
@@ -118,21 +118,43 @@ TEST(URITests, URIStatusIteratorWithValue) {
 
     uri::uri_status_type const original = status;
 
-    int i = 0;
+    int index = 0;
     for (auto item : uri::uri_status_iterator{status}) {
         EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
                     item == uri::uri_status::invalid_character || item == uri::uri_status::valid_queries)
-          << "Index: " << i << "\n"
+          << "Index: " << index << "\n"
           << "Value: " << stl::to_underlying(item) << "\n"
           << "Original: " << original << "\n"
           << to_string(item);
-        ++i;
+        ++index;
     }
-    EXPECT_EQ(i, 3);
+    EXPECT_EQ(index, 3);
 }
 
 
-TEST(URITests, PercentEncodeDecode) {
+TEST(URITests, PercentEncodeDecodeIterator) {
+    stl::string            out;
+    stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
+    stl::string_view const decoded = "سلام";
+    EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
+    EXPECT_EQ(out, decoded);
+
+    out      = inp;
+    auto ptr = out.begin();
+    EXPECT_TRUE(decode_uri_component_inplace(ptr, out.end(), ALPHA_DIGIT<char>));
+    out.resize(static_cast<stl::size_t>(ptr - out.begin()));
+    EXPECT_EQ(out, decoded);
+
+    std::string output2;
+    encode_uri_component(out, output2, ALPHA_DIGIT<char>);
+    EXPECT_EQ(output2, inp) << out;
+
+    out.clear();
+    EXPECT_TRUE(decode_uri_component(output2, out, ALPHA_DIGIT<char>));
+    EXPECT_EQ(out, decoded) << out;
+}
+
+TEST(URITests, PercentEncodeDecodePointer) {
     stl::string            out;
     stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     stl::string_view const decoded = "سلام";
@@ -145,11 +167,11 @@ TEST(URITests, PercentEncodeDecode) {
     out.resize(static_cast<stl::size_t>(ptr - out.data()));
     EXPECT_EQ(out, decoded);
 
-    std::string out2;
-    encode_uri_component(out, out2, ALPHA_DIGIT<char>);
-    EXPECT_EQ(out2, inp) << out;
+    std::string output2;
+    encode_uri_component(out, output2, ALPHA_DIGIT<char>);
+    EXPECT_EQ(output2, inp) << out;
 
     out.clear();
-    EXPECT_TRUE(decode_uri_component(out2, out, ALPHA_DIGIT<char>));
+    EXPECT_TRUE(decode_uri_component(output2, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded) << out;
 }

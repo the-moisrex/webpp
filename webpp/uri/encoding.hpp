@@ -27,16 +27,17 @@ namespace webpp {
               typename ConstIter         = char const*>
     [[nodiscard]] static constexpr bool
     decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
-        using char_type = istl::char_type_of_t<Iter>;
+        using iterator        = Iter;
+        using iterator_traits = stl::iterator_traits<Iter>;
+        using pointer         = typename iterator_traits::pointer;
+        using char_type       = istl::char_type_of_t<pointer>;
 
-        static_assert(stl::same_as<char_type, istl::char_type_of_t<ConstIter>>,
-                      "The beginning and the end of the same string are required.");
+        webpp_static_constexpr auto ones      = static_cast<int>(~0UL);
+        webpp_static_constexpr auto zero_char = static_cast<char_type>('\0');
 
-        webpp_static_constexpr auto ones = static_cast<int>(~0UL);
-
-        char_type* out = pos;
+        auto out = pos;
         for (; pos != end; ++pos) {
-            if (*pos == '%') {
+            if (*pos == static_cast<char_type>('%')) {
                 if (pos++ >= end - 2) [[unlikely]] {
                     return false;
                 }
@@ -48,20 +49,20 @@ namespace webpp {
                     *out++ = static_cast<char_type>(decoded_char);
                 } else {
                     pos  = out;
-                    *pos = '\0';
+                    *pos = zero_char;
                     return false;
                 }
             } else {
                 if constexpr (uri_encoding_policy::allowed_chars == Policy) {
                     if (!chars.contains(*pos)) {
                         pos  = out;
-                        *pos = '\0';
+                        *pos = zero_char;
                         return false; // bad chars
                     }
                 } else {
                     if (chars.contains(*pos)) {
                         pos  = out;
-                        *pos = '\0';
+                        *pos = zero_char;
                         return false; // bad chars
                     }
                 }
@@ -70,7 +71,7 @@ namespace webpp {
         }
         pos = out;
         if (pos != end) {
-            *pos = '\0';
+            *pos = zero_char;
         }
         return true;
     }
@@ -80,23 +81,24 @@ namespace webpp {
      * @brief this function will decode parts of uri
      * @details this function is almost the same as "decodeURIComponent" in javascript
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars>
-    [[nodiscard]] static constexpr bool decode_uri_component(istl::StringViewifiable auto&& encoded_str,
-                                                             istl::String auto&             output,
-                                                             CharSet auto const&            chars) {
-        using char_type = istl::char_type_of_t<decltype(encoded_str)>;
+    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
+              istl::StringViewifiable StrVT   = stl::string_view,
+              istl::String            OutStrT = stl::string>
+    [[nodiscard]] static constexpr bool
+    decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
+        using char_type = istl::char_type_of_t<StrVT>;
 
         webpp_static_constexpr auto ones = static_cast<int>(~0UL);
 
-        auto const str = istl::string_viewify(encoded_str);
-        for (auto it = str.begin(); it != str.end(); ++it) {
-            if (*it == '%') {
-                if (it++ >= str.end() - 2) [[unlikely]] {
+        auto const str = istl::string_viewify(stl::forward<StrVT>(encoded_str));
+        for (auto pos = str.begin(); pos != str.end(); ++pos) {
+            if (*pos == static_cast<char_type>('%')) {
+                if (pos++ >= str.end() - 2) [[unlikely]] {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*it++, ones) << 4U;
-                decoded_char |= ascii::hex_digit_value<int>(*it, ones);
+                int decoded_char = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
+                decoded_char |= ascii::hex_digit_value<int>(*pos, ones);
 
                 if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
                     output += static_cast<char_type>(decoded_char);
@@ -105,15 +107,15 @@ namespace webpp {
                 }
             } else {
                 if constexpr (uri_encoding_policy::allowed_chars == Policy) {
-                    if (!chars.contains(*it)) [[unlikely]] {
+                    if (!chars.contains(*pos)) [[unlikely]] {
                         return false; // bad chars
                     }
                 } else {
-                    if (chars.contains(*it)) [[unlikely]] {
+                    if (chars.contains(*pos)) [[unlikely]] {
                         return false; // bad chars
                     }
                 }
-                output += *it;
+                output += *pos;
             }
         }
         return true;

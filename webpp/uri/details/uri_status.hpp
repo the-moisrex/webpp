@@ -48,8 +48,8 @@ namespace webpp::uri {
     /// successes are exclusive
     /// errors are exclusive,
     /// warnings are not exclusive,
-    enum struct uri_status : uri_status_type {
-        unparsed = 0, // not parsed at all
+    enum struct uri_status : uri_status_type { // NOLINT(*-enum-size)
+        unparsed = 0,                          // not parsed at all
 
         // success:
         valid          = valid_bit | 1U, // valid URI
@@ -245,14 +245,12 @@ namespace webpp::uri {
         return get_value(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status,
-                                                          uri_status_type index = 0) noexcept {
-        return static_cast<uri_status>((warning_bit >> index) & status);
+    [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status) noexcept {
+        return static_cast<uri_status>((warning_bit >> 0) & status);
     }
 
-    [[nodiscard]] static constexpr uri_status get_warning(uri_status      status,
-                                                          uri_status_type index = 0) noexcept {
-        return get_warning(stl::to_underlying(status), index);
+    [[nodiscard]] static constexpr uri_status get_warning(uri_status status) noexcept {
+        return get_warning(stl::to_underlying(status));
     }
 
 
