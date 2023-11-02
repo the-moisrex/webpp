@@ -84,8 +84,9 @@ namespace webpp {
     // NOLINTBEGIN(*-magic-numbers)
 
     namespace details {
-        static constexpr int parse_prefix(const char*& src, const char* src_endp) noexcept {
-            int prefix; // NOLINT(cppcoreguidelines-init-variables)
+        template <typename Iter = const char*, typename CIter = Iter>
+        static constexpr int parse_prefix(Iter& src, CIter src_endp) noexcept {
+            int prefix; // NOLINT(*-init-variables)
             if (src == src_endp || *src < '0' || *src > '9') {
                 return -1;
             }
@@ -131,15 +132,15 @@ namespace webpp {
      *
      * @returns status of the parsing
      **/
-    static constexpr inet_pton4_status
-    inet_pton4(const char*& src, const char* end, stl::uint8_t* out) noexcept {
+    template <typename Iter = char const*, typename CIter = Iter>
+    static constexpr inet_pton4_status inet_pton4(Iter& src, CIter end, stl::uint8_t* out) noexcept {
         using enum inet_pton4_status;
 
         bool saw_digit = false;
         int  octets    = 0;
         *out           = 0;
         while (src != end) {
-            char const cur_char = *src++;
+            auto const cur_char = *src++;
             if (cur_char >= '0' && cur_char <= '9') {
                 unsigned int const new_i = *out * 10U + static_cast<unsigned int>(cur_char - '0');
                 if (saw_digit && *out == 0) {
@@ -182,8 +183,9 @@ namespace webpp {
     /**
      * Parse IPv4 + prefix
      */
+    template <typename Iter = char const*, typename CIter = Iter>
     static constexpr inet_pton4_status
-    inet_pton4(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+    inet_pton4(Iter& src, CIter end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         using enum inet_pton4_status;
         auto const res = inet_pton4(src, end, out);
         if (res == invalid_character && *src == '/') {
@@ -198,20 +200,6 @@ namespace webpp {
         return res;
     }
 
-    static constexpr inet_pton4_status
-    inet_pton4(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
-        const char* src = inp_src;
-        return inet_pton4(src, src_endp, out);
-    }
-
-    static constexpr inet_pton4_status inet_pton4(const char* const& inp_src,
-                                                  const char*        src_endp,
-                                                  stl::uint8_t*      out,
-                                                  stl::uint8_t&      prefix) noexcept {
-        const char* src = inp_src;
-        return inet_pton4(src, src_endp, out, prefix);
-    }
-
     /**
      * Convert IPv6 Presentation string into network order binary form.
      *
@@ -219,12 +207,14 @@ namespace webpp {
      *
      * @returns status of the parsing
      **/
-    static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* src_endp, stl::uint8_t* out) noexcept {
+    template <typename Iter = char const*, typename CIter = Iter>
+    static constexpr inet_pton6_status inet_pton6(Iter& src, CIter src_endp, stl::uint8_t* out) noexcept {
         using enum inet_pton6_status;
 
-        stl::uint8_t* colonp = nullptr;
-        stl::uint8_t* endp   = out + ipv6_byte_count;
+        using char_type = istl::char_type_of_t<stl::iterator_traits<Iter>>;
+
+        stl::uint8_t* colon_ptr = nullptr;
+        stl::uint8_t* endp      = out + ipv6_byte_count;
 
         // Handling Leading ::
         if (src == src_endp) {
@@ -237,10 +227,10 @@ namespace webpp {
             }
         }
 
-        const char*  current_token = src;
+        auto         current_token = src;
         stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
         unsigned int val           = 0;
-        char         cur_char; // NOLINT(*-init-variables)
+        char_type    cur_char; // NOLINT(*-init-variables)
         while (src != src_endp) {
             cur_char        = *src++;
             int const digit = ascii::hex_digit_value(cur_char);
@@ -259,10 +249,10 @@ namespace webpp {
             if (cur_char == ':') {
                 current_token = src;
                 if (hex_seen == 0) {
-                    if (colonp != nullptr) {
+                    if (colon_ptr != nullptr) {
                         return invalid_colon_usage;
                     }
-                    colonp = out;
+                    colon_ptr = out;
                     continue;
                 }
                 if (src == src_endp) {
@@ -294,8 +284,9 @@ namespace webpp {
                     case inet_pton4_status::invalid_character: return invalid_character;
                     case inet_pton4_status::invalid_prefix: return invalid_prefix;
                 }
-                break;              // '\0' was seen by inet_pton4.
-            } else if (cur_char == '/') { // handling prefixes
+                break; // '\0' was seen by inet_pton4.
+            }
+            if (cur_char == '/') { // handling prefixes
                 --src;
                 break;
             }
@@ -309,7 +300,7 @@ namespace webpp {
             *out++ = static_cast<stl::uint8_t>((val >> 8U) & 0xFFU);
             *out++ = static_cast<stl::uint8_t>(val & 0xFFU);
         }
-        if (colonp != nullptr) {
+        if (colon_ptr != nullptr) {
             // Replace :: with zeros.
             if (out == endp) {
                 // :: would expand to a zero-width field.
@@ -330,11 +321,11 @@ namespace webpp {
             //     ;
 
             // another constexpr-friendly way of doing the same thing:
-            auto rightp = endp;
-            for (; out != colonp;) {
-                *--rightp = *--out;
+            auto right_ptr = endp;
+            for (; out != colon_ptr;) {
+                *--right_ptr = *--out;
             }
-            for (; colonp != rightp; *colonp++ = 0)
+            for (; colon_ptr != right_ptr; *colon_ptr++ = 0)
                 ;
             out = endp;
         }
@@ -352,8 +343,9 @@ namespace webpp {
     /**
      * Parse a ipv6 + prefix
      */
-    static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+    template <typename Iter = char const*, typename CIter = Iter>
+    [[nodiscard]] static constexpr inet_pton6_status
+    inet_pton6(Iter& src, CIter end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
         if (res == invalid_character && *src == '/') {
@@ -366,21 +358,6 @@ namespace webpp {
             return valid;
         }
         return res;
-    }
-
-
-    static constexpr inet_pton6_status
-    inet_pton6(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
-        const char* src = inp_src;
-        return inet_pton6(src, src_endp, out);
-    }
-
-    static constexpr inet_pton6_status inet_pton6(const char* const& inp_src,
-                                                  const char*        src_endp,
-                                                  stl::uint8_t*      out,
-                                                  stl::uint8_t&      prefix) noexcept {
-        const char* src = inp_src;
-        return inet_pton6(src, src_endp, out, prefix);
     }
 
     // NOLINTEND(*-magic-numbers)

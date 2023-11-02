@@ -159,7 +159,8 @@ TEST(IPv4Tests, InetP2NValidation) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(is::ipv4(_ip)) << _ip;
-        EXPECT_EQ(inet_pton4(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton4_status::valid)
+        auto beg = _ip.begin();
+        EXPECT_EQ(inet_pton4(beg, _ip.end(), ip), inet_pton4_status::valid)
           << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
           << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
 
@@ -171,7 +172,8 @@ TEST(IPv4Tests, InetP2NValidation) {
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv4(_ip)) << _ip;
-        EXPECT_NE(inet_pton4(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton4_status::valid)
+        auto beg = _ip.data();
+        EXPECT_NE(inet_pton4(beg, beg + _ip.size(), ip), inet_pton4_status::valid)
           << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
           << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
     }

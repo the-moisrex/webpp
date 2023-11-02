@@ -91,11 +91,11 @@ TEST(ValidationTest, IPv6Functions) {
         EXPECT_TRUE(ipv6(item)) << item;
         EXPECT_FALSE(ipv4(item)) << item;
         EXPECT_TRUE(ip(item)) << item;
-        std::string ip  = item;
-        std::string ip2 = item;
-        std::string ip3 = item;
-        ip.append("/64");
-        EXPECT_TRUE(ipv6_prefix(ip)) << "ip has a prefix: " << ip;
+        std::string ip_addr = item;
+        std::string ip2     = item;
+        std::string ip3     = item;
+        ip_addr.append("/64");
+        EXPECT_TRUE(ipv6_prefix(ip_addr)) << "ip has a prefix: " << ip_addr;
         ip2.append("/something bad");
         EXPECT_FALSE(ipv6_prefix(ip2));
         ip3.append("-128");
@@ -105,9 +105,9 @@ TEST(ValidationTest, IPv6Functions) {
 
     for (auto const& item : invalids) {
         EXPECT_FALSE(ipv6(item)) << item;
-        std::string ip = item;
-        ip.append("/64");
-        EXPECT_FALSE(ipv6_prefix(ip));
+        std::string ip_addr = item;
+        ip_addr.append("/64");
+        EXPECT_FALSE(ipv6_prefix(ip_addr)) << ip_addr;
         EXPECT_FALSE(host("[" + std::string(item) + "]")) << "ip: " << item;
     }
 }
@@ -133,16 +133,18 @@ TEST(ValidationsTest, HostFunction) {
 }
 
 TEST(ValidationsTest, EmailFunction) {
-    EXPECT_TRUE(email("moisrex@gmail.com")) << "moisrex@gmail.com should be valid";
-    EXPECT_TRUE(email("moisrex.test@gmail.com")) << "moisrex.test@gmail.com should be valid";
+    EXPECT_TRUE(email("example@email.com")) << "example@email.com should be valid";
+    EXPECT_TRUE(email("example.test@email.com")) << "example.test@email.com should be valid";
     EXPECT_FALSE(email("not an.email@123.com")) << "spaces are not allowed in emails";
 }
 
 TEST(ValidationsTest, NumberFunctions) {
-    for (char i = '0'; i <= '9'; i++)
+    for (char i = '0'; i <= '9'; i++) {
         EXPECT_TRUE(digit(i));
-    for (char i = 'a'; i <= 'z'; i++)
+    }
+    for (char i = 'a'; i <= 'z'; i++) {
         EXPECT_FALSE(digit('c'));
+    }
 
     EXPECT_TRUE(digit(std::string_view{"123"}));
     EXPECT_FALSE(digit(std::string_view{"1.3"}));

@@ -57,10 +57,25 @@ TEST(IPv6Tests, Validation) {
                           "",
                           ":",
                           "/",
+                          "1::1::1",
+                          "1:2:3!:4",
+                          "1:2:3",
+                          "1:1:1:1:1:1:1:127.0.0.1",
+                          "ffff::.0.0.1",
+                          "ffff::127.00.0.1",
+                          "ffff::127..0.1",
+                          "ffff::.127.0.0.1",
+                          "ffff::127.0.0.1.",
+                          "ffff::127.0.0.4000",
+                          "ffff::127.0.0",
+                          "1:2:3:4:5:6:7:8:9",
+                          ":1",
+                          "127.0.0x0.1",
                           "/1",
                           "/01",
                           "1/1",
                           ":::",
+                          "127.1.1.1/64",
                           ":::/12",
                           "::1:1:2::"};
 
@@ -167,15 +182,15 @@ TEST(IPv6Tests, IP2NTest) {
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_TRUE(is::ipv6(_ip)) << _ip;
         EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
-        EXPECT_EQ(inet_pton6(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton6_status::valid)
-          << "ip: " << _ip;
+        auto beg = _ip.begin();
+        EXPECT_EQ(inet_pton6(beg, _ip.end(), ip), inet_pton6_status::valid) << "ip: " << _ip;
     }
 
     for (auto const& _ip : invalid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
         EXPECT_FALSE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
-        EXPECT_NE(inet_pton6(_ip.data(), _ip.data() + _ip.size(), ip), inet_pton6_status::valid)
-          << "ip: " << _ip;
+        auto beg = _ip.data();
+        EXPECT_NE(inet_pton6(beg, beg + _ip.size(), ip), inet_pton6_status::valid) << "ip: " << _ip;
     }
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
 }
