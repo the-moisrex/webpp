@@ -19,15 +19,15 @@ namespace webpp {
      * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
      */
     enum struct inet_pton4_status : stl::uint_fast8_t {
-        valid                = 255u,
-        too_little_octets    = 254u, // not enough octets
-        too_many_octets      = 253u, // found too many octets
-        invalid_octet_range  = 252u, // at least one octet is not in range
-        invalid_leading_zero = 251u, // the octet is starting with an invalid leading zero
-        invalid_character    = 250u, // found a non-standard character
-        bad_ending           = 249u, // The ip ended badly
-        invalid_octet        = 248u, // Found an invalid character in the octets
-        invalid_prefix       = 247u  // The ip has and invalid prefix
+        valid                = 255U,
+        too_little_octets    = 254U, // not enough octets
+        too_many_octets      = 253U, // found too many octets
+        invalid_octet_range  = 252U, // at least one octet is not in range
+        invalid_leading_zero = 251U, // the octet is starting with an invalid leading zero
+        invalid_character    = 250U, // found a non-standard character
+        bad_ending           = 249U, // The ip ended badly
+        invalid_octet        = 248U, // Found an invalid character in the octets
+        invalid_prefix       = 247U  // The ip has and invalid prefix
     };
 
     /**
@@ -36,12 +36,12 @@ namespace webpp {
      * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
      */
     enum struct inet_pton6_status : stl::uint_fast8_t {
-        valid               = 255u,
-        invalid_character   = 250u, // found a non-standard character
-        bad_ending          = 249u, // the ip ended badly
-        invalid_prefix      = 247u, // The ip has and invalid prefix
-        invalid_octet_range = 252u, // at least one octet is not in range
-        invalid_colon_usage = 246u  // the ip is using colon where it shouldn't
+        valid               = 255U,
+        invalid_character   = 250U, // found a non-standard character
+        bad_ending          = 249U, // the ip ended badly
+        invalid_prefix      = 247U, // The ip has and invalid prefix
+        invalid_octet_range = 252U, // at least one octet is not in range
+        invalid_colon_usage = 246U  // the ip is using colon where it shouldn't
     };
 
     /**
@@ -61,7 +61,6 @@ namespace webpp {
             case invalid_octet: return {"Found an invalid character in the IPv4 octets"};
             case invalid_prefix: return {"IPv4 has an invalid prefix"};
         }
-        stl::unreachable();
     }
 
     /**
@@ -77,7 +76,6 @@ namespace webpp {
             case invalid_character: return {"Invalid character found in the IPv6"};
             case invalid_prefix: return {"IPv6 has an invalid prefix"};
         }
-        stl::unreachable();
     }
 
 
@@ -90,30 +88,33 @@ namespace webpp {
             int prefix; // NOLINT(cppcoreguidelines-init-variables)
             if (src == src_endp || *src < '0' || *src > '9') {
                 return -1;
-            } else {
-                prefix = *src - '0';
             }
+            prefix = *src - '0';
             ++src;
             if (src == src_endp) {
                 return prefix;
-            } else if (*src < '0' || *src > '9') {
-                return -1;
-            } else {
-                if (prefix == 0) {
-                    return -1;
-                }
-                prefix *= 10;
-                prefix += *src - '0';
             }
+            if (*src < '0' || *src > '9') {
+                return -1;
+            }
+
+            if (prefix == 0) {
+                return -1;
+            }
+            prefix *= 10;
+            prefix += *src - '0';
+
             ++src;
             if (src == src_endp) {
                 return prefix;
-            } else if (*src < '0' || *src > '9') {
-                return -1;
-            } else {
-                prefix *= 10;
-                prefix += *src - '0';
             }
+            if (*src < '0' || *src > '9') {
+                return -1;
+            }
+
+            prefix *= 10;
+            prefix += *src - '0';
+
             ++src;
             if (src != src_endp) {
                 return -1;
@@ -138,9 +139,9 @@ namespace webpp {
         int  octets    = 0;
         *out           = 0;
         while (src != end) {
-            char const ch = *src++;
-            if (ch >= '0' && ch <= '9') {
-                unsigned int const new_i = *out * 10u + static_cast<unsigned int>(ch - '0');
+            char const cur_char = *src++;
+            if (cur_char >= '0' && cur_char <= '9') {
+                unsigned int const new_i = *out * 10U + static_cast<unsigned int>(cur_char - '0');
                 if (saw_digit && *out == 0) {
                     return invalid_leading_zero;
                 }
@@ -154,7 +155,7 @@ namespace webpp {
                     }
                     saw_digit = true;
                 }
-            } else if (ch == '.' && saw_digit) {
+            } else if (cur_char == '.' && saw_digit) {
                 if (octets == 4) {
                     return bad_ending;
                 }
@@ -239,41 +240,44 @@ namespace webpp {
         const char*  current_token = src;
         stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
         unsigned int val           = 0;
-        char         ch; // NOLINT(cppcoreguidelines-init-variables)
+        char         cur_char; // NOLINT(*-init-variables)
         while (src != src_endp) {
-            ch              = *src++;
-            int const digit = ascii::hex_digit_value(ch);
+            cur_char        = *src++;
+            int const digit = ascii::hex_digit_value(cur_char);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;
                 }
-                val <<= 4;
+                val <<= 4U;
                 val |= static_cast<unsigned int>(digit);
-                if (val > 0xffff) {
+                if (val > 0xFFFF) {
                     return invalid_octet_range; // todo: is this if stmt even possible?
                 }
                 ++hex_seen;
                 continue;
-            } else if (ch == ':') {
+            }
+            if (cur_char == ':') {
                 current_token = src;
                 if (hex_seen == 0) {
-                    if (colonp) {
+                    if (colonp != nullptr) {
                         return invalid_colon_usage;
                     }
                     colonp = out;
                     continue;
-                } else if (src == src_endp) {
+                }
+                if (src == src_endp) {
                     return bad_ending;
                 }
                 if (out + uint16_byte_count > endp) {
                     return invalid_octet_range;
                 }
-                *out++   = static_cast<stl::uint8_t>((val >> 8) & 0xff);
-                *out++   = static_cast<stl::uint8_t>(val & 0xff);
+                *out++   = static_cast<stl::uint8_t>((val >> 8U) & 0xFFU);
+                *out++   = static_cast<stl::uint8_t>(val & 0xFFU);
                 hex_seen = 0;
                 val      = 0;
                 continue;
-            } else if (ch == '.' && (out + ipv4_byte_count) <= endp) {
+            }
+            if (cur_char == '.' && (out + ipv4_byte_count) <= endp) {
                 src = current_token;
                 switch (inet_pton4(src, src_endp, out)) {
                     case inet_pton4_status::valid: {
@@ -291,7 +295,7 @@ namespace webpp {
                     case inet_pton4_status::invalid_prefix: return invalid_prefix;
                 }
                 break;              // '\0' was seen by inet_pton4.
-            } else if (ch == '/') { // handling prefixes
+            } else if (cur_char == '/') { // handling prefixes
                 --src;
                 break;
             }
@@ -302,8 +306,8 @@ namespace webpp {
             if (out + uint16_byte_count > endp) {
                 return invalid_octet_range;
             }
-            *out++ = static_cast<stl::uint8_t>((val >> 8) & 0xff);
-            *out++ = static_cast<stl::uint8_t>(val & 0xff);
+            *out++ = static_cast<stl::uint8_t>((val >> 8U) & 0xFFU);
+            *out++ = static_cast<stl::uint8_t>(val & 0xFFU);
         }
         if (colonp != nullptr) {
             // Replace :: with zeros.
@@ -337,7 +341,7 @@ namespace webpp {
         if (out != endp) {
             return bad_ending;
         }
-        if (ch == '/') {
+        if (cur_char == '/') {
             return invalid_character;
         }
         return valid;
