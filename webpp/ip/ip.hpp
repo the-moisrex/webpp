@@ -8,18 +8,21 @@
 namespace webpp {
 
     // Maximum IPv4 dotted-decimal string (same as INET_ADDRSTRLEN - 1)
-    static constexpr auto max_ipv4_str_len = 15u;
+    static constexpr auto max_ipv4_str_len = 15U;
 
     // length of "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
     // Maximum IPv6 hexadecimal string (same as INET6_ADDRSTRLEN - 1)
-    static constexpr auto max_ipv6_str_len = 45u;
+    static constexpr auto max_ipv6_str_len = 45U;
 
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t
 
     // ipv4 octet/byte count
-    static constexpr auto ipv4_byte_count = 4u;
+    static constexpr auto ipv4_byte_count = 4U;
     // ipv6 octet/byte count
-    static constexpr auto ipv6_byte_count = 16u;
+    static constexpr auto ipv6_byte_count = 16U;
+
+    static constexpr std::uint8_t ipv4_max_prefix = 32U;
+    static constexpr std::uint8_t ipv6_max_prefix = 128U;
 
 } // namespace webpp
 
