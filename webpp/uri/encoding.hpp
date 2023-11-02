@@ -27,7 +27,6 @@ namespace webpp {
               typename ConstIter         = char const*>
     [[nodiscard]] static constexpr bool
     decode_uri_component_inplace(Iter& pos, ConstIter end, CharSet auto const& chars) noexcept {
-        using iterator        = Iter;
         using iterator_traits = stl::iterator_traits<Iter>;
         using pointer         = typename iterator_traits::pointer;
         using char_type       = istl::char_type_of_t<pointer>;
@@ -175,6 +174,25 @@ namespace webpp {
         }
         for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, chars);
+        }
+        output.shrink_to_fit();
+    }
+
+    /// Iterator based encoding
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, typename Iter, typename CIter>
+    static constexpr void
+    encode_uri_component(Iter beg, CIter end, istl::String auto& output, CharSet auto const& chars) {
+        const auto input_size = end - beg;
+        { // todo: see if this is necessary/performant
+            const auto new_capacity =
+              output.size() +
+              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
+            if (output.capacity() < new_capacity) {
+                output.reserve(new_capacity);
+            }
+        }
+        for (auto pos = beg; pos != end; ++pos) {
+            encode_uri_component<Policy>(*pos, output, chars);
         }
         output.shrink_to_fit();
     }

@@ -20,48 +20,74 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#authority-state
 
         using ctx_type = uri::parsing_uri_context<T...>;
+        using iterator = typename ctx_type::iterator;
 
-        bool at_char_seen        = false;
-        bool password_token_seen = false;
-        for (; ctx.pos != ctx.end; ++ctx.pos) {
+        const auto interesting_characters = is_special_scheme(ctx.out.scheme())
+                                              ? details::ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
+                                              : details::ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
+        iterator   atsign_pos             = nullptr;
+        iterator   password_token_pos     = nullptr;
+        auto const beg                    = ctx.pos;
+        for (;; ++ctx.pos) {
+            ctx.pos = interesting_characters.find_first_in(ctx.pos, ctx.end);
+            if (ctx.pos == ctx.end) {
+                break;
+            }
             switch (*ctx.pos) {
-                case '@':
+                case '@': {
                     ctx.status |= stl::to_underlying(uri_status::has_credentials);
+                    atsign_pos = ctx.pos;
 
+                    // append to the username and password
+                    iterator const username_beg = beg;
+                    iterator const username_end = stl::min(password_token_pos, atsign_pos);
+                    iterator const password_beg = password_token_pos + 1;
+                    iterator const password_end = atsign_pos;
                     if constexpr (ctx_type::is_modifiable) {
-                        if (at_char_seen) {
-                            if (password_token_seen) {
-                                ctx.out.append_password("%40");
-                            } else {
-                                ctx.out.append_username("%40");
+                        if (atsign_pos != nullptr) {
+                            encode_uri_component(username_beg,
+                                                 username_end,
+                                                 ctx.out.get_username_ref(),
+                                                 details::USER_INFO_ENCODE_SET);
+
+                            if (password_token_pos != nullptr) {
+                                encode_uri_component(password_beg,
+                                                     password_end,
+                                                     ctx.out.get_password_ref(),
+                                                     details::USER_INFO_ENCODE_SET);
+                            }
+                        }
+                    } else {
+                        if (atsign_pos != nullptr) {
+                            ctx.out.username(username_beg, username_end);
+
+                            if (password_token_pos != nullptr) {
+                                ctx.out.password(password_beg, password_end);
                             }
                         }
                     }
-                    at_char_seen = true;
-
-                    // todo: continue
-
 
                     break;
-                case ':':
-                    if (password_token_seen) {
-                        // todo
-                    }
-                    break;
-                case '\\': {
-                    if (!is_special_scheme(ctx.out.scheme())) {
-                        break;
-                    }
-                    [[fallthrough]];
                 }
+                case ':':
+                    if (password_token_pos == nullptr) {
+                        password_token_pos = ctx.pos;
+                        continue;
+                    }
+                    break; // append the ":" to the username/password
                 case '/':
                 case '?':
                 case '#':
+                case '\\': // the check has been done before, we don't need to check to see if the URL has a
+                           // special scheme here (as it said by WHATWG)
                 case '\0':
-                    if (at_char_seen /*&& ctx.out.empty()*/) {
+                    if (atsign_pos && ctx.pos == beg) {
                         ctx.status = stl::to_underlying(uri_status::host_missing);
                         return;
                     }
+                    // There was no username and password
+                    // todo: we could do this in one pass instead of going back here
+                    ctx.pos = atsign_pos == nullptr ? beg : atsign_pos + 1;
                     ctx.status |= stl::to_underlying(uri_status::valid_host);
                     return;
             }

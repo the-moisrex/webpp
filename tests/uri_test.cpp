@@ -89,6 +89,19 @@ TEST(URITests, URIParsingWithWarnings) {
     EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
 }
 
+TEST(URITests, URIStatusTest) {
+    uri::uri_status_type status = 0;
+    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status |= stl::to_underlying(uri::uri_status::invalid_character);
+
+    EXPECT_TRUE(uri::has_warnings(status));
+    EXPECT_TRUE(uri::has_warnings(static_cast<uri::uri_status>(status)));
+    EXPECT_FALSE(uri::has_error(static_cast<uri::uri_status>(status)));
+    EXPECT_FALSE(uri::has_error(status));
+    EXPECT_TRUE(uri::is_valid(status));
+    EXPECT_TRUE(uri::is_valid(static_cast<uri::uri_status>(status)));
+}
+
 TEST(URITests, URIStatusIterator) {
     uri::uri_status_type status = 0;
     status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
@@ -149,9 +162,9 @@ TEST(URITests, PercentEncodeDecodeIterator) {
     encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
-    out.clear();
-    EXPECT_TRUE(decode_uri_component(output2, out, ALPHA_DIGIT<char>));
-    EXPECT_EQ(out, decoded) << out;
+    std::string output3;
+    EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
+    EXPECT_EQ(output3, decoded) << out;
 }
 
 TEST(URITests, PercentEncodeDecodePointer) {
@@ -171,7 +184,35 @@ TEST(URITests, PercentEncodeDecodePointer) {
     encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
-    out.clear();
-    EXPECT_TRUE(decode_uri_component(output2, out, ALPHA_DIGIT<char>));
-    EXPECT_EQ(out, decoded) << out;
+    std::string output3;
+    EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
+    EXPECT_EQ(output3, decoded) << out;
+}
+
+
+TEST(URITests, BasicURIParsing) {
+    stl::string_view const str =
+      "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
+
+    auto       context = uri::parse_uri(str);
+    auto const res     = static_cast<uri::uri_status>(context.status);
+    EXPECT_TRUE(uri::is_valid(res));
+    EXPECT_FALSE(uri::has_warnings(res));
+    EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
+    EXPECT_EQ(context.out.scheme(), "https");
+    EXPECT_EQ(context.out.host(), "example.com");
+    EXPECT_EQ(context.out.username(), "username");
+    EXPECT_EQ(context.out.password(), "password");
+    EXPECT_EQ(context.out.port(), "1010");
+    EXPECT_EQ(context.out.path(), "/this/is/the/path");
+    EXPECT_EQ(context.out.queries(), "query1=one");
+    EXPECT_EQ(context.out.fragment(), "hash");
+    EXPECT_TRUE(context.out.has_scheme());
+    EXPECT_TRUE(context.out.has_username());
+    // EXPECT_TRUE(context.out.has_authority());
+    EXPECT_TRUE(context.out.has_credentials());
+    EXPECT_TRUE(context.out.has_host());
+    EXPECT_TRUE(context.out.has_path());
+    EXPECT_TRUE(context.out.has_queries());
+    EXPECT_TRUE(context.out.has_fragment());
 }
