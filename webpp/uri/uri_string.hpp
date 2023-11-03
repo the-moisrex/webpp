@@ -2036,9 +2036,9 @@ namespace webpp::uri {
     concept URIString = requires {
         typename stl::remove_cvref_t<T>::specified_string_type;
         typename stl::remove_cvref_t<T>::specified_string_view_type;
-        requires stl::same_as<stl::remove_cvref_t<T>,
-                              uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
-                                         typename stl::remove_cvref_t<T>::specified_string_view_type>>;
+        requires istl::cvref_as<T,
+                                uri_string<typename stl::remove_cvref_t<T>::specified_string_type,
+                                           typename stl::remove_cvref_t<T>::specified_string_view_type>>;
     };
 
 
@@ -2054,11 +2054,11 @@ namespace webpp::uri {
                 if (stl::empty(*it1)) {
                     ++it1;
                     continue;
-                } else if (stl::empty(*it2)) {
+                }
+                if (stl::empty(*it2)) {
                     ++it2;
                     continue;
                 }
-
                 return false;
             }
             ++it1;
@@ -2068,14 +2068,16 @@ namespace webpp::uri {
         if (it1 != _p1.cend()) {
             if (!stl::all_of(it1, _p1.cend(), [](auto const& a) constexpr noexcept {
                     return stl::empty(a);
-                }))
+                })) {
                 return false;
+            }
         }
         if (it1 != _p2.cend()) {
             if (!stl::all_of(it2, _p2.cend(), [](auto const& a) constexpr noexcept {
                     return stl::empty(a);
-                }))
+                })) {
                 return false;
+            }
         }
         return true;
     }

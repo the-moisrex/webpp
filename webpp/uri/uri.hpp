@@ -95,9 +95,9 @@ namespace webpp::uri {
     static constexpr auto parse_uri(StrV str) noexcept {
         using iterator     = typename StrV::const_iterator;
         using context_type = uri::parsing_uri_context<iterator, StrV>;
-        context_type context{.beg = str.data(),
-                             .pos = str.data(), // current position is start
-                             .end = str.data() + str.size()};
+        context_type context{.beg = str.begin(),
+                             .pos = str.begin(), // current position is start
+                             .end = str.end()};
         parse_uri(context);
         return context;
     }
@@ -112,9 +112,9 @@ namespace webpp::uri {
         using base_seg_type        = typename base_components_type::seg_type;
         using context_type         = uri::parsing_uri_context<iterator, StrT, base_seg_type>;
 
-        context_type context{.beg  = the_url.data(),
-                             .pos  = the_url.data(), // current position is start
-                             .end  = the_url.data() + the_url.size(),
+        context_type context{.beg  = the_url.begin(),
+                             .pos  = the_url.begin(), // current position is start
+                             .end  = the_url.end(),
                              .base = origin_context};
         parse_uri(context);
         return context;
@@ -130,9 +130,7 @@ namespace webpp::uri {
         auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
         using base_context_type = uri::parsing_uri_context<iterator>;
 
-        base_context_type origin_context{.beg = origin.data(),
-                                         .pos = origin.data(),
-                                         .end = origin.data() + origin.size()};
+        base_context_type origin_context{.beg = origin.begin(), .pos = origin.begin(), .end = origin.end()};
         parse_uri(origin_context);
 
         return parse_uri(the_url, origin_context.out);
@@ -169,7 +167,7 @@ namespace webpp::uri {
         template <typename T, typename Allocator = allocator_type>
             requires((URIString<T> || istl::StringViewifiable<T>) &&
                      stl::is_constructible_v<allocator_type, Allocator>)
-        constexpr basic_uri(T&& uri_str, Allocator const& alloc = {})
+        constexpr explicit basic_uri(T&& uri_str, Allocator const& alloc = {})
           : scheme{alloc},
             username{alloc},
             password{alloc},
@@ -180,6 +178,18 @@ namespace webpp::uri {
             fragment{alloc} {
             extract_from(stl::forward<T>(uri_str));
         }
+
+        template <typename Allocator = allocator_type>
+            requires(stl::is_constructible_v<allocator_type, Allocator>)
+        constexpr explicit basic_uri(Allocator const& alloc)
+          : scheme{alloc},
+            username{alloc},
+            password{alloc},
+            host{alloc},
+            port{alloc},
+            path{alloc},
+            queries{alloc},
+            fragment{alloc} {}
 
 
         constexpr basic_uri()
@@ -195,14 +205,7 @@ namespace webpp::uri {
                   typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
         [[nodiscard]] static constexpr auto create(AllocatorType const& alloc = AllocatorType{}) {
             using str_t = stl::remove_cvref_t<StrT>;
-            return basic_uri<str_t>{.scheme{alloc},
-                                    .username{alloc},
-                                    .password{alloc},
-                                    .host{alloc},
-                                    .port{alloc},
-                                    .path{alloc},
-                                    .queries{alloc},
-                                    .fragment{alloc}};
+            return basic_uri<str_t>{alloc};
         }
 
 

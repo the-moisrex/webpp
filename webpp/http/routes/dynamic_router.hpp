@@ -55,12 +55,13 @@ namespace webpp::http {
         }
 
       public:
-        // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
 
-        // These are the callable types
+        /// These are the objects that will be used by the valves to make it
+        /// easier for the user to pass member functions as valves in the routes.
         objects_type objects;
 
-        // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
@@ -70,8 +71,8 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, basic_dynamic_router>)
-        constexpr basic_dynamic_router(ET&& et)
-          : etraits{stl::forward<ET>(et)},
+        constexpr basic_dynamic_router(ET&& inp_etraits)
+          : etraits{stl::forward<ET>(inp_etraits)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

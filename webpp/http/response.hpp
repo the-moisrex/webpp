@@ -29,42 +29,43 @@ namespace webpp::http {
         static_assert(HTTPResponseBody<body_type>, "Body is not a valid body type.");
         static_assert(HTTPResponseHeaders<headers_type>, "Header is not a valid header.");
 
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         headers_type headers;
         body_type    body;
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
 
 
-        // NOLINTBEGIN(bugprone-forwarding-reference-overload)
-
+        // NOLINTBEGIN(*-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_response>) // It's not a copy/move
-        constexpr common_http_response(ET&& et) noexcept(
+        explicit constexpr common_http_response(ET&& etraits) noexcept(
           stl::is_nothrow_constructible_v<headers_type, ET>&& stl::is_nothrow_constructible_v<body_type, ET>)
-          : headers{et},
-            body{et} {}
-
-        // NOLINTEND(bugprone-forwarding-reference-overload)
+          : headers{etraits},
+            body{etraits} {}
+        // NOLINTEND(*-forwarding-reference-overload)
 
         template <EnabledTraits ET, typename T>
-        constexpr common_http_response(ET&& et, T&& body_obj)
-          : headers{et},
-            body{et, stl::forward<T>(body_obj)} {}
+        constexpr common_http_response(ET&& etraits, T&& body_obj)
+          : headers{etraits},
+            body{etraits, stl::forward<T>(body_obj)} {}
 
         template <EnabledTraits ET>
-        constexpr common_http_response(ET&& et, http::status_code code) : headers{et, code},
-                                                                          body{et} {}
+        constexpr common_http_response(ET&& etraits, http::status_code code)
+          : headers{etraits, code},
+            body{etraits} {}
 
 
         constexpr ~common_http_response()                                        = default;
         constexpr common_http_response(common_http_response const& res) noexcept = default;
         constexpr common_http_response(common_http_response&& res) noexcept      = default;
 
-        constexpr explicit common_http_response(body_type const& b) : headers{b.get_traits()}, body(b) {}
-        constexpr explicit common_http_response(body_type&& b)
-          : headers{b.get_traits()},
-            body(stl::move(b)) {}
+        constexpr explicit common_http_response(body_type const& inp_body)
+          : headers{inp_body.get_traits()},
+            body(inp_body) {}
+        constexpr explicit common_http_response(body_type&& inp_body)
+          : headers{inp_body.get_traits()},
+            body(stl::move(inp_body)) {}
 
         constexpr common_http_response& operator=(common_http_response const&)         = default;
         constexpr common_http_response& operator=(common_http_response&& res) noexcept = default;
@@ -125,8 +126,8 @@ namespace webpp::http {
         }
 
         template <EnabledTraits ET, typename T>
-        [[nodiscard]] constexpr static auto with_body(ET&& et, T&& obj) {
-            return create(et, obj);
+        [[nodiscard]] constexpr static auto with_body(ET&& etraits, T&& obj) {
+            return create(stl::forward<ET>(etraits), stl::forward<T>(obj));
         }
 
         // template <typename... Args>
@@ -138,12 +139,12 @@ namespace webpp::http {
          * Generate a response
          */
         template <EnabledTraits ET, typename... Args>
-        [[nodiscard]] static constexpr HTTPResponse auto create(ET&& et, Args&&... args) {
+        [[nodiscard]] static constexpr HTTPResponse auto create(ET&& etraits, Args&&... args) {
             using new_response_type = common_http_response;
-            if constexpr (requires { new_response_type{et, stl::forward<Args>(args)...}; }) {
-                return new_response_type{et, stl::forward<Args>(args)...};
-            } else if constexpr (requires { new_response_type{stl::forward<Args>(args)..., et}; }) {
-                return new_response_type{stl::forward<Args>(args)..., et};
+            if constexpr (requires { new_response_type{etraits, stl::forward<Args>(args)...}; }) {
+                return new_response_type{etraits, stl::forward<Args>(args)...};
+            } else if constexpr (requires { new_response_type{stl::forward<Args>(args)..., etraits}; }) {
+                return new_response_type{stl::forward<Args>(args)..., etraits};
             } else {
                 return new_response_type{stl::forward<Args>(args)...};
             }
@@ -197,7 +198,7 @@ namespace webpp::http {
         template <typename T>
             requires(!istl::is_specialization_of_v<stl::remove_cvref_t<T>, common_http_response> &&
                      HTTPConvertibleBody<T, common_http_response, headers_type, body_type>)
-        constexpr operator T() const {
+        explicit constexpr operator T() const {
             return as<T>();
         }
 
@@ -260,13 +261,14 @@ namespace webpp::http {
         constexpr ~basic_response()                                         = default;
 
         template <EnabledTraits ET, typename T>
-        constexpr basic_response(ET&& et, T&& body_obj)
-          : common_http_response_type{stl::forward<ET>(et), stl::forward<T>(body_obj)} {}
+        constexpr basic_response(ET&& etraits, T&& body_obj)
+          : common_http_response_type{stl::forward<ET>(etraits), stl::forward<T>(body_obj)} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!HTTPResponse<ET> && !istl::cvref_as<basic_response, ET>)
-        explicit constexpr basic_response(ET&& et) : common_http_response_type{stl::forward<ET>(et)} {}
+        explicit constexpr basic_response(ET&& etraits)
+          : common_http_response_type{stl::forward<ET>(etraits)} {}
 
 
         template <HTTPResponse ResT>
@@ -274,7 +276,7 @@ namespace webpp::http {
         explicit constexpr basic_response(ResT&& res) : common_http_response_type{stl::forward<ResT>(res)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        constexpr explicit basic_response(body_type const& b) : common_http_response_type{b} {}
+        constexpr explicit basic_response(body_type const& inp_body) : common_http_response_type{inp_body} {}
     };
 
     using response = basic_response<default_dynamic_traits>;

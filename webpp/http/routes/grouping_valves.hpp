@@ -78,7 +78,8 @@ namespace webpp::http {
       public:
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        constexpr mangler_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr mangler_valve(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : manglers{stl::forward<Args>(args)...} {}
 
 
@@ -146,7 +147,8 @@ namespace webpp::http {
       public:
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        constexpr forward_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr forward_valve(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : callables{stl::forward<Args>(args)...} {}
 
         constexpr forward_valve(forward_valve const&)                     = default;
@@ -178,7 +180,8 @@ namespace webpp::http {
         constexpr void to_string(istl::String auto& out) const {
             stl::apply(
               [&out]<typename... T>(T&&... funcs) constexpr {
-                  ((out.append(" >> ("), valve_to_string(out, funcs), out.append(" )")), ...);
+                  ((out.append(" >> ("), valve_to_string(out, stl::forward<T>(funcs)), out.append(" )")),
+                   ...);
               },
               as_tuple());
         }
@@ -189,7 +192,7 @@ namespace webpp::http {
             istl::for_each_element(
               [&inp_router]<typename T>([[maybe_unused]] T&& inp_callable) constexpr {
                   if constexpr (ValveRequiresSetup<RouterT, T>) {
-                      inp_callable.setup(inp_router);
+                      stl::forward<T>(inp_callable).setup(inp_router);
                   }
               },
               as_tuple());
@@ -233,17 +236,17 @@ namespace webpp::http {
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <istl::cvref_as<pre_type> T, istl::cvref_as<route_type> R>
-        constexpr valves_group(T&& inp_pre, R&& inp_routes = route_type{})
+        explicit constexpr valves_group(T&& inp_pre, R&& inp_routes = route_type{})
           : pres{stl::forward<T>(inp_pre)},
             routes{stl::forward<R>(inp_routes)} {}
 
         template <istl::cvref_as<post_type> T, istl::cvref_as<route_type> R>
-        constexpr valves_group(T&& inp_post, R&& inp_routes = route_type{})
+        explicit constexpr valves_group(T&& inp_post, R&& inp_routes = route_type{})
           : posts{stl::forward<T>(inp_post)},
             routes{stl::forward<R>(inp_routes)} {}
 
         template <istl::cvref_as<mangler_type> T, istl::cvref_as<route_type> R>
-        constexpr valves_group(T&& inp_mangler, R&& inp_routes = route_type{})
+        explicit constexpr valves_group(T&& inp_mangler, R&& inp_routes = route_type{})
           : manglers{stl::forward<T>(inp_mangler)},
             routes{stl::forward<R>(inp_routes)} {}
 

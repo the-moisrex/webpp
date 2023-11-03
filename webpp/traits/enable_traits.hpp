@@ -136,12 +136,12 @@ namespace webpp {
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
-        constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
-                                                    logger{obj.logger} {}
+        explicit constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
+                                                             logger{obj.logger} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
-        constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
+        explicit constexpr enable_traits(alloc_pack_ref alloc_pack_obj, logger_ref logger_obj = {}) noexcept
           : alloc_pack{alloc_pack_obj},
             logger{logger_obj} {}
 
@@ -209,10 +209,10 @@ namespace webpp {
         using enabled_type = T;
         using enable_traits<TraitsType>::enable_traits;
 
-        constexpr enable_traits_with(enable_traits<TraitsType> const& et) noexcept
-          : enable_traits<TraitsType>{et} {}
-        constexpr enable_traits_with(enable_traits<TraitsType>&& et) noexcept
-          : enable_traits<TraitsType>{stl::move(et)} {}
+        explicit constexpr enable_traits_with(enable_traits<TraitsType> const& etraits) noexcept
+          : enable_traits<TraitsType>{etraits} {}
+        explicit constexpr enable_traits_with(enable_traits<TraitsType>&& etraits) noexcept
+          : enable_traits<TraitsType>{stl::move(etraits)} {}
 
         constexpr enable_traits_with(enable_traits_with const&) noexcept            = default;
         constexpr enable_traits_with(enable_traits_with&&) noexcept                 = default;
@@ -304,7 +304,7 @@ namespace webpp {
 
         template <typename... Args>
             requires(stl::is_constructible_v<T, etraits, Args...>)
-        constexpr enable_traits_for(Args&&... args) noexcept(
+        explicit constexpr enable_traits_for(Args&&... args) noexcept(
           stl::is_nothrow_constructible_v<T, etraits, Args...>)
           : T{et, stl::forward<Args>(args)...} {}
 
@@ -317,7 +317,7 @@ namespace webpp {
                   requires stl::is_constructible_v<T, typename T::allocator_type const&, Args...>;
                   requires etraits::allocator_pack_type::template has_allocator<typename T::allocator_type>;
               })
-        constexpr enable_traits_for(Args&&... args) noexcept(
+        explicit constexpr enable_traits_for(Args&&... args) noexcept(
           stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
           : T{alloc::general_alloc_for<T>(et), stl::forward<Args>(args)...} {}
 

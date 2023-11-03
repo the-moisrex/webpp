@@ -175,8 +175,10 @@ namespace webpp::uri {
                         "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
                         "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
             case has_credentials:
-                return {"The input has credentials (username or password); "
-                        "more info: https://url.spec.whatwg.org/#invalid-credentials"};
+                return {
+                  "The input has credentials (username or password), it is a deprecated feature of URIs; "
+                  "more info: https://url.spec.whatwg.org/#invalid-credentials "
+                  "and https://httpwg.org/specs/rfc9110.html#http.userinfo"};
 
                 // port-specific errors:
             case port_out_of_range:

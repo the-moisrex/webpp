@@ -11,6 +11,10 @@
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
 
+/**
+ * Attention: User infos in URIs are DEPRECATED in URI, but we SHOULD parse it
+ *   https://httpwg.org/specs/rfc9110.html#http.userinfo
+ */
 namespace webpp::uri {
 
 

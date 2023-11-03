@@ -43,7 +43,8 @@ namespace webpp::http {
         constexpr member_function_valve() noexcept                                        = default;
         constexpr ~member_function_valve() noexcept                                       = default;
 
-        constexpr member_function_valve(member_ptr_type inp_func) noexcept : holder{.mem_ptr = inp_func} {}
+        explicit constexpr member_function_valve(member_ptr_type inp_func) noexcept
+          : holder{.mem_ptr = inp_func} {}
 
         using valve_type::operator();
 
@@ -88,18 +89,27 @@ namespace webpp::http {
                 // dynamic router's object:
 
                 for (auto& object : router.objects) {
-                    if (object.type() == typeid(object_type)) {
+                    auto const& obj_type_info = object.type();
+                    if (obj_type_info == typeid(object_type)) {
                         set_object(stl::any_cast<object_type>(stl::addressof(object)));
+                        return;
+                    }
+                    if (obj_type_info == typeid(object_ptr)) {
+                        set_object(stl::any_cast<object_ptr>(object));
                         return;
                     }
                 }
 
-                // default constructing it if it's possible and use that object
-                if constexpr (stl::is_default_constructible_v<object_type>) {
-                    router.objects.emplace_back(object_type{});
+                // if we can construct it with the router itself
+                webpp_static_constexpr bool is_any_constructible =
+                  stl::is_constructible_v<typename objects_type::value_type, // std::any
+                                          object_type>;
+                if constexpr (is_any_constructible && stl::is_constructible_v<object_type, RouterType&>) {
+                    router.objects.emplace_back(stl::in_place_type<object_type>, router);
                     set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
-                } else if constexpr (stl::is_constructible_v<object_type, RouterType&>) {
-                    router.objects.emplace_back(object_type{router});
+                } else if constexpr (is_any_constructible && stl::is_default_constructible_v<object_type>) {
+                    // default constructing it if it's possible and use that object
+                    router.objects.emplace_back(stl::in_place_type<object_type>);
                     set_object(stl::any_cast<object_type>(stl::addressof(router.objects.back())));
                 } else {
                     router.logger.error(
@@ -134,17 +144,15 @@ namespace webpp::http {
     // Member Function Pointer Valvifier
     template <typename T>
         requires stl::is_member_function_pointer_v<stl::remove_cvref_t<T>>
-    [[nodiscard]] static constexpr member_function_valve<stl::remove_cvref_t<T>>
-    tag_invoke(valvify_tag, T&& next) noexcept {
-        return {stl::forward<T>(next)};
+    [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag vtag, T&& next) noexcept {
+        return member_function_valve<stl::remove_cvref_t<T>>{stl::forward<T>(next)};
     }
 
     // Free Functions
     template <typename T>
         requires stl::is_function_v<stl::remove_cvref_t<T>>
-    [[nodiscard]] static constexpr member_function_valve<stl::remove_cvref_t<T>>
-    tag_invoke(valvify_tag, T&& next) noexcept {
-        return {stl::forward<T>(next)};
+    [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag vtag, T&& next) noexcept {
+        return member_function_valve<stl::remove_cvref_t<T>>{stl::forward<T>(next)};
     }
 
 

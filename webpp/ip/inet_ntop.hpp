@@ -91,29 +91,29 @@ namespace webpp {
             *octet_ptr++ = '\0';
             octet_ptr    = hex_ptr;
 
-            stl::uint8_t x8  = *src_ptr++;
-            stl::uint8_t hx8 = x8 >> 4U;
+            stl::uint8_t low_hex_8bit  = *src_ptr++;
+            stl::uint8_t high_hex_8bit = low_hex_8bit >> 4U;
 
-            if (hx8 != 0U) {
+            if (high_hex_8bit != 0U) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char_type>[hx8];
+                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
             }
 
-            hx8 = x8 & 0x0FU;
-            if (!skip || (hx8 != 0U)) {
+            high_hex_8bit = low_hex_8bit & 0x0FU;
+            if (!skip || (high_hex_8bit != 0U)) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char_type>[hx8];
+                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
             }
 
-            x8 = *src_ptr++;
+            low_hex_8bit = *src_ptr++;
 
-            hx8 = x8 >> 4U;
-            if (!skip || (hx8 != 0U)) {
-                *octet_ptr++ = hex_chars<char_type>[hx8];
+            high_hex_8bit = low_hex_8bit >> 4U;
+            if (!skip || (high_hex_8bit != 0U)) {
+                *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
             }
 
-            hx8          = x8 & 0x0FU;
-            *octet_ptr++ = hex_chars<char_type>[hx8];
+            high_hex_8bit = low_hex_8bit & 0x0FU;
+            *octet_ptr++  = hex_chars<char_type>[high_hex_8bit];
             hex_ptr += 5;
 
 
@@ -161,23 +161,23 @@ namespace webpp {
                 *out++ = *hex_ptr;
             }
         } else {
-            int i = 0;
-            for (; i != longest_index; ++i) {
-                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+            int index = 0;
+            for (; index != longest_index; ++index) {
+                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
                 }
-                if (i != 7) {
+                if (index != 7) {
                     *out++ = ':';
                 }
             }
             // check for leading zero
             *out++ = ':';
-            i += longest_count;
-            for (; i != 8; ++i) {
-                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+            index += longest_count;
+            for (; index != 8; ++index) {
+                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
                 }
-                if (i != 7) {
+                if (index != 7) {
                     *out++ = ':';
                 }
             }
