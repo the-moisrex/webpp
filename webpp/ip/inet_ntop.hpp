@@ -3,6 +3,9 @@
 #ifndef WEBPP_IP_INET_NTOP_HPP
 #define WEBPP_IP_INET_NTOP_HPP
 
+#include "../std/iterator.hpp"
+#include "../std/string.hpp"
+#include "../std/string_view.hpp"
 #include "../strings/hex.hpp"
 #include "ip.hpp"
 
@@ -19,7 +22,8 @@ namespace webpp {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static constexpr char* inet_ntop4(const stl::uint8_t* src, char* out) noexcept {
+    template <typename Iter = char*>
+    static constexpr Iter inet_ntop4(const stl::uint8_t* src, Iter out) noexcept {
 #define WEBPP_PUT_CHAR()                                   \
     if (*src < 10) {                                       \
         *out++ = static_cast<char>('0' + *src);            \
@@ -53,9 +57,12 @@ namespace webpp {
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
-    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
+    template <typename Iter = char*>
+    static constexpr Iter inet_ntop6(const stl::uint8_t* src, Iter out) noexcept {
 
         using ascii::details::hex_chars;
+
+        using char_type = typename istl::char_type_of_t<typename stl::iterator_traits<Iter>::pointer>;
 
         if (src == nullptr) {
             return nullptr;
@@ -63,10 +70,10 @@ namespace webpp {
 
         *out = '\0';
 
-        char                hexa[8 * 5];
-        char*               hex_ptr   = static_cast<char*>(hexa);
+        char_type           hexa[8 * 5];
+        char_type*          hex_ptr   = static_cast<char*>(hexa);
         const stl::uint8_t* src_ptr   = src;
-        char*               octet_ptr = hex_ptr;
+        char_type*          octet_ptr = hex_ptr;
 
 
         int j             = 0;
@@ -85,34 +92,34 @@ namespace webpp {
             octet_ptr    = hex_ptr;
 
             stl::uint8_t x8  = *src_ptr++;
-            stl::uint8_t hx8 = x8 >> 4u;
+            stl::uint8_t hx8 = x8 >> 4U;
 
-            if (hx8 != 0u) {
+            if (hx8 != 0U) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char>[hx8];
+                *octet_ptr++ = hex_chars<char_type>[hx8];
             }
 
-            hx8 = x8 & 0x0fu;
-            if (!skip || (hx8 != 0u)) {
+            hx8 = x8 & 0x0FU;
+            if (!skip || (hx8 != 0U)) {
                 skip         = false;
-                *octet_ptr++ = hex_chars<char>[hx8];
+                *octet_ptr++ = hex_chars<char_type>[hx8];
             }
 
             x8 = *src_ptr++;
 
-            hx8 = x8 >> 4u;
-            if (!skip || (hx8 != 0u)) {
-                *octet_ptr++ = hex_chars<char>[hx8];
+            hx8 = x8 >> 4U;
+            if (!skip || (hx8 != 0U)) {
+                *octet_ptr++ = hex_chars<char_type>[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = hex_chars<char>[hx8];
+            hx8          = x8 & 0x0FU;
+            *octet_ptr++ = hex_chars<char_type>[hx8];
             hex_ptr += 5;
 
 
 
             // find runs of zeros for :: convention
-            if (src[i + i] == 0u && src[i + i + 1] == 0u) {
+            if (src[i + i] == 0U && src[i + i + 1] == 0U) {
                 j++;
                 if (j >= longest_count) {
                     longest_index = i - j + 1;
@@ -132,7 +139,7 @@ namespace webpp {
             //     *out++ = ':';
             //     return inet_ntop4(src + 12, out);
             // } else
-            if (longest_count == 5 && src[10] == 0xffu && src[11] == 0xffu) {
+            if (longest_count == 5 && src[10] == 0xFFU && src[11] == 0xFFU) {
                 *out++ = ':';
                 *out++ = 'f';
                 *out++ = 'f';

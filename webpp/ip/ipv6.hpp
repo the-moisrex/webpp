@@ -875,7 +875,7 @@ namespace webpp {
         constexpr void iid(const stl::uint8_t* piid) noexcept {
             auto const* _end = piid + interface_identifier_size;
             auto*       _iid = iid();
-            for (auto* iter = piid; iter != _end; iter++) {
+            for (auto const* iter = piid; iter != _end; iter++) {
                 *_iid++ = *iter;
             }
         }
@@ -885,10 +885,10 @@ namespace webpp {
          * @param A reference to the Interface Identifier.
          */
         constexpr void iid(const octets8_t::const_iterator& piid) noexcept {
-            auto*       _iid = iid();
-            auto const* _end = _iid + interface_identifier_size;
-            auto*       pit  = piid;
-            for (auto* iter = _iid; iter != _end; iter++) {
+            auto const _iid = iid();
+            auto const _end = _iid + interface_identifier_size;
+            auto       pit  = piid;
+            for (auto iter = _iid; iter != _end; iter++) {
                 *iter = *pit++;
             }
         }
@@ -1048,22 +1048,22 @@ namespace webpp {
 #ifdef __cpp_lib_string_resize_and_overwrite
             output.resize_and_overwrite(max_ipv6_str_len + 5,
                                         [this](auto* buf, stl::size_t) constexpr noexcept {
-                                            auto it = inet_ntop6(data.data(), buf);
+                                            auto pos = inet_ntop6(data.data(), buf);
                                             if (has_prefix()) {
-                                                *it++ = '/';
+                                                *pos++ = '/';
                                                 if (_prefix < 10) {
-                                                    *it++ = static_cast<char>('0' + _prefix);
+                                                    *pos++ = static_cast<char>('0' + _prefix);
                                                 } else if (_prefix < 100) {
-                                                    *it++ = static_cast<char>('0' + _prefix / 10);
-                                                    *it++ = static_cast<char>('0' + _prefix % 10);
+                                                    *pos++ = static_cast<char>('0' + _prefix / 10);
+                                                    *pos++ = static_cast<char>('0' + _prefix % 10);
                                                 } else {
-                                                    *it++ = static_cast<char>('0' + _prefix / 100);
-                                                    *it++ = static_cast<char>('0' + _prefix % 100 / 10);
-                                                    *it++ = static_cast<char>('0' + _prefix % 10);
+                                                    *pos++ = static_cast<char>('0' + _prefix / 100);
+                                                    *pos++ = static_cast<char>('0' + _prefix % 100 / 10);
+                                                    *pos++ = static_cast<char>('0' + _prefix % 10);
                                                 }
-                                                *it++ = '\0';
+                                                *pos++ = '\0';
                                             }
-                                            return static_cast<stl::size_t>(it - buf);
+                                            return static_cast<stl::size_t>(pos - buf);
                                         });
 #else
             to_string(output);

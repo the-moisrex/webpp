@@ -9,7 +9,7 @@
 
 using namespace webpp;
 
-using ipv4 = ipv4;
+// NOLINTBEGIN(*-magic-numbers)
 
 TEST(IPv4Tests, ConstEvalCraetion) {
     EXPECT_FALSE(ipv4::invalid().is_valid());
@@ -193,5 +193,8 @@ TEST(IPv4Tests, StartsWith) {
     EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
     EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with(ipv4{127, 0, 0, 0}, 8));
     EXPECT_EQ(ipv4::create("127.0.0.1").mask(8), ipv4(127U, 0U, 0U, 0U));
-    EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127U, 2u, 3u, 0u));
+    EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127U, 2U, 3U, 0U));
 }
+
+
+// NOLINTEND(*-magic-numbers)
