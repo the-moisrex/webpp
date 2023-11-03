@@ -44,10 +44,10 @@ TEST(IPv4Tests, Creation) {
 
 TEST(IPv4Tests, Methods) {
     ipv4_t const ip{192, 168, 1, 1};
-    EXPECT_TRUE(ip.is_in_subnet({{192, 168, 0, 0}, 16}));
-    EXPECT_TRUE(ip.is_in_subnet({{192, 168, 1, 0}, 24}));
-    EXPECT_TRUE(ip.in_range({192, 168, 0, 1}, ipv4_t("192.168.2.1")));
-    EXPECT_FALSE(ip.in_range({192, 168, 1, 2}, ipv4_t("192.168.2.1")));
+    EXPECT_TRUE(ip.is_in_subnet(ipv4{{192, 168, 0, 0}, 16}));
+    EXPECT_TRUE(ip.is_in_subnet(ipv4{{192, 168, 1, 0}, 24}));
+    EXPECT_TRUE(ip.in_range(ipv4{192, 168, 0, 1}, ipv4_t("192.168.2.1")));
+    EXPECT_FALSE(ip.in_range(ipv4{192, 168, 1, 2}, ipv4_t("192.168.2.1")));
     EXPECT_TRUE(ip.is_private());
     EXPECT_FALSE(ip.is_public());
     EXPECT_FALSE(ip.is_zero());
@@ -123,7 +123,7 @@ TEST(IPv4Tests, ToString) {
 
 
 TEST(IPv4Tests, InetP2NValidation) {
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv4s[]{
       "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",
       "203.0.113.3",     "10.0.0.4",        "172.16.0.5",      "192.168.0.6",     "127.0.0.7",
@@ -177,7 +177,7 @@ TEST(IPv4Tests, InetP2NValidation) {
           << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
           << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
     }
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTEND(*-avoid-c-arrays)
 }
 
 TEST(IPv4Tests, ErrorMessages) {

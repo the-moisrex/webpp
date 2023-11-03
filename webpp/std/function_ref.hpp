@@ -443,8 +443,7 @@ namespace webpp::istl {
         define_is_specialization_of(is_specialization_of_mem_fun_ref,
                                     typename WEBPP_COMMA typename WEBPP_COMMA bool,
                                     typename Sig WEBPP_COMMA typename ObjT WEBPP_COMMA bool IsConst,
-                                    Sig WEBPP_COMMA ObjT WEBPP_COMMA                        IsConst)
-
+                                    Sig WEBPP_COMMA ObjT WEBPP_COMMA                        IsConst);
     }
 
 
@@ -1000,11 +999,11 @@ namespace webpp::istl {
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
 
-        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+        // NOLINTBEGIN(*-avoid-c-arrays)
         storage_type   obj = this;
         stl::byte      mem_ptr_storage[member_holder_required_storage]{};
         self_signature erased_func = &member_function_ref::error;
-        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+        // NOLINTEND(*-avoid-c-arrays)
     };
 
 

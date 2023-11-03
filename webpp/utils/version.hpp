@@ -20,7 +20,7 @@ namespace webpp {
         define_is_specialization_of(is_specialization_of_basic_version_impl,
                                     WEBPP_SINGLE_ARG(stl::uint8_t, typename),
                                     WEBPP_SINGLE_ARG(stl::uint8_t N, stl::integral DataType),
-                                    WEBPP_SINGLE_ARG(N, DataType))
+                                    WEBPP_SINGLE_ARG(N, DataType));
     } // namespace details
 
     template <typename T>
@@ -56,7 +56,7 @@ namespace webpp {
 
 
       public:
-        // NOLINTBEGIN(*-macro-usage)
+        // NOLINTBEGIN(*-macro-usage, *-macro-parentheses)
 #define WEBPP_DEFINE_OPERATOR(op, short_op)                                                      \
     template <stl::integral IntType>                                                             \
     constexpr basic_version& op(IntType new_value) noexcept {                                    \
@@ -78,12 +78,12 @@ namespace webpp {
     template <stl::uint8_t NewCounts, stl::integral NewType>                                     \
     constexpr basic_version& op(basic_version<NewCounts, NewType> const& new_val) noexcept {     \
         if constexpr (NewCounts >= OctetCount) {                                                 \
-            for (auto it = new_val.begin(); auto& item : *this) {                                \
-                item short_op static_cast<integer_type>(*it++);                                  \
+            for (auto iter = new_val.begin(); auto& item : *this) {                              \
+                item short_op static_cast<integer_type>(*iter++);                                \
             }                                                                                    \
         } else {                                                                                 \
-            for (auto it = this->begin(); auto const& item : new_val) {                          \
-                (*it++) short_op static_cast<integer_type>(item);                                \
+            for (auto iter = this->begin(); auto const& item : new_val) {                        \
+                (*iter++) short_op static_cast<integer_type>(item);                              \
             }                                                                                    \
         }                                                                                        \
         return *this;                                                                            \
@@ -100,7 +100,7 @@ namespace webpp {
 
 #define WEBPP_DEFINE_OPERATOR(op, alt_op)                                                      \
     template <stl::uint8_t NewCounts, stl::integral NewType>                                   \
-        requires(!(NewCounts == OctetCount && stl::same_as<NewType, OctetType>) )              \
+        requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)                 \
     [[nodiscard]] constexpr basic_version op(basic_version<NewCounts, NewType> const& new_val) \
       const noexcept {                                                                         \
         basic_version val{*this};                                                              \
@@ -118,7 +118,7 @@ namespace webpp {
 
 #undef WEBPP_DEFINE_OPERATOR
 
-        // NOLINTEND(*-macro-usage)
+        // NOLINTEND(*-macro-usage, *-macro-parentheses)
 
 
         /// Read from ALREADY-CHECKED string
@@ -246,8 +246,8 @@ namespace webpp {
             requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
         [[nodiscard]] constexpr bool
         operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
-            for (auto it = other.begin(); auto const& item : *this) {
-                if (item != static_cast<integer_type>(*it++)) {
+            for (auto iter = other.begin(); auto const& item : *this) {
+                if (item != static_cast<integer_type>(*iter++)) {
                     return false;
                 }
             }

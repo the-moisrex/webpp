@@ -125,7 +125,7 @@ namespace webpp {
         // Create an ipv4 at compile-time; a simple consteval constructor helper
         template <typename... Args>
         static consteval ipv4 create(Args&&... args) noexcept {
-            return {stl::forward<Args>(args)...};
+            return ipv4{stl::forward<Args>(args)...};
         }
 
         static consteval ipv4 invalid() noexcept {
@@ -155,7 +155,7 @@ namespace webpp {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!istl::cvref_as<T, ipv4> && istl::StringViewifiable<T>)
-        constexpr ipv4(T&& ip_addr) noexcept {
+        constexpr explicit ipv4(T&& ip_addr) noexcept {
             parse(stl::forward<T>(ip_addr));
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -221,8 +221,8 @@ namespace webpp {
             _prefix(is::subnet(subnet) ? to_prefix(stl::forward<StrT>(subnet))
                                        : prefix_status(inet_pton4_status::invalid_prefix)) {}
 
-        constexpr ipv4(ipv4_octets ip_addr,
-                       ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        constexpr explicit ipv4(ipv4_octets ip_addr,
+                                ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : data(parse(ip_addr)),
             _prefix(prefix > ipv4_max_prefix && prefix != prefix_status(inet_pton4_status::valid)
                       ? prefix_status(inet_pton4_status::invalid_prefix)
@@ -420,8 +420,8 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_in_subnet(ipv4 const& ip_addr) const noexcept {
             auto uint_val = integer();
             auto uint_ip  = ip_addr.integer();
-            uint_val &= 0xFFFFFFFFU << (ipv4_max_prefix - ip_addr.prefix());
-            uint_ip &= 0xFFFFFFFFU << (ipv4_max_prefix - ip_addr.prefix());
+            uint_val &= 0xFF'FF'FF'FFU << static_cast<stl::uint32_t>(ipv4_max_prefix - ip_addr.prefix());
+            uint_ip &= 0xFF'FF'FF'FFU << static_cast<stl::uint32_t>(ipv4_max_prefix - ip_addr.prefix());
             return uint_val == uint_ip;
         }
 

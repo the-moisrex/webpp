@@ -355,10 +355,10 @@ namespace webpp {
     template <typename StringType>
     struct istring<istring<StringType>> : public istring<StringType> {};
 
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTBEGIN(*-avoid-c-arrays)
     template <istl::CharType CharT, stl::size_t size>
     istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTEND(*-avoid-c-arrays)
 
     using std_istring      = istring<stl::string>;
     using std_istring_view = istring<stl::string_view>;

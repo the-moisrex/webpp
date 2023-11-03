@@ -355,7 +355,6 @@ static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst
 
 
 
-static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
 using octets8_t                      = array<uint8_t, 16u>;
 using octets16_t                     = array<uint16_t, 8u>;
 using octets_t                       = octets8_t;
@@ -413,7 +412,7 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
     // I'm not going to use string here because most small object
     // optimizations are smaller than 48bit (16 or 20 mostly)
     // I should be using a string with local-allocator in it, but I've already written this algo
-    // char_type   buffer[IPV6_ADDR_SIZE * 2 + (IPV6_ADDR_SIZE - 1) + 1];
+    // char_type   buffer[ipv6_byte_count * 2 + (ipv6_byte_count - 1) + 1];
     size_t index = 0;
 
 

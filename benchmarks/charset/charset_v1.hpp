@@ -16,7 +16,7 @@
 #include <utility>
 
 namespace webpp::charset_v1 {
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTBEGIN(*-avoid-c-arrays)
 
     /**
      * This represents a set of characters which can be queried
@@ -627,7 +627,7 @@ namespace webpp::charset_v1 {
     };
 
 
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTEND(*-avoid-c-arrays)
 
 } // namespace webpp::charset_v1
 #endif // WEBPP_CHARSET_HPP

@@ -10,7 +10,7 @@
 
 namespace webpp::istl {
 
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTBEGIN(*-avoid-c-arrays)
     namespace detail {
 
         template <class T>
@@ -216,7 +216,7 @@ namespace webpp::istl {
     } // namespace details
 
 
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTEND(*-avoid-c-arrays)
 
     template <class T, class A>
     class alloc_deleter {

@@ -1021,14 +1021,14 @@ namespace webpp::istl {
     struct name<Primary<names>, Primary> : stl::true_type {};             \
                                                                           \
     template <typename T, template <types> typename Primary>              \
-    concept name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value;
+    concept name##_v = WEBPP_SINGLE_ARG(name)<T, Primary>::value
 
-    define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...)
+    define_is_specialization_of(is_specialization_of, typename..., typename... Args, Args...);
 
-      // valued specialization is exactly the same as above, but it supports some auto values as well
-      // this has a very limited use case, so don't worry about it if it seems useless to you.
-      template <typename T, template <auto, typename...> typename Primary>
-      struct is_valued_specialization_of : stl::false_type {};
+    // valued specialization is exactly the same as above, but it supports some auto values as well
+    // this has a very limited use case, so don't worry about it if it seems useless to you.
+    template <typename T, template <auto, typename...> typename Primary>
+    struct is_valued_specialization_of : stl::false_type {};
 
     template <template <auto, typename...> typename Primary, auto Val, typename... Args>
     struct is_valued_specialization_of<Primary<Val, Args...>, Primary> : stl::true_type {};

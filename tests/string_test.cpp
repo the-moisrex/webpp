@@ -7,7 +7,7 @@
 
 #include <array>
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays,*-magic-numbers)
+// NOLINTBEGIN(*-avoid-c-arrays,*-magic-numbers)
 
 using namespace webpp;
 using namespace webpp::istl;
@@ -151,4 +151,4 @@ TEST(String, StringViewConcept) {
 
 
 
-// NOLINTEND(cppcoreguidelines-avoid-c-arrays,*-magic-numbers)
+// NOLINTEND(*-avoid-c-arrays,*-magic-numbers)

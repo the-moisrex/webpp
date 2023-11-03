@@ -12,15 +12,14 @@
 // There are plenty of magic numbers in this file, they ain't magic, you'll know what they mean when you see
 // them, so we're disabling this warning for this file.
 // NOLINTBEGIN(*-magic-numbers)
-
 namespace webpp {
 
     namespace details {
         define_is_specialization_of(is_specializes_array,
                                     WEBPP_SINGLE_ARG(typename, stl::size_t),
                                     WEBPP_SINGLE_ARG(typename T, stl::size_t N),
-                                    WEBPP_SINGLE_ARG(T, N))
-    };
+                                    WEBPP_SINGLE_ARG(T, N));
+    }
 
     /**
      * This utility will get you the uint8_t representation of status result of ipv6 parsing
@@ -33,31 +32,30 @@ namespace webpp {
     struct ipv6 {
         // todo: add support for systems that support 128bit integer types
 
-        static constexpr auto IPV6_ADDR_SIZE = 16u; // Bytes
-        using octets8_t                      = stl::array<stl::uint8_t, 16u>;
-        using octets16_t                     = stl::array<stl::uint16_t, 8u>;
-        using octets32_t                     = stl::array<stl::uint32_t, 4u>;
-        using octets64_t                     = stl::array<stl::uint64_t, 2u>;
-        using octets_t                       = octets8_t;
-        using octets_value_t                 = typename octets_t::value_type;
+        using octets8_t      = stl::array<stl::uint8_t, ipv6_byte_count>;
+        using octets16_t     = stl::array<stl::uint16_t, ipv6_byte_count / 2U>;
+        using octets32_t     = stl::array<stl::uint32_t, ipv6_byte_count / 4U>;
+        using octets64_t     = stl::array<stl::uint64_t, ipv6_byte_count / 8U>;
+        using octets_t       = octets8_t;
+        using octets_value_t = typename octets_t::value_type;
 
         /**
          * IPv6 Address Scopes
          */
-        enum class scope {
-            node_local      = 0u,  // Node-Local scope
-            interface_local = 1u,  // Interface-Local scope
-            link_local      = 2u,  // Link-Local scope
-            realm_local     = 3u,  // Realm-Local scope
-            admin_local     = 4u,  // Admin-Local scope
-            site_local      = 5u,  // Site-Local scope
-            org_local       = 8u,  // Organization-Local scope
-            global          = 14u, // Global scope
+        enum class scope : stl::uint_fast8_t {
+            node_local      = 0U,  // Node-Local scope
+            interface_local = 1U,  // Interface-Local scope
+            link_local      = 2U,  // Link-Local scope
+            realm_local     = 3U,  // Realm-Local scope
+            admin_local     = 4U,  // Admin-Local scope
+            site_local      = 5U,  // Site-Local scope
+            org_local       = 8U,  // Organization-Local scope
+            global          = 14U, // Global scope
         };
 
       private:
-        static constexpr auto interface_identifier_offset = 8u; // Interface Identifier offset in bytes
-        static constexpr auto interface_identifier_size   = 8u; // Interface Identifier size in bytes
+        static constexpr auto interface_identifier_offset = 8U; // Interface Identifier offset in bytes
+        static constexpr auto interface_identifier_size   = 8U; // Interface Identifier size in bytes
 
         // I didn't go with a union because in OpenThread project they did, and
         // they had to deal with endianness of their data. I rather use shifts
@@ -79,70 +77,69 @@ namespace webpp {
         [[nodiscard]] static constexpr octets_t to_octets_t(stl::array<IntType, N> const& _octets) noexcept {
             if constexpr (N == 2) { // to 64bits
                 return {
-                  static_cast<stl::uint8_t>(_octets[0] >> (7u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (6u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (5u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (4u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (3u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (2u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] >> (1u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (7u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (6u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (5u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (4u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (3u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (2u * 8u) & 0xFFu),
-                  static_cast<stl::uint8_t>(_octets[1] >> (1u * 8u) & 0xFFu),
+                  static_cast<stl::uint8_t>(_octets[0] >> (7U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (6U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (5U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (4U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (3U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (2U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] >> (1U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[0] & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (7U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (6U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (5U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (4U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (3U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (2U * 8U) & 0xFFU),
+                  static_cast<stl::uint8_t>(_octets[1] >> (1U * 8U) & 0xFFU),
                   static_cast<stl::uint8_t>(_octets[1]),
                 };
             } else if constexpr (N == 4) { // 4 of 32bits
-                return {static_cast<stl::uint8_t>(_octets[0] >> 24u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[0] >> 16u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[0] >> 8u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[1] >> 24u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[1] >> 16u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[1] >> 8u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[1] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[2] >> 24u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[2] >> 16u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[2] >> 8u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[2] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[3] >> 24u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[3] >> 16u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[3] >> 8u & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[3] & 0xFFu)};
+                return {static_cast<stl::uint8_t>(_octets[0] >> 24U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[0] >> 16U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[0] >> 8U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[0] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[1] >> 24U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[1] >> 16U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[1] >> 8U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[1] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[2] >> 24U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[2] >> 16U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[2] >> 8U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[2] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[3] >> 24U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[3] >> 16U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[3] >> 8U & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[3] & 0xFFU)};
             } else if constexpr (N == 8) { // 8 of 16bits
-                return {static_cast<stl::uint8_t>(_octets[0] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[0] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[1] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[1] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[2] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[2] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[3] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[3] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[4] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[4] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[5] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[5] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[6] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[6] & 0xFFu),
-                        static_cast<stl::uint8_t>(_octets[7] >> 8u),
-                        static_cast<stl::uint8_t>(_octets[7] & 0xFFu)};
+                return {static_cast<stl::uint8_t>(_octets[0] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[0] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[1] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[1] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[2] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[2] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[3] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[3] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[4] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[4] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[5] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[5] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[6] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[6] & 0xFFU),
+                        static_cast<stl::uint8_t>(_octets[7] >> 8U),
+                        static_cast<stl::uint8_t>(_octets[7] & 0xFFU)};
             } else if constexpr (N == 16) { // 16 of 8bits
                 return _octets;
             } else {
                 // todo: test this, this used to be wrong:
                 octets_t   _data           = {};
                 auto       _octets_it      = _octets.cbegin();
-                auto       _data_it        = _data.begin();
                 auto const each_octet_size = _data.size() / _octets.size();
-                for (; _octets_it != _octets.cend(); ++_octets_it) {
+                for (auto _data_it = _data.begin(); _octets_it != _octets.cend(); ++_octets_it) {
                     auto _octet = *_octets_it;
-                    for (stl::size_t i = 0u; i < each_octet_size; i++) {
-                        _octet >>= i * 8u;
-                        _octet &= 0xFFu;
+                    for (stl::size_t index = 0U; index < each_octet_size; index++) {
+                        _octet >>= index * 8U;
+                        _octet &= 0xFFU;
                         *_data_it++ = static_cast<stl::uint8_t>(*_octets_it);
                     }
                 }
@@ -170,7 +167,7 @@ namespace webpp {
 
       public:
         static consteval ipv6 invalid() noexcept {
-            return {prefix_status(inet_pton6_status::invalid_prefix)};
+            return ipv6{prefix_status(inet_pton6_status::invalid_prefix)};
         }
 
         // ::
@@ -180,13 +177,13 @@ namespace webpp {
 
         // ::1
         static consteval ipv6 loopback() noexcept {
-            return ipv6{{0x0ull, 0x1ull}};
+            return ipv6{{0x0ULL, 0x1ULL}};
         }
 
         // Create an ipv6 at compile-time; a simple consteval constructor helper
         template <typename... Args>
         static consteval ipv6 create(Args&&... args) noexcept {
-            return {stl::forward<Args>(args)...};
+            return ipv6{stl::forward<Args>(args)...};
         }
 
 
@@ -199,7 +196,7 @@ namespace webpp {
                      !details::is_specializes_array_v<stl::remove_cvref_t<StrT>,
                                                       stl::array> && // it shouldn't be an array
                      !stl::same_as<stl::remove_cvref_t<StrT>, ipv6>) // so it's not copy ctor
-        constexpr ipv6(StrT&& str) noexcept {
+        constexpr explicit ipv6(StrT&& str) noexcept {
             parse(stl::forward<StrT>(str));
         }
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -216,9 +213,9 @@ namespace webpp {
             }
         }
 
-        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
-        constexpr ipv6(const stl::uint8_t (&_octets)[16],
-                       stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        // NOLINTBEGIN(*-avoid-c-arrays)
+        constexpr explicit ipv6(const stl::uint8_t (&_octets)[16],
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{_octets[0],
                  _octets[1],
                  _octets[2],
@@ -237,41 +234,41 @@ namespace webpp {
                  _octets[15]} {
             prefix(prefix_value);
         }
-        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
-        constexpr ipv6(octets8_t const& _octets,
-                       stl::uint8_t     prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        // NOLINTEND(*-avoid-c-arrays)
+        constexpr explicit ipv6(octets8_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{_octets} {
             prefix(prefix_value);
         }
-        constexpr ipv6(octets16_t const& _octets,
-                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr explicit ipv6(octets16_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
-        constexpr ipv6(octets32_t const& _octets,
-                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr explicit ipv6(octets32_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
-        constexpr ipv6(octets64_t const& _octets,
-                       stl::uint8_t      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        constexpr explicit ipv6(octets64_t const& _octets,
+                                stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : data{to_octets_t(_octets)} {
             prefix(prefix_value);
         }
 
 
-        constexpr ipv6(stl::uint8_t prefix_value) noexcept {
+        constexpr explicit ipv6(stl::uint8_t prefix_value) noexcept {
             prefix(prefix_value);
         }
 
-        constexpr ipv6(ipv6 const& ip) noexcept = default;
-        constexpr ipv6(ipv6&& ip) noexcept      = default;
+        constexpr ipv6(ipv6 const&) noexcept = default;
+        constexpr ipv6(ipv6&&) noexcept      = default;
 
-        constexpr ipv6& operator=(ipv6 const& ip) noexcept = default;
-        constexpr ipv6& operator=(ipv6&&) noexcept         = default;
-        constexpr ~ipv6() noexcept                         = default;
+        constexpr ipv6& operator=(ipv6 const&) noexcept = default;
+        constexpr ipv6& operator=(ipv6&&) noexcept      = default;
+        constexpr ~ipv6() noexcept                      = default;
 
         template <typename StrT>
             requires(istl::StringViewifiable<StrT> && !stl::is_array_v<stl::remove_cvref_t<StrT>>)
@@ -287,13 +284,13 @@ namespace webpp {
             return *this;
         }
 
-        // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+        // NOLINTBEGIN(*-avoid-c-arrays)
         constexpr ipv6& operator=(const stl::uint8_t (&_octets)[16]) noexcept {
-            stl::copy_n(stl::begin(_octets), 16u, std::begin(data));
+            stl::copy_n(stl::begin(_octets), 16U, std::begin(data));
             _prefix = prefix_status(inet_pton6_status::valid);
             return *this;
         }
-        // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+        // NOLINTEND(*-avoid-c-arrays)
 
         constexpr ipv6& operator=(octets16_t const& _octets) noexcept {
             data    = to_octets_t(_octets);
@@ -317,29 +314,29 @@ namespace webpp {
         // todo: add other stuff for operator<=>
 
         template <istl::StringViewifiable StrT>
-        [[nodiscard]] constexpr bool operator==(StrT&& ip) const noexcept {
+        [[nodiscard]] constexpr bool operator==(StrT&& ip_addr) const noexcept {
             // only compare the octets and not the prefix
-            return ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip))).data == data;
+            return ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr))).data == data;
         }
 
-        [[nodiscard]] constexpr bool operator==(ipv6 ip) const noexcept {
-            return _prefix == ip._prefix && data == ip.data;
+        [[nodiscard]] constexpr bool operator==(ipv6 ip_addr) const noexcept {
+            return _prefix == ip_addr._prefix && data == ip_addr.data;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets8_t ip) const noexcept {
-            return data == ip;
+        [[nodiscard]] constexpr bool operator==(octets8_t ip_addr) const noexcept {
+            return data == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets16_t ip) const noexcept {
-            return octets16() == ip;
+        [[nodiscard]] constexpr bool operator==(octets16_t ip_addr) const noexcept {
+            return octets16() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets32_t ip) const noexcept {
-            return octets32() == ip;
+        [[nodiscard]] constexpr bool operator==(octets32_t ip_addr) const noexcept {
+            return octets32() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets64_t ip) const noexcept {
-            return octets64() == ip;
+        [[nodiscard]] constexpr bool operator==(octets64_t ip_addr) const noexcept {
+            return octets64() == ip_addr;
         }
 
 
@@ -390,29 +387,29 @@ namespace webpp {
             return {
 
               // octet 1
-              static_cast<t>((static_cast<t>(_octets[0u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[1u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[0U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[1U]) << (16U - 8U * 2U))),
               // octet 2
-              static_cast<t>((static_cast<t>(_octets[2u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[3u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[2U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[3U]) << (16U - 8U * 2U))),
               // octet 3
-              static_cast<t>((static_cast<t>(_octets[4u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[5u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[4U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[5U]) << (16U - 8U * 2U))),
               // octet 4
-              static_cast<t>((static_cast<t>(_octets[6u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[7u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[6U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[7U]) << (16U - 8U * 2U))),
               // octet 5
-              static_cast<t>((static_cast<t>(_octets[8u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[9u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[8U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[9U]) << (16U - 8U * 2U))),
               // octet 6
-              static_cast<t>((static_cast<t>(_octets[10u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[11u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[10U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[11U]) << (16U - 8U * 2U))),
               // octet 7
-              static_cast<t>((static_cast<t>(_octets[12u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[13u]) << (16u - 8u * 2u))),
+              static_cast<t>((static_cast<t>(_octets[12U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[13U]) << (16U - 8U * 2U))),
               // octet 8
-              static_cast<t>((static_cast<t>(_octets[14u]) << (16u - 8u * 1u)) |
-                             (static_cast<t>(_octets[15u]) << (16u - 8u * 2u)))
+              static_cast<t>((static_cast<t>(_octets[14U]) << (16U - 8U * 1U)) |
+                             (static_cast<t>(_octets[15U]) << (16U - 8U * 2U)))
 
             };
         }
@@ -432,28 +429,28 @@ namespace webpp {
             return {
 
               // octet 1
-              (static_cast<t>(_octets[0u]) << (32u - 8u * 1u)) |
-                (static_cast<t>(_octets[1u]) << (32u - 8u * 2u)) |
-                (static_cast<t>(_octets[2u]) << (32u - 8u * 3u)) |
-                (static_cast<t>(_octets[3u]) << (32u - 8u * 4u)),
+              (static_cast<t>(_octets[0U]) << (32U - 8U * 1U)) |
+                (static_cast<t>(_octets[1U]) << (32U - 8U * 2U)) |
+                (static_cast<t>(_octets[2U]) << (32U - 8U * 3U)) |
+                (static_cast<t>(_octets[3U]) << (32U - 8U * 4U)),
 
               // octet 2
-              (static_cast<t>(_octets[4u]) << (32u - 8u * 1u)) |
-                (static_cast<t>(_octets[5u]) << (32u - 8u * 2u)) |
-                (static_cast<t>(_octets[6u]) << (32u - 8u * 3u)) |
-                (static_cast<t>(_octets[7u]) << (32u - 8u * 4u)),
+              (static_cast<t>(_octets[4U]) << (32U - 8U * 1U)) |
+                (static_cast<t>(_octets[5U]) << (32U - 8U * 2U)) |
+                (static_cast<t>(_octets[6U]) << (32U - 8U * 3U)) |
+                (static_cast<t>(_octets[7U]) << (32U - 8U * 4U)),
 
               // octet 3
-              (static_cast<t>(_octets[8u]) << (32u - 8u * 1u)) |
-                (static_cast<t>(_octets[9u]) << (32u - 8u * 2u)) |
-                (static_cast<t>(_octets[10u]) << (32u - 8u * 3u)) |
-                (static_cast<t>(_octets[11u]) << (32u - 8u * 4u)),
+              (static_cast<t>(_octets[8U]) << (32U - 8U * 1U)) |
+                (static_cast<t>(_octets[9U]) << (32U - 8U * 2U)) |
+                (static_cast<t>(_octets[10U]) << (32U - 8U * 3U)) |
+                (static_cast<t>(_octets[11U]) << (32U - 8U * 4U)),
 
               // octet 4
-              (static_cast<t>(_octets[12u]) << (32u - 8u * 1u)) |
-                (static_cast<t>(_octets[13u]) << (32u - 8u * 2u)) |
-                (static_cast<t>(_octets[14u]) << (32u - 8u * 3u)) |
-                (static_cast<t>(_octets[15u]) << (32u - 8u * 4u))};
+              (static_cast<t>(_octets[12U]) << (32U - 8U * 1U)) |
+                (static_cast<t>(_octets[13U]) << (32U - 8U * 2U)) |
+                (static_cast<t>(_octets[14U]) << (32U - 8U * 3U)) |
+                (static_cast<t>(_octets[15U]) << (32U - 8U * 4U))};
         }
 
         /**
@@ -470,24 +467,24 @@ namespace webpp {
             return {
 
               // octet 1
-              (static_cast<t>(_octets[0u]) << (64u - 8u * 1u)) |
-                (static_cast<t>(_octets[1u]) << (64u - 8u * 2u)) |
-                (static_cast<t>(_octets[2u]) << (64u - 8u * 3u)) |
-                (static_cast<t>(_octets[3u]) << (64u - 8u * 4u)) |
-                (static_cast<t>(_octets[4u]) << (64u - 8u * 5u)) |
-                (static_cast<t>(_octets[5u]) << (64u - 8u * 6u)) |
-                (static_cast<t>(_octets[6u]) << (64u - 8u * 7u)) |
-                (static_cast<t>(_octets[7u]) << (64u - 8u * 8u)),
+              (static_cast<t>(_octets[0U]) << (64U - 8U * 1U)) |
+                (static_cast<t>(_octets[1U]) << (64U - 8U * 2U)) |
+                (static_cast<t>(_octets[2U]) << (64U - 8U * 3U)) |
+                (static_cast<t>(_octets[3U]) << (64U - 8U * 4U)) |
+                (static_cast<t>(_octets[4U]) << (64U - 8U * 5U)) |
+                (static_cast<t>(_octets[5U]) << (64U - 8U * 6U)) |
+                (static_cast<t>(_octets[6U]) << (64U - 8U * 7U)) |
+                (static_cast<t>(_octets[7U]) << (64U - 8U * 8U)),
 
               // octet 2
-              (static_cast<t>(_octets[8u]) << (64u - 8u * 1u)) |
-                (static_cast<t>(_octets[9u]) << (64u - 8u * 2u)) |
-                (static_cast<t>(_octets[10u]) << (64u - 8u * 3u)) |
-                (static_cast<t>(_octets[11u]) << (64u - 8u * 4u)) |
-                (static_cast<t>(_octets[12u]) << (64u - 8u * 5u)) |
-                (static_cast<t>(_octets[13u]) << (64u - 8u * 6u)) |
-                (static_cast<t>(_octets[14u]) << (64u - 8u * 7u)) |
-                (static_cast<t>(_octets[15u]) << (64u - 8u * 8u))};
+              (static_cast<t>(_octets[8U]) << (64U - 8U * 1U)) |
+                (static_cast<t>(_octets[9U]) << (64U - 8U * 2U)) |
+                (static_cast<t>(_octets[10U]) << (64U - 8U * 3U)) |
+                (static_cast<t>(_octets[11U]) << (64U - 8U * 4U)) |
+                (static_cast<t>(_octets[12U]) << (64U - 8U * 5U)) |
+                (static_cast<t>(_octets[13U]) << (64U - 8U * 6U)) |
+                (static_cast<t>(_octets[14U]) << (64U - 8U * 7U)) |
+                (static_cast<t>(_octets[15U]) << (64U - 8U * 8U))};
         }
 
         /**
@@ -497,9 +494,11 @@ namespace webpp {
         [[nodiscard]] constexpr stl::uint8_t scope() const noexcept {
             if (is_multicast()) {
                 return multicast_scope();
-            } else if (is_link_local()) {
+            }
+            if (is_link_local()) {
                 return static_cast<stl::uint8_t>(scope::link_local);
-            } else if (is_loopback()) {
+            }
+            if (is_loopback()) {
                 return static_cast<stl::uint8_t>(scope::node_local);
             }
             return static_cast<stl::uint8_t>(scope::global);
@@ -510,7 +509,7 @@ namespace webpp {
          * This method may only be called on multicast addresses.
          */
         [[nodiscard]] constexpr stl::uint8_t multicast_scope() const noexcept {
-            return octets8()[1] & 0xfu;
+            return octets8()[1] & 0xFU;
         }
 
 
@@ -522,14 +521,14 @@ namespace webpp {
          */
         [[nodiscard]] constexpr ipv6 mask(stl::size_t num_bits) const noexcept {
             num_bits                = stl::min<stl::size_t>(num_bits, ipv6_max_prefix);
-            constexpr auto _0s      = uint64_t(0);
-            constexpr auto _1s      = ~_0s;
-            auto const     fragment = _1s << ((ipv6_max_prefix - num_bits) % 64u);
-            auto const     hi       = num_bits <= 64 ? fragment : _1s;
-            auto const     lo       = num_bits <= 64 ? 0ull : fragment;
+            constexpr auto zeros    = static_cast<stl::uint64_t>(0);
+            constexpr auto ones     = ~zeros;
+            auto const     fragment = ones << ((ipv6_max_prefix - num_bits) % 64U);
+            auto const     high     = num_bits <= 64 ? fragment : ones;
+            auto const     low      = num_bits <= 64 ? 0ULL : fragment;
 
             auto const _octets = octets64();
-            return {octets64_t{hi & _octets[0], lo & _octets[1]}};
+            return ipv6{octets64_t{high & _octets[0], low & _octets[1]}};
         }
 
         /**
@@ -554,7 +553,7 @@ namespace webpp {
             auto const _octets = octets8();
             // either ::1 or v4-mapped of ipv4 loopback address (::ffff:127.0.0.1)
             return _octets == octets8_t{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1} ||
-                   _octets == octets8_t{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0x7f, 0, 0, 1};
+                   _octets == octets8_t{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0x7F, 0, 0, 1};
         }
 
         /**
@@ -565,7 +564,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_link_local() const noexcept {
             auto const _octets = octets8();
-            return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0x80u);
+            return (_octets[0] == 0xFEU) && ((_octets[1] & 0xC0U) == 0x80U);
         }
 
         /**
@@ -577,7 +576,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast() const noexcept {
             auto const _octets = octets8();
-            return _octets[0] == 0xffu;
+            return _octets[0] == 0xFFU;
         }
 
         /**
@@ -586,7 +585,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast_global() const noexcept {
             auto const _octets = octets8();
-            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x0eu));
+            return ((_octets[0] == 0xFFU) && ((_octets[1] & 0x0FU) == 0x0EU));
         }
 
         /**
@@ -595,7 +594,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast_link_local() const noexcept {
             auto const _octets = octets8();
-            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x02u));
+            return ((_octets[0] == 0xFFU) && ((_octets[1] & 0x0FU) == 0x02U));
         }
 
         /**
@@ -604,7 +603,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast_node_local() const noexcept {
             auto const _octets = octets8();
-            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x01u));
+            return ((_octets[0] == 0xFFU) && ((_octets[1] & 0x0FU) == 0x01U));
         }
 
         /**
@@ -613,7 +612,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast_org_local() const noexcept {
             auto const _octets = octets8();
-            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x08u));
+            return ((_octets[0] == 0xFFU) && ((_octets[1] & 0x0FU) == 0x08U));
         }
 
         /**
@@ -622,7 +621,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_multicast_site_local() const noexcept {
             auto const _octets = octets8();
-            return ((_octets[0] == 0xffu) && ((_octets[1] & 0x0fu) == 0x05u));
+            return ((_octets[0] == 0xFFU) && ((_octets[1] & 0x0FU) == 0x05U));
         }
 
         /**
@@ -631,7 +630,7 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_site_local() const noexcept {
             auto const _octets = octets8();
-            return (_octets[0] == 0xfeu) && ((_octets[1] & 0xc0u) == 0xc0u);
+            return (_octets[0] == 0xFEU) && ((_octets[1] & 0xC0U) == 0xC0U);
         }
 
         /**
@@ -642,7 +641,7 @@ namespace webpp {
             auto const _octets = octets8();
             return (_octets[0] == 0) && (_octets[1] == 0) && (_octets[2] == 0) && (_octets[3] == 0) &&
                    (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
-                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0xff) && (_octets[11] == 0xff);
+                   (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0xFF) && (_octets[11] == 0xFF);
         }
 
         /**
@@ -666,10 +665,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_link_local_all_nodes_multicast() const noexcept {
             auto const _octets = octets8();
-            return _octets[0] == 0xFFu && _octets[1] == 0x02u && (_octets[2] == 0) && (_octets[3] == 0) &&
+            return _octets[0] == 0xFFU && _octets[1] == 0x02U && (_octets[2] == 0) && (_octets[3] == 0) &&
                    (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
                    (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x01u);
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x01U);
         }
 
         /**
@@ -682,10 +681,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_link_local_all_routers_multicast() const noexcept {
             auto const _octets = octets();
-            return _octets[0] == 0xFFu && _octets[1] == 0x02u && (_octets[2] == 0) && (_octets[3] == 0) &&
+            return _octets[0] == 0xFFU && _octets[1] == 0x02U && (_octets[2] == 0) && (_octets[3] == 0) &&
                    (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
                    (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02u);
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02U);
         }
 
         /**
@@ -722,10 +721,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_realm_local_all_routers_multicast() const noexcept {
             auto const _octets = octets();
-            return _octets[0] == 0xFFu && _octets[1] == 0x03u && (_octets[2] == 0) && (_octets[3] == 0) &&
+            return _octets[0] == 0xFFU && _octets[1] == 0x03U && (_octets[2] == 0) && (_octets[3] == 0) &&
                    (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
                    (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02u);
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0x02U);
         }
 
         /**
@@ -737,10 +736,10 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_realm_local_all_mpl_forwarders() const noexcept {
             auto const _octets = octets8();
-            return _octets[0] == 0xFFu && _octets[1] == 0x03u && (_octets[2] == 0) && (_octets[3] == 0) &&
+            return _octets[0] == 0xFFU && _octets[1] == 0x03U && (_octets[2] == 0) && (_octets[3] == 0) &&
                    (_octets[4] == 0) && (_octets[5] == 0) && (_octets[6] == 0) && (_octets[7] == 0) &&
                    (_octets[8] == 0) && (_octets[9] == 0) && (_octets[10] == 0) && (_octets[11] == 0) &&
-                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0xfcu);
+                   (_octets[12] == 0) && (_octets[13] == 0) && (_octets[14] == 0) && (_octets[15] == 0xFCU);
         }
 
         /**
@@ -760,8 +759,8 @@ namespace webpp {
          * @retval FALSE  If the IPv6 address is not a RLOC address.
          */
         [[nodiscard]] constexpr bool is_routing_locator() const noexcept {
-            constexpr auto aloc_16_mask             = 0xFCu; // The mask for Aloc16
-            constexpr auto rloc16_reserved_bit_mask = 0x02u; // The mask for the reserved bit of Rloc16
+            constexpr auto aloc_16_mask             = 0xFCU; // The mask for Aloc16
+            constexpr auto rloc16_reserved_bit_mask = 0x02U; // The mask for the reserved bit of Rloc16
             auto const     _octets                  = octets();
             // XX XX XX XX XX XX XX XX 00 00 00 FF FE 00 YY YY
             // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
@@ -797,11 +796,11 @@ namespace webpp {
          */
         [[nodiscard]] constexpr bool is_anycast_service_locator() const noexcept {
             constexpr auto aloc8_service_start = 0x10;
-            constexpr auto aloc8_service_end   = 0x2f;
+            constexpr auto aloc8_service_end   = 0x2F;
             auto const     _octets             = octets();
-            return is_anycast_routing_locator() && (_octets[IPV6_ADDR_SIZE - 2] == 0xfc) &&
-                   (_octets[IPV6_ADDR_SIZE - 1] >= aloc8_service_start) &&
-                   (_octets[IPV6_ADDR_SIZE - 1] <= aloc8_service_end);
+            return is_anycast_routing_locator() && (_octets[ipv6_byte_count - 2] == 0xFC) &&
+                   (_octets[ipv6_byte_count - 1] >= aloc8_service_start) &&
+                   (_octets[ipv6_byte_count - 1] <= aloc8_service_end);
         }
 
         /**
@@ -834,9 +833,9 @@ namespace webpp {
             // 32: -----0----- -----1----- -----2----- -----3-----
             // 64: -----------0----------- -----------1-----------
             auto const _octets = octets8();
-            return _octets[8] == 0xFD && _octets[15] == 0x80 && (_octets[9] == 0xFFu) &&
-                   (_octets[10] == 0xFFu) && (_octets[11] == 0xFFu) && (_octets[12] == 0xFFu) &&
-                   (_octets[13] == 0xFFu) && (_octets[14] == 0xFFu);
+            return _octets[8] == 0xFD && _octets[15] == 0x80 && (_octets[9] == 0xFFU) &&
+                   (_octets[10] == 0xFFU) && (_octets[11] == 0xFFU) && (_octets[12] == 0xFFU) &&
+                   (_octets[13] == 0xFFU) && (_octets[14] == 0xFFU);
         }
 
         /**
@@ -873,10 +872,10 @@ namespace webpp {
          * @param piid A reference to the Interface Identifier.
          */
         constexpr void iid(const stl::uint8_t* piid) noexcept {
-            auto const _end = piid + interface_identifier_size;
-            auto       _iid = iid();
-            for (auto it = piid; it != _end; it++) {
-                *_iid++ = *it;
+            auto const* _end = piid + interface_identifier_size;
+            auto*       _iid = iid();
+            for (auto* iter = piid; iter != _end; iter++) {
+                *_iid++ = *iter;
             }
         }
 
@@ -885,11 +884,11 @@ namespace webpp {
          * @param A reference to the Interface Identifier.
          */
         constexpr void iid(const octets8_t::const_iterator& piid) noexcept {
-            auto       _iid = iid();
-            auto const _end = _iid + interface_identifier_size;
-            auto       pit  = piid;
-            for (auto it = _iid; it != _end; it++) {
-                *it = *pit++;
+            auto*       _iid = iid();
+            auto const* _end = _iid + interface_identifier_size;
+            auto*       pit  = piid;
+            for (auto* iter = _iid; iter != _end; iter++) {
+                *iter = *pit++;
             }
         }
         // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -952,12 +951,12 @@ namespace webpp {
          * For example, 192.168.xxx.xxx or fc00::/7 addresses.
          */
         [[nodiscard]] constexpr bool is_private() const noexcept {
-            const ipv4 v4 = mapped_v4();
+            const ipv4 ip_addr_v4 = mapped_v4();
             // we check is_zero instead of is_v4_mapped because mapped_v4 already checks that.
-            if (!v4.is_zero() && v4.is_private()) {
+            if (!ip_addr_v4.is_zero() && ip_addr_v4.is_private()) {
                 return true;
             }
-            return is_loopback() || starts_with(stl::array<stl::uint8_t, 2>{0xfcu, 0x00u}, 7);
+            return is_loopback() || starts_with(stl::array<stl::uint8_t, 2>{0xFCU, 0x00U}, 7);
         }
 
         /**
@@ -972,7 +971,7 @@ namespace webpp {
          * Check if Link Local Broadcast (ff02::1)
          */
         [[nodiscard]] constexpr bool is_broadcast() const noexcept {
-            return octets64_t{0xff02'0000'0000'0000ull, 0x1ull} == octets64();
+            return octets64_t{0xFF02'0000'0000'0000ULL, 0x1ULL} == octets64();
         }
 
 
@@ -982,10 +981,10 @@ namespace webpp {
         [[nodiscard]] constexpr bool is_routable() const noexcept {
             return
               // 2000::/3 is the only assigned global unicast block
-              starts_with(stl::array<stl::uint8_t, 2>{0x20u, 0x00u}, 3u) ||
+              starts_with(stl::array<stl::uint8_t, 2>{0x20U, 0x00U}, 3U) ||
               // ffxe::/16 are global scope multicast addresses,
               // which are eligible to be routed over the internet
-              (is_multicast() && multicast_scope() == 0xeu);
+              (is_multicast() && multicast_scope() == 0xEU);
         }
 
         /**
@@ -999,7 +998,7 @@ namespace webpp {
          * Check if the specified ipv6 binary starts with the specified inp_octets up to inp_prefix bits.
          */
         template <stl::size_t N>
-            requires(N <= IPV6_ADDR_SIZE)
+            requires(N <= ipv6_byte_count)
         [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> inp_octets,
                                                  stl::size_t                 inp_prefix) const noexcept {
             const auto masked = mask(inp_prefix);
@@ -1007,9 +1006,9 @@ namespace webpp {
         }
 
 
-        [[nodiscard]] constexpr bool starts_with(ipv6 const& ip, stl::size_t inp_prefix) const noexcept {
+        [[nodiscard]] constexpr bool starts_with(ipv6 const& ip_addr, stl::size_t inp_prefix) const noexcept {
             const auto masked    = mask(inp_prefix).octets8();
-            const auto ip_octets = ip.mask(inp_prefix).octets8();
+            const auto ip_octets = ip_addr.mask(inp_prefix).octets8();
             return stl::equal(ip_octets.begin(), ip_octets.end(), masked.begin());
         }
 
@@ -1029,17 +1028,17 @@ namespace webpp {
             stl::array<char_type, 40> buffer  = {};
             auto const                _octets = octets16();
 
-            auto it = fmt::format_to(buffer.data(),
-                                     "{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}",
-                                     _octets[0],
-                                     _octets[1],
-                                     _octets[2],
-                                     _octets[3],
-                                     _octets[4],
-                                     _octets[5],
-                                     _octets[6],
-                                     _octets[7]);
-            output.append(buffer.data(), it);
+            auto iter = fmt::format_to(buffer.data(),
+                                       "{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}:{:04x}",
+                                       _octets[0],
+                                       _octets[1],
+                                       _octets[2],
+                                       _octets[3],
+                                       _octets[4],
+                                       _octets[5],
+                                       _octets[6],
+                                       _octets[7]);
+            output.append(buffer.data(), iter);
         }
 
         template <istl::String StrT = stl::string, typename... Args>
@@ -1076,22 +1075,22 @@ namespace webpp {
          */
         constexpr void to_string(istl::String auto& output) const noexcept {
             resize_and_append(output, max_ipv6_str_len + 5, [this](auto* buf) constexpr noexcept {
-                auto it = inet_ntop6(data.data(), buf);
+                auto pos = inet_ntop6(data.data(), buf);
                 if (has_prefix()) {
-                    *it++ = '/';
+                    *pos++ = '/';
                     if (_prefix < 10) {
-                        *it++ = static_cast<char>('0' + _prefix);
+                        *pos++ = static_cast<char>('0' + _prefix);
                     } else if (_prefix < 100) {
-                        *it++ = static_cast<char>('0' + _prefix / 10);
-                        *it++ = static_cast<char>('0' + _prefix % 10);
+                        *pos++ = static_cast<char>('0' + _prefix / 10);
+                        *pos++ = static_cast<char>('0' + _prefix % 10);
                     } else {
-                        *it++ = static_cast<char>('0' + _prefix / 100);
-                        *it++ = static_cast<char>('0' + _prefix % 100 / 10);
-                        *it++ = static_cast<char>('0' + _prefix % 10);
+                        *pos++ = static_cast<char>('0' + _prefix / 100);
+                        *pos++ = static_cast<char>('0' + _prefix % 100 / 10);
+                        *pos++ = static_cast<char>('0' + _prefix % 10);
                     }
-                    *it++ = '\0';
+                    *pos++ = '\0';
                 }
-                return it;
+                return pos;
             });
         }
 

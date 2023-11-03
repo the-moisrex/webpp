@@ -147,7 +147,7 @@ TEST(IPv6Tests, StrTests) {
 
 TEST(IPv6Tests, IP2NTest) {
 
-    // NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv6s[]{
       "2001:db8:3333:4444:5555:6666:7777:8888",
       "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF",
@@ -192,11 +192,11 @@ TEST(IPv6Tests, IP2NTest) {
         auto beg = _ip.data();
         EXPECT_NE(inet_pton6(beg, beg + _ip.size(), ip), inet_pton6_status::valid) << "ip: " << _ip;
     }
-    // NOLINTEND(cppcoreguidelines-avoid-c-arrays)
+    // NOLINTEND(*-avoid-c-arrays)
 }
 
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-c-arrays)
+// NOLINTBEGIN(*-avoid-c-arrays)
 
 static constexpr stl::string_view some_valid_ipv6s[]{
   "2001:db8:3333:4444:5555:6666:7777:8888",

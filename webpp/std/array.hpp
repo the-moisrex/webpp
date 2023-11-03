@@ -14,7 +14,7 @@ namespace webpp::istl {
         define_is_specialization_of(is_specialization_of_array_impl,
                                     WEBPP_SINGLE_ARG(typename, stl::size_t),
                                     WEBPP_SINGLE_ARG(typename DataType, stl::size_t N),
-                                    WEBPP_SINGLE_ARG(DataType, N))
+                                    WEBPP_SINGLE_ARG(DataType, N));
     }
 
     template <typename T>

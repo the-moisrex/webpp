@@ -656,7 +656,7 @@ namespace webpp::json::rapidjson {
             define_is_specialization_of(is_generic_object,
                                         auto             WEBPP_COMMA typename...,
                                         auto Item        WEBPP_COMMA typename... Args,
-                                        Item WEBPP_COMMA Args...)
+                                        Item WEBPP_COMMA Args...);
         };
 
         /**
