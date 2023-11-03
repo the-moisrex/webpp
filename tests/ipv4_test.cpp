@@ -9,7 +9,7 @@
 
 using namespace webpp;
 
-using ipv4_t = ipv4;
+using ipv4 = ipv4;
 
 TEST(IPv4Tests, ConstEvalCraetion) {
     EXPECT_FALSE(ipv4::invalid().is_valid());
@@ -22,20 +22,20 @@ TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_prefix("0.255.255.128"), 0);
     EXPECT_EQ(to_prefix({255, 255, 255, 128}), 25);
     EXPECT_EQ(to_prefix({0, 255, 255, 128}), 0);
-    EXPECT_EQ(to_prefix(0xFF'FF'FF'00u), 24);
-    EXPECT_EQ(to_prefix(0xFF'00'FF'00u), 8);
+    EXPECT_EQ(to_prefix(0xFF'FF'FF'00U), 24);
+    EXPECT_EQ(to_prefix(0xFF'00'FF'00U), 8);
     EXPECT_EQ(to_subnet(24), 0xFF'FF'FF'00);
     EXPECT_EQ(to_subnet(8), 0xFF'00'00'00);
 
-    auto a = ::std::array<uint8_t, 4>({255, 0, 0, 0});
-    auto b = ::std::array<uint8_t, 4>({255, 255, 255, 128});
-    EXPECT_EQ(to_subnet_array(8), a);
-    EXPECT_EQ(to_subnet_array(25), b);
+    auto ip_a = ::std::array<uint8_t, 4>({255, 0, 0, 0});
+    auto ip_b = ::std::array<uint8_t, 4>({255, 255, 255, 128});
+    EXPECT_EQ(to_subnet_array(8), ip_a);
+    EXPECT_EQ(to_subnet_array(25), ip_b);
 }
 
 TEST(IPv4Tests, Creation) {
-    constexpr ipv4_t one{192, 168, 2, 1};
-    ipv4_t const     two("192.168.2.1");
+    constexpr ipv4 one{192, 168, 2, 1};
+    ipv4 const     two("192.168.2.1");
     EXPECT_EQ(one, two) << "one is: " << one.string() << "; two is: " << two.string();
     EXPECT_EQ(one.integer(), two.integer());
     EXPECT_EQ(one.string(), two.string());
@@ -43,17 +43,17 @@ TEST(IPv4Tests, Creation) {
 }
 
 TEST(IPv4Tests, Methods) {
-    ipv4_t const ip{192, 168, 1, 1};
-    EXPECT_TRUE(ip.is_in_subnet(ipv4{{192, 168, 0, 0}, 16}));
-    EXPECT_TRUE(ip.is_in_subnet(ipv4{{192, 168, 1, 0}, 24}));
-    EXPECT_TRUE(ip.in_range(ipv4{192, 168, 0, 1}, ipv4_t("192.168.2.1")));
-    EXPECT_FALSE(ip.in_range(ipv4{192, 168, 1, 2}, ipv4_t("192.168.2.1")));
-    EXPECT_TRUE(ip.is_private());
-    EXPECT_FALSE(ip.is_public());
-    EXPECT_FALSE(ip.is_zero());
-    EXPECT_EQ(ip.string(), "192.168.1.1");
+    ipv4 const ip_addr{192, 168, 1, 1};
+    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{{192, 168, 0, 0}, 16}));
+    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{{192, 168, 1, 0}, 24}));
+    EXPECT_TRUE(ip_addr.in_range(ipv4{192, 168, 0, 1}, ipv4("192.168.2.1")));
+    EXPECT_FALSE(ip_addr.in_range(ipv4{192, 168, 1, 2}, ipv4("192.168.2.1")));
+    EXPECT_TRUE(ip_addr.is_private());
+    EXPECT_FALSE(ip_addr.is_public());
+    EXPECT_FALSE(ip_addr.is_zero());
+    EXPECT_EQ(ip_addr.string(), "192.168.1.1");
 
-    auto octets = ip.octets();
+    auto octets = ip_addr.octets();
     EXPECT_EQ(octets[0], 192);
     EXPECT_EQ(octets[1], 168);
     EXPECT_EQ(octets[2], 1);
@@ -76,17 +76,17 @@ TEST(IPv4Tests, Validation) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4(_ip)));
         EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         EXPECT_TRUE(is::ipv4(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
-        ipv4_t const ip{_ip};
-        (void) ip.integer(); // just to make sure it's parsed
-        EXPECT_TRUE(ip.is_valid());
+        ipv4 const ip_addr{_ip};
+        (void) ip_addr.integer(); // just to make sure it's parsed
+        EXPECT_TRUE(ip_addr.is_valid());
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv4(_ip));
-        EXPECT_FALSE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
-        ipv4_t const ip{_ip};
-        (void) ip.integer(); // just to make sure it's parsed
-        EXPECT_FALSE(ip.is_valid());
+        EXPECT_FALSE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
+        ipv4 const ip_addr{_ip};
+        (void) ip_addr.integer(); // just to make sure it's parsed
+        EXPECT_FALSE(ip_addr.is_valid());
     }
 }
 
@@ -96,26 +96,26 @@ TEST(IPv4Tests, CIDR) {
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(static_cast<bool>(is::ipv4_prefix(_ip))) << _ip;
-        EXPECT_TRUE(ipv4_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
-        EXPECT_TRUE(is::ipv4_prefix(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4_t(_ip).string();
-        EXPECT_TRUE(ipv4_t(_ip).has_prefix()) << _ip;
-        EXPECT_GE(ipv4_t(_ip).prefix(), 0) << _ip;
-        EXPECT_LE(ipv4_t(_ip).prefix(), 32) << _ip;
+        EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
+        EXPECT_TRUE(is::ipv4_prefix(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
+        EXPECT_TRUE(ipv4(_ip).has_prefix()) << _ip;
+        EXPECT_GE(ipv4(_ip).prefix(), 0) << _ip;
+        EXPECT_LE(ipv4(_ip).prefix(), 32) << _ip;
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
-        EXPECT_FALSE(ipv4_t(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(ipv4(_ip).is_valid()) << _ip;
         EXPECT_FALSE(is::ipv4_prefix(_ip)) << _ip;
-        EXPECT_FALSE(ipv4_t(_ip).has_prefix()) << _ip;
+        EXPECT_FALSE(ipv4(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
     }
 }
 
 TEST(IPv4Tests, ToString) {
-    ipv4_t const ip{192, 168, 1, 1};
-    stl::string  str{"ip is: "};
-    ip.to_string(str);
+    ipv4 const  ip_addr{192, 168, 1, 1};
+    stl::string str{"ip is: "};
+    ip_addr.to_string(str);
     EXPECT_EQ(str, "ip is: 192.168.1.1");
     EXPECT_EQ(str.size(), ascii::size("ip is: 192.168.1.1"));
 }
@@ -155,27 +155,29 @@ TEST(IPv4Tests, InetP2NValidation) {
       "192.168. 224.0",
       "192.168.224.0 1",
     };
-    stl::uint8_t ip[4]{};
+    stl::uint8_t ip_octets[4]{};
 
     for (auto const& _ip : valid_ipv4s) {
         EXPECT_TRUE(is::ipv4(_ip)) << _ip;
         auto beg = _ip.begin();
-        EXPECT_EQ(inet_pton4(beg, _ip.end(), ip), inet_pton4_status::valid)
-          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
-          << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
+        EXPECT_EQ(inet_pton4(beg, _ip.end(), ip_octets), inet_pton4_status::valid)
+          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
+          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+          << static_cast<int>(ip_octets[3]);
 
         // testing inet_ntop4
         stl::array<char, sizeof "255.255.255.255"> new_ip{};
-        inet_ntop4(ip, new_ip.data());
+        inet_ntop4(ip_octets, new_ip.data());
         EXPECT_EQ(stl::string_view{_ip}, stl::string_view{new_ip.data()}) << new_ip.data();
     }
 
     for (auto const& _ip : invalid_ipv4s) {
         EXPECT_FALSE(is::ipv4(_ip)) << _ip;
-        auto beg = _ip.data();
-        EXPECT_NE(inet_pton4(beg, beg + _ip.size(), ip), inet_pton4_status::valid)
-          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip[0]) << "." << static_cast<int>(ip[1])
-          << "." << static_cast<int>(ip[2]) << "." << static_cast<int>(ip[3]);
+        auto* beg = _ip.data();
+        EXPECT_NE(inet_pton4(beg, beg + _ip.size(), ip_octets), inet_pton4_status::valid)
+          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
+          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+          << static_cast<int>(ip_octets[3]);
     }
     // NOLINTEND(*-avoid-c-arrays)
 }
@@ -187,9 +189,9 @@ TEST(IPv4Tests, ErrorMessages) {
 }
 
 
-TEST(IPv6Tests, StartsWith) {
-    EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with<1>({127u}, 8));
+TEST(IPv4Tests, StartsWith) {
+    EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
     EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with(ipv4{127, 0, 0, 0}, 8));
-    EXPECT_EQ(ipv4::create("127.0.0.1").mask(8), ipv4(127u, 0u, 0u, 0u));
-    EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127u, 2u, 3u, 0u));
+    EXPECT_EQ(ipv4::create("127.0.0.1").mask(8), ipv4(127U, 0U, 0U, 0U));
+    EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127U, 2u, 3u, 0u));
 }

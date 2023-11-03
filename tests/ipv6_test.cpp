@@ -7,9 +7,8 @@
 
 
 
+// NOLINTBEGIN(*-avoid-c-arrays)
 using namespace webpp;
-
-using ipv6_t = ipv6;
 
 TEST(IPv6Tests, ConstEvalCraetion) {
     EXPECT_FALSE(ipv6::invalid().is_valid());
@@ -17,81 +16,85 @@ TEST(IPv6Tests, ConstEvalCraetion) {
 }
 
 TEST(IPv6Tests, Creation) {
-    ipv6_t const ip1{"::"};
+    ipv6 const ip1{"::"};
     EXPECT_TRUE(ip1.is_valid());
     EXPECT_TRUE(ip1.is_unspecified());
 
-    ipv6_t const ip2{"::1"};
+    ipv6 const ip2{"::1"};
     EXPECT_FALSE(ip2.is_unspecified());
     EXPECT_TRUE(ip2.is_valid());
     EXPECT_FALSE(ip2.has_prefix());
 
-    ipv6_t const ip3("fe00::1");
+    ipv6 const ip3("fe00::1");
     EXPECT_TRUE(ip3.is_valid());
     EXPECT_FALSE(ip3.is_unspecified());
 
-    ipv6_t const ip4("2001:db8:0:85a3::ac1f:8001");
+    ipv6 const ip4("2001:db8:0:85a3::ac1f:8001");
     EXPECT_TRUE(ip4.is_valid());
     EXPECT_EQ("2001:db8:0:85a3::ac1f:8001", ip4.string());
     EXPECT_EQ("2001:0db8:0000:85a3:0000:0000:ac1f:8001", ip4.expanded_string());
 }
 
 TEST(IPv6Tests, Validation) {
-    auto valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000",
-                        "fe00::1",
-                        "fe80::217:f2ff:fe07:ed62",
-                        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-                        "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
+    auto const valid_ipv6s = {"0000:0000:0000:0000:0000:0000:0000:0000",
+                              "fe00::1",
+                              "fe80::217:f2ff:fe07:ed62",
+                              "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+                              "2001:0db8:0000:85a3:0000:0000:ac1f:8001"};
 
-    auto invalid_ipv6s = {"02001:0000:1234:0000:0000:C1C0:ABCD:0876",
-                          "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
-                          "2001:0000:1234: 0000:0000:C1C0:ABCD:0876",
-                          "2001:0000:1234:0000:0000:C1C0:ABCD:0876 0",
-                          "3ffe:0b00:0000:0001:0000:0000:000a",
-                          "FF02:0000:0000:0000:0000:0000:0000:0000:0001",
-                          "::1111:2222:3333:4444:5555:6666::",
-                          "3ffe:b00::1::a",
-                          "invalid",
-                          "this is not valid",
-                          "this:is:not:valid",
-                          "",
-                          ":",
-                          "/",
-                          "1::1::1",
-                          "1:2:3!:4",
-                          "1:2:3",
-                          "1:1:1:1:1:1:1:127.0.0.1",
-                          "ffff::.0.0.1",
-                          "ffff::127.00.0.1",
-                          "ffff::127..0.1",
-                          "ffff::.127.0.0.1",
-                          "ffff::127.0.0.1.",
-                          "ffff::127.0.0.4000",
-                          "ffff::127.0.0",
-                          "1:2:3:4:5:6:7:8:9",
-                          ":1",
-                          "127.0.0x0.1",
-                          "/1",
-                          "/01",
-                          "1/1",
-                          ":::",
-                          "127.1.1.1/64",
-                          ":::/12",
-                          "::1:1:2::"};
+    auto const invalid_ipv6s = {"02001:0000:1234:0000:0000:C1C0:ABCD:0876",
+                                "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
+                                "2001:0000:1234: 0000:0000:C1C0:ABCD:0876",
+                                "2001:0000:1234:0000:0000:C1C0:ABCD:0876 0",
+                                "3ffe:0b00:0000:0001:0000:0000:000a",
+                                "FF02:0000:0000:0000:0000:0000:0000:0000:0001",
+                                "::1111:2222:3333:4444:5555:6666::",
+                                "3ffe:b00::1::a",
+                                "invalid",
+                                "this is not valid",
+                                "this:is:not:valid",
+                                "",
+                                ":",
+                                "/",
+                                "1::1::1",
+                                "1:2:3!:4",
+                                "1:2:3",
+                                "1:1:1:1:1:1:1:127.0.0.1",
+                                "ffff::.0.0.1",
+                                "ffff::127.00.0.1",
+                                "ffff::127..0.1",
+                                "ffff::.127.0.0.1",
+                                "ffff::127.0.0.1.",
+                                "ffff::127.0.0.4000",
+                                "ffff::127.0.0",
+                                "1:2:3:4:5:6:7:8:9",
+                                ":1",
+                                "127.0.0x0.1",
+                                "/1",
+                                "/01",
+                                "1/1",
+                                ":::",
+                                "127.1.1.1/64",
+                                "127.1.1.1",
+                                ":127.1.1.1",
+                                ":::127.1.1.1",
+                                ":1::127.1.1.1",
+                                ":0:0:127.1.1.1",
+                                ":::/12",
+                                "::1:1:2::"};
 
     for (auto const& _ip : valid_ipv6s) {
-        EXPECT_EQ(ipv6_t(ipv6_t(_ip).string()), ipv6_t(_ip))
-          << "ip: " << _ip << "\ncompiled ip: " << ipv6_t(_ip).string()
-          << "\nlong ip: " << ipv6_t(_ip).string()
-          << "\nshort long ip: " << ipv6_t(ipv6_t(_ip).string()).string();
+        EXPECT_EQ(ipv6(ipv6(_ip).string()), ipv6(_ip))
+          << "ip: " << _ip << "\ncompiled ip: " << ipv6(_ip).string() << "\nlong ip: " << ipv6(_ip).string()
+          << "\nshort long ip: " << ipv6(ipv6(_ip).string()).string();
         EXPECT_TRUE(static_cast<bool>(is::ipv6(_ip)))
-          << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
-        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
+          << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
+        EXPECT_TRUE(ipv6(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
     }
 
-    for (auto const& _ip : invalid_ipv6s) {
-        EXPECT_FALSE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
-        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6_t(_ip).string();
+    for (stl::string_view const _ip : invalid_ipv6s) {
+        EXPECT_FALSE(is::ipv6(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
+        EXPECT_FALSE(ipv6(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv6(_ip).string();
     }
 }
 
@@ -118,36 +121,35 @@ TEST(IPv6Tests, CIDR) {
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
         EXPECT_TRUE(is::ipv6_prefix(_ip)) << _ip;
-        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
-        EXPECT_TRUE(ipv6_t(_ip).has_prefix()) << _ip;
-        EXPECT_GE(ipv6_t(_ip).prefix(), 0) << _ip;
-        EXPECT_LE(ipv6_t(_ip).prefix(), 128) << _ip;
+        EXPECT_TRUE(ipv6(_ip).is_valid()) << _ip << "\n" << ipv6{_ip}.string();
+        EXPECT_TRUE(ipv6(_ip).has_prefix()) << _ip;
+        EXPECT_GE(ipv6(_ip).prefix(), 0) << _ip;
+        EXPECT_LE(ipv6(_ip).prefix(), 128) << _ip;
     }
 
     for (auto const& _ip : invalid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
         EXPECT_FALSE(is::ipv6_prefix(_ip)) << _ip;
-        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << _ip;
-        EXPECT_FALSE(ipv6_t(_ip).has_prefix()) << _ip;
+        EXPECT_FALSE(ipv6(_ip).is_valid()) << _ip;
+        EXPECT_FALSE(ipv6(_ip).has_prefix()) << _ip;
         // TODO: check cidr(prefix) method
     }
 }
 
 TEST(IPv6Tests, SpecialCases) {
-    EXPECT_EQ(ipv6_t("::0.0.0.1"), ipv6_t("::1"));
-    EXPECT_EQ(ipv6_t("::0.0.0.1"), ipv6_t("::1"));
+    EXPECT_EQ(ipv6("::0.0.0.1"), ipv6("::1"));
+    EXPECT_EQ(ipv6("::0.0.0.1"), ipv6("::1"));
 }
 
 TEST(IPv6Tests, StrTests) {
-    EXPECT_EQ(ipv6_t("::").string(), "::");
-    EXPECT_EQ(ipv6_t("::1").string(), "::1");
-    EXPECT_EQ(ipv6_t("::f0:1").string(), "::f0:1");
+    EXPECT_EQ(ipv6("::").string(), "::");
+    EXPECT_EQ(ipv6("::1").string(), "::1");
+    EXPECT_EQ(ipv6("::f0:1").string(), "::f0:1");
 }
 
 
 TEST(IPv6Tests, IP2NTest) {
 
-    // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv6s[]{
       "2001:db8:3333:4444:5555:6666:7777:8888",
       "2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF",
@@ -177,26 +179,24 @@ TEST(IPv6Tests, IP2NTest) {
                                                       ":01",
                                                       ":::",
                                                       ":"};
-    stl::uint8_t                      ip[16]{};
+    stl::uint8_t                      ip_octets[16]{};
 
     for (auto const& _ip : valid_ipv6s) {
         EXPECT_TRUE(is::ipv6(_ip)) << _ip;
-        EXPECT_TRUE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
+        EXPECT_TRUE(ipv6(_ip).is_valid()) << _ip << "\n" << ipv6{_ip}.string();
         auto beg = _ip.begin();
-        EXPECT_EQ(inet_pton6(beg, _ip.end(), ip), inet_pton6_status::valid) << "ip: " << _ip;
+        EXPECT_EQ(inet_pton6(beg, _ip.end(), ip_octets), inet_pton6_status::valid) << "ip: " << _ip;
     }
 
     for (auto const& _ip : invalid_ipv6s) {
         EXPECT_FALSE(is::ipv6(_ip)) << _ip;
-        EXPECT_FALSE(ipv6_t(_ip).is_valid()) << _ip << "\n" << ipv6_t{_ip}.string();
+        EXPECT_FALSE(ipv6(_ip).is_valid()) << _ip << "\n" << ipv6{_ip}.string();
         auto beg = _ip.data();
-        EXPECT_NE(inet_pton6(beg, beg + _ip.size(), ip), inet_pton6_status::valid) << "ip: " << _ip;
+        EXPECT_NE(inet_pton6(beg, beg + _ip.size(), ip_octets), inet_pton6_status::valid) << "ip: " << _ip;
     }
-    // NOLINTEND(*-avoid-c-arrays)
 }
 
 
-// NOLINTBEGIN(*-avoid-c-arrays)
 
 static constexpr stl::string_view some_valid_ipv6s[]{
   "2001:db8:3333:4444:5555:6666:7777:8888",
@@ -316,7 +316,7 @@ TEST(IPv6Tests, ShortStrEquality) {
     stl::array<uint8_t, INET6_ADDRSTRLEN> ip_bin{};
     stl::array<char, 64>                  ip_str{};
     for (auto const& _ip : some_valid_ipv6s) {
-        auto const ip6 = ipv6_t{_ip};
+        auto const ip6 = ipv6{_ip};
         ::inet_pton(AF_INET6, _ip.data(), ip_bin.data());
         ::inet_ntop(AF_INET6, ip_bin.data(), ip_str.data(), ip_str.size());
         EXPECT_STREQ(ip_str.data(), ip6.ip_string().c_str()) << _ip;
@@ -331,7 +331,7 @@ static constexpr stl::string_view ipv4_deprecated_mapped[]{
 };
 TEST(IPv6Tests, IPv4MappedDeprecated) {
     for (auto const& _ip : ipv4_deprecated_mapped) {
-        auto const ip6 = ipv6_t{_ip};
+        auto const ip6 = ipv6{_ip};
         EXPECT_TRUE(ip6.is_valid()) << _ip;
     }
     EXPECT_EQ(ipv6::create("::f0:1").string(), "::f0:1"); // and not ::0.240.0.1
@@ -348,7 +348,7 @@ TEST(IPv6Tests, PrefixesTest) {
             stl::string ip_prefixed{_ip};
             ip_prefixed += '/';
             ip_prefixed += stl::to_string(prefix);
-            ipv6_t const ip6{ip_prefixed};
+            ipv6 const ip6{ip_prefixed};
             EXPECT_TRUE(ip6.is_valid()) << _ip << "\n" << ip_prefixed;
             EXPECT_EQ(ip6.prefix(), prefix) << _ip << "\n" << ip_prefixed << "\n" << ip6.status_string();
         }
@@ -357,7 +357,7 @@ TEST(IPv6Tests, PrefixesTest) {
             stl::string ip_prefixed{_ip};
             ip_prefixed += '/';
             ip_prefixed += prefix;
-            ipv6_t const ip6{ip_prefixed};
+            ipv6 const ip6{ip_prefixed};
             EXPECT_FALSE(ip6.is_valid()) << _ip << "\n"
                                          << ip_prefixed << "\n"
                                          << static_cast<int>(ip6.prefix());
@@ -374,23 +374,25 @@ TEST(IPv6Tests, ErrorMessages) {
 }
 
 TEST(IPv6Tests, LoopbackCheck) {
-    ipv6_t const ip6{"::ffff:127.0.0.1"};
+    ipv6 const ip6{"::ffff:127.0.0.1"};
     EXPECT_TRUE(ip6.is_loopback()) << ip6.string() << "\n" << ip6.expanded_string();
 }
 
 TEST(IPv6Tests, StartsWith) {
-    auto const ip = ipv6::create("10::ffff:127.0.0.1");
-    EXPECT_TRUE(ip.starts_with(ipv6::create("10::"), 16));
-    EXPECT_EQ(ip.mask(120), ipv6::create("10::ffff:127.0.0.0"))
-      << ip.mask(120).expanded_string() << "\n"
+    auto const ip_addr = ipv6::create("10::ffff:127.0.0.1");
+    EXPECT_TRUE(ip_addr.starts_with(ipv6::create("10::"), 16));
+    EXPECT_EQ(ip_addr.mask(120), ipv6::create("10::ffff:127.0.0.0"))
+      << ip_addr.mask(120).expanded_string() << "\n"
       << ipv6::create("10::ffff:127.0.0.0").expanded_string();
-    EXPECT_EQ(ip.mask(16), ipv6::create("10::")) << ip.expanded_string() << "\n"
-                                                 << ip.mask(16).expanded_string();
+    EXPECT_EQ(ip_addr.mask(16), ipv6::create("10::")) << ip_addr.expanded_string() << "\n"
+                                                      << ip_addr.mask(16).expanded_string();
 }
 
 TEST(IPv6Tests, ConversionTest) {
-    auto const ip = ipv6::create("10::ffff:127.0.0.1");
-    EXPECT_EQ(ipv6{ip.octets16()}, ip);
-    EXPECT_EQ(ipv6{ip.octets32()}, ip);
-    EXPECT_EQ(ipv6{ip.octets64()}, ip);
+    auto const ip_addr = ipv6::create("10::ffff:127.0.0.1");
+    EXPECT_EQ(ipv6{ip_addr.octets16()}, ip_addr);
+    EXPECT_EQ(ipv6{ip_addr.octets32()}, ip_addr);
+    EXPECT_EQ(ipv6{ip_addr.octets64()}, ip_addr);
 }
+
+// NOLINTEND(*-avoid-c-arrays)

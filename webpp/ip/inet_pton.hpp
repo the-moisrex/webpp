@@ -213,8 +213,9 @@ namespace webpp {
 
         using char_type = istl::char_type_of_t<stl::iterator_traits<Iter>>;
 
-        stl::uint8_t* colon_ptr = nullptr;
-        stl::uint8_t* endp      = out + ipv6_byte_count;
+        stl::uint8_t*             colon_ptr = nullptr;
+        stl::uint8_t const* const beg       = out;
+        stl::uint8_t*             endp      = out + ipv6_byte_count;
 
         // Handling Leading ::
         if (src == src_endp) {
@@ -267,7 +268,10 @@ namespace webpp {
                 val      = 0;
                 continue;
             }
-            if (cur_char == '.' && (out + ipv4_byte_count) <= endp) {
+            if (cur_char == '.' &&                   // <-- possible ipv4 dot character
+                (out + ipv4_byte_count) <= endp &&   // <-- have enough octets of the ipv6 left for ipv4, and
+                (out != beg || colon_ptr != nullptr) // <-- we're not at the beginning of the string
+            ) {
                 src = current_token;
                 switch (inet_pton4(src, src_endp, out)) {
                     case inet_pton4_status::valid: {
@@ -321,12 +325,11 @@ namespace webpp {
             //     ;
 
             // another constexpr-friendly way of doing the same thing:
-            auto right_ptr = endp;
+            auto* right_ptr = endp;
             for (; out != colon_ptr;) {
                 *--right_ptr = *--out;
             }
-            for (; colon_ptr != right_ptr; *colon_ptr++ = 0)
-                ;
+            for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {}
             out = endp;
         }
         if (out != endp) {

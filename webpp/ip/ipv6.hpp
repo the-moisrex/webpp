@@ -132,10 +132,11 @@ namespace webpp {
                 return _octets;
             } else {
                 // todo: test this, this used to be wrong:
-                octets_t   _data           = {};
-                auto       _octets_it      = _octets.cbegin();
+                octets_t _data = {};
+
                 auto const each_octet_size = _data.size() / _octets.size();
-                for (auto _data_it = _data.begin(); _octets_it != _octets.cend(); ++_octets_it) {
+                auto       _data_it        = _data.begin();
+                for (auto _octets_it = _octets.cbegin(); _octets_it != _octets.cend(); ++_octets_it) {
                     auto _octet = *_octets_it;
                     for (stl::size_t index = 0U; index < each_octet_size; index++) {
                         _octet >>= index * 8U;
