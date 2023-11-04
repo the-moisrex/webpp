@@ -209,10 +209,12 @@ namespace webpp::uri {
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT view(seg_type beg, seg_type size) const noexcept {
             using str_iterator = typename StrT::iterator;
-            if constexpr (stl::same_as<str_iterator, seg_type>) {
-                return StrT{uri_beg + beg, size};
-            } else {
+            if constexpr (!stl::same_as<str_iterator, iterator> && requires {
+                              StrT{uri_beg.base() + beg, size};
+                          }) {
                 return StrT{uri_beg.base() + beg, size};
+            } else {
+                return StrT{uri_beg + beg, size};
             }
         }
 
