@@ -55,6 +55,9 @@ namespace website {
             using json::document;
 
             document<default_traits> doc;
+
+            auto const query = ctx.request.uri();
+
             doc["valid"] = false;
             doc["error"] = "No URI specified.";
             return doc;
@@ -78,10 +81,15 @@ namespace website {
 
         void setup_view_manager() {
             resources.view_roots.emplace_back(".");
-            resources.view_roots.emplace_back("./public");
-            resources.view_roots.emplace_back("./009-URI-playground/public");
-            resources.view_roots.emplace_back("./examples/009-URI-playground/public");
-            resources.view_roots.emplace_back("./webpp/examples/009-URI-playground/public");
+            resources.view_roots.emplace_back("./assets");
+            resources.view_roots.emplace_back("./009-URI-playground/assets");
+            resources.view_roots.emplace_back("./examples/009-URI-playground/assets");
+            resources.view_roots.emplace_back("./webpp/examples/009-URI-playground/assets");
+            resources.view_roots.emplace_back("../examples/009-URI-playground/assets");
+            resources.view_roots.emplace_back("./009-URI-playground");
+            resources.view_roots.emplace_back("./examples/009-URI-playground");
+            resources.view_roots.emplace_back("./webpp/examples/009-URI-playground");
+            resources.view_roots.emplace_back("../examples/009-URI-playground");
         }
     };
 

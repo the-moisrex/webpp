@@ -1,0 +1,128 @@
+:root {
+    --background-color: #f9efff;
+    --accent-color: #760c76;
+    --text-color: var(--accent-color);
+}
+
+.dark {
+    --background-color: #0e1936;
+    --accent-color: #760c76;
+    --text-color: #e7c6fc;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    min-height: 100vh;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(2, 0, 36);
+    background: linear-gradient(115deg, rgba(2, 0, 36, 1) 0%, rgba(121, 9, 113, 1) 35%, rgba(0, 212, 255, 1) 100%);
+}
+
+main {
+    margin: 3em 0;
+}
+
+h1 {
+    font-weight: normal;
+}
+
+/**
+ * Settings
+ */
+
+.settings {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+}
+
+.settings #dark-mode-switch {
+    background: url(dark-mode-switch.svg);
+    background-size: contain;
+    border: none;
+    width: 2em;
+    height: 2em;
+    color: var(--text-color);
+    cursor: pointer;
+    margin: 0 1em;
+    box-shadow: 0 1em 2em rgba(0, 0, 0, 0.9);
+    border-radius: 100%;
+}
+
+#dark-mode-switch .details {
+    position: absolute;
+    display: block;
+    visibility: hidden;
+    top: 100%;
+    right: 0;
+    width: max-content;
+    margin: 1em 0.7em;
+    background: var(--background-color);
+    padding: .7em 2em;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+    box-shadow: 0 1em 2em rgba(0, 0, 0, 0.9);
+}
+#dark-mode-switch:hover .details {
+    opacity: 1;
+    visibility: visible;
+}
+
+#dark-mode-switch .details:after {
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: 100%;
+    right: 10px;
+    width: 0;
+    height: 0;
+    border: solid 0.5em var(--background-color);
+    border-top-color: transparent;
+    border-left-color: transparent;
+    border-right-color: transparent;
+}
+
+
+/**
+ * Form
+ */
+
+form input[type="text"] {
+    color: var(--text-color);
+    background: transparent;
+    border: none;
+    outline: transparent;
+    display: block;
+    width: max-content;
+    min-width: 50vw;
+    padding: 1em 2em;
+    margin: 0;
+    font-size: 1em;
+}
+
+@media (max-width: 600px) {
+    form input[type="text"] {
+        min-width: 95vw;
+    }
+}
+
+form {
+    display: block;
+    border-radius: 100px;
+    width: max-content;
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1em 2em rgba(0, 0, 0, 0.7);
+    position: relative;
+}
+
+.dark form {
+    background: rgba(0, 0, 0, 0.6);
+}

@@ -29,13 +29,15 @@ namespace webpp::http {
      */
     template <typename... CallableSegments>
     struct segment_valve : valve<segment_valve<CallableSegments...>>, stl::tuple<CallableSegments...> {
-        static_assert((true && ... && !istl::StringLiteral<CallableSegments>), "");
+        static_assert((true && ... && !istl::StringLiteral<CallableSegments>),
+                      "Callables should not be strings");
         using valve_type = valve<segment_valve<CallableSegments...>>;
         using tuple_type = stl::tuple<CallableSegments...>;
 
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        constexpr segment_valve(Args&&... args) noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr segment_valve(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : tuple_type{stl::forward<Args>(args)...} {}
 
         constexpr segment_valve(segment_valve const&)                     = default;
@@ -71,7 +73,7 @@ namespace webpp::http {
                   (([&out](auto&& callable) constexpr {
                        out.append(" /");
                        valve_to_string(out, callable);
-                   })(callables),
+                   })(stl::forward<T>(callables)),
                    ...);
               },
               as_tuple());
@@ -100,8 +102,8 @@ namespace webpp::http {
         Segment seg;
 
       public:
-        constexpr segment_string(Segment&& inp_seg) noexcept : seg{stl::move(inp_seg)} {}
-        constexpr segment_string(Segment const& inp_seg) : seg{inp_seg} {}
+        explicit constexpr segment_string(Segment&& inp_seg) noexcept : seg{stl::move(inp_seg)} {}
+        explicit constexpr segment_string(Segment const& inp_seg) : seg{inp_seg} {}
 
         constexpr segment_string(segment_string const&)                = default;
         constexpr segment_string(segment_string&&) noexcept            = default;

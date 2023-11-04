@@ -4,20 +4,23 @@
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
     <meta charset="UTF-8">
     <title>URI Playground</title>
-    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-
-<h1>URI Playground</h1>
 
 
 <main>
     <form action="/parse-uri" method="get">
-        <input type="text" name="uri">
-        <button type="submit">Parse</button>
+        <input placeholder="http://..." type="text" name="uri">
     </form>
 </main>
 
-<script src="/assets/scripts.js"></script>
+<div class="settings">
+    <button id="dark-mode-switch">
+        <span class="details">Switch Dark-Mode</span>
+    </button>
+</div>
+
+<script src="assets/scripts.js"></script>
 </body>
 </html>
