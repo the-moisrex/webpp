@@ -29,8 +29,8 @@ namespace webpp::uri {
         const auto interesting_characters = is_special_scheme(ctx.out.scheme())
                                               ? details::ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
                                               : details::ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
-        iterator   atsign_pos             = nullptr;
-        iterator   password_token_pos     = nullptr;
+        iterator   atsign_pos             = ctx.end;
+        iterator   password_token_pos     = ctx.end;
         auto const beg                    = ctx.pos;
         for (;; ++ctx.pos) {
             ctx.pos = interesting_characters.find_first_in(ctx.pos, ctx.end);
@@ -48,13 +48,13 @@ namespace webpp::uri {
                     iterator const password_beg = password_token_pos + 1;
                     iterator const password_end = atsign_pos;
                     if constexpr (ctx_type::is_modifiable) {
-                        if (atsign_pos != nullptr) {
+                        if (atsign_pos != ctx.end) {
                             encode_uri_component(username_beg,
                                                  username_end,
                                                  ctx.out.get_username_ref(),
                                                  details::USER_INFO_ENCODE_SET);
 
-                            if (password_token_pos != nullptr) {
+                            if (password_token_pos != ctx.end) {
                                 encode_uri_component(password_beg,
                                                      password_end,
                                                      ctx.out.get_password_ref(),
@@ -62,10 +62,10 @@ namespace webpp::uri {
                             }
                         }
                     } else {
-                        if (atsign_pos != nullptr) {
+                        if (atsign_pos != ctx.end) {
                             ctx.out.username(username_beg, username_end);
 
-                            if (password_token_pos != nullptr) {
+                            if (password_token_pos != ctx.end) {
                                 ctx.out.password(password_beg, password_end);
                             }
                         }
@@ -74,7 +74,7 @@ namespace webpp::uri {
                     break;
                 }
                 case ':':
-                    if (password_token_pos == nullptr) {
+                    if (password_token_pos == ctx.end) {
                         password_token_pos = ctx.pos;
                         continue;
                     }
@@ -85,13 +85,13 @@ namespace webpp::uri {
                 case '\\': // the check has been done before, we don't need to check to see if the URL has a
                            // special scheme here (as it said by WHATWG)
                 case '\0':
-                    if (atsign_pos && ctx.pos == beg) {
+                    if (atsign_pos != ctx.end && ctx.pos == beg) {
                         ctx.status = stl::to_underlying(uri_status::host_missing);
                         return;
                     }
                     // There was no username and password
                     // todo: we could do this in one pass instead of going back here
-                    ctx.pos = atsign_pos == nullptr ? beg : atsign_pos + 1;
+                    ctx.pos = atsign_pos == ctx.end ? beg : atsign_pos + 1;
                     ctx.status |= stl::to_underlying(uri_status::valid_host);
                     return;
             }

@@ -60,7 +60,7 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = false;
 
       private:
-        iterator uri_beg         = nullptr;
+        iterator uri_beg{};
         seg_type scheme_end      = omitted; // excluding :// stuff
         seg_type authority_start = omitted; // username/host start
         seg_type password_start  = omitted;
@@ -208,10 +208,19 @@ namespace webpp::uri {
       private:
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT view(seg_type beg, seg_type size) const noexcept {
-            return StrT{uri_beg + beg, size};
+            using str_iterator = typename StrT::iterator;
+            if constexpr (stl::same_as<str_iterator, seg_type>) {
+                return StrT{uri_beg + beg, size};
+            } else {
+                return StrT{uri_beg.base() + beg, size};
+            }
         }
 
       public:
+        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+            return uri_end == omitted ? 0 : uri_end;
+        }
+
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT scheme() const noexcept {
             return view<StrT>(0, scheme_end);
@@ -233,15 +242,22 @@ namespace webpp::uri {
         }
 
         template <istl::StringView StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT port() const noexcept {
+            return view<StrT>(port_start, authority_end - port_start);
+        }
+
+        template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT path() const noexcept {
-            return view<StrT>(authority_end,
-                              stl::min(stl::min(queries_start, fragment_start), view<StrT>().size()) -
-                                authority_end);
+            return view<StrT>(
+              authority_end,
+              stl::min(stl::min(queries_start, fragment_start), static_cast<seg_type>(size())) -
+                authority_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT queries() const noexcept {
-            return view<StrT>(queries_start, stl::min(fragment_start, view<StrT>().size()) - queries_start);
+            return view<StrT>(queries_start,
+                              stl::min(fragment_start, static_cast<seg_type>(size())) - queries_start);
         }
 
         template <istl::StringView StrT = stl::string_view>

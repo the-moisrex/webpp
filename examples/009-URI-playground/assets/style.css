@@ -71,6 +71,7 @@ h1 {
     transition: opacity 200ms ease-in-out;
     box-shadow: 0 1em 2em rgba(0, 0, 0, 0.9);
 }
+
 #dark-mode-switch:hover .details {
     opacity: 1;
     visibility: visible;
@@ -125,4 +126,31 @@ form {
 
 .dark form {
     background: rgba(0, 0, 0, 0.6);
+}
+
+#result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#result > span {
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 1em 2em rgba(0, 0, 0, 0.7);
+    border-radius: 100px;
+    padding: 1em 2em;
+    margin-top: 2em;
+}
+
+.perf-results {
+    /*background-color: color-mix(in srgb, var(--accent-color) 30%, transparent);*/
+    color: var(--background-color);
+    margin: 0.2em 2em;
+    padding: 0.3em;
+    border-radius: 100px;
+    font-size: small;
+}
+
+.perf-results > span {
+    font-weight: bold;
 }

@@ -10,6 +10,7 @@
 #include <webpp/http/routes/context.hpp>
 #include <webpp/http/routes/dynamic_router.hpp>
 #include <webpp/json/defaultjson.hpp>
+#include <webpp/uri/uri.hpp>
 #include <webpp/views/view_manager.hpp>
 
 
@@ -53,13 +54,39 @@ namespace website {
 
         auto parse_uri(context const& ctx) {
             using json::document;
+            using std::chrono::duration_cast;
+            using std::chrono::high_resolution_clock;
+            using std::chrono::nanoseconds;
 
             document<default_traits> doc;
 
             auto const query = ctx.request.uri();
+            if (query.empty()) {
+                doc["valid"] = false;
+                doc["error"] = "No URI specified.";
+            } else {
+                using iterator = typename stl::remove_cvref_t<decltype(query)>::const_iterator;
+                uri::parsing_uri_context<iterator> context{.beg = query.begin(),
+                                                           .pos = query.begin(),
+                                                           .end = query.end()};
+                auto const                         start = high_resolution_clock::now();
+                {
+                    // calculating the time that it takes to parse it
+                    uri::parse_uri(context);
+                }
+                auto const fin = high_resolution_clock::now();
 
-            doc["valid"] = false;
-            doc["error"] = "No URI specified.";
+                auto const parsing_time = duration_cast<nanoseconds>(start - fin).count();
+                doc["parsing-time"]     = parsing_time;
+                doc["scheme"]           = context.out.scheme();
+                doc["username"]         = context.out.username();
+                doc["password"]         = context.out.password();
+                doc["host"]             = context.out.host();
+                doc["port"]             = context.out.port();
+                doc["path"]             = context.out.path();
+                doc["queries"]          = context.out.queries();
+                doc["fragment"]         = context.out.fragment();
+            }
             return doc;
         }
 
