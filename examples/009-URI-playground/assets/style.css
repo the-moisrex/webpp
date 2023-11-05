@@ -1,13 +1,30 @@
 :root {
+    color-scheme: light dark; /* both supported */
     --background-color: #f9efff;
-    --accent-color: #760c76;
-    --text-color: var(--accent-color);
+    --accent-color: #7e003f;
+    --text-color: white;
+    --attention-items-color: rgba(255, 255, 255, 0.6);
+
+    --wallpaper-background: linear-gradient(115deg, rgba(2, 0, 36, 1) 0%, rgba(121, 9, 113, 1) 35%, rgba(0, 212, 255, 1) 100%);
+    --wallpaper-background-fallback: rgb(2, 0, 36);
+
+    --scheme-color: #ff316a;
+    --username-color: #ff316a;
+    --password-color: #ff316a;
+    --host-color: #ff316a;
+    --port-color: #ff316a;
+    --path-color: #ff316a;
+    --queries-color: #ff316a;
+    --fragment-color: #ff316a;
 }
 
 .dark {
-    --background-color: #0e1936;
-    --accent-color: #760c76;
+    --background-color: rgba(38, 11, 52, 0.77);
+    --accent-color: #e79fe7;
     --text-color: #e7c6fc;
+    --attention-items-color: rgba(0, 0, 0, 0.6);
+
+    --wallpaper-background: linear-gradient(115deg, rgba(2, 0, 36, 1) 0%, rgb(73, 6, 67) 35%, rgb(0, 51, 70) 100%);
 }
 
 html, body {
@@ -21,8 +38,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgb(2, 0, 36);
-    background: linear-gradient(115deg, rgba(2, 0, 36, 1) 0%, rgba(121, 9, 113, 1) 35%, rgba(0, 212, 255, 1) 100%);
+    background: var(--wallpaper-background-fallback);
+    background: var(--wallpaper-background);
 }
 
 main {
@@ -41,17 +58,21 @@ h1 {
     position: absolute;
     top: 1em;
     right: 1em;
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: center;
 }
 
 .settings #dark-mode-switch {
     background: url(dark-mode-switch.svg);
     background-size: contain;
     border: none;
-    width: 2em;
-    height: 2em;
-    color: var(--text-color);
+    width: 1.5em;
+    height: 1.5em;
+    color: var(--accent-color);
     cursor: pointer;
-    margin: 0 1em;
+    margin: 0.25em 1em;
     box-shadow: 0 1em 2em rgba(0, 0, 0, 0.9);
     border-radius: 100%;
 }
@@ -91,41 +112,81 @@ h1 {
     border-right-color: transparent;
 }
 
+.button-group {
+    display: flex;
+    flex-direction: row-reverse;
+    overflow: hidden;
+    border-radius: 100px;
+    background: var(--background-color);
+    box-shadow: 0 -2px 3px color-mix(in srgb, var(--accent-color) 20%, var(--background-color)),
+    0 2px 3px color-mix(in srgb, var(--background-color) 30%, #000);
+}
+
+.button-group button {
+    margin: 0;
+    padding: 0.7em 1.3em;
+    border: none;
+    background: transparent;
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    outline: none;
+    cursor: pointer;
+}
+
+.button-group button:hover {
+    text-shadow: 0 0 3px var(--accent-color);
+    background-color: color-mix(in srgb, var(--accent-color) 10%, var(--background-color));
+}
+
+.button-group .active {
+    background-color: color-mix(in srgb, var(--accent-color) 40%, var(--background-color));
+}
+
+.button-group .active:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 50%, var(--background-color));
+}
 
 /**
  * Form
  */
 
-form input[type="text"] {
-    color: var(--text-color);
-    background: transparent;
-    border: none;
-    outline: transparent;
-    display: block;
-    width: max-content;
-    min-width: 50vw;
-    padding: 1em 2em;
-    margin: 0;
-    font-size: 1em;
-}
-
-@media (max-width: 600px) {
-    form input[type="text"] {
-        min-width: 95vw;
-    }
-}
-
-form {
+.uri-form {
     display: block;
     border-radius: 100px;
     width: max-content;
-    background: rgba(255, 255, 255, 0.6);
+    background: var(--attention-items-color);
     box-shadow: 0 1em 2em rgba(0, 0, 0, 0.7);
     position: relative;
+    min-width: 50vw;
+    min-height: 1em;
+    padding: 1em 2em;
 }
 
-.dark form {
-    background: rgba(0, 0, 0, 0.6);
+.uri-form input[type="text"] {
+    color: var(--accent-color);
+    background: transparent;
+    display: block;
+    z-index: 5;
+}
+
+.uri-form input[type="text"], #uri-segments {
+    position: absolute;
+    padding: 1em 2em;
+    margin: 0;
+    font-size: 1em;
+    outline: none;
+    border: none;
+    box-sizing: border-box;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+@media (max-width: 600px) {
+    .uri-form input[type="text"] {
+        min-width: 85vw;
+    }
 }
 
 #result {
@@ -144,7 +205,7 @@ form {
 
 .perf-results {
     /*background-color: color-mix(in srgb, var(--accent-color) 30%, transparent);*/
-    color: var(--background-color);
+    color: var(--text-color);
     margin: 0.2em 2em;
     padding: 0.3em;
     border-radius: 100px;
@@ -153,4 +214,85 @@ form {
 
 .perf-results > span {
     font-weight: bold;
+}
+
+
+/**
+ * URI Segments
+ */
+
+#uri-segments {
+    display: flex;
+    z-index: 4; /* one less than the input */
+}
+
+#uri-segments > * {
+    --segment-color: var(--background-color);
+    --position: 1;
+}
+
+#uri-segments .empty {
+    display: none;
+}
+
+#uri-segments .content {
+    color: transparent;
+    border-radius: 3px;
+    /*box-shadow: 0 0 0 2px var(--segment-color);*/
+    /*background-color: var(--segment-color);*/
+    border-top: 0.3em solid var(--segment-color);
+    padding-top: 1em;
+}
+
+#uri-segments .content::before {
+    content: "";
+    display: block;
+    border-radius: 4px;
+    background-color: var(--segment-color);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: calc(var(--position) * 5em);
+    height: 0.3em;
+    transform: rotate(-45deg) translate(70%, 0);
+}
+
+#uri-segments [data-uri-segment="scheme"] {
+    --position: 1;
+    --segment-color: var(--scheme-color);
+}
+
+#uri-segments [data-uri-segment="username"] {
+    --position: 2;
+    --segment-color: var(--username-color);
+}
+
+#uri-segments [data-uri-segment="password"] {
+    --position: 3;
+    --segment-color: var(--password-color);
+}
+
+#uri-segments [data-uri-segment="host"] {
+    --position: 4;
+    --segment-color: var(--host-color);
+}
+
+#uri-segments [data-uri-segment="port"] {
+    --position: 5;
+    --segment-color: var(--port-color);
+}
+
+#uri-segments [data-uri-segment="path"] {
+    --position: 6;
+    --segment-color: var(--path-color);
+}
+
+#uri-segments [data-uri-segment="queries"] {
+    --position: 7;
+    --segment-color: var(--queries-color);
+}
+
+#uri-segments [data-uri-segment="fragment"] {
+    --position: 8;
+    --segment-color: var(--fragment-color);
 }

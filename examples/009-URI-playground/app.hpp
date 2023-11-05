@@ -1,18 +1,7 @@
 #ifndef WEBPP_EXAMPLE_URI_PLAYGROUND_APP_HPP
 #define WEBPP_EXAMPLE_URI_PLAYGROUND_APP_HPP
 
-#include <optional>
-#include <string_view>
-#include <webpp/http/bodies/json.hpp>
-#include <webpp/http/bodies/string.hpp>
-#include <webpp/http/mime_types.hpp>
-#include <webpp/http/response.hpp>
-#include <webpp/http/routes/context.hpp>
-#include <webpp/http/routes/dynamic_router.hpp>
-#include <webpp/json/defaultjson.hpp>
-#include <webpp/uri/uri.hpp>
-#include <webpp/views/view_manager.hpp>
-
+#include "pch.hpp"
 
 namespace website {
 
@@ -99,9 +88,9 @@ namespace website {
         void setup_routes() {
             router.objects.emplace_back(this);
 
-            router += router / "assets" / &app::assets;
-            router += router / "parse-uri" >> &app::parse_uri;
-            router += router % &app::home;
+            router += http::get / "assets" / &app::assets;
+            router += http::get % "parse-uri" >> &app::parse_uri;
+            router += http::get % &app::home;
 
             etraits.logger.info(router.to_string());
         }

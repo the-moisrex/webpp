@@ -10,7 +10,41 @@
 
 
 <main>
-    <form action="/parse-uri" method="get">
+    <form id="uri-form" class="uri-form" action="/parse-uri" method="get">
+        <div id="uri-segments">
+            <div data-uri-segment="scheme" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="username" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="password" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="host" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="port" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="path" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="queries" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+            <div data-uri-segment="fragment" class="uri-segment">
+                <span class="content"></span>
+                <span class="desc"></span>
+            </div>
+        </div>
         <input placeholder="http://..." type="text" name="uri">
     </form>
     <div class="perf-results">
@@ -24,6 +58,10 @@
     <button id="dark-mode-switch">
         <span class="details">Switch Dark-Mode</span>
     </button>
+    <div class="button-group">
+        <button class="active" data-uri-parser="webpp">Web++ URL Parser</button>
+        <button data-uri-parser="browser">Browser URL Parser</button>
+    </div>
 </div>
 
 <script src="assets/scripts.js"></script>

@@ -209,7 +209,6 @@ namespace webpp::uri {
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
         }
-        stl::unreachable();
     }
 
 

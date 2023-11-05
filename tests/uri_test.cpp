@@ -2,6 +2,7 @@
 
 #include "../webpp/uri/uri.hpp"
 
+#include "../webpp/uri/path_traverser.hpp"
 #include "common/tests_common_pch.hpp"
 
 // also checkout:
@@ -25,7 +26,7 @@ TEST(URITests, Generation) {
 }
 
 TEST(URITests, PathFromString) {
-    uri::basic_path path = "/a/b/c/../d";
+    uri::basic_path path{"/a/b/c/../d"};
     EXPECT_EQ(path.size(), 6);
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
@@ -198,7 +199,7 @@ TEST(URITests, BasicURIParsing) {
     auto const res     = static_cast<uri::uri_status>(context.status);
     EXPECT_TRUE(uri::is_valid(res));
     EXPECT_FALSE(uri::has_warnings(res));
-    EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
+    EXPECT_EQ(res, uri::uri_status::valid) << to_string(uri::get_value(res));
     EXPECT_EQ(context.out.scheme(), "https");
     EXPECT_EQ(context.out.host(), "example.com");
     EXPECT_EQ(context.out.username(), "username");
@@ -215,4 +216,33 @@ TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(context.out.has_path());
     EXPECT_TRUE(context.out.has_queries());
     EXPECT_TRUE(context.out.has_fragment());
+}
+
+
+TEST(URITests, PathIteratorTest) {
+    uri::path_iterator<> iter{"/page/one"};
+    EXPECT_TRUE(iter.check_segment("page"));
+    EXPECT_TRUE(iter.check_segment("one"));
+    EXPECT_TRUE(iter.at_end());
+    iter.reset();
+    EXPECT_TRUE(iter.check_segment("page"));
+    EXPECT_TRUE(iter.check_segment("one"));
+    EXPECT_TRUE(iter.at_end());
+}
+
+
+TEST(URITests, PathTraverser) {
+    uri::basic_path<stl::string> the_path;
+    EXPECT_TRUE(the_path.parse(stl::string_view{"/page/one"}));
+    EXPECT_EQ(the_path.size(), 3);
+    uri::path_traverser<stl::string> iter{the_path};
+    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
+    EXPECT_TRUE(iter.at_end());
+    iter.reset();
+    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
+    EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
+    EXPECT_TRUE(iter.at_end());
 }

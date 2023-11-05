@@ -71,7 +71,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, basic_dynamic_router>)
-        constexpr basic_dynamic_router(ET&& inp_etraits)
+        explicit constexpr basic_dynamic_router(ET&& inp_etraits)
           : etraits{stl::forward<ET>(inp_etraits)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
         // NOLINTEND(bugprone-forwarding-reference-overload)

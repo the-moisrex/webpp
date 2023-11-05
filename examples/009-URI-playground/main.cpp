@@ -1,7 +1,5 @@
 #include "app.hpp"
 
-#include <webpp/beast/beast.hpp>
-
 int main() {
     webpp::beast<website::app> server;
     server

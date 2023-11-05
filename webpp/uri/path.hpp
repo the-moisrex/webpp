@@ -130,6 +130,8 @@ namespace webpp::uri {
           conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
         using string_view_type = istl::string_view_type_of<value_type>;
         using path_type        = basic_path;
+        using iterator         = typename container_type::iterator;
+        using const_iterator   = typename container_type::const_iterator;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -138,12 +140,12 @@ namespace webpp::uri {
 
         template <typename... T>
             requires(stl::is_constructible_v<container_type, T...>)
-        constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
+        explicit constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
 
         // NOLINTBEGIN(*-forwarding-reference-overload)
         template <istl::StringViewifiable T>
             requires(!istl::cvref_as<T, basic_path>)
-        constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
+        explicit constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
           : container_type{alloc} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
@@ -151,7 +153,7 @@ namespace webpp::uri {
         template <istl::String T>
             requires(!istl::cvref_as<T, basic_path> &&
                      istl::cvref_as<typename T::allocator_type, allocator_type>)
-        constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
+        explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
         // NOLINTEND(*-forwarding-reference-overload)
@@ -341,7 +343,7 @@ namespace webpp::uri {
 
 
     template <istl::Stringifiable S>
-    basic_path(S&& str) -> basic_path<decltype(istl::stringify(stl::forward<S>(str)))>;
+    basic_path(S&& str) -> basic_path<stl::remove_cvref_t<decltype(istl::stringify(stl::forward<S>(str)))>>;
 
 } // namespace webpp::uri
 

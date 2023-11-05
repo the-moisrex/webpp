@@ -260,13 +260,6 @@ namespace webpp::http {
             return request.empty() && response.empty();
         }
 
-        // You should call this function if you every wanted to change the request's url
-        constexpr basic_context& reset_path_traverser() noexcept {
-            traverser = request.path_traverser();
-            return *this;
-        }
-
-
         constexpr path_traverser_type& path_traverser() noexcept {
             return traverser;
         }
@@ -286,6 +279,7 @@ namespace webpp::http {
 
         constexpr void current_route(dynamic_route_type& new_route) noexcept {
             current_route_ptr = stl::addressof(new_route);
+            traverser.reset();
         }
     };
 

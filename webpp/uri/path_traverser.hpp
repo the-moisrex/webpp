@@ -13,21 +13,24 @@ namespace webpp::uri {
     struct path_traverser {
         using slug_type     = SlugType;
         using path_type     = basic_path<slug_type>;
-        using path_iterator = typename path_type::iterator;
+        using path_iterator = typename path_type::const_iterator;
 
       private:
         // todo: do we actually need the end? can't we just construct it ourselves?
 
-        path_iterator it;  // beginning (will be moved)
+        path_iterator beg; // beginning
+        path_iterator pos; // beginning (will be moved)
         path_iterator fin; // end
 
       public:
         constexpr explicit path_traverser(path_type const& path) noexcept
-          : it{path.begin()},
+          : beg{path.begin()},
+            pos{path.begin()},
             fin{path.end()} {}
 
         constexpr path_traverser& operator=(path_type const& path) noexcept {
-            it  = path.begin();
+            beg = path.begin();
+            pos = path.begin();
             fin = path.end();
             return *this;
         }
@@ -46,12 +49,28 @@ namespace webpp::uri {
             return {*this};
         }
 
+        constexpr void reset() noexcept {
+            pos = beg;
+        }
+
         constexpr void next() noexcept {
-            ++it;
+            ++pos;
         }
 
         constexpr void prev() noexcept {
-            --it;
+            --pos;
+        }
+
+        [[nodiscard]] constexpr auto operator*() const noexcept {
+            return pos.operator*();
+        }
+
+        [[nodiscard]] constexpr auto operator->() const noexcept {
+            return pos.operator->();
+        }
+
+        [[nodiscard]] constexpr slug_type const& segment() const noexcept {
+            return *pos;
         }
 
         constexpr path_traverser& operator++() noexcept {
@@ -65,14 +84,14 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
-            return it == fin;
+            return pos == fin;
         }
 
         /**
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
         [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
-            if (!at_end() && *it == slug) {
+            if (!at_end() && *pos == slug) {
                 next();
                 return true;
             }
@@ -81,7 +100,7 @@ namespace webpp::uri {
 
         template <istl::StringViewifiable StrV>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (!at_end() && *it == istl::string_viewify(stl::forward<StrV>(slug))) {
+            if (!at_end() && *pos == istl::string_viewify(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }
@@ -113,17 +132,20 @@ namespace webpp::uri {
 
       private:
         slug_type seg; // segment
-        iterator  it;
+        iterator  beg;
+        iterator  pos;
         iterator  fin; // todo: technically it's possible to remove this
 
       public:
         constexpr explicit basic_path_iterator(string_type const& path)
           : seg{path.get_allocator()},
-            it{stl::begin(path)},
+            beg{stl::begin(path)},
+            pos{stl::begin(path)},
             fin{stl::end(path)} {}
 
         constexpr basic_path_iterator& operator=(string_type const& path) {
-            it  = stl::begin(path);
+            beg = stl::begin(path);
+            pos = stl::begin(path);
             fin = stl::end(path);
             seg.clear();
             return *this;
@@ -144,25 +166,29 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr size_type size() const noexcept {
-            return static_cast<size_type>(fin - it);
+            return static_cast<size_type>(fin - pos);
+        }
+
+        [[nodiscard]] constexpr bool at_end() const noexcept {
+            return pos == fin;
         }
 
         constexpr bool next() {
             if (at_end()) {
                 return false;
             }
-            const auto slash_start = stl::find(it, fin, char_type{'/'});
-            if (slash_start == it) { // the first slash, or two or more contiguous slashes
-                ++it;
+            const auto slash_start = stl::find(pos, fin, char_type{'/'});
+            if (slash_start == pos) { // the first slash, or two or more contiguous slashes
+                ++pos;
                 return next();
             }
             seg.clear();
-            if (!decode_uri_component(string_view_type(it, slash_start), seg, allowed_chars)) {
+            if (!decode_uri_component(string_view_type(pos, slash_start), seg, allowed_chars)) {
                 return false;
             }
-            it = slash_start;
-            if (it != fin) {
-                ++it;
+            pos = slash_start;
+            if (pos != fin) {
+                ++pos;
             }
             return true;
         }
@@ -171,7 +197,7 @@ namespace webpp::uri {
             if (at_end()) {
                 return stl::nullopt;
             }
-            iterator pit = it;
+            iterator pit = pos;
             iterator slash_start;
             for (;;) {
                 slash_start = stl::find(pit, fin, char_type{'/'});
@@ -209,15 +235,16 @@ namespace webpp::uri {
             return seg;
         }
 
-        [[nodiscard]] constexpr bool at_end() const noexcept {
-            return it == fin;
+        constexpr void reset() noexcept {
+            pos = beg;
+            seg.clear();
         }
 
         /**
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
         [[nodiscard]] constexpr bool check_segment(slug_type const& slug) noexcept {
-            return next() && *it == slug;
+            return next() && *pos == slug;
         }
 
         template <typename StrV>
