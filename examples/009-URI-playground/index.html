@@ -10,6 +10,13 @@
 
 
 <main>
+    <div class="perf-results">
+        <div id="general-error" class="hidden"></div>
+        <div id="general-response" class="hidden">
+            <span id="parsing-time">0ns</span> parsing time, and
+            <span id="network-time">0ms</span> network time
+        </div>
+    </div>
     <form id="uri-form" class="uri-form" action="/parse-uri" method="get">
         <div id="uri-segments">
             <div data-uri-segment="scheme" class="uri-segment">
@@ -47,11 +54,40 @@
         </div>
         <input placeholder="http://..." type="text" name="uri">
     </form>
-    <div class="perf-results">
-        <span id="parsing-time">0ns</span> parsing time, and
-        <span id="network-time">0ms</span> network time
+    <div class="results" data-parser-results="browser">
+        <div data-uri-segment="scheme" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="username" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="password" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="host" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="port" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="path" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="queries" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
+        <div data-uri-segment="fragment" class="uri-segment">
+            <span class="content"></span>
+            <span class="desc"></span>
+        </div>
     </div>
-    <div id="result"></div>
 </main>
 
 <div class="settings">

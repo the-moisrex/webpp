@@ -8,14 +8,15 @@
     --wallpaper-background: linear-gradient(115deg, rgba(2, 0, 36, 1) 0%, rgba(121, 9, 113, 1) 35%, rgba(0, 212, 255, 1) 100%);
     --wallpaper-background-fallback: rgb(2, 0, 36);
 
-    --scheme-color: #ff316a;
+    --scheme-color: #31b7ff;
     --username-color: #ff316a;
-    --password-color: #ff316a;
-    --host-color: #ff316a;
-    --port-color: #ff316a;
-    --path-color: #ff316a;
-    --queries-color: #ff316a;
-    --fragment-color: #ff316a;
+    --password-color: #ff0848;
+    --host-color: #0dc406;
+    --port-color: #e5500d;
+    --path-color: #e8b50c;
+    --queries-color: #a504a8;
+    --fragment-color: #31ffc8;
+    --error-color: red;
 }
 
 .dark {
@@ -210,10 +211,35 @@ h1 {
     padding: 0.3em;
     border-radius: 100px;
     font-size: small;
+    text-align: right;
 }
 
-.perf-results > span {
+.perf-results #general-response span {
     font-weight: bold;
+}
+
+.perf-results #general-error {
+    color: var(--error-color);
+}
+
+.hidden {
+    display: none;
+}
+
+.results {
+    margin: 1em;
+    padding: 1em;
+}
+
+.results .content, .results .desc {
+    background-color: var(--background-color);
+    color: var(--accent-color);
+    border: 0.1em solid var(--segment-color);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, .5), 0 0 5px rgba(255, 255, 255, 0.3);
+    padding: 0.5em 1em;
+    display: inline-block;
+    border-radius: 5px;
+    margin: 0.3em 0.2em;
 }
 
 
@@ -240,59 +266,59 @@ h1 {
     border-radius: 3px;
     /*box-shadow: 0 0 0 2px var(--segment-color);*/
     /*background-color: var(--segment-color);*/
-    border-top: 0.3em solid var(--segment-color);
-    padding-top: 1em;
+    border-bottom: 0.3em solid var(--segment-color);
+    padding-bottom: 1em;
 }
 
-#uri-segments .content::before {
-    content: "";
-    display: block;
-    border-radius: 4px;
-    background-color: var(--segment-color);
-    position: absolute;
-    bottom: 100%;
-    left: 0;
-    width: calc(var(--position) * 5em);
-    height: 0.3em;
-    transform: rotate(-45deg) translate(70%, 0);
-}
+/*#uri-segments .content::before {*/
+/*    content: "";*/
+/*    display: block;*/
+/*    border-radius: 4px;*/
+/*    background-color: var(--segment-color);*/
+/*    position: absolute;*/
+/*    bottom: 100%;*/
+/*    left: 0;*/
+/*    width: calc(var(--position) * 5em);*/
+/*    height: 0.3em;*/
+/*    transform: rotate(-45deg) translate(70%, 0);*/
+/*}*/
 
-#uri-segments [data-uri-segment="scheme"] {
+[data-uri-segment="scheme"] {
     --position: 1;
     --segment-color: var(--scheme-color);
 }
 
-#uri-segments [data-uri-segment="username"] {
+[data-uri-segment="username"] {
     --position: 2;
     --segment-color: var(--username-color);
 }
 
-#uri-segments [data-uri-segment="password"] {
+[data-uri-segment="password"] {
     --position: 3;
     --segment-color: var(--password-color);
 }
 
-#uri-segments [data-uri-segment="host"] {
+[data-uri-segment="host"] {
     --position: 4;
     --segment-color: var(--host-color);
 }
 
-#uri-segments [data-uri-segment="port"] {
+[data-uri-segment="port"] {
     --position: 5;
     --segment-color: var(--port-color);
 }
 
-#uri-segments [data-uri-segment="path"] {
+[data-uri-segment="path"] {
     --position: 6;
     --segment-color: var(--path-color);
 }
 
-#uri-segments [data-uri-segment="queries"] {
+[data-uri-segment="queries"] {
     --position: 7;
     --segment-color: var(--queries-color);
 }
 
-#uri-segments [data-uri-segment="fragment"] {
+[data-uri-segment="fragment"] {
     --position: 8;
     --segment-color: var(--fragment-color);
 }

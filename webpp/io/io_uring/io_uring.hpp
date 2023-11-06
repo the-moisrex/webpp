@@ -54,7 +54,7 @@ namespace webpp::io {
       private:
         friend service_type;
 
-        constexpr io_uring_scheduler(service_type& inp_service) noexcept
+        explicit constexpr io_uring_scheduler(service_type& inp_service) noexcept
           : service{stl::addressof(inp_service)} {}
 
         service_type* service;
@@ -99,11 +99,10 @@ namespace webpp::io {
                 last_err_val = -ret;
                 last_err_cat = err_cat;
                 return false;
-            } else {
+            }
                 last_err_val = 0;
                 last_err_cat = io_uring_service_state::success;
                 return true;
-            }
         }
 
         constexpr bool error_on_errno(stl::integral auto ret, io_uring_service_state err_cat) noexcept {
@@ -111,11 +110,10 @@ namespace webpp::io {
                 last_err_val = errno;
                 last_err_cat = err_cat;
                 return false;
-            } else {
+            }
                 last_err_val = 0;
                 last_err_cat = io_uring_service_state::success;
                 return true;
-            }
         }
 
       public:
@@ -137,12 +135,12 @@ namespace webpp::io {
                                            io_uring_service_state::init_failure));
         }
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        basic_io_uring_service(
+        explicit basic_io_uring_service(
           unsigned         entries   = default_entries_value,
           Allocator const& inp_alloc = {}) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : basic_io_uring_service{entries, {}, inp_alloc} {}
 
-        basic_io_uring_service(Allocator const& inp_alloc) noexcept(
+        explicit basic_io_uring_service(Allocator const& inp_alloc) noexcept(
           stl::is_nothrow_copy_constructible_v<Allocator>)
           : basic_io_uring_service{default_entries_value, {}, inp_alloc} {}
 
@@ -192,7 +190,7 @@ namespace webpp::io {
             return last_err_cat == io_uring_service_state::success;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_success();
         }
 

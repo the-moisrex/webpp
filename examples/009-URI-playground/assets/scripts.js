@@ -2,6 +2,41 @@ console.log(
   "%cURI Playground by M. Bahoosh",
   "color: purple; display: inline-block; background: white; padding: 0.5em 1em; margin: 1em 0; border-radius: 5px; border: 1px purple solid; font-family: sans-serif;");
 
+function setError(err) {
+    const generalResponse = document.querySelector("#general-response");
+    const generalError    = document.querySelector("#general-error");
+    const resultsElement  = document.querySelector(".results");
+    resultsElement.classList.add("hidden");
+    generalResponse.classList.add("hidden");
+    generalError.classList.remove("hidden");
+    generalError.innerText = err;
+    console.error(err);
+}
+
+function setPerfResult(diff, networkTime = "0ms") {
+    const generalResponse = document.querySelector("#general-response");
+    const generalError    = document.querySelector("#general-error");
+    generalResponse.classList.remove("hidden");
+    generalError.classList.add("hidden");
+    generalResponse.querySelector("#parsing-time").innerText = diff;
+    generalResponse.querySelector("#network-time").innerText = networkTime;
+}
+
+function setResult(result) {
+    const resultsElement = document.querySelector(".results");
+    resultsElement.classList.remove("hidden");
+    Object.keys(result).forEach(seg => {
+        const segElement = resultsElement.querySelector(`[data-uri-segment=${seg}]`);
+        if (!result[seg]) {
+            segElement.classList.add("hidden");
+            return;
+        }
+        segElement.classList.remove("hidden");
+        segElement.querySelector(".content").innerText = result[seg];
+        segElement.querySelector(".desc").innerText    = seg;
+    });
+}
+
 const browserURIParser = {
     name: "browser",
     result: {
@@ -16,7 +51,10 @@ const browserURIParser = {
     },
     parse(uriText) {
         try {
-            const uri            = new URL(uriText);
+            const start = Date.now()
+            const uri   = new URL(uriText);
+            const fin   = Date.now();
+
             this.result.scheme   = uri.protocol;
             this.result.username = uri.username;
             this.result.password = uri.password;
@@ -25,8 +63,11 @@ const browserURIParser = {
             this.result.path     = uri.pathname;
             this.result.queries  = uri.search;
             this.result.fragment = uri.hash;
+
+            setPerfResult(`${fin - start}ms`);
+            setResult(this.result);
         } catch (err) {
-            console.log(err); // todo
+            setError(err);
         }
     }
 };
@@ -46,20 +87,32 @@ const webppURIParser = {
     async parse(uriText) {
         // todo
         // find the URI
+        const start     = Date.now()
         let query_url = new URL(document.querySelector("#uri-form").action);
-        let queries   = new URLSearchParams;
+        let   queries   = new URLSearchParams;
         queries.set("uri", uriText);
         query_url.search = "?" + queries.toString();
 
         try {
-            const response = await fetch(query_url.toString());
+            let response = await fetch(query_url.toString());
             if (!response.ok) {
-                setResult(new Error("Network error"));
+                setError(new Error("Network error"));
                 return;
             }
-            console.log(response);
+            response             = response.json();
+            this.result.scheme   = response["scheme"];
+            this.result.username = response["username"];
+            this.result.password = response["password"];
+            this.result.host     = response["host"];
+            this.result.port     = response["port"];
+            this.result.path     = response["path"];
+            this.result.queries  = response["queries"];
+            this.result.fragment = response["fragment"];
+            const fin            = Date.now();
+            setPerfResult(`${response["parsing-time"]}ns`, `${fin - start}ms`);
+            setResult(this.result);
         } catch (err) {
-            setResult(err);
+            setError(err);
         }
     }
 }
@@ -102,6 +155,9 @@ const activeParser = {
         cur_params.set("uri", this.uriTextValue);
         cur_url.search = cur_params.toString();
         window.history.replaceState({}, null, cur_url.toString());
+
+        const uriInput = document.querySelector("#uri-form input[name=uri]");
+        uriInput.value = this.uriTextValue;
 
         this.run();
     },
@@ -167,13 +223,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList[!to_light ? "remove" : "add"]("light");
     });
 
-    const form     = document.querySelector("form");
-    const uriInput = form.querySelector("form input[name=uri]");
+    const form     = document.querySelector("#uri-form");
+    const uriInput = form.querySelector("input[name=uri]");
     const onUpdate = debounce(updatePage, 200);
 
     let cur_url    = new URL(window.location);
     let cur_params = cur_url.searchParams;
-    uriInput.value = cur_params.get("uri");
 
 
     form.addEventListener("submit", onUpdate);
@@ -188,4 +243,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (activeParserStored) {
         activeParser.active = activeParserStored;
     }
+
+    activeParser.uriText = cur_params.get("uri");
 });
