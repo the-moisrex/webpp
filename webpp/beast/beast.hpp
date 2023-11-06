@@ -4,6 +4,7 @@
 #define WEBPP_BEAST_HPP
 
 #include "../http/protocol/common_http_protocol.hpp"
+#include "../http/response.hpp"
 #include "../std/string_view.hpp"
 #include "beast_body_communicator.hpp"
 #include "beast_server.hpp"

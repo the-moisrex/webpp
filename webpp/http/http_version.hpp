@@ -5,6 +5,7 @@
 
 #include "../convert/casts.hpp"
 #include "../std/string_view.hpp"
+#include "../strings/size.hpp"
 
 #include <cstdint>
 
@@ -14,7 +15,7 @@ namespace webpp::http {
     class version {
       private:
         static constexpr auto uint_16_bits     = sizeof(stl::uint16_t) * 8u;
-        static constexpr auto minor_value_mask = 0xffffu;
+        static constexpr auto minor_value_mask = 0xFFFFU;
 
         // parse version from string
         constexpr stl::uint32_t parse_string(auto&& str) noexcept {
@@ -112,7 +113,7 @@ namespace webpp::http {
         // todo: use <=> operator
 
       private:
-        uint32_t value = 0ul; // Packed as <major>:<minor>
+        uint32_t value = 0UL; // Packed as <major>:<minor>
     };
 
 
