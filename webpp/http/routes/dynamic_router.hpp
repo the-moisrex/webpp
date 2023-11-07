@@ -85,7 +85,7 @@ namespace webpp::http {
         }
 
         constexpr response_type response(status_code code) {
-            return {this->get_traits(), code};
+            return response_type{this->get_traits(), code};
         }
 
 
@@ -140,6 +140,7 @@ namespace webpp::http {
                     return;
                 }
             }
+            ctx.response = this->error(status_code::not_found);
         }
 
         constexpr void to_string(istl::String auto& out) const {

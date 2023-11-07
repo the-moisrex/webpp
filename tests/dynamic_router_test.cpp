@@ -4,6 +4,7 @@
 #include "../webpp/http/bodies/string.hpp"
 #include "../webpp/http/routes/context.hpp"
 #include "../webpp/http/routes/disabler.hpp"
+#include "../webpp/http/routes/methods.hpp"
 #include "../webpp/http/routes/path.hpp"
 #include "../webpp/http/routes/static_router.hpp"
 #include "common/tests_common_pch.hpp"
@@ -90,8 +91,8 @@ TEST(DynamicRouter, RouteRegistration) {
 
 TEST(DynamicRouter, MemFuncPtr) {
 
-    enable_owner_traits<default_dynamic_traits> et;
-    dynamic_router                              router{et};
+    enable_owner_traits<default_dynamic_traits> etraits;
+    dynamic_router                              router{etraits};
     router.objects.emplace_back(pages{});
 
     router += router / "about" >> &pages::about;
@@ -458,17 +459,17 @@ struct custom_type {
 
 
 TEST(DynamicRouter, CustomValvifier) {
-    enable_owner_traits<default_dynamic_traits> et;
+    enable_owner_traits<default_dynamic_traits> etraits;
 
     custom_callable cc;
     custom_type     ct{&cc};
 
-    dynamic_router router{et};
+    dynamic_router router{etraits};
     router += router / "home" >> ct >> [] {
         return "home sweet home";
     };
 
-    request req{et};
+    request req{etraits};
     req.method("GET");
     req.uri("/home");
 
@@ -497,9 +498,9 @@ TEST(DynamicRouter, CrossStringTypeSupport) {
 
 // https://github.com/the-moisrex/webpp/issues/307
 TEST(DynamicRouter, ContextCallChaining) {
-    enable_owner_traits<default_dynamic_traits> et;
+    enable_owner_traits<default_dynamic_traits> etraits;
 
-    dynamic_router router{et};
+    dynamic_router router{etraits};
     router += router / "home" >> [](context& ctx) {
         auto fill_context = [] {
             return "home sweet home";
@@ -511,7 +512,7 @@ TEST(DynamicRouter, ContextCallChaining) {
         ctx >> fill_context >> wrap_with_body;
     };
 
-    request req{et};
+    request req{etraits};
     req.method("GET");
     req.uri("/home");
 
@@ -522,16 +523,16 @@ TEST(DynamicRouter, ContextCallChaining) {
 
 
 TEST(DynamicRouter, RouteDisabler) {
-    enable_owner_traits<default_dynamic_traits> et;
+    enable_owner_traits<default_dynamic_traits> etraits;
 
     route_disabler<> home_enabler;
 
-    dynamic_router router{et};
+    dynamic_router router{etraits};
     router += router / "home" >> &home_enabler >> [] {
         return "home";
     };
 
-    request req{et};
+    request req{etraits};
     req.method("GET");
     req.uri("/home");
 
@@ -544,4 +545,47 @@ TEST(DynamicRouter, RouteDisabler) {
     HTTPResponse auto const res2 = router(req);
     EXPECT_EQ(res2.headers.status_code(), status_code::not_found);
     EXPECT_NE(as<std::string>(res2.body), "home") << as<std::string>(res2.body);
+}
+
+
+TEST(DynamicRouter, RootRoute) {
+    enable_owner_traits<default_dynamic_traits> etraits;
+    dynamic_router                              router{etraits};
+
+    router += http::get % "normal" >> []() {
+        return "normal route";
+    };
+    router += http::get % "parse-uri" >> []() -> stl::optional<response> {
+        return stl::nullopt;
+    };
+    router += http::get % root >> [] {
+        return "home";
+    };
+
+    request req{etraits};
+    req.method("GET");
+    req.uri("/");
+
+    HTTPResponse auto res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "home") << as<std::string>(res.body) << "\n" << router.to_string();
+
+
+    req.uri("/parse-uri");
+
+    res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::not_found);
+
+
+    req.uri("/normal");
+
+    res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "normal route") << as<std::string>(res.body);
+
+
+    req.uri("/undefined");
+
+    res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::not_found);
 }

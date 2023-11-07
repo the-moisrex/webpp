@@ -34,6 +34,10 @@ namespace webpp::http {
         using valve_type = valve<segment_valve<CallableSegments...>>;
         using tuple_type = stl::tuple<CallableSegments...>;
 
+        constexpr segment_valve() noexcept(stl::is_nothrow_default_constructible_v<tuple_type>)
+            requires(stl::is_default_constructible_v<tuple_type>)
+        = default;
+
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
         explicit constexpr segment_valve(Args&&... args) noexcept(
@@ -70,8 +74,11 @@ namespace webpp::http {
         constexpr void to_string(istl::String auto& out) const {
             stl::apply(
               [&out]<typename... T>(T&&... callables) constexpr {
-                  (([&out](auto&& callable) constexpr {
-                       out.append(" /");
+                  int index = 0;
+                  (([&out, &index](auto&& callable) constexpr {
+                       if (index++ != 0) {
+                           out.append(" /");
+                       }
                        valve_to_string(out, callable);
                    })(stl::forward<T>(callables)),
                    ...);
@@ -117,6 +124,7 @@ namespace webpp::http {
         }
 
         constexpr void to_string(istl::String auto& out) const {
+            out.append(" ");
             out.append(seg);
         }
     };
@@ -125,19 +133,19 @@ namespace webpp::http {
     segment_string(Seg&&) -> segment_string<stl::remove_cvref_t<Seg>>;
 
     template <istl::StringLiteral StrT>
-    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, StrT&& next) noexcept {
+    [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag tag, StrT&& next) noexcept {
         return segment_string{istl::string_viewify(stl::forward<StrT>(next))};
     }
 
     // String Views Valvifier
     template <istl::StringView T>
-    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, T&& next) noexcept {
+    [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag tag, T&& next) noexcept {
         return segment_string{stl::forward<T>(next)};
     }
 
     // String object is passed
     template <istl::String T>
-    [[nodiscard]] static constexpr auto tag_invoke(valvify_tag, T&& next) {
+    [[nodiscard]] static constexpr auto tag_invoke([[maybe_unused]] valvify_tag tag, T&& next) {
         return segment_string{stl::forward<T>(next)};
     }
 

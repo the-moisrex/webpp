@@ -87,6 +87,10 @@ namespace webpp::uri {
             return pos == fin;
         }
 
+        [[nodiscard]] constexpr bool at_beginning() const noexcept {
+            return pos == beg;
+        }
+
         /**
          * Check if the specified segment is a match, if it is, increment the segment pointer
          */
@@ -171,6 +175,10 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
             return pos == fin;
+        }
+
+        [[nodiscard]] constexpr bool at_beginning() const noexcept {
+            return pos == beg;
         }
 
         constexpr bool next() {
