@@ -54,7 +54,8 @@ struct pages {
     void rot13_path(context& ctx) const {
         auto uri = ctx.request.uri();
         rot13(uri);
-        ctx.request.uri(uri); // set the uri again
+        // todo: setting ctx.request.uri(uri) will not affect path traverser
+        ctx.reset_path(uri); // set the uri again
     }
     // NOLINTEND(readability-convert-member-functions-to-static)
 };
@@ -80,9 +81,9 @@ TEST(DynamicRouter, RouteRegistration) {
     req.method("GET");
     req.uri("/page/about");
     EXPECT_EQ(req.uri(), "/page/about");
-    auto it = req.path_iterator();
-    EXPECT_TRUE(it.check_segment("page")) << *it;
-    EXPECT_TRUE(it.check_segment("about")) << *it;
+    auto iter = uri::path_iterator<default_traits>(req.uri());
+    EXPECT_TRUE(iter.check_segment("page")) << *iter;
+    EXPECT_TRUE(iter.check_segment("about")) << *iter;
 
     auto res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
@@ -192,6 +193,29 @@ TEST(DynamicRouter, CacheDeceptionTest) {
     EXPECT_NE(as<std::string>(res.body), "about page");
 }
 
+
+TEST(DynamicRouter, NormalizationTest) {
+    enable_traits_for<dynamic_router> router;
+    router.objects.emplace_back(pages{});
+
+    router += router % "admin" >> &pages::about;
+
+    request req{router.get_traits()};
+    req.method("GET");
+
+    for (auto const* path_str : {"/%2e/admin", "/admin/.", "//admin//"}) {
+        req.uri(path_str);
+        auto const res        = router(req);
+        auto       parsed_uri = uri::basic_path<stl::string>(path_str);
+        parsed_uri.normalize(true);
+        EXPECT_EQ(res.headers.status_code(), status_code::ok) << res.headers.status_code_integer() << "\n"
+                                                              << router.to_string() << "\n"
+                                                              << path_str << "\n"
+                                                              << parsed_uri.to_string();
+        EXPECT_EQ(as<std::string>(res.body), "about page") << path_str;
+    }
+}
+
 TEST(DynamicRouter, CommonBypassTests) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
@@ -201,22 +225,18 @@ TEST(DynamicRouter, CommonBypassTests) {
     request req{router.get_traits()};
     req.method("GET");
 
-    for (auto const u : {"/%2e/admin",
-                         "/admin/.",
-                         "//admin//",
-                         "/./admin/..",
-                         "/;/admin",
-                         "/.;/admin",
-                         "//;//admin",
-                         "/admin..;/",
-                         "/aDmIN"}) {
-        req.uri(u);
+    for (auto const* path_str :
+         {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"}) {
+        req.uri(path_str);
+        auto parsed_uri = uri::basic_path<stl::string>(path_str);
+        parsed_uri.normalize(true);
         auto const res = router(req);
         EXPECT_EQ(res.headers.status_code(), status_code::not_found)
           << res.headers.status_code_integer() << "\n"
           << router.to_string() << "\n"
-          << u;
-        EXPECT_NE(as<std::string>(res.body), "about page") << u;
+          << path_str << "\n"
+          << parsed_uri.to_string();
+        EXPECT_NE(as<std::string>(res.body), "about page") << path_str;
     }
 }
 
@@ -298,7 +318,7 @@ TEST(DynamicRouter, PreRoutingTest) {
 
     auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
-    EXPECT_EQ(as<std::string>(res.body), "about page");
+    EXPECT_EQ(as<std::string>(res.body), "about page") << req.uri();
 }
 
 TEST(DynamicRouter, SameOrderPreRoutingTest) {
@@ -310,9 +330,11 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
         EXPECT_FALSE(ctx.path_traverser().at_end()) << num;
         // rot13 should already be run, so we should get a clear "page" as the first segment
         EXPECT_EQ("page", ctx.path_traverser().peek().value_or(""))
+          << "Value: " << ctx.path_traverser().peek().value_or("") << "\n"
           << "Segment: " << *ctx.path_traverser() << "\n"
           << "Should be called before checking the paths, it's a pre-routing.\nNum: " << num
-          << "\nRouter: " << router.to_string();
+          << "\nRouter: " << router.to_string() << "\n"
+          << ctx.path_traverser().get_path().to_string();
         ++num;
     };
 
@@ -396,20 +418,20 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
 
 
 TEST(DynamicRouter, ContextCurrentRoute) {
-    enable_owner_traits<default_dynamic_traits> et;
+    enable_owner_traits<default_dynamic_traits> etraits;
 
-    dynamic_router router{et};
+    dynamic_router router{etraits};
     router += root / "home" >> [](context& ctx) {
         return ctx.current_route().to_string();
     };
 
-    request req{et};
+    request req{etraits};
     req.method("GET");
     req.uri("/home");
 
     HTTPResponse auto const res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::ok);
-    EXPECT_TRUE(as<std::string>(res.body).find("/home") != std::string::npos) << as<std::string>(res.body);
+    EXPECT_TRUE(as<std::string>(res.body).find("home") != std::string::npos) << as<std::string>(res.body);
 }
 
 

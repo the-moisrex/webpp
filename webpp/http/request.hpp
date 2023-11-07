@@ -193,11 +193,11 @@ namespace webpp::http {
         template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
             requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
-        constexpr explicit basic_request(ET&&          et,
+        constexpr explicit basic_request(ET&&          inp_etraits,
                                          MStrT&&       inp_method = "GET",
                                          UStrT&&       url        = "/",
                                          http::version ver        = http::http_2_0)
-          : common_request_type{et},
+          : common_request_type{inp_etraits},
             requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
                                                           alloc::general_alloc_for<string_type>(*this))},
             requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method),
@@ -227,10 +227,6 @@ namespace webpp::http {
             requested_uri =
               istl::stringify_of<string_type>(stl::forward<T>(str), requested_uri.get_allocator());
             return *this;
-        }
-
-        [[nodiscard]] constexpr uri::path_iterator<traits_type> path_iterator() const noexcept {
-            return uri::path_iterator<traits_type>{uri()};
         }
 
         [[nodiscard]] constexpr string_type const& method() const noexcept {

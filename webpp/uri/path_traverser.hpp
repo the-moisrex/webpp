@@ -11,31 +11,58 @@ namespace webpp::uri {
 
     template <Slug SlugType>
     struct path_traverser {
-        using slug_type     = SlugType;
-        using path_type     = basic_path<slug_type>;
-        using path_iterator = typename path_type::const_iterator;
+        using slug_type        = SlugType;
+        using path_type        = basic_path<slug_type>;
+        using path_iterator    = typename path_type::const_iterator;
+        using char_type        = istl::char_type_of_t<slug_type>;
+        using string_view_type = stl::basic_string_view<char_type>;
+        using slug_ref         = typename path_type::reference;
+        using slug_cref        = typename path_type::const_reference;
 
       private:
-        // todo: do we actually need the end? can't we just construct it ourselves?
-
-        path_iterator beg; // beginning
-        path_iterator pos; // beginning (will be moved)
-        path_iterator fin; // end
+        path_type     path;
+        path_iterator pos{path.begin()}; // beginning (will be moved)
 
       public:
-        constexpr explicit path_traverser(path_type const& path) noexcept
-          : beg{path.begin()},
-            pos{path.begin()},
-            fin{path.end()} {}
+        constexpr explicit path_traverser(path_type const& inp_path) : path{inp_path} {
+            path.normalize(true);
+            pos = path.begin(); // the iterator might be invalidated
+        }
 
-        constexpr path_traverser& operator=(path_type const& path) noexcept {
-            beg = path.begin();
+        constexpr explicit path_traverser(path_type&& inp_path) : path{stl::move(inp_path)} {
+            path.normalize(true);
             pos = path.begin();
-            fin = path.end();
+        }
+
+        template <istl::StringViewifiable StrT = string_view_type>
+        constexpr explicit path_traverser(StrT&& inp_path_str) : path{stl::forward<StrT>(inp_path_str)} {
+            path.normalize(true); // todo: parsing and normalizing can be combined into one algorithm
+            pos = path.begin();
+        }
+
+        constexpr path_traverser& operator=(path_type const& inp_path) {
+            path = inp_path;
+            path.normalize(true);
+            pos = path.begin();
             return *this;
         }
 
-        constexpr path_traverser(path_traverser const&) noexcept       = default;
+        constexpr path_traverser& operator=(path_type&& inp_path) {
+            path = stl::move(inp_path);
+            path.normalize(true);
+            pos = path.begin();
+            return *this;
+        }
+
+        template <istl::StringViewifiable StrT = string_view_type>
+        constexpr path_traverser& operator=(StrT&& inp_path_str) {
+            path = stl::forward<StrT>(inp_path_str);
+            path.normalize(true);
+            pos = path.begin();
+            return *this;
+        }
+
+        constexpr path_traverser(path_traverser const&)                = default;
         constexpr path_traverser(path_traverser&&) noexcept            = default;
         constexpr path_traverser& operator=(path_traverser&&) noexcept = default;
         constexpr path_traverser& operator=(path_traverser const&)     = default;
@@ -49,12 +76,24 @@ namespace webpp::uri {
             return {*this};
         }
 
-        constexpr void reset() noexcept {
-            pos = beg;
+        constexpr path_type const& get_path() const noexcept {
+            return path;
         }
 
-        constexpr void next() noexcept {
+        constexpr void reset() noexcept {
+            pos = path.begin();
+        }
+
+        constexpr bool next() noexcept {
             ++pos;
+            return pos == path.end();
+        }
+
+        [[nodiscard]] constexpr stl::optional<slug_type> peek() const noexcept {
+            if (at_end()) {
+                return stl::nullopt;
+            }
+            return *pos;
         }
 
         constexpr void prev() noexcept {
@@ -84,11 +123,11 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool at_end() const noexcept {
-            return pos == fin;
+            return pos == path.end();
         }
 
         [[nodiscard]] constexpr bool at_beginning() const noexcept {
-            return pos == beg;
+            return pos == path.begin();
         }
 
         /**
@@ -102,9 +141,9 @@ namespace webpp::uri {
             return false;
         }
 
-        template <istl::StringViewifiable StrV>
+        template <istl::StringViewifiable StrV = string_view_type>
         [[nodiscard]] constexpr bool check_segment(StrV&& slug) noexcept {
-            if (!at_end() && *pos == istl::string_viewify(stl::forward<StrV>(slug))) {
+            if (!at_end() && *pos == istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug))) {
                 next();
                 return true;
             }

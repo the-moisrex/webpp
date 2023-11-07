@@ -158,8 +158,9 @@ namespace webpp::uri {
         }
         // NOLINTEND(*-forwarding-reference-overload)
 
-        constexpr bool parse(istl::StringifiableOf<string_view_type> auto&& str) {
-            auto path = istl::string_viewify_of<string_view_type>(stl::forward<decltype(str)>(str));
+        template <istl::StringifiableOf<string_view_type> StrT>
+        constexpr bool parse(StrT&& str) {
+            auto path = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             if (path.empty()) {
                 return true;
             }
@@ -208,6 +209,7 @@ namespace webpp::uri {
         }
 
         constexpr basic_path& operator=(value_type str) {
+            this->clear();
             parse(stl::move(str));
             return *this;
         }
@@ -243,8 +245,8 @@ namespace webpp::uri {
             return !is_absolute();
         }
 
-        constexpr void normalize() {
-            remove_dot_segments(is_absolute());
+        constexpr void normalize(bool remove_empty_segments = false) {
+            remove_dot_segments(is_absolute(), remove_empty_segments);
         }
 
 
@@ -252,7 +254,7 @@ namespace webpp::uri {
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
          * Refer to uri_normalize_benchmark for more related algorithms of this
          */
-        constexpr void remove_dot_segments(bool remove_leading) {
+        constexpr void remove_dot_segments(bool remove_leading, bool remove_empty_segments = false) {
             if (this->empty()) {
                 return;
             }
@@ -260,27 +262,34 @@ namespace webpp::uri {
             auto pos = this->begin();
 
             // handle the first part
-            while (pos < this->end()) {
+            while (pos != this->end()) {
+                if (remove_empty_segments && pos->empty()) {
+                    pos = this->erase(pos);
+                    continue;
+                }
                 if (*pos == current_dir) {
-                    this->erase(pos);
+                    pos = this->erase(pos);
                     continue;
                 }
                 if (*pos == parent_dir) {
                     if (pos != this->begin()) {
-                        const auto p = std::prev(pos);
-                        if (p->empty()) {
+                        const auto last_el = std::prev(pos);
+                        if (last_el->empty()) {
                             // remove just this one
-                            this->erase(pos);
+                            pos = this->erase(pos);
                             continue;
                         }
-                        if (*p != parent_dir) {
+                        if (*last_el != parent_dir) {
                             // remove the previous one and this one
-                            this->erase(p, std::next(pos));
+                            pos = this->erase(last_el, std::next(pos));
+                            if (pos == this->begin()) {
+                                return;
+                            }
                             --pos;
                             continue;
                         }
                     } else if (remove_leading) {
-                        this->erase(pos);
+                        pos = this->erase(pos);
                         continue;
                     }
                 }

@@ -199,7 +199,7 @@ namespace webpp::http {
         using response_type       = basic_response<traits_type>;
         using string_type         = traits::general_string<traits_type>;
         using slug_type           = string_type;
-        using path_traverser_type = uri::path_iterator<traits_type>;
+        using path_traverser_type = uri::path_traverser<string_type>;
         using dynamic_route_type  = dynamic_route<traits_type>;
         using dynamic_route_ptr   = dynamic_route_type*;
 
@@ -212,7 +212,7 @@ namespace webpp::http {
       private:
         using context_methods = details::common_context_methods<basic_request<TraitsType>>;
 
-        path_traverser_type traverser{request.path_iterator()};
+        path_traverser_type traverser;
         dynamic_route_ptr   current_route_ptr = nullptr;
 
       public:
@@ -222,13 +222,13 @@ namespace webpp::http {
           : context_methods{req},
             request{req},
             response{req.get_traits()},
-            traverser{request.path_iterator()} {}
+            traverser{request.uri()} {}
 
         constexpr basic_context(request_type& req)
           : context_methods{req},
             request{req},
             response{req.get_traits()},
-            traverser{request.path_iterator()} {}
+            traverser{request.uri()} {}
 
         template <Context CtxT>
             requires(!istl::cvref_as<CtxT, basic_context>)
@@ -268,6 +268,11 @@ namespace webpp::http {
             return traverser;
         }
 
+        template <typename URIOrStringType>
+        constexpr void reset_path(URIOrStringType&& new_path) {
+            request.uri(stl::forward<URIOrStringType>(new_path));
+            traverser = request.uri();
+        }
 
         constexpr dynamic_route_type const& current_route() const noexcept {
             return *current_route_ptr;
