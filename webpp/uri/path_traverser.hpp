@@ -85,8 +85,11 @@ namespace webpp::uri {
         }
 
         constexpr bool next() noexcept {
+            if (at_end()) {
+                return false;
+            }
             ++pos;
-            return pos == path.end();
+            return true;
         }
 
         [[nodiscard]] constexpr stl::optional<slug_type> peek() const noexcept {
@@ -108,7 +111,7 @@ namespace webpp::uri {
             return pos.operator->();
         }
 
-        [[nodiscard]] constexpr slug_type const& segment() const noexcept {
+        [[nodiscard]] constexpr slug_type segment() const noexcept {
             return *pos;
         }
 

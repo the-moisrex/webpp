@@ -13,6 +13,7 @@
 #include <webpp/http/routes/context.hpp>
 #include <webpp/http/routes/dynamic_router.hpp>
 #include <webpp/http/routes/methods.hpp>
+#include <webpp/http/routes/path.hpp>
 #include <webpp/json/defaultjson.hpp>
 #include <webpp/uri/uri.hpp>
 #include <webpp/views/view_manager.hpp>

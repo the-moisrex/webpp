@@ -598,6 +598,12 @@ TEST(DynamicRouter, RootRoute) {
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found);
 
+    req.uri("/parse-uri?uri=test");
+
+    res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::not_found)
+      << stl::to_underlying(res.headers.status_code());
+
 
     req.uri("/normal");
 
@@ -610,4 +616,21 @@ TEST(DynamicRouter, RootRoute) {
 
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found);
+}
+
+
+TEST(DynamicRouter, PathWithQueries) {
+    enable_owner_traits<default_dynamic_traits> etraits;
+    dynamic_router                              router{etraits};
+
+    router += http::get % "parse-uri" >> []() {
+        return "parsed";
+    };
+    request req{etraits};
+    req.method("GET");
+    req.uri("/parse-uri?uri=test");
+
+    HTTPResponse auto res = router(req);
+    EXPECT_EQ(res.headers.status_code(), status_code::ok);
+    EXPECT_EQ(as<std::string>(res.body), "parsed") << as<std::string>(res.body);
 }

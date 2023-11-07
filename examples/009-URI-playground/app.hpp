@@ -25,13 +25,7 @@ namespace website {
         }
 
         std::optional<response> assets(context& ctx) {
-            if (!ctx.path_traverser().next()) {
-                return stl::nullopt;
-            }
             auto const slug = ctx.path_traverser().segment();
-            if (ctx.path_traverser().next()) {
-                return stl::nullopt;
-            }
             if (auto res_str = resources.view(slug); !res_str.empty()) {
                 response res{etraits};
                 res.body = res_str;
@@ -88,9 +82,9 @@ namespace website {
         void setup_routes() {
             router.objects.emplace_back(this);
 
-            router += http::get / "assets" / &app::assets;
+            router += http::get / "assets" % &app::assets;
             router += http::get % "parse-uri" >> &app::parse_uri;
-            router += http::get % &app::home;
+            router += http::get % root >> &app::home;
 
             etraits.logger.info(router.to_string());
         }

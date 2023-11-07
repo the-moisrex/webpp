@@ -38,7 +38,7 @@ namespace webpp::uri {
                 case '8':
                 case '9':
                     port_value *= 10; // NOLINT(*-magic-numbers)
-                    port_value += *ctx.pos - '0';
+                    port_value += static_cast<stl::uint16_t>(*ctx.pos - '0');
                     ++ctx.pos;
                     break;
                 case '\\':
@@ -50,7 +50,8 @@ namespace webpp::uri {
                 case '/':
                 case '?':
                 case '#':
-                    if (port_value < 0 || port_value > max_port_number) {
+                    // it's unsigned, we don't need to check for it being lower than 0
+                    if (port_value > max_port_number) {
                         ctx.status = stl::to_underlying(uri_status::port_out_of_range);
                         return;
                     }
