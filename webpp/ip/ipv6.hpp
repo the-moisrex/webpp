@@ -159,8 +159,8 @@ namespace webpp {
 
             // set the default value to valid
             _prefix           = prefix_status(inet_pton6_status::valid);
-            const auto status = inet_pton6(inp_ptr, ip_str.end(), out_ptr, _prefix);
-            if (status != inet_pton6_status::valid) {
+            const auto status = inet_pton6(inp_ptr, ip_str.end(), out_ptr, _prefix, '/');
+            if (!webpp::is_valid(status)) {
                 // set the status
                 _prefix = prefix_status(status);
             }

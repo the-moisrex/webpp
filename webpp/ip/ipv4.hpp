@@ -107,7 +107,7 @@ namespace webpp {
             ipv4_octets bin; // NOLINT(cppcoreguidelines-pro-type-member-init)
             auto        beg = str.begin();
             auto const  res = inet_pton4(beg, str.end(), bin.data(), _prefix);
-            if (res == inet_pton4_status::valid) {
+            if (webpp::is_valid(res)) {
                 data = parse(bin);
             } else {
                 // set the error

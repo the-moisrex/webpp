@@ -34,7 +34,7 @@ namespace webpp {
      * Attention: keep the underlying type of this enum match the uri_status' underlying type, they are
      * convertible
      */
-    enum struct ip_address_status : stl::uint_fast16_t {
+    enum struct ip_address_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
         valid             = 255U,
         valid_special     = 254U, // valid ip, found the specified special character at the end (prefix, ...)
         too_little_octets = 253U, // not enough octets
@@ -52,7 +52,7 @@ namespace webpp {
      * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
      * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
      */
-    enum struct inet_pton4_status : stl::uint_fast16_t {
+    enum struct inet_pton4_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
         valid = stl::to_underlying(ip_address_status::valid),
 
         // valid ipv4, special character found at the end
@@ -85,7 +85,7 @@ namespace webpp {
      * The numbers stated for the values of the states are designed to be used in a uint8_t and still be
      * able to use that uint8_t for a ipv4/ipv6 prefix (which only requires 0-128)
      */
-    enum struct inet_pton6_status : stl::uint_fast16_t {
+    enum struct inet_pton6_status : stl::uint_fast16_t { // NOLINT(*-enum-size)
         valid = stl::to_underlying(ip_address_status::valid),
 
         // valid ipv6, special character found at the end
@@ -108,6 +108,20 @@ namespace webpp {
     };
 
 
+    [[nodiscard]] static constexpr bool is_valid(inet_pton4_status status) noexcept {
+        using enum inet_pton4_status;
+        return status == valid || status == valid_special;
+    }
+
+    [[nodiscard]] static constexpr bool is_valid(inet_pton6_status status) noexcept {
+        using enum inet_pton6_status;
+        return status == valid || status == valid_special;
+    }
+
+    [[nodiscard]] static constexpr bool is_valid(ip_address_status status) noexcept {
+        using enum ip_address_status;
+        return status == valid || status == valid_special;
+    }
 
 
 
