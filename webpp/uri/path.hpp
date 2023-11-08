@@ -76,12 +76,12 @@ namespace webpp::uri {
                 case '?':
                     ctx.out.clear_queries();
                     ++path_end;
-                    ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                    uri::set_valid(ctx.status, uri_status::valid_queries);
                     break;
                 case '#':
                     ctx.out.clear_fragment();
                     ++path_end;
-                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    uri::set_valid(ctx.status, uri_status::valid_fragment);
                     break;
                 default: {
 

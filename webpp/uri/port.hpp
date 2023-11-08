@@ -52,7 +52,7 @@ namespace webpp::uri {
                 case '#':
                     // it's unsigned, we don't need to check for it being lower than 0
                     if (port_value > max_port_number) {
-                        ctx.status = stl::to_underlying(uri_status::port_out_of_range);
+                        uri::set_error(ctx.status, uri_status::port_out_of_range);
                         return;
                     }
                     if (port_value == known_port(ctx.out.scheme())) {
@@ -73,12 +73,12 @@ namespace webpp::uri {
                     }
 
                     // https://url.spec.whatwg.org/#path-start-state
-                    ctx.status |= stl::to_underlying(uri_status::valid_authority_end);
+                    uri::set_valid(ctx.status, uri_status::valid_authority_end);
                     return;
             }
         }
 
-        ctx.status = stl::to_underlying(uri_status::port_invalid);
+        uri::set_error(ctx.status, uri_status::port_invalid);
     }
 
 

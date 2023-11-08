@@ -39,7 +39,7 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '@': {
-                    ctx.status |= stl::to_underlying(uri_status::has_credentials);
+                    uri::set_warning(ctx.status, uri_status::has_credentials);
                     atsign_pos = ctx.pos;
 
                     // append to the username and password
@@ -86,13 +86,13 @@ namespace webpp::uri {
                            // special scheme here (as it said by WHATWG)
                 case '\0':
                     if (atsign_pos != ctx.end && ctx.pos == beg) {
-                        ctx.status = stl::to_underlying(uri_status::host_missing);
+                        uri::set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
                     // There was no username and password
                     // todo: we could do this in one pass instead of going back here
                     ctx.pos = atsign_pos == ctx.end ? beg : atsign_pos + 1;
-                    ctx.status |= stl::to_underlying(uri_status::valid_host);
+                    uri::set_valid(ctx.status, uri_status::valid_host);
                     return;
             }
         }

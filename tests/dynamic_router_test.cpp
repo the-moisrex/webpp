@@ -463,7 +463,7 @@ struct custom_type {
     custom_callable* cc;
 
   public:
-    constexpr custom_type(custom_callable* c) : cc{c} {}
+    explicit constexpr custom_type(custom_callable* c) : cc{c} {}
     constexpr custom_type(custom_type const&) noexcept            = default;
     constexpr custom_type(custom_type&&) noexcept                 = default;
     constexpr custom_type& operator=(custom_type&&) noexcept      = default;
@@ -474,7 +474,8 @@ struct custom_type {
         return cc;
     }
 
-    constexpr friend custom_callable* tag_invoke(stl::tag_t<valvify>, custom_type& ct) noexcept {
+    constexpr friend custom_callable* tag_invoke([[maybe_unused]] stl::tag_t<valvify> tag,
+                                                 custom_type&                         ct) noexcept {
         return ct.get_cc();
     }
 };
@@ -502,14 +503,14 @@ TEST(DynamicRouter, CustomValvifier) {
 }
 
 TEST(DynamicRouter, CrossStringTypeSupport) {
-    enable_owner_traits<std_pmr_traits> et;
+    enable_owner_traits<std_pmr_traits> etraits;
 
-    dynamic_router router{et};
+    dynamic_router router{etraits};
     router += router / std::string{"home"} >> [] {
         return "home sweet home";
     };
 
-    request req{et};
+    request req{etraits};
     req.method("GET");
     req.uri("/home");
 

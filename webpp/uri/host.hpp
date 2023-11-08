@@ -32,30 +32,28 @@ namespace webpp::uri {
 
         if (ctx.pos == ctx.end) {
             // todo: I'm guessing
-            ctx.status |= stl::to_underlying(uri_status::valid);
+            uri::set_valid(ctx.status, uri_status::valid);
             return;
         }
         if (is_special_scheme(ctx.out.scheme())) {
             switch (*ctx.pos) {
-                case '\\':
-                    ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
-                    [[fallthrough]];
+                case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': ++ctx.pos; break;
             }
         } else {
             switch (*ctx.pos) {
                 case '?':
-                    ctx.status |= stl::to_underlying(uri_status::valid_queries);
+                    uri::set_valid(ctx.status, uri_status::valid_queries);
                     ++ctx.pos;
                     ctx.out.clear_queries();
                     return;
                 case '#':
-                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    uri::set_valid(ctx.status, uri_status::valid_fragment);
                     ++ctx.pos;
                     ctx.out.clear_fragment();
                     return;
                 default:
-                    ctx.status |= stl::to_underlying(uri_status::valid_path);
+                    uri::set_valid(ctx.status, uri_status::valid_path);
                     ctx.out.clear_path();
                     return;
             }
@@ -92,7 +90,7 @@ namespace webpp::uri {
         using ctx_type = uri::parsing_uri_context<T...>;
 
         if (ctx.pos == ctx.end) {
-            ctx.status = stl::to_underlying(uri_status::host_missing);
+            uri::set_error(ctx.status, uri_status::host_missing);
             return;
         }
 
@@ -123,7 +121,7 @@ namespace webpp::uri {
                 switch (ipv6_parsing_result) {
                     case inet_pton6_status::valid:
                         // todo: host missing end of ] char
-                        // ctx.status = stl::to_underlying(uri_status::);
+                        // uri::set_error(ctx.status, uri_status::);
                         break;
                     case inet_pton6_status::invalid_character:
                         if (*ctx.pos == ']') {
@@ -149,28 +147,29 @@ namespace webpp::uri {
                     break;
                 }
                 [[fallthrough]];
-            case ':': ctx.status = stl::to_underlying(uri_status::host_missing); return;
+            case ':': uri::set_error(ctx.status, uri_status::host_missing); return;
         }
 
         bool inside_brackets = false;
         for (;;) {
-            ctx.pos = end_of_host_chars.find_first_in(ctx.pos, ctx.end);
+            ctx.pos = end_of_host_chars.find_first_not_in(ctx.pos, ctx.end);
 
             switch (*ctx.pos) {
                 case ':':
                     if (!inside_brackets) {
-                        ctx.status |= stl::to_underlying(uri_status::valid_port);
+                        uri::set_valid(ctx.status, uri_status::valid_port);
+                        ++ctx.pos;
                     }
                     break;
                 case '#':
-                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    uri::set_valid(ctx.status, uri_status::valid_fragment);
                     break;
                 [[unlikely]] case '\0':
                     if (is_special && ctx.pos == beg) {
-                        ctx.status = stl::to_underlying(uri_status::host_missing);
+                        uri::set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
-                    ctx.status |= stl::to_underlying(uri_status::valid);
+                    uri::set_valid(ctx.status, uri_status::valid);
                     break;
                 case '[': {
                     inside_brackets = true;
@@ -179,10 +178,10 @@ namespace webpp::uri {
                 case '\\':
                 case '/':
                 case '?':
-                    ctx.status |= stl::to_underlying(uri_status::valid_path);
+                    uri::set_valid(ctx.status, uri_status::valid_path);
                     break;
                 [[unlikely]] default:
-                    ctx.status |= stl::to_underlying(uri_status::invalid_character);
+                    uri::set_warning(ctx.status, uri_status::invalid_character);
                     ++ctx.pos;
                     continue;
             }

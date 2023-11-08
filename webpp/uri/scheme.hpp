@@ -45,9 +45,9 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\':
-                        ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
+                        uri::set_warning(ctx.status, uri_status::reverse_solidus_used);
                         [[fallthrough]];
-                    case '/': ctx.status |= stl::to_underlying(uri_status::valid_file_host); return;
+                    case '/': uri::set_valid(ctx.status, uri_status::valid_file_host); return;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -61,7 +61,7 @@ namespace webpp::uri {
                     //    This is a (platform-independent) Windows drive letter quirk.
                 }
             }
-            ctx.status |= stl::to_underlying(uri_status::valid_path);
+            uri::set_valid(ctx.status, uri_status::valid_path);
         }
 
         template <typename... T>
@@ -79,9 +79,7 @@ namespace webpp::uri {
 
             // todo: check for end
             switch (*ctx.pos) {
-                case '\\':
-                    ctx.status |= stl::to_underlying(uri_status::reverse_solidus_used);
-                    [[fallthrough]];
+                case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': file_slash_state(ctx); return;
             }
 
@@ -91,7 +89,7 @@ namespace webpp::uri {
                 }
             }
 
-            ctx.status |= stl::to_underlying(uri_status::valid_path);
+            uri::set_valid(ctx.status, uri_status::valid_path);
         }
 
 
@@ -109,7 +107,7 @@ namespace webpp::uri {
                         ctx.out.set_path(ctx.base.get_path());
                         ctx.out.set_query(ctx.base.get_query());
                         ctx.out.clear_fragment();
-                        ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                        uri::set_valid(ctx.status, uri_status::valid_fragment);
                         return;
                     }
                 } else if (ctx.base.scheme() != "file") {
@@ -120,7 +118,7 @@ namespace webpp::uri {
                     return;
                 }
             }
-            ctx.status = stl::to_underlying(uri_status::missing_scheme_non_relative_url);
+            uri::set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
         }
 
 
@@ -133,7 +131,7 @@ namespace webpp::uri {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
-            ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
+            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
         }
 
         template <typename... T>
@@ -144,15 +142,15 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\':
-                    case '/': ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
+                    case '/': uri::set_warning(ctx.status, uri_status::missing_following_solidus);
                 }
                 ++ctx.pos;
 
                 // todo: set authority
-                ctx.status |= stl::to_underlying(uri_status::valid_authority);
+                uri::set_valid(ctx.status, uri_status::valid_authority);
                 return;
             }
-            ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
+            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
         }
 
         template <typename... T>
@@ -166,7 +164,7 @@ namespace webpp::uri {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
-            ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
+            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
             relative_state(ctx);
         }
 
@@ -176,10 +174,10 @@ namespace webpp::uri {
 
             if (ctx.pos != ctx.end && *ctx.pos == '/') {
                 ++ctx.pos;
-                ctx.status |= stl::to_underlying(uri_status::valid_authority);
+                uri::set_valid(ctx.status, uri_status::valid_authority);
                 return;
             }
-            ctx.status |= stl::to_underlying(uri_status::valid_path);
+            uri::set_valid(ctx.status, uri_status::valid_path);
         }
 
 
@@ -254,7 +252,7 @@ namespace webpp::uri {
                         if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
                             ctx.pos += 2;
                         } else {
-                            ctx.status |= stl::to_underlying(uri_status::missing_following_solidus);
+                            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
                         }
                         details::file_state(ctx);
                         return;
@@ -275,7 +273,7 @@ namespace webpp::uri {
                         return;
                     }
                     ctx.out.clear_path();
-                    ctx.status |= stl::to_underlying(uri_status::valid_opaque_path);
+                    uri::set_valid(ctx.status, uri_status::valid_opaque_path);
                     return;
                 }
 

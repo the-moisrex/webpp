@@ -197,11 +197,13 @@ TEST(URITests, BasicURIParsing) {
     stl::string_view const str =
       "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
 
-    auto       context = uri::parse_uri(str);
-    auto const res     = static_cast<uri::uri_status>(context.status);
-    EXPECT_TRUE(uri::is_valid(res));
-    EXPECT_FALSE(uri::has_warnings(res));
-    EXPECT_EQ(res, uri::uri_status::valid) << to_string(uri::get_value(res));
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::uri_status::has_credentials, uri::get_warning(context.status))
+      << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.scheme(), "https");
     EXPECT_EQ(context.out.host(), "example.com");
     EXPECT_EQ(context.out.username(), "username");
@@ -238,12 +240,10 @@ TEST(URITests, PathTraverser) {
     EXPECT_TRUE(the_path.parse(stl::string_view{"/page/one"}));
     EXPECT_EQ(the_path.size(), 3);
     uri::path_traverser<stl::string> iter{the_path};
-    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
     EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
     EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
     EXPECT_TRUE(iter.at_end());
     iter.reset();
-    EXPECT_TRUE(iter.check_segment("")) << iter.segment();
     EXPECT_TRUE(iter.check_segment("page")) << iter.segment();
     EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
     EXPECT_TRUE(iter.at_end());

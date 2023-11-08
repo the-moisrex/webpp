@@ -25,13 +25,13 @@ namespace webpp::uri {
                                                        output,
                                                        uri::details::FRAGMENT_ENCODE_SET);
             if (!is_valid) {
-                ctx.status = stl::to_underlying(uri_status::invalid_character);
+                uri::set_warning(ctx.status, uri_status::invalid_character);
                 return;
             }
         } else {
             ctx.out.fragment(ctx.pos, ctx.end);
         }
-        ctx.status |= stl::to_underlying(uri_status::valid);
+        uri::set_valid(ctx.status, uri_status::valid);
     }
 
     template <istl::String StringType = stl::string>

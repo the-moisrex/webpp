@@ -246,6 +246,19 @@ namespace webpp::uri {
         return get_value(stl::to_underlying(status));
     }
 
+    static constexpr void set_valid(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+        status &= ~values_mask;
+        status |= stl::to_underlying(value);
+    }
+
+    static constexpr void set_error(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+        status = stl::to_underlying(value);
+    }
+
+    static constexpr void set_warning(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+        status |= stl::to_underlying(value);
+    }
+
     [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status) noexcept {
         return static_cast<uri_status>((warning_bit >> 0) & status);
     }

@@ -41,11 +41,11 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '#':
                     ctx.out.clear_fragment();
-                    ctx.status |= stl::to_underlying(uri_status::valid_fragment);
+                    uri::set_valid(ctx.status, uri_status::valid_fragment);
                     ++ctx.pos;
                     break;
                 default:
-                    ctx.status |= stl::to_underlying(uri_status::invalid_character);
+                    uri::set_warning(ctx.status, uri_status::invalid_character);
                     ++ctx.pos;
                     // invalid characters are not errors
                     continue;
