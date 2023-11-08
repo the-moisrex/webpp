@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_STATUS_HPP
 #define WEBPP_URI_STATUS_HPP
 
+#include "../../ip/ip.hpp"
 #include "../../std/string_view.hpp"
 #include "../../std/utility.hpp"
 
@@ -87,9 +88,22 @@ namespace webpp::uri {
         // ipv4-specific errors and warnings:
         // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
 
+        // ipv4 and ipv6 errors:
+        ip_too_little_octets    = error_bit | stl::to_underlying(ip_address_status::too_little_octets),
+        ip_too_many_octets      = error_bit | stl::to_underlying(ip_address_status::too_many_octets),
+        ip_invalid_octet_range  = error_bit | stl::to_underlying(ip_address_status::invalid_octet_range),
+        ip_invalid_leading_zero = error_bit | stl::to_underlying(ip_address_status::invalid_leading_zero),
+        ip_bad_ending           = error_bit | stl::to_underlying(ip_address_status::bad_ending),
+        ip_invalid_character    = error_bit | stl::to_underlying(ip_address_status::invalid_character),
+        ip_invalid_colon_usage  = error_bit | stl::to_underlying(ip_address_status::invalid_colon_usage),
+
+        // ipv6-specific errors and warnings:
+        ipv6_unclosed           = error_bit | 15U,
+        ipv6_char_after_closing = error_bit | 16U,
+
         // port-specific errors:
-        port_out_of_range = error_bit | 15U,
-        port_invalid      = error_bit | 16U, // invalid characters and what not
+        port_out_of_range = error_bit | 17U,
+        port_invalid      = error_bit | 18U, // invalid characters and what not
 
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 9U,
@@ -119,6 +133,7 @@ namespace webpp::uri {
             case valid_punycode:
                 return {"Valid URI with unicode domain name which contains punycode"};
 
+
                 // common errors:
             case invalid_character:
                 return {"Found an invalid character in the URI; "
@@ -126,6 +141,7 @@ namespace webpp::uri {
             case too_long: return {"The URI is too long, max allowed character is 255"};
             case empty_string:
                 return {"The URI is empty."};
+
 
                 // scheme-specific errors:
             case valid_path_or_authority:
@@ -151,6 +167,7 @@ namespace webpp::uri {
             case missing_scheme_non_relative_url:
                 return {"The URI is missing scheme, and nothing was provided by the base URI; "
                         "more info: https://url.spec.whatwg.org/#missing-scheme-non-relative-url"};
+
 
                 // domain-specific errors:
             case subdomain_too_long:
@@ -180,6 +197,39 @@ namespace webpp::uri {
                   "more info: https://url.spec.whatwg.org/#invalid-credentials "
                   "and https://httpwg.org/specs/rfc9110.html#http.userinfo"};
 
+
+                // ipv4 and ipv6 errors:
+            case ip_too_little_octets:
+                return {"Host's IP address doesn't have enough octets "
+                        "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
+                        "more info at https://url.spec.whatwg.org/#ipv6-too-few-pieces"};
+            case ip_too_many_octets:
+                return {"Host's IP address has too many octets "
+                        "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
+                        "more info at https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
+                        "https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
+                        "https://url.spec.whatwg.org/#ipv4-in-ipv6-too-many-pieces and"
+                        "https://url.spec.whatwg.org/#ipv4-too-many-parts"};
+            case ip_invalid_octet_range:
+                return {"At least one octet of host's IP address is out of range "
+                        "(IPv4's limit is 255, and IPv6's limit is ); "
+                        "more info at https://url.spec.whatwg.org/#ipv4-out-of-range-part and "
+                        "https://url.spec.whatwg.org/#ipv4-in-ipv6-out-of-range-part"};
+            case ip_invalid_leading_zero: return {"Host's IPv4's octet starts with a leading zero"};
+            case ip_bad_ending: return {"Host's IP address ended unexpectedly."};
+            case ip_invalid_character: return {"Host's IP address has an invalid character"};
+            case ip_invalid_colon_usage:
+                return {"The host's IPv6 address is using a colon where it shouldn't"};
+
+
+                // ipv6-specific errors:
+            case ipv6_unclosed:
+                return {"IPv6 is missing the closing character ']'; "
+                        "more info: https://url.spec.whatwg.org/#ipv6-unclosed"};
+            case ipv6_char_after_closing:
+                return {"Invalid character found after closing (the ']' character) an IPv6 host."};
+
+
                 // port-specific errors:
             case port_out_of_range:
                 return {"Port number is too big; "
@@ -187,6 +237,7 @@ namespace webpp::uri {
             case port_invalid:
                 return {"Invalid characters used in port; "
                         "more info: https://url.spec.whatwg.org/#port-invalid"};
+
 
                 // path-specific errors/warnings:
             case valid_path: return {"Valid URI until path; parsing is not done yet."};
@@ -202,9 +253,11 @@ namespace webpp::uri {
                 return {"A 'file:' URI cannot have a Windows Drive Letter as a host; "
                         "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter-host"};
 
+
             // queries-specific errors/warnings:
             case valid_queries:
                 return {"Valid URI until queries, parsing is not done yet."};
+
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
@@ -260,7 +313,7 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status) noexcept {
-        return static_cast<uri_status>((warning_bit >> 0) & status);
+        return static_cast<uri_status>((warning_bit >> 0U) & status);
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status status) noexcept {

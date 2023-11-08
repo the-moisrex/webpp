@@ -105,9 +105,9 @@ namespace webpp::uri {
 
         const auto end_of_host_chars = is_special
                                          ? ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                             ascii_bitmap{':', '\\', '\0', '/', '?', '#', '['})
+                                             ascii_bitmap{':', '\\', '\0', '/', '?', '#', '[', ']'})
                                          : ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                             ascii_bitmap{':', '\0', '/', '?', '#', '['});
+                                             ascii_bitmap{':', '\0', '/', '?', '#', '[', ']'});
 
 
         auto const beg = ctx.pos;
@@ -120,21 +120,30 @@ namespace webpp::uri {
                 auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data());
                 switch (ipv6_parsing_result) {
                     case inet_pton6_status::valid:
-                        // todo: host missing end of ] char
-                        // uri::set_error(ctx.status, uri_status::);
-                        break;
-                    case inet_pton6_status::invalid_character:
+                        uri::set_error(ctx.status, uri_status::ipv6_unclosed);
+                        return;
+                    case inet_pton6_status::valid_special:
                         if (*ctx.pos == ']') {
                             ++ctx.pos;
-                            // todo: valid
-                            break;
+                            if (ctx.pos == ctx.end) {
+                                uri::set_valid(ctx.status, uri_status::valid);
+                                return;
+                            }
+                            switch (*ctx.pos) {
+                                case ':': uri::set_valid(ctx.status, uri_status::valid_port); break;
+                                case '/': uri::set_valid(ctx.status, uri_status::valid_path); break;
+                                case '#': uri::set_valid(ctx.status, uri_status::valid_fragment); break;
+                                case '?': uri::set_valid(ctx.status, uri_status::valid_queries); break;
+                                default:
+                                    uri::set_error(ctx.status, uri_status::ipv6_char_after_closing);
+                                    return;
+                            }
+                            ++ctx.pos;
+                            return;
                         }
-                        // todo
-                        break;
-                    case inet_pton6_status::bad_ending: break;
-                    case inet_pton6_status::invalid_prefix: break;
-                    case inet_pton6_status::invalid_octet_range: break;
-                    case inet_pton6_status::invalid_colon_usage: break;
+                        uri::set_error(ctx.status, uri_status::ipv6_unclosed);
+                        return;
+                    default: uri::set_error(ctx.status, static_cast<uri_status>(ipv6_parsing_result)); return;
                 }
                 break;
             }
@@ -152,13 +161,23 @@ namespace webpp::uri {
 
         bool inside_brackets = false;
         for (;;) {
-            ctx.pos = end_of_host_chars.find_first_not_in(ctx.pos, ctx.end);
+            if constexpr (ctx_type::is_modifiable) {
+                // changes ctx.pos
+                if (decode_uri_component(ctx.pos, ctx.end, ctx.out.host_ref(), end_of_host_chars)) {
+                    if (is_special && ctx.pos == beg) {
+                        uri::set_error(ctx.status, uri_status::host_missing);
+                        return;
+                    }
+                    uri::set_valid(ctx.status, uri_status::valid);
+                }
+            } else {
+                ctx.pos = end_of_host_chars.find_first_not_in(ctx.pos, ctx.end);
+            }
 
             switch (*ctx.pos) {
                 case ':':
                     if (!inside_brackets) {
                         uri::set_valid(ctx.status, uri_status::valid_port);
-                        ++ctx.pos;
                     }
                     break;
                 case '#':
@@ -171,8 +190,14 @@ namespace webpp::uri {
                     }
                     uri::set_valid(ctx.status, uri_status::valid);
                     break;
-                case '[': {
+                case '[': { // not an ipv6 since this is not the first character
                     inside_brackets = true;
+                    ++ctx.pos;
+                    continue;
+                }
+                case ']': {
+                    inside_brackets = false;
+                    ++ctx.pos;
                     continue;
                 }
                 case '\\':
@@ -188,11 +213,10 @@ namespace webpp::uri {
             break;
         }
 
-        if constexpr (ctx_type::is_modifiable) {
-            // todo
-        } else {
-            // todo
+        if constexpr (!ctx_type::is_modifiable) {
+            ctx.out.host(beg, ctx.pos);
         }
+        ++ctx.pos;
     }
 
 

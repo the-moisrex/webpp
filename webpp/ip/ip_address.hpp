@@ -10,26 +10,6 @@
 namespace webpp {
 
     /**
-     * This is the combination of both of ipv4 and ipv6 parsing status enums:
-     *   - inet_pton4_status
-     *   - inet_pton6_status
-     */
-    enum struct ip_address_status : stl::uint_fast8_t {
-        valid                = 255U,
-        too_little_octets    = 254U, // not enough octets
-        too_many_octets      = 253U, // found too many octets
-        invalid_octet_range  = 252U, // at least one octet is not in range
-        invalid_leading_zero = 251U, // the octet is starting with an invalid leading zero
-        invalid_character    = 250U, // found a non-standard character
-        bad_ending           = 249U, // The ip ended badly
-        invalid_octet        = 248U, // Found an invalid character in the octets
-        invalid_prefix       = 247U, // The ip has and invalid prefix
-        invalid_colon_usage  = 246U  // the ip is using colon where it shouldn't
-    };
-
-
-
-    /**
      * Represents an IPv4 or IPv6
      */
     struct ip_address : stl::variant<ipv4, ipv6> {
@@ -41,7 +21,7 @@ namespace webpp {
       private:
         constexpr void parse(stl::string_view ip_addr) noexcept {
             // first, let's try parsing it as an ipv4 address
-            if (ipv4 const ip4{ip_addr}; ip4.status() == inet_pton4_status::invalid_octet) {
+            if (ipv4 const ip4{ip_addr}; ip4.status() == inet_pton4_status::invalid_character) {
                 *this = ipv6{ip_addr};
             } else {
                 // either it's a valid ipv4, or it's completely invalid ip address,

@@ -112,7 +112,7 @@ namespace webpp::uri {
                 ipv4_octets octets;
                 auto        host_ptr = hostname.data();
                 auto const  host_end = host_ptr + hostname.size(); // NOLINT(*-pro-bounds-pointer-arithmetic)
-                auto const  res      = inet_pton4(host_ptr, host_end, octets.data());
+                auto const  res      = inet_pton4(host_ptr, host_end, octets.data(), ':');
                 switch (res) {
                     using enum inet_pton4_status;
                     case valid: {
@@ -121,7 +121,7 @@ namespace webpp::uri {
                         endpoint.emplace<struct ipv4>(octets);
                         return;
                     }
-                    case invalid_character: {
+                    case valid_special: {
                         // we might have a port
                         if (':' == *host_ptr) {
                             // doesn't matter if the port was valid or not, we're just going to add it anyway

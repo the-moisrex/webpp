@@ -76,23 +76,19 @@ namespace webpp {
     }
 
 
-    /**
-     * @brief this function will decode parts of uri
-     * @details this function is almost the same as "decodeURIComponent" in javascript
-     */
-    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
-              istl::StringViewifiable StrVT   = stl::string_view,
-              istl::String            OutStrT = stl::string>
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
+              typename Iter,
+              typename CIter,
+              istl::String OutStrT = stl::string>
     [[nodiscard]] static constexpr bool
-    decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
-        using char_type = istl::char_type_of_t<StrVT>;
+    decode_uri_component(Iter& pos, CIter end, OutStrT& output, CharSet auto const& chars) {
+        using char_type = istl::char_type_of_t<typename stl::iterator_traits<Iter>::pointer>;
 
         webpp_static_constexpr auto ones = static_cast<int>(~0UL);
 
-        auto const str = istl::string_viewify(stl::forward<StrVT>(encoded_str));
-        for (auto pos = str.begin(); pos != str.end(); ++pos) {
+        for (; pos != end; ++pos) {
             if (*pos == static_cast<char_type>('%')) {
-                if (pos++ >= str.end() - 2) [[unlikely]] {
+                if (pos++ >= end - 2) [[unlikely]] {
                     return false;
                 }
 
@@ -118,6 +114,19 @@ namespace webpp {
             }
         }
         return true;
+    }
+    /**
+     * @brief this function will decode parts of uri
+     * @details this function is almost the same as "decodeURIComponent" in javascript
+     */
+    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
+              istl::StringViewifiable StrVT   = stl::string_view,
+              istl::String            OutStrT = stl::string>
+    [[nodiscard]] static constexpr bool
+    decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
+        auto const str = istl::string_viewify(stl::forward<StrVT>(encoded_str));
+        auto       pos = str.begin();
+        return decode_uri_component(pos, str.end(), output, chars);
     }
 
     /// encode one character and add it to the output
