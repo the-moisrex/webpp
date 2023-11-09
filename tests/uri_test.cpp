@@ -274,7 +274,7 @@ TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.scheme(), "urn");
-    EXPECT_EQ(context.out.host(), "this");
+    EXPECT_EQ(context.out.host(), "th%is");
     EXPECT_EQ(context.out.path(), "/is/a/path");
 }
 
@@ -303,4 +303,27 @@ TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.scheme(), "ldap");
     EXPECT_EQ(context.out.fragment(), "one");
+}
+
+TEST(URITests, IPv4AsHost) {
+    stl::string_view const str = "http://127.0.0.1/page/one";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.scheme(), "http");
+    EXPECT_EQ(context.out.host(), "127.0.0.1");
+    EXPECT_EQ(context.out.path(), "/page/one");
+}
+
+TEST(URITests, InvalidIPv4AsHost) {
+    stl::string_view const str = "http://12l.0.0.1/page/one";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_FALSE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::ip_invalid_character)
+      << to_string(uri::get_value(context.status));
 }
