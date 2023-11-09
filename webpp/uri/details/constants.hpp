@@ -148,6 +148,33 @@ namespace webpp::uri::details {
                                                        ascii_bitmap{charset('+', ',')},
                                                        bitmap_range<'$', '&', 256U>()};
 
+    /// https://url.spec.whatwg.org/#forbidden-host-code-point
+    /// U+0000 NULL, U+0009 TAB, U+000A LF, U+000D CR, U+0020 SPACE, U+0023 (#), U+002F (/), U+003A (:),
+    /// U+003C (<), U+003E (>), U+003F (?), U+0040 (@), U+005B ([), U+005C (\), U+005D (]), U+005E (^), or
+    /// U+007C (|)
+    static constexpr ascii_bitmap FORBIDDEN_HOST_CODE_POINTS{'\0',
+                                                             '\t',
+                                                             '\r',
+                                                             '\xA',
+                                                             ' ',
+                                                             '#',
+                                                             '/',
+                                                             ':',
+                                                             '<',
+                                                             '>',
+                                                             '?',
+                                                             '@',
+                                                             '[',
+                                                             '\\',
+                                                             ']',
+                                                             '^',
+                                                             '|'};
+
+    /// https://url.spec.whatwg.org/#forbidden-domain-code-point
+    /// A forbidden domain code point is a forbidden host code point, a C0 control, U+0025 (%), or U+007F
+    /// DELETE.
+    static constexpr ascii_bitmap FORBIDDEN_DOMAIN_CODE_POINTS{FORBIDDEN_HOST_CODE_POINTS,
+                                                               ascii_bitmap{'%', '\x7F'}};
 
     // NOLINTEND(*-magic-numbers)
 

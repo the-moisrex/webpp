@@ -17,6 +17,32 @@ namespace webpp {
     };
 
 
+    template <typename Iter, typename CIter>
+    static constexpr void encode_uri_component_set_capacity(Iter pos, CIter end, istl::String auto& output) {
+        const auto input_size = end - pos;
+        { // todo: see if this is necessary/performant
+            const auto new_capacity =
+              output.size() +
+              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
+            if (output.capacity() < new_capacity) {
+                output.reserve(new_capacity);
+            }
+        }
+    }
+
+    static constexpr void encode_uri_component_set_capacity(istl::StringView auto str,
+                                                            istl::String auto&    output) {
+        const auto input_size = str.size();
+        { // todo: see if this is necessary/performant
+            const auto new_capacity =
+              output.size() +
+              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
+            if (output.capacity() < new_capacity) {
+                output.reserve(new_capacity);
+            }
+        }
+    }
+
 
     /**
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
@@ -126,7 +152,7 @@ namespace webpp {
     decode_uri_component(StrVT&& encoded_str, OutStrT& output, CharSet auto const& chars) {
         auto const str = istl::string_viewify(stl::forward<StrVT>(encoded_str));
         auto       pos = str.begin();
-        return decode_uri_component(pos, str.end(), output, chars);
+        return decode_uri_component<Policy>(pos, str.end(), output, chars);
     }
 
     /// encode one character and add it to the output
@@ -143,6 +169,38 @@ namespace webpp {
                 output += inp_char;
                 return;
             }
+        } else {
+            if (!chars.contains(inp_char)) {
+                output += inp_char;
+                return;
+            }
+        }
+        output += ascii::to_percent_hex<char_type>(inp_char);
+    }
+
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, istl::CharType CharT>
+    static constexpr bool encode_uri_component(CharT               inp_char,
+                                               istl::String auto&  output,
+                                               CharSet auto const& chars,
+                                               CharSet auto const& invalid_chars) {
+        using char_type   = CharT;
+        using string_type = stl::remove_cvref_t<decltype(output)>;
+        static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
+                      "The specified string do not have the same char type.");
+
+        if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+            if (chars.contains(inp_char)) {
+                output += inp_char;
+                return true;
+            }
+        } else {
+            if (!chars.contains(inp_char)) {
+                output += inp_char;
+                return true;
+            }
+        }
+        if (invalid_chars.contains(inp_char)) {
+            return false;
         }
         output += ascii::to_percent_hex<char_type>(inp_char);
     }
@@ -171,40 +229,48 @@ namespace webpp {
               istl::StringViewifiable InpStrT = stl::string_view>
     static constexpr void
     encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& chars) {
-        const auto input      = istl::string_viewify(stl::forward<InpStrT>(src));
-        const auto input_size = input.size();
-        { // todo: see if this is necessary/performant
-            const auto new_capacity =
-              output.size() +
-              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
-            if (output.capacity() < new_capacity) {
-                output.reserve(new_capacity);
-            }
-        }
+        const auto input = istl::string_viewify(stl::forward<InpStrT>(src));
         for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, chars);
         }
-        output.shrink_to_fit();
     }
 
     /// Iterator based encoding
     template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, typename Iter, typename CIter>
     static constexpr void
     encode_uri_component(Iter beg, CIter end, istl::String auto& output, CharSet auto const& chars) {
-        const auto input_size = end - beg;
-        { // todo: see if this is necessary/performant
-            const auto new_capacity =
-              output.size() +
-              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
-            if (output.capacity() < new_capacity) {
-                output.reserve(new_capacity);
-            }
-        }
         for (auto pos = beg; pos != end; ++pos) {
             encode_uri_component<Policy>(*pos, output, chars);
         }
-        output.shrink_to_fit();
     }
+
+    /// Encode the specified characters, otherwise if it's an invalid character, then return false.
+    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, typename Iter, typename CIter>
+    [[nodiscard]] static constexpr bool encode_uri_component(Iter&               pos,
+                                                             CIter               end,
+                                                             istl::String auto&  output,
+                                                             CharSet auto const& policy_chars,
+                                                             CharSet auto const& invalid_chars) {
+        for (; pos != end; ++pos) {
+            if (!encode_uri_component<Policy>(*pos, output, policy_chars, invalid_chars)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
+    template <typename Iter, typename CIter = Iter>
+    [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, CIter end) noexcept {
+        webpp_assume(*pos == '%');
+        if (pos + 2 > end || !ascii::is_hex_digit(pos[1]) || !ascii::is_hex_digit(pos[1])) {
+            return false;
+        }
+        pos += 2;
+        return true;
+    }
+
 
 
 

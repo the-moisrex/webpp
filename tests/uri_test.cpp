@@ -248,3 +248,59 @@ TEST(URITests, PathTraverser) {
     EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
     EXPECT_TRUE(iter.at_end());
 }
+
+
+TEST(URITests, OpaqueHostParser) {
+    stl::string_view const str = "urn://this/is/a/path";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.scheme(), "urn");
+    EXPECT_EQ(context.out.host(), "this");
+    EXPECT_EQ(context.out.path(), "/is/a/path");
+}
+
+TEST(URITests, OpaqueHostParserWarning) {
+    stl::string_view const str = "urn://th%is/is/a/path";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::uri_status::invalid_character, uri::get_warning(context.status))
+      << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.scheme(), "urn");
+    EXPECT_EQ(context.out.host(), "this");
+    EXPECT_EQ(context.out.path(), "/is/a/path");
+}
+
+
+TEST(URITests, OpaqueHostWithIPv6) {
+    stl::string_view const str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.scheme(), "ldap");
+    EXPECT_EQ(context.out.host(), "[2001:db8::7]");
+    EXPECT_EQ(context.out.path(), "/c=GB");
+    EXPECT_EQ(context.out.queries(), "?objectClass?one");
+}
+
+TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
+    stl::string_view const str = "ldap://#one";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.scheme(), "ldap");
+    EXPECT_EQ(context.out.fragment(), "one");
+}

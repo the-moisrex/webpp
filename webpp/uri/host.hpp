@@ -21,6 +21,62 @@ namespace webpp::uri {
           uri::parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#host-parsing
         }
+
+
+        template <typename... T>
+        static constexpr void parse_opaque_host(uri::parsing_uri_context<T...>& ctx) noexcept(
+          uri::parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#concept-opaque-host-parser
+
+            using ctx_type = uri::parsing_uri_context<T...>;
+
+            webpp_static_constexpr auto stop_chars_for_opaque_host = FORBIDDEN_HOST_CODE_POINTS;
+
+            auto const beg = ctx.pos;
+            for (;;) {
+                if constexpr (ctx_type::is_modifiable) {
+                    encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.get_host_ref());
+
+                    if (encode_uri_component<uri_encoding_policy::disallowed_chars>(
+                          ctx.pos,
+                          ctx.end,
+                          ctx.host_ref(),
+                          C0_CONTROL_ENCODE_SET,
+                          stop_chars_for_opaque_host)) {
+                        uri::set_valid(ctx.status, uri_status::valid);
+                        break;
+                    }
+                } else {
+                    ctx.pos = stop_chars_for_opaque_host.find_first_in(ctx.pos, ctx.end);
+                    if (ctx.pos == ctx.end) {
+                        uri::set_valid(ctx.status, uri_status::valid);
+                        break;
+                    }
+                }
+
+
+                switch (*ctx.pos) {
+                    case '%': {
+                        if (!validate_percent_encode(ctx.pos, ctx.end)) {
+                            uri::set_warning(ctx.status, uri_status::invalid_character);
+                            continue;
+                        }
+                        ++ctx.pos;
+                        continue;
+                    }
+                    case '/': uri::set_valid(ctx.status, uri_status::valid_path); break;
+                    case '#': uri::set_valid(ctx.status, uri_status::valid_fragment); break;
+                    case '?': uri::set_valid(ctx.status, uri_status::valid_queries); break;
+                    default: uri::set_error(ctx.status, uri_status::invalid_host_code_point); return;
+                }
+                break;
+            }
+
+            if constexpr (!ctx_type::is_modifiable) {
+                ctx.out.host(beg, ctx.pos);
+            }
+        }
+
     } // namespace details
 
     /// Path start state (I like to call it authority end because it's more RFC like to say that,
@@ -103,11 +159,9 @@ namespace webpp::uri {
             return;
         }
 
-        const auto end_of_host_chars = is_special
-                                         ? ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                             ascii_bitmap{':', '\\', '\0', '/', '?', '#', '[', ']'})
-                                         : ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-                                             ascii_bitmap{':', '\0', '/', '?', '#', '[', ']'});
+        const auto end_of_host_chars = ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
+          ascii_bitmap{':', '\\', '\0', '/', '?', '#', '[', ']'});
+
 
 
         auto const beg = ctx.pos;
@@ -117,7 +171,7 @@ namespace webpp::uri {
             case '[': {
                 ++ctx.pos;
                 stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
-                auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data());
+                auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']');
                 switch (ipv6_parsing_result) {
                     case inet_pton6_status::valid:
                         uri::set_error(ctx.status, uri_status::ipv6_unclosed);
@@ -125,6 +179,7 @@ namespace webpp::uri {
                     case inet_pton6_status::valid_special:
                         if (*ctx.pos == ']') {
                             ++ctx.pos;
+                            ctx.out.host(beg, ctx.pos);
                             if (ctx.pos == ctx.end) {
                                 uri::set_valid(ctx.status, uri_status::valid);
                                 return;
@@ -143,7 +198,11 @@ namespace webpp::uri {
                         }
                         uri::set_error(ctx.status, uri_status::ipv6_unclosed);
                         return;
-                    default: uri::set_error(ctx.status, static_cast<uri_status>(ipv6_parsing_result)); return;
+                    default:
+                        uri::set_error(
+                          ctx.status,
+                          static_cast<uri_status>(uri::error_bit | stl::to_underlying(ipv6_parsing_result)));
+                        return;
                 }
                 break;
             }
@@ -159,12 +218,17 @@ namespace webpp::uri {
             case ':': uri::set_error(ctx.status, uri_status::host_missing); return;
         }
 
-        bool inside_brackets = false;
+        if (!is_special) {
+            details::parse_opaque_host(ctx);
+            return;
+        }
+
         for (;;) {
             if constexpr (ctx_type::is_modifiable) {
                 // changes ctx.pos
+                // todo: UTF-8 and punycodes
                 if (decode_uri_component(ctx.pos, ctx.end, ctx.out.host_ref(), end_of_host_chars)) {
-                    if (is_special && ctx.pos == beg) {
+                    if (ctx.pos == beg) {
                         uri::set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
@@ -175,31 +239,17 @@ namespace webpp::uri {
             }
 
             switch (*ctx.pos) {
-                case ':':
-                    if (!inside_brackets) {
-                        uri::set_valid(ctx.status, uri_status::valid_port);
-                    }
-                    break;
+                case ':': uri::set_valid(ctx.status, uri_status::valid_port); break;
                 case '#':
                     uri::set_valid(ctx.status, uri_status::valid_fragment);
                     break;
                 [[unlikely]] case '\0':
-                    if (is_special && ctx.pos == beg) {
+                    if (ctx.pos == beg) {
                         uri::set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
                     uri::set_valid(ctx.status, uri_status::valid);
                     break;
-                case '[': { // not an ipv6 since this is not the first character
-                    inside_brackets = true;
-                    ++ctx.pos;
-                    continue;
-                }
-                case ']': {
-                    inside_brackets = false;
-                    ++ctx.pos;
-                    continue;
-                }
                 case '\\':
                 case '/':
                 case '?':
