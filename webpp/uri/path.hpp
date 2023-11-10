@@ -8,6 +8,7 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "details/constants.hpp"
+#include "details/special_schemes.hpp"
 #include "details/uri_components.hpp"
 #include "encoding.hpp"
 
@@ -107,6 +108,51 @@ namespace webpp::uri {
     static constexpr void
     parse_path(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
+
+        using details::ascii_bitmap;
+
+        const bool is_special = is_special_scheme(ctx.out.scheme());
+
+        auto const end_of_path_chars =
+          is_special ? ascii_bitmap{'\\', '\0', '/', '?', '#', '%'} : ascii_bitmap{'\0', '/', '?', '#', '%'};
+
+        if (ctx.pos == ctx.end) {
+            ctx.out.clear_path();
+            uri::set_valid(ctx.status, uri_status::valid);
+            return;
+        }
+
+        for (;;) {
+            ctx.pos = end_of_path_chars.find_first_in(ctx.pos, ctx.end);
+            if (ctx.pos == ctx.end) {
+                uri::set_valid(ctx.status, uri_status::valid);
+                break;
+            }
+            switch (*ctx.pos) {
+                case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                case '\0':
+                case '/':
+                    // todo
+                    break;
+                case '?':
+                    uri::set_valid(ctx.status, uri_status::valid_queries);
+                    ++ctx.pos;
+                    break;
+                case '#':
+                    uri::set_valid(ctx.status, uri_status::valid_fragment);
+                    ++ctx.pos;
+                    break;
+                case '%':
+                    if (!validate_percent_encode(ctx.pos, ctx.end)) {
+                        uri::set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    break;
+                default:
+                    // todo
+                    break;
+            }
+            break;
+        }
     }
 
     /**

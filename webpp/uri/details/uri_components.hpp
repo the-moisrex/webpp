@@ -3,8 +3,11 @@
 #ifndef WEBPP_URL_COMPONENTS_HPP
 #define WEBPP_URL_COMPONENTS_HPP
 
+#include "../../std/collection.hpp"
 #include "../../std/concepts.hpp"
+#include "../../std/map.hpp"
 #include "../../std/string_like.hpp"
+#include "../../std/vector.hpp"
 #include "./uri_status.hpp"
 
 #include <cstdint>
@@ -58,6 +61,8 @@ namespace webpp::uri {
         static constexpr bool is_nothrow = true;
 
         static constexpr bool is_modifiable = false;
+
+        static constexpr bool is_segregated = false;
 
       private:
         iterator uri_beg{};
@@ -272,6 +277,7 @@ namespace webpp::uri {
     template <istl::StringLike StrT, typename Iter>
     struct uri_components<StrT, Iter> {
         using string_type   = StrT;
+        using iterator      = Iter;
         using seg_type      = string_type;
         using char_type     = typename string_type::value_type;
         using size_type     = typename string_type::size_type;
@@ -286,6 +292,8 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
+        static constexpr bool is_segregated = false;
+
       private:
         string_type m_scheme{};
         string_type m_username{};
@@ -299,8 +307,8 @@ namespace webpp::uri {
       public:
         // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(field)                                                              \
-    template <istl::StringView StrVT = stl::string_view>                              \
-    [[nodiscard]] constexpr StrT field() const noexcept {                             \
+    template <istl::StringView StrVT = stl::basic_string_view<char_type>>             \
+    [[nodiscard]] constexpr StrVT field() const noexcept {                            \
         return {m_##field.data(), m_##field.size()};                                  \
     }                                                                                 \
                                                                                       \
@@ -405,49 +413,151 @@ namespace webpp::uri {
 
 
 
-    using uri_components_view = uri_components<stl::string_view, stl::string_view::const_pointer>;
+
+
+    /**
+     * URI Components fully separated
+     *   - Domains are split into its subdomains
+     *   - Path are split into its segments
+     *   - Queries are mapped
+     */
+    template <istl::LinearContainer VecOfStr, istl::MapContainer MapOfStr>
+    struct uri_components<VecOfStr, MapOfStr> {
+        using vec_type      = VecOfStr;
+        using map_type      = MapOfStr;
+        using string_type   = typename vec_type::value_type;
+        using seg_type      = string_type;
+        using iterator      = typename string_type::iterator;
+        using char_type     = typename string_type::value_type;
+        using size_type     = typename string_type::size_type;
+        using pointer       = typename string_type::pointer;
+        using const_pointer = typename string_type::const_pointer;
+
+
+        /// maximum number that this url component class supports
+        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
+
+        /// is resetting the values are noexcept or not
+        static constexpr bool is_nothrow = false;
+
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+
+        static constexpr bool is_segregated = true;
+
+      private:
+        string_type m_scheme{};
+        string_type m_username{};
+        string_type m_password{};
+        vec_type    m_host{};
+        string_type m_port{};
+        vec_type    m_path{};
+        map_type    m_queries{};
+        string_type m_fragment{};
+
+      public:
+        // NOLINTBEGIN(*-macro-usage)
+#define webpp_def(field)                                                              \
+    template <istl::StringView StrVT = stl::string_view>                              \
+    [[nodiscard]] constexpr StrVT field() const noexcept {                            \
+        return {m_##field.data(), m_##field.size()};                                  \
+    }                                                                                 \
+                                                                                      \
+    constexpr void clear_##field() noexcept {                                         \
+        istl::clear(m_##field);                                                       \
+    }                                                                                 \
+                                                                                      \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                       \
+        return !m_##field.empty();                                                    \
+    }                                                                                 \
+                                                                                      \
+    constexpr void field(const_pointer beg, const_pointer end) noexcept(is_nothrow) { \
+        istl::assign(m_##field, beg, end);                                            \
+    }                                                                                 \
+                                                                                      \
+    constexpr void field(decltype(m_##field)&& str) noexcept(is_nothrow) {            \
+        m_##field = stl::move(str);                                                   \
+    }                                                                                 \
+                                                                                      \
+    constexpr auto& field##_ref() noexcept {                                          \
+        return m_##field;                                                             \
+    }                                                                                 \
+                                                                                      \
+    constexpr auto const& field##_ref() const noexcept {                              \
+        return m_##field;                                                             \
+    }
+
+
+
+        webpp_def(scheme)     //
+          webpp_def(username) //
+          webpp_def(password) //
+          webpp_def(host)     //
+          webpp_def(port)     //
+          webpp_def(path)     //
+          webpp_def(queries)  //
+          webpp_def(fragment) //
+
+        // NOLINTEND(*-macro-usage)
+#undef webpp_def
+
+          [[nodiscard]] constexpr bool has_credentials() const noexcept {
+            return has_username(); // password cannot exist without the username
+        }
+    };
+
+
+
+
+
+    using uri_components_view = uri_components<stl::string_view, stl::string_view::const_iterator>;
     using uri_components_u32  = uri_components<stl::uint32_t, const char*>;
 
 
     /**
      * A class used during parsing a URI
      */
-    template <typename Iter = const char*, typename OutSegType = stl::uint32_t, typename BaseSegType = void>
+    template <typename OutSegType  = stl::uint32_t,
+              typename OutIter     = const char*,
+              typename BaseSegType = void,
+              typename BaseIter    = OutIter>
     struct parsing_uri_context {
-        using iterator        = Iter;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using out_seg_type    = OutSegType;
         using base_seg_type   = BaseSegType;
-        using out_type        = uri::uri_components<out_seg_type, iterator>;
-        using base_type       = uri::uri_components<base_seg_type, iterator>;
+        using out_type        = uri::uri_components<out_seg_type, OutIter>;
+        using base_type       = uri::uri_components<base_seg_type, BaseIter>;
+        using iterator        = typename out_type::iterator;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
         static constexpr bool is_modifiable = out_type::is_modifiable;
+        static constexpr bool is_segregated = out_type::is_segregated;
 
         iterator   beg{}; // the beginning of the string, not going to change during parsing
         iterator   pos{}; // current position
         iterator   end{}; // the end of the string
         out_type   out{}; // the output uri components
-        state_type status = stl::to_underlying(uri_status::unparsed);
+        state_type status     = stl::to_underlying(uri_status::unparsed);
+        bool       is_special = false;
     };
 
-    template <typename Iter, istl::StringLike OutSegType, typename BaseSegType>
-    struct parsing_uri_context<Iter, OutSegType, BaseSegType> {
-        using iterator        = Iter;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+    template <typename OutSegType, istl::StringLike OutIter, typename BaseSegType, typename BaseIter>
+    struct parsing_uri_context<OutSegType, OutIter, BaseSegType, BaseIter> {
         using out_seg_type    = OutSegType;
         using base_seg_type   = BaseSegType;
-        using out_type        = uri::uri_components<out_seg_type, iterator>;
-        using base_type       = uri::uri_components<base_seg_type, iterator>;
+        using out_type        = uri::uri_components<out_seg_type, OutIter>;
+        using base_type       = uri::uri_components<base_seg_type, BaseIter>;
+        using iterator        = typename out_type::iterator;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = stl::underlying_type_t<uri_status>;
 
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
         static constexpr bool is_modifiable = out_type::is_modifiable;
+        static constexpr bool is_segregated = out_type::is_segregated;
 
         // static_assert(has_base_uri && !is_modifiable,
         //               "If you have Base URI, then you need to make sure the output is overridable "
@@ -463,9 +573,25 @@ namespace webpp::uri {
         iterator end{};
         out_type out{};
         [[no_unique_address]] base_type base{};
-        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        state_type                      status     = stl::to_underlying(uri_status::unparsed);
+        bool                            is_special = false;
     };
 
+
+    using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, const char*>;
+
+    template <typename CharT = char>
+    using parsing_uri_context_view =
+      parsing_uri_context<stl::basic_string_view<CharT>,
+                          typename stl::basic_string_view<CharT>::const_iterator>;
+
+    template <istl::StringLike StrT = stl::string, typename Allocator = typename StrT::allocator_type>
+    using parsing_uri_context_segregated = parsing_uri_context<
+      stl::vector<StrT, typename stl::allocator_traits<Allocator>::template rebind_alloc<StrT>>,
+      istl::map_of_strings<StrT, Allocator>>;
+
+    template <typename Allocator = stl::allocator<char>>
+    using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
 
 } // namespace webpp::uri
 

@@ -48,10 +48,8 @@ TEST(URITests, QueryParamGeneration) {
 
 
 TEST(URITests, IntegralSchemeParsing) {
-    stl::string_view const                                     str = "http://";
-    uri::parsing_uri_context<stl::string_view::const_iterator> context{.beg = str.begin(),
-                                                                       .pos = str.begin(),
-                                                                       .end = str.end()};
+    stl::string_view const          str = "http://";
+    uri::parsing_uri_context_view<> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
@@ -63,7 +61,7 @@ TEST(URITests, IntegralSchemeParsing) {
 TEST(URITests, StringSchemeParsing) {
     stl::string_view const str = "urn:testing";
 
-    uri::parsing_uri_context<const char*, stl::string_view> context{.beg = str.data(),
+    uri::parsing_uri_context<stl::string_view, const char*> context{.beg = str.data(),
                                                                     .pos = str.data(),
                                                                     .end = str.data() + str.size()};
 

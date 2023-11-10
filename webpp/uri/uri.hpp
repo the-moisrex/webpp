@@ -94,7 +94,7 @@ namespace webpp::uri {
     template <istl::StringView StrV = stl::string_view>
     static constexpr auto parse_uri(StrV str) noexcept {
         using iterator     = typename StrV::const_iterator;
-        using context_type = uri::parsing_uri_context<iterator, StrV>;
+        using context_type = uri::parsing_uri_context<StrV, iterator>;
         context_type context{.beg = str.begin(),
                              .pos = str.begin(), // current position is start
                              .end = str.end()};
@@ -110,7 +110,7 @@ namespace webpp::uri {
         using iterator             = typename StrT::const_iterator;
         using base_components_type = uri::uri_components<SegType>;
         using base_seg_type        = typename base_components_type::seg_type;
-        using context_type         = uri::parsing_uri_context<iterator, StrT, base_seg_type>;
+        using context_type         = uri::parsing_uri_context<StrT, iterator, base_seg_type>;
 
         context_type context{.beg  = the_url.begin(),
                              .pos  = the_url.begin(), // current position is start
@@ -128,7 +128,7 @@ namespace webpp::uri {
           stl::same_as<iterator, typename OStrV::const_iterator>,
           "Origin's string's char type must be the same as the specified URI's string's char type.");
         auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
-        using base_context_type = uri::parsing_uri_context<iterator>;
+        using base_context_type = uri::parsing_uri_context<stl::uint32_t, iterator>;
 
         base_context_type origin_context{.beg = origin.begin(), .pos = origin.begin(), .end = origin.end()};
         parse_uri(origin_context);

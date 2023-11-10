@@ -271,10 +271,9 @@ namespace webpp::uri {
 
 
     template <istl::String StringType = stl::string>
-    struct basic_host : stl::vector<stl::remove_cvref_t<StringType>,
-                                    rebind_allocator<typename stl::remove_cvref_t<StringType>::allocator_type,
-                                                     stl::remove_cvref_t<StringType>>> {
-        using string_type = stl::remove_cvref_t<StringType>;
+    struct basic_host
+      : stl::vector<StringType, rebind_allocator<typename StringType::allocator_type, StringType>> {
+        using string_type = StringType;
         using super =
           stl::vector<string_type, rebind_allocator<typename string_type::allocator_type, string_type>>;
 

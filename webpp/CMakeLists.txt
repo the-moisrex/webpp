@@ -129,7 +129,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/convert/lexical_cast.hpp
 
         ${LIB_INCLUDE_DIR}/utils/const_list.hpp
-        ${LIB_INCLUDE_DIR}/utils/containers.hpp
         ${LIB_INCLUDE_DIR}/utils/debounce.hpp
         ${LIB_INCLUDE_DIR}/utils/property.hpp
         ${LIB_INCLUDE_DIR}/utils/version.hpp

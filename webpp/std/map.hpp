@@ -27,15 +27,12 @@ namespace webpp::istl {
 
 
     // todo: use better thing here that supports the allocator pack idea
-    template <typename StringType = stl::string,
-              typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
+    template <typename StringType = stl::string, typename AllocType = typename StringType::allocator_type>
     using map_of_strings =
-      stl::map<stl::remove_cvref_t<StringType>,
-               stl::remove_cvref_t<StringType>,
-               stl::less<stl::remove_cvref_t<StringType>>,
-               rebind_allocator<AllocType,
-                                stl::pair<stl::add_const_t<stl::remove_cvref_t<StringType>>,
-                                          stl::remove_cvref_t<StringType>>>>;
+      stl::map<StringType,
+               StringType,
+               stl::less<StringType>,
+               rebind_allocator<AllocType, stl::pair<stl::add_const_t<StringType>, StringType>>>;
 
 } // namespace webpp::istl
 

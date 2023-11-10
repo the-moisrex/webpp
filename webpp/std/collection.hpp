@@ -66,6 +66,29 @@ namespace webpp::istl {
 
 
     } // namespace collection
+
+
+    template <typename T>
+    concept LinearContainer = ReadOnlyCollection<T> && AppendableCollection<T> && requires(T container) {
+        typename T::value_type;
+        typename T::size_type;
+        typename T::allocator_type;
+        typename T::iterator;
+        typename T::const_iterator;
+        container.size();
+    };
+
+    template <typename T>
+    concept MapContainer = LinearContainer<T> && requires(T container) {
+        typename T::key_type;
+        typename T::mapped_type;
+        requires requires(typename T::key_type key, typename T::mapped_type value) {
+            container[key];         // get the value
+            container[key] = value; // set the value
+        };
+    };
+
+
 } // namespace webpp::istl
 
 #endif // COLLECTION_HPP
