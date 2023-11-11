@@ -15,13 +15,11 @@ namespace webpp::istl {
     concept ModifiableString = istl::String<T>;
 
 
-    template <istl::StringLike StrT>
-    constexpr void assign(StrT&                        str,
-                          typename StrT::const_pointer beg,
-                          typename StrT::const_pointer end) noexcept(istl::StringView<StrT>) {
+    template <istl::StringLike StrT, typename InputIt>
+    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(istl::StringView<StrT>) {
         if constexpr (istl::StringView<StrT>) {
             using size_type = typename StrT::size_type;
-            str             = StrT{beg, static_cast<size_type>(end - beg)};
+            str             = StrT{beg, end};
         } else {
             str.assign(beg, end);
         }

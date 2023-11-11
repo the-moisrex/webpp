@@ -19,7 +19,7 @@ namespace webpp::uri {
         using string_view_type = stl::basic_string_view<char_type>;
 
         if constexpr (ctx_type::is_modifiable) {
-            auto& output = ctx.out.get_fragment_ref();
+            auto& output = ctx.out.fragment_ref();
             // todo: this is encode, not decode
             bool const is_valid = decode_uri_component(string_view_type{ctx.beg, ctx.end},
                                                        output,

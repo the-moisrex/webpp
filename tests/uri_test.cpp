@@ -11,18 +11,18 @@
 using namespace webpp;
 
 TEST(URITests, Generation) {
-    uri::uri u;
-    EXPECT_EQ(u.scheme.size(), 0);
+    uri::uri url;
+    EXPECT_EQ(url.scheme.size(), 0);
 
-    auto alloc = u.get_allocator<std::allocator<char>>();
+    auto alloc = url.get_allocator<std::allocator<char>>();
 
     std::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
 
-    u.scheme = "https";
-    EXPECT_EQ(u.to_string(), "https://");
-    u.host = "webpp.dev";
-    EXPECT_EQ(u.to_string(), "https://webpp.dev");
+    url.scheme = "https";
+    EXPECT_EQ(url.to_string(), "https://");
+    url.host = "webpp.dev";
+    EXPECT_EQ(url.to_string(), "https://webpp.dev");
 }
 
 TEST(URITests, PathFromString) {
@@ -324,4 +324,31 @@ TEST(URITests, InvalidIPv4AsHost) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::ip_invalid_character)
       << to_string(uri::get_value(context.status));
+}
+
+TEST(URITests, PathDot) {
+    stl::string_view const str = "http://127.0.0.1/./one";
+
+    auto context = uri::parse_uri(str);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.path(), "/./one");
+}
+
+TEST(URITests, PathDotNormalized) {
+    stl::string const str = "http://127.0.0.1/./one";
+
+    uri::parsing_uri_context_string<stl::string> context{
+      .beg = str.begin(),
+      .pos = str.begin(),
+      .end = str.end(),
+    };
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.path(), "/one");
 }

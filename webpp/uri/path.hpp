@@ -4,6 +4,7 @@
 #define WEBPP_URI_PATH_HPP
 
 #include "../memory/allocators.hpp"
+#include "../std/collection.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
@@ -63,6 +64,12 @@ namespace webpp::uri {
         //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
 
+        template <typename... T>
+        static constexpr bool
+        has_normalized_windows_driver_letter(uri::parsing_uri_context<T...>& ctx) noexcept {
+            return ASCII_ALPHA.contains(*ctx.pos) && ctx.pos[1] == ':';
+        }
+
 
     } // namespace details
 
@@ -111,10 +118,11 @@ namespace webpp::uri {
 
         using details::ascii_bitmap;
 
-        const bool is_special = is_special_scheme(ctx.out.scheme());
+        using ctx_type = uri::parsing_uri_context<T...>;
 
-        auto const end_of_path_chars =
-          is_special ? ascii_bitmap{'\\', '\0', '/', '?', '#', '%'} : ascii_bitmap{'\0', '/', '?', '#', '%'};
+
+        auto const end_of_path_chars = ctx.is_special ? ascii_bitmap{'\\', '\0', '/', '?', '#', '%', '.'}
+                                                      : ascii_bitmap{'\0', '/', '?', '#', '%', '.'};
 
         if (ctx.pos == ctx.end) {
             ctx.out.clear_path();
@@ -122,6 +130,13 @@ namespace webpp::uri {
             return;
         }
 
+        bool const is_windows_path =
+          details::has_normalized_windows_driver_letter(ctx) && ctx.out.scheme() == "file";
+
+
+        auto const   beg                  = ctx.pos;
+        auto         segment_start        = beg;
+        unsigned int dotted_segment_count = 0;
         for (;;) {
             ctx.pos = end_of_path_chars.find_first_in(ctx.pos, ctx.end);
             if (ctx.pos == ctx.end) {
@@ -129,6 +144,12 @@ namespace webpp::uri {
                 break;
             }
             switch (*ctx.pos) {
+                case '.':
+                    if (segment_start + dotted_segment_count == ctx.pos) {
+                        ++dotted_segment_count;
+                    }
+                    ++ctx.pos;
+                    continue;
                 case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '\0':
                 case '/':
@@ -143,15 +164,54 @@ namespace webpp::uri {
                     ++ctx.pos;
                     break;
                 case '%':
-                    if (!validate_percent_encode(ctx.pos, ctx.end)) {
-                        uri::set_warning(ctx.status, uri_status::invalid_character);
+                    if (ctx.pos + 2 < ctx.end) {
+                        // %2E or %2e is equal to a "." (dot)
+                        if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
+                            ctx.pos += 2;
+                            dotted_segment_count += 3;
+                            break;
+                        }
+                        if (validate_percent_encode(ctx.pos, ctx.end)) {
+                            continue;
+                        }
                     }
-                    break;
+                    uri::set_warning(ctx.status, uri_status::invalid_character);
+                    continue;
                 default:
                     // todo
                     break;
             }
+
+            if ((dotted_segment_count & 0b1U) == 0b1U) { // single dot
+                // Number of chars of each dot (or %2e):
+                //   3 3 = 6  0b110 > double dot
+                //   3 1 = 4  0b100 > double dot
+                //   1 3 = 4  0b100 > double dot
+                //   1 1 = 2  0b010 > double dot
+                //   1   = 1  0b001 > single dot
+                //   3   = 3  0b011 > single dot
+                //                ^
+                //         The deciding bit
+
+                dotted_segment_count = 0;
+                continue; // ignore this path segment
+            }
+            if (dotted_segment_count != 0) { // double dot
+                // remove the last segment as well
+                dotted_segment_count = 0;
+                continue;
+            }
+
+            // setting the segment
+            dotted_segment_count = 0; // zeroing out the dot count
+            if constexpr (ctx_type::is_segregated) {
+                istl::collection::emplace(ctx.out.path_ref(), segment_start, ctx.pos);
+            } else if constexpr (ctx_type::is_modifiable) {
+            }
             break;
+        }
+        if constexpr (!ctx_type::is_segregated) {
+            ctx.out.path(beg, ctx.pos);
         }
     }
 

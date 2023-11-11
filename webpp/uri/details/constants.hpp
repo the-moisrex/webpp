@@ -105,6 +105,8 @@ namespace webpp::uri::details {
 
     using ascii_bitmap = bitmap<256U>;
 
+    static constexpr ascii_bitmap ASCII_ALPHA{ALPHA<char>};
+
     /// https://infra.spec.whatwg.org/#c0-control
     static constexpr auto C0_CONTROL_SET = bitmap_range<0X0ULL, 0X001FULL>();
 

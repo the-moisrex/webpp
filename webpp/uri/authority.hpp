@@ -26,7 +26,7 @@ namespace webpp::uri {
         using ctx_type = uri::parsing_uri_context<T...>;
         using iterator = typename ctx_type::iterator;
 
-        const auto interesting_characters = is_special_scheme(ctx.out.scheme())
+        const auto interesting_characters = ctx.is_special
                                               ? details::ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
                                               : details::ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
         iterator   atsign_pos             = ctx.end;
@@ -51,13 +51,13 @@ namespace webpp::uri {
                         if (atsign_pos != ctx.end) {
                             encode_uri_component(username_beg,
                                                  username_end,
-                                                 ctx.out.get_username_ref(),
+                                                 ctx.out.username_ref(),
                                                  details::USER_INFO_ENCODE_SET);
 
                             if (password_token_pos != ctx.end) {
                                 encode_uri_component(password_beg,
                                                      password_end,
-                                                     ctx.out.get_password_ref(),
+                                                     ctx.out.password_ref(),
                                                      details::USER_INFO_ENCODE_SET);
                             }
                         }

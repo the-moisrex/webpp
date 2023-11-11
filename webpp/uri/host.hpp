@@ -35,12 +35,12 @@ namespace webpp::uri {
             auto const beg = ctx.pos;
             for (;;) {
                 if constexpr (ctx_type::is_modifiable) {
-                    encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.get_host_ref());
+                    encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.host_ref());
 
                     if (encode_uri_component<uri_encoding_policy::disallowed_chars>(
                           ctx.pos,
                           ctx.end,
-                          ctx.host_ref(),
+                          ctx.out.host_ref(),
                           C0_CONTROL_ENCODE_SET,
                           stop_chars_for_opaque_host)) {
                         uri::set_valid(ctx.status, uri_status::valid);
@@ -57,11 +57,13 @@ namespace webpp::uri {
 
                 switch (*ctx.pos) {
                     case '%': {
-                        if (!validate_percent_encode(ctx.pos, ctx.end)) {
-                            uri::set_warning(ctx.status, uri_status::invalid_character);
-                            continue;
+                        if (ctx.pos + 2 < ctx.end) {
+                            if (validate_percent_encode(ctx.pos, ctx.end)) {
+                                continue;
+                            }
+                            ++ctx.pos;
                         }
-                        ++ctx.pos;
+                        uri::set_warning(ctx.status, uri_status::invalid_character);
                         continue;
                     }
                     case '/': uri::set_valid(ctx.status, uri_status::valid_path); break;
@@ -91,7 +93,7 @@ namespace webpp::uri {
             uri::set_valid(ctx.status, uri_status::valid);
             return;
         }
-        if (is_special_scheme(ctx.out.scheme())) {
+        if (ctx.is_special) {
             switch (*ctx.pos) {
                 case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': ++ctx.pos; break;
@@ -150,8 +152,7 @@ namespace webpp::uri {
             return;
         }
 
-        auto const scheme     = ctx.out.scheme();
-        const bool is_special = is_special_scheme(scheme);
+        auto const scheme = ctx.out.scheme();
 
         if (scheme == "file") {
             // todo: should we set the status instead?
@@ -211,14 +212,14 @@ namespace webpp::uri {
             case '\0':
             case '/':
             case '?':
-                if (is_special) {
+                if (ctx.is_special) {
                     break;
                 }
                 [[fallthrough]];
             case ':': uri::set_error(ctx.status, uri_status::host_missing); return;
         }
 
-        if (!is_special) {
+        if (!ctx.is_special) {
             details::parse_opaque_host(ctx);
             return;
         }

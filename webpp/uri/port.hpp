@@ -42,7 +42,7 @@ namespace webpp::uri {
                     ++ctx.pos;
                     break;
                 case '\\':
-                    if (is_special_scheme(ctx.out.scheme())) {
+                    if (ctx.is_special) {
                         break; // invalid port
                     }
                     [[fallthrough]];

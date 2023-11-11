@@ -258,6 +258,7 @@ namespace webpp::uri {
                         return;
                     }
                     if (is_special_scheme(ctx.out.scheme())) [[likely]] {
+                        ctx.is_special = true;
                         // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {
                             if (ctx.out.scheme() == ctx.base.scheme()) {
