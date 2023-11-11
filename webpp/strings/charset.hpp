@@ -369,10 +369,19 @@ namespace webpp {
         using super = stl::array<bool, N>;
 
         // NOLINTBEGIN(*-avoid-do-while, *-macro-usage)
-#define webpp_or_set(set, out)                                      \
-    do {                                                            \
-        for (stl::size_t index = 0; index != (set).size(); ++index) \
-            (out)[static_cast<stl::size_t>((set)[index])] |= true;  \
+#define webpp_set_at(set, out)                                        \
+    do {                                                              \
+        for (stl::size_t index = 0; index != (set).size(); ++index) { \
+            (out)[static_cast<stl::size_t>((set)[index])] = true;     \
+        }                                                             \
+    } while (false)
+
+
+#define webpp_xor_all(set, out)                                       \
+    do {                                                              \
+        for (stl::size_t index = 0; index != (set).size(); ++index) { \
+            (out)[index] |= (set)[index];                             \
+        }                                                             \
     } while (false)
         // NOLINTEND(*-avoid-do-while, *-macro-usage)
 
@@ -386,7 +395,7 @@ namespace webpp {
         {
             (
               [this, &str]() {
-                  webpp_or_set(str, *this);
+                  webpp_set_at(str, *this);
               }(),
               ...); // make them true
         }
@@ -395,7 +404,7 @@ namespace webpp {
             requires(sizeof...(T) <= N)
         explicit consteval charmap(T... data) noexcept : super{} {
             stl::array<char, sizeof...(T)> const list{data...};
-            webpp_or_set(list, *this);
+            webpp_set_at(list, *this);
         }
 
         /**
@@ -412,11 +421,11 @@ namespace webpp {
                                    charmap<NN> const&... c_sets) noexcept
           : super{} // init with false values
         {
-            webpp_or_set(set1, *this);
-            webpp_or_set(set2, *this);
+            webpp_xor_all(set1, *this);
+            webpp_xor_all(set2, *this);
             (
               [this, &c_sets]() {
-                  webpp_or_set(c_sets, *this);
+                  webpp_xor_all(c_sets, *this);
               }(),
               ...);
         }
@@ -428,7 +437,7 @@ namespace webpp {
         {
             (
               [this, &c_sets]() {
-                  webpp_or_set(c_sets, *this);
+                  webpp_set_at(c_sets, *this);
               }(),
               ...);
         }
@@ -532,7 +541,8 @@ namespace webpp {
             return *this;
         }
 
-#undef webpp_or_set
+#undef webpp_set_at
+#undef webpp_xor_all
     };
 
     /**

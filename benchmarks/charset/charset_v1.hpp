@@ -339,7 +339,7 @@ namespace webpp::charset_v1 {
         using super = stl::array<bool, N>;
 
         // NOLINTBEGIN(*-avoid-do-while)
-#define webpp_or_set(set, out)                                      \
+#define webpp_set_at(set, out)                                      \
     do {                                                            \
         for (stl::size_t index = 0; index != (set).size(); ++index) \
             (out)[static_cast<stl::size_t>((set)[index])] |= true;  \
@@ -356,7 +356,7 @@ namespace webpp::charset_v1 {
         {
             (
               [this, &str]() {
-                  webpp_or_set(str, *this);
+                  webpp_set_at(str, *this);
               }(),
               ...); // make them true
         }
@@ -365,7 +365,7 @@ namespace webpp::charset_v1 {
             requires(sizeof...(T) <= N)
         consteval charmap(T... data) noexcept : super{} {
             stl::array<char, sizeof...(T)> const list{data...};
-            webpp_or_set(list, *this);
+            webpp_set_at(list, *this);
         }
 
         /**
@@ -382,11 +382,11 @@ namespace webpp::charset_v1 {
                           charmap<NN> const&... c_sets) noexcept
           : super{} // init with false values
         {
-            webpp_or_set(set1, *this);
-            webpp_or_set(set2, *this);
+            webpp_set_at(set1, *this);
+            webpp_set_at(set2, *this);
             (
               [this, &c_sets]() {
-                  webpp_or_set(c_sets, *this);
+                  webpp_set_at(c_sets, *this);
               }(),
               ...);
         }
@@ -398,7 +398,7 @@ namespace webpp::charset_v1 {
         {
             (
               [this, &c_sets]() {
-                  webpp_or_set(c_sets, *this);
+                  webpp_set_at(c_sets, *this);
               }(),
               ...);
         }
@@ -482,7 +482,7 @@ namespace webpp::charset_v1 {
             return *this;
         }
 
-#undef webpp_or_set
+#undef webpp_set_at
     };
 
     /**

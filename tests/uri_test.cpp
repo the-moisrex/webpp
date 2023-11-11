@@ -334,7 +334,7 @@ TEST(URITests, PathDot) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.path(), "/./one");
+    EXPECT_EQ(context.out.path(), "/one");
 }
 
 TEST(URITests, PathDotNormalized) {
@@ -351,4 +351,21 @@ TEST(URITests, PathDotNormalized) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.path(), "/one");
+}
+
+TEST(URITests, PathDotNormalizedABunch) {
+    stl::string const str =
+      "http://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
+
+    uri::parsing_uri_context_string<stl::string> context{
+      .beg = str.begin(),
+      .pos = str.begin(),
+      .end = str.end(),
+    };
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.path(), "//three/");
 }
