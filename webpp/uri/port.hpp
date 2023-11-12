@@ -55,21 +55,21 @@ namespace webpp::uri {
                         uri::set_error(ctx.status, uri_status::port_out_of_range);
                         return;
                     }
-                    if (port_value == known_port(ctx.out.scheme())) {
+                    if (port_value == known_port(ctx.out.get_scheme())) {
                         ctx.out.clear_port();
-                    } else if constexpr (requires { ctx.out.port(port_value); }) {
+                    } else if constexpr (requires { ctx.out.set_port(port_value); }) {
                         // store the integer port value
-                        ctx.out.port(port_value);
+                        ctx.out.set_port(port_value);
                     } else if constexpr (requires {
-                                             ctx.out.port(static_cast<seg_type>(beg - ctx.beg),
-                                                          static_cast<seg_type>(ctx.pos - ctx.beg));
+                                             ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
+                                                              static_cast<seg_type>(ctx.pos - ctx.beg));
                                          }) {
                         // store the position of it relative to the beginning of the URI
-                        ctx.out.port(static_cast<seg_type>(beg - ctx.beg),
-                                     static_cast<seg_type>(ctx.pos - ctx.beg));
+                        ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
+                                         static_cast<seg_type>(ctx.pos - ctx.beg));
                     } else {
                         // store it as a string
-                        ctx.out.port(beg, ctx.pos);
+                        ctx.out.set_port(beg, ctx.pos);
                     }
 
                     // https://url.spec.whatwg.org/#path-start-state

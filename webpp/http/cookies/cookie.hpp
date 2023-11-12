@@ -210,9 +210,7 @@ namespace webpp::http {
          *   - whitespace and control characters
          */
         static constexpr void cookie_value_escape_to(istl::StringView auto value, auto& to) noexcept {
-            encode_uri_component<uri_encoding_policy::disallowed_chars>(value,
-                                                                        to,
-                                                                        COOKIE_VALUE_ILLEGAL_CHARS);
+            encode_uri_component<uri_encoding_policy::encode_chars>(value, to, COOKIE_VALUE_ILLEGAL_CHARS);
         }
 
         /*
@@ -221,9 +219,9 @@ namespace webpp::http {
          * respective characters.
          */
         static constexpr bool cookie_value_unescape_to(istl::StringView auto value, auto& to) noexcept {
-            return decode_uri_component<uri_encoding_policy::disallowed_chars>(value,
-                                                                               to,
-                                                                               COOKIE_VALUE_ILLEGAL_CHARS);
+            return decode_uri_component<uri_encoding_policy::encode_chars>(value,
+                                                                           to,
+                                                                           COOKIE_VALUE_ILLEGAL_CHARS);
         }
 
     } // namespace details

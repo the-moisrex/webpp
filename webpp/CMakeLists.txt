@@ -157,6 +157,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/details/constants.hpp
         ${LIB_INCLUDE_DIR}/uri/details/uri_status.hpp
         ${LIB_INCLUDE_DIR}/uri/details/uri_components.hpp
+        ${LIB_INCLUDE_DIR}/uri/details/uri_components_encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/details/special_schemes.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/fragment.hpp

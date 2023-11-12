@@ -100,9 +100,9 @@ namespace webpp::io {
                 last_err_cat = err_cat;
                 return false;
             }
-                last_err_val = 0;
-                last_err_cat = io_uring_service_state::success;
-                return true;
+            last_err_val = 0;
+            last_err_cat = io_uring_service_state::success;
+            return true;
         }
 
         constexpr bool error_on_errno(stl::integral auto ret, io_uring_service_state err_cat) noexcept {
@@ -111,9 +111,9 @@ namespace webpp::io {
                 last_err_cat = err_cat;
                 return false;
             }
-                last_err_val = 0;
-                last_err_cat = io_uring_service_state::success;
-                return true;
+            last_err_val = 0;
+            last_err_cat = io_uring_service_state::success;
+            return true;
         }
 
       public:

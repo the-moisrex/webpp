@@ -113,7 +113,7 @@ namespace webpp::is {
         using enum inet_pton6_status;
         auto const                                ip_str = istl::string_viewify(stl::forward<StrV>(ip_addr));
         auto                                      beg    = ip_str.begin();
-        stl::array<stl::uint8_t, ipv6_byte_count> out; // NOLINT(*-member-init)
+        stl::array<stl::uint8_t, ipv6_byte_count> out;             // NOLINT(*-member-init)
         return inet_pton6(beg, ip_str.end(), out.data()) == valid; // valid_special is not valid here
     }
 

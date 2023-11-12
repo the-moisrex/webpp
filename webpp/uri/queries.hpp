@@ -6,7 +6,7 @@
 #include "../memory/allocators.hpp"
 #include "../std/map.hpp"
 #include "./details/constants.hpp"
-#include "./details/uri_components.hpp"
+#include "./details/uri_components_encoding.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
@@ -20,17 +20,27 @@ namespace webpp::uri {
         using char_type        = typename ctx_type::char_type;
         using string_view_type = stl::basic_string_view<char_type>;
 
+        using details::ascii_bitmap;
+
         if (ctx.pos == ctx.end) {
-            // todo
+            uri::set_valid(ctx.status, uri_status::valid);
             return;
         }
 
-        auto* const beg = ctx.pos;
+        webpp_static_constexpr auto interesting_characters = details::QUERIES_ENCODE_SET;
+        ascii_bitmap{'%'};
+
+        auto const beg = ctx.pos;
 
         // find the end of the queries
         for (;;) {
 
             // find the next non-query character:
+            // if constexpr (ctx_type::is_segregated) {
+            // } else {
+            //     details::encode_or_validate<uri_encoding_policy::encode_chars>(ctx,
+            //                                                                    interesting_characters);
+            // }
             ctx.pos =
               uri::details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>.find_first_not_in(ctx.pos, ctx.end);
 
@@ -44,6 +54,11 @@ namespace webpp::uri {
                     uri::set_valid(ctx.status, uri_status::valid_fragment);
                     ++ctx.pos;
                     break;
+                case '%':
+                    if (!validate_percent_encode(ctx.pos, ctx.end)) {
+                        uri::set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    continue;
                 default:
                     uri::set_warning(ctx.status, uri_status::invalid_character);
                     ++ctx.pos;
@@ -53,14 +68,21 @@ namespace webpp::uri {
             break;
         }
 
-        if constexpr (ctx_type::is_modifiable) {
-            auto const query_percent_encode_set =
-              ctx.is_special ? uri::details::SPECIAL_QUERIES_ENCODE_SET : uri::details::QUERIES_ENCODE_SET;
-            string_view_type const input{beg, ctx.pos};
-            auto&                  output = ctx.out.queries();
-            encode_uri_component(input, output, query_percent_encode_set);
-        } else {
-            ctx.out.queries(beg, ctx.pos);
+        if constexpr (!ctx_type::is_segregated) {
+            if constexpr (ctx_type::is_modifiable) {
+                auto const             query_percent_encode_set = ctx.is_special
+                                                                    ? uri::details::SPECIAL_QUERIES_ENCODE_SET
+                                                                    : uri::details::QUERIES_ENCODE_SET;
+                string_view_type const input{beg, ctx.pos};
+                auto&                  output = ctx.out.queries_ref();
+                encode_uri_component(input, output, query_percent_encode_set);
+            } else {
+                ctx.out.set_queries(beg, ctx.pos);
+            }
+        }
+
+        if (ctx.pos == ctx.end) {
+            uri::set_valid(ctx.status, uri_status::valid);
         }
     }
 

@@ -10,7 +10,41 @@
 
 using namespace webpp;
 
-TEST(URITests, Generation) {
+using Types = testing::Types<uri::parsing_uri_context_string<stl::string>,
+                             uri::parsing_uri_context_string<stl::string_view>,
+                             // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
+                             uri::parsing_uri_context_u32,
+                             uri::parsing_uri_context_segregated<>,
+                             uri::parsing_uri_context_segregated_view<>,
+                             uri::parsing_uri_context<stl::string_view, const char*>>;
+template <class T>
+struct URITests : testing::Test {
+
+  private:
+    stl::string url_text;
+
+  public:
+    template <typename SpecifiedTypeParam>
+    [[nodiscard]] constexpr SpecifiedTypeParam get_context(auto str) {
+        using ctx_type    = SpecifiedTypeParam;
+        using string_type = stl::remove_cvref_t<decltype(str)>;
+        using str_iter    = typename string_type::const_iterator;
+        using iterator    = typename ctx_type::iterator;
+        if constexpr (stl::convertible_to<str_iter, iterator>) {
+            return SpecifiedTypeParam{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
+        } else if constexpr (stl::convertible_to<stl::string::iterator, iterator>) {
+            url_text = str;
+            return SpecifiedTypeParam{.beg = url_text.begin(),
+                                      .pos = url_text.begin(),
+                                      .end = url_text.end()};
+        } else {
+            return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
+        }
+    }
+};
+TYPED_TEST_SUITE(URITests, Types);
+
+TYPED_TEST(URITests, Generation) {
     uri::uri url;
     EXPECT_EQ(url.scheme.size(), 0);
 
@@ -25,7 +59,7 @@ TEST(URITests, Generation) {
     EXPECT_EQ(url.to_string(), "https://webpp.dev");
 }
 
-TEST(URITests, PathFromString) {
+TYPED_TEST(URITests, PathFromString) {
     uri::basic_path path{"/a/b/c/../d"};
     EXPECT_EQ(path.size(), 6);
     EXPECT_EQ(path[0], "");
@@ -35,7 +69,7 @@ TEST(URITests, PathFromString) {
     // EXPECT_EQ(path, "/a/b/c/../d/nice");
 }
 
-TEST(URITests, QueryParamGeneration) {
+TYPED_TEST(URITests, QueryParamGeneration) {
     uri::uri url          = "https://localhost/api/v2/content";
     url.queries["model"]  = "Encode this";
     url.queries["locale"] = "English is a locale";
@@ -47,18 +81,18 @@ TEST(URITests, QueryParamGeneration) {
 }
 
 
-TEST(URITests, IntegralSchemeParsing) {
+TYPED_TEST(URITests, IntegralSchemeParsing) {
     stl::string_view const          str = "http://";
     uri::parsing_uri_context_view<> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
-    EXPECT_EQ(context.out.scheme(), "http");
+    EXPECT_EQ(context.out.get_scheme(), "http");
     EXPECT_EQ(context.pos - str.begin(), 7);
 }
 
 
-TEST(URITests, StringSchemeParsing) {
+TYPED_TEST(URITests, StringSchemeParsing) {
     stl::string_view const str = "urn:testing";
 
     uri::parsing_uri_context<stl::string_view, const char*> context{.beg = str.data(),
@@ -68,27 +102,27 @@ TEST(URITests, StringSchemeParsing) {
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
-    EXPECT_EQ(context.out.scheme(), "urn");
+    EXPECT_EQ(context.out.get_scheme(), "urn");
     EXPECT_EQ(context.pos - str.data(), 4);
 }
 
-TEST(URITests, ParseURI) {
+TYPED_TEST(URITests, ParseURI) {
     stl::string_view const str = "urn:testing";
 
     auto       context = uri::parse_uri(str);
     auto const res     = static_cast<uri::uri_status>(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
-    EXPECT_EQ(context.out.scheme(), "urn");
-    EXPECT_EQ(context.out.path(), "testing");
+    EXPECT_EQ(context.out.get_scheme(), "urn");
+    EXPECT_EQ(context.out.get_path(), "testing");
 }
 
 
-TEST(URITests, URIParsingWithWarnings) {
+TYPED_TEST(URITests, URIParsingWithWarnings) {
     uri::uri url = "https:this-is-stupid";
     EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
 }
 
-TEST(URITests, URIStatusTest) {
+TYPED_TEST(URITests, URIStatusTest) {
     uri::uri_status_type status = 0;
     status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
     status |= stl::to_underlying(uri::uri_status::invalid_character);
@@ -101,7 +135,7 @@ TEST(URITests, URIStatusTest) {
     EXPECT_TRUE(uri::is_valid(static_cast<uri::uri_status>(status)));
 }
 
-TEST(URITests, URIStatusIterator) {
+TYPED_TEST(URITests, URIStatusIterator) {
     uri::uri_status_type status = 0;
     status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
     status |= stl::to_underlying(uri::uri_status::invalid_character);
@@ -122,7 +156,7 @@ TEST(URITests, URIStatusIterator) {
 }
 
 
-TEST(URITests, URIStatusIteratorWithValue) {
+TYPED_TEST(URITests, URIStatusIteratorWithValue) {
     uri::uri_status_type status = 0;
     status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
     status |= stl::to_underlying(uri::uri_status::invalid_character);
@@ -144,7 +178,7 @@ TEST(URITests, URIStatusIteratorWithValue) {
 }
 
 
-TEST(URITests, PercentEncodeDecodeIterator) {
+TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
     stl::string            out;
     stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     stl::string_view const decoded = "سلام";
@@ -166,7 +200,7 @@ TEST(URITests, PercentEncodeDecodeIterator) {
     EXPECT_EQ(output3, decoded) << out;
 }
 
-TEST(URITests, PercentEncodeDecodePointer) {
+TYPED_TEST(URITests, PercentEncodeDecodePointer) {
     stl::string            out;
     stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
     stl::string_view const decoded = "سلام";
@@ -191,7 +225,7 @@ TEST(URITests, PercentEncodeDecodePointer) {
 }
 
 
-TEST(URITests, BasicURIParsing) {
+TYPED_TEST(URITests, BasicURIParsing) {
     stl::string_view const str =
       "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
 
@@ -202,14 +236,14 @@ TEST(URITests, BasicURIParsing) {
       << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "https");
-    EXPECT_EQ(context.out.host(), "example.com");
-    EXPECT_EQ(context.out.username(), "username");
-    EXPECT_EQ(context.out.password(), "password");
-    EXPECT_EQ(context.out.port(), "1010");
-    EXPECT_EQ(context.out.path(), "/this/is/the/path");
-    EXPECT_EQ(context.out.queries(), "query1=one");
-    EXPECT_EQ(context.out.fragment(), "hash");
+    EXPECT_EQ(context.out.get_scheme(), "https");
+    EXPECT_EQ(context.out.get_host(), "example.com");
+    EXPECT_EQ(context.out.get_username(), "username");
+    EXPECT_EQ(context.out.get_password(), "password");
+    EXPECT_EQ(context.out.get_port(), "1010");
+    EXPECT_EQ(context.out.get_path(), "/this/is/the/path");
+    EXPECT_EQ(context.out.get_queries(), "query1=one");
+    EXPECT_EQ(context.out.get_fragment(), "hash");
     EXPECT_TRUE(context.out.has_scheme());
     EXPECT_TRUE(context.out.has_username());
     // EXPECT_TRUE(context.out.has_authority());
@@ -221,7 +255,7 @@ TEST(URITests, BasicURIParsing) {
 }
 
 
-TEST(URITests, PathIteratorTest) {
+TYPED_TEST(URITests, PathIteratorTest) {
     uri::path_iterator<> iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
     EXPECT_TRUE(iter.check_segment("one"));
@@ -233,7 +267,7 @@ TEST(URITests, PathIteratorTest) {
 }
 
 
-TEST(URITests, PathTraverser) {
+TYPED_TEST(URITests, PathTraverser) {
     uri::basic_path<stl::string> the_path;
     EXPECT_TRUE(the_path.parse(stl::string_view{"/page/one"}));
     EXPECT_EQ(the_path.size(), 3);
@@ -248,85 +282,91 @@ TEST(URITests, PathTraverser) {
 }
 
 
-TEST(URITests, OpaqueHostParser) {
+TYPED_TEST(URITests, OpaqueHostParser) {
     stl::string_view const str = "urn://this/is/a/path";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "urn");
-    EXPECT_EQ(context.out.host(), "this");
-    EXPECT_EQ(context.out.path(), "/is/a/path");
+    EXPECT_EQ(context.out.get_scheme(), "urn");
+    EXPECT_EQ(context.out.get_host(), "this");
+    EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
 
-TEST(URITests, OpaqueHostParserWarning) {
+TYPED_TEST(URITests, OpaqueHostParserWarning) {
     stl::string_view const str = "urn://th%is/is/a/path";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(str);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::uri_status::invalid_character, uri::get_warning(context.status))
       << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "urn");
-    EXPECT_EQ(context.out.host(), "th%is");
-    EXPECT_EQ(context.out.path(), "/is/a/path");
+    EXPECT_EQ(context.out.get_scheme(), "urn");
+    EXPECT_EQ(context.out.get_host(), "th%is");
+    EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
 
 
-TEST(URITests, OpaqueHostWithIPv6) {
+TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     stl::string_view const str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "ldap");
-    EXPECT_EQ(context.out.host(), "[2001:db8::7]");
-    EXPECT_EQ(context.out.path(), "/c=GB");
-    EXPECT_EQ(context.out.queries(), "?objectClass?one");
+    EXPECT_EQ(context.out.get_scheme(), "ldap");
+    EXPECT_EQ(context.out.get_host(), "[2001:db8::7]");
+    EXPECT_EQ(context.out.get_path(), "/c=GB");
+    EXPECT_EQ(context.out.get_queries(), "?objectClass?one");
 }
 
-TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
+TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
     stl::string_view const str = "ldap://#one";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "ldap");
-    EXPECT_EQ(context.out.fragment(), "one");
+    EXPECT_EQ(context.out.get_scheme(), "ldap");
+    EXPECT_EQ(context.out.get_fragment(), "one");
 }
 
-TEST(URITests, IPv4AsHost) {
+TYPED_TEST(URITests, IPv4AsHost) {
     stl::string_view const str = "http://127.0.0.1/page/one";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.scheme(), "http");
-    EXPECT_EQ(context.out.host(), "127.0.0.1");
-    EXPECT_EQ(context.out.path(), "/page/one");
+    EXPECT_EQ(context.out.get_scheme(), "http");
+    EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+    EXPECT_EQ(context.out.get_path(), "/page/one");
 }
 
-TEST(URITests, InvalidIPv4AsHost) {
+TYPED_TEST(URITests, InvalidIPv4AsHost) {
     stl::string_view const str = "http://12l.0.0.1/page/one";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_FALSE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::ip_invalid_character)
       << to_string(uri::get_value(context.status));
 }
 
-TEST(URITests, PathDot) {
+TYPED_TEST(URITests, PathDot) {
     stl::string_view const str = "http://127.0.0.1/./one";
 
     auto context = uri::parse_uri(str);
@@ -334,10 +374,10 @@ TEST(URITests, PathDot) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.path(), "/one");
+    EXPECT_EQ(context.out.get_path(), "/one");
 }
 
-TEST(URITests, PathDotNormalized) {
+TYPED_TEST(URITests, PathDotNormalized) {
     stl::string const str = "http://127.0.0.1/./one";
 
     uri::parsing_uri_context_string<stl::string> context{
@@ -350,10 +390,10 @@ TEST(URITests, PathDotNormalized) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.path(), "/one");
+    EXPECT_EQ(context.out.get_path(), "/one");
 }
 
-TEST(URITests, PathDotNormalizedABunch) {
+TYPED_TEST(URITests, PathDotNormalizedABunch) {
     stl::string const str =
       "http://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
 
@@ -367,5 +407,5 @@ TEST(URITests, PathDotNormalizedABunch) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.path(), "//three/");
+    EXPECT_EQ(context.out.get_path(), "//three/");
 }

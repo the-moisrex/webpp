@@ -12,8 +12,8 @@
 namespace webpp {
 
     enum struct uri_encoding_policy : stl::uint_fast8_t {
-        allowed_chars,   // allow the specified chars
-        disallowed_chars // allow all the chars except these
+        skip_chars,  // allow the specified chars
+        encode_chars // allow all the chars except these
     };
 
 
@@ -48,7 +48,7 @@ namespace webpp {
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
      * longer than or equal to the decoded version thus we don't need allocations.
      */
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
               typename Iter              = char*,
               typename ConstIter         = char const*>
     [[nodiscard]] static constexpr bool
@@ -78,7 +78,7 @@ namespace webpp {
                     return false;
                 }
             } else {
-                if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+                if constexpr (uri_encoding_policy::skip_chars == Policy) {
                     if (!chars.contains(*pos)) {
                         pos  = out;
                         *pos = zero_char;
@@ -102,7 +102,7 @@ namespace webpp {
     }
 
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars,
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
               typename Iter,
               typename CIter,
               istl::String OutStrT = stl::string>
@@ -127,7 +127,7 @@ namespace webpp {
                     return false;
                 }
             } else {
-                if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+                if constexpr (uri_encoding_policy::skip_chars == Policy) {
                     if (!chars.contains(*pos)) [[unlikely]] {
                         return false; // bad chars
                     }
@@ -145,7 +145,7 @@ namespace webpp {
      * @brief this function will decode parts of uri
      * @details this function is almost the same as "decodeURIComponent" in javascript
      */
-    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
+    template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
               istl::StringViewifiable StrVT   = stl::string_view,
               istl::String            OutStrT = stl::string>
     [[nodiscard]] static constexpr bool
@@ -156,7 +156,7 @@ namespace webpp {
     }
 
     /// encode one character and add it to the output
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, istl::CharType CharT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT>
     static constexpr void
     encode_uri_component(CharT inp_char, istl::String auto& output, CharSet auto const& chars) {
         using char_type   = CharT;
@@ -164,7 +164,7 @@ namespace webpp {
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
 
-        if constexpr (uri_encoding_policy::allowed_chars == Policy) {
+        if constexpr (uri_encoding_policy::skip_chars == Policy) {
             if (chars.contains(inp_char)) {
                 output += inp_char;
                 return;
@@ -178,31 +178,32 @@ namespace webpp {
         output += ascii::to_percent_hex<char_type>(inp_char);
     }
 
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, istl::CharType CharT>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT>
     static constexpr bool encode_uri_component(CharT               inp_char,
                                                istl::String auto&  output,
-                                               CharSet auto const& chars,
+                                               CharSet auto const& policy_chars,
                                                CharSet auto const& invalid_chars) {
         using char_type   = CharT;
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
                       "The specified string do not have the same char type.");
 
-        if constexpr (uri_encoding_policy::allowed_chars == Policy) {
-            if (chars.contains(inp_char)) {
+        if (invalid_chars.contains(inp_char)) {
+            return false;
+        }
+        if constexpr (uri_encoding_policy::skip_chars == Policy) {
+            if (policy_chars.contains(inp_char)) {
                 output += inp_char;
                 return true;
             }
         } else {
-            if (!chars.contains(inp_char)) {
+            if (!policy_chars.contains(inp_char)) {
                 output += inp_char;
                 return true;
             }
         }
-        if (invalid_chars.contains(inp_char)) {
-            return false;
-        }
         output += ascii::to_percent_hex<char_type>(inp_char);
+        return true;
     }
 
     /**
@@ -215,7 +216,10 @@ namespace webpp {
      * @param[in] src
      *     This is the element to encode.
      *
-     * @param[in] allowed_chars
+     * @param[in] output
+     *     Output
+     *
+     * @param[in] policy_chars
      *     This is the set of characters that do not need to
      *     be percent-encoded.
      *
@@ -225,18 +229,18 @@ namespace webpp {
      *
      * @details this function is almost the same as "encodeURIComponent" in javascript
      */
-    template <uri_encoding_policy     Policy  = uri_encoding_policy::allowed_chars,
+    template <uri_encoding_policy     Policy  = uri_encoding_policy::skip_chars,
               istl::StringViewifiable InpStrT = stl::string_view>
     static constexpr void
-    encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& chars) {
+    encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& policy_chars) {
         const auto input = istl::string_viewify(stl::forward<InpStrT>(src));
         for (auto const ith_char : input) {
-            encode_uri_component<Policy>(ith_char, output, chars);
+            encode_uri_component<Policy>(ith_char, output, policy_chars);
         }
     }
 
     /// Iterator based encoding
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, typename Iter, typename CIter>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, typename Iter, typename CIter>
     static constexpr void
     encode_uri_component(Iter beg, CIter end, istl::String auto& output, CharSet auto const& chars) {
         for (auto pos = beg; pos != end; ++pos) {
@@ -245,7 +249,7 @@ namespace webpp {
     }
 
     /// Encode the specified characters, otherwise if it's an invalid character, then return false.
-    template <uri_encoding_policy Policy = uri_encoding_policy::allowed_chars, typename Iter, typename CIter>
+    template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, typename Iter, typename CIter>
     [[nodiscard]] static constexpr bool encode_uri_component(Iter&               pos,
                                                              CIter               end,
                                                              istl::String auto&  output,
@@ -263,12 +267,15 @@ namespace webpp {
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
     template <typename Iter, typename CIter = Iter>
     [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, CIter end) noexcept {
-        webpp_assume(*pos == '%');
-        if (pos + 2 > end || !ascii::is_hex_digit(pos[1]) || !ascii::is_hex_digit(pos[1])) {
-            return false;
+        using ascii::is_hex_digit;
+        if constexpr (stl::is_pointer_v<Iter>) { // Dereferencing iterators have side effects, so we get a
+                                                 // warning in clang
+            webpp_assume(*pos == '%');
         }
-        pos += 2;
-        return true;
+
+        // NOLINTBEGIN(*-inc-dec-in-conditions)
+        return pos++ + 2 <= end && is_hex_digit(*pos++) && is_hex_digit(*pos);
+        // NOLINTEND(*-inc-dec-in-conditions)
     }
 
 

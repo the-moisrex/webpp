@@ -5,33 +5,35 @@
 
 #include "../std/string.hpp"
 #include "./details/constants.hpp"
-#include "./details/uri_components.hpp"
+#include "./details/uri_components_encoding.hpp"
 #include "encoding.hpp"
 
 namespace webpp::uri {
 
     template <typename... T>
     static constexpr void
-    parse_fragment(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+    parse_fragment(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
-        using ctx_type         = uri::parsing_uri_context<T...>;
-        using char_type        = typename ctx_type::char_type;
-        using string_view_type = stl::basic_string_view<char_type>;
+        using ctx_type  = parsing_uri_context<T...>;
+        using char_type = typename ctx_type::char_type;
 
-        if constexpr (ctx_type::is_modifiable) {
-            auto& output = ctx.out.fragment_ref();
-            // todo: this is encode, not decode
-            bool const is_valid = decode_uri_component(string_view_type{ctx.beg, ctx.end},
-                                                       output,
-                                                       uri::details::FRAGMENT_ENCODE_SET);
-            if (!is_valid) {
-                uri::set_warning(ctx.status, uri_status::invalid_character);
-                return;
+        for (;;) {
+            if (details::encode_or_validate<uri_encoding_policy::encode_chars>(ctx,
+                                                                               details::FRAGMENT_ENCODE_SET,
+                                                                               charset<char_type, 1>('%'),
+                                                                               ctx.out.fragment_ref())) {
+                break;
             }
-        } else {
-            ctx.out.fragment(ctx.pos, ctx.end);
+            switch (*ctx.pos) {
+                case '%':
+                    if (validate_percent_encode(ctx.pos, ctx.end)) {
+                        continue;
+                    }
+                    break;
+            }
+            set_warning(ctx.status, uri_status::invalid_character);
         }
-        uri::set_valid(ctx.status, uri_status::valid);
+        set_valid(ctx.status, uri_status::valid);
     }
 
     template <istl::String StringType = stl::string>

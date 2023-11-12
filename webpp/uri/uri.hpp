@@ -41,53 +41,7 @@ namespace webpp::uri {
     template <typename... T>
     static constexpr void
     parse_uri(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-        using enum uri_status;
-
-        // NOLINTBEGIN(*-macro-usage, *-avoid-do-while)
-#define webpp_parse_component(component, ...)                \
-    do {                                                     \
-        parse_##component(ctx);                              \
-        if (has_error(ctx.status)) {                         \
-            return;                                          \
-        }                                                    \
-        switch (get_value(ctx.status)) {                     \
-            case valid: return; __VA_ARGS__ default : break; \
-        }                                                    \
-    } while (false)
-
-        webpp_parse_component(
-          scheme,
-          case valid_authority: {
-              webpp_parse_component(
-                authority,
-                case valid_host: {
-                    webpp_parse_component(
-                      host,
-                      case valid_port: {
-                          webpp_parse_component(port);
-                      }
-                      case valid_path: {
-                          webpp_parse_component(path);
-                      }
-                      case valid_fragment: {
-                          webpp_parse_component(fragment);
-                      });
-                    break;
-                }
-                case valid_file_host: {
-                    webpp_parse_component(file_host);
-                    break;
-                });
-              break;
-          }
-          case valid_opaque_path: {
-              webpp_parse_component(opaque_path);
-              break;
-          });
-
-
-#undef webpp_parse_component
-        // NOLINTEND(*-macro-usage, *-avoid-do-while)
+        continue_parsing_uri(ctx);
     }
 
 

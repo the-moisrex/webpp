@@ -9,7 +9,6 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "details/constants.hpp"
-#include "details/special_schemes.hpp"
 #include "details/uri_components.hpp"
 #include "encoding.hpp"
 
@@ -65,42 +64,43 @@ namespace webpp::uri {
 
 
         template <typename... T>
-        static constexpr bool
-        has_normalized_windows_driver_letter(uri::parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr bool has_normalized_windows_driver_letter(parsing_uri_context<T...>& ctx) noexcept {
             return ASCII_ALPHA.contains(*ctx.pos) && ctx.pos[1] == ':';
         }
 
 
         template <typename... T>
         static constexpr void
-        append_path(uri::parsing_uri_context<T...>&                   ctx,
-                    typename uri::parsing_uri_context<T...>::iterator start,
-                    typename uri::parsing_uri_context<T...>::iterator end,
-                    bool const needs_encoding) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-            using ctx_type = uri::parsing_uri_context<T...>;
+        append_path(parsing_uri_context<T...>&                   ctx,
+                    typename parsing_uri_context<T...>::iterator start,
+                    typename parsing_uri_context<T...>::iterator end,
+                    bool const needs_encoding) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            using ctx_type = parsing_uri_context<T...>;
 
-            if (needs_encoding) { // slow path
-                if constexpr (ctx_type::is_segregated) {
+            if ((ctx_type::is_segregated || ctx_type::is_modifiable) && needs_encoding) { // slow path
+                if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                     auto path_ref = ctx.out.path_ref();
-                    istl::collection::emplace(path_ref, path_ref.get_allocator());
-                    encode_uri_component<uri_encoding_policy::disallowed_chars>(start,
-                                                                                end,
-                                                                                path_ref().back(),
-                                                                                details::PATH_ENCODE_SET);
+                    istl::collection::emplace_one(path_ref, path_ref.get_allocator());
+                    encode_uri_component<uri_encoding_policy::encode_chars>(start,
+                                                                            end,
+                                                                            path_ref.back(),
+                                                                            details::PATH_ENCODE_SET);
                 } else if constexpr (ctx_type::is_modifiable) {
-                    encode_uri_component<uri_encoding_policy::disallowed_chars>(start,
-                                                                                end,
-                                                                                ctx.out.path_ref(),
-                                                                                details::PATH_ENCODE_SET);
+                    encode_uri_component<uri_encoding_policy::encode_chars>(start,
+                                                                            end,
+                                                                            ctx.out.path_ref(),
+                                                                            details::PATH_ENCODE_SET);
                 }
             } else { // quicker
-                if constexpr (ctx_type::is_segregated) {
-                    istl::collection::emplace(ctx.out.path_ref(),
-                                              start,
-                                              end,
-                                              ctx.out.path_ref().get_allocator());
+                if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
+                    istl::collection::emplace_one(ctx.out.path_ref(),
+                                                  start,
+                                                  end,
+                                                  ctx.out.path_ref().get_allocator());
                 } else if constexpr (ctx_type::is_modifiable) {
                     ctx.out.path_ref().append(start, end);
+                    // } else {
+                    //     ctx.out.path(start, end);
                 }
             }
         }
@@ -108,51 +108,46 @@ namespace webpp::uri {
     } // namespace details
 
     template <typename... T>
-    static constexpr void parse_opaque_path(uri::parsing_uri_context<T...>& ctx) noexcept(
-      uri::parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void
+    parse_opaque_path(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
-        auto path_end = ctx.pos;
-        while (path_end != ctx.end) {
+        for (;;) {
+            if (details::encode_or_validate<uri_encoding_policy::encode_chars>(
+                  ctx,
+                  details::C0_CONTROL_ENCODE_SET,
+                  details::ascii_bitmap('%', '#', '?'),
+                  ctx.out.path_ref())) { // todo: path ref doesn't work for integer version
+                break;
+            }
             switch (*ctx.pos) {
                 case '?':
                     ctx.out.clear_queries();
-                    ++path_end;
-                    uri::set_valid(ctx.status, uri_status::valid_queries);
+                    set_valid(ctx.status, uri_status::valid_queries);
                     break;
                 case '#':
                     ctx.out.clear_fragment();
-                    ++path_end;
-                    uri::set_valid(ctx.status, uri_status::valid_fragment);
+                    set_valid(ctx.status, uri_status::valid_fragment);
                     break;
-                default: {
-
-                    // todo: validate uri_status::invalid_character here
-                    // 1. If c is not the EOF code point, not a URL code point, and not U+0025 (%),
-                    // invalid-URL-unit validation error.
-                    // 2. If c is U+0025 (%) and remaining does not start with two ASCII hex digits,
-                    // invalid-URL-unit validation error.
-                    // 3. If c is not the EOF code point, UTF-8 percent-encode c using the C0 control
-                    // percent-encode set and append the result to url’s path.
-
-                    ++path_end;
-                    continue;
-                }
+                case '%':
+                    if (validate_percent_encode(ctx.pos, ctx.end)) {
+                        continue;
+                    }
+                    break;
             }
-            break;
+            set_warning(ctx.status, uri_status::invalid_character);
         }
-        ctx.out.path(ctx.pos, path_end);
-        ctx.pos = path_end;
+        set_valid(ctx.status, uri_status::valid);
     }
 
     template <typename... T>
     static constexpr void
-    parse_path(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+    parse_path(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
         using details::ascii_bitmap;
 
-        using ctx_type = uri::parsing_uri_context<T...>;
+        using ctx_type = parsing_uri_context<T...>;
         webpp_static_constexpr auto encode_set =
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
@@ -162,12 +157,12 @@ namespace webpp::uri {
 
         if (ctx.pos == ctx.end) {
             ctx.out.clear_path();
-            uri::set_valid(ctx.status, uri_status::valid);
+            set_valid(ctx.status, uri_status::valid);
             return;
         }
 
         bool const is_windows_path =
-          details::has_normalized_windows_driver_letter(ctx) && ctx.out.scheme() == "file";
+          details::has_normalized_windows_driver_letter(ctx) && ctx.out.get_scheme() == "file";
 
         if constexpr (ctx_type::is_modifiable) {
             // encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.host_ref());
@@ -191,7 +186,7 @@ namespace webpp::uri {
 
             ctx.pos = interesting_chars.find_first_in(ctx.pos, ctx.end);
             if (ctx.pos == ctx.end) {
-                uri::set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, uri_status::valid);
 
                 // set the previous segment
                 if (prev_segment_start != ctx.end) {
@@ -208,7 +203,7 @@ namespace webpp::uri {
                     continue;
                 case '\\':
                     if (ctx.is_special) {
-                        uri::set_warning(ctx.status, uri_status::reverse_solidus_used);
+                        set_warning(ctx.status, uri_status::reverse_solidus_used);
                     } else {
                         // todo: do we need to enable encoding for this character?
                         ++ctx.pos;
@@ -220,11 +215,11 @@ namespace webpp::uri {
                     is_done = true; // todo: is this correct?
                     break;
                 case '?':
-                    uri::set_valid(ctx.status, uri_status::valid_queries);
+                    set_valid(ctx.status, uri_status::valid_queries);
                     is_done = true;
                     break;
                 case '#':
-                    uri::set_valid(ctx.status, uri_status::valid_fragment);
+                    set_valid(ctx.status, uri_status::valid_fragment);
                     is_done = true;
                     break;
                 case '%':
@@ -239,7 +234,7 @@ namespace webpp::uri {
                             continue;
                         }
                     }
-                    uri::set_warning(ctx.status, uri_status::invalid_character);
+                    set_warning(ctx.status, uri_status::invalid_character);
                     continue;
                 default: segment_needs_encoding = true; continue;
             }
@@ -285,7 +280,7 @@ namespace webpp::uri {
         }
         if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
             // append the whole thing right now, no encoding, no nothing
-            ctx.out.path(beg, ctx.pos);
+            ctx.out.set_path(beg, ctx.pos);
         } else {
             // Append the last segment
             details::append_path(ctx, segment_start, ctx.pos, segment_needs_encoding);

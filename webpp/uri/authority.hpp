@@ -6,7 +6,6 @@
 #include "../std/string.hpp"
 #include "../std/utility.hpp"
 #include "details/constants.hpp"
-#include "details/special_schemes.hpp"
 #include "details/uri_components.hpp"
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
@@ -19,11 +18,11 @@ namespace webpp::uri {
 
 
     template <typename... T>
-    static constexpr void parse_authority(uri::parsing_uri_context<T...>& ctx) noexcept(
-      uri::parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void
+    parse_authority(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#authority-state
 
-        using ctx_type = uri::parsing_uri_context<T...>;
+        using ctx_type = parsing_uri_context<T...>;
         using iterator = typename ctx_type::iterator;
 
         const auto interesting_characters = ctx.is_special
@@ -39,7 +38,7 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '@': {
-                    uri::set_warning(ctx.status, uri_status::has_credentials);
+                    set_warning(ctx.status, uri_status::has_credentials);
                     atsign_pos = ctx.pos;
 
                     // append to the username and password
@@ -63,10 +62,10 @@ namespace webpp::uri {
                         }
                     } else {
                         if (atsign_pos != ctx.end) {
-                            ctx.out.username(username_beg, username_end);
+                            ctx.out.set_username(username_beg, username_end);
 
                             if (password_token_pos != ctx.end) {
-                                ctx.out.password(password_beg, password_end);
+                                ctx.out.set_password(password_beg, password_end);
                             }
                         }
                     }
@@ -86,13 +85,13 @@ namespace webpp::uri {
                            // special scheme here (as it said by WHATWG)
                 case '\0':
                     if (atsign_pos != ctx.end && ctx.pos == beg) {
-                        uri::set_error(ctx.status, uri_status::host_missing);
+                        set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
                     // There was no username and password
                     // todo: we could do this in one pass instead of going back here
                     ctx.pos = atsign_pos == ctx.end ? beg : atsign_pos + 1;
-                    uri::set_valid(ctx.status, uri_status::valid_host);
+                    set_valid(ctx.status, uri_status::valid_host);
                     return;
             }
         }

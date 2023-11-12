@@ -4,7 +4,6 @@
 #define WEBPP_URL_COMPONENTS_HPP
 
 #include "../../std/collection.hpp"
-#include "../../std/concepts.hpp"
 #include "../../std/map.hpp"
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
@@ -77,72 +76,72 @@ namespace webpp::uri {
         seg_type uri_end         = omitted; // string end
 
       public:
-        constexpr void scheme(iterator beg, iterator end) noexcept {
+        constexpr void set_scheme(iterator beg, iterator end) noexcept {
             uri_beg    = beg;
             scheme_end = uri_end = static_cast<seg_type>(end - beg);
         }
 
-        constexpr void path(seg_type beg, seg_type end) noexcept {
+        constexpr void set_path(seg_type beg, seg_type end) noexcept {
             authority_end = beg;
             uri_end       = end;
         }
 
-        constexpr void path(iterator beg, iterator end) noexcept {
-            path(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_path(iterator beg, iterator end) noexcept {
+            set_path(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void username(seg_type beg, seg_type end) noexcept {
+        constexpr void set_username(seg_type beg, seg_type end) noexcept {
             authority_start = beg;
             uri_end = authority_end = end;
         }
 
-        constexpr void username(iterator beg, iterator end) noexcept {
-            username(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_username(iterator beg, iterator end) noexcept {
+            set_username(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void password(seg_type beg, seg_type end) noexcept {
+        constexpr void set_password(seg_type beg, seg_type end) noexcept {
             password_start = beg;
             uri_end = authority_end = end;
         }
 
-        constexpr void password(iterator beg, iterator end) noexcept {
-            password(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_password(iterator beg, iterator end) noexcept {
+            set_password(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void host(seg_type beg, seg_type end) noexcept {
+        constexpr void set_host(seg_type beg, seg_type end) noexcept {
             host_start = beg;
             uri_end    = end;
         }
 
-        constexpr void host(iterator beg, iterator end) noexcept {
-            host(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_host(iterator beg, iterator end) noexcept {
+            set_host(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void port(seg_type start, seg_type end) noexcept {
+        constexpr void set_port(seg_type start, seg_type end) noexcept {
             port_start    = start;
             authority_end = uri_end = end;
         }
 
-        constexpr void port(iterator beg, iterator end) noexcept {
-            port(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_port(iterator beg, iterator end) noexcept {
+            set_port(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void queries(seg_type start, seg_type end) noexcept {
+        constexpr void set_queries(seg_type start, seg_type end) noexcept {
             queries_start = start;
             uri_end       = end;
         }
 
-        constexpr void queries(iterator beg, iterator end) noexcept {
-            queries(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_queries(iterator beg, iterator end) noexcept {
+            set_queries(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void fragment(seg_type start, seg_type end) noexcept {
+        constexpr void set_fragment(seg_type start, seg_type end) noexcept {
             fragment_start = start;
             uri_end        = end;
         }
 
-        constexpr void fragment(iterator beg, iterator end) noexcept {
-            fragment(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_fragment(iterator beg, iterator end) noexcept {
+            set_fragment(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
 
@@ -229,32 +228,32 @@ namespace webpp::uri {
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT scheme() const noexcept {
+        [[nodiscard]] constexpr StrT get_scheme() const noexcept {
             return view<StrT>(0, scheme_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT username() const noexcept {
+        [[nodiscard]] constexpr StrT get_username() const noexcept {
             return view<StrT>(authority_start, host_start - authority_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT password() const noexcept {
+        [[nodiscard]] constexpr StrT get_password() const noexcept {
             return view<StrT>(password_start, host_start - password_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT host() const noexcept {
+        [[nodiscard]] constexpr StrT get_host() const noexcept {
             return view<StrT>(host_start, stl::min(port_start, authority_end) - host_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT port() const noexcept {
+        [[nodiscard]] constexpr StrT get_port() const noexcept {
             return view<StrT>(port_start, authority_end - port_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT path() const noexcept {
+        [[nodiscard]] constexpr StrT get_path() const noexcept {
             return view<StrT>(
               authority_end,
               stl::min(stl::min(queries_start, fragment_start), static_cast<seg_type>(size())) -
@@ -262,15 +261,37 @@ namespace webpp::uri {
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT queries() const noexcept {
+        [[nodiscard]] constexpr StrT get_queries() const noexcept {
             return view<StrT>(queries_start,
                               stl::min(fragment_start, static_cast<seg_type>(size())) - queries_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT fragment() const noexcept {
+        [[nodiscard]] constexpr StrT get_fragment() const noexcept {
             return view<StrT>(fragment_start, uri_end);
         }
+
+
+        // NOLINTBEGIN(*-macro-usage)
+#define webpp_def(field)                           \
+    constexpr auto& field##_ref() const noexcept { \
+        return *this;                              \
+    }
+
+
+
+        // they're not used
+        webpp_def(scheme)     //
+          webpp_def(username) //
+          webpp_def(password) //
+          webpp_def(host)     //
+          webpp_def(port)     //
+          webpp_def(path)     //
+          webpp_def(queries)  //
+          webpp_def(fragment) //
+
+        // NOLINTEND(*-macro-usage)
+#undef webpp_def
     };
 
 
@@ -304,34 +325,34 @@ namespace webpp::uri {
 
       public:
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                    \
-    template <istl::StringView StrVT = stl::basic_string_view<char_type>>   \
-    [[nodiscard]] constexpr StrVT field() const noexcept {                  \
-        return {m_##field.data(), m_##field.size()};                        \
-    }                                                                       \
-                                                                            \
-    constexpr void clear_##field() noexcept {                               \
-        istl::clear(m_##field);                                             \
-    }                                                                       \
-                                                                            \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {             \
-        return !m_##field.empty();                                          \
-    }                                                                       \
-                                                                            \
-    constexpr void field(iterator beg, iterator end) noexcept(is_nothrow) { \
-        istl::assign(m_##field, beg, end);                                  \
-    }                                                                       \
-                                                                            \
-    constexpr void field(string_type str) noexcept(is_nothrow) {            \
-        m_##field = stl::move(str);                                         \
-    }                                                                       \
-                                                                            \
-    constexpr string_type& field##_ref() noexcept {                         \
-        return m_##field;                                                   \
-    }                                                                       \
-                                                                            \
-    constexpr string_type const& field##_ref() const noexcept {             \
-        return m_##field;                                                   \
+#define webpp_def(field)                                                          \
+    template <istl::StringView StrVT = stl::basic_string_view<char_type>>         \
+    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                  \
+        return {m_##field.data(), m_##field.size()};                              \
+    }                                                                             \
+                                                                                  \
+    constexpr void clear_##field() noexcept {                                     \
+        istl::clear(m_##field);                                                   \
+    }                                                                             \
+                                                                                  \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                   \
+        return !m_##field.empty();                                                \
+    }                                                                             \
+                                                                                  \
+    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) { \
+        istl::assign(m_##field, beg, end);                                        \
+    }                                                                             \
+                                                                                  \
+    constexpr void set_##field(string_type str) noexcept(is_nothrow) {            \
+        m_##field = stl::move(str);                                               \
+    }                                                                             \
+                                                                                  \
+    constexpr string_type& field##_ref() noexcept {                               \
+        return m_##field;                                                         \
+    }                                                                             \
+                                                                                  \
+    constexpr string_type const& field##_ref() const noexcept {                   \
+        return m_##field;                                                         \
     }
 
 
@@ -452,34 +473,49 @@ namespace webpp::uri {
 
       public:
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                    \
-    template <istl::StringView StrVT = stl::string_view>                    \
-    [[nodiscard]] constexpr StrVT field() const noexcept {                  \
-        return {m_##field.data(), m_##field.size()};                        \
-    }                                                                       \
-                                                                            \
-    constexpr void clear_##field() noexcept {                               \
-        istl::clear(m_##field);                                             \
-    }                                                                       \
-                                                                            \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {             \
-        return !m_##field.empty();                                          \
-    }                                                                       \
-                                                                            \
-    constexpr void field(iterator beg, iterator end) noexcept(is_nothrow) { \
-        istl::assign(m_##field, beg, end);                                  \
-    }                                                                       \
-                                                                            \
-    constexpr void field(decltype(m_##field)&& str) noexcept(is_nothrow) {  \
-        m_##field = stl::move(str);                                         \
-    }                                                                       \
-                                                                            \
-    constexpr auto& field##_ref() noexcept {                                \
-        return m_##field;                                                   \
-    }                                                                       \
-                                                                            \
-    constexpr auto const& field##_ref() const noexcept {                    \
-        return m_##field;                                                   \
+#define webpp_def(field)                                                                            \
+    static constexpr bool is_##field##_modifiable = stl::same_as<decltype(m_##field), string_type>; \
+                                                                                                    \
+    template <istl::StringView StrVT = stl::string_view>                                            \
+        requires(is_##field##_modifiable)                                                           \
+    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                                    \
+        return {m_##field.data(), m_##field.size()};                                                \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void clear_##field() noexcept                                                         \
+        requires(is_##field##_modifiable)                                                           \
+    {                                                                                               \
+        istl::clear(m_##field);                                                                     \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void clear_##field() noexcept                                                         \
+        requires(!is_##field##_modifiable)                                                          \
+    {                                                                                               \
+        istl::collection::clear(m_##field);                                                         \
+    }                                                                                               \
+                                                                                                    \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                                     \
+        return !m_##field.empty();                                                                  \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow)                     \
+        requires(is_##field##_modifiable)                                                           \
+    {                                                                                               \
+        istl::assign(m_##field, beg, end);                                                          \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow)                      \
+        requires(is_##field##_modifiable)                                                           \
+    {                                                                                               \
+        m_##field = stl::move(str);                                                                 \
+    }                                                                                               \
+                                                                                                    \
+    constexpr auto& field##_ref() noexcept {                                                        \
+        return m_##field;                                                                           \
+    }                                                                                               \
+                                                                                                    \
+    constexpr auto const& field##_ref() const noexcept {                                            \
+        return m_##field;                                                                           \
     }
 
 
@@ -496,7 +532,84 @@ namespace webpp::uri {
         // NOLINTEND(*-macro-usage)
 #undef webpp_def
 
-          [[nodiscard]] constexpr bool has_credentials() const noexcept {
+          constexpr void set_host(iterator beg, iterator end) {
+            istl::collection::clear(m_host);
+            if constexpr (is_modifiable) {
+                istl::collection::emplace_one(m_host, beg, end, m_host.get_allocator());
+            } else {
+                istl::collection::emplace_one(m_host, beg, end);
+            }
+        }
+
+        constexpr void set_path(iterator beg, iterator end) {
+            istl::collection::clear(m_path);
+            if constexpr (is_modifiable) {
+                istl::collection::emplace_one(m_path, beg, end, m_path.get_allocator());
+            } else {
+                istl::collection::emplace_one(m_path, beg, end);
+            }
+        }
+
+        constexpr void set_queries(iterator beg, iterator end) {
+            using pack_type  = typename map_type::value_type;
+            using key_type   = typename map_type::key_type;
+            using value_type = typename map_type::mapped_type;
+
+            // first "name" is chosen for the whole value, because of the algorithm that gets the queries will
+            // be correct that way
+
+            istl::collection::clear(m_queries);
+            if constexpr (is_modifiable) {
+                istl::collection::emplace_one(m_queries,
+                                              pack_type{key_type{beg, end, m_queries.get_allocator()},
+                                                        value_type{m_queries.get_allocator()}});
+            } else {
+                istl::collection::emplace_one(m_queries, pack_type{key_type{beg, end}, value_type{}});
+            }
+        }
+
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT get_host(Args&&... args) const {
+            StrT out{stl::forward<Args>(args)...};
+            for (auto pos = m_host.begin();; ++pos) {
+                out += *pos;
+                if (pos != m_host.end()) {
+                    break;
+                }
+                out += '.';
+            }
+            return out;
+        }
+
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT get_path(Args&&... args) const {
+            StrT out{stl::forward<Args>(args)...};
+            for (auto const& seg : m_path) {
+                out += '/';
+                out += seg;
+            }
+            return out;
+        }
+
+        template <istl::String StrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr StrT get_queries(Args&&... args) const {
+            StrT out{stl::forward<Args>(args)...};
+            for (auto pos = m_queries.begin();; ++pos) {
+                auto const [name, value] = *pos;
+                out += name;
+                if (!value.empty()) {
+                    out += '=';
+                    out += value;
+                }
+                if (pos != m_queries.end()) {
+                    break;
+                }
+                out += '&';
+            }
+            return out;
+        }
+
+        [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username(); // password cannot exist without the username
         }
     };
@@ -519,8 +632,8 @@ namespace webpp::uri {
     struct parsing_uri_context {
         using out_seg_type    = OutSegType;
         using base_seg_type   = BaseSegType;
-        using out_type        = uri::uri_components<out_seg_type, OutIter>;
-        using base_type       = uri::uri_components<base_seg_type, BaseIter>;
+        using out_type        = uri_components<out_seg_type, OutIter>;
+        using base_type       = uri_components<base_seg_type, BaseIter>;
         using iterator        = typename out_type::iterator;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
@@ -543,8 +656,8 @@ namespace webpp::uri {
     struct parsing_uri_context<OutSegType, OutIter, BaseSegType, BaseIter> {
         using out_seg_type    = OutSegType;
         using base_seg_type   = BaseSegType;
-        using out_type        = uri::uri_components<out_seg_type, OutIter>;
-        using base_type       = uri::uri_components<base_seg_type, BaseIter>;
+        using out_type        = uri_components<out_seg_type, OutIter>;
+        using base_type       = uri_components<base_seg_type, BaseIter>;
         using iterator        = typename out_type::iterator;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
@@ -589,6 +702,8 @@ namespace webpp::uri {
 
     template <typename Allocator = stl::allocator<char>>
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
+
+
 
 } // namespace webpp::uri
 

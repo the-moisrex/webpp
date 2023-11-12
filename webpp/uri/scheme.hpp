@@ -243,10 +243,10 @@ namespace webpp::uri {
                     //     ctx.out.clear_port();
                     // }
 
-                    ctx.out.scheme(ctx.beg, ctx.pos);
+                    ctx.out.set_scheme(ctx.beg, ctx.pos);
                     ++ctx.pos;
 
-                    if (ctx.out.scheme() == "file") {
+                    if (ctx.out.get_scheme() == "file") {
                         // If remaining does not start with "//", special-scheme-missing-following-solidus
                         // validation error.
                         if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
@@ -257,7 +257,7 @@ namespace webpp::uri {
                         details::file_state(ctx);
                         return;
                     }
-                    if (is_special_scheme(ctx.out.scheme())) [[likely]] {
+                    if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
                         ctx.is_special = true;
                         // todo: first check the constexpr if
                         if constexpr (ctx_type::has_base_uri) {

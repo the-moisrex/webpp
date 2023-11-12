@@ -18,8 +18,7 @@ namespace webpp::istl {
     template <istl::StringLike StrT, typename InputIt>
     constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(istl::StringView<StrT>) {
         if constexpr (istl::StringView<StrT>) {
-            using size_type = typename StrT::size_type;
-            str             = StrT{beg, end};
+            str = StrT{beg, end};
         } else {
             str.assign(beg, end);
         }

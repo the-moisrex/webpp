@@ -8,8 +8,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
-#include "./details/special_schemes.hpp"
-#include "./details/uri_components.hpp"
+#include "./details/uri_components_encoding.hpp"
 
 namespace webpp::uri {
 
@@ -17,43 +16,28 @@ namespace webpp::uri {
     namespace details {
 
         template <typename... T>
-        static constexpr void host_parsing_state(uri::parsing_uri_context<T...>& ctx) noexcept(
-          uri::parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void
+        host_parsing_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#host-parsing
         }
 
 
         template <typename... T>
-        static constexpr void parse_opaque_host(uri::parsing_uri_context<T...>& ctx) noexcept(
-          uri::parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void
+        parse_opaque_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-opaque-host-parser
 
-            using ctx_type = uri::parsing_uri_context<T...>;
-
-            webpp_static_constexpr auto stop_chars_for_opaque_host = FORBIDDEN_HOST_CODE_POINTS;
+            using ctx_type = parsing_uri_context<T...>;
 
             auto const beg = ctx.pos;
             for (;;) {
-                if constexpr (ctx_type::is_modifiable) {
-                    encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.host_ref());
-
-                    if (encode_uri_component<uri_encoding_policy::disallowed_chars>(
-                          ctx.pos,
-                          ctx.end,
-                          ctx.out.host_ref(),
-                          C0_CONTROL_ENCODE_SET,
-                          stop_chars_for_opaque_host)) {
-                        uri::set_valid(ctx.status, uri_status::valid);
-                        break;
-                    }
-                } else {
-                    ctx.pos = stop_chars_for_opaque_host.find_first_in(ctx.pos, ctx.end);
-                    if (ctx.pos == ctx.end) {
-                        uri::set_valid(ctx.status, uri_status::valid);
-                        break;
-                    }
+                if (details::encode_or_validate<uri_encoding_policy::encode_chars>(ctx,
+                                                                                   C0_CONTROL_ENCODE_SET,
+                                                                                   FORBIDDEN_HOST_CODE_POINTS,
+                                                                                   ctx.out.host_ref())) {
+                    set_valid(ctx.status, uri_status::valid);
+                    break;
                 }
-
 
                 switch (*ctx.pos) {
                     case '%': {
@@ -63,19 +47,19 @@ namespace webpp::uri {
                             }
                             ++ctx.pos;
                         }
-                        uri::set_warning(ctx.status, uri_status::invalid_character);
+                        set_warning(ctx.status, uri_status::invalid_character);
                         continue;
                     }
-                    case '/': uri::set_valid(ctx.status, uri_status::valid_path); break;
-                    case '#': uri::set_valid(ctx.status, uri_status::valid_fragment); break;
-                    case '?': uri::set_valid(ctx.status, uri_status::valid_queries); break;
-                    default: uri::set_error(ctx.status, uri_status::invalid_host_code_point); return;
+                    case '/': set_valid(ctx.status, uri_status::valid_path); break;
+                    case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
+                    case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                    default: set_error(ctx.status, uri_status::invalid_host_code_point); return;
                 }
                 break;
             }
 
             if constexpr (!ctx_type::is_modifiable) {
-                ctx.out.host(beg, ctx.pos);
+                ctx.out.set_host(beg, ctx.pos);
             }
         }
 
@@ -84,34 +68,35 @@ namespace webpp::uri {
     /// Path start state (I like to call it authority end because it's more RFC like to say that,
     /// but WHATWG likes to call it "path start state")
     template <typename... T>
-    static constexpr void parse_authority_end(uri::parsing_uri_context<T...>& ctx) noexcept(
-      uri::parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void
+    parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
 
         if (ctx.pos == ctx.end) {
             // todo: I'm guessing
-            uri::set_valid(ctx.status, uri_status::valid);
+            set_valid(ctx.status, uri_status::valid);
             return;
         }
         if (ctx.is_special) {
             switch (*ctx.pos) {
-                case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                case '/': ++ctx.pos; break;
+                case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                case '/': ++ctx.pos; [[fallthrough]];
+                default: set_valid(ctx.status, uri_status::valid_path); break;
             }
         } else {
             switch (*ctx.pos) {
                 case '?':
-                    uri::set_valid(ctx.status, uri_status::valid_queries);
+                    set_valid(ctx.status, uri_status::valid_queries);
                     ++ctx.pos;
                     ctx.out.clear_queries();
                     return;
                 case '#':
-                    uri::set_valid(ctx.status, uri_status::valid_fragment);
+                    set_valid(ctx.status, uri_status::valid_fragment);
                     ++ctx.pos;
                     ctx.out.clear_fragment();
                     return;
                 default:
-                    uri::set_valid(ctx.status, uri_status::valid_path);
+                    set_valid(ctx.status, uri_status::valid_path);
                     ctx.out.clear_path();
                     return;
             }
@@ -119,8 +104,8 @@ namespace webpp::uri {
     }
 
     template <typename... T>
-    static constexpr void parse_file_host(uri::parsing_uri_context<T...>& ctx) noexcept(
-      uri::parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void
+    parse_file_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
         // todo
@@ -139,20 +124,20 @@ namespace webpp::uri {
     /// Parse the host port
     template <typename... T>
     static constexpr void
-    parse_host(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+    parse_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#host-state
         // todo
 
         using details::ascii_bitmap;
 
-        using ctx_type = uri::parsing_uri_context<T...>;
+        using ctx_type = parsing_uri_context<T...>;
 
         if (ctx.pos == ctx.end) {
-            uri::set_error(ctx.status, uri_status::host_missing);
+            set_error(ctx.status, uri_status::host_missing);
             return;
         }
 
-        auto const scheme = ctx.out.scheme();
+        auto const scheme = ctx.out.get_scheme();
 
         if (scheme == "file") {
             // todo: should we set the status instead?
@@ -174,35 +159,31 @@ namespace webpp::uri {
                 stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
                 auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']');
                 switch (ipv6_parsing_result) {
-                    case inet_pton6_status::valid:
-                        uri::set_error(ctx.status, uri_status::ipv6_unclosed);
-                        return;
+                    case inet_pton6_status::valid: set_error(ctx.status, uri_status::ipv6_unclosed); return;
                     case inet_pton6_status::valid_special:
                         if (*ctx.pos == ']') {
                             ++ctx.pos;
-                            ctx.out.host(beg, ctx.pos);
+                            ctx.out.set_host(beg, ctx.pos);
                             if (ctx.pos == ctx.end) {
-                                uri::set_valid(ctx.status, uri_status::valid);
+                                set_valid(ctx.status, uri_status::valid);
                                 return;
                             }
                             switch (*ctx.pos) {
-                                case ':': uri::set_valid(ctx.status, uri_status::valid_port); break;
-                                case '/': uri::set_valid(ctx.status, uri_status::valid_path); break;
-                                case '#': uri::set_valid(ctx.status, uri_status::valid_fragment); break;
-                                case '?': uri::set_valid(ctx.status, uri_status::valid_queries); break;
-                                default:
-                                    uri::set_error(ctx.status, uri_status::ipv6_char_after_closing);
-                                    return;
+                                case ':': set_valid(ctx.status, uri_status::valid_port); break;
+                                case '/': set_valid(ctx.status, uri_status::valid_path); break;
+                                case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
+                                case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                                default: set_error(ctx.status, uri_status::ipv6_char_after_closing); return;
                             }
                             ++ctx.pos;
                             return;
                         }
-                        uri::set_error(ctx.status, uri_status::ipv6_unclosed);
+                        set_error(ctx.status, uri_status::ipv6_unclosed);
                         return;
                     default:
-                        uri::set_error(
+                        set_error(
                           ctx.status,
-                          static_cast<uri_status>(uri::error_bit | stl::to_underlying(ipv6_parsing_result)));
+                          static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
                         return;
                 }
                 break;
@@ -216,7 +197,7 @@ namespace webpp::uri {
                     break;
                 }
                 [[fallthrough]];
-            case ':': uri::set_error(ctx.status, uri_status::host_missing); return;
+            case ':': set_error(ctx.status, uri_status::host_missing); return;
         }
 
         if (!ctx.is_special) {
@@ -225,39 +206,37 @@ namespace webpp::uri {
         }
 
         for (;;) {
-            if constexpr (ctx_type::is_modifiable) {
-                // changes ctx.pos
-                // todo: UTF-8 and punycodes
-                if (decode_uri_component(ctx.pos, ctx.end, ctx.out.host_ref(), end_of_host_chars)) {
+            if (details::decode_or_validate<uri_encoding_policy::skip_chars>(ctx,
+                                                                             end_of_host_chars,
+                                                                             ctx.out.host_ref())) {
+                if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
                     if (ctx.pos == beg) {
-                        uri::set_error(ctx.status, uri_status::host_missing);
+                        set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
-                    uri::set_valid(ctx.status, uri_status::valid);
+                    set_valid(ctx.status, uri_status::valid);
                 }
-            } else {
-                ctx.pos = end_of_host_chars.find_first_not_in(ctx.pos, ctx.end);
             }
 
             switch (*ctx.pos) {
-                case ':': uri::set_valid(ctx.status, uri_status::valid_port); break;
+                case ':': set_valid(ctx.status, uri_status::valid_port); break;
                 case '#':
-                    uri::set_valid(ctx.status, uri_status::valid_fragment);
+                    set_valid(ctx.status, uri_status::valid_fragment);
                     break;
                 [[unlikely]] case '\0':
                     if (ctx.pos == beg) {
-                        uri::set_error(ctx.status, uri_status::host_missing);
+                        set_error(ctx.status, uri_status::host_missing);
                         return;
                     }
-                    uri::set_valid(ctx.status, uri_status::valid);
+                    set_valid(ctx.status, uri_status::valid);
                     break;
                 case '\\':
                 case '/':
                 case '?':
-                    uri::set_valid(ctx.status, uri_status::valid_path);
+                    set_valid(ctx.status, uri_status::valid_path);
                     break;
                 [[unlikely]] default:
-                    uri::set_warning(ctx.status, uri_status::invalid_character);
+                    set_warning(ctx.status, uri_status::invalid_character);
                     ++ctx.pos;
                     continue;
             }
@@ -265,7 +244,7 @@ namespace webpp::uri {
         }
 
         if constexpr (!ctx_type::is_modifiable) {
-            ctx.out.host(beg, ctx.pos);
+            ctx.out.set_host(beg, ctx.pos);
         }
         ++ctx.pos;
     }
