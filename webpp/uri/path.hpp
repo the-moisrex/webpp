@@ -9,7 +9,7 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "details/constants.hpp"
-#include "details/uri_components.hpp"
+#include "details/uri_components_encoding.hpp"
 #include "encoding.hpp"
 
 #include <compare>
