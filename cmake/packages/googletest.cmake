@@ -2,9 +2,9 @@ if (IS_DEBUG)
     include(CPM)
     CPMAddPackage(
             NAME googletest
-            URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.tar.gz
-            GIT_TAG v1.13.0
-            VERSION 1.13.0
+            URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz
+            # GIT_TAG v1.14.0
+            # VERSION 1.14.0
             OPTIONS
                 "INSTALL_GTEST OFF"
                 "gtest_force_shared_crt ON"
