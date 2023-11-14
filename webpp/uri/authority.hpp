@@ -93,6 +93,7 @@ namespace webpp::uri {
                     ctx.pos = atsign_pos == ctx.end ? beg : atsign_pos + 1;
                     set_valid(ctx.status, uri_status::valid_host);
                     return;
+                default: stl::unreachable(); break;
             }
         }
     }

@@ -608,6 +608,12 @@ namespace webpp {
             (this->set(static_cast<stl::size_t>(chars)), ...);
         }
 
+        template <istl::CharType... CharT>
+        explicit consteval bitmap(bitmap<N> const& inp_bitmap, CharT... chars) noexcept
+          : bitset_type{inp_bitmap} {
+            (this->set(static_cast<stl::size_t>(chars)), ...);
+        }
+
 
         template <typename... T>
             requires((requires(T set) { set.string_view(); }) && ...)

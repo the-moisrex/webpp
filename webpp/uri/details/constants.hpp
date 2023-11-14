@@ -119,36 +119,39 @@ namespace webpp::uri::details {
 
     /// https://url.spec.whatwg.org/#fragment-percent-encode-set
     /// C0 control percent-encode set and U+0020 SPACE, U+0022 ("), U+003C (<), U+003E (>), and U+0060 (`)
-    static constexpr ascii_bitmap FRAGMENT_ENCODE_SET{C0_CONTROL_ENCODE_SET,
-                                                      ascii_bitmap{charset(' ', '"', '<', '>', '`')}};
+    static constexpr ascii_bitmap FRAGMENT_ENCODE_SET{C0_CONTROL_ENCODE_SET, ' ', '"', '<', '>', '`'};
 
 
     /// https://url.spec.whatwg.org/#query-percent-encode-set
     /// C0 control percent-encode set and U+0020 SPACE, U+0022 ("), U+0023 (#), U+003C (<), and U+003E (>).
-    static constexpr ascii_bitmap QUERIES_ENCODE_SET{C0_CONTROL_ENCODE_SET,
-                                                     ascii_bitmap{charset(' ', '"', '<', '>', '#')}};
+    static constexpr ascii_bitmap QUERIES_ENCODE_SET{C0_CONTROL_ENCODE_SET, ' ', '"', '<', '>', '#'};
 
     /// https://url.spec.whatwg.org/#special-query-percent-encode-set
     /// query percent-encode set and U+0027 (').
-    static constexpr ascii_bitmap SPECIAL_QUERIES_ENCODE_SET{QUERIES_ENCODE_SET, ascii_bitmap{charset('\'')}};
+    static constexpr ascii_bitmap SPECIAL_QUERIES_ENCODE_SET{QUERIES_ENCODE_SET, '\''};
 
     /// https://url.spec.whatwg.org/#path-percent-encode-set
     /// query percent-encode set and U+003F (?), U+0060 (`), U+007B ({), and U+007D (}).
-    static constexpr ascii_bitmap PATH_ENCODE_SET{QUERIES_ENCODE_SET,
-                                                  ascii_bitmap{charset('?', '`', '{', '}')}};
+    static constexpr ascii_bitmap PATH_ENCODE_SET{QUERIES_ENCODE_SET, '?', '`', '{', '}'};
 
     /// https://url.spec.whatwg.org/#userinfo-percent-encode-set
     /// path percent-encode set and U+002F (/), U+003A (:), U+003B (;), U+003D (=), U+0040 (@), U+005B ([) to
     /// U+005E (^), inclusive, and U+007C (|).
-    static constexpr ascii_bitmap USER_INFO_ENCODE_SET{PATH_ENCODE_SET,
-                                                       ascii_bitmap{charset('/', ':', ';', '=', '@', '|')},
-                                                       bitmap_range<'[', '^', 256U>()};
+    static constexpr ascii_bitmap USER_INFO_ENCODE_SET{
+      ascii_bitmap{PATH_ENCODE_SET, bitmap_range<'[', '^', 256U>()},
+      '/',
+      ':',
+      ';',
+      '=',
+      '@',
+      '|'};
 
     /// https://url.spec.whatwg.org/#component-percent-encode-set
     /// userinfo percent-encode set and U+0024 ($) to U+0026 (&), inclusive, U+002B (+), and U+002C (,).
-    static constexpr ascii_bitmap COMPONENT_ENCODE_SET{USER_INFO_ENCODE_SET,
-                                                       ascii_bitmap{charset('+', ',')},
-                                                       bitmap_range<'$', '&', 256U>()};
+    static constexpr ascii_bitmap COMPONENT_ENCODE_SET{
+      ascii_bitmap{USER_INFO_ENCODE_SET, bitmap_range<'$', '&', 256U>()},
+      '+',
+      ','};
 
     /// https://url.spec.whatwg.org/#forbidden-host-code-point
     /// U+0000 NULL, U+0009 TAB, U+000A LF, U+000D CR, U+0020 SPACE, U+0023 (#), U+002F (/), U+003A (:),
@@ -175,8 +178,7 @@ namespace webpp::uri::details {
     /// https://url.spec.whatwg.org/#forbidden-domain-code-point
     /// A forbidden domain code point is a forbidden host code point, a C0 control, U+0025 (%), or U+007F
     /// DELETE.
-    static constexpr ascii_bitmap FORBIDDEN_DOMAIN_CODE_POINTS{FORBIDDEN_HOST_CODE_POINTS,
-                                                               ascii_bitmap{'%', '\x7F'}};
+    static constexpr ascii_bitmap FORBIDDEN_DOMAIN_CODE_POINTS{FORBIDDEN_HOST_CODE_POINTS, '%', '\x7F'};
 
     // NOLINTEND(*-magic-numbers)
 

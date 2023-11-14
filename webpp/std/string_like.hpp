@@ -9,15 +9,15 @@
 namespace webpp::istl {
 
     template <typename T>
-    concept StringLike = istl::String<T> || istl::StringView<T>;
+    concept StringLike = String<T> || StringView<T>;
 
     template <typename T>
-    concept ModifiableString = istl::String<T>;
+    concept ModifiableString = String<T>;
 
 
-    template <istl::StringLike StrT, typename InputIt>
-    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(istl::StringView<StrT>) {
-        if constexpr (istl::StringView<StrT>) {
+    template <StringLike StrT, typename InputIt>
+    constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(StringView<StrT>) {
+        if constexpr (StringView<StrT>) {
             str = StrT{beg, end};
         } else {
             str.assign(beg, end);
@@ -25,9 +25,9 @@ namespace webpp::istl {
     }
 
 
-    template <istl::StringLike StrT>
+    template <StringLike StrT>
     constexpr void clear(StrT& str) noexcept {
-        if constexpr (istl::StringView<StrT>) {
+        if constexpr (StringView<StrT>) {
             str = StrT{};
         } else {
             str.clear(); // doesn't deallocate actually, so it's nothrow

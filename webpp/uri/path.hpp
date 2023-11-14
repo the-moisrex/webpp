@@ -84,12 +84,12 @@ namespace webpp::uri {
                     encode_uri_component<uri_encoding_policy::encode_chars>(start,
                                                                             end,
                                                                             path_ref.back(),
-                                                                            details::PATH_ENCODE_SET);
+                                                                            PATH_ENCODE_SET);
                 } else if constexpr (ctx_type::is_modifiable) {
                     encode_uri_component<uri_encoding_policy::encode_chars>(start,
                                                                             end,
                                                                             ctx.out.path_ref(),
-                                                                            details::PATH_ENCODE_SET);
+                                                                            PATH_ENCODE_SET);
                 }
             } else { // quicker
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
@@ -112,12 +112,15 @@ namespace webpp::uri {
     parse_opaque_path(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
+        using ctx_type = parsing_uri_context<T...>;
+
+        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
+
+        details::component_encoder<details::components::path, ctx_type> encoder(ctx);
         for (;;) {
-            if (details::encode_or_validate<uri_encoding_policy::encode_chars>(
-                  ctx,
+            if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::C0_CONTROL_ENCODE_SET,
-                  details::ascii_bitmap('%', '#', '?'),
-                  ctx.out.path_ref())) { // todo: path ref doesn't work for integer version
+                  interesting_characters)) {
                 break;
             }
             switch (*ctx.pos) {
@@ -134,10 +137,12 @@ namespace webpp::uri {
                         continue;
                     }
                     break;
+                default: break;
             }
             set_warning(ctx.status, uri_status::invalid_character);
         }
         set_valid(ctx.status, uri_status::valid);
+        encoder.set_value();
     }
 
     template <typename... T>

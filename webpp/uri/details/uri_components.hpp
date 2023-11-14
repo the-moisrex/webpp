@@ -48,8 +48,11 @@ namespace webpp::uri {
      */
     template <stl::integral SegType, typename Iter>
     struct uri_components<SegType, Iter> {
-        using seg_type = SegType;
-        using iterator = Iter;
+        using seg_type       = SegType;
+        using iterator       = Iter;
+        using map_iterator   = seg_type*;
+        using map_value_type = seg_type;
+        using vec_iterator   = seg_type*;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<seg_type>::max() - 1;
@@ -297,11 +300,14 @@ namespace webpp::uri {
 
     template <istl::StringLike StrT, typename Iter>
     struct uri_components<StrT, Iter> {
-        using string_type = StrT;
-        using iterator    = Iter;
-        using seg_type    = string_type;
-        using char_type   = typename string_type::value_type;
-        using size_type   = typename string_type::size_type;
+        using string_type    = StrT;
+        using iterator       = Iter;
+        using seg_type       = string_type;
+        using char_type      = typename string_type::value_type;
+        using size_type      = typename string_type::size_type;
+        using map_iterator   = seg_type*;
+        using map_value_type = seg_type;
+        using vec_iterator   = seg_type*;
 
         /// maximum number that this url component class supports
         static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
@@ -442,13 +448,18 @@ namespace webpp::uri {
      */
     template <istl::LinearContainer VecOfStr, istl::MapContainer MapOfStr>
     struct uri_components<VecOfStr, MapOfStr> {
-        using vec_type    = VecOfStr;
-        using map_type    = MapOfStr;
-        using string_type = typename vec_type::value_type;
-        using seg_type    = string_type;
-        using iterator    = typename string_type::iterator;
-        using char_type   = typename string_type::value_type;
-        using size_type   = typename string_type::size_type;
+        using vec_type     = VecOfStr;
+        using map_type     = MapOfStr;
+        using string_type  = typename vec_type::value_type;
+        using seg_type     = string_type;
+        using iterator     = typename string_type::iterator;
+        using char_type    = typename string_type::value_type;
+        using size_type    = typename string_type::size_type;
+        using map_iterator = typename map_type::iterator;
+        using vec_iterator = typename vec_type::iterator;
+
+        // map_type::value_type is const, we need a modifiable name
+        using map_value_type = stl::pair<typename map_type::key_type, typename map_type::mapped_type>;
 
 
         /// maximum number that this url component class supports
@@ -634,6 +645,7 @@ namespace webpp::uri {
         using base_seg_type   = BaseSegType;
         using out_type        = uri_components<out_seg_type, OutIter>;
         using base_type       = uri_components<base_seg_type, BaseIter>;
+        using seg_type        = typename out_type::seg_type; // this might be different than OutSegType
         using iterator        = typename out_type::iterator;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;

@@ -274,7 +274,7 @@ namespace webpp {
         }
 
         // NOLINTBEGIN(*-inc-dec-in-conditions)
-        return pos++ + 2 <= end && is_hex_digit(*pos++) && is_hex_digit(*pos);
+        return pos++ + 2 <= end && is_hex_digit(*pos++) && is_hex_digit(*pos++);
         // NOLINTEND(*-inc-dec-in-conditions)
     }
 

@@ -8,18 +8,13 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
+#include "./details/constants.hpp"
 #include "./details/uri_components_encoding.hpp"
 
 namespace webpp::uri {
 
 
     namespace details {
-
-        template <typename... T>
-        static constexpr void
-        host_parsing_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
-            // https://url.spec.whatwg.org/#host-parsing
-        }
 
 
         template <typename... T>
@@ -29,12 +24,15 @@ namespace webpp::uri {
 
             using ctx_type = parsing_uri_context<T...>;
 
-            auto const beg = ctx.pos;
+            webpp_static_constexpr auto interesting_characters =
+              ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
+                                      : FORBIDDEN_HOST_CODE_POINTS;
+
+            component_encoder<components::host, ctx_type> encoder(ctx);
             for (;;) {
-                if (details::encode_or_validate<uri_encoding_policy::encode_chars>(ctx,
-                                                                                   C0_CONTROL_ENCODE_SET,
-                                                                                   FORBIDDEN_HOST_CODE_POINTS,
-                                                                                   ctx.out.host_ref())) {
+                if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                      C0_CONTROL_ENCODE_SET,
+                      interesting_characters)) {
                     set_valid(ctx.status, uri_status::valid);
                     break;
                 }
@@ -53,14 +51,19 @@ namespace webpp::uri {
                     case '/': set_valid(ctx.status, uri_status::valid_path); break;
                     case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
                     case '?': set_valid(ctx.status, uri_status::valid_queries); break;
-                    default: set_error(ctx.status, uri_status::invalid_host_code_point); return;
+                    case '.':
+                        if constexpr (ctx_type::is_segregated) {
+                            encoder.set_segment();
+                            continue;
+                        }
+                        [[fallthrough]];
+                    [[unlikely]] default:
+                        set_error(ctx.status, uri_status::invalid_host_code_point);
+                        return;
                 }
                 break;
             }
-
-            if constexpr (!ctx_type::is_modifiable) {
-                ctx.out.set_host(beg, ctx.pos);
-            }
+            encoder.set_value();
         }
 
     } // namespace details
@@ -145,8 +148,9 @@ namespace webpp::uri {
             return;
         }
 
-        const auto end_of_host_chars = ascii_bitmap{details::ALLOWED_CHARACTERS_IN_URI<char>}.except(
-          ascii_bitmap{':', '\\', '\0', '/', '?', '#', '[', ']'});
+        webpp_static_constexpr auto end_of_host_chars =
+          ctx_type::is_segregated ? details::FORBIDDEN_DOMAIN_CODE_POINTS
+                                  : ascii_bitmap{details::FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
 
 
@@ -157,8 +161,8 @@ namespace webpp::uri {
             case '[': {
                 ++ctx.pos;
                 stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
-                auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']');
-                switch (ipv6_parsing_result) {
+                switch (auto const ipv6_parsing_result =
+                          inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
                     case inet_pton6_status::valid: set_error(ctx.status, uri_status::ipv6_unclosed); return;
                     case inet_pton6_status::valid_special:
                         if (*ctx.pos == ']') {
@@ -198,6 +202,7 @@ namespace webpp::uri {
                 }
                 [[fallthrough]];
             case ':': set_error(ctx.status, uri_status::host_missing); return;
+            default: break;
         }
 
         if (!ctx.is_special) {
@@ -205,10 +210,9 @@ namespace webpp::uri {
             return;
         }
 
+        details::component_encoder<details::components::host, ctx_type> decoder(ctx);
         for (;;) {
-            if (details::decode_or_validate<uri_encoding_policy::skip_chars>(ctx,
-                                                                             end_of_host_chars,
-                                                                             ctx.out.host_ref())) {
+            if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(end_of_host_chars)) {
                 if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
                     if (ctx.pos == beg) {
                         set_error(ctx.status, uri_status::host_missing);
@@ -232,9 +236,13 @@ namespace webpp::uri {
                     break;
                 case '\\':
                 case '/':
-                case '?':
-                    set_valid(ctx.status, uri_status::valid_path);
-                    break;
+                case '?': set_valid(ctx.status, uri_status::valid_path); break;
+                case '.':
+                    if constexpr (ctx_type::is_segregated) {
+                        decoder.set_segment();
+                    }
+                    ++ctx.pos;
+                    continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, uri_status::invalid_character);
                     ++ctx.pos;
