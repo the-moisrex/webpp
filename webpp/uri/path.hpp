@@ -174,34 +174,25 @@ namespace webpp::uri {
         }
 
 
-        auto const   beg                  = ctx.pos;
         unsigned int dotted_segment_count = 0;
-
-        // start position of last 2 segments:
-        auto prev_segment_start = ctx.end;
-        auto segment_start      = beg;
-
-        // boolean to check if we need to encode the path or not:
-        bool prev_segment_needs_encoding = false;
-        bool segment_needs_encoding      = false;
 
         bool is_done = false;
 
+        details::component_encoder<details::components::path, ctx_type> encoder{ctx};
+
         for (;;) {
 
-            ctx.pos = interesting_chars.find_first_in(ctx.pos, ctx.end);
-            if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
+            if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                  details::PATH_ENCODE_SET,
+                  interesting_chars)) {
 
-                // set the previous segment
-                if (prev_segment_start != ctx.end) {
-                    details::append_path(ctx, prev_segment_start, segment_start, prev_segment_needs_encoding);
-                }
+                set_valid(ctx.status, uri_status::valid);
+                encoder.set_segment();
                 break;
             }
             switch (*ctx.pos) {
                 case '.':
-                    if (segment_start + dotted_segment_count == ctx.pos) {
+                    if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
                         ++dotted_segment_count;
                     }
                     ++ctx.pos;
@@ -241,7 +232,7 @@ namespace webpp::uri {
                     }
                     set_warning(ctx.status, uri_status::invalid_character);
                     continue;
-                default: segment_needs_encoding = true; continue;
+                default: continue;
             }
 
             if ((dotted_segment_count & 0b1U) == 0b1U) { // single dot
@@ -255,27 +246,22 @@ namespace webpp::uri {
                 //                ^
                 //         The deciding bit
                 dotted_segment_count = 0;
-                prev_segment_start   = segment_start;
-                segment_start        = ctx.pos;
+                encoder.reset_begin();
+                encoder.clear_segment();
                 continue; // ignore this path segment
             }
             if (dotted_segment_count != 0) { // double dot
                 // remove the last segment as well
-                prev_segment_start   = ctx.end;
-                segment_start        = ctx.pos;
                 dotted_segment_count = 0;
+                encoder.reset_begin();
+                encoder.pop_back();
                 continue;
             }
 
+            dotted_segment_count = 0; // zeroing out the dot count
+
             // Append the last segment (not the current one)
-            if (prev_segment_start != ctx.end) {
-                details::append_path(ctx, prev_segment_start, segment_start, prev_segment_needs_encoding);
-            }
-            dotted_segment_count        = 0; // zeroing out the dot count
-            prev_segment_start          = segment_start;
-            segment_start               = ctx.pos;
-            prev_segment_needs_encoding = segment_needs_encoding;
-            segment_needs_encoding      = false;
+            encoder.set_segment();
 
             if (!is_done) {
                 continue;
@@ -283,13 +269,7 @@ namespace webpp::uri {
 
             break;
         }
-        if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
-            // append the whole thing right now, no encoding, no nothing
-            ctx.out.set_path(beg, ctx.pos);
-        } else {
-            // Append the last segment
-            details::append_path(ctx, segment_start, ctx.pos, segment_needs_encoding);
-        }
+        encoder.set_value();
 
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {

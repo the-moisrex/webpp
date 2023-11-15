@@ -107,9 +107,9 @@ namespace webpp::uri::details {
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
         constexpr void
-        encode_or_validate(iterator                             pos,
-                           iterator                             end,
-                           [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+        encode_or_set(iterator                             pos,
+                      iterator                             end,
+                      [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 if constexpr (is_vec) {
                     encode_uri_component<Policy>(pos, end, *output, policy_chars);
@@ -203,20 +203,49 @@ namespace webpp::uri::details {
             }
         }
 
+        /// Set the beginning to current position
+        constexpr void reset_begin() noexcept {
+            beg = ctx->pos + 1;
+        }
+
+        constexpr void clear_segment() noexcept {
+            if constexpr (is_vec && ctx_type::is_modifiable) {
+                output->clear();
+            }
+        }
+
+        [[nodiscard]] constexpr iterator segment_begin() const noexcept {
+            return beg;
+        }
+
+        constexpr void pop_back() noexcept {
+            if constexpr (is_vec && ctx_type::is_modifiable) {
+                using difference_type = typename seg_type::difference_type;
+                if (!get_output().empty()) {
+                    get_output().pop_back();
+                }
+                output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+            } else if constexpr (is_vec) {
+                if (!get_output().empty()) {
+                    get_output().pop_back();
+                }
+            }
+        }
 
         /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
         /// for path) This is the same as next_segment, except it also sets the result first
-        constexpr void set_segment() noexcept(ctx_type::is_nothrow)
-            requires(is_vec)
-        {
-            // the non-modifiable version is the one that needs to be set, the modified versions already
-            // contain the right value at this point in time
-            if constexpr (ctx_type::is_modifiable) {
-                using difference_type = typename seg_type::difference_type;
-                istl::collection::emplace_one(get_output(), get_output().get_allocator());
-                output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
-            } else {
-                istl::collection::emplace_one(get_output(), beg, ctx->pos);
+        constexpr void set_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
+            if constexpr (is_vec) {
+                // the non-modifiable version is the one that needs to be set, the modified versions already
+                // contain the right value at this point in time
+                if constexpr (ctx_type::is_modifiable) {
+                    using difference_type = typename seg_type::difference_type;
+                    istl::collection::emplace_one(get_output(), get_output().get_allocator());
+                    output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+                } else {
+                    istl::collection::emplace_one(get_output(), beg, ctx->pos);
+                    reset_begin();
+                }
             }
         }
 
@@ -226,7 +255,7 @@ namespace webpp::uri::details {
         {
             if constexpr (!ctx_type::is_modifiable) {
                 istl::assign(output.first, beg, ctx->pos);
-                beg = ctx->pos + 1;
+                reset_begin();
             }
         }
 

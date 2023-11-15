@@ -7,6 +7,7 @@
 #include "../../std/string_view.hpp"
 #include "../../std/utility.hpp"
 
+#include <bit>
 #include <cstdint>
 
 namespace webpp::uri {
@@ -314,7 +315,7 @@ namespace webpp::uri {
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status) noexcept {
-        return static_cast<uri_status>((warning_bit >> 0U) & status);
+        return static_cast<uri_status>(stl::bit_floor(warnings_mask & status));
     }
 
     [[nodiscard]] static constexpr uri_status get_warning(uri_status status) noexcept {

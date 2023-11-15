@@ -606,9 +606,9 @@ namespace webpp::uri {
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT get_host(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
-            for (auto pos = m_host.begin();; ++pos) {
+            for (auto pos = m_host.begin();;) {
                 out += *pos;
-                if (pos != m_host.end()) {
+                if (++pos != m_host.end()) {
                     break;
                 }
                 out += '.';
@@ -629,14 +629,14 @@ namespace webpp::uri {
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT get_queries(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
-            for (auto pos = m_queries.begin();; ++pos) {
+            for (auto pos = m_queries.begin();;) {
                 auto const [name, value] = *pos;
                 out += name;
                 if (!value.empty()) {
                     out += '=';
                     out += value;
                 }
-                if (pos != m_queries.end()) {
+                if (++pos != m_queries.end()) {
                     break;
                 }
                 out += '&';
