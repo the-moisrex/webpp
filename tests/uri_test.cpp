@@ -300,7 +300,7 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     stl::string_view const str = "urn://th%is/is/a/path";
 
     auto context = this->template get_context<TypeParam>(str);
-    uri::parse_uri(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::uri_status::invalid_character, uri::get_warning(context.status))

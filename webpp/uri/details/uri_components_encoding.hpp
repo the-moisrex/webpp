@@ -29,10 +29,10 @@ namespace webpp::uri::details {
         static constexpr bool is_map = ctx_type::is_segregated && components::queries == Comp;
         static constexpr bool is_seg = is_vec || is_map;
 
-        /// if it's segregatable:
+        /// if it's segregated:
         ///   if it's modifiable queries, map::value_type (pair<string, string>),
         ///   if it's modifiable path/host, vector::iterator
-        /// else if it's not segregatable but still modifiable:
+        /// else if it's not segregated but still modifiable:
         ///   vec_iterator which is seg_type*
         /// otherwise, nothing_type
         using output_type = stl::conditional_t<

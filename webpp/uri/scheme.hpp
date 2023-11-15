@@ -194,7 +194,7 @@ namespace webpp::uri {
         using enum uri_status;
 
         webpp_static_constexpr auto alnum_plus =
-          charset(ALPHA_DIGIT<char_type>, charset<char_type, 3>{'+', '-', '.'});
+          details::ascii_bitmap(details::ascii_bitmap{ALPHA_DIGIT<char_type>}, '+', '-', '.');
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end) {
@@ -202,22 +202,16 @@ namespace webpp::uri {
             return;
         }
 
-        if (ALPHA<char_type>.contains(*ctx.pos)) {
+        if (details::ASCII_ALPHA.contains(*ctx.pos)) {
             ++ctx.pos;
 
             // scheme state (https://url.spec.whatwg.org/#scheme-state)
             {
                 // handling alpha, num, +, -, .
-                for (;;) {
-                    if (ctx.pos == ctx.end) [[unlikely]] {
-                        ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
-                        return;
-                    }
-                    if (!alnum_plus.contains(*ctx.pos)) {
-                        break;
-                    }
-
-                    ++ctx.pos;
+                ctx.pos = alnum_plus.find_first_not_in(ctx.pos, ctx.end);
+                if (ctx.pos == ctx.end) {
+                    ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
+                    return;
                 }
 
                 // handling ":" character

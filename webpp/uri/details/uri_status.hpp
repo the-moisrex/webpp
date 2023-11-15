@@ -122,7 +122,7 @@ namespace webpp::uri {
     /**
      * Get the error message as a string view
      */
-    static constexpr stl::string_view to_string(uri_status status) noexcept {
+    static constexpr stl::string_view to_string(uri_status const status) noexcept {
         switch (status) {
             using enum uri_status;
 
@@ -261,6 +261,7 @@ namespace webpp::uri {
 
                 // fragment-specific errors/warnings:
             case valid_fragment: return {"Valid URI until fragment, parsing is not done yet."};
+            default: stl::unreachable();
         }
     }
 
