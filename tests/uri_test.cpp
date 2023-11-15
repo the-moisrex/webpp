@@ -325,7 +325,7 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     EXPECT_EQ(context.out.get_scheme(), "ldap");
     EXPECT_EQ(context.out.get_host(), "[2001:db8::7]");
     EXPECT_EQ(context.out.get_path(), "/c=GB");
-    EXPECT_EQ(context.out.get_queries(), "?objectClass?one");
+    EXPECT_EQ(context.out.get_queries(), "objectClass?one");
 }
 
 TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {

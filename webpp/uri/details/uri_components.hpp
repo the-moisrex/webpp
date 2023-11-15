@@ -232,31 +232,49 @@ namespace webpp::uri {
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_scheme() const noexcept {
+            if (scheme_end == omitted) {
+                return {};
+            }
             return view<StrT>(0, scheme_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_username() const noexcept {
+            if (authority_start == omitted) {
+                return {};
+            }
             return view<StrT>(authority_start, host_start - authority_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_password() const noexcept {
+            if (password_start == omitted) {
+                return {};
+            }
             return view<StrT>(password_start, host_start - password_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_host() const noexcept {
+            if (host_start == omitted) {
+                return {};
+            }
             return view<StrT>(host_start, stl::min(port_start, authority_end) - host_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_port() const noexcept {
+            if (port_start == omitted) {
+                return {};
+            }
             return view<StrT>(port_start, authority_end - port_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_path() const noexcept {
+            if (authority_end == omitted) {
+                return {};
+            }
             return view<StrT>(
               authority_end,
               stl::min(stl::min(queries_start, fragment_start), static_cast<seg_type>(size())) -
@@ -265,12 +283,18 @@ namespace webpp::uri {
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_queries() const noexcept {
+            if (queries_start == omitted) {
+                return {};
+            }
             return view<StrT>(queries_start,
                               stl::min(fragment_start, static_cast<seg_type>(size())) - queries_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT get_fragment() const noexcept {
+            if (fragment_start == omitted) {
+                return {};
+            }
             return view<StrT>(fragment_start, uri_end);
         }
 

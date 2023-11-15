@@ -83,7 +83,7 @@ namespace webpp::uri {
         if (ctx.is_special) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                case '/': ++ctx.pos; [[fallthrough]];
+                case '/':
                 default: set_valid(ctx.status, uri_status::valid_path); break;
             }
         } else {
@@ -173,8 +173,8 @@ namespace webpp::uri {
                                 return;
                             }
                             switch (*ctx.pos) {
+                                case '/': set_valid(ctx.status, uri_status::valid_path); return;
                                 case ':': set_valid(ctx.status, uri_status::valid_port); break;
-                                case '/': set_valid(ctx.status, uri_status::valid_path); break;
                                 case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
                                 case '?': set_valid(ctx.status, uri_status::valid_queries); break;
                                 default: set_error(ctx.status, uri_status::ipv6_char_after_closing); return;
