@@ -409,3 +409,20 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_path(), "//three/");
 }
+
+
+TYPED_TEST(URITests, DoubleAtSign) {
+    stl::string_view const str = "http://username@username@127.0.0.1/?one==a#hash";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_username(), "username%40username");
+    } else {
+        EXPECT_EQ(context.out.get_username(), "username@username");
+    }
+    EXPECT_EQ(context.out.get_path(), "/");
+    EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+    EXPECT_EQ(context.out.get_queries(), "one==a");
+    EXPECT_EQ(context.out.get_fragment(), "hash");
+}
