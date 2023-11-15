@@ -104,7 +104,8 @@ namespace webpp::uri {
 
         template <typename... Args>
             requires requires(Args... args) { super{stl::forward<Args>(args)...}; }
-        constexpr basic_queries(Args&&... args) noexcept(noexcept(super(stl::forward<Args>(args)...)))
+        explicit constexpr basic_queries(Args&&... args) noexcept(
+          noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
 

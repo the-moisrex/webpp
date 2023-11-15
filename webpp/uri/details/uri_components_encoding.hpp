@@ -68,26 +68,30 @@ namespace webpp::uri::details {
       public:
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
-        constexpr void set_value() noexcept(ctx_type::is_nothrow) {
+        constexpr void set_value(iterator start, iterator end) noexcept(ctx_type::is_nothrow || is_seg) {
             if constexpr (!is_seg) {
                 if constexpr (components::scheme == Comp) {
-                    ctx->out.set_scheme(beg, ctx->pos);
+                    ctx->out.set_scheme(start, end);
                 } else if constexpr (components::username == Comp) {
-                    ctx->out.set_username(beg, ctx->pos);
+                    ctx->out.set_username(start, end);
                 } else if constexpr (components::password == Comp) {
-                    ctx->out.set_password(beg, ctx->pos);
+                    ctx->out.set_password(start, end);
                 } else if constexpr (components::port == Comp) {
-                    ctx->out.set_port(beg, ctx->pos);
+                    ctx->out.set_port(start, end);
                 } else if constexpr (components::host == Comp) {
-                    ctx->out.set_host(beg, ctx->pos);
+                    ctx->out.set_host(start, end);
                 } else if constexpr (components::path == Comp) {
-                    ctx->out.set_path(beg, ctx->pos);
+                    ctx->out.set_path(start, end);
                 } else if constexpr (components::queries == Comp) {
-                    ctx->out.set_queries(beg, ctx->pos);
+                    ctx->out.set_queries(start, end);
                 } else if constexpr (components::fragment == Comp) {
-                    ctx->out.set_fragment(beg, ctx->pos);
+                    ctx->out.set_fragment(start, end);
                 }
             }
+        }
+
+        constexpr void set_value() noexcept(ctx_type::is_nothrow || is_seg) {
+            set_value(beg, ctx->pos);
         }
 
         template <typename... T>
@@ -97,6 +101,46 @@ namespace webpp::uri::details {
             beg{ctx->pos} {
             if constexpr (is_vec) {
                 set_segment();
+            }
+        }
+
+
+        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
+        constexpr void
+        encode_or_validate(iterator                             pos,
+                           iterator                             end,
+                           [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+            if constexpr (ctx_type::is_modifiable) {
+                if constexpr (is_vec) {
+                    encode_uri_component<Policy>(pos, end, *output, policy_chars);
+                } else {
+                    encode_uri_component<Policy>(pos, end, get_output(), policy_chars);
+                }
+            } else {
+                set_value(pos, end);
+            }
+        }
+
+
+        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
+        [[nodiscard]] constexpr bool
+        encode_or_validate(iterator&                            pos,
+                           iterator                             end,
+                           [[maybe_unused]] CharSet auto const& policy_chars,
+                           CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
+            if constexpr (ctx_type::is_modifiable) {
+                if constexpr (is_vec) {
+                    return encode_uri_component<Policy>(pos, end, *output, policy_chars, invalid_chars);
+                } else {
+                    return encode_uri_component<Policy>(pos, end, get_output(), policy_chars, invalid_chars);
+                }
+            } else {
+                if constexpr (Policy == uri_encoding_policy::skip_chars) {
+                    pos = invalid_chars.find_first_not_in(pos, end);
+                } else {
+                    pos = invalid_chars.find_first_in(pos, end);
+                }
+                return pos == end;
             }
         }
 
@@ -113,29 +157,9 @@ namespace webpp::uri::details {
         [[nodiscard]] constexpr bool
         encode_or_validate([[maybe_unused]] CharSet auto const& policy_chars,
                            CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
-            if constexpr (ctx_type::is_modifiable) {
-                if constexpr (is_vec) {
-                    return encode_uri_component<Policy>(ctx->pos,
-                                                        ctx->end,
-                                                        *output,
-                                                        policy_chars,
-                                                        invalid_chars);
-                } else {
-                    return encode_uri_component<Policy>(ctx->pos,
-                                                        ctx->end,
-                                                        get_output(),
-                                                        policy_chars,
-                                                        invalid_chars);
-                }
-            } else {
-                if constexpr (Policy == uri_encoding_policy::skip_chars) {
-                    ctx->pos = invalid_chars.find_first_not_in(ctx->pos, ctx->end);
-                } else {
-                    ctx->pos = invalid_chars.find_first_in(ctx->pos, ctx->end);
-                }
-                return ctx->pos == ctx->end;
-            }
+            return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars, invalid_chars);
         }
+
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
         [[nodiscard]] constexpr bool

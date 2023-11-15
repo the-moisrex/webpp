@@ -6,7 +6,7 @@
 #include "../std/string.hpp"
 #include "../std/utility.hpp"
 #include "details/constants.hpp"
-#include "details/uri_components.hpp"
+#include "details/uri_components_encoding.hpp"
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
 
@@ -22,12 +22,16 @@ namespace webpp::uri {
     parse_authority(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#authority-state
 
+        using details::ascii_bitmap;
+        using details::component_encoder;
+        using details::components;
+        using details::USER_INFO_ENCODE_SET;
+
         using ctx_type = parsing_uri_context<T...>;
         using iterator = typename ctx_type::iterator;
 
-        const auto interesting_characters = ctx.is_special
-                                              ? details::ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
-                                              : details::ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
+        const auto interesting_characters = ctx.is_special ? ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
+                                                           : ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
         iterator   atsign_pos             = ctx.end;
         iterator   password_token_pos     = ctx.end;
         auto const beg                    = ctx.pos;
@@ -42,34 +46,27 @@ namespace webpp::uri {
                     atsign_pos = ctx.pos;
 
                     // append to the username and password
-                    iterator const username_beg = beg;
-                    iterator const username_end = stl::min(password_token_pos, atsign_pos);
-                    iterator const password_beg = password_token_pos + 1;
-                    iterator const password_end = atsign_pos;
-                    if constexpr (ctx_type::is_modifiable) {
-                        if (atsign_pos != ctx.end) {
-                            encode_uri_component(username_beg,
-                                                 username_end,
-                                                 ctx.out.username_ref(),
-                                                 details::USER_INFO_ENCODE_SET);
+                    if (atsign_pos != ctx.end) {
+                        // parse username
+                        iterator const username_beg = beg;
+                        iterator const username_end = stl::min(password_token_pos, atsign_pos);
+                        component_encoder<components::username, ctx_type> user_encoder{ctx};
+                        user_encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                          username_beg,
+                          username_end,
+                          USER_INFO_ENCODE_SET);
 
-                            if (password_token_pos != ctx.end) {
-                                encode_uri_component(password_beg,
-                                                     password_end,
-                                                     ctx.out.password_ref(),
-                                                     details::USER_INFO_ENCODE_SET);
-                            }
-                        }
-                    } else {
-                        if (atsign_pos != ctx.end) {
-                            ctx.out.set_username(username_beg, username_end);
-
-                            if (password_token_pos != ctx.end) {
-                                ctx.out.set_password(password_beg, password_end);
-                            }
+                        // parse password
+                        if (password_token_pos != ctx.end) {
+                            iterator const password_beg = password_token_pos + 1;
+                            iterator const password_end = atsign_pos;
+                            component_encoder<components::password, ctx_type> pass_encoder{ctx};
+                            pass_encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                              password_beg,
+                              password_end,
+                              USER_INFO_ENCODE_SET);
                         }
                     }
-
                     break;
                 }
                 case ':':
