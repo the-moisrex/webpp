@@ -121,28 +121,27 @@ namespace webpp::uri {
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::C0_CONTROL_ENCODE_SET,
                   interesting_characters)) {
+                set_valid(ctx.status, uri_status::valid);
+                encoder.set_value();
                 break;
             }
             switch (*ctx.pos) {
-                case '?':
-                    ctx.out.clear_queries();
-                    set_valid(ctx.status, uri_status::valid_queries);
-                    break;
-                case '#':
-                    ctx.out.clear_fragment();
-                    set_valid(ctx.status, uri_status::valid_fragment);
-                    break;
+                case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
                 case '%':
                     if (validate_percent_encode(ctx.pos, ctx.end)) {
                         continue;
                     }
-                    break;
-                default: break;
+                    [[fallthrough]];
+                default:
+                    ++ctx.pos;
+                    set_warning(ctx.status, uri_status::invalid_character);
+                    continue;
             }
-            set_warning(ctx.status, uri_status::invalid_character);
+            encoder.set_value();
+            ++ctx.pos; // it's okay, we're not at the end
+            break;
         }
-        set_valid(ctx.status, uri_status::valid);
-        encoder.set_value();
     }
 
     template <typename... T>
@@ -163,6 +162,11 @@ namespace webpp::uri {
         if (ctx.pos == ctx.end) {
             ctx.out.clear_path();
             set_valid(ctx.status, uri_status::valid);
+            return;
+        }
+
+        if (!ctx.is_special) {
+            parse_opaque_path(ctx);
             return;
         }
 

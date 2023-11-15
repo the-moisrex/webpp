@@ -226,7 +226,7 @@ namespace webpp::uri {
         }
 
       public:
-        [[nodiscard]] constexpr stl::size_t size() const noexcept {
+        [[nodiscard]] constexpr seg_type size() const noexcept {
             return uri_end == omitted ? 0 : uri_end;
         }
 
@@ -235,7 +235,7 @@ namespace webpp::uri {
             if (scheme_end == omitted) {
                 return {};
             }
-            return view<StrT>(0, scheme_end);
+            return view<StrT>(0, stl::min(scheme_end, size()));
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -243,7 +243,7 @@ namespace webpp::uri {
             if (authority_start == omitted) {
                 return {};
             }
-            return view<StrT>(authority_start, host_start - authority_start);
+            return view<StrT>(authority_start, host_start - 1 - authority_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -251,7 +251,7 @@ namespace webpp::uri {
             if (password_start == omitted) {
                 return {};
             }
-            return view<StrT>(password_start, host_start - password_start);
+            return view<StrT>(password_start, host_start - 1 - password_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -259,7 +259,8 @@ namespace webpp::uri {
             if (host_start == omitted) {
                 return {};
             }
-            return view<StrT>(host_start, stl::min(port_start, authority_end) - host_start);
+            return view<StrT>(host_start,
+                              stl::min(stl::min(port_start - 1, authority_end), size()) - host_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -267,7 +268,7 @@ namespace webpp::uri {
             if (port_start == omitted) {
                 return {};
             }
-            return view<StrT>(port_start, authority_end - port_start);
+            return view<StrT>(port_start, stl::min(authority_end, size()) - port_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -275,10 +276,9 @@ namespace webpp::uri {
             if (authority_end == omitted) {
                 return {};
             }
-            return view<StrT>(
-              authority_end,
-              stl::min(stl::min(queries_start, fragment_start), static_cast<seg_type>(size())) -
-                authority_end);
+            return view<StrT>(authority_end,
+                              stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) -
+                                authority_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -286,8 +286,7 @@ namespace webpp::uri {
             if (queries_start == omitted) {
                 return {};
             }
-            return view<StrT>(queries_start,
-                              stl::min(fragment_start, static_cast<seg_type>(size())) - queries_start);
+            return view<StrT>(queries_start, stl::min(fragment_start - 1, size()) - queries_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
