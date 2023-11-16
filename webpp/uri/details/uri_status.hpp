@@ -35,7 +35,7 @@ namespace webpp::uri {
     ///         valid bit == 0
     using uri_status_type                        = stl::uint_fast16_t;
     static constexpr uri_status_type valid_bit   = 0U;
-    static constexpr uri_status_type error_bit   = (1U << 15U);
+    static constexpr uri_status_type error_bit   = 1U << 15U;
     static constexpr uri_status_type warning_bit = error_bit >> 1U;
 
     /// maximum number between errors and valids must go here,
@@ -268,57 +268,62 @@ namespace webpp::uri {
 
 
 
-    [[nodiscard]] static constexpr bool is_valid(stl::underlying_type_t<uri_status> status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(stl::underlying_type_t<uri_status> const status) noexcept {
         return (error_bit & status) == 0;
     }
 
-    [[nodiscard]] static constexpr bool is_valid(uri_status status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(uri_status const status) noexcept {
         return is_valid(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_warnings(stl::underlying_type_t<uri_status> status) noexcept {
+    [[nodiscard]] static constexpr bool
+    has_warnings(stl::underlying_type_t<uri_status> const status) noexcept {
         return (status & warnings_mask) != 0;
     }
 
-    [[nodiscard]] static constexpr bool has_warnings(uri_status status) noexcept {
+    [[nodiscard]] static constexpr bool has_warnings(uri_status const status) noexcept {
         return has_warnings(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> status) noexcept {
+    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status) noexcept {
         return (error_bit & status) == error_bit;
     }
 
-    [[nodiscard]] static constexpr bool has_error(uri_status status) noexcept {
+    [[nodiscard]] static constexpr bool has_error(uri_status const status) noexcept {
         return has_error(stl::to_underlying(status));
     }
 
     /// get the error/valid value without the warnings if available
-    [[nodiscard]] static constexpr uri_status get_value(stl::underlying_type_t<uri_status> status) noexcept {
+    [[nodiscard]] static constexpr uri_status
+    get_value(stl::underlying_type_t<uri_status> const status) noexcept {
         return static_cast<uri_status>(status & values_mask);
     }
 
-    [[nodiscard]] static constexpr uri_status get_value(uri_status status) noexcept {
+    [[nodiscard]] static constexpr uri_status get_value(uri_status const status) noexcept {
         return get_value(stl::to_underlying(status));
     }
 
-    static constexpr void set_valid(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+    static constexpr void set_valid(stl::underlying_type_t<uri_status>& status,
+                                    uri_status const                    value) noexcept {
         status &= ~values_mask;
         status |= stl::to_underlying(value);
     }
 
-    static constexpr void set_error(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+    static constexpr void set_error(stl::underlying_type_t<uri_status>& status,
+                                    uri_status const                    value) noexcept {
         status = stl::to_underlying(value);
     }
 
-    static constexpr void set_warning(stl::underlying_type_t<uri_status>& status, uri_status value) noexcept {
+    static constexpr void set_warning(stl::underlying_type_t<uri_status>& status,
+                                      uri_status const                    value) noexcept {
         status |= stl::to_underlying(value);
     }
 
-    [[nodiscard]] static constexpr uri_status get_warning(uri_status_type status) noexcept {
+    [[nodiscard]] static constexpr uri_status get_warning(uri_status_type const status) noexcept {
         return static_cast<uri_status>(stl::bit_floor(warnings_mask & status));
     }
 
-    [[nodiscard]] static constexpr uri_status get_warning(uri_status status) noexcept {
+    [[nodiscard]] static constexpr uri_status get_warning(uri_status const status) noexcept {
         return get_warning(stl::to_underlying(status));
     }
 
@@ -340,9 +345,9 @@ namespace webpp::uri {
 
 
         constexpr uri_status_iterator() noexcept = default;
-        constexpr explicit uri_status_iterator(uri_status inp_status) noexcept
+        constexpr explicit uri_status_iterator(uri_status const inp_status) noexcept
           : status{stl::to_underlying(inp_status)} {}
-        constexpr explicit uri_status_iterator(value_type inp_status) noexcept : status{inp_status} {}
+        constexpr explicit uri_status_iterator(value_type const inp_status) noexcept : status{inp_status} {}
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;
         constexpr uri_status_iterator(uri_status_iterator&&) noexcept                 = default;
         constexpr uri_status_iterator& operator=(uri_status_iterator const&) noexcept = default;
@@ -352,7 +357,7 @@ namespace webpp::uri {
         constexpr uri_status_iterator& operator++() noexcept {
             if (has_warnings(status)) {
                 // remove the first warning
-                auto const new_warnings = ((warnings_mask & status) << 1U) & warnings_mask;
+                auto const new_warnings = (warnings_mask & status) << 1U & warnings_mask;
 
                 // remove the warnings
                 status &= ~warnings_mask;
@@ -368,8 +373,8 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr uri_status_iterator operator++(int) noexcept {
-            uri_status_iterator iter{*this};
-            ++(*this);
+            uri_status_iterator const iter{*this};
+            ++*this;
             return iter;
         }
 
@@ -390,15 +395,15 @@ namespace webpp::uri {
             return &status;
         }
 
-        [[nodiscard]] constexpr bool operator==(uri_status_iterator rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator==(uri_status_iterator const rhs) const noexcept {
             return status == rhs.status;
         }
 
-        [[nodiscard]] constexpr bool operator!=(uri_status_iterator rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(uri_status_iterator const rhs) const noexcept {
             return status != rhs.status;
         }
 
-        [[nodiscard]] constexpr auto operator<=>(uri_status_iterator rhs) const noexcept {
+        [[nodiscard]] constexpr auto operator<=>(uri_status_iterator const rhs) const noexcept {
             return status <=> rhs.status;
         }
 
@@ -415,7 +420,7 @@ namespace webpp::uri {
         return {};
     }
 
-    [[nodiscard]] static constexpr uri_status_iterator begin(uri_status status) noexcept {
+    [[nodiscard]] static constexpr uri_status_iterator begin(uri_status const status) noexcept {
         return uri_status_iterator{status};
     }
 

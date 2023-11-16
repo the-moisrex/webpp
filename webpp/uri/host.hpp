@@ -220,7 +220,7 @@ namespace webpp::uri {
         }
 
         details::component_encoder<details::components::host, ctx_type> decoder(ctx);
-        for (;;) {
+        for (;; ++ctx.pos) {
             if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(end_of_host_chars)) {
                 if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
                     if (ctx.pos == beg) {
@@ -243,26 +243,24 @@ namespace webpp::uri {
                     }
                     set_valid(ctx.status, uri_status::valid);
                     break;
-                case '\\':
                 case '/':
+                case '\\':
+                    decoder.set_value();
+                    set_valid(ctx.status, uri_status::valid_path);
+                    return;
                 case '?': set_valid(ctx.status, uri_status::valid_path); break;
                 case '.':
                     if constexpr (ctx_type::is_segregated) {
                         decoder.set_segment();
                     }
-                    ++ctx.pos;
                     continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, uri_status::invalid_character);
-                    ++ctx.pos;
                     continue;
             }
             break;
         }
-
-        if constexpr (!ctx_type::is_modifiable) {
-            ctx.out.set_host(beg, ctx.pos);
-        }
+        decoder.set_value();
         ++ctx.pos;
     }
 

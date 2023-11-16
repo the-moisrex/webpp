@@ -5,7 +5,7 @@
 using namespace webpp;
 
 TEST(StringTokenizerTest, Init) {
-    stl::string_view const str{"Hello;world"};
+    constexpr stl::string_view str{"Hello;world"};
     string_tokenizer       tok{str};
 
     EXPECT_TRUE(tok.next(charset{';'}));
@@ -16,7 +16,7 @@ TEST(StringTokenizerTest, Init) {
 
 
 TEST(StringTokenizerTest, EmptyNext) {
-    stl::string_view const str{"Hello;world"};
+    constexpr stl::string_view str{"Hello;world"};
     string_tokenizer       tok{str};
 
     EXPECT_TRUE(tok.next(charset{';'}));

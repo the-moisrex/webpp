@@ -82,7 +82,7 @@ TYPED_TEST(URITests, QueryParamGeneration) {
 
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
-    stl::string_view const          str = "http://";
+    constexpr stl::string_view      str = "http://";
     uri::parsing_uri_context_view<> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
@@ -93,7 +93,7 @@ TYPED_TEST(URITests, IntegralSchemeParsing) {
 
 
 TYPED_TEST(URITests, StringSchemeParsing) {
-    stl::string_view const str = "urn:testing";
+    constexpr stl::string_view str = "urn:testing";
 
     uri::parsing_uri_context<stl::string_view, const char*> context{.beg = str.data(),
                                                                     .pos = str.data(),
@@ -107,7 +107,7 @@ TYPED_TEST(URITests, StringSchemeParsing) {
 }
 
 TYPED_TEST(URITests, ParseURI) {
-    stl::string_view const str = "urn:testing";
+    constexpr stl::string_view str = "urn:testing";
 
     auto       context = uri::parse_uri(str);
     auto const res     = static_cast<uri::uri_status>(context.status);
@@ -179,9 +179,9 @@ TYPED_TEST(URITests, URIStatusIteratorWithValue) {
 
 
 TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
-    stl::string            out;
-    stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
-    stl::string_view const decoded = "سلام";
+    stl::string                out;
+    constexpr stl::string_view inp     = "%D8%B3%D9%84%D8%A7%D9%85";
+    constexpr stl::string_view decoded = "سلام";
     EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);
 
@@ -201,9 +201,9 @@ TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
 }
 
 TYPED_TEST(URITests, PercentEncodeDecodePointer) {
-    stl::string            out;
-    stl::string_view const inp     = "%D8%B3%D9%84%D8%A7%D9%85";
-    stl::string_view const decoded = "سلام";
+    stl::string                out;
+    constexpr stl::string_view inp     = "%D8%B3%D9%84%D8%A7%D9%85";
+    constexpr stl::string_view decoded = "سلام";
     EXPECT_TRUE(decode_uri_component(inp, out, ALPHA_DIGIT<char>));
     EXPECT_EQ(out, decoded);
 
@@ -226,7 +226,7 @@ TYPED_TEST(URITests, PercentEncodeDecodePointer) {
 
 
 TYPED_TEST(URITests, BasicURIParsing) {
-    stl::string_view const str =
+    constexpr stl::string_view str =
       "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
 
     auto context = uri::parse_uri(str);
@@ -256,7 +256,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
 
 
 TYPED_TEST(URITests, PathIteratorTest) {
-    uri::path_iterator<> iter{"/page/one"};
+    uri::path_iterator iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
     EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
@@ -283,7 +283,7 @@ TYPED_TEST(URITests, PathTraverser) {
 
 
 TYPED_TEST(URITests, OpaqueHostParser) {
-    stl::string_view const str = "urn://this/is/a/path";
+    constexpr stl::string_view str = "urn://this/is/a/path";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -297,7 +297,7 @@ TYPED_TEST(URITests, OpaqueHostParser) {
 }
 
 TYPED_TEST(URITests, OpaqueHostParserWarning) {
-    stl::string_view const str = "urn://th%is/is/a/path";
+    constexpr stl::string_view str = "urn://th%is/is/a/path";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -314,7 +314,7 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
 
 
 TYPED_TEST(URITests, OpaqueHostWithIPv6) {
-    stl::string_view const str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
+    constexpr stl::string_view str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -329,7 +329,7 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
 }
 
 TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
-    stl::string_view const str = "ldap://#one";
+    constexpr stl::string_view str = "ldap://#one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -342,7 +342,7 @@ TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
 }
 
 TYPED_TEST(URITests, IPv4AsHost) {
-    stl::string_view const str = "http://127.0.0.1/page/one";
+    constexpr stl::string_view str = "http://127.0.0.1/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -356,7 +356,7 @@ TYPED_TEST(URITests, IPv4AsHost) {
 }
 
 TYPED_TEST(URITests, InvalidIPv4AsHost) {
-    stl::string_view const str = "http://12l.0.0.1/page/one";
+    constexpr stl::string_view str = "http://12l.0.0.1/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -367,9 +367,9 @@ TYPED_TEST(URITests, InvalidIPv4AsHost) {
 }
 
 TYPED_TEST(URITests, PathDot) {
-    stl::string_view const str = "http://127.0.0.1/./one";
+    constexpr stl::string_view str = "http://127.0.0.1/./one";
 
-    auto context = uri::parse_uri(str);
+    const auto context = uri::parse_uri(str);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
@@ -412,7 +412,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
 
 
 TYPED_TEST(URITests, DoubleAtSign) {
-    stl::string_view const str = "http://username@username@127.0.0.1/?one==a#hash";
+    constexpr stl::string_view str = "http://username@username@127.0.0.1/?one==a#hash";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
