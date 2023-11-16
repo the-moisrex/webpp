@@ -49,11 +49,20 @@ namespace webpp::uri {
                         continue;
                     }
                     case '/': set_valid(ctx.status, uri_status::valid_path); break;
-                    case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
-                    case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                    case '#':
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                        encoder.set_value();
+                        ++ctx.pos;
+                        return;
+                    case '?':
+                        set_valid(ctx.status, uri_status::valid_queries);
+                        encoder.set_value();
+                        ++ctx.pos;
+                        return;
                     case '.':
                         if constexpr (ctx_type::is_segregated) {
                             encoder.set_segment();
+                            ++ctx.pos;
                             continue;
                         }
                         [[fallthrough]];
@@ -197,7 +206,7 @@ namespace webpp::uri {
             case '\0':
             case '/':
             case '?':
-                if (ctx.is_special) {
+                if (!ctx.is_special) {
                     break;
                 }
                 [[fallthrough]];
