@@ -98,11 +98,7 @@ namespace webpp::uri::details {
         explicit constexpr component_encoder(parsing_uri_context<T...>& inp_ctx) noexcept(
           ctx_type::is_nothrow)
           : ctx{&inp_ctx},
-            beg{ctx->pos} {
-            if constexpr (is_vec && ctx_type::is_modifiable) {
-                set_segment();
-            }
-        }
+            beg{ctx->pos} {}
 
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
@@ -205,7 +201,9 @@ namespace webpp::uri::details {
 
         /// Set the beginning to current position
         constexpr void reset_begin() noexcept {
-            beg = ctx->pos;
+            if constexpr (is_vec) {
+                beg = ctx->pos;
+            }
         }
 
         constexpr void clear_segment() noexcept {
@@ -232,17 +230,25 @@ namespace webpp::uri::details {
             }
         }
 
-        /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
-        /// for path) This is the same as next_segment, except it also sets the result first
-        constexpr void set_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
+        constexpr void start_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
             if constexpr (is_vec) {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
                 if constexpr (ctx_type::is_modifiable) {
-                    using difference_type = typename seg_type::difference_type;
                     istl::collection::emplace_one(get_output(), get_output().get_allocator());
+                    using difference_type = typename seg_type::difference_type;
                     output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
-                } else {
+                }
+            }
+        }
+
+        /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
+        /// for path) This is the same as next_segment, except it also sets the result first
+        constexpr void end_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
+            if constexpr (is_vec) {
+                // the non-modifiable version is the one that needs to be set, the modified versions already
+                // contain the right value at this point in time
+                if constexpr (!ctx_type::is_modifiable) {
                     istl::collection::emplace_one(get_output(), beg, ctx->pos);
                     reset_begin();
                 }

@@ -29,11 +29,13 @@ namespace webpp::uri {
                                       : FORBIDDEN_HOST_CODE_POINTS;
 
             component_encoder<components::host, ctx_type> encoder(ctx);
+            encoder.start_segment();
             for (;;) {
                 if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                       C0_CONTROL_ENCODE_SET,
                       interesting_characters)) {
                     set_valid(ctx.status, uri_status::valid);
+                    encoder.end_segment();
                     break;
                 }
 
@@ -51,21 +53,20 @@ namespace webpp::uri {
                     case '/': set_valid(ctx.status, uri_status::valid_path); break;
                     case '#':
                         set_valid(ctx.status, uri_status::valid_fragment);
+                        encoder.end_segment();
                         encoder.set_value();
                         ++ctx.pos;
                         return;
                     case '?':
                         set_valid(ctx.status, uri_status::valid_queries);
+                        encoder.end_segment();
                         encoder.set_value();
                         ++ctx.pos;
                         return;
                     case '.':
-                        if constexpr (ctx_type::is_segregated) {
-                            encoder.set_segment();
-                            ++ctx.pos;
-                            continue;
-                        }
-                        [[fallthrough]];
+                        encoder.end_segment();
+                        ++ctx.pos;
+                        continue;
                     [[unlikely]] default:
                         set_error(ctx.status, uri_status::invalid_host_code_point);
                         return;
@@ -220,7 +221,8 @@ namespace webpp::uri {
         }
 
         details::component_encoder<details::components::host, ctx_type> decoder(ctx);
-        for (;; ++ctx.pos) {
+        decoder.start_segment();
+        for (;;) {
             if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(end_of_host_chars)) {
                 if constexpr (!ctx_type::is_segregated && !ctx_type::is_modifiable) {
                     if (ctx.pos == beg) {
@@ -228,6 +230,7 @@ namespace webpp::uri {
                         return;
                     }
                     set_valid(ctx.status, uri_status::valid);
+                    break;
                 }
             }
 
@@ -245,23 +248,31 @@ namespace webpp::uri {
                     break;
                 case '/':
                 case '\\':
-                    decoder.set_segment();
+                    decoder.end_segment();
                     decoder.set_value();
                     set_valid(ctx.status, uri_status::valid_path);
                     return;
                 case '?': set_valid(ctx.status, uri_status::valid_path); break;
                 case '.':
-                    decoder.set_segment();
+                    if constexpr (ctx_type::is_segregated) {
+                        decoder.end_segment();
+                        decoder.reset_begin();
+                        decoder.start_segment();
+                    }
+                    ++ctx.pos;
                     continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, uri_status::invalid_character);
+                    ++ctx.pos;
                     continue;
             }
             break;
         }
-        decoder.set_segment();
+        decoder.end_segment();
         decoder.set_value();
-        ++ctx.pos;
+        if (ctx.pos != ctx.end) {
+            ++ctx.pos;
+        }
     }
 
 

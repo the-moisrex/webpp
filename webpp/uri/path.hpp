@@ -117,11 +117,13 @@ namespace webpp::uri {
         webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
 
         details::component_encoder<details::components::path, ctx_type> encoder(ctx);
+        encoder.start_segment();
         for (;;) {
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::C0_CONTROL_ENCODE_SET,
                   interesting_characters)) {
                 set_valid(ctx.status, uri_status::valid);
+                encoder.end_segment();
                 encoder.set_value();
                 break;
             }
@@ -138,6 +140,7 @@ namespace webpp::uri {
                     set_warning(ctx.status, uri_status::invalid_character);
                     continue;
             }
+            encoder.end_segment();
             encoder.set_value();
             ++ctx.pos; // it's okay, we're not at the end
             break;
@@ -183,15 +186,15 @@ namespace webpp::uri {
         bool is_done = false;
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
-
-        for (;; ++ctx.pos) {
+        encoder.start_segment();
+        for (;;) {
 
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::PATH_ENCODE_SET,
                   interesting_chars)) {
 
                 set_valid(ctx.status, uri_status::valid);
-                encoder.set_segment();
+                encoder.end_segment();
                 break;
             }
             switch (*ctx.pos) {
@@ -199,11 +202,13 @@ namespace webpp::uri {
                     if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
                         ++dotted_segment_count;
                     }
+                    ++ctx.pos;
                     continue;
                 case '\\':
                     if (ctx.is_special) {
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
                     } else {
+                        ++ctx.pos;
                         continue;
                     }
                     [[fallthrough]];
@@ -260,9 +265,12 @@ namespace webpp::uri {
             }
 
             // Append the last segment (not the current one)
-            encoder.set_segment();
+            encoder.end_segment();
 
             if (!is_done) {
+                ++ctx.pos;
+                encoder.reset_begin();
+                encoder.start_segment();
                 continue;
             }
 

@@ -426,3 +426,14 @@ TYPED_TEST(URITests, DoubleAtSign) {
     EXPECT_EQ(context.out.get_queries(), "one==a");
     EXPECT_EQ(context.out.get_fragment(), "hash");
 }
+
+TYPED_TEST(URITests, DontGetFooledURI) {
+    constexpr stl::string_view str = "https://example.com:8080@real.example.org/";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_username(), "example.com");
+    EXPECT_EQ(context.out.get_password(), "8080");
+    EXPECT_EQ(context.out.get_path(), "/");
+    EXPECT_EQ(context.out.get_host(), "real.example.org");
+}

@@ -621,9 +621,16 @@ namespace webpp::uri {
         template <istl::String StrT = stl::string, typename... Args>
         [[nodiscard]] constexpr StrT get_path(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
-            for (auto const& seg : m_path) {
+            if (m_path.empty()) {
+                return out;
+            }
+            auto seg = m_path.begin();
+            for (;;) {
+                out += *seg;
+                if (++seg == m_path.end()) {
+                    break;
+                }
                 out += '/';
-                out += seg;
             }
             return out;
         }
