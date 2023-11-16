@@ -245,14 +245,13 @@ namespace webpp::uri {
                     break;
                 case '/':
                 case '\\':
+                    decoder.set_segment();
                     decoder.set_value();
                     set_valid(ctx.status, uri_status::valid_path);
                     return;
                 case '?': set_valid(ctx.status, uri_status::valid_path); break;
                 case '.':
-                    if constexpr (ctx_type::is_segregated) {
-                        decoder.set_segment();
-                    }
+                    decoder.set_segment();
                     continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, uri_status::invalid_character);
@@ -260,6 +259,7 @@ namespace webpp::uri {
             }
             break;
         }
+        decoder.set_segment();
         decoder.set_value();
         ++ctx.pos;
     }

@@ -184,7 +184,7 @@ namespace webpp::uri {
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
 
-        for (;;) {
+        for (;; ++ctx.pos) {
 
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::PATH_ENCODE_SET,
@@ -199,18 +199,15 @@ namespace webpp::uri {
                     if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
                         ++dotted_segment_count;
                     }
-                    ++ctx.pos;
                     continue;
                 case '\\':
                     if (ctx.is_special) {
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
                     } else {
-                        // todo: do we need to enable encoding for this character?
-                        ++ctx.pos;
                         continue;
                     }
                     [[fallthrough]];
-                case '/': ++ctx.pos; break;
+                case '/': break;
                 case '\0':
                     is_done = true; // todo: is this correct?
                     break;
@@ -235,7 +232,7 @@ namespace webpp::uri {
                         }
                     }
                     set_warning(ctx.status, uri_status::invalid_character);
-                    continue;
+                    [[fallthrough]];
                 default: continue;
             }
 
@@ -261,8 +258,6 @@ namespace webpp::uri {
                 encoder.pop_back();
                 continue;
             }
-
-            dotted_segment_count = 0; // zeroing out the dot count
 
             // Append the last segment (not the current one)
             encoder.set_segment();

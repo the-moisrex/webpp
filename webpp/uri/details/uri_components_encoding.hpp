@@ -99,7 +99,7 @@ namespace webpp::uri::details {
           ctx_type::is_nothrow)
           : ctx{&inp_ctx},
             beg{ctx->pos} {
-            if constexpr (is_vec) {
+            if constexpr (is_vec && ctx_type::is_modifiable) {
                 set_segment();
             }
         }
@@ -205,7 +205,7 @@ namespace webpp::uri::details {
 
         /// Set the beginning to current position
         constexpr void reset_begin() noexcept {
-            beg = ctx->pos + 1;
+            beg = ctx->pos;
         }
 
         constexpr void clear_segment() noexcept {
