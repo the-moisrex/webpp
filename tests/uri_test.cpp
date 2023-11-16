@@ -107,11 +107,12 @@ TYPED_TEST(URITests, StringSchemeParsing) {
 }
 
 TYPED_TEST(URITests, ParseURI) {
-    constexpr stl::string_view str = "urn:testing";
+    constexpr stl::string_view str     = "urn:testing";
+    auto                       context = this->template get_context<TypeParam>(str);
 
-    auto       context = uri::parse_uri(str);
-    auto const res     = static_cast<uri::uri_status>(context.status);
-    EXPECT_EQ(res, uri::uri_status::valid_opaque_path) << to_string(res);
+    uri::parse_uri(context);
+    auto const res = static_cast<uri::uri_status>(context.status);
+    EXPECT_EQ(res, uri::uri_status::valid) << to_string(res);
     EXPECT_EQ(context.out.get_scheme(), "urn");
     EXPECT_EQ(context.out.get_path(), "testing");
 }
