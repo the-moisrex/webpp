@@ -259,9 +259,9 @@ namespace webpp::uri {
                 case '.':
                     if constexpr (ctx_type::is_segregated) {
                         decoder.end_segment();
+                        ++ctx.pos;
                         decoder.reset_begin();
                         decoder.start_segment();
-                        ++ctx.pos;
                     }
                     continue;
                 [[unlikely]] default:

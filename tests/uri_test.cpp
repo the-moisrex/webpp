@@ -370,12 +370,17 @@ TYPED_TEST(URITests, InvalidIPv4AsHost) {
 TYPED_TEST(URITests, PathDot) {
     constexpr stl::string_view str = "http://127.0.0.1/./one";
 
-    const auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.get_path(), "/one");
+    if (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/one");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/./one");
+    }
 }
 
 TYPED_TEST(URITests, PathDotNormalized) {
