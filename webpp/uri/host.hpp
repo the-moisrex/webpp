@@ -162,8 +162,8 @@ namespace webpp::uri {
         }
 
         webpp_static_constexpr auto end_of_host_chars =
-          ctx_type::is_segregated ? details::FORBIDDEN_DOMAIN_CODE_POINTS
-                                  : ascii_bitmap{details::FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+          ctx_type::is_segregated ? ascii_bitmap{details::FORBIDDEN_DOMAIN_CODE_POINTS, '.'}
+                                  : details::FORBIDDEN_DOMAIN_CODE_POINTS;
 
 
 
@@ -261,8 +261,8 @@ namespace webpp::uri {
                         decoder.end_segment();
                         decoder.reset_begin();
                         decoder.start_segment();
+                        ++ctx.pos;
                     }
-                    ++ctx.pos;
                     continue;
                 [[unlikely]] default:
                     set_warning(ctx.status, uri_status::invalid_character);
