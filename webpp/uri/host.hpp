@@ -50,7 +50,10 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::invalid_character);
                         continue;
                     }
-                    case '/': set_valid(ctx.status, uri_status::valid_path); break;
+                    case '/':
+                        encoder.end_segment();
+                        set_valid(ctx.status, uri_status::valid_path);
+                        break;
                     case '#':
                         set_valid(ctx.status, uri_status::valid_fragment);
                         encoder.end_segment();

@@ -68,8 +68,9 @@ namespace webpp::uri::details {
       public:
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
-        constexpr void set_value(iterator start, iterator end) noexcept(ctx_type::is_nothrow || is_seg) {
-            if constexpr (!is_seg) {
+        constexpr void set_value(iterator start, iterator end) noexcept(ctx_type::is_nothrow || is_seg ||
+                                                                        ctx_type::is_modifiable) {
+            if constexpr (!is_seg && !ctx_type::is_modifiable) {
                 if constexpr (components::scheme == Comp) {
                     ctx->out.set_scheme(start, end);
                 } else if constexpr (components::username == Comp) {

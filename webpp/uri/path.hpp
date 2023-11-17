@@ -199,7 +199,7 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '.':
-                    if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
+                    if (encoder.segment_begin() + dotted_segment_count + 1 == ctx.pos) {
                         ++dotted_segment_count;
                     }
                     ++ctx.pos;
