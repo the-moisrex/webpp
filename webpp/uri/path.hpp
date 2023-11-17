@@ -199,7 +199,7 @@ namespace webpp::uri {
             }
             switch (*ctx.pos) {
                 case '.':
-                    if (encoder.segment_begin() + dotted_segment_count + 1 == ctx.pos) {
+                    if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
                         ++dotted_segment_count;
                     }
                     ++ctx.pos;
@@ -212,7 +212,15 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                case '/': break;
+                case '/':
+                    if constexpr (ctx_type::is_segregated) {
+                        ++ctx.pos;
+                        encoder.reset_begin();
+                    } else {
+                        encoder.reset_begin();
+                        ++ctx.pos;
+                    }
+                    break;
                 case '\0':
                     is_done = true; // todo: is this correct?
                     break;
@@ -225,16 +233,18 @@ namespace webpp::uri {
                     is_done = true;
                     break;
                 case '%':
-                    if (ctx.pos + 2 < ctx.end) {
-                        // %2E or %2e is equal to a "." (dot)
-                        if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
-                            ctx.pos += 2;
-                            dotted_segment_count += 3;
-                            continue;
-                        }
-                        if (validate_percent_encode(ctx.pos, ctx.end)) {
-                            continue;
-                        }
+                    if (ctx.pos + 2 >= ctx.end) {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        break;
+                    }
+                    // %2E or %2e is equal to a "." (dot)
+                    if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
+                        ctx.pos += 3;
+                        dotted_segment_count += 3;
+                        continue;
+                    }
+                    if (validate_percent_encode(ctx.pos, ctx.end)) {
+                        continue;
                     }
                     set_warning(ctx.status, uri_status::invalid_character);
                     [[fallthrough]];
@@ -252,15 +262,15 @@ namespace webpp::uri {
                 //                ^
                 //         The deciding bit
                 dotted_segment_count = 0;
-                encoder.reset_begin();
+                // encoder.reset_begin();
                 encoder.clear_segment();
                 continue; // ignore this path segment
             }
             if (dotted_segment_count != 0) { // double dot
                 // remove the last segment as well
                 dotted_segment_count = 0;
-                encoder.reset_begin();
                 encoder.pop_back();
+                encoder.reset_begin();
                 continue;
             }
 
@@ -268,8 +278,6 @@ namespace webpp::uri {
             encoder.end_segment();
 
             if (!is_done) {
-                ++ctx.pos;
-                encoder.reset_begin();
                 encoder.start_segment();
                 continue;
             }

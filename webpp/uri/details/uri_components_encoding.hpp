@@ -202,7 +202,7 @@ namespace webpp::uri::details {
 
         /// Set the beginning to current position
         constexpr void reset_begin() noexcept {
-            if constexpr (is_vec) {
+            if constexpr (is_vec || ctx_type::is_modifiable) {
                 beg = ctx->pos;
             }
         }
@@ -227,6 +227,10 @@ namespace webpp::uri::details {
             } else if constexpr (is_vec) {
                 if (!get_output().empty()) {
                     get_output().pop_back();
+                }
+            } else if constexpr (ctx_type::is_modifiable) {
+                if (!get_output().empty()) {
+                    get_output().erase(ctx->pos - beg);
                 }
             }
         }

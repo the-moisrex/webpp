@@ -400,20 +400,21 @@ TYPED_TEST(URITests, PathDotNormalized) {
 }
 
 TYPED_TEST(URITests, PathDotNormalizedABunch) {
-    stl::string const str =
+    constexpr stl::string_view str =
       "http://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
 
-    uri::parsing_uri_context_string<stl::string> context{
-      .beg = str.begin(),
-      .pos = str.begin(),
-      .end = str.end(),
-    };
+    auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.get_path(), "//three/");
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "//three/");
+    } else {
+        EXPECT_EQ(context.out.get_path(),
+                  "..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e");
+    }
 }
 
 
@@ -442,4 +443,16 @@ TYPED_TEST(URITests, DontGetFooledURI) {
     EXPECT_EQ(context.out.get_password(), "8080");
     EXPECT_EQ(context.out.get_path(), "/");
     EXPECT_EQ(context.out.get_host(), "real.example.org");
+}
+
+TYPED_TEST(URITests, FuckedUpURL) {
+    constexpr stl::string_view str = "file://C|\\windows";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
+    }
 }
