@@ -202,8 +202,12 @@ namespace webpp::uri::details {
 
         /// Set the beginning to current position
         constexpr void reset_begin() noexcept {
+            beg = ctx->pos;
+        }
+
+        constexpr void reset_segment_start() noexcept {
             if constexpr (is_vec || ctx_type::is_modifiable) {
-                beg = ctx->pos;
+                reset_begin();
             }
         }
 

@@ -215,9 +215,9 @@ namespace webpp::uri {
                 case '/':
                     if constexpr (ctx_type::is_segregated) {
                         ++ctx.pos;
-                        encoder.reset_begin();
+                        encoder.reset_segment_start();
                     } else {
-                        encoder.reset_begin();
+                        encoder.reset_segment_start();
                         ++ctx.pos;
                     }
                     break;
@@ -270,7 +270,7 @@ namespace webpp::uri {
                 // remove the last segment as well
                 dotted_segment_count = 0;
                 encoder.pop_back();
-                encoder.reset_begin();
+                encoder.reset_segment_start();
                 continue;
             }
 

@@ -10,6 +10,7 @@
 #include "details/uri_components_encoding.hpp"
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
+#include "port.hpp"
 
 /**
  * Attention: User infos in URIs are DEPRECATED in URI, but we SHOULD parse it
@@ -316,7 +317,7 @@ namespace webpp::uri {
 
         component_encoder<components::host, ctx_type> decoder(ctx);
         decoder.start_segment();
-        for (;; ++ctx.pos) {
+        for (;;) {
 
             // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
             if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
@@ -330,16 +331,34 @@ namespace webpp::uri {
             }
 
             switch (*ctx.pos) {
-                case ':':
-                    if constexpr (Options.parse_credentails) {
+                case ':': {
+                    if constexpr (!Options.parse_credentails) {
+                        set_valid(ctx.status, uri_status::valid_port);
+                    } else {
                         // the first colon is the start of the password section
                         if (colon_pos == ctx.end) {
                             colon_pos = ctx.pos;
                         }
-                        continue; // append the ":" to the username/password
+
+                        // assume it's a port (even though it might be the start of the password)
+                        ++ctx.pos;
+                        auto const pres_port_pos = ctx.pos;
+                        set_valid(ctx.status, uri_status::valid_port);
+                        parse_port(ctx);
+
+                        // rollback if it's not a port, we rollback and assume it's a password
+                        if (get_value(ctx.status) != uri_status::valid_authority_end) {
+                            // it might be a "password" or an "invalid port"
+                            ctx.pos = pres_port_pos;
+                            continue;
+                        }
+
+                        decoder.end_segment();
+                        decoder.set_value();
+                        return;
                     }
-                    set_valid(ctx.status, uri_status::valid_port);
                     break;
+                }
                 case '\\':
                     if (!ctx.is_special) {
                         // todo: check for non-specials
@@ -357,6 +376,8 @@ namespace webpp::uri {
                         ++ctx.pos;
                         decoder.reset_begin();
                         decoder.start_segment();
+                    } else {
+                        ++ctx.pos; // todo: append to the output
                     }
                     continue;
                 case '?': set_valid(ctx.status, uri_status::valid_path); break;
@@ -364,9 +385,12 @@ namespace webpp::uri {
                 case '@':
                     if constexpr (Options.parse_credentails) {
                         details::parse_credentials(ctx, authority_begin, colon_pos);
+                        ++ctx.pos;
                         ctx.out.clear_host();
-                        host_begin = ctx.pos + 1;
-                        break;
+                        decoder.reset_begin();
+                        decoder.start_segment();
+                        host_begin = ctx.pos;
+                        continue;
                     } else {
                         // todo: set an error
                         set_warning(ctx.status, uri_status::has_credentials);

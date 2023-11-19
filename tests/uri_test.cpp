@@ -230,7 +230,8 @@ TYPED_TEST(URITests, BasicURIParsing) {
     constexpr stl::string_view str =
       "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
 
-    auto context = uri::parse_uri(str);
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status));
     EXPECT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::uri_status::has_credentials, uri::get_warning(context.status))
@@ -555,4 +556,62 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
             EXPECT_EQ(context.out.get_host(), "127.0.0.1");
         }
     }
+}
+
+
+// TYPED_TEST(URITests, PunnycodeBasic) {
+//     constexpr stl::string_view str = "http://☕.example";
+//
+//     auto context = this->template get_context<TypeParam>(str);
+//     uri::parse_uri(context);
+//     if constexpr (TypeParam::is_modifiable) {
+//         EXPECT_EQ(context.out.get_host(), "xn--53h.example");
+//     } else {
+//         EXPECT_EQ(context.out.get_host(), "http://☕.example");
+//     }
+// }
+
+TYPED_TEST(URITests, IPv6WithCredentials) {
+    constexpr stl::string_view str = "http://user:pass@[::1]:8080/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_host(), "[::1]");
+    EXPECT_EQ(context.out.get_username(), "user");
+    EXPECT_EQ(context.out.get_password(), "pass");
+    EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+TYPED_TEST(URITests, PortLikePassword) {
+    constexpr stl::string_view str = "http://user:123@host/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_host(), "host");
+    EXPECT_FALSE(context.out.has_port());
+    EXPECT_EQ(context.out.get_username(), "user");
+    EXPECT_EQ(context.out.get_password(), "123");
+    EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+TYPED_TEST(URITests, InvlaidPort) {
+    constexpr stl::string_view str = "http://user:123@host:invalid/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::uri_status::port_invalid, uri::get_value(context.status))
+      << str << "\n"
+      << to_string(uri::get_value(context.status));
+}
+
+TYPED_TEST(URITests, OutOfRangePort) {
+    constexpr stl::string_view str = "http://user:123@host:77777/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::uri_status::port_out_of_range, uri::get_value(context.status))
+      << str << "\n"
+      << to_string(uri::get_value(context.status));
 }

@@ -192,6 +192,10 @@ namespace webpp::uri {
             return password_start != omitted;
         }
 
+        [[nodiscard]] constexpr bool has_host() const noexcept {
+            return host_start != omitted;
+        }
+
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return authority_start != omitted;
         }
@@ -243,7 +247,8 @@ namespace webpp::uri {
             if (authority_start == omitted) {
                 return {};
             }
-            return view<StrT>(authority_start, host_start - 1 - authority_start);
+            return view<StrT>(authority_start,
+                              stl::min(password_start - 1, host_start - 1) - authority_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -294,7 +299,7 @@ namespace webpp::uri {
             if (fragment_start == omitted) {
                 return {};
             }
-            return view<StrT>(fragment_start, uri_end);
+            return view<StrT>(fragment_start, uri_end - fragment_start);
         }
 
 
