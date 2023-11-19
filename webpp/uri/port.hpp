@@ -17,14 +17,22 @@ namespace webpp::uri {
 
     template <typename... T>
     static constexpr void
-    parse_port(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+    parse_port(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
 
-        using ctx_type = uri::parsing_uri_context<T...>;
-        using seg_type = typename ctx_type::out_seg_type;
+        using ctx_type  = parsing_uri_context<T...>;
+        using seg_type  = typename ctx_type::out_seg_type;
+        using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
-        auto const    beg        = ctx.pos;
-        stl::uint16_t port_value = 0;
+        if (ctx.pos == ctx.end) {
+            // It's still valid:
+            //   scheme://example.com:
+            set_valid(ctx.status, uri_status::valid);
+            return;
+        }
+
+        auto const beg        = ctx.pos;
+        port_type  port_value = 0;
         while (ctx.pos != ctx.end) {
             switch (*ctx.pos) {
                 case '0':
@@ -37,8 +45,13 @@ namespace webpp::uri {
                 case '7':
                 case '8':
                 case '9':
-                    port_value *= 10; // NOLINT(*-magic-numbers)
-                    port_value += static_cast<stl::uint16_t>(*ctx.pos - '0');
+                    // "65535".count() == 5
+                    if (ctx.pos - beg == 5U) { // NOLINT(*-magic-numbers)
+                        set_error(ctx.status, uri_status::port_out_of_range);
+                        return;
+                    }
+                    port_value *= 10U; // NOLINT(*-magic-numbers)
+                    port_value += static_cast<port_type>(*ctx.pos - '0');
                     ++ctx.pos;
                     continue;
                 case '\\':
@@ -52,14 +65,16 @@ namespace webpp::uri {
                 case '#':
                     // it's unsigned, we don't need to check for it being lower than 0
                     if (port_value > max_port_number) {
-                        uri::set_error(ctx.status, uri_status::port_out_of_range);
+                        set_error(ctx.status, uri_status::port_out_of_range);
                         return;
                     }
                     if (port_value == known_port(ctx.out.get_scheme())) {
                         ctx.out.clear_port();
-                    } else if constexpr (requires { ctx.out.set_port(port_value); }) {
+                    } else if constexpr (requires {
+                                             ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
+                                         }) {
                         // store the integer port value
-                        ctx.out.set_port(port_value);
+                        ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
                     } else if constexpr (requires {
                                              ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
                                                               static_cast<seg_type>(ctx.pos - ctx.beg));
@@ -73,14 +88,14 @@ namespace webpp::uri {
                     }
 
                     // https://url.spec.whatwg.org/#path-start-state
-                    uri::set_valid(ctx.status, uri_status::valid_authority_end);
+                    set_valid(ctx.status, uri_status::valid_authority_end);
                     return;
                 default: break;
             }
             break;
         }
 
-        uri::set_error(ctx.status, uri_status::port_invalid);
+        set_error(ctx.status, uri_status::port_invalid);
     }
 
 
