@@ -3,6 +3,7 @@
 #ifndef WEBPP_URI_AUTHORITY_HPP
 #define WEBPP_URI_AUTHORITY_HPP
 
+#include "../ip/inet_pton.hpp"
 #include "../std/string.hpp"
 #include "../std/utility.hpp"
 #include "details/constants.hpp"
@@ -17,81 +18,387 @@
 namespace webpp::uri {
 
 
+    namespace details {
+
+
+        /**
+         * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
+         * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
+         */
+        template <typename... T>
+        static constexpr bool
+        parse_host_ipv6(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            webpp_assume(ctx.pos < ctx.end);
+
+            auto const                                beg = ctx.pos;
+            stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
+
+            ++ctx.pos; // first char should be '[' now
+
+            // todo: use context's output host for storing ipv6 bytes if the host supports it
+            switch (auto const ipv6_parsing_result = inet_pton6(ctx.pos, ctx.end, ipv6_bytes.data(), ']')) {
+                case inet_pton6_status::valid: set_error(ctx.status, uri_status::ipv6_unclosed); return false;
+                case inet_pton6_status::valid_special:
+                    if (*ctx.pos == ']') {
+                        ++ctx.pos;
+                        ctx.out.set_host(beg, ctx.pos);
+                        if (ctx.pos == ctx.end) {
+                            set_valid(ctx.status, uri_status::valid);
+                            return false;
+                        }
+                        switch (*ctx.pos) {
+                            case '/': set_valid(ctx.status, uri_status::valid_path); return false;
+                            case ':': set_valid(ctx.status, uri_status::valid_port); break;
+                            case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
+                            case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                            default: set_error(ctx.status, uri_status::ipv6_char_after_closing); return false;
+                        }
+                        ++ctx.pos;
+                        return false;
+                    }
+                    set_error(ctx.status, uri_status::ipv6_unclosed);
+                    return false;
+                default:
+                    set_error(ctx.status,
+                              static_cast<uri_status>(error_bit | stl::to_underlying(ipv6_parsing_result)));
+                    return false;
+            }
+            return true;
+        }
+
+        template <typename... T>
+        static constexpr void
+        parse_opaque_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            // https://url.spec.whatwg.org/#concept-opaque-host-parser
+
+            using ctx_type = parsing_uri_context<T...>;
+
+            webpp_static_constexpr auto interesting_characters =
+              ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
+                                      : FORBIDDEN_HOST_CODE_POINTS;
+
+            component_encoder<components::host, ctx_type> encoder(ctx);
+            encoder.start_segment();
+            for (;;) {
+                if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                      C0_CONTROL_ENCODE_SET,
+                      interesting_characters)) {
+                    set_valid(ctx.status, uri_status::valid);
+                    encoder.end_segment();
+                    break;
+                }
+
+                switch (*ctx.pos) {
+                    case '%': {
+                        if (ctx.pos + 2 < ctx.end) {
+                            if (validate_percent_encode(ctx.pos, ctx.end)) {
+                                continue;
+                            }
+                            ++ctx.pos;
+                        }
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        continue;
+                    }
+                    case '/':
+                        encoder.end_segment();
+                        set_valid(ctx.status, uri_status::valid_path);
+                        break;
+                    case '#':
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                        encoder.end_segment();
+                        encoder.set_value();
+                        ++ctx.pos;
+                        return;
+                    case '?':
+                        set_valid(ctx.status, uri_status::valid_queries);
+                        encoder.end_segment();
+                        encoder.set_value();
+                        ++ctx.pos;
+                        return;
+                    case '.':
+                        encoder.end_segment();
+                        ++ctx.pos;
+                        continue;
+                    [[unlikely]] default:
+                        set_error(ctx.status, uri_status::invalid_host_code_point);
+                        return;
+                }
+                break;
+            }
+            encoder.set_value();
+        }
+
+
+        template <typename... T, typename Iter = typename parsing_uri_context<T...>::iterator>
+        static constexpr void
+        parse_credentials(parsing_uri_context<T...>& ctx,
+                          Iter                       beg,
+                          Iter password_token_pos) noexcept(parsing_uri_context<T...>::is_nothrow) {
+
+            // todo: add "needs_encoding"
+            // todo: See if there's a way to find the last atsign position instead of running this function for every atsign
+            // todo: use already parsed host
+
+            using details::ascii_bitmap;
+            using details::component_encoder;
+            using details::components;
+            using details::USER_INFO_ENCODE_SET;
+
+            using ctx_type = parsing_uri_context<T...>;
+            using iterator = typename ctx_type::iterator;
+
+            webpp_assume(ctx.pos < ctx.end);
+
+            set_warning(ctx.status, uri_status::has_credentials);
+            auto const atsign_pos = ctx.pos;
+
+            // append to the username and password
+            if (atsign_pos != ctx.end) {
+                // parse username
+                iterator const username_beg = beg;
+                iterator const username_end = stl::min(password_token_pos, atsign_pos);
+                component_encoder<components::username, ctx_type> user_encoder{ctx};
+                user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(username_beg,
+                                                                                       username_end,
+                                                                                       USER_INFO_ENCODE_SET);
+
+                // parse password
+                if (password_token_pos != ctx.end) {
+                    iterator const                                    password_beg = password_token_pos + 1;
+                    iterator const                                    password_end = atsign_pos;
+                    component_encoder<components::password, ctx_type> pass_encoder{ctx};
+                    pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
+                      password_beg,
+                      password_end,
+                      USER_INFO_ENCODE_SET);
+                }
+            }
+        }
+
+    } // namespace details
+
     template <typename... T>
     static constexpr void
+    parse_file_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#file-host-state
+
+        // todo
+        if (ctx.pos != ctx.end) {
+            switch (*ctx.pos) {
+                case '\0':
+                case '/':
+                case '\\':
+                case '?':
+                case '#': break;
+            }
+        }
+    }
+
+    /// Path start state (I like to call it authority end because it's more RFC like to say that,
+    /// but WHATWG likes to call it "path start state")
+    template <typename... T>
+    static constexpr void
+    parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        // https://url.spec.whatwg.org/#path-start-state
+
+        if (ctx.pos == ctx.end) {
+            // todo: I'm guessing
+            set_valid(ctx.status, uri_status::valid);
+            return;
+        }
+        if (ctx.is_special) {
+            switch (*ctx.pos) {
+                case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                case '/':
+                default: set_valid(ctx.status, uri_status::valid_path); break;
+            }
+        } else {
+            switch (*ctx.pos) {
+                case '?':
+                    set_valid(ctx.status, uri_status::valid_queries);
+                    ++ctx.pos;
+                    ctx.out.clear_queries();
+                    return;
+                case '#':
+                    set_valid(ctx.status, uri_status::valid_fragment);
+                    ++ctx.pos;
+                    ctx.out.clear_fragment();
+                    return;
+                default:
+                    set_valid(ctx.status, uri_status::valid_path);
+                    ctx.out.clear_path();
+                    return;
+            }
+        }
+    }
+
+
+    /**
+     * @brief Parse authority part of the URI (credentials, host, and port)
+     * @param ctx Parsing Context containing all the details of the URI and the state of it
+     */
+    template <uri_parsing_options Options = {}, typename... T>
+    static constexpr void
     parse_authority(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        // We merged the host parser and authority parser to make it single-pass for most use cases.
         // https://url.spec.whatwg.org/#authority-state
+        // https://url.spec.whatwg.org/#host-state
 
         using details::ascii_bitmap;
         using details::component_encoder;
         using details::components;
-        using details::USER_INFO_ENCODE_SET;
 
         using ctx_type = parsing_uri_context<T...>;
         using iterator = typename ctx_type::iterator;
 
-        const auto interesting_characters = ctx.is_special ? ascii_bitmap{'@', ':', '/', '?', '#', '\0', '\\'}
-                                                           : ascii_bitmap{'@', ':', '/', '?', '#', '\0'};
-        iterator   atsign_pos             = ctx.end;
-        iterator   password_token_pos     = ctx.end;
-        auto const beg                    = ctx.pos;
-        for (;; ++ctx.pos) {
-            ctx.pos = interesting_characters.find_first_in(ctx.pos, ctx.end);
-            if (ctx.pos == ctx.end) {
+        webpp_static_constexpr auto interesting_characters =
+          ascii_bitmap{details::FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+
+        if (ctx.pos == ctx.end) {
+            set_error(ctx.status, uri_status::host_missing);
+            return;
+        }
+
+        auto const scheme = ctx.out.get_scheme();
+        if (scheme == "file") {
+            // todo: should we set the status instead?
+            parse_file_host(ctx);
+            return;
+        }
+
+        auto const authority_begin = ctx.pos;
+        auto       host_begin      = authority_begin;
+        iterator   colon_pos       = ctx.end; // start of password or port
+
+        // Handle missing host situation, and ipv6:
+        // attention: since we have merge the authority and host parsing, it's possible to have
+        // something like "http://username@:8080/" which the host is missing too
+        switch (*ctx.pos) {
+            case '[': {
+                if (!details::parse_host_ipv6(ctx)) {
+                    return;
+                }
                 break;
             }
-            switch (*ctx.pos) {
-                case '@': {
-                    set_warning(ctx.status, uri_status::has_credentials);
-                    atsign_pos = ctx.pos;
-
-                    // append to the username and password
-                    if (atsign_pos != ctx.end) {
-                        // parse username
-                        iterator const username_beg = beg;
-                        iterator const username_end = stl::min(password_token_pos, atsign_pos);
-                        component_encoder<components::username, ctx_type> user_encoder{ctx};
-                        user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
-                          username_beg,
-                          username_end,
-                          USER_INFO_ENCODE_SET);
-
-                        // parse password
-                        if (password_token_pos != ctx.end) {
-                            iterator const password_beg = password_token_pos + 1;
-                            iterator const password_end = atsign_pos;
-                            component_encoder<components::password, ctx_type> pass_encoder{ctx};
-                            pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
-                              password_beg,
-                              password_end,
-                              USER_INFO_ENCODE_SET);
-                        }
-                    }
+            case ':':
+                if constexpr (Options.parse_credentails) {
+                    colon_pos = ctx.pos;
+                } else {
+                    set_error(ctx.status, uri_status::host_missing);
+                    return;
+                }
+                break;
+            case '\0':
+                if constexpr (Options.eof_is_valid) {
+                    break;
+                } else {
+                    set_error(ctx.status, uri_status::host_missing);
+                    return;
+                }
+            case '?':
+                if (!ctx.is_special) {
                     break;
                 }
+                [[fallthrough]];
+            case '\\':
+            case '/':
+            case '#': set_error(ctx.status, uri_status::host_missing); return;
+            default: break;
+        }
+
+        if (!ctx.is_special) {
+            // todo: opaque host also needs to check for credentials
+            details::parse_opaque_host(ctx);
+            return;
+        }
+
+
+
+        component_encoder<components::host, ctx_type> decoder(ctx);
+        decoder.start_segment();
+        for (;; ++ctx.pos) {
+
+            // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
+            if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
+                  interesting_characters)) {
+                if (ctx.pos == authority_begin) {
+                    set_error(ctx.status, uri_status::host_missing);
+                    return;
+                }
+                set_valid(ctx.status, uri_status::valid);
+                break;
+            }
+
+            switch (*ctx.pos) {
                 case ':':
-                    if (password_token_pos == ctx.end) {
-                        password_token_pos = ctx.pos;
-                        continue;
+                    if constexpr (Options.parse_credentails) {
+                        // the first colon is the start of the password section
+                        if (colon_pos == ctx.end) {
+                            colon_pos = ctx.pos;
+                        }
+                        continue; // append the ":" to the username/password
                     }
-                    break; // append the ":" to the username/password
+                    set_valid(ctx.status, uri_status::valid_port);
+                    break;
+                case '\\':
+                    if (!ctx.is_special) {
+                        // todo: check for non-specials
+                        break;
+                    }
+                    [[fallthrough]];
                 case '/':
-                case '?':
-                case '#':
-                case '\\': // the check has been done before, we don't need to check to see if the URL has a
-                           // special scheme here (as it said by WHATWG)
-                case '\0':
-                    if (atsign_pos != ctx.end && ctx.pos == beg) {
-                        set_error(ctx.status, uri_status::host_missing);
+                    decoder.end_segment();
+                    decoder.set_value();
+                    set_valid(ctx.status, uri_status::valid_path);
+                    return;
+                case '.':
+                    if constexpr (ctx_type::is_segregated) {
+                        decoder.end_segment();
+                        ++ctx.pos;
+                        decoder.reset_begin();
+                        decoder.start_segment();
+                    }
+                    continue;
+                case '?': set_valid(ctx.status, uri_status::valid_path); break;
+                case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
+                case '@':
+                    if constexpr (Options.parse_credentails) {
+                        details::parse_credentials(ctx, authority_begin, colon_pos);
+                        ctx.out.clear_host();
+                        host_begin = ctx.pos + 1;
+                        break;
+                    } else {
+                        // todo: set an error
+                        set_warning(ctx.status, uri_status::has_credentials);
+                        set_warning(ctx.status, uri_status::invalid_character);
                         return;
                     }
-                    // There was no username and password
-                    // todo: we could do this in one pass instead of going back here
-                    ctx.pos = atsign_pos == ctx.end ? beg : atsign_pos + 1;
-                    set_valid(ctx.status, uri_status::valid_host);
-                    return;
-                default: stl::unreachable(); break;
+                [[unlikely]] case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        if (ctx.pos == authority_begin) {
+                            set_error(ctx.status, uri_status::host_missing);
+                            return;
+                        }
+                        set_valid(ctx.status, uri_status::valid);
+                        break;
+                    }
+                    [[fallthrough]];
+                [[unlikely]] default:
+                    set_warning(ctx.status, uri_status::invalid_character);
+                    ++ctx.pos;
+                    continue;
             }
+            if (ctx.pos == host_begin) {
+                set_error(ctx.status, uri_status::host_missing);
+                return;
+            }
+            break;
+        }
+
+        decoder.end_segment();
+        decoder.set_value();
+        if (ctx.pos != ctx.end) {
+            ++ctx.pos;
         }
     }
 

@@ -152,7 +152,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr stl::uint16_t
-        port_or(stl::uint16_t default_port = default_http_port) const noexcept {
+        port_or(stl::uint16_t const default_port = default_http_port) const noexcept {
             return has_port() ? port_value : default_port;
         }
 
@@ -202,7 +202,7 @@ namespace webpp::uri {
             return status_code == valid || status_code == valid_with_port;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
         }
 
@@ -286,18 +286,18 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr stl::strong_ordering
-        operator<=>(host_authority const& rhs_host) const noexcept = default;
+        operator<=>(host_authority const& rhs_host) const = default;
 
 
-        [[nodiscard]] constexpr operator struct ipv4() const noexcept {
+        [[nodiscard]] explicit constexpr operator struct ipv4() const noexcept {
             return this->ipv4();
         }
 
-        [[nodiscard]] constexpr operator struct ipv6() const noexcept {
+        [[nodiscard]] explicit constexpr operator struct ipv6() const noexcept {
             return this->ipv6();
         }
 
-        [[nodiscard]] constexpr operator domain_type() const noexcept {
+        [[nodiscard]] explicit constexpr operator domain_type() const noexcept {
             return this->domain();
         }
 

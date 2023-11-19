@@ -14,6 +14,24 @@ namespace webpp::uri {
 
     // NOLINTBEGIN(*-magic-numbers)
 
+
+    /// URI Parsing Options,
+    /// These options are designed to
+    struct uri_parsing_options {
+
+        /// Parse username and password part of the authority (you may want to disable it if you're trying to
+        /// parse Host Authority which doesn't have credentials)
+        bool parse_credentails = true;
+
+        /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
+        /// know the end of your string and you may enable if you're working with a stream
+        bool eof_is_valid = false;
+
+        /// Parse punny codes
+        bool parse_punycodes = true;
+    };
+
+
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
     /// only one error is possible.
     /// This warning bit helps with:
@@ -71,10 +89,9 @@ namespace webpp::uri {
         // host-specific errors:
         valid_path_or_authority = valid_bit | 3U,
         valid_authority         = valid_bit | 4U,
-        valid_host              = valid_bit | 5U,
-        valid_file_host         = valid_bit | 6U,
-        valid_port              = valid_bit | 7U,
-        valid_authority_end     = valid_bit | 8U,
+        valid_file_host         = valid_bit | 5U,
+        valid_port              = valid_bit | 6U,
+        valid_authority_end     = valid_bit | 7U,
         subdomain_too_long      = error_bit | 6U, // the subdomain is too long
         dot_at_end              = error_bit | 7U, // the domain ended unexpectedly
         begin_with_hyphen       = error_bit | 8U, // the domain cannot start with hyphens
@@ -107,17 +124,17 @@ namespace webpp::uri {
         port_invalid      = error_bit | 18U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 9U,
-        valid_opaque_path            = valid_bit | 10U,
+        valid_path                   = valid_bit | 8U,
+        valid_opaque_path            = valid_bit | 9U,
         reverse_solidus_used         = warning_bit >> 3U,
         windows_drive_letter_used    = warning_bit >> 4U,
         windows_drive_letter_as_host = warning_bit >> 5U,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 11U,
+        valid_queries = valid_bit | 10U,
 
         // fragment-specific errors/warnings:
-        valid_fragment = valid_bit | 12U,
+        valid_fragment = valid_bit | 11U,
     };
 
     /**
@@ -147,8 +164,9 @@ namespace webpp::uri {
                 // scheme-specific errors:
             case valid_path_or_authority:
                 return {"Valid scheme that should be followed by a path or an authority."};
-            case valid_authority: return {"Valid scheme that should be followed by an authority."};
-            case valid_host: return {"Valid URI until host; parsing is not done yet."};
+            case valid_authority:
+                return {"Valid scheme that should be followed by an authority "
+                        "(a host optionally with username and password or port)."};
             case valid_file_host:
                 return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};

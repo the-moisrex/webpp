@@ -40,7 +40,7 @@ namespace webpp::uri {
                     port_value *= 10; // NOLINT(*-magic-numbers)
                     port_value += static_cast<stl::uint16_t>(*ctx.pos - '0');
                     ++ctx.pos;
-                    break;
+                    continue;
                 case '\\':
                     if (ctx.is_special) {
                         break; // invalid port
@@ -75,7 +75,9 @@ namespace webpp::uri {
                     // https://url.spec.whatwg.org/#path-start-state
                     uri::set_valid(ctx.status, uri_status::valid_authority_end);
                     return;
+                default: break;
             }
+            break;
         }
 
         uri::set_error(ctx.status, uri_status::port_invalid);

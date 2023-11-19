@@ -48,7 +48,7 @@ TYPED_TEST(URITests, Generation) {
     uri::uri url;
     EXPECT_EQ(url.scheme.size(), 0);
 
-    auto alloc = url.get_allocator<std::allocator<char>>();
+    auto const alloc = url.get_allocator<std::allocator<char>>();
 
     std::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
@@ -144,7 +144,7 @@ TYPED_TEST(URITests, URIStatusIterator) {
     uri::uri_status_type const original = status;
 
     int index = 0;
-    for (auto item : uri::uri_status_iterator{status}) {
+    for (auto const item : uri::uri_status_iterator{status}) {
         EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
                     item == uri::uri_status::invalid_character)
           << "Index: " << index << "\n"
@@ -454,5 +454,105 @@ TYPED_TEST(URITests, FuckedUpURL) {
         EXPECT_EQ(context.out.get_path(), "/C:/windows");
     } else {
         EXPECT_EQ(context.out.get_path(), "/C|/windows");
+    }
+}
+
+TYPED_TEST(URITests, EmptyCredentials) {
+    constexpr stl::array<stl::string_view, 4> strs{
+      "http://@example.com/",
+      "http://:@example.com/",
+
+      // opaque hosts:
+      "opaque://@example.com/",
+      "opaque://:@example.com/",
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_EQ(context.out.get_host(), "example.com") << str;
+        EXPECT_EQ(context.out.get_username(), "") << str;
+        EXPECT_EQ(context.out.get_password(), "") << str;
+    }
+}
+
+TYPED_TEST(URITests, AtSign2Percent40) {
+    constexpr stl::string_view str = "http://@@:@:@::::@@a:1/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_host(), "a");
+    EXPECT_EQ(context.out.get_port(), "1");
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_username(), "%40%40");
+        EXPECT_EQ(context.out.get_password(), "%40%3A%40%3A%3A%3A%3A%40");
+    } else {
+        EXPECT_EQ(context.out.get_username(), "@@");
+        EXPECT_EQ(context.out.get_password(), "@:@::::@");
+    }
+}
+
+TYPED_TEST(URITests, HostMissing) {
+    constexpr stl::array<stl::string_view, 16> strs{
+      "http://username@:8080/",
+      "http://username:password@/",
+      "http:///",
+      "http://:8080/",
+      "http://username@more-username@/",
+      "http://username@more-username:password@/",
+      "http://username@more-username:password@:8080/",
+      "http://username@@:8080/",
+
+      // opaque hosts:
+      "opaque://username@:8080/",
+      "opaque://username:password@/",
+      "opaque:///",
+      "opaque://:8080/",
+      "opaque://username@more-username@/",
+      "opaque://username@more-username:password@/",
+      "opaque://username@more-username:password@:8080/",
+      "opaque://username@@:8080/",
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n"
+                                                    << to_string(uri::get_value(context.status));
+        EXPECT_EQ(uri::get_value(context.status), uri::uri_status::host_missing)
+          << str << "\n"
+          << to_string(uri::get_value(context.status));
+    }
+}
+
+TYPED_TEST(URITests, LocalIPv4Addr) {
+    constexpr stl::array<stl::string_view, 17> strs{
+      "http://127.0.0.1/",
+      "http://0x7F.1/",
+      "http://0x7f000001",
+      "http://0x0000000007F.0X1",
+      "http://127.0.0x0.1",
+      "http://127.0X0.0x0.1",
+      "http://127.0X0.0x0.0x1",
+      "http://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001",
+      "http://0x7F.0x00000000000000000000000001",
+      "http://0x000000000000000007F.0x00000000000000000000000001",
+      "http://0x000000000000000007F.0.0x00000000000000000000000001",
+      "http://0x7f.0.0.0x1",
+      "http://0x7F.0.0x000.0x1",
+      "http://2130706433",
+      "http://127.1",
+      "http://127.0x00.1",
+      "http://127.0x000000000000000.0.1",
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+        EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n"
+                                                   << to_string(uri::get_value(context.status));
+        if constexpr (TypeParam::is_modifiable) {
+            EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+        }
     }
 }

@@ -47,7 +47,7 @@ TEST(JSONTest, Fields) {
     field<string> username{"username"};
     // field<vector<string>> emails{"emails"};
 
-    document               doc;
+    document                   doc;
     constexpr stl::string_view json_string = R"JSON({
         "username": "the-moisrex",
         "emails":   ["one@example.com", "two@example.com"],
