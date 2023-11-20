@@ -253,15 +253,19 @@ namespace webpp::uri::details {
 
         /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
         /// for path) This is the same as next_segment, except it also sets the result first
-        constexpr void end_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
+        constexpr void end_segment(iterator inp_beg, iterator end) noexcept(ctx_type::is_nothrow || !is_vec) {
             if constexpr (is_vec) {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
                 if constexpr (!ctx_type::is_modifiable) {
-                    istl::collection::emplace_one(get_output(), beg, ctx->pos);
+                    istl::collection::emplace_one(get_output(), inp_beg, end);
                     reset_begin();
                 }
             }
+        }
+
+        constexpr void end_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
+            end_segment(beg, ctx->pos);
         }
 
 

@@ -15,7 +15,7 @@
 
 namespace webpp::uri {
 
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     continue_parsing_uri(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         while (!has_error(ctx.status)) {
@@ -23,16 +23,16 @@ namespace webpp::uri {
                 using enum uri_status;
                 case valid: return; // we're done parsing
                 case valid_punycode: break;
-                case valid_authority: parse_authority(ctx); break;
-                case valid_file_host: parse_file_host(ctx); break;
-                case valid_port: parse_port(ctx); break;
-                case valid_authority_end: parse_authority_end(ctx); break;
-                case valid_opaque_path: parse_opaque_path(ctx); break;
-                case valid_path: parse_path(ctx); break;
-                case valid_queries: parse_queries(ctx); break;
-                case valid_fragment: parse_fragment(ctx); break;
-                case unparsed: parse_scheme(ctx); break; // start from the beginning
-                default: stl::unreachable(); break;      // should be impossible
+                case valid_authority: parse_authority<Options>(ctx); break;
+                case valid_file_host: parse_file_host<Options>(ctx); break;
+                case valid_port: parse_port<Options>(ctx); break;
+                case valid_authority_end: parse_authority_end<Options>(ctx); break;
+                case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
+                case valid_path: parse_path<Options>(ctx); break;
+                case valid_queries: parse_queries<Options>(ctx); break;
+                case valid_fragment: parse_fragment<Options>(ctx); break;
+                case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
+                default: stl::unreachable(); break;               // should be impossible
             }
         }
     }

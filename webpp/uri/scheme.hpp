@@ -20,10 +20,10 @@ namespace webpp::uri {
 
 
         template <typename... T>
-        static constexpr void relative_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr void relative_state(parsing_uri_context<T...>& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
 
-            using ctx_type = uri::parsing_uri_context<T...>;
+            using ctx_type = parsing_uri_context<T...>;
 
             if constexpr (ctx_type::has_base_uri) {
                 // Assert base's scheme is not file
@@ -37,17 +37,15 @@ namespace webpp::uri {
 
 
         template <typename... T>
-        static constexpr void file_slash_state(uri::parsing_uri_context<T...>& ctx) noexcept(
-          uri::parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void
+        file_slash_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
 
-            using ctx_type = uri::parsing_uri_context<T...>;
+            using ctx_type = parsing_uri_context<T...>;
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
-                    case '\\':
-                        uri::set_warning(ctx.status, uri_status::reverse_solidus_used);
-                        [[fallthrough]];
-                    case '/': uri::set_valid(ctx.status, uri_status::valid_file_host); return;
+                    case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                    case '/': set_valid(ctx.status, uri_status::valid_file_host); return;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -61,15 +59,15 @@ namespace webpp::uri {
                     //    This is a (platform-independent) Windows drive letter quirk.
                 }
             }
-            uri::set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, uri_status::valid_path);
         }
 
         template <typename... T>
         static constexpr void
-        file_state(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
+        file_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
 
-            using ctx_type = uri::parsing_uri_context<T...>;
+            using ctx_type = parsing_uri_context<T...>;
 
             if constexpr (ctx_type::has_base_uri) {
                 // set scheme to "file"
@@ -79,7 +77,7 @@ namespace webpp::uri {
 
             // todo: check for end
             switch (*ctx.pos) {
-                case '\\': uri::set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': file_slash_state(ctx); return;
             }
 
@@ -89,16 +87,16 @@ namespace webpp::uri {
                 }
             }
 
-            uri::set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, uri_status::valid_path);
         }
 
 
         template <typename... T>
-        static constexpr void no_scheme_state(uri::parsing_uri_context<T...>& ctx) noexcept(
-          uri::parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void
+        no_scheme_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
-            using ctx_type = uri::parsing_uri_context<T...>;
+            using ctx_type = parsing_uri_context<T...>;
 
             if constexpr (ctx_type::has_base_uri) {
                 if (ctx.base.has_opaque_path()) {
@@ -107,7 +105,7 @@ namespace webpp::uri {
                         ctx.out.set_path(ctx.base.get_path());
                         ctx.out.set_query(ctx.base.get_query());
                         ctx.out.clear_fragment();
-                        uri::set_valid(ctx.status, uri_status::valid_fragment);
+                        set_valid(ctx.status, uri_status::valid_fragment);
                         return;
                     }
                 } else if (ctx.base.scheme() != "file") {
@@ -118,12 +116,12 @@ namespace webpp::uri {
                     return;
                 }
             }
-            uri::set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
+            set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
         }
 
 
         template <typename... T>
-        static constexpr void special_authority_slashes_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr void special_authority_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
             /// https://url.spec.whatwg.org/#special-authority-slashes-state
 
             if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) {
@@ -131,31 +129,30 @@ namespace webpp::uri {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
-            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
+            set_warning(ctx.status, uri_status::missing_following_solidus);
         }
 
         template <typename... T>
         static constexpr void
-        special_authority_ignore_slashes_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+        special_authority_ignore_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\':
-                    case '/': uri::set_warning(ctx.status, uri_status::missing_following_solidus);
+                    case '/': set_warning(ctx.status, uri_status::missing_following_solidus);
                 }
                 ++ctx.pos;
 
                 // todo: set authority
-                uri::set_valid(ctx.status, uri_status::valid_authority);
+                set_valid(ctx.status, uri_status::valid_authority);
                 return;
             }
-            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
+            set_warning(ctx.status, uri_status::missing_following_solidus);
         }
 
         template <typename... T>
-        static constexpr void
-        special_relative_or_authority_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr void special_relative_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
 
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -164,20 +161,20 @@ namespace webpp::uri {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
-            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
+            set_warning(ctx.status, uri_status::missing_following_solidus);
             relative_state(ctx);
         }
 
         template <typename... T>
-        static constexpr void path_or_authority_state(uri::parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr void path_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
             // https://url.spec.whatwg.org/#path-or-authority-state
 
             if (ctx.pos != ctx.end && *ctx.pos == '/') {
                 ++ctx.pos;
-                uri::set_valid(ctx.status, uri_status::valid_authority);
+                set_valid(ctx.status, uri_status::valid_authority);
                 return;
             }
-            uri::set_valid(ctx.status, uri_status::valid_path);
+            set_valid(ctx.status, uri_status::valid_path);
         }
 
 
@@ -186,10 +183,10 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
-    parse_scheme(uri::parsing_uri_context<T...>& ctx) noexcept(uri::parsing_uri_context<T...>::is_nothrow) {
-        using ctx_type  = uri::parsing_uri_context<T...>;
+    parse_scheme(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
 
@@ -246,7 +243,7 @@ namespace webpp::uri {
                         if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
                             ctx.pos += 2;
                         } else {
-                            uri::set_warning(ctx.status, uri_status::missing_following_solidus);
+                            set_warning(ctx.status, uri_status::missing_following_solidus);
                         }
                         details::file_state(ctx);
                         return;
@@ -268,7 +265,7 @@ namespace webpp::uri {
                         return;
                     }
                     ctx.out.clear_path();
-                    uri::set_valid(ctx.status, uri_status::valid_opaque_path);
+                    set_valid(ctx.status, uri_status::valid_opaque_path);
                     return;
                 }
 
@@ -283,7 +280,7 @@ namespace webpp::uri {
             }
         }
         // todo: invalid character is not an error
-        ctx.status = stl::to_underlying(invalid_character);
+        set_warning(ctx.status, invalid_character);
     }
 
 

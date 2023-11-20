@@ -10,31 +10,39 @@
 
 namespace webpp::uri {
 
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     parse_fragment(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename ctx_type::char_type;
 
-        details::component_encoder<details::components::fragment, ctx_type> encoder{ctx};
-        for (;;) {
-            if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-                  details::FRAGMENT_ENCODE_SET,
-                  charset<char_type, 1>('%'))) {
-                break;
-            }
-            switch (*ctx.pos) {
-                case '%':
-                    if (validate_percent_encode(ctx.pos, ctx.end)) {
-                        continue;
-                    }
+        if constexpr (Options.parse_fragment) {
+            details::component_encoder<details::components::fragment, ctx_type> encoder{ctx};
+            for (;;) {
+                if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                      details::FRAGMENT_ENCODE_SET,
+                      charset<char_type, 1>('%'))) {
                     break;
+                }
+                switch (*ctx.pos) {
+                    case '%':
+                        if (validate_percent_encode(ctx.pos, ctx.end)) {
+                            continue;
+                        }
+                        break;
+                }
+                set_warning(ctx.status, uri_status::invalid_character);
             }
-            set_warning(ctx.status, uri_status::invalid_character);
+            encoder.set_value();
+            set_valid(ctx.status, uri_status::valid);
+        } else {
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+            } else {
+                set_warning(ctx.status, uri_status::invalid_character);
+            }
         }
-        encoder.set_value();
-        set_valid(ctx.status, uri_status::valid);
     }
 
     template <istl::String StringType = stl::string>

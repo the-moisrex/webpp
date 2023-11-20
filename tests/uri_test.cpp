@@ -567,7 +567,19 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
 //     if constexpr (TypeParam::is_modifiable) {
 //         EXPECT_EQ(context.out.get_host(), "xn--53h.example");
 //     } else {
-//         EXPECT_EQ(context.out.get_host(), "http://☕.example");
+//         EXPECT_EQ(context.out.get_host(), "☕.example");
+//     }
+// }
+
+// TYPED_TEST(URITests, FileSchemePunnycodeBasic) {
+//     constexpr stl::string_view str = "file://☕.example";
+//
+//     auto context = this->template get_context<TypeParam>(str);
+//     uri::parse_uri(context);
+//     if constexpr (TypeParam::is_modifiable) {
+//         EXPECT_EQ(context.out.get_host(), "xn--53h.example");
+//     } else {
+//         EXPECT_EQ(context.out.get_host(), "☕.example");
 //     }
 // }
 
@@ -614,4 +626,39 @@ TYPED_TEST(URITests, OutOfRangePort) {
     EXPECT_EQ(uri::uri_status::port_out_of_range, uri::get_value(context.status))
       << str << "\n"
       << to_string(uri::get_value(context.status));
+}
+
+
+TYPED_TEST(URITests, FileSchemeBasic) {
+    constexpr stl::string_view str = "file:///page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+
+TYPED_TEST(URITests, FileSchemeWithHost) {
+    constexpr stl::string_view str = "file://0x7f.1/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+    } else {
+        EXPECT_EQ(context.out.get_host(), "0x7f.1");
+    }
+    EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+TYPED_TEST(URITests, LocalhostFileScheme) {
+    constexpr stl::string_view str = "file://localhost/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_FALSE(context.out.has_host()) << "localhost for file: scheme gets removed.";
+    EXPECT_EQ(context.out.get_path(), "/page/one");
 }

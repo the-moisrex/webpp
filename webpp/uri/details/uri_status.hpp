@@ -19,16 +19,28 @@ namespace webpp::uri {
     /// These options are designed to
     struct uri_parsing_options {
 
-        /// Parse username and password part of the authority (you may want to disable it if you're trying to
-        /// parse Host Authority which doesn't have credentials)
-        bool parse_credentails = true;
-
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
         bool eof_is_valid = false;
 
+        /// Parse username and password part of the authority (you may want to disable it if you're trying to
+        /// parse Host Authority which doesn't have credentials)
+        bool parse_credentails = true;
+
+        /// Empty Host is an error (file:// URIs can have empty hosts)
+        bool empty_host_is_error = true;
+
         /// Parse punny codes
         bool parse_punycodes = true;
+
+        /// Parse port (file:// scheme doesn't have a port, this is used there)
+        bool parse_port = true;
+
+        /// Parse queries
+        bool parse_queries = true;
+
+        /// Parse fragment
+        bool parse_fragment = true;
     };
 
 

@@ -10,6 +10,7 @@
 #include "details/uri_components_encoding.hpp"
 #include "details/uri_status.hpp"
 #include "encoding.hpp"
+#include "host_authority.hpp"
 #include "port.hpp"
 
 /**
@@ -176,28 +177,189 @@ namespace webpp::uri {
             }
         }
 
+
+        template <uri_parsing_options Options = {}, typename... T>
+        static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
+
+            using enum uri_status;
+
+            using ctx_type = parsing_uri_context<T...>;
+            using iterator = typename ctx_type::iterator;
+
+            webpp_static_constexpr auto interesting_characters =
+              ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+
+            auto const authority_begin = ctx.pos;
+            auto       host_begin      = authority_begin;
+            iterator   colon_pos       = ctx.end; // start of password or port
+
+            component_encoder<components::host, ctx_type> decoder(ctx);
+            decoder.start_segment();
+            for (;;) {
+
+                // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
+                if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
+                      interesting_characters)) {
+                    if constexpr (Options.empty_host_is_error) {
+                        if (ctx.pos == authority_begin) {
+                            set_error(ctx.status, host_missing);
+                            return;
+                        }
+                    }
+                    set_valid(ctx.status, valid);
+                    break;
+                }
+
+                switch (*ctx.pos) {
+                    case '[': {
+                        if (!details::parse_host_ipv6(ctx)) {
+                            return;
+                        }
+                        break;
+                    }
+                    case ':': {
+                        if constexpr (!Options.parse_credentails && !Options.parse_port) {
+                            set_warning(ctx.status, invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        } else if constexpr (!Options.parse_credentails) {
+                            set_valid(ctx.status, valid_port);
+                        } else {
+                            // the first colon is the start of the password section
+                            if (colon_pos == ctx.end) {
+                                colon_pos = ctx.pos;
+                            }
+
+                            // assume it's a port (even though it might be the start of the password)
+                            auto const pre_port_pos = ctx.pos;
+                            ++ctx.pos;
+                            set_valid(ctx.status, valid_port);
+                            parse_port(ctx);
+
+                            // rollback if it's not a port, we rollback and assume it's a password
+                            if (get_value(ctx.status) != valid_authority_end) {
+                                // it might be a "password" or an "invalid port"
+                                ctx.pos = pre_port_pos + 1;
+                                continue;
+                            }
+
+                            decoder.end_segment(decoder.segment_begin(), pre_port_pos);
+                            decoder.set_value(host_begin, pre_port_pos);
+                            return;
+                        }
+                        break;
+                    }
+                    case '\\':
+                        if (!ctx.is_special) {
+                            // todo: check for non-specials
+                            break;
+                        }
+                        [[fallthrough]];
+                    case '/':
+                        decoder.end_segment();
+                        decoder.set_value();
+                        set_valid(ctx.status, valid_path);
+                        return;
+                    case '.':
+                        if constexpr (ctx_type::is_segregated) {
+                            decoder.end_segment();
+                            ++ctx.pos;
+                            decoder.reset_begin();
+                            decoder.start_segment();
+                        } else {
+                            ++ctx.pos; // todo: append to the output
+                        }
+                        continue;
+                    case '?':
+                        if constexpr (Options.parse_queries) {
+                            set_valid(ctx.status, valid_queries);
+                        } else {
+                            set_warning(ctx.status, invalid_character);
+                        }
+                        break;
+                    case '#':
+                        if constexpr (Options.parse_fragment) {
+                            set_valid(ctx.status, valid_fragment);
+                        } else {
+                            set_warning(ctx.status, invalid_character);
+                        }
+                        break;
+                    case '@':
+                        if constexpr (Options.parse_credentails) {
+                            details::parse_credentials(ctx, authority_begin, colon_pos);
+                            ++ctx.pos;
+                            ctx.out.clear_host();
+                            decoder.reset_begin();
+                            decoder.start_segment();
+                            host_begin = ctx.pos;
+                            continue;
+                        } else {
+                            // todo: set an error
+                            set_warning(ctx.status, has_credentials);
+                            set_warning(ctx.status, invalid_character);
+                            return;
+                        }
+                    [[unlikely]] case '\0':
+                        if constexpr (Options.eof_is_valid) {
+                            if constexpr (Options.empty_host_is_error) {
+                                if (ctx.pos == authority_begin) {
+                                    set_error(ctx.status, host_missing);
+                                    return;
+                                }
+                            }
+                            set_valid(ctx.status, valid);
+                            break;
+                        }
+                        [[fallthrough]];
+                    [[unlikely]] default:
+                        set_warning(ctx.status, invalid_character);
+                        ++ctx.pos;
+                        continue;
+                }
+                if (ctx.pos == host_begin) {
+                    if constexpr (Options.empty_host_is_error) {
+                        set_error(ctx.status, host_missing);
+                    } else {
+                        set_valid(ctx.status, valid);
+                    }
+                    return;
+                }
+                break;
+            }
+
+            decoder.end_segment();
+            decoder.set_value();
+            if (ctx.pos != ctx.end) {
+                ++ctx.pos;
+            }
+        }
+
     } // namespace details
 
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     parse_file_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
-        // todo
-        if (ctx.pos != ctx.end) {
-            switch (*ctx.pos) {
-                case '\0':
-                case '/':
-                case '\\':
-                case '?':
-                case '#': break;
-            }
+        details::parse_authority_pieces<uri_parsing_options{
+          .eof_is_valid        = Options.eof_is_valid,
+          .parse_credentails   = false,
+          .empty_host_is_error = false,
+          .parse_punycodes     = Options.parse_punycodes,
+          .parse_port          = false,
+          .parse_queries       = Options.parse_queries,
+          .parse_fragment      = Options.parse_fragment,
+        }>(ctx);
+
+        if (ctx.out.has_host() && ctx.out.get_host() == "localhost") {
+            ctx.out.clear_host();
         }
     }
 
     /// Path start state (I like to call it authority end because it's more RFC like to say that,
     /// but WHATWG likes to call it "path start state")
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
@@ -216,19 +378,27 @@ namespace webpp::uri {
         } else {
             switch (*ctx.pos) {
                 case '?':
-                    set_valid(ctx.status, uri_status::valid_queries);
-                    ++ctx.pos;
-                    ctx.out.clear_queries();
+                    if constexpr (Options.parse_queries) {
+                        set_valid(ctx.status, uri_status::valid_queries);
+                        ++ctx.pos;
+                        ctx.out.clear_queries();
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
                     return;
                 case '#':
-                    set_valid(ctx.status, uri_status::valid_fragment);
-                    ++ctx.pos;
-                    ctx.out.clear_fragment();
+                    if constexpr (Options.parse_fragment) {
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                        ++ctx.pos;
+                        ctx.out.clear_fragment();
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
                     return;
                 default:
                     set_valid(ctx.status, uri_status::valid_path);
                     ctx.out.clear_path();
-                    return;
+                    break;
             }
         }
     }
@@ -245,41 +415,32 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state
 
-        using details::ascii_bitmap;
-        using details::component_encoder;
-        using details::components;
-
-        using ctx_type = parsing_uri_context<T...>;
-        using iterator = typename ctx_type::iterator;
-
-        webpp_static_constexpr auto interesting_characters =
-          ascii_bitmap{details::FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
-
         if (ctx.pos == ctx.end) {
-            set_error(ctx.status, uri_status::host_missing);
+            if constexpr (Options.empty_host_is_error) {
+                set_error(ctx.status, uri_status::host_missing);
+            } else {
+                set_valid(ctx.status, uri_status::valid);
+            }
             return;
         }
 
-        auto const scheme = ctx.out.get_scheme();
-        if (scheme == "file") {
+        if (ctx.is_special && ctx.out.get_scheme() == "file") {
             // todo: should we set the status instead?
             parse_file_host(ctx);
             return;
         }
-
-        auto const authority_begin = ctx.pos;
-        auto       host_begin      = authority_begin;
-        iterator   colon_pos       = ctx.end; // start of password or port
 
         // Handle missing host situation, and ipv6:
         // attention: since we have merge the authority and host parsing, it's possible to have
         // something like "http://username@:8080/" which the host is missing too
         switch (*ctx.pos) {
             case ':':
-                if constexpr (Options.parse_credentails) {
-                    colon_pos = ctx.pos;
-                } else {
-                    set_error(ctx.status, uri_status::host_missing);
+                if constexpr (!Options.parse_credentails) {
+                    if constexpr (Options.empty_host_is_error) {
+                        set_error(ctx.status, uri_status::host_missing);
+                    } else {
+                        set_valid(ctx.status, uri_status::valid);
+                    }
                     return;
                 }
                 break;
@@ -287,7 +448,11 @@ namespace webpp::uri {
                 if constexpr (Options.eof_is_valid) {
                     break;
                 } else {
-                    set_error(ctx.status, uri_status::host_missing);
+                    if constexpr (Options.empty_host_is_error) {
+                        set_error(ctx.status, uri_status::host_missing);
+                    } else {
+                        set_valid(ctx.status, uri_status::valid);
+                    }
                     return;
                 }
             case '?':
@@ -297,7 +462,13 @@ namespace webpp::uri {
                 [[fallthrough]];
             case '\\':
             case '/':
-            case '#': set_error(ctx.status, uri_status::host_missing); return;
+            case '#':
+                if constexpr (Options.empty_host_is_error) {
+                    set_error(ctx.status, uri_status::host_missing);
+                } else {
+                    set_valid(ctx.status, uri_status::valid);
+                }
+                return;
             default: break;
         }
 
@@ -307,123 +478,7 @@ namespace webpp::uri {
             return;
         }
 
-
-
-        component_encoder<components::host, ctx_type> decoder(ctx);
-        decoder.start_segment();
-        for (;;) {
-
-            // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-            if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
-                  interesting_characters)) {
-                if (ctx.pos == authority_begin) {
-                    set_error(ctx.status, uri_status::host_missing);
-                    return;
-                }
-                set_valid(ctx.status, uri_status::valid);
-                break;
-            }
-
-            switch (*ctx.pos) {
-                case '[': {
-                    if (!details::parse_host_ipv6(ctx)) {
-                        return;
-                    }
-                    break;
-                }
-                case ':': {
-                    if constexpr (!Options.parse_credentails) {
-                        set_valid(ctx.status, uri_status::valid_port);
-                    } else {
-                        // the first colon is the start of the password section
-                        if (colon_pos == ctx.end) {
-                            colon_pos = ctx.pos;
-                        }
-
-                        // assume it's a port (even though it might be the start of the password)
-                        ++ctx.pos;
-                        auto const pres_port_pos = ctx.pos;
-                        set_valid(ctx.status, uri_status::valid_port);
-                        parse_port(ctx);
-
-                        // rollback if it's not a port, we rollback and assume it's a password
-                        if (get_value(ctx.status) != uri_status::valid_authority_end) {
-                            // it might be a "password" or an "invalid port"
-                            ctx.pos = pres_port_pos;
-                            continue;
-                        }
-
-                        decoder.end_segment();
-                        decoder.set_value();
-                        return;
-                    }
-                    break;
-                }
-                case '\\':
-                    if (!ctx.is_special) {
-                        // todo: check for non-specials
-                        break;
-                    }
-                    [[fallthrough]];
-                case '/':
-                    decoder.end_segment();
-                    decoder.set_value();
-                    set_valid(ctx.status, uri_status::valid_path);
-                    return;
-                case '.':
-                    if constexpr (ctx_type::is_segregated) {
-                        decoder.end_segment();
-                        ++ctx.pos;
-                        decoder.reset_begin();
-                        decoder.start_segment();
-                    } else {
-                        ++ctx.pos; // todo: append to the output
-                    }
-                    continue;
-                case '?': set_valid(ctx.status, uri_status::valid_path); break;
-                case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
-                case '@':
-                    if constexpr (Options.parse_credentails) {
-                        details::parse_credentials(ctx, authority_begin, colon_pos);
-                        ++ctx.pos;
-                        ctx.out.clear_host();
-                        decoder.reset_begin();
-                        decoder.start_segment();
-                        host_begin = ctx.pos;
-                        continue;
-                    } else {
-                        // todo: set an error
-                        set_warning(ctx.status, uri_status::has_credentials);
-                        set_warning(ctx.status, uri_status::invalid_character);
-                        return;
-                    }
-                [[unlikely]] case '\0':
-                    if constexpr (Options.eof_is_valid) {
-                        if (ctx.pos == authority_begin) {
-                            set_error(ctx.status, uri_status::host_missing);
-                            return;
-                        }
-                        set_valid(ctx.status, uri_status::valid);
-                        break;
-                    }
-                    [[fallthrough]];
-                [[unlikely]] default:
-                    set_warning(ctx.status, uri_status::invalid_character);
-                    ++ctx.pos;
-                    continue;
-            }
-            if (ctx.pos == host_begin) {
-                set_error(ctx.status, uri_status::host_missing);
-                return;
-            }
-            break;
-        }
-
-        decoder.end_segment();
-        decoder.set_value();
-        if (ctx.pos != ctx.end) {
-            ++ctx.pos;
-        }
+        details::parse_authority_pieces<Options>(ctx);
     }
 
 

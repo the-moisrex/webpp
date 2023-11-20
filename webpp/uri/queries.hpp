@@ -12,80 +12,90 @@
 namespace webpp::uri {
 
 
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     parse_queries(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
         using ctx_type = parsing_uri_context<T...>;
 
-        webpp_static_constexpr auto interesting_characters = ctx_type::is_segregated
-                                                               ? details::ascii_bitmap('#', '%')
-                                                               : details::ascii_bitmap('#', '%', '=', '&');
+        if constexpr (Options.parse_queries) {
+
+            webpp_static_constexpr auto interesting_characters =
+              ctx_type::is_segregated ? details::ascii_bitmap('#', '%')
+                                      : details::ascii_bitmap('#', '%', '=', '&');
 
 
-        if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, uri_status::valid);
-            return;
-        }
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+                return;
+            }
 
-        auto const query_percent_encode_set =
-          ctx.is_special ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
+            auto const query_percent_encode_set =
+              ctx.is_special ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
 
-        bool in_value = false;
+            bool in_value = false;
 
-        details::component_encoder<details::components::queries, ctx_type> encoder{ctx};
+            details::component_encoder<details::components::queries, ctx_type> encoder{ctx};
 
-        // find the end of the queries
-        for (;;) {
+            // find the end of the queries
+            for (;;) {
 
-            // find the next non-query character:
-            if (encoder.template encode_or_validate_map<uri_encoding_policy::encode_chars>(
-                  query_percent_encode_set,
-                  interesting_characters,
-                  in_value)) {
+                // find the next non-query character:
+                if (encoder.template encode_or_validate_map<uri_encoding_policy::encode_chars>(
+                      query_percent_encode_set,
+                      interesting_characters,
+                      in_value)) {
+                    break;
+                }
+
+                switch (*ctx.pos) {
+                    case '#':
+                        ctx.out.clear_fragment();
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                        break;
+                    case '%':
+                        if (!validate_percent_encode(ctx.pos, ctx.end)) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        }
+                        continue;
+                    case '=':
+                        if constexpr (ctx_type::is_segregated) {
+                            if (!in_value) {
+                                encoder.set_query_name();
+                            }
+                            in_value = true;
+                        }
+                        ++ctx.pos;
+                        continue;
+                    case '&':
+                        if constexpr (ctx_type::is_segregated) {
+                            encoder.set_query_value();
+                            in_value = false;
+                        }
+                        ++ctx.pos;
+                        continue;
+                    default:
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        ++ctx.pos;
+                        // invalid characters are not errors
+                        continue;
+                }
                 break;
             }
+            encoder.set_value();
 
-            switch (*ctx.pos) {
-                case '#':
-                    ctx.out.clear_fragment();
-                    set_valid(ctx.status, uri_status::valid_fragment);
-                    break;
-                case '%':
-                    if (!validate_percent_encode(ctx.pos, ctx.end)) {
-                        set_warning(ctx.status, uri_status::invalid_character);
-                    }
-                    continue;
-                case '=':
-                    if constexpr (ctx_type::is_segregated) {
-                        if (!in_value) {
-                            encoder.set_query_name();
-                        }
-                        in_value = true;
-                    }
-                    ++ctx.pos;
-                    continue;
-                case '&':
-                    if constexpr (ctx_type::is_segregated) {
-                        encoder.set_query_value();
-                        in_value = false;
-                    }
-                    ++ctx.pos;
-                    continue;
-                default:
-                    set_warning(ctx.status, uri_status::invalid_character);
-                    ++ctx.pos;
-                    // invalid characters are not errors
-                    continue;
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+            } else {
+                ++ctx.pos;
             }
-            break;
-        }
-        encoder.set_value();
 
-        if (ctx.pos == ctx.end) {
-            set_valid(ctx.status, uri_status::valid);
-        } else {
-            ++ctx.pos;
+        } else { // don't parse queries
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+            } else {
+                set_warning(ctx.status, uri_status::invalid_character);
+            }
         }
     }
 

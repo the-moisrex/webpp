@@ -15,7 +15,7 @@ namespace webpp::uri {
 
     static constexpr stl::uint16_t max_port_number = 65535U;
 
-    template <typename... T>
+    template <uri_parsing_options Options = {}, typename... T>
     static constexpr void
     parse_port(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
@@ -31,71 +31,75 @@ namespace webpp::uri {
             return;
         }
 
-        auto const beg        = ctx.pos;
-        port_type  port_value = 0;
-        while (ctx.pos != ctx.end) {
-            switch (*ctx.pos) {
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9':
-                    // "65535".count() == 5
-                    if (ctx.pos - beg == 5U) { // NOLINT(*-magic-numbers)
-                        set_error(ctx.status, uri_status::port_out_of_range);
-                        return;
-                    }
-                    port_value *= 10U; // NOLINT(*-magic-numbers)
-                    port_value += static_cast<port_type>(*ctx.pos - '0');
-                    ++ctx.pos;
-                    continue;
-                case '\\':
-                    if (ctx.is_special) {
-                        break; // invalid port
-                    }
-                    [[fallthrough]];
-                case '\0':
-                case '/':
-                case '?':
-                case '#':
-                    // it's unsigned, we don't need to check for it being lower than 0
-                    if (port_value > max_port_number) {
-                        set_error(ctx.status, uri_status::port_out_of_range);
-                        return;
-                    }
-                    if (port_value == known_port(ctx.out.get_scheme())) {
-                        ctx.out.clear_port();
-                    } else if constexpr (requires {
-                                             ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-                                         }) {
-                        // store the integer port value
-                        ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-                    } else if constexpr (requires {
-                                             ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
-                                                              static_cast<seg_type>(ctx.pos - ctx.beg));
-                                         }) {
-                        // store the position of it relative to the beginning of the URI
-                        ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
-                                         static_cast<seg_type>(ctx.pos - ctx.beg));
-                    } else {
-                        // store it as a string
-                        ctx.out.set_port(beg, ctx.pos);
-                    }
+        if constexpr (!Options.parse_port) {
+            set_warning(ctx.status, uri_status::invalid_character);
+        } else {
+            auto const beg        = ctx.pos;
+            port_type  port_value = 0;
+            while (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        // "65535".count() == 5
+                        if (ctx.pos - beg == 5U) { // NOLINT(*-magic-numbers)
+                            set_error(ctx.status, uri_status::port_out_of_range);
+                            return;
+                        }
+                        port_value *= 10U; // NOLINT(*-magic-numbers)
+                        port_value += static_cast<port_type>(*ctx.pos - '0');
+                        ++ctx.pos;
+                        continue;
+                    case '\\':
+                        if (ctx.is_special) {
+                            break; // invalid port
+                        }
+                        [[fallthrough]];
+                    case '\0':
+                    case '/':
+                    case '?':
+                    case '#':
+                        // it's unsigned, we don't need to check for it being lower than 0
+                        if (port_value > max_port_number) {
+                            set_error(ctx.status, uri_status::port_out_of_range);
+                            return;
+                        }
+                        if (port_value == known_port(ctx.out.get_scheme())) {
+                            ctx.out.clear_port();
+                        } else if constexpr (requires {
+                                                 ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
+                                             }) {
+                            // store the integer port value
+                            ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
+                        } else if constexpr (requires {
+                                                 ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
+                                                                  static_cast<seg_type>(ctx.pos - ctx.beg));
+                                             }) {
+                            // store the position of it relative to the beginning of the URI
+                            ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
+                                             static_cast<seg_type>(ctx.pos - ctx.beg));
+                        } else {
+                            // store it as a string
+                            ctx.out.set_port(beg, ctx.pos);
+                        }
 
-                    // https://url.spec.whatwg.org/#path-start-state
-                    set_valid(ctx.status, uri_status::valid_authority_end);
-                    return;
-                default: break;
+                        // https://url.spec.whatwg.org/#path-start-state
+                        set_valid(ctx.status, uri_status::valid_authority_end);
+                        return;
+                    default: break;
+                }
+                break;
             }
-            break;
-        }
 
-        set_error(ctx.status, uri_status::port_invalid);
+            set_error(ctx.status, uri_status::port_invalid);
+        }
     }
 
 
