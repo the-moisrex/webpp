@@ -275,12 +275,6 @@ namespace webpp::uri {
         // attention: since we have merge the authority and host parsing, it's possible to have
         // something like "http://username@:8080/" which the host is missing too
         switch (*ctx.pos) {
-            case '[': {
-                if (!details::parse_host_ipv6(ctx)) {
-                    return;
-                }
-                break;
-            }
             case ':':
                 if constexpr (Options.parse_credentails) {
                     colon_pos = ctx.pos;
@@ -331,6 +325,12 @@ namespace webpp::uri {
             }
 
             switch (*ctx.pos) {
+                case '[': {
+                    if (!details::parse_host_ipv6(ctx)) {
+                        return;
+                    }
+                    break;
+                }
                 case ':': {
                     if constexpr (!Options.parse_credentails) {
                         set_valid(ctx.status, uri_status::valid_port);
