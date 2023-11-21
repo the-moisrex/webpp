@@ -43,7 +43,7 @@ namespace webpp::uri {
                 case inet_pton6_status::valid_special:
                     if (*ctx.pos == ']') {
                         ++ctx.pos;
-                        ctx.out.set_host(beg, ctx.pos);
+                        ctx.out.set_hostname(beg, ctx.pos);
                         if (ctx.pos == ctx.end) {
                             set_valid(ctx.status, uri_status::valid);
                             return false;
@@ -178,7 +178,7 @@ namespace webpp::uri {
         }
 
 
-        template <uri_parsing_options Options = {}, typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
 
@@ -289,7 +289,7 @@ namespace webpp::uri {
                         if constexpr (Options.parse_credentails) {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
                             ++ctx.pos;
-                            ctx.out.clear_host();
+                            ctx.out.clear_hostname();
                             decoder.reset_begin();
                             decoder.start_segment();
                             host_begin = ctx.pos;
@@ -337,7 +337,7 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <uri_parsing_options Options = {}, typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void
     parse_file_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
@@ -352,14 +352,14 @@ namespace webpp::uri {
           .parse_fragment      = Options.parse_fragment,
         }>(ctx);
 
-        if (ctx.out.has_host() && ctx.out.get_host() == "localhost") {
-            ctx.out.clear_host();
+        if (ctx.out.has_hostname() && ctx.out.get_hostname() == "localhost") {
+            ctx.out.clear_hostname();
         }
     }
 
     /// Path start state (I like to call it authority end because it's more RFC like to say that,
     /// but WHATWG likes to call it "path start state")
-    template <uri_parsing_options Options = {}, typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void
     parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
@@ -408,7 +408,7 @@ namespace webpp::uri {
      * @brief Parse authority part of the URI (credentials, host, and port)
      * @param ctx Parsing Context containing all the details of the URI and the state of it
      */
-    template <uri_parsing_options Options = {}, typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void
     parse_authority(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // We merged the host parser and authority parser to make it single-pass for most use cases.

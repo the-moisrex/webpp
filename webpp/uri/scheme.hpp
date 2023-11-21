@@ -73,7 +73,7 @@ namespace webpp::uri {
                 // set scheme to "file"
                 ctx.scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
             }
-            ctx.out.clear_host();
+            ctx.out.clear_hostname();
 
             // todo: check for end
             switch (*ctx.pos) {
@@ -183,7 +183,7 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <uri_parsing_options Options = {}, typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void
     parse_scheme(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         using ctx_type  = parsing_uri_context<T...>;

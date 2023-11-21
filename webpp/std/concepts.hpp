@@ -194,8 +194,7 @@ namespace webpp::istl {
      * @endcode
      */
     template <typename... T>
-    concept one_of =
-      (sizeof...(T) > 1) && (istl::last_type<T...>::template rotate<details::is_one_of>::value);
+    concept one_of = (sizeof...(T) > 1) && (last_type<T...>::template rotate<details::is_one_of>::value);
 
 
     // The simpler version of the above code, with the difference that can't be used as concept for return

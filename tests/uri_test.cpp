@@ -41,6 +41,14 @@ struct URITests : testing::Test {
             return SpecifiedTypeParam{.beg = str.data(), .pos = str.data(), .end = str.data() + str.size()};
         }
     }
+
+
+    template <typename SpecifiedTypeParam, typename StrT = stl::string_view>
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(StrT&& str) {
+        auto ctx = get_context<SpecifiedTypeParam>(stl::forward<StrT>(str));
+        uri::parse_uri(ctx);
+        return ctx;
+    }
 };
 TYPED_TEST_SUITE(URITests, Types);
 
@@ -48,9 +56,9 @@ TYPED_TEST(URITests, Generation) {
     uri::uri url;
     EXPECT_EQ(url.scheme.size(), 0);
 
-    auto const alloc = url.get_allocator<std::allocator<char>>();
+    auto const alloc = url.get_allocator<stl::allocator<char>>();
 
-    std::string const str{alloc};
+    stl::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
 
     url.scheme = "https";
@@ -192,11 +200,11 @@ TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
     out.resize(static_cast<stl::size_t>(ptr - out.begin()));
     EXPECT_EQ(out, decoded);
 
-    std::string output2;
+    stl::string output2;
     encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
-    std::string output3;
+    stl::string output3;
     EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
     EXPECT_EQ(output3, decoded) << out;
 }
@@ -216,11 +224,11 @@ TYPED_TEST(URITests, PercentEncodeDecodePointer) {
     out.resize(static_cast<stl::size_t>(ptr - out.data()));
     EXPECT_EQ(out, decoded);
 
-    std::string output2;
+    stl::string output2;
     encode_uri_component(out, output2, ALPHA_DIGIT<char>);
     EXPECT_EQ(output2, inp) << out;
 
-    std::string output3;
+    stl::string output3;
     EXPECT_TRUE(decode_uri_component(output2, output3, ALPHA_DIGIT<char>));
     EXPECT_EQ(output3, decoded) << out;
 }
@@ -239,7 +247,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "https");
-    EXPECT_EQ(context.out.get_host(), "example.com");
+    EXPECT_EQ(context.out.get_hostname(), "example.com");
     EXPECT_EQ(context.out.get_username(), "username");
     EXPECT_EQ(context.out.get_password(), "password");
     EXPECT_EQ(context.out.get_port(), "1010");
@@ -250,7 +258,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(context.out.has_username());
     // EXPECT_TRUE(context.out.has_authority());
     EXPECT_TRUE(context.out.has_credentials());
-    EXPECT_TRUE(context.out.has_host());
+    EXPECT_TRUE(context.out.has_hostname());
     EXPECT_TRUE(context.out.has_path());
     EXPECT_TRUE(context.out.has_queries());
     EXPECT_TRUE(context.out.has_fragment());
@@ -258,7 +266,7 @@ TYPED_TEST(URITests, BasicURIParsing) {
 
 
 TYPED_TEST(URITests, PathIteratorTest) {
-    uri::path_iterator iter{"/page/one"};
+    uri::path_iterator<default_traits> iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
     EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
@@ -294,7 +302,7 @@ TYPED_TEST(URITests, OpaqueHostParser) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "urn");
-    EXPECT_EQ(context.out.get_host(), "this");
+    EXPECT_EQ(context.out.get_hostname(), "this");
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
 
@@ -310,7 +318,7 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "urn");
-    EXPECT_EQ(context.out.get_host(), "th%is");
+    EXPECT_EQ(context.out.get_hostname(), "th%is");
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
 
@@ -325,7 +333,7 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "ldap");
-    EXPECT_EQ(context.out.get_host(), "[2001:db8::7]");
+    EXPECT_EQ(context.out.get_hostname(), "[2001:db8::7]");
     EXPECT_EQ(context.out.get_path(), "/c=GB");
     EXPECT_EQ(context.out.get_queries(), "objectClass?one");
 }
@@ -353,7 +361,7 @@ TYPED_TEST(URITests, IPv4AsHost) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "http");
-    EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+    EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }
 
@@ -430,7 +438,7 @@ TYPED_TEST(URITests, DoubleAtSign) {
         EXPECT_EQ(context.out.get_username(), "username@username");
     }
     EXPECT_EQ(context.out.get_path(), "/");
-    EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+    EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
     EXPECT_EQ(context.out.get_queries(), "one==a");
     EXPECT_EQ(context.out.get_fragment(), "hash");
 }
@@ -443,7 +451,7 @@ TYPED_TEST(URITests, DontGetFooledURI) {
     EXPECT_EQ(context.out.get_username(), "example.com");
     EXPECT_EQ(context.out.get_password(), "8080");
     EXPECT_EQ(context.out.get_path(), "/");
-    EXPECT_EQ(context.out.get_host(), "real.example.org");
+    EXPECT_EQ(context.out.get_hostname(), "real.example.org");
 }
 
 TYPED_TEST(URITests, FuckedUpURL) {
@@ -471,7 +479,7 @@ TYPED_TEST(URITests, EmptyCredentials) {
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
-        EXPECT_EQ(context.out.get_host(), "example.com") << str;
+        EXPECT_EQ(context.out.get_hostname(), "example.com") << str;
         EXPECT_EQ(context.out.get_username(), "") << str;
         EXPECT_EQ(context.out.get_password(), "") << str;
     }
@@ -482,7 +490,7 @@ TYPED_TEST(URITests, AtSign2Percent40) {
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
-    EXPECT_EQ(context.out.get_host(), "a");
+    EXPECT_EQ(context.out.get_hostname(), "a");
     EXPECT_EQ(context.out.get_port(), "1");
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(context.out.get_username(), "%40%40");
@@ -553,7 +561,7 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
         EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n"
                                                    << to_string(uri::get_value(context.status));
         if constexpr (TypeParam::is_modifiable) {
-            EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+            EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
         }
     }
 }
@@ -565,9 +573,9 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
 //     auto context = this->template get_context<TypeParam>(str);
 //     uri::parse_uri(context);
 //     if constexpr (TypeParam::is_modifiable) {
-//         EXPECT_EQ(context.out.get_host(), "xn--53h.example");
+//         EXPECT_EQ(context.out.get_hostname(), "xn--53h.example");
 //     } else {
-//         EXPECT_EQ(context.out.get_host(), "☕.example");
+//         EXPECT_EQ(context.out.get_hostname(), "☕.example");
 //     }
 // }
 
@@ -577,9 +585,9 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
 //     auto context = this->template get_context<TypeParam>(str);
 //     uri::parse_uri(context);
 //     if constexpr (TypeParam::is_modifiable) {
-//         EXPECT_EQ(context.out.get_host(), "xn--53h.example");
+//         EXPECT_EQ(context.out.get_hostname(), "xn--53h.example");
 //     } else {
-//         EXPECT_EQ(context.out.get_host(), "☕.example");
+//         EXPECT_EQ(context.out.get_hostname(), "☕.example");
 //     }
 // }
 
@@ -588,7 +596,7 @@ TYPED_TEST(URITests, IPv6WithCredentials) {
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
-    EXPECT_EQ(context.out.get_host(), "[::1]");
+    EXPECT_EQ(context.out.get_hostname(), "[::1]");
     EXPECT_EQ(context.out.get_username(), "user");
     EXPECT_EQ(context.out.get_password(), "pass");
     EXPECT_EQ(context.out.get_path(), "/page/one");
@@ -599,7 +607,7 @@ TYPED_TEST(URITests, PortLikePassword) {
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
-    EXPECT_EQ(context.out.get_host(), "host");
+    EXPECT_EQ(context.out.get_hostname(), "host");
     EXPECT_FALSE(context.out.has_port());
     EXPECT_EQ(context.out.get_username(), "user");
     EXPECT_EQ(context.out.get_password(), "123");
@@ -646,9 +654,9 @@ TYPED_TEST(URITests, FileSchemeWithHost) {
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(context.out.get_host(), "127.0.0.1");
+        EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
     } else {
-        EXPECT_EQ(context.out.get_host(), "0x7f.1");
+        EXPECT_EQ(context.out.get_hostname(), "0x7f.1");
     }
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }
@@ -659,6 +667,6 @@ TYPED_TEST(URITests, LocalhostFileScheme) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
-    EXPECT_FALSE(context.out.has_host()) << "localhost for file: scheme gets removed.";
+    EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }

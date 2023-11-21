@@ -55,7 +55,7 @@ namespace webpp::uri::details {
             } else if constexpr (components::port == Comp) {
                 return ctx->out.port_ref();
             } else if constexpr (components::host == Comp) {
-                return ctx->out.host_ref();
+                return ctx->out.hostname_ref();
             } else if constexpr (components::path == Comp) {
                 return ctx->out.path_ref();
             } else if constexpr (components::queries == Comp) {
@@ -80,7 +80,7 @@ namespace webpp::uri::details {
                 } else if constexpr (components::port == Comp) {
                     ctx->out.set_port(start, end);
                 } else if constexpr (components::host == Comp) {
-                    ctx->out.set_host(start, end);
+                    ctx->out.set_hostname(start, end);
                 } else if constexpr (components::path == Comp) {
                     ctx->out.set_path(start, end);
                 } else if constexpr (components::queries == Comp) {

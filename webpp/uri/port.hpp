@@ -15,7 +15,7 @@ namespace webpp::uri {
 
     static constexpr stl::uint16_t max_port_number = 65535U;
 
-    template <uri_parsing_options Options = {}, typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void
     parse_port(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state

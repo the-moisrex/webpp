@@ -111,13 +111,13 @@ namespace webpp::uri {
             set_password(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-        constexpr void set_host(seg_type beg, seg_type end) noexcept {
+        constexpr void set_hostname(seg_type beg, seg_type end) noexcept {
             host_start = beg;
             uri_end    = end;
         }
 
-        constexpr void set_host(iterator beg, iterator end) noexcept {
-            set_host(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
+        constexpr void set_hostname(iterator beg, iterator end) noexcept {
+            set_hostname(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
         constexpr void set_port(seg_type start, seg_type end) noexcept {
@@ -152,7 +152,7 @@ namespace webpp::uri {
             scheme_end = omitted;
         }
 
-        constexpr void clear_host() noexcept {
+        constexpr void clear_hostname() noexcept {
             host_start = omitted; // todo: should we reset authority_start and password_start as well?
         }
 
@@ -192,7 +192,7 @@ namespace webpp::uri {
             return password_start != omitted;
         }
 
-        [[nodiscard]] constexpr bool has_host() const noexcept {
+        [[nodiscard]] constexpr bool has_hostname() const noexcept {
             return host_start != omitted;
         }
 
@@ -260,7 +260,7 @@ namespace webpp::uri {
         }
 
         template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_host() const noexcept {
+        [[nodiscard]] constexpr StrT get_hostname() const noexcept {
             if (host_start == omitted) {
                 return {};
             }
@@ -315,7 +315,7 @@ namespace webpp::uri {
         webpp_def(scheme)     //
           webpp_def(username) //
           webpp_def(password) //
-          webpp_def(host)     //
+          webpp_def(hostname) //
           webpp_def(port)     //
           webpp_def(path)     //
           webpp_def(queries)  //
@@ -351,7 +351,7 @@ namespace webpp::uri {
         string_type m_scheme{};
         string_type m_username{};
         string_type m_password{};
-        string_type m_host{};
+        string_type m_hostname{};
         string_type m_port{};
         string_type m_path{};
         string_type m_queries{};
@@ -394,7 +394,7 @@ namespace webpp::uri {
         webpp_def(scheme)     //
           webpp_def(username) //
           webpp_def(password) //
-          webpp_def(host)     //
+          webpp_def(hostname) //
           webpp_def(port)     //
           webpp_def(path)     //
           webpp_def(queries)  //
@@ -417,7 +417,7 @@ namespace webpp::uri {
         //     return {.scheme   = StringType{alloc},
         //             .username = StringType{alloc},
         //             .password = StringType{alloc},
-        //             .host     = StringType{alloc},
+        //             .hostname     = StringType{alloc},
         //             .port     = StringType{alloc},
         //             .path     = StringType{alloc},
         //             .queries  = StringType{alloc},
@@ -504,7 +504,7 @@ namespace webpp::uri {
         string_type m_scheme{};
         string_type m_username{};
         string_type m_password{};
-        vec_type    m_host{};
+        vec_type    m_hostname{};
         string_type m_port{};
         vec_type    m_path{};
         map_type    m_queries{};
@@ -562,7 +562,7 @@ namespace webpp::uri {
         webpp_def(scheme)     //
           webpp_def(username) //
           webpp_def(password) //
-          webpp_def(host)     //
+          webpp_def(hostname) //
           webpp_def(port)     //
           webpp_def(path)     //
           webpp_def(queries)  //
@@ -571,12 +571,12 @@ namespace webpp::uri {
         // NOLINTEND(*-macro-usage)
 #undef webpp_def
 
-          constexpr void set_host(iterator beg, iterator end) {
-            istl::collection::clear(m_host);
+          constexpr void set_hostname(iterator beg, iterator end) {
+            istl::collection::clear(m_hostname);
             if constexpr (is_modifiable) {
-                istl::collection::emplace_one(m_host, beg, end, m_host.get_allocator());
+                istl::collection::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
             } else {
-                istl::collection::emplace_one(m_host, beg, end);
+                istl::collection::emplace_one(m_hostname, beg, end);
             }
         }
 
@@ -608,14 +608,14 @@ namespace webpp::uri {
         }
 
         template <istl::String StrT = stl::string, typename... Args>
-        [[nodiscard]] constexpr StrT get_host(Args&&... args) const {
+        [[nodiscard]] constexpr StrT get_hostname(Args&&... args) const {
             StrT out{stl::forward<Args>(args)...};
-            if (m_host.empty()) {
+            if (m_hostname.empty()) {
                 return out;
             }
-            for (auto pos = m_host.begin();;) {
+            for (auto pos = m_hostname.begin();;) {
                 out += *pos;
-                if (++pos == m_host.end()) {
+                if (++pos == m_hostname.end()) {
                     break;
                 }
                 out += '.';
