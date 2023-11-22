@@ -24,10 +24,10 @@ struct URITests : testing::Test {
     stl::string url_text;
 
   public:
-    template <typename SpecifiedTypeParam>
-    [[nodiscard]] constexpr SpecifiedTypeParam get_context(auto str) {
+    template <typename SpecifiedTypeParam, typename StrT = stl::string_view>
+    [[nodiscard]] constexpr SpecifiedTypeParam get_context(StrT str) {
         using ctx_type    = SpecifiedTypeParam;
-        using string_type = stl::remove_cvref_t<decltype(str)>;
+        using string_type = stl::remove_cvref_t<StrT>;
         using str_iter    = typename string_type::const_iterator;
         using iterator    = typename ctx_type::iterator;
         if constexpr (stl::convertible_to<str_iter, iterator>) {
@@ -43,9 +43,9 @@ struct URITests : testing::Test {
     }
 
 
-    template <typename SpecifiedTypeParam, typename StrT = stl::string_view>
-    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(StrT&& str) {
-        auto ctx = get_context<SpecifiedTypeParam>(stl::forward<StrT>(str));
+    template <typename SpecifiedTypeParam>
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view str) {
+        auto ctx = get_context<SpecifiedTypeParam, stl::string_view>(str);
         uri::parse_uri(ctx);
         return ctx;
     }
@@ -669,4 +669,15 @@ TYPED_TEST(URITests, LocalhostFileScheme) {
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
     EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+TYPED_TEST(URITests, InsaneUrl) {
+    auto const ctx = this->template parse_from_string<TypeParam>("e:@EEEE");
+    EXPECT_TRUE(uri::is_valid(ctx.status));
+    EXPECT_EQ(ctx.out.get_scheme(), "e");
+    EXPECT_EQ(ctx.out.get_username(), "");
+    EXPECT_EQ(ctx.out.get_password(), "");
+    EXPECT_EQ(ctx.out.get_hostname(), "");
+    EXPECT_EQ(ctx.out.get_port(), "");
+    EXPECT_EQ(ctx.out.get_path(), "@EEEE");
 }
