@@ -681,3 +681,14 @@ TYPED_TEST(URITests, InsaneUrl) {
     EXPECT_EQ(ctx.out.get_port(), "");
     EXPECT_EQ(ctx.out.get_path(), "@EEEE");
 }
+
+TYPED_TEST(URITests, EmptyURI) {
+    auto ctx = this->template parse_from_string<TypeParam>("");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
+    EXPECT_EQ(uri::get_value(ctx.status), uri::uri_status::empty_string);
+}
+
+TYPED_TEST(URITests, HashOnly) {
+    auto ctx = this->template parse_from_string<TypeParam>("#hash");
+    EXPECT_FALSE(uri::is_valid(ctx.status));
+}
