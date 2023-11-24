@@ -692,3 +692,16 @@ TYPED_TEST(URITests, HashOnly) {
     auto ctx = this->template parse_from_string<TypeParam>("#hash");
     EXPECT_FALSE(uri::is_valid(ctx.status));
 }
+
+TYPED_TEST(URITests, ToLowered) {
+    auto url = this->template parse_from_string<TypeParam>("HTTP://EXAMPLE.COM");
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(url.out.get_scheme(), "http");
+        EXPECT_EQ(url.out.get_hostname(), "example.com");
+        // EXPECT_EQ(url.get_href(), "http://example.com/");
+    } else {
+        EXPECT_EQ(url.out.get_scheme(), "HTTP");
+        EXPECT_EQ(url.out.get_hostname(), "EXAMPLE.COM");
+        // EXPECT_EQ(url.out.get_href(), "HTTP://EXAMPLE.COM/");
+    }
+}
