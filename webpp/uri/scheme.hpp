@@ -243,7 +243,7 @@ namespace webpp::uri {
                         if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
                             ctx.pos += 2;
                         } else {
-                            set_warning(ctx.status, uri_status::missing_following_solidus);
+                            set_warning(ctx.status, missing_following_solidus);
                         }
                         details::file_state(ctx);
                         return;
@@ -265,22 +265,19 @@ namespace webpp::uri {
                         return;
                     }
                     ctx.out.clear_path();
-                    set_valid(ctx.status, uri_status::valid_opaque_path);
+                    set_valid(ctx.status, valid_opaque_path);
                     return;
                 }
-
-                // Otherwise, if state override is not given, set buffer to the empty string, state to no
-                // scheme state, and start over (from the first code point in input).
-                //
-                // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-                ctx.pos = ctx.beg;
-                ctx.out.clear_scheme();
-                details::no_scheme_state(ctx);
-                return;
             }
         }
-        // todo: invalid character is not an error
-        set_warning(ctx.status, invalid_character);
+
+        // Otherwise, if state override is not given, set buffer to the empty string, state to no
+        // scheme state, and start over (from the first code point in input).
+        //
+        // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+        ctx.pos = ctx.beg;
+        ctx.out.clear_scheme();
+        details::no_scheme_state(ctx);
     }
 
 
