@@ -34,13 +34,10 @@ namespace webpp::io {
     using wpath_view = basic_path_view<wchar_t>;
     using path_view  = basic_path_view<char>;
 
-
-
     /**
      * File options used to open a file descriptor
      */
     struct file_options {
-
         using flags_type = OS_VALUE(int, int); // since we plan to use _sopen_s instead of CreateFileA in
                                                // windows, we can use int for windows instead of DWORD
 
@@ -85,9 +82,9 @@ namespace webpp::io {
         def random     = OS_VALUE(0, _O_RANDOM);
         def shortlived = OS_VALUE(0, _O_CREAT | _O_SHORT_LIVED);
 
-        def invalid = ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct &
-                      ~temporary & ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random &
-                      ~shortlived;
+        def invalid =
+          ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct & ~temporary &
+          ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random & ~shortlived;
 #undef def
 
         constexpr file_options() noexcept = default;
@@ -111,14 +108,12 @@ namespace webpp::io {
     }
 
         def(|) def(&) def(+) def(-) def(*) def(/) def(%)
-
 #undef def
 
           [[nodiscard]] constexpr file_options
           operator~() const noexcept {
             return {~oflags};
         }
-
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return (oflags & invalid) == 0;
@@ -160,7 +155,7 @@ namespace webpp::io {
                     return;
             }
 
-            const auto mode_end = mode + 8;
+            auto const mode_end = mode + 8;
             for (; mode != mode_end; ++mode) {
                 switch (*mode) {
                     case '\0': [[fallthrough]];
@@ -194,7 +189,6 @@ namespace webpp::io {
 
             // todo: handle unicode options
         }
-
 
         flags_type oflags = 0u;
     };

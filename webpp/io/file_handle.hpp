@@ -46,6 +46,7 @@ namespace webpp::io {
         }
 
         file_handle(stl::error_code ec) noexcept : handle{ec.value()} {}
+
         constexpr file_handle() noexcept                              = default;
         constexpr file_handle(file_handle const&) noexcept            = default;
         constexpr file_handle(file_handle&&) noexcept                 = default;
@@ -93,8 +94,8 @@ namespace webpp::io {
 
         template <istl::String StrT>
         constexpr void to_string(StrT& out) const {
-            auto const str = stl::strerror(-handle);
-            out += str;
+            auto const str  = stl::strerror(-handle);
+            out            += str;
         }
 
         template <istl::String StrT, typename... Args>
@@ -109,8 +110,6 @@ namespace webpp::io {
         handle_type handle{};
     };
 
-
-
     /**
      * In async I/O operations, there will be time where you need the async operations for a to be synced
      * so the problems like this wouldn't happen:
@@ -123,9 +122,10 @@ namespace webpp::io {
      * io_uring to synchronize these operations and keep the order of executions.
      */
     struct synced_file_handle {
-
         constexpr synced_file_handle() noexcept = default;
+
         constexpr synced_file_handle(file_handle inp_fh) noexcept : fh{inp_fh} {}
+
         constexpr synced_file_handle(synced_file_handle&&) noexcept            = default;
         synced_file_handle(synced_file_handle const&)                          = delete;
         synced_file_handle&           operator=(synced_file_handle const&)     = delete;

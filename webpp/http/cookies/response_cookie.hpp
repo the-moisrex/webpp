@@ -18,8 +18,12 @@
 
 namespace webpp::http {
 
-    enum struct same_site_value : stl::uint_fast8_t { not_specified, none, lax, strict };
-
+    enum struct same_site_value : stl::uint_fast8_t {
+        not_specified,
+        none,
+        lax,
+        strict
+    };
 
     template <istl::String StringType = stl::string>
     struct response_cookie {
@@ -102,7 +106,6 @@ namespace webpp::http {
             _comment{alloc},
             attrs{alloc} {}
 
-
         /**
          * Parse response cookie (A single Set-Cookie header value)
          * There are not many reasons to use this constructor
@@ -136,8 +139,9 @@ namespace webpp::http {
 
             bool is_valid = true;
             details::parse_SE_value(src, _name, _value, is_valid);
-            if (!is_valid)
+            if (!is_valid) {
                 return false;
+            }
             string_view_type                   key;
             string_view_type                   value;
             string_tokenizer<string_view_type> tokenizer{src};
@@ -238,11 +242,11 @@ namespace webpp::http {
                     case 'v':
                         if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "version")) {
                             ascii::rtrim(value);
-                            if (value == "0")
+                            if (value == "0") {
                                 _version = version_t::version_0;
-                            else if (value == "1")
+                            } else if (value == "1") {
                                 _version = version_t::version_1;
-                            else {
+                            } else {
                                 attrs.emplace(key, value);
                                 is_valid = false;
                             }
@@ -264,7 +268,7 @@ namespace webpp::http {
             // NOLINTBEGIN(*-magic-numbers)
 
             // difference between year_dur and std::chrono::year is the integer type
-            using year_dur = stl::chrono::duration<int, std::ratio<31556952>>;
+            using year_dur = stl::chrono::duration<int, std::ratio<31'556'952>>;
             if (i_remove) {
                 // set the 'expire' date 10 year before now:
                 _expires = (clock_type::now() - year_dur(10));
@@ -287,7 +291,7 @@ namespace webpp::http {
          * @brief sets expiration time relative to now.
          */
         template <typename D, typename T>
-        constexpr inline auto& expires_in(stl::chrono::duration<D, T> const& i_dur) noexcept {
+        inline constexpr auto& expires_in(stl::chrono::duration<D, T> const& i_dur) noexcept {
             _expires = clock_type::now() + i_dur;
             return *this;
         }
@@ -351,7 +355,7 @@ namespace webpp::http {
         return *this;                                    \
     }
 
-        WEBPP_METHOD_OTHERS(secure_t, secure);
+        WEBPP_METHOD_OTHERS(secure_t, secure)
         WEBPP_METHOD_OTHERS(prefix_t, prefix)
         WEBPP_METHOD_OTHERS(encrypted_t, encrypted)
         WEBPP_METHOD_OTHERS(http_only_t, http_only)
@@ -366,7 +370,6 @@ namespace webpp::http {
             // todo
             return false;
         }
-
 
         /**
          * Check if the specified path is valid for this cookie
@@ -400,7 +403,6 @@ namespace webpp::http {
 
         constexpr void expires_string_to(istl::String auto& result) const {
             if (_expires) {
-
                 // we have to do this because currently STL implementers have not yet specialized
                 // std::formatter for utc_clock type
                 if constexpr (requires { typename fmt::formatter<date_t, char_type>::type; }) {
@@ -561,8 +563,6 @@ namespace webpp::http {
             }
         }
 
-
-
         //        template <istl::StringView StrViewType>
         //        bool operator==(request_cookie<StrViewType> const& c) const noexcept {
         //            return super::name == c.name && super::value == c.value;
@@ -609,7 +609,7 @@ namespace webpp::http {
                    _path == c._path && c._domain == _domain;
         }
 
-        friend constexpr inline void swap(response_cookie& first, response_cookie& second) noexcept {
+        friend inline constexpr void swap(response_cookie& first, response_cookie& second) noexcept {
             using stl::swap;
             swap(first._name, second._name);
             swap(first._value, second._value);

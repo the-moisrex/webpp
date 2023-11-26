@@ -93,7 +93,6 @@ namespace webpp::istl {
 
     } // namespace collection
 
-
     template <typename T>
     concept LinearContainer = ReadOnlyCollection<T> && AppendableCollection<T> && requires(T container) {
         typename T::value_type;

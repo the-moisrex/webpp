@@ -28,7 +28,6 @@ namespace webpp {
             return *this;
         }
 
-
         template <typename K>
         constexpr stl::optional<value_type> get(K&& key) {
             return gate.get(stl::forward<K>(key));

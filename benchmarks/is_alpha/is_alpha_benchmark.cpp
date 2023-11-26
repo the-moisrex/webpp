@@ -11,7 +11,7 @@
 using namespace std;
 
 bool is_alpha_bools(char c) {
-    static bool constexpr tab[] = {
+    static constexpr bool tab[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32
@@ -33,7 +33,7 @@ bool is_alpha_bools(char c) {
 }
 
 char is_alpha(char c) {
-    static char constexpr tab[] = {
+    static constexpr char tab[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 16
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 32
@@ -55,10 +55,11 @@ char is_alpha(char c) {
 }
 
 bool is_alpha_bitset(char c) {
-    static const std::bitset<255> tab{"0000000000000000000000000000000000000000000000000000000000000000"
-                                      "0111111111111111111111111110000001111111111111111111111111100000"
-                                      "0000000000000000000000000000000000000000000000000000000000000000"
-                                      "0000000000000000000000000000000000000000000000000000000000000000"};
+    static const std::bitset<255> tab{
+      "0000000000000000000000000000000000000000000000000000000000000000"
+      "0111111111111111111111111110000001111111111111111111111111100000"
+      "0000000000000000000000000000000000000000000000000000000000000000"
+      "0000000000000000000000000000000000000000000000000000000000000000"};
     return tab[static_cast<std::size_t>(c)];
 }
 
@@ -70,10 +71,10 @@ bool is_alpha_arithmetic3(char c) {
     return (unsigned(c & ~(1 << 5)) - 'A') <= ('Z' - 'A');
 }
 
-
 bool is_alpha_arithmetic2(char c) {
-    static constexpr uint64_t t     = 0b1111111111111111111111111100000011111111111111111111111111000000;
-    auto const                count = c - 'A';
+    static constexpr uint64_t t =
+      0b1111'1111'1111'1111'1111'1111'1100'0000'1111'1111'1111'1111'1111'1111'1100'0000;
+    auto const count = c - 'A';
     return ((t & (uint64_t(1) << count)) >> count) == 0;
 }
 
@@ -114,8 +115,8 @@ bool is_alpha_arithmetic2(char c) {
 //}
 //
 
-const auto is_alpha_strs =
-  str_array_generator<256>(10000, std::string_view{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"});
+auto const is_alpha_strs =
+  str_array_generator<256>(10'000, std::string_view{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"});
 
 #define func(name, algo)                                                      \
     static void IsAlpha_##name(benchmark::State& state) {                     \

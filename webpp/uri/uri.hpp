@@ -16,8 +16,8 @@
 namespace webpp::uri {
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    continue_parsing_uri(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void continue_parsing_uri(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         while (!has_error(ctx.status)) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
@@ -38,11 +38,10 @@ namespace webpp::uri {
     }
 
     template <typename... T>
-    static constexpr void
-    parse_uri(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_uri(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         continue_parsing_uri(ctx);
     }
-
 
     template <istl::StringView StrV = stl::string_view>
     static constexpr auto parse_uri(StrV str) noexcept {
@@ -55,11 +54,10 @@ namespace webpp::uri {
         return context;
     }
 
-
     template <istl::StringLike StrT, typename SegType>
-    static constexpr auto
-    parse_uri(StrT const&                    the_url,
-              uri_components<SegType> const& origin_context) noexcept(istl::StringView<StrT>) {
+    static constexpr auto parse_uri(
+      StrT const&                    the_url,
+      uri_components<SegType> const& origin_context) noexcept(istl::StringView<StrT>) {
         using iterator             = typename StrT::const_iterator;
         using base_components_type = uri_components<SegType>;
         using base_seg_type        = typename base_components_type::seg_type;
@@ -74,8 +72,8 @@ namespace webpp::uri {
     }
 
     template <istl::StringLike StrT, istl::StringViewifiable OStrV>
-    static constexpr auto parse_uri(StrT const& the_url,
-                                    OStrV&&     origin_url) noexcept(istl::StringView<StrT>) {
+    static constexpr auto parse_uri(StrT const& the_url, OStrV&& origin_url) noexcept(
+      istl::StringView<StrT>) {
         using iterator = typename StrT::const_iterator;
         static_assert(
           stl::same_as<iterator, typename OStrV::const_iterator>,
@@ -88,7 +86,6 @@ namespace webpp::uri {
 
         return parse_uri(the_url, origin_context.out);
     }
-
 
     template <istl::String StringType>
     struct basic_uri {
@@ -114,6 +111,7 @@ namespace webpp::uri {
         path_type     path{};
         queries_type  queries{};
         fragment_type fragment{};
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
@@ -144,7 +142,6 @@ namespace webpp::uri {
             queries{alloc},
             fragment{alloc} {}
 
-
         constexpr basic_uri()
             requires(stl::is_default_constructible_v<string_type>)
         = default;
@@ -161,32 +158,32 @@ namespace webpp::uri {
             return basic_uri<str_t>{alloc};
         }
 
-
         template <typename DefaultAlloc = allocator_type>
         constexpr auto get_allocator() const noexcept {
-            return extract_allocator_of_or_default<DefaultAlloc>(scheme,
-                                                                 username,
-                                                                 password,
-                                                                 host,
-                                                                 port,
-                                                                 path,
-                                                                 queries,
-                                                                 fragment);
+            return extract_allocator_of_or_default<DefaultAlloc>(
+              scheme,
+              username,
+              password,
+              host,
+              port,
+              path,
+              queries,
+              fragment);
         }
-
 
         constexpr void append_to(istl::String auto& out) {
             // estimate the size
             // todo: check if it has a good impact on performance or it's just in the way
-            out.reserve(out.size() +                // the size of out itself
-                        scheme.size() +             // the scheme size
-                        username.size() +           // the username size
-                        password.size() + 1 +       // the password size + 1 character for @
-                        host.size() +               // host size
-                        port.size() + 1 +           // port size + 1 character for :
-                        path.raw_string_size() +    // path size
-                        queries.raw_string_size() + // queries size
-                        fragment.size()             // fragments size
+            out.reserve(
+              out.size() +                // the size of out itself
+              scheme.size() +             // the scheme size
+              username.size() +           // the username size
+              password.size() + 1 +       // the password size + 1 character for @
+              host.size() +               // host size
+              port.size() + 1 +           // port size + 1 character for :
+              path.raw_string_size() +    // path size
+              queries.raw_string_size() + // queries size
+              fragment.size()             // fragments size
             );
             scheme.append_to(out);
             username.append_to(out);
@@ -205,8 +202,6 @@ namespace webpp::uri {
             return str;
         }
 
-
-
         /**
          * This method returns an indication of whether or not the URI includes
          * any element that is part of the authority URI.
@@ -215,9 +210,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool has_authority() const noexcept {
             return !host.empty() || !username.empty() || !password.empty() || !port.empty();
         }
-
-
-
 
         /**
          * This method resolves the given relative reference, based on the given
@@ -234,7 +226,7 @@ namespace webpp::uri {
          *     (in which I mean, the base URI should be absolute,
          *     as in IsRelativeReference() should return false).
          */
-        [[nodiscard]] constexpr basic_uri resolve(const basic_uri& relative_uri) const noexcept {
+        [[nodiscard]] constexpr basic_uri resolve(basic_uri const& relative_uri) const noexcept {
             // Resolve the reference by following the algorithm
             // from section 5.2.2 in
             // RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -288,7 +280,6 @@ namespace webpp::uri {
 
             return target;
         }
-
 
         template <istl::StringViewifiable StrT>
         constexpr uri_status set_scheme(StrT&& inp_str) noexcept {

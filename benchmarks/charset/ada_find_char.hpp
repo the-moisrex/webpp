@@ -27,9 +27,9 @@ namespace ada_v1 {
 #    if defined(__APPLE__) || defined(__FreeBSD__) // defined __BYTE_ORDER__ && defined
                                                    // __ORDER_BIG_ENDIAN__
 #        include <machine/endian.h>
-#    elif defined(sun) || defined(__sun) // defined(__APPLE__) || defined(__FreeBSD__)
+#    elif defined(sun) || defined(__sun)           // defined(__APPLE__) || defined(__FreeBSD__)
 #        include <sys/byteorder.h>
-#    else // defined(__APPLE__) || defined(__FreeBSD__)
+#    else                                          // defined(__APPLE__) || defined(__FreeBSD__)
 
 #        ifdef __has_include
 #            if __has_include(<endian.h>)
@@ -37,7 +37,7 @@ namespace ada_v1 {
 #            endif //__has_include(<endian.h>)
 #        endif     //__has_include
 
-#    endif // defined(__APPLE__) || defined(__FreeBSD__)
+#    endif         // defined(__APPLE__) || defined(__FreeBSD__)
 
 #    ifndef !defined(__BYTE_ORDER__) || !defined(__ORDER_LITTLE_ENDIAN__)
 #        define ADA_IS_BIG_ENDIAN 0
@@ -45,21 +45,21 @@ namespace ada_v1 {
 
 #    if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #        define ADA_IS_BIG_ENDIAN 0
-#    else // __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#    else  // __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #        define ADA_IS_BIG_ENDIAN 1
 #    endif // __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
-#endif // defined __BYTE_ORDER__ && defined __ORDER_BIG_ENDIAN__
+#endif     // defined __BYTE_ORDER__ && defined __ORDER_BIG_ENDIAN__
 
 
 
     // Reverse the byte order.
     ada_really_inline uint64_t swap_bytes(uint64_t val) noexcept {
         // performance: this often compiles to a single instruction (e.g., bswap)
-        return ((((val) &0xff00000000000000ull) >> 56) | (((val) &0x00ff000000000000ull) >> 40) |
-                (((val) &0x0000ff0000000000ull) >> 24) | (((val) &0x000000ff00000000ull) >> 8) |
-                (((val) &0x00000000ff000000ull) << 8) | (((val) &0x0000000000ff0000ull) << 24) |
-                (((val) &0x000000000000ff00ull) << 40) | (((val) &0x00000000000000ffull) << 56));
+        return ((((val) &0xff00'0000'0000'0000ull) >> 56) | (((val) &0x00ff'0000'0000'0000ull) >> 40) |
+                (((val) &0x0000'ff00'0000'0000ull) >> 24) | (((val) &0x0000'00ff'0000'0000ull) >> 8) |
+                (((val) &0x0000'0000'ff00'0000ull) << 8) | (((val) &0x0000'0000'00ff'0000ull) << 24) |
+                (((val) &0x0000'0000'0000'ff00ull) << 40) | (((val) &0x0000'0000'0000'00ffull) << 56));
     }
 
     ada_really_inline uint64_t swap_bytes_if_big_endian(uint64_t val) noexcept {
@@ -80,13 +80,13 @@ namespace ada_v1 {
         // you *really* want find_next_host_delimiter to be inlined, because
         // otherwise, the constants may get reloaded each time (bad).
         auto has_zero_byte = [](uint64_t v) {
-            return ((v - 0x0101010101010101) & ~(v) &0x8080808080808080);
+            return ((v - 0x0101'0101'0101'0101) & ~(v) &0x8080'8080'8080'8080);
         };
         auto index_of_first_set_byte = [](uint64_t v) {
-            return ((((v - 1) & 0x101010101010101) * 0x101010101010101) >> 56) - 1;
+            return ((((v - 1) & 0x101'0101'0101'0101) * 0x101'0101'0101'0101) >> 56) - 1;
         };
         auto broadcast = [](uint8_t v) -> uint64_t {
-            return 0x101010101010101ull * v;
+            return 0x101'0101'0101'0101ull * v;
         };
         size_t   i     = location;
         uint64_t mask1 = broadcast(':');

@@ -112,7 +112,7 @@ namespace webpp::modp_b64 {
 
     static constexpr std::size_t error = static_cast<std::size_t>(-1);
 
-    static constexpr auto BADCHAR = 0x01FFFFFF;
+    static constexpr auto BADCHAR = 0x01FF'FFFF;
 
 /**
  * you can control if we use padding by commenting out this
@@ -157,7 +157,7 @@ namespace webpp::modp_b64 {
      *
      * todo: this function can be "constexpr"
      */
-    [[nodiscard]] static inline std::size_t encode(char* dest, const char* str, std::size_t len) noexcept {
+    [[nodiscard]] static inline std::size_t encode(char* dest, char constr* str, std::size_t len) noexcept {
         std::size_t i = 0;
         auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
@@ -198,7 +198,6 @@ namespace webpp::modp_b64 {
         return static_cast<std::size_t>(p - reinterpret_cast<std::uint8_t*>(dest));
     }
 
-
     /**
      * Decode a base64 encoded string
      *
@@ -220,9 +219,11 @@ namespace webpp::modp_b64 {
      * if (len == -1) { error }
      * \endcode
      */
-    [[nodiscard]] static constexpr std::size_t decode(char* dest, const char* src, std::size_t len) noexcept {
-        if (len == 0)
+    [[nodiscard]] static constexpr std::size_t
+    decode(char* dest, char constr* src, std::size_t len) noexcept {
+        if (len == 0) {
             return 0;
+        }
 
 
 #ifdef DOPAD
@@ -230,8 +231,9 @@ namespace webpp::modp_b64 {
          * if padding is used, then the message must be at least
          * 4 chars and be a multiple of 4
          */
-        if (len < 4 || (len % 4 != 0))
+        if (len < 4 || (len % 4 != 0)) {
             return error; /* error */
+        }
         /* there can be at most 2 pad chars at the end */
         if (src[len - 1] == CHARPAD) {
             len--;
@@ -250,24 +252,26 @@ namespace webpp::modp_b64 {
             auto*         p       = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t x       = 0;
             auto*         destInt = reinterpret_cast<std::uint32_t*>(p);
-            const auto*   srcInt  = reinterpret_cast<std::uint32_t const*>(src);
+            auto consto*  srcInt  = reinterpret_cast<std::uint32_t const*>(src);
             std::uint32_t y       = *srcInt++;
             for (i = 0; i < chunks; ++i) {
                 x = d0[y >> 24 & 0xff] | d1[y >> 16 & 0xff] | d2[y >> 8 & 0xff] | d3[y & 0xff];
 
-                if (x >= BADCHAR)
+                if (x >= BADCHAR) {
                     return error;
-                *destInt = x << 8;
-                p += 3;
-                destInt = (std::uint32_t*) p;
-                y       = *srcInt++;
+                }
+                *destInt  = x << 8;
+                p        += 3;
+                destInt   = (std::uint32_t*) p;
+                y         = *srcInt++;
             }
 
             switch (leftover) {
                 case 0:
                     x = d0[y >> 24 & 0xff] | d1[y >> 16 & 0xff] | d2[y >> 8 & 0xff] | d3[y & 0xff];
-                    if (x >= BADCHAR)
+                    if (x >= BADCHAR) {
                         return error;
+                    }
                     *p++ = ((std::uint8_t*) &x)[1];
                     *p++ = ((std::uint8_t*) &x)[2];
                     *p   = ((std::uint8_t*) &x)[3];
@@ -287,8 +291,9 @@ namespace webpp::modp_b64 {
                     break;
             }
 
-            if (x >= BADCHAR)
+            if (x >= BADCHAR) {
                 return error;
+            }
             return 3 * chunks + (6 * leftover) / 8;
 
 
@@ -300,11 +305,12 @@ namespace webpp::modp_b64 {
 
             auto*         p = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t x = 0;
-            const auto*   y = reinterpret_cast<std::uint8_t const*>(src);
+            auto consto*  y = reinterpret_cast<std::uint8_t const*>(src);
             for (i = 0; i < chunks; ++i, y += 4) {
                 x = d0[y[0]] | d1[y[1]] | d2[y[2]] | d3[y[3]];
-                if (x >= BADCHAR)
+                if (x >= BADCHAR) {
                     return error;
+                }
                 *p++ = ((std::uint8_t*) (&x))[0];
                 *p++ = ((std::uint8_t*) (&x))[1];
                 *p++ = ((std::uint8_t*) (&x))[2];
@@ -314,19 +320,20 @@ namespace webpp::modp_b64 {
                 case 0:
                     x = d0[y[0]] | d1[y[1]] | d2[y[2]] | d3[y[3]];
 
-                    if (x >= BADCHAR)
+                    if (x >= BADCHAR) {
                         return error;
+                    }
                     *p++ = ((std::uint8_t*) (&x))[0];
                     *p++ = ((std::uint8_t*) (&x))[1];
                     *p   = ((std::uint8_t*) (&x))[2];
                     return (chunks + 1) * 3;
-                case 1: /* with padding this is an impossible case */
+                case 1:                                    /* with padding this is an impossible case */
                     x  = d0[y[0]];
-                    *p = *((std::uint8_t*) (&x)); // i.e. first char/byte in int
+                    *p = *((std::uint8_t*) (&x));          // i.e. first char/byte in int
                     break;
-                case 2: // * case 2, 1  output byte */
+                case 2:                                    // * case 2, 1  output byte */
                     x  = d0[y[0]] | d1[y[1]];
-                    *p = *((std::uint8_t*) (&x)); // i.e. first char
+                    *p = *((std::uint8_t*) (&x));          // i.e. first char
                     break;
                 default:                                   /* case 3, 2 output bytes */
                     x    = d0[y[0]] | d1[y[1]] | d2[y[2]]; /* 0x3c */
@@ -335,8 +342,9 @@ namespace webpp::modp_b64 {
                     break;
             }
 
-            if (x >= BADCHAR)
+            if (x >= BADCHAR) {
                 return error;
+            }
 
             return 3 * chunks + (6 * leftover) / 8;
         }

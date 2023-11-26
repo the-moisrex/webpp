@@ -11,45 +11,47 @@
 
 #include <cstring>
 
-
 namespace webpp {
 
     // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
     // NOLINTBEGIN(*-magic-numbers)
 
-    // NOLINTBEGIN(*-macro-usage)
+    // NOLINTBEGIN(*-macro-usage, *-avoid-do-while)
     /**
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
     template <typename Iter = char*>
-    static constexpr Iter inet_ntop4(const stl::uint8_t* src, Iter out) noexcept {
-#define WEBPP_PUT_CHAR()                                   \
-    if (*src < 10) {                                       \
-        *out++ = static_cast<char>('0' + *src);            \
-    } else if (*src < 100) {                               \
-        *out++ = static_cast<char>('0' + *src / 10);       \
-        *out++ = static_cast<char>('0' + *src % 10);       \
-    } else {                                               \
-        *out++ = static_cast<char>('0' + *src / 100);      \
-        *out++ = static_cast<char>('0' + *src % 100 / 10); \
-        *out++ = static_cast<char>('0' + *src % 10);       \
-    }
-        WEBPP_PUT_CHAR()
+    static constexpr Iter inet_ntop4(stl::uint8_t const* src, Iter out) noexcept {
+#define WEBPP_PUT_CHAR()                                       \
+    do {                                                       \
+        if (*src < 10) {                                       \
+            *out++ = static_cast<char>('0' + *src);            \
+        } else if (*src < 100) {                               \
+            *out++ = static_cast<char>('0' + *src / 10);       \
+            *out++ = static_cast<char>('0' + *src % 10);       \
+        } else {                                               \
+            *out++ = static_cast<char>('0' + *src / 100);      \
+            *out++ = static_cast<char>('0' + *src % 100 / 10); \
+            *out++ = static_cast<char>('0' + *src % 10);       \
+        }                                                      \
+    } while (false)
+        WEBPP_PUT_CHAR();
         ++src;
         *out++ = '.';
-        WEBPP_PUT_CHAR()
+        WEBPP_PUT_CHAR();
         ++src;
         *out++ = '.';
-        WEBPP_PUT_CHAR()
+        WEBPP_PUT_CHAR();
         ++src;
         *out++ = '.';
-        WEBPP_PUT_CHAR()
+        WEBPP_PUT_CHAR();
         *out = '\0';
         return out;
 #undef WEBPP_PUT_CHAR
     }
-    // NOLINTEND(*-macro-usage)
+
+    // NOLINTEND(*-macro-usage, *-avoid-do-while)
 
 
 
@@ -58,8 +60,7 @@ namespace webpp {
      * Convert IPv6 binary address into presentation (printable) format
      */
     template <typename Iter = char*>
-    static constexpr Iter inet_ntop6(const stl::uint8_t* src, Iter out) noexcept {
-
+    static constexpr Iter inet_ntop6(stl::uint8_t const* src, Iter out) noexcept {
         using ascii::details::hex_chars;
 
         using char_type = typename istl::char_type_of_t<typename stl::iterator_traits<Iter>::pointer>;
@@ -72,7 +73,7 @@ namespace webpp {
 
         char_type           hexa[8 * 5];
         char_type*          hex_ptr   = static_cast<char*>(hexa);
-        const stl::uint8_t* src_ptr   = src;
+        stl::uint8_t const* src_ptr   = src;
         char_type*          octet_ptr = hex_ptr;
 
 
@@ -112,9 +113,9 @@ namespace webpp {
                 *octet_ptr++ = hex_chars<char_type>[high_hex_8bit];
             }
 
-            high_hex_8bit = low_hex_8bit & 0x0FU;
-            *octet_ptr++  = hex_chars<char_type>[high_hex_8bit];
-            hex_ptr += 5;
+            high_hex_8bit  = low_hex_8bit & 0x0FU;
+            *octet_ptr++   = hex_chars<char_type>[high_hex_8bit];
+            hex_ptr       += 5;
 
 
 
@@ -171,8 +172,8 @@ namespace webpp {
                 }
             }
             // check for leading zero
-            *out++ = ':';
-            index += longest_count;
+            *out++  = ':';
+            index  += longest_count;
             for (; index != 8; ++index) {
                 for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;

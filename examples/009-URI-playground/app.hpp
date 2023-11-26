@@ -49,10 +49,11 @@ namespace website {
                 doc["error"] = "No URI specified.";
             } else {
                 using iterator = typename stl::remove_cvref_t<decltype(query)>::const_iterator;
-                uri::parsing_uri_context<iterator> context{.beg = query.begin(),
-                                                           .pos = query.begin(),
-                                                           .end = query.end()};
-                auto const                         start = high_resolution_clock::now();
+                uri::parsing_uri_context<iterator> context{
+                  .beg = query.begin(),
+                  .pos = query.begin(),
+                  .end = query.end()};
+                auto const start = high_resolution_clock::now();
                 {
                     // calculating the time that it takes to parse it
                     uri::parse_uri(context);

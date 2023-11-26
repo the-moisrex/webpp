@@ -107,7 +107,6 @@ namespace webpp {
         invalid_colon_usage = stl::to_underlying(ip_address_status::invalid_colon_usage)
     };
 
-
     [[nodiscard]] static constexpr bool is_valid(inet_pton4_status status) noexcept {
         using enum inet_pton4_status;
         return status == valid || status == valid_special;

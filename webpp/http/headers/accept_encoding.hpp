@@ -86,7 +86,6 @@ namespace webpp::http {
         constexpr basic_accept_encoding(auto&&... args) noexcept
           : data{stl::forward<decltype(args)>(args)...} {}
 
-
         void parse() noexcept {
             if (data.find_first_of('\"') != str_v::npos) {
                 _is_valid = false;
@@ -128,9 +127,8 @@ namespace webpp::http {
                 }
                 auto param_name = params.substr(0, equals_pos);
                 http::trim_lws(param_name);
-                if (!ascii::iequals<ascii::char_case_side::second_lowered>(
-                      param_name,
-                      'q')) { // the size is checked inside of iequals
+                if (!ascii::iequals<ascii::char_case_side::second_lowered>(param_name, 'q'))
+                { // the size is checked inside of iequals
                     _is_valid = false;
                     return;
                 }
@@ -159,8 +157,9 @@ namespace webpp::http {
                     return;
                 }
                 auto len = qvalue.length();
-                if (len == 1)
+                if (len == 1) {
                     continue;
+                }
                 if (len <= 2 || len > 5) {
                     _is_valid = false;
                     return;
@@ -177,7 +176,7 @@ namespace webpp::http {
                         return;
                     }
                     qval += d * (qvalue[i] - '0');
-                    d /= 10;
+                    d    /= 10;
                 }
                 if (qval != 0) {
                     if constexpr (allow_unknown_algos) {
@@ -260,7 +259,8 @@ namespace webpp::http {
                 [[unlikely]] case 'X': // unlikely because browsers usually don't use x- prefix
                     if (ascii::iequals<the_case>(str, "x-gzip")) {
                         return gzip;
-                    } else if (ascii::iequals<the_case>(str, "x-compress")) {
+                    }
+                    if (ascii::iequals<the_case>(str, "x-compress")) {
                         return compress;
                     }
                     break;
@@ -292,10 +292,10 @@ namespace webpp::http {
               _allowed_encodings.cbegin(),
               _allowed_encodings.cend(),
               [&](auto&& item) noexcept {
-                  return (
-                    ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(item.encoding,
-                                                                                              str) ||
-                    ...);
+                  return (ascii::iequals<ascii::char_case_to_side(ascii::char_case::unknown, Case)>(
+                            item.encoding,
+                            str) ||
+                          ...);
               });
         }
 

@@ -6,11 +6,10 @@
 using namespace webpp;
 using namespace std;
 
-
 TEST(Unicode, U8UnChecked) {
     using namespace unicode::unchecked;
 
-    const char8_t* str = u8"این یک تست است.";
+    char8_t const* str = u8"این یک تست است.";
     // have to use static_cast<int> because the google-test doesn't seem to understand char8_t
     EXPECT_EQ(static_cast<int>(u8"ی"[0]), static_cast<int>(*next_char_copy(str + 1)));
     EXPECT_EQ(static_cast<int>(u8"ن"[0]), static_cast<int>(*next_char_copy(str + 3)));
@@ -21,7 +20,7 @@ TEST(Unicode, U8UnChecked) {
 TEST(Unicode, U16UnChecked) {
     using namespace unicode::unchecked;
 
-    const char16_t* str = u"این یک تست است.";
+    char16_t const* str = u"این یک تست است.";
     // have to use static_cast<int> because the google-test doesn't seem to understand char8_t
     EXPECT_EQ(static_cast<int>(u"ی"[0]), static_cast<int>(*next_char_copy(str)));
     EXPECT_EQ(static_cast<int>(u"ن"[0]), static_cast<int>(*next_char_copy(str + 1)));

@@ -6,7 +6,6 @@
 #include "../common/meta.hpp"
 #include "http_concepts.hpp"
 
-
 namespace webpp::http {
 
 
@@ -35,7 +34,6 @@ namespace webpp::http {
 
         using Communicator::Communicator;
 
-
         template <typename T>
         // requires(HTTPGenerallyDeserializableBody<T, request_body>)
         [[nodiscard]] constexpr T as() {
@@ -53,7 +51,6 @@ namespace webpp::http {
                                     " You can always write your own custom body (de)serializer functions.");
             }
         }
-
 
         template <typename T>
         // requires(HTTPGenerallyDeserializableBody<T, request_body>)
@@ -110,7 +107,6 @@ namespace webpp::http {
             }
         }
 
-
         template <typename T>
         constexpr request_body& add(T&& obj) {
             if constexpr (SerializableRequestBody<T, request_body>) {
@@ -138,7 +134,6 @@ namespace webpp::http {
             set(stl::forward<T>(obj));
             return *this;
         }
-
 
         template <typename T>
         constexpr request_body& operator+=(T&& obj) {

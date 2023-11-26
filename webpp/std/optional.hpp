@@ -8,6 +8,7 @@
 #include "std.hpp"
 
 #include <optional>
+
 namespace webpp::istl {
 
     /**
@@ -29,9 +30,15 @@ namespace webpp::istl {
     concept Optional =
       (is_std_optional<stl::remove_cvref_t<T>>::value || requires(stl::remove_cvref_t<T> obj) {
           typename stl::remove_cvref_t<T>::value_type;
-          { obj.value() } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-          { obj.value_or(obj) } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
-          { static_cast<bool>(obj) } -> stl::same_as<bool>; // convertible to bool
+          {
+              obj.value()
+          } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+          {
+              obj.value_or(obj)
+          } -> stl::same_as<typename stl::remove_cvref_t<T>::value_type>;
+          {
+              static_cast<bool>(obj)
+          } -> stl::same_as<bool>; // convertible to bool
       });
 
     template <typename Q, typename T>

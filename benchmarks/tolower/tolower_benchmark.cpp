@@ -10,8 +10,6 @@
 
 using namespace std;
 
-
-
 static void TLR_STD(benchmark::State& state) {
     std::string str = str_generator();
     for (auto _ : state) {
@@ -20,12 +18,13 @@ static void TLR_STD(benchmark::State& state) {
         }
     }
 }
+
 BENCHMARK(TLR_STD);
 
 void to_lower_std_string(auto& str) noexcept {
     char*      it   = str.data();
-    const auto size = str.size();
-    const auto end  = it + size;
+    auto const size = str.size();
+    auto const end  = it + size;
     for (; it != end; ++it) {
         *it = static_cast<char>(std::tolower(*it));
     }
@@ -39,6 +38,7 @@ static void TLR_STDString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_STDString);
 
 constexpr auto to_lower(auto&& c) noexcept {
@@ -79,8 +79,6 @@ constexpr auto to_lower2(auto&& c) noexcept {
     }
 }
 
-
-
 constexpr auto to_lower3(auto&& c) noexcept {
     switch (c) {
         case 'A': return 'a';
@@ -112,6 +110,7 @@ constexpr auto to_lower3(auto&& c) noexcept {
         default: return c;
     }
 }
+
 static void TLR_Mine(benchmark::State& state) {
     std::string str = str_generator();
     for (auto _ : state) {
@@ -120,8 +119,8 @@ static void TLR_Mine(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(TLR_Mine);
 
+BENCHMARK(TLR_Mine);
 
 static void TLR_Switch1(benchmark::State& state) {
     std::string str = str_generator();
@@ -131,13 +130,13 @@ static void TLR_Switch1(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(TLR_Switch1);
 
+BENCHMARK(TLR_Switch1);
 
 inline void to_lower_switch1(string& str) noexcept {
     char*      it   = str.data();
-    const auto size = str.size();
-    const auto end  = it + size;
+    auto const size = str.size();
+    auto const end  = it + size;
     for (; it != end; ++it) {
         *it = to_lower2(*it);
     }
@@ -151,8 +150,8 @@ static void TLR_Switch1String(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
-BENCHMARK(TLR_Switch1String);
 
+BENCHMARK(TLR_Switch1String);
 
 static void TLR_Switch2(benchmark::State& state) {
     std::string str = str_generator();
@@ -162,13 +161,13 @@ static void TLR_Switch2(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(TLR_Switch2);
 
+BENCHMARK(TLR_Switch2);
 
 inline void to_lower_switch2(string& str) noexcept {
     char*      it   = str.data();
-    const auto size = str.size();
-    const auto end  = it + size;
+    auto const size = str.size();
+    auto const end  = it + size;
     for (; it != end; ++it) {
         *it = to_lower3(*it);
     }
@@ -182,9 +181,8 @@ static void TLR_Switch2String(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_Switch2String);
-
-
 
 static void TLR_Webpp(benchmark::State& state) {
     std::string str = str_generator();
@@ -195,8 +193,8 @@ static void TLR_Webpp(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(TLR_Webpp);
 
+BENCHMARK(TLR_Webpp);
 
 auto to_lower_john(auto&& c) noexcept {
     return c + (32 * (c >= 'A' && c <= 'Z'));
@@ -210,15 +208,16 @@ static void TLR_John(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(TLR_John);
 
+BENCHMARK(TLR_John);
 
 inline void to_lower_string_john(auto& str) noexcept {
     auto*      it   = str.data();
-    const auto size = str.size();
-    const auto end  = it + size;
-    for (; it != end; ++it)
+    auto const size = str.size();
+    auto const end  = it + size;
+    for (; it != end; ++it) {
         *it = to_lower_john(*it);
+    }
 }
 
 static void TLR_JohnString(benchmark::State& state) {
@@ -229,8 +228,8 @@ static void TLR_JohnString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
-BENCHMARK(TLR_JohnString);
 
+BENCHMARK(TLR_JohnString);
 
 //////////////////////////////////////////////////////////
 
@@ -242,6 +241,7 @@ static void TLR_WebppToLowerString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_WebppToLowerString);
 
 
@@ -256,6 +256,7 @@ BENCHMARK(TLR_WebppToLowerString);
         }                                                        \
     }                                                            \
     BENCHMARK(TLR_##name##str_count);
+
 /*
 TEST_SUITE(NWebppEveString, webpp::ascii::algo::eve_to_lower, 1)
 TEST_SUITE(NJohnString, to_lower_string_john, 1)
@@ -299,19 +300,21 @@ static void TLR_WebppToLowerStringData(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
-BENCHMARK(TLR_WebppToLowerStringData);
 
+BENCHMARK(TLR_WebppToLowerStringData);
 
 inline void webpp_to_lower2(auto& str) noexcept {
     using namespace webpp;
     using str_t           = stl::remove_cvref_t<decltype(str)>;
     using char_type       = istl::char_type_of_t<str_t>;
     char_type*       it   = str.data();
-    const auto       size = str.size();
-    const char_type* end  = it + size;
-    for (; it != end; ++it)
+    auto const       size = str.size();
+    char_type const* end  = it + size;
+    for (; it != end; ++it) {
         *it = webpp::ascii::to_lower_copy(*it);
+    }
 }
+
 static void TLR_ToLowerString2(benchmark::State& state) {
     auto str = str_generator();
     for (auto _ : state) {
@@ -320,6 +323,7 @@ static void TLR_ToLowerString2(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_ToLowerString2);
 
 inline void webpp_to_lower3(auto& str) noexcept {
@@ -328,9 +332,9 @@ inline void webpp_to_lower3(auto& str) noexcept {
     using str_t                 = stl::remove_cvref_t<decltype(str)>;
     using char_type             = istl::char_type_of_t<str_t>;
     char_type*       it         = str.data();
-    const auto       size       = str.size();
-    const char_type* end        = it + size;
-    const char_type* almost_end = end - (size % 4);
+    auto const       size       = str.size();
+    char_type const* end        = it + size;
+    char_type const* almost_end = end - (size % 4);
     for (; it != almost_end; it += 4) {
         *it       = to_lower_copy(*it);
         *(it + 1) = to_lower_copy(*(it + 1));
@@ -338,9 +342,11 @@ inline void webpp_to_lower3(auto& str) noexcept {
         *(it + 3) = to_lower_copy(*(it + 3));
     }
     // doing the rest
-    for (it -= 4; it != end; ++it)
+    for (it -= 4; it != end; ++it) {
         *it = to_lower_copy(*it);
+    }
 }
+
 static void TLR_ToLowerString3(benchmark::State& state) {
     auto str = str_generator();
     for (auto _ : state) {
@@ -349,8 +355,8 @@ static void TLR_ToLowerString3(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
-BENCHMARK(TLR_ToLowerString3);
 
+BENCHMARK(TLR_ToLowerString3);
 
 static void TLR_STDToLowerString(benchmark::State& state) {
     auto str = str_generator();
@@ -362,9 +368,8 @@ static void TLR_STDToLowerString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_STDToLowerString);
-
-
 
 constexpr auto to_lower_simd(char c) noexcept {
     using char_type = std::remove_cvref_t<decltype(c)>;
@@ -379,26 +384,26 @@ void to_lower_simd(auto& str) noexcept {
     constexpr auto simd_size = simd_type().size();
 
     char_type*       it         = str.data();
-    const auto       size       = str.size();
-    const char_type* end        = it + size;
-    const char_type* almost_end = end - (size % simd_size);
+    auto const       size       = str.size();
+    char_type const* end        = it + size;
+    char_type const* almost_end = end - (size % simd_size);
     for (; it != almost_end; it += simd_size) {
         simd_type diff{'a' - 'A'};
         simd_type simd_it(it, element_aligned);
         auto      ifs = simd_it >= 'A' && simd_it <= 'Z';
         for (std::size_t idx = 0; idx != simd_size; ++idx) {
-            if (!ifs[idx])
+            if (!ifs[idx]) {
                 diff[idx] = 0;
+            }
         }
         simd_it += diff;
         simd_it.copy_to(it, element_aligned);
     }
     // doing the rest
-    for (it -= 4; it != end; ++it)
+    for (it -= 4; it != end; ++it) {
         *it = to_lower(*it);
+    }
 }
-
-
 
 static void TLR_SIMDToLowerString(benchmark::State& state) {
     auto str = str_generator();
@@ -408,10 +413,8 @@ static void TLR_SIMDToLowerString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_SIMDToLowerString);
-
-
-
 
 void to_lower_simd2(auto& str) noexcept {
     using namespace std::experimental;
@@ -420,26 +423,27 @@ void to_lower_simd2(auto& str) noexcept {
     constexpr auto simd_size = simd_type().size();
 
     char_type*       it         = str.data();
-    const auto       size       = str.size();
-    const char_type* end        = it + size;
-    const char_type* almost_end = end - (size % simd_size);
+    auto const       size       = str.size();
+    char_type const* end        = it + size;
+    char_type const* almost_end = end - (size % simd_size);
     simd_type        diff, simd_it;
     for (; it != almost_end; it += simd_size) {
         diff = 'a' - 'A';
         simd_it.copy_from(it, element_aligned);
         auto ifs = simd_it >= 'A' && simd_it <= 'Z';
         for (std::size_t idx = 0; idx != simd_size; ++idx) {
-            if (!ifs[idx])
+            if (!ifs[idx]) {
                 diff[idx] = 0;
+            }
         }
         simd_it += diff;
         simd_it.copy_to(it, element_aligned);
     }
     // doing the rest
-    for (it -= 4; it != end; ++it)
+    for (it -= 4; it != end; ++it) {
         *it = to_lower(*it);
+    }
 }
-
 
 static void TLR_SIMDToLowerString2(benchmark::State& state) {
     auto str = str_generator();
@@ -449,6 +453,7 @@ static void TLR_SIMDToLowerString2(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_SIMDToLowerString2);
 
 
@@ -457,7 +462,7 @@ BENCHMARK(TLR_SIMDToLowerString2);
 ////////////////////////////////
 
 
-#if __has_include(<eve/eve.hpp>)
+#if __has_include(<eve/eve.hpp> )
 #    include <eve/eve.hpp>
 #    include <eve/function/add.hpp>
 #    include <eve/function/store.hpp>
@@ -676,10 +681,6 @@ constexpr auto to_lower_utopia(auto c) noexcept {
     __asm volatile("# LLVM-MCA-END");
 }
 
-
-
-
-
 /*
 
 void to_lower_simd_utopia(auto &str) noexcept  {
@@ -826,30 +827,30 @@ void to_lower_simd_utopia_optimized(auto& str) noexcept {
     constexpr auto simd_size = simd_type().size();
 
     char_type*       it       = str.data();
-    const auto       size     = str.size();
-    const char_type* end      = it + size;
-    const char_type* simd_end = end - simd_size;
+    auto const       size     = str.size();
+    char_type const* end      = it + size;
+    char_type const* simd_end = end - simd_size;
 
-    const char_type diff{'a' - 'A'};
+    char_type const diff{'a' - 'A'};
 
-    const simd_type lower_bound{'A' - 1};
-    const simd_type upper_bound{'Z' + 1};
-    const simd_type one{1};
+    simd_type const lower_bound{'A' - 1};
+    simd_type const upper_bound{'Z' + 1};
+    simd_type const one{1};
 
     simd_type simd_it;
     for (; it < simd_end; it += simd_size) {
         simd_it.copy_from(it, element_aligned);
-        const auto simd_it_mask =
+        auto const simd_it_mask =
           min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
 
         simd_it += min(simd_it_mask, one) * diff;
         simd_it.copy_to(it, element_aligned);
     }
     // doing the rest
-    for (; it < end; ++it)
+    for (; it < end; ++it) {
         *it = to_lower(*it);
+    }
 }
-
 
 static void TLR_UtopiaToLowerStringOptimized(benchmark::State& state) {
     auto str = str_generator();
@@ -859,11 +860,8 @@ static void TLR_UtopiaToLowerStringOptimized(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_UtopiaToLowerStringOptimized);
-
-
-
-
 
 void to_lower_simd_utopia3(auto& str) noexcept {
     using namespace std::experimental;
@@ -871,25 +869,26 @@ void to_lower_simd_utopia3(auto& str) noexcept {
     using simd_type = native_simd<char_type>;
 
     auto       it   = str.data();
-    const auto size = str.size();
-    const auto end  = it + size;
+    auto const size = str.size();
+    auto const end  = it + size;
 
     constexpr auto               simd_size = simd_type().size();
-    const auto                   remainder = size % simd_size;
-    const auto                   simd_end  = end - remainder;
+    auto const                   remainder = size % simd_size;
+    auto const                   simd_end  = end - remainder;
     static constexpr char_type   diff{'a' - 'A'};
-    static constexpr std::size_t diff_bit_width =
-      std::bit_width(std::size_t(diff)); // Can put in 6 if bit_width is not available
+    static constexpr std::size_t diff_bit_width = std::bit_width(std::size_t(diff)); // Can put in 6 if
+                                                                                     // bit_width is not
+                                                                                     // available
 
-    const simd_type lower_bound{'A' - 1};
-    const simd_type upper_bound{'Z' + 1};
-    const simd_type one_vector{1};
-    const simd_type diff_vector{diff};
+    simd_type const lower_bound{'A' - 1};
+    simd_type const upper_bound{'Z' + 1};
+    simd_type const one_vector{1};
+    simd_type const diff_vector{diff};
 
     simd_type simd_it;
     for (; it < simd_end; it += simd_size) {
         simd_it.copy_from(it, element_aligned);
-        const auto simd_it_mask =
+        auto const simd_it_mask =
           min(max(simd_it, lower_bound) - lower_bound, upper_bound - min(simd_it, upper_bound));
 
         simd_it += min(min(simd_it_mask, one_vector) << diff_bit_width, diff_vector);
@@ -897,8 +896,9 @@ void to_lower_simd_utopia3(auto& str) noexcept {
     }
 
     // doing the rest
-    for (; it < end; ++it)
+    for (; it < end; ++it) {
         *it = to_lower(*it);
+    }
 }
 
 static void TLR_UtopiaToLowerString3(benchmark::State& state) {
@@ -909,4 +909,5 @@ static void TLR_UtopiaToLowerString3(benchmark::State& state) {
         benchmark::DoNotOptimize(istr);
     }
 }
+
 BENCHMARK(TLR_UtopiaToLowerString3);

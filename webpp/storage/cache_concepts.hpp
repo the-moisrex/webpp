@@ -30,7 +30,6 @@ namespace webpp {
     concept CacheFileOptions =
       CacheOptions<T> && lexical::CastableTo<T, stl::string> && lexical::CastableTo<stl::string, T>;
 
-
     namespace details {
 
         // I extracted this function from StorageGateType because of GCC segfault crash.
@@ -60,7 +59,9 @@ namespace webpp {
                 gate.erase(key);
                 gate.set(key, value, opts);
                 gate.set_options(key, opts);
-                { gate.get(key) } -> stl::same_as<stl::optional<typename S::bundle_type>>;
+                {
+                    gate.get(key)
+                } -> stl::same_as<stl::optional<typename S::bundle_type>>;
 
                 // I added the erase_if here and not in the "cache" because
                 // it might be faster (I think)
@@ -86,7 +87,9 @@ namespace webpp {
                               typename T::key_type     key,
                               typename T::value_type   value,
                               typename T::options_type opts) {
-                { gate.get_ptr(key) } -> stl::same_as<stl::optional<typename T::bundle_ptr_type>>;
+                {
+                    gate.get_ptr(key)
+                } -> stl::same_as<stl::optional<typename T::bundle_ptr_type>>;
             };
         };
 
@@ -101,7 +104,9 @@ namespace webpp {
             typename T::storage_gate_type;
             requires requires(T st, typename T::key_type key, typename T::value_type value) {
                 st.set(key, value);
-                { st.get(key) } -> stl::same_as<stl::optional<typename T::value_type>>;
+                {
+                    st.get(key)
+                } -> stl::same_as<stl::optional<typename T::value_type>>;
             };
         };
 
@@ -126,8 +131,6 @@ namespace webpp {
         typename T::template strategy<default_traits, int, int, null_gate>;
         requires details::CacheStrategy<typename T::template strategy<default_traits, int, int, null_gate>>;
     };
-
-
 
     template <typename KeyT, typename ValueT, typename OptionsT>
     struct cache_tuple {

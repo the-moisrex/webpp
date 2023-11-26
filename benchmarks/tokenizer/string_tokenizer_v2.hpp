@@ -88,7 +88,6 @@ namespace webpp::benchmark::v2 {
     template <typename StringViewType = stl::string_view,
               typename ConstIterType  = typename StringViewType::const_iterator>
     class string_tokenizer {
-
         // these are the options that are used internally
         enum hidden_options : stl::uint8_t {
             // Enabled = Expect anything until you find the delimiter
@@ -103,7 +102,6 @@ namespace webpp::benchmark::v2 {
 
         static constexpr bool is_raw_pointer_iterator = stl::is_pointer_v<const_iterator>;
 
-
         constexpr string_tokenizer(str_v str) noexcept
           : _token_begin{str.begin()},
             _token_end{str.begin()},
@@ -113,7 +111,6 @@ namespace webpp::benchmark::v2 {
           : _token_begin{str_begin},
             _token_end{str_begin},
             _end{str_end} {}
-
 
         // Call this method to advance the tokenizer to the next delimiter.  This
         // returns false if the tokenizer is complete.  This method must be called
@@ -162,35 +159,34 @@ namespace webpp::benchmark::v2 {
         }
 
         template <CharSet AllowedCharsT, CharSet QuotesT, typename StrT>
-        constexpr bool
-        expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out) noexcept(noexcept(token(out))) {
+        constexpr bool expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out) noexcept(
+          noexcept(token(out))) {
             webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
             return next<Options>(stl::forward<AllowedCharsT>(allowed_chars),
                                  stl::forward<QuotesT>(quotes),
                                  out);
         }
 
-
         template <CharSet AllowedCharsT, CharSet QuotesT, typename StrT, typename ErrorType>
-        constexpr bool expect(AllowedCharsT&& allowed_chars,
-                              QuotesT&&       quotes,
-                              StrT&           out,
-                              ErrorType&      err,
-                              ErrorType       err_val) noexcept(noexcept(token(out))) {
+        constexpr bool expect(
+          AllowedCharsT&& allowed_chars,
+          QuotesT&&       quotes,
+          StrT&           out,
+          ErrorType&      err,
+          ErrorType       err_val) noexcept(noexcept(token(out))) {
             webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
-            return next<Options>(stl::forward<AllowedCharsT>(allowed_chars),
-                                 stl::forward<QuotesT>(quotes),
-                                 out,
-                                 err,
-                                 err_val);
+            return next<Options>(
+              stl::forward<AllowedCharsT>(allowed_chars),
+              stl::forward<QuotesT>(quotes),
+              out,
+              err,
+              err_val);
         }
 
-
         template <CharSet AllowedCharsT, typename StrT, typename ErrorType>
-        constexpr bool expect(AllowedCharsT&& allowed_chars,
-                              StrT&           out,
-                              ErrorType&      err,
-                              ErrorType       err_val) noexcept(noexcept(token(out))) {
+        constexpr bool
+        expect(AllowedCharsT&& allowed_chars, StrT& out, ErrorType& err, ErrorType err_val) noexcept(
+          noexcept(token(out))) {
             bool const res = expect(stl::forward<AllowedCharsT>(allowed_chars), out);
             if (!res) {
                 err = err_val;
@@ -209,14 +205,16 @@ namespace webpp::benchmark::v2 {
 
         // Expect anything but the specified charset
         constexpr void skip_but(CharSet auto&& chars) noexcept {
-            while (_token_end != _end && !chars.contains(*_token_end))
+            while (_token_end != _end && !chars.contains(*_token_end)) {
                 ++_token_end;
+            }
             _token_begin = _token_end;
         }
 
         constexpr void skip(CharSet auto&& chars) noexcept {
-            while (_token_end != _end && chars.contains(*_token_end))
+            while (_token_end != _end && chars.contains(*_token_end)) {
                 ++_token_end;
+            }
             _token_begin = _token_end;
         }
 
@@ -238,7 +236,6 @@ namespace webpp::benchmark::v2 {
         constexpr void skip_spaces() noexcept {
             skip(charset<char_type, 1>(' '));
         }
-
 
         constexpr void reset(const_iterator string_begin, const_iterator string_end) noexcept {
             _token_begin = string_begin;
@@ -268,10 +265,8 @@ namespace webpp::benchmark::v2 {
          * @param err_value
          */
         template <stl::uint8_t Options = 0, CharSet DelimsT, typename StrT, typename ErrorType>
-        constexpr bool next(DelimsT&&  delims,
-                            StrT&      out,
-                            ErrorType& err,
-                            ErrorType  err_value) noexcept(noexcept(token(out))) {
+        constexpr bool next(DelimsT&& delims, StrT& out, ErrorType& err, ErrorType err_value) noexcept(
+          noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims))) {
                 token(out);
                 return true;
@@ -287,11 +282,12 @@ namespace webpp::benchmark::v2 {
                   CharSet      QuotedCharsT,
                   typename StrT,
                   typename ErrorType>
-        constexpr bool next(DelimsT&&      delims,
-                            QuotedCharsT&& quotes,
-                            StrT&          out,
-                            ErrorType&     err,
-                            ErrorType      err_value) noexcept(noexcept(token(out))) {
+        constexpr bool next(
+          DelimsT&&      delims,
+          QuotedCharsT&& quotes,
+          StrT&          out,
+          ErrorType&     err,
+          ErrorType      err_value) noexcept(noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims), stl::forward<QuotedCharsT>(quotes))) {
                 token(out);
                 return true;
@@ -321,8 +317,8 @@ namespace webpp::benchmark::v2 {
 
         // same as other "next", except that it accepts a `quotes` as well
         template <stl::uint8_t Options = 0, CharSet DelimsT, CharSet QuotedCharsT, typename StrT>
-        constexpr bool
-        next(DelimsT&& delims, QuotedCharsT&& quotes, StrT& out) noexcept(noexcept(token(out))) {
+        constexpr bool next(DelimsT&& delims, QuotedCharsT&& quotes, StrT& out) noexcept(
+          noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims), stl::forward<QuotedCharsT>(quotes))) {
                 token(out);
                 return true;
@@ -389,16 +385,17 @@ namespace webpp::benchmark::v2 {
                     _is_delim = true;
                     return false;
                 }
-                if (!delims.contains(*_token_begin))
+                if (!delims.contains(*_token_begin)) {
                     break;
+                }
             }
             _token_end = _token_begin;
             ++_token_end;
-            while (_token_end != _end && !delims.contains(*_token_end))
+            while (_token_end != _end && !delims.contains(*_token_end)) {
                 ++_token_end;
+            }
             return true;
         }
-
 
         // Implementation of next() for when we have to take quotes into account.
         template <stl::uint8_t Options>
@@ -427,8 +424,9 @@ namespace webpp::benchmark::v2 {
 
                     // If it's non-empty, or empty tokens were requested, return the token.
                     // NOLINTBEGIN(bugprone-branch-clone)
-                    if constexpr (Options &
-                                  static_cast<stl::uint8_t>(string_tokenizer_options::return_empty_tokens)) {
+                    if constexpr (
+                      Options & static_cast<stl::uint8_t>(string_tokenizer_options::return_empty_tokens))
+                    {
                         return true;
                     } else if (_token_begin != _token_end) {
                         return true;
@@ -453,8 +451,9 @@ namespace webpp::benchmark::v2 {
                 _is_delim    = true;
                 _token_begin = _token_end;
 
-                if (_token_end == _end)
+                if (_token_end == _end) {
                     return false;
+                }
 
                 // Look at the delimiter.
                 ++_token_end;
@@ -473,10 +472,11 @@ namespace webpp::benchmark::v2 {
         // Returns true if a delimiter was not hit.
         // Returns true if a allowed_chars (delims) was hit (if the hidden_options::allow_chars is set)
         template <stl::uint8_t Options = 0>
-        static constexpr bool advance_one(CharSet auto&& delims,
-                                          CharSet auto&& quotes,
-                                          advance_state* state,
-                                          char_type      c) noexcept {
+        static constexpr bool advance_one(
+          CharSet auto&& delims,
+          CharSet auto&& quotes,
+          advance_state* state,
+          char_type      c) noexcept {
             webpp_static_constexpr bool hit =
               !(Options & static_cast<stl::uint8_t>(hidden_options::allow_chars));
             if (state->in_quote) {
@@ -488,8 +488,9 @@ namespace webpp::benchmark::v2 {
                     state->in_quote = false;
                 }
             } else {
-                if (delims.contains(c))
+                if (delims.contains(c)) {
                     return !hit;
+                }
                 state->in_quote = quotes.contains(state->quote_char = c);
             }
             return hit;

@@ -12,7 +12,7 @@ TEST(Casts, ToInt) {
     EXPECT_EQ(to_int("-10"), -10);
     EXPECT_EQ(to_uint32("-10"), std::numeric_limits<uint32_t>::max() - 10 + 1);
     EXPECT_EQ((to<int>("-10")), -10);
-    EXPECT_EQ((to<unsigned long long>("+1025153153")), 1025153153);
+    EXPECT_EQ((to<unsigned long long>("+1025153153")), 1'025'153'153);
 
     auto invalids = {"one", "+two", "12a", "a11", "+a11", "111-751", "123,321", "123.123", "123+123"};
 

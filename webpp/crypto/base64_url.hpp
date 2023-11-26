@@ -29,7 +29,6 @@ namespace webpp::base64 {
     static constexpr auto base64_chars          = "+/";
     static constexpr auto base64_url_safe_chars = "-_";
 
-
     /*
      * Encodes the |input| string in base64url, defined in RFC 4648:
      * https://tools.ietf.org/html/rfc4648#section-5
@@ -51,8 +50,9 @@ namespace webpp::base64 {
         } else if constexpr (url_encode_policy::omit_padding == Policy) {
             // The padding included in |*output| will be removed.
             const size_t last_non_padding_pos = output.find_last_not_of(padding_char);
-            if (last_non_padding_pos != output.npos)
+            if (last_non_padding_pos != output.npos) {
                 output.resize(last_non_padding_pos + 1);
+            }
         }
     }
 
@@ -71,25 +71,28 @@ namespace webpp::base64 {
 
         // Characters outside the base64url alphabet are disallowed, which includes
         // the {+, /} characters found in the conventional base64 alphabet.
-        if (input.find_first_of(base64_chars) != str_v::npos)
+        if (input.find_first_of(base64_chars) != str_v::npos) {
             return false;
+        }
 
 
         const size_t required_padding_characters = input.size() % 4;
 
         if constexpr (url_decode_policy::require_padding == Policy) {
             // Fail if the required padding is not included in |input|.
-            if (required_padding_characters > 0)
+            if (required_padding_characters > 0) {
                 return false;
+            }
         } else if constexpr (url_decode_policy::ignore_padding == Policy) {
             // Missing padding will be silently appended.
         } else if constexpr (url_decode_policy::disallow_padding == Policy) {
             // Fail if padding characters are included in |input|.
-            if (input.find_first_of(padding_char) != std::string::npos)
+            if (input.find_first_of(padding_char) != std::string::npos) {
                 return false;
+            }
         }
 
-        const bool needs_replacement = input.find_first_of(base64_url_safe_chars) != str_v::npos;
+        bool const needs_replacement = input.find_first_of(base64_url_safe_chars) != str_v::npos;
 
         // If the string either needs replacement of URL-safe characters to normal
         // base64 ones, or additional padding, a copy of |input| needs to be made in
@@ -98,8 +101,9 @@ namespace webpp::base64 {
             str_t base64_input;
 
             size_t base64_input_size = input.size();
-            if (required_padding_characters > 0)
+            if (required_padding_characters > 0) {
                 base64_input_size += 4 - required_padding_characters;
+            }
 
             base64_input.reserve(base64_input_size);
             base64_input.append(input.data(), input.size());

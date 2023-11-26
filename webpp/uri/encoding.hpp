@@ -16,14 +16,13 @@ namespace webpp {
         encode_chars // allow all the chars except these
     };
 
-
     template <typename Iter, typename CIter>
     static constexpr void encode_uri_component_set_capacity(Iter pos, CIter end, istl::String auto& output) {
-        const auto input_size = end - pos;
+        auto const input_size = end - pos;
         { // todo: see if this is necessary/performant
-            const auto new_capacity =
-              output.size() +
-              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
+            auto const new_capacity =
+              output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
+                                                                                               // chance
             if (output.capacity() < new_capacity) {
                 output.reserve(new_capacity);
             }
@@ -32,17 +31,16 @@ namespace webpp {
 
     static constexpr void encode_uri_component_set_capacity(istl::StringView auto str,
                                                             istl::String auto&    output) {
-        const auto input_size = str.size();
+        auto const input_size = str.size();
         { // todo: see if this is necessary/performant
-            const auto new_capacity =
-              output.size() +
-              static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by chance
+            auto const new_capacity =
+              output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
+                                                                                               // chance
             if (output.capacity() < new_capacity) {
                 output.reserve(new_capacity);
             }
         }
     }
-
 
     /**
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
@@ -67,8 +65,8 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, ones);
+                int decoded_char  = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
+                decoded_char     |= ascii::hex_digit_value<int>(*pos, ones);
 
                 if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
@@ -101,7 +99,6 @@ namespace webpp {
         return true;
     }
 
-
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars,
               typename Iter,
               typename CIter,
@@ -118,8 +115,8 @@ namespace webpp {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, ones);
+                int decoded_char  = ascii::hex_digit_value<int>(*pos++, ones) << 4U;
+                decoded_char     |= ascii::hex_digit_value<int>(*pos, ones);
 
                 if (decoded_char != ones) [[likely]] { // NOLINT(*-magic-numbers)
                     output += static_cast<char_type>(decoded_char);
@@ -141,6 +138,7 @@ namespace webpp {
         }
         return true;
     }
+
     /**
      * @brief this function will decode parts of uri
      * @details this function is almost the same as "decodeURIComponent" in javascript
@@ -179,10 +177,11 @@ namespace webpp {
     }
 
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, istl::CharType CharT>
-    static constexpr bool encode_uri_component(CharT               inp_char,
-                                               istl::String auto&  output,
-                                               CharSet auto const& policy_chars,
-                                               CharSet auto const& invalid_chars) {
+    static constexpr bool encode_uri_component(
+      CharT               inp_char,
+      istl::String auto&  output,
+      CharSet auto const& policy_chars,
+      CharSet auto const& invalid_chars) {
         using char_type   = CharT;
         using string_type = stl::remove_cvref_t<decltype(output)>;
         static_assert(stl::is_same_v<char_type, typename string_type::value_type>,
@@ -233,7 +232,7 @@ namespace webpp {
               istl::StringViewifiable InpStrT = stl::string_view>
     static constexpr void
     encode_uri_component(InpStrT&& src, istl::String auto& output, CharSet auto const& policy_chars) {
-        const auto input = istl::string_viewify(stl::forward<InpStrT>(src));
+        auto const input = istl::string_viewify(stl::forward<InpStrT>(src));
         for (auto const ith_char : input) {
             encode_uri_component<Policy>(ith_char, output, policy_chars);
         }
@@ -250,11 +249,12 @@ namespace webpp {
 
     /// Encode the specified characters, otherwise if it's an invalid character, then return false.
     template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars, typename Iter, typename CIter>
-    [[nodiscard]] static constexpr bool encode_uri_component(Iter&               pos,
-                                                             CIter               end,
-                                                             istl::String auto&  output,
-                                                             CharSet auto const& policy_chars,
-                                                             CharSet auto const& invalid_chars) {
+    [[nodiscard]] static constexpr bool encode_uri_component(
+      Iter&               pos,
+      CIter               end,
+      istl::String auto&  output,
+      CharSet auto const& policy_chars,
+      CharSet auto const& invalid_chars) {
         for (; pos != end; ++pos) {
             if (!encode_uri_component<Policy>(*pos, output, policy_chars, invalid_chars)) {
                 return false;
@@ -262,7 +262,6 @@ namespace webpp {
         }
         return true;
     }
-
 
     /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
     template <typename Iter, typename CIter = Iter>

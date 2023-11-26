@@ -10,24 +10,26 @@
 #include <vector>
 
 
-static std::vector<std::string_view> schemes{{"one",        "two",        "three",
-                                              "http",       "five",       "https",
-                                              "https",      "ftp",        "ftps",
-                                              "ftps",       "ws",         "ftps",
-                                              "ftps",       "ftp",        "ftps",
-                                              "ftps",       "https",      "https",
-                                              "https",      "http",       "http",
-                                              "http",       "ws",         "http",
-                                              "ftps",       "ftps",       "ftps",
-                                              "ftps",       "ftps",       "wss",
-                                              "ws",         "ws",         "ws",
-                                              "file",       "ssh",        "https",
-                                              "https",      "http",       "http",
-                                              "http",       "scheme",     "nonsense",
-                                              "ws",         "ws",         "https",
-                                              "https",      "",           "http",
-                                              "http",       "     ",      "d;klasjfd;alsjf",
-                                              "2408372-54", " @#$@fdsafd"}};
+static std::vector<std::string_view> schemes{
+  {"one", "two", "three",
+   "http", "five", "https",
+   "https", "ftp", "ftps",
+   "ftps", "ws", "ftps",
+   "ftps", "ftp", "ftps",
+   "ftps", "https", "https",
+   "https", "http", "http",
+   "http", "ws", "http",
+   "ftps", "ftps", "ftps",
+   "ftps", "ftps", "wss",
+   "ws", "ws", "ws",
+   "file", "ssh", "https",
+   "https", "http", "http",
+   "http", "scheme", "nonsense",
+   "ws", "ws", "https",
+   "https", "", "http",
+   "http", "     ", "d;klasjfd;alsjf",
+   "2408372-54", " @#$@fdsafd"}
+};
 
 static constexpr std::string_view valid_ipv4s[]{
   "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",
@@ -70,17 +72,17 @@ static constexpr std::array<std::string_view, 115> valid_ipv6s{
   "2001:db8:1234::5678",
   "2001:db8::1",
   "2001::1",
-  "::1234:5678:91.123.4.56", // implies that the first four ipv6 segments are zero
+  "::1234:5678:91.123.4.56",     // implies that the first four ipv6 segments are zero
   "2001:db8:3333:4444:5555:6666:1.2.3.4",
   "::11.22.33.44",               // implies all six ipv6 segments are zero
   "2001:db8::123.123.123.123",   // implies that the last four ipv6 segments are zero
   "::1234:5678:1.2.3.4",         // implies that the first four ipv6 segments are zero
   "2001:db8::1234:5678:5.6.7.8", // implies that the middle two ipv6 segments are zero
   "::1",
-  "::ffff:192.0.2.128", // IPv4-mapped IPv6 address
+  "::ffff:192.0.2.128",          // IPv4-mapped IPv6 address
   "::FFFF:129.144.52.38",
-  "::FAFF:129.144.52.38", // not a IPv4-Compatible IPv6 Address, but looks like one
-  "1::129.144.52.38",     // not a IPv4-Compatible IPv6 Address, but looks like one
+  "::FAFF:129.144.52.38",        // not a IPv4-Compatible IPv6 Address, but looks like one
+  "1::129.144.52.38",            // not a IPv4-Compatible IPv6 Address, but looks like one
   "::",
 
   // AI Generated examples:
@@ -225,8 +227,8 @@ static void WebppSchemePort(benchmark::State& state) {
         benchmark::DoNotOptimize(port);
     }
 }
-BENCHMARK(WebppSchemePort);
 
+BENCHMARK(WebppSchemePort);
 
 static void AdaSchemePort(benchmark::State& state) {
     std::size_t i = 0;
@@ -237,9 +239,8 @@ static void AdaSchemePort(benchmark::State& state) {
         benchmark::DoNotOptimize(port);
     }
 }
+
 BENCHMARK(AdaSchemePort);
-
-
 
 ////////////////////////////// IPv4 Serialization //////////////////////////////
 
@@ -254,6 +255,7 @@ static void WebppV1SerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppV1SerializeIPv4);
 
 static void WebppV1OptimizedSerializeIPv4(benchmark::State& state) {
@@ -266,6 +268,7 @@ static void WebppV1OptimizedSerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppV1OptimizedSerializeIPv4);
 
 static void WebppV2OptimizedSerializeIPv4(benchmark::State& state) {
@@ -278,6 +281,7 @@ static void WebppV2OptimizedSerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppV2OptimizedSerializeIPv4);
 
 static void WebppV3OptimizedSerializeIPv4(benchmark::State& state) {
@@ -290,6 +294,7 @@ static void WebppV3OptimizedSerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppV3OptimizedSerializeIPv4);
 
 static void WebppSerializeIPv4(benchmark::State& state) {
@@ -300,6 +305,7 @@ static void WebppSerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppSerializeIPv4);
 
 static void AdaSerializeIPv4(benchmark::State& state) {
@@ -310,8 +316,8 @@ static void AdaSerializeIPv4(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
-BENCHMARK(AdaSerializeIPv4);
 
+BENCHMARK(AdaSerializeIPv4);
 
 ////////////////////////////// IPv6 Serialization //////////////////////////////
 
@@ -324,6 +330,7 @@ static void AdaSerializeIPv6(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(AdaSerializeIPv6);
 
 static void WebppSerializeIPv6(benchmark::State& state) {
@@ -334,6 +341,7 @@ static void WebppSerializeIPv6(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppSerializeIPv6);
 
 static void WebppSerializeIPv6Append(benchmark::State& state) {
@@ -345,8 +353,8 @@ static void WebppSerializeIPv6Append(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
-BENCHMARK(WebppSerializeIPv6Append);
 
+BENCHMARK(WebppSerializeIPv6Append);
 
 static void WebppV1SerializeIPv6Optimized(benchmark::State& state) {
     std::size_t i = 0;
@@ -358,4 +366,5 @@ static void WebppV1SerializeIPv6Optimized(benchmark::State& state) {
         benchmark::DoNotOptimize(out);
     }
 }
+
 BENCHMARK(WebppV1SerializeIPv6Optimized);

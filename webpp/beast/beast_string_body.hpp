@@ -21,7 +21,6 @@ namespace webpp::beast_proto {
      */
     template <istl::String StrT>
     struct string_body_of {
-
         /**
          * The type of container used for the body
          * This determines the type of @ref message::body
@@ -112,7 +111,9 @@ namespace webpp::beast_proto {
 
             boost::optional<std::pair<const_buffers_type, bool>> get(boost::beast::error_code& ec) {
                 ec = {};
-                return {{const_buffers_type{body_ptr->data(), body_ptr->size()}, false}};
+                return {
+                  {const_buffers_type{body_ptr->data(), body_ptr->size()}, false}
+                };
             }
         };
     };

@@ -36,7 +36,7 @@ TEST(HTTPResponseTest, Type) {
     EXPECT_TRUE(three);
     //    EXPECT_TRUE(four);
     //    EXPECT_TRUE(five);
-    EXPECT_STREQ("Hello", return_callback().body.as<const char*>());
+    EXPECT_STREQ("Hello", return_callback().body.as<char const*>());
 }
 
 TEST(HTTPResponseTest, VariantCopyAssignment) {
@@ -74,7 +74,6 @@ TEST(HTTPResponseTest, ResponseBodyCopyAssignment) {
     EXPECT_EQ(one, two);
     EXPECT_EQ(as<std::string>(two), "hello world");
 }
-
 
 TEST(HTTPResponseTest, Init) {
     enable_owner_traits<default_traits> et;
@@ -144,7 +143,6 @@ TEST(HTTPResponseTest, File) {
     EXPECT_EQ(res_t::with_body(et, file).body.as<stl::string_view>(), "Hello World");
     std::filesystem::remove(file);
 }
-
 
 TEST(HTTPResponseTest, DynamicResponse) {
     enable_owner_traits<default_dynamic_traits> et;

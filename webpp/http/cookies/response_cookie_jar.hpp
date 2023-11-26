@@ -16,7 +16,6 @@ namespace webpp::http {
     struct response_cookie_jar
       : public basic_cookie_jar<response_cookie<StringType>,
                                 rebind_allocator<Allocator, response_cookie<StringType>>> {
-
         using allocator_type  = rebind_allocator<Allocator, response_cookie<StringType>>;
         using string_type     = StringType;
         using cookie_type     = response_cookie<string_type>;
@@ -39,16 +38,18 @@ namespace webpp::http {
         }
 
         iterator remove_const(const_iterator const& citer) noexcept {
-            if (citer == super::cend())
+            if (citer == super::cend()) {
                 return super::end();
+            }
             auto it = super::begin();
             stl::advance(it, stl::distance(it, citer.base()));
             return it;
         }
 
         iterator remove_const(typename super::const_reverse_iterator const& citer) noexcept {
-            if (citer == super::rcend())
+            if (citer == super::rcend()) {
                 return super::end();
+            }
             auto it = super::begin();
             stl::advance(it, stl::distance(it, citer.base()));
             return it;
@@ -59,8 +60,9 @@ namespace webpp::http {
         }
 
         iterator remove_const(typename super::reverse_iterator& iter) noexcept {
-            if (iter == super::rend())
+            if (iter == super::rend()) {
                 return super::end();
+            }
             auto it = super::begin();
             stl::advance(it, stl::distance(it, iter.base()));
             return it;
@@ -75,7 +77,6 @@ namespace webpp::http {
         explicit response_cookie_jar(Iter const& _start, Iter const& _end) noexcept : super{} {
             // todo: parse a list of strings which represent cookies
         }
-
 
 #define DEFINE_METHOD(method_name)                                                       \
     auto& method_name(typename cookie_type::method_name##_t const& old_value,            \

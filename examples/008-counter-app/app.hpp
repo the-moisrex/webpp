@@ -8,7 +8,6 @@
 #include <webpp/http/routes/dynamic_router.hpp>
 #include <webpp/std/utility.hpp>
 
-
 namespace website {
 
     using namespace webpp::http;

@@ -8,9 +8,9 @@
 #include <string>
 
 template <typename StrType = std::string>
-static StrType
-str_generator(std::size_t      size  = 10000,
-              std::string_view chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
+static StrType str_generator(
+  std::size_t      size  = 10'000,
+  std::string_view chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
     StrType str;
     str.reserve(size);
     for (std::size_t i = 0; i < size; i++) {
@@ -22,7 +22,7 @@ str_generator(std::size_t      size  = 10000,
 
 template <std::size_t count>
 static std::array<std::string, count> str_array_generator(
-  std::size_t      size  = 10000,
+  std::size_t      size  = 10'000,
   std::string_view chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") {
     std::array<std::string, count> strs;
     for (auto& str : strs) {
@@ -31,9 +31,7 @@ static std::array<std::string, count> str_array_generator(
     return strs;
 }
 
-
-
-static std::vector<int> int_generator(std::size_t size = 10000) {
+static std::vector<int> int_generator(std::size_t size = 10'000) {
     std::vector<int> ints;
     ints.reserve(size);
     for (std::size_t i = 0; i < size; i++) {

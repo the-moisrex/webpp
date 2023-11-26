@@ -4,7 +4,6 @@
 #include "../std/iterator.hpp"
 #include "cache_concepts.hpp"
 
-
 namespace webpp {
 
     template <typename CacheType>
@@ -31,7 +30,6 @@ namespace webpp {
         using CacheType::optional_value_type::value;
         using CacheType::optional_value_type::value_or;
 
-
         template <CacheValue V>
             requires(stl::is_convertible_v<V, value_type>)
         constexpr cache_result& operator=(V&& new_val) {
@@ -48,7 +46,6 @@ namespace webpp {
             return *this;
         }
     };
-
 
     /**
      * This class is mother of all caches.
@@ -71,7 +68,6 @@ namespace webpp {
         // ctor
         using CS::template strategy<TraitsType, KeyT, ValT, SG>::strategy;
 
-
         template <CacheKey K>
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
         constexpr cache_result_type operator[](K&& key) noexcept {
@@ -86,13 +82,11 @@ namespace webpp {
             return *this;
         }
 
-
         template <CacheKey K, CacheValue V>
             requires(stl::is_convertible_v<K, key_type> && stl::is_convertible_v<V, value_type>)
         constexpr value_type get(K&& key, V&& default_value) {
             return strategy_type::get(stl::forward<K>(key)).value_or(stl::forward<V>(default_value));
         }
-
 
         template <CacheKey K>
             requires(stl::is_convertible_v<K, key_type>) // it's convertible to key
@@ -103,12 +97,11 @@ namespace webpp {
         // Get a reference to the values, the life-time of the returned value becomes the problem in parallel
         // algorithms
         template <CacheKey K>
-            requires(details::CacheStrategyPointerSupport<strategy_type> &&
-                     stl::is_convertible_v<K, key_type>)
+            requires(
+              details::CacheStrategyPointerSupport<strategy_type> && stl::is_convertible_v<K, key_type>)
         constexpr auto* get_ptr(K&& key) {
             return strategy_type::get_ptr(stl::forward<K>(key));
         }
-
 
         /**
          * Get the value if exists, if not, construct one, and return the constructed one.
@@ -120,7 +113,8 @@ namespace webpp {
                 return cache_result_type{*this, stl::forward<K>(key), *val};
             }
             if constexpr (sizeof...(Args) == 1 &&
-                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>) {
+                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
+            {
                 // if args... is value_type itself, no need to copy/move twice
                 set(key, args...);
                 return cache_result_type{*this, stl::forward<K>(key), stl::forward<Args>(args)...};
@@ -141,7 +135,8 @@ namespace webpp {
                 return val;
             }
             if constexpr (sizeof...(Args) == 1 &&
-                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>) {
+                          stl::same_as<value_type, stl::remove_cvref_t<istl::first_type_t<Args...>>>)
+            {
                 // if args... is value_type itself, no need to copy/move twice
                 set(key, args...);
             } else {
@@ -157,6 +152,7 @@ namespace webpp {
                 return this->get_gate().begin();
             }
         }
+
         constexpr decltype(auto) begin() const {
             if constexpr (istl::Iterable<strategy_type>) {
                 return this->begin();
@@ -164,6 +160,7 @@ namespace webpp {
                 return this->get_gate().begin();
             }
         }
+
         constexpr decltype(auto) end() {
             if constexpr (istl::Iterable<strategy_type>) {
                 return this->end();
@@ -171,6 +168,7 @@ namespace webpp {
                 return this->get_gate().end();
             }
         }
+
         constexpr decltype(auto) end() const {
             if constexpr (istl::Iterable<strategy_type>) {
                 return this->end();

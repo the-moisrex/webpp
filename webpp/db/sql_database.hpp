@@ -13,70 +13,69 @@ namespace webpp::sql {
 
     template <typename CharT = char>
     struct sql_lowercase_keywords {
-        static constexpr const CharT* select       = "select";
-        static constexpr const CharT* update       = "update";
-        static constexpr const CharT* delete_word  = "delete";
-        static constexpr const CharT* values       = "values";
-        static constexpr const CharT* from         = "from";
-        static constexpr const CharT* where        = "where";
-        static constexpr const CharT* in           = "in";
-        static constexpr const CharT* null         = "null";
-        static constexpr const CharT* not_word     = "not";
-        static constexpr const CharT* and_word     = "and";
-        static constexpr const CharT* or_word      = "or";
-        static constexpr const CharT* insert       = "insert";
-        static constexpr const CharT* into         = "into";
-        static constexpr const CharT* default_word = "default";
-        static constexpr const CharT* like         = "like";
-        static constexpr const CharT* exists       = "exists";
-        static constexpr const CharT* set          = "set";
-        static constexpr const CharT* inner        = "inner";
-        static constexpr const CharT* left         = "left";
-        static constexpr const CharT* right        = "right";
-        static constexpr const CharT* join         = "join";
-        static constexpr const CharT* cross        = "cross";
-        static constexpr const CharT* full         = "full";
-        static constexpr const CharT* using_word   = "using";
-        static constexpr const CharT* on_word      = "on";
-        static constexpr const CharT* is           = "is";
-        static constexpr const CharT* distinct     = "distinct";
-        static constexpr const CharT* true_word    = "true";
-        static constexpr const CharT* false_word   = "false";
+        static constexpr CharT const* select       = "select";
+        static constexpr CharT const* update       = "update";
+        static constexpr CharT const* delete_word  = "delete";
+        static constexpr CharT const* values       = "values";
+        static constexpr CharT const* from         = "from";
+        static constexpr CharT const* where        = "where";
+        static constexpr CharT const* in           = "in";
+        static constexpr CharT const* null         = "null";
+        static constexpr CharT const* not_word     = "not";
+        static constexpr CharT const* and_word     = "and";
+        static constexpr CharT const* or_word      = "or";
+        static constexpr CharT const* insert       = "insert";
+        static constexpr CharT const* into         = "into";
+        static constexpr CharT const* default_word = "default";
+        static constexpr CharT const* like         = "like";
+        static constexpr CharT const* exists       = "exists";
+        static constexpr CharT const* set          = "set";
+        static constexpr CharT const* inner        = "inner";
+        static constexpr CharT const* left         = "left";
+        static constexpr CharT const* right        = "right";
+        static constexpr CharT const* join         = "join";
+        static constexpr CharT const* cross        = "cross";
+        static constexpr CharT const* full         = "full";
+        static constexpr CharT const* using_word   = "using";
+        static constexpr CharT const* on_word      = "on";
+        static constexpr CharT const* is           = "is";
+        static constexpr CharT const* distinct     = "distinct";
+        static constexpr CharT const* true_word    = "true";
+        static constexpr CharT const* false_word   = "false";
     };
 
     template <typename CharT = char>
     struct sql_uppercase_keywords {
-        static constexpr const CharT* select       = "SELECT";
-        static constexpr const CharT* update       = "UPDATE";
-        static constexpr const CharT* delete_word  = "DELETE";
-        static constexpr const CharT* values       = "VALUES";
-        static constexpr const CharT* from         = "FROM";
-        static constexpr const CharT* where        = "WHERE";
-        static constexpr const CharT* in           = "IN";
-        static constexpr const CharT* null         = "NULL";
-        static constexpr const CharT* not_word     = "NOT";
-        static constexpr const CharT* and_word     = "AND";
-        static constexpr const CharT* or_word      = "OR";
-        static constexpr const CharT* insert       = "INSERT";
-        static constexpr const CharT* into         = "INTO";
-        static constexpr const CharT* default_word = "DEFAULT";
-        static constexpr const CharT* like         = "LIKE";
-        static constexpr const CharT* exists       = "EXISTS";
-        static constexpr const CharT* set          = "SET";
-        static constexpr const CharT* inner        = "INNER";
-        static constexpr const CharT* left         = "LEFT";
-        static constexpr const CharT* right        = "RIGHT";
-        static constexpr const CharT* join         = "JOIN";
-        static constexpr const CharT* cross        = "CROSS";
-        static constexpr const CharT* full         = "FULL";
-        static constexpr const CharT* using_word   = "USING";
-        static constexpr const CharT* on_word      = "ON";
-        static constexpr const CharT* is           = "IS";
-        static constexpr const CharT* distinct     = "DISTINCT";
-        static constexpr const CharT* true_word    = "TRUE";
-        static constexpr const CharT* false_word   = "FALSE";
+        static constexpr CharT const* select       = "SELECT";
+        static constexpr CharT const* update       = "UPDATE";
+        static constexpr CharT const* delete_word  = "DELETE";
+        static constexpr CharT const* values       = "VALUES";
+        static constexpr CharT const* from         = "FROM";
+        static constexpr CharT const* where        = "WHERE";
+        static constexpr CharT const* in           = "IN";
+        static constexpr CharT const* null         = "NULL";
+        static constexpr CharT const* not_word     = "NOT";
+        static constexpr CharT const* and_word     = "AND";
+        static constexpr CharT const* or_word      = "OR";
+        static constexpr CharT const* insert       = "INSERT";
+        static constexpr CharT const* into         = "INTO";
+        static constexpr CharT const* default_word = "DEFAULT";
+        static constexpr CharT const* like         = "LIKE";
+        static constexpr CharT const* exists       = "EXISTS";
+        static constexpr CharT const* set          = "SET";
+        static constexpr CharT const* inner        = "INNER";
+        static constexpr CharT const* left         = "LEFT";
+        static constexpr CharT const* right        = "RIGHT";
+        static constexpr CharT const* join         = "JOIN";
+        static constexpr CharT const* cross        = "CROSS";
+        static constexpr CharT const* full         = "FULL";
+        static constexpr CharT const* using_word   = "USING";
+        static constexpr CharT const* on_word      = "ON";
+        static constexpr CharT const* is           = "IS";
+        static constexpr CharT const* distinct     = "DISTINCT";
+        static constexpr CharT const* true_word    = "TRUE";
+        static constexpr CharT const* false_word   = "FALSE";
     };
-
 
     /**
      * The name SQL Database and not Database is used because database can mean more and this struct will only
@@ -171,12 +170,12 @@ namespace webpp::sql {
             return stmt;
         }
 
-
         template <istl::StringViewifiable StrT>
         inline bool execute(StrT sql_str) noexcept {
             if constexpr (requires(driver_statement_type stmt, string_type errmsg) {
                               stmt.execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
-                          }) {
+                          })
+            {
                 auto errmsg = object::make_general<string_type>(*this);
                 driver().execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
                 log(errmsg);
@@ -198,12 +197,12 @@ namespace webpp::sql {
 
       private:
         inline void log(string_type& errmsg) noexcept {
-            if (errmsg.empty())
+            if (errmsg.empty()) {
                 return;
+            }
             this->logger.error("SQL", errmsg);
         }
     };
-
 
     template <SQLDriver SQLDBType, Traits TraitsType = default_traits>
     using sql_database = basic_sql_database<SQLDBType, enable_owner_traits<TraitsType>>;

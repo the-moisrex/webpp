@@ -18,7 +18,6 @@ namespace webpp {
     template <typename>
     struct basic_dynamic_logger;
 
-
     /// dynamic interface
     template <>
     struct basic_dynamic_logger<details::dynamic_logger_interface> {
@@ -46,7 +45,6 @@ namespace webpp {
 #undef WEBPP_DEFINE_METHOD
     };
 
-
     /// implementation of each logger
     template <Logger LoggerType>
     struct basic_dynamic_logger<LoggerType> final : basic_dynamic_logger<details::dynamic_logger_interface> {
@@ -61,13 +59,13 @@ namespace webpp {
         ~basic_dynamic_logger() override                                 = default;
 
         basic_dynamic_logger(logger_type&& logger) noexcept : actual_logger{stl::move(logger)} {}
+
         basic_dynamic_logger(logger_type const& logger) noexcept : actual_logger{logger} {}
 
         template <typename... Args>
             requires(stl::is_constructible_v<logger_type, Args...>)
         basic_dynamic_logger(Args&&... args) noexcept(stl::is_nothrow_constructible_v<logger_type, Args...>)
           : actual_logger{stl::forward<Args>(args)...} {}
-
 
 #define WEBPP_DEFINE_METHOD(method_name)                                                              \
     void method_name(string_view_type msg) override {                                                 \
@@ -98,7 +96,6 @@ namespace webpp {
       private:
         logger_type actual_logger;
     };
-
 
     /**
      * Dynamic logger
@@ -134,7 +131,6 @@ namespace webpp {
           : m_logger_ptr{
               stl::allocate_shared<basic_dynamic_logger<LoggerType>>(alloc, stl::forward<Args>(args)...)} {}
 
-
         /// default logger
         template <typename Allocator = stl::allocator<basic_dynamic_logger<default_static_logger>>,
                   typename... Args>
@@ -160,14 +156,11 @@ namespace webpp {
             m_logger_ptr          = stl::allocate_shared<new_logger_type>(alloc, stl::forward<Args>(args)...);
         }
 
-
-
         /// Disable the logging by setting the logger to use the void logger
         template <typename Allocator = stl::allocator<basic_dynamic_logger<void_logger>>>
         void disable(Allocator const& alloc = {}) {
             emplace_logger<void_logger>(alloc);
         }
-
 
 #define WEBPP_DEFINE_METHOD(method_name)                                                                  \
                                                                                                           \

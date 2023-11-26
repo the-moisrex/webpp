@@ -32,7 +32,6 @@ namespace webpp {
         using state_type = stl::mbstate_t;
     };
 
-
     template <typename CharT>
     struct unicode_char_traits {
         using char_type  = CharT;
@@ -46,29 +45,31 @@ namespace webpp {
         using comparison_category = stl::strong_ordering;
 #endif
 
-        static constexpr void assign(char_type& c1, const char_type& c2) {
+        static constexpr void assign(char_type& c1, char_type const& c2) {
             c1 = c2;
         }
 
-        static constexpr bool eq(const char_type& c1, const char_type& c2) {
+        static constexpr bool eq(char_type const& c1, char_type const& c2) {
             return c1 == c2;
         }
 
-        static constexpr bool lt(const char_type& c1, const char_type& c2) {
+        static constexpr bool lt(char_type const& c1, char_type const& c2) {
             return c1 < c2;
         }
 
-
-        static constexpr int compare(const char_type* s1, const char_type* s2, stl::size_t n) {
-            for (stl::size_t i = 0; i < n; ++i)
-                if (lt(s1[i], s2[i]))
+        static constexpr int compare(char_type const* s1, char_type const* s2, stl::size_t n) {
+            for (stl::size_t i = 0; i < n; ++i) {
+                if (lt(s1[i], s2[i])) {
                     return -1;
-                else if (lt(s2[i], s1[i]))
+                }
+                if (lt(s2[i], s1[i])) {
                     return 1;
+                }
+            }
             return 0;
         }
 
-        static constexpr stl::size_t length(const char_type* pp) noexcept {
+        static constexpr stl::size_t length(char_type const* pp) noexcept {
             return unicode::unchecked::count(stl::addressof(pp->value));
             // stl::size_t      i = 0;
             // const char_type* p = pp;
@@ -90,25 +91,27 @@ namespace webpp {
             // return i;
         }
 
-
-        static constexpr const char_type*
-        find(const char_type* s, stl::size_t n, const char_type& a) noexcept {
-            for (stl::size_t i = 0; i < n; ++i)
-                if (eq(s[i], a))
+        static constexpr char_type const*
+        find(char_type const* s, stl::size_t n, char_type const& a) noexcept {
+            for (stl::size_t i = 0; i < n; ++i) {
+                if (eq(s[i], a)) {
                     return s + i;
-            return 0;
+                }
+            }
+            return nullptr;
         }
 
-
-        static constexpr char_type* move(char_type* s1, const char_type* s2, stl::size_t n) {
-            if (n == 0)
+        static constexpr char_type* move(char_type* s1, char_type const* s2, stl::size_t n) {
+            if (n == 0) {
                 return s1;
+            }
 #ifdef __cpp_lib_is_constant_evaluated
             if (stl::is_constant_evaluated()) {
-                if (s1 > s2 && s1 < s2 + n)
+                if (s1 > s2 && s1 < s2 + n) {
                     stl::copy_backward(s2, s2 + n, s1);
-                else
+                } else {
                     stl::copy(s2, s2 + n, s1);
+                }
                 return s1;
             }
 #endif
@@ -116,13 +119,11 @@ namespace webpp {
             return static_cast<CharT*>(builtin_memmove(s1, s2, n * sizeof(char_type)));
         }
 
-
-        static constexpr char_type* copy(char_type* s1, const char_type* s2, stl::size_t n) {
+        static constexpr char_type* copy(char_type* s1, char_type const* s2, stl::size_t n) {
             // NB: Inline stl::copy so no recursive dependencies.
             stl::copy(s2, s2 + n, s1);
             return s1;
         }
-
 
         static constexpr char_type* assign(char_type* s, stl::size_t n, char_type a) noexcept {
             // NB: Inline stl::fill_n so no recursive dependencies.
@@ -130,16 +131,15 @@ namespace webpp {
             return s;
         }
 
-
-        static constexpr char_type to_char_type(const int_type& c) {
+        static constexpr char_type to_char_type(int_type const& c) {
             return static_cast<char_type>(c);
         }
 
-        static constexpr int_type to_int_type(const char_type& c) {
+        static constexpr int_type to_int_type(char_type const& c) {
             return static_cast<int_type>(c);
         }
 
-        static constexpr bool eq_int_type(const int_type& c1, const int_type& c2) {
+        static constexpr bool eq_int_type(int_type const& c1, int_type const& c2) {
             return c1 == c2;
         }
 
@@ -147,7 +147,7 @@ namespace webpp {
             return static_cast<int_type>(-1);
         }
 
-        static constexpr int_type not_eof(const int_type& c) {
+        static constexpr int_type not_eof(int_type const& c) {
             return !eq_int_type(c, eof()) ? c : to_int_type(char_type());
         }
     };

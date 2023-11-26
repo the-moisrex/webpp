@@ -139,14 +139,18 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
             return "son";
         }
     };
+
     static int side_effect = 20;
+
     struct daughter : mother {
         daughter() {
             side_effect = 20;
         }
+
         stl::string to_string() override {
             return "daughter";
         }
+
         ~daughter() override {
             side_effect += 10;
         }
@@ -161,7 +165,7 @@ TEST(MemoryTest, PolymorphicTestForDynamicType) {
     dynamic<mother> family_member{stl::allocator<mother>()};
     family_member.template emplace<son>(); // replace a son
     EXPECT_EQ(family_member->to_string(), "son");
-    family_member = daughter{}; // replace a daughter, using move
+    family_member = daughter{};            // replace a daughter, using move
     EXPECT_EQ(family_member->to_string(), "daughter");
 
     // memory leak check

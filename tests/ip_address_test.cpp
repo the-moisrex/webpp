@@ -4,7 +4,6 @@
 
 using namespace webpp;
 
-
 TEST(IPAddressTests, Init) {
     ip_address addr{127, 0, 0, 1};
     EXPECT_TRUE(addr.is_valid()) << addr.string();
@@ -12,8 +11,6 @@ TEST(IPAddressTests, Init) {
     EXPECT_TRUE(addr.is_v4());
     EXPECT_EQ(addr.as_v4(), (ipv4{127, 0, 0, 1}));
 }
-
-
 
 TEST(IPAddressTests, ParseString) {
     {
@@ -33,7 +30,6 @@ TEST(IPAddressTests, ParseString) {
         EXPECT_EQ(addr.as_v6(), (ipv6{"::ffff:127.0.0.1"}));
     }
 }
-
 
 TEST(IPAddressTests, Equality) {
     {
@@ -63,7 +59,6 @@ TEST(IPAddressTests, Equality) {
         EXPECT_TRUE(addr < addr2);
     }
 }
-
 
 TEST(IPAddressTests, Methods) {
     ip_address addr{"::0fff:1/127"};

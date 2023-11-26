@@ -18,8 +18,6 @@ namespace webpp::v1 {
         template <typename... T>
         constexpr basic_scheme(T&&... args) : string_type{stl::forward<T>(args)...} {}
 
-
-
         /**
          * @brief checks if the URI is a relative reference
          */
@@ -34,25 +32,31 @@ namespace webpp::v1 {
             // NOLINTBEGIN(*-magic-numbers)
             switch (this->size()) {
                 case 2:
-                    if (this->operator[](0) == 'w' && this->operator[](1) == 's')
-                        return 80u;
+                    if (this->operator[](0) == 'w' && this->operator[](1) == 's') {
+                        return 80U;
+                    }
                     break;
                 case 3:
-                    if (*this == "wss")
-                        return 443u;
-                    else if (*this == "ftp")
-                        return 21;
+                    if (*this == "wss") {
+                        return 443U;
+                    }
+                    if (*this == "ftp") {
+                        return 21U;
+                    }
                     break;
                 case 4:
-                    if (*this == "http")
-                        return 80u;
+                    if (*this == "http") {
+                        return 80U;
+                    }
                     break;
                 case 5:
-                    if (*this == "https")
-                        return 443;
+                    if (*this == "https") {
+                        return 443U;
+                    }
                     break;
+                default: break;
             }
-            return 0u;
+            return 0U;
             // NOLINTEND(*-magic-numbers)
         }
     };

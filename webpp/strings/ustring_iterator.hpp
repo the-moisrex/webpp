@@ -32,10 +32,11 @@ namespace webpp {
 
       public:
         constexpr unicode_iterator() noexcept = default;
-        explicit constexpr unicode_iterator(const pointer& i) noexcept : current(i) {}
+
+        explicit constexpr unicode_iterator(pointer const& i) noexcept : current(i) {}
 
         // Allow iterator to const_iterator conversion
-        constexpr unicode_iterator(const iterator_type& i) noexcept : current(i.content) {}
+        constexpr unicode_iterator(iterator_type const& i) noexcept : current(i.content) {}
 
         // Forward iterator requirements
         constexpr reference operator*() const noexcept {
@@ -88,10 +89,9 @@ namespace webpp {
             return iterator_type(current - n);
         }
 
-        constexpr const pointer& base() const noexcept {
+        constexpr pointer const& base() const noexcept {
             return current;
         }
-
 
         //        constexpr size_type operator-(difference_type other) const noexcept {
         //            uni_iterator_adapter a = *this;
@@ -120,18 +120,20 @@ namespace webpp {
 
     template <typename CPL, typename CPR, typename CharTL, typename CharTR>
         requires requires(CharTL lhs, CharTR rhs) {
-            { lhs == rhs } -> stl::convertible_to<bool>;
+            {
+                lhs == rhs
+            } -> stl::convertible_to<bool>;
         }
-    constexpr bool
-    operator==(const unicode_iterator<CPL, CharTL>& lhs,
-               const unicode_iterator<CPR, CharTR>& rhs) noexcept(noexcept(lhs.base() == rhs.base())) {
+    constexpr bool operator==(
+      unicode_iterator<CPL, CharTL> const& lhs,
+      unicode_iterator<CPR, CharTR> const& rhs) noexcept(noexcept(lhs.base() == rhs.base())) {
         return lhs.base() == rhs.base();
     }
 
     template <typename CPL, typename CPR, typename CharTL, typename CharTR>
-    constexpr auto
-    operator<=>(const unicode_iterator<CPL, CharTL>& lhs,
-                const unicode_iterator<CPR, CharTR>& rhs) noexcept(noexcept(lhs.base() <=> rhs.base())) {
+    constexpr auto operator<=>(
+      unicode_iterator<CPL, CharTL> const& lhs,
+      unicode_iterator<CPR, CharTR> const& rhs) noexcept(noexcept(lhs.base() <=> rhs.base())) {
         return lhs.base() <=> rhs.base();
     }
 

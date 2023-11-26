@@ -1,13 +1,10 @@
 #ifndef WEBPP_UTILS_STRINGS_H
 #define WEBPP_UTILS_STRINGS_H
 
-#include "../common/meta.hpp"
 #include "../libs/eve.hpp"
 #include "../std/string.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/string_view.hpp"
-#include "../traits/default_traits.hpp"
-#include "../traits/traits.hpp"
 #include "size.hpp"
 
 #include <algorithm>
@@ -21,7 +18,7 @@
 #    include <eve/wide.hpp>
 #endif
 
-
+// todo: it's possible to use ASCII lookup table instead of if-else statements for changing the case
 namespace webpp::ascii {
 
     /**
@@ -40,8 +37,9 @@ namespace webpp::ascii {
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_upper(CharT& c) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
-        if (c >= 'a' && c <= 'z')
+        if (c >= 'a' && c <= 'z') {
             c -= diff;
+        }
     }
 
     /**
@@ -59,12 +57,11 @@ namespace webpp::ascii {
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_lower(CharT& c) noexcept {
-        using char_type                       = stl::remove_cvref_t<decltype(c)>;
-        webpp_static_constexpr char_type diff = 'a' - 'A';
-        if (c >= 'A' && c <= 'Z')
+        webpp_static_constexpr CharT diff = 'a' - 'A';
+        if (c >= 'A' && c <= 'Z') {
             c += diff;
+        }
     }
-
 
     /**
      * The "algo" namespace is used for when there are multiple algorithms for the same purpose.
@@ -75,8 +72,9 @@ namespace webpp::ascii {
         requires(!stl::is_const_v<CharT>)                                            \
     static constexpr void simple_##method(CharT* start, const CharT* end) noexcept { \
         auto* it = start;                                                            \
-        for (; it != end; ++it)                                                      \
+        for (; it != end; ++it) {                                                    \
             method(*it);                                                             \
+        }                                                                            \
     }                                                                                \
                                                                                      \
     static constexpr void simple_##method(istl::Stringifiable auto& str) noexcept {  \
@@ -84,8 +82,9 @@ namespace webpp::ascii {
         using char_type      = istl::char_type_of_t<str_t>;                          \
         char_type*       it  = istl::string_data(str);                               \
         const char_type* end = it + size(str);                                       \
-        for (; it != end; ++it)                                                      \
+        for (; it != end; ++it) {                                                    \
             method(*it);                                                             \
+        }                                                                            \
     }
 
         WEBPP_ALGO(to_lower)
@@ -98,7 +97,7 @@ namespace webpp::ascii {
             using value_type  = typename stl::remove_cvref_t<decltype(str)>::value_type;
             using char_type   = stl::make_unsigned_t<value_type>;
             auto       start  = reinterpret_cast<char_type*>(str.data());
-            const auto finish = start + str.size();
+            auto const finish = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
                 static constexpr char_type alphabet_length = 'z' - 'a';
                 static constexpr char_type a_A_offset      = 'a' - 'A';
@@ -110,7 +109,7 @@ namespace webpp::ascii {
             using value_type  = typename stl::remove_cvref_t<decltype(str)>::value_type;
             using char_type   = stl::make_unsigned_t<value_type>;
             auto       start  = reinterpret_cast<char_type*>(str.data());
-            const auto finish = start + str.size();
+            auto const finish = start + str.size();
             eve::algo::transform_inplace(eve::algo::as_range(start, finish), [](auto c) {
                 static constexpr char_type alphabet_length = 'z' - 'a';
                 static constexpr char_type a_A_offset      = 'a' - 'A';
@@ -120,7 +119,6 @@ namespace webpp::ascii {
 
 #endif
     } // namespace algo
-
 
 #define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                    \
     template <istl::CharType CharT>                                                                   \
@@ -159,7 +157,6 @@ namespace webpp::ascii {
 
 #undef WEBPP_TO_METHOD
 
-
     template <typename T>
     [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& _str, T&& data) noexcept {
         return istl::string_viewify(_str).starts_with(stl::forward<T>(data));
@@ -167,7 +164,7 @@ namespace webpp::ascii {
 
     [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&       _str,
                                            istl::char_type_of_t<decltype(_str)> c) noexcept {
-        const auto str = istl::string_viewify(_str);
+        auto const str = istl::string_viewify(_str);
         return !str.empty() && str.back() == c;
     }
 
@@ -175,7 +172,6 @@ namespace webpp::ascii {
                                            istl::StringViewifiable auto&& _ending) noexcept {
         return istl::string_viewify(_str).ends_with(istl::string_viewify(_ending));
     }
-
 
     //    template <typename ValueType, typename... R>
     //    requires(stl::is_integral_v<stl::remove_cvref_t<ValueType>>)

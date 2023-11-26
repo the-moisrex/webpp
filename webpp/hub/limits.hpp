@@ -11,6 +11,7 @@ namespace webpp::http::shosted {
 
     struct limits_type {
         stl::uint16_t uri = 255;
+
         struct body_limits {
             stl::uint16_t get_method  = 8 * 1024;        // 8KiB
             stl::size_t   post_method = 1 * 1024 * 1024; // 1MiB

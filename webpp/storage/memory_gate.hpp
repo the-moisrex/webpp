@@ -28,11 +28,11 @@ namespace webpp {
             using options_ptr_type = stl::add_pointer_t<options_type>;
             using bundle_ptr_type  = cache_tuple<key_ptr_type, value_ptr_type, options_ptr_type>;
 
-
             // NOLINTBEGIN(bugprone-forwarding-reference-overload)
             template <EnabledTraits ET>
                 requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
             constexpr storage_gate(ET&& et) : map{alloc::general_alloc_for<map_type>(et)} {}
+
             // NOLINTEND(bugprone-forwarding-reference-overload)
 
             template <typename K>
@@ -67,7 +67,6 @@ namespace webpp {
                     it->second.first = opts;
                 }
             }
-
 
             template <typename K>
             constexpr void erase(K&& input) {

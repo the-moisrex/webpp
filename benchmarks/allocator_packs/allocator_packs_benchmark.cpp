@@ -21,7 +21,6 @@ static void custom_str_generator(auto& str) {
     // str = str.substr(0, size);
 }
 
-
 static void ALLOC_STD(benchmark::State& state) {
     for (auto _ : state) {
         std::string str1;
@@ -29,6 +28,7 @@ static void ALLOC_STD(benchmark::State& state) {
         benchmark::DoNotOptimize(str1.data());
     }
 }
+
 BENCHMARK(ALLOC_STD);
 
 static void ALLOC_Stack_PMR_Pack(benchmark::State& state) {
@@ -39,6 +39,7 @@ static void ALLOC_Stack_PMR_Pack(benchmark::State& state) {
         benchmark::DoNotOptimize(str1.data());
     }
 }
+
 BENCHMARK(ALLOC_Stack_PMR_Pack);
 
 static void ALLOC_Heap_PMR_Pack(benchmark::State& state) {
@@ -49,4 +50,5 @@ static void ALLOC_Heap_PMR_Pack(benchmark::State& state) {
         benchmark::DoNotOptimize(str1.data());
     }
 }
+
 BENCHMARK(ALLOC_Heap_PMR_Pack);

@@ -19,14 +19,12 @@ namespace webpp::io::inline syscall_operations {
 
     /// Customization Point Object for syscalls
     inline constexpr struct syscall_tag {
-
         template <typename SyscallOperation, typename Sched, typename... Args>
         static constexpr bool is_supported = stl::tag_invocable<SyscallOperation, Sched&, Args...>;
 
         template <typename SyscallOperation, typename Sched, typename... Args>
         constexpr decltype(auto) operator()(SyscallOperation, Sched& sched, Args&&... args) const
           noexcept(stl::nothrow_tag_invocable<SyscallOperation, Sched&, Args...>) {
-
             // a nice error message
             static_assert(stl::tag_invocable<SyscallOperation, Sched&, Args...>,
                           "IO operation is not implemented.");
@@ -36,11 +34,14 @@ namespace webpp::io::inline syscall_operations {
     } syscall;
 
     struct syscall_open {};
-    struct syscall_read {};
-    struct syscall_write {};
-    struct syscall_close {};
-    struct syscall_remove {};
 
+    struct syscall_read {};
+
+    struct syscall_write {};
+
+    struct syscall_close {};
+
+    struct syscall_remove {};
 
 #undef impl_syscall
 

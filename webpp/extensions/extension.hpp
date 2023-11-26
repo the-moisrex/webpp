@@ -50,8 +50,8 @@ namespace webpp {
          */
         template <typename Parent>
         struct vctor : public virtual Parent {
-
             using Parent::Parent;
+
             // template <typename... Args>
             // requires(stl::constructible_from<Parent, Args...>) constexpr vctor(Args&&... args)
             // noexcept
@@ -64,8 +64,8 @@ namespace webpp {
 
         template <typename Parent>
         struct ctor : public Parent {
-
             using Parent::Parent;
+
             // template <typename... Args>
             // constexpr ctor(Args&&... args) noexcept requires(stl::constructible_from<Parent,
             // Args...>)
@@ -122,8 +122,6 @@ namespace webpp {
             //  };
         };
 
-
-
         /**
          * This TMP will find, flatten, and re-orders the extensions and their dependencies.
          */
@@ -131,6 +129,7 @@ namespace webpp {
         struct dependencies {
             using type = extension_pack<E...>;
         };
+
         template <typename... E, typename... Es>
         struct dependencies<extension_pack<E...>, Es...> : dependencies<E..., Es...> {};
 
@@ -150,7 +149,6 @@ namespace webpp {
             using type = istl::merge_parameters<extension_pack<First>, typename dependencies<E...>::type>;
         };
 
-
         // without any kids
         template <Traits TraitsType, typename Mother>
         struct children_inherited<TraitsType, Mother> {
@@ -167,8 +165,6 @@ namespace webpp {
         template <Traits TraitsType, typename Mother, typename... Kids>
         struct children_inherited<TraitsType, Mother, extension_pack<Kids...>>
           : public children_inherited<TraitsType, Mother, Kids...> {};
-
-
 
         template <typename... EPacks>
         struct flatten_epacks {
@@ -195,10 +191,6 @@ namespace webpp {
             using type =
               typename flatten_epacks<extension_pack<Ex1...>, typename flatten_epacks<EPacks...>::type>::type;
         };
-
-
-
-
 
         template <Traits TraitsType>
         struct is_mother_condition {
@@ -247,14 +239,11 @@ namespace webpp {
                                 // append the individual lonely extensions in the big epack
                                 ::template appended<istl::filter_parameters_t<IF, RootExtensionPack>>>::type>;
 
-
-
         template <typename RootExtensionPack,
                   typename TraitsType,
                   typename ExtensieDescriptor,
                   typename... ExtraArgs>
         struct mid_level_extractor {
-
             using mother_pack = istl::unique_parameters<typename merge_extensions<
               RootExtensionPack,
               ExtensieDescriptor,
@@ -275,13 +264,14 @@ namespace webpp {
             //    - Okay, pass the "mother pack" to the "mid-level extensie"
             // if not:
             //    - The just use the "mother pack" as the extensie type
-            using type = istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor,
-                                                                      RootExtensionPack,
-                                                                      TraitsType,
-                                                                      applied_mother_pack,
-                                                                      ExtraArgs...>,
-                                                  istl::templated_lazy_type<extractor, ExtensieDescriptor>,
-                                                  istl::lazy_type<applied_mother_pack>>;
+            using type =
+              istl::lazy_conditional_t<HasMidLevelExtensie<ExtensieDescriptor,
+                                                           RootExtensionPack,
+                                                           TraitsType,
+                                                           applied_mother_pack,
+                                                           ExtraArgs...>,
+                                       istl::templated_lazy_type<extractor, ExtensieDescriptor>,
+                                       istl::lazy_type<applied_mother_pack>>;
         };
 
         // Mid-Level extensie type
@@ -292,16 +282,11 @@ namespace webpp {
         using mid_level_extensie_type =
           typename mid_level_extractor<RootExtensionPack, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
 
-
-
-
-
         template <typename RootExtensionPack,
                   typename TraitsType,
                   typename ExtensieDescriptor,
                   typename... ExtraArgs>
         struct final_extensie_extractor {
-
             // Mid-Level extensie children (will extend the mid-level extensie and will be extended by the
             // final extensie)
             using mid_level_extensie_children = typename merge_extensions<
@@ -342,7 +327,6 @@ namespace webpp {
 
     template <Extension... E>
     struct extension_pack {
-
         // these are the dependencies
         using include_dependencies = typename details::dependencies<E...>::type;
 
@@ -378,7 +362,6 @@ namespace webpp {
         using extensie_type = typename details::
           final_extensie_extractor<include_dependencies, TraitsType, ExtensieDescriptor, ExtraArgs...>::type;
 
-
         /**
          * Check if all the extensions are the correct type
          * @tparam IF
@@ -388,8 +371,6 @@ namespace webpp {
             static constexpr bool value = (IF<E>::value && ...);
         };
     };
-
-
 
     struct fake_extensie_descriptor {
         template <typename ExtensionType>
@@ -442,7 +423,6 @@ namespace webpp {
     concept ExtensionDescriptor =
       requires { typename T::template related_extension_pack<empty_extension_pack>; };
 
-
     namespace details {
 
         template <ExtensionList EList, ExtensionDescriptor EDesc>
@@ -452,8 +432,6 @@ namespace webpp {
 
     template <ExtensionList EList, ExtensionDescriptor EDesc>
     using extension_extractor = void;
-
-
 
     /**
      * This struct will help the user to create an extension from

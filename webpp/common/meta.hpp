@@ -5,27 +5,27 @@
 
 // NOLINTBEGIN(*-avoid-do-while, *-macro-usage, *-trailing-return)
 
-#if __cplusplus >= 199711L
+#if __cplusplus >= 199'711L
 #    define CXX98
 #endif
 
-#if __cplusplus >= 201103L
+#if __cplusplus >= 201'103L
 #    define CXX11
 #endif
 
-#if __cplusplus >= 201402L
+#if __cplusplus >= 201'402L
 #    define CXX14
 #endif
 
-#if __cplusplus >= 201703L
+#if __cplusplus >= 201'703L
 #    define CXX17
 #endif
 
-#if __cplusplus >= 202002L
+#if __cplusplus >= 202'002L
 #    define CXX20
 #endif
 
-#if __cplusplus >= 202302L
+#if __cplusplus >= 202'302L
 #    define CXX23
 #endif
 
@@ -38,7 +38,7 @@
 // For usage in a constexpr function, C++20 doesn't allow for usage of "static constexpr" stuff inside
 // "constexpr" functions, but C++23 does.
 // https://wg21.link/P2647#feature-test-macro
-#if defined(__cpp_constexpr) && __cpp_constexpr >= 202300L
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 202'300L
 #    define webpp_static_constexpr static constexpr
 #else
 #    define webpp_static_constexpr constexpr
@@ -85,11 +85,13 @@ namespace webpp::details {
 
 #if defined(NDEBUG) || !defined(DEBUG) || !defined(_DEBUG)
 #    define NDEBUG
+
 namespace webpp {
     static constexpr bool is_debug_build = false;
 } // namespace webpp
 #else
 #    define DEBUG
+
 namespace webpp {
     static constexpr bool is_debug_build = true;
 } // namespace webpp
@@ -182,6 +184,7 @@ namespace webpp::details {
 namespace webpp {
     [[noreturn]] inline void invoke_undefined_behaviour() {}
 } // namespace webpp
+
 #    define webpp_assume(...)                        \
         do {                                         \
             if (!(__VA_ARGS__))                      \

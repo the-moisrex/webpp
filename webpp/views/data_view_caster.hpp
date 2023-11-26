@@ -34,7 +34,7 @@ namespace webpp::view {
             if constexpr (stl::is_rvalue_reference_v<From>) { // move the items
                 return to_type{data_view_caster<first_type>(et, stl::move(from.first)),
                                data_view_caster<second_type>(et, stl::move(from.second))};
-            } else { // copy the items
+            } else {                                          // copy the items
                 return to_type{data_view_caster<first_type>(et, from.first),
                                data_view_caster<second_type>(et, from.second)};
             }

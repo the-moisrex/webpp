@@ -15,6 +15,7 @@ namespace webpp {
         stl::atomic<T> counter{0};
 
         constexpr atomic_counter(T init) noexcept : counter{init} {}
+
         constexpr atomic_counter() noexcept = default;
 
         constexpr void up() noexcept {
@@ -29,7 +30,7 @@ namespace webpp {
             return false;
         }
 
-        constexpr atomic_counter& operator=(const atomic_counter& rhs) {
+        constexpr atomic_counter& operator=(atomic_counter const& rhs) {
             counter = rhs.counter.load(std::memory_order_relaxed);
             return *this;
         }
@@ -71,7 +72,6 @@ namespace webpp {
         constexpr bool operator==(stl::integral auto value) const noexcept {
             return counter == static_cast<T>(value);
         }
-
 
         constexpr auto operator<=>(stl::integral auto value) const noexcept {
             return counter <=> static_cast<T>(value);

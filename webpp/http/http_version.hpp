@@ -35,6 +35,7 @@ namespace webpp::http {
             requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
         constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr version(version const&) noexcept            = default;
@@ -85,37 +86,41 @@ namespace webpp::http {
             return unknown();
         }
 
-
         [[nodiscard]] static constexpr version from_string(istl::StringView auto str) noexcept {
             return {str};
         }
 
         // Overloaded operators:
 
-        [[nodiscard]] constexpr bool operator==(const version& v) const noexcept {
+        [[nodiscard]] constexpr bool operator==(version const& v) const noexcept {
             return value == v.value;
         }
-        [[nodiscard]] constexpr bool operator!=(const version& v) const noexcept {
+
+        [[nodiscard]] constexpr bool operator!=(version const& v) const noexcept {
             return value != v.value;
         }
-        [[nodiscard]] constexpr bool operator>(const version& v) const noexcept {
+
+        [[nodiscard]] constexpr bool operator>(version const& v) const noexcept {
             return value > v.value;
         }
-        [[nodiscard]] constexpr bool operator>=(const version& v) const noexcept {
+
+        [[nodiscard]] constexpr bool operator>=(version const& v) const noexcept {
             return value >= v.value;
         }
-        [[nodiscard]] constexpr bool operator<(const version& v) const noexcept {
+
+        [[nodiscard]] constexpr bool operator<(version const& v) const noexcept {
             return value < v.value;
         }
-        [[nodiscard]] constexpr bool operator<=(const version& v) const noexcept {
+
+        [[nodiscard]] constexpr bool operator<=(version const& v) const noexcept {
             return value <= v.value;
         }
+
         // todo: use <=> operator
 
       private:
         uint32_t value = 0UL; // Packed as <major>:<minor>
     };
-
 
     /**
      * A list of http::version
@@ -129,13 +134,13 @@ namespace webpp::http {
 
         [[nodiscard]] constexpr bool include_version(version ver) noexcept {
             for (auto const& v : *this) {
-                if (ver == v)
+                if (ver == v) {
                     return true;
+                }
             }
             return false;
         }
     };
-
 
     static constexpr version http_0_9{"0.9"};
     static constexpr version http_1_0{"1.0"};

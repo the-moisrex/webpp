@@ -14,12 +14,15 @@
 #    include <boost/container/pmr/unsynchronized_pool_resource.hpp>
 #    define webpp_has_memory_resource
 #    define webpp_using_boost_memory_resource
+
 namespace webpp::stl::pmr {
     using namespace ::boost::container::pmr;
 }
+
 namespace std::pmr {}
 #else
 namespace webpp::stl::pmr {}
+
 namespace std::pmr {}
 #endif
 

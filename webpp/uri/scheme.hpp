@@ -18,7 +18,6 @@ namespace webpp::uri {
 
     namespace details { // states
 
-
         template <typename... T>
         static constexpr void relative_state(parsing_uri_context<T...>& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
@@ -33,12 +32,9 @@ namespace webpp::uri {
             }
         }
 
-
-
-
         template <typename... T>
-        static constexpr void
-        file_slash_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void file_slash_state(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
 
             using ctx_type = parsing_uri_context<T...>;
@@ -63,8 +59,8 @@ namespace webpp::uri {
         }
 
         template <typename... T>
-        static constexpr void
-        file_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void file_state(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
 
             using ctx_type = parsing_uri_context<T...>;
@@ -90,10 +86,9 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_path);
         }
 
-
         template <typename... T>
-        static constexpr void
-        no_scheme_state(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void no_scheme_state(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
             using ctx_type = parsing_uri_context<T...>;
@@ -119,7 +114,6 @@ namespace webpp::uri {
             set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
         }
 
-
         template <typename... T>
         static constexpr void special_authority_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
             /// https://url.spec.whatwg.org/#special-authority-slashes-state
@@ -133,8 +127,8 @@ namespace webpp::uri {
         }
 
         template <typename... T>
-        static constexpr void
-        special_authority_ignore_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
+        static constexpr void special_authority_ignore_slashes_state(
+          parsing_uri_context<T...>& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
             if (ctx.pos != ctx.end) {
@@ -153,7 +147,6 @@ namespace webpp::uri {
 
         template <typename... T>
         static constexpr void special_relative_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
-
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
             if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) {
@@ -184,8 +177,8 @@ namespace webpp::uri {
      * Parse scheme (or sometimes called Protocol)
      */
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_scheme(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_scheme(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
@@ -199,89 +192,82 @@ namespace webpp::uri {
             return;
         }
 
-        if (details::ASCII_ALPHA.contains(*ctx.pos)) {
-            ++ctx.pos;
-
-            // scheme state (https://url.spec.whatwg.org/#scheme-state)
-            {
-                // handling alpha, num, +, -, .
-                ctx.pos = alnum_plus.find_first_not_in(ctx.pos, ctx.end);
-                if (ctx.pos == ctx.end) {
-                    ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
-                    return;
-                }
-
-                // handling ":" character
-                if (*ctx.pos == ':') {
-
-                    // if constexpr (ctx_type::is_overridable) {
-                    //     const auto url_scheme =
-                    //       stl::basic_string_view<char_type>{ctx.pos,
-                    //                                         static_cast<stl::size_t>(ctx.pos - ctx.beg)};
-                    //     if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
-                    //         ctx.status = stl::to_underlying(incompatible_schemes);
-                    //         return;
-                    //     }
-
-
-                    //     if (ctx.in.scheme() == "file") {
-                    //         if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
-                    //             ctx.status = stl::to_underlying(incompatible_schemes);
-                    //             return;
-                    //         }
-                    //     }
-
-                    //     ctx.out.clear_port();
-                    // }
-
-                    ctx.out.set_scheme(ctx.beg, ctx.pos);
-                    ++ctx.pos;
-
-                    if (ctx.out.get_scheme() == "file") {
-                        // If remaining does not start with "//", special-scheme-missing-following-solidus
-                        // validation error.
-                        if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
-                            ctx.pos += 2;
-                        } else {
-                            set_warning(ctx.status, missing_following_solidus);
-                        }
-                        details::file_state(ctx);
-                        return;
-                    }
-                    if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
-                        ctx.is_special = true;
-                        // todo: first check the constexpr if
-                        if constexpr (ctx_type::has_base_uri) {
-                            if (ctx.out.scheme() == ctx.base.scheme()) {
-                                // todo: Assert: base is special (and therefore does not have an opaque path).
-                                details::special_relative_or_authority_state(ctx);
-                            }
-                        }
-                    }
-
-                    if (ctx.pos != ctx.end && *ctx.pos == '/') {
-                        ++ctx.pos;
-                        details::path_or_authority_state(ctx);
-                        return;
-                    }
-                    ctx.out.clear_path();
-                    set_valid(ctx.status, valid_opaque_path);
-                    return;
-                }
-            }
+        if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
+            // Otherwise, if state override is not given, set buffer to the empty string, state to no
+            // scheme state, and start over (from the first code point in input).
+            //
+            // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+            ctx.pos = ctx.beg;
+            ctx.out.clear_scheme();
+            details::no_scheme_state(ctx);
         }
 
-        // Otherwise, if state override is not given, set buffer to the empty string, state to no
-        // scheme state, and start over (from the first code point in input).
-        //
-        // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-        ctx.pos = ctx.beg;
-        ctx.out.clear_scheme();
-        details::no_scheme_state(ctx);
+        ++ctx.pos;
+
+        // scheme state (https://url.spec.whatwg.org/#scheme-state)
+        // handling alpha, num, +, -, .
+        ctx.pos = alnum_plus.find_first_not_in(ctx.pos, ctx.end);
+        if (ctx.pos == ctx.end) {
+            ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
+            return;
+        }
+
+        // handling ":" character
+        if (*ctx.pos == ':') {
+            // if constexpr (ctx_type::is_overridable) {
+            //     const auto url_scheme =
+            //       stl::basic_string_view<char_type>{ctx.pos,
+            //                                         static_cast<stl::size_t>(ctx.pos - ctx.beg)};
+            //     if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
+            //         ctx.status = stl::to_underlying(incompatible_schemes);
+            //         return;
+            //     }
+
+
+            //     if (ctx.in.scheme() == "file") {
+            //         if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
+            //             ctx.status = stl::to_underlying(incompatible_schemes);
+            //             return;
+            //         }
+            //     }
+
+            //     ctx.out.clear_port();
+            // }
+
+            ctx.out.set_scheme(ctx.beg, ctx.pos);
+            ++ctx.pos;
+
+            if (ctx.out.get_scheme() == "file") {
+                // If remaining does not start with "//", special-scheme-missing-following-solidus
+                // validation error.
+                if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
+                    ctx.pos += 2;
+                } else {
+                    set_warning(ctx.status, missing_following_solidus);
+                }
+                details::file_state(ctx);
+                return;
+            }
+            if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
+                ctx.is_special = true;
+                // todo: first check the constexpr if
+                if constexpr (ctx_type::has_base_uri) {
+                    if (ctx.out.scheme() == ctx.base.scheme()) {
+                        // todo: Assert: base is special (and therefore does not have an opaque path).
+                        details::special_relative_or_authority_state(ctx);
+                    }
+                }
+            }
+
+            if (ctx.pos != ctx.end && *ctx.pos == '/') {
+                ++ctx.pos;
+                details::path_or_authority_state(ctx);
+                return;
+            }
+            ctx.out.clear_path();
+            set_valid(ctx.status, valid_opaque_path);
+        }
     }
-
-
-
 
     /**
      * Scheme or Protocol

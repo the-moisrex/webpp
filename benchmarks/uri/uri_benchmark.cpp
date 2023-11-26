@@ -7,48 +7,49 @@
 #include <vector>
 
 
-constexpr std::string_view encoded_str = "%D9%84%D8%A8%D9%86%D9%85%DB%8C%D8%B3%D8%AA%D9%84%D8%A8%D9%86%D9"
-                                         "%85%DB%8C%D8%B3%D8%AA%D9%84%D8%A7%D8%A8%DB%8C%D9%86%D9%85%D8%B3"
-                                         "%D8%AA%D9%84%D8%A7%D8%A8%DB%8C%DA%A9%D8%B3%D8%AA%D9%84%D8%A8%DA"
-                                         "%A9%D9%85%DB%8C%D8%A8%D9%86%D8%AA%DA%A9%D8%AB%D8%B6%D9%85%D9%87"
-                                         "%D8%A8%DB%8C%DA%A9%D9%85%D8%B3%D9%84%D8%AF%D8%A8%DA%A9%DB%8C%D9"
-                                         "%85%D8%B3%D9%84%DA%A9%D8%AF%D9%82%D8%AB%D8%B4%D8%B9%D9%81%D9%84"
-                                         "%DA%A9%D9%82%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA%A9%D8%A8%D9"
-                                         "%85%DB%8C%D9%87%D8%B3%D8%B9%D9%84%DA%A9%D9%85%D8%A8%DB%8C%D9%87"
-                                         "%D8%B3%D8%B9%D9%84%DA%A9%D8%AF%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%DA"
-                                         "%A9%D9%84%D8%AF%D9%85%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%DA%A9%D9%84"
-                                         "%D9%85%D8%A8%D9%87%DB%8C%D8%B3%DA%A9%D8%AF%D9%85%D9%84%D8%A8%D9"
-                                         "%87%D8%B9%DB%8C%D8%B3%DA%A9%D9%85%D9%84%D9%87%D8%B9%D8%A8%DB%8C"
-                                         "%D8%B3%DA%A9%D9%85%D9%84%D9%87%D8%B9%D8%A8%D8%AF%DA%A9%DB%8C%D9"
-                                         "%85%D8%B3%D9%87%D9%84%D8%B9%D8%AF%D8%A8%DA%A9%D9%85%DB%8C%D8%B3"
-                                         "%D9%87%D8%B9%D9%84%DA%A9%D8%A8%DB%8C%D9%85%D8%B3%D9%87%D8%B9%D9"
-                                         "%84%DA%A9%D8%A8%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA%A9%D8%A8"
-                                         "%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%D8%A8%DB%8C%DA%A9%D9%85%D8"
-                                         "%B3%D9%87%D8%B9%D8%AF%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3%D9%87"
-                                         "%D8%B9%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA"
-                                         "%A9%D8%A8%DB%8C%D9%85%D8%B3%D9%87%D8%B9%D9%84%D8%A8%D8%AF%DA%A9"
-                                         "%D9%85%DB%8C%D8%B3%D9%87%D8%AF%D8%B9%D8%A8%D9%84%D8%AF%DA%A9%D9"
-                                         "%85%DB%8C%D8%B3%D8%B9%D8%AF%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3"
-                                         "%D9%87%D8%B9%D9%84%D8%AF%D8%A8%DB%8C%DA%A9%D8%B3%D9%85%D9%87%D8"
-                                         "%B9%D9%84%D8%A8%DB%8C%DA%A9%D9%85%D8%B3%D9%87%D8%B9%D9%84%DA%A9"
-                                         "%D8%AF%D8%AB%D8%AE%D8%B5%D9%87%D8%B9%D9%84%D8%AE%D8%AB%DA%A9%D8"
-                                         "%B5%D8%B9%D9%84%DA%A9%D9%82%D8%AB%D9%87%20%D8%AE%D8%AB%D8%B5%D9"
-                                         "%87%D9%84%DA%A9%D9%85%D9%82%D8%AB%D9%87%D8%B5%D8%B9%20%D8%B0%D8"
-                                         "%AF%D9%84%DA%A9%D9%82%D8%AB%D8%B5%D8%B9%20%D8%AF%D9%84%DA%A9%D9"
-                                         "%82%D9%85%D8%AB%D9%87%D8%B9%D8%B5%20%D8%AF%D9%84%DA%A9%D9%82%D8"
-                                         "%AB%D9%87%D8%B9%D8%B5%20%D8%AF%DA%A9%D9%84%D9%85%D8%A8%DB%8C%D8"
-                                         "%B3%D8%AA%D9%84%DA%A9%D8%A8%D9%87%DB%8C%D8%B3%20%D8%AF%DA%A9%D9"
-                                         "%84%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%20%D9%84%DA%A9%D9%85%D8%A8%DB"
-                                         "%8C%D9%87%D8%B3%D8%B9%20%DA%A9%D9%84%D9%85%D8%A8%DB%8C%D8%B3%D9"
-                                         "%87%DA%A9";
-
+constexpr std::string_view encoded_str =
+  "%D9%84%D8%A8%D9%86%D9%85%DB%8C%D8%B3%D8%AA%D9%84%D8%A8%D9%86%D9"
+  "%85%DB%8C%D8%B3%D8%AA%D9%84%D8%A7%D8%A8%DB%8C%D9%86%D9%85%D8%B3"
+  "%D8%AA%D9%84%D8%A7%D8%A8%DB%8C%DA%A9%D8%B3%D8%AA%D9%84%D8%A8%DA"
+  "%A9%D9%85%DB%8C%D8%A8%D9%86%D8%AA%DA%A9%D8%AB%D8%B6%D9%85%D9%87"
+  "%D8%A8%DB%8C%DA%A9%D9%85%D8%B3%D9%84%D8%AF%D8%A8%DA%A9%DB%8C%D9"
+  "%85%D8%B3%D9%84%DA%A9%D8%AF%D9%82%D8%AB%D8%B4%D8%B9%D9%81%D9%84"
+  "%DA%A9%D9%82%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA%A9%D8%A8%D9"
+  "%85%DB%8C%D9%87%D8%B3%D8%B9%D9%84%DA%A9%D9%85%D8%A8%DB%8C%D9%87"
+  "%D8%B3%D8%B9%D9%84%DA%A9%D8%AF%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%DA"
+  "%A9%D9%84%D8%AF%D9%85%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%DA%A9%D9%84"
+  "%D9%85%D8%A8%D9%87%DB%8C%D8%B3%DA%A9%D8%AF%D9%85%D9%84%D8%A8%D9"
+  "%87%D8%B9%DB%8C%D8%B3%DA%A9%D9%85%D9%84%D9%87%D8%B9%D8%A8%DB%8C"
+  "%D8%B3%DA%A9%D9%85%D9%84%D9%87%D8%B9%D8%A8%D8%AF%DA%A9%DB%8C%D9"
+  "%85%D8%B3%D9%87%D9%84%D8%B9%D8%AF%D8%A8%DA%A9%D9%85%DB%8C%D8%B3"
+  "%D9%87%D8%B9%D9%84%DA%A9%D8%A8%DB%8C%D9%85%D8%B3%D9%87%D8%B9%D9"
+  "%84%DA%A9%D8%A8%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA%A9%D8%A8"
+  "%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%D8%A8%DB%8C%DA%A9%D9%85%D8"
+  "%B3%D9%87%D8%B9%D8%AF%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3%D9%87"
+  "%D8%B9%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3%D9%87%D8%B9%D9%84%DA"
+  "%A9%D8%A8%DB%8C%D9%85%D8%B3%D9%87%D8%B9%D9%84%D8%A8%D8%AF%DA%A9"
+  "%D9%85%DB%8C%D8%B3%D9%87%D8%AF%D8%B9%D8%A8%D9%84%D8%AF%DA%A9%D9"
+  "%85%DB%8C%D8%B3%D8%B9%D8%AF%D9%84%D8%A8%DA%A9%D9%85%DB%8C%D8%B3"
+  "%D9%87%D8%B9%D9%84%D8%AF%D8%A8%DB%8C%DA%A9%D8%B3%D9%85%D9%87%D8"
+  "%B9%D9%84%D8%A8%DB%8C%DA%A9%D9%85%D8%B3%D9%87%D8%B9%D9%84%DA%A9"
+  "%D8%AF%D8%AB%D8%AE%D8%B5%D9%87%D8%B9%D9%84%D8%AE%D8%AB%DA%A9%D8"
+  "%B5%D8%B9%D9%84%DA%A9%D9%82%D8%AB%D9%87%20%D8%AE%D8%AB%D8%B5%D9"
+  "%87%D9%84%DA%A9%D9%85%D9%82%D8%AB%D9%87%D8%B5%D8%B9%20%D8%B0%D8"
+  "%AF%D9%84%DA%A9%D9%82%D8%AB%D8%B5%D8%B9%20%D8%AF%D9%84%DA%A9%D9"
+  "%82%D9%85%D8%AB%D9%87%D8%B9%D8%B5%20%D8%AF%D9%84%DA%A9%D9%82%D8"
+  "%AB%D9%87%D8%B9%D8%B5%20%D8%AF%DA%A9%D9%84%D9%85%D8%A8%DB%8C%D8"
+  "%B3%D8%AA%D9%84%DA%A9%D8%A8%D9%87%DB%8C%D8%B3%20%D8%AF%DA%A9%D9"
+  "%84%D8%A8%D9%87%DB%8C%D8%B3%D8%B9%20%D9%84%DA%A9%D9%85%D8%A8%DB"
+  "%8C%D9%87%D8%B3%D8%B9%20%DA%A9%D9%84%D9%85%D8%A8%DB%8C%D8%B3%D9"
+  "%87%DA%A9";
 
 namespace v1 {
     using namespace webpp;
 
-    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
-
-
+    enum struct uri_encoding_policy {
+        allowed_chars,
+        disallowed_chars
+    };
 
     /**
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
@@ -70,7 +71,7 @@ namespace v1 {
         for (; pos != end; ++pos) {
             if (digits_left) {
                 decoded_char <<= 4;
-                if (*pos >= '0' && *pos <= '9') { // DIGITS
+                if (*pos >= '0' && *pos <= '9') {                            // DIGITS
                     decoded_char += static_cast<char_type>(*pos - '0');
                 } else if (*pos >= 'A' && *pos <= 'F') {                     // UPPER_HEX
                     decoded_char += static_cast<char_type>(*pos - 'A' + 10); // NOLINT(*-magic-numbers)
@@ -108,8 +109,9 @@ namespace v1 {
             }
         }
         pos = out;
-        if (pos != end)
+        if (pos != end) {
             *pos = '\0';
+        }
         return true;
     }
 
@@ -117,8 +119,10 @@ namespace v1 {
 
 namespace v2 {
     using namespace webpp;
-    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
-
+    enum struct uri_encoding_policy {
+        allowed_chars,
+        disallowed_chars
+    };
 
     /**
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
@@ -141,8 +145,8 @@ namespace v2 {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, -1);
+                int decoded_char  = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
+                decoded_char     |= ascii::hex_digit_value<int>(*pos, -1);
 
                 if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
@@ -169,8 +173,9 @@ namespace v2 {
             }
         }
         pos = out;
-        if (pos != end)
+        if (pos != end) {
             *pos = '\0';
+        }
         return true;
     }
 
@@ -179,8 +184,10 @@ namespace v2 {
 
 namespace v3 {
     using namespace webpp;
-    enum struct uri_encoding_policy { allowed_chars, disallowed_chars };
-
+    enum struct uri_encoding_policy {
+        allowed_chars,
+        disallowed_chars
+    };
 
     /**
      * in-place version of uri component decoding, this is also nothrow since encoded version is always
@@ -203,8 +210,8 @@ namespace v3 {
                     return false;
                 }
 
-                int decoded_char = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
-                decoded_char |= ascii::hex_digit_value<int>(*pos, ~0);
+                int decoded_char  = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
+                decoded_char     |= ascii::hex_digit_value<int>(*pos, ~0);
 
                 if (decoded_char != ~0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
@@ -231,8 +238,9 @@ namespace v3 {
             }
         }
         pos = out;
-        if (pos != end)
+        if (pos != end) {
             *pos = '\0';
+        }
         return true;
     }
 
@@ -249,8 +257,8 @@ static void URIDecodeV1(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
-BENCHMARK(URIDecodeV1);
 
+BENCHMARK(URIDecodeV1);
 
 static void URIDecodeV2(benchmark::State& state) {
     for (auto _ : state) {
@@ -262,8 +270,8 @@ static void URIDecodeV2(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
-BENCHMARK(URIDecodeV2);
 
+BENCHMARK(URIDecodeV2);
 
 static void URIDecodeV3(benchmark::State& state) {
     for (auto _ : state) {
@@ -275,4 +283,5 @@ static void URIDecodeV3(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+
 BENCHMARK(URIDecodeV3);

@@ -9,6 +9,7 @@
 #if __cpp_lib_format
 #    include <format>
 #    define FMT_COMPILE(formatted_string) (formatted_string)
+
 namespace webpp::fmt {
     using namespace ::std; // to mame std::format available
 }
@@ -18,9 +19,11 @@ namespace webpp::fmt {
 #    include <fmt/format.h>
 #    include <fmt/printf.h>
 #    define WEBPP_FMT_LIB 1
+
 namespace webpp::fmt {
     using namespace ::fmt;
 }
+
 namespace webpp::stl {
 
     // from: https://twitter.com/vzverovich/status/1327762206734237698?s=20
@@ -66,6 +69,7 @@ namespace webpp::stl {
 
 #ifndef webpp_no_fmt
 #    include <chrono>
+
 namespace webpp::istl {
 #    if WEBPP_FMT_LIB
     template <typename... Args>
@@ -75,6 +79,7 @@ namespace webpp::istl {
 
 #    else
     namespace fmt::detail {};
+
     // A fallback for when the fmt library is not available
 
     namespace details {
@@ -85,15 +90,16 @@ namespace webpp::istl {
 
         template <typename T = void>
         struct null {};
+
         inline null<> localtime_r WEBPP_FMT_NOMACRO(...) {
             return null<>();
         }
+
         inline null<> localtime_s(...) {
             return null<>();
         }
 
     } // namespace details
-
 
     // Thread-safe replacement for std::localtime
     inline std::tm safe_localtime(std::time_t time) {
@@ -125,21 +131,24 @@ namespace webpp::istl {
             bool fallback(details::null<>) {
                 using namespace fmt::detail;
                 std::tm* tm = std::localtime(&time_);
-                if (tm)
+                if (tm) {
                     tm_ = *tm;
+                }
                 return tm != nullptr;
             }
 #        endif
         };
+
         dispatcher lt(time);
         // Too big time values may be unsupported.
-        if (!lt.run())
+        if (!lt.run()) {
             throw stl::invalid_argument("time_t value out of range");
+        }
         return lt.tm_;
     }
 
     inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> time_point) {
-        const auto time = std::chrono::system_clock::to_time_t(time_point);
+        auto const time = std::chrono::system_clock::to_time_t(time_point);
         return *localtime(stl::addressof(time));
     }
 

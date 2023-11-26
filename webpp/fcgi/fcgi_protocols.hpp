@@ -30,7 +30,7 @@ namespace webpp::fastcgi {
     }
 
     template <typename Full, typename PieceType>
-    constexpr Full join_pieces(const PieceType* pieces) noexcept {
+    constexpr Full join_pieces(PieceType const* pieces) noexcept {
         constexpr stl::uint8_t piece_count = sizeof(Full) / sizeof(PieceType);
         if constexpr (piece_count == 4) {
             return join_pieces<Full, PieceType, 3, 2, 1, 0>(pieces[0], pieces[1], pieces[2], pieces[3]);
@@ -61,7 +61,6 @@ namespace webpp::fastcgi {
             throw stl::invalid_argument("We're not able to handle these types.");
         }
     }
-
 
     template <typename Full, typename PieceType, uint8_t... Index>
     constexpr void split_pieces(Full value, indexed_value<PieceType&, Index>... pieces) noexcept {
@@ -106,7 +105,11 @@ namespace webpp::fastcgi {
     };
 
     // Defines the possible roles a FastCGI application may play
-    enum struct role : uint16_t { responder = 1, authorizer = 2, filter = 3 };
+    enum struct role : uint16_t {
+        responder  = 1,
+        authorizer = 2,
+        filter     = 3
+    };
 
     //! possible statuses a request may declare when complete
     enum struct protocol_status : uint8_t {
@@ -202,6 +205,7 @@ namespace webpp::fastcgi {
         [[nodiscard]] enum role role() const noexcept {
             return static_cast<enum role>(role_value());
         }
+
         /*!
          * If this value is false, the socket should be closed on our side when the request is complete.
          * If true, the other side will close the socket when done and potentially reuse the socket and
@@ -213,6 +217,7 @@ namespace webpp::fastcgi {
             return !(flags & keep_connection_flag);
         }
     };
+
     /*
      * This structure defines the body used in FastCGI END_REQUEST records.
      * It can be casted to raw 8 byte blocks of data and transmitted as is.
@@ -228,11 +233,12 @@ namespace webpp::fastcgi {
         uint8_t reserved[3] = {};
 
         void app_status(uint32_t status_code) noexcept {
-            split_pieces<uint32_t, uint8_t>(status_code,
-                                            app_status_b3,
-                                            app_status_b2,
-                                            app_status_b1,
-                                            app_status_b0);
+            split_pieces<uint32_t, uint8_t>(
+              status_code,
+              app_status_b3,
+              app_status_b2,
+              app_status_b1,
+              app_status_b0);
         }
 
         [[nodiscard]] uint32_t app_status() const noexcept {
@@ -271,7 +277,6 @@ namespace webpp::fastcgi {
             stl::copy_n(_value, real_value_length, value);
         }
 
-
         /*
          * Determine the optimal record size given a requested content length
          *
@@ -281,8 +286,9 @@ namespace webpp::fastcgi {
         [[nodiscard]] stl::size_t record_size(stl::size_t content_length) noexcept {
             // Of course the maximum content length is in fact 0xffff bytes so any passed content length >
             // 0xffff will be assumed 0xffff.
-            if (content_length > 0xFFFFu)
+            if (content_length > 0xFFFFu) {
                 content_length = 0xFFFFU;
+            }
             return (content_length + sizeof(header) + chunk_size - 1) / chunk_size * chunk_size;
         }
     };

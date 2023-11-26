@@ -27,7 +27,7 @@ namespace webpp {
      * Converts a number of microseconds to a relative timeval.
      * @param dur A chrono duration of microseconds.
      */
-    [[nodiscard]] static constexpr timeval to_timeval(const std::chrono::microseconds& dur) noexcept {
+    [[nodiscard]] static constexpr timeval to_timeval(std::chrono::microseconds const& dur) noexcept {
         using std::chrono::duration_cast;
         using std::chrono::microseconds;
         using std::chrono::seconds;
@@ -43,15 +43,14 @@ namespace webpp {
           .tv_usec = suseconds_t{duration_cast<microseconds>(dur - sec).count()}};
     }
 
-
     /**
      * Converts a chrono duration to a relative timeval.
      * @param dur A chrono duration.
      * @return A timeval.
      */
     template <typename Rep, typename Period>
-    [[nodiscard]] static constexpr timeval
-    to_timeval(const std::chrono::duration<Rep, Period>& dur) noexcept {
+    [[nodiscard]] static constexpr timeval to_timeval(
+      std::chrono::duration<Rep, Period> const& dur) noexcept {
         return to_timeval(std::chrono::duration_cast<std::chrono::microseconds>(dur));
     }
 
@@ -61,7 +60,7 @@ namespace webpp {
      * @return A chrono duration.
      */
     template <typename Dur = std::chrono::microseconds>
-    [[nodiscard]] static constexpr Dur to_duration(const timeval& tv) noexcept {
+    [[nodiscard]] static constexpr Dur to_duration(timeval const& tv) noexcept {
         auto const dur = std::chrono::seconds{tv.tv_sec} + std::chrono::microseconds{tv.tv_usec};
         return std::chrono::duration_cast<Dur>(dur);
     }
@@ -72,7 +71,7 @@ namespace webpp {
      * @return A chrono time_point.
      */
     template <typename Clock = std::chrono::system_clock>
-    [[nodiscard]] static constexpr typename Clock::time_point to_timepoint(const timeval& tv) noexcept {
+    [[nodiscard]] static constexpr typename Clock::time_point to_timepoint(timeval const& tv) noexcept {
         return
           typename Clock::time_point{std::chrono::duration_cast<typename Clock::duration>(to_duration(tv))};
     }

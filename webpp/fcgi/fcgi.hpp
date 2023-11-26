@@ -34,7 +34,6 @@ namespace webpp::fastcgi {
         server_type                          server;
         app_wrapper_type                     app;
 
-
         template <typename... Args>
         fcgi(Args&&... args)
           : super{stl::forward<Args>(args)...},
@@ -52,11 +51,12 @@ namespace webpp::fastcgi {
                 endpoints.emplace(stl::net::ip::make_address(default_listen_address, ec),
                                   default_listen_port);
                 if (!ec) {
-                    this->logger.critical(logging_category,
-                                          fmt::format("We're not able to listen to {}:{}",
-                                                      default_listen_address,
-                                                      default_listen_port),
-                                          ec);
+                    this->logger.critical(
+                      logging_category,
+                      fmt::format("We're not able to listen to {}:{}",
+                                  default_listen_address,
+                                  default_listen_port),
+                      ec);
                     return;
                 }
             }

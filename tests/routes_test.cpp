@@ -9,9 +9,7 @@
 using namespace webpp;
 using namespace webpp::http;
 
-
 struct fake_app {
-
     HTTPResponse auto operator()(HTTPRequest auto&& req) {
         static_router _router{[]() {}};
         return _router(req);
@@ -30,8 +28,6 @@ TEST(Routes, Path) {
     //  EXPECT_TRUE((root / number{"integer name"} / number{"2th num"})(ctx));
     //  EXPECT_TRUE((root / number{"integer name"} / number{"another number"} / number{"3th num"})(ctx));
 }
-
-
 
 // namespace webpp {
 //    class fake_cgi;

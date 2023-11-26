@@ -39,8 +39,8 @@ namespace webpp {
             return _content;
         }
 
-        [[nodiscard]] static constexpr std::optional<embedded_file>
-        search([[maybe_unused]] string_view_type filepath) noexcept {
+        [[nodiscard]] static constexpr std::optional<embedded_file> search(
+          [[maybe_unused]] string_view_type filepath) noexcept {
 #ifdef WEBPP_EMBEDDED_FILES
             for (auto const& [file, content] : webpp_embedded_files) {
                 if (filepath == file) {
@@ -58,8 +58,8 @@ namespace webpp {
             return search(string_view_type{filename.data(), filename.size()});
         }
 #else
-        [[nodiscard]] static constexpr std::optional<embedded_file>
-        search(std::filesystem::path const&) noexcept {
+        [[nodiscard]] static constexpr std::optional<embedded_file> search(
+          std::filesystem::path const&) noexcept {
             return std::nullopt;
         }
 #endif

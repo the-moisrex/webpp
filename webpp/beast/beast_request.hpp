@@ -109,8 +109,8 @@ namespace webpp::beast_proto {
         }
 
         [[nodiscard]] http::version version() const noexcept {
-            const auto major = static_cast<stl::uint16_t>(breq->version() / 10);
-            const auto minor = static_cast<stl::uint16_t>(breq->version() % 10);
+            auto const major = static_cast<stl::uint16_t>(breq->version() / 10);
+            auto const minor = static_cast<stl::uint16_t>(breq->version() % 10);
             return http::version{major, minor};
         }
 
@@ -119,7 +119,7 @@ namespace webpp::beast_proto {
         void set_beast_parser(beast_parser_ref parser) noexcept {
             breq = &parser.get();
             // todo: not very efficient, is it?
-            for (const auto& field : *breq) {
+            for (auto const& field : *breq) {
                 this->headers.emplace(string_viewify(field.name_string()), string_viewify(field.value()));
             }
             this->body.set_beast_parser(parser);

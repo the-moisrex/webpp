@@ -4,6 +4,7 @@
 #include "common/tests_common_pch.hpp"
 
 using namespace webpp;
+
 // NOLINTBEGIN(*-magic-numbers)
 
 TEST(BasicVersion, Concepts) {
@@ -21,7 +22,6 @@ TEST(BasicVersion, SimpleUsage) {
     ver = stl::uint16_t{7};
     EXPECT_EQ(ver[2], 7);
 }
-
 
 TEST(BasicVersion, FromString) {
     basic_version<3, stl::uint16_t> const ver123{stl::uint16_t{1}, 2, 3};
@@ -64,7 +64,6 @@ TEST(BasicVersion, OperatorsTest) {
     EXPECT_TRUE(stl::is_lt(basic_version{} <=> ver));
     EXPECT_TRUE(stl::is_eq(basic_version{} <=> basic_version{}));
 }
-
 
 TEST(BasicVersion, ToStringTest) {
     basic_version ver{1, 2, 3, 4, 5, 6};

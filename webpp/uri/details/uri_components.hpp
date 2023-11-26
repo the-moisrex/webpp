@@ -14,7 +14,7 @@
 
 namespace webpp::uri {
 
-    template <typename SegType = stl::uint32_t, typename Iter = const char*>
+    template <typename SegType = stl::uint32_t, typename Iter = char const*>
     struct uri_components;
 
     template <typename T>
@@ -27,7 +27,6 @@ namespace webpp::uri {
     /// Iterator type has no effect
     template <typename Iter>
     struct uri_components<void, Iter> {};
-
 
     /**
      * URL Components
@@ -147,7 +146,6 @@ namespace webpp::uri {
             set_fragment(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
-
         constexpr void clear_scheme() noexcept {
             scheme_end = omitted;
         }
@@ -222,7 +220,8 @@ namespace webpp::uri {
             using str_iterator = typename StrT::iterator;
             if constexpr (!stl::same_as<str_iterator, iterator> && requires {
                               StrT{uri_beg.base() + beg, size};
-                          }) {
+                          })
+            {
                 return StrT{uri_beg.base() + beg, size};
             } else {
                 return StrT{uri_beg + beg, size};
@@ -281,9 +280,9 @@ namespace webpp::uri {
             if (authority_end == omitted) {
                 return {};
             }
-            return view<StrT>(authority_end,
-                              stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) -
-                                authority_end);
+            return view<StrT>(
+              authority_end,
+              stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) - authority_end);
         }
 
         template <istl::StringView StrT = stl::string_view>
@@ -302,7 +301,6 @@ namespace webpp::uri {
             return view<StrT>(fragment_start, uri_end - fragment_start);
         }
 
-
         // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(field)                           \
     constexpr auto& field##_ref() const noexcept { \
@@ -312,19 +310,18 @@ namespace webpp::uri {
 
 
         // they're not used
-        webpp_def(scheme)     //
-          webpp_def(username) //
-          webpp_def(password) //
-          webpp_def(hostname) //
-          webpp_def(port)     //
-          webpp_def(path)     //
-          webpp_def(queries)  //
-          webpp_def(fragment) //
+        webpp_def(scheme)
+        webpp_def(username)
+        webpp_def(password)
+        webpp_def(hostname)
+        webpp_def(port)
+        webpp_def(path)
+        webpp_def(queries)
+        webpp_def(fragment)
 
         // NOLINTEND(*-macro-usage)
 #undef webpp_def
     };
-
 
     template <istl::StringLike StrT, typename Iter>
     struct uri_components<StrT, Iter> {
@@ -391,23 +388,21 @@ namespace webpp::uri {
 
 
 
-        webpp_def(scheme)     //
-          webpp_def(username) //
-          webpp_def(password) //
-          webpp_def(hostname) //
-          webpp_def(port)     //
-          webpp_def(path)     //
-          webpp_def(queries)  //
-          webpp_def(fragment) //
-
-        // NOLINTEND(*-macro-usage)
+        webpp_def(scheme)
+        webpp_def(username)
+        webpp_def(password)
+        webpp_def(hostname)
+        webpp_def(port)
+        webpp_def(path)
+        webpp_def(queries)
+        webpp_def(fragment)
 #undef webpp_def
 
-          [[nodiscard]] constexpr bool has_credentials() const noexcept {
+        // NOLINTEND(*-macro-usage)
+
+        [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username(); // password cannot exist without the username
         }
-
-
 
         /// Create a URI Component using an allocator
         // template <istl::String StringType = StrT>
@@ -463,10 +458,6 @@ namespace webpp::uri {
         //       comps.fragment_start}};
         // }
     };
-
-
-
-
 
     /**
      * URI Components fully separated
@@ -559,19 +550,19 @@ namespace webpp::uri {
 
 
 
-        webpp_def(scheme)     //
-          webpp_def(username) //
-          webpp_def(password) //
-          webpp_def(hostname) //
-          webpp_def(port)     //
-          webpp_def(path)     //
-          webpp_def(queries)  //
-          webpp_def(fragment) //
-
-        // NOLINTEND(*-macro-usage)
+        webpp_def(scheme)
+        webpp_def(username)
+        webpp_def(password)
+        webpp_def(hostname)
+        webpp_def(port)
+        webpp_def(path)
+        webpp_def(queries)
+        webpp_def(fragment)
 #undef webpp_def
 
-          constexpr void set_hostname(iterator beg, iterator end) {
+        // NOLINTEND(*-macro-usage)
+
+        constexpr void set_hostname(iterator beg, iterator end) {
             istl::collection::clear(m_hostname);
             if constexpr (is_modifiable) {
                 istl::collection::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
@@ -599,11 +590,19 @@ namespace webpp::uri {
 
             istl::collection::clear(m_queries);
             if constexpr (is_modifiable) {
-                istl::collection::emplace_one(m_queries,
-                                              pack_type{key_type{beg, end, m_queries.get_allocator()},
-                                                        value_type{m_queries.get_allocator()}});
+                istl::collection::emplace_one(
+                  m_queries,
+                  pack_type{
+                    key_type{beg, end, m_queries.get_allocator()},
+                    value_type{m_queries.get_allocator()}
+                });
             } else {
-                istl::collection::emplace_one(m_queries, pack_type{key_type{beg, end}, value_type{}});
+                istl::collection::emplace_one(
+                  m_queries,
+                  pack_type{
+                    key_type{beg, end},
+                    value_type{}
+                });
             }
         }
 
@@ -647,8 +646,8 @@ namespace webpp::uri {
                 return out;
             }
             for (auto pos = m_queries.begin();;) {
-                auto const [name, value] = *pos;
-                out += name;
+                auto const [name, value]  = *pos;
+                out                      += name;
                 if (!value.empty()) {
                     out += '=';
                     out += value;
@@ -666,19 +665,14 @@ namespace webpp::uri {
         }
     };
 
-
-
-
-
     using uri_components_view = uri_components<stl::string_view, stl::string_view::const_iterator>;
-    using uri_components_u32  = uri_components<stl::uint32_t, const char*>;
-
+    using uri_components_u32  = uri_components<stl::uint32_t, char const*>;
 
     /**
      * A class used during parsing a URI
      */
     template <typename OutSegType  = stl::uint32_t,
-              typename OutIter     = const char*,
+              typename OutIter     = char const*,
               typename BaseSegType = void,
               typename BaseIter    = OutIter>
     struct parsing_uri_context {
@@ -739,8 +733,7 @@ namespace webpp::uri {
         bool                            is_special = false;
     };
 
-
-    using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, const char*>;
+    using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, char const*>;
 
     template <typename StrT = stl::string>
     using parsing_uri_context_string = parsing_uri_context<StrT, typename StrT::const_iterator>;
@@ -755,7 +748,6 @@ namespace webpp::uri {
 
     template <typename Allocator = stl::allocator<char>>
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
-
 
 
 } // namespace webpp::uri

@@ -56,7 +56,6 @@ namespace webpp::ascii {
         rtrim<StrViewType>(str, whitespaces);
     }
 
-
     // trim from start (copying)
     template <istl::StringViewifiable StrViewType, CharSet CS = decltype(standard_whitespaces)>
     [[nodiscard]] static inline auto ltrim_copy(StrViewType&& inp_str,
@@ -87,7 +86,7 @@ namespace webpp::ascii {
     // trim from start (in place)
     template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
     static inline void ltrim(StrT& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        const auto pos = inp_str.find_first_not_of(whitespaces.data());
+        auto const pos = inp_str.find_first_not_of(whitespaces.data());
         if (pos != StrT::npos) {
             inp_str.erase(0, pos);
         }
@@ -96,7 +95,7 @@ namespace webpp::ascii {
     // trim from end (in place)
     template <CharSet CS = decltype(standard_whitespaces), istl::String StrT = stl::string>
     static inline void rtrim(StrT& inp_str, CS whitespaces = standard_whitespaces) noexcept {
-        const auto pos = inp_str.find_last_not_of(whitespaces.data());
+        auto const pos = inp_str.find_last_not_of(whitespaces.data());
         if (pos == StrT::npos) {
             inp_str.clear();
         } else {

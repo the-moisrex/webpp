@@ -58,13 +58,11 @@ namespace webpp::async {
     template <typename... Tasks>
     using connected_type = decltype(connect(stl::declval<Tasks>()...));
 
-
     /**
      * Start/Continue Operation
      * This CPO (Customization Point Object) helps to advance a connected task
      */
     inline constexpr struct advance_tag {
-
         /// calls tag_invoke(advance, task)
         template <typename T>
             requires(stl::tag_invocable<advance_tag, T>)
@@ -76,8 +74,8 @@ namespace webpp::async {
         /// calls task.advance()
         template <typename T>
             requires requires(T task) { task.advance(); }
-        [[nodiscard]] friend constexpr bool
-        tag_invoke(advance_tag, T&& task) noexcept(noexcept(stl::forward<T>(task).advance())) {
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task) noexcept(
+          noexcept(stl::forward<T>(task).advance())) {
             using return_type = stl::remove_cvref_t<decltype(stl::forward<T>(task).advance())>;
             if constexpr (stl::same_as<return_type, bool>) {
                 return stl::forward<T>(task).advance();
@@ -90,12 +88,11 @@ namespace webpp::async {
             }
         }
 
-
         /// calls task()
         template <typename T>
             requires(stl::is_invocable_v<T> && !requires(T task) { task.advance(); })
-        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag,
-                                                       T&& task) noexcept(stl::is_nothrow_invocable_v<T>) {
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task) noexcept(
+          stl::is_nothrow_invocable_v<T>) {
             using return_type = stl::remove_cvref_t<stl::invoke_result_t<T>>;
             if constexpr (stl::same_as<return_type, bool>) {
                 return stl::invoke(stl::forward<T>(task));
@@ -111,13 +108,11 @@ namespace webpp::async {
         // todo: add iterators support
     } advance;
 
-
     /**
      * Yield Value
      * Pass the specified value to the sub-tasks to handle
      */
     inline constexpr struct yield_value_tag {
-
         /// calls tag_invoke(yield_value, task, value)
         template <typename TaskT, typename ValueT>
             requires(stl::tag_invocable<yield_value_tag, TaskT, ValueT>)
@@ -139,7 +134,6 @@ namespace webpp::async {
      * Set Done
      */
     inline constexpr struct set_done_tag {
-
         // Customization Point
         template <typename T>
             requires stl::tag_invocable<set_done_tag, T>
@@ -159,14 +153,12 @@ namespace webpp::async {
         }
     } set_done;
 
-
     /**
      * Set Value
      * Setting value is a pushing technique used by producer algorithms to push the data to the consumers,
      * and immediately run their algorithms if they want to.
      */
     inline constexpr struct set_value_tag {
-
         // Customization Point
         template <typename T, typename... Args>
             requires stl::tag_invocable<set_value_tag, T, Args...>
@@ -221,7 +213,6 @@ namespace webpp::async {
      * @endcode
      */
     inline constexpr struct get_value_tag {
-
         // Customization Point
         template <typename T, typename... Args>
             requires stl::tag_invocable<get_value_tag, T, Args...>
@@ -282,11 +273,7 @@ namespace webpp::async {
         return HasValue<TaskT, Args...>;
     }
 
-
-
-
     inline constexpr struct set_error_tag {
-
         // Customization Point
         template <typename T, typename... Args>
             requires stl::tag_invocable<set_error_tag, T, Args...>
@@ -310,10 +297,13 @@ namespace webpp::async {
 
     namespace details {
         template <typename T>
-        concept BasicTask = stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
-                            requires(T task1, T task2) {
-                                { connect(task1, task2) }; // todo: inspect the returned type
-                            };
+        concept BasicTask =
+          stl::movable<T> && stl::is_nothrow_move_constructible_v<T> && stl::copyable<T> &&
+          requires(T task1, T task2) {
+              {
+                  connect(task1, task2)
+              }; // todo: inspect the returned type
+          };
     }
 
     /**
@@ -321,15 +311,22 @@ namespace webpp::async {
      * It's kinda an iterator
      */
     template <typename T>
-    concept TaskYielder = stl::movable<T> &&
-                          requires(T iter) {
-                              // almost weakly incrementable
-                              { ++iter } noexcept -> stl::same_as<T&>;
-                              // almost indirectly readable
-                              { *iter } noexcept;
-                              // is_done
-                              { static_cast<bool>(iter) } noexcept;
-                          }
+    concept TaskYielder =
+      stl::movable<T> &&
+      requires(T iter) {
+          // almost weakly incrementable
+          {
+              ++iter
+          } noexcept -> stl::same_as<T&>;
+          // almost indirectly readable
+          {
+              *iter
+          } noexcept;
+          // is_done
+          {
+              static_cast<bool>(iter)
+          } noexcept;
+      }
     // #ifdef __cpp_lib_ranges
     //                           && std::ranges::view<T>
     // #endif
@@ -340,13 +337,19 @@ namespace webpp::async {
 
     template <typename T>
     concept IterableTask = details::BasicTask<T> && requires(T task) {
-        { stl::begin(task) } noexcept -> TaskYielder;
-        { stl::end(task) } noexcept -> TaskYielder;
+        {
+            stl::begin(task)
+        } noexcept -> TaskYielder;
+        {
+            stl::end(task)
+        } noexcept -> TaskYielder;
     };
 
     template <typename T>
     concept RootTask = details::BasicTask<T> && requires(T task) {
-        { advance(task) } -> stl::same_as<bool>;
+        {
+            advance(task)
+        } -> stl::same_as<bool>;
     };
 
     template <typename T>
@@ -389,7 +392,9 @@ namespace webpp::async {
     template <typename T>
     concept ExecutionContext = Task<T> && requires(T async) {
         // This is what gets stored in the "enabled_traits" objects.
-        { async.scheduler() } -> Scheduler;
+        {
+            async.scheduler()
+        } -> Scheduler;
     };
 
 

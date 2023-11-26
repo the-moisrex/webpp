@@ -6,100 +6,100 @@
 #include <cstring>
 using namespace webpp;
 
-static constexpr auto valid_domains =
-  stl::array{"example.com",
-             "google.com",
-             "github.com",
-             "wikipedia.org",
-             "stackoverflow.com",
-             "yahoo.com",
-             "amazon.com",
-             "microsoft.com",
-             "linkedin.com",
-             "reddit.com",
-             "instagram.com",
-             "twitter.com",
-             "facebook.com",
-             "netflix.com",
-             "ebay.com",
-             "craigslist.org",
-             "spotify.com",
-             "apple.com",
-             "pinterest.com",
-             "tumblr.com",
-             "wordpress.com",
-             "bbc.co.uk",
-             "nytimes.com",
-             "cnn.com",
-             "foxnews.com",
-             "forbes.com",
-             "walmart.com",
-             "bestbuy.com",
-             "homedepot.com",
-             "target.com",
-             "ikea.com",
-             "nasa.gov",
-             "usda.gov",
-             "whitehouse.gov",
-             "irs.gov",
-             "cdc.gov",
-             "nih.gov",
-             "who.int",
-             "un.org",
-             "europa.eu",
-             "nato.int",
-             "icann.org",
-             "ietf.org",
-             "iso.org",
-             "ieee.org",
-             "acm.org",
-             "ietf.org",
-             "dnssec.net",
-             "localhost",
-             "example.com",
-             "example.co.uk",
-             "example.org",
-             "www.example.com",
-             "a.example.com",
-             "a.b.example.com",
-             "xn--h1aegh.com",
-             "example.com-foo.com",
-             "foo.example.com",
-             "example.00",
-             "example.1",
-             "example.123",
-             "example.1234",
-             "example.12345",
-             "example.123456",
-             "example.1234567",
-             "example.com",
-             "example.net",
-             "example.org",
-             "example.edu",
-             "example.gov",
-             "example.mil",
-             "example.int",
-             "example.arpa",
-             "example.info",
-             "example.biz",
-             "example.name",
-             "example.pro",
-             "example.coop",
-             "example.mobi",
-             "example.asia",
-             "example.cat",
-             "example.jobs",
-             "example.com-abc",
-             "example.tel",
-             "example.coma",
-             "example.travel",
-             "example.1234",
-             "example.xxx",
-             "14159265358979323846264338327950288419716939937510582097494459.com",
-             "example.abcdefghijklmnopqrstuvwxyz0123456789",
-             "example.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z",
-             "example.com1",
-             "example.com123456789012345678901234567890123456789012345678901234567890"};
+static constexpr auto valid_domains = stl::array{
+  "example.com",
+  "google.com",
+  "github.com",
+  "wikipedia.org",
+  "stackoverflow.com",
+  "yahoo.com",
+  "amazon.com",
+  "microsoft.com",
+  "linkedin.com",
+  "reddit.com",
+  "instagram.com",
+  "twitter.com",
+  "facebook.com",
+  "netflix.com",
+  "ebay.com",
+  "craigslist.org",
+  "spotify.com",
+  "apple.com",
+  "pinterest.com",
+  "tumblr.com",
+  "wordpress.com",
+  "bbc.co.uk",
+  "nytimes.com",
+  "cnn.com",
+  "foxnews.com",
+  "forbes.com",
+  "walmart.com",
+  "bestbuy.com",
+  "homedepot.com",
+  "target.com",
+  "ikea.com",
+  "nasa.gov",
+  "usda.gov",
+  "whitehouse.gov",
+  "irs.gov",
+  "cdc.gov",
+  "nih.gov",
+  "who.int",
+  "un.org",
+  "europa.eu",
+  "nato.int",
+  "icann.org",
+  "ietf.org",
+  "iso.org",
+  "ieee.org",
+  "acm.org",
+  "ietf.org",
+  "dnssec.net",
+  "localhost",
+  "example.com",
+  "example.co.uk",
+  "example.org",
+  "www.example.com",
+  "a.example.com",
+  "a.b.example.com",
+  "xn--h1aegh.com",
+  "example.com-foo.com",
+  "foo.example.com",
+  "example.00",
+  "example.1",
+  "example.123",
+  "example.1234",
+  "example.12345",
+  "example.123456",
+  "example.1234567",
+  "example.com",
+  "example.net",
+  "example.org",
+  "example.edu",
+  "example.gov",
+  "example.mil",
+  "example.int",
+  "example.arpa",
+  "example.info",
+  "example.biz",
+  "example.name",
+  "example.pro",
+  "example.coop",
+  "example.mobi",
+  "example.asia",
+  "example.cat",
+  "example.jobs",
+  "example.com-abc",
+  "example.tel",
+  "example.coma",
+  "example.travel",
+  "example.1234",
+  "example.xxx",
+  "14159265358979323846264338327950288419716939937510582097494459.com",
+  "example.abcdefghijklmnopqrstuvwxyz0123456789",
+  "example.a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z",
+  "example.com1",
+  "example.com123456789012345678901234567890123456789012345678901234567890"};
 
 static constexpr auto invalid_domains = stl::array{
   "-example.com",
@@ -224,7 +224,8 @@ std::array<std::pair<std::string_view, std::string_view>, 60> puny_domains = {
    {"xn--h1akwe.xn--p1ai", "сайт.рф"},
    {"xn--80aaahwbee3a.xn--p1ai", "подольск.рф"},
    {"xn--80adxhks.xn--p1ai", "сайт.рф"},
-   {"xn--80ahc0b.xn--p1ai", "москва.рф"}}};
+   {"xn--80ahc0b.xn--p1ai", "москва.рф"}}
+};
 
 TEST(DomainsTest, Validity) {
     for (auto domain_str : valid_domains) {
@@ -244,7 +245,6 @@ TEST(DomainsTest, ValidityPunycode) {
     }
 }
 
-
 TEST(DomainsTest, InValidity) {
     for (auto domain_str : invalid_domains) {
         auto ptr    = domain_str;
@@ -258,10 +258,10 @@ TEST(DomainsTest, SubDomainTooLongError) {
     for (int i = 0; i <= 64; ++i) {
         str += 'd';
     }
-    str += "example.com";
-    auto       str_beg = static_cast<char const*>(str.data());
-    auto const str_end = str_beg + str.size();
-    auto       status  = parse_domain_name(str_beg, str_end);
+    str                += "example.com";
+    auto       str_beg  = static_cast<char const*>(str.data());
+    auto const str_end  = str_beg + str.size();
+    auto       status   = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::subdomain_too_long) << str << "\n" << to_string(status);
 }
 
@@ -271,10 +271,10 @@ TEST(DomainsTest, DomainTooLongError) {
         str += 'd';
         str += '.';
     }
-    str += "com";
-    auto       str_beg = static_cast<char const*>(str.data());
-    auto const str_end = str_beg + str.size();
-    auto       status  = parse_domain_name(str_beg, str_end);
+    str                += "com";
+    auto       str_beg  = static_cast<char const*>(str.data());
+    auto const str_end  = str_beg + str.size();
+    auto       status   = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::too_long) << str << "\n" << to_string(status);
 }
 

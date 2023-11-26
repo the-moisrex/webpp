@@ -75,7 +75,6 @@ namespace webpp::http {
                 // It's noexcept, we call it knowing that.
                 return callable(stl::forward<Args>(args)...);
             } else if constexpr (stl::is_invocable_v<CallableT, Args...>) {
-
                 if constexpr (stl::is_void_v<return_type>) {
                     try {
                         callable(stl::forward<Args>(args)...);
@@ -138,7 +137,6 @@ namespace webpp::http {
 
     } // namespace details
 
-
     template <typename RouteT, Context CtxT, HTTPRequest ReqT>
     constexpr decltype(auto) call_route(RouteT&& _route, CtxT&& ctx, ReqT&& req) noexcept {
         using namespace details;
@@ -170,14 +168,19 @@ namespace webpp::http {
 
 
 
-    enum class logical_operators { none, AND, OR, XOR };
+    enum class logical_operators {
+        none,
+        AND,
+        OR,
+        XOR
+    };
 
     template <typename RouteType, logical_operators Op, typename NextRoute>
     struct basic_route : public istl::make_inheritable<RouteType> {
         using next_route_type = NextRoute;
         using super_t         = istl::make_inheritable<RouteType>;
 
-        constexpr static logical_operators op = Op;
+        static constexpr logical_operators op = Op;
         next_route_type                    next; // NOLINT(misc-non-private-member-variables-in-classes)
 
         // constexpr basic_route(super_t&&       super = super_t{},
@@ -191,6 +194,7 @@ namespace webpp::http {
         constexpr basic_route(ParentRouteType&& super, NextRouteType&& _next = next_route_type{}) noexcept
           : super_t(stl::forward<ParentRouteType>(super)),
             next(stl::forward<NextRouteType>(_next)) {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_route(basic_route const&) noexcept       = default;
@@ -236,7 +240,6 @@ namespace webpp::http {
               typename NextRouteType = void>
     struct route
       : public basic_route<stl::remove_cvref_t<RouteType>, Op, stl::remove_cvref_t<NextRouteType>> {
-
         using route_type                      = stl::remove_cvref_t<RouteType>;
         using next_route_type                 = stl::remove_cvref_t<NextRouteType>;
         static constexpr logical_operators op = Op;
@@ -294,8 +297,8 @@ namespace webpp::http {
         // };
 
       public:
-        constexpr static bool is_route_valid      = !stl::is_void_v<route_type>;
-        constexpr static bool is_next_route_valid = !stl::is_void_v<next_route_type>;
+        static constexpr bool is_route_valid      = !stl::is_void_v<route_type>;
+        static constexpr bool is_next_route_valid = !stl::is_void_v<next_route_type>;
 
         // template <typename R, typename C>
         // using route_switched_context_type =
@@ -342,14 +345,16 @@ namespace webpp::http {
                 using encapsulated_new_route = route<next_route_type, TheOp, NewRouteType>;
                 return route<route_type, op, encapsulated_new_route>{
                   *this,
-                  encapsulated_new_route{super_t::next, stl::forward<NewRouteType>(new_route)}};
+                  encapsulated_new_route{super_t::next, stl::forward<NewRouteType>(new_route)}
+                };
             }
         }
 
         template <typename AppType, typename NewRoutePtr, bool is_noexcept>
         struct route_with_router_pointer {
-            NewRoutePtr        new_route;
-            AppType*           app = nullptr;
+            NewRoutePtr new_route;
+            AppType*    app = nullptr;
+
             [[nodiscard]] auto operator()(auto... args) noexcept(is_noexcept) {
                 // yes we know app must not be nullptr, but route should only be used with router,
                 // and the router will set the app if it can otherwise the router can throw an
@@ -392,7 +397,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator>>=(ReturnType (*func)()) const noexcept {
             return set_next<logical_operators::none>(func);
         }
-
 
         template <typename RouteT>
         [[nodiscard]] constexpr auto operator>>=(RouteT&& new_route) const noexcept {
@@ -442,7 +446,6 @@ namespace webpp::http {
             return operator>>=(stl::forward<decltype(new_route)>(new_route));
         }
 
-
         // template <typename T, typename Ret, typename... Args>
         // [[nodiscard]] constexpr auto operator>>=(Ret (T::*mem_func_pointer)(Args...)) const
         // noexcept {
@@ -476,7 +479,6 @@ namespace webpp::http {
             return set_next<logical_operators::XOR>(stl::forward<decltype(new_route)>(new_route));
         }
 
-
         constexpr auto operator()(Context auto&& ctx, HTTPRequest auto&& req) const noexcept {
             // exceptions will be handled by the router, unfortunately we're not able to do that here
 
@@ -484,7 +486,7 @@ namespace webpp::http {
             if constexpr (stl::is_void_v<res_t>) {
                 call_this_route(ctx, req); // nothing to worry about, it's void
             } else {
-                const auto res = call_this_route(ctx, req);
+                auto const res = call_this_route(ctx, req);
                 if constexpr (!is_next_route_valid) {
                     // we don't have "next route", so let's just return the result of this route to the caller
                     return res;
@@ -499,57 +501,69 @@ namespace webpp::http {
                             // practically the same as AND, but without converting the result to boolean
                             if constexpr (stl::is_void_v<n_res_t>) {
                                 // just because we can't have an optional<void>
-                                if (res)
+                                if (res) {
                                     call_next_route(ctx, req);
+                                }
                             } else if constexpr (stl::same_as<n_res_t, bool>) {
-                                if (res)
+                                if (res) {
                                     return call_next_route(ctx, req);
+                                }
                                 return false;
                             } else if constexpr (istl::Optional<n_res_t>) {
-                                if (!res)
+                                if (!res) {
                                     return n_res_t{stl::nullopt};
+                                }
                                 return call_next_route(ctx, req);
                             } else {
-                                if (!res)
+                                if (!res) {
                                     return stl::optional<n_res_t>{stl::nullopt};
+                                }
                                 return stl::optional<n_res_t>{call_next_route(ctx, req)};
                             }
                         } else if constexpr (logical_operators::AND == op) {
                             // don't rely on operator && for not executing the next route, because the user
                             // may have overloaded the operator &&
                             if constexpr (stl::is_void_v<n_res_t>) {
-                                if (res)
+                                if (res) {
                                     call_next_route(ctx, req);
+                                }
                             } else if constexpr (stl::same_as<n_res_t, bool>) {
-                                if (res)
+                                if (res) {
                                     return call_next_route(ctx, req);
+                                }
                                 return false;
                             } else if constexpr (istl::Optional<n_res_t>) {
-                                if (!res)
+                                if (!res) {
                                     return n_res_t{stl::nullopt};
+                                }
                                 return call_next_route(ctx, req);
                             } else {
-                                if (!res)
+                                if (!res) {
                                     return stl::optional<n_res_t>{stl::nullopt};
+                                }
                                 return stl::optional<n_res_t>{call_next_route(ctx, req)};
                             }
 
                         } else if constexpr (logical_operators::OR == op) {
                             // Same as "and", we will not use operator ||
                             if constexpr (stl::is_void_v<n_res_t>) {
-                                if (res)
+                                if (res) {
                                     call_next_route(ctx, req);
+                                }
                             } else if constexpr (stl::same_as<n_res_t, bool>) {
-                                if (res)
+                                if (res) {
                                     return true;
+                                }
                                 return call_next_route(ctx, req);
                             } else if constexpr (istl::Optional<n_res_t>) {
-                                if (res)
+                                if (res) {
                                     return n_res_t{stl::nullopt};
+                                }
                                 return call_next_route(ctx, req);
                             } else {
-                                if (res)
+                                if (res) {
                                     return stl::optional<n_res_t>{stl::nullopt};
+                                }
                                 return optional<n_res_t>(call_next_route(ctx, req));
                             }
                         } else if constexpr (logical_operators::XOR == op) {
@@ -593,7 +607,6 @@ namespace webpp::http {
       private:
         template <typename ResT, bool First = false, typename RoutT>
         static void append_route_as_string(istl::String auto& out, RoutT& the_route) {
-
             // print this route
             if constexpr (stl::is_void_v<ResT>) {
                 if constexpr (First) {

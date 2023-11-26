@@ -8,7 +8,6 @@
 #include <webpp/traits/enable_traits.hpp>
 #include <webpp/views/view_manager.hpp>
 
-
 namespace website {
 
     using namespace webpp::http;
@@ -26,8 +25,8 @@ namespace website {
             stl::string const body           = ctx.request.as();
             stl::size_t const content_length = ctx.request.headers.content_length();
 
-            stl::string res = webpp::fmt::format("Content-Length: {}\n", content_length);
-            res += webpp::fmt::format("Body Length: {}\n", body.size());
+            stl::string res  = webpp::fmt::format("Content-Length: {}\n", content_length);
+            res             += webpp::fmt::format("Body Length: {}\n", body.size());
 
             for (auto const& hdr : ctx.request.headers) {
                 res += hdr.name;
@@ -54,24 +53,24 @@ namespace website {
         }
 
         HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
-            static static_router router{(get and root) >>
-                                          [this] {
-                                              return view_man.view("home.html");
-                                          },
-                                        (post and root) >>
-                                          [this](context& ctx) {
-                                              stl::size_t const body_size =
-                                                ctx.request.headers.content_length();
-                                              stl::map<stl::string, stl::string> values;
-                                              values["request_body_size"] = stl::to_string(body_size);
-                                              values["request_body"]      = as<stl::string>(ctx.request.body);
-                                              return view_man.mustache("home-post", values);
-                                          },
-                                        (get and root / "about") >>
-                                          [this]() {
-                                              return view_man.file("about.html");
-                                          },
-                                        (post and root / "content-length") >> &app::get_len};
+            static static_router router{
+              (get and root) >>
+                [this] {
+                    return view_man.view("home.html");
+                },
+              (post and root) >>
+                [this](context& ctx) {
+                    stl::size_t const                  body_size = ctx.request.headers.content_length();
+                    stl::map<stl::string, stl::string> values;
+                    values["request_body_size"] = stl::to_string(body_size);
+                    values["request_body"]      = as<stl::string>(ctx.request.body);
+                    return view_man.mustache("home-post", values);
+                },
+              (get and root / "about") >>
+                [this]() {
+                    return view_man.file("about.html");
+                },
+              (post and root / "content-length") >> &app::get_len};
 
             return router(req);
         }

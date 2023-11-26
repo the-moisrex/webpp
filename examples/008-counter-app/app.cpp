@@ -20,7 +20,6 @@ struct app_impl : public enable_traits<traits_type> {
     counter_model                    counter;
     dynamic_router                   router;
 
-
     app_impl(etraits const& et) : etraits{et}, view_man{*this} {
         view_man.view_roots.emplace_back("./public");
         view_man.view_roots.emplace_back("./examples/007-beast-view/public");
@@ -54,11 +53,12 @@ struct app_impl : public enable_traits<traits_type> {
 
     // home page
     auto home(context const& ctx) noexcept {
-        return view_man.mustache("home",
-                                 {
-                                   {"count", counter.current()},   // visited times
-                                   {"ip_address", ctx.client_ip()} // user ip
-                                 });
+        return view_man.mustache(
+          "home",
+          {
+            {     "count", counter.current()}, // visited times
+            {"ip_address",   ctx.client_ip()}  // user ip
+        });
     }
 
     // about page
@@ -71,9 +71,6 @@ struct app_impl : public enable_traits<traits_type> {
         return router(req);
     }
 };
-
-
-
 
 // app impl
 app::app(typename app::etraits const& et) : the_app{stl::make_unique<app_impl>(et)} {}

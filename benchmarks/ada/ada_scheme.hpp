@@ -30,6 +30,7 @@ namespace ada::scheme {
         const std::string_view target     = details::is_special_list[hash_value];
         return (target[0] == scheme[0]) && (target.substr(1) == scheme.substr(1));
     }
+
     constexpr uint16_t get_special_port(std::string_view scheme) noexcept {
         if (scheme.empty()) {
             return 0;

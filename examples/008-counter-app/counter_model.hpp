@@ -22,7 +22,7 @@ namespace website {
             counter["ip"].string().unique().not_null();
             counter["val"].number().not_null().default_value(0);
             counter.create_if_not_exists();
-        };
+        }
 
         bool increment() {
             auto counter = db.table("counter").where("ip", ip);

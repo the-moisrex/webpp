@@ -13,11 +13,11 @@
 
 namespace webpp::uri {
 
-    static constexpr stl::uint16_t max_port_number = 65535U;
+    static constexpr stl::uint16_t max_port_number = 65'535U;
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_port(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_port(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
 
         using ctx_type  = parsing_uri_context<T...>;
@@ -73,15 +73,16 @@ namespace webpp::uri {
                         }
                         if (port_value == known_port(ctx.out.get_scheme())) {
                             ctx.out.clear_port();
-                        } else if constexpr (requires {
-                                                 ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-                                             }) {
+                        } else if constexpr (
+                          requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); })
+                        {
                             // store the integer port value
                             ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
                         } else if constexpr (requires {
                                                  ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
                                                                   static_cast<seg_type>(ctx.pos - ctx.beg));
-                                             }) {
+                                             })
+                        {
                             // store the position of it relative to the beginning of the URI
                             ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
                                              static_cast<seg_type>(ctx.pos - ctx.beg));
@@ -102,7 +103,6 @@ namespace webpp::uri {
         }
     }
 
-
     /**
      * Basic port is designed as a string because it also should be able to handle services,
      * not that URIs can handle services but that operating systems APIs like Unix systems can
@@ -114,7 +114,7 @@ namespace webpp::uri {
     struct basic_port : stl::remove_cvref_t<StringType> {
         using string_type = stl::remove_cvref_t<StringType>;
 
-        static constexpr uint16_t max_port_number       = 65535;
+        static constexpr uint16_t max_port_number       = 65'535;
         static constexpr uint16_t well_known_upper_port = 1024;
 
         template <typename... T>
@@ -126,9 +126,9 @@ namespace webpp::uri {
         }
 
         template <typename T>
-            requires(stl::is_integral_v<stl::remove_cvref_t<T>> &&
-                     (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
-                     !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
+            requires(
+              stl::is_integral_v<stl::remove_cvref_t<T>> && (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
+              !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
         constexpr explicit basic_port(T port_num) : string_type{} {
             if (port_num < 0 || port_num > max_port_number) {
                 throw stl::invalid_argument("The specified port number is not in a valid range.");

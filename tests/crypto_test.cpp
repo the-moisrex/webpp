@@ -8,14 +8,12 @@
 
 using namespace webpp;
 
-
 TEST(Crypto, GZip) {
     std::string original{"zip me"};
     auto        compressed   = gzip::compress(original.data(), original.size());
     auto        decompressed = gzip::decompress(compressed.data(), compressed.size());
     EXPECT_EQ(original, decompressed);
 }
-
 
 TEST(Crypto, Base64) {
     std::string orig = "encode me up";

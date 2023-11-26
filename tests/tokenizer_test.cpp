@@ -14,7 +14,6 @@ TEST(StringTokenizerTest, Init) {
     EXPECT_EQ(tok.token(), "world");
 }
 
-
 TEST(StringTokenizerTest, EmptyNext) {
     constexpr stl::string_view str{"Hello;world"};
     string_tokenizer           tok{str};
@@ -24,7 +23,6 @@ TEST(StringTokenizerTest, EmptyNext) {
     EXPECT_TRUE(tok.next(charset{';'}));
     EXPECT_EQ(tok.token(), "world");
 }
-
 
 TEST(StringTokenizerTest, QuotesTest) {
     std::string_view const input = R"(no-cache="foo,\" bar", private)";
@@ -56,7 +54,11 @@ TEST(StringTokenizerTest, ReturnDelimsOptionTest) {
     EXPECT_EQ("private", t.token()) << t.token();
 }
 
-enum struct errors { ok, no_one, no_two };
+enum struct errors {
+    ok,
+    no_one,
+    no_two
+};
 
 TEST(StringTokenizerTest, SimpleUsage) {
     using namespace webpp::stl;

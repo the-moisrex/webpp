@@ -15,9 +15,10 @@ namespace webpp::uri::details {
      */
     template <istl::CharType char_type>
     static constexpr auto ALLOWED_CHARACTERS_IN_URI =
-      charset(ALPHA<char_type>, DIGIT<char_type>, charset<char_type, 20>{';', ',', '/',  '?', ':', '@', '&',
-                                                                         '=', '+', '$',  '-', '_', '.', '!',
-                                                                         '~', '*', '\'', '(', ')', '#'});
+      charset(ALPHA<char_type>,
+              DIGIT<char_type>,
+              charset<char_type, 20>{';', ',', '/', '?', ':', '@', '&',  '=', '+', '$',
+                                     '-', '_', '.', '!', '~', '*', '\'', '(', ')', '#'});
     /**
      * This is the character set corresponds to the second part of the "scheme" syntax
      * specified in RFC 3986 (https://tools.ietf.org/html/rfc3986).
@@ -143,36 +144,39 @@ namespace webpp::uri::details {
       ';',
       '=',
       '@',
-      '|'};
+      '|'
+    };
 
     /// https://url.spec.whatwg.org/#component-percent-encode-set
     /// userinfo percent-encode set and U+0024 ($) to U+0026 (&), inclusive, U+002B (+), and U+002C (,).
     static constexpr ascii_bitmap COMPONENT_ENCODE_SET{
       ascii_bitmap{USER_INFO_ENCODE_SET, bitmap_range<'$', '&', 256U>()},
       '+',
-      ','};
+      ','
+    };
 
     /// https://url.spec.whatwg.org/#forbidden-host-code-point
     /// U+0000 NULL, U+0009 TAB, U+000A LF, U+000D CR, U+0020 SPACE, U+0023 (#), U+002F (/), U+003A (:),
     /// U+003C (<), U+003E (>), U+003F (?), U+0040 (@), U+005B ([), U+005C (\), U+005D (]), U+005E (^), or
     /// U+007C (|)
-    static constexpr ascii_bitmap FORBIDDEN_HOST_CODE_POINTS{'\0',
-                                                             '\t',
-                                                             '\r',
-                                                             '\xA',
-                                                             ' ',
-                                                             '#',
-                                                             '/',
-                                                             ':',
-                                                             '<',
-                                                             '>',
-                                                             '?',
-                                                             '@',
-                                                             '[',
-                                                             '\\',
-                                                             ']',
-                                                             '^',
-                                                             '|'};
+    static constexpr ascii_bitmap FORBIDDEN_HOST_CODE_POINTS{
+      '\0',
+      '\t',
+      '\r',
+      '\xA',
+      ' ',
+      '#',
+      '/',
+      ':',
+      '<',
+      '>',
+      '?',
+      '@',
+      '[',
+      '\\',
+      ']',
+      '^',
+      '|'};
 
     /// https://url.spec.whatwg.org/#forbidden-domain-code-point
     /// A forbidden domain code point is a forbidden host code point, a C0 control, U+0025 (%), or U+007F
@@ -180,7 +184,8 @@ namespace webpp::uri::details {
     static constexpr ascii_bitmap FORBIDDEN_DOMAIN_CODE_POINTS{
       ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, C0_CONTROL_SET},
       '%',
-      '\x7F'};
+      '\x7F'
+    };
 
     // NOLINTEND(*-magic-numbers)
 

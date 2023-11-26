@@ -3,7 +3,6 @@
 
 #include "../async/async.hpp"
 
-
 namespace webpp::io {
 
     template <typename T>
@@ -20,8 +19,12 @@ namespace webpp::io {
     template <typename T>
     concept IOScheduler =
       async::Scheduler<T> && requires(T sched, char* data, unsigned long long size, int fd) {
-          { sched.read(fd, data, size) } noexcept -> IOTask;
-          { sched.write(fd, data, size) } noexcept -> IOTask;
+          {
+              sched.read(fd, data, size)
+          } noexcept -> IOTask;
+          {
+              sched.write(fd, data, size)
+          } noexcept -> IOTask;
       };
 
 } // namespace webpp::io

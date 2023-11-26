@@ -13,7 +13,6 @@ namespace website {
     using namespace webpp::json;
 
     struct app {
-
         auto about([[maybe_unused]] auto const& ctx) {
             document doc;
             doc["page"] = "about";
@@ -21,21 +20,22 @@ namespace website {
         }
 
         auto operator()(auto&& req) {
-            static_router router{(get and root) >>
-                                   [] {
-                                       document doc;
-                                       doc["page"] = "home";
-                                       return doc;
-                                   },
-                                 (get and root / "about") >>
-                                   [this](context& ctx) {
-                                       return this->about(ctx);
-                                   },
-                                 [] {
-                                     document doc;
-                                     doc["welcome"] = "Hello World";
-                                     return doc;
-                                 }};
+            static_router router{
+              (get and root) >>
+                [] {
+                    document doc;
+                    doc["page"] = "home";
+                    return doc;
+                },
+              (get and root / "about") >>
+                [this](context& ctx) {
+                    return this->about(ctx);
+                },
+              [] {
+                  document doc;
+                  doc["welcome"] = "Hello World";
+                  return doc;
+              }};
 
             return router(req);
         }

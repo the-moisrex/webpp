@@ -27,7 +27,6 @@ TEST(AsyncTest, ChainableTask) {
         ;
 }
 
-
 struct custom_yielder {
   private:
     stl::string_view data = "Hello World";
@@ -36,6 +35,7 @@ struct custom_yielder {
     [[nodiscard]] auto begin() const noexcept {
         return data.begin();
     }
+
     [[nodiscard]] auto end() const noexcept {
         return data.end();
     }

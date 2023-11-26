@@ -31,7 +31,6 @@ namespace webpp {
         using type = stl::expected<Value, Error>;
     };
 
-
     template <error_handling_strategy Strategy, typename Value, typename Error>
     using expected_strategy_t = typename expected_strategy<Strategy, Value, Error>::type;
 

@@ -57,7 +57,6 @@ namespace webpp::http {
         static constexpr bool app_requires_logger  = ConstructibleWithLogger<application_type, logger_ref>;
         static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
 
-
         // ctor that passes the enabled_traits object to daddy :)
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, ETT, Args...>)
@@ -114,22 +113,25 @@ namespace webpp::http {
                      !stl::is_constructible_v<application_type, ETT, Args...>)
         constexpr http_app_wrapper(ETT&, Args&&... args) : application_type{stl::forward<Args>(args)...} {}
 
-
         [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {
             if constexpr (requires {
-                              { application_type::response(req) } -> HTTPResponse;
-                          }) {
+                              {
+                                  application_type::response(req)
+                              } -> HTTPResponse;
+                          })
+            {
                 return application_type::response(req);
             } else if constexpr (requires {
-                                     { application_type::response() } -> HTTPResponse;
-                                 }) {
+                                     {
+                                         application_type::response()
+                                     } -> HTTPResponse;
+                                 })
+            {
                 return application_type::response();
             } else {
                 return req.response();
             }
         }
-
-
 
         constexpr void error(HTTPRequest auto& req, http::status_code err, HTTPResponse auto& res) {
             if constexpr (requires { application_type::error(req, err, res); }) {
@@ -146,17 +148,18 @@ namespace webpp::http {
                 application_type::error(res, err, req);
             } else {
                 res      = err;
-                res.body = fmt::format("<!DOCTYPE html>\n"
-                                       "<html>\n"
-                                       "  <head>\n"
-                                       "    <title>{0} - {1}</title>\n"
-                                       "  </head>\n"
-                                       "  <body>\n"
-                                       "    <h1>{0} - {1}</h1>\n"
-                                       "  </body>\n"
-                                       "</html>\n",
-                                       static_cast<status_code_type>(err),
-                                       http::status_code_reason_phrase(err));
+                res.body = fmt::format(
+                  "<!DOCTYPE html>\n"
+                  "<html>\n"
+                  "  <head>\n"
+                  "    <title>{0} - {1}</title>\n"
+                  "  </head>\n"
+                  "  <body>\n"
+                  "    <h1>{0} - {1}</h1>\n"
+                  "  </body>\n"
+                  "</html>\n",
+                  static_cast<status_code_type>(err),
+                  http::status_code_reason_phrase(err));
             }
         }
 
@@ -169,16 +172,25 @@ namespace webpp::http {
          */
         [[nodiscard]] constexpr HTTPResponse auto error(HTTPRequest auto& req, http::status_code err) {
             if constexpr (requires {
-                              { application_type::error(req, err) } -> HTTPResponse;
-                          }) {
+                              {
+                                  application_type::error(req, err)
+                              } -> HTTPResponse;
+                          })
+            {
                 return application_type::error(req, err);
             } else if constexpr (requires {
-                                     { application_type::error(err) } -> HTTPResponse;
-                                 }) {
+                                     {
+                                         application_type::error(err)
+                                     } -> HTTPResponse;
+                                 })
+            {
                 return application_type::error(err);
             } else if constexpr (requires {
-                                     { application_type::error(err, req) } -> HTTPResponse;
-                                 }) {
+                                     {
+                                         application_type::error(err, req)
+                                     } -> HTTPResponse;
+                                 })
+            {
                 return application_type::error(err, req);
             } else {
                 auto res = response(req);

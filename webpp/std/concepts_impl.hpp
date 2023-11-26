@@ -6,10 +6,6 @@
 namespace webpp::stl {
     using namespace ::std;
 
-
-
-
-
     namespace details {
         // Let COPYCV(FROM, TO) be an alias for type TO with the addition of FROM's
         // top-level cv-qualifiers.
@@ -63,7 +59,6 @@ namespace webpp::stl {
     template <class Xp, class Yp>
     using __cond_res = decltype(false ? declval<Xp (&)()>()() : declval<Yp (&)()>()());
 
-
     // Let `XREF(A)` denote a unary alias template `T` such that `T<U>` denotes the same type as `U`
     // with the addition of `A`'s cv and reference qualifiers, for a non-reference cv-unqualified type
     // `U`.
@@ -88,9 +83,6 @@ namespace webpp::stl {
     template <class Xp, class Yp>
     using __cv_cond_res = __cond_res<details::copy_cv_t<Xp, Yp>&, details::copy_cv_t<Yp, Xp>&>;
 
-
-
-
     //    If A and B are both lvalue reference types, COMMON-REF(A, B) is
     //    COND-RES(COPYCV(X, Y)&, COPYCV(Y, X)&) if that type exists and is a reference type.
     template <class Ap, class Bp, class Xp, class Yp>
@@ -103,9 +95,6 @@ namespace webpp::stl {
     //    Otherwise, let C be remove_reference_t<COMMON-REF(X&, Y&)>&&. ...
     template <class Xp, class Yp>
     using __common_ref_C = remove_reference_t<__common_ref_t<Xp&, Yp&>>&&;
-
-
-
 
     //    .... If A and B are both rvalue reference types, C is well-formed, and
     //    is_convertible_v<A, C> && is_convertible_v<B, C> is true, then COMMON-REF(A, B) is C.
@@ -120,8 +109,7 @@ namespace webpp::stl {
 
     //    Otherwise, let D be COMMON-REF(const X&, Y&). ...
     template <class Tp, class Up>
-    using __common_ref_D = __common_ref_t<const Tp&, Up&>;
-
+    using __common_ref_D = __common_ref_t<Tp const&, Up&>;
 
     //    ... If A is an rvalue reference and B is an lvalue reference and D is well-formed and
     //    is_convertible_v<A, D> is true, then COMMON-REF(A, B) is D.
@@ -132,12 +120,10 @@ namespace webpp::stl {
         using __type = __common_ref_D<Xp, Yp>;
     };
 
-
     //    Otherwise, if A is an lvalue reference and B is an rvalue reference, then
     //    COMMON-REF(A, B) is COMMON-REF(B, A).
     template <class Ap, class Bp, class Xp, class Yp>
     struct __common_ref<Ap&, Bp&&, Xp, Yp> : __common_ref<Bp&&, Ap&> {};
-
 
     //    Otherwise, COMMON-REF(A, B) is ill-formed.
     template <class Ap, class Bp, class Xp, class Yp>
@@ -154,11 +140,9 @@ namespace webpp::stl {
     template <class... _Types>
     using common_reference_t = typename common_reference<_Types...>::type;
 
-
     // bullet 1 - sizeof...(T) == 0
     template <>
     struct common_reference<> {};
-
 
     // bullet 2 - sizeof...(T) == 1
     template <class Tp>
@@ -170,24 +154,23 @@ namespace webpp::stl {
     // bullet 3 - sizeof...(T) == 2
     template <class Tp, class Up>
     struct __common_reference_sub_bullet3;
+
     template <class Tp, class Up>
     struct __common_reference_sub_bullet2 : __common_reference_sub_bullet3<Tp, Up> {};
+
     template <class Tp, class Up>
     struct __common_reference_sub_bullet1 : __common_reference_sub_bullet2<Tp, Up> {};
-
 
     // sub-bullet 1 - If T1 and T2 are reference types and COMMON-REF(T1, T2) is well-formed, then
     // the member typedef `type` denotes that type.
     template <class Tp, class Up>
     struct common_reference<Tp, Up> : __common_reference_sub_bullet1<Tp, Up> {};
 
-
     template <class Tp, class Up>
         requires is_reference_v<Tp> && is_reference_v<Up> && requires { typename __common_ref_t<Tp, Up>; }
     struct __common_reference_sub_bullet1<Tp, Up> {
         using type = __common_ref_t<Tp, Up>;
     };
-
 
     // sub-bullet 2 - Otherwise, if basic_common_reference<remove_cvref_t<T1>, remove_cvref_t<T2>, XREF(T1),
     // XREF(T2)>::type is well-formed, then the member typedef `type` denotes that type.
@@ -196,18 +179,17 @@ namespace webpp::stl {
 
 
     template <class Tp, class Up>
-    using __basic_common_reference_t = typename basic_common_reference<remove_cvref_t<Tp>,
-                                                                       remove_cvref_t<Up>,
-                                                                       __xref<Tp>::template __apply,
-                                                                       __xref<Up>::template __apply>::type;
-
+    using __basic_common_reference_t =
+      typename basic_common_reference<remove_cvref_t<Tp>,
+                                      remove_cvref_t<Up>,
+                                      __xref<Tp>::template __apply,
+                                      __xref<Up>::template __apply>::type;
 
     template <class Tp, class Up>
         requires requires { typename __basic_common_reference_t<Tp, Up>; }
     struct __common_reference_sub_bullet2<Tp, Up> {
         using type = __basic_common_reference_t<Tp, Up>;
     };
-
 
     // sub-bullet 3 - Otherwise, if COND-RES(T1, T2) is well-formed,
     // then the member typedef `type` denotes that type.
@@ -217,15 +199,11 @@ namespace webpp::stl {
         using type = __cond_res<Tp, Up>;
     };
 
-
-
-
     // sub-bullet 4 & 5 - Otherwise, if common_type_t<T1, T2> is well-formed,
     //                    then the member typedef `type` denotes that type.
     //                  - Otherwise, there shall be no member `type`.
     template <class Tp, class Up>
     struct __common_reference_sub_bullet3 : common_type<Tp, Up> {};
-
 
     // bullet 4 - If there is such a type `C`, the member typedef type shall denote the same type, if
     //            any, as `common_reference_t<C, Rest...>`.
@@ -234,14 +212,9 @@ namespace webpp::stl {
     struct common_reference<Tp, Up, _Vp, _Rest...>
       : common_reference<common_reference_t<Tp, Up>, _Vp, _Rest...> {};
 
-
     // bullet 5 - Otherwise, there shall be no member `type`.
     template <class...>
     struct common_reference {};
-
-
-
-
 
     namespace detail {
         template <class T, class U>
@@ -282,7 +255,7 @@ namespace webpp::stl {
     template <class T>
     concept copy_constructible =
       move_constructible<T> && constructible_from<T, T&> && convertible_to<T&, T> &&
-      constructible_from<T, const T&> && convertible_to<const T&, T> && constructible_from<T, const T> &&
+      constructible_from<T, T const&> && convertible_to<T const&, T> && constructible_from<T, T const> &&
       convertible_to<const T, T>;
 
     template <class T>
@@ -302,17 +275,27 @@ namespace webpp::stl {
 
         template <class B>
         concept boolean_testable = boolean_testable_impl<B> && requires(B&& b) {
-            { !forward<B>(b) } -> boolean_testable_impl;
+            {
+                !forward<B>(b)
+            } -> boolean_testable_impl;
         };
 
 
         template <class T, class U>
         concept WeaklyEqualityComparableWith =
-          requires(const remove_reference_t<T>& t, const remove_reference_t<U>& u) {
-              { t == u } -> boolean_testable;
-              { t != u } -> boolean_testable;
-              { u == t } -> boolean_testable;
-              { u != t } -> boolean_testable;
+          requires(remove_reference_t<T> const& t, remove_reference_t<U> const& u) {
+              {
+                  t == u
+              } -> boolean_testable;
+              {
+                  t != u
+              } -> boolean_testable;
+              {
+                  u == t
+              } -> boolean_testable;
+              {
+                  u != t
+              } -> boolean_testable;
           };
 
 
@@ -324,8 +307,8 @@ namespace webpp::stl {
     template <class T, class U>
     concept equality_comparable_with =
       equality_comparable<T> && equality_comparable<U> &&
-      common_reference_with<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
-      equality_comparable<common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>> &&
+      common_reference_with<remove_reference_t<T> const&, remove_reference_t<U> const&> &&
+      equality_comparable<common_reference_t<remove_reference_t<T> const&, remove_reference_t<U> const&>> &&
       details::WeaklyEqualityComparableWith<T, U>;
 
 
@@ -333,9 +316,11 @@ namespace webpp::stl {
     template <class LHS, class RHS>
     concept assignable_from =
       is_lvalue_reference_v<LHS> &&
-      common_reference_with<const remove_reference_t<LHS>&, const remove_reference_t<RHS>&> &&
+      common_reference_with<remove_reference_t<LHS> const&, remove_reference_t<RHS> const&> &&
       requires(LHS lhs, RHS&& rhs) {
-          { lhs = forward<RHS>(rhs) } -> same_as<LHS>;
+          {
+              lhs = forward<RHS>(rhs)
+          } -> same_as<LHS>;
       };
 
 
@@ -344,7 +329,6 @@ namespace webpp::stl {
 
     template <class Tp>
     concept __class_or_enum = is_class_v<Tp> || is_union_v<Tp> || is_enum_v<Tp>;
-
 
     // [concept.swappable]
     namespace ranges::__swap {
@@ -356,8 +340,8 @@ namespace webpp::stl {
         // [1]
         template <class Tp, class Up>
         concept __unqualified_swappable_with =
-          (__class_or_enum<remove_cvref_t<Tp>> || __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp&& __t,
-                                                                                                  Up&& __u) {
+          (__class_or_enum<remove_cvref_t<Tp>> ||
+           __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp&& __t, Up&& __u) {
               swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
           };
 
@@ -366,7 +350,7 @@ namespace webpp::stl {
         template <class Tp, class Up, size_t _Size>
         concept __swappable_arrays =
           !__unqualified_swappable_with<Tp (&)[_Size], Up (&)[_Size]> && extent_v<Tp> == extent_v<Up> &&
-          requires(Tp (&__t)[_Size], Up (&__u)[_Size], const __fn& __swap) { __swap(__t[0], __u[0]); };
+          requires(Tp (&__t)[_Size], Up (&__u)[_Size], __fn const& __swap) { __swap(__t[0], __u[0]); };
 
         template <class Tp>
         concept __exchangeable =
@@ -426,7 +410,7 @@ namespace webpp::stl {
 
     template <class T>
     concept copyable = copy_constructible<T> && movable<T> && assignable_from<T&, T&> &&
-                       assignable_from<T&, const T&> && assignable_from<T&, const T>;
+                       assignable_from<T&, T const&> && assignable_from<T&, T const>;
 
     template <class T>
     concept semiregular = copyable<T> && default_initializable<T>;

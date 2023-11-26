@@ -25,7 +25,6 @@ TEST(HdrHostAuthorityTest, AddressTest) {
     EXPECT_EQ(host.address(), localhost);
 }
 
-
 // Modified AI Generated Tests:
 
 TEST(HdrHostAuthorityTest, ParseIpv4Host) {

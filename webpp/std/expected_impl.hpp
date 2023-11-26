@@ -75,7 +75,7 @@ namespace webpp::stl {
      * @{
      */
 
-#define __cpp_lib_expected 202202L
+#define __cpp_lib_expected 202'202L
 
     /// Discriminated union that holds an expected value or an error value.
     /**
@@ -102,14 +102,16 @@ namespace webpp::stl {
     class bad_expected_access<void> : public std::exception {
       protected:
         bad_expected_access() noexcept {}
-        bad_expected_access(const bad_expected_access&)            = default;
+
+        bad_expected_access(bad_expected_access const&)            = default;
         bad_expected_access(bad_expected_access&&)                 = default;
-        bad_expected_access& operator=(const bad_expected_access&) = default;
+        bad_expected_access& operator=(bad_expected_access const&) = default;
         bad_expected_access& operator=(bad_expected_access&&)      = default;
-        ~bad_expected_access()                                     = default;
+
+        ~bad_expected_access() override = default;
 
       public:
-        [[nodiscard]] const char* what() const noexcept override {
+        [[nodiscard]] char const* what() const noexcept override {
             return "bad access to std::expected without expected value";
         }
     };
@@ -125,7 +127,7 @@ namespace webpp::stl {
             return m_unex;
         }
 
-        [[nodiscard]] const E& error() const& noexcept {
+        [[nodiscard]] E const& error() const& noexcept {
             return m_unex;
         }
 
@@ -133,7 +135,7 @@ namespace webpp::stl {
             return std::move(m_unex);
         }
 
-        [[nodiscard]] const E&& error() const&& noexcept {
+        [[nodiscard]] E const&& error() const&& noexcept {
             return std::move(m_unex);
         }
 
@@ -172,6 +174,7 @@ namespace webpp::stl {
           std::is_object_v<E> && (!std::is_array_v<E>) &&(!detail_expected::is_unexpected<E>) &&(
                                    !std::is_const_v<E>) &&(!std::is_volatile_v<E>);
     } // namespace detail_expected
+
     /// @endcond
 
     template <typename E>
@@ -179,7 +182,7 @@ namespace webpp::stl {
         static_assert(detail_expected::can_be_unexpected<E>);
 
       public:
-        constexpr unexpected(const unexpected&) = default;
+        constexpr unexpected(unexpected const&) = default;
         constexpr unexpected(unexpected&&)      = default;
 
         template <typename Er = E>
@@ -191,8 +194,8 @@ namespace webpp::stl {
 
         template <typename... Args>
             requires std::is_constructible_v<E, Args...>
-        constexpr explicit unexpected(std::in_place_t,
-                                      Args&&... args) noexcept(std::is_nothrow_constructible_v<E, Args...>)
+        constexpr explicit unexpected(std::in_place_t, Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<E, Args...>)
           : m_unex(std::forward<Args>(args)...) {}
 
         template <typename U, typename... Args>
@@ -201,11 +204,10 @@ namespace webpp::stl {
           std::is_nothrow_constructible_v<E, std::initializer_list<U>&, Args...>)
           : m_unex(il, std::forward<Args>(args)...) {}
 
-        constexpr unexpected& operator=(const unexpected&) = default;
+        constexpr unexpected& operator=(unexpected const&) = default;
         constexpr unexpected& operator=(unexpected&&)      = default;
 
-
-        [[nodiscard]] constexpr const E& error() const& noexcept {
+        [[nodiscard]] constexpr E const& error() const& noexcept {
             return m_unex;
         }
 
@@ -213,7 +215,7 @@ namespace webpp::stl {
             return m_unex;
         }
 
-        [[nodiscard]] constexpr const E&& error() const&& noexcept {
+        [[nodiscard]] constexpr E const&& error() const&& noexcept {
             return std::move(m_unex);
         }
 
@@ -229,7 +231,7 @@ namespace webpp::stl {
         }
 
         template <typename Er>
-        [[nodiscard]] friend constexpr bool operator==(const unexpected& x, const unexpected<Er>& y) {
+        [[nodiscard]] friend constexpr bool operator==(unexpected const& x, unexpected<Er> const& y) {
             return x.m_unex == y.error();
         }
 
@@ -260,12 +262,13 @@ namespace webpp::stl {
             }
 
             constexpr ~Guard() {
-                if (m_guarded) [[unlikely]]
+                if (m_guarded) [[unlikely]] {
                     std::construct_at(m_guarded, std::move(m_tmp));
+                }
             }
 
-            Guard(const Guard&)            = delete;
-            Guard& operator=(const Guard&) = delete;
+            Guard(Guard const&)            = delete;
+            Guard& operator=(Guard const&) = delete;
 
             constexpr T&& release() noexcept {
                 m_guarded = nullptr;
@@ -294,6 +297,7 @@ namespace webpp::stl {
             }
         }
     } // namespace detail_expected
+
     /// @endcond
 
     template <typename T, typename E>
@@ -309,20 +313,21 @@ namespace webpp::stl {
         static constexpr bool cons_from_expected =
           std::disjunction_v<std::is_constructible<T, expected<U, Er>&>,
                              std::is_constructible<T, expected<U, Er>>,
-                             std::is_constructible<T, const expected<U, Er>&>,
-                             std::is_constructible<T, const expected<U, Er>>,
+                             std::is_constructible<T, expected<U, Er> const&>,
+                             std::is_constructible<T, expected<U, Er> const>,
                              std::is_convertible<expected<U, Er>&, T>,
                              std::is_convertible<expected<U, Er>, T>,
-                             std::is_convertible<const expected<U, Er>&, T>,
-                             std::is_convertible<const expected<U, Er>, T>,
+                             std::is_convertible<expected<U, Er> const&, T>,
+                             std::is_convertible<expected<U, Er> const, T>,
                              std::is_constructible<Unex, expected<U, Er>&>,
                              std::is_constructible<Unex, expected<U, Er>>,
-                             std::is_constructible<Unex, const expected<U, Er>&>,
-                             std::is_constructible<Unex, const expected<U, Er>>>;
+                             std::is_constructible<Unex, expected<U, Er> const&>,
+                             std::is_constructible<Unex, expected<U, Er> const>>;
 
         template <typename U, typename Er>
-        constexpr static bool explicit_conv = std::disjunction_v<std::negation<std::is_convertible<U, T>>,
-                                                                 std::negation<std::is_convertible<Er, E>>>;
+        static constexpr bool explicit_conv =
+          std::disjunction_v<std::negation<std::is_convertible<U, T>>,
+                             std::negation<std::is_convertible<Er, E>>>;
 
       public:
         using value_type      = T;
@@ -337,18 +342,19 @@ namespace webpp::stl {
           : m_val(),
             m_has_value(true) {}
 
-        expected(const expected&) = default;
+        expected(expected const&) = default;
 
-        constexpr expected(const expected& x) noexcept(
+        constexpr expected(expected const& x) noexcept(
           std::conjunction_v<std::is_nothrow_copy_constructible<T>, std::is_nothrow_copy_constructible<E>>)
             requires std::is_copy_constructible_v<T> && std::is_copy_constructible_v<E> &&
                      (!std::is_trivially_copy_constructible_v<T> ||
                       !std::is_trivially_copy_constructible_v<E>)
           : m_has_value(x.m_has_value) {
-            if (m_has_value)
+            if (m_has_value) {
                 std::construct_at(std::addressof(m_val), x.m_val);
-            else
+            } else {
                 std::construct_at(std::addressof(m_unex), x.m_unex);
+            }
         }
 
         expected(expected&&) = default;
@@ -359,23 +365,25 @@ namespace webpp::stl {
                      (!std::is_trivially_move_constructible_v<T> ||
                       !std::is_trivially_move_constructible_v<E>)
           : m_has_value(x.m_has_value) {
-            if (m_has_value)
+            if (m_has_value) {
                 std::construct_at(std::addressof(m_val), std::move(x).m_val);
-            else
+            } else {
                 std::construct_at(std::addressof(m_unex), std::move(x).m_unex);
+            }
         }
 
         template <typename U, typename Gr>
-            requires std::is_constructible_v<T, const U&> && std::is_constructible_v<E, const Gr&> &&
+            requires std::is_constructible_v<T, U const&> && std::is_constructible_v<E, Gr const&> &&
                      (!cons_from_expected<U, Gr>)
-        constexpr explicit(explicit_conv<const U&, const Gr&>) expected(const expected<U, Gr>& x) noexcept(
-          std::conjunction_v<std::is_nothrow_constructible<T, const U&>,
-                             std::is_nothrow_constructible<E, const Gr&>>)
+        constexpr explicit(explicit_conv<U const&, Gr const&>) expected(expected<U, Gr> const& x) noexcept(
+          std::conjunction_v<std::is_nothrow_constructible<T, U const&>,
+                             std::is_nothrow_constructible<E, Gr const&>>)
           : m_has_value(x.m_has_value) {
-            if (m_has_value)
+            if (m_has_value) {
                 std::construct_at(std::addressof(m_val), x.m_val);
-            else
+            } else {
                 std::construct_at(std::addressof(m_unex), x.m_unex);
+            }
         }
 
         template <typename U, typename Gr>
@@ -384,10 +392,11 @@ namespace webpp::stl {
         constexpr explicit(explicit_conv<U, Gr>) expected(expected<U, Gr>&& x) noexcept(
           std::conjunction_v<std::is_nothrow_constructible<T, U>, std::is_nothrow_constructible<E, Gr>>)
           : m_has_value(x.m_has_value) {
-            if (m_has_value)
+            if (m_has_value) {
                 std::construct_at(std::addressof(m_val), std::move(x).m_val);
-            else
+            } else {
                 std::construct_at(std::addressof(m_unex), std::move(x).m_unex);
+            }
         }
 
         template <typename U = T>
@@ -401,9 +410,9 @@ namespace webpp::stl {
             m_has_value(true) {}
 
         template <typename Gr = E>
-            requires std::is_constructible_v<E, const Gr&>
-        constexpr explicit(!std::is_convertible_v<const Gr&, E>)
-          expected(const unexpected<Gr>& u) noexcept(std::is_nothrow_constructible_v<E, const Gr&>)
+            requires std::is_constructible_v<E, Gr const&>
+        constexpr explicit(!std::is_convertible_v<Gr const&, E>)
+          expected(unexpected<Gr> const& u) noexcept(std::is_nothrow_constructible_v<E, Gr const&>)
           : m_unex(u.error()),
             m_has_value(false) {}
 
@@ -416,8 +425,8 @@ namespace webpp::stl {
 
         template <typename... Args>
             requires std::is_constructible_v<T, Args...>
-        constexpr explicit expected(std::in_place_t,
-                                    Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+        constexpr explicit expected(std::in_place_t, Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<T, Args...>)
           : m_val(std::forward<Args>(args)...),
             m_has_value(true) {}
 
@@ -430,8 +439,8 @@ namespace webpp::stl {
 
         template <typename... Args>
             requires std::is_constructible_v<E, Args...>
-        constexpr explicit expected(unexpect_t,
-                                    Args&&... args) noexcept(std::is_nothrow_constructible_v<E, Args...>)
+        constexpr explicit expected(unexpect_t, Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<E, Args...>)
           : m_unex(std::forward<Args>(args)...),
             m_has_value(false) {}
 
@@ -447,45 +456,48 @@ namespace webpp::stl {
         constexpr ~expected()
             requires(!std::is_trivially_destructible_v<T>) || (!std::is_trivially_destructible_v<E>)
         {
-            if (m_has_value)
+            if (m_has_value) {
                 std::destroy_at(std::addressof(m_val));
-            else
+            } else {
                 std::destroy_at(std::addressof(m_unex));
+            }
         }
 
         // assignment
 
-        expected& operator=(const expected&) = delete;
+        expected& operator=(expected const&) = delete;
 
-        constexpr expected&
-        operator=(const expected& x) noexcept(std::conjunction_v<std::is_nothrow_copy_constructible<T>,
-                                                                 std::is_nothrow_copy_constructible<E>,
-                                                                 std::is_nothrow_copy_assignable<T>,
-                                                                 std::is_nothrow_copy_assignable<E>>)
+        constexpr expected& operator=(expected const& x) noexcept(
+          std::conjunction_v<std::is_nothrow_copy_constructible<T>,
+                             std::is_nothrow_copy_constructible<E>,
+                             std::is_nothrow_copy_assignable<T>,
+                             std::is_nothrow_copy_assignable<E>>)
             requires std::is_copy_assignable_v<T> && std::is_copy_constructible_v<T> &&
                      std::is_copy_assignable_v<E> && std::is_copy_constructible_v<E> &&
                      (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
         {
-            if (x.m_has_value)
+            if (x.m_has_value) {
                 this->m_assign_val(x.m_val);
-            else
+            } else {
                 this->m_assign_unex(x.m_unex);
+            }
             return *this;
         }
 
-        constexpr expected&
-        operator=(expected&& x) noexcept(std::conjunction_v<std::is_nothrow_move_constructible<T>,
-                                                            std::is_nothrow_move_constructible<E>,
-                                                            std::is_nothrow_move_assignable<T>,
-                                                            std::is_nothrow_move_assignable<E>>)
+        constexpr expected& operator=(expected&& x) noexcept(
+          std::conjunction_v<std::is_nothrow_move_constructible<T>,
+                             std::is_nothrow_move_constructible<E>,
+                             std::is_nothrow_move_assignable<T>,
+                             std::is_nothrow_move_assignable<E>>)
             requires std::is_move_assignable_v<T> && std::is_move_constructible_v<T> &&
                      std::is_move_assignable_v<E> && std::is_move_constructible_v<E> &&
                      (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
         {
-            if (x.m_has_value)
+            if (x.m_has_value) {
                 m_assign_val(std::move(x.m_val));
-            else
+            } else {
                 m_assign_unex(std::move(x.m_unex));
+            }
             return *this;
         }
 
@@ -501,10 +513,10 @@ namespace webpp::stl {
         }
 
         template <typename Gr>
-            requires std::is_constructible_v<E, const Gr&> && std::is_assignable_v<E&, const Gr&> &&
-                     (std::is_nothrow_constructible_v<E, const Gr&> ||
+            requires std::is_constructible_v<E, Gr const&> && std::is_assignable_v<E&, Gr const&> &&
+                     (std::is_nothrow_constructible_v<E, Gr const&> ||
                       std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
-        constexpr expected& operator=(const unexpected<Gr>& e) {
+        constexpr expected& operator=(unexpected<Gr> const& e) {
             m_assign_unex(e.error());
             return *this;
         }
@@ -523,9 +535,9 @@ namespace webpp::stl {
         template <typename... Args>
             requires std::is_nothrow_constructible_v<T, Args...>
         constexpr T& emplace(Args&&... args) noexcept {
-            if (m_has_value)
+            if (m_has_value) {
                 std::destroy_at(std::addressof(m_val));
-            else {
+            } else {
                 std::destroy_at(std::addressof(m_unex));
                 m_has_value = true;
             }
@@ -536,9 +548,9 @@ namespace webpp::stl {
         template <typename U, typename... Args>
             requires std::is_nothrow_constructible_v<T, std::initializer_list<U>&, Args...>
         constexpr T& emplace(std::initializer_list<U> il, Args&&... args) noexcept {
-            if (m_has_value)
+            if (m_has_value) {
                 std::destroy_at(std::addressof(m_val));
-            else {
+            } else {
                 std::destroy_at(std::addressof(m_unex));
                 m_has_value = true;
             }
@@ -547,10 +559,11 @@ namespace webpp::stl {
         }
 
         // swap
-        constexpr void swap(expected& x) noexcept(std::conjunction_v<std::is_nothrow_move_constructible<T>,
-                                                                     std::is_nothrow_move_constructible<E>,
-                                                                     std::is_nothrow_swappable<T&>,
-                                                                     std::is_nothrow_swappable<E&>>)
+        constexpr void swap(expected& x) noexcept(
+          std::conjunction_v<std::is_nothrow_move_constructible<T>,
+                             std::is_nothrow_move_constructible<E>,
+                             std::is_nothrow_swappable<T&>,
+                             std::is_nothrow_swappable<E&>>)
             requires std::is_swappable_v<T> && std::is_swappable_v<E> && std::is_move_constructible_v<T> &&
                      std::is_move_constructible_v<E> &&
                      (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
@@ -559,12 +572,13 @@ namespace webpp::stl {
                 if (x.m_has_value) {
                     using std::swap;
                     swap(m_val, x.m_val);
-                } else
+                } else {
                     this->m_swap_val_unex(x);
+                }
             } else {
-                if (x.m_has_value)
+                if (x.m_has_value) {
                     x.m_swap_val_unex(*this);
-                else {
+                } else {
                     using std::swap;
                     swap(m_unex, x.m_unex);
                 }
@@ -573,7 +587,7 @@ namespace webpp::stl {
 
         // observers
 
-        [[nodiscard]] constexpr const T* operator->() const noexcept {
+        [[nodiscard]] constexpr T const* operator->() const noexcept {
             webpp_cxx_assert(m_has_value);
             return std::addressof(m_val);
         }
@@ -583,7 +597,7 @@ namespace webpp::stl {
             return std::addressof(m_val);
         }
 
-        [[nodiscard]] constexpr const T& operator*() const& noexcept {
+        [[nodiscard]] constexpr T const& operator*() const& noexcept {
             webpp_cxx_assert(m_has_value);
             return m_val;
         }
@@ -593,7 +607,7 @@ namespace webpp::stl {
             return m_val;
         }
 
-        [[nodiscard]] constexpr const T&& operator*() const&& noexcept {
+        [[nodiscard]] constexpr T const&& operator*() const&& noexcept {
             webpp_cxx_assert(m_has_value);
             return std::move(m_val);
         }
@@ -611,31 +625,35 @@ namespace webpp::stl {
             return m_has_value;
         }
 
-        constexpr const T& value() const& {
-            if (m_has_value) [[likely]]
+        constexpr T const& value() const& {
+            if (m_has_value) [[likely]] {
                 return m_val;
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(m_unex));
         }
 
         constexpr T& value() & {
-            if (m_has_value) [[likely]]
+            if (m_has_value) [[likely]] {
                 return m_val;
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(m_unex));
         }
 
-        constexpr const T&& value() const&& {
-            if (m_has_value) [[likely]]
+        constexpr T const&& value() const&& {
+            if (m_has_value) [[likely]] {
                 return std::move(m_val);
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(std::move(m_unex)));
         }
 
         constexpr T&& value() && {
-            if (m_has_value) [[likely]]
+            if (m_has_value) [[likely]] {
                 return std::move(m_val);
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(std::move(m_unex)));
         }
 
-        constexpr const E& error() const& noexcept {
+        constexpr E const& error() const& noexcept {
             webpp_cxx_assert(!m_has_value);
             return m_unex;
         }
@@ -645,7 +663,7 @@ namespace webpp::stl {
             return m_unex;
         }
 
-        constexpr const E&& error() const&& noexcept {
+        constexpr E const&& error() const&& noexcept {
             webpp_cxx_assert(!m_has_value);
             return std::move(m_unex);
         }
@@ -661,8 +679,9 @@ namespace webpp::stl {
             static_assert(std::is_copy_constructible_v<T>);
             static_assert(std::is_convertible_v<U, T>);
 
-            if (m_has_value)
+            if (m_has_value) {
                 return m_val;
+            }
             return static_cast<T>(std::forward<U>(v));
         }
 
@@ -672,8 +691,9 @@ namespace webpp::stl {
             static_assert(std::is_move_constructible_v<T>);
             static_assert(std::is_convertible_v<U, T>);
 
-            if (m_has_value)
+            if (m_has_value) {
                 return std::move(m_val);
+            }
             return static_cast<T>(std::forward<U>(v));
         }
 
@@ -681,25 +701,26 @@ namespace webpp::stl {
 
         template <typename U, typename E2>
             requires(!std::is_void_v<U>)
-        friend constexpr bool operator==(const expected& x, const expected<U, E2>& y)
+        friend constexpr bool operator==(expected const& x, expected<U, E2> const& y)
         // FIXME: noexcept(noexcept(bool(*x == *y))
         // && noexcept(bool(x.error() == y.error())))
         {
-            if (x.has_value())
+            if (x.has_value()) {
                 return y.has_value() && bool(*x == *y);
-            else
+            } else {
                 return !y.has_value() && bool(x.error() == y.error());
+            }
         }
 
         template <typename U>
-        friend constexpr bool operator==(const expected& x, const U& v)
+        friend constexpr bool operator==(expected const& x, U const& v)
         // FIXME: noexcept(noexcept(bool(*x == v)))
         {
             return x.has_value() && bool(*x == v);
         }
 
         template <typename E2>
-        friend constexpr bool operator==(const expected& x, const unexpected<E2>& e)
+        friend constexpr bool operator==(expected const& x, unexpected<E2> const& e)
         // FIXME: noexcept(noexcept(bool(x.error() == e.error())))
         {
             return !x.has_value() && bool(x.error() == e.error());
@@ -717,9 +738,9 @@ namespace webpp::stl {
 
         template <typename V>
         constexpr void m_assign_val(V&& v) {
-            if (m_has_value)
+            if (m_has_value) {
                 m_val = std::forward<V>(v);
-            else {
+            } else {
                 detail_expected::reinit(std::addressof(m_val), std::addressof(m_unex), std::forward<V>(v));
                 m_has_value = true;
             }
@@ -730,8 +751,9 @@ namespace webpp::stl {
             if (m_has_value) {
                 detail_expected::reinit(std::addressof(m_unex), std::addressof(m_val), std::forward<V>(v));
                 m_has_value = false;
-            } else
+            } else {
                 m_unex = std::forward<V>(v);
+            }
         }
 
         // Swap two expected objects when only one has a value.
@@ -775,8 +797,8 @@ namespace webpp::stl {
         static constexpr bool cons_from_expected =
           std::disjunction_v<std::is_constructible<Unex, expected<U, Er>&>,
                              std::is_constructible<Unex, expected<U, Er>>,
-                             std::is_constructible<Unex, const expected<U, Er>&>,
-                             std::is_constructible<Unex, const expected<U, Er>>>;
+                             std::is_constructible<Unex, expected<U, Er> const&>,
+                             std::is_constructible<Unex, expected<U, Er> const>>;
 
       public:
         using value_type      = T;
@@ -788,14 +810,15 @@ namespace webpp::stl {
 
         constexpr expected() noexcept : m_void(), m_has_value(true) {}
 
-        expected(const expected&) = default;
+        expected(expected const&) = default;
 
-        constexpr expected(const expected& x) noexcept(std::is_nothrow_copy_constructible_v<E>)
+        constexpr expected(expected const& x) noexcept(std::is_nothrow_copy_constructible_v<E>)
             requires std::is_copy_constructible_v<E> && (!std::is_trivially_copy_constructible_v<E>)
           : m_void(),
             m_has_value(x.m_has_value) {
-            if (!m_has_value)
+            if (!m_has_value) {
                 std::construct_at(std::addressof(m_unex), x.m_unex);
+            }
         }
 
         expected(expected&&) = default;
@@ -804,19 +827,21 @@ namespace webpp::stl {
             requires std::is_move_constructible_v<E> && (!std::is_trivially_move_constructible_v<E>)
           : m_void(),
             m_has_value(x.m_has_value) {
-            if (!m_has_value)
+            if (!m_has_value) {
                 std::construct_at(std::addressof(m_unex), std::move(x).m_unex);
+            }
         }
 
         template <typename U, typename Gr>
-            requires std::is_void_v<U> && std::is_constructible_v<E, const Gr&> &&
+            requires std::is_void_v<U> && std::is_constructible_v<E, Gr const&> &&
                        (!cons_from_expected<U, Gr>)
-        constexpr explicit(!std::is_convertible_v<const Gr&, E>)
-          expected(const expected<U, Gr>& x) noexcept(std::is_nothrow_constructible_v<E, const Gr&>)
+        constexpr explicit(!std::is_convertible_v<Gr const&, E>)
+          expected(expected<U, Gr> const& x) noexcept(std::is_nothrow_constructible_v<E, Gr const&>)
           : m_void(),
             m_has_value(x.m_has_value) {
-            if (!m_has_value)
+            if (!m_has_value) {
                 std::construct_at(std::addressof(m_unex), x.m_unex);
+            }
         }
 
         template <typename U, typename Gr>
@@ -825,14 +850,15 @@ namespace webpp::stl {
           expected(expected<U, Gr>&& x) noexcept(std::is_nothrow_constructible_v<E, Gr>)
           : m_void(),
             m_has_value(x.m_has_value) {
-            if (!m_has_value)
+            if (!m_has_value) {
                 std::construct_at(std::addressof(m_unex), std::move(x).m_unex);
+            }
         }
 
         template <typename Gr = E>
-            requires std::is_constructible_v<E, const Gr&>
-        constexpr explicit(!std::is_convertible_v<const Gr&, E>)
-          expected(const unexpected<Gr>& u) noexcept(std::is_nothrow_constructible_v<E, const Gr&>)
+            requires std::is_constructible_v<E, Gr const&>
+        constexpr explicit(!std::is_convertible_v<Gr const&, E>)
+          expected(unexpected<Gr> const& u) noexcept(std::is_nothrow_constructible_v<E, Gr const&>)
           : m_unex(u.error()),
             m_has_value(false) {}
 
@@ -848,8 +874,8 @@ namespace webpp::stl {
 
         template <typename... Args>
             requires std::is_constructible_v<E, Args...>
-        constexpr explicit expected(unexpect_t,
-                                    Args&&... args) noexcept(std::is_nothrow_constructible_v<E, Args...>)
+        constexpr explicit expected(unexpect_t, Args&&... args) noexcept(
+          std::is_nothrow_constructible_v<E, Args...>)
           : m_unex(std::forward<Args>(args)...),
             m_has_value(false) {}
 
@@ -865,22 +891,24 @@ namespace webpp::stl {
         constexpr ~expected()
             requires(!std::is_trivially_destructible_v<E>)
         {
-            if (!m_has_value)
+            if (!m_has_value) {
                 std::destroy_at(std::addressof(m_unex));
+            }
         }
 
         // assignment
 
-        expected& operator=(const expected&) = delete;
+        expected& operator=(expected const&) = delete;
 
-        constexpr expected& operator=(const expected& x) noexcept(
+        constexpr expected& operator=(expected const& x) noexcept(
           std::conjunction_v<std::is_nothrow_copy_constructible<E>, std::is_nothrow_copy_assignable<E>>)
             requires std::is_copy_constructible_v<E> && std::is_copy_assignable_v<E>
         {
-            if (x.m_has_value)
+            if (x.m_has_value) {
                 emplace();
-            else
+            } else {
                 m_assign_unex(x.m_unex);
+            }
             return *this;
         }
 
@@ -888,16 +916,17 @@ namespace webpp::stl {
           std::conjunction_v<std::is_nothrow_move_constructible<E>, std::is_nothrow_move_assignable<E>>)
             requires std::is_move_constructible_v<E> && std::is_move_assignable_v<E>
         {
-            if (x.m_has_value)
+            if (x.m_has_value) {
                 emplace();
-            else
+            } else {
                 m_assign_unex(std::move(x.m_unex));
+            }
             return *this;
         }
 
         template <typename Gr>
-            requires std::is_constructible_v<E, const Gr&> && std::is_assignable_v<E&, const Gr&>
-        constexpr expected& operator=(const unexpected<Gr>& e) {
+            requires std::is_constructible_v<E, Gr const&> && std::is_assignable_v<E&, Gr const&>
+        constexpr expected& operator=(unexpected<Gr> const& e) {
             m_assign_unex(e.error());
             return *this;
         }
@@ -960,18 +989,20 @@ namespace webpp::stl {
         }
 
         constexpr void value() const& {
-            if (m_has_value) [[likely]]
+            if (m_has_value) [[likely]] {
                 return;
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(m_unex));
         }
 
         constexpr void value() && {
-            if (m_has_value) [[likely]]
+            if (m_has_value) [[likely]] {
                 return;
+            }
             WEBPP_THROW_OR_ABORT(bad_expected_access<E>(std::move(m_unex)));
         }
 
-        constexpr const E& error() const& noexcept {
+        constexpr E const& error() const& noexcept {
             webpp_cxx_assert(!m_has_value);
             return m_unex;
         }
@@ -981,7 +1012,7 @@ namespace webpp::stl {
             return m_unex;
         }
 
-        constexpr const E&& error() const&& noexcept {
+        constexpr E const&& error() const&& noexcept {
             webpp_cxx_assert(!m_has_value);
             return std::move(m_unex);
         }
@@ -995,17 +1026,17 @@ namespace webpp::stl {
 
         template <typename U, typename E2>
             requires std::is_void_v<U>
-        friend constexpr bool operator==(const expected& x, const expected<U, E2>& y)
+        friend constexpr bool operator==(expected const& x, expected<U, E2> const& y)
         // FIXME: noexcept(noexcept(bool(x.error() == y.error())))
         {
-            if (x.has_value())
+            if (x.has_value()) {
                 return y.has_value();
-            else
-                return !y.has_value() && bool(x.error() == y.error());
+            }
+            return !y.has_value() && bool(x.error() == y.error());
         }
 
         template <typename E2>
-        friend constexpr bool operator==(const expected& x, const unexpected<E2>& e)
+        friend constexpr bool operator==(expected const& x, unexpected<E2> const& e)
         // FIXME: noexcept(noexcept(bool(x.error() == e.error())))
         {
             return !x.has_value() && bool(x.error() == e.error());
@@ -1026,11 +1057,13 @@ namespace webpp::stl {
             if (m_has_value) {
                 std::construct_at(std::addressof(m_unex), std::forward<V>(v));
                 m_has_value = false;
-            } else
+            } else {
                 m_unex = std::forward<V>(v);
+            }
         }
 
         struct some_void_type {};
+
         union {
             some_void_type m_void;
             E              m_unex;
@@ -1038,6 +1071,7 @@ namespace webpp::stl {
 
         bool m_has_value;
     };
+
     /// @}
 
 

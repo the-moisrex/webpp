@@ -22,7 +22,6 @@ namespace webpp::istl {
         return static_cast<stl::remove_reference_t<T>>(t);
     }
 
-
     /**
      * The opposite of std::move; it's convert rvalue references into lvalue references.
      */
@@ -30,9 +29,6 @@ namespace webpp::istl {
     [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(T&& t) noexcept {
         return static_cast<stl::remove_cvref_t<T>&>(t);
     }
-
-
-
 
     namespace details {
         template <typename IntegerT, IntegerT Start, IntegerT End, IntegerT... I>
@@ -130,13 +126,13 @@ namespace webpp::stl {
     // polyfill for C++23 feature named unreachable
 #ifndef __cpp_lib_unreachable
     [[noreturn]] inline void unreachable() {
-#    ifdef __GNUC__ // GCC, Clang, ICC
+#    ifdef __GNUC__         // GCC, Clang, ICC
         __builtin_unreachable();
 #    elif defined(_MSC_VER) // MSVC
         __assume(false);
 #    endif
     }
-#endif // __cpp_lib_unreachable
+#endif                      // __cpp_lib_unreachable
 
 } // namespace webpp::stl
 

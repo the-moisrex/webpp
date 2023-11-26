@@ -20,11 +20,10 @@ struct project_template {
     bool is_valid() const;
 };
 
-
 // the struct that creates the project template's object
 struct template_manager {
-
     template_manager(stl::string_view root_dir_inp) noexcept : root_dir{root_dir_inp} {}
+
     template_manager(template_manager const&)                = default;
     template_manager(template_manager&&) noexcept            = default;
     template_manager& operator=(template_manager const&)     = default;
@@ -45,7 +44,7 @@ struct template_manager {
 void template_manager::scan() {
     namespace fs = std::filesystem;
     for (auto const& entry : fs::recursive_directory_iterator(root_dir)) {
-        const auto ext = entry.path().extension();
+        auto const ext = entry.path().extension();
         if (entry.is_regular_file() && ext == tmpl_extension) {
             add_template_file(entry.path().string());
         }
@@ -53,10 +52,6 @@ void template_manager::scan() {
 }
 
 void template_manager::add_template_file(stl::string_view /*file*/) {}
-
-
-
-
 
 command_status create_project::start(command_options args) {
     using enum command_status;
@@ -66,6 +61,7 @@ command_status create_project::start(command_options args) {
 int create_project::handle_project(stl::span<std::string> args) {
     return 0;
 }
+
 stl::string_view create_project::desc() const noexcept {
     return {"Create Project"};
 }

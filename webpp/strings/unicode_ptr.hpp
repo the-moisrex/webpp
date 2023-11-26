@@ -48,7 +48,6 @@ namespace webpp::unicode {
         }
     };
 
-
     /**
      * This is a "fancy pointer" for storage_unit
      * Fancy Pointer: (https://en.cppreference.com/w/cpp/named_req/Allocator#Fancy_pointers)
@@ -61,7 +60,7 @@ namespace webpp::unicode {
         using char_type               = typename storage_unit_type::char_type;
         using code_point_type         = typename storage_unit_type::code_point_type;
         using pointer                 = char_type*;
-        using const_pointer           = const char_type*;
+        using const_pointer           = char_type const*;
         using difference_type         = stl::ptrdiff_t;
         using const_storage_unit_type = typename storage_unit_type::const_storage_unit_type;
         using iterator_category       = stl::random_access_iterator_tag;
@@ -70,8 +69,8 @@ namespace webpp::unicode {
         static constexpr bool is_storage_const = stl::is_const_v<storage_unit_type>;
 
         using element_type    = storage_unit_type;
-        using reference       = stl::conditional_t<is_storage_const, const element_type&, element_type&>;
-        using const_reference = const element_type&;
+        using reference       = stl::conditional_t<is_storage_const, element_type const&, element_type&>;
+        using const_reference = element_type const&;
         // using const_pointer   = unicode_ptr<const_storage_unit_type>;
 
         using element_ptr =
@@ -89,11 +88,12 @@ namespace webpp::unicode {
         constexpr unicode_ptr() = default;
 
         template <typename T>
-            requires(sizeof(T) == sizeof(char_type) &&
-                     !stl::same_as<T, char_type>) // same size but not char_type
+            requires(
+              sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
         constexpr unicode_ptr(T* p) noexcept : start{reinterpret_cast<pointer>(p)} {}
 
         constexpr unicode_ptr(pointer p) noexcept : start{p} {}
+
         constexpr unicode_ptr(reference r) noexcept : start{&r.value} {}
 
         // this is used by std::pointer_traits<T>::pointer_to
@@ -117,7 +117,6 @@ namespace webpp::unicode {
         constexpr operator element_type() noexcept {
             return {*start};
         }
-
 
         constexpr operator element_type const*() const noexcept {
             return reinterpret_cast<element_type const*>(start);
@@ -172,28 +171,32 @@ namespace webpp::unicode {
         }
 
         constexpr unicode_ptr& operator+=(difference_type n) noexcept {
-            for (; n != 0; --n)
+            for (; n != 0; --n) {
                 this->operator++();
+            }
             return *this;
         }
 
         constexpr unicode_ptr& operator-=(difference_type n) noexcept {
-            for (; n != 0; --n)
+            for (; n != 0; --n) {
                 this->operator--();
+            }
             return *this;
         }
 
         constexpr unicode_ptr operator+(difference_type n) const noexcept {
             unicode_ptr ret{*this};
-            for (; n != 0; --n)
+            for (; n != 0; --n) {
                 ret.operator++();
+            }
             return ret;
         }
 
         constexpr unicode_ptr operator-(difference_type n) const noexcept {
             unicode_ptr ret{*this};
-            for (; n != 0; --n)
+            for (; n != 0; --n) {
                 ret.operator--();
+            }
             return ret;
         }
     };
@@ -206,7 +209,7 @@ namespace webpp::unicode {
         using char_type               = CharT;
         using code_point_type         = CodePointType;
         using type                    = storage_unit<CharT, CodePointType>;
-        using const_storage_unit_type = const storage_unit<CharT, CodePointType>;
+        using const_storage_unit_type = storage_unit<CharT, CodePointType> const;
 
         // the std::iterator_traits uses this to get the pointer type
         using pointer = unicode_ptr<type>;
@@ -221,11 +224,12 @@ namespace webpp::unicode {
         char_type value; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename C>
-            requires(details::is_value<stl::remove_cvref_t<C>> &&
-                     !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
+            requires(
+              details::is_value<stl::remove_cvref_t<C>> && !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
         constexpr explicit(false) storage_unit(C c) noexcept : value(static_cast<char_type>(c)) {}
 
         constexpr explicit(false) storage_unit(char_type val) noexcept : value(val) {}
+
         constexpr storage_unit() noexcept                    = default;
         constexpr storage_unit(storage_unit const&)          = default;
         constexpr storage_unit(storage_unit&&) noexcept      = default;
@@ -251,7 +255,6 @@ namespace webpp::unicode {
 
         constexpr bool operator==(storage_unit const& val) const noexcept = default;
 
-
         template <typename IntT>
             requires(details::is_value<stl::remove_cvref_t<IntT>>)
         constexpr stl::strong_ordering operator<=>(IntT&& val) const noexcept {
@@ -265,19 +268,16 @@ namespace webpp::unicode {
         }
     };
 
-
-
     template <typename CharT, typename CodePointT>
-    constexpr bool operator==(CharT lhs, const storage_unit<CharT, CodePointT>& rhs) noexcept {
+    constexpr bool operator==(CharT lhs, storage_unit<CharT, CodePointT> const& rhs) noexcept {
         return rhs == lhs;
     }
 
     template <typename ChT, typename CharT, typename CodePointT>
         requires requires(ChT str, CharT val) { static_cast<CharT>(str) <=> val; }
-    constexpr auto operator<=>(ChT&& str, const storage_unit<CharT, CodePointT>& unit) noexcept {
+    constexpr auto operator<=>(ChT&& str, storage_unit<CharT, CodePointT> const& unit) noexcept {
         return static_cast<CharT>(str) == unit.value;
     }
-
 
     using utf8_storage_unit   = storage_unit<char8_t, char32_t>;
     using utf16_storage_unit  = storage_unit<char16_t, char32_t>;

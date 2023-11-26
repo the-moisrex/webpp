@@ -21,22 +21,24 @@ bool cmp(auto&& str1, auto&& str2) noexcept {
     using simd_type                 = eve::wide<char_type>;
     static constexpr auto simd_size = simd_type::size();
 
-    const auto size1 = str1.size();
-    const auto size2 = str2.size();
-    if (size1 != size2)
+    auto const size1 = str1.size();
+    auto const size2 = str2.size();
+    if (size1 != size2) {
         return false;
+    }
 
     auto it1 = str1.data();
     auto it2 = str2.data();
 
-    const auto it1end     = it1 + size1;
-    const auto almost_end = it1 + (size1 % simd_size);
+    auto const it1end     = it1 + size1;
+    auto const almost_end = it1 + (size1 % simd_size);
     for (; it1 != almost_end; it1 += simd_size, it2 += simd_size) {
         auto const values1 = simd_type{it1};
         auto const values2 = simd_type{it2};
         auto const cmped   = eve::is_not_equal(values1, values2);
-        if (eve::any(cmped))
+        if (eve::any(cmped)) {
             return false;
+        }
     }
 
     // let's just forget about the rest of them now, it's just a benchmark, and we already know the results.
@@ -52,6 +54,7 @@ static void EQ_STD(benchmark::State& state) {
         benchmark::DoNotOptimize(str1 == str2);
     }
 }
+
 BENCHMARK(EQ_STD);
 
 static void EQ_STRcmp(benchmark::State& state) {
@@ -61,6 +64,7 @@ static void EQ_STRcmp(benchmark::State& state) {
         benchmark::DoNotOptimize(strcmp(str1.data(), str2.data()));
     }
 }
+
 BENCHMARK(EQ_STRcmp);
 
 #ifdef webpp_has_eve
@@ -71,5 +75,6 @@ static void EQ_SIMD(benchmark::State& state) {
         benchmark::DoNotOptimize(cmp(str1, str2));
     }
 }
+
 BENCHMARK(EQ_SIMD);
 #endif

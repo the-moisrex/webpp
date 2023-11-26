@@ -68,35 +68,37 @@ namespace webpp::uri {
             return ASCII_ALPHA.contains(*ctx.pos) && ctx.pos[1] == ':';
         }
 
-
         template <typename... T>
-        static constexpr void
-        append_path(parsing_uri_context<T...>&                   ctx,
-                    typename parsing_uri_context<T...>::iterator start,
-                    typename parsing_uri_context<T...>::iterator end,
-                    bool const needs_encoding) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void append_path(
+          parsing_uri_context<T...>&                   ctx,
+          typename parsing_uri_context<T...>::iterator start,
+          typename parsing_uri_context<T...>::iterator end,
+          bool const needs_encoding) noexcept(parsing_uri_context<T...>::is_nothrow) {
             using ctx_type = parsing_uri_context<T...>;
 
             if ((ctx_type::is_segregated || ctx_type::is_modifiable) && needs_encoding) { // slow path
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                     auto path_ref = ctx.out.path_ref();
                     istl::collection::emplace_one(path_ref, path_ref.get_allocator());
-                    encode_uri_component<uri_encoding_policy::encode_chars>(start,
-                                                                            end,
-                                                                            path_ref.back(),
-                                                                            PATH_ENCODE_SET);
+                    encode_uri_component<uri_encoding_policy::encode_chars>(
+                      start,
+                      end,
+                      path_ref.back(),
+                      PATH_ENCODE_SET);
                 } else if constexpr (ctx_type::is_modifiable) {
-                    encode_uri_component<uri_encoding_policy::encode_chars>(start,
-                                                                            end,
-                                                                            ctx.out.path_ref(),
-                                                                            PATH_ENCODE_SET);
+                    encode_uri_component<uri_encoding_policy::encode_chars>(
+                      start,
+                      end,
+                      ctx.out.path_ref(),
+                      PATH_ENCODE_SET);
                 }
             } else { // quicker
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                    istl::collection::emplace_one(ctx.out.path_ref(),
-                                                  start,
-                                                  end,
-                                                  ctx.out.path_ref().get_allocator());
+                    istl::collection::emplace_one(
+                      ctx.out.path_ref(),
+                      start,
+                      end,
+                      ctx.out.path_ref().get_allocator());
                 } else if constexpr (ctx_type::is_modifiable) {
                     ctx.out.path_ref().append(start, end);
                     // } else {
@@ -108,8 +110,8 @@ namespace webpp::uri {
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_opaque_path(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_opaque_path(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
         using ctx_type = parsing_uri_context<T...>;
@@ -121,7 +123,8 @@ namespace webpp::uri {
         for (;;) {
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::C0_CONTROL_ENCODE_SET,
-                  interesting_characters)) {
+                  interesting_characters))
+            {
                 set_valid(ctx.status, uri_status::valid);
                 encoder.end_segment();
                 encoder.set_value();
@@ -148,8 +151,8 @@ namespace webpp::uri {
     }
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_path(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_path(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
         using details::ascii_bitmap;
@@ -188,11 +191,10 @@ namespace webpp::uri {
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
         for (;;) {
-
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::PATH_ENCODE_SET,
-                  interesting_chars)) {
-
+                  interesting_chars))
+            {
                 set_valid(ctx.status, uri_status::valid);
                 encoder.end_segment();
                 break;
@@ -239,7 +241,7 @@ namespace webpp::uri {
                     }
                     // %2E or %2e is equal to a "." (dot)
                     if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
-                        ctx.pos += 3;
+                        ctx.pos              += 3;
                         dotted_segment_count += 3;
                         continue;
                     }
@@ -264,7 +266,7 @@ namespace webpp::uri {
                 dotted_segment_count = 0;
                 // encoder.reset_begin();
                 encoder.clear_segment();
-                continue; // ignore this path segment
+                continue;                    // ignore this path segment
             }
             if (dotted_segment_count != 0) { // double dot
                 // remove the last segment as well
@@ -334,11 +336,12 @@ namespace webpp::uri {
         }
 
         template <istl::String T>
-            requires(!istl::cvref_as<T, basic_path> &&
-                     istl::cvref_as<typename T::allocator_type, allocator_type>)
+            requires(
+              !istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
         explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
             parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
+
         // NOLINTEND(*-forwarding-reference-overload)
 
         template <istl::StringifiableOf<string_view_type> StrT>
@@ -398,8 +401,8 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
-            const auto lhs_size = this->size();
-            const auto rhs_size = rhs.size();
+            auto const lhs_size = this->size();
+            auto const rhs_size = rhs.size();
             if (lhs_size != rhs_size) {
                 return stl::compare_partial_order_fallback(lhs_size, rhs_size);
             }
@@ -409,7 +412,6 @@ namespace webpp::uri {
             return stl::partial_ordering::unordered;
         }
 
-
         template <istl::StringViewifiable SegStrT>
             requires(!stl::same_as<stl::remove_cvref_t<SegStrT>, basic_path>)
         [[nodiscard]] constexpr auto operator<=>(SegStrT&& rhs) const {
@@ -418,7 +420,6 @@ namespace webpp::uri {
             path_type const rhs_path{path_str, this->get_allocator()};
             return *this <=> rhs_path;
         }
-
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
             return !this->empty() && this->front().empty();
@@ -431,7 +432,6 @@ namespace webpp::uri {
         constexpr void normalize(bool remove_empty_segments = false) {
             remove_dot_segments(is_absolute(), remove_empty_segments);
         }
-
 
         /**
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
@@ -456,7 +456,7 @@ namespace webpp::uri {
                 }
                 if (*pos == parent_dir) {
                     if (pos != this->begin()) {
-                        const auto last_el = std::prev(pos);
+                        auto const last_el = std::prev(pos);
                         if (last_el->empty()) {
                             // remove just this one
                             pos = this->erase(pos);
@@ -501,13 +501,11 @@ namespace webpp::uri {
             return *this;
         }
 
-
         [[nodiscard]] constexpr string_type to_string() const {
             string_type str{this->get_allocator()};
             append_to(str);
             return str;
         }
-
 
         /**
          * Get the raw string non-decoded size
@@ -524,7 +522,6 @@ namespace webpp::uri {
             }() + this->size() - 1;
         }
 
-
         constexpr void fix() {
             // remove the last empty string
             if (this->size() && this->back().empty()) {
@@ -532,7 +529,6 @@ namespace webpp::uri {
             }
         }
     };
-
 
     template <istl::Stringifiable S>
     basic_path(S&& str) -> basic_path<stl::remove_cvref_t<decltype(istl::stringify(stl::forward<S>(str)))>>;

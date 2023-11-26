@@ -79,7 +79,6 @@ namespace webpp::http::cgi_proto {
             return protocol_type::read(data);
         }
 
-
         /**
          * Even though this request body is a CStreamBasedBodyCommunicator, and CStreams don't require being
          * SizableBody, we can do such thing for CGI request body communicator.
@@ -87,7 +86,6 @@ namespace webpp::http::cgi_proto {
         [[nodiscard]] constexpr stl::size_t size() const noexcept {
             return body_content.size();
         }
-
 
         [[nodiscard]] constexpr bool empty() const noexcept {
             return body_content.empty();

@@ -19,7 +19,9 @@ namespace webpp::istl {
         str.at(0);
         str.data();
         str.c_str();
-        { str = "str" };
+        {
+            str = "str"
+        };
         str.size();
         str.capacity();
         str.shrink_to_fit();
@@ -79,13 +81,13 @@ namespace webpp::istl {
     template <typename T>
     concept Stringifiable = StringifiableOf<defaulted_string<T>, stl::remove_cvref_t<T>>;
 
-
     template <typename StrT, typename Strifiable>
         requires(StringifiableOf<StrT, Strifiable>)
     [[nodiscard]] constexpr auto stringify_of(Strifiable&& str, auto const& allocator) noexcept {
         if constexpr (String<Strifiable> &&
                       (stl::is_same_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>> ||
-                       stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) ) {
+                       stl::is_convertible_v<stl::remove_cvref_t<StrT>, stl::remove_cvref_t<Strifiable>>) )
+        {
             return stl::forward<Strifiable>(str);
         } else if constexpr (requires { StrT{str, allocator}; }) {
             return StrT{str, allocator};
@@ -93,13 +95,15 @@ namespace webpp::istl {
                                  str.c_str();
                                  str.size();
                                  StrT{str.c_str(), str.size(), allocator};
-                             }) {
+                             })
+        {
             return StrT{str.c_str(), str.size(), allocator};
         } else if constexpr (requires {
                                  str.data();
                                  str.size();
                                  StrT{str.data(), str.size(), allocator};
-                             }) {
+                             })
+        {
             return StrT{str.data(), str.size(), allocator};
         } else if constexpr (requires { str.str(); }) {
             return stringify_of<StrT>(str.str(), allocator);
@@ -118,13 +122,11 @@ namespace webpp::istl {
         return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }
 
-
     template <typename Strifiable, typename AllocType>
     [[nodiscard]] constexpr auto stringify(Strifiable&& str, AllocType const& allocator) noexcept {
         using deduced_type = defaulted_string<Strifiable, AllocType>;
         return stringify_of<deduced_type>(stl::forward<Strifiable>(str), allocator);
     }
-
 
     /**
      * Get the underlying data of the specified string
@@ -135,18 +137,20 @@ namespace webpp::istl {
         } else if constexpr (requires { str.c_str(); }) {
             return str.c_str(); // this is const, but that's that caller's problem now :)
         } else {
-            return &str[0]; // it'll throw an error if it didn't work, so let's do this
+            return &str[0];     // it'll throw an error if it didn't work, so let's do this
         }
     }
 
     template <typename T>
     concept ComparableToString = requires(T obj) {
-        { obj == "" };
+        {
+            obj == ""
+        };
     } || requires(T obj) {
-        { "" == obj };
+        {
+            "" == obj
+        };
     };
-
-
 
     template <istl::String StrT>
     static constexpr auto to_std_string(StrT&& str) {
@@ -161,8 +165,6 @@ namespace webpp::istl {
             return std_string_type{str.data(), str.size(), str.get_allocator()};
         }
     }
-
-
 
     template <istl::String StrT>
     stl::size_t replace_all(StrT& inout, stl::string_view what, stl::string_view with) {

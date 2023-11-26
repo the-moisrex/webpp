@@ -6,12 +6,12 @@
 #include "./tests_common_pch.hpp"
 
 template <typename T>
-void fuzz_passer(T&& fuzzer, const uint8_t* data, size_t size) {
+void fuzz_passer(T&& fuzzer, uint8_t const* data, size_t size) {
     using namespace std;
-    if constexpr (invocable<T, const uint8_t*, size_t>) {
+    if constexpr (invocable<T, uint8_t const*, size_t>) {
         invoke(fuzzer, data, size);
     } else if constexpr (invocable<T, string_view>) {
-        static_cast<void>(invoke(fuzzer, std::string_view{reinterpret_cast<const char*>(data), size}));
+        static_cast<void>(invoke(fuzzer, std::string_view{reinterpret_cast<char const*>(data), size}));
     }
 }
 

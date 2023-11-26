@@ -49,6 +49,7 @@ namespace webpp {
         constexpr ip_address(StrT&& ip_addr) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip_addr)));
         }
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <istl::StringViewifiable StrT>
@@ -61,38 +62,54 @@ namespace webpp {
         ////////////////////////////// IPv4 Constructors //////////////////////////////
 
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
-        constexpr ip_address(ipv4_octet octet1,
-                             ipv4_octet octet2,
-                             ipv4_octet octet3,
-                             ipv4_octet octet4,
-                             ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
-          : ip_address{ipv4{octet1, octet2, octet3, octet4, prefix_val}} {}
+        constexpr ip_address(
+          ipv4_octet octet1,
+          ipv4_octet octet2,
+          ipv4_octet octet3,
+          ipv4_octet octet4,
+          ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
+          : ip_address{
+              ipv4{octet1, octet2, octet3, octet4, prefix_val}
+        } {}
 
-        constexpr ip_address(ipv4_octet       octet1,
-                             ipv4_octet       octet2,
-                             ipv4_octet       octet3,
-                             ipv4_octet       octet4,
-                             stl::string_view subnet) noexcept
-          : ip_address{ipv4{octet1, octet2, octet3, octet4, subnet}} {}
+        constexpr ip_address(
+          ipv4_octet       octet1,
+          ipv4_octet       octet2,
+          ipv4_octet       octet3,
+          ipv4_octet       octet4,
+          stl::string_view subnet) noexcept
+          : ip_address{
+              ipv4{octet1, octet2, octet3, octet4, subnet}
+        } {}
 
         constexpr explicit ip_address(stl::uint32_t ip,
                                       ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
-          : ip_address{ipv4{ip, prefix}} {}
+          : ip_address{
+              ipv4{ip, prefix}
+        } {}
 
         template <istl::StringViewifiable StrT>
         constexpr explicit ip_address(stl::uint32_t ip_addr, StrT&& subnet) noexcept
-          : ip_address{ipv4{ip_addr, stl::forward<StrT>(subnet)}} {}
+          : ip_address{
+              ipv4{ip_addr, stl::forward<StrT>(subnet)}
+        } {}
 
         constexpr ip_address(ipv4_octets ip_addr,
                              ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
-          : ip_address{ipv4{ip_addr, prefix}} {}
+          : ip_address{
+              ipv4{ip_addr, prefix}
+        } {}
 
         template <istl::StringViewifiable StrT>
         constexpr ip_address(ipv4_octets ip_addr, StrT&& subnet) noexcept
-          : ip_address{ipv4{ip_addr, stl::forward<StrT>(subnet)}} {}
+          : ip_address{
+              ipv4{ip_addr, stl::forward<StrT>(subnet)}
+        } {}
 
         constexpr ip_address(ipv4_octets ip_addr, ipv4_octets subnet) noexcept
-          : ip_address{ipv4{ip_addr, subnet}} {}
+          : ip_address{
+              ipv4{ip_addr, subnet}
+        } {}
 
         // NOLINTEND(bugprone-easily-swappable-parameters)
 
@@ -101,19 +118,27 @@ namespace webpp {
 
         constexpr ip_address(ipv6::octets8_t const& inp_octets,
                              stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : ip_address{ipv6{inp_octets, prefix_value}} {}
+          : ip_address{
+              ipv6{inp_octets, prefix_value}
+        } {}
 
         constexpr ip_address(ipv6::octets16_t const& inp_octets,
                              stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : ip_address{ipv6{inp_octets, prefix_value}} {}
+          : ip_address{
+              ipv6{inp_octets, prefix_value}
+        } {}
 
         constexpr ip_address(ipv6::octets32_t const& inp_octets,
                              stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : ip_address{ipv6{inp_octets, prefix_value}} {}
+          : ip_address{
+              ipv6{inp_octets, prefix_value}
+        } {}
 
         constexpr ip_address(ipv6::octets64_t const& inp_octets,
                              stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
-          : ip_address{ipv6{inp_octets, prefix_value}} {}
+          : ip_address{
+              ipv6{inp_octets, prefix_value}
+        } {}
 
         ////////////////////////////// Common Functions //////////////////////////////
 
@@ -211,7 +236,6 @@ namespace webpp {
             return static_cast<variant_type const&>(*this);
         }
 
-
         [[nodiscard]] constexpr variant_type& as_variant() noexcept {
             return static_cast<variant_type&>(*this);
         }
@@ -306,8 +330,6 @@ namespace webpp {
             });
         }
     };
-
-
 
     template <typename T>
     concept IPAddress = istl::part_of<stl::remove_cvref_t<T>, ipv4, ipv6, ip_address>;

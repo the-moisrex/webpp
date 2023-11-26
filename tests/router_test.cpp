@@ -12,14 +12,15 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
-constexpr auto s_router = static_router{root / "page" >>
-                                          [] {
-                                              return "page 1";
-                                          },
-                                        root / "test" >>
-                                          [] {
-                                              return "test 2";
-                                          }};
+constexpr auto s_router = static_router{
+  root / "page" >>
+    [] {
+        return "page 1";
+    },
+  root / "test" >>
+    [] {
+        return "test 2";
+    }};
 
 struct fake_app_struct {
     HTTPResponse auto operator()(HTTPRequest auto&& req) noexcept {
@@ -62,7 +63,6 @@ TEST(Router, RouteCreation) {
     HTTPResponse auto const res3 = router3(req);
     EXPECT_EQ(as<std::string>(res3.body), "testing 2");
 }
-
 
 // namespace webpp {
 //    class fake_cgi;

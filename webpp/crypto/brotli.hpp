@@ -23,37 +23,38 @@ namespace webpp {
      * https://github.com/CHN-beta/brotli-cpp/blob/master/brotli-cpp.hpp
      */
     struct brotli {
-
 #ifdef WEBPP_BROTLI
 
-        static std::string compress(const char* data, const size_t ndata) {
+        static std::string compress(char const* data, const size_t ndata) {
             std::string ret;
-            if (ndata == 0)
+            if (ndata == 0) {
                 return ret;
+            }
             ret.resize(BrotliEncoderMaxCompressedSize(ndata));
             size_t encodedSize{ret.size()};
-            auto   r = BrotliEncoderCompress(5,
-                                           BROTLI_DEFAULT_WINDOW,
-                                           BROTLI_DEFAULT_MODE,
-                                           ndata,
-                                           (const uint8_t*) (data),
-                                           &encodedSize,
-                                           (uint8_t*) (ret.data()));
-            if (r == BROTLI_FALSE)
+            auto   r = BrotliEncoderCompress(
+              5,
+              BROTLI_DEFAULT_WINDOW,
+              BROTLI_DEFAULT_MODE,
+              ndata,
+              (uint8_t const*) (data),
+              &encodedSize,
+              (uint8_t*) (ret.data()));
+            if (r == BROTLI_FALSE) {
                 ret.resize(0);
-            else
+            } else {
                 ret.resize(encodedSize);
+            }
             return ret;
         }
 
-
-
-        static std::string decompress(const char* data, const size_t ndata) {
-            if (ndata == 0)
+        static std::string decompress(char const* data, const size_t ndata) {
+            if (ndata == 0) {
                 return std::string(data, ndata);
+            }
 
             size_t availableIn  = ndata;
-            auto   nextIn       = (const uint8_t*) (data);
+            auto   nextIn       = (uint8_t const*) (data);
             auto   decompressed = std::string(availableIn * 3, 0);
             size_t availableOut = decompressed.size();
             auto   nextOut      = (uint8_t*) (decompressed.data());
@@ -80,12 +81,13 @@ namespace webpp {
             return decompressed;
         }
 #else
-        static std::string compress(const char* /*data*/, const std::size_t /*ndata*/) {
+        static std::string compress(char const* /*data*/, const std::size_t /*ndata*/) {
             throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliCompress()");
             abort();
         }
-        static std::string decompress(const char* /*data*/, const std::size_t /*ndata*/) {
+
+        static std::string decompress(char const* /*data*/, const std::size_t /*ndata*/) {
             throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliDecompress()");
             abort();

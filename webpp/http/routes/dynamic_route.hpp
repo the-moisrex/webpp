@@ -23,9 +23,11 @@ namespace webpp::http {
 
       public:
         explicit dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
+
         explicit dynamic_route(Callable const& new_callable) noexcept(
           stl::is_nothrow_copy_constructible_v<callable_type>)
           : callable(new_callable) {}
+
         dynamic_route(dynamic_route const&)                     = delete;
         dynamic_route(dynamic_route&&) noexcept                 = default;
         dynamic_route& operator=(dynamic_route const&) noexcept = delete;
@@ -48,14 +50,12 @@ namespace webpp::http {
             valve_to_string(out, callable);
         }
 
-
         void setup([[maybe_unused]] router_type& router) final {
             if constexpr (ValveRequiresSetup<router_type, callable_type>) {
                 callable.setup(router);
             }
         }
     };
-
 
     template <Traits TraitsType>
     struct dynamic_route<TraitsType, void> {
@@ -76,7 +76,6 @@ namespace webpp::http {
         virtual void operator()(context_type& ctx)                                       = 0;
         virtual void to_string(string_type& out) const                                   = 0;
         virtual void setup(router_type& out)                                             = 0;
-
 
         /**
          * Utility to get a string more easily; this method should not be used in the library itself.

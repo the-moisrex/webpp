@@ -10,18 +10,19 @@
 #    warning \
       "Using std_allocator_pack as a fallback for std_pmr_allocator_pack due to not having access to <memory_resource> header file."
 #    include "std_allocator_pack.hpp"
+
 namespace webpp::stl::pmr {
     using allocator_descriptors = stl::allocator_descriptors;
 }
 #else
 #    include "allocator_pack.hpp"
 
-
 namespace webpp {
 
     // add stuff to the stl::pmr namespace
     namespace stl::pmr {
         using namespace std::pmr;
+
         /**
          * Unfortunately due to the nature of the `new_delete_resource` and the `null_memory_resource`
          * (them being a function not a distinguishable type), we're not able to put them here, so we fall
@@ -93,10 +94,11 @@ namespace webpp {
                 //        };
 
                 // todo: add new_delete_resource
-                using resources = type_list<default_resource_descriptor,
-                                            monotonic_buffer_resource_descriptor,
-                                            synchronized_pool_resource_descriptor,
-                                            unsynchronized_pool_resource_descriptor>;
+                using resources =
+                  type_list<default_resource_descriptor,
+                            monotonic_buffer_resource_descriptor,
+                            synchronized_pool_resource_descriptor,
+                            unsynchronized_pool_resource_descriptor>;
 
                 using default_resource = default_resource_descriptor;
             };
@@ -104,7 +106,7 @@ namespace webpp {
         } // namespace details
 
         using allocator_descriptors = type_list<details::polymorphic_allocator_descriptor>;
-    } // namespace stl::pmr
+    }     // namespace stl::pmr
 
 } // namespace webpp
 

@@ -31,48 +31,46 @@ namespace webpp::sql {
           : stmt(stmt_ref),
             index(cell_index) {}
 
-
         // define operators
         // todo: replace this with spaceship op, it's not implemented as of this time.
-#define def_op(op)                                                                                         \
-    template <typename T>                                                                                  \
-    inline bool operator op(T&& val) const {                                                               \
-        switch (category()) {                                                                              \
-            case column_category::string: {                                                                \
-                auto const str = as_string<local_string_type>();                                           \
-                auto const val_str =                                                                       \
-                  lexical::cast<local_string_type>(val,                                                    \
-                                                   stmt.alloc_pack.template local_allocator<char_type>()); \
-                                                                                                           \
-                return str op val_str;                                                                     \
-            }                                                                                              \
-            case column_category::number: {                                                                \
-                if constexpr (stl::integral<T>) {                                                          \
-                    return val op as_number<T>();                                                          \
-                } else {                                                                                   \
-                    /* todo: add debug info                                                                \
-                     * todo: should we use long double?                                                    \
-                     */                                                                                    \
-                    return lexical::cast<double>(val) op as_number<double>();                              \
-                }                                                                                          \
-            }                                                                                              \
-            case column_category::blob:                                                                    \
-            case column_category::unknown:                                                                 \
-            default: return false;                                                                         \
-        }                                                                                                  \
+#define webpp_def(op)                                                         \
+    template <typename T>                                                     \
+    inline bool operator op(T&& val) const {                                  \
+        switch (category()) {                                                 \
+            case column_category::string: {                                   \
+                auto const str     = as_string<local_string_type>();          \
+                auto const val_str = lexical::cast<local_string_type>(        \
+                  val,                                                        \
+                  stmt.alloc_pack.template local_allocator<char_type>());     \
+                                                                              \
+                return str op val_str;                                        \
+            }                                                                 \
+            case column_category::number: {                                   \
+                if constexpr (stl::integral<T>) {                             \
+                    return val op as_number<T>();                             \
+                } else {                                                      \
+                    /* todo: add debug info                                   \
+                     * todo: should we use long double?                       \
+                     */                                                       \
+                    return lexical::cast<double>(val) op as_number<double>(); \
+                }                                                             \
+            }                                                                 \
+            case column_category::blob:                                       \
+            case column_category::unknown:                                    \
+            default: return false;                                            \
+        }                                                                     \
     }
 
-        def_op(>)    //
-          def_op(<)  //
-          def_op(==) //
-          def_op(!=) //
-          def_op(>=) //
-          def_op(<=) //
+        webpp_def(>)
+        webpp_def(<)
+        webpp_def(==)
+        webpp_def(!=)
+        webpp_def(>=)
+        webpp_def(<=)
+#undef webpp_def
 
-#undef def_op
-
-          template <istl::String StrT = stl::string>
-          [[nodiscard]] inline StrT as_string() const {
+        template <istl::String StrT = stl::string>
+        [[nodiscard]] inline StrT as_string() const {
             auto str = object::make<StrT>(stmt);
             stmt.as_string(index, str);
             return str;
@@ -120,12 +118,14 @@ namespace webpp::sql {
             return res;
         }
 
-
         // get the category type
         [[nodiscard]] inline column_category category() const noexcept {
             if constexpr (requires {
-                              { stmt.column_cat(index) } -> stl::same_as<column_category>;
-                          }) {
+                              {
+                                  stmt.column_cat(index)
+                              } -> stl::same_as<column_category>;
+                          })
+            {
                 return stmt.column_cat(index);
             } else {
                 return column_category::unknown;
@@ -135,34 +135,42 @@ namespace webpp::sql {
         // check if the column type is of type string (or varchar, char, text, or any other similar names)
         [[nodiscard]] inline bool is_string() const noexcept {
             if constexpr (requires {
-                              { stmt.is_string() } -> stl::same_as<bool>;
-                          }) {
+                              {
+                                  stmt.is_string()
+                              } -> stl::same_as<bool>;
+                          })
+            {
                 return stmt.is_string();
             } else {
                 return category() == column_category::string;
             }
         }
 
-
-
         // check if the column type is of type number (or float, tinyint, integer, double, or any other
         // similar names)
         [[nodiscard]] inline bool is_number() const noexcept {
             if constexpr (requires {
-                              { stmt.is_number() } -> stl::same_as<bool>;
-                          }) {
+                              {
+                                  stmt.is_number()
+                              } -> stl::same_as<bool>;
+                          })
+            {
                 return stmt.is_number();
             } else if constexpr (requires {
-                                     { stmt.is_column_integer(index) } -> stl::same_as<bool>;
-                                     { stmt.is_column_float(index) } -> stl::same_as<bool>;
-                                 }) {
+                                     {
+                                         stmt.is_column_integer(index)
+                                     } -> stl::same_as<bool>;
+                                     {
+                                         stmt.is_column_float(index)
+                                     } -> stl::same_as<bool>;
+                                 })
+            {
                 // todo: do we need this implemwntation or should we re-order it and use category way first and use this way as fallback?
                 return stmt.is_column_integer(index) || stmt.is_column_float(index);
             } else {
                 return category() == column_category::number;
             }
         }
-
 
         [[nodiscard]] inline bool is_primary_key() const noexcept {
             return stmt.is_primary_key();
@@ -173,7 +181,6 @@ namespace webpp::sql {
             return stmt.is_column_null(index);
         }
 
-
         // support for stmt[index] = value;
         // calls stmt.bind
         template <typename T>
@@ -182,13 +189,11 @@ namespace webpp::sql {
             return *this;
         }
 
-
         template <typename T>
         [[nodiscard]] inline sql_cell& operator<<(T&& val) noexcept {
             stmt.bind(index++, stl::forward<T>(val));
             return *this;
         }
-
 
         template <typename T>
         [[nodiscard]] inline auto as() {
@@ -229,8 +234,6 @@ namespace webpp::sql {
         }
     };
 
-
-
     template <typename StmtType>
     struct cell_iterator {
         using statement_type        = StmtType;
@@ -249,18 +252,21 @@ namespace webpp::sql {
 
       public:
         constexpr cell_iterator() noexcept = default;
+
         constexpr cell_iterator(cell_type initial_cell) noexcept : cell{initial_cell} {}
+
         constexpr cell_iterator(cell_iterator const&)                = default;
         constexpr cell_iterator(cell_iterator&&) noexcept            = default;
         constexpr cell_iterator& operator=(cell_iterator const&)     = default;
         constexpr cell_iterator& operator=(cell_iterator&&) noexcept = default;
-        constexpr ~cell_iterator() noexcept                          = default;
 
-        constexpr auto operator==(const cell_iterator& rhs) noexcept {
+        constexpr ~cell_iterator() noexcept = default;
+
+        constexpr auto operator==(cell_iterator const& rhs) noexcept {
             return cell == rhs.cell;
         }
 
-        constexpr auto operator<=>(const cell_iterator& rhs) noexcept {
+        constexpr auto operator<=>(cell_iterator const& rhs) noexcept {
             return cell <=> rhs.cell;
         }
 

@@ -27,7 +27,6 @@ namespace webpp {
           noexcept(stl::is_nothrow_constructible_v<T, ET, Args...>))
           : T{stl::forward<ET>(et), stl::forward<Args>(args)...} {}
 
-
         template <EnabledTraits ET, typename... Args>
             requires(stl::is_constructible_v<T, Args...> && !stl::is_constructible_v<T, ET, Args...>)
         constexpr extension_wrapper(ET&&, Args&&... args) noexcept(

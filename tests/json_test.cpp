@@ -22,7 +22,7 @@ TEST(JSONTest, Parse) {
     document doc;
     EXPECT_TRUE(doc.is_null());
     EXPECT_FALSE(doc.is_object());
-    const char* json_str = "{\"id\":20}";
+    char const* json_str = "{\"id\":20}";
     doc.parse(json_str);
     EXPECT_FALSE(doc.is_null()) << "We have an object now, it shouldn't be null";
     EXPECT_TRUE(doc.is_object()) << "There's an object right there.";
@@ -37,8 +37,6 @@ TEST(JSONTest, Parse) {
         EXPECT_EQ(as<int>(value), 20);
     }
 }
-
-
 
 TEST(JSONTest, Fields) {
     using namespace std;
@@ -97,8 +95,8 @@ TEST(JSONTest, Create) {
 #if feature_support
                doc["info"] = {
                  {"firstname", "Jane"}, // first name
-                 {"lastname", "Doe"},   // last name
-                 {"id", 313}            // id
+                 { "lastname",  "Doe"}, // last name
+                 {       "id",    313}  // id
                };
                EXPECT_EQ(doc["info"]["firstname"].as_string(), "Jane");
                EXPECT_EQ(doc["info"]["id"].as_int32(), 313);

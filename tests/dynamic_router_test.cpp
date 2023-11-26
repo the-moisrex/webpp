@@ -14,9 +14,8 @@ using namespace webpp;
 using namespace webpp::http;
 using namespace std;
 
-
 template <typename Iter, char Num = 13> // NOLINT(*-magic-numbers)
-void rot13(Iter begin, const Iter& end) noexcept {
+void rot13(Iter begin, Iter const& end) noexcept {
     while (begin != end) {
         char& c = *begin;
 
@@ -57,6 +56,7 @@ struct pages {
         // todo: setting ctx.request.uri(uri) will not affect path traverser
         ctx.reset_path(uri); // set the uri again
     }
+
     // NOLINTEND(readability-convert-member-functions-to-static)
 };
 
@@ -65,8 +65,8 @@ TEST(DynamicRouter, RouteRegistration) {
 
     enable_traits_for<dynamic_router> router;
 
-    auto const page = root / "page";
-    router += page / "about" >> [] {
+    auto const page  = root / "page";
+    router          += page / "about" >> [] {
         return "About";
     };
     router += page / "index" >> [] {
@@ -91,7 +91,6 @@ TEST(DynamicRouter, RouteRegistration) {
 }
 
 TEST(DynamicRouter, MemFuncPtr) {
-
     enable_owner_traits<default_dynamic_traits> etraits;
     dynamic_router                              router{etraits};
     router.objects.emplace_back(pages{});
@@ -106,7 +105,6 @@ TEST(DynamicRouter, MemFuncPtr) {
 }
 
 TEST(DynamicRouter, NotNotTest) {
-
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
@@ -120,7 +118,6 @@ TEST(DynamicRouter, NotNotTest) {
 }
 
 TEST(DynamicRouter, DynamicString) {
-
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
     std::string const about_route = "about";
@@ -134,9 +131,7 @@ TEST(DynamicRouter, DynamicString) {
     EXPECT_EQ(as<std::string>(router(req).body), "about page");
 }
 
-
 TEST(DynamicRouter, ManglerTest) {
-
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
@@ -157,7 +152,6 @@ TEST(DynamicRouter, ManglerTest) {
 }
 
 TEST(DynamicRouter, MuliManglerTest) {
-
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
@@ -193,7 +187,6 @@ TEST(DynamicRouter, CacheDeceptionTest) {
     EXPECT_NE(as<std::string>(res.body), "about page");
 }
 
-
 TEST(DynamicRouter, NormalizationTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
@@ -208,10 +201,11 @@ TEST(DynamicRouter, NormalizationTest) {
         auto const res        = router(req);
         auto       parsed_uri = uri::basic_path<stl::string>(path_str);
         parsed_uri.normalize(true);
-        EXPECT_EQ(res.headers.status_code(), status_code::ok) << res.headers.status_code_integer() << "\n"
-                                                              << router.to_string() << "\n"
-                                                              << path_str << "\n"
-                                                              << parsed_uri.to_string();
+        EXPECT_EQ(res.headers.status_code(), status_code::ok)
+          << res.headers.status_code_integer() << "\n"
+          << router.to_string() << "\n"
+          << path_str << "\n"
+          << parsed_uri.to_string();
         EXPECT_EQ(as<std::string>(res.body), "about page") << path_str;
     }
 }
@@ -225,8 +219,9 @@ TEST(DynamicRouter, CommonBypassTests) {
     request req{router.get_traits()};
     req.method("GET");
 
-    for (auto const* path_str :
-         {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"}) {
+    for (
+      auto const* path_str : {"/./admin/..", "/;/admin", "/.;/admin", "//;//admin", "/admin..;/", "/aDmIN"})
+    {
         req.uri(path_str);
         auto parsed_uri = uri::basic_path<stl::string>(path_str);
         parsed_uri.normalize(true);
@@ -291,8 +286,8 @@ TEST(DynamicRouter, PostRoutingTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
-    auto const main_page = router / "page" + &pages::add_body;
-    router += main_page % "about" >> &pages::about;
+    auto const main_page  = router / "page" + &pages::add_body;
+    router               += main_page % "about" >> &pages::about;
 
     request req{router.get_traits()};
     req.method("GET");
@@ -307,8 +302,8 @@ TEST(DynamicRouter, PreRoutingTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
-    auto const main_page = router / "page" - &pages::rot13_path;
-    router += main_page % "about" >> &pages::about;
+    auto const main_page  = router / "page" - &pages::rot13_path;
+    router               += main_page % "about" >> &pages::about;
 
     std::string uri = "/page/about";
     rot13(uri);
@@ -338,8 +333,8 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
         ++num;
     };
 
-    auto const main_page = router / "page" - &pages::rot13_path - add_num - add_num;
-    router += ((main_page % "about" - add_num) >> &pages::about) - add_num;
+    auto const main_page  = router / "page" - &pages::rot13_path - add_num - add_num;
+    router               += ((main_page % "about" - add_num) >> &pages::about) - add_num;
 
     std::string uri = "/page/about";
     rot13(uri);
@@ -368,8 +363,8 @@ TEST(DynamicRouter, SameOrderPostRoutingTest) {
         ++num;
     };
 
-    auto const main_page = router / "page" + add_num + add_num;
-    router += (((main_page % "about" + add_num) >> &pages::about) >> set_num) + add_num;
+    auto const main_page  = router / "page" + add_num + add_num;
+    router               += (((main_page % "about" + add_num) >> &pages::about) >> set_num) + add_num;
 
     request req{router.get_traits()};
     req.method("GET");
@@ -385,8 +380,8 @@ TEST(DynamicRouter, PrePostRoutingTest) {
     enable_traits_for<dynamic_router> router;
     router.objects.emplace_back(pages{});
 
-    auto const main_page = router / "page" - &pages::rot13_path + &pages::add_body;
-    router += main_page % "about" >> &pages::about;
+    auto const main_page  = router / "page" - &pages::rot13_path + &pages::add_body;
+    router               += main_page % "about" >> &pages::about;
 
     std::string uri = "/page/about";
     rot13(uri);
@@ -398,7 +393,6 @@ TEST(DynamicRouter, PrePostRoutingTest) {
     EXPECT_EQ(res.headers.status_code(), status_code::ok) << router.to_string();
     EXPECT_EQ(as<std::string>(res.body), "<body>about page</body>") << router.to_string();
 }
-
 
 TEST(DynamicRouter, ValvesInStaticRouter) {
     static_router _router{root % "about" >> []() {
@@ -415,7 +409,6 @@ TEST(DynamicRouter, ValvesInStaticRouter) {
     EXPECT_NE(res.headers.status_code(), status_code::ok);
     EXPECT_NE(as<std::string>(res.body), "about page");
 }
-
 
 TEST(DynamicRouter, ContextCurrentRoute) {
     enable_owner_traits<default_dynamic_traits> etraits;
@@ -434,14 +427,15 @@ TEST(DynamicRouter, ContextCurrentRoute) {
     EXPECT_TRUE(as<std::string>(res.body).find("home") != std::string::npos) << as<std::string>(res.body);
 }
 
-
 struct custom_callable {
   private:
     int res = 0;
 
   public:
     constexpr custom_callable() noexcept = default;
+
     constexpr custom_callable(int inp) noexcept : res{inp} {}
+
     constexpr custom_callable(custom_callable const&) noexcept            = default;
     constexpr custom_callable(custom_callable&&) noexcept                 = default;
     constexpr custom_callable& operator=(custom_callable&&) noexcept      = default;
@@ -464,6 +458,7 @@ struct custom_type {
 
   public:
     explicit constexpr custom_type(custom_callable* c) : cc{c} {}
+
     constexpr custom_type(custom_type const&) noexcept            = default;
     constexpr custom_type(custom_type&&) noexcept                 = default;
     constexpr custom_type& operator=(custom_type&&) noexcept      = default;
@@ -474,12 +469,11 @@ struct custom_type {
         return cc;
     }
 
-    constexpr friend custom_callable* tag_invoke([[maybe_unused]] stl::tag_t<valvify> tag,
+    friend constexpr custom_callable* tag_invoke([[maybe_unused]] stl::tag_t<valvify> tag,
                                                  custom_type&                         ct) noexcept {
         return ct.get_cc();
     }
 };
-
 
 TEST(DynamicRouter, CustomValvifier) {
     enable_owner_traits<default_dynamic_traits> etraits;
@@ -544,7 +538,6 @@ TEST(DynamicRouter, ContextCallChaining) {
     EXPECT_EQ(as<std::string>(res.body), "<body>home sweet home</body>") << as<std::string>(res.body);
 }
 
-
 TEST(DynamicRouter, RouteDisabler) {
     enable_owner_traits<default_dynamic_traits> etraits;
 
@@ -569,7 +562,6 @@ TEST(DynamicRouter, RouteDisabler) {
     EXPECT_EQ(res2.headers.status_code(), status_code::not_found);
     EXPECT_NE(as<std::string>(res2.body), "home") << as<std::string>(res2.body);
 }
-
 
 TEST(DynamicRouter, RootRoute) {
     enable_owner_traits<default_dynamic_traits> etraits;
@@ -618,7 +610,6 @@ TEST(DynamicRouter, RootRoute) {
     res = router(req);
     EXPECT_EQ(res.headers.status_code(), status_code::not_found);
 }
-
 
 TEST(DynamicRouter, PathWithQueries) {
     enable_owner_traits<default_dynamic_traits> etraits;

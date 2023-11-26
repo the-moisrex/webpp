@@ -10,7 +10,6 @@ namespace stl {
 
 struct S : std::vector<std::string> { // I know, I know
 
-
     // The idea has come from here:
     // https://twitter.com/_JoelFilho/status/1606642294160994304?s=20
     template <typename... NameType>
@@ -19,7 +18,6 @@ struct S : std::vector<std::string> { // I know, I know
             return std::make_tuple((std::find(begin(), end(), name) != end())...);
         }
     }
-
 
     /**
      * Check if the specified names are in headers
@@ -33,12 +31,12 @@ struct S : std::vector<std::string> { // I know, I know
             return stl::find(this->begin(), this->end(), name...) != this->end();
         } else if constexpr (sizeof...(NameType) > 1) {
             stl::tuple tup{(stl::ignore.operator=(name), false)...}; // fill with "false" values
-            auto const names  = stl::forward_as_tuple<NameType...>(name...);
-            auto const filler = [&]<stl::size_t... I>(auto const& field,
-                                                      stl::index_sequence<I...>) constexpr noexcept {
-                ((field == stl::get<I>(names) && (stl::get<I>(tup) = true)), ...);
-            };
-            for (const auto& field : *this) {
+            auto const names = stl::forward_as_tuple<NameType...>(name...);
+            auto const filler =
+              [&]<stl::size_t... I>(auto const& field, stl::index_sequence<I...>) constexpr noexcept {
+                  ((field == stl::get<I>(names) && (stl::get<I>(tup) = true)), ...);
+              };
+            for (auto const& field : *this) {
                 filler(field, stl::make_index_sequence<sizeof...(NameType)>{});
             }
             return tup;
@@ -46,7 +44,6 @@ struct S : std::vector<std::string> { // I know, I know
             return true;
         }
     }
-
 
     /**
      * Check if the specified names are in headers

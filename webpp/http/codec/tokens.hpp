@@ -30,16 +30,18 @@ namespace webpp::http {
     static constexpr charmap_full token_charmap{
       ALPHA<>,
       DIGIT<>,
-      charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}};
-
+      charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}
+    };
 
     static constexpr bool is_http_token(char item) noexcept {
         return token_charmap.contains(item);
     }
 
-
     // Some projects like proxygen allow '_' as well by default, but that's not the standard
-    static constexpr charset host_charset{ALPHA_DIGIT<char>, charset{'.', '-'}};
+    static constexpr charset host_charset{
+      ALPHA_DIGIT<char>,
+      charset{'.', '-'}
+    };
 
 
 } // namespace webpp::http

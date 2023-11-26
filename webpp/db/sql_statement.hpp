@@ -28,7 +28,7 @@ namespace webpp::sql {
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
         using iterator          = row_iterator<sql_statement>;
-        using const_iterator    = row_iterator<const sql_statement>;
+        using const_iterator    = row_iterator<sql_statement const>;
 
         static constexpr auto LOG_CAT = "SQLStmt";
 
@@ -56,13 +56,15 @@ namespace webpp::sql {
         };
 
         template <EnabledTraits ET>
-        sql_statement(ET&& et) noexcept : driver_type{},
-                                          etraits{stl::forward<ET>(et)} {}
+        sql_statement(ET&& et) noexcept
+          : driver_type{},
+            etraits{stl::forward<ET>(et)} {}
 
         template <EnabledTraits ET>
         sql_statement(driver_type&& driver, ET&& et) noexcept
           : driver_type{stl::move(driver)},
             etraits{stl::forward<ET>(et)} {}
+
         sql_statement(sql_statement&&) noexcept = default;
         sql_statement(sql_statement const&)     = delete;
 
@@ -96,7 +98,7 @@ namespace webpp::sql {
 
         inline bool step() noexcept {
             auto       errmsg          = object::make_general<string_type>(*this);
-            const bool continue_or_not = driver().step(errmsg);
+            bool const continue_or_not = driver().step(errmsg);
             if (!errmsg.empty()) {
                 this->logger.error(LOG_CAT, errmsg);
                 return false;
@@ -109,7 +111,6 @@ namespace webpp::sql {
             return *this;
         }
 
-
         inline sql_statement& reset() noexcept {
             auto errmsg = object::make_general<string_type>(*this);
             driver().reset(errmsg);
@@ -120,7 +121,6 @@ namespace webpp::sql {
         inline cell_type column(size_type index) noexcept {
             return {*this, index};
         }
-
 
         [[nodiscard]] inline cell_type operator[](size_type index) noexcept {
             return {*this, index};
@@ -136,24 +136,20 @@ namespace webpp::sql {
             return *static_cast<driver_type*>(this);
         }
 
-
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
-
 
         template <stl::size_t N>
         [[nodiscard]] inline auto structured() const noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
-
         template <stl::size_t N>
         [[nodiscard]] inline auto&& structured() && noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{stl::move(*this)};
         }
-
 
         // row iterator
         [[nodiscard]] iterator begin() noexcept {
@@ -166,12 +162,10 @@ namespace webpp::sql {
             return {};
         }
 
-
         // end of row iterator
         [[nodiscard]] const_iterator end() const noexcept {
             return {};
         }
-
 
         [[nodiscard]] row_type first() noexcept {
             execute();

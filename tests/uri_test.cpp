@@ -10,16 +10,17 @@
 
 using namespace webpp;
 
-using Types = testing::Types<uri::parsing_uri_context_string<stl::string>,
-                             uri::parsing_uri_context_string<stl::string_view>,
-                             // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
-                             uri::parsing_uri_context_u32,
-                             uri::parsing_uri_context_segregated<>,
-                             uri::parsing_uri_context_segregated_view<>,
-                             uri::parsing_uri_context<stl::string_view, const char*>>;
+using Types =
+  testing::Types<uri::parsing_uri_context_string<stl::string>,
+                 uri::parsing_uri_context_string<stl::string_view>,
+                 // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
+                 uri::parsing_uri_context_u32,
+                 uri::parsing_uri_context_segregated<>,
+                 uri::parsing_uri_context_segregated_view<>,
+                 uri::parsing_uri_context<stl::string_view, char const*>>;
+
 template <class T>
 struct URITests : testing::Test {
-
   private:
     stl::string url_text;
 
@@ -42,7 +43,6 @@ struct URITests : testing::Test {
         }
     }
 
-
     template <typename SpecifiedTypeParam>
     [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view str) {
         auto ctx = get_context<SpecifiedTypeParam, stl::string_view>(str);
@@ -50,6 +50,7 @@ struct URITests : testing::Test {
         return ctx;
     }
 };
+
 TYPED_TEST_SUITE(URITests, Types);
 
 TYPED_TEST(URITests, Generation) {
@@ -83,11 +84,11 @@ TYPED_TEST(URITests, QueryParamGeneration) {
     url.queries["locale"] = "English is a locale";
     url.queries["text"]   = "This text has a \n newline in it.";
     url.queries["token"]  = "f95d9af1-18da-439c-8326-55f9ff7d6f8c";
-    EXPECT_EQ(
-      url.to_string(),
-      "https://localhost/api/v2/content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
+    EXPECT_EQ(url.to_string(),
+              "https://localhost/api/v2/"
+              "content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%"
+              "20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
 }
-
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
     constexpr stl::string_view      str = "http://";
@@ -99,13 +100,13 @@ TYPED_TEST(URITests, IntegralSchemeParsing) {
     EXPECT_EQ(context.pos - str.begin(), 7);
 }
 
-
 TYPED_TEST(URITests, StringSchemeParsing) {
     constexpr stl::string_view str = "urn:testing";
 
-    uri::parsing_uri_context<stl::string_view, const char*> context{.beg = str.data(),
-                                                                    .pos = str.data(),
-                                                                    .end = str.data() + str.size()};
+    uri::parsing_uri_context<stl::string_view, char const*> context{
+      .beg = str.data(),
+      .pos = str.data(),
+      .end = str.data() + str.size()};
 
     uri::parse_scheme(context);
     auto const res = static_cast<uri::uri_status>(context.status);
@@ -125,16 +126,15 @@ TYPED_TEST(URITests, ParseURI) {
     EXPECT_EQ(context.out.get_path(), "testing");
 }
 
-
 TYPED_TEST(URITests, URIParsingWithWarnings) {
     uri::uri url = "https:this-is-stupid";
     EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
 }
 
 TYPED_TEST(URITests, URIStatusTest) {
-    uri::uri_status_type status = 0;
-    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
-    status |= stl::to_underlying(uri::uri_status::invalid_character);
+    uri::uri_status_type status  = 0;
+    status                      |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status                      |= stl::to_underlying(uri::uri_status::invalid_character);
 
     EXPECT_TRUE(uri::has_warnings(status));
     EXPECT_TRUE(uri::has_warnings(static_cast<uri::uri_status>(status)));
@@ -145,16 +145,16 @@ TYPED_TEST(URITests, URIStatusTest) {
 }
 
 TYPED_TEST(URITests, URIStatusIterator) {
-    uri::uri_status_type status = 0;
-    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
-    status |= stl::to_underlying(uri::uri_status::invalid_character);
+    uri::uri_status_type status  = 0;
+    status                      |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status                      |= stl::to_underlying(uri::uri_status::invalid_character);
 
     uri::uri_status_type const original = status;
 
     int index = 0;
     for (auto const item : uri::uri_status_iterator{status}) {
-        EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
-                    item == uri::uri_status::invalid_character)
+        EXPECT_TRUE(
+          item == uri::uri_status::missing_following_solidus || item == uri::uri_status::invalid_character)
           << "Index: " << index << "\n"
           << "Value: " << stl::to_underlying(item) << "\n"
           << "Original: " << original << "\n"
@@ -164,12 +164,11 @@ TYPED_TEST(URITests, URIStatusIterator) {
     EXPECT_EQ(index, 2);
 }
 
-
 TYPED_TEST(URITests, URIStatusIteratorWithValue) {
-    uri::uri_status_type status = 0;
-    status |= stl::to_underlying(uri::uri_status::missing_following_solidus);
-    status |= stl::to_underlying(uri::uri_status::invalid_character);
-    status |= stl::to_underlying(uri::uri_status::valid_queries);
+    uri::uri_status_type status  = 0;
+    status                      |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status                      |= stl::to_underlying(uri::uri_status::invalid_character);
+    status                      |= stl::to_underlying(uri::uri_status::valid_queries);
 
     uri::uri_status_type const original = status;
 
@@ -185,7 +184,6 @@ TYPED_TEST(URITests, URIStatusIteratorWithValue) {
     }
     EXPECT_EQ(index, 3);
 }
-
 
 TYPED_TEST(URITests, PercentEncodeDecodeIterator) {
     stl::string                out;
@@ -233,7 +231,6 @@ TYPED_TEST(URITests, PercentEncodeDecodePointer) {
     EXPECT_EQ(output3, decoded) << out;
 }
 
-
 TYPED_TEST(URITests, BasicURIParsing) {
     constexpr stl::string_view str =
       "https://username:password@example.com:1010/this/is/the/path?query1=one#hash";
@@ -264,7 +261,6 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(context.out.has_fragment());
 }
 
-
 TYPED_TEST(URITests, PathIteratorTest) {
     uri::path_iterator<default_traits> iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
@@ -275,7 +271,6 @@ TYPED_TEST(URITests, PathIteratorTest) {
     EXPECT_TRUE(iter.check_segment("one"));
     EXPECT_TRUE(iter.at_end());
 }
-
 
 TYPED_TEST(URITests, PathTraverser) {
     uri::basic_path<stl::string> the_path;
@@ -290,7 +285,6 @@ TYPED_TEST(URITests, PathTraverser) {
     EXPECT_TRUE(iter.check_segment("one")) << iter.segment();
     EXPECT_TRUE(iter.at_end());
 }
-
 
 TYPED_TEST(URITests, OpaqueHostParser) {
     constexpr stl::string_view str = "urn://this/is/a/path";
@@ -321,7 +315,6 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_EQ(context.out.get_hostname(), "th%is");
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
-
 
 TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     constexpr stl::string_view str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
@@ -426,7 +419,6 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
     }
 }
 
-
 TYPED_TEST(URITests, DoubleAtSign) {
     constexpr stl::string_view str = "http://username@username@127.0.0.1/?one==a#hash";
 
@@ -526,8 +518,9 @@ TYPED_TEST(URITests, HostMissing) {
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
-        EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n"
-                                                    << to_string(uri::get_value(context.status));
+        EXPECT_FALSE(uri::is_valid(context.status))
+          << str << "\n"
+          << to_string(uri::get_value(context.status));
         EXPECT_EQ(uri::get_value(context.status), uri::uri_status::host_missing)
           << str << "\n"
           << to_string(uri::get_value(context.status));
@@ -558,14 +551,14 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
         uri::parse_uri(context);
-        EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n"
-                                                   << to_string(uri::get_value(context.status));
+        EXPECT_TRUE(uri::is_valid(context.status))
+          << str << "\n"
+          << to_string(uri::get_value(context.status));
         if constexpr (TypeParam::is_modifiable) {
             EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
         }
     }
 }
-
 
 // TYPED_TEST(URITests, PunnycodeBasic) {
 //     constexpr stl::string_view str = "http://☕.example";
@@ -636,7 +629,6 @@ TYPED_TEST(URITests, OutOfRangePort) {
       << to_string(uri::get_value(context.status));
 }
 
-
 TYPED_TEST(URITests, FileSchemeBasic) {
     constexpr stl::string_view str = "file:///page/one";
 
@@ -645,7 +637,6 @@ TYPED_TEST(URITests, FileSchemeBasic) {
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }
-
 
 TYPED_TEST(URITests, FileSchemeWithHost) {
     constexpr stl::string_view str = "file://0x7f.1/page/one";
@@ -691,6 +682,9 @@ TYPED_TEST(URITests, EmptyURI) {
 TYPED_TEST(URITests, HashOnly) {
     auto ctx = this->template parse_from_string<TypeParam>("#hash");
     EXPECT_FALSE(uri::is_valid(ctx.status));
+
+    auto ctx2 = this->template parse_from_string<TypeParam>("?#hash");
+    EXPECT_FALSE(uri::is_valid(ctx2.status));
 }
 
 TYPED_TEST(URITests, ToLowered) {

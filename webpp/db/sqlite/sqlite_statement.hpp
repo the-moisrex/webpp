@@ -44,16 +44,21 @@ namespace webpp::sql {
 
       public:
         constexpr sqlite_statement() noexcept = default;
+
         constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
+
         constexpr sqlite_statement(sqlite_statement const&) = delete;
+
         constexpr sqlite_statement(sqlite_statement&& in_stmt) noexcept : stmt{in_stmt.stmt} {
             in_stmt.stmt = nullptr; // stop the pointer from becoming "destroyed".
         }
 
-        sqlite_statement& operator=(const sqlite_statement&) = delete;
+        sqlite_statement& operator=(sqlite_statement const&) = delete;
+
         sqlite_statement& operator=(sqlite_statement&& in_stmt) noexcept {
-            if (stmt == in_stmt.stmt)
+            if (stmt == in_stmt.stmt) {
                 return *this;
+            }
 
             destroy();
             stmt         = in_stmt.stmt;
@@ -111,19 +116,21 @@ namespace webpp::sql {
             using type = stl::remove_cvref_t<T>;
             if constexpr (istl::Span<type>) {
                 if (val.size() > stl::numeric_limits<int>::max()) {
-                    check_bind_result(sqlite3_bind_blob64(stmt,
-                                                          index,
-                                                          static_cast<void const*>(val.data()),
-                                                          static_cast<sqlite3_int64>(val.size()),
-                                                          SQLITE_STATIC),
-                                      err_msg);
+                    check_bind_result(
+                      sqlite3_bind_blob64(stmt,
+                                          index,
+                                          static_cast<void const*>(val.data()),
+                                          static_cast<sqlite3_int64>(val.size()),
+                                          SQLITE_STATIC),
+                      err_msg);
                 } else {
-                    check_bind_result(sqlite3_bind_blob(stmt,
-                                                        index,
-                                                        static_cast<void const*>(val.data()),
-                                                        static_cast<int>(val.size()),
-                                                        SQLITE_STATIC),
-                                      err_msg);
+                    check_bind_result(
+                      sqlite3_bind_blob(stmt,
+                                        index,
+                                        static_cast<void const*>(val.data()),
+                                        static_cast<int>(val.size()),
+                                        SQLITE_STATIC),
+                      err_msg);
                 }
             } else if constexpr (stl::is_floating_point_v<type>) {
                 check_bind_result(sqlite3_bind_double(stmt, index, static_cast<double>(val)), err_msg);
@@ -142,20 +149,23 @@ namespace webpp::sql {
 
                 if constexpr (value_size >= 64) { // 64bit string
                     // todo: it's possible for this string type to be utf-16 as well, write tests for this
-                    check_bind_result(sqlite3_bind_text64(stmt,
-                                                          index,
-                                                          val.data(),
-                                                          static_cast<int>(val.size()),
-                                                          SQLITE_STATIC,
-                                                          SQLITE_UTF8),
-                                      err_msg);
+                    check_bind_result(
+                      sqlite3_bind_text64(
+                        stmt,
+                        index,
+                        val.data(),
+                        static_cast<int>(val.size()),
+                        SQLITE_STATIC,
+                        SQLITE_UTF8),
+                      err_msg);
                 } else if constexpr (value_size == 16) { // utf-16
-                    check_bind_result(sqlite3_bind_text16(stmt,
-                                                          index,
-                                                          static_cast<int>(val.size()),
-                                                          val.size(),
-                                                          SQLITE_STATIC),
-                                      err_msg);
+                    check_bind_result(
+                      sqlite3_bind_text16(stmt,
+                                          index,
+                                          static_cast<int>(val.size()),
+                                          val.size(),
+                                          SQLITE_STATIC),
+                      err_msg);
                 } else { // normal string
                     check_bind_result(
                       sqlite3_bind_text(stmt, index, val.data(), static_cast<int>(val.size()), SQLITE_STATIC),
@@ -173,7 +183,7 @@ namespace webpp::sql {
 
         bool step(istl::String auto& errmsg) {
             assert(stmt != nullptr);
-            const int rc = sqlite3_step(stmt);
+            int const rc = sqlite3_step(stmt);
             switch (rc) {
                 // this is an embarrassing situation for clang-format
                 // clang-format off
@@ -184,9 +194,9 @@ namespace webpp::sql {
                     return false;
                 // clang-format on
                 default: {
-                    ::sqlite3* handle = sqlite3_db_handle(stmt);
-                    errmsg += "SQLite3 error, could not execute prepared statement: ";
-                    errmsg += sqlite3_errmsg(handle);
+                    ::sqlite3* handle  = sqlite3_db_handle(stmt);
+                    errmsg            += "SQLite3 error, could not execute prepared statement: ";
+                    errmsg            += sqlite3_errmsg(handle);
                     return false;
                 }
             }
@@ -199,15 +209,15 @@ namespace webpp::sql {
         void column_name(int index, StrT& name_ref) const {
             using str_value_type = typename StrT::value_type;
             if constexpr (istl::UTF16<StrT>) {
-                const void* name = sqlite3_column_name16(stmt, index);
+                void const* name = sqlite3_column_name16(stmt, index);
                 if (!name) [[unlikely]] {
                     // memory error happened
                     // todo: error handling
                     return;
                 }
-                name_ref = reintepret_cast<str_value_type const*>(name);
+                name_ref = reinterpret_cast<str_value_type const*>(name);
             } else {
-                const char* name = sqlite3_column_name(stmt, index);
+                char const* name = sqlite3_column_name(stmt, index);
                 if (!name) [[unlikely]] {
                     // memory error happened
                     // todo: error handling
@@ -216,7 +226,7 @@ namespace webpp::sql {
                 if constexpr (stl::same_as<str_value_type, char>) {
                     name_ref = name;
                 } else {
-                    name_ref = reintepret_cast<str_value_type const*>(name);
+                    name_ref = reinterpret_cast<str_value_type const*>(name);
                 }
             }
         }
@@ -239,7 +249,6 @@ namespace webpp::sql {
                 default: return column_category::unknown;
             }
         }
-
 
         [[nodiscard]] inline bool is_column_null(int index) const noexcept {
             return sqlite3_column_type(stmt, index) == SQLITE_NULL;
@@ -268,8 +277,8 @@ namespace webpp::sql {
         template <istl::String StrT = stl::string>
         void as_string(int index, StrT& out) const noexcept {
             // todo: handle text16
-            const char* str     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, index));
-            const auto  str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));
+            char const* str     = reinterpret_cast<char const*>(sqlite3_column_text(stmt, index));
+            auto const  str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));
             out.append(str, str_len);
         }
     };

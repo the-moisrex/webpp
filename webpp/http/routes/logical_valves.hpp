@@ -18,6 +18,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
         constexpr not_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
         constexpr not_valve(not_valve const&)                     = default;
         constexpr not_valve(not_valve&&) noexcept                 = default;
@@ -51,7 +52,6 @@ namespace webpp::http {
         }
     };
 
-
     template <typename Callable>
     struct negative_valve : valve<negative_valve<Callable>> {
         using valve_type = valve<negative_valve<Callable>>;
@@ -64,6 +64,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
         constexpr negative_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
         constexpr negative_valve(negative_valve const&)                     = default;
         constexpr negative_valve(negative_valve&&) noexcept                 = default;
@@ -89,7 +90,6 @@ namespace webpp::http {
             out.append(")");
         }
 
-
         template <typename RouterT>
             requires(ValveRequiresSetup<RouterT, Callable>)
         constexpr void setup(RouterT& router) {
@@ -109,6 +109,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
         constexpr positive_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr positive_valve(positive_valve const&)                     = default;
@@ -135,15 +136,12 @@ namespace webpp::http {
             out.append(")");
         }
 
-
         template <typename RouterT>
             requires(ValveRequiresSetup<RouterT, Callable>)
         constexpr void setup(RouterT& router) {
             next.setup(router);
         }
     };
-
-
 
     template <typename LeftCallable, typename RightCallable>
     struct and_valve : valve<and_valve<LeftCallable, RightCallable>> {
@@ -160,6 +158,7 @@ namespace webpp::http {
         constexpr and_valve(L&& inp_lhs, R&& inp_rhs) noexcept
           : lhs{stl::forward<L>(inp_lhs)},
             rhs{stl::forward<R>(inp_rhs)} {}
+
         constexpr and_valve(and_valve const&) noexcept            = default;
         constexpr and_valve(and_valve&&) noexcept                 = default;
         constexpr and_valve& operator=(and_valve const&) noexcept = default;
@@ -180,7 +179,6 @@ namespace webpp::http {
             return false;
         }
 
-
         constexpr void to_string(istl::String auto& out) const {
             out.append(" (");
             valve_to_string(out, lhs);
@@ -188,7 +186,6 @@ namespace webpp::http {
             valve_to_string(out, rhs);
             out.append(")");
         }
-
 
         template <typename RouterT>
             requires(ValveRequiresSetup<RouterT, left_type> || ValveRequiresSetup<RouterT, right_type>)
@@ -201,7 +198,6 @@ namespace webpp::http {
             }
         }
     };
-
 
     template <typename LeftCallable, typename RightCallable>
     struct or_valve : valve<or_valve<LeftCallable, RightCallable>> {
@@ -218,6 +214,7 @@ namespace webpp::http {
         constexpr or_valve(L&& inp_lhs, R&& inp_rhs) noexcept
           : lhs{stl::forward<L>(inp_lhs)},
             rhs{stl::forward<R>(inp_rhs)} {}
+
         constexpr or_valve(or_valve const&) noexcept            = default;
         constexpr or_valve(or_valve&&) noexcept                 = default;
         constexpr or_valve& operator=(or_valve const&) noexcept = default;
@@ -245,7 +242,6 @@ namespace webpp::http {
             valve_to_string(out, rhs);
             out.append(")");
         }
-
 
         template <typename RouterT>
             requires(ValveRequiresSetup<RouterT, left_type> || ValveRequiresSetup<RouterT, right_type>)

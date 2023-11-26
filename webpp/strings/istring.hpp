@@ -90,8 +90,6 @@ namespace webpp {
             return {this->data(), this->size()};
         }
 
-
-
         [[nodiscard]] constexpr alternate_std_string_type std_string() const noexcept {
             static_assert(has_allocator, "This type doesn't have an allocator.");
             return {this->data(), this->size(), this->get_allocator()};
@@ -105,22 +103,22 @@ namespace webpp {
             return this->std_string();
         }
 
-        void for_each(auto&&                  func,
-                      [[maybe_unused]] auto&& simd_func) noexcept(noexcept(func(this->data()))
+        void for_each(auto&& func, [[maybe_unused]] auto&& simd_func) noexcept(
+          noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-                                                                    && noexcept(simd_func(this->data()))
+            && noexcept(simd_func(this->data()))
 #endif
         ) {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
 
 #ifdef WEBPP_EVE
             using simd_type          = eve::wide<char_type>;
             constexpr auto simd_size = simd_type::size();
 
             if (_size > simd_size) {
-                const auto* almost_end = it_end - (_size % simd_size);
+                auto const* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
                     stl::invoke(simd_func, it);
                 }
@@ -135,8 +133,8 @@ namespace webpp {
 
         void for_each(auto&& func) noexcept(noexcept(func(this->data()))) {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
             for (; it != it_end; ++it) {
                 func(it);
             }
@@ -144,15 +142,15 @@ namespace webpp {
 
         [[nodiscard]] constexpr bool if_all(auto&& func, [[maybe_unused]] auto&& simd_func) const noexcept {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
 
 #ifdef WEBPP_EVE
             using simd_type          = eve::wide<char_type>;
             constexpr auto simd_size = simd_type::size();
 
             if (_size > simd_size) {
-                const auto* almost_end = it_end - (_size % simd_size);
+                auto const* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
                     if (!stl::invoke(simd_func, it)) {
                         return false;
@@ -171,11 +169,10 @@ namespace webpp {
             return true;
         }
 
-
         [[nodiscard]] constexpr bool if_all(auto&& func) const noexcept {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
             for (; it != it_end; ++it) {
                 if (!stl::invoke(func, it)) {
                     return false;
@@ -186,15 +183,15 @@ namespace webpp {
 
         [[nodiscard]] constexpr bool if_any(auto&& func, [[maybe_unused]] auto&& simd_func) const noexcept {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
 
 #ifdef WEBPP_EVE
             using simd_type          = eve::wide<char_type>;
             constexpr auto simd_size = simd_type::size();
 
             if (_size > simd_size) {
-                const auto* almost_end = it_end - (_size % simd_size);
+                auto const* almost_end = it_end - (_size % simd_size);
                 for (; it != almost_end; it += simd_size) {
                     if (stl::invoke(simd_func, simd_type{it})) {
                         return true;
@@ -212,11 +209,10 @@ namespace webpp {
             return false;
         }
 
-
         [[nodiscard]] constexpr bool if_any(auto&& func) const noexcept {
             auto*       it     = this->data();
-            const auto  _size  = this->size();
-            const auto* it_end = it + _size;
+            auto const  _size  = this->size();
+            auto const* it_end = it + _size;
             for (; it != it_end; ++it) {
                 if (stl::invoke(func, it)) {
                     return true;

@@ -18,7 +18,6 @@ namespace webpp::uri {
     /// URI Parsing Options,
     /// These options are designed to
     struct uri_parsing_options {
-
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
         bool eof_is_valid = false;
@@ -42,7 +41,6 @@ namespace webpp::uri {
         /// Parse fragment
         bool parse_fragment = true;
     };
-
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
     /// only one error is possible.
@@ -166,8 +164,9 @@ namespace webpp::uri {
 
                 // common errors:
             case invalid_character:
-                return {"Found an invalid character in the URI; "
-                        "more info: https://url.spec.whatwg.org/#invalid-url-unit"};
+                return {
+                  "Found an invalid character in the URI; "
+                  "more info: https://url.spec.whatwg.org/#invalid-url-unit"};
             case too_long: return {"The URI is too long, max allowed character is 255"};
             case empty_string:
                 return {"The URI is empty."};
@@ -177,16 +176,18 @@ namespace webpp::uri {
             case valid_path_or_authority:
                 return {"Valid scheme that should be followed by a path or an authority."};
             case valid_authority:
-                return {"Valid scheme that should be followed by an authority "
-                        "(a host optionally with username and password or port)."};
+                return {
+                  "Valid scheme that should be followed by an authority "
+                  "(a host optionally with username and password or port)."};
             case valid_file_host:
                 return {"Valid URI until host, scheme is 'file:'; parsing is not done yet."};
             case valid_port: return {"Valid URI until port, there's a port but parsing is not done yet."};
             case valid_authority_end:
-                return {"Valid URI until the authority ends "
-                        "(meaning the next part of the URI should be a path, query, "
-                        "fragment, or a combination of them); "
-                        "parsing is not done yet."};
+                return {
+                  "Valid URI until the authority ends "
+                  "(meaning the next part of the URI should be a path, query, "
+                  "fragment, or a combination of them); "
+                  "parsing is not done yet."};
             case scheme_ended_unexpectedly:
                 return {"This URI doesn't seem to have enough information, not even a qualified scheme."};
             case incompatible_schemes:
@@ -196,32 +197,37 @@ namespace webpp::uri {
                   "The URI's scheme is not followed by \"//\"; "
                   "more information: https://url.spec.whatwg.org/#special-scheme-missing-following-solidus"};
             case missing_scheme_non_relative_url:
-                return {"The URI is missing scheme, and nothing was provided by the base URI; "
-                        "more info: https://url.spec.whatwg.org/#missing-scheme-non-relative-url"};
+                return {
+                  "The URI is missing scheme, and nothing was provided by the base URI; "
+                  "more info: https://url.spec.whatwg.org/#missing-scheme-non-relative-url"};
 
 
                 // domain-specific errors:
             case subdomain_too_long:
                 return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
             case dot_at_end:
-                return {"The domain ended unexpectedly; "
-                        "domains cannot have a dot at the end (this is not a dns record)"};
+                return {
+                  "The domain ended unexpectedly; "
+                  "domains cannot have a dot at the end (this is not a dns record)"};
             case begin_with_hyphen: return {"The domain cannot start with hyphens"};
             case end_with_hyphen: return {"The domain cannot end with hyphens"};
             case double_hyphen: return {"The domain cannot have double hyphens unless it's a punycode"};
             case empty_subdomain: return {"A domain/sub-domain cannot be empty (no double dotting)"};
             case host_missing:
-                return {"Based on the URI's scheme, this URL must have a host; "
-                        "more info: https://url.spec.whatwg.org/#host-missing"};
+                return {
+                  "Based on the URI's scheme, this URL must have a host; "
+                  "more info: https://url.spec.whatwg.org/#host-missing"};
             case invalid_host_code_point:
-                return {"Invalid character found in the "
-                        "opaque host (opaque means that URI is not ftp, http, https, ws, or wss); "
-                        "more info: https://url.spec.whatwg.org/#host-invalid-code-point"};
+                return {
+                  "Invalid character found in the "
+                  "opaque host (opaque means that URI is not ftp, http, https, ws, or wss); "
+                  "more info: https://url.spec.whatwg.org/#host-invalid-code-point"};
             case invalid_domain_code_point:
-                return {"Invalid character found in the domain name "
-                        "(domain name is not host; "
-                        "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
-                        "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
+                return {
+                  "Invalid character found in the domain name "
+                  "(domain name is not host; "
+                  "'domain' is only applied to ftp, http, https, ws, or wss protocols); "
+                  "more info: https://url.spec.whatwg.org/#domain-invalid-code-point"};
             case has_credentials:
                 return {
                   "The input has credentials (username or password), it is a deprecated feature of URIs; "
@@ -231,21 +237,24 @@ namespace webpp::uri {
 
                 // ipv4 and ipv6 errors:
             case ip_too_little_octets:
-                return {"Host's IP address doesn't have enough octets "
-                        "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
-                        "more info at https://url.spec.whatwg.org/#ipv6-too-few-pieces"};
+                return {
+                  "Host's IP address doesn't have enough octets "
+                  "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
+                  "more info at https://url.spec.whatwg.org/#ipv6-too-few-pieces"};
             case ip_too_many_octets:
-                return {"Host's IP address has too many octets "
-                        "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
-                        "more info at https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
-                        "https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
-                        "https://url.spec.whatwg.org/#ipv4-in-ipv6-too-many-pieces and"
-                        "https://url.spec.whatwg.org/#ipv4-too-many-parts"};
+                return {
+                  "Host's IP address has too many octets "
+                  "(4 octets for IPv4, and 8 parts for uncompressed IPv6); "
+                  "more info at https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
+                  "https://url.spec.whatwg.org/#ipv6-too-many-pieces and "
+                  "https://url.spec.whatwg.org/#ipv4-in-ipv6-too-many-pieces and"
+                  "https://url.spec.whatwg.org/#ipv4-too-many-parts"};
             case ip_invalid_octet_range:
-                return {"At least one octet of host's IP address is out of range "
-                        "(IPv4's limit is 255, and IPv6's limit is ); "
-                        "more info at https://url.spec.whatwg.org/#ipv4-out-of-range-part and "
-                        "https://url.spec.whatwg.org/#ipv4-in-ipv6-out-of-range-part"};
+                return {
+                  "At least one octet of host's IP address is out of range "
+                  "(IPv4's limit is 255, and IPv6's limit is ); "
+                  "more info at https://url.spec.whatwg.org/#ipv4-out-of-range-part and "
+                  "https://url.spec.whatwg.org/#ipv4-in-ipv6-out-of-range-part"};
             case ip_invalid_leading_zero: return {"Host's IPv4's octet starts with a leading zero"};
             case ip_bad_ending: return {"Host's IP address ended unexpectedly."};
             case ip_invalid_character: return {"Host's IP address has an invalid character"};
@@ -255,34 +264,40 @@ namespace webpp::uri {
 
                 // ipv6-specific errors:
             case ipv6_unclosed:
-                return {"IPv6 is missing the closing character ']'; "
-                        "more info: https://url.spec.whatwg.org/#ipv6-unclosed"};
+                return {
+                  "IPv6 is missing the closing character ']'; "
+                  "more info: https://url.spec.whatwg.org/#ipv6-unclosed"};
             case ipv6_char_after_closing:
                 return {"Invalid character found after closing (the ']' character) an IPv6 host."};
 
 
                 // port-specific errors:
             case port_out_of_range:
-                return {"Port number is too big; "
-                        "more info: https://url.spec.whatwg.org/#port-out-of-range"};
+                return {
+                  "Port number is too big; "
+                  "more info: https://url.spec.whatwg.org/#port-out-of-range"};
             case port_invalid:
-                return {"Invalid characters used in port; "
-                        "more info: https://url.spec.whatwg.org/#port-invalid"};
+                return {
+                  "Invalid characters used in port; "
+                  "more info: https://url.spec.whatwg.org/#port-invalid"};
 
 
                 // path-specific errors/warnings:
             case valid_path: return {"Valid URI until path; parsing is not done yet."};
             case valid_opaque_path: return {"Valid URI until opaque path; parsing is not done yet."};
             case reverse_solidus_used:
-                return {"The URI is using backslash instead of a forward slash; "
-                        "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus"};
+                return {
+                  "The URI is using backslash instead of a forward slash; "
+                  "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus"};
             case windows_drive_letter_used:
-                return {"The URI is relative, starts with Windows Drive Letter, "
-                        "and the base URI's scheme is 'file:'; "
-                        "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter"};
+                return {
+                  "The URI is relative, starts with Windows Drive Letter, "
+                  "and the base URI's scheme is 'file:'; "
+                  "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter"};
             case windows_drive_letter_as_host:
-                return {"A 'file:' URI cannot have a Windows Drive Letter as a host; "
-                        "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter-host"};
+                return {
+                  "A 'file:' URI cannot have a Windows Drive Letter as a host; "
+                  "more info: https://url.spec.whatwg.org/#file-invalid-windows-drive-letter-host"};
 
 
             // queries-specific errors/warnings:
@@ -296,8 +311,6 @@ namespace webpp::uri {
         }
     }
 
-
-
     [[nodiscard]] static constexpr bool is_valid(stl::underlying_type_t<uri_status> const status) noexcept {
         return (error_bit & status) == 0;
     }
@@ -306,8 +319,8 @@ namespace webpp::uri {
         return is_valid(stl::to_underlying(status));
     }
 
-    [[nodiscard]] static constexpr bool
-    has_warnings(stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr bool has_warnings(
+      stl::underlying_type_t<uri_status> const status) noexcept {
         return (status & warnings_mask) != 0;
     }
 
@@ -324,8 +337,8 @@ namespace webpp::uri {
     }
 
     /// get the error/valid value without the warnings if available
-    [[nodiscard]] static constexpr uri_status
-    get_value(stl::underlying_type_t<uri_status> const status) noexcept {
+    [[nodiscard]] static constexpr uri_status get_value(
+      stl::underlying_type_t<uri_status> const status) noexcept {
         return static_cast<uri_status>(status & values_mask);
     }
 
@@ -357,7 +370,6 @@ namespace webpp::uri {
         return get_warning(stl::to_underlying(status));
     }
 
-
     /**
      * This is a forward iterator that gives you all the warnings inside a uri status.
      * You can use this to print the warnings and errors of a URI.
@@ -375,9 +387,12 @@ namespace webpp::uri {
 
 
         constexpr uri_status_iterator() noexcept = default;
+
         constexpr explicit uri_status_iterator(uri_status const inp_status) noexcept
           : status{stl::to_underlying(inp_status)} {}
+
         constexpr explicit uri_status_iterator(value_type const inp_status) noexcept : status{inp_status} {}
+
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;
         constexpr uri_status_iterator(uri_status_iterator&&) noexcept                 = default;
         constexpr uri_status_iterator& operator=(uri_status_iterator const&) noexcept = default;
@@ -445,8 +460,8 @@ namespace webpp::uri {
         return {status};
     }
 
-    [[nodiscard]] static constexpr uri_status_iterator
-    end([[maybe_unused]] uri_status_iterator iter) noexcept {
+    [[nodiscard]] static constexpr uri_status_iterator end(
+      [[maybe_unused]] uri_status_iterator iter) noexcept {
         return {};
     }
 

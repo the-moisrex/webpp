@@ -11,7 +11,6 @@ namespace webpp {
      * LRU Cache (Least Recently Used Cache)
      */
     struct lru_strategy {
-
         template <Traits TraitsType, CacheKey KeyT, CacheValue ValueT, StorageGate SG>
         struct strategy {
             using traits_type = TraitsType;
@@ -37,8 +36,9 @@ namespace webpp {
           private:
             // clean up the old data
             void clean_up() {
-                if (next_usage <= max_size)
+                if (next_usage <= max_size) {
                     return;
+                }
                 stl::size_t break_index = next_usage - max_size;
                 gate.erase_if([break_index](auto const& item) noexcept {
                     const auto last_used_index = item.options;
@@ -68,30 +68,30 @@ namespace webpp {
                 clean_up();
             }
 
-
             template <typename K>
                 requires(stl::convertible_to<K, key_type>) // it's a key
             constexpr stl::optional<value_type> get(K&& key) {
                 stl::optional<bundle_type> const data = gate.get(key);
-                if (!data)
+                if (!data) {
                     return stl::nullopt;
+                }
 
                 gate.set_options(key, next_usage++);
 
                 return data->value;
             }
 
-
             template <typename K>
-                requires(details::StorageGatePointerSupport<storage_gate_type> &&
-                         stl::convertible_to<K, key_type>)
+                requires(
+                  details::StorageGatePointerSupport<storage_gate_type> && stl::convertible_to<K, key_type>)
             constexpr auto* get_ptr(K&& key) {
                 // we can't use return type directly in the signature because we're using "value_ptr_type"
                 // which may not be present in every storage gate type.
                 using return_type = typename storage_gate_type::value_ptr_type;
                 auto const data   = gate.get_ptr(key); // data is optional<bundle_ref_type>
-                if (!data)
+                if (!data) {
                     return return_type{nullptr};
+                }
 
                 // todo: we have a reference to the options here, don't need to re-write it.
                 gate.set_options(key, next_usage++);
@@ -101,7 +101,6 @@ namespace webpp {
             }
         };
     };
-
 
     template <Traits      TraitsType   = default_traits,
               CacheKey    KeyT         = traits::general_string<TraitsType>,

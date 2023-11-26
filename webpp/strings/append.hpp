@@ -85,7 +85,8 @@ namespace webpp {
                                          chars.data() + _size,
                                          static_cast<float_type>(value), // to remove ambiguity
                                          stl::forward<R>(args)...);
-                res.ec == stl::errc()) {
+                res.ec == stl::errc())
+            {
                 str.append(chars.data(), static_cast<stl::size_t>(res.ptr - chars.data()));
                 return true;
             }
@@ -97,16 +98,13 @@ namespace webpp {
         }
     }
 
-
-
     /**
      * This is almost has the same idea as C++23's std::string::resize_and_overwrite, but it appends the
      * string to the end of the string instead of overwriting the whole thing
      */
     template <typename Op>
-    constexpr void resize_and_append(istl::String auto& out,
-                                     stl::size_t        counts,
-                                     Op&&               operation) noexcept(noexcept(operation(out.data()))) {
+    constexpr void resize_and_append(istl::String auto& out, stl::size_t counts, Op&& operation) noexcept(
+      noexcept(operation(out.data()))) {
         auto const str_size = out.size();
         out.resize(out.size() + counts); // unfortunately resize writes zeros!!
         auto const ret    = stl::forward<Op>(operation)(out.data() + str_size);
@@ -117,7 +115,6 @@ namespace webpp {
             out.erase(static_cast<stl::size_t>(ret - out.data()));
         }
     }
-
 
     /**
      * The purpose of this utility is to choose between these 2 types and take action accordingly:

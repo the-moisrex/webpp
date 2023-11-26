@@ -25,8 +25,6 @@ namespace webpp::ascii {
         return count;
     }
 
-
-
     template <typename T>
     struct constexpr_array_type {
         static constexpr bool is_array = false;
@@ -37,8 +35,8 @@ namespace webpp::ascii {
         using array_type                      = T;
         static constexpr bool        is_array = true;
         static constexpr stl::size_t array_length =
-          N - (stl::is_same_v<T, char> ||
-               stl::is_same_v<T, wchar_t>); // for strings, we don't want to count the last null character
+          N - (stl::is_same_v<T, char> || stl::is_same_v<T, wchar_t>); // for strings, we don't want to count
+                                                                       // the last null character
     };
 
     // it's best to use this for counting strings and not other types of arrays or containers,
@@ -59,13 +57,12 @@ namespace webpp::ascii {
             return 1;
         } else {
             // todo: is it possible to optimize this with SIMD?
-            const T* end = str;
-            while (*end++ != 0) {}
+            T const* end = str;
+            while (*end++ != 0) {
+            }
             return end - str - 1;
         }
     }
-
-
 
     template <typename T>
     [[nodiscard]] constexpr stl::size_t max_size(T&& val) noexcept {

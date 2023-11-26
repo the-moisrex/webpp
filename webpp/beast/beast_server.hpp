@@ -111,7 +111,7 @@ namespace webpp::beast_proto {
             parser{
               stl::in_place,
               stl::piecewise_construct,
-              stl::make_tuple(), // body args
+              stl::make_tuple(),                                                                // body args
               stl::make_tuple(
                 alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
             } {}
@@ -143,10 +143,11 @@ namespace webpp::beast_proto {
             } else {
                 using body_char_type = stl::remove_pointer_t<stl::remove_cvref_t<decltype(body.data())>>;
                 static constexpr stl::size_t char_type_size = sizeof(body_char_type);
-                const auto                   body_size      = body.size();
-                const auto                   body_data = static_cast<beast_char_type const*>(body.data());
-                if (body_size == 0 || body_data == nullptr)
+                auto const                   body_size      = body.size();
+                auto const                   body_data = static_cast<beast_char_type const*>(body.data());
+                if (body_size == 0 || body_data == nullptr) {
                     return;
+                }
                 bres->body().replace(0,
                                      bres->body().size(),
                                      body_data,
@@ -162,13 +163,13 @@ namespace webpp::beast_proto {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
             stl::array<char, default_buffer_size> static_buf;
             while (stl::streamsize read_size = body.read(reinterpret_cast<byte_type*>(static_buf.data()),
-                                                         static_cast<stl::streamsize>(static_buf.size()))) {
+                                                         static_cast<stl::streamsize>(static_buf.size())))
+            {
                 bres->body().append(static_buf.data(), static_cast<stl::size_t>(read_size));
             }
             // NOLINTEND(cppcoreguidelines-pro-type-member-init)
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
-
 
         template <http::StreamBasedBodyReader BodyType>
         void set_response_body_stream(BodyType& body) {
@@ -180,7 +181,8 @@ namespace webpp::beast_proto {
                                      body.tellp();
                                      body.seekg(0);
                                      body.rdbuf();
-                                 }) {
+                                 })
+            {
                 bres->body().resize(body.tellp());
                 auto const g = body.tellg();
                 body.seekg(0);
@@ -190,7 +192,6 @@ namespace webpp::beast_proto {
                 body >> bres->body();
             }
         }
-
 
         template <typename BodyType>
         void set_response_body(BodyType& body) {
@@ -216,7 +217,6 @@ namespace webpp::beast_proto {
             }
         }
 
-
         void make_beast_response() noexcept {
             // putting the beast's request into webpp's request
             req->set_beast_parser(*parser);
@@ -237,7 +237,6 @@ namespace webpp::beast_proto {
             str_serializer.emplace(*bres);
         }
 
-
         // Asynchronously receive a complete request message.
         void async_read_request() noexcept {
             stream->expires_after(server->timeout());
@@ -249,7 +248,6 @@ namespace webpp::beast_proto {
                   if (!ec) [[likely]] {
                       async_write_response();
                   } else [[unlikely]] {
-
                       // This means they closed the connection
                       if (ec == boost::beast::http::error::end_of_stream) {
                           // try sending shutdown signal
@@ -257,7 +255,6 @@ namespace webpp::beast_proto {
                           stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
                           reset();
                       } else {
-
                           this->logger.warning(log_cat, "Connection error.", ec);
 
                           // if we don't reset here, the connection will hang if there are too many concurrent
@@ -268,7 +265,6 @@ namespace webpp::beast_proto {
                   }
               });
         }
-
 
         void async_write_response() noexcept {
             make_beast_response();
@@ -292,7 +288,6 @@ namespace webpp::beast_proto {
 
       public:
         void reset() noexcept {
-
             // todo: half of these things can be yanked out with the help of allocators
             boost::beast::error_code ec;
             stream->socket().close(ec);
@@ -304,7 +299,7 @@ namespace webpp::beast_proto {
             req.emplace(*server);
             parser.emplace(
               stl::piecewise_construct,
-              stl::make_tuple(), // body args
+              stl::make_tuple(),                                                                // body args
               stl::make_tuple(
                 alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
             );
@@ -320,14 +315,12 @@ namespace webpp::beast_proto {
             stream.reset(); // go in the idle mode
         }
 
-
         void stop() noexcept {
             if (stream) {
                 stream->cancel();
             }
         }
     };
-
 
     /**
      * A single thread worker which will include multiple http workers.
@@ -362,7 +355,6 @@ namespace webpp::beast_proto {
             }
             worker = http_workers.begin();
         }
-
 
         void start_work(socket_type&& sock) {
             http_worker_type* worker_ptr; // NOLINT(cppcoreguidelines-init-variables)

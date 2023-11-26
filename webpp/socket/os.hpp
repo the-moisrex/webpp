@@ -50,7 +50,7 @@ struct iovec {
 #    include <arpa/inet.h> // htonl, ...
 #    include <fcntl.h>
 #    include <sys/socket.h>
-#    include <unistd.h> // dup
+#    include <unistd.h>    // dup
 #    ifdef __FreeBSD__
 #        include <netinet/in.h>
 #    endif

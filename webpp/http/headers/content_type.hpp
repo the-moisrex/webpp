@@ -14,9 +14,9 @@ namespace webpp::http {
         using str_const_iterator    = typename str_v::const_iterator;
         using allocator_type        = AllocT;
         using string_tokenizer_type = string_tokenizer<str_v, str_const_iterator>;
+
         // ctor
         constexpr basic_content_type(auto&&... args) noexcept : data{stl::forward<decltype(args)>(args)...} {}
-
 
         void parse() noexcept {
             // todo

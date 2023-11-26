@@ -7,7 +7,6 @@
 namespace webpp {
 
     struct null_gate {
-
         template <Traits TraitsType, typename KeyT, typename ValueT, typename OptsT>
         struct storage_gate {
             using key_type     = KeyT;

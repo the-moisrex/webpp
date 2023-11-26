@@ -40,14 +40,15 @@ namespace webpp::lexical {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::String<target_t>) {
             // Target == string
-            const auto the_alloc =
+            auto const the_alloc =
               extract_allocator_of_or_default<istl::allocator_type_of<target_t>>(allocs..., source);
             if constexpr (istl::StringifiableOf<target_t, src_t>) {
                 // Source is convertible to string
                 return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
             } else if constexpr (istl::String<target_t> && stl::is_integral_v<src_t>) {
                 if constexpr (stl::same_as<src_t, char> || stl::same_as<src_t, char8_t> ||
-                              stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>) {
+                              stl::same_as<src_t, char16_t> || stl::same_as<src_t, char32_t>)
+                {
                     // don't need to convert, it's a char type
                     using char_type = istl::char_type_of_t<target_t>;
                     return Target{1, static_cast<char_type>(source), the_alloc};
@@ -89,7 +90,7 @@ namespace webpp::lexical {
             } else if constexpr (istl::StringViewifiable<src_t>) {
                 target_t    target;
                 auto* const data      = istl::string_data(source);
-                const auto  data_size = stl::size(source);
+                auto const  data_size = stl::size(source);
                 stl::from_chars(data, data + data_size, target);
                 return target;
             } else {
@@ -97,13 +98,15 @@ namespace webpp::lexical {
             }
         } else if constexpr (requires {
                                  Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-                             }) {
+                             })
+        {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-        } else if constexpr (requires {
-                                 Target{
-                                   stl::forward<Source>(source),
-                                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
-                             }) {
+        } else if constexpr (
+          requires {
+              Target{stl::forward<Source>(source),
+                     extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+          })
+        {
             return Target{stl::forward<Source>(source),
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
         } else if constexpr (requires { Target{stl::forward<Source>(source)}; }) {
@@ -122,30 +125,33 @@ namespace webpp::lexical {
         //        static_assert(is_target_string);
 
         if constexpr (istl::StringViewifiableOfTemplate<Target, src_t> &&
-                      requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); }) {
+                      requires { istl::string_viewify_of<Target>(stl::forward<Source>(source)); })
+        {
             return istl::string_viewify_of<Target>(stl::forward<Source>(source));
         } else if constexpr (istl::StringifiableOfTemplate<Target, src_t> && requires {
                                  istl::stringify_of<Target>(stl::forward<Source>(source),
                                                             extract_allocator_or_default(allocs..., source));
-                             }) {
-            const auto the_alloc = extract_allocator_or_default(allocs..., source);
+                             })
+        {
+            auto const the_alloc = extract_allocator_or_default(allocs..., source);
             return istl::stringify_of<Target>(stl::forward<Source>(source), the_alloc);
         } else if constexpr (requires {
                                  Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-                             }) {
+                             })
+        {
             return Target{stl::forward<Source>(source), stl::forward<AllocList>(allocs)...};
-        } else if constexpr (requires {
-                                 Target{
-                                   stl::forward<Source>(source),
-                                   extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
-                             }) {
+        } else if constexpr (
+          requires {
+              Target{stl::forward<Source>(source),
+                     extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
+          })
+        {
             return Target{stl::forward<Source>(source),
                           extract_allocator_or_default(stl::forward<AllocList>(allocs)..., source)};
         } else if constexpr (requires { Target{stl::forward<Source>(source)}; }) {
             return Target{stl::forward<Source>(source)};
         }
     }
-
 
     // todo: implement safe_cast
     // todo: implement floating point
@@ -158,7 +164,9 @@ namespace webpp::lexical {
 
     template <typename T, typename To>
     concept CastableTo = requires(T obj, enable_owner_traits<default_traits> etraits) {
-        { cast<To>(obj, etraits) } -> stl::same_as<To>;
+        {
+            cast<To>(obj, etraits)
+        } -> stl::same_as<To>;
     };
 } // namespace webpp::lexical
 

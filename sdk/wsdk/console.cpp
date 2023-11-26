@@ -15,19 +15,22 @@ using namespace webpp::sdk;
 int console::width(int default_value) noexcept {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
         return default_value;
+    }
     return csbi.srWindow.Right - csbi.srWindow.Left + 1;
 #elif defined(webpp_unix_systems)
 #    ifdef TIOCGSIZE
     struct ttysize ts;
-    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1) {
         return default_dimentions;
+    }
     return ts.ts_cols;
 #    elif defined(TIOCGWINSZ)
     struct winsize ts;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1) {
         return default_value;
+    }
     return ts.ws_col;
 #    endif // TIOCGSIZE
 #else
@@ -35,23 +38,25 @@ int console::width(int default_value) noexcept {
 #endif
 }
 
-
 int console::height(int default_value) noexcept {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
         return default_value;
+    }
     return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 #elif defined(webpp_unix_systems)
 #    ifdef TIOCGSIZE
     struct ttysize ts;
-    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1) {
         return default_value;
+    }
     return ts.ts_lines;
 #    elif defined(TIOCGWINSZ)
     struct winsize ts;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1) {
         return default_value;
+    }
     return ts.ws_row;
 #    endif // TIOCGSIZE
 #else
@@ -59,24 +64,26 @@ int console::height(int default_value) noexcept {
 #endif
 }
 
-
 console_dimensions console::dimensions(console_dimensions default_dimensions) noexcept {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi;
-    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+    if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
         return default_dimensions;
+    }
     return {.width  = csbi.srWindow.Right - csbi.srWindow.Left + 1,
             .height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1};
 #elif defined(webpp_unix_systems)
 #    ifdef TIOCGSIZE
     struct ttysize ts;
-    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGSIZE, &ts) == -1) {
         return default_dimentions;
+    }
     return {.width = ts.ts_cols, .height = ts.ts_lines};
 #    elif defined(TIOCGWINSZ)
     struct winsize ts;
-    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1)
+    if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ts) == -1) {
         return default_dimensions;
+    }
     return {.width = ts.ws_col, .height = ts.ws_row};
 #    endif // TIOCGSIZE
 #else

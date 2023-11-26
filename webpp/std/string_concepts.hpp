@@ -17,30 +17,57 @@ namespace webpp::istl {
         typename X::off_type;
         typename X::pos_type;
         typename X::state_type;
-        requires requires(typename X::char_type        c,
-                          typename X::char_type const* p,
-                          typename X::char_type*       s,
-                          stl::size_t                  n,
-                          typename X::int_type         e,
-                          typename X::char_type const& ch) {
+        requires requires(
+          typename X::char_type        c,
+          typename X::char_type const* p,
+          typename X::char_type*       s,
+          stl::size_t                  n,
+          typename X::int_type         e,
+          typename X::char_type const& ch) {
             requires CopyAssignable<typename X::state_type>;
             requires Destructible<typename X::state_type>;
             requires CopyConstructible<typename X::state_type>;
             requires DefaultConstructible<typename X::state_type>;
 
-            { X::eq(c, c) } -> stl::same_as<bool>;
-            { X::lt(c, c) } -> stl::same_as<bool>;
-            { X::compare(p, p, n) } -> stl::same_as<int>;
-            { X::length(p) } -> stl::same_as<stl::size_t>;
-            { X::find(p, n, ch) } -> stl::same_as<typename X::char_type const*>;
-            { X::move(s, p, ch) } -> stl::same_as<typename X::char_type*>;
-            { X::copy(s, p, n) } -> stl::same_as<typename X::char_type*>;
-            { X::assign(s, n, c) } -> stl::same_as<typename X::char_type*>;
-            { X::not_eof(e) } -> stl::same_as<typename X::int_type>;
-            { X::to_char_type(e) } -> stl::same_as<typename X::char_type>;
-            { X::to_int_type(c) } -> stl::same_as<typename X::int_type>;
-            { X::eq_int_type(e, e) } -> stl::same_as<bool>;
-            { X::eof() } -> stl::same_as<typename X::int_type>;
+            {
+                X::eq(c, c)
+            } -> stl::same_as<bool>;
+            {
+                X::lt(c, c)
+            } -> stl::same_as<bool>;
+            {
+                X::compare(p, p, n)
+            } -> stl::same_as<int>;
+            {
+                X::length(p)
+            } -> stl::same_as<stl::size_t>;
+            {
+                X::find(p, n, ch)
+            } -> stl::same_as<typename X::char_type const*>;
+            {
+                X::move(s, p, ch)
+            } -> stl::same_as<typename X::char_type*>;
+            {
+                X::copy(s, p, n)
+            } -> stl::same_as<typename X::char_type*>;
+            {
+                X::assign(s, n, c)
+            } -> stl::same_as<typename X::char_type*>;
+            {
+                X::not_eof(e)
+            } -> stl::same_as<typename X::int_type>;
+            {
+                X::to_char_type(e)
+            } -> stl::same_as<typename X::char_type>;
+            {
+                X::to_int_type(c)
+            } -> stl::same_as<typename X::int_type>;
+            {
+                X::eq_int_type(e, e)
+            } -> stl::same_as<bool>;
+            {
+                X::eof()
+            } -> stl::same_as<typename X::int_type>;
         };
     };
 
@@ -72,12 +99,10 @@ namespace webpp::istl {
             using type = T;
         };
 
-
         template <typename T>
         struct traits_extractor {
             using type = typename T::traits_type;
         };
-
 
         template <typename T>
         struct allocator_type_extractor {
@@ -106,7 +131,6 @@ namespace webpp::istl {
       details::has_allocator_type<T>,
       templated_lazy_type<details::allocator_type_extractor, stl::decay_t<stl::remove_cvref_t<T>>>,
       lazy_type<DefaultAllocator>>;
-
 
     namespace details {
         template <typename T>

@@ -30,8 +30,6 @@ stl::string_view webpp::sdk::to_string(command_status status) noexcept {
     stl::unreachable();
 }
 
-
-
 command_status command_manager::run_command(stl::string_view cmd_str) {
     using enum command_status;
 
@@ -39,7 +37,6 @@ command_status command_manager::run_command(stl::string_view cmd_str) {
 
     // extract the command from the arguments
     if (cmd.tokenizer().next(WHITESPACES)) {
-
         auto const root_cmd_str = cmd.tokenizer().token();
         if (root_cmd_str == "create" || root_cmd_str == "new") {
             create_command crt_cmd;

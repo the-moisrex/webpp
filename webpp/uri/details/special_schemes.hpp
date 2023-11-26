@@ -17,22 +17,26 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-magic-numbers)
         switch (scheme.size()) {
             case 2:
-                if (scheme[0] == 'w' && scheme[1] == 's')
+                if (scheme[0] == 'w' && scheme[1] == 's') {
                     return 80u;
+                }
                 break;
             case 3:
-                if (scheme == "wss")
+                if (scheme == "wss") {
                     return 443u;
-                else if (scheme == "ftp")
+                } else if (scheme == "ftp") {
                     return 21;
+                }
                 break;
             case 4:
-                if (scheme == "http")
+                if (scheme == "http") {
                     return 80u;
+                }
                 break;
             case 5:
-                if (scheme == "https")
+                if (scheme == "https") {
                     return 443;
+                }
                 break;
         }
         return 0u;

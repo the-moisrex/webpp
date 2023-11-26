@@ -22,10 +22,8 @@ namespace webpp::io {
      * by the constants ENOENT, EINTR, EBUSY, etc.
      */
     struct io_result {
-
         // Creates an empty result
         constexpr io_result() noexcept = default;
-
 
         /**
          * Creates a result from the return val of a low-level I/O function.

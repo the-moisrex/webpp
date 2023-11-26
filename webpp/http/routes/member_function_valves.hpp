@@ -59,7 +59,6 @@ namespace webpp::http {
             holder.obj = inp_obj;
         }
 
-
         /**
          * @brief Set up the router with the specified router.
          *
@@ -124,7 +123,6 @@ namespace webpp::http {
             }
         }
 
-
         /**
          * @brief Converts the member function to a string representation.
          *
@@ -138,8 +136,6 @@ namespace webpp::http {
             valve_to_string(out, holder.mem_ptr);
         }
     };
-
-
 
     // Member Function Pointer Valvifier
     template <typename T>

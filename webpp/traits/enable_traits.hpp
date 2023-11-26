@@ -37,6 +37,7 @@ namespace webpp {
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] allocator_pack_type alloc_pack{};
         [[no_unique_address]] logger_type         logger{};
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
@@ -45,8 +46,9 @@ namespace webpp {
         // a copy constructor essentially; works on enable_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_owner_traits> && EnabledTraits<T>)
-        constexpr enable_owner_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
-                                                          logger{obj.logger} {}
+        constexpr enable_owner_traits(T&& obj) noexcept
+          : alloc_pack{obj.alloc_pack},
+            logger{obj.logger} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -95,7 +97,6 @@ namespace webpp {
         }
     };
 
-
     /**
      * By inheriting from this you'll make your type "TraitsEnabled".
      */
@@ -129,6 +130,7 @@ namespace webpp {
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         [[no_unique_address]] alloc_pack_ref alloc_pack;
         [[no_unique_address]] logger_ref     logger;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
@@ -136,8 +138,9 @@ namespace webpp {
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
-        explicit constexpr enable_traits(T&& obj) noexcept : alloc_pack{obj.alloc_pack},
-                                                             logger{obj.logger} {}
+        explicit constexpr enable_traits(T&& obj) noexcept
+          : alloc_pack{obj.alloc_pack},
+            logger{obj.logger} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -183,7 +186,6 @@ namespace webpp {
         }
     };
 
-
     /**
      * If the passed type is already a enable_owner_traits or enable_traits,
      * then we can just omit using them and convert them into non-owner enable traits.
@@ -198,8 +200,6 @@ namespace webpp {
         using enable_traits<TraitsType>::enable_traits;
     };
 
-
-
     /**
      * Inheriting from this means you can inherit from type T and we make sure either T is traits' enabled,
      * or if it's not, we provide one for you.
@@ -211,6 +211,7 @@ namespace webpp {
 
         explicit constexpr enable_traits_with(enable_traits<TraitsType> const& etraits) noexcept
           : enable_traits<TraitsType>{etraits} {}
+
         explicit constexpr enable_traits_with(enable_traits<TraitsType>&& etraits) noexcept
           : enable_traits<TraitsType>{stl::move(etraits)} {}
 
@@ -321,15 +322,12 @@ namespace webpp {
           stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
           : T{alloc::general_alloc_for<T>(et), stl::forward<Args>(args)...} {}
 
-
         constexpr enable_traits_for(enable_traits_for const&) noexcept            = default;
         constexpr enable_traits_for(enable_traits_for&&) noexcept                 = default;
         constexpr ~enable_traits_for() noexcept                                   = default;
         constexpr enable_traits_for& operator=(enable_traits_for const&) noexcept = default;
         constexpr enable_traits_for& operator=(enable_traits_for&&) noexcept      = default;
     };
-
-
 
     template <typename T>
     concept TraitsAccess = Traits<T> || requires {
@@ -354,7 +352,9 @@ namespace webpp {
         concept AllocatorHolder = requires(T holder) {
             typename T::allocator_pack_type;
             requires AllocatorPack<typename T::allocator_pack_type>;
-            { holder.alloc_pack } -> AllocatorPack;
+            {
+                holder.alloc_pack
+            } -> AllocatorPack;
         };
 
         template <typename T, AllocatorHolder AllocHolder>

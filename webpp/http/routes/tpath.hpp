@@ -8,7 +8,6 @@
 
 #include <cassert>
 
-
 namespace webpp::http {
 
     /**
@@ -31,8 +30,9 @@ namespace webpp::http {
         for (ptr_t c = templ_start; *c; c++) {
             // breaks out of the loop when the template and the paths don't
             // match
-            if (curly_start == templ_end && *c != '{' && *c != *path_char++)
+            if (curly_start == templ_end && *c != '{' && *c != *path_char++) {
                 break;
+            }
 
             switch (*c) {
                 case '{':
@@ -66,8 +66,8 @@ namespace webpp::http {
                         res[key] = value;
 
                         // preparing for the next variable
-                        curly_start = colon = templ_end; // reset
-                        path_char += next_char_path;
+                        curly_start = colon  = templ_end; // reset
+                        path_char           += next_char_path;
                     }
                     break;
             }
@@ -75,9 +75,6 @@ namespace webpp::http {
 
         return res;
     }
-
-
-
 
     /**
      * Check whether or not the specified URI path is a match for the specified

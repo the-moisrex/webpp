@@ -37,14 +37,14 @@ namespace webpp::base64 {
         // does not null terminate result since result is binary data!
         stl::size_t input_size  = input_view.size();
         stl::size_t output_size = modp_b64::decode(&(temp[0]), input_view.data(), input_size);
-        if (output_size == modp_b64::error)
+        if (output_size == modp_b64::error) {
             return false;
+        }
 
         temp.resize(output_size);
         output.swap(temp);
         return true;
     }
-
 
     /**
      * @brief Gets the expected length of an encoded buffer
@@ -54,7 +54,7 @@ namespace webpp::base64 {
      * You many need to add one to it if you want space for '\0' as well.
      * @returns The expected length of an encoded buffer
      */
-    static constexpr inline stl::size_t expected_length(stl::size_t len) noexcept {
+    static inline constexpr stl::size_t expected_length(stl::size_t len) noexcept {
         return ((len + 2ull) / 3ull) * 4ull;
     }
 

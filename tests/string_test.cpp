@@ -15,48 +15,48 @@ using namespace webpp::strings;
 using namespace webpp::ascii;
 
 TEST(String, Concepts) {
-    EXPECT_FALSE((stl::is_same_v<int, char_type_of_t<int*>>) );
+    EXPECT_FALSE((stl::is_same_v<int, char_type_of_t<int *>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<char[]>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<char[10]>>) );
-    EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<const char[10]>>) );
-    EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<const char(&)[20]>>) );
-    EXPECT_TRUE((stl::is_same_v<wchar_t, char_type_of_t<const wchar_t*>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<char const[10]>>) );
+    EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<char const(&)[20]>>) );
+    EXPECT_TRUE((stl::is_same_v<wchar_t, char_type_of_t<wchar_t const *>>) );
     EXPECT_TRUE((stl::is_same_v<char, char_type_of_t<std::string>>) );
     EXPECT_TRUE((stl::is_same_v<int, char_type_of_t<std::basic_string_view<int>>>) );
 
-    EXPECT_TRUE(istl::StringViewifiable<const char*>);
-    EXPECT_TRUE(istl::StringViewifiable<char*>);
-    EXPECT_TRUE(istl::StringViewifiable<const char[8]>);
-    EXPECT_TRUE(istl::StringViewifiable<const char(&)[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<char const *>);
+    EXPECT_TRUE(istl::StringViewifiable<char *>);
+    EXPECT_TRUE(istl::StringViewifiable<char const[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<char const(&)[8]>);
 
-    EXPECT_TRUE(istl::StringViewifiable<const wchar_t*>);
-    EXPECT_TRUE(istl::StringViewifiable<wchar_t*>);
+    EXPECT_TRUE(istl::StringViewifiable<wchar_t const *>);
+    EXPECT_TRUE(istl::StringViewifiable<wchar_t *>);
     EXPECT_TRUE(istl::StringViewifiable<const wchar_t[8]>);
     EXPECT_TRUE(istl::StringViewifiable<const wchar_t(&)[8]>);
 
-    EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<char*>, char>) );
+    EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<char *>, char>) );
     EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<wchar_t[]>, wchar_t>) );
     EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<wchar_t const(&)[20]>, wchar_t>) );
     EXPECT_FALSE((istl::StringLiteral<char>) );
     EXPECT_FALSE((istl::StringLiteral<stl::string_view>) );
-    EXPECT_FALSE((istl::StringLiteral<char**>) );
+    EXPECT_FALSE((istl::StringLiteral<char **>) );
     EXPECT_FALSE((istl::StringLiteral<wchar_t>) );
-    EXPECT_FALSE((istl::StringLiteral<int*>) );
-    EXPECT_TRUE(istl::StringLiteral<char*>);
+    EXPECT_FALSE((istl::StringLiteral<int *>) );
+    EXPECT_TRUE(istl::StringLiteral<char *>);
     EXPECT_TRUE(istl::StringLiteral<char[]>);
     EXPECT_TRUE(istl::StringLiteral<char const[]>);
     EXPECT_TRUE(istl::StringLiteral<char const[20]>);
     EXPECT_TRUE(istl::StringLiteral<char[20]>);
-    EXPECT_TRUE(istl::StringLiteral<const char*>);
-    EXPECT_TRUE(istl::StringLiteral<const wchar_t*>);
+    EXPECT_TRUE(istl::StringLiteral<char const *>);
+    EXPECT_TRUE(istl::StringLiteral<wchar_t const *>);
 }
 
 TEST(String, IEquals) {
     using webpp::ascii::iequals;
 
-    const auto one = "Hello World!";
-    const auto two = "hELLo WORLd!";
-    const auto res = iequals(one, two);
+    auto const one = "Hello World!";
+    auto const two = "hELLo WORLd!";
+    auto const res = iequals(one, two);
     EXPECT_TRUE(res);
     EXPECT_TRUE(iequals<char_case_side::second_lowered>("OnE", "one"));
     EXPECT_EQ(iequals("123 One Two aZ", "123 oNe TWo Az"), true);
@@ -78,7 +78,6 @@ TEST(String, Join) {
     EXPECT_EQ(join(stl::string("one, "), 1, 2), "one, 12");
 }
 
-
 TEST(String, JoinWith) {
     stl::string const        one   = "one";
     stl::string const        two   = "two";
@@ -92,12 +91,9 @@ TEST(String, JoinWith) {
 
     using tup_type = stl::tuple<stl::string, stl::string, stl::string, stl::string_view>;
     tup_type const tup{one, two, three, "four"};
-    const auto     tup_res = join_with(tup, ' ');
+    auto const     tup_res = join_with(tup, ' ');
     EXPECT_EQ(tup_res, "one two three four");
 }
-
-
-
 
 TEST(String, Splitter) {
     splitter const email_splitter{"test@email.com", '@', "."};
@@ -114,7 +110,9 @@ TEST(String, Splitter) {
     ++it;
     EXPECT_EQ(it, eit);
     stl::size_t                     index = 0;
-    stl::array<stl::string_view, 3> parts{{"test", "email", "com"}};
+    stl::array<stl::string_view, 3> parts{
+      {"test", "email", "com"}
+    };
     for (auto part : email_splitter) {
         EXPECT_EQ(part, parts[index++]);
     }
@@ -129,7 +127,6 @@ TEST(String, Splitter) {
         index++;
     }
 }
-
 
 TEST(String, SplitterConstexpr) {
     constexpr splitter email_splitter{"test@email.com", '@'};
@@ -146,9 +143,7 @@ TEST(String, SplitterConstexpr) {
 }
 
 TEST(String, StringViewConcept) {
-    EXPECT_FALSE(bool(StringViewifiable<stl::array<char const*, 4>>));
+    EXPECT_FALSE(bool(StringViewifiable<stl::array<char const *, 4>>));
 }
-
-
 
 // NOLINTEND(*-avoid-c-arrays,*-magic-numbers)

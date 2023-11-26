@@ -29,14 +29,14 @@ struct ConstMyCallable {
 };
 
 struct MyCallable {
-    int  i = 0;
+    int i = 0;
+
     auto operator()(int limit) {
         i++;
         EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
         return i;
     }
 };
-
 
 TEST(FunctionalTests, Concepts) {
     EXPECT_TRUE(stl::is_trivially_copy_constructible_v<function_ref<void()>>);
@@ -61,8 +61,9 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     auto checking_deduction_for_function_pointers = debounce(test);
     auto debounced_test                           = debounce(milliseconds(10), test);
-    for (int i = 0; i < limit; i++)
+    for (int i = 0; i < limit; i++) {
         debounced_test(limit);
+    }
 
     // lambdas
 
@@ -72,8 +73,9 @@ TEST(FunctionalTests, DebouncedFunctions) {
         EXPECT_LT(i, _limit);
     });
 
-    for (int i = 0; i < limit; i++)
+    for (int i = 0; i < limit; i++) {
         lambda_test(limit);
+    }
 
     // class
 
@@ -83,11 +85,11 @@ TEST(FunctionalTests, DebouncedFunctions) {
         EXPECT_LT(res, limit) << res;
     }
 
-    const debounce<ConstMyCallable> const_debounced_class;
-    for (int i = 0; i < limit; i++)
+    t debounce<ConstMyCallable> const const_debounced_classs;
+    for (int i = 0; i < limit; i++) {
         const_debounced_class(limit);
+    }
 }
-
 
 TEST(FunctionalTests, TrailingMode) {
     // using dtype = debounce_type;
@@ -96,7 +98,6 @@ TEST(FunctionalTests, TrailingMode) {
 
     });
 }
-
 
 TEST(FunctionalTests, FunctionWithSTDAllocators) {
     istl::function<int()> func = [i = 0]() mutable {
@@ -246,14 +247,17 @@ TEST(FunctionalTests, DoubleFreeFunction) {
     vec.emplace_back([i = 0]() mutable {
         return ++i;
     });
+
     struct item_type {
         istl::pmr::function<int()> caller = [] { // NOLINT(misc-non-private-member-variables-in-classes)
             return 20;
         };
+
         int operator()() {
             return caller();
         }
     };
+
     item_type item;
     item.caller = item_type{};
     EXPECT_EQ(20, item());
@@ -308,11 +312,11 @@ TEST(FunctionalTests, FunctionRefTests) {
     function_ref<int(int, int)> const view3{&mmmax};
     EXPECT_EQ(view3(10, 15), 15);
 
-
     struct object_type_constness {
         int operator()() const {
             return 25;
         }
+
         int operator()() {
             return 26;
         }
@@ -425,7 +429,6 @@ TEST(FunctionalTests, MemberFunctionRef) {
     EXPECT_EQ(view(), 222);
 }
 
-
 ////////////////////////////// ChatGPT Made tests (modified) //////////////////////////////
 
 
@@ -450,10 +453,10 @@ TEST(FunctionalTests, FunctionRefWithCapture) {
 }
 
 TEST(FunctionalTests, FunctionRefWithCharPointer) {
-    auto charLengthFunc = [](const char* str) -> stl::size_t {
+    auto charLengthFunc = [char constar* str) -> stl::size_t {
         return strlen(str);
     };
-    function_ref<int(const char*)> const ref(charLengthFunc);
+    function_ref<inchar constar*)> const ref(charLengthFunc);
     EXPECT_EQ(ref("hello"), 5);
 }
 
@@ -533,7 +536,7 @@ TEST(FunctionalTests, MoveAssignment) {
         // Verify that ref2 has been moved
         ref2(2, 3);
         FAIL() << "Expected stl::bad_function_call";
-    } catch (const stl::bad_function_call&) {
+    } catchst stl::bad_function_ca const &l&) {
         SUCCEED();
     }
 }
@@ -563,7 +566,7 @@ TEST(FunctionalTests, EmptyFunctionRef) {
         // Calling an empty function_ref should cause a bad_function_call exception
         ref();
         FAIL() << "Expected std::bad_function_call";
-    } catch (const stl::bad_function_call&) {
+    } catchst stl::bad_function_ca const &l&) {
         SUCCEED();
     }
 }
@@ -591,7 +594,6 @@ TEST(FunctionalTests, FunctionRefToPointToStdFunction) {
     EXPECT_EQ(ref(2, 3), 5);
 }
 
-
 int addFunc(int a, int b) {
     return a + b;
 }
@@ -612,7 +614,6 @@ TEST(FunctionalTests, FunctionRefToPointToStdFunctionFunctionPointer) {
     function_ref<int(int, int)> const ref(fptr);
     EXPECT_EQ(ref(2, 3), 5);
 }
-
 
 TEST(FunctionalTests, CopyConstructorFunctionPointer) {
     // Create a new function_ref that points to addFunc function pointer
@@ -670,9 +671,6 @@ TEST(FunctionalTests, MoveConstructorFunctionPointer) {
     EXPECT_EQ(ref2(2, 3), 5);
 }
 
-
-
-
 ////////////////////////////// ChatGPT Generated Tests for member_function_ref //////////////////////////////
 
 
@@ -680,10 +678,12 @@ TEST(FunctionalTests, MoveConstructorFunctionPointer) {
 class MemberFunctionPtrTest : public ::testing::Test {
   protected:
     struct TestStruct {
-        int  x;
+        int x;
+
         void foo(int n) {
             x = n;
         }
+
         [[nodiscard]] int bar(int n) const {
             return x + n;
         }
@@ -721,13 +721,13 @@ TEST_F(MemberFunctionPtrTest, CopyAndMoveTest) {
     EXPECT_EQ(obj.x, 10);
 }
 
-
 // define a test fixture
 class MemberFunctionPtrTest2 : public ::testing::Test {
   protected:
     static int add_func(int a, int b) {
         return a + b;
     }
+
     static bool is_even(int n) {
         return n % 2 == 0;
     }
@@ -749,19 +749,21 @@ TEST_F(MemberFunctionPtrTest2, BasicTest) {
     EXPECT_FALSE(is_even_ptr(7));
 }
 
-
 // define a test fixture
 class MemberFunctionRefTest : public ::testing::Test {
   protected:
     struct TestStruct {
-        int  x; // NOLINT(misc-non-private-member-variables-in-classes)
+        int x; // NOLINT(misc-non-private-member-variables-in-classes)
+
         void foo(int n) {
             x = n;
         }
+
         [[nodiscard]] int bar(int n) const {
             return x + n;
         }
     };
+
     static int add_func(int a, int b) {
         return a + b;
     }
@@ -844,6 +846,5 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
     ref0(x);
     EXPECT_EQ(x, 42);
 }
-
 
 // NOLINTEND(*-magic-numbers)

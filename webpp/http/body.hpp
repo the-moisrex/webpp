@@ -43,7 +43,6 @@ namespace webpp::http {
                               stl::char_traits<traits::char_type<TraitsType>>,
                               traits::general_allocator<TraitsType, traits::char_type<TraitsType>>>>;
 
-
     /**
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
      * used to get a better performance)
@@ -83,7 +82,6 @@ namespace webpp::http {
         }
     };
 
-
     namespace details {
         template <typename T, typename Obj>
         constexpr T get_as([[maybe_unused]] Obj&& obj) {
@@ -104,7 +102,6 @@ namespace webpp::http {
 
     } // namespace details
 
-
     /**
      * This is the dynamic parent for body readers and body writers.
      */
@@ -118,15 +115,16 @@ namespace webpp::http {
         using stream_communicator_type  = stream_response_body_communicator<traits_type>;
         using stream_type               = typename stream_communicator_type::element_type;
 
-        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
-        using value_type =
-          typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
+        using byte_type  = stl::byte; // required by CStreamBasedBodyWriter
+        using value_type = typename string_communicator_type::value_type; // required by the
+                                                                          // TextBasedBodyWriter
 
         // the order of types in this variant must match the order of http::communicator_type enum
-        using communicator_storage_type = stl::variant<stl::monostate,
-                                                       string_communicator_type,
-                                                       cstream_communicator_type,
-                                                       stream_communicator_type>;
+        using communicator_storage_type =
+          stl::variant<stl::monostate,
+                       string_communicator_type,
+                       cstream_communicator_type,
+                       stream_communicator_type>;
 
 
         static_assert(TextBasedBodyCommunicator<string_communicator_type>,
@@ -152,6 +150,7 @@ namespace webpp::http {
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, body_communicator>)
         explicit constexpr body_communicator(ET&& et) : enable_traits<TraitsType>(et) {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <EnabledTraits ET, typename ComT>
@@ -179,7 +178,6 @@ namespace webpp::http {
         explicit constexpr body_communicator(ComT&& inp_communicator)
           : etraits_type{inp_communicator},
             communicator_var{inp_communicator.as_string_communicator()} {}
-
 
         template <TextBasedBodyReader ComT>
             requires(EnabledTraits<ComT>)
@@ -218,7 +216,6 @@ namespace webpp::http {
             communicator_var{
               string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
 
-
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
         constexpr body_communicator& operator=(body_communicator const&)     = default;
@@ -233,13 +230,11 @@ namespace webpp::http {
             return communicator_var;
         }
 
-
         // This member function will tell you this body contains what
         [[nodiscard]] constexpr http::communicator_type which_communicator() const noexcept {
             return static_cast<http::communicator_type>(communicator().index());
         }
     };
-
 
     template <Traits TraitsType>
     struct body_reader : body_communicator<TraitsType> {
@@ -263,13 +258,12 @@ namespace webpp::http {
         constexpr body_reader(body_reader const& other)
           : body_communicator<TraitsType>{other.get_traits(), other.as_string_communicator()} {}
 
-
         template <HTTPBodyHolder H>
             requires(EnabledTraits<H>)
         explicit constexpr body_reader(H& holder) : body_reader{holder.body} {}
 
-
         constexpr body_reader(body_reader&&) noexcept = default;
+
         constexpr body_reader& operator=(body_reader const& other) {
             if (this != &other) {
                 this->communicator().template emplace<string_communicator_type>(
@@ -277,9 +271,9 @@ namespace webpp::http {
             }
             return *this;
         }
+
         constexpr body_reader& operator=(body_reader&&) noexcept = default;
         constexpr ~body_reader() noexcept                        = default;
-
 
         // Get the data pointer if available, returns nullptr otherwise
         [[nodiscard]] constexpr char_type const* data() const noexcept {
@@ -307,8 +301,9 @@ namespace webpp::http {
             // have but not required at this point, that's why I check if the c-stream communicator
             // supports it or not)
             if constexpr (SizableBody<cstream_communicator_type>) {
-                if (auto const* cstream_reader =
-                      stl::get_if<cstream_communicator_type>(&this->communicator())) {
+                if (
+                  auto const* cstream_reader = stl::get_if<cstream_communicator_type>(&this->communicator()))
+                {
                     return cstream_reader->size();
                 }
             }
@@ -332,7 +327,6 @@ namespace webpp::http {
             return empty();
         }
 
-
         constexpr stl::streamsize read(byte_type* data, stl::streamsize count) const {
             // Attention: cross-talks (writing to one communicator and reading from another) are
             // discouraged
@@ -352,22 +346,21 @@ namespace webpp::http {
                 stl::copy_n(string_reader->data(), static_cast<stl::size_t>(count), begin);
                 return 0; // return 0 to skip the loop
             }
-            return 0LL; // nothing is read because we can't read it
+            return 0LL;   // nothing is read because we can't read it
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
-
-
 
         constexpr decltype(auto) rdbuf() const {
             if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
                 return (*stream_reader)->rdbuf();
             }
             // todo: should we log, or should we blow up with an exception?
-            throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                 "communicator, but now you're trying to read from a stream based body "
-                                 "communicator which doesn't know how to convert the text/cstream-based-body "
-                                 "communicators to your object type. Be consistent in your "
-                                 "calls. Cross-Talks are discouraged.)");
+            throw bad_cross_talk(
+              "Bad Cross-Talk error (you previously wrote to a different body "
+              "communicator, but now you're trying to read from a stream based body "
+              "communicator which doesn't know how to convert the text/cstream-based-body "
+              "communicators to your object type. Be consistent in your "
+              "calls. Cross-Talks are discouraged.)");
         }
 
         constexpr stl::streamsize readsome(stream_char_type* data, stl::streamsize count) {
@@ -375,23 +368,24 @@ namespace webpp::http {
                 return (*stream_reader)->readsome(data, count);
             }
             // todo: should we log, or should we blow up with an exception?
-            throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                 "communicator, but now you're trying to read from a stream based body "
-                                 "communicator which doesn't know how to convert the text/cstream-based-body "
-                                 "communicators to your object type. Be consistent in your "
-                                 "calls. Cross-Talks are discouraged.)");
+            throw bad_cross_talk(
+              "Bad Cross-Talk error (you previously wrote to a different body "
+              "communicator, but now you're trying to read from a stream based body "
+              "communicator which doesn't know how to convert the text/cstream-based-body "
+              "communicators to your object type. Be consistent in your "
+              "calls. Cross-Talks are discouraged.)");
         }
-
 
         constexpr typename stream_type::pos_type tellg() {
             if (auto* stream_reader = stl::get_if<stream_communicator_type>(&this->communicator())) {
                 return (*stream_reader)->tellg();
             }
-            throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                 "communicator, but now you're trying to read from a stream based body "
-                                 "communicator which doesn't know how to convert the text/cstream-based-body "
-                                 "communicators to your object type. Be consistent in your "
-                                 "calls. Cross-Talks are discouraged.)");
+            throw bad_cross_talk(
+              "Bad Cross-Talk error (you previously wrote to a different body "
+              "communicator, but now you're trying to read from a stream based body "
+              "communicator which doesn't know how to convert the text/cstream-based-body "
+              "communicators to your object type. Be consistent in your "
+              "calls. Cross-Talks are discouraged.)");
         }
 
         constexpr body_reader& seekg(typename stream_type::pos_type pos) {
@@ -399,11 +393,12 @@ namespace webpp::http {
                 (*stream_reader)->seekg(pos);
                 return *this;
             }
-            throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                 "communicator, but now you're trying to read from a stream based body "
-                                 "communicator which doesn't know how to convert the text/cstream-based-body "
-                                 "communicators to your object type. Be consistent in your "
-                                 "calls. Cross-Talks are discouraged.)");
+            throw bad_cross_talk(
+              "Bad Cross-Talk error (you previously wrote to a different body "
+              "communicator, but now you're trying to read from a stream based body "
+              "communicator which doesn't know how to convert the text/cstream-based-body "
+              "communicators to your object type. Be consistent in your "
+              "calls. Cross-Talks are discouraged.)");
         }
 
         constexpr body_reader& seekg(typename stream_type::off_type off, stl::ios_base::seekdir dir) {
@@ -411,11 +406,12 @@ namespace webpp::http {
                 (*stream_reader)->seekg(off, dir);
                 return *this;
             }
-            throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                 "communicator, but now you're trying to read from a stream based body "
-                                 "communicator which doesn't know how to convert the text/cstream-based-body "
-                                 "communicators to your object type. Be consistent in your "
-                                 "calls. Cross-Talks are discouraged.)");
+            throw bad_cross_talk(
+              "Bad Cross-Talk error (you previously wrote to a different body "
+              "communicator, but now you're trying to read from a stream based body "
+              "communicator which doesn't know how to convert the text/cstream-based-body "
+              "communicators to your object type. Be consistent in your "
+              "calls. Cross-Talks are discouraged.)");
         }
 
         template <typename T>
@@ -433,7 +429,6 @@ namespace webpp::http {
             }
             return *this;
         }
-
 
         template <typename T>
             requires(HTTPGenerallyDeserializableBody<T, body_reader>)
@@ -471,7 +466,6 @@ namespace webpp::http {
             return as<traits::general_string<traits_type>>();
         }
 
-
         [[nodiscard]] constexpr bool operator==(body_reader const& body) const noexcept {
             if (&body == this) {
                 return true;
@@ -484,25 +478,23 @@ namespace webpp::http {
                 using enum communicator_type;
                 case nothing: return true;
                 case text_based: {
-                    const auto this_size = size();
+                    auto const this_size = size();
                     return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
                 }
                 case stream_based: // we can't check equality of streams without
                                    // changing them
                 case cstream_based: {
-                    return false; // c-streams don't have a mechanism to read but don't modify, so always
+                    return false;  // c-streams don't have a mechanism to read but don't modify, so always
                     // false too
                 }
             }
             return false;
         }
 
-
         [[nodiscard]] constexpr bool operator!=(body_reader const& body) const noexcept {
             return !operator==(body);
         }
     };
-
 
     template <Traits TraitsType>
     struct body_writer : body_reader<TraitsType> {
@@ -517,9 +509,9 @@ namespace webpp::http {
         using string_char_type  = typename string_communicator_type::value_type;
         using cstream_byte_type = typename cstream_communicator_type::byte_type;
 
-        using byte_type = stl::byte; // required by CStreamBasedBodyWriter
-        using value_type =
-          typename string_communicator_type::value_type; // required by the TextBasedBodyWriter
+        using byte_type  = stl::byte; // required by CStreamBasedBodyWriter
+        using value_type = typename string_communicator_type::value_type; // required by the
+                                                                          // TextBasedBodyWriter
 
         static constexpr auto log_cat = "BodyWriter";
 
@@ -529,7 +521,6 @@ namespace webpp::http {
         constexpr body_writer& operator=(body_writer const&)     = default;
         constexpr body_writer& operator=(body_writer&&) noexcept = default;
         constexpr ~body_writer() noexcept                        = default;
-
 
         constexpr void append(char_type const* data, stl::size_t count) {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -542,9 +533,9 @@ namespace webpp::http {
                 auto            size      = static_cast<stl::streamsize>(count);
                 stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
                 for (;;) {
-                    ret_size = cstream_writer->write(byte_data, size);
+                    ret_size   = cstream_writer->write(byte_data, size);
                     byte_data += ret_size;
-                    size -= ret_size;
+                    size      -= ret_size;
                     if (ret_size <= 0) {
                         break;
                     }
@@ -558,14 +549,13 @@ namespace webpp::http {
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
 
-
         constexpr void clear() {
             if (auto* string_writer = stl::get_if<string_communicator_type>(&this->communicator())) {
                 string_writer->clear();
             } else if (auto* stream_writer = stl::get_if<stream_communicator_type>(&this->communicator())) {
-                (*stream_writer)->clear(); // clear the state
-                (*stream_writer)
-                  ->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in the stream
+                (*stream_writer)->clear();                                             // clear the state
+                (*stream_writer)->ignore(std::numeric_limits<std::streamsize>::max()); // ignore the data in
+                                                                                       // the stream
             } else if (auto* cstream_writer = stl::get_if<cstream_communicator_type>(&this->communicator())) {
                 cstream_writer->clear();
             } else {
@@ -578,7 +568,6 @@ namespace webpp::http {
         constexpr void reset() {
             this->communicator().template emplace<stl::monostate>();
         }
-
 
         constexpr stl::streamsize write(byte_type const* data, stl::streamsize count) {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -610,11 +599,12 @@ namespace webpp::http {
                 *stl::get<stream_communicator_type>(this->communicator()) << stl::forward<T>(obj);
             } else {
                 // todo: should we log, or should we blow up with an exception?
-                throw bad_cross_talk("Bad Cross-Talk error (you previously wrote to a different body "
-                                     "communicator, but now you're trying to write to stream based body "
-                                     "communicator which doesn't know how to convert your object to "
-                                     "text/cstream-based-body communicators. Be consistent in your "
-                                     "calls. Cross-Talks are discouraged.)");
+                throw bad_cross_talk(
+                  "Bad Cross-Talk error (you previously wrote to a different body "
+                  "communicator, but now you're trying to write to stream based body "
+                  "communicator which doesn't know how to convert your object to "
+                  "text/cstream-based-body communicators. Be consistent in your "
+                  "calls. Cross-Talks are discouraged.)");
             }
             return *this;
         }
@@ -638,8 +628,11 @@ namespace webpp::http {
         constexpr body_writer& set(T&& obj) {
             clear();
             if constexpr (BodyReader<T> && requires {
-                              { obj.as_string_communicator() } -> stl::same_as<string_communicator_type>;
-                          }) {
+                              {
+                                  obj.as_string_communicator()
+                              } -> stl::same_as<string_communicator_type>;
+                          })
+            {
                 this->communicator().template emplace<string_communicator_type>(obj.as_string_communicator());
             } else if constexpr (stl::constructible_from<string_communicator_type, T>) {
                 this->communicator().template emplace<string_communicator_type>(stl::forward<T>(obj));
@@ -667,12 +660,11 @@ namespace webpp::http {
 
       private:
         void init_stream() {
-            this->communicator().template emplace<stream_communicator_type>(
-              stl::allocate_shared<stream_type>(alloc::general_allocator<stream_type>(*this),
-                                                std::ios_base::in | std::ios_base::out));
+            this->communicator().template emplace<stream_communicator_type>(stl::allocate_shared<stream_type>(
+              alloc::general_allocator<stream_type>(*this),
+              std::ios_base::in | std::ios_base::out));
         }
     };
-
 
     template <typename TraitsType>
     constexpr body_reader<TraitsType>& as_body_reader(body_reader<TraitsType>& body) noexcept {

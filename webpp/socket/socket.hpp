@@ -19,7 +19,6 @@ namespace webpp {
      * On POSIX, the initializer sets optional parameters for the library, and the destructor does nothing.
      */
     class socket_initializer {
-
         socket_initializer() noexcept {
 #ifdef MSVC_COMPILER
             WSADATA wsadata;
@@ -27,12 +26,12 @@ namespace webpp {
                 wprintf(L"WSAStartup() failed with error: %d\n", iResult);
                 exit(EXIT_FAILURE);
             }
-#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
+#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199'309L)
             // ignoring the signal the new way
             // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
             // Set up the signal handler using sigaction()
-            struct sigaction sa;     // NOLINT(cppcoreguidelines-pro-type-member-init)
-            sa.sa_handler = SIG_IGN; // Set the signal handler to SIG_IGN to ignore the signal
+            struct sigaction sa;      // NOLINT(cppcoreguidelines-pro-type-member-init)
+            sa.sa_handler = SIG_IGN;  // Set the signal handler to SIG_IGN to ignore the signal
             ::sigemptyset(&sa.sa_mask);
             sa.sa_flags = SA_RESTART; // Set the SA_RESTART flag to automatically restart system calls
                                       // interrupted by the signal
@@ -49,11 +48,10 @@ namespace webpp {
         }
 
       public:
-        socket_initializer(const socket_initializer&)            = delete;
+        socket_initializer(socket_initializer const&)            = delete;
         socket_initializer(socket_initializer&&)                 = delete;
-        socket_initializer& operator=(const socket_initializer&) = delete;
+        socket_initializer& operator=(socket_initializer const&) = delete;
         socket_initializer& operator=(socket_initializer&&)      = delete;
-
 
         /**
          * Creates the initializer singleton on the first call as a static.
@@ -73,8 +71,8 @@ namespace webpp {
 #endif
     };
 
-
     using ipproto_type = int;
+
     /**
      * Standard well-defined IP protocols
      *
@@ -121,7 +119,6 @@ namespace webpp {
             max             // just to indicate the max value
         };
     };
-
 
     /**
      * Basic Socket is just a wrapper around either a file descriptor or a SOCKET based on the platform.
@@ -187,14 +184,15 @@ namespace webpp {
 
         basic_socket(basic_socket&& other) noexcept : fd{other.release()} {}
 
-
         basic_socket& operator=(basic_socket const& other) noexcept {
             if (this != &other && other.fd != fd) {
                 other.clone().swap(*this);
             }
             return *this;
         }
+
         basic_socket& operator=(basic_socket&&) noexcept = default;
+
         basic_socket& operator=(native_handle_type d) noexcept {
             if (d != fd) {
                 close();
@@ -203,6 +201,7 @@ namespace webpp {
             }
             return *this;
         }
+
         ~basic_socket() noexcept {
             close();
         }
@@ -272,7 +271,6 @@ namespace webpp {
             return sock_address_any::invalid();
         }
 
-
         /**
          * Gets the address of the remote peer, if this socket is connected.
          * @return The address of the remote peer, if this socket is connected.
@@ -288,7 +286,7 @@ namespace webpp {
         /**
          * Binds the socket to the specified address.
          */
-        bool bind(const sock_address_any& addr) noexcept {
+        bool bind(sock_address_any const& addr) noexcept {
             return check_ret_bool(::bind(fd, addr.sockaddr_ptr(), addr.size()));
         }
 
@@ -313,6 +311,7 @@ namespace webpp {
             }
             return false;
         }
+
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
         /**
@@ -322,7 +321,6 @@ namespace webpp {
         bool listen(int queue_size = default_queue_size) noexcept {
             return check_ret_bool(::listen(fd, queue_size));
         }
-
 
         /**
          * Bind and Listen
@@ -411,10 +409,10 @@ namespace webpp {
          *
          * @return bool true if the value was set, false on error.
          */
-        bool set_option(int level, int optname, const void* optval, socklen_t optlen) noexcept {
+        bool set_option(int level, int optname, void constd* optval, socklen_t optlen) noexcept {
 #ifdef MSVC_COMPILER
             return check_ret_bool(
-              ::setsockopt(fd, level, optname, static_cast<const char*>(optval), static_cast<int>(optlen)));
+              ::setsockopt(fd, level, optname, static_castchar constr* > (optval), static_cast<int>(optlen)));
 #else
             return check_ret_bool(::setsockopt(fd, level, optname, optval, optlen));
 #endif
@@ -430,10 +428,9 @@ namespace webpp {
          * @return bool true if the value was set, false on error
          */
         template <typename T>
-        bool set_option(int level, int optname, const T& val) noexcept {
+        bool set_option(int level, int optname, t const&& val) noexcept {
             return set_option(level, optname, (void*) &val, sizeof(T));
         }
-
 
         bool set_non_blocking(bool on = true) noexcept {
 #ifdef MSVC_COMPILER
@@ -501,7 +498,6 @@ namespace webpp {
             clear_error();
         }
 
-
         /**
          * Gets the network family of the address to which the socket is bound.
          *
@@ -516,11 +512,11 @@ namespace webpp {
             return fd;
         }
 
-        [[nodiscard]] bool operator==(const basic_socket& other) const noexcept {
+        [[nodiscard]] bool operator==(basic_socket const& other) const noexcept {
             return fd == other.fd;
         }
 
-        [[nodiscard]] bool operator!=(const basic_socket& other) const noexcept {
+        [[nodiscard]] bool operator!=(basic_socket const& other) const noexcept {
             return fd != other.fd;
         }
 
@@ -560,11 +556,12 @@ namespace webpp {
 } // namespace webpp
 
 #include <functional>
+
 namespace std {
 
     template <>
     struct hash<webpp::basic_socket> {
-        size_t operator()(const webpp::basic_socket& s) const noexcept {
+        size_t operator()(webpp::basic_socket const& s) const noexcept {
             return hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
         }
     };

@@ -53,8 +53,8 @@ namespace webpp::views {
 
         using mustache_data_type = typename mustache_view_type::data_type;
         // using json_data_type = typename json_view_type::data_type;
-        using file_data_type = typename file_view_type::data_type;
-        using cache_type     = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
+        using file_data_type     = typename file_view_type::data_type;
+        using cache_type         = lru_cache<traits_type, path_type, view_types, memory_gate<null_gate>>;
 
         static constexpr stl::array<string_view_type, 1> valid_extensions{".mustache"};
 
@@ -65,7 +65,6 @@ namespace webpp::views {
       public:
         // the root directories where we can find the views
         view_roots_type view_roots; // NOLINT(cppcoreguidelines-non-private-member-variables-in-classes)
-
 
         template <typename ET>
             requires(EnabledTraits<stl::remove_cvref_t<ET>> &&
@@ -114,14 +113,13 @@ namespace webpp::views {
             }
 
             // a search for all request
-            const bool recursive_search = request.starts_with('*');
+            bool const recursive_search = request.starts_with('*');
             if (recursive_search) {
                 request.remove_prefix(1);
             }
 
             // traverse the root directories
             for (path_type dir : view_roots) {
-
                 fs::file_status status = fs::status(dir, ec);
                 if (ec && !fs::status_known(status)) {
                     this->logger.error(logging_category,
@@ -153,7 +151,7 @@ namespace webpp::views {
                             continue;
                         }
                         const path_type file      = *it;
-                        const auto      file_stem = file.stem();
+                        auto const      file_stem = file.stem();
                         if (file_stem == request) {
                             goto found_it;
                         }
@@ -212,7 +210,6 @@ namespace webpp::views {
             return stl::nullopt;
         }
 
-
         /**
          * Read the file content
          */
@@ -226,13 +223,11 @@ namespace webpp::views {
             return res;
         }
 
-
         template <typename VT>
         [[nodiscard]] auto* get_view(path_type const& file) {
             static view_types default_view{stl::in_place_type<VT>, *this};
             return cached_views.emplace_get_ptr(file, default_view);
         }
-
 
         template <typename ViewType, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, path_type const& file, DataType&&... data) {
@@ -251,7 +246,6 @@ namespace webpp::views {
             // Render the view based on the data that passed to us
             view.render(out, stl::forward<DataType>(data)...);
         }
-
 
         template <typename ViewType, istl::StringViewifiable StrT, typename OutT, typename... DataType>
         constexpr void view_to(OutT& out, StrT&& file_request, DataType&&... data) {
@@ -275,7 +269,6 @@ namespace webpp::views {
             view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
         }
-
 
         template <istl::StringViewifiable StrT, typename... StrT2, typename... DataType>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, stl::pair<StrT2, DataType>... data) {
@@ -318,7 +311,7 @@ namespace webpp::views {
                                    fmt::format("We can't find the specified view {}.", file_request));
                 return out;
             }
-            const auto ext = file->extension().string();
+            auto const ext = file->extension().string();
             if (ext.size() >= 1) {
                 switch (ext[1]) {
                     case 'm': {

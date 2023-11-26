@@ -9,7 +9,6 @@
 #include "beast_body_communicator.hpp"
 #include "beast_server.hpp"
 
-
 namespace webpp {
 
     /**
@@ -76,8 +75,6 @@ namespace webpp {
         // each request should finish before this
         duration timeout_val{stl::chrono::seconds(3)};
 
-
-
         void async_accept() noexcept {
             acceptor.async_accept(asio::make_strand(io),
                                   [this](boost::beast::error_code ec, socket_type sock) {
@@ -118,7 +115,6 @@ namespace webpp {
             acceptor{asio::make_strand(io)},
             thread_workers{*this} {}
 
-
         beast& address(string_view_type addr) noexcept {
             asio::error_code ec;
             bind_address = asio::ip::make_address(istl::to_std_string_view(addr), ec);
@@ -127,7 +123,6 @@ namespace webpp {
             }
             return *this;
         }
-
 
         beast& port(port_type p) noexcept {
             bind_port = p;
@@ -151,7 +146,6 @@ namespace webpp {
         [[nodiscard]] bool is_ssl_active() const noexcept {
             return false;
         }
-
 
         [[nodiscard]] static constexpr bool is_ssl_available() noexcept {
             return false;
@@ -212,7 +206,6 @@ namespace webpp {
 
         // run the server
         [[nodiscard]] int operator()() noexcept {
-
             // Capture SIGINT and SIGTERM to perform a clean shutdown
             asio::signal_set signals(io, SIGINT, SIGTERM);
             signals.async_wait([this](boost::beast::error_code const&, int) {
@@ -282,10 +275,10 @@ namespace webpp {
                         } catch (stl::exception const& err) {
                             this->logger.error(
                               log_cat,
-                              fmt::format(
-                                "Error while starting io server; restarting io runner; io runner id: {}; tries: {}",
-                                io_index,
-                                tries),
+                              fmt::format("Error while starting io server; restarting io "
+                                          "runner; io runner id: {}; tries: {}",
+                                          io_index,
+                                          tries),
                               err);
                         } catch (...) {
                             // todo: possible data race

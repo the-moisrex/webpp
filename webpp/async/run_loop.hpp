@@ -50,8 +50,6 @@ namespace webpp::async {
         run_loop_type* loop;
     };
 
-
-
     /**
      * Run Loop
      * This class stores, and runs the [possibly chained] sub-tasks.
@@ -67,6 +65,7 @@ namespace webpp::async {
         static_assert(Scheduler<scheduler_type>, "Run Loop's Scheduler is not a valid scheduler.");
 
         constexpr basic_run_loop(allocator_type const& alloc = {}) noexcept : tasks{alloc} {}
+
         constexpr basic_run_loop(basic_run_loop const&)                = default;
         constexpr basic_run_loop(basic_run_loop&&) noexcept            = default;
         constexpr basic_run_loop& operator=(basic_run_loop const&)     = default;

@@ -22,10 +22,10 @@ TEST(IPv4Tests, FreeFunctions) {
     EXPECT_EQ(to_prefix("0.255.255.128"), 0);
     EXPECT_EQ(to_prefix({255, 255, 255, 128}), 25);
     EXPECT_EQ(to_prefix({0, 255, 255, 128}), 0);
-    EXPECT_EQ(to_prefix(0xFF'FF'FF'00U), 24);
-    EXPECT_EQ(to_prefix(0xFF'00'FF'00U), 8);
-    EXPECT_EQ(to_subnet(24), 0xFF'FF'FF'00);
-    EXPECT_EQ(to_subnet(8), 0xFF'00'00'00);
+    EXPECT_EQ(to_prefix(0xFFFF'FF00U), 24);
+    EXPECT_EQ(to_prefix(0xFF00'FF00U), 8);
+    EXPECT_EQ(to_subnet(24), 0xFFFF'FF00);
+    EXPECT_EQ(to_subnet(8), 0xFF00'0000);
 
     auto ip_a = ::std::array<uint8_t, 4>({255, 0, 0, 0});
     auto ip_b = ::std::array<uint8_t, 4>({255, 255, 255, 128});
@@ -44,8 +44,14 @@ TEST(IPv4Tests, Creation) {
 
 TEST(IPv4Tests, Methods) {
     ipv4 const ip_addr{192, 168, 1, 1};
-    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{{192, 168, 0, 0}, 16}));
-    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{{192, 168, 1, 0}, 24}));
+    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{
+      {192, 168, 0, 0},
+      16
+    }));
+    EXPECT_TRUE(ip_addr.is_in_subnet(ipv4{
+      {192, 168, 1, 0},
+      24
+    }));
     EXPECT_TRUE(ip_addr.in_range(ipv4{192, 168, 0, 1}, ipv4("192.168.2.1")));
     EXPECT_FALSE(ip_addr.in_range(ipv4{192, 168, 1, 2}, ipv4("192.168.2.1")));
     EXPECT_TRUE(ip_addr.is_private());
@@ -120,8 +126,6 @@ TEST(IPv4Tests, ToString) {
     EXPECT_EQ(str.size(), ascii::size("ip is: 192.168.1.1"));
 }
 
-
-
 TEST(IPv4Tests, InetP2NValidation) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv4s[]{
@@ -188,13 +192,11 @@ TEST(IPv4Tests, ErrorMessages) {
     EXPECT_EQ(to_string(inet_pton4_status::invalid_prefix), (ipv4{"1.1.1.1", "-1.255.1.3"}.status_string()));
 }
 
-
 TEST(IPv4Tests, StartsWith) {
     EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with<1>({127U}, 8));
     EXPECT_TRUE(ipv4::create("127.0.0.1").starts_with(ipv4{127, 0, 0, 0}, 8));
     EXPECT_EQ(ipv4::create("127.0.0.1").mask(8), ipv4(127U, 0U, 0U, 0U));
     EXPECT_EQ(ipv4::create("127.2.3.1").mask(24), ipv4(127U, 2U, 3U, 0U));
 }
-
 
 // NOLINTEND(*-magic-numbers)

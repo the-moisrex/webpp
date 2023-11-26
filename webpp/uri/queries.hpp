@@ -13,13 +13,12 @@ namespace webpp::uri {
 
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_queries(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_queries(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
         using ctx_type = parsing_uri_context<T...>;
 
         if constexpr (Options.parse_queries) {
-
             webpp_static_constexpr auto interesting_characters =
               ctx_type::is_segregated ? details::ascii_bitmap('#', '%')
                                       : details::ascii_bitmap('#', '%', '=', '&');
@@ -39,12 +38,12 @@ namespace webpp::uri {
 
             // find the end of the queries
             for (;;) {
-
                 // find the next non-query character:
                 if (encoder.template encode_or_validate_map<uri_encoding_policy::encode_chars>(
                       query_percent_encode_set,
                       interesting_characters,
-                      in_value)) {
+                      in_value))
+                {
                     break;
                 }
 
@@ -99,7 +98,6 @@ namespace webpp::uri {
         }
     }
 
-
     template <typename StringType = stl::string,
               typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
     struct basic_queries : public istl::map_of_strings<StringType, AllocType> {
@@ -118,7 +116,6 @@ namespace webpp::uri {
           noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
-
         /**
          * Get the raw string non-decoded size
          */
@@ -136,7 +133,7 @@ namespace webpp::uri {
 
         void append_to(istl::String auto& str) const {
             str.append("?");
-            for (const auto& [key, value] : *this) {
+            for (auto const& [key, value] : *this) {
                 encode_uri_component(key, str, allowed_chars);
                 str.append("=");
                 encode_uri_component(value, str, allowed_chars);

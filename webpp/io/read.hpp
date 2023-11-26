@@ -11,7 +11,7 @@ namespace webpp::io {
     template <IOService SchedT>
     void read(SchedT& io, file_handle file, buffer_span buf) noexcept {
         if constexpr (syscall_tag::is_supported<SchedT, file_handle, buffer_span>) {
-            const auto val = syscall(syscall_read{}, io, file, buf, *this);
+            auto const val = syscall(syscall_read{}, io, file, buf, *this);
         } else {
             ::read(file.native_handle(), buf.data(), buf.size());
         }
@@ -20,7 +20,7 @@ namespace webpp::io {
     struct async_read_some {
         void set_value(IOScheduler auto io, file_handle file_descriptor, buffer_span buf) noexcept {
             // request a read, and set a callback
-            if (const auto val = syscall(syscall_read{}, io, file_descriptor, buf, *this); val != 0) {
+            if (auto const val = syscall(syscall_read{}, io, file_descriptor, buf, *this); val != 0) {
                 set_error(io, val);
             }
         }
@@ -64,15 +64,13 @@ namespace webpp::io {
         };
     };
 
-
     inline constexpr void async_file_stats(IOScheduler auto io, file_handle file_descriptor) noexcept {
-        const auto stats = io.request_file_stats(file_descriptor);
+        auto const stats = io.request_file_stats(file_descriptor);
         if (stats != 0) {
             set_error(io, stats);
         }
         set_value(io, stats);
     }
-
 
     constexpr auto read(file_handle file_descriptor) noexcept {
         // todo: how to pass the buffer?

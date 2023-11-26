@@ -6,7 +6,6 @@ using namespace webpp;
 
 TEST(Server, Creation) {}
 
-
 //
 // namespace webpp {
 //

@@ -33,12 +33,14 @@ namespace webpp::http {
         value_type      m_value;
 
       public:
-        constexpr header_field_reference(container_type& inp_container,
-                                         name_type       inp_name,
-                                         value_type      inp_val)
+        constexpr header_field_reference(
+          container_type& inp_container,
+          name_type       inp_name,
+          value_type      inp_val)
           : container{&inp_container},
             m_name{stl::move(inp_name)},
             m_value{stl::move(inp_val)} {}
+
         constexpr header_field_reference(header_field_reference const&)                = default;
         constexpr header_field_reference(header_field_reference&&) noexcept            = default;
         constexpr header_field_reference& operator=(header_field_reference const&)     = default;
@@ -80,7 +82,6 @@ namespace webpp::http {
             return container == field.container && m_name == field.m_name && m_value == field.m_value;
         }
 
-
         [[nodiscard]] constexpr bool operator!=(header_field_reference const& field) const noexcept {
             return !operator==(field);
         }
@@ -121,25 +122,22 @@ namespace webpp::http {
             });
         }
 
-
         /**
          * Get the field value that holds the specified header name
          */
         [[nodiscard]] constexpr stl::optional<field_type> field(name_type name) const noexcept {
-            const auto res = iter(name);
+            auto const res = iter(name);
             return res == this->end() ? stl::nullopt : *res;
         }
-
 
         /**
          * Get the value of a header
          * Returns an empty string if there are no header with that name
          */
         [[nodiscard]] constexpr value_type get(name_type name) const noexcept {
-            const auto res = iter(name);
+            auto const res = iter(name);
             return res == this->end() ? value_type{} : res->value;
         }
-
 
         /**
          * Get multiple header values as a tuple
@@ -150,8 +148,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto get(NameType&&... name) const noexcept {
             return stl::make_tuple(get(name)...);
         }
-
-
 
         [[nodiscard]] constexpr const_reference_type operator[](name_type name) const noexcept {
             return const_reference_type{*this, name, get(name)};
@@ -193,7 +189,6 @@ namespace webpp::http {
             }
         }
 
-
         constexpr void set(name_type name, value_type new_value) {
             this->emplace(stl::move(name), stl::move(new_value));
         }
@@ -215,7 +210,6 @@ namespace webpp::http {
             set(lexical::cast<name_type>(stl::forward<NT>(name), this->get_allocator()),
                 lexical::cast<value_type>(stl::forward<VT>(new_value), this->get_allocator()));
         }
-
 
         /**
          * Check if the header is empty or not

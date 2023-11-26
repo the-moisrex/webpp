@@ -24,9 +24,13 @@ namespace webpp::sql {
         stmt.bind(1, stl::string_view{}, errmsg); // index based set string type
         stmt.bind(1, 1, errmsg);                  // index based set integer type
         stmt.column_name(1, name);
-        { stmt.column_count() } -> stl::integral;
+        {
+            stmt.column_count()
+        } -> stl::integral;
         stmt.step(errmsg);
-        { stmt.is_column_null(1) } -> stl::same_as<bool>;
+        {
+            stmt.is_column_null(1)
+        } -> stl::same_as<bool>;
     };
 
 
@@ -44,18 +48,24 @@ namespace webpp::sql {
         requires stl::default_initializable<T>;
 
         // &T::open; // the last arg is errmsg, the rest is driver dependent.
-        { db.is_open() } -> stl::same_as<bool>;
+        {
+            db.is_open()
+        } -> stl::same_as<bool>;
         db.close();
         db.version(str_ref);
         db.execute("", str_ref);
         // db.begin_transaction();
         // db.rollback(); // rollback a database transaction
         // db.commit();   // commit changes
-        { db.prepare(str_ref, str_ref) } -> stl::same_as<typename T::statement_type>;
+        {
+            db.prepare(str_ref, str_ref)
+        } -> stl::same_as<typename T::statement_type>;
         // { db.query(str_ref, str_ref) } -> stl::same_as<typename T::result_type>;
 
         // todo: return result is not checked here:
-        { db.last_insert_id() } -> stl::same_as<stl::uint64_t>;
+        {
+            db.last_insert_id()
+        } -> stl::same_as<stl::uint64_t>;
 
 
         // Other specialized configuration for each database type is goes here as

@@ -75,7 +75,6 @@ TEST(Cookie, CookieExpirationDate) {
 //}
 //
 TEST(ResponseCookies, CookieJar) {
-
     res_cookie_jar_t jar;
     jar.emplace_back("one", "value");
     jar.emplace_back(" one ", "value 2"); // this should replace the other one

@@ -10,6 +10,6 @@ namespace webpp::sql {
         blob
     };
 
-}
+} // namespace webpp::sql
 
 #endif

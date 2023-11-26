@@ -34,10 +34,16 @@ namespace webpp::http {
         typename T::name_type;
         typename T::value_type;
         requires requires(typename T::name_type name) {
-            { f.is_name(name) } -> stl::same_as<bool>;
+            {
+                f.is_name(name)
+            } -> stl::same_as<bool>;
         };
-        { f.name } -> istl::StringViewifiable;
-        { f.value } -> istl::StringViewifiable;
+        {
+            f.name
+        } -> istl::StringViewifiable;
+        {
+            f.value
+        } -> istl::StringViewifiable;
     };
 
 
@@ -121,8 +127,6 @@ namespace webpp::http {
         // requires Protocol<typename stl::remove_cvref_t<T>::protocol_type>
     };
 
-
-
     ////////////////////////////// Response //////////////////////////////
 
     namespace details {
@@ -170,13 +174,17 @@ namespace webpp::http {
 
     template <typename T>
     concept HTTPHeadersHolder = requires(stl::remove_cvref_t<T> server) {
-        { server.headers } -> HTTPHeaders;
+        {
+            server.headers
+        } -> HTTPHeaders;
     };
 
 
     template <typename T>
     concept HTTPBodyHolder = requires(stl::remove_cvref_t<T> server) {
-        { server.body } -> HTTPBody;
+        {
+            server.body
+        } -> HTTPBody;
     };
 
 
@@ -210,15 +218,18 @@ namespace webpp::http {
         requires HTTPRequest<typename T::request_type>;
         requires Application<typename T::application_type>;
         requires ApplicationWrapper<typename T::app_wrapper_type>;
-        { proto.app } -> ApplicationWrapper; // get the app
+        {
+            proto.app
+        } -> ApplicationWrapper; // get the app
         // should be able to pass an app to it as well
 
-        { proto.is_ssl_available() } -> stl::same_as<bool>;
-        { proto() } -> stl::same_as<int>;
+        {
+            proto.is_ssl_available()
+        } -> stl::same_as<bool>;
+        {
+            proto()
+        } -> stl::same_as<int>;
     };
-
-
-
 
     /**
      * This is designed to enable this syntax in the request and response bodies:
@@ -234,12 +245,14 @@ namespace webpp::http {
       public:
         constexpr auto_converter(auto_converter const&) noexcept = default;
         constexpr auto_converter(auto_converter&&) noexcept      = default;
+
         constexpr auto_converter(BodyType& inp_obj) noexcept : obj{&inp_obj} {}
+
         constexpr auto_converter(BodyType const& inp_obj) noexcept : obj{&inp_obj} {}
+
         constexpr auto_converter& operator=(auto_converter const&) noexcept = default;
         constexpr auto_converter& operator=(auto_converter&&) noexcept      = default;
         constexpr ~auto_converter() noexcept                                = default;
-
 
         template <typename T>
         explicit(HTTPRequest<T> || HTTPResponse<T>) constexpr operator T() const {
@@ -256,11 +269,11 @@ namespace webpp::http {
         return obj.template as<T>();
     }
 
-
     template <typename T, typename BodyType, typename... NotThese>
-    concept HTTPConvertibleBody = istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
-                                  !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> &&
-                                  HTTPGenerallyDeserializableBody<T, BodyType>;
+    concept HTTPConvertibleBody =
+      istl::is_specialization_of_v<stl::remove_cvref_t<T>, auto_converter> &&
+      !istl::part_of<stl::remove_cvref_t<T>, BodyType, NotThese...> &&
+      HTTPGenerallyDeserializableBody<T, BodyType>;
 
 } // namespace webpp::http
 

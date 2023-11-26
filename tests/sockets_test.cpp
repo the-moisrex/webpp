@@ -3,9 +3,8 @@
 
 using namespace webpp;
 
-inline constexpr in_port_t test_port   = 12332;
+inline constexpr in_port_t test_port   = 12'332;
 constexpr auto             test_handle = basic_socket::native_handle_type(3);
-
 
 TEST(SocketTest, DefaultCtor) {
     basic_socket const sock;
@@ -24,7 +23,6 @@ TEST(SocketTest, HandleCtor) {
     EXPECT_EQ(sock.native_handle(), test_handle);
     EXPECT_EQ(sock.last_error(), 0);
 }
-
 
 TEST(SocketTest, MoveCtor) {
     basic_socket       org_sock(test_handle);
@@ -154,7 +152,6 @@ TEST(SocketTest, AddressOfBoundSocket) {
     EXPECT_TRUE(sock.is_error_free());
     EXPECT_EQ(ipv4{sock.address()}, addr) << ipv4{sock.address()}.string() << " != " << addr.string();
 }
-
 
 TEST(SocketTest, SocketNonBlockingMode) {
     auto sock = basic_socket(AF_INET, SOCK_STREAM);

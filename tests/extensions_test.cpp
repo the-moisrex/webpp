@@ -17,19 +17,23 @@ TEST(ExtensionsTests, ExtensionConcepts) {
 struct one {
     static constexpr bool item     = true;
     static constexpr bool item_one = true;
+
     template <typename tt>
     struct type {
         static constexpr bool value_one = true;
     };
 };
+
 struct two {
     static constexpr bool item     = true;
     static constexpr bool item_two = true;
+
     template <typename tt>
     struct type {
         static constexpr bool value_two = true;
     };
 };
+
 struct three {
     static constexpr bool item       = true;
     static constexpr bool item_three = true;
@@ -43,37 +47,43 @@ struct three {
 struct child_one {
     static constexpr bool item     = true;
     static constexpr bool item_one = true;
+
     template <typename tt, typename mommy>
     struct type : mommy {
         static constexpr bool value_one = true;
     };
 };
+
 struct child_two {
     static constexpr bool item     = true;
     static constexpr bool item_two = true;
+
     template <typename tt, typename mommy>
     struct type : mommy {
         static constexpr bool value_two = true;
     };
 };
 
-
 struct cone {
     static constexpr bool item     = true;
     static constexpr bool item_one = true;
+
     template <typename tt, typename Daddy>
     struct type : public Daddy {
         static constexpr bool cvalue_one = true;
     };
 };
+
 struct ctwo {
     static constexpr bool item     = true;
     static constexpr bool item_two = true;
+
     template <typename tt, typename Daddy>
     struct type : public Daddy {
         static constexpr bool cvalue_two = true;
     };
 };
+
 struct cthree {
     static constexpr bool item       = true;
     static constexpr bool item_three = true;
@@ -122,7 +132,6 @@ using pack   = extension_pack<one, two, three>;
 using cpack  = extension_pack<cone, ctwo, cthree>;
 using expack = extension_pack<exes>;
 
-
 TEST(ExtensionsTests, ExtensionPackStuff) {
     EXPECT_TRUE(pack::template is_all<has_item>::value);
 
@@ -151,6 +160,7 @@ TEST(ExtensionsTests, ExtensionPackStuff) {
     struct daddy {
         bool daddy_value = true;
     };
+
     typename details::children_inherited<std_traits, daddy, cpack>::type icpack;
 
     EXPECT_TRUE(icpack.cvalue_one);
@@ -195,10 +205,10 @@ struct ctor_one {
     struct type {
         int a  = 1;
         type() = default;
+
         type(int _a, int _b) : a{_a + _b} {}
     };
 };
-
 
 TEST(ExtensionsTests, ExtensionConstructors) {
     using ctor_pack  = extension_pack<ctor_one>;
@@ -216,9 +226,7 @@ TEST(ExtensionsTests, ExtensionConstructors) {
     EXPECT_EQ((etype{4, 2}.a), 6);
 }
 
-
 struct first {
-
     template <typename TraitsType>
     struct type {
         using first = int;
@@ -227,12 +235,14 @@ struct first {
 
 struct second {
     using dependencies = extension_pack<first>;
+
     template <typename TraitsType, typename Mother>
     struct type : Mother {};
 };
 
 struct third {
     using dependencies = extension_pack<second>;
+
     template <typename TraitsType, typename Mother>
     struct type : Mother {};
 };
@@ -248,13 +258,10 @@ struct third_descriptor {
 struct third_pack {
     using test_extensions = extension_pack<third>;
 };
+
 using third_extensie =
   typename extension_pack<third_pack>::template extensie_type<std_traits, third_descriptor>;
 static_assert(stl::same_as<typename third_extensie::first, int>);
-
-
-
-
 
 struct fake_descriptor_no_final {
     template <typename ExtensionType>

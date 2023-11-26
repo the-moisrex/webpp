@@ -9,7 +9,6 @@
 #include <string>
 #include <string_view>
 
-
 // sorry that we're using std::string and other features that have nothing to do with the traits system that
 // I'v built, the sqlite doesn't support those and it's pretty much useless to have them here so this way, we
 // at least will gain some compile-time performance. Connection to the database should be performed when the
@@ -31,7 +30,6 @@ namespace webpp::sql {
 #endif
     };
 
-
     struct sqlite_connection {
         using statement_type = sqlite_statement;
 
@@ -46,6 +44,7 @@ namespace webpp::sql {
         sqlite_connection(sqlite_connection const&)            = delete;
         sqlite_connection(sqlite_connection&&) noexcept        = default;
         sqlite_connection& operator=(sqlite_connection const&) = delete;
+
         sqlite_connection& operator=(sqlite_connection&& other) noexcept {
             using std::swap;
             using stl::swap;
@@ -58,17 +57,17 @@ namespace webpp::sql {
             return *this;
         }
 
-
         // in memory
         void open(istl::String auto& errmsg) noexcept {
             open(sqlite_config{}, errmsg);
         }
 
         void open(sqlite_config conf, istl::String auto& errmsg) noexcept {
-            const int rc = sqlite3_open_v2(conf.filename.data(),
-                                           &handle,
-                                           conf.flags,
-                                           conf.vfs.empty() ? nullptr : conf.vfs.data());
+            int const rc = sqlite3_open_v2(
+              conf.filename.data(),
+              &handle,
+              conf.flags,
+              conf.vfs.empty() ? nullptr : conf.vfs.data());
             if (rc != SQLITE_OK) {
                 errmsg += sqlite3_errmsg(handle);
                 (void) sqlite3_close_v2(handle);
@@ -85,7 +84,7 @@ namespace webpp::sql {
 
         bool close() noexcept {
             if (handle) {
-                if (const int res = sqlite3_close_v2(handle); res == SQLITE_OK) {
+                if (int const res = sqlite3_close_v2(handle); res == SQLITE_OK) {
                     handle = nullptr;
                     return true;
                 }
@@ -97,7 +96,7 @@ namespace webpp::sql {
 
         void execute(std::string_view sql, istl::String auto& errmsg) noexcept {
             char*     err;
-            const int rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
+            int const rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
             if (rc != SQLITE_OK) {
                 errmsg += err;
                 sqlite3_free(err); // we have copied it
@@ -111,16 +110,16 @@ namespace webpp::sql {
             return stmt;
         }
 
-
         // prepare a statement for the parent sql connection to wrap it
         void prepare(std::string_view stmt_str, statement_type& stmt, istl::String auto& errmsg) noexcept {
             // todo: there's a performance gain if you know the string is null terminated. (more: https://www.sqlite.org/c3ref/prepare.html)
 
-            const int rc = sqlite3_prepare_v2(handle,
-                                              stmt_str.data(),
-                                              static_cast<int>(stmt_str.size()),
-                                              &stmt.sqlite3_stmt(),
-                                              nullptr);
+            int const rc = sqlite3_prepare_v2(
+              handle,
+              stmt_str.data(),
+              static_cast<int>(stmt_str.size()),
+              &stmt.sqlite3_stmt(),
+              nullptr);
             if (rc != SQLITE_OK) [[unlikely]] {
                 errmsg += "SQLite3 error, could not prepare statement: ";
                 errmsg += sqlite3_errmsg(handle);
@@ -138,23 +137,21 @@ namespace webpp::sql {
             static_cast<void>(close());
         }
 
-
         ::sqlite3* native_handle() noexcept {
             return handle;
         }
-
 
         std::uint64_t last_insert_id() noexcept {
             return static_cast<std::uint64_t>(sqlite3_last_insert_rowid(handle));
         }
 
-
         // escape string
         constexpr void escape(auto&& input, istl::String auto& output) const noexcept {
             // todo: optimize this using SIMD if the compiler doesn't already do it
-            for (const auto c : input) {
-                if (c == '\'')
+            for (auto const c : input) {
+                if (c == '\'') {
                     output.push_back(c);
+                }
                 output.push_back(c);
             }
         }
@@ -166,7 +163,6 @@ namespace webpp::sql {
             output.push_back('\'');
         }
 
-
         template <istl::String StrT>
         void version(StrT& sqlite) const {
             sqlite += StrT(SQLITE_VERSION);
@@ -175,7 +171,6 @@ namespace webpp::sql {
         // source: https://raw.githubusercontent.com/sqlitebrowser/sqlitebrowser/master/src/sqlitedb.cpp
         template <istl::String StrT>
         void sqlite_sqlcipher_version(StrT& sqlcipher) const {
-
             // The SQLCipher version must be queried via a pragma and for a pragma we need a database
             // connection. Because we want to be able to query the SQLCipher version without opening a
             // database file first, we open a separate connection to an in-memory database here.
@@ -185,9 +180,10 @@ namespace webpp::sql {
                 sqlite3_stmt* stmt;
                 if (sqlite3_prepare_v2(dummy, "PRAGMA cipher_version", -1, &stmt, nullptr) == SQLITE_OK) {
                     // fixme: QByteArray? really?
-                    if (sqlite3_step(stmt) == SQLITE_ROW)
-                        sqlcipher += QByteArray(static_cast<const char*>(sqlite3_column_blob(stmt, 0)),
+                    if (sqlite3_step(stmt) == SQLITE_ROW) {
+                        sqlcipher += QByteArray(static_cast<char const*>(sqlite3_column_blob(stmt, 0)),
                                                 sqlite3_column_bytes(stmt, 0));
+                    }
 
                     sqlite3_finalize(stmt);
                 }

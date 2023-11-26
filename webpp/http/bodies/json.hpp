@@ -46,13 +46,10 @@ namespace webpp::http {
 
     } // namespace details
 
-
-
     template <json::JSONDocument DocT, HTTPBody BodyType>
     constexpr void tag_invoke(deserialize_body_tag, stl::type_identity<DocT>, BodyType const& body) {
         // todo
     }
-
 
     // Only sets the body
     template <json::JSONDocument DocT, HTTPBody BodyType>
@@ -68,7 +65,6 @@ namespace webpp::http {
     // Set the header for json and pass it to the serialize_body to set the body as well
     template <json::JSONDocument DocT, HTTPResponse ResT>
     constexpr void tag_invoke(serialize_response_body_tag, DocT const& doc, ResT& res) {
-
         // todo: encoding support
         // todo: don't insert into headers directly
         res.headers.set("Content-Type", "application/json; charset=utf-8");

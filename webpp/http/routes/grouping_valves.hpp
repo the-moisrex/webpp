@@ -29,8 +29,6 @@ namespace webpp::http {
         constexpr ~postrouting_valve()                                       = default;
     };
 
-
-
     template <typename... ManglerType>
     struct mangler_valve : valve<mangler_valve<ManglerType...>> {
         using valve_type = valve<mangler_valve<ManglerType...>>;
@@ -49,7 +47,6 @@ namespace webpp::http {
             constexpr next_callable(tuple_type& inp_manglers, NextCallable& inp_next) noexcept
               : manglers_ptr{&inp_manglers},
                 next{&inp_next} {}
-
 
             // to make sure it matches the "basic_next_route"'s return type
             template <Traits TraitsType>
@@ -82,7 +79,6 @@ namespace webpp::http {
           stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : manglers{stl::forward<Args>(args)...} {}
 
-
         constexpr mangler_valve(mangler_valve const&)                     = default;
         constexpr mangler_valve(mangler_valve&&) noexcept                 = default;
         constexpr mangler_valve& operator=(mangler_valve&&) noexcept      = default;
@@ -90,7 +86,6 @@ namespace webpp::http {
         constexpr ~mangler_valve()                                        = default;
 
         using valve_type::operator();
-
 
         template <Traits TraitsType, typename NextCallable>
         constexpr bool operator()(basic_context<TraitsType>& ctx, NextCallable&& next) {
@@ -131,7 +126,6 @@ namespace webpp::http {
               as_tuple());
         }
     };
-
 
     /**
      * Forward Valve can contain multiple callables and calls them in-order
@@ -199,18 +193,15 @@ namespace webpp::http {
         }
     };
 
-
-
-
     template <typename... Pres, typename... Posts, typename... Manglers, typename Routes>
     struct valves_group<prerouting_valve<Pres...>,
                         postrouting_valve<Posts...>,
                         mangler_valve<Manglers...>,
-                        Routes> : valve<valves_group<prerouting_valve<Pres...>,
-                                                     postrouting_valve<Posts...>,
-                                                     mangler_valve<Manglers...>,
-                                                     Routes>> {
-
+                        Routes>
+      : valve<valves_group<prerouting_valve<Pres...>,
+                           postrouting_valve<Posts...>,
+                           mangler_valve<Manglers...>,
+                           Routes>> {
         using valve_type   = valve<valves_group>;
         using pre_type     = prerouting_valve<Pres...>;
         using post_type    = postrouting_valve<Posts...>;
@@ -279,7 +270,6 @@ namespace webpp::http {
             }
         }
 
-
         template <typename RouterT>
         constexpr void setup(RouterT& router) {
             if constexpr (ValveRequiresSetup<RouterT, pre_type>) {
@@ -340,7 +330,6 @@ namespace webpp::http {
               routes};
         }
 
-
         template <typename Callable>
         [[nodiscard]] constexpr auto replace_route(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
@@ -350,7 +339,6 @@ namespace webpp::http {
               manglers,
               stl::forward<Callable>(callable)};
         }
-
 
         constexpr void to_string(istl::String auto& out) const {
             if constexpr (sizeof...(Pres) > 0) {
@@ -371,7 +359,6 @@ namespace webpp::http {
             }
         }
     };
-
 
     template <typename... T>
     valves_group(prerouting_valve<T...>)

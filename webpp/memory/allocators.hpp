@@ -32,7 +32,8 @@ namespace webpp {
                 using U = stl::remove_cvref_t<decltype(arg)>;
                 if constexpr (!stl::is_void_v<alloc_type>) {
                     if constexpr (/* stl::uses_allocator_v<U, alloc_type> && */
-                                  requires(U n_alloc) { n_alloc.get_allocator(); }) {
+                                  requires(U n_alloc) { n_alloc.get_allocator(); })
+                    {
                         // I have to explicitly use decltype here because of a clang bug
                         return temp_alloc_holder<decltype(arg.get_allocator())>{arg.get_allocator()};
                     } else {
@@ -42,7 +43,8 @@ namespace webpp {
                     if constexpr (requires(U n_alloc) {
                                       // typename U::allocator_type;
                                       n_alloc.get_allocator();
-                                  }) {
+                                  })
+                    {
                         // I have to use decltype because of a clang bug
                         return temp_alloc_holder<decltype(arg.get_allocator())>{arg.get_allocator()};
                     } else {
@@ -51,8 +53,8 @@ namespace webpp {
                 }
             }
 
-            constexpr auto
-            operator|(auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
+            constexpr auto operator|(
+              auto&& finder_res) const noexcept { // NOLINT(misc-unconventional-assign-operator)
                 using U = stl::remove_cvref_t<decltype(finder_res)>;
                 if constexpr (stl::is_integral_v<U>) {
                     return *this;
@@ -73,7 +75,7 @@ namespace webpp {
     template <typename... T>
     [[nodiscard]] inline auto extract_allocator(T&&... args) noexcept {
         details::alloc_finder_type<> const finder;
-        const auto                         res = (finder | ... | finder(stl::forward<T>(args)));
+        auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
           requires { res.alloc; },
           "We didn't find any allocator in the inputs.");
@@ -83,7 +85,7 @@ namespace webpp {
     template <typename Default = stl::allocator<void>, typename... T>
     [[nodiscard]] inline auto extract_allocator_or_default(T&&... args) noexcept {
         details::alloc_finder_type<> const finder;
-        const auto                         res = (finder | ... | finder(stl::forward<T>(args)));
+        auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
         if constexpr (requires { res.alloc; }) {
             return res.alloc;
         } else {
@@ -91,14 +93,13 @@ namespace webpp {
         }
     }
 
-
     /**
      * This version of allocator extractor will help you extract an allocator of an specific type.
      */
     template <typename AllocType, typename... T>
     [[nodiscard]] inline auto extract_allocator_of(T&&... args) noexcept {
         details::alloc_finder_type<AllocType> finder;
-        const auto                            res = (finder | ... | finder(stl::forward<T>(args)));
+        auto const                            res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
           stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>,
           "We didn't find any allocator in the inputs.");
@@ -108,16 +109,16 @@ namespace webpp {
     template <typename AllocType, typename... T>
     [[nodiscard]] inline auto extract_allocator_of_or_default(T&&... args) noexcept {
         details::alloc_finder_type<AllocType> finder;
-        const auto                            res = (finder | ... | finder(stl::forward<T>(args)));
-        if constexpr (stl::is_same_v<stl::remove_cvref_t<decltype(res)>,
-                                     details::temp_alloc_holder<AllocType>>) {
+        auto const                            res = (finder | ... | finder(stl::forward<T>(args)));
+        if constexpr (
+          stl::is_same_v<stl::remove_cvref_t<decltype(res)>, details::temp_alloc_holder<AllocType>>)
+        {
             return res.alloc;
         } else {
             // todo: we might be able to find and convert an allocator and not just re-create it
             return AllocType{};
         }
     }
-
 
     template <typename AllocType>
     struct allocator_holder {

@@ -34,6 +34,7 @@ namespace webpp::http {
         using context_ref  = context_type&;
 
         constexpr valve_traverser(context_ref inp_ctx) noexcept : ctx{&inp_ctx} {}
+
         constexpr valve_traverser(valve_traverser const&)            = delete; // stopping accidental copying
         constexpr valve_traverser(valve_traverser&&) noexcept        = default;
         constexpr valve_traverser& operator=(valve_traverser const&) = delete;
@@ -70,7 +71,6 @@ namespace webpp::http {
         [[nodiscard]] explicit constexpr operator StrT() const {
             return to_string();
         }
-
 
         // Member functions for valves while traversing:
 

@@ -10,14 +10,15 @@ using namespace webpp::http;
 using req_parser = http_request_parser<std_traits>;
 
 TEST(HTTPRequestParser, RequestLine) {
-    std::vector<std::string_view> accepted_req_lines{"GET / HTTP/1.1",
-                                                     "POST / HTTP/1.1",
-                                                     "HEAD / HTTP/1.1",
-                                                     "SOMETHING / HTTP/1.1",
-                                                     "SOMETHING /some/path HTTP/1.1",
-                                                     "SOMETHING /some/path.html HTTP/1.1",
-                                                     "SOMETHING /some/path.html HTTP/1.0",
-                                                     "GET some/path.html HTTP/1.0"};
+    std::vector<std::string_view> accepted_req_lines{
+      "GET / HTTP/1.1",
+      "POST / HTTP/1.1",
+      "HEAD / HTTP/1.1",
+      "SOMETHING / HTTP/1.1",
+      "SOMETHING /some/path HTTP/1.1",
+      "SOMETHING /some/path.html HTTP/1.1",
+      "SOMETHING /some/path.html HTTP/1.0",
+      "GET some/path.html HTTP/1.0"};
 
     for (std::string_view line : accepted_req_lines) {
         req_parser parser;
@@ -52,17 +53,19 @@ TEST(HTTPRequestParser, RequestLine) {
     EXPECT_EQ(ver.minor_value(), 1);
 }
 
-
 TEST(HTTPRequestParser, HeaderLexer) {
     using str = std::string_view;
     using arr = std::array<str, 2>;
     using vec = std::vector<std::tuple<str, arr>>;
-    vec headers({{"one: string\r\n", arr{"one", "string"}},
-                 {"Second-One:    String   \r\n", arr{"Second-One", "String"}}});
+    vec headers({
+      {             "one: string\r\n",        arr{"one", "string"}},
+      {"Second-One:    String   \r\n", arr{"Second-One", "String"}}
+    });
 
-    str                                                           sample_request = "one: 1\r\n"
-                                                                                   "two: 2\r\n"
-                                                                                   "The-One:Yes,NoSpaceIsNeeded\r\n";
+    str sample_request =
+      "one: 1\r\n"
+      "two: 2\r\n"
+      "The-One:Yes,NoSpaceIsNeeded\r\n";
     http_lexer<str, traits::general_string_allocator<std_traits>> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());

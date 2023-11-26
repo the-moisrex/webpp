@@ -14,7 +14,6 @@ namespace webpp {
      * The file gate doesn't support a parent because why should it?
      */
     struct file_gate {
-
         template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
         struct storage_gate {
             using key_type     = KeyT;

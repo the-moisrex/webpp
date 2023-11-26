@@ -19,32 +19,36 @@ namespace webpp::v2 {
      */
     constexpr uint8_t to_prefix(uint32_t octets) noexcept {
         uint8_t prefix = 0u;
-        for (uint32_t mask = 0x80'00'00'00u; mask != 0u; mask >>= 1u)
-            if ((octets & mask) == mask)
+        for (uint32_t mask = 0x8000'0000u; mask != 0u; mask >>= 1u) {
+            if ((octets & mask) == mask) {
                 prefix++;
-            else
+            } else {
                 return prefix;
+            }
+        }
         return prefix;
     }
 
     constexpr uint8_t to_prefix(stl::array<uint8_t, 4> octets) noexcept {
         uint8_t prefix = 0u;
-        for (auto const& octet : octets)
-            for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u)
-                if ((octet & mask) == mask)
+        for (auto const& octet : octets) {
+            for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u) {
+                if ((octet & mask) == mask) {
                     prefix++;
-                else
+                } else {
                     return prefix;
+                }
+            }
+        }
         return prefix;
     }
 
     /**
      * Convert string to prefix
-     * @param octets
      */
     template <istl::StringViewifiable StrT>
     constexpr uint8_t to_prefix(StrT&& inp_str) noexcept {
-        const auto              str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        coauto const            str = istl::string_viewify(stl::forward<StrT>(inp_str));
         stl::array<uint8_t, 4u> bin;
         auto const              res = inet_pton4(str.data(), str.data() + str.size(), bin.data());
         switch (res) {
@@ -60,10 +64,9 @@ namespace webpp::v2 {
     /**
      * Convert a prefix to a subnet
      * @param prefix
-     * @return bool
      */
     constexpr uint32_t to_subnet(uint8_t prefix) noexcept {
-        return 0xFF'FF'FF'FFu << (32u - prefix);
+        return 0xFFFF'FFFFu << (32u - prefix);
     }
 
     /**
@@ -89,7 +92,7 @@ namespace webpp::v2 {
         uint8_t _prefix = 255u;
 
         constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
-            const auto              _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+            auto const              _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
             stl::array<uint8_t, 4u> bin;
             auto const res = inet_pton4(_data.data(), _data.data() + _data.size(), bin.data(), _prefix);
             switch (res) {
@@ -123,6 +126,7 @@ namespace webpp::v2 {
         constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
             parse(stl::forward<decltype(ip)>(ip));
         }
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr ipv4(istl::StringViewifiable auto&& ip, istl::StringViewifiable auto&& subnet) noexcept
@@ -197,6 +201,7 @@ namespace webpp::v2 {
         }
 
         constexpr auto operator<=>(ipv4 const&) const noexcept = default;
+
         constexpr auto operator<=>(stl::array<uint8_t, 4> other) const noexcept {
             return data <=> parse(other);
         }
@@ -240,10 +245,11 @@ namespace webpp::v2 {
          */
         [[nodiscard]] constexpr stl::array<uint8_t, 4u> octets() const noexcept {
             uint32_t const _data = integer();
-            return stl::array<uint8_t, 4u>({static_cast<uint8_t>(_data >> 24u),
-                                            static_cast<uint8_t>(_data >> 16u & 0x0FFu),
-                                            static_cast<uint8_t>(_data >> 8u & 0x0FFu),
-                                            static_cast<uint8_t>(_data & 0x0FFu)});
+            return stl::array<uint8_t, 4u>(
+              {static_cast<uint8_t>(_data >> 24u),
+               static_cast<uint8_t>(_data >> 16u & 0x0FFu),
+               static_cast<uint8_t>(_data >> 8u & 0x0FFu),
+               static_cast<uint8_t>(_data & 0x0FFu)});
         }
 
         /**
@@ -320,10 +326,10 @@ namespace webpp::v2 {
          * @return bool
          */
         [[nodiscard]] constexpr bool is_in_subnet(ipv4 const& ip) const noexcept {
-            auto uint_val = integer();
-            auto uint_ip  = ip.integer();
-            uint_val &= 0xFFFFFFFFu << (32u - ip.prefix());
-            uint_ip &= 0xFFFFFFFFu << (32u - ip.prefix());
+            auto uint_val  = integer();
+            auto uint_ip   = ip.integer();
+            uint_val      &= 0xFFFF'FFFFu << (32u - ip.prefix());
+            uint_ip       &= 0xFFFF'FFFFu << (32u - ip.prefix());
             return uint_val == uint_ip;
         }
 
@@ -370,14 +376,16 @@ namespace webpp::v2 {
          * @return
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return stl::array<uint8_t, 4>{static_cast<uint8_t>(data & 0xFFu),
-                                          static_cast<uint8_t>(data >> 8u & 0xFFu),
-                                          static_cast<uint8_t>(data >> 16u & 0xFFu),
-                                          static_cast<uint8_t>(data >> 24u & 0xFFu)};
+            return stl::array<uint8_t, 4>{
+              static_cast<uint8_t>(data & 0xFFu),
+              static_cast<uint8_t>(data >> 8u & 0xFFu),
+              static_cast<uint8_t>(data >> 16u & 0xFFu),
+              static_cast<uint8_t>(data >> 24u & 0xFFu)};
         }
     };
 
 } // namespace webpp::v2
+
 // NOLINTEND(*-magic-numbers)
 
 

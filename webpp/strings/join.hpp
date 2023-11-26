@@ -16,13 +16,13 @@ namespace webpp::strings {
     namespace details {
 
         template <typename T>
-        constexpr void append_delimiter(auto& output, T&& in) {
+        constexpr void append_delimiter(auto& output, T&& inp) {
             if constexpr (istl::CharType<T>) {
-                output.push_back(stl::forward<T>(in));
-            } else if constexpr (requires { output.append(stl::forward<T>(in)); }) {
-                output.append(stl::forward<T>(in));
+                output.push_back(stl::forward<T>(inp));
+            } else if constexpr (requires { output.append(stl::forward<T>(inp)); }) {
+                output.append(stl::forward<T>(inp));
             } else {
-                output.append(stl::begin(in), stl::end(in));
+                output.append(stl::begin(inp), stl::end(inp));
             }
         }
 
@@ -38,13 +38,14 @@ namespace webpp::strings {
          */
         template <typename T>
         struct string_type_ranker {
-            static constexpr int has_std_allocator = requires {
+            static constexpr bool has_std_allocator = requires {
                 typename T::allocator_type;
                 typename T::value_type;
                 requires stl::same_as<typename T::allocator_type, stl::allocator<typename T::value_type>>;
             };
-            static constexpr int is_string = istl::String<T>;
-            static constexpr int value     = !is_string ? -1 : ((is_string * 2) + !has_std_allocator);
+            static constexpr bool is_string = istl::String<T>;
+            static constexpr int  value =
+              !is_string ? -1 : ((static_cast<int>(is_string) * 2) + static_cast<int>(!has_std_allocator));
         };
     } // namespace details
 
@@ -83,17 +84,16 @@ namespace webpp::strings {
              } else */
              if constexpr (requires { str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); }) {
                  str.append(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-             } else if constexpr (requires {
-                                      str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
-                                  }) {
+             } else if constexpr (requires { str += lexical::cast<str_type>(stl::forward<T>(strs), alloc); })
+             {
                  str += lexical::cast<str_type>(stl::forward<T>(strs), alloc);
-             } else if constexpr (requires {
-                                      str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-                                  }) {
+             } else if constexpr (
+               requires { str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc)); })
+             {
                  str.push_back(lexical::cast<str_type>(stl::forward<T>(strs), alloc));
-             } else if constexpr (requires {
-                                      fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
-                                  }) {
+             } else if constexpr (
+               requires { fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs)); })
+             {
                  fmt::format_to(stl::back_inserter(str), "{}", stl::forward<T>(strs));
              } else { // unlikely
                  throw stl::invalid_argument("We're not able to append the specified string");
@@ -106,7 +106,7 @@ namespace webpp::strings {
     /**
      * @brief joins a collection of strings into one string
      * @param vec is a collection or a tuple
-     * @param separators are a list of separators that will be put in between the strings. the last one will
+     * @param delims are a list of separators that will be put in between the strings. the last one will
      * continue to be used if there are more strings than there are separators.
      * @example join_with(vec, ' ')
      */
@@ -114,11 +114,11 @@ namespace webpp::strings {
     constexpr void join_with(StringType& output, C const& vec, DelimTuple const& delims) {
         constexpr stl::size_t delim_count = stl::tuple_size_v<DelimTuple>;
         if constexpr (istl::Collection<C>) {
-
             // reserve storage beforehand:
             stl::size_t necessary_storage_size = output.size();
-            for (auto const& item : vec)
+            for (auto const& item : vec) {
                 necessary_storage_size += ascii::max_size(item);
+            }
             output.reserve(necessary_storage_size);
 
             // handle the first one
@@ -132,8 +132,9 @@ namespace webpp::strings {
             if constexpr (delim_count > 0) {
                 ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
                     auto run = [&]<stl::size_t DelimIndex>(istl::value_holder<DelimIndex>) {
-                        if (it == vec.end())
+                        if (it == vec.end()) {
                             return;
+                        }
                         details::append_delimiter(output, stl::get<DelimIndex>(delims));
                         details::append_delimiter(output, *it);
                         ++it;
@@ -141,7 +142,7 @@ namespace webpp::strings {
                     ((run(istl::value_holder<I>{})), ...); // call the func
                 })(stl::make_index_sequence<delim_count>());
 
-                const auto last_delim = stl::get<delim_count - 1>(delims);
+                auto const last_delim = stl::get<delim_count - 1>(delims);
                 for (; it != vec.end(); ++it) {
                     details::append_delimiter(output, last_delim);
                     details::append_delimiter(output, *it);
@@ -200,8 +201,9 @@ namespace webpp::strings {
             using allocator_type = typename string_type::allocator_type;
             string_type str{[&vec] {
                 if constexpr (istl::String<value_type>) {
-                    if (vec.size())
+                    if (vec.size()) {
                         return vec[0].get_allocator();
+                    }
                 }
                 return allocator_type{}; // default initialize the allocator
             }()};
@@ -242,11 +244,11 @@ namespace webpp::strings {
     template <istl::String StringType = stl::string, typename C, typename... SeparatorTypes>
         requires((!istl::Tuple<SeparatorTypes> && ...))
     constexpr auto join_with(StringType& output, C const& vec, SeparatorTypes&&... separators) {
-        return join_with<StringType, C>(output,
-                                        vec,
-                                        stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
+        return join_with<StringType, C>(
+          output,
+          vec,
+          stl::make_tuple(stl::forward<SeparatorTypes>(separators)...));
     }
-
 
     // todo: add join_to
 

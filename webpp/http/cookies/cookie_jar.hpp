@@ -42,7 +42,6 @@ namespace webpp::http {
      */
     template <Cookie CookieType, typename Allocator = stl::allocator<CookieType>>
     struct basic_cookie_jar : public stl::vector<CookieType, Allocator> {
-
       public:
         using cookie_type = CookieType;
 

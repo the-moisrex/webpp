@@ -22,7 +22,6 @@ namespace webpp::io {
         template <IOTraits IOT, typename ValueType = int>
         using iterator = typename IOT::iterator<ValueType>;
 
-
         template <IOTraits IOT, typename ValueType = int>
         struct syscallify {
             using iterator = traits::iterator<IOT, ValueType>;

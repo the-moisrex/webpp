@@ -8,7 +8,6 @@
 namespace webpp::http {
 
     static constexpr struct root_valve : valve<root_valve> {
-
         template <Traits TraitsType>
         [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
             return ctx.path_traverser().at_beginning();

@@ -12,9 +12,10 @@ namespace webpp::http {
     template <typename T>
     concept BooleanLike = requires(T val) {
         val = true;
-        { !val } noexcept -> stl::same_as<bool>;
+        {
+            !val
+        } noexcept -> stl::same_as<bool>;
     };
-
 
     /**
      * Simple Route Disabler Valve
@@ -30,9 +31,10 @@ namespace webpp::http {
      */
     template <BooleanLike ConditionType = bool>
     struct route_disabler : valve<route_disabler<ConditionType>> {
-
         constexpr route_disabler() noexcept = default;
+
         constexpr route_disabler(bool inp_is_enabled) noexcept : is_enabled_value{inp_is_enabled} {}
+
         constexpr route_disabler(route_disabler const&) noexcept                  = delete;
         constexpr route_disabler(route_disabler&&) noexcept                       = default;
         constexpr route_disabler& operator=(route_disabler&&) noexcept            = delete;

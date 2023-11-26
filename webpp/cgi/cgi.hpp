@@ -89,7 +89,6 @@ namespace webpp::http {
             return read_count;
         }
 
-
         /**
          * Send the stream to the user
          * @param stream
@@ -113,8 +112,9 @@ namespace webpp::http {
          * Get the environment value safely
          */
         [[nodiscard]] static inline stl::string_view env(char const* key) noexcept {
-            if (const auto value = getenv(key))
+            if (auto const value = getenv(key)) {
                 return value;
+            }
             return {};
         }
 
@@ -124,7 +124,6 @@ namespace webpp::http {
             write(body.data(), static_cast<stl::streamsize>(body.size()));
         }
 
-
         template <typename BodyType>
         inline void write_cstream(BodyType& body) {
             using body_type         = stl::remove_cvref_t<BodyType>;
@@ -133,12 +132,12 @@ namespace webpp::http {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             stl::array<char_type, default_buffer_size> buf;
             while (stl::streamsize read_size = body.read(reinterpret_cast<cstream_byte_type*>(buf.data()),
-                                                         static_cast<stl::streamsize>(buf.size()))) {
+                                                         static_cast<stl::streamsize>(buf.size())))
+            {
                 write(buf.data(), read_size);
             }
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
-
 
         template <typename BodyType>
         inline void write_response_body(BodyType& body) {

@@ -23,7 +23,6 @@ namespace webpp::http {
      */
     template <HTTPRequestHeaderFieldsProvider FieldsProviderType>
     class request_headers : public headers_container<FieldsProviderType> {
-
         using fields_provider_type = headers_container<FieldsProviderType>;
 
         static_assert(
@@ -50,7 +49,6 @@ namespace webpp::http {
         constexpr request_headers& operator=(request_headers const&)     = default;
         constexpr request_headers& operator=(request_headers&&) noexcept = default;
         constexpr ~request_headers()                                     = default;
-
 
         /**
          * Get the Content-Type as a size_t; if not specified, zero is returned.

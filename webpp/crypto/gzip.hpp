@@ -11,7 +11,6 @@
 namespace webpp {
 
     struct gzip {
-
         /**
          * Compress the input with gzip
          * Original source from: drogon project
@@ -28,7 +27,8 @@ namespace webpp {
                                  Z_DEFLATED,
                                  MAX_WBITS + 16,
                                  8,
-                                 Z_DEFAULT_STRATEGY) != Z_OK) {
+                                 Z_DEFAULT_STRATEGY) != Z_OK)
+                {
                     // todo: add an error handling way here
                     return string_type{};
                 }
@@ -51,7 +51,7 @@ namespace webpp {
                     }
                 } while (strm.avail_out == 0);
                 assert(strm.avail_in == 0);
-                assert(ret == Z_STREAM_END); // stream will be complete
+                assert(ret == Z_STREAM_END);          // stream will be complete
                 outstr.resize(strm.total_out);
 
                 static_cast<void>(deflateEnd(&strm)); // clean up and return
@@ -59,7 +59,6 @@ namespace webpp {
             }
             return string_type{};
         }
-
 
         /**
          * Decompress gzip data
@@ -69,8 +68,9 @@ namespace webpp {
         static StrT decompress(typename StrT::const_pointer data, const stl::size_t ndata) {
             using string_type = StrT;
 
-            if (ndata == 0)
+            if (ndata == 0) {
                 return string_type(data, ndata);
+            }
 
             auto full_length = ndata;
 
@@ -96,15 +96,16 @@ namespace webpp {
                 strm.next_out  = (Bytef*) decompressed.data() + strm.total_out;
                 strm.avail_out = static_cast<uInt>(decompressed.length() - strm.total_out);
                 // Inflate another chunk
-                int status = inflate(&strm, Z_SYNC_FLUSH);
+                int status     = inflate(&strm, Z_SYNC_FLUSH);
                 if (status == Z_STREAM_END) {
                     done = true;
                 } else if (status != Z_OK) {
                     break;
                 }
             }
-            if (inflateEnd(&strm) != Z_OK)
+            if (inflateEnd(&strm) != Z_OK) {
                 return string_type{};
+            }
             // Set the real length
             if (done) {
                 decompressed.resize(strm.total_out);

@@ -11,8 +11,8 @@
 namespace webpp::uri {
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_fragment(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_fragment(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
         using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename ctx_type::char_type;
@@ -22,7 +22,8 @@ namespace webpp::uri {
             for (;;) {
                 if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                       details::FRAGMENT_ENCODE_SET,
-                      charset<char_type, 1>('%'))) {
+                      charset<char_type, 1>('%')))
+                {
                     break;
                 }
                 switch (*ctx.pos) {
@@ -55,7 +56,6 @@ namespace webpp::uri {
 
         template <typename... T>
         constexpr basic_fragment(T&&... args) : string_type{stl::forward<T>(args)...} {}
-
 
         void append_to(istl::String auto& str) const {
             if (!this->empty()) {

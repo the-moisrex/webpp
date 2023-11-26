@@ -45,7 +45,6 @@ namespace webpp::http {
       private:
         routes_type routes;
 
-
         /**
          * This method checks the context and see if we have reached the end of the routing or not.
          */
@@ -74,6 +73,7 @@ namespace webpp::http {
         explicit constexpr basic_dynamic_router(ET&& inp_etraits)
           : etraits{stl::forward<ET>(inp_etraits)},
             objects{alloc::general_alloc_for<objects_type>(*this)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
 
@@ -88,7 +88,6 @@ namespace webpp::http {
             return response_type{this->get_traits(), code};
         }
 
-
         // Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
@@ -100,7 +99,6 @@ namespace webpp::http {
             routes.emplace_back(stl::move(route));
             return *this;
         }
-
 
         /**
          * Calling this will get you a response.
@@ -157,7 +155,6 @@ namespace webpp::http {
             }
         }
 
-
         template <istl::String StrT = string_type>
         [[nodiscard]] constexpr StrT to_string() const {
             StrT out{alloc::general_alloc_for<StrT>(*this)};
@@ -165,7 +162,6 @@ namespace webpp::http {
             return out;
         }
     };
-
 
     using dynamic_router = basic_dynamic_router<default_dynamic_traits>;
 

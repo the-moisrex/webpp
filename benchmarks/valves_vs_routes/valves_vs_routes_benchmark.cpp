@@ -22,6 +22,7 @@ static void ValveBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
+
 BENCHMARK(ValveBench);
 
 static void RouteBench(benchmark::State& state) {
@@ -36,8 +37,8 @@ static void RouteBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
-BENCHMARK(RouteBench);
 
+BENCHMARK(RouteBench);
 
 static void ValveCallBench(benchmark::State& state) {
     enable_owner_traits<default_dynamic_traits> et;
@@ -52,6 +53,7 @@ static void ValveCallBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
+
 BENCHMARK(ValveCallBench);
 
 static void RouteCallBench(benchmark::State& state) {
@@ -66,6 +68,7 @@ static void RouteCallBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
+
 BENCHMARK(RouteCallBench);
 
 static void ValveStringBench(benchmark::State& state) {
@@ -81,6 +84,7 @@ static void ValveStringBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
+
 BENCHMARK(ValveStringBench);
 
 static void RouteStringBench(benchmark::State& state) {
@@ -95,4 +99,5 @@ static void RouteStringBench(benchmark::State& state) {
         benchmark::DoNotOptimize(ctx);
     }
 }
+
 BENCHMARK(RouteStringBench);

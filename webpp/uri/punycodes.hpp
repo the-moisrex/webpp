@@ -26,7 +26,6 @@ namespace webpp::uri {
         bad_input,
     };
 
-
     /**
      * Converts an UTF-8 input into punycode.
      * This function is non-allocating and it does not throw.
@@ -39,7 +38,7 @@ namespace webpp::uri {
      *    The errors include: an invalid UTF-8 input, a punycode overflow (unlikely) or
      *    an output that might exceed 63 bytes.
      */
-    constexpr int utf8_to_punycode(const char* input, stl::size_t input_length, char* output) noexcept {
+    constexpr int utf8_to_punycode(char const* input, stl::size_t input_length, char* output) noexcept {
         // NOLINTBEGIN(*-magic-numbers)
         // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
@@ -59,14 +58,14 @@ namespace webpp::uri {
             for (; pos + 9 < input_length; pos += 8) {
                 uint64_t v;
                 std::memcpy(&v, char_pointer + pos, sizeof(uint64_t));
-                if ((v & 0x8080808080808080) != 0) {
+                if ((v & 0x8080'8080'8080'8080) != 0) {
                     is_all_ascii = false;
                     break;
                 }
             }
             // process the tail byte-by-byte
             for (; is_all_ascii && pos < input_length; pos++) {
-                if (char_pointer[pos] >= 0b10000000) {
+                if (char_pointer[pos] >= 0b1000'0000) {
                     is_all_ascii = false;
                     break;
                 }
@@ -78,8 +77,8 @@ namespace webpp::uri {
             return static_cast<int>(input_length + 1);
         }
         std::memcpy(output, "xn--", 4);
-        output += 4;
-        const char* const init_output = output;
+        output                            += 4;
+        char constchar* const init_output  = output;
 
         stl::array<stl::uint32_t, 64> all_buffer;
         stl::uint32_t*                all{all_buffer.data()};
@@ -88,68 +87,69 @@ namespace webpp::uri {
 
         while (char_pointer < end_char_pointer) {
             unsigned char const c = *char_pointer;
-            if (c >= 0b10000000) {
+            if (c >= 0b1000'0000) {
                 auto const    lookahead = static_cast<stl::size_t const>(char_pointer - end_char_pointer);
                 stl::uint32_t code_point;
                 stl::uint32_t const leading_byte = c;
 
-                if ((leading_byte & 0b11100000) == 0b11000000) {
+                if ((leading_byte & 0b1110'0000) == 0b1100'0000) {
                     // We have a two-byte UTF-8
                     if (lookahead < 2) {
                         return -1;
                     }
 
-                    if ((char_pointer[1] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[1] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
                     // range check
-                    code_point = (leading_byte & 0b00011111) << 6 | (char_pointer[1] & 0b00111111);
+                    code_point = (leading_byte & 0b0001'1111) << 6 | (char_pointer[1] & 0b0011'1111);
                     if (code_point < 0x80 || 0x7ff < code_point) {
                         return -1;
                     }
                     char_pointer += 2;
-                } else if ((leading_byte & 0b11110000) == 0b11100000) {
+                } else if ((leading_byte & 0b1111'0000) == 0b1110'0000) {
                     // We have a three-byte UTF-8
                     if (lookahead < 3) {
                         return -1;
                     }
-                    if ((char_pointer[1] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[1] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
-                    if ((char_pointer[2] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[2] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
                     // range check
-                    code_point = (leading_byte & 0b00001111) << 12 |
-                                 static_cast<stl::uint32_t>((char_pointer[1] & 0b00111111) << 6) |
-                                 (char_pointer[2] & 0b00111111);
+                    code_point = (leading_byte & 0b0000'1111) << 12 |
+                                 static_cast<stl::uint32_t>((char_pointer[1] & 0b0011'1111) << 6) |
+                                 (char_pointer[2] & 0b0011'1111);
                     if (code_point < 0x800 || 0xffff < code_point ||
-                        (0xd7ff < code_point && code_point < 0xe000)) {
+                        (0xd7ff < code_point && code_point < 0xe000))
+                    {
                         return -1;
                     }
                     char_pointer += 3;
-                } else if ((leading_byte & 0b11111000) == 0b11110000) { // 0b11110000
+                } else if ((leading_byte & 0b1111'1000) == 0b1111'0000) { // 0b11110000
                     // we have a 4-byte UTF-8 word.
                     if (lookahead < 4) {
                         return -1;
                     }
 
-                    if ((char_pointer[1] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[1] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
-                    if ((char_pointer[2] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[2] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
-                    if ((char_pointer[3] & 0b11000000) != 0b10000000) {
+                    if ((char_pointer[3] & 0b1100'0000) != 0b1000'0000) {
                         return -1;
                     }
 
                     // range check
-                    code_point = (leading_byte & 0b00000111) << 18 |
-                                 static_cast<stl::uint32_t>((char_pointer[1] & 0b00111111) << 12) |
-                                 static_cast<stl::uint32_t>((char_pointer[2] & 0b00111111) << 6) |
-                                 (char_pointer[3] & 0b00111111);
-                    if (code_point <= 0xffff || 0x10ffff < code_point) {
+                    code_point = (leading_byte & 0b0000'0111) << 18 |
+                                 static_cast<stl::uint32_t>((char_pointer[1] & 0b0011'1111) << 12) |
+                                 static_cast<stl::uint32_t>((char_pointer[2] & 0b0011'1111) << 6) |
+                                 (char_pointer[3] & 0b0011'1111);
+                    if (code_point <= 0xffff || 0x10'ffff < code_point) {
                         return -1;
                     }
                     char_pointer += 4;
@@ -174,30 +174,31 @@ namespace webpp::uri {
             *output++ = '-';
         }
 
-        stl::uint32_t n                  = 128;
-        stl::uint32_t bias               = 72;
-        stl::uint32_t delta              = 0;
-        auto const    sort_unique_values = [](stl::array<stl::uint32_t, 64>& array,
-                                           stl::size_t const              size) noexcept {
-            stl::size_t duplicates = 0;
-            for (stl::size_t k = 1; k < size; k++) {
-                stl::size_t         z   = k - duplicates;
-                stl::uint32_t const key = array[k];
-                for (; (z >= 1) && (array[z - 1] >= key); z--) {}
-                if (z == k) {
-                    // nothing to do!
-                } else if ((array[z] > key)) {
-                    std::memmove(array.data() + z + 1,
-                                 array.data() + z,
-                                 (k - duplicates - z) * sizeof(stl::uint32_t));
-                    array[z] = key;
-                } else if (array[z] == key) {
-                    duplicates++;
-                } else {
-                    array[z] = key;
-                }
-            }
-        };
+        stl::uint32_t n     = 128;
+        stl::uint32_t bias  = 72;
+        stl::uint32_t delta = 0;
+        auto const    sort_unique_values =
+          [](stl::array<stl::uint32_t, 64>& array, stl::size_t const size) noexcept {
+              stl::size_t duplicates = 0;
+              for (stl::size_t k = 1; k < size; k++) {
+                  stl::size_t         z   = k - duplicates;
+                  stl::uint32_t const key = array[k];
+                  for (; (z >= 1) && (array[z - 1] >= key); z--) {
+                  }
+                  if (z == k) {
+                      // nothing to do!
+                  } else if ((array[z] > key)) {
+                      std::memmove(array.data() + z + 1,
+                                   array.data() + z,
+                                   (k - duplicates - z) * sizeof(stl::uint32_t));
+                      array[z] = key;
+                  } else if (array[z] == key) {
+                      duplicates++;
+                  } else {
+                      array[z] = key;
+                  }
+              }
+          };
 
         sort_unique_values(non_basic_buffer,
                            static_cast<const stl::size_t>(non_basic - non_basic_buffer.data()));
@@ -223,9 +224,9 @@ namespace webpp::uri {
 
 
         for (stl::size_t processed = basic_count; processed < number_of_chars; ++n, ++delta) {
-            stl::uint32_t const non_ascii_code_point = *non_basic++;
-            delta += (non_ascii_code_point - n) * (processed + 1);
-            n = non_ascii_code_point;
+            stl::uint32_t const non_ascii_code_point  = *non_basic++;
+            delta                                    += (non_ascii_code_point - n) * (processed + 1);
+            n                                         = non_ascii_code_point;
             for (stl::size_t i = 0; i < number_of_chars; i++) {
                 stl::uint32_t const c = all_buffer[i];
                 if (c < n && (++delta == 0)) { // overflow

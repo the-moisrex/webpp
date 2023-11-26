@@ -17,7 +17,6 @@ namespace webpp::sdk {
      *   MySite is the project name
      */
     struct create_project : command {
-
         create_project()                                     = default;
         create_project(create_project&&) noexcept            = default;
         create_project(create_project const&)                = delete;
@@ -28,6 +27,7 @@ namespace webpp::sdk {
         [[nodiscard]] stl::string_view name() const noexcept override {
             return {"project"};
         }
+
         [[nodiscard]] stl::string_view desc() const noexcept override;
 
         // wpp new ....

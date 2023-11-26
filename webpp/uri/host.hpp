@@ -22,10 +22,9 @@ namespace webpp::uri {
         template <typename... T>
         explicit constexpr basic_host(T&&... args) : super{stl::forward<T>(args)...} {}
 
-
         template <istl::StringViewifiable StrT>
         constexpr basic_host& operator=(StrT&& inp_str) {
-            const auto str =
+            auto const str =
               istl::stringify_of<string_type>(stl::forward<StrT>(inp_str), this->get_allocator());
             // todo: split it based on the domains
             this->push_back(str);

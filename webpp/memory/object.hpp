@@ -75,7 +75,6 @@ namespace webpp::object {
             static_assert(!has_resource, "This allocator has resources, you need to pass it");
         }
 
-
         /// these 2 are for when the object doesn't support allocators at all.
 
         template <typename... Args>
@@ -106,12 +105,11 @@ namespace webpp::object {
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-            requires(!has_resource &&
-                     sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
+            requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above
+                                                             // version
                      support_args_alloc<Args...>)
         constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
-
 
         /// these 3 are for when we don't have a resource but the user of this class passes an empty one
 
@@ -128,12 +126,11 @@ namespace webpp::object {
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-            requires(!has_resource &&
-                     sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
+            requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above
+                                                             // version
                      support_args_alloc<Args...>)
         constexpr object(alloc_pack_type& alloc_pack, [[maybe_unused]] istl::nothing_type, Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
-
 
         /// these 3 are for when you pass a valid resource
 
@@ -151,18 +148,16 @@ namespace webpp::object {
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
-            requires(has_resource &&
-                     sizeof...(Args) > 0 && // to resolve some ambiguity with the above version
+            requires(has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above
+                                                            // version
                      support_args_alloc<Args...>)
         constexpr object(alloc_pack_type& alloc_pack, res_ref res, Args&&... args)
           : super{stl::forward<Args>(args)...,
                   alloc_pack.template get_allocator<allocator_type, resource_type>(res)} {}
     };
 
-
     template <typename T, AllocatorDescriptorList AllocDescList>
     using general = object<T, alloc::general_features, AllocDescList>;
-
 
     /**
      * Local object.
@@ -173,10 +168,11 @@ namespace webpp::object {
      * @tparam AllocDescList
      */
     template <typename T, typename StackType, AllocatorDescriptorList AllocDescList>
-    struct local : public details::resource_holder<
-                     typename alloc::alloc_finder<T, alloc::local_features, AllocDescList>::resource_type,
-                     StackType>,
-                   public object<T, alloc::local_features, AllocDescList> {
+    struct local
+      : public details::resource_holder<
+          typename alloc::alloc_finder<T, alloc::local_features, AllocDescList>::resource_type,
+          StackType>,
+        public object<T, alloc::local_features, AllocDescList> {
       private:
         using super      = object<T, alloc::local_features, AllocDescList>;
         using res_holder = details::resource_holder<typename super::resource_type, StackType>;
@@ -185,7 +181,6 @@ namespace webpp::object {
         using stack_type      = StackType;
         using resource_type   = typename super::resource_type;
         using alloc_pack_type = alloc::allocator_pack<AllocDescList>;
-
 
         template <typename... Args>
         constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
@@ -204,8 +199,6 @@ namespace webpp::object {
         constexpr auto global_copy() {}
     };
 
-
-
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make_general(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
         return alloc_pack.template general<T, Args...>(stl::forward<Args>(args)...);
@@ -218,7 +211,8 @@ namespace webpp::object {
         } else if constexpr (requires { holder.get_allocator(); }) {
             if constexpr (requires {
                               T{stl::allocator_arg, holder.get_allocator(), stl::forward<Args>(args)...};
-                          }) {
+                          })
+            {
                 return T{stl::allocator_arg, holder.get_allocator(), stl::forward<Args>(args)...};
             } else if constexpr (requires { T{stl::forward<Args>(args)..., holder.get_allocator()}; }) {
                 return T{stl::forward<Args>(args)..., holder.get_allocator()};
@@ -232,10 +226,10 @@ namespace webpp::object {
         }
     }
 
-
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>
-    static constexpr local<T, stack<>, AllocDescType>
-    make_local(alloc::allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
+    static constexpr local<T, stack<>, AllocDescType> make_local(
+      alloc::allocator_pack<AllocDescType>& alloc_pack,
+      Args&&... args) {
         return {alloc_pack, stl::forward<Args>(args)...};
     }
 
@@ -248,7 +242,6 @@ namespace webpp::object {
             return make_general<T>(stl::forward<AllocHolderType>(holder), stl::forward<Args>(args)...);
         }
     }
-
 
     // This won't change the allocator type
     template <typename T, AllocatorDescriptorList AllocDescType, typename... Args>

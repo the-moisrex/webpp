@@ -22,6 +22,7 @@ static void ISLower_Simple(benchmark::State& state) {
         benchmark::DoNotOptimize(is_lower(str));
     }
 }
+
 BENCHMARK(ISLower_Simple);
 
 static void ISLower_IString(benchmark::State& state) {
@@ -31,4 +32,5 @@ static void ISLower_IString(benchmark::State& state) {
         benchmark::DoNotOptimize(istr.is_ascii_lower());
     }
 }
+
 BENCHMARK(ISLower_IString);

@@ -28,7 +28,7 @@ TEST_F(TupleTest, AdjacentApplyHelper) {
     int result = 0;
 
     // Lambda function to test
-    auto add_elements = [&result](const auto& x, const auto& y) {
+    auto add_elements = [&result](auto const& x, auto const& y) {
         result += x + y;
     };
 
@@ -42,7 +42,7 @@ TEST_F(TupleTest, AdjacentApply) {
     int result = 0;
 
     // Lambda function to test
-    auto subtract_elements = [&result](const auto& x, const auto& y) {
+    auto subtract_elements = [&result](auto const& x, auto const& y) {
         result += (x - y);
     };
 
@@ -57,7 +57,7 @@ TEST_F(TupleTest, AdjacentApplySmallTuple) {
     bool                 was_called  = false;
 
     // Lambda function to test
-    auto was_called_func = [&was_called](const auto&, const auto&) {
+    auto was_called_func = [&was_called](auto const&, auto const&) {
         was_called = true;
     };
 
@@ -71,7 +71,7 @@ TEST_F(TupleTest, AdjacentApplyTwoElementsTuple) {
     stl::tuple<int, int> two_elements_tuple = stl::make_tuple(1, 2);
 
     // Lambda function to test
-    auto identity_func = [](const auto& x, const auto& y) {
+    auto identity_func = [](auto const& x, auto const& y) {
         EXPECT_EQ(x, 1);
         EXPECT_EQ(y, 2);
     };
@@ -80,15 +80,12 @@ TEST_F(TupleTest, AdjacentApplyTwoElementsTuple) {
     adjacent_apply(two_elements_tuple, identity_func);
 }
 
-
-
 TEST_F(TupleTest, SubTuples) {
     auto const tup = stl::make_tuple(0, 1, 2, 3, 4, 5);
     EXPECT_EQ((istl::sub_tuple<2, 5>(tup)), (stl::make_tuple(2, 3, 4)));
     EXPECT_EQ((istl::sub_tuple<1, 1>(tup)), (stl::make_tuple()));
     EXPECT_EQ((istl::sub_tuple<1, 2>(tup)), (stl::make_tuple(1)));
 }
-
 
 TEST_F(TupleTest, MoveElements) {
     auto const tup = stl::make_tuple(0, 1, 2, 3, 4, 5);
@@ -99,6 +96,5 @@ TEST_F(TupleTest, MoveElements) {
     EXPECT_EQ((istl::move_element_to_back<3>(tup)), (stl::make_tuple(0, 1, 2, 4, 5, 3)));
     EXPECT_EQ((istl::move_element_to<2, 4>(tup)), (stl::make_tuple(0, 1, 3, 2, 4, 5)));
 }
-
 
 // NOLINTEND(*-magic-numbers)

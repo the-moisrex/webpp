@@ -37,12 +37,12 @@ namespace webpp {
     logger.logger_name(if_debug, "category", "msg", ec); \
     logger.logger_name(if_debug, "category", "msg", ex); \
     logger.logger_name(if_debug, "msg", ec);             \
-    logger.logger_name(if_debug, "msg", ex);
+    logger.logger_name(if_debug, "msg", ex)
 
-            WEBPP_LOGGER_CONCEPT(info)
-            WEBPP_LOGGER_CONCEPT(warning)
-            WEBPP_LOGGER_CONCEPT(error)
-            WEBPP_LOGGER_CONCEPT(critical)
+            WEBPP_LOGGER_CONCEPT(info);
+            WEBPP_LOGGER_CONCEPT(warning);
+            WEBPP_LOGGER_CONCEPT(error);
+            WEBPP_LOGGER_CONCEPT(critical);
 
 #undef WEBPP_LOGGER_CONCEPT
         };

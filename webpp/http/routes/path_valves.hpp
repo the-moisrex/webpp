@@ -12,7 +12,6 @@
 namespace webpp::http {
 
     static constexpr struct endpath_valve {
-
         template <Traits TraitsType>
         [[nodiscard]] constexpr bool operator()(basic_context<TraitsType>& ctx) const noexcept {
             return ctx.path_traverser().at_end();
@@ -22,7 +21,6 @@ namespace webpp::http {
             out.append(" endpath");
         }
     } endpath;
-
 
     /**
      * A Series of Path Segments
@@ -57,8 +55,8 @@ namespace webpp::http {
             using context_type = basic_context<TraitsType>;
             return stl::apply(
               [&ctx]<typename... T>(T&&... callables) constexpr {
-                  return (valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) &&
-                          ...);
+                  return (
+                    valve_traits<T, context_type>::call_set_get(stl::forward<T>(callables), ctx) && ...);
               },
               as_tuple());
         }
@@ -86,7 +84,6 @@ namespace webpp::http {
               as_tuple());
         }
 
-
         template <typename RouterT>
             requires((ValveRequiresSetup<RouterT, CallableSegments> || ...))
         constexpr void setup(RouterT& inp_router) {
@@ -100,9 +97,6 @@ namespace webpp::http {
         }
     };
 
-
-
-
     template <typename Segment>
     struct segment_string {
       private:
@@ -110,6 +104,7 @@ namespace webpp::http {
 
       public:
         explicit constexpr segment_string(Segment&& inp_seg) noexcept : seg{stl::move(inp_seg)} {}
+
         explicit constexpr segment_string(Segment const& inp_seg) : seg{inp_seg} {}
 
         constexpr segment_string(segment_string const&)                = default;

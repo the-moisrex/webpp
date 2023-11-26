@@ -22,9 +22,7 @@ TEST(Body, Concepts) {
     EXPECT_TRUE(bool(BodyWriter<body_writer<default_traits>>));
 }
 
-
 struct custom_body_type {
-
     friend void tag_invoke(serialize_body_tag, custom_body_type, HTTPBody auto& body) {
         body = "custom body type";
     }
@@ -43,12 +41,11 @@ TEST(Body, CustomBodyTypeSerializerTest) {
     EXPECT_EQ(body.as<stl::string_view>(), "custom body type");
 }
 
-
 TEST(Body, Text) {
     enable_owner_traits<default_traits> et;
     body_type                           b{et, "Testing"};
     EXPECT_EQ(b.template as<std::string_view>(), "Testing");
-    EXPECT_STREQ(b.template as<char const*>(), "Testing") << stl::string_view{b.as<const char*>()};
+    EXPECT_STREQ(b.template as<char const*>(), "Testing") << stl::string_view{b.as<char const*>()};
 
     // todo
     // EXPECT_TRUE(b == "Testing");
@@ -56,11 +53,11 @@ TEST(Body, Text) {
     string_type const str = "hello";
     b                     = str;
 
-    EXPECT_STREQ(b.as<const char*>(), "hello");
+    EXPECT_STREQ(b.as<char const*>(), "hello");
 
     std::string_view const sth = "nice";
     b                          = sth;
-    EXPECT_STREQ(b.as<const char*>(), "nice");
+    EXPECT_STREQ(b.as<char const*>(), "nice");
 
     b = string_type("cool");
     EXPECT_EQ(b.as<stl::string_view>(), "cool");
@@ -102,7 +99,6 @@ TEST(Body, File) {
     std::filesystem::remove(file);
 }
 
-
 TEST(Body, StringCustomBody) {
     enable_owner_traits<default_traits> et;
     static_assert(istl::String<stl::string> && stl::is_default_constructible_v<stl::string>,
@@ -121,8 +117,6 @@ TEST(Body, StringCustomBody) {
     body_str2 = body2.template as<stl::string>();
     EXPECT_EQ("nice", body_str2);
 }
-
-
 
 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 ////////////////////////////////////////////////// Read & Write //////////////////////////////////////////////////
@@ -153,12 +147,12 @@ TEST(Body, BodyCStreamToCStream) {
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
     while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
+    {
         str2.append(buf.data(), static_cast<stl::size_t>(res));
     }
     EXPECT_EQ(str, str2);
 }
-
 
 TEST(Body, BodyTextToText) {
     enable_owner_traits<default_traits> et;
@@ -210,7 +204,8 @@ TEST(Body, BodyCrossTalkTextToCStream) {
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
     while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
+    {
         str2.append(buf.data(), static_cast<stl::size_t>(res)); // res is always zero to not create a loop!!!
     }
     EXPECT_EQ(str, str2);
@@ -225,7 +220,8 @@ TEST(Body, BodyCrossTalkStreamToCStream) {
     static constexpr auto       buff_size = 10;
     stl::array<char, buff_size> buf{};
     while (auto res =
-             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size()))) {
+             body.read(reinterpret_cast<stl::byte*>(buf.data()), static_cast<stl::streamsize>(buf.size())))
+    {
         str2.append(buf.data(), static_cast<stl::size_t>(res));
     }
     EXPECT_EQ(str, str2);

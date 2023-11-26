@@ -16,6 +16,7 @@ webpp::sdk::proj_template::proj_template(std::shared_ptr<command_options> option
   : pimpl{stl::make_unique<impl>(stl::move(options))} {}
 
 proj_template::proj_template(proj_template&& other) noexcept : pimpl{stl::move(other.pimpl)} {}
+
 proj_template& webpp::sdk::proj_template::operator=(proj_template&& other) noexcept {
     if (stl::addressof(other) != this) {
         pimpl = stl::move(other.pimpl);

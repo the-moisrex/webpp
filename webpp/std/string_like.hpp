@@ -14,7 +14,6 @@ namespace webpp::istl {
     template <typename T>
     concept ModifiableString = String<T>;
 
-
     template <StringLike StrT, typename InputIt>
     constexpr void assign(StrT& str, InputIt beg, InputIt end) noexcept(StringView<StrT>) {
         if constexpr (StringView<StrT>) {
@@ -23,7 +22,6 @@ namespace webpp::istl {
             str.assign(beg, end);
         }
     }
-
 
     template <StringLike StrT>
     constexpr void clear(StrT& str) noexcept {

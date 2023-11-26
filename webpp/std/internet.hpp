@@ -12,6 +12,7 @@
 #    define STD_INTERNET STLLIB_STANDARD
 #    include <internet>
 #    include <system_error>
+
 namespace webpp::stl::net {
     // a fix for different error_code in boost vs in std
     using error_code      = stl::error_code;
@@ -21,6 +22,7 @@ namespace webpp::stl::net {
 #elif __has_include(<boost/asio/ts/internet.hpp>)
 #    define STD_INTERNET STLLIB_BOOST
 #    include <boost/asio/ts/internet.hpp>
+
 namespace webpp::stl::net {
     using namespace boost::asio;
     using error_code      = boost::system::error_code;
@@ -30,6 +32,7 @@ namespace webpp::stl::net {
 #elif __has_include(<experimental/internet>)
 #    define STD_INTERNET STLLIB_EXPERIMENTAL
 #    include <experimental/internet>
+
 namespace webpp::stl {
     namespace net = experimental::net;
 }

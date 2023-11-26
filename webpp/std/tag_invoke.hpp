@@ -37,7 +37,9 @@ namespace webpp::stl {
 
     template <typename Tag, typename... Args>
     concept nothrow_tag_invocable = tag_invocable<Tag, Args...> && requires(Tag tag, Args... args) {
-        { stl::tag_invoke((Tag&&) tag, (Args&&) args...) } noexcept;
+        {
+            stl::tag_invoke((Tag&&) tag, (Args&&) args...)
+        } noexcept;
     };
 
     template <typename Tag, typename... Args>

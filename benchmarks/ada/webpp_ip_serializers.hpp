@@ -8,7 +8,6 @@
 #include <cstring>
 #include <utility>
 
-
 namespace webpp::v1 {
 
     /**
@@ -16,8 +15,8 @@ namespace webpp::v1 {
      * string to the end of the string instead of overwriting the whole thing
      */
     template <typename Op>
-    constexpr void
-    resize_and_append(auto& out, std::size_t counts, Op&& op) noexcept(noexcept(op(out.data()))) {
+    constexpr void resize_and_append(auto& out, std::size_t counts, Op&& op) noexcept(
+      noexcept(op(out.data()))) {
         auto const str_size = out.size();
         out.resize(out.size() + counts); // unfortunately resize writes zeros!!
         auto const ret    = std::forward<Op>(op)(out.data() + str_size);
@@ -30,18 +29,18 @@ namespace webpp::v1 {
     }
 
     // Maximum IPv4 dotted-decimal string (same as INET_ADDRSTRLEN)
-    static constexpr auto max_ipv4_str_len = 15u;
+    static constexpr auto max_ipv4_str_len = 15U;
 
     // sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"
     // Maximum IPv6 hexadecimal string (same as INET6_ADDRSTRLEN)
-    static constexpr auto max_ipv6_str_len = 45u;
+    static constexpr auto max_ipv6_str_len = 45U;
 
     static constexpr auto uint16_byte_count = sizeof(std::uint16_t); // Number of bytes of data in an uint16_t
 
     // ipv4 octet/byte count
-    static constexpr auto ipv4_byte_count = 4u;
+    static constexpr auto ipv4_byte_count = 4U;
     // ipv6 octet/byte count
-    static constexpr auto ipv6_byte_count = 16u;
+    static constexpr auto ipv6_byte_count = 16U;
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
     // NOLINTBEGIN(*-magic-numbers)
@@ -51,7 +50,7 @@ namespace webpp::v1 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(std::uint8_t const* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR()                                   \
     if (*src < 10) {                                       \
         *out++ = static_cast<char>('0' + *src);            \
@@ -77,19 +76,19 @@ namespace webpp::v1 {
         return out;
 #undef WEBPP_PUT_CHAR
     }
+
     // NOLINTEND(cppcoreguidelines-macro-usage)
 
 
 
     namespace details {
-        static constexpr const char* hex_chars = "0123456789abcdef";
+        static constexpr char const* hex_chars = "0123456789abcdef";
     }
 
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
-    static char* inet_ntop6(const std::uint8_t* src, char* out) noexcept {
-
+    static char* inet_ntop6(std::uint8_t const* src, char* out) noexcept {
         if (!src) {
             return nullptr;
         }
@@ -98,7 +97,7 @@ namespace webpp::v1 {
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
-        const std::uint8_t* src_ptr   = src;
+        std::uint8_t const* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
 
 
@@ -138,9 +137,9 @@ namespace webpp::v1 {
                 *octet_ptr++ = details::hex_chars[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = details::hex_chars[hx8];
-            hex_ptr += 5;
+            hx8           = x8 & 0x0fu;
+            *octet_ptr++  = details::hex_chars[hx8];
+            hex_ptr      += 5;
 
 
 
@@ -197,8 +196,8 @@ namespace webpp::v1 {
                 }
             }
             // check for leading zero
-            *out++ = ':';
-            i += longest_count;
+            *out++  = ':';
+            i      += longest_count;
             for (; i != 8; ++i) {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
@@ -225,7 +224,7 @@ namespace webpp::v2 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(std::uint8_t const* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR(inp)                               \
     if (*src < 10) {                                      \
         *out++ = static_cast<char>('0' + inp);            \
@@ -248,6 +247,7 @@ namespace webpp::v2 {
         return out;
 #undef WEBPP_PUT_CHAR
     }
+
     // NOLINTEND(cppcoreguidelines-macro-usage)
 
 } // namespace webpp::v2
@@ -258,7 +258,7 @@ namespace webpp::v3 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static char* inet_ntop4(const std::uint8_t* src, char* out) noexcept {
+    static char* inet_ntop4(std::uint8_t const* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR(inp) out = std::to_chars(out, out + 3, inp).ptr;
 
         WEBPP_PUT_CHAR(src[0])
@@ -272,6 +272,7 @@ namespace webpp::v3 {
         return out;
 #undef WEBPP_PUT_CHAR
     }
+
     // NOLINTEND(cppcoreguidelines-macro-usage)
 
 } // namespace webpp::v3

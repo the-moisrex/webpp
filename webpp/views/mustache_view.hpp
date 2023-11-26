@@ -52,7 +52,6 @@
 #include <variant>
 #include <vector>
 
-
 namespace webpp::views {
 
     /**
@@ -81,7 +80,6 @@ namespace webpp::views {
         friend class mustache_view;
     };
 
-
     namespace details {
         template <Traits TraitsType>
         struct mustache_data_view_settings {
@@ -106,7 +104,9 @@ namespace webpp::views {
 
                 static constexpr bool requires_renderer =
                   requires(Func func, string_view_type text, renderer_type const& renderer) {
-                      { func(text, renderer) } -> istl::StringViewifiableOf<string_type>;
+                      {
+                          func(text, renderer)
+                      } -> istl::StringViewifiableOf<string_type>;
                   };
 
               private:
@@ -119,23 +119,26 @@ namespace webpp::views {
                 constexpr lambda_fixer(ET&& et, Func&& func) noexcept
                   : Func{stl::forward<Func>(func)},
                     string_allocator{alloc::general_allocator<char_type>(et)} {}
+
                 // NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
                 constexpr string_type operator()(string_view_type text, renderer_type const& renderer) {
                     if constexpr (requires_renderer) {
                         return istl::stringify_of<string_type>(func(text, renderer), string_allocator);
                     } else if constexpr (requires(Func func) {
-                                             { func(text) } -> istl::StringViewifiableOf<string_type>;
-                                         }) {
+                                             {
+                                                 func(text)
+                                             } -> istl::StringViewifiableOf<string_type>;
+                                         })
+                    {
                         return istl::stringify_of<string_type>(func(text), string_allocator);
                     } else {
-                        static_assert_false(
-                          Func,
-                          "We don't know how to call or handle the return type of the specified mustache lambda.");
+                        static_assert_false(Func,
+                                            "We don't know how to call or handle the return type of the "
+                                            "specified mustache lambda.");
                     }
                 }
             };
-
 
             struct variable
               : stl::variant<bool,
@@ -143,7 +146,6 @@ namespace webpp::views {
                              partial_type,
                              string_type,
                              stl::vector<variable, traits::general_allocator<traits_type, variable>>> {
-
                 using variant_type =
                   stl::variant<bool,
                                lambda_type,
@@ -159,13 +161,15 @@ namespace webpp::views {
                 template <typename T, EnabledTraits ET>
                 constexpr auto convert(T&& val, ET&& et) const {
                     using value_type = stl::remove_cvref_t<T>;
-                    if constexpr (istl::one_of<string_type,
-                                               bool,
-                                               lambda_type,
-                                               partial_type,
-                                               list_type,
-                                               variant_type,
-                                               value_type>) {
+                    if constexpr (
+                      istl::one_of<string_type,
+                                   bool,
+                                   lambda_type,
+                                   partial_type,
+                                   list_type,
+                                   variant_type,
+                                   value_type>)
+                    {
                         return stl::forward<T>(val);
                     } else {
                         return lexical::cast<string_type>(stl::forward<T>(val),
@@ -181,33 +185,32 @@ namespace webpp::views {
                     key_value{istl::stringify_of<string_type>(stl::forward<StrT>(input_key),
                                                               alloc::general_allocator<char_type>(et))} {}
 
-
                 template <EnabledTraits ET, typename StrT, typename T>
                 constexpr variable(ET&& et, stl::pair<StrT, T> input)
                   : variant_type{convert(stl::move(input.second), et)},
                     key_value{istl::stringify_of<string_type>(stl::move(input.first),
                                                               alloc::general_allocator<char_type>(et))} {}
 
-
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
                     return istl::string_viewify_of<string_view_type>(key_value);
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {
-                    if (const auto* v = get_if_bool()) {
+                    if (auto const* v = get_if_bool()) {
                         return *v;
-                    } else if (const auto* vlist = get_if_list()) {
-                        return vlist->empty();
-                    } else {
-                        return true;
                     }
+                    if (auto const* vlist = get_if_list()) {
+                        return vlist->empty();
+                    }
+                    return true;
                 }
 
                 // search the tree for a key and get a variable*
                 // nullptr is returned if we couldn't find the key
                 [[nodiscard]] constexpr variable const* get(string_view_type input_key) const noexcept {
-                    if (key_value == input_key)
+                    if (key_value == input_key) {
                         return this;
+                    }
                     if (auto list = get_if_list()) {
                         for (auto& item : *list) {
                             if (auto* var = item.get(input_key); var) {
@@ -258,7 +261,6 @@ namespace webpp::views {
                     return stl::holds_alternative<bool>(*as_variant());
                 }
 
-
                 [[nodiscard]] constexpr partial_type const& partial_value() const noexcept {
                     return stl::get<partial_type>(*as_variant());
                 }
@@ -278,7 +280,6 @@ namespace webpp::views {
                     return false;
                 }
             };
-
 
             // data type
             using type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
@@ -304,7 +305,6 @@ namespace webpp::views {
 
     } // namespace details
 
-
     /**
      * A pair of delimiter type; in mustache you can change the delimiter you're using for variables and
      * stuff.
@@ -320,6 +320,7 @@ namespace webpp::views {
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         string_type begin;
         string_type end;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
@@ -332,7 +333,6 @@ namespace webpp::views {
         }
     };
 
-
     template <Traits TraitsType>
     struct context : enable_traits<TraitsType> {
         using traits_type      = TraitsType;
@@ -340,7 +340,7 @@ namespace webpp::views {
         using char_type        = traits::char_type<traits_type>;
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type    = typename data_type::value_type;
-        using items_type       = istl::vector<const variable_type*, traits_type>;
+        using items_type       = istl::vector<variable_type const*, traits_type>;
         using items_value_type = typename items_type::value_type;
         using etraits          = enable_traits<traits_type>;
 
@@ -349,21 +349,21 @@ namespace webpp::views {
 
       public:
         template <EnabledTraits ET>
-        context(ET&& et, const variable_type* data)
+        context(ET&& et, variable_type const* data)
           : etraits{et},
             items{et.alloc_pack.template general_allocator<items_value_type>()} {
             push(data);
         }
 
-        ~context()                             = default;
-        context(const context&)                = delete;
+        ~context() = default;
+
+        context(context const&)                = delete;
         context(context&&) noexcept            = default;
         context& operator=(context&&) noexcept = default;
-        context& operator=(const context&)     = delete;
-
+        context& operator=(context const&)     = delete;
 
         template <EnabledTraits ET>
-        context(ET&& et, const data_type* data)
+        context(ET&& et, data_type const* data)
           : etraits{et},
             items{et.alloc_pack.template general_allocator<items_value_type>()} {
             items.reserve(data->size());
@@ -375,8 +375,7 @@ namespace webpp::views {
                            });
         }
 
-
-        void push(const variable_type* data) {
+        void push(variable_type const* data) {
             items.insert(items.begin(), data);
         }
 
@@ -384,15 +383,15 @@ namespace webpp::views {
             items.erase(items.begin());
         }
 
-        const variable_type* get(string_view_type name) const {
+        variable_type const* get(string_view_type name) const {
             // process {{.}} name
             if (name.size() == 1 && name.at(0) == '.') {
                 return items.front();
             }
             if (name.find('.') == string_view_type::npos) {
                 // process normal name without having to split which is slower
-                for (const auto& item : items) {
-                    const auto var = item->get(name);
+                for (auto const& item : items) {
+                    auto const var = item->get(name);
                     if (var) {
                         return var;
                     }
@@ -402,9 +401,9 @@ namespace webpp::views {
             // process x.y-like name
             auto names = object::make_local<stl::vector<string_view_type>>(*this);
             strings::basic_splitter<string_view_type, char_type>(name, char_type{'.'}).split(names);
-            for (const auto* item : items) {
+            for (auto const* item : items) {
                 auto* var = item;
-                for (const auto& n : names) {
+                for (auto const& n : names) {
                     var = var->get(n);
                     if (!var) {
                         break;
@@ -417,9 +416,9 @@ namespace webpp::views {
             return nullptr;
         }
 
-        const variable_type* get_partial(string_view_type name) const {
-            for (const auto& item : items) {
-                const auto var = item->get(name);
+        variable_type const* get_partial(string_view_type name) const {
+            for (auto const& item : items) {
+                auto const var = item->get(name);
                 if (var) {
                     return var;
                 }
@@ -427,9 +426,6 @@ namespace webpp::views {
             return nullptr;
         }
     };
-
-
-
 
     template <Traits TraitsType>
     struct line_buffer_state {
@@ -439,13 +435,14 @@ namespace webpp::views {
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         string_type data;
         bool        contained_section_tag = false;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
         constexpr line_buffer_state(ET& et) : data{alloc::general_alloc_for<string_type>(et)} {}
 
         [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
-            for (const auto ch : data) {
+            for (auto const ch : data) {
                 // don't look at newlines
                 if (ch != ' ' && ch != '\t') {
                     return false;
@@ -468,6 +465,7 @@ namespace webpp::views {
         context<traits_type>*          ctx = nullptr;
         delimiter_set<traits_type>     delim_set;
         line_buffer_state<traits_type> line_buffer;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         constexpr context_internal(context<traits_type>& ctx_ref)
@@ -479,11 +477,13 @@ namespace webpp::views {
         constexpr context_internal(context_internal&&) noexcept            = default;
         constexpr context_internal& operator=(context_internal&&) noexcept = default;
         constexpr context_internal& operator=(context_internal const&)     = default;
-        constexpr ~context_internal()                                      = default;
+
+        constexpr ~context_internal() = default;
 
         template <EnabledTraits ET>
-        constexpr context_internal(ET& et) : delim_set{et},
-                                             line_buffer{et} {}
+        constexpr context_internal(ET& et)
+          : delim_set{et},
+            line_buffer{et} {}
     };
 
     template <Traits TraitsType>
@@ -502,13 +502,15 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        constexpr mstch_tag(ET& et) : name{alloc::general_alloc_for<string_type>(et)},
-                                      delim_set{et} {}
+        constexpr mstch_tag(ET& et)
+          : name{alloc::general_alloc_for<string_type>(et)},
+            delim_set{et} {}
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
             using enum details::tag_type;
             return type == section_begin || type == section_begin_inverted;
         }
+
         [[nodiscard]] constexpr bool is_section_end() const noexcept {
             return type == details::tag_type::section_end;
         }
@@ -520,15 +522,17 @@ namespace webpp::views {
         using data_type     = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type = typename data_type::value_type;
 
-        constexpr context_pusher(context_internal<traits_type>& ctx, const variable_type* var) : ctx_(&ctx) {
+        constexpr context_pusher(context_internal<traits_type>& ctx, variable_type const* var) : ctx_(&ctx) {
             ctx.ctx->push(var);
         }
+
         constexpr ~context_pusher() {
             ctx_->ctx->pop();
         }
-        constexpr context_pusher(const context_pusher&)                = delete;
+
+        constexpr context_pusher(context_pusher const&)                = delete;
         constexpr context_pusher(context_pusher&&) noexcept            = default;
-        constexpr context_pusher& operator=(const context_pusher&)     = delete;
+        constexpr context_pusher& operator=(context_pusher const&)     = delete;
         constexpr context_pusher& operator=(context_pusher&&) noexcept = default;
 
       private:
@@ -561,7 +565,6 @@ namespace webpp::views {
             skip,
         };
 
-
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, component>)
@@ -570,6 +573,7 @@ namespace webpp::views {
             tag{et},
             children{alloc::general_allocator<component>(et)},
             position(p) {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         [[nodiscard]] constexpr bool is_text() const noexcept {
@@ -647,8 +651,10 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        constexpr mustache_view(ET&& et) noexcept : etraits{et},
-                                                    root_component{et} {}
+        constexpr mustache_view(ET&& et) noexcept
+          : etraits{et},
+            root_component{et} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr mustache_view(mustache_view const&)     = default;
@@ -705,7 +711,7 @@ namespace webpp::views {
             return render(ctx, ss).str();
         }
 
-        constexpr void render(data_type const& data, const render_handler& handler) {
+        constexpr void render(data_type const& data, render_handler const& handler) {
             if (!is_valid()) {
                 return;
             }
@@ -713,7 +719,6 @@ namespace webpp::views {
             context_internal<traits_type> context{ctx};
             render(handler, context);
         }
-
 
         template <typename DT = data_type>
             requires(PossibleDataTypes<mustache_view, stl::remove_cvref_t<DT>>)
@@ -755,17 +760,18 @@ namespace webpp::views {
             return out;
         }
 
-
         /////// Parser
 
 
-        constexpr static stl::array<string_view_type, 5> whitespace{{"\r\n", "\n", "\r", " ", "\t"}};
+        static constexpr stl::array<string_view_type, 5> whitespace{
+          {"\r\n", "\n", "\r", " ", "\t"}
+        };
 
         constexpr void parse(string_view_type input, delimiter_set<traits_type>& delim_set) {
             using streamstring = stl::basic_ostringstream<typename string_type::value_type>;
 
-            const string_view_type brace_delimiter_end_unescaped("}}}");
-            const string_size_type input_size{input.size()};
+            string_view_type const brace_delimiter_end_unescaped("}}}");
+            string_size_type const input_size{input.size()};
 
             bool current_delimiter_is_brace{delim_set.is_default()};
 
@@ -780,7 +786,7 @@ namespace webpp::views {
 
             current_text.reserve(input_size);
 
-            const auto process_current_text = [this, &current_text, &current_text_position, &sections]() {
+            auto const process_current_text = [this, &current_text, &current_text_position, &sections]() {
                 if (!current_text.empty()) {
                     const component_type comp{*this, current_text, current_text_position};
                     sections.back()->children.push_back(comp);
@@ -800,11 +806,11 @@ namespace webpp::views {
                     parse_tag = true;
                 } else {
                     bool parsed_whitespace = false;
-                    for (const auto& whitespace_text : whitespace) {
+                    for (auto const& whitespace_text : whitespace) {
                         if (input.compare(input_position, whitespace_text.size(), whitespace_text) == 0) {
                             process_current_text();
 
-                            const component_type comp{*this, whitespace_text, input_position};
+                            component_type const comp{*this, whitespace_text, input_position};
                             sections.back()->children.push_back(comp);
                             input_position += whitespace_text.size();
 
@@ -827,20 +833,20 @@ namespace webpp::views {
                 }
 
                 // Find the next tag start delimiter
-                const string_size_type tag_location_start = input_position;
+                string_size_type const tag_location_start = input_position;
 
                 // Find the next tag end delimiter
-                string_size_type       tag_contents_location{tag_location_start + delim_set.begin.size()};
-                const bool             tag_is_unescaped_var{current_delimiter_is_brace &&
-                                                tag_location_start != (input_size - 2) &&
-                                                input.at(tag_contents_location) == delim_set.begin.at(0)};
-                const string_view_type current_tag_delimiter_end{
+                string_size_type tag_contents_location{tag_location_start + delim_set.begin.size()};
+                bool const       tag_is_unescaped_var{
+                  current_delimiter_is_brace && tag_location_start != (input_size - 2) &&
+                  input.at(tag_contents_location) == delim_set.begin.at(0)};
+                string_view_type const current_tag_delimiter_end{
                   tag_is_unescaped_var ? brace_delimiter_end_unescaped : delim_set.end};
-                const auto current_tag_delimiter_end_size = current_tag_delimiter_end.size();
+                auto const current_tag_delimiter_end_size = current_tag_delimiter_end.size();
                 if (tag_is_unescaped_var) {
                     ++tag_contents_location;
                 }
-                const string_size_type tag_location_end{
+                string_size_type const tag_location_end{
                   input.find(current_tag_delimiter_end, tag_contents_location)};
                 if (tag_location_end == string_view_type::npos) {
                     streamstring ss;
@@ -901,7 +907,8 @@ namespace webpp::views {
                     return walk_control_type::walk;
                 }
                 if (comp.children.empty() || !comp.children.back().tag.is_section_end() ||
-                    comp.children.back().tag.name != comp.tag.name) {
+                    comp.children.back().tag.name != comp.tag.name)
+                {
                     streamstring ss;
                     ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
                     error_msg.assign(ss.str());
@@ -920,7 +927,7 @@ namespace webpp::views {
         constexpr bool is_set_delimiter_valid(string_view_type delimiter) const {
             // "Custom delimiters may not contain whitespace or the equals sign."
             // todo: optimize-able
-            for (const auto ch : delimiter) {
+            for (auto const ch : delimiter) {
                 if (ch == '=' || stl::isspace(ch)) {
                     return false;
                 }
@@ -928,8 +935,9 @@ namespace webpp::views {
             return true;
         }
 
-        [[nodiscard]] constexpr bool
-        parse_set_delimiter_tag(string_view_type contents, delimiter_set<traits_type>& delimiter_set) const {
+        [[nodiscard]] constexpr bool parse_set_delimiter_tag(
+          string_view_type            contents,
+          delimiter_set<traits_type>& delimiter_set) const {
             // Smallest legal tag is "=X X="
             constexpr stl::size_t smallest_legal_tag_size = 5;
             if (contents.size() < smallest_legal_tag_size) {
@@ -940,14 +948,14 @@ namespace webpp::views {
             }
             contents = contents.substr(1, contents.size() - 2); // todo: use remove_prefix and remove_suffix
             ascii::trim(contents);
-            const auto spacepos = contents.find(' ');
+            auto const spacepos = contents.find(' ');
             if (spacepos == string_view_type::npos) {
                 return false;
             }
-            const auto nonspace = contents.find_first_not_of(' ', spacepos + 1);
+            auto const nonspace = contents.find_first_not_of(' ', spacepos + 1);
             assert(nonspace != string_type::npos);
-            const auto begin = contents.substr(0, spacepos);
-            const auto end   = contents.substr(nonspace, contents.size() - nonspace);
+            auto const begin = contents.substr(0, spacepos);
+            auto const end   = contents.substr(nonspace, contents.size() - nonspace);
             if (!is_set_delimiter_valid(begin) || !is_set_delimiter_valid(end)) {
                 return false;
             }
@@ -956,9 +964,10 @@ namespace webpp::views {
             return true;
         }
 
-        constexpr void parse_tag_contents(bool                    is_unescaped_var,
-                                          string_view_type        contents,
-                                          mstch_tag<traits_type>& tag) const {
+        constexpr void parse_tag_contents(
+          bool                    is_unescaped_var,
+          string_view_type        contents,
+          mstch_tag<traits_type>& tag) const {
             using enum details::tag_type;
             if (is_unescaped_var) {
                 tag.type = unescaped_variable;
@@ -986,8 +995,6 @@ namespace webpp::views {
             }
         }
 
-
-
         ////// Renderer
 
 
@@ -1006,7 +1013,7 @@ namespace webpp::views {
         }
 
         constexpr void
-        render(const render_handler& handler, context_internal<traits_type>& ctx, bool root_renderer = true) {
+        render(render_handler const& handler, context_internal<traits_type>& ctx, bool root_renderer = true) {
             root_component.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             });
@@ -1016,9 +1023,10 @@ namespace webpp::views {
             }
         }
 
-        constexpr void render_current_line(const render_handler&           handler,
-                                           line_buffer_state<traits_type>& line_buffer,
-                                           const component_type*           comp) const {
+        constexpr void render_current_line(
+          render_handler const&           handler,
+          line_buffer_state<traits_type>& line_buffer,
+          component_type const*           comp) const {
             // We're at the end of a line, so check the line buffer state to see
             // if the line had tags in it, and also if the line is now empty or
             // contains whitespace only. if this situation is true, skip the line.
@@ -1031,9 +1039,10 @@ namespace webpp::views {
             line_buffer.clear();
         }
 
-        constexpr walk_control_type render_component(const render_handler&          handler,
-                                                     context_internal<traits_type>& ctx,
-                                                     component_type&                comp) {
+        constexpr walk_control_type render_component(
+          render_handler const&          handler,
+          context_internal<traits_type>& ctx,
+          component_type&                comp) {
             if (comp.is_text()) {
                 if (comp.is_newline()) {
                     render_current_line(handler, ctx.line_buffer, &comp);
@@ -1043,8 +1052,8 @@ namespace webpp::views {
                 return walk_control_type::walk;
             }
 
-            const mstch_tag<traits_type>& tag{comp.tag};
-            const variable_type*          var; // NOLINT(cppcoreguidelines-init-variables)
+            mstch_tag<traits_type> const& tag{comp.tag};
+            variable_type const*          var; // NOLINT(cppcoreguidelines-init-variables)
             switch (tag.type) {
                 using enum details::tag_type;
                 case variable:
@@ -1065,7 +1074,8 @@ namespace webpp::views {
                                                ctx,
                                                details::render_lambda_escape::optional,
                                                *comp.tag.section_text,
-                                               true)) {
+                                               true))
+                            {
                                 return walk_control_type::stop;
                             }
                         } else if (!var->is_false()) {
@@ -1082,7 +1092,7 @@ namespace webpp::views {
                 case partial:
                     var = ctx.ctx->get_partial(tag.name);
                     if (var != nullptr && (var->is_partial() || var->is_string())) {
-                        const auto& partial_result =
+                        auto const& partial_result =
                           var->is_partial() ? var->partial_value()() : var->string_value();
                         mustache_view tmpl{this->get_traits()};
                         tmpl.scheme(partial_result);
@@ -1103,9 +1113,9 @@ namespace webpp::views {
                         //  - File
                         //  - Line
                         //  - Column
-                        this->logger.error(
-                          MUSTACHE_CAT,
-                          "The mustache template requested a partial which we're not able to find; it's getting ignored.");
+                        this->logger.error(MUSTACHE_CAT,
+                                           "The mustache template requested a partial which we're not able "
+                                           "to find; it's getting ignored.");
                     }
                     break;
                 case set_delimiter: ctx.delim_set = comp.tag.delim_set; break;
@@ -1115,14 +1125,13 @@ namespace webpp::views {
             return walk_control_type::walk;
         }
 
-        constexpr bool render_lambda(const render_handler&          handler,
-                                     const lambda_type&             var,
-                                     context_internal<traits_type>& ctx,
-                                     details::render_lambda_escape  escape,
-                                     string_view_type               text,
-                                     bool                           parse_with_same_context) {
-
-
+        constexpr bool render_lambda(
+          render_handler const&          handler,
+          lambda_type const&             var,
+          context_internal<traits_type>& ctx,
+          details::render_lambda_escape  escape,
+          string_view_type               text,
+          bool                           parse_with_same_context) {
             auto render = [this, &ctx, parse_with_same_context, escape](string_view_type txt,
                                                                         bool escaped) -> string_type {
                 const auto process_template =
@@ -1155,42 +1164,45 @@ namespace webpp::views {
                 tmpl.scheme(txt);
                 return process_template(tmpl);
             };
-            const renderer_type renderer{
+            renderer_type const renderer{
               typename renderer_type::type{render,
-                                           alloc::general_alloc_for<typename renderer_type::type>(*this)}};
+                                           alloc::general_alloc_for<typename renderer_type::type>(*this)}
+            };
             // todo: in original source, the next line wouldn't run if the user is getting a renderer as input
             render_current_line(handler, ctx.line_buffer, nullptr);
             ctx.line_buffer.data.append(var(text, renderer));
             return error_msg.empty();
         }
 
-        constexpr bool render_variable(const render_handler&          handler,
-                                       const variable_type*           var,
-                                       context_internal<traits_type>& ctx,
-                                       bool                           escaped) {
+        constexpr bool render_variable(
+          render_handler const&          handler,
+          variable_type const*           var,
+          context_internal<traits_type>& ctx,
+          bool                           escaped) {
             if (auto val_str = var->get_if_string()) {
                 ctx.line_buffer.data.append(escaped ? escaper(*val_str) : *val_str);
             } else if (auto val_lambda = var->get_if_lambda()) {
                 using enum details::render_lambda_escape;
-                const details::render_lambda_escape escape_opt = escaped ? escape : unescape;
+                details::render_lambda_escape const escape_opt = escaped ? escape : unescape;
                 return render_lambda(handler, *val_lambda, ctx, escape_opt, {}, false);
             }
             return true;
         }
 
-        constexpr void render_section(const render_handler&          handler,
-                                      context_internal<traits_type>& ctx,
-                                      component_type&                incomp,
-                                      const variable_type*           var) {
-            const auto callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
+        constexpr void render_section(
+          render_handler const&          handler,
+          context_internal<traits_type>& ctx,
+          component_type&                incomp,
+          variable_type const*           var) {
+            auto const callback = [&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             };
             if (var && var->is_non_empty_list()) {
-                for (const auto& item : var->list_value()) {
+                for (auto const& item : var->list_value()) {
                     // account for the section begin tag
                     ctx.line_buffer.contained_section_tag = true;
 
-                    const context_pusher<traits_type> ctxpusher{ctx, &item};
+                    context_pusher<traits_type> const ctxpusher{ctx, &item};
                     incomp.walk_children(callback);
 
                     // ctx may have been cleared. account for the section end tag
@@ -1200,7 +1212,7 @@ namespace webpp::views {
                 // account for the section begin tag
                 ctx.line_buffer.contained_section_tag = true;
 
-                const context_pusher<traits_type> ctxpusher{ctx, var};
+                context_pusher<traits_type> const ctxpusher{ctx, var};
                 incomp.walk_children(callback);
 
                 // ctx may have been cleared. account for the section end tag

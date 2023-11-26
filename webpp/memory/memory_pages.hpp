@@ -22,6 +22,7 @@ namespace webpp {
     [[nodiscard]] static constexpr stl::size_t get_page_size() noexcept {
         return 4096u; // NOLINT(*-magic-numbers)
     }
+
     // todo: for other architectures like aarch64 and riscv64, we also can get the memory page size
     //       differently as well, you can find an implementation of such thing in "liburing"
 #else

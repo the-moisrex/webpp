@@ -38,7 +38,6 @@ namespace webpp::http {
             constexpr common_context_methods& operator=(common_context_methods&&) noexcept = default;
             constexpr ~common_context_methods()                                            = default;
 
-
             // todo: add more error handling templates here.
             // todo: let the user customize error templates with extensions
             // todo: add all the features of returning a response each body type should have at least one method here
@@ -52,7 +51,6 @@ namespace webpp::http {
                 return response_type::create(*this, stl::forward<Args>(args)...);
             }
 
-
             /**
              * Generate a response while passing the specified arguments as the body of that response
              */
@@ -61,8 +59,7 @@ namespace webpp::http {
                 return with_body(*this, stl::forward<Args>(args)...);
             }
 
-
-            [[nodiscard]] constexpr static bool is_debug() noexcept {
+            [[nodiscard]] static constexpr bool is_debug() noexcept {
                 // todo: configure this in cmake
 #ifdef DEBUG
                 return true;
@@ -90,8 +87,8 @@ namespace webpp::http {
              *
              * @return An HTTP response with the error message.
              */
-            [[nodiscard]] constexpr HTTPResponse auto
-            error(http::status_code_type error_code) const noexcept {
+            [[nodiscard]] constexpr HTTPResponse auto error(
+              http::status_code_type error_code) const noexcept {
                 using str_t = traits::general_string<traits_type>;
                 str_t msg{alloc::allocator_for<str_t>(*this)};
                 fmt::format_to(stl::back_inserter(msg),
@@ -112,8 +109,6 @@ namespace webpp::http {
                 return error(error_code, stl::move(msg));
             }
 
-
-
             /**
              * @brief Generates an HTTP response for a given error code and data.
              *
@@ -132,8 +127,11 @@ namespace webpp::http {
                     res.headers.status_code(error_code);
                     return res;
                 } else if constexpr (requires {
-                                         { data.what() } -> istl::StringViewifiable;
-                                     }) {
+                                         {
+                                             data.what()
+                                         } -> istl::StringViewifiable;
+                                     })
+                {
                     // standard exception, use .what to get the error message
                     auto res = create_response(data.what());
                     res.headers.status_code(error_code);
@@ -147,8 +145,6 @@ namespace webpp::http {
             }
         };
     } // namespace details
-
-
 
     template <HTTPRequest RequestType>
     struct common_context_view : public details::common_context_methods<RequestType> {
@@ -165,6 +161,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         request_ref request;
+
         // NOLINTEND(*-non-private-member-variables-in-classes)
 
         constexpr common_context_view(request_ref inp_req) noexcept
@@ -182,11 +179,8 @@ namespace webpp::http {
         constexpr ~common_context_view()                                         = default;
     };
 
-
-
     template <HTTPRequest ReqType>
     using simple_context = common_context_view<ReqType>;
-
 
     /**
      * The standard and dynamic context which will own its data
@@ -254,7 +248,6 @@ namespace webpp::http {
         [[nodiscard]] constexpr bool check_segment(T&& slug) noexcept {
             return traverser.check_segment(stl::forward<T>(slug));
         }
-
 
         [[nodiscard]] constexpr bool empty() const noexcept {
             return request.empty() && response.empty();

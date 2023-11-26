@@ -38,8 +38,9 @@ namespace webpp::http {
             while (encoding_tokenizer.next(charset{','})) {
                 auto token = encoding_tokenizer.token();
                 trim_lws(token);
-                if (token.find_first_of(http_lws) != string_view_type::npos)
+                if (token.find_first_of(http_lws) != string_view_type::npos) {
                     return false;
+                }
                 used_encodings_list.insert(token);
             }
             return true;

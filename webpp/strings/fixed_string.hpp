@@ -17,7 +17,7 @@ namespace webpp::istl {
 #    include <cstdint>
 #    include <utility>
 
-#    if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201911L)))
+#    if !((__cpp_nontype_template_parameter_class || (__cpp_nontype_template_args >= 201'911L)))
 #        warning \
           "Your compiler doesn't support non-type template parameters. Some compile-time features may not work"
 #    else
@@ -64,8 +64,8 @@ namespace webpp {
     }
 
     constexpr length_value_t length_and_value_of_utf16_code_point(uint16_t first_unit) noexcept {
-        if ((first_unit & 0b1111110000000000) == 0b1101'1000'0000'0000) {
-            return {static_cast<uint32_t>(first_unit & 0b0000001111111111), 2};
+        if ((first_unit & 0b1111'1100'0000'0000) == 0b1101'1000'0000'0000) {
+            return {static_cast<uint32_t>(first_unit & 0b0000'0011'1111'1111), 2};
         }
         return {first_unit, 1};
     }
@@ -82,34 +82,40 @@ namespace webpp {
 #    ifdef WEBPP_STRING_IS_UTF8
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
-                    if ((i == (N - 1)) && (input[i] == 0))
+                    if ((i == (N - 1)) && (input[i] == 0)) {
                         break;
+                    }
                     length_value_t info = length_and_value_of_utf8_code_point(input[i]);
                     switch (info.length) {
                         case 6:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 5:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 4:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 3:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 2:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 1:
                             content[out++] = static_cast<char32_t>(info.value);
@@ -121,8 +127,9 @@ namespace webpp {
 #    else
                 for (size_t i{0}; i < N; ++i) {
                     content[i] = static_cast<uint8_t>(input[i]);
-                    if ((i == (N - 1)) && (input[i] == 0))
+                    if ((i == (N - 1)) && (input[i] == 0)) {
                         break;
+                    }
                     real_size++;
                 }
 #    endif
@@ -130,34 +137,40 @@ namespace webpp {
             } else if constexpr (stl::is_same_v<T, char8_t>) {
                 size_t out{0};
                 for (size_t i{0}; i < N; ++i) {
-                    if ((i == (N - 1)) && (input[i] == 0))
+                    if ((i == (N - 1)) && (input[i] == 0)) {
                         break;
+                    }
                     length_value_t info = length_and_value_of_utf8_code_point(input[i]);
                     switch (info.length) {
                         case 6:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 5:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 4:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 3:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 2:
-                            if (++i < N)
+                            if (++i < N) {
                                 info.value = (info.value << 6) |
                                              value_of_trailing_utf8_code_point(input[i], correct_flag);
+                            }
                             [[fallthrough]];
                         case 1:
                             content[out++] = static_cast<char32_t>(info.value);
@@ -181,8 +194,9 @@ namespace webpp {
                             }
                         }
                     } else {
-                        if ((i == (N - 1)) && (input[i] == 0))
+                        if ((i == (N - 1)) && (input[i] == 0)) {
                             break;
+                        }
                         content[out++] = info.value;
                     }
                 }
@@ -190,44 +204,55 @@ namespace webpp {
             } else if constexpr (stl::is_same_v<T, wchar_t> || stl::is_same_v<T, char32_t>) {
                 for (size_t i{0}; i < N; ++i) {
                     content[i] = input[i];
-                    if ((i == (N - 1)) && (input[i] == 0))
+                    if ((i == (N - 1)) && (input[i] == 0)) {
                         break;
+                    }
                     real_size++;
                 }
             }
         }
-        constexpr fixed_string(const fixed_string& other) noexcept {
+
+        constexpr fixed_g(const fixed const& string& other) noexcept {
             for (size_t i{0}; i < N; ++i) {
                 content[i] = other.content[i];
             }
             real_size    = other.real_size;
             correct_flag = other.correct_flag;
         }
+
         constexpr bool correct() const noexcept {
             return correct_flag;
         }
+
         constexpr size_t size() const noexcept {
             return real_size;
         }
-        constexpr const char32_t* begin() const noexcept {
+
+        conchar32_t consthar32_t* begin() const noexcept {
             return content;
         }
-        constexpr const char32_t* end() const noexcept {
+
+        conchar32_t consthar32_t* end() const noexcept {
             return content + size();
         }
+
         constexpr char32_t operator[](size_t i) const noexcept {
             return content[i];
         }
+
         template <size_t M>
-        constexpr bool is_same_as(const fixed_string<M>& rhs) const noexcept {
-            if (real_size != rhs.size())
+        constexpr bool is_ss(const fixed_st const& ing<M>& rhs) const noexcept {
+            if (real_size != rhs.size()) {
                 return false;
+            }
             for (size_t i{0}; i != real_size; ++i) {
-                if (content[i] != rhs[i])
+                if (content[i] != rhs[i]) {
                     return false;
+                }
             }
             return true;
         }
+
         constexpr operator stl::basic_string_view<char32_t>() const noexcept {
             return stl::basic_string_view<char32_t>{content, size()};
         }
@@ -239,24 +264,32 @@ namespace webpp {
 
       public:
         template <typename T>
-        constexpr fixed_string(const T*) noexcept {}
+        constexpr fixed_g(const* onst T*) noexcept {}
+
         constexpr fixed_string(stl::initializer_list<char32_t>) noexcept {}
-        constexpr fixed_string(const fixed_string&) noexcept {}
+
+        constexpr fixed_g(const fixed const& string&) noexcept {}
+
         constexpr bool correct() const noexcept {
             return true;
         }
+
         constexpr size_t size() const noexcept {
             return 0;
         }
-        constexpr const char32_t* begin() const noexcept {
+
+        conchar32_t consthar32_t* begin() const noexcept {
             return empty;
         }
-        constexpr const char32_t* end() const noexcept {
+
+        conchar32_t consthar32_t* end() const noexcept {
             return empty + size();
         }
+
         constexpr char32_t operator[](size_t) const noexcept {
             return 0;
         }
+
         constexpr operator stl::basic_string_view<char32_t>() const noexcept {
             return stl::basic_string_view<char32_t>{empty, 0};
         }

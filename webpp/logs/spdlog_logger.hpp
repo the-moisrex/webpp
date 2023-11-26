@@ -30,19 +30,18 @@ namespace webpp {
 
       public:
         spdlog_logger() : spdlogger{spdlog::default_logger()} {}
+
         spdlog_logger(stl::shared_ptr<spdlog::logger> logger) noexcept : spdlogger{stl::move(logger)} {}
 
         template <istl::StringViewifiable LogT>
         spdlog_logger(LogT&& logger_name)
           : spdlogger{spdlog::get(istl::string_viewify(stl::forward<LogT>(logger_name)).c_str())} {}
 
-
         spdlog_logger(spdlog_logger const&)                = default;
         spdlog_logger(spdlog_logger&&) noexcept            = default;
         spdlog_logger& operator=(spdlog_logger const&)     = default;
         spdlog_logger& operator=(spdlog_logger&&) noexcept = default;
         ~spdlog_logger()                                   = default;
-
 
         /// Get a handle to the underlying spdlog logger
         spdlog::logger& get_handle() noexcept {
@@ -70,10 +69,11 @@ namespace webpp {
                        istl::StringViewifiable auto&& details,                                             \
                        stl::error_code const&         ec) const noexcept {                                         \
             if constexpr (!is_debug) {                                                                     \
-                spdlogger->logging_name("[{}] {}; error message: {}",                                      \
-                                        stl::forward<decltype(category)>(category),                        \
-                                        stl::forward<decltype(details)>(details),                          \
-                                        ec.message());                                                     \
+                spdlogger->logging_name(                                                                   \
+                  "[{}] {}; error message: {}",                                                            \
+                  stl::forward<decltype(category)>(category),                                              \
+                  stl::forward<decltype(details)>(details),                                                \
+                  ec.message());                                                                           \
             }                                                                                              \
         }                                                                                                  \
                                                                                                            \
@@ -81,10 +81,11 @@ namespace webpp {
                        istl::StringViewifiable auto&& details,                                             \
                        stl::exception const&          ex) const noexcept {                                          \
             if constexpr (!is_debug) {                                                                     \
-                spdlogger->logging_name("[{}] {}; error message: {}",                                      \
-                                        stl::forward<decltype(category)>(category),                        \
-                                        stl::forward<decltype(details)>(details),                          \
-                                        ex.what());                                                        \
+                spdlogger->logging_name(                                                                   \
+                  "[{}] {}; error message: {}",                                                            \
+                  stl::forward<decltype(category)>(category),                                              \
+                  stl::forward<decltype(details)>(details),                                                \
+                  ex.what());                                                                              \
             }                                                                                              \
         }                                                                                                  \
                                                                                                            \

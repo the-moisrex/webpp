@@ -13,8 +13,14 @@
 namespace webpp {
 
     namespace details {
-        enum struct logging_type : stl::uint_fast8_t { info, warning, error, critical, unknown };
-    }
+        enum struct logging_type : stl::uint_fast8_t {
+            info,
+            warning,
+            error,
+            critical,
+            unknown
+        };
+    } // namespace details
 
     /**
      * A logger class
@@ -28,7 +34,6 @@ namespace webpp {
 
         static constexpr bool is_debug              = IsDebug;
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
-
 
         static constexpr auto logging_type_to_string(details::logging_type lt) noexcept {
             switch (lt) {
@@ -85,11 +90,12 @@ namespace webpp {
             stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
                                       istl::string_viewify(category).size();                              \
             auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
-            auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                            \
-                                           stl::move(space_count),                                        \
-                                           "",                                                            \
-                                           old_details,                                                   \
-                                           ec.message());                                                 \
+            auto new_details = fmt::format(                                                               \
+              "{2}\n{1: >{0}}error message: {3}",                                                         \
+              stl::move(space_count),                                                                     \
+              "",                                                                                         \
+              old_details,                                                                                \
+              ec.message());                                                                              \
             log(details::logging_type::logging_name,                                                      \
                 stl::forward<CatStrT>(category),                                                          \
                 stl::move(new_details));                                                                  \
@@ -102,11 +108,12 @@ namespace webpp {
             stl::size_t space_count = 6 + logging_type_string_size(details::logging_type::logging_name) + \
                                       istl::string_viewify(category).size();                              \
             auto old_details = istl::string_viewify(stl::forward<DetStrT>(details));                      \
-            auto new_details = fmt::format("{2}\n{1: >{0}}error message: {3}",                            \
-                                           stl::move(space_count),                                        \
-                                           "",                                                            \
-                                           old_details,                                                   \
-                                           ex.what());                                                    \
+            auto new_details = fmt::format(                                                               \
+              "{2}\n{1: >{0}}error message: {3}",                                                         \
+              stl::move(space_count),                                                                     \
+              "",                                                                                         \
+              old_details,                                                                                \
+              ex.what());                                                                                 \
             log(details::logging_type::logging_name,                                                      \
                 stl::forward<CatStrT>(category),                                                          \
                 stl::move(new_details));                                                                  \

@@ -11,7 +11,6 @@
 #include <boost/beast/http/read.hpp>
 #include <boost/beast/http/write.hpp>
 
-
 namespace webpp::beast_proto {
 
     /**

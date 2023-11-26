@@ -4,12 +4,44 @@
 #define URI_COMPONENTS_ENCODING_HPP
 
 #include "../../std/string_like.hpp"
+#include "../../strings/append.hpp"
+#include "../../strings/to_case.hpp"
 #include "../encoding.hpp"
 #include "./uri_components.hpp"
 
 namespace webpp::uri::details {
 
-    enum struct components : stl::uint8_t { scheme, host, username, password, port, path, queries, fragment };
+    enum struct components : stl::uint8_t {
+        scheme,
+        host,
+        username,
+        password,
+        port,
+        path,
+        queries,
+        fragment
+    };
+
+    template <components Comp, typename... T>
+    [[nodiscard]] constexpr decltype(auto) get_output(parsing_uri_context<T...>& ctx) noexcept {
+        if constexpr (components::scheme == Comp) {
+            return ctx.out.scheme_ref();
+        } else if constexpr (components::username == Comp) {
+            return ctx.out.username_ref();
+        } else if constexpr (components::password == Comp) {
+            return ctx.out.password_ref();
+        } else if constexpr (components::port == Comp) {
+            return ctx.out.port_ref();
+        } else if constexpr (components::host == Comp) {
+            return ctx.out.hostname_ref();
+        } else if constexpr (components::path == Comp) {
+            return ctx.out.path_ref();
+        } else if constexpr (components::queries == Comp) {
+            return ctx.out.queries_ref();
+        } else if constexpr (components::fragment == Comp) {
+            return ctx.out.fragment_ref();
+        }
+    }
 
     /**
      * @brief Encode/Decode a piece of URI
@@ -46,30 +78,14 @@ namespace webpp::uri::details {
         iterator                          beg = ctx->pos;
 
         [[nodiscard]] constexpr decltype(auto) get_output() const noexcept {
-            if constexpr (components::scheme == Comp) {
-                return ctx->out.scheme_ref();
-            } else if constexpr (components::username == Comp) {
-                return ctx->out.username_ref();
-            } else if constexpr (components::password == Comp) {
-                return ctx->out.password_ref();
-            } else if constexpr (components::port == Comp) {
-                return ctx->out.port_ref();
-            } else if constexpr (components::host == Comp) {
-                return ctx->out.hostname_ref();
-            } else if constexpr (components::path == Comp) {
-                return ctx->out.path_ref();
-            } else if constexpr (components::queries == Comp) {
-                return ctx->out.queries_ref();
-            } else if constexpr (components::fragment == Comp) {
-                return ctx->out.fragment_ref();
-            }
+            return details::get_output<Comp>(*ctx);
         }
 
       public:
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
-        constexpr void set_value(iterator start, iterator end) noexcept(ctx_type::is_nothrow || is_seg ||
-                                                                        ctx_type::is_modifiable) {
+        constexpr void set_value(iterator start, iterator end) noexcept(
+          ctx_type::is_nothrow || is_seg || ctx_type::is_modifiable) {
             if constexpr (!is_seg && !ctx_type::is_modifiable) {
                 if constexpr (components::scheme == Comp) {
                     ctx->out.set_scheme(start, end);
@@ -101,12 +117,11 @@ namespace webpp::uri::details {
           : ctx{&inp_ctx},
             beg{ctx->pos} {}
 
-
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        constexpr void
-        encode_or_set(iterator                             pos,
-                      iterator                             end,
-                      [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+        constexpr void encode_or_set(
+          iterator                             pos,
+          iterator                             end,
+          [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 if constexpr (is_vec) {
                     encode_uri_component<Policy>(pos, end, *output, policy_chars);
@@ -118,13 +133,12 @@ namespace webpp::uri::details {
             }
         }
 
-
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool
-        encode_or_validate(iterator&                            pos,
-                           iterator                             end,
-                           [[maybe_unused]] CharSet auto const& policy_chars,
-                           CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool encode_or_validate(
+          iterator&                            pos,
+          iterator                             end,
+          [[maybe_unused]] CharSet auto const& policy_chars,
+          CharSet auto const&                  invalid_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 if constexpr (is_vec) {
                     return encode_uri_component<Policy>(pos, end, *output, policy_chars, invalid_chars);
@@ -141,8 +155,6 @@ namespace webpp::uri::details {
             }
         }
 
-
-
         /**
          * @brief Encode if the context is modifiable, otherwise just validate the invalid characters
          * @tparam Policy
@@ -151,29 +163,28 @@ namespace webpp::uri::details {
          * @returns successful until the end (== didn't find any invalid chars)
          */
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool
-        encode_or_validate([[maybe_unused]] CharSet auto const& policy_chars,
-                           CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool encode_or_validate(
+          [[maybe_unused]] CharSet auto const& policy_chars,
+          CharSet auto const&                  invalid_chars) noexcept(ctx_type::is_nothrow) {
             return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars, invalid_chars);
         }
 
-
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool
-        encode_or_validate_map([[maybe_unused]] CharSet auto const& policy_chars,
-                               CharSet auto const&                  invalid_chars,
-                               [[maybe_unused]] bool const          in_value) noexcept(ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool encode_or_validate_map(
+          [[maybe_unused]] CharSet auto const& policy_chars,
+          CharSet auto const&                  invalid_chars,
+          [[maybe_unused]] bool const          in_value) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable && is_map) {
-                return encode_uri_component<Policy>(ctx->pos,
-                                                    ctx->end,
-                                                    !in_value ? output.first : output.second,
-                                                    policy_chars,
-                                                    invalid_chars);
+                return encode_uri_component<Policy>(
+                  ctx->pos,
+                  ctx->end,
+                  !in_value ? output.first : output.second,
+                  policy_chars,
+                  invalid_chars);
             } else {
                 return encode_or_validate<Policy>(policy_chars, invalid_chars);
             }
         }
-
 
         /**
          * @brief Decode if the context is modifiable, otherwise just validate the invalid characters
@@ -182,8 +193,8 @@ namespace webpp::uri::details {
          * @returns successful until the end (== didn't find any invalid chars)
          */
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool
-        decode_or_validate(CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars) noexcept(
+          ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 if constexpr (is_vec) {
                     return decode_uri_component<Policy>(ctx->pos, ctx->end, *output, policy_chars);
@@ -268,7 +279,6 @@ namespace webpp::uri::details {
             end_segment(beg, ctx->pos);
         }
 
-
         constexpr void set_query_name() noexcept(ctx_type::is_nothrow)
             requires(is_map)
         {
@@ -291,6 +301,20 @@ namespace webpp::uri::details {
         }
     };
 
+    template <components Comp, typename... T>
+    static constexpr void next_append_lowered(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
+        using ctx_type = parsing_uri_context<T...>;
+        if constexpr (ctx_type::is_modifiable) {
+            if constexpr (ctx_type::is_segregated) {
+                // todo
+            } else {
+                append_to(get_output<Comp>(ctx), ascii::to_lower_copy(*ctx.pos));
+            }
+        }
+
+        ++ctx.pos;
+    }
 
 
 } // namespace webpp::uri::details

@@ -7,12 +7,12 @@
 using namespace std;
 
 
-constexpr static auto VALID_COOKIE_NAME = webpp::charset(
+static constexpr auto VALID_COOKIE_NAME = webpp::charset(
   webpp::ALPHA_DIGIT<>,
   webpp::charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
 
-constexpr static auto VALID_COOKIE_VALUE = webpp::charset(
+static constexpr auto VALID_COOKIE_VALUE = webpp::charset(
   webpp::ALPHA_DIGIT<char>,
   webpp::charset<char, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
                            '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
@@ -23,11 +23,12 @@ namespace v1 {
     using namespace webpp;
 
     template <typename ErrorType>
-    constexpr void parse_SE_pair(istl::StringView auto& str,
-                                 auto&                  name,
-                                 auto&                  value,
-                                 ErrorType&             err,
-                                 ErrorType              err_value) noexcept {
+    constexpr void parse_SE_pair(
+      istl::StringView auto& str,
+      auto&                  name,
+      auto&                  value,
+      ErrorType&             err,
+      ErrorType              err_value) noexcept {
         using namespace webpp::benchmark::v1;
         string_tokenizer tok{str};
         tok.skip(OWS);
@@ -44,7 +45,8 @@ namespace v1 {
         using string_view_type = stl::remove_cvref_t<decltype(str)>;
         ascii::ltrim(str);
         if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
-            equal_pos != string_view_type::npos) {
+            equal_pos != string_view_type::npos)
+        {
             // setting the name we found it
             _name = name_t{str.substr(0, equal_pos)};
 
@@ -57,21 +59,23 @@ namespace v1 {
         }
     }
 
-
     constexpr void
     parse_SE_value(istl::StringView auto& str, auto& _name, auto& _value, bool& _valid) noexcept {
         using string_view_type = stl::remove_cvref_t<decltype(str)>;
 
         parse_SE_name(str, _name, _valid);
-        if (!_valid)
+        if (!_valid) {
             return; // do not continue if there's no name
+        }
         ascii::ltrim(str);
-        if (ascii::starts_with(str, '='))
+        if (ascii::starts_with(str, '=')) {
             str.remove_prefix(1);
+        }
         ascii::ltrim(str);
         if (ascii::starts_with(str, '"')) {
             if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
-                d_quote_end != string_view_type::npos) {
+                d_quote_end != string_view_type::npos)
+            {
                 if (str[d_quote_end] == '"') {
                     _value = str.substr(1, d_quote_end - 1);
                     str.remove_prefix(d_quote_end + 1);
@@ -91,7 +95,8 @@ namespace v1 {
         } else {
             // there's no double quote in the value
             if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE.data());
-                semicolon_pos != string_view_type::npos) {
+                semicolon_pos != string_view_type::npos)
+            {
                 _value = str.substr(0, semicolon_pos);
                 str.remove_prefix(semicolon_pos);
             } else {
@@ -113,11 +118,12 @@ namespace v2 {
     using namespace webpp;
 
     template <typename ErrorType>
-    constexpr void parse_SE_pair(istl::StringView auto& str,
-                                 auto&                  name,
-                                 auto&                  value,
-                                 ErrorType&             err,
-                                 ErrorType              err_value) noexcept {
+    constexpr void parse_SE_pair(
+      istl::StringView auto& str,
+      auto&                  name,
+      auto&                  value,
+      ErrorType&             err,
+      ErrorType              err_value) noexcept {
         using namespace webpp::benchmark::v2;
         string_tokenizer tok{str};
         tok.skip(OWS);
@@ -142,8 +148,8 @@ static void StrViewParser(benchmark::State& state) {
         benchmark::DoNotOptimize(is_valid);
     }
 }
-BENCHMARK(StrViewParser);
 
+BENCHMARK(StrViewParser);
 
 static void TokenizerParserV1(benchmark::State& state) {
     for (auto _ : state) {
@@ -157,8 +163,8 @@ static void TokenizerParserV1(benchmark::State& state) {
         benchmark::DoNotOptimize(is_valid);
     }
 }
-BENCHMARK(TokenizerParserV1);
 
+BENCHMARK(TokenizerParserV1);
 
 static void TokenizerParserV2(benchmark::State& state) {
     for (auto _ : state) {
@@ -172,4 +178,5 @@ static void TokenizerParserV2(benchmark::State& state) {
         benchmark::DoNotOptimize(is_valid);
     }
 }
+
 BENCHMARK(TokenizerParserV2);

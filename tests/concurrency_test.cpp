@@ -12,16 +12,17 @@ using namespace webpp::stl;
 // NOLINTBEGIN(*-magic-numbers)
 
 TEST(ConcurrencyTest, AtomicCounter) {
-
     atomic_counter<int> counter;
 
     thread th{[&] {
-        for (int i = 0; i != 100; i++)
+        for (int i = 0; i != 100; i++) {
             ++counter;
+        }
     }};
 
-    for (int i = 0; i != 50; i++)
+    for (int i = 0; i != 50; i++) {
         --counter;
+    }
 
     th.join();
 
@@ -29,26 +30,23 @@ TEST(ConcurrencyTest, AtomicCounter) {
     EXPECT_LT(counter, 3000);
 }
 
-
-
 TEST(ConcurrencyTest, STDAtomicCounter) {
-
     std::atomic<int> counter;
 
     thread th{[&] {
-        for (int i = 0; i != 100; i++)
+        for (int i = 0; i != 100; i++) {
             ++counter;
+        }
     }};
 
-    for (int i = 0; i != 50; i++)
+    for (int i = 0; i != 50; i++) {
         --counter;
+    }
 
     th.join();
 
     EXPECT_EQ(counter, 50);
     EXPECT_LT(counter, 3000);
 }
-
-
 
 // NOLINTEND(*-magic-numbers)

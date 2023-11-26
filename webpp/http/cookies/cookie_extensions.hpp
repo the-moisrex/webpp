@@ -12,10 +12,8 @@ namespace webpp::http {
 
 
     struct cookies {
-
         template <HTTPHeaderField HF>
         struct cookie_header_field_extension : public HF {
-
           private:
             using super = HF;
 
@@ -58,7 +56,6 @@ namespace webpp::http {
             }
         };
 
-
         template <Header H>
         struct cookie_header_extension : public virtual H {
             using traits_type      = typename H::traits_type;
@@ -77,16 +74,20 @@ namespace webpp::http {
             auto cookies() const noexcept {
                 if constexpr (super::header_direction == header_type::request) {
                     request_cookie_jar<traits_type> cookies;
-                    for (auto& c : *this)
-                        if (c.is_cookie())
+                    for (auto& c : *this) {
+                        if (c.is_cookie()) {
                             cookies.emplace(c);
+                        }
+                    }
                     return cookies;
                 } else {
                     // response
                     response_cookie_jar<traits_type> cookies;
-                    for (auto& c : *this)
-                        if (c.is_cookie())
+                    for (auto& c : *this) {
+                        if (c.is_cookie()) {
                             cookies.emplace(c);
+                        }
+                    }
                     return cookies;
                 }
             }
@@ -101,13 +102,13 @@ namespace webpp::http {
              */
             void remove_cookies() noexcept {
                 for (auto it = super::begin(); it != super::end();) {
-                    if (it->is_cookie())
+                    if (it->is_cookie()) {
                         it = erase(it);
-                    else
+                    } else {
                         ++it;
+                    }
                 }
             }
-
 
             /**
              * @brief replace cookies in the cookie_jar with all the cookies in
@@ -120,7 +121,6 @@ namespace webpp::http {
                     emplace(c);
                 }
             }
-
 
             /**
              * Replace a single cookie
@@ -146,8 +146,9 @@ namespace webpp::http {
              * @param _cookie
              */
             void replace_cookie(super::iterator const& it, Cookie auto const& cookie) noexcept {
-                if (it == super::end())
+                if (it == super::end()) {
                     return;
+                }
                 super::erase(it);
                 emplace(cookie);
             }

@@ -14,7 +14,6 @@ TEST(StopWatch, Init) {
     EXPECT_GE(watch.elapse_now(), 10s);
 }
 
-
 TEST(StopWatch, Stop) {
     auto const      ten_secs_ago = high_resolution_clock::now() - 10s;
     time::stopwatch watch{ten_secs_ago};
@@ -29,13 +28,11 @@ TEST(StopWatch, Elapse) {
     EXPECT_EQ(watch.elapse(ten_secs_ago + 5s), 5s);
 }
 
-
 TEST(StopWatch, Duration) {
     time::stopwatch watch;
     watch += 10s;
     EXPECT_EQ(watch.elapsed(), 10s);
 }
-
 
 TEST(StopWatch, DurationSeconds) {
     time::stopwatch watch;

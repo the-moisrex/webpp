@@ -92,7 +92,10 @@
 
 namespace webpp::http {
 
-    enum struct cookie_version : stl::uint_fast8_t { version_0 = 0, version_1 = 1 };
+    enum struct cookie_version : stl::uint_fast8_t {
+        version_0 = 0,
+        version_1 = 1
+    };
 
     /**
      * Even though these algorithms are capable of handling other char types than "char" itself, they
@@ -100,11 +103,11 @@ namespace webpp::http {
      */
     namespace details {
 
-        constexpr static auto VALID_COOKIE_NAME = charset(
+        static constexpr auto VALID_COOKIE_NAME = charset(
           ALPHA_DIGIT<>,
           charset<char, 16>{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'});
 
-        constexpr static auto VALID_COOKIE_VALUE =
+        static constexpr auto VALID_COOKIE_VALUE =
           charset(ALPHA_DIGIT<char>,
                   charset<char, 28>{'!', '#', '$', '%', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
                                     '<', '=', '>', '?', '@', '[',  ']', '^', '_', '`', '{', '|', '}', '~'});
@@ -116,7 +119,8 @@ namespace webpp::http {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
             ascii::ltrim(str);
             if (auto equal_pos = str.find_first_not_of(VALID_COOKIE_NAME.data());
-                equal_pos != string_view_type::npos) {
+                equal_pos != string_view_type::npos)
+            {
                 // setting the name we found it
                 _name = name_t{str.substr(0, equal_pos)};
 
@@ -136,15 +140,18 @@ namespace webpp::http {
             using string_view_type = stl::remove_cvref_t<decltype(str)>;
 
             parse_SE_name(str, _name, _valid);
-            if (!_valid)
+            if (!_valid) {
                 return; // do not continue if there's no name
+            }
             ascii::ltrim(str);
-            if (ascii::starts_with(str, '='))
+            if (ascii::starts_with(str, '=')) {
                 str.remove_prefix(1);
+            }
             ascii::ltrim(str);
             if (ascii::starts_with(str, '"')) {
                 if (auto d_quote_end = str.find_first_not_of(VALID_COOKIE_VALUE.data(), 1);
-                    d_quote_end != string_view_type::npos) {
+                    d_quote_end != string_view_type::npos)
+                {
                     if (str[d_quote_end] == '"') {
                         _value = str.substr(1, d_quote_end - 1);
                         str.remove_prefix(d_quote_end + 1);
@@ -164,7 +171,8 @@ namespace webpp::http {
             } else {
                 // there's no double quote in the value
                 if (auto semicolon_pos = str.find_first_not_of(VALID_COOKIE_VALUE.data());
-                    semicolon_pos != string_view_type::npos) {
+                    semicolon_pos != string_view_type::npos)
+                {
                     _value = str.substr(0, semicolon_pos);
                     str.remove_prefix(semicolon_pos);
                 } else {
@@ -179,12 +187,10 @@ namespace webpp::http {
             // that it's invalid so far, it really is invalid.
         }
 
-
         // check if the specified string is encrypted
         static constexpr bool is_encrypted() noexcept;
         static constexpr void encrypt_to(istl::StringView auto&& value, auto& to) noexcept;
         static constexpr void decrypt_to(istl::StringView auto&& value, auto& to) noexcept;
-
 
         /*
          * Escapes the given string by replacing all
@@ -219,15 +225,13 @@ namespace webpp::http {
          * respective characters.
          */
         static constexpr bool cookie_value_unescape_to(istl::StringView auto value, auto& to) noexcept {
-            return decode_uri_component<uri_encoding_policy::encode_chars>(value,
-                                                                           to,
-                                                                           COOKIE_VALUE_ILLEGAL_CHARS);
+            return decode_uri_component<uri_encoding_policy::encode_chars>(
+              value,
+              to,
+              COOKIE_VALUE_ILLEGAL_CHARS);
         }
 
     } // namespace details
-
-
-
 
     //    template <typename Traits, header_type HeaderType = header_type::response>
     //    class basic_cookie : public stl::conditional_t<HeaderType == header_type::response,

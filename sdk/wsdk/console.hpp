@@ -14,8 +14,6 @@ namespace webpp::sdk {
         int height = DEFAULT_CONSOLE_HEIGHT;
     };
 
-
-
     struct console {
         /// get current console width in chars
         static int width(int default_value = DEFAULT_CONSOLE_WIDTH) noexcept;

@@ -33,7 +33,6 @@ TEST(HTTPRequestTest, Constructors) {
     EXPECT_EQ(23, req1.headers.content_length());
 }
 
-
 TEST(HTTPRequestTest, DynamicRequest) {
     fake_protocol pt;
     req_t         req{pt};

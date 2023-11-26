@@ -25,16 +25,17 @@ namespace webpp {
                 using resources        = type_list<default_resource_descriptor>;
                 using default_resource = default_resource_descriptor;
 
-                static constexpr alloc::feature_pack allocator_features{alloc::stateless,
-                                                                        alloc::sync,
-                                                                        alloc::low_locality};
+                static constexpr alloc::feature_pack allocator_features{
+                  alloc::stateless,
+                  alloc::sync,
+                  alloc::low_locality};
                 template <typename T>
                 using allocator = stl::allocator<T>;
             };
         } // namespace details
 
         using allocator_descriptors = type_list<details::std_allocator_descriptor_type>;
-    } // namespace stl
+    }     // namespace stl
 
 } // namespace webpp
 

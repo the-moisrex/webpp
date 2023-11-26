@@ -10,7 +10,6 @@ namespace webpp::http {
     static constexpr auto http_lws = charset(" \t");
     using http_lws_type            = stl::remove_cvref_t<decltype(http_lws)>;
 
-
     // Return true if the character is HTTP "linear white space" (SP | HT).
     // This definition corresponds with the HTTP_LWS macro, and does not match
     // newlines.
@@ -50,7 +49,6 @@ namespace webpp::http {
     static inline void trim_lws(istl::StringView auto& str) noexcept {
         ascii::trim(str, http_lws);
     }
-
 
     // trim from start (copying)
     [[nodiscard]] static inline auto ltrim_copy_lws(istl::StringViewifiable auto&& s) noexcept {

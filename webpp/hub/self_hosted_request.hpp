@@ -25,7 +25,6 @@ namespace webpp::http::shosted {
           : super(stl::forward<Args>(args)...),
             session{_session} {}
 
-
         // #define WEBPP_SHOSTED_HEADER(name, value)
         //     [[nodiscard]] string_view_type name() const noexcept {
         //         return protocol_type::header(value);

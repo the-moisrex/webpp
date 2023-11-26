@@ -11,7 +11,6 @@
 
 #include <cstdint>
 
-
 // This file contains the list of HTTP status codes. Taken from IANA HTTP Status Code Registry.
 // https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
 // There are some that are defined in this file as well but is not standard.
@@ -175,12 +174,11 @@ namespace webpp::http {
         network_connect_timeout_error   = 599
     };
 
-
     constexpr auto status_code_reason_phrase(status_code_type code) noexcept {
         switch (code) {
             case 100: return "Continue";
             case 101: return "Switching Protocols";
-            case 102: // WebDav
+            case 102:                       // WebDav
                 return "Processing";
             case 103: return "Early Hints"; // rfc8297.html
 
@@ -315,8 +313,6 @@ namespace webpp::http {
         }
         return status_code_category::unknown;
     }
-
-
 
     static constexpr bool is_fatal_error(status_code_type code) noexcept {
         return (code == 400) || (code >= 500) || (code == 408) || ((code >= 411) && (code <= 415));

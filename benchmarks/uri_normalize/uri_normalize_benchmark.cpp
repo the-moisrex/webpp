@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 namespace test {
     struct basic_path : public std::vector<std::string> {
         static constexpr std::string_view parent_dir  = "..";
@@ -32,8 +31,9 @@ namespace test {
         }
 
         void remove_dot_segments_erase(bool remove_leading) {
-            if (this->empty())
+            if (this->empty()) {
                 return;
+            }
 
             auto it = this->begin();
 
@@ -44,7 +44,7 @@ namespace test {
                     continue;
                 } else if (*it == parent_dir) {
                     if (it != this->begin()) {
-                        const auto p = std::prev(it);
+                        auto const p = std::prev(it);
                         if (p->empty()) {
                             // remove just this one
                             this->erase(it);
@@ -66,18 +66,20 @@ namespace test {
 
         // from poco library (with a little optimization)
         void remove_dot_segments_poco(bool removeLeading) {
-            if (this->empty())
+            if (this->empty()) {
                 return;
+            }
 
             std::vector<std::string> normalizedSegments;
             normalizedSegments.reserve(this->size());
-            for (const auto& s : *this) {
+            for (auto const& s : *this) {
                 if (s == "..") {
                     if (!normalizedSegments.empty()) {
-                        if (normalizedSegments.back() == "..")
+                        if (normalizedSegments.back() == "..") {
                             normalizedSegments.push_back(s);
-                        else
+                        } else {
                             normalizedSegments.pop_back();
+                        }
                     } else if (!removeLeading) {
                         normalizedSegments.push_back(s);
                     }
@@ -93,8 +95,9 @@ namespace test {
          * todo: check if "erase", "shift_left" or "rotate" is better
          */
         void remove_dot_segments(bool remove_leading) {
-            if (this->empty())
+            if (this->empty()) {
                 return;
+            }
 
             auto the_end = this->end();
             auto it      = this->begin();
@@ -107,7 +110,7 @@ namespace test {
                     continue;
                 } else if (*it == parent_dir) {
                     if (it != this->begin()) {
-                        const auto p = std::prev(it);
+                        auto const p = std::prev(it);
                         if (p->empty()) {
                             // remove just this one
                             the_end = std::rotate(it, std::next(it), the_end);
@@ -132,7 +135,7 @@ namespace test {
             this->erase(this->begin(),
                         (this->rend() - std::remove_if(this->rbegin(),
                                                        this->rend(),
-                                                       [borrowed_paths = 0](const auto& element) mutable {
+                                                       [borrowed_paths = 0](auto const& element) mutable {
                                                            if (element == current_dir) {
                                                                return true;
                                                            } else if (element == parent_dir) {
@@ -148,11 +151,11 @@ namespace test {
                           this->begin());
         }
 
-
         std::string to_string() const {
             std::string str{this->get_allocator()};
-            if (this->size() == 0)
+            if (this->size() == 0) {
                 return str;
+            }
 
             auto it = this->cbegin();
             str.append(*it++);
@@ -165,16 +168,17 @@ namespace test {
     };
 } // namespace test
 
-
 auto const paths = []() {
-    vector<test::basic_path> _paths{test::basic_path{"..", "home", "..", ".", "test"},
-                                    test::basic_path{".", "home", "..", ".", "test"},
-                                    test::basic_path{"..", "home", "...", ".", "test"},
-                                    test::basic_path{"", "home", ".", ".", "test", ".."},
-                                    test::basic_path{"..", "home", "..", ".", "test", "."},
-                                    test::basic_path{"", "..", "home", "..", ".", "test"},
-                                    test::basic_path{"", ".", "home", "..", ".", "test", "."},
-                                    test::basic_path{"..", "home", "..", ".", "test", ""}};
+    vector<test::basic_path> _paths{
+      test::basic_path{"..", "home", "..", ".", "test"},
+      test::basic_path{".", "home", "..", ".", "test"},
+      test::basic_path{"..", "home", "...", ".", "test"},
+      test::basic_path{"", "home", ".", ".", "test", ".."},
+      test::basic_path{"..", "home", "..", ".", "test", "."},
+      test::basic_path{"", "..", "home", "..", ".", "test"},
+      test::basic_path{"", ".", "home", "..", ".", "test", "."},
+      test::basic_path{"..", "home", "..", ".", "test", ""}
+    };
     return _paths;
 }();
 
@@ -188,6 +192,7 @@ static void URINormalize_Rotate(benchmark::State& state) {
         benchmark::DoNotOptimize(the_paths);
     }
 }
+
 BENCHMARK(URINormalize_Rotate);
 
 static void URINormalize_Erase(benchmark::State& state) {
@@ -200,6 +205,7 @@ static void URINormalize_Erase(benchmark::State& state) {
         benchmark::DoNotOptimize(the_paths);
     }
 }
+
 BENCHMARK(URINormalize_Erase);
 
 static void URINormalize_Poco(benchmark::State& state) {
@@ -212,6 +218,7 @@ static void URINormalize_Poco(benchmark::State& state) {
         benchmark::DoNotOptimize(the_paths);
     }
 }
+
 BENCHMARK(URINormalize_Poco);
 
 static void URINormalize_SimpleRemoveIf(benchmark::State& state) {
@@ -224,4 +231,5 @@ static void URINormalize_SimpleRemoveIf(benchmark::State& state) {
         benchmark::DoNotOptimize(the_paths);
     }
 }
+
 BENCHMARK(URINormalize_SimpleRemoveIf);

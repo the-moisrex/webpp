@@ -35,20 +35,22 @@ namespace webpp {
               T                       base     = 10,
               error_handling_strategy strategy = error_handling_strategy::assume_safe,
               istl::StringViewifiable StrT     = stl::string_view>
-    constexpr expected_strategy_t<strategy, T, integer_casting_errors>
-    to(StrT&& _str) noexcept(is_noexcept(strategy)) {
+    constexpr expected_strategy_t<strategy, T, integer_casting_errors> to(StrT&& _str) noexcept(
+      is_noexcept(strategy)) {
         /**
          * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */
 
-        const auto str = istl::string_viewify(stl::forward<StrT>(_str));
+        auto const str = istl::string_viewify(stl::forward<StrT>(_str));
         T          ret = 0;
-        if (!str.size())
+        if (!str.size()) {
             return ret;
+        }
 
         auto c = str.begin();
-        if (*c == '-' || *c == '+')
+        if (*c == '-' || *c == '+') {
             c++; // first character can be - or +
+        }
         for (; c != str.end(); c++) {
             auto ch = *c;
             if constexpr (base <= 10) {
@@ -64,12 +66,13 @@ namespace webpp {
                 }
                 ch -= '0';
             } else if (base > 10) {
-                if (ch >= 'a')
+                if (ch >= 'a') {
                     ch -= 'a' - 10;
-                else if (ch >= 'A')
+                } else if (ch >= 'A') {
                     ch -= 'A' - 10;
-                else
+                } else {
                     ch -= '0';
+                }
                 if constexpr (strategy == error_handling_strategy::throw_errors) {
                     if (ch > base) {
                         throw stl::invalid_argument(to_string(integer_casting_errors::invalid_base).data());
@@ -111,6 +114,7 @@ namespace webpp {
 
 
 } // namespace webpp
+
 // NOLINTEND(*-magic-numbers)
 
 #endif // WEBPP_CASTS_HPP

@@ -9,7 +9,7 @@ using namespace webpp;
 void ipv6_fuzz(string_view data) {
     ipv6 ip{data}; // from string
     ip.clear_prefix();
-    [[maybe_unused]] volatile bool res = ip.has_prefix();
+    [[maybe_unused]] bool volatile res = ip.has_prefix();
     res                                = ip.is_loopback();
     const string str                   = ip.string();
     ASSERT_NE(str.size(), 0);

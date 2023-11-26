@@ -12,7 +12,7 @@ namespace webpp {
      * Network byte-order == std::endian::big
      */
     template <typename T>
-    [[nodiscard]] constexpr static T hton(T value) noexcept {
+    [[nodiscard]] static constexpr T hton(T value) noexcept {
         if constexpr (stl::endian::native == stl::endian::big) {
             return value;
         } else {
@@ -25,7 +25,7 @@ namespace webpp {
      * Network byte-order == std::endian::big
      */
     template <typename T>
-    [[nodiscard]] constexpr static T ntoh(T value) noexcept {
+    [[nodiscard]] static constexpr T ntoh(T value) noexcept {
         if constexpr (stl::endian::native == stl::endian::big) {
             return value;
         } else {

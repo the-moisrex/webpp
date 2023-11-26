@@ -6,7 +6,6 @@
 
 #include <span>
 
-
 namespace webpp::istl {
 
     template <typename>

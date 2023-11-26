@@ -68,9 +68,11 @@ namespace webpp::ascii::is {
     [[nodiscard]] constexpr bool digit(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
-        for (auto c : str)
-            if (!digit(c))
+        for (auto c : str) {
+            if (!digit(c)) {
                 return false;
+            }
+        }
         return !str.empty();
     }
 
@@ -123,9 +125,11 @@ namespace webpp::ascii::is {
     [[nodiscard]] constexpr bool lowercase(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
-        for (auto const& c : str)
-            if (!lowercase(c))
+        for (auto const& c : str) {
+            if (!lowercase(c)) {
                 return false;
+            }
+        }
         return true;
     }
 
@@ -146,9 +150,11 @@ namespace webpp::ascii::is {
     [[nodiscard]] constexpr bool uppercase(istl::StringViewifiable auto&& _str) noexcept {
         // todo: add SIMD
         auto str = istl::string_viewify(_str);
-        for (auto const& c : str)
-            if (!uppercase(c))
+        for (auto const& c : str) {
+            if (!uppercase(c)) {
                 return false;
+            }
+        }
         return true;
     }
 
@@ -198,7 +204,8 @@ namespace webpp::ascii::is {
         }
         if (!stl::all_of(first, std::cend(str), [](char_type ch) {
                 return hex(ch);
-            })) {
+            }))
+        {
             return false;
         }
         return !str.empty();

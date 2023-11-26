@@ -129,19 +129,22 @@ namespace webpp::http {
      */
     static constexpr verb string_to_verb(stl::string_view v) noexcept {
         using namespace std::literals::string_view_literals;
-        if (v.size() < 3)
+        if (v.size() < 3) {
             return verb::unknown;
+        }
         auto c = v[0];
         v.remove_prefix(1);
         switch (c) {
             case 'A':
-                if (v == "CL"sv)
+                if (v == "CL"sv) {
                     return verb::acl;
+                }
                 break;
 
             case 'B':
-                if (v == "IND"sv)
+                if (v == "IND"sv) {
                     return verb::bind;
+                }
                 break;
 
             case 'C':
@@ -149,15 +152,18 @@ namespace webpp::http {
                 v.remove_prefix(1);
                 switch (c) {
                     case 'H':
-                        if (v == "ECKOUT"sv)
+                        if (v == "ECKOUT"sv) {
                             return verb::checkout;
+                        }
                         break;
 
                     case 'O':
-                        if (v == "NNECT"sv)
+                        if (v == "NNECT"sv) {
                             return verb::connect;
-                        if (v == "PY"sv)
+                        }
+                        if (v == "PY"sv) {
                             return verb::copy;
+                        }
                         [[fallthrough]];
 
                     default: break;
@@ -165,25 +171,30 @@ namespace webpp::http {
                 break;
 
             case 'D':
-                if (v == "ELETE"sv)
+                if (v == "ELETE"sv) {
                     return verb::del;
+                }
                 break;
 
             case 'G':
-                if (v == "ET"sv)
+                if (v == "ET"sv) {
                     return verb::get;
+                }
                 break;
 
             case 'H':
-                if (v == "EAD"sv)
+                if (v == "EAD"sv) {
                     return verb::head;
+                }
                 break;
 
             case 'L':
-                if (v == "INK"sv)
+                if (v == "INK"sv) {
                     return verb::link;
-                if (v == "OCK"sv)
+                }
+                if (v == "OCK"sv) {
                     return verb::lock;
+                }
                 break;
 
             case 'M':
@@ -191,31 +202,37 @@ namespace webpp::http {
                 v.remove_prefix(1);
                 switch (c) {
                     case '-':
-                        if (v == "SEARCH"sv)
+                        if (v == "SEARCH"sv) {
                             return verb::msearch;
+                        }
                         break;
 
                     case 'E':
-                        if (v == "RGE"sv)
+                        if (v == "RGE"sv) {
                             return verb::merge;
+                        }
                         break;
 
                     case 'K':
-                        if (v == "ACTIVITY"sv)
+                        if (v == "ACTIVITY"sv) {
                             return verb::mkactivity;
+                        }
                         if (v[0] == 'C') {
                             v.remove_prefix(1);
-                            if (v == "ALENDAR"sv)
+                            if (v == "ALENDAR"sv) {
                                 return verb::mkcalendar;
-                            if (v == "OL"sv)
+                            }
+                            if (v == "OL"sv) {
                                 return verb::mkcol;
+                            }
                             break;
                         }
                         break;
 
                     case 'O':
-                        if (v == "VE"sv)
+                        if (v == "VE"sv) {
                             return verb::move;
+                        }
                         [[fallthrough]];
 
                     default: break;
@@ -223,13 +240,15 @@ namespace webpp::http {
                 break;
 
             case 'N':
-                if (v == "OTIFY"sv)
+                if (v == "OTIFY"sv) {
                     return verb::notify;
+                }
                 break;
 
             case 'O':
-                if (v == "PTIONS"sv)
+                if (v == "PTIONS"sv) {
                     return verb::options;
+                }
                 break;
 
             case 'P':
@@ -237,27 +256,33 @@ namespace webpp::http {
                 v.remove_prefix(1);
                 switch (c) {
                     case 'A':
-                        if (v == "TCH"sv)
+                        if (v == "TCH"sv) {
                             return verb::patch;
+                        }
                         break;
 
                     case 'O':
-                        if (v == "ST"sv)
+                        if (v == "ST"sv) {
                             return verb::post;
+                        }
                         break;
 
                     case 'R':
-                        if (v == "OPFIND"sv)
+                        if (v == "OPFIND"sv) {
                             return verb::propfind;
-                        if (v == "OPPATCH"sv)
+                        }
+                        if (v == "OPPATCH"sv) {
                             return verb::proppatch;
+                        }
                         break;
 
                     case 'U':
-                        if (v == "RGE"sv)
+                        if (v == "RGE"sv) {
                             return verb::purge;
-                        if (v == "T"sv)
+                        }
+                        if (v == "T"sv) {
                             return verb::put;
+                        }
                         [[fallthrough]];
 
                     default: break;
@@ -265,39 +290,50 @@ namespace webpp::http {
                 break;
 
             case 'R':
-                if (v[0] != 'E')
+                if (v[0] != 'E') {
                     break;
+                }
                 v.remove_prefix(1);
-                if (v == "BIND"sv)
+                if (v == "BIND"sv) {
                     return verb::rebind;
-                if (v == "PORT"sv)
+                }
+                if (v == "PORT"sv) {
                     return verb::report;
+                }
                 break;
 
             case 'S':
-                if (v == "EARCH"sv)
+                if (v == "EARCH"sv) {
                     return verb::search;
-                if (v == "UBSCRIBE"sv)
+                }
+                if (v == "UBSCRIBE"sv) {
                     return verb::subscribe;
+                }
                 break;
 
             case 'T':
-                if (v == "RACE"sv)
+                if (v == "RACE"sv) {
                     return verb::trace;
+                }
                 break;
 
             case 'U':
-                if (v[0] != 'N')
+                if (v[0] != 'N') {
                     break;
+                }
                 v.remove_prefix(1);
-                if (v == "BIND"sv)
+                if (v == "BIND"sv) {
                     return verb::unbind;
-                if (v == "LINK"sv)
+                }
+                if (v == "LINK"sv) {
                     return verb::unlink;
-                if (v == "LOCK"sv)
+                }
+                if (v == "LOCK"sv) {
                     return verb::unlock;
-                if (v == "SUBSCRIBE"sv)
+                }
+                if (v == "SUBSCRIBE"sv) {
                     return verb::unsubscribe;
+                }
                 break;
 
             default: break;
@@ -305,9 +341,6 @@ namespace webpp::http {
 
         return verb::unknown;
     }
-
-
-
 
     // Returns the text representation of a request method verb.
     static constexpr stl::string_view to_string(verb v) noexcept {

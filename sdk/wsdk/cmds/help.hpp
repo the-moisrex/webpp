@@ -8,7 +8,6 @@
 namespace webpp::sdk {
 
     struct help_command final : command {
-
         help_command()                                        = default;
         help_command(help_command const&)                     = delete;
         help_command(help_command&&) noexcept                 = default;

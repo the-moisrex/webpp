@@ -70,7 +70,6 @@ namespace webpp::http {
                 // read the file successfully
                 return this->response_body(result);
             } else {
-
                 this->logger.error("Response/File",
                                    fmt::format("Cannot load the specified file: {}", filepath.string()));
                 // todo: retry feature
@@ -84,8 +83,6 @@ namespace webpp::http {
             }
         }
     };
-
-
 
     ////////////////////////////// Body Deserializer ( Body into Object ) //////////////////////////////
 
@@ -131,8 +128,9 @@ namespace webpp::http {
                     } else {
                         read = body.read(reinterpret_cast<byte_type*>(str.data() + read_total), buffer_size);
                     }
-                    if (read == 0)
+                    if (read == 0) {
                         break;
+                    }
                     read_total += static_cast<stl::size_t>(read);
                 }
                 str.resize(read_total);
@@ -190,7 +188,8 @@ namespace webpp::http {
                             case cstream_based:
                             case stream_based:
                                 throw stl::invalid_argument(
-                                  "You're asking us to get the data of a body type while the body doesn't contain "
+                                  "You're asking us to get the data of a body type while the body doesn't "
+                                  "contain "
                                   "a string so we can't get its data to put it in a string view.");
                         }
                     }
@@ -237,14 +236,15 @@ namespace webpp::http {
         requires(istl::String<T> || istl::StringView<T>)
     constexpr T tag_invoke(deserialize_body_tag, stl::type_identity<T>, BodyType&& body) {
         using type = T;
-        if constexpr (istl::String<type> && EnabledTraits<BodyType> &&
-                      istl::StringifiableOf<type, BodyType>) {
+        if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>)
+        {
             return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (istl::String<type> && EnabledTraits<BodyType> && requires {
-                                 requires alloc::HasAllocatorFor<
-                                   type,
-                                   traits::allocator_pack_type<typename BodyType::traits_type>>;
-                             }) {
+        } else if constexpr (
+          istl::String<type> && EnabledTraits<BodyType> && requires {
+              requires alloc::HasAllocatorFor<type,
+                                              traits::allocator_pack_type<typename BodyType::traits_type>>;
+          })
+        {
             type str{alloc::general_alloc_for<type>(body)};
             details::deserialize_body_impl(str, body);
             return str;
@@ -264,9 +264,6 @@ namespace webpp::http {
             static_assert_false(T, "We don't know how to get the string out of the body.");
         }
     }
-
-
-
 
     ////////////////////////////// Body Serializer ( Object into Body ) //////////////////////////////
 
@@ -289,9 +286,9 @@ namespace webpp::http {
                 auto            size      = static_cast<stl::streamsize>(str.size());
                 stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
                 do {
-                    ret_size = body.write(byte_data, size);
+                    ret_size   = body.write(byte_data, size);
                     byte_data += ret_size;
-                    size -= ret_size;
+                    size      -= ret_size;
                 } while (size > 0);
             } else {
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -299,9 +296,9 @@ namespace webpp::http {
                 auto            size      = static_cast<stl::streamsize>(str.size());
                 stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
                 do {
-                    ret_size = body.write(byte_data, size);
+                    ret_size   = body.write(byte_data, size);
                     byte_data += ret_size;
-                    size -= ret_size;
+                    size      -= ret_size;
                 } while (size > 0);
                 // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }

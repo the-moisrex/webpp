@@ -26,7 +26,6 @@ namespace webpp::http {
         }
     };
 
-
     static_assert(HTTPProtocol<server>, "The dynamic server is not a valid protocol.");
 } // namespace webpp::http
 

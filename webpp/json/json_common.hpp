@@ -16,7 +16,9 @@ namespace webpp::json {
      */
     template <typename T, typename ObjT>
         requires requires(ObjT json_obj) {
-            { json_obj.template as<T>() } -> stl::same_as<T>;
+            {
+                json_obj.template as<T>()
+            } -> stl::same_as<T>;
         }
     [[nodiscard]] static constexpr T as(ObjT&& obj) {
         return obj.template as<T>();
@@ -27,7 +29,9 @@ namespace webpp::json {
      */
     template <typename T, typename ObjT>
         requires requires(ObjT json_obj) {
-            { json_obj.template is<T>() } -> stl::same_as<bool>;
+            {
+                json_obj.template is<T>()
+            } -> stl::same_as<bool>;
         }
     [[nodiscard]] static constexpr bool is(ObjT const& obj) {
         return obj.template is<T>();
@@ -39,7 +43,6 @@ namespace webpp::json {
 
     template <typename... T>
     struct field_pack : public stl::tuple<field<T>&...> {
-
         using tuple_type = stl::tuple<field<T>&...>;
 
         using stl::tuple<field<T>&...>::tuple; // ctor
@@ -56,7 +59,6 @@ namespace webpp::json {
                 return field_pack<T..., NewT>{fields..., input_field};
             });
         }
-
 
         template <typename F>
         constexpr decltype(auto) apply(F&& func) {
@@ -83,7 +85,9 @@ namespace webpp::json {
 
         template <typename ObjHolder>
             requires requires(ObjHolder holder) {
-                { holder.as_object() } -> JSONObject;
+                {
+                    holder.as_object()
+                } -> JSONObject;
             }
         field_pack& operator=(ObjHolder&& obj) {
             return operator=(obj.as_object());
@@ -103,6 +107,7 @@ namespace webpp::json {
         key_type key{};
 
         constexpr field(key_type input_key) noexcept : key{input_key} {}
+
         constexpr field(key_type input_key, value_type const& input_value) noexcept
           : optional_value_type{input_value},
             key{input_key} {}
@@ -110,7 +115,6 @@ namespace webpp::json {
         constexpr field(key_type input_key, value_type&& input_value) noexcept
           : optional_value_type{stl::move(input_value)},
             key{input_key} {}
-
 
         template <typename U>
         constexpr field& operator=(U&& val) {

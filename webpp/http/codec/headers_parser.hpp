@@ -59,6 +59,7 @@ namespace webpp::http {
         constexpr headers_parser_iterator(value_type inp_buf, value_type inp_end) noexcept
           : buf{inp_buf},
             buf_end{inp_end} {}
+
         constexpr headers_parser_iterator(headers_parser_iterator const&)                = default;
         constexpr headers_parser_iterator(headers_parser_iterator&&) noexcept            = default;
         constexpr headers_parser_iterator& operator=(headers_parser_iterator const&)     = default;
@@ -108,8 +109,9 @@ namespace webpp::http {
         }
 
         constexpr headers_parser_iterator& operator+=(difference_type val) noexcept {
-            for (difference_type i = 0; i != val; ++i)
+            for (difference_type i = 0; i != val; ++i) {
                 operator++();
+            }
             return *this;
         }
 
@@ -147,15 +149,16 @@ namespace webpp::http {
             if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
                 /* parsing name, but do not discard SP before colon, see
                  * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
-                name_start                                  = buf;
-                static constexpr char alignas(16) ranges1[] = "\x00 "  // control chars and up to SP
-                                                              "\"\""   // 0x22
-                                                              "()"     // 0x28,0x29
-                                                              ",,"     // 0x2c
-                                                              "//"     // 0x2f
-                                                              ":@"     // 0x3a-0x40
-                                                              "[]"     // 0x5b-0x5d
-                                                              "{\377"; // 0x7b-0xff
+                name_start = buf;
+                static constexpr char alignas(16) ranges1[] =
+                  "\x00 "  // control chars and up to SP
+                  "\"\""   // 0x22
+                  "()"     // 0x28,0x29
+                  ",,"     // 0x2c
+                  "//"     // 0x2f
+                  ":@"     // 0x3a-0x40
+                  "[]"     // 0x5b-0x5d
+                  "{\377"; // 0x7b-0xff
                 int found;
                 buf = findchar_fast(buf, buf_end, ranges1, sizeof(ranges1) - 1, &found);
                 if (!found) {
@@ -188,16 +191,16 @@ namespace webpp::http {
                 name_start = nullptr;
                 name_size  = 0;
             }
-            const char* value;
+            char const* value;
             size_t      value_len;
             if ((buf = get_token_to_eol(buf, buf_end, &value, &value_len, ret)) == nullptr) {
                 buf = buf_end = nullptr;
                 return *this;
             }
             /* remove trailing SPs and HTABs */
-            const char* value_size_ptr = value + value_len;
+            char const* value_size_ptr = value + value_len;
             for (; value_size_ptr != value; --value_size) {
-                const char c = *(value_size_ptr - 1);
+                char const c = *(value_size_ptr - 1);
                 if (!(c == ' ' || c == '\t')) {
                     break;
                 }
@@ -214,7 +217,6 @@ namespace webpp::http {
         constexpr headers_parser_iterator operator++(int) const noexcept {
             return headers_parser_iterator{*this}.operator++();
         }
-
 
         [[nodiscard]] constexpr parsing_status status() const noexcept {
             return status_value;

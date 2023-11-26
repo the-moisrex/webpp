@@ -8,8 +8,8 @@ static void EmptyRandom(benchmark::State& state) {
         // benchmark::DoNotOptimize(c);
     }
 }
-BENCHMARK(EmptyRandom);
 
+BENCHMARK(EmptyRandom);
 
 auto prepare() {
     S s;
@@ -18,7 +18,6 @@ auto prepare() {
     }
     return s;
 }
-
 
 auto prepare2() {
     S s;
@@ -35,8 +34,8 @@ static void JoelHas(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
-BENCHMARK(JoelHas);
 
+BENCHMARK(JoelHas);
 
 static void MoHas(benchmark::State& state) {
     auto vals = prepare();
@@ -45,9 +44,8 @@ static void MoHas(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
+
 BENCHMARK(MoHas);
-
-
 
 static void JoelHasMo(benchmark::State& state) {
     auto vals = prepare();
@@ -56,9 +54,8 @@ static void JoelHasMo(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
+
 BENCHMARK(JoelHasMo);
-
-
 
 //////////////////////////////////////////////////
 
@@ -69,8 +66,8 @@ static void JoelHas2(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
-BENCHMARK(JoelHas2);
 
+BENCHMARK(JoelHas2);
 
 static void MoHas2(benchmark::State& state) {
     auto vals = prepare2();
@@ -79,9 +76,8 @@ static void MoHas2(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
+
 BENCHMARK(MoHas2);
-
-
 
 static void JoelHasMo2(benchmark::State& state) {
     auto vals = prepare2();
@@ -90,4 +86,5 @@ static void JoelHasMo2(benchmark::State& state) {
         benchmark::DoNotOptimize(has_them);
     }
 }
+
 BENCHMARK(JoelHasMo2);

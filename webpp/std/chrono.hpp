@@ -28,12 +28,14 @@
 // } // namespace webpp::stl::chrono
 // #else
 #include <chrono>
+
 namespace webpp::stl::chrono {
     using namespace ::std::chrono;
 }
+
 // #endif
 
-#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201'907L
 #    define WEBPP_UTC_CLOCK_SUPPORTED
 #endif
 

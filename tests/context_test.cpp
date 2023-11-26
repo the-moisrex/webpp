@@ -17,15 +17,12 @@ namespace fake {
     };
 } // namespace fake
 
-
 using fake_protocol = fake_proto<fake::app>;
 using request_type  = typename fake_protocol::request_type;
 static_assert(HTTPRequest<request_type>, "fake_request should be a http request");
 using context_type = simple_context<request_type>;
 
-
 TEST(Routes, ContextTests) {
-
     // todo: do we need this?
     // EXPECT_TRUE(static_cast<bool>(Protocol<typename request_type::protocol_type>));
 

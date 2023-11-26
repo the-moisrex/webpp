@@ -43,7 +43,6 @@ namespace webpp::http {
           : container{et},
             m_status_code{static_cast<http::status_code_type>(code)} {}
 
-
         template <EnabledTraits ET>
             requires(!stl::is_constructible_v<container, ET> && stl::is_default_constructible_v<container>)
         constexpr response_headers(ET&&, http::status_code code = http::status_code::ok) noexcept(
@@ -63,7 +62,6 @@ namespace webpp::http {
             return *this;
         }
 
-
         [[nodiscard]] constexpr http::status_code_type status_code_integer() const noexcept {
             return m_status_code;
         }
@@ -79,7 +77,6 @@ namespace webpp::http {
         constexpr void status_code(http::status_code_type code) noexcept {
             m_status_code = code;
         }
-
 
         template <typename StringType>
         constexpr void string_to(StringType& out) const {
@@ -105,7 +102,6 @@ namespace webpp::http {
         constexpr void to_string(StringType& out) const {
             string_to<StringType>(out);
         }
-
 
         [[nodiscard]] constexpr bool operator==(response_headers const& other) const noexcept {
             return m_status_code == other.m_status_code &&

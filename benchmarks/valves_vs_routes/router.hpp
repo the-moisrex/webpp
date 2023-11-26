@@ -24,6 +24,7 @@ namespace webpp::http {
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         stl::tuple<RouteType...> routes;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         constexpr router(NewRootExtensions&&, RouteType&&... _route) noexcept
@@ -80,7 +81,7 @@ namespace webpp::http {
             if constexpr (HTTPResponse<result_type> || istl::Optional<result_type>) {
                 return stl::forward<ResT>(res); // let the "next_route" function handle it
             } else if constexpr (stl::is_integral_v<result_type>) {
-                return ctx.error(res); // error code
+                return ctx.error(res);          // error code
             } else if constexpr (Route<result_type, context_type>) {
                 auto res2       = call_route(res, ctx, req);
                 using res2_type = stl::remove_cvref_t<decltype(res2)>;
@@ -95,7 +96,6 @@ namespace webpp::http {
                 static_assert_false(result_type, "We don't know how to handle your output.");
             }
         }
-
 
         template <stl::size_t Index = 0, typename ResT, Context CtxT, HTTPRequest ReqT>
         constexpr HTTPResponse decltype(auto)
@@ -115,9 +115,10 @@ namespace webpp::http {
             if constexpr (istl::Optional<result_type>) {
                 if (res) {
                     // Call this function for the same route, but strip out the optional struct
-                    return istl::deref(basic_next_route<Index>(handle_primary_results(res.value(), ctx, req),
-                                                               stl::forward<CtxT>(ctx),
-                                                               req));
+                    return istl::deref(basic_next_route<Index>(
+                      handle_primary_results(res.value(), ctx, req),
+                      stl::forward<CtxT>(ctx),
+                      req));
                 } else {
                     // We don't need to handle the result of this route, because there's none;
                     // So we just call the next route for the result.
@@ -167,13 +168,11 @@ namespace webpp::http {
             return this->template operator()<0>(context_type{req}, req);
         }
 
-
         /**
          * Call the routes with the specified request and context.
          */
         template <stl::size_t Index = 0, Context CtxT, HTTPRequest ReqT>
         constexpr HTTPResponse auto operator()(CtxT&& ctx, ReqT&& req) const noexcept {
-
             constexpr bool no_routes         = route_count() == 0u;
             constexpr bool passed_last_route = Index > (route_count() - 1);
             // constexpr auto next_route_index  = Index + 1;
@@ -184,7 +183,6 @@ namespace webpp::http {
                 // this is adds a 404 error response to the end of the routes essentially
                 return ctx.error(status_code::not_found);
             } else {
-
                 // handling root-level route calls:
                 auto route = stl::get<Index>(routes);
 

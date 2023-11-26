@@ -10,6 +10,7 @@
 inline constexpr auto log_cat = "helps";
 
 using namespace webpp::sdk;
+
 std::string_view help_command::name() const noexcept {
     return "help";
 }
@@ -21,7 +22,7 @@ std::string_view help_command::desc() const noexcept {
 enum struct available_helps : std::uint16_t {
     none          = 0x0,
     all           = 0xffffu, // print all help commands
-    root_commands = 0x00'01u
+    root_commands = 0x0001u
 };
 
 command_status help_command::start(command_options options) {
@@ -45,18 +46,16 @@ command_status help_command::start(command_options options) {
     }
 
     try {
-
         // define each help command and its corresponding function to call
         static constexpr stl::array<stl::pair<available_helps, command_status (*)(command_options&)>, 1>
           actions{
-            stl::pair{root_commands, &help_root_commands} // 1
-          };
+            stl::pair{root_commands, &help_root_commands}  // 1
+        };
         while (helps != 0x0) {
             // print all of them
             if (helps & stl::to_underlying(all)) {
                 return help_all(stl::move(options));
             } else {
-
                 // check each one of them and print their helps
                 for (auto&& [help_cmd, action] : actions) {
                     if (helps & stl::to_underlying(help_cmd)) {
@@ -94,7 +93,7 @@ command_status help_command::help_root_commands(command_options& options) {
 
     static constexpr stl::array<stl::pair<stl::string_view, stl::string_view>, 2> root_commands_table{
       stl::pair{"new / create [something]"sv, "create a new [something]"sv}, // row 1
-      {"help [something]", "Get the help"}                                   // row 2
+      {          "help [something]",               "Get the help"}  // row 2
     };
 
     options.output().send_table("Root Commands", row_view{root_commands_table});

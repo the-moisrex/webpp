@@ -17,7 +17,7 @@ enum struct inet_pton4_status {
 
 namespace v1 {
 
-    static constexpr inet_pton4_status inet_pton4(const char* src, const char* end, uint8_t* out) noexcept {
+    static constexpr inet_pton4_status inet_pton4(char const* src, char const* end, uint8_t* out) noexcept {
         bool saw_digit = false;
         int  octets    = 0;
         *out           = 0;
@@ -57,7 +57,7 @@ namespace v1 {
 
 namespace v2 {
 
-    static constexpr inet_pton4_status inet_pton4(const char* src, const char* end, uint8_t* out) noexcept {
+    static constexpr inet_pton4_status inet_pton4(char const* src, char const* end, uint8_t* out) noexcept {
         bool saw_digit = false;
         int  octets    = 0;
         *out           = 0;
@@ -110,7 +110,6 @@ namespace v2 {
     }
 } // namespace v2
 
-
 using namespace std;
 #ifdef webpp_has_boost
 using namespace boost::asio;
@@ -123,6 +122,7 @@ static void IP_asio_v4(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_asio_v4);
 #endif
 
@@ -132,6 +132,7 @@ static void IP_webpp_v4(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_webpp_v4);
 
 /////////////////// Random ///////////////////////////
@@ -145,12 +146,14 @@ auto ipv4_rands() {
     }
     return ipv4_rand;
 }
+
 auto ipv4_data() {
     static auto data = ipv4_rands();
     static auto it   = data.begin();
     ++it;
-    if (it == data.end())
+    if (it == data.end()) {
         it = data.begin();
+    }
     return *it;
 }
 
@@ -162,6 +165,7 @@ static void IP_asio_v4_random(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_asio_v4_random);
 #endif
 
@@ -172,34 +176,34 @@ static void IP_webpp_v4_random(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
-BENCHMARK(IP_webpp_v4_random);
 
+BENCHMARK(IP_webpp_v4_random);
 
 static void IP_webpp_v4_random_inet_pton4_v1(benchmark::State& state) {
     ipv4_data();
     for (auto _ : state) {
-        const auto        ip = ipv4_data();
+        auto const        ip = ipv4_data();
         array<uint8_t, 4> out_ip;
         auto              addr = v1::inet_pton4(ip.data(), ip.data() + ip.size(), out_ip.data());
         benchmark::DoNotOptimize(addr);
         benchmark::DoNotOptimize(out_ip);
     }
 }
-BENCHMARK(IP_webpp_v4_random_inet_pton4_v1);
 
+BENCHMARK(IP_webpp_v4_random_inet_pton4_v1);
 
 static void IP_webpp_v4_random_inet_pton4_v2(benchmark::State& state) {
     ipv4_data();
     for (auto _ : state) {
-        const auto        ip = ipv4_data();
+        auto const        ip = ipv4_data();
         array<uint8_t, 4> out_ip;
         auto              addr = v2::inet_pton4(ip.data(), ip.data() + ip.size(), out_ip.data());
         benchmark::DoNotOptimize(addr);
         benchmark::DoNotOptimize(out_ip);
     }
 }
-BENCHMARK(IP_webpp_v4_random_inet_pton4_v2);
 
+BENCHMARK(IP_webpp_v4_random_inet_pton4_v2);
 
 static void IP_webpp_v4_random_ipv4_v1(benchmark::State& state) {
     ipv4_data();
@@ -208,8 +212,8 @@ static void IP_webpp_v4_random_ipv4_v1(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
-BENCHMARK(IP_webpp_v4_random_ipv4_v1);
 
+BENCHMARK(IP_webpp_v4_random_ipv4_v1);
 
 static void IP_webpp_v4_random_ipv4_v2(benchmark::State& state) {
     ipv4_data();
@@ -218,10 +222,8 @@ static void IP_webpp_v4_random_ipv4_v2(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_webpp_v4_random_ipv4_v2);
-
-
-
 
 ////////////////////////////// Prefix //////////////////////////////
 
@@ -233,8 +235,8 @@ static void ipv4_prefix_parsing_v1(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
-BENCHMARK(ipv4_prefix_parsing_v1);
 
+BENCHMARK(ipv4_prefix_parsing_v1);
 
 static void ipv4_prefix_parsing_v2(benchmark::State& state) {
     ipv4_data();
@@ -243,4 +245,5 @@ static void ipv4_prefix_parsing_v2(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+
 BENCHMARK(ipv4_prefix_parsing_v2);

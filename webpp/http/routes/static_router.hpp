@@ -29,6 +29,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes)
         [[no_unique_address]] objects_type objects{};
+
         // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes)
 
         constexpr static_router(RouteType&&... _route) : routes{stl::forward<RouteType>(_route)...} {
@@ -118,7 +119,6 @@ namespace webpp::http {
             }
             return stl::move(ctx.response);
         }
-
 
         /**
          * Call the routes with the specified request and context.

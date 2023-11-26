@@ -23,7 +23,6 @@ namespace webpp::http {
         using string_view_type = StringViewType;
         using char_type        = typename string_view_type::value_type;
 
-
         template <typename... Args>
         constexpr request_cookie_jar(Args&&... args) noexcept(noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
@@ -41,8 +40,9 @@ namespace webpp::http {
                 string_view_type value;
                 bool             is_valid;
                 details::parse_SE_value(source, name, value, is_valid);
-                if (!is_valid)
+                if (!is_valid) {
                     return false;
+                }
                 this->emplace_back(name, value);
                 ascii::lremove(source, charset(';'));
             } while (!source.empty());

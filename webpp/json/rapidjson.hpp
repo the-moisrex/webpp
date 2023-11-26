@@ -29,9 +29,9 @@
 namespace rapidjson {
     // a patch for issue: https://github.com/Tencent/rapidjson/pull/1947
     template <bool Const, typename Encoding, typename Allocator>
-    GenericMemberIterator<Const, Encoding, Allocator>
-    operator+(typename GenericMemberIterator<Const, Encoding, Allocator>::DifferenceType n,
-              GenericMemberIterator<Const, Encoding, Allocator> const&                   j) {
+    GenericMemberIterator<Const, Encoding, Allocator> operator+(
+      typename GenericMemberIterator<Const, Encoding, Allocator>::DifferenceType n,
+      GenericMemberIterator<Const, Encoding, Allocator> const&                   j) {
         return j + n;
     }
 
@@ -66,8 +66,11 @@ namespace webpp::json::rapidjson {
             // default init is not allowed, but we don't want to disappoint allocator_holder
             assert(alloc);
         }
+
         constexpr rapidjson_allocator_wrapper(rapidjson_allocator_wrapper const&) = default;
+
         constexpr rapidjson_allocator_wrapper(T& the_alloc) : alloc{&the_alloc} {}
+
         constexpr rapidjson_allocator_wrapper(T const& the_alloc) : alloc{&the_alloc} {}
 
         template <typename U>
@@ -103,7 +106,6 @@ namespace webpp::json::rapidjson {
             return *alloc;
         }
 
-
         // C++ allocator compatibility
 
         [[nodiscard]] constexpr value_type* allocate(size_type n) {
@@ -135,20 +137,28 @@ namespace webpp::json::rapidjson {
         using value_type = MemberValType;
 
         constexpr key_value_pair(key_value_pair const& p) : key{p.key}, value{p.value} {}
+
         constexpr key_value_pair(key_value_pair&&) noexcept = default;
 
         constexpr key_value_pair(key_type const& k, value_type const& v) : key{k}, value{v} {}
+
         constexpr key_value_pair(key_type& k, value_type& v) : key{k}, value{v} {}
+
         constexpr key_value_pair(key_type&& k, value_type&& v) : key{stl::move(k)}, value{stl::move(v)} {}
+
         constexpr key_value_pair(key_type const& k, value_type& v) : key{k}, value{v} {}
+
         constexpr key_value_pair(key_type const& k, value_type&& v) : key{k}, value{stl::move(v)} {}
+
         constexpr key_value_pair(key_type& k, value_type const& v) : key{k}, value{v} {}
+
         constexpr key_value_pair(key_type&& k, value_type const& v) : key{stl::move(k)}, value{v} {}
 
         key_value_pair& operator=(key_value_pair const&)     = default;
         key_value_pair& operator=(key_value_pair&&) noexcept = default;
 
         auto operator<=>(key_value_pair const&) const = default;
+
         auto operator<=>(MemberValType const& val) const {
             return val <=> value;
         }
@@ -184,7 +194,6 @@ namespace webpp::json::rapidjson {
               decltype(stl::declval<typename stl::remove_cvref_t<
                          typename stl::remove_cvref_t<RapidJSONIterator>::reference>>()
                          .name)>::AllocatorType>> {
-
             using traits_type                 = TraitsType;
             using base_type                   = stl::remove_pointer_t<RapidJSONIterator>;
             using rapidjson_reference         = typename base_type::reference;
@@ -220,9 +229,11 @@ namespace webpp::json::rapidjson {
             generic_member_iterator(base_type const& iter, allocator_type const& the_alloc)
               : base_type{iter},
                 allocator_holder_type{the_alloc} {}
+
             generic_member_iterator(base_type&& iter, allocator_type const& the_alloc)
               : base_type{stl::move(iter)},
                 allocator_holder_type{the_alloc} {}
+
             generic_member_iterator(generic_member_iterator const& iter)     = default;
             generic_member_iterator(generic_member_iterator&& iter) noexcept = default;
 
@@ -240,6 +251,7 @@ namespace webpp::json::rapidjson {
                 base_type::operator++();
                 return *this;
             }
+
             iterator& operator--() {
                 base_type::operator--();
                 return *this;
@@ -248,14 +260,15 @@ namespace webpp::json::rapidjson {
             iterator operator++(int) { // NOLINT(cert-dcl21-cpp)
                 return iterator(*this).operator++();
             }
+
             iterator operator--(int) { // NOLINT(cert-dcl21-cpp)
                 return iterator(*this).operator--();
             }
 
-
             iterator operator+(difference_type n) const {
                 return base_type::operator+(n);
             }
+
             iterator operator-(difference_type n) const {
                 return base_type::operator-(n);
             }
@@ -264,28 +277,32 @@ namespace webpp::json::rapidjson {
                 base_type::operator+=(n);
                 return *this;
             }
+
             iterator& operator-=(difference_type n) {
                 base_type::operator-=(n);
                 return *this;
             }
 
-
-
             bool operator==(const_iterator that) const {
                 return base_type::operator==(that);
             }
+
             bool operator!=(const_iterator that) const {
                 return base_type::operator!=(that);
             }
+
             bool operator<=(const_iterator that) const {
                 return base_type::operator<=(that);
             }
+
             bool operator>=(const_iterator that) const {
                 return base_type::operator>=(that);
             }
+
             bool operator<(const_iterator that) const {
                 return base_type::operator<(that);
             }
+
             bool operator>(const_iterator that) const {
                 return base_type::operator>(that);
             }
@@ -293,36 +310,42 @@ namespace webpp::json::rapidjson {
             bool operator==(iterator const& that) const {
                 return base_type::operator==(that);
             }
+
             bool operator!=(iterator const& that) const {
                 return base_type::operator!=(that);
             }
+
             bool operator<=(iterator const& that) const {
                 return base_type::operator<=(that);
             }
+
             bool operator>=(iterator const& that) const {
                 return base_type::operator>=(that);
             }
+
             bool operator<(iterator const& that) const {
                 return base_type::operator<(that);
             }
+
             bool operator>(iterator const& that) const {
                 return base_type::operator>(that);
             }
 
-
-
             reference operator*() const {
                 auto& res = base_type::operator*();
-                return {{res.name.Move(), this->get_allocator()}, {res.value.Move(), this->get_allocator()}};
+                return {
+                  { res.name.Move(), this->get_allocator()},
+                  {res.value.Move(), this->get_allocator()}
+                };
             }
+
             pointer operator->() const {
                 return base_type::operator->();
             }
+
             reference operator[](difference_type n) const {
                 return base_type::operator[](n);
             }
-
-
 
             difference_type operator-(const_iterator that) const {
                 return base_type::operator-(that);
@@ -330,14 +353,11 @@ namespace webpp::json::rapidjson {
         };
 
         template <Traits TraitsType, typename RapidJSONIterator>
-        generic_member_iterator<TraitsType, RapidJSONIterator>
-        operator+(typename generic_member_iterator<TraitsType, RapidJSONIterator>::diff_t n,
-                  generic_member_iterator<TraitsType, RapidJSONIterator> const&           j) {
+        generic_member_iterator<TraitsType, RapidJSONIterator> operator+(
+          typename generic_member_iterator<TraitsType, RapidJSONIterator>::diff_t n,
+          generic_member_iterator<TraitsType, RapidJSONIterator> const&           j) {
             return j + n;
         }
-
-
-
 
         /**
          * @brief This is the common things between values' types.
@@ -346,7 +366,6 @@ namespace webpp::json::rapidjson {
          */
         template <Traits TraitsType, typename ValueContainer>
         struct json_common {
-
           private:
             // DocType could be a document or an GenericObject actually
             template <typename DocType>
@@ -374,8 +393,8 @@ namespace webpp::json::rapidjson {
             using string_view_type       = traits::string_view<traits_type>;
             using char_type              = traits::char_type<traits_type>;
             using generic_value_type     = generic_value<traits_type, value_type>;
-            using value_ref              = stl::add_lvalue_reference_t<value_type>; // add & to obj
-            using value_const_ref        = stl::add_const_t<value_ref>;             // add const
+            using value_ref              = stl::add_lvalue_reference_t<value_type>;     // add & to obj
+            using value_const_ref        = stl::add_const_t<value_ref>;                 // add const
             using auto_ref_value_type    = stl::conditional_t<has_ref, value_ref, value_type>;
             using value_ref_holder       = generic_value<traits_type, value_ref>;       // ref holder
             using value_const_ref_holder = generic_value<traits_type, value_const_ref>; // ref holder
@@ -388,12 +407,12 @@ namespace webpp::json::rapidjson {
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ValueContainer>::AllocatorType>;
 
             constexpr json_common() : val_handle{}, alloc{val_handle.GetAllocator()} {}
+
             constexpr json_common(json_common const&)     = default;
             constexpr json_common(json_common&&) noexcept = default;
 
             json_common& operator=(json_common&&) noexcept = default;
             json_common& operator=(json_common const&)     = default;
-
 
             template <typename ValT>
             json_common(ValT&& obj, allocator_type const& inp_alloc)
@@ -419,7 +438,8 @@ namespace webpp::json::rapidjson {
                         ((obj[field.key] = field.value()), ...);
                     });
                 } else if constexpr (JSONArray<T> || stl::is_array_v<T> ||
-                                     istl::is_specialization_of_array_v<T> || istl::Collection<T>) {
+                                     istl::is_specialization_of_array_v<T> || istl::Collection<T>)
+                {
                     rapidjson_value_type data{::rapidjson::kArrayType};
                     for (auto&& item : val) {
                         using item_type = stl::remove_cvref_t<decltype(item)>;
@@ -427,8 +447,8 @@ namespace webpp::json::rapidjson {
                             data.PushBack(rapidjson_value_type{item}.Move(),
                                           this->get_allocator().native_alloc());
                         } else if constexpr (istl::StringViewifiable<item_type>) {
-                            const auto item_view = istl::string_viewify(stl::move(item));
-                            const auto item_ref  = ::rapidjson::StringRef(item_view.data(), item_view.size());
+                            auto const item_view = istl::string_viewify(stl::move(item));
+                            auto const item_ref  = ::rapidjson::StringRef(item_view.data(), item_view.size());
                             data.PushBack(rapidjson_value_type{item_ref}.Move(),
                                           this->get_allocator().native_alloc());
                         }
@@ -444,7 +464,6 @@ namespace webpp::json::rapidjson {
             [[nodiscard]] bool is() const {
                 return val_handle.template Is<T>();
             }
-
 
             template <typename T>
             [[nodiscard]] T as() const {
@@ -561,7 +580,6 @@ namespace webpp::json::rapidjson {
                 return *this;
             }
 
-
             [[nodiscard]] constexpr decltype(auto) get_allocator() const {
                 return alloc;
             }
@@ -570,9 +588,6 @@ namespace webpp::json::rapidjson {
             container_type val_handle{};
             allocator_type alloc;
         };
-
-
-
 
         /**
          * This is a generic array holder
@@ -585,8 +600,11 @@ namespace webpp::json::rapidjson {
             using value_type           = generic_value<traits_type, rapidjson_value_type>;
 
             constexpr generic_array(rapidjson_array_type& arr) : arr_handle{arr} {}
+
             constexpr generic_array(rapidjson_array_type const& arr) : arr_handle{arr} {}
+
             constexpr generic_array(rapidjson_value_type& arr) : arr_handle{arr.GetArray()} {}
+
             constexpr generic_array(rapidjson_value_type const& arr) : arr_handle{arr.GetArray()} {}
 
             [[nodiscard]] constexpr stl::size_t size() const {
@@ -597,16 +615,15 @@ namespace webpp::json::rapidjson {
                 return arr_handle.Capacity();
             }
 
-
             template <JSONNumber T>
             [[nodiscard]] constexpr auto& operator[](T index) {
                 return *stl::find(begin(), end(), static_cast<::rapidjson::SizeType>(index));
             }
 
-
             constexpr auto begin() const {
                 return arr_handle.Begin();
             }
+
             constexpr auto end() const {
                 return arr_handle.End();
             }
@@ -614,6 +631,7 @@ namespace webpp::json::rapidjson {
             constexpr auto cbegin() const {
                 return arr_handle.Begin();
             }
+
             constexpr auto cend() const {
                 return arr_handle.End();
             }
@@ -638,7 +656,7 @@ namespace webpp::json::rapidjson {
             using string_view_type     = traits::string_view<traits_type>;
             using json_common_type     = json_common<TraitsType, ValueType>;
 
-            using json_common_type::json_common; // common ctors
+            using json_common_type::json_common;  // common ctors
 
             template <typename T>
                 requires(stl::is_arithmetic_v<T>) // only numbers
@@ -653,11 +671,12 @@ namespace webpp::json::rapidjson {
         };
 
         namespace details {
-            define_is_specialization_of(is_generic_object,
-                                        auto             WEBPP_COMMA typename...,
-                                        auto Item        WEBPP_COMMA typename... Args,
-                                        Item WEBPP_COMMA Args...);
-        };
+            define_is_specialization_of(
+              is_generic_object,
+              auto             WEBPP_COMMA typename...,
+              auto Item        WEBPP_COMMA typename... Args,
+              Item WEBPP_COMMA Args...);
+        } // namespace details
 
         /**
          * This is a json object which means it can hold a key/value pair of value objects.
@@ -670,7 +689,6 @@ namespace webpp::json::rapidjson {
         struct generic_object
           : public allocator_holder<
               rapidjson_allocator_wrapper<typename stl::remove_cvref_t<ObjectType>::AllocatorType>> {
-
             static_assert(details::is_generic_object_v<ObjectType, ::rapidjson::GenericObject>,
                           "it's an object not a value");
 
@@ -694,18 +712,17 @@ namespace webpp::json::rapidjson {
               : allocator_holder_type(the_alloc),
                 obj_handle{obj} {}
 
-
             template <JSONKey KeyType>
             [[nodiscard]] value_type operator[](KeyType&& key) {
                 if constexpr (JSONNumber<KeyType>) {
                     // fixme: write tests for this, this will run the "index" version, right?
-                    const auto key_value = rapidjson_plain_value_type{stl::forward<KeyType>(key)};
+                    auto const key_value = rapidjson_plain_value_type{stl::forward<KeyType>(key)};
                     return value_type{obj_handle[key_value], this->get_allocator()};
                 } else if constexpr (JSONString<KeyType>) {
                     // The key is convertible to string_view
-                    const auto key_view =
+                    auto const key_view =
                       istl::string_viewify_of<string_view_type>(stl::forward<KeyType>(key));
-                    const auto key_ref = ::rapidjson::StringRef(key_view.data(), key_view.size());
+                    auto const key_ref = ::rapidjson::StringRef(key_view.data(), key_view.size());
                     if (!contains(key_ref)) {
                         obj_handle.AddMember(rapidjson_plain_value_type{key_ref},
                                              rapidjson_plain_value_type{},
@@ -744,6 +761,7 @@ namespace webpp::json::rapidjson {
             iterator_type begin() const {
                 return {obj_handle.MemberBegin(), this->get_allocator()};
             }
+
             iterator_type end() const {
                 return {obj_handle.MemberEnd(), this->get_allocator()};
             }
@@ -751,6 +769,7 @@ namespace webpp::json::rapidjson {
             iterator_type cbegin() const {
                 return {obj_handle.MemberBegin(), this->get_allocator()};
             }
+
             iterator_type cend() const {
                 return {obj_handle.MemberEnd(), this->get_allocator()};
             }
@@ -758,7 +777,7 @@ namespace webpp::json::rapidjson {
             template <typename KeyT>
             [[nodiscard]] bool contains(KeyT&& key) const {
                 if constexpr (JSONKey<KeyT>) {
-                    const auto key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
+                    auto const key_view = istl::string_viewify_of<string_view_type>(stl::forward<KeyT>(key));
                     return obj_handle.HasMember(key_view.data()); // fixme: not passing the length
                 } else if constexpr (requires { obj_handle.HasMember(stl::forward<KeyT>(key)); }) {
                     return obj_handle.HasMember(stl::forward<KeyT>(key));
@@ -771,7 +790,6 @@ namespace webpp::json::rapidjson {
           protected:
             rapidjson_object_type obj_handle;
         };
-
 
         /**
          * Rapidjson GenericValue wrapper
@@ -803,7 +821,7 @@ namespace webpp::json::rapidjson {
             using json_common<TraitsType, ValueType>::json_common;
             using json_common<TraitsType, ValueType>::operator=;
 
-            constexpr generic_value(const generic_value&)     = default;
+            constexpr generic_value(generic_value const&)     = default;
             constexpr generic_value(generic_value&&) noexcept = default;
 
             template <typename V>
@@ -826,7 +844,6 @@ namespace webpp::json::rapidjson {
                 return this->val_handle.HasMember(::rapidjson::StringRef(key.data(), key.size()));
             }
 
-
             // this method will assume that the value is an object
             template <typename T>
             [[nodiscard]] decltype(auto) operator[](T&& val) {
@@ -839,7 +856,6 @@ namespace webpp::json::rapidjson {
                     return this->as_object().emplace(val, rapidjson_value_type{})[val];
                 }
             }
-
 
             //            template <stl::size_t N>
             //            [[nodiscard]] auto operator[](char_type const child_name[N]) {
@@ -938,10 +954,10 @@ namespace webpp::json::rapidjson {
         /**
          * Get the file and parse it.
          */
-        explicit document(const stl::filesystem::path& file_path) {
+        explicit document(stl::filesystem::path const& file_path) {
             stl::FILE* fp = stl::fopen(file_path.c_str(), "rb");
 
-            stack<65536>                read_buffer;
+            stack<65'536>               read_buffer;
             ::rapidjson::FileReadStream is(fp, read_buffer.data(), read_buffer.size());
             this->ParseStream(is);
 
@@ -966,18 +982,16 @@ namespace webpp::json::rapidjson {
                      (stl::convertible_to<stl::remove_cvref_t<ConvertibleToValue>,
                                           value_type> && // check if it's a value or an object
                       !stl::same_as<stl::remove_cvref_t<stl::remove_cvref_t<ConvertibleToValue>>, document>) )
-        document(ConvertibleToValue&& val) // NOLINT(bugprone-forwarding-reference-overload)
+        document(ConvertibleToValue&& val)               // NOLINT(bugprone-forwarding-reference-overload)
           : generic_value_type{stl::forward<ConvertibleToValue>(val)} {}
-
 
         // implement the parse method
         template <istl::StringViewifiable StrT>
         document& parse(StrT&& json_string) {
-            const auto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
+            auto consto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
             this->val_handle.Parse(json_str_view.data(), json_str_view.size());
             return *this;
         }
-
 
         template <istl::String StrT = string_type, typename... Args>
         [[nodiscard]] StrT pretty(Args&&... string_args) const {

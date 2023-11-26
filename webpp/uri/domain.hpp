@@ -29,7 +29,7 @@ namespace webpp {
     /**
      * Get the error message as a string view
      */
-    static constexpr stl::string_view to_string(domain_name_status status) noexcept {
+    static constexpr stl::string_view to_string(domain_name_status const status) noexcept {
         switch (status) {
             using enum domain_name_status;
             case valid: return {"Valid ascii domain name"};
@@ -40,7 +40,8 @@ namespace webpp {
                 return {"The subdomain is too long, max allowed character in a sub-domain is 63"};
             case dot_at_end:
                 return {
-                  "The domain ended unexpectedly; domains cannot have a dot at the end (this is not a dns record)"};
+                  "The domain ended unexpectedly; "
+                  "domains cannot have a dot at the end (this is not a dns record)"};
             case begin_with_hyphen: return {"The domain cannot start with hyphens"};
             case end_with_hyphen: return {"The domain cannot end with hyphens"};
             case double_hyphen: return {"The domain cannot have double hyphens unless it's a punycode"};
@@ -54,7 +55,6 @@ namespace webpp {
         static constexpr auto subdomain_threshold   = 63;
     } // namespace details
 
-
     /**
      * Parse a domain name
      *
@@ -62,7 +62,7 @@ namespace webpp {
      * @param end end
      * @return status of the parsing
      */
-    constexpr domain_name_status parse_domain_name(const char*& pos, const char* end) noexcept {
+    constexpr domain_name_status parse_domain_name(char const*& pos, char const* end) noexcept {
         // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
         using enum domain_name_status;
         if (pos == end) {
@@ -79,16 +79,15 @@ namespace webpp {
         }
 
         bool        has_punycode    = false;
-        const auto* subdomain_start = pos;
+        auto const* subdomain_start = pos;
         while (pos != end) {
-
             if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
                 has_punycode = true;
                 pos          = charset{ALPHA_DIGIT<char>, charset{'-'}}.find_first_not_in(pos, end);
                 continue;
             }
 
-            const char cur_char = *pos++;
+            char const cur_char = *pos++;
 
             switch (cur_char) {
                 case '.':
@@ -127,9 +126,6 @@ namespace webpp {
         // NOLINTEND(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
     }
 
-
-
-
     /**
      * Domain Name
      */
@@ -150,7 +146,7 @@ namespace webpp {
 
         // Top-Level-Domain
         [[nodiscard]] constexpr stl::string_view tld() const noexcept {
-            if (const auto pos = this->rfind('.'); pos != npos) {
+            if (auto const pos = this->rfind('.'); pos != npos) {
                 return this->substr(pos + 1);
             }
             return *this; // the whole thing is a TLD

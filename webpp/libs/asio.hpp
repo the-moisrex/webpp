@@ -24,7 +24,9 @@
 
 #ifdef WEBPP_BOOST_ASIO
 #    include <boost/system/error_code.hpp>
+
 namespace boost::asio {}
+
 namespace webpp::asio {
     using error_code      = boost::system::error_code;
     using error_category  = boost::system::error_category;
@@ -34,6 +36,7 @@ namespace webpp::asio {
 
 #ifdef WEBPP_ASIO
 namespace asio {}
+
 namespace webpp::asio {
     // todo: check what the type of error_code is in asio
 }

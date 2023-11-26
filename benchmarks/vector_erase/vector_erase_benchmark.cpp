@@ -6,14 +6,14 @@ using namespace std;
 
 auto const strs = []() {
     vector<string> _strs;
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10'000; i++) {
         _strs.push_back(str_generator());
     }
     return _strs;
 }();
 auto const ints = []() {
     vector<int> _ints;
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 10'000; i++) {
         _ints.push_back(i);
     }
     return _ints;
@@ -31,6 +31,7 @@ static void StdVecErase_IntRotate(benchmark::State& state) {
         benchmark::DoNotOptimize(the_ints);
     }
 }
+
 BENCHMARK(StdVecErase_IntRotate);
 
 static void StdVecErase_IntErase(benchmark::State& state) {
@@ -44,9 +45,8 @@ static void StdVecErase_IntErase(benchmark::State& state) {
         benchmark::DoNotOptimize(the_ints);
     }
 }
+
 BENCHMARK(StdVecErase_IntErase);
-
-
 
 static void StdVecErase_StrRotate(benchmark::State& state) {
     for (auto _ : state) {
@@ -60,6 +60,7 @@ static void StdVecErase_StrRotate(benchmark::State& state) {
         benchmark::DoNotOptimize(the_strs);
     }
 }
+
 BENCHMARK(StdVecErase_StrRotate);
 
 static void StdVecErase_StrShift(benchmark::State& state) {
@@ -74,6 +75,7 @@ static void StdVecErase_StrShift(benchmark::State& state) {
         benchmark::DoNotOptimize(the_strs);
     }
 }
+
 BENCHMARK(StdVecErase_StrShift);
 
 static void StdVecErase_StrErase(benchmark::State& state) {
@@ -87,4 +89,5 @@ static void StdVecErase_StrErase(benchmark::State& state) {
         benchmark::DoNotOptimize(the_strs);
     }
 }
+
 BENCHMARK(StdVecErase_StrErase);

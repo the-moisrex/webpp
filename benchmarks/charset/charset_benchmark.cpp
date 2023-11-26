@@ -6,7 +6,7 @@
 #include <vector>
 
 
-const auto strs = str_array_generator<200>(5000, "123456789abcdefghijklmopqrstuvwzyz:/?[");
+auto const strs = str_array_generator<200>(5000, "123456789abcdefghijklmopqrstuvwzyz:/?[");
 
 void AdaAutoVectorizedSolution(benchmark::State& state) {
     std::size_t i = 0;
@@ -17,6 +17,7 @@ void AdaAutoVectorizedSolution(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
+
 BENCHMARK(AdaAutoVectorizedSolution);
 
 
@@ -31,6 +32,7 @@ void WebppSimpleCharsetSearch(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
+
 BENCHMARK(WebppSimpleCharsetSearch);
 
 
@@ -45,6 +47,7 @@ void WebppSimpleCharmapSearch(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
+
 BENCHMARK(WebppSimpleCharmapSearch);
 
 
@@ -61,4 +64,5 @@ void WebppSimpleBitmapSearch(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
+
 BENCHMARK(WebppSimpleBitmapSearch);

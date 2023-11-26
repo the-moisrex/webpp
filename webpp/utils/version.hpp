@@ -15,12 +15,12 @@ namespace webpp {
     template <stl::uint8_t, stl::integral>
     struct basic_version;
 
-
     namespace details {
-        define_is_specialization_of(is_specialization_of_basic_version_impl,
-                                    WEBPP_SINGLE_ARG(stl::uint8_t, typename),
-                                    WEBPP_SINGLE_ARG(stl::uint8_t N, stl::integral DataType),
-                                    WEBPP_SINGLE_ARG(N, DataType));
+        define_is_specialization_of(
+          is_specialization_of_basic_version_impl,
+          WEBPP_SINGLE_ARG(stl::uint8_t, typename),
+          WEBPP_SINGLE_ARG(stl::uint8_t N, stl::integral DataType),
+          WEBPP_SINGLE_ARG(N, DataType));
     } // namespace details
 
     template <typename T>
@@ -152,14 +152,15 @@ namespace webpp {
         /**
          * Load the version from string
          * @tparam StrT String-View-Like type
-         * @param str the string to load
+         * @param inp_str the string to load
          * @return bool, whether or not the parsing of the string value was a success or not.
          */
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
-        [[nodiscard("If you're discarding the result of this member function, "
-                    "that means you're not handling the case in which "
-                    "the specified string is not a valid version.")]] constexpr bool
+        [[nodiscard(
+          "If you're discarding the result of this member function, "
+          "that means you're not handling the case in which "
+          "the specified string is not a valid version.")]] constexpr bool
         from_string(StrT&& inp_str) noexcept {
             auto str    = istl::string_viewify(stl::forward<StrT>(inp_str));
             using str_v = decltype(str);
@@ -227,13 +228,13 @@ namespace webpp {
         }
 
         // Array comparison
-        [[nodiscard]] constexpr inline bool operator==(const basic_version& other) const noexcept {
+        [[nodiscard]] inline constexpr bool operator==(basic_version const& other) const noexcept {
             return std::equal(this->begin(), this->end(), other.begin());
         }
 
         template <istl::StringViewifiable StrT>
             requires(!is_specialization_of_basic_version_v<StrT>)
-        [[nodiscard]] constexpr inline bool operator==(StrT&& other) const noexcept {
+        [[nodiscard]] inline constexpr bool operator==(StrT&& other) const noexcept {
             using ver_t = basic_version;
             ver_t other_ver{};
             if (!other_ver.from_string(stl::forward<StrT>(other))) {
@@ -244,8 +245,8 @@ namespace webpp {
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
             requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
-        [[nodiscard]] constexpr bool
-        operator==(basic_version<NewCounts, NewType> const& other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(
+          basic_version<NewCounts, NewType> const& other) const noexcept {
             for (auto iter = other.begin(); auto const& item : *this) {
                 if (item != static_cast<integer_type>(*iter++)) {
                     return false;
@@ -255,7 +256,7 @@ namespace webpp {
         }
 
 #ifdef __cpp_lib_three_way_comparison
-        [[nodiscard]] constexpr auto operator<=>(const basic_version& other) const noexcept {
+        [[nodiscard]] constexpr auto operator<=>(basic_version const& other) const noexcept {
             return as_array() <=> other.as_array();
         }
 
@@ -272,8 +273,8 @@ namespace webpp {
 
         template <stl::uint8_t NewCounts, stl::integral NewType>
             requires(NewCounts != OctetCount || !stl::same_as<NewType, OctetType>)
-        [[nodiscard]] constexpr stl::partial_ordering
-        operator<=>(basic_version<NewCounts, NewType> const& other) const noexcept {
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(
+          basic_version<NewCounts, NewType> const& other) const noexcept {
             auto rhs = other.begin();
             for (auto lhs = this->begin(); lhs != this->end(); ++lhs) {
                 if (rhs == other.end()) {

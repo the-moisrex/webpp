@@ -12,7 +12,7 @@ namespace webpp {
     static constexpr StrT html_escape(StrVT&& input, StrT& out) {
         // todo: consider using SIMD if it's not being optimized
         out.reserve(input.size() * 2);
-        for (const auto ch : input) {
+        for (auto const ch : input) {
             switch (ch) {
                 case '&': out.append({'&', 'a', 'm', 'p', ';'}); break;
                 case '<': out.append({'&', 'l', 't', ';'}); break;

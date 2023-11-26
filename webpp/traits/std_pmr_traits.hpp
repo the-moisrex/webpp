@@ -20,7 +20,6 @@ namespace webpp {
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;
     };
 
-
     //    template <typename T>
     //    struct std_pmr_traits_from_string_view {
     //        using type = basic_std_pmr_traits<typename T::value_type, typename T::traits_type,
@@ -51,9 +50,13 @@ namespace webpp {
 
 
     struct std_pmr_traits : basic_std_pmr_traits<char> {};
+
     struct std_pmr_wtraits : basic_std_pmr_traits<wchar_t> {};
+
     struct std_pmr_u8traits : basic_std_pmr_traits<char8_t> {};
+
     struct std_pmr_u16traits : basic_std_pmr_traits<char16_t> {};
+
     struct std_pmr_u32traits : basic_std_pmr_traits<char32_t> {};
 
 } // namespace webpp

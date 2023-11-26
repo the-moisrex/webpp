@@ -185,10 +185,11 @@ namespace webpp {
 
         template <std::size_t I>
         [[nodiscard]] constexpr auto& at() const noexcept {
-            if constexpr (I != 0 && !std::is_void_v<next_type>)
+            if constexpr (I != 0 && !std::is_void_v<next_type>) {
                 return next().template at<I - 1>();
-            else
+            } else {
                 return *this;
+            }
         }
 
         template <typename NewValueType>
@@ -264,8 +265,9 @@ namespace webpp {
         template <typename Callable>
         constexpr void do_once(Callable const& callable) const noexcept {
             if constexpr (!std::is_void_v<type>) {
-                if (callable(value()))
+                if (callable(value())) {
                     return; // don't check the next ones
+                }
             }
             if constexpr (!std::is_void_v<next_type>) {
                 next().do_once(callable);
@@ -302,13 +304,15 @@ namespace webpp {
         template <typename T>
         constexpr bool has(T const& _value) const noexcept {
             if constexpr (!std::is_void_v<type> && std::is_convertible_v<type, T>) {
-                if (value() == _value)
+                if (value() == _value) {
                     return true;
+                }
             }
             if constexpr (!std::is_void_v<next_type>) {
                 if constexpr (std::is_convertible_v<next_type, T>) {
-                    if (value() == _value)
+                    if (value() == _value) {
                         return true;
+                    }
                 }
                 return next().has(_value);
             }
@@ -318,8 +322,9 @@ namespace webpp {
         template <typename NType, typename NNextType>
         constexpr bool operator==(const_list<NType, NNextType> const& l) const noexcept {
             if constexpr (!std::is_same_v<type, NType>) {
-                if (value() != l.value())
+                if (value() != l.value()) {
                     return false;
+                }
                 if constexpr (!std::is_void_v<next_type>) {
                     return next().operator==(l);
                 } else {

@@ -73,7 +73,6 @@ TEST(Database, SQLiteWrapper) {
     EXPECT_EQ(pass, "123");
 }
 
-
 TEST(Database, QueryBuilderTest) {
     sql_database<sqlite> db; // in memory database
 
@@ -89,8 +88,8 @@ TEST(Database, QueryBuilderTest) {
     inserter["value"] = "moisrex";
     inserter.insert();
     inserter.insert({
-      {"name", "password"}, // col 2
-      {"value", 123}        // col 3
+      { "name", "password"}, // col 2
+      {"value",        123}  // col 3
     });
 
 
@@ -100,7 +99,6 @@ TEST(Database, QueryBuilderTest) {
     EXPECT_EQ("select value from 'settings' where 'name' = 'username'", query.to_string())
       << query.to_string();
 }
-
 
 TEST(Database, InsertSelectQuery) {
     // A test for https://github.com/the-moisrex/webpp/issues/146
@@ -146,9 +144,9 @@ TEST(Database, WhereClause) {
 
 
     q1.and_where_not_in("six", 1, 2, 3);
-    EXPECT_EQ(
-      q1.to_string(),
-      "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8) and 'six' not in (1, 2, 3)")
+    EXPECT_EQ(q1.to_string(),
+              "select one, two, three from 'test' where 'four' not in (1, 2, 3, 4, 'five', 6, 7, 8) and "
+              "'six' not in (1, 2, 3)")
       << q1.to_string();
 
     q1.where_in("six", 1, 2, 3);
@@ -160,7 +158,6 @@ TEST(Database, WhereClause) {
               "select one, two, three from 'test' where 'six' in (1, 2, 3) or 'seven' in (1, 2, 3)")
       << q1.to_string();
 }
-
 
 TEST(Database, UpdateQuery) {
     sql_database<sqlite> db;

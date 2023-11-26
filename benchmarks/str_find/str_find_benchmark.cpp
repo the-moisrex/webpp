@@ -24,26 +24,28 @@ bool find_char(auto&& str, auto&& ch) noexcept {
     using simd_type                 = eve::wide<char_type>;
     static constexpr auto simd_size = simd_type::size();
 
-    const auto _size = str.size();
+    auto const _size = str.size();
 
     auto it = str.data();
 
-    const auto it1end     = it + _size;
-    const auto almost_end = it + (_size % simd_size);
+    auto const it1end     = it + _size;
+    auto const almost_end = it + (_size % simd_size);
     for (; it != almost_end; it += simd_size) {
         auto const values1 = simd_type{it};
         auto const cmped   = eve::is_not_equal(values1, ch);
-        if (eve::any(cmped))
+        if (eve::any(cmped)) {
             return false;
+        }
     }
 
-    for (it -= simd_size; it != it1end; ++it)
-        if (*it != ch)
+    for (it -= simd_size; it != it1end; ++it) {
+        if (*it != ch) {
             return false;
+        }
+    }
 
     return true;
 }
-
 
 std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
     using char_type                 = typename std::remove_cvref_t<decltype(str1)>::value_type;
@@ -51,24 +53,26 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
     using string_type               = std::string_view;
     static constexpr auto simd_size = simd_type::size();
 
-    const auto size1 = str1.size();
-    const auto size2 = str2.size();
-    if (size2 > size1)
+    auto const size1 = str1.size();
+    auto const size2 = str2.size();
+    if (size2 > size1) {
         return string_type::npos;
+    }
 
-    const auto it1start               = str1.data();
-    const auto it2start               = str2.data();
-    const auto it1end                 = it1start + size1;
-    const auto it2end                 = it2start + size2;
-    const auto last_possible_position = size1 - size2;
-    const auto finishline_size        = last_possible_position - (last_possible_position % simd_size);
-    const auto almost_end             = it1end - finishline_size;
+    auto const it1start               = str1.data();
+    auto const it2start               = str2.data();
+    auto const it1end                 = it1start + size1;
+    auto const it2end                 = it2start + size2;
+    auto const last_possible_position = size1 - size2;
+    auto const finishline_size        = last_possible_position - (last_possible_position % simd_size);
+    auto const almost_end             = it1end - finishline_size;
 
     auto it1 = str1.data();
     auto it2 = str2.data();
 
-    if (size1 < simd_size || size2 < simd_size)
+    if (size1 < simd_size || size2 < simd_size) {
         goto the_rest;
+    }
 
 
     for (; it1 != almost_end; it1 += simd_size) {
@@ -78,27 +82,28 @@ std::size_t find_str(std::string_view str1, std::string_view str2) noexcept {
         auto const cmped   = eve::is_equal(values1, values2);
 
         if (eve::any(cmped)) {
-            const auto items      = cmped.bits();
-            const auto item_end   = items.end();
-            const auto item_start = items.begin();
+            auto const items      = cmped.bits();
+            auto const item_end   = items.end();
+            auto const item_start = items.begin();
             for (auto item_it = item_start; item_it != item_end; ++item_it) {
-                if (!*item_it)
+                if (!*item_it) {
                     continue;
+                }
 
-                const auto len                 = item_it - item_start;
-                const auto new_finishline_size = finishline_size - len;
+                auto const len                 = item_it - item_start;
+                auto const new_finishline_size = finishline_size - len;
                 if (new_finishline_size <= 0) {
                     it1 += len;
                     goto the_rest;
                 }
-                const auto new_almost_end = it2end - new_finishline_size;
+                auto const new_almost_end = it2end - new_finishline_size;
                 auto       it1_rest = it1 + len + 1; // we found the first one, not it's time for the rest
                 auto       it2_rest = it2 + 1; // we checked the first char above, now it's time for the rest
 
                 for (; it1_rest != new_almost_end; it1_rest += simd_size, it2_rest += simd_size) {
-                    const auto next_values1_set = simd_type{it1_rest};
-                    const auto next_values2_set = simd_type{it2_rest};
-                    const auto res              = eve::is_not_equal(next_values1_set, next_values2_set);
+                    auto const next_values1_set = simd_type{it1_rest};
+                    auto const next_values2_set = simd_type{it2_rest};
+                    auto const res              = eve::is_not_equal(next_values1_set, next_values2_set);
                     if (eve::any(res)) {
                         goto cnt; // continue with the outer, outer loop
                     }
@@ -119,28 +124,28 @@ the_rest:
     return str1.find(str2, it1 - it1start);
 }
 
-
 std::size_t find_str_simple(std::string_view str1, std::string_view str2) noexcept {
     using char_type                 = typename std::remove_cvref_t<decltype(str1)>::value_type;
     using simd_type                 = eve::wide<char_type>;
     using string_type               = std::string_view;
     static constexpr auto simd_size = simd_type::size();
 
-    const auto size1 = str1.size();
-    const auto size2 = str2.size();
-    if (size2 > size1)
+    auto const size1 = str1.size();
+    auto const size2 = str2.size();
+    if (size2 > size1) {
         return string_type::npos;
+    }
 
-    const auto it1start               = str1.data();
-    const auto it2start               = str2.data();
-    const auto it1end                 = it1start + size1;
-    const auto it2end                 = it2start + size2;
-    const auto last_possible_position = size1 - size2;
+    auto const it1start               = str1.data();
+    auto const it2start               = str2.data();
+    auto const it1end                 = it1start + size1;
+    auto const it2end                 = it2start + size2;
+    auto const last_possible_position = size1 - size2;
 
     auto it1 = str1.data();
     auto it2 = str2.data();
 
-    const auto    last_possible_end = it1start - last_possible_position;
+    auto const    last_possible_end = it1start - last_possible_position;
     decltype(it1) found             = nullptr;
     for (; it1 != last_possible_end; ++it1) {
         if (*it1 == *it2) {
@@ -167,6 +172,7 @@ static void StrFind_FindCharString(benchmark::State& state) {
         benchmark::DoNotOptimize(str1.find('a'));
     }
 }
+
 BENCHMARK(StrFind_FindCharString);
 
 #ifdef webpp_has_eve
@@ -176,6 +182,7 @@ static void StrFind_FindCharSIMD(benchmark::State& state) {
         benchmark::DoNotOptimize(find_char(str1, 'a'));
     }
 }
+
 BENCHMARK(StrFind_FindCharSIMD);
 #endif
 
@@ -185,10 +192,11 @@ static void StrFind_FindStringString(benchmark::State& state) {
     auto str1 = str_generator();
     int  i    = str1.size() / 3;
     for (auto _ : state) {
-        const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
+        auto const str2 = str1.substr(str1.size() - (i++ % str1.size()));
         benchmark::DoNotOptimize(str1.find(str2));
     }
 }
+
 BENCHMARK(StrFind_FindStringString);
 
 // static void StrFind_FindStringSimple(benchmark::State& state) {
@@ -206,9 +214,10 @@ static void StrFind_FindStringSIMD(benchmark::State& state) {
     auto str1 = str_generator();
     int  i    = str1.size() / 3;
     for (auto _ : state) {
-        const auto str2 = str1.substr(str1.size() - (i++ % str1.size()));
+        auto const str2 = str1.substr(str1.size() - (i++ % str1.size()));
         benchmark::DoNotOptimize(find_str(str1, str2));
     }
 }
+
 BENCHMARK(StrFind_FindStringSIMD);
 #endif

@@ -24,7 +24,6 @@ TEST(Strings, StartsEndsWith) {
     EXPECT_FALSE(starts_with("_one! ", "__one!"));
 }
 
-
 TEST(Strings, ToLowerToUpper) {
     EXPECT_EQ(to_lower_copy('A'), 'a');
     EXPECT_EQ(to_lower_copy('-'), '-');
@@ -56,8 +55,9 @@ TEST(Strings, EveToLowerToUpper) {
     constexpr auto long_string = "1 LONG [STRING] is a short string WHICH IS REPEATED MANY TIMES";
     std::string    long_str    = long_string;
     long_str.reserve(long_str.size() * times);
-    for (auto i = 0; i < times; i++)
+    for (auto i = 0; i < times; i++) {
         long_str.append(long_string);
+    }
     std::string long_str2 = long_str;
     algo::simple_to_lower(long_str2);
     algo::eve_to_lower(long_str);

@@ -18,22 +18,27 @@ namespace webpp::v1 {
      */
     constexpr uint8_t to_prefix(uint32_t octets) noexcept {
         uint8_t prefix = 0u;
-        for (uint32_t mask = 0x80'00'00'00u; mask != 0u; mask >>= 1u)
-            if ((octets & mask) == mask)
+        for (uint32_t mask = 0x8000'0000u; mask != 0u; mask >>= 1u) {
+            if ((octets & mask) == mask) {
                 prefix++;
-            else
+            } else {
                 return prefix;
+            }
+        }
         return prefix;
     }
 
     constexpr uint8_t to_prefix(stl::array<uint8_t, 4> octets) noexcept {
         uint8_t prefix = 0u;
-        for (auto const& octet : octets)
-            for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u)
-                if ((octet & mask) == mask)
+        for (auto const& octet : octets) {
+            for (uint8_t mask = 0b1000'0000; mask != 0u; mask >>= 1u) {
+                if ((octet & mask) == mask) {
                     prefix++;
-                else
+                } else {
                     return prefix;
+                }
+            }
+        }
         return prefix;
     }
 
@@ -42,46 +47,53 @@ namespace webpp::v1 {
      * @param octets
      */
     constexpr uint8_t to_prefix(istl::StringViewifiable auto&& m_data) noexcept {
-        const auto _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+        auto const _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
 
         if (_data.size() > 15 || _data.size() < 7) {
             return 0u;
         }
         stl::size_t       first_dot = 0u;
         stl::size_t const len       = _data.size();
-        while (_data[first_dot] != '.' && first_dot != len)
+        while (_data[first_dot] != '.' && first_dot != len) {
             first_dot++;
+        }
 
         auto octet_1 = _data.substr(0u, first_dot);
         if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
-            (ascii::starts_with(octet_1, '0') && octet_1 != "0")) {
+            (ascii::starts_with(octet_1, '0') && octet_1 != "0"))
+        {
             return 0u;
         }
 
         stl::size_t second_dot = first_dot + 1;
-        while (_data[second_dot] != '.' && second_dot != len)
+        while (_data[second_dot] != '.' && second_dot != len) {
             second_dot++;
+        }
 
         auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1));
         if (second_dot == len || octet_2.empty() || octet_2.size() > 3 || !ascii::is::digit(octet_2) ||
-            (ascii::starts_with(octet_2, '0') && octet_2 != "0")) {
+            (ascii::starts_with(octet_2, '0') && octet_2 != "0"))
+        {
             return 0u;
         }
 
         stl::size_t third_dot = second_dot + 1;
-        while (_data[third_dot] != '.' && third_dot != len)
+        while (_data[third_dot] != '.' && third_dot != len) {
             third_dot++;
+        }
 
         auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
         if (first_dot == len || octet_3.empty() || octet_3.size() > 3 || !ascii::is::digit(octet_3) ||
-            (ascii::starts_with(octet_3, '0') && octet_3 != "0")) {
+            (ascii::starts_with(octet_3, '0') && octet_3 != "0"))
+        {
             return 0u; // parsing failed.
         }
 
         auto octet_4 = _data.substr(third_dot + 1u);
 
         if (octet_4.empty() || octet_4.size() > 3 || !ascii::is::digit(octet_4) ||
-            (ascii::starts_with(octet_4, '0') && octet_4 != "0")) {
+            (ascii::starts_with(octet_4, '0') && octet_4 != "0"))
+        {
             return 0u;
         }
 
@@ -94,7 +106,7 @@ namespace webpp::v1 {
      * @return bool
      */
     constexpr uint32_t to_subnet(uint8_t prefix) noexcept {
-        return 0xFF'FF'FF'FFu << (32u - prefix);
+        return 0xFFFF'FFFFu << (32u - prefix);
     }
 
     /**
@@ -120,7 +132,7 @@ namespace webpp::v1 {
         uint8_t _prefix = 255u;
 
         constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
-            const auto _data       = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
+            auto const _data       = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
             using string_view_type = stl::remove_cvref_t<decltype(_data)>;
             using char_type        = typename string_view_type::value_type;
 
@@ -130,58 +142,67 @@ namespace webpp::v1 {
             }
             stl::size_t first_dot = 0u;
             stl::size_t len       = _data.size();
-            while (_data[first_dot] != '.' && first_dot != len)
+            while (_data[first_dot] != '.' && first_dot != len) {
                 first_dot++;
+            }
 
-            const auto octet_1 = _data.substr(0u, first_dot);
+            auto const octet_1 = _data.substr(0u, first_dot);
             if (first_dot == len || octet_1.empty() || octet_1.size() > 3 || !ascii::is::digit(octet_1) ||
-                (ascii::starts_with(octet_1, static_cast<char_type>('0')) && octet_1.size() != 1)) {
+                (ascii::starts_with(octet_1, static_cast<char_type>('0')) && octet_1.size() != 1))
+            {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
             stl::size_t second_dot = first_dot + 1ul;
-            while (_data[second_dot] != '.' && second_dot != len)
+            while (_data[second_dot] != '.' && second_dot != len) {
                 second_dot++;
+            }
 
-            const auto octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1ul));
+            auto const octet_2 = _data.substr(first_dot + 1u, second_dot - (first_dot + 1ul));
             if (second_dot == len || octet_2.empty() || octet_2.size() > 3ul || !ascii::is::digit(octet_2) ||
-                (ascii::starts_with(octet_2, '0') && octet_2.size() != 1ul)) {
+                (ascii::starts_with(octet_2, '0') && octet_2.size() != 1ul))
+            {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
             stl::size_t third_dot = second_dot + 1ul;
-            while (_data[third_dot] != '.' && third_dot != len)
+            while (_data[third_dot] != '.' && third_dot != len) {
                 third_dot++;
+            }
 
-            const auto octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
+            auto const octet_3 = _data.substr(second_dot + 1u, third_dot - (second_dot + 1));
             if (third_dot == len || octet_3.empty() || octet_3.size() > 3ul || !ascii::is::digit(octet_3) ||
-                (ascii::starts_with(octet_3, '0') && octet_3.size() != 1ul)) {
+                (ascii::starts_with(octet_3, '0') && octet_3.size() != 1ul))
+            {
                 _prefix = 254u; // the ip is not valid
                 return;         // parsing failed.
             }
 
             stl::size_t slash = third_dot + 1ul;
-            while (slash != len && _data[slash] != '/')
+            while (slash != len && _data[slash] != '/') {
                 slash++;
+            }
 
-            const auto octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1ul));
+            auto const octet_4 = _data.substr(third_dot + 1u, slash - (third_dot + 1ul));
 
             if (octet_4.empty() || octet_4.size() > 3ul || !ascii::is::digit(octet_4) ||
-                (ascii::starts_with(octet_4, '0') && octet_4.size() != 1ul)) {
+                (ascii::starts_with(octet_4, '0') && octet_4.size() != 1ul))
+            {
                 _prefix = 254u; // the ip is not valid
                 return;
             }
 
             if (slash != len) {
-                const auto prefix_str = _data.substr(slash + 1ul);
+                auto const prefix_str = _data.substr(slash + 1ul);
                 if (prefix_str.empty() || (ascii::starts_with(prefix_str, '0') && prefix_str.size() != 1ul) ||
-                    !ascii::is::digit(prefix_str)) {
+                    !ascii::is::digit(prefix_str))
+                {
                     _prefix = 254u; // the ip is not valid
                     return;
                 }
-                const auto prefix_val = to_uint(prefix_str);
+                auto const prefix_val = to_uint(prefix_str);
                 if (prefix_val > 32u) {
                     _prefix = 254u; // the ip is not valid
                     return;
@@ -189,10 +210,10 @@ namespace webpp::v1 {
                 _prefix = static_cast<uint8_t>(prefix_val);
             }
 
-            const auto oc1 = to_uint(octet_1);
-            const auto oc2 = to_uint(octet_2);
-            const auto oc3 = to_uint(octet_3);
-            const auto oc4 = to_uint(octet_4);
+            auto const oc1 = to_uint(octet_1);
+            auto const oc2 = to_uint(octet_2);
+            auto const oc3 = to_uint(octet_3);
+            auto const oc4 = to_uint(octet_4);
 
             if (oc1 > 255u || oc2 > 255u || oc3 > 255u || oc4 > 255u) {
                 _prefix = 254u; // the ip is not valid
@@ -204,8 +225,9 @@ namespace webpp::v1 {
                           static_cast<uint8_t>(oc3),
                           static_cast<uint8_t>(oc4)});
 
-            if (_prefix == 254u)
+            if (_prefix == 254u) {
                 _prefix = 255u; // the ip is valid
+            }
         }
 
         static constexpr uint32_t parse(stl::array<uint8_t, 4u> ip) noexcept {
@@ -224,6 +246,7 @@ namespace webpp::v1 {
         constexpr explicit ipv4(T&& ip) noexcept : _prefix(255) {
             parse(stl::forward<decltype(ip)>(ip));
         }
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr ipv4(istl::StringViewifiable auto&& ip, istl::StringViewifiable auto&& subnet) noexcept
@@ -298,6 +321,7 @@ namespace webpp::v1 {
         }
 
         constexpr auto operator<=>(ipv4 const&) const noexcept = default;
+
         constexpr auto operator<=>(stl::array<uint8_t, 4> other) const noexcept {
             return data <=> parse(other);
         }
@@ -341,10 +365,11 @@ namespace webpp::v1 {
          */
         [[nodiscard]] constexpr stl::array<uint8_t, 4u> octets() const noexcept {
             uint32_t const _data = integer();
-            return stl::array<uint8_t, 4u>({static_cast<uint8_t>(_data >> 24u),
-                                            static_cast<uint8_t>(_data >> 16u & 0x0FFu),
-                                            static_cast<uint8_t>(_data >> 8u & 0x0FFu),
-                                            static_cast<uint8_t>(_data & 0x0FFu)});
+            return stl::array<uint8_t, 4u>(
+              {static_cast<uint8_t>(_data >> 24u),
+               static_cast<uint8_t>(_data >> 16u & 0x0FFu),
+               static_cast<uint8_t>(_data >> 8u & 0x0FFu),
+               static_cast<uint8_t>(_data & 0x0FFu)});
         }
 
         /**
@@ -417,14 +442,13 @@ namespace webpp::v1 {
          * @brief checks if the ip in this class is in the specified subnet or
          * not regardless of the the prefix that is specified in the ctor
          * @param ip
-         * @param prefix
          * @return bool
          */
         [[nodiscard]] constexpr bool is_in_subnet(ipv4 const& ip) const noexcept {
-            auto uint_val = integer();
-            auto uint_ip  = ip.integer();
-            uint_val &= 0xFFFFFFFFu << (32u - ip.prefix());
-            uint_ip &= 0xFFFFFFFFu << (32u - ip.prefix());
+            auto uint_val  = integer();
+            auto uint_ip   = ip.integer();
+            uint_val      &= 0xFFFF'FFFFu << (32u - ip.prefix());
+            uint_ip       &= 0xFFFF'FFFFu << (32u - ip.prefix());
             return uint_val == uint_ip;
         }
 
@@ -468,17 +492,18 @@ namespace webpp::v1 {
 
         /**
          * Get the ip in reversed order
-         * @return
          */
         [[nodiscard]] constexpr ipv4 reversed() const noexcept {
-            return stl::array<uint8_t, 4>{static_cast<uint8_t>(data & 0xFFu),
-                                          static_cast<uint8_t>(data >> 8u & 0xFFu),
-                                          static_cast<uint8_t>(data >> 16u & 0xFFu),
-                                          static_cast<uint8_t>(data >> 24u & 0xFFu)};
+            return stl::array<uint8_t, 4>{
+              static_cast<uint8_t>(data & 0xFFu),
+              static_cast<uint8_t>(data >> 8u & 0xFFu),
+              static_cast<uint8_t>(data >> 16u & 0xFFu),
+              static_cast<uint8_t>(data >> 24u & 0xFFu)};
         }
     };
 
 } // namespace webpp::v1
+
 // NOLINTEND(*-magic-numbers)
 
 

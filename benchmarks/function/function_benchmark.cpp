@@ -12,6 +12,7 @@ static void DirectCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(DirectCall);
 
 static void STLFunctionCall(benchmark::State& state) {
@@ -22,6 +23,7 @@ static void STLFunctionCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(STLFunctionCall);
 
 static void ISTLFunctionCall(benchmark::State& state) {
@@ -32,6 +34,7 @@ static void ISTLFunctionCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(ISTLFunctionCall);
 
 ///////////////////////////////////////////////////
@@ -45,6 +48,7 @@ static void STLFunctionInitCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(STLFunctionInitCall);
 
 static void ISTLFunctionInitCall(benchmark::State& state) {
@@ -56,8 +60,8 @@ static void ISTLFunctionInitCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
-BENCHMARK(ISTLFunctionInitCall);
 
+BENCHMARK(ISTLFunctionInitCall);
 
 static void ISTLFunctionInitCallPMR(benchmark::State& state) {
     int                                 c = 0;
@@ -73,6 +77,7 @@ static void ISTLFunctionInitCallPMR(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(ISTLFunctionInitCallPMR);
 
 ///////////////////////////////////////////////////
@@ -88,6 +93,7 @@ static void STLFunctionAssignCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(STLFunctionAssignCall);
 
 static void ISTLFunctionAssignCallPMR(benchmark::State& state) {
@@ -104,6 +110,7 @@ static void ISTLFunctionAssignCallPMR(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(ISTLFunctionAssignCallPMR);
 
 static void ISTLFunctionAssignCall(benchmark::State& state) {
@@ -116,6 +123,7 @@ static void ISTLFunctionAssignCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(ISTLFunctionAssignCall);
 
 ///////////////////////////////////////////////////////////
@@ -131,6 +139,7 @@ static void STLFunctionAssignBigCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(STLFunctionAssignBigCall);
 
 static void ISTLFunctionAssignBigCallPMR(benchmark::State& state) {
@@ -146,6 +155,7 @@ static void ISTLFunctionAssignBigCallPMR(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
+
 BENCHMARK(ISTLFunctionAssignBigCallPMR);
 
 static void ISTLFunctionAssignBigCall(benchmark::State& state) {
@@ -159,8 +169,8 @@ static void ISTLFunctionAssignBigCall(benchmark::State& state) {
         benchmark::DoNotOptimize(func());
     }
 }
-BENCHMARK(ISTLFunctionAssignBigCall);
 
+BENCHMARK(ISTLFunctionAssignBigCall);
 
 ///////////////////////////////////////////////////////
 
@@ -178,6 +188,7 @@ static void STDFunctionCopyAssignment(benchmark::State& state) {
         benchmark::DoNotOptimize(copy());
     }
 }
+
 BENCHMARK(STDFunctionCopyAssignment);
 
 static void ISTLFunctionCopyAssignment(benchmark::State& state) {
@@ -193,8 +204,8 @@ static void ISTLFunctionCopyAssignment(benchmark::State& state) {
         benchmark::DoNotOptimize(copy());
     }
 }
-BENCHMARK(ISTLFunctionCopyAssignment);
 
+BENCHMARK(ISTLFunctionCopyAssignment);
 
 ///////////////////////////////////////////////////////
 
@@ -212,6 +223,7 @@ static void STDFunctionCopyCtor(benchmark::State& state) {
         benchmark::DoNotOptimize(copy());
     }
 }
+
 BENCHMARK(STDFunctionCopyCtor);
 
 static void ISTLFunctionCopyCtor(benchmark::State& state) {
@@ -227,4 +239,5 @@ static void ISTLFunctionCopyCtor(benchmark::State& state) {
         benchmark::DoNotOptimize(copy());
     }
 }
+
 BENCHMARK(ISTLFunctionCopyCtor);

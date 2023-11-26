@@ -24,7 +24,6 @@ namespace webpp::io {
     using buffer_span = stl::span<stl::byte>;
     using buffer_view = stl::span<const stl::byte>;
 
-
     /**
      * @class buffer
      * @brief Represents a buffer with a specified length.
@@ -67,8 +66,6 @@ namespace webpp::io {
         [[no_unique_address]] allocator_type allocator;
         iovec                                iov{nullptr, 0};
     };
-
-
 
     template <typename Allocator = stl::allocator<buffer<>>>
     struct buffer_manager {

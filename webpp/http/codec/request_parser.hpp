@@ -52,8 +52,8 @@ namespace webpp::http {
 
             // -------------------------------- parsing method ------------------------------------
 
-            if (auto sp = str.substr(0, METHOD_LIMIT).find(' ');
-                sp != string_view_type::npos) { // find the first SP
+            if (auto sp = str.substr(0, METHOD_LIMIT).find(' '); sp != string_view_type::npos) { // find the
+                                                                                                 // first SP
                 method_view = str.substr(0, sp);
                 str.remove_prefix(sp + 1);
             } else {
@@ -62,8 +62,8 @@ namespace webpp::http {
 
             // ------------------------------ parsing request target (path) ------------------------------
 
-            if (auto sp = str.substr(0, URI_LIMIT).find(' ');
-                sp != string_view_type::npos) { // find the second SP
+            if (auto sp = str.substr(0, URI_LIMIT).find(' '); sp != string_view_type::npos) { // find the
+                                                                                              // second SP
                 request_target_view = str.substr(0, sp);
                 str.remove_prefix(sp + 1);
             } else {
@@ -83,9 +83,9 @@ namespace webpp::http {
             //            }
 
             http_version_view = str.substr(ascii::size(http_prefix) - 1, 3); // 1.1 and 1.0 are 3 chars
-            if (http_version_view != "1.0" &&
-                http_version_view != "1.1") { // todo: add 2.0 and 0.9 and others as well
-                return 505;                   // HTTP Version Not Supported
+            if (http_version_view != "1.0" && http_version_view != "1.1")
+            {               // todo: add 2.0 and 0.9 and others as well
+                return 505; // HTTP Version Not Supported
             }
 
             // str.remove_prefix(CRLF + 2); // move the string_view to the next line
@@ -93,18 +93,16 @@ namespace webpp::http {
             return 200; // so far, it's a good request
         }
 
-
-
         // parse one line of a header (A header field as it called in the RFC)
         status_code_type parse_header_field(string_view_type& str) noexcept {
             // todo
         }
 
-
         // parse the header fully
         void parse_header(string_view_type str) noexcept {
             auto finish_line = str.end();
-            for (auto it = str.begin(); it != finish_line; ++it) {}
+            for (auto it = str.begin(); it != finish_line; ++it) {
+            }
         }
     };
 

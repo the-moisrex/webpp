@@ -33,14 +33,15 @@ namespace webpp::http {
     concept Valve = ValveOf<default_dynamic_traits, T>;
 
     template <typename TraitsType, typename T>
-    concept Mangler = Traits<TraitsType> && stl::is_invocable_v<T,                           // type
-                                                                basic_context<TraitsType>&,  // context
-                                                                basic_next_route<TraitsType> // next valve
-                                                                >;
+    concept Mangler =
+      Traits<TraitsType> &&
+      stl::is_invocable_v<T,                           // type
+                          basic_context<TraitsType>&,  // context
+                          basic_next_route<TraitsType> // next valve
+                          >;
 
     template <typename TraitsType, typename T>
     concept RouteSetter = Traits<TraitsType> && stl::is_invocable_v<T, basic_dynamic_router<TraitsType>&>;
-
 
     /// Get the string representation of the value and append it to the output
     template <istl::String StrT, typename Callable>
@@ -66,13 +67,11 @@ namespace webpp::http {
         }
     }
 
-
     /// General Valvifier Tag, and its default implementation
     /// We use this Customization Point Object to let the users customize their types that they
     /// use as "valves", hence the name "valvify", because you're converting your random object
     /// type into a valve-compliant object.
     inline constexpr struct valvify_tag {
-
         /// Customization Point
         template <typename T>
             requires stl::tag_invocable<valvify_tag, T>
@@ -97,7 +96,6 @@ namespace webpp::http {
 
     template <typename T>
     concept Valvifiable = stl::tag_invocable<valvify_tag, T>;
-
 
     /**
      * The valve traits
@@ -168,7 +166,8 @@ namespace webpp::http {
             if constexpr (stl::is_void_v<ret_t> || istl::part_of<ret_t, bool, istl::nothing_type>) {
                 // ignore the result
             } else if constexpr (HTTPResponse<ret_t> || HTTPResponseBody<ret_t> ||
-                                 HTTPGenerallySerializableBody<ret_t, response_body_type>) {
+                                 HTTPGenerallySerializableBody<ret_t, response_body_type>)
+            {
                 ctx.response = stl::forward<R>(ret);
             } else if constexpr (stl::same_as<ret_t, http::status_code>) {
                 ctx.response = ret;
@@ -187,7 +186,6 @@ namespace webpp::http {
             }
         }
 
-
         /// Call the valve, and then set the response if there's any
         template <typename C>
             requires istl::cvref_as<C, Callable>
@@ -199,12 +197,11 @@ namespace webpp::http {
             }
         }
 
-
         /// Call the valve, and then set the response if there's any, and then tell me if we should continue
         template <typename C>
             requires istl::cvref_as<C, Callable>
-        [[nodiscard]] static constexpr bool call_set_get(C&&           segment,
-                                                         context_type& ctx) noexcept(is_nothrow) {
+        [[nodiscard]] static constexpr bool call_set_get(C&& segment, context_type& ctx) noexcept(
+          is_nothrow) {
             if constexpr (stl::is_void_v<return_type>) {
                 call(stl::forward<C>(segment), ctx);
                 return true;
@@ -215,7 +212,6 @@ namespace webpp::http {
                 return res;
             }
         }
-
 
         // template <typename C>
         //     requires istl::cvref_as<C, Callable>
@@ -232,7 +228,6 @@ namespace webpp::http {
         // }
     };
 
-
     // Get the valves_group's routes_type
     template <typename T>
     struct routes_type_of_valve {
@@ -243,7 +238,6 @@ namespace webpp::http {
     struct routes_type_of_valve<valves_group<Pres, Posts, Manglers, Routes>> {
         using type = Routes;
     };
-
 
     /**
      * Context Chaining

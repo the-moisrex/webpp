@@ -44,7 +44,6 @@ namespace webpp::sdk {
         void send_table(stl::string_view name, row_view rows) override;
     };
 
-
     static constexpr charset WHITESPACES{' ', '\t', '\n', '\r'};
 
     struct command_options {
@@ -56,6 +55,7 @@ namespace webpp::sdk {
           : m_tokenizer{command},
             m_output{stl::move(inp_out)},
             m_logger{stl::move(inp_logger)} {}
+
         command_options(command_options&&) noexcept            = default;
         command_options(command_options const&)                = delete;
         command_options& operator=(command_options const&)     = delete;

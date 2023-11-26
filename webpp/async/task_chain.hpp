@@ -38,16 +38,19 @@ namespace webpp::async {
 
         constexpr dynamic_task(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>)
           : task{stl::move(inp_task)} {}
+
         constexpr dynamic_task(task_type const& inp_task) noexcept
             requires(stl::is_nothrow_copy_constructible_v<task_type>)
           : task{inp_task} {}
-        constexpr dynamic_task&
-        operator=(task_type&& inp_task) noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
+
+        constexpr dynamic_task& operator=(task_type&& inp_task) noexcept(
+          stl::is_nothrow_move_assignable_v<task_type>) {
             task = stl::move(inp_task);
             return *this;
         }
-        constexpr dynamic_task&
-        operator=(task_type const& inp_task) noexcept(stl::is_nothrow_copy_assignable_v<task_type>) {
+
+        constexpr dynamic_task& operator=(task_type const& inp_task) noexcept(
+          stl::is_nothrow_copy_assignable_v<task_type>) {
             if (this != stl::addressof(inp_task)) {
                 task = inp_task;
             }
@@ -61,9 +64,6 @@ namespace webpp::async {
       private:
         task_type task;
     };
-
-
-
 
     template <typename TaskList>
     struct task_chain_iterator {
@@ -115,17 +115,14 @@ namespace webpp::async {
             }
         }
 
-
         constexpr bool operator==(task_chain_iterator other) const noexcept {
             return tasks == other.tasks;
         }
+
         constexpr bool operator!=(task_chain_iterator other) const noexcept {
             return tasks != other.tasks;
         }
     };
-
-
-
 
     /**
      * Unified, non-dynamic, Tuple-like Task Chain
@@ -169,7 +166,6 @@ namespace webpp::async {
         constexpr iterator begin() noexcept {
             return {*this};
         }
-
 
         // CPO for connecting (appending) a sub-task to this task chain
         template <Task TaskT>

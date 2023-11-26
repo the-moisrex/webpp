@@ -24,7 +24,7 @@ struct custom_type {
 
 TEST(ValvesTests, ValveifyTest) {
     EXPECT_TRUE(bool(stl::same_as<valvified_type<stl::string_view>, segment_string<stl::string_view>>));
-    EXPECT_TRUE(bool(stl::same_as<valvified_type<const char*>, segment_string<stl::string_view>>));
+    EXPECT_TRUE(bool(stl::same_as<valvified_type<char const*>, segment_string<stl::string_view>>));
     EXPECT_TRUE(bool(stl::same_as<valvified_type<int>, double>));
     EXPECT_TRUE(bool(stl::same_as<valvified_type<custom_type>, int>));
 

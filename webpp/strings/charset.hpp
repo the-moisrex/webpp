@@ -22,11 +22,21 @@ namespace webpp {
     concept CharSet = requires(stl::remove_cvref_t<T> set, char const* beg, char const* end) {
         stl::remove_cvref_t<T>::array_size;
 
-        { set.size() } noexcept -> stl::same_as<stl::size_t>;
-        { set.contains('a') } noexcept -> stl::same_as<bool>;
-        { set.contains("") } noexcept -> stl::same_as<bool>;
-        { set.find_first_in(beg, end) } noexcept -> stl::same_as<char const*>;
-        { set.find_first_not_in(beg, end) } noexcept -> stl::same_as<char const*>;
+        {
+            set.size()
+        } noexcept -> stl::same_as<stl::size_t>;
+        {
+            set.contains('a')
+        } noexcept -> stl::same_as<bool>;
+        {
+            set.contains("")
+        } noexcept -> stl::same_as<bool>;
+        {
+            set.find_first_in(beg, end)
+        } noexcept -> stl::same_as<char const*>;
+        {
+            set.find_first_not_in(beg, end)
+        } noexcept -> stl::same_as<char const*>;
         set.set(1);
 
 
@@ -70,9 +80,8 @@ namespace webpp {
 
       public:
         // we use +1, so we don't copy the null terminator character as well
-        explicit consteval charset(const value_type (&str)[N + 1]) noexcept
+        explicit consteval charset(value_type const (&str)[N + 1]) noexcept
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
-
 
         template <typename... T>
             requires((stl::convertible_to<T, value_type> && ...) && sizeof...(T) <= N)
@@ -92,7 +101,6 @@ namespace webpp {
           : super{merge<N1, N2, NN...>(set1, set2, c_sets...)} {
             static_assert(N == (N1 + N2 + (0 + ... + NN)), "The charsets don't fit in this charset.");
         }
-
 
         /**
          * This method checks to see if the given character
@@ -198,7 +206,6 @@ namespace webpp {
             return end;
         }
 
-
         /// find the first character that's in the range
         template <typename Iter>
         [[nodiscard]] constexpr Iter find_first_in(Iter beg, Iter end) const noexcept {
@@ -210,13 +217,12 @@ namespace webpp {
             return end;
         }
 
-
         /**
          * Exclude these charsets from the original one; all of these sets MUST be in the original charset.
          */
         template <stl::size_t... NN>
-        [[nodiscard]] consteval charset<value_type, array_size - (NN + ...)>
-        except(charset<value_type, NN> const&... sets) const noexcept {
+        [[nodiscard]] consteval charset<value_type, array_size - (NN + ...)> except(
+          charset<value_type, NN> const&... sets) const noexcept {
             charset<value_type, array_size - (NN + ...)> chars;
             stl::size_t                                  index = 0;
             for (auto const character : *this) {
@@ -266,8 +272,6 @@ namespace webpp {
             return StrType{this->data(), this->size(), alloc};
         }
 
-
-
         /// default value is for compatibility
         constexpr charset& set(stl::size_t pos, value_type val = '\0') noexcept {
             this->operator[](pos) = val;
@@ -296,7 +300,6 @@ namespace webpp {
         return data;
     }
 
-
     /**
      * Type deduction. I stole this from a type deduction from std::array
      */
@@ -305,7 +308,7 @@ namespace webpp {
     charset(Tp, Up...) -> charset<Tp, (1 + sizeof...(Up))>;
 
     template <istl::CharType CharT = char, stl::size_t N>
-    charset(const CharT (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
+    charset(CharT const (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
 
     template <istl::CharType CharT = char, stl::size_t N1, stl::size_t N2, stl::size_t... N>
     charset(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
@@ -347,9 +350,6 @@ namespace webpp {
     template <istl::CharType CharT = char>
     static constexpr auto ALPHA_DIGIT = charset(ALPHA<CharT>, DIGIT<CharT>);
 
-
-
-
     ////////////////////////////// CHAR MAP //////////////////////////////
 
 
@@ -387,10 +387,10 @@ namespace webpp {
 
 
       public:
-        explicit consteval charmap(const bool (&bools)[N]) noexcept : super{bools} {}
+        explicit consteval charmap(bool const (&bools)[N]) noexcept : super{bools} {}
 
         template <typename CharT, stl::size_t... I>
-        explicit consteval charmap(const CharT (&... str)[I]) noexcept
+        explicit consteval charmap(CharT const (&... str)[I]) noexcept
           : super{} // init with false
         {
             (
@@ -410,9 +410,6 @@ namespace webpp {
         /**
          * This constructs a character map that contains all the
          * characters in all the other given character maps.
-         *
-         * @param[in] characterMaps
-         *     These are the character maps to include.
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
             requires(N1 <= N && N2 <= N && (... && (NN <= N)))
@@ -445,7 +442,6 @@ namespace webpp {
         template <stl::size_t N1, typename... CharT>
         explicit consteval charmap(charmap<N1> const& set1, CharT... c_set) noexcept
           : charmap{set1, charmap{c_set...}} {}
-
 
         /**
          * Exclude these charsets from the original one
@@ -535,7 +531,6 @@ namespace webpp {
             return StrType{super::data(), super::size(), alloc};
         }
 
-
         constexpr charmap& set(stl::size_t pos, bool val = true) noexcept {
             this->operator[](pos) = val;
             return *this;
@@ -565,17 +560,16 @@ namespace webpp {
         return data;
     }
 
-
     template <istl::CharType CharT = char, stl::size_t... N>
-    charmap(const CharT (&... str)[N]) -> charmap<stl::max(N...) - 1>;
+    charmap(CharT const (&... str)[N]) -> charmap<stl::max(N...) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
     charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...)
       -> charmap<stl::max({N1, N2, N...})>;
 
 
-    using charmap_half =
-      charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative chars)
+    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative
+                                                                        // chars)
     using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
 
 
@@ -614,7 +608,6 @@ namespace webpp {
             (this->set(static_cast<stl::size_t>(chars)), ...);
         }
 
-
         template <typename... T>
             requires((requires(T set) { set.string_view(); }) && ...)
         explicit consteval bitmap(T const&... sets) noexcept {
@@ -640,13 +633,11 @@ namespace webpp {
             return chars;
         }
 
-
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
             webpp_assume(character >= 0 && static_cast<stl::size_t>(character) <= N);
             return this->operator[](static_cast<stl::size_t>(character));
         }
-
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<CharT> set) const noexcept {
@@ -657,7 +648,6 @@ namespace webpp {
             }
             return true;
         }
-
 
         /**
          * @brief Finds the first element in a range that is not contained in the container.
@@ -695,7 +685,7 @@ namespace webpp {
     };
 
     template <istl::CharType CharT = char, stl::size_t... N>
-    bitmap(const CharT (&... str)[N]) -> bitmap<stl::max(N...) - 1>;
+    bitmap(CharT const (&... str)[N]) -> bitmap<stl::max(N...) - 1>;
 
     template <typename... SetN>
         requires(requires { SetN::array_size; } && ...)
@@ -711,7 +701,6 @@ namespace webpp {
         }
         return data;
     }
-
 
     // NOLINTEND(*-avoid-c-arrays)
 } // namespace webpp

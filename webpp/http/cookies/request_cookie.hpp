@@ -33,18 +33,17 @@ namespace webpp::http {
             details::parse_SE_value(source, _name, _value, _valid);
         }
 
-
         using name_t  = string_view_type;
         using value_t = string_view_type;
 
-        constexpr request_cookie(const request_cookie& c)     = default;
+        constexpr request_cookie(request_cookie const& c)     = default;
         constexpr request_cookie(request_cookie&& c) noexcept = default;
 
         constexpr request_cookie(name_t i_name, value_t i_value) noexcept
           : _name(ascii::trim_copy(i_name)),
             _value(ascii::trim_copy(i_value)) {}
 
-        constexpr request_cookie& operator=(const request_cookie& c)     = default;
+        constexpr request_cookie& operator=(request_cookie const& c)     = default;
         constexpr request_cookie& operator=(request_cookie&& c) noexcept = default;
 
         constexpr explicit operator bool() {
@@ -55,16 +54,17 @@ namespace webpp::http {
             // todo
             // The _valid may not catch all the validness conditions, so we have
             // to do other validation checks ourselves.
-            if (!_valid)
+            if (!_valid) {
                 return false;
+            }
             return false;
         }
-
 
         constexpr auto name() const noexcept {
             // string_view is cheap to copy
             return _name;
         }
+
         constexpr auto value() const noexcept {
             // string_view is cheap to copy
             return _value;

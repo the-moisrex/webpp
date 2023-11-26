@@ -57,7 +57,6 @@ namespace webpp::charset_v1 {
         consteval charset(const value_type (&str)[N + 1]) noexcept
           : super{to_array(stl::make_index_sequence<N>(), str)} {}
 
-
         template <typename... T>
             requires((stl::convertible_to<T, value_type> && ...) && sizeof...(T) <= N)
         consteval charset(T... chars) noexcept : super{static_cast<value_type>(chars)...} {}
@@ -76,7 +75,6 @@ namespace webpp::charset_v1 {
           : super{merge<N1, N2, NN...>(set1, set2, c_sets...)} {
             static_assert(N == (N1 + N2 + (0 + ... + NN)), "The charsets don't fit in this charset.");
         }
-
 
         /**
          * This method checks to see if the given character
@@ -114,9 +112,11 @@ namespace webpp::charset_v1 {
          * @return True if all characters are present in the list, false otherwise.
          */
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<value_type> const& _cs) const noexcept {
-            for (auto const& c : _cs)
-                if (!contains(c))
+            for (auto const& c : _cs) {
+                if (!contains(c)) {
                     return false;
+                }
+            }
             return true;
         }
 
@@ -148,9 +148,11 @@ namespace webpp::charset_v1 {
          */
         template <typename Iter>
         [[nodiscard]] constexpr bool contains(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (!contains(*beg))
+            for (; beg != end; ++beg) {
+                if (!contains(*beg)) {
                     return false;
+                }
+            }
             return true;
         }
 
@@ -169,17 +171,21 @@ namespace webpp::charset_v1 {
          */
         template <typename Iter>
         [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (!contains(*beg))
+            for (; beg != end; ++beg) {
+                if (!contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
         template <typename Iter>
         [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (contains(*beg))
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
@@ -187,13 +193,14 @@ namespace webpp::charset_v1 {
          * Exclude these charsets from the original one; all of these sets MUST be in the original charset.
          */
         template <stl::size_t... NN>
-        [[nodiscard]] constexpr charset<value_type, array_size - (NN + ...)>
-        except(charset<value_type, NN> const&... sets) const noexcept {
+        [[nodiscard]] constexpr charset<value_type, array_size - (NN + ...)> except(
+          charset<value_type, NN> const&... sets) const noexcept {
             charset<value_type, array_size - (NN + ...)> chars;
             stl::size_t                                  index = 0;
             for (auto const c : *this) {
-                if ((sets.contains(c) && ...))
+                if ((sets.contains(c) && ...)) {
                     continue;
+                }
                 chars[index] = c;
                 ++index;
             }
@@ -237,8 +244,6 @@ namespace webpp::charset_v1 {
             return StrType{this->data(), this->size(), alloc};
         }
 
-
-
         /// default value is for compatiblity
         constexpr charset& set(stl::size_t pos, value_type val = '\0') noexcept {
             this->operator[](pos) = val;
@@ -260,12 +265,12 @@ namespace webpp::charset_v1 {
     [[nodiscard]] static consteval auto charset_range() noexcept {
         constexpr stl::size_t    the_size = static_cast<stl::size_t>(Last - First) + 1ul;
         charset<CharT, the_size> data;
-        for (CharT it = First; it != Last; ++it)
+        for (CharT it = First; it != Last; ++it) {
             data[static_cast<stl::size_t>(it - First)] = it;
+        }
         data[static_cast<stl::size_t>(Last - First)] = Last;
         return data;
     }
-
 
     /**
      * Type deduction. I stole this from a type deduction from std::array
@@ -317,9 +322,6 @@ namespace webpp::charset_v1 {
     template <istl::CharType CharT = char>
     static constexpr auto ALPHA_DIGIT = charset(ALPHA<CharT>, DIGIT<CharT>);
 
-
-
-
     ////////////////////////////// CHAR MAP //////////////////////////////
 
 
@@ -348,7 +350,7 @@ namespace webpp::charset_v1 {
 
 
       public:
-        consteval charmap(const bool (&bools)[N]) noexcept : super{bools} {}
+        consteval charmap(bool const (&bools)[N]) noexcept : super{bools} {}
 
         template <typename CharT, stl::size_t... I>
         consteval charmap(const CharT (&... str)[I]) noexcept
@@ -407,7 +409,6 @@ namespace webpp::charset_v1 {
         consteval charmap(charmap<N1> const& set1, CharT... c_set) noexcept
           : charmap{set1, charmap{c_set...}} {}
 
-
         /**
          * This method checks to see if the given character
          * is in the character map.
@@ -430,9 +431,11 @@ namespace webpp::charset_v1 {
          * @return
          */
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<bool> const& _cs) const noexcept {
-            for (auto const& c : _cs)
-                if (!contains(c))
+            for (auto const& c : _cs) {
+                if (!contains(c)) {
                     return false;
+                }
+            }
             return true;
         }
 
@@ -451,17 +454,21 @@ namespace webpp::charset_v1 {
          */
         template <typename Iter>
         [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (!contains(*beg))
+            for (; beg != end; ++beg) {
+                if (!contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
         template <typename Iter>
         [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (contains(*beg))
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
@@ -475,7 +482,6 @@ namespace webpp::charset_v1 {
           typename StrType::allocator_type const& alloc = typename StrType::allocator_type{}) const noexcept {
             return StrType{super::data(), super::size(), alloc};
         }
-
 
         constexpr charmap& set(stl::size_t pos, bool val = true) noexcept {
             this->operator[](pos) = val;
@@ -499,11 +505,11 @@ namespace webpp::charset_v1 {
     [[nodiscard]] static consteval auto charmap_range() noexcept {
         constexpr auto    the_size = static_cast<stl::size_t>(Last) + 1;
         charmap<the_size> data{}; // all false
-        for (auto it = First; it != Last + 1; ++it)
+        for (auto it = First; it != Last + 1; ++it) {
             data[static_cast<stl::size_t>(it)] = true;
+        }
         return data;
     }
-
 
     template <istl::CharType CharT = char, stl::size_t... N>
     charmap(const CharT (&... str)[N]) -> charmap<stl::max(N...) - 1>;
@@ -513,12 +519,9 @@ namespace webpp::charset_v1 {
       -> charmap<stl::max({N1, N2, N...})>;
 
 
-    using charmap_half =
-      charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative chars)
+    using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative
+                                                                        // chars)
     using charmap_full = charmap<stl::numeric_limits<unsigned char>::max() + 1>; // Full Table
-
-
-
 
     template <stl::size_t N>
     struct bitmap : stl::bitset<N> {
@@ -540,7 +543,6 @@ namespace webpp::charset_v1 {
             (this->set(chars), ...);
         }
 
-
         template <typename... T>
             requires((requires(T set) { set.string_view(); }) && ...)
         constexpr bitmap(T const&... sets) noexcept {
@@ -552,14 +554,11 @@ namespace webpp::charset_v1 {
              ...);
         }
 
-
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT c) const noexcept {
             webpp_assume(c >= 0 && c <= N);
             return this->operator[](static_cast<stl::size_t>(c));
         }
-
-
 
         /**
          * @brief Finds the first element in a range that is not contained in the container.
@@ -576,25 +575,30 @@ namespace webpp::charset_v1 {
          */
         template <typename Iter>
         [[nodiscard]] constexpr Iter contains_until(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (!contains(*beg))
+            for (; beg != end; ++beg) {
+                if (!contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
         template <typename Iter>
         [[nodiscard]] constexpr Iter find_first_of(Iter beg, Iter end) const noexcept {
-            for (; beg != end; ++beg)
-                if (contains(*beg))
+            for (; beg != end; ++beg) {
+                if (contains(*beg)) {
                     return beg;
+                }
+            }
             return end;
         }
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(stl::basic_string_view<CharT> set) const noexcept {
             for (auto const ch : set) {
-                if (!this->contains(ch))
+                if (!this->contains(ch)) {
                     return false;
+                }
             }
             return true;
         }
@@ -607,12 +611,12 @@ namespace webpp::charset_v1 {
         requires(requires { SetN::array_size; } && ...)
     bitmap(SetN&&...) -> bitmap<stl::max({SetN::array_size...})>;
 
-
     template <auto First, auto Last, stl::size_t Size = static_cast<stl::size_t>(Last) + 1>
     [[nodiscard]] static consteval auto bitmap_range() noexcept {
         bitmap<Size> data{}; // all false
-        for (auto it = static_cast<stl::size_t>(First); it != static_cast<stl::size_t>(Last) + 1; ++it)
+        for (auto it = static_cast<stl::size_t>(First); it != static_cast<stl::size_t>(Last) + 1; ++it) {
             data.set(it);
+        }
         return data;
     }
 
@@ -620,9 +624,15 @@ namespace webpp::charset_v1 {
     concept CharSet = requires(stl::remove_cvref_t<T> cs) {
         stl::remove_cvref_t<T>::array_size;
 
-        { cs.size() } noexcept -> stl::same_as<stl::size_t>;
-        { cs.contains('a') } noexcept -> stl::same_as<bool>;
-        { cs.contains("") } noexcept -> stl::same_as<bool>;
+        {
+            cs.size()
+        } noexcept -> stl::same_as<stl::size_t>;
+        {
+            cs.contains('a')
+        } noexcept -> stl::same_as<bool>;
+        {
+            cs.contains("")
+        } noexcept -> stl::same_as<bool>;
         cs.set(1);
     };
 

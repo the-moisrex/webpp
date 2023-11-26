@@ -64,9 +64,9 @@ using t8  = tuple<map<vector<list<string>>, vector<string>>>;
 using t9  = recursively_replace_templated_parameter<t8, allocator, pmr::polymorphic_allocator>;
 using t10 = tuple<map<string, string>>;
 using t11 = recursively_replace_templated_parameter<t10, allocator, pmr::polymorphic_allocator>;
-using t12 = tuple<const allocator<char>>;
-using t13 = recursively_replace_templated_parameter<t12, allocator, pmr::polymorphic_allocator>;
-using t14 = tuple<const tuple<allocator<char>>>;
+using t12 = tuple<allocator<char> const> using t13 =
+  recursively_replace_templated_parameter<t12, allocator, pmr::polymorphic_allocator>;
+using t14 = tuple<tuple<allocator<char>> const>;
 using t15 = recursively_replace_templated_parameter<t14, allocator, pmr::polymorphic_allocator>;
 
 static_assert(is_same_v<t2, tuple<double, string, vector<int>, double>>);
@@ -75,10 +75,9 @@ static_assert(is_same_v<t4, tuple<int, pmr::string, pmr::vector<int>, int>>);
 static_assert(is_same_v<t6, tuple<pmr::vector<pmr::string>>>);
 static_assert(is_same_v<t7, tuple<int, string, list<int>, int>>);
 static_assert(is_same_v<t13, tuple<const pmr::polymorphic_allocator<char>>>);
-static_assert(is_same_v<t15, tuple<const tuple<pmr::polymorphic_allocator<char>>>>);
+static_assert(is_same_v < t15, tuple<tuple<pmr::polymorphic_allocator<char>> const>);
 static_assert(is_same_v<t11, tuple<pmr::map<pmr::string, pmr::string>>>);
 static_assert(is_same_v<t9, tuple<pmr::map<pmr::vector<pmr::list<pmr::string>>, pmr::vector<pmr::string>>>>);
-
 
 template <typename T>
 struct int_replacer {
@@ -126,13 +125,10 @@ static_assert(is_same_v<only_ints, tuple<int, short>>, "remove if bug");
 using one_int = typename last_type<int, double, int, string>::template remove_limit<tuple, 1>;
 static_assert(is_same_v<one_int, tuple<int>>, "remove limit bug");
 
-
-
 /// ituple
 
 
 TEST(TypeTraits, ITupleTest) {
-
     // 1.3 should be converted to 1 because it's int
     auto const tup  = ituple<int, double>{1.3, 1.1};
     auto const tup3 = tup.structured<3>();
@@ -157,7 +153,6 @@ TEST(TypeTraits, ITupleTest) {
     EXPECT_EQ(1, tuple_size_v<decltype(tup1)>);
 }
 
-
 template <template <typename...> typename Tup = ituple>
 struct iterable_type {
     using vec      = list<Tup<int, double>>;
@@ -177,6 +172,7 @@ struct iterable_type {
     iterator begin() {
         return data.begin();
     }
+
     iterator end() {
         return data.end();
     }
@@ -218,7 +214,6 @@ TEST(TypeTraits, ITupleIteratorTestWithTuple) {
     }
 }
 
-
 TEST(TypeTraits, OneOfTest) {
     EXPECT_TRUE(bool(one_of<int, double, int>));
     EXPECT_FALSE(bool(one_of<float, double, int>));
@@ -226,11 +221,14 @@ TEST(TypeTraits, OneOfTest) {
     EXPECT_TRUE(bool(one_of<float, short, unsigned, int, double, int>));
 }
 
-
 struct one {};
+
 struct two {};
+
 struct three {};
+
 struct four {};
+
 TEST(TypeTraits, InvocableInOrder) {
     using std::function;
     using webpp::istl::invocable_inorder_v;
@@ -263,7 +261,6 @@ TEST(TypeTraits, InvocableInOrder) {
     EXPECT_TRUE(invoke_inorder(ok, three{}, one{}, two{}));
 }
 
-
 TEST(TypeTraits, SameAsAllTest) {
     EXPECT_TRUE(bool(same_as_all<>));
     EXPECT_FALSE(bool(same_as_all<one>));
@@ -282,7 +279,6 @@ TEST(TypeTraits, SameAsAllTest) {
 template <typename T>
 using is_one = is_same<T, one>;
 
-
 TEST(TypeTraits, IndexesIfTest) {
     EXPECT_TRUE(bool(same_as<indexes_if<is_one, two, one, three>, index_sequence<1>>));
     EXPECT_TRUE(bool(same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
@@ -290,11 +286,10 @@ TEST(TypeTraits, IndexesIfTest) {
       bool(same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
 }
 
-
 TEST(TypeTraits, RmoeveUnsignedTest) {
     EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<char>>));
     EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<unsigned char>>));
-    EXPECT_TRUE(bool(same_as<char volatile, remove_unsigned_t<volatile unsigned char>>));
+    EXPECT_TRUE(bool(same_as<char volatile, remove_unsigned_t<unsigned char volatile>>));
     EXPECT_TRUE(bool(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
     EXPECT_TRUE(bool(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
 }

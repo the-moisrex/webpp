@@ -64,11 +64,10 @@ TEST(Cache, CacheResultTest) {
     EXPECT_EQ(c["one"].key(), "one");
 }
 
-
 TEST(Cache, DirectoryGateTest) {
     enable_owner_traits<default_traits> t;
-    auto                                dir = stl::filesystem::temp_directory_path();
-    dir /= "webpp-directory-gate-test";
+    auto                                dir  = stl::filesystem::temp_directory_path();
+    dir                                     /= "webpp-directory-gate-test";
     stl::filesystem::create_directory(dir);
     lru_cache<default_traits, std::string, std::string, directory_gate> c(t, 1024, dir, "one");
     c.set("one", "value");
@@ -103,7 +102,6 @@ TEST(Cache, DirectoryGateTest) {
 
     stl::filesystem::remove_all(dir);
 }
-
 
 TEST(Cache, ReferenceTest) {
     enable_owner_traits<default_traits> t;

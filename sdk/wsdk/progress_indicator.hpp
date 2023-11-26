@@ -22,7 +22,6 @@ namespace webpp::sdk {
         void         update(stl::string_view desc);
     };
 
-
     /**
      * Provides multiple progress bars and handles all of them together
      */

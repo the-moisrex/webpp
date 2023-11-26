@@ -49,23 +49,24 @@ namespace webpp::alloc {
         using value_type = bool;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        value_type m_sync : 1   = false;
-        value_type m_unsync : 1 = false;
+        value_type m_sync             : 1 = false;
+        value_type m_unsync           : 1 = false;
 
-        value_type m_noop_dealloc : 1    = false;
-        value_type m_no_noop_dealloc : 1 = false;
+        value_type m_noop_dealloc     : 1 = false;
+        value_type m_no_noop_dealloc  : 1 = false;
 
-        value_type m_stateful : 1  = false;
-        value_type m_stateless : 1 = false;
+        value_type m_stateful         : 1 = false;
+        value_type m_stateless        : 1 = false;
 
-        value_type m_high_contention : 1 = false;
-        value_type m_low_contention : 1  = false;
+        value_type m_high_contention  : 1 = false;
+        value_type m_low_contention   : 1 = false;
 
         value_type m_high_utilization : 1 = false;
-        value_type m_low_utilization : 1  = false;
+        value_type m_low_utilization  : 1 = false;
 
-        value_type m_high_locality : 1 = false;
-        value_type m_low_locality : 1  = false;
+        value_type m_high_locality    : 1 = false;
+        value_type m_low_locality     : 1 = false;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <typename... FeaturesType>
@@ -74,7 +75,7 @@ namespace webpp::alloc {
             set_features(values...);
         }
 
-        constexpr feature_pack(const feature_pack&) noexcept            = default;
+        constexpr feature_pack(feature_pack const&) noexcept            = default;
         constexpr feature_pack(feature_pack&&) noexcept                 = default;
         constexpr feature_pack& operator=(feature_pack const&) noexcept = default;
         constexpr feature_pack& operator=(feature_pack&&) noexcept      = default;
@@ -151,7 +152,6 @@ namespace webpp::alloc {
             m_no_noop_dealloc = !val;
         }
 
-
         constexpr void set_stateful(value_type val) noexcept {
             m_stateful  = val;
             m_stateless = !val;
@@ -162,12 +162,10 @@ namespace webpp::alloc {
             m_low_contention  = !val;
         }
 
-
         constexpr void set_high_utilization(value_type val) noexcept {
             m_high_utilization = val;
             m_low_utilization  = !val;
         }
-
 
         constexpr void set_high_locality(value_type val) noexcept {
             m_high_locality = val;
@@ -203,8 +201,6 @@ namespace webpp::alloc {
             return m_high_locality && !m_low_locality;
         }
 
-
-
         [[nodiscard]] constexpr value_type specified_sync() const noexcept {
             return m_sync || m_unsync;
         }
@@ -234,8 +230,6 @@ namespace webpp::alloc {
                    !specified_locality() && !specified_noop_dealloc() && !specified_utilization();
         }
 
-
-
         /**
          * Merge two feature packs. One of them is the parent, and the other one is the child.
          * The Child's feature will overwrite the parent's feature if there's a conflict.
@@ -243,23 +237,27 @@ namespace webpp::alloc {
         [[nodiscard]] static constexpr feature_pack merge_features(feature_pack parent,
                                                                    feature_pack child) noexcept {
             feature_pack pack;
-            if (parent.is_sync() || child.is_sync())
+            if (parent.is_sync() || child.is_sync()) {
                 pack.set_sync(true);
-            if (parent.is_noop_dealloc() || child.is_noop_dealloc())
+            }
+            if (parent.is_noop_dealloc() || child.is_noop_dealloc()) {
                 pack.set_noop_dealloc(true);
-            if (parent.is_high_contention() || child.is_high_contention())
+            }
+            if (parent.is_high_contention() || child.is_high_contention()) {
                 pack.set_high_contention(true);
-            if (parent.is_high_utilization() || child.is_high_utilization())
+            }
+            if (parent.is_high_utilization() || child.is_high_utilization()) {
                 pack.set_high_utilization(true);
-            if (parent.is_high_locality() || child.is_high_locality())
+            }
+            if (parent.is_high_locality() || child.is_high_locality()) {
                 pack.set_high_locality(true);
+            }
             return pack;
         }
 
-
         // only for those that are not a required feature; only include one of conflicting features.
         // the feature that if it's present it's usually better should be present here.
-        [[nodiscard]] constexpr static long long int rank(features feature) noexcept {
+        [[nodiscard]] static constexpr long long int rank(features feature) noexcept {
             // NOLINTBEGIN(*-magic-numbers)
             switch (feature) {
                 using enum features;
@@ -280,18 +278,18 @@ namespace webpp::alloc {
             // NOLINTEND(*-magic-numbers)
         }
 
-
         [[nodiscard]] constexpr long long int rank(feature_pack asked_features) const noexcept {
             long long int res = 100; // NOLINT(*-magic-numbers)
 
             // Checking required features first:
             if ((asked_features.specified_state() && specified_state()) ||
-                (asked_features.is_sync() && specified_sync())) {
+                (asked_features.is_sync() && specified_sync()))
+            {
                 return res * -1;
             }
 
             for (features const feature : {noop_dealloc, high_contention, high_utilization, high_locality}) {
-                const auto points = rank(feature);
+                auto const points = rank(feature);
                 if (asked_features.specified(feature) && specified(feature)) {
                     res += asked_features.is(feature) == is(feature) ? points : -points;
                 } else if (specified(feature)) {
@@ -312,14 +310,11 @@ namespace webpp::alloc {
     inline constexpr auto local_features       = monotonic_features;
     inline constexpr auto general_features     = feature_pack{stateless, sync};
 
-
-
     /**
      * This type ranks each allocator descriptor
      */
     template <feature_pack Features>
     struct ranking_condition {
-
         template <typename AllocDescriptor>
         struct ranker {
             static constexpr feature_pack asked_features = Features;
@@ -334,9 +329,9 @@ namespace webpp::alloc {
             static constexpr feature_pack asked_features = Features;
             static constexpr feature_pack alloc_features =
               alloc::descriptors::allocator_features<AllocDescriptor>;
-            static constexpr feature_pack res_features =
-              feature_pack::merge_features(alloc_features,
-                                           alloc::descriptors::resource_features<ResDescriptor>);
+            static constexpr feature_pack res_features = feature_pack::merge_features(
+              alloc_features,
+              alloc::descriptors::resource_features<ResDescriptor>);
 
             static constexpr auto value = res_features.rank(asked_features);
         };
@@ -353,7 +348,6 @@ namespace webpp::alloc {
               istl::Pair... AllocResPairType,
               feature_pack AskedFeatures>
     struct ranker<TupleT<AllocResPairType...>, AskedFeatures> {
-
         // the ranking should be used on each combination of "allocator" and its "resources";
         // sorting allocators only will not result in the best solution.
 
@@ -367,15 +361,12 @@ namespace webpp::alloc {
           !stl::is_void_v<typename descriptors::storage<best_resource_descriptor>>;
     };
 
-
-
     // todo: add "allocator pack" merger mechanism that helps in merging two or more packs of allocators
 
     namespace details {
 
         template <feature_pack FPack>
         struct features_filterer {
-
             template <typename T>
             struct type {
                 // check if T has the features in the FPack
@@ -390,8 +381,6 @@ namespace webpp::alloc {
      */
     template <typename List, feature_pack FPack>
     using filter = istl::filter_parameters<details::features_filterer<FPack>::template type, List>;
-
-
 
     namespace details {
         template <template <typename> typename AllocType>
@@ -414,7 +403,6 @@ namespace webpp::alloc {
     template <typename T, template <typename> typename AllocType>
     using replace_allocators =
       istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
-
 
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescList>
     struct alloc_finder {
@@ -457,7 +445,6 @@ namespace webpp::alloc {
      */
     template <AllocatorDescriptorList AllocDescriptorsType>
     struct allocator_pack {
-
         // the type is: tuple<AllocatorDescriptor, ...>
         using allocator_descriptors = AllocDescriptorsType;
 
@@ -555,12 +542,12 @@ namespace webpp::alloc {
         constexpr allocator_pack() noexcept  = default;
         constexpr ~allocator_pack() noexcept = default;
 
-        constexpr allocator_pack& operator=(const allocator_pack&) noexcept { // NOLINT(cert-oop54-cpp)
+        constexpr allocator_pack& operator=(allocator_pack const&) noexcept { // NOLINT(cert-oop54-cpp)
             // do nothing; really
             return *this;
         }
-        constexpr allocator_pack& operator=(allocator_pack&&) noexcept = default;
 
+        constexpr allocator_pack& operator=(allocator_pack&&) noexcept = default;
 
         template <typename ResourceType>
             requires(!ResourceDescriptor<ResourceType> && has_resource_object<ResourceType>)
@@ -578,7 +565,6 @@ namespace webpp::alloc {
         [[nodiscard]] constexpr auto& get_resource() noexcept {
             return get_resource<typename ranker<allocator_descriptors, FPack>::best_resource_descriptor>();
         }
-
 
         [[nodiscard]] constexpr auto& local_resource() noexcept {
             return get_resource<local_features>();
@@ -642,7 +628,6 @@ namespace webpp::alloc {
                 return descriptors::construct_allocator<ResDescType, new_type>();
             }
         }
-
 
         template <feature_pack FPack, typename T>
         [[nodiscard]] constexpr auto get_allocator() noexcept {
@@ -737,13 +722,12 @@ namespace webpp::alloc {
             return get_allocator<general_features, T>();
         }
 
-
         // todo: you can remove AllocType here
         template <typename T, template <typename> typename AllocType, typename ResDescType, typename... Args>
-            requires(
-              has_templated_allocator<AllocType> &&
-              (ResourceDescriptor<ResDescType> ||
-               stl::is_void_v<ResDescType>) ) // the resource might be void if the allocator is resource-less
+            requires(has_templated_allocator<AllocType> &&
+                     (ResourceDescriptor<ResDescType> ||
+                      stl::is_void_v<ResDescType>) ) // the resource might be void if the allocator is
+                                                     // resource-less
         [[nodiscard]] constexpr auto make(Args&&... args) {
             if constexpr (!requires { typename T::allocator_type; }) {
                 // doesn't have an allocator, so construct a normal object
@@ -850,7 +834,6 @@ namespace webpp::alloc {
             return this->template allocate_unique<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
 
-
         template <typename T, typename... Args>
         [[nodiscard]] constexpr auto local(Args&&... args) {
             return this->make<T, local_features, Args...>(stl::forward<Args>(args)...);
@@ -862,13 +845,10 @@ namespace webpp::alloc {
         }
     };
 
-
-
     template <typename T, feature_pack FPack, AllocatorDescriptorList AllocDescType, typename... Args>
     static constexpr auto make(allocator_pack<AllocDescType>& alloc_pack, Args&&... args) {
         return alloc_pack.template make<T, FPack, Args...>(stl::forward<Args>(args)...);
     }
-
 
     template <typename T, AllocatorDescriptorList AllocDescType>
     static constexpr auto local_allocator(allocator_pack<AllocDescType>& alloc_pack) noexcept {

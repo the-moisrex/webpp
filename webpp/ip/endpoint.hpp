@@ -18,18 +18,32 @@ namespace webpp {
         requires stl::derived_from<stl::remove_cvref_t<T>, ip_address>;
 
         // it should be noexcept, even if you have to use "try-catch"
-        { ep.is_bindable() } noexcept -> stl::same_as<bool>;
+        {
+            ep.is_bindable()
+        } noexcept -> stl::same_as<bool>;
 
-        { ep.is_tcp() } noexcept -> stl::same_as<bool>;
-        { ep.is_udp() } noexcept -> stl::same_as<bool>;
-        { ep.port() } noexcept -> stl::same_as<stl::uint16_t>;
+        {
+            ep.is_tcp()
+        } noexcept -> stl::same_as<bool>;
+        {
+            ep.is_udp()
+        } noexcept -> stl::same_as<bool>;
+        {
+            ep.port()
+        } noexcept -> stl::same_as<stl::uint16_t>;
     };
 
     template <typename T>
     concept EndpointList = requires(T ep) {
-        { stl::begin(ep) } -> stl::random_access_iterator;
-        { stl::end(ep) } -> stl::random_access_iterator;
-        { *stl::begin(ep) } -> Endpoint;
+        {
+            stl::begin(ep)
+        } -> stl::random_access_iterator;
+        {
+            stl::end(ep)
+        } -> stl::random_access_iterator;
+        {
+            *stl::begin(ep)
+        } -> Endpoint;
     };
 
     /**
@@ -46,12 +60,16 @@ namespace webpp {
      *            has a sub-domain for him/herself.
      */
     struct ip_endpoint : public ip_address {
-        enum protocol { tcp = SOCK_STREAM, udp = SOCK_DGRAM };
+        enum protocol {
+            tcp = SOCK_STREAM,
+            udp = SOCK_DGRAM
+        };
 
         constexpr ip_endpoint(protocol inp_proto, ip_address inp_addr, stl::uint16_t inp_port) noexcept
           : ip_address{inp_addr},
             proto{inp_proto},
             port_num{inp_port} {}
+
         constexpr ip_endpoint(ip_endpoint const&) noexcept            = default;
         constexpr ip_endpoint(ip_endpoint&&) noexcept                 = default;
         constexpr ip_endpoint& operator=(ip_endpoint const&) noexcept = default;
@@ -83,7 +101,6 @@ namespace webpp {
             return static_cast<ip_address const&>(*this);
         }
 
-
         /**
          * Check if the specified endpoint is bind-able.
          * There can be multiple reasons why it's not bind-able.
@@ -98,13 +115,10 @@ namespace webpp {
         stl::uint16_t port_num = 0;
     };
 
-
-
     template <typename Vec = stl::vector<ip_endpoint>>
     struct ip_endpoint_list : Vec {
         using Vec::Vec;
     };
-
 
     template <stl::size_t N>
     using ip_endpoint_array = stl::array<ip_endpoint, N>;

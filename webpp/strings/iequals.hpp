@@ -13,7 +13,11 @@
 
 namespace webpp::ascii {
 
-    enum struct char_case { lowered, uppered, unknown };
+    enum struct char_case {
+        lowered,
+        uppered,
+        unknown
+    };
 
     enum struct char_case_side {
         first_lowered,
@@ -58,6 +62,7 @@ namespace webpp::ascii {
                 }
         }
     }
+
     // NOLINTEND(bugprone-easily-swappable-parameters)
 
 
@@ -79,8 +84,9 @@ namespace webpp::ascii {
         } else if constexpr (second_uppered == Side) {
             return a == b || to_upper_copy(a) == b;
         } else {
-            if (a == b)
+            if (a == b) {
                 return true;
+            }
             to_lower(a);
             to_lower(b);
             return a == b;
@@ -89,15 +95,17 @@ namespace webpp::ascii {
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
     [[nodiscard]] static constexpr bool iequals(istl::StringViewifiable auto&& a, CharT b) noexcept {
-        if (a.size() != 1ul)
+        if (a.size() != 1ul) {
             return false;
+        }
         return iequals<Side, CharT>(a[0ul], b);
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
     [[nodiscard]] static constexpr bool iequals(CharT a, istl::StringViewifiable auto&& b) noexcept {
-        if (a.size() != 1ul)
+        if (a.size() != 1ul) {
             return false;
+        }
         return iequals<Side, CharT>(a, b[0ul]);
     }
 
@@ -115,29 +123,27 @@ namespace webpp::ascii {
         using str2_t     = stl::remove_cvref_t<str2_type>;
         using char_type  = istl::char_type_of_t<str1_t>;
         using char_type2 = istl::char_type_of_t<str2_t>;
-        static_assert(
-          stl::is_same_v<char_type, char_type2>,
-          "The specified strings do not have the same character type, we're not able to compare them with this algorithm.");
+        static_assert(stl::is_same_v<char_type, char_type2>,
+                      "The specified strings do not have the same character type, we're not able to compare "
+                      "them with this algorithm.");
 
         auto _size = size(_str1);
-        if (_size != size(_str2))
+        if (_size != size(_str2)) {
             return false;
+        }
 
         if constexpr (both_lowered == Side || both_uppered == Side) {
             return istl::string_viewify(_str1) == istl::string_viewify(_str2);
         } else {
-
-
-
 #ifdef WEBPP_EVE
 
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 
             using uchar_type = stl::make_unsigned_t<char_type>;
             // converting them to unsigned types; because our to upper algorithm relies on unsigned integers.
-            auto* f1 = reinterpret_cast<uchar_type const*>(istl::string_data(_str1));
-            auto* l1 = f1 + size(_str1);
-            auto* f2 = reinterpret_cast<uchar_type const*>(istl::string_data(_str2));
+            auto* f1         = reinterpret_cast<uchar_type const*>(istl::string_data(_str1));
+            auto* l1         = f1 + size(_str1);
+            auto* f2         = reinterpret_cast<uchar_type const*>(istl::string_data(_str2));
 
             using simd_utype = eve::wide<uchar_type>;
 
@@ -185,32 +191,37 @@ namespace webpp::ascii {
 #else
             auto*       it1     = istl::string_data(_str1);
             auto*       it2     = istl::string_data(_str2);
-            const auto* it1_end = it1 + _size;
+            auto const* it1_end = it1 + _size;
 
             for (; it1 != it1_end; ++it1, ++it2) {
                 if (*it1 != *it2) {
                     // compiler seems to be able to optimize this better than us
                     if constexpr (first_lowered == Side) {
                         auto ch2_lowered = to_lower_copy(*it2);
-                        if (*it1 != ch2_lowered)
+                        if (*it1 != ch2_lowered) {
                             return false;
+                        }
                     } else if constexpr (second_lowered == Side) {
                         auto ch1_lowered = to_lower_copy(*it1);
-                        if (ch1_lowered != *it2)
+                        if (ch1_lowered != *it2) {
                             return false;
+                        }
                     } else if constexpr (first_uppered == Side) {
                         auto ch2_uppered = to_upper_copy(*it2);
-                        if (*it1 != ch2_uppered)
+                        if (*it1 != ch2_uppered) {
                             return false;
+                        }
                     } else if constexpr (second_uppered == Side) {
                         auto ch1_uppered = to_upper_copy(*it1);
-                        if (ch1_uppered == *it2)
+                        if (ch1_uppered == *it2) {
                             return false;
+                        }
                     } else {
                         auto ch1_lowered = to_lower_copy(*it1);
                         auto ch2_lowered = to_lower_copy(*it2);
-                        if (ch1_lowered != ch2_lowered)
+                        if (ch1_lowered != ch2_lowered) {
                             return false;
+                        }
                     }
                 }
             }

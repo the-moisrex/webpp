@@ -13,12 +13,12 @@ namespace webpp::http {
 
       public:
         explicit constexpr method(char const* inp_method) noexcept : method_str{inp_method} {}
+
         constexpr method(method const&) noexcept            = default;
         constexpr method(method&&) noexcept                 = default;
         constexpr method& operator=(method const&) noexcept = default;
         constexpr method& operator=(method&&) noexcept      = default;
         constexpr ~method() noexcept                        = default;
-
 
         template <HTTPRequest ReqT>
         [[nodiscard]] constexpr bool operator()(ReqT const& req) const noexcept {
@@ -51,7 +51,7 @@ namespace webpp::http {
     constexpr auto options = method{"OPTIONS"};
 
     inline namespace literals {
-        constexpr auto operator""_method(const char* str, [[maybe_unused]] std::size_t inp_size) noexcept {
+        constexpr auto operator""_method(char const* str, [[maybe_unused]] std::size_t inp_size) noexcept {
             return method{str};
         }
     } // namespace literals

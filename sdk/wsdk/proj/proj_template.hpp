@@ -13,7 +13,6 @@ namespace webpp::sdk {
     };
 
     struct proj_template {
-
         proj_template(stl::shared_ptr<command_options>);
         proj_template(proj_template const&) = delete;
         proj_template(proj_template&&) noexcept;

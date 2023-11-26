@@ -62,8 +62,8 @@ namespace webpp::http {
         constexpr common_http_request(common_http_request&&) noexcept                 = default;
         constexpr common_http_request& operator=(common_http_request const&) noexcept = default;
         constexpr common_http_request& operator=(common_http_request&&) noexcept      = default;
-        constexpr ~common_http_request()                                              = default;
 
+        constexpr ~common_http_request() = default;
 
         /**
          * Get the Web++ Library version
@@ -71,7 +71,6 @@ namespace webpp::http {
         [[nodiscard]] string_view_type framework_version() const noexcept {
             return webpp_version;
         }
-
 
         template <typename T>
             requires(HTTPGenerallyDeserializableBody<T, common_http_request>)
@@ -120,12 +119,8 @@ namespace webpp::http {
         }
     };
 
-
-
     template <template <typename...> typename MidLevelRequestType, typename HeadersType, typename BodyType>
     using simple_request = MidLevelRequestType<common_http_request<HeadersType, BodyType>>;
-
-
 
     /**
      * Dynamic Request type
@@ -143,7 +138,6 @@ namespace webpp::http {
       : public common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
                                    request_body<TraitsType, body_writer<TraitsType>>>,
         public details::request_view_interface<TraitsType> {
-
         using common_request_type =
           common_http_request<request_headers<header_fields_provider<header_field_of<TraitsType>>>,
                               request_body<TraitsType, body_writer<TraitsType>>>;
@@ -193,24 +187,26 @@ namespace webpp::http {
         template <EnabledTraits ET, typename MStrT = string_view_type, typename UStrT = string_view_type>
             requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
-        constexpr explicit basic_request(ET&&          inp_etraits,
-                                         MStrT&&       inp_method = "GET",
-                                         UStrT&&       url        = "/",
-                                         http::version ver        = http::http_2_0)
+        constexpr explicit basic_request(
+          ET&&          inp_etraits,
+          MStrT&&       inp_method = "GET",
+          UStrT&&       url        = "/",
+          http::version ver        = http::http_2_0)
           : common_request_type{inp_etraits},
             requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
                                                           alloc::general_alloc_for<string_type>(*this))},
             requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method),
                                                              alloc::general_alloc_for<string_type>(*this))},
             request_version{ver} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr basic_request(basic_request const&)      = default;
         constexpr basic_request(basic_request&&) noexcept  = default;
         basic_request& operator=(basic_request const&)     = default;
         basic_request& operator=(basic_request&&) noexcept = default;
-        constexpr ~basic_request() final                   = default;
 
+        constexpr ~basic_request() = default;
 
         // Get a request view from this request
         [[nodiscard]] constexpr request_view view() const noexcept {
@@ -255,7 +251,6 @@ namespace webpp::http {
                    requested_method.empty();
         }
     };
-
 
     using request = basic_request<default_dynamic_traits>;
 

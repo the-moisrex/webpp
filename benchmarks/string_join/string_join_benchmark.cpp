@@ -24,9 +24,8 @@ static void StrJoin_Webpp(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+
 BENCHMARK(StrJoin_Webpp);
-
-
 
 static void StrJoin_STD(benchmark::State& state) {
     for (auto _ : state) {
@@ -43,6 +42,7 @@ static void StrJoin_STD(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+
 BENCHMARK(StrJoin_STD);
 
 #ifdef has_fmt
@@ -56,5 +56,6 @@ static void StrJoin_FMT(benchmark::State& state) {
         benchmark::DoNotOptimize(res);
     }
 }
+
 BENCHMARK(StrJoin_FMT);
 #endif

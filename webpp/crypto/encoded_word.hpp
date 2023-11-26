@@ -98,7 +98,7 @@ namespace webpp::http {
      * consists only of ASCII characters.
      */
     static std::string
-    encodeWord(const std::string& text, const std::string& charset = "UTF-8", char encoding = 'q');
+    encodeWord(std::string const& text, std::string const& charset = "UTF-8", char encoding = 'q');
 
     /*
      * Decodes a string containing encoded-word's according to the rules specified in
@@ -109,7 +109,7 @@ namespace webpp::http {
      * If toCharset is provided, returned string is converted to the specified
      * charset. For a list of supported encodings, see Poco:TextEncodingRegistry.
      */
-    static std::string decodeWord(const std::string& encodedWord, std::string toCharset = "");
+    static std::string decodeWord(std::string const& encodedWord, std::string toCharset = "");
 
 
 

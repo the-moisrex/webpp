@@ -7,7 +7,6 @@
 
 #include <string_view>
 
-
 namespace webpp::istl {
 
 
@@ -35,7 +34,9 @@ namespace webpp::istl {
         str.clear();
         str.shrink_to_fit();
         str.capacity();
-        { str = "str" };
+        {
+            str = "str"
+        };
     };
 
     namespace details::string_view {
@@ -102,13 +103,15 @@ namespace webpp::istl {
                                  str.c_str();
                                  str.size();
                                  StrViewT{str.c_str(), str.size()};
-                             }) {
+                             })
+        {
             return StrViewT{str.c_str(), str.size()};
         } else if constexpr (requires {
                                  str.data();
                                  str.size();
                                  StrViewT{str.data(), str.size()};
-                             }) {
+                             })
+        {
             return StrViewT{str.data(), str.size()};
         } else if constexpr (requires { str.string_view(); }) {
             return string_viewify_of<StrViewT>(str.string_view());
@@ -136,7 +139,6 @@ namespace webpp::istl {
         return string_viewify_of<deduced_type, StrT>(stl::forward<StrT>(str));
     }
 
-
     /**
      * Convert to string view (if itself is one, return itself, otherwise get one of the basic_string_view)
      */
@@ -158,7 +160,6 @@ namespace webpp::istl {
     template <typename T>
     using string_view_type_of =
       stl::conditional_t<StringView<T>, T, stl::basic_string_view<char_type_of_t<T>>>;
-
 
     template <StringViewifiable T>
     [[nodiscard]] static constexpr auto to_std_string_view(T&& str) noexcept {

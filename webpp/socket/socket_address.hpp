@@ -89,6 +89,7 @@ namespace webpp {
             default: to_ip = ipv6::invalid();
         }
     }
+
     // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
 
@@ -106,7 +107,6 @@ namespace webpp {
         return to_ip;
     }
 
-
     //////////////////////////////////////// To Socket Addresses ////////////////////////////////////////
 
     static constexpr void to_sock_addr(sockaddr_in& to_addr, ipv4 from_ip) noexcept {
@@ -120,7 +120,7 @@ namespace webpp {
 
     static constexpr void to_sock_addr(in6_addr& to_addr, ipv6 const& from_ip) noexcept {
         // NOLINTBEGIN(*-magic-numbers)
-        const auto octets   = from_ip.octets8();
+        auto const octets   = from_ip.octets8();
         to_addr.s6_addr[0]  = octets[0];
         to_addr.s6_addr[1]  = octets[1];
         to_addr.s6_addr[2]  = octets[2];
@@ -217,7 +217,6 @@ namespace webpp {
         return sock_addr;
     }
 
-
     //////////////////////////////////////// Address Wrappers ////////////////////////////////////////
 
     /**
@@ -249,17 +248,16 @@ namespace webpp {
          * @param addr Pointer to a buffer holding the address.
          * @param n The number of valid bytes in the address
          */
-        sock_address_any(const sockaddr* addr, socklen_t n) noexcept : addr_len{n} {
+        sock_address_any(sockaddr const* addr, socklen_t n) noexcept : addr_len{n} {
             std::memcpy(&addr_storage, addr, n);
         }
-
 
         /**
          * Constructs an address.
          * @param addr The buffer holding the address.
          * @param n The number of valid bytes in the address
          */
-        sock_address_any(const sockaddr_storage& addr, socklen_t n) noexcept : addr_len{n} {
+        sock_address_any(sockaddr_storage const& addr, socklen_t n) noexcept : addr_len{n} {
             std::memcpy(&addr_storage, &addr, n);
         }
 
@@ -285,8 +283,8 @@ namespace webpp {
         /**
          * Gets a pointer to this object cast to a sockaddr.
          */
-        [[nodiscard]] const sockaddr* sockaddr_ptr() const noexcept {
-            return reinterpret_cast<const sockaddr*>(&addr_storage);
+        [[nodiscard]] sockaddr const* sockaddr_ptr() const noexcept {
+            return reinterpret_cast<sockaddr const*>(&addr_storage);
         }
 
         /**
@@ -295,6 +293,7 @@ namespace webpp {
         [[nodiscard]] sockaddr* sockaddr_ptr() noexcept {
             return reinterpret_cast<sockaddr*>(&addr_storage);
         }
+
         // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
         [[nodiscard]] constexpr socklen_t* socklen_ptr() noexcept {
@@ -326,11 +325,11 @@ namespace webpp {
             return make_addr<ipv6>(addr_storage);
         }
 
-        [[nodiscard]] constexpr bool operator==(const sock_address_any& rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator==(sock_address_any const& rhs) const noexcept {
             return size() == rhs.size() && std::memcmp(sockaddr_ptr(), rhs.sockaddr_ptr(), size()) == 0;
         }
 
-        [[nodiscard]] constexpr bool operator!=(const sock_address_any& rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(sock_address_any const& rhs) const noexcept {
             return !operator==(rhs);
         }
 

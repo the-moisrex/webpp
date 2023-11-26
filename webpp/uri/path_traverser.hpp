@@ -154,10 +154,6 @@ namespace webpp::uri {
         }
     };
 
-
-
-
-
     /**
      * Iterator through a path, and parse while we go through it
      *
@@ -177,7 +173,7 @@ namespace webpp::uri {
         static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
 
       private:
-        slug_type seg; // segment
+        slug_type seg;                                                                   // segment
         iterator  beg;
         iterator  pos;
         iterator  fin; // todo: technically it's possible to remove this
@@ -227,7 +223,7 @@ namespace webpp::uri {
             if (at_end()) {
                 return false;
             }
-            const auto slash_start = stl::find(pos, fin, char_type{'/'});
+            auto const slash_start = stl::find(pos, fin, char_type{'/'});
             if (slash_start == pos) { // the first slash, or two or more contiguous slashes
                 ++pos;
                 return next();
@@ -303,7 +299,6 @@ namespace webpp::uri {
             return next() && seg == istl::string_viewify_of<string_view_type>(stl::forward<StrV>(slug));
         }
     };
-
 
     template <Traits TraitsType = default_traits>
     using path_iterator =

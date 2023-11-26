@@ -33,6 +33,7 @@ namespace webpp::views {
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
         constexpr file_view(ET&& et) : data{alloc::general_alloc_for<string_type>(et)} {}
+
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         constexpr file_view(file_view const&)     = default;
@@ -41,7 +42,6 @@ namespace webpp::views {
 
         constexpr file_view& operator=(file_view const&)     = default;
         constexpr file_view& operator=(file_view&&) noexcept = default;
-
 
         constexpr data_view_type generate_data_view(auto&&) const noexcept {
             return {};

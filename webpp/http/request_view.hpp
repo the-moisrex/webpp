@@ -12,7 +12,6 @@
 
 #include <variant>
 
-
 namespace webpp::http {
 
 
@@ -54,7 +53,6 @@ namespace webpp::http {
 #undef call_svr
         };
 
-
         /**
          * This request type can hold other HTTP request types.
          */
@@ -86,7 +84,6 @@ namespace webpp::http {
             virtual ~request_view_interface()                                         = default;
         };
 
-
         /**
          * An HTTPRequest that meets the requirements of a "request view".
          */
@@ -112,14 +109,14 @@ namespace webpp::http {
             fields_type view;
 
           public:
-            constexpr dynamic_header_fields_provider(dynamic_header_fields_provider const&) noexcept =
-              default;
+            constexpr dynamic_header_fields_provider(
+              dynamic_header_fields_provider const&) noexcept                                   = default;
             constexpr dynamic_header_fields_provider(dynamic_header_fields_provider&&) noexcept = default;
             constexpr ~dynamic_header_fields_provider() noexcept                                = default;
-            constexpr dynamic_header_fields_provider&
-            operator=(dynamic_header_fields_provider const&) noexcept = default;
-            constexpr dynamic_header_fields_provider&
-            operator=(dynamic_header_fields_provider&&) noexcept = default;
+            constexpr dynamic_header_fields_provider& operator=(
+              dynamic_header_fields_provider const&) noexcept = default;
+            constexpr dynamic_header_fields_provider& operator=(
+              dynamic_header_fields_provider&&) noexcept = default;
 
             template <typename ReqType>
                 requires(HTTPRequestViewifiable<traits_type, ReqType>)
@@ -161,6 +158,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
         headers_type headers;
+
         // NOLINTEND(cppcoreguidelines-non-private-member-variables-in-classes,misc-non-private-member-variables-in-classes)
 
         // An HTTP Request is passed down
@@ -209,7 +207,6 @@ namespace webpp::http {
             return req->get_version();
         }
     };
-
 
     using request_view = basic_request_view<>;
 

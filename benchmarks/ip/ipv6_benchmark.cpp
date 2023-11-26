@@ -4,7 +4,6 @@
 #include "../benchmark.hpp"
 #include "../boost_pch.hpp"
 
-
 namespace using_memmove {
     using namespace webpp;
 
@@ -16,7 +15,7 @@ namespace using_memmove {
      * @returns status of the parsing
      **/
     static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* src_endp, stl::uint8_t* out) noexcept {
+    inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
         using enum inet_pton6_status;
 
         stl::uint8_t* colonp = nullptr;
@@ -33,10 +32,10 @@ namespace using_memmove {
             }
         }
 
-        const char*  current_token = src;
+        char const*  current_token = src;
         stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
         unsigned int val           = 0;
-        char         ch; // NOLINT(cppcoreguidelines-init-variables)
+        char         ch;                // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
             int const digit = ascii::hex_digit_value(ch);
@@ -45,7 +44,7 @@ namespace using_memmove {
                     return invalid_octet_range;
                 }
                 val <<= 4;
-                val |= static_cast<unsigned int>(digit);
+                val  |= static_cast<unsigned int>(digit);
                 if (val > 0xffff) {
                     return invalid_octet_range; // todo: is this if stmt even possible?
                 }
@@ -74,8 +73,8 @@ namespace using_memmove {
                 src = current_token;
                 switch (inet_pton4(src, src_endp, out)) {
                     case inet_pton4_status::valid: {
-                        out += ipv4_byte_count;
-                        hex_seen = 0;
+                        out      += ipv4_byte_count;
+                        hex_seen  = 0;
                         break;
                     }
                     case inet_pton4_status::bad_ending:
@@ -124,13 +123,11 @@ namespace using_memmove {
         return valid;
     }
 
-
-
     /**
      * Parse a ipv6 + prefix
      */
     static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+    inet_pton6(char const*& src, char const* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
         if (res == invalid_character && *src == '/') {
@@ -145,18 +142,18 @@ namespace using_memmove {
         return res;
     }
 
-
     static constexpr inet_pton6_status
-    inet_pton6(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
-        const char* src = inp_src;
+    inet_pton6(char const* const& inp_src, char const* src_endp, stl::uint8_t* out) noexcept {
+        char const* src = inp_src;
         return inet_pton6(src, src_endp, out);
     }
 
-    static constexpr inet_pton6_status inet_pton6(const char* const& inp_src,
-                                                  const char*        src_endp,
-                                                  stl::uint8_t*      out,
-                                                  stl::uint8_t&      prefix) noexcept {
-        const char* src = inp_src;
+    static constexpr inet_pton6_status inet_pton6(
+      char const* const& inp_src,
+      char const*        src_endp,
+      stl::uint8_t*      out,
+      stl::uint8_t&      prefix) noexcept {
+        char const* src = inp_src;
         return inet_pton6(src, src_endp, out, prefix);
     }
 
@@ -164,9 +161,9 @@ namespace using_memmove {
 
 } // namespace using_memmove
 
-
 namespace manual_algorithm {
     using namespace webpp;
+
     /**
      * Convert IPv6 Presentation string into network order binary form.
      *
@@ -175,7 +172,7 @@ namespace manual_algorithm {
      * @returns status of the parsing
      **/
     static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* src_endp, stl::uint8_t* out) noexcept {
+    inet_pton6(char const*& src, char const* src_endp, stl::uint8_t* out) noexcept {
         using enum inet_pton6_status;
 
         stl::uint8_t* colonp = nullptr;
@@ -192,10 +189,10 @@ namespace manual_algorithm {
             }
         }
 
-        const char*  current_token = src;
+        char const*  current_token = src;
         stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
         unsigned int val           = 0;
-        char         ch; // NOLINT(cppcoreguidelines-init-variables)
+        char         ch;                // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
             int const digit = ascii::hex_digit_value(ch);
@@ -204,7 +201,7 @@ namespace manual_algorithm {
                     return invalid_octet_range;
                 }
                 val <<= 4;
-                val |= static_cast<unsigned int>(digit);
+                val  |= static_cast<unsigned int>(digit);
                 if (val > 0xffff) {
                     return invalid_octet_range; // todo: is this if stmt even possible?
                 }
@@ -233,8 +230,8 @@ namespace manual_algorithm {
                 src = current_token;
                 switch (inet_pton4(src, src_endp, out)) {
                     case inet_pton4_status::valid: {
-                        out += ipv4_byte_count;
-                        hex_seen = 0;
+                        out      += ipv4_byte_count;
+                        hex_seen  = 0;
                         break;
                     }
                     case inet_pton4_status::bad_ending:
@@ -293,13 +290,11 @@ namespace manual_algorithm {
         return valid;
     }
 
-
-
     /**
      * Parse a ipv6 + prefix
      */
     static constexpr inet_pton6_status
-    inet_pton6(const char*& src, const char* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
+    inet_pton6(char const*& src, char const* end, stl::uint8_t* out, stl::uint8_t& prefix) noexcept {
         using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
         if (res == invalid_character && *src == '/') {
@@ -314,18 +309,18 @@ namespace manual_algorithm {
         return res;
     }
 
-
     static constexpr inet_pton6_status
-    inet_pton6(const char* const& inp_src, const char* src_endp, stl::uint8_t* out) noexcept {
-        const char* src = inp_src;
+    inet_pton6(char const* const& inp_src, char const* src_endp, stl::uint8_t* out) noexcept {
+        char const* src = inp_src;
         return inet_pton6(src, src_endp, out);
     }
 
-    static constexpr inet_pton6_status inet_pton6(const char* const& inp_src,
-                                                  const char*        src_endp,
-                                                  stl::uint8_t*      out,
-                                                  stl::uint8_t&      prefix) noexcept {
-        const char* src = inp_src;
+    static constexpr inet_pton6_status inet_pton6(
+      char const* const& inp_src,
+      char const*        src_endp,
+      stl::uint8_t*      out,
+      stl::uint8_t&      prefix) noexcept {
+        char const* src = inp_src;
         return inet_pton6(src, src_endp, out, prefix);
     }
 
@@ -346,6 +341,7 @@ static void IP_asio_v6(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_asio_v6);
 #endif
 
@@ -355,6 +351,7 @@ static void IP_webpp_v6(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_webpp_v6);
 
 /////////////////// IPv6 Random ///////////////////////
@@ -368,12 +365,14 @@ auto ipv6_rands() {
     }
     return ipv6_rand;
 }
+
 auto ipv6_data() {
     static auto data = ipv6_rands();
     static auto it   = data.begin();
     ++it;
-    if (it == data.end())
+    if (it == data.end()) {
         it = data.begin();
+    }
     return *it;
 }
 
@@ -385,6 +384,7 @@ static void IP_asio_v6_random(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_asio_v6_random);
 #endif
 
@@ -395,9 +395,8 @@ static void IP_webpp_v6_random(benchmark::State& state) {
         benchmark::DoNotOptimize(addr);
     }
 }
+
 BENCHMARK(IP_webpp_v6_random);
-
-
 
 static void IP_webpp_v6_random_normal(benchmark::State& state) {
     ipv6_data();
@@ -415,8 +414,8 @@ static void IP_webpp_v6_random_normal(benchmark::State& state) {
         benchmark::DoNotOptimize(status);
     }
 }
-BENCHMARK(IP_webpp_v6_random_normal);
 
+BENCHMARK(IP_webpp_v6_random_normal);
 
 static void IP_webpp_v6_random_manual(benchmark::State& state) {
     ipv6_data();
@@ -434,6 +433,7 @@ static void IP_webpp_v6_random_manual(benchmark::State& state) {
         benchmark::DoNotOptimize(status);
     }
 }
+
 BENCHMARK(IP_webpp_v6_random_manual);
 
 static void IP_webpp_v6_random_memmove(benchmark::State& state) {
@@ -452,4 +452,5 @@ static void IP_webpp_v6_random_memmove(benchmark::State& state) {
         benchmark::DoNotOptimize(status);
     }
 }
+
 BENCHMARK(IP_webpp_v6_random_memmove);

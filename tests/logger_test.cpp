@@ -27,7 +27,6 @@ TEST(LoggerTests, LoggerConcepts) {
 }
 
 TEST(LoggerTests, STDLoggerTeat) {
-
     output = std::tmpfile();
 
     using ol = std_logger<output_getter>;

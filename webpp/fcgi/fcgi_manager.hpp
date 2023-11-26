@@ -8,7 +8,6 @@
 namespace webpp::fastcgi {
 
     struct fcgi_manager {
-
         /**
          * Explanation of this algorithm is in FastCGI specs:
          *    http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html#S3.4
@@ -60,12 +59,14 @@ namespace webpp::fastcgi {
          *
          *
          */
-        static bool process_header_params(const char*       data,
-                                          const char* const data_end,
-                                          stl::string_view& name,
-                                          stl::string_view& value) noexcept {
-            if (data >= data_end)
+        static bool process_header_params(
+          char const*       data,
+          char const* const data_end,
+          stl::string_view& name,
+          stl::string_view& value) noexcept {
+            if (data >= data_end) {
                 return false; // no more params for you
+            }
 
             stl::size_t name_size;
             stl::size_t value_size;
@@ -73,37 +74,40 @@ namespace webpp::fastcgi {
             // calculating name length
             if (static_cast<uint8_t>(*data) & 0x80u) { // if the first bit is 1
                 // it means we've got a longer name length than uint8_t, we've got uint32_t
-                const auto* const size = reinterpret_cast<const uint8_t*>(data);
-                data += sizeof(uint32_t);
+                auto const* const size  = reinterpret_cast<uint8_t const*>(data);
+                data                   += sizeof(uint32_t);
 
-                if (data >= data_end)
+                if (data >= data_end) {
                     return false; // no more params for you
+                }
 
-                name_size = join_pieces<uint32_t, uint8_t>(size) & 0x7FFFFFFFu;
+                name_size = join_pieces<uint32_t, uint8_t>(size) & 0x7FFF'FFFFu;
             } else {
                 name_size = static_cast<uint8_t>(*data);
                 ++data;
             }
 
-            if (data >= data_end)
+            if (data >= data_end) {
                 return false;
+            }
 
             // calculating value length
             if (static_cast<uint8_t>(*data) & 0x80u) { // if the first bit is 1
                 // it means we've got a longer value length than uint8_t, we've got uint32_t
-                const auto* const size = reinterpret_cast<const uint8_t*>(data);
-                data += sizeof(uint32_t);
+                auto consto* const size  = reinterpret_castt uint8_ const** > (data);
+                data                    += sizeof(uint32_t);
 
-                if (data >= data_end)
+                if (data >= data_end) {
                     return false; // no more params for you
+                }
 
-                value_size = join_pieces<uint32_t, uint8_t>(size) & 0x7FFFFFFFu;
+                value_size = join_pieces<uint32_t, uint8_t>(size) & 0x7FFF'FFFFu;
             } else {
                 value_size = static_cast<uint8_t>(*data);
                 ++data;
             }
 
-            name     = stl::string_view{static_cast<const char*>(data), name_size};
+            name     = stl::string_view{static_caschar constar* > (data), name_size};
             value    = stl::string_view{name.data() + name_size, value_size};
             auto end = value.data() + value_size;
 
@@ -122,11 +126,9 @@ namespace webpp::fastcgi {
                     stl::string_view name, value;
                     while (process_header_params(data, data_end, name, value)) {
                         switch (name.size()) {
-
                             case decltype(max_conns_reply)::real_name_length:
-                                if (stl::equal(name.data(),
-                                               name.data() + name.size(),
-                                               max_conns_reply.name)) {
+                                if (stl::equal(name.data(), name.data() + name.size(), max_conns_reply.name))
+                                {
                                     send(max_conns_reply);
                                 }
                                 break;
@@ -138,9 +140,8 @@ namespace webpp::fastcgi {
                                 break;
 
                             case decltype(mpxs_conns_reply)::real_name_length:
-                                if (stl::equal(name.data(),
-                                               name.data() + name.size(),
-                                               mpxs_conns_reply.name)) {
+                                if (stl::equal(name.data(), name.data() + name.size(), mpxs_conns_reply.name))
+                                {
                                     send(max_reqs_reply);
                                 }
                                 break;

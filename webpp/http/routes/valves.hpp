@@ -11,13 +11,10 @@
 #include "router_concepts.hpp"
 #include "valve_traits.hpp"
 
-
 namespace webpp::http {
 
     template <typename Self>
     struct valve {
-
-
         template <template <typename...> typename T>
         static constexpr bool is_self_of = istl::template_of_v<T, Self>;
 
@@ -25,7 +22,6 @@ namespace webpp::http {
 
         template <template <typename...> typename T>
         static constexpr bool is_routes_of = istl::template_of_v<T, routes_type>;
-
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator>>(Callable&& callable) const {
@@ -57,7 +53,7 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto operator&&([[maybe_unused]] Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C && Negative == ?
-            if constexpr (stl::same_as<routes_type, callable_type>) { // C && C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C && C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C && !C == -C
                 return rebind_self<negative_valve>(routes());
@@ -68,12 +64,11 @@ namespace webpp::http {
             }
         }
 
-
         template <typename Callable>
         [[nodiscard]] constexpr auto operator||(Callable&& callable) const {
             using callable_type = stl::remove_cvref_t<Callable>;
             // todo: C || Positive == ?
-            if constexpr (stl::same_as<routes_type, callable_type>) { // C || C = C
+            if constexpr (stl::same_as<routes_type, callable_type>) {                   // C || C = C
                 return *this;
             } else if constexpr (stl::same_as<not_valve<routes_type>, callable_type>) { // C || !C == +C
                 return rebind_self<positive_valve>(routes());
@@ -84,12 +79,11 @@ namespace webpp::http {
             }
         }
 
-
         [[nodiscard]] constexpr auto operator!() const {
             if constexpr (istl::remove_template_of_v<not_valve, routes_type>) {
                 // This only checks against the default traits'-type's return type
-                if constexpr (stl::same_as<bool,
-                                           typename valve_traits<routes_type>::return_type>) { // !!C == C
+                if constexpr (stl::same_as<bool, typename valve_traits<routes_type>::return_type>) { // !!C ==
+                                                                                                     // C
                     return routes().unwrap();
                 } else { // !!C = +C
                     return rebind_self<positive_valve>(routes().unwrap());
@@ -98,7 +92,6 @@ namespace webpp::http {
                 return rebind_next<not_valve>();
             }
         }
-
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator+(Callable&& callable) const {
@@ -109,7 +102,6 @@ namespace webpp::http {
             }
         }
 
-
         template <typename Callable>
         [[nodiscard]] constexpr auto operator-(Callable&& callable) const {
             if constexpr (is_self_of<valves_group>) {
@@ -118,7 +110,6 @@ namespace webpp::http {
                 return valves_group{prerouting_valve{valvify(stl::forward<Callable>(callable))}, routes()};
             }
         }
-
 
         template <typename Callable>
         [[nodiscard]] constexpr auto operator*(Callable&& callable) const {
@@ -148,7 +139,6 @@ namespace webpp::http {
             }
         }
 
-
         template <typename SegT>
         [[nodiscard]] constexpr auto operator%(SegT&& inp_segment) const {
             using seg_type = stl::remove_cvref_t<SegT>;
@@ -159,16 +149,15 @@ namespace webpp::http {
                     return rebind_self<segment_valve>(
                       stl::tuple_cat(routes().as_tuple(), inp_segment.as_tuple(), stl::make_tuple(endpath)));
                 } else { // append the segment
-                    return rebind_self<segment_valve>(
-                      stl::tuple_cat(routes().as_tuple(),
-                                     stl::make_tuple(valvify(stl::forward<SegT>(inp_segment))),
-                                     stl::make_tuple(endpath)));
+                    return rebind_self<segment_valve>(stl::tuple_cat(
+                      routes().as_tuple(),
+                      stl::make_tuple(valvify(stl::forward<SegT>(inp_segment))),
+                      stl::make_tuple(endpath)));
                 }
             } else {
                 return rebind_next<segment_valve>(stl::forward<SegT>(inp_segment), endpath);
             }
         }
-
 
         // Convert Custom Contexts into dynamic context
         // For compatibility with the static router
@@ -230,14 +219,14 @@ namespace webpp::http {
         [[nodiscard]] constexpr auto rebind_next(Args&&... nexts) const {
             // skip passing the routes if the valve_group's routes are empty, that would create an
             // empty segment route (for example)
-            if constexpr (stl::is_void_v<Self> || (is_self_of<valves_group> &&
-                                                   istl::cvref_as<decltype(routes()), forward_valve<>>) ) {
+            if constexpr (stl::is_void_v<Self> ||
+                          (is_self_of<valves_group> && istl::cvref_as<decltype(routes()), forward_valve<>>) )
+            {
                 return rebind_self<Templ, T...>(stl::forward<Args>(nexts)...);
             } else {
                 return rebind_self<Templ, T...>(routes(), stl::forward<Args>(nexts)...);
             }
         }
-
 
         // We get a tuple<>, but we want to pass all the individual elements to `valvify`
         // Attention: This means we will be calling `valvify` multiple times for each element

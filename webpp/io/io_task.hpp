@@ -12,7 +12,6 @@ namespace webpp::io {
     template <typename T>
     struct io_task;
 
-
     /**
      * Exception thrown when you attempt to retrieve the result of a task that has been
      * detached from its promise/coroutine.
@@ -144,7 +143,11 @@ namespace webpp::io {
             }
 
           private:
-            enum class result_type { empty, value, exception };
+            enum class result_type {
+                empty,
+                value,
+                exception
+            };
 
             result_type res_type_val = result_type::empty;
 
@@ -241,8 +244,8 @@ namespace webpp::io {
         constexpr io_task(io_task&& t) noexcept : coro_handle(stl::exchange(t.coro_handle, nullptr)) {}
 
         /// Disable copy construction/assignment.
-        io_task(const io_task&)            = delete;
-        io_task& operator=(const io_task&) = delete;
+        io_task(io_task const&)            = delete;
+        io_task& operator=(io_task const&) = delete;
 
         /// Frees resources used by this task.
         ~io_task() {

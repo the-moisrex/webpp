@@ -31,7 +31,6 @@ namespace webpp::ascii {
         return false;
     }
 
-
     /**
      * remove the first character if exists (only those that is specified in chars)
      */
@@ -56,11 +55,10 @@ namespace webpp::ascii {
         }
     }
 
-
     template <istl::StringView StrViewT, stl::size_t N = 1>
     static constexpr StrViewT next_token(StrViewT&                                 str,
                                          charset<typename StrViewT::value_type, N> allowed_chars) noexcept {
-        const auto pos   = str.find_if_not_of(allowed_chars.string_view());
+        auto const pos   = str.find_if_not_of(allowed_chars.string_view());
         StrViewT   token = str.substr(0, pos);
         str.remove_suffix(pos);
         return token;
@@ -72,7 +70,6 @@ namespace webpp::ascii {
       charset<typename StrViewT::value_type, N>       allowed_chars,
       charset<typename StrViewT::value_type, QStartN> allowed_start_quotes = {'"'},
       charset<typename StrViewT::value_type, QEndN>   allowed_end_quotes   = {'"'}) noexcept {
-
         // todo: how to check valid-ness?
     }
 

@@ -8,8 +8,7 @@
 using namespace std;
 using namespace webpp;
 
-
-static constexpr const char* inet_ntop4_manual(const uint8_t* src, char* out) noexcept {
+static constexpr char const* inet_ntop4_manual(uint8_t const* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR()                                   \
     if (*src < 10) {                                       \
         *out++ = static_cast<char>('0' + *src);            \
@@ -41,15 +40,14 @@ static constexpr const char* inet_ntop4_manual(const uint8_t* src, char* out) no
 #    define SPRINTF(x) ((size_t) sprintf x)
 #endif
 
-static const char* inet_ntop4_glibc(const uint8_t* src, char* out, size_t size) noexcept {
-    static const char fmt[] = "%u.%u.%u.%u";
+static char const* inet_ntop4_glibc(uint8_t const* src, char* out, size_t size) noexcept {
+    static char const fmt[] = "%u.%u.%u.%u";
     char              tmp[sizeof "255.255.255.255"];
     if (SPRINTF((tmp, fmt, src[0], src[1], src[2], src[3])) >= size) {
         return nullptr;
     }
     return strcpy(out, tmp);
 }
-
 
 static constexpr string_view valid_ipv4s[]{
   "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",
@@ -74,20 +72,17 @@ static constexpr string_view valid_ipv4s[]{
   "255.255.254.1",   "255.254.255.1",   "254.255.255.1",   "255.1.255.0",     "1.255.254.0",
   "1.254.255.0",     "254.1.255.0",     "254.255.1.0"};
 
-
-
-
 /* const char *
  * inet_ntop6(src, out, size)
  *	convert IPv6 binary address into presentation (printable) format
  * author:
  *	Paul Vixie, 1996.
  */
-static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) noexcept {
-    webpp_static_constexpr auto uint16_byte_count =
-      sizeof(stl::uint16_t); // Number of bytes of data in an uint16_t
-    webpp_static_constexpr auto ipv4_byte_count = 4;
-    webpp_static_constexpr auto ipv6_byte_count = 16;
+static char const* glibc_inet_ntop6(uint8_t const* src, char* out, size_t size) noexcept {
+    webpp_static_constexpr auto uint16_byte_count = sizeof(stl::uint16_t); // Number of bytes of data in an
+                                                                           // uint16_t
+    webpp_static_constexpr auto ipv4_byte_count   = 4;
+    webpp_static_constexpr auto ipv6_byte_count   = 16;
     /*
      * Note that int32_t and int16_t need only be "at least" large enough
      * to contain a value of the specified size.  On some systems, like
@@ -96,9 +91,11 @@ static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) 
      * to use pointer overlays.  All the world's not a VAX.
      */
     char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
+
     struct {
         int base, len;
     } best, cur;
+
     u_int words[ipv6_byte_count / uint16_byte_count];
     int   i;
     /*
@@ -107,32 +104,37 @@ static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) 
      *	Find the longest run of 0x00's in src[] for :: shorthanding.
      */
     memset(words, '\0', sizeof words);
-    for (i = 0; i < ipv6_byte_count; i += 2)
+    for (i = 0; i < ipv6_byte_count; i += 2) {
         words[i / 2] = (src[i] << 8) | src[i + 1];
+    }
     best.base = -1;
     cur.base  = -1;
     best.len  = 0;
     cur.len   = 0;
     for (i = 0; i < (ipv6_byte_count / uint16_byte_count); i++) {
         if (words[i] == 0) {
-            if (cur.base == -1)
+            if (cur.base == -1) {
                 cur.base = i, cur.len = 1;
-            else
+            } else {
                 cur.len++;
+            }
         } else {
             if (cur.base != -1) {
-                if (best.base == -1 || cur.len > best.len)
+                if (best.base == -1 || cur.len > best.len) {
                     best = cur;
+                }
                 cur.base = -1;
             }
         }
     }
     if (cur.base != -1) {
-        if (best.base == -1 || cur.len > best.len)
+        if (best.base == -1 || cur.len > best.len) {
             best = cur;
+        }
     }
-    if (best.base != -1 && best.len < 2)
+    if (best.base != -1 && best.len < 2) {
         best.base = -1;
+    }
     /*
      * Format the result.
      */
@@ -140,25 +142,29 @@ static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) 
     for (i = 0; i < (ipv6_byte_count / uint16_byte_count); i++) {
         /* Are we inside the best run of 0x00's? */
         if (best.base != -1 && i >= best.base && i < (best.base + best.len)) {
-            if (i == best.base)
+            if (i == best.base) {
                 *tp++ = ':';
+            }
             continue;
         }
         /* Are we following an initial run of 0x00s or any real hex? */
-        if (i != 0)
+        if (i != 0) {
             *tp++ = ':';
+        }
         /* Is this address an encapsulated IPv4? */
         if (i == 6 && best.base == 0 && (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
-            if (!inet_ntop4_glibc(src + 12, tp, sizeof tmp - (tp - tmp)))
+            if (!inet_ntop4_glibc(src + 12, tp, sizeof tmp - (tp - tmp))) {
                 return nullptr;
+            }
             tp += strlen(tp);
             break;
         }
         tp += SPRINTF((tp, "%x", words[i]));
     }
     /* Was it a trailing run of 0x00's? */
-    if (best.base != -1 && (best.base + best.len) == (ipv6_byte_count / uint16_byte_count))
+    if (best.base != -1 && (best.base + best.len) == (ipv6_byte_count / uint16_byte_count)) {
         *tp++ = ':';
+    }
     *tp++ = '\0';
     /*
      * Check for overflow, copy, and we're done.
@@ -171,7 +177,6 @@ static const char* glibc_inet_ntop6(const uint8_t* src, char* out, size_t size) 
 
 #define MAX_IPv4_STR_LEN 16
 #define MAX_IPv6_STR_LEN 64
-
 
 /*
  * Internet address (a structure for historical reasons)
@@ -191,7 +196,8 @@ struct apple_in6_addr {
         uint32_t __u6_addr32[4];
     } __u6_addr; /* 128-bit IP6 address */
 };
-static const char* hexchars = "0123456789abcdef";
+
+static char const* hexchars = "0123456789abcdef";
 
 #define s6_addr   __u6_addr.__u6_addr8
 #define s6_addr8  __u6_addr.__u6_addr8
@@ -214,10 +220,10 @@ static const char* hexchars = "0123456789abcdef";
 #define APPLE_IN6_IS_ADDR_V4MAPPED(a)                              \
     ((*(const uint32_t*) (const void*) (&(a)->s6_addr[0]) == 0) && \
      (*(const uint32_t*) (const void*) (&(a)->s6_addr[4]) == 0) && \
-     (*(const uint32_t*) (const void*) (&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+     (*(const uint32_t*) (const void*) (&(a)->s6_addr[8]) == ntohl(0x0000'ffff)))
 
-static const char* apple_inet_ntop4(const struct apple_in_addr* addr, char* buf, size_t len) {
-    const u_int8_t* ap = (const u_int8_t*) &addr->s_addr;
+static char const* apple_inet_ntop4(const struct apple_in_addr* addr, char* buf, size_t len) {
+    u_int8_t const* ap = (u_int8_t const*) &addr->s_addr;
     char            tmp[MAX_IPv4_STR_LEN]; /* max length of ipv4 addr string */
     int             fulllen;
 
@@ -236,7 +242,7 @@ static const char* apple_inet_ntop4(const struct apple_in_addr* addr, char* buf,
     return buf;
 }
 
-static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst, size_t size) {
+static char const* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst, size_t size) {
     char                 hexa[8][5], tmp[MAX_IPv6_STR_LEN];
     int                  zr[8];
     size_t               len;
@@ -245,8 +251,9 @@ static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst
     uint16_t             x16;
     struct apple_in_addr a4;
 
-    if (addr == NULL)
+    if (addr == NULL) {
         return NULL;
+    }
 
     bzero(tmp, sizeof(tmp));
 
@@ -261,8 +268,9 @@ static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst
                        "::%s%s",
                        (i != 0) ? "ffff:" : "",
                        apple_inet_ntop4(&a4, tmp2, sizeof(tmp2)));
-        if (len >= size)
+        if (len >= size) {
             return NULL;
+        }
         bcopy(tmp, dst, len + 1);
         return dst;
     }
@@ -306,10 +314,11 @@ static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst
     for (i = 7; i >= 0; i--) {
         zr[i] = j;
         x16   = addr->__u6_addr.__u6_addr16[i];
-        if (x16 == 0)
+        if (x16 == 0) {
             j++;
-        else
+        } else {
             j = 0;
+        }
         zr[i] = j;
     }
 
@@ -324,40 +333,43 @@ static const char* apple_inet_ntop6(const struct apple_in6_addr* addr, char* dst
     }
 
     for (i = 0; i < 8; i++) {
-        if (i != k)
+        if (i != k) {
             zr[i] = 0;
+        }
     }
 
     len = 0;
     for (i = 0; i < 8; i++) {
         if (zr[i] != 0) {
             /* check for leading zero */
-            if (i == 0)
+            if (i == 0) {
                 tmp[len++] = ':';
-            tmp[len++] = ':';
-            i += (zr[i] - 1);
+            }
+            tmp[len++]  = ':';
+            i          += (zr[i] - 1);
             continue;
         }
-        for (j = 0; hexa[i][j] != '\0'; j++)
+        for (j = 0; hexa[i][j] != '\0'; j++) {
             tmp[len++] = hexa[i][j];
-        if (i != 7)
+        }
+        if (i != 7) {
             tmp[len++] = ':';
+        }
     }
 
     /* trailing NULL */
     len++;
 
-    if (len > size)
+    if (len > size) {
         return NULL;
+    }
     bcopy(tmp, dst, len);
     return dst;
 }
 
-
-
-using octets8_t                      = array<uint8_t, 16u>;
-using octets16_t                     = array<uint16_t, 8u>;
-using octets_t                       = octets8_t;
+using octets8_t  = array<uint8_t, 16u>;
+using octets16_t = array<uint16_t, 8u>;
+using octets_t   = octets8_t;
 
 /**
  * @brief return all the octets in 16bit format
@@ -378,7 +390,6 @@ using octets_t                       = octets8_t;
     }
     return ndata;
 }
-
 
 /**
  * @brief return the short string representation of ip version 6
@@ -416,25 +427,27 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
     size_t index = 0;
 
 
-    const auto append_to_buffer = [](auto& buffer, auto& index, uint16_t octet) {
-        constexpr auto hex_table = "000102030405060708090a0b0c0d0e0f1011"
-                                   "12131415161718191a1b1c1d1e1f20212223"
-                                   "2425262728292a2b2c2d2e2f303132333435"
-                                   "363738393a3b3c3d3e3f4041424344454647"
-                                   "48494a4b4c4d4e4f50515253545556575859"
-                                   "5a5b5c5d5e5f606162636465666768696a6b"
-                                   "6c6d6e6f707172737475767778797a7b7c7d"
-                                   "7e7f808182838485868788898a8b8c8d8e8f"
-                                   "909192939495969798999a9b9c9d9e9fa0a1"
-                                   "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
-                                   "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
-                                   "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
-                                   "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
-                                   "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
-                                   "fcfdfeff";
-        auto           hex_val   = hex_table + octet;
-        if (octet > 0xfu)
+    auto const append_to_buffer = [](auto& buffer, auto& index, uint16_t octet) {
+        constexpr auto hex_table =
+          "000102030405060708090a0b0c0d0e0f1011"
+          "12131415161718191a1b1c1d1e1f20212223"
+          "2425262728292a2b2c2d2e2f303132333435"
+          "363738393a3b3c3d3e3f4041424344454647"
+          "48494a4b4c4d4e4f50515253545556575859"
+          "5a5b5c5d5e5f606162636465666768696a6b"
+          "6c6d6e6f707172737475767778797a7b7c7d"
+          "7e7f808182838485868788898a8b8c8d8e8f"
+          "909192939495969798999a9b9c9d9e9fa0a1"
+          "a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3"
+          "b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5"
+          "c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7"
+          "d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9"
+          "eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafb"
+          "fcfdfeff";
+        auto hex_val = hex_table + octet;
+        if (octet > 0xfu) {
             buffer[index++] = *hex_val;
+        }
         ++hex_val;
         buffer[index++] = *hex_val;
     };
@@ -444,8 +457,9 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
     // [0, range_start)
     while (it != range_start) {
         append_to_buffer(buffer, index, *it);
-        if (++it != range_start)
+        if (++it != range_start) {
             buffer[index++] = ':';
+        }
     }
 
     // [range_start, range_end)
@@ -458,13 +472,13 @@ constexpr void short_str_to(octets_t const& octets, auto& buffer) noexcept {
     // [range_end, end)
     while (it != _octets.cend()) {
         append_to_buffer(buffer, index, *it);
-        if (++it != _octets.cend())
+        if (++it != _octets.cend()) {
             buffer[index++] = ':';
+        }
     }
 
     buffer[index++] = '\0';
 }
-
 
 namespace v2 {
 
@@ -472,7 +486,7 @@ namespace v2 {
      * Determine whether the address is a mapped IPv4 address
      * @return bool
      */
-    [[nodiscard]] constexpr bool is_v4_mapped(const stl::uint8_t* octets) noexcept {
+    [[nodiscard]] constexpr bool is_v4_mapped(stl::uint8_t const* octets) noexcept {
         return (octets[0] == 0) && (octets[1] == 0) && (octets[2] == 0) && (octets[3] == 0) &&
                (octets[4] == 0) && (octets[5] == 0) && (octets[6] == 0) && (octets[7] == 0) &&
                (octets[8] == 0) && (octets[9] == 0) && (octets[10] == 0xff) && (octets[11] == 0xff);
@@ -482,7 +496,7 @@ namespace v2 {
      * Determine whether the address is compatible with ipv4
      * @return bool
      */
-    [[nodiscard]] constexpr bool is_ipv6_address_v4_compat(const stl::uint8_t* octets) noexcept {
+    [[nodiscard]] constexpr bool is_ipv6_address_v4_compat(stl::uint8_t const* octets) noexcept {
         return (octets[0] == 0x00) && (octets[1] == 0x00) && (octets[2] == 0x00) && (octets[3] == 0x00) &&
                (octets[4] == 0x00) && (octets[5] == 0x00) && (octets[6] == 0x00) && (octets[7] == 0x00) &&
                (octets[8] == 0x00) && (octets[9] == 0x00) && (octets[10] == 0xff) && (octets[11] == 0xff);
@@ -492,7 +506,7 @@ namespace v2 {
      * Convert an IPv4 to string
      * It's fast, but it's not pretty, I know :)
      */
-    static constexpr char* inet_ntop4(const stl::uint8_t* src, char* out) noexcept {
+    static constexpr char* inet_ntop4(stl::uint8_t const* src, char* out) noexcept {
 #define WEBPP_PUT_CHAR()                                   \
     if (*src < 10) {                                       \
         *out++ = static_cast<char>('0' + *src);            \
@@ -518,8 +532,8 @@ namespace v2 {
 #undef WEBPP_PUT_CHAR
     }
 
-    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-        webpp_static_constexpr const char* hex_chars = "0123456789abcdef";
+    static constexpr char* inet_ntop6(stl::uint8_t const* src, char* out) noexcept {
+        webpp_static_constexpr char const* hex_chars = "0123456789abcdef";
 
         if (!src) {
             return nullptr;
@@ -541,7 +555,7 @@ namespace v2 {
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
-        const stl::uint8_t* src_ptr   = src;
+        stl::uint8_t const* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
         for (int i = 0; i != 8; ++i) {
             bool skip = true;
@@ -575,9 +589,9 @@ namespace v2 {
                 *octet_ptr++ = hex_chars[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = hex_chars[hx8];
-            hex_ptr += 5;
+            hx8           = x8 & 0x0fu;
+            *octet_ptr++  = hex_chars[hx8];
+            hex_ptr      += 5;
         }
 
         // find runs of zeros for :: convention
@@ -602,8 +616,8 @@ namespace v2 {
                 if (i == 0) {
                     *out++ = ':';
                 }
-                *out++ = ':';
-                i += longest_count - 1;
+                *out++  = ':';
+                i      += longest_count - 1;
             } else {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
@@ -619,19 +633,17 @@ namespace v2 {
     }
 } // namespace v2
 
-
 namespace v3 {
 
 
     namespace details {
-        static constexpr const char* hex_chars = "0123456789abcdef";
+        static constexpr char const* hex_chars = "0123456789abcdef";
     }
 
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
-    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-
+    static constexpr char* inet_ntop6(stl::uint8_t const* src, char* out) noexcept {
         if (!src) {
             return nullptr;
         }
@@ -640,7 +652,7 @@ namespace v3 {
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
-        const stl::uint8_t* src_ptr   = src;
+        stl::uint8_t const* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
         for (int i = 0; i != 8; ++i) {
             bool skip = true;
@@ -674,9 +686,9 @@ namespace v3 {
                 *octet_ptr++ = details::hex_chars[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = details::hex_chars[hx8];
-            hex_ptr += 5;
+            hx8           = x8 & 0x0fu;
+            *octet_ptr++  = details::hex_chars[hx8];
+            hex_ptr      += 5;
         }
 
         // find runs of zeros for :: convention
@@ -715,8 +727,8 @@ namespace v3 {
                         return v2::inet_ntop4(src + 12, out);
                     }
                 }
-                *out++ = ':';
-                i += longest_count - 1;
+                *out++  = ':';
+                i      += longest_count - 1;
             } else {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
@@ -734,13 +746,11 @@ namespace v3 {
 
 } // namespace v3
 
-
 namespace v4 {
     /**
      * Convert IPv6 binary address into presentation (printable) format
      */
-    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-
+    static constexpr char* inet_ntop6(stl::uint8_t const* src, char* out) noexcept {
         if (!src) {
             return nullptr;
         }
@@ -749,7 +759,7 @@ namespace v4 {
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
-        const stl::uint8_t* src_ptr   = src;
+        stl::uint8_t const* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
         for (int i = 0; i != 8; ++i) {
             bool skip = true;
@@ -783,9 +793,9 @@ namespace v4 {
                 *octet_ptr++ = v3::details::hex_chars[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = v3::details::hex_chars[hx8];
-            hex_ptr += 5;
+            hx8           = x8 & 0x0fu;
+            *octet_ptr++  = v3::details::hex_chars[hx8];
+            hex_ptr      += 5;
         }
 
         // find runs of zeros for :: convention
@@ -824,8 +834,8 @@ namespace v4 {
         for (int i = 0; i != 8; ++i) {
             if (i == longest_index) {
                 // check for leading zero
-                *out++ = ':';
-                i += longest_count - 1;
+                *out++  = ':';
+                i      += longest_count - 1;
             } else {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
@@ -843,11 +853,9 @@ namespace v4 {
 
 } // namespace v4
 
-
 namespace v5 {
 
-    static constexpr char* inet_ntop6(const stl::uint8_t* src, char* out) noexcept {
-
+    static constexpr char* inet_ntop6(stl::uint8_t const* src, char* out) noexcept {
         if (!src) {
             return nullptr;
         }
@@ -856,7 +864,7 @@ namespace v5 {
 
         char                hexa[8 * 5];
         char*               hex_ptr   = hexa;
-        const stl::uint8_t* src_ptr   = src;
+        stl::uint8_t const* src_ptr   = src;
         char*               octet_ptr = hex_ptr;
 
 
@@ -896,9 +904,9 @@ namespace v5 {
                 *octet_ptr++ = v3::details::hex_chars[hx8];
             }
 
-            hx8          = x8 & 0x0fu;
-            *octet_ptr++ = v3::details::hex_chars[hx8];
-            hex_ptr += 5;
+            hx8           = x8 & 0x0fu;
+            *octet_ptr++  = v3::details::hex_chars[hx8];
+            hex_ptr      += 5;
 
 
 
@@ -954,8 +962,8 @@ namespace v5 {
                 }
             }
             // check for leading zero
-            *out++ = ':';
-            i += longest_count;
+            *out++  = ':';
+            i      += longest_count;
             for (; i != 8; ++i) {
                 for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
                     *out++ = *hex_ptr;
@@ -991,8 +999,8 @@ static void IPv4ToStrApple(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv4ToStrApple);
 
+BENCHMARK(IPv4ToStrApple);
 
 static void IPv4ToStrGlibc(benchmark::State& state) {
     array<array<uint8_t, 4>, sizeof(valid_ipv4s) / sizeof(string_view)> ips;
@@ -1011,8 +1019,8 @@ static void IPv4ToStrGlibc(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv4ToStrGlibc);
 
+BENCHMARK(IPv4ToStrGlibc);
 
 static void IPv4ToStrManual(benchmark::State& state) {
     array<array<uint8_t, 4>, sizeof(valid_ipv4s) / sizeof(string_view)> ips;
@@ -1031,6 +1039,7 @@ static void IPv4ToStrManual(benchmark::State& state) {
         }
     }
 }
+
 BENCHMARK(IPv4ToStrManual);
 
 
@@ -1054,17 +1063,17 @@ static constexpr array<string_view, 115> valid_ipv6s{
   "2001:db8:1234::5678",
   "2001:db8::1",
   "2001::1",
-  "::1234:5678:91.123.4.56", // implies that the first four ipv6 segments are zero
+  "::1234:5678:91.123.4.56",     // implies that the first four ipv6 segments are zero
   "2001:db8:3333:4444:5555:6666:1.2.3.4",
   "::11.22.33.44",               // implies all six ipv6 segments are zero
   "2001:db8::123.123.123.123",   // implies that the last four ipv6 segments are zero
   "::1234:5678:1.2.3.4",         // implies that the first four ipv6 segments are zero
   "2001:db8::1234:5678:5.6.7.8", // implies that the middle two ipv6 segments are zero
   "::1",
-  "::ffff:192.0.2.128", // IPv4-mapped IPv6 address
+  "::ffff:192.0.2.128",          // IPv4-mapped IPv6 address
   "::FFFF:129.144.52.38",
-  "::FAFF:129.144.52.38", // not a IPv4-Compatible IPv6 Address, but looks like one
-  "1::129.144.52.38",     // not a IPv4-Compatible IPv6 Address, but looks like one
+  "::FAFF:129.144.52.38",        // not a IPv4-Compatible IPv6 Address, but looks like one
+  "1::129.144.52.38",            // not a IPv4-Compatible IPv6 Address, but looks like one
   "::",
 
   // AI Generated examples:
@@ -1160,7 +1169,6 @@ static constexpr array<string_view, 115> valid_ipv6s{
 static constexpr auto ip_count   = valid_ipv6s.size();
 static constexpr auto ipv6_bytes = sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255";
 
-
 static void IPv6ToStrApple(benchmark::State& state) {
     array<apple_in6_addr, ip_count> ips{};
 
@@ -1178,8 +1186,8 @@ static void IPv6ToStrApple(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv6ToStrApple);
 
+BENCHMARK(IPv6ToStrApple);
 
 static void IPv6ToStrGlibc(benchmark::State& state) {
     array<octets_t, ip_count> ips{};
@@ -1198,8 +1206,8 @@ static void IPv6ToStrGlibc(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv6ToStrGlibc);
 
+BENCHMARK(IPv6ToStrGlibc);
 
 static void IPv6ToStrManualV1(benchmark::State& state) {
     array<octets_t, ip_count> ips{};
@@ -1241,6 +1249,7 @@ static void IPv6ToStrManualV2(benchmark::State& state) {
         }
     }
 }
+
 BENCHMARK(IPv6ToStrManualV2);
 
 static void IPv6ToStrManualV3(benchmark::State& state) {
@@ -1260,8 +1269,8 @@ static void IPv6ToStrManualV3(benchmark::State& state) {
         }
     }
 }
-BENCHMARK(IPv6ToStrManualV3);
 
+BENCHMARK(IPv6ToStrManualV3);
 
 static void IPv6ToStrManualV4(benchmark::State& state) {
     array<octets_t, ip_count> ips{};
@@ -1280,6 +1289,7 @@ static void IPv6ToStrManualV4(benchmark::State& state) {
         }
     }
 }
+
 BENCHMARK(IPv6ToStrManualV4);
 
 static void IPv6ToStrManualV5(benchmark::State& state) {
@@ -1299,4 +1309,5 @@ static void IPv6ToStrManualV5(benchmark::State& state) {
         }
     }
 }
+
 BENCHMARK(IPv6ToStrManualV5);

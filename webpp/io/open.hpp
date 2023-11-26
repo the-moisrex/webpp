@@ -25,23 +25,22 @@
 namespace webpp::io {
 
     template <IOService Sched, typename CharT = char>
-    [[nodiscard]] file_handle
-    open(Sched&                 io,
-         basic_path_view<CharT> file_path,
-         file_options           options     = file_options::readwrite | file_options::create,
-         stl::filesystem::perms permissions = stl::filesystem::perms::unknown) noexcept {
-        if constexpr (syscall_tag::is_supported<syscall_open,
-                                                Sched,
-                                                basic_path_view<CharT>,
-                                                file_options,
-                                                stl::filesystem::perms>) {
+    [[nodiscard]] file_handle open(
+      Sched&                 io,
+      basic_path_view<CharT> file_path,
+      file_options           options     = file_options::readwrite | file_options::create,
+      stl::filesystem::perms permissions = stl::filesystem::perms::unknown) noexcept {
+        if constexpr (
+          syscall_tag::
+            is_supported<syscall_open, Sched, basic_path_view<CharT>, file_options, stl::filesystem::perms>)
+        {
             return syscall(io, syscall_open{}, file_path, options, permissions);
         } else {
             // fallback implementation
 #ifdef MSVC_COMPILER
             int        fd{-1};
-            const auto shflag = _SH_DENYNO;
-            const auto pmode  = options.is_readonly() ? _S_IREAD : _S_IREAD | _S_IWRITE;
+            auto const shflag = _SH_DENYNO;
+            auto const pmode  = options.is_readonly() ? _S_IREAD : _S_IREAD | _S_IWRITE;
             if constexpr (stl::same_as<CharT, wchar_t>) {
                 _wsopen_s(&fd, file_path.data(), optioins.native_flags(), shflag, pmode);
             } else {
@@ -62,10 +61,10 @@ namespace webpp::io {
     }
 
     [[nodiscard]] file_handle open(IOService auto& io) noexcept {
-        return open(io,
-                    {},
-                    file_options::readwrite | file_options::trunc | file_options::create |
-                      file_options::temporary);
+        return open(
+          io,
+          {},
+          file_options::readwrite | file_options::trunc | file_options::create | file_options::temporary);
     }
 
 } // namespace webpp::io

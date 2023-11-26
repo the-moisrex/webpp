@@ -30,8 +30,9 @@ namespace webpp {
 
         bool try_pop(stl::function<void()>& x) noexcept {
             stl::unique_lock<stl::mutex> lock{_mutex, stl::try_to_lock};
-            if (!lock || _q.empty())
+            if (!lock || _q.empty()) {
                 return false;
+            }
             x = move(_q.front());
             _q.pop_front();
             return true;
@@ -41,8 +42,9 @@ namespace webpp {
         bool try_push(F&& f) noexcept {
             {
                 stl::unique_lock<stl::mutex> lock{_mutex, stl::try_to_lock};
-                if (!lock)
+                if (!lock) {
                     return false;
+                }
                 _q.emplace_back(forward<F>(f));
             }
             _ready.notify_one();
@@ -59,10 +61,12 @@ namespace webpp {
 
         bool pop(stl::function<void()>& x) noexcept {
             stl::unique_lock<stl::mutex> lock{_mutex};
-            while (_q.empty() && !_done)
+            while (_q.empty() && !_done) {
                 _ready.wait(lock);
-            if (_q.empty())
+            }
+            if (_q.empty()) {
                 return false;
+            }
             x = move(_q.front());
             _q.pop_front();
             return true;
@@ -93,11 +97,13 @@ namespace webpp {
                 stl::function<void()> f;
 
                 for (unsigned n = 0; n != _count * 32; ++n) {
-                    if (_q[(i + n) % _count].try_pop(f))
+                    if (_q[(i + n) % _count].try_pop(f)) {
                         break;
+                    }
                 }
-                if (!f && !_q[i].pop(f))
+                if (!f && !_q[i].pop(f)) {
                     break;
+                }
 
                 f();
             }
@@ -119,10 +125,12 @@ namespace webpp {
         task_system& operator=(task_system&&) noexcept = delete; // todo: implement this if needed
 
         ~task_system() {
-            for (auto& e : _q)
+            for (auto& e : _q) {
                 e.done();
-            for (auto& e : _threads)
+            }
+            for (auto& e : _threads) {
                 e.join();
+            }
         }
 
         template <typename F>
@@ -130,8 +138,9 @@ namespace webpp {
             auto i = _index++;
 
             for (unsigned n = 0; n != _count; ++n) {
-                if (_q[(i + n) % _count].try_push(stl::forward<F>(f)))
+                if (_q[(i + n) % _count].try_push(stl::forward<F>(f))) {
                     return;
+                }
             }
 
             _q[i % _count].push(stl::forward<F>(f));

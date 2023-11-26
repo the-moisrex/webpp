@@ -111,7 +111,6 @@ namespace webpp {
                 }
             }
 
-
             template <typename... Args>
             auto operator()(Args&&... args) const noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
                 using RetType = stl::invoke_result_t<Callable, Args...>;
@@ -133,7 +132,6 @@ namespace webpp {
             }
         };
 
-
         /**
          * This class will be async trailing implementation of the debounce class
          */
@@ -147,8 +145,8 @@ namespace webpp {
             stl::atomic<bool>       done = false;
 
             template <typename RetType, typename... Args>
-            stl::future<RetType>
-            async_run_later(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            stl::future<RetType> async_run_later(Args&&... args) noexcept(
+              stl::is_nothrow_invocable_v<Callable, Args...>) {
                 stl::this_thread::sleep_for(ctors::interval());
                 return flush(stl::forward<Args>(args)...);
             }
@@ -157,8 +155,8 @@ namespace webpp {
             using ctors::debounce_ctors;
 
             template <typename RetType, typename... Args>
-            stl::future<RetType>
-            operator()(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
+            stl::future<RetType> operator()(Args&&... args) noexcept(
+              stl::is_nothrow_invocable_v<Callable, Args...>) {
                 trs.emplace(&debounce_impl::async_run_later, *this, stl::forward<Args>(args)...);
             }
 
@@ -169,8 +167,9 @@ namespace webpp {
                 // join all the threads
                 while (!trs.empty()) {
                     auto tr = stl::move(trs.front());
-                    if (tr.joinable())
+                    if (tr.joinable()) {
                         tr.join();
+                    }
                     trs.pop();
                 }
             }
@@ -204,6 +203,7 @@ namespace webpp {
         };
 
     } // namespace details
+
     /**************************************************************************
      * The base classes
      **************************************************************************/
@@ -269,7 +269,6 @@ namespace webpp {
         using super::super;
     };
 
-
     template <typename Callable,
               typename Rep    = stl::chrono::milliseconds::rep,
               typename Period = stl::chrono::milliseconds::period,
@@ -279,7 +278,6 @@ namespace webpp {
         using super::super;
     };
 
-
     template <typename Callable,
               typename Rep    = stl::chrono::milliseconds::rep,
               typename Period = stl::chrono::milliseconds::period,
@@ -288,7 +286,6 @@ namespace webpp {
         using super = debounce_t<Callable, debounce_type::both, Rep, Period, Clock>;
         using super::super;
     };
-
 
     /**************************************************************************
      * Type deduction for function pointers and lambdas

@@ -18,8 +18,6 @@ inline constexpr auto ALPHA_DIGIT_MAP = charmap{ALPHA_MAP, DIGIT_MAP};
 inline constexpr charset<char, 2> CRLF{0x0D, 0x0A}; // CR(\r), LF(\n)
 inline constexpr charset<char, 2> OWS{0x20, 0x09};  // SP, HTAB
 
-
-
 TEST(CharsetTest, CharsetConcepts) {
     EXPECT_TRUE((CharSet<charset<char, 1>>) );
     EXPECT_TRUE((CharSet<charmap<1>>) );
@@ -39,7 +37,6 @@ TEST(CharsetTest, CharsetCreation) {
     static constexpr charset chars2{'1', '2', '3', '4', '5'};
     EXPECT_EQ(5, chars2.size());
 }
-
 
 TEST(CharsetTest, CharMapCreation) {
     constexpr auto chars = charmap_range<'a', 'z'>();
@@ -91,7 +88,8 @@ static constexpr bool token_char_map[256]{
 static constexpr charmap_full token_charmap{
   ALPHA<>,
   DIGIT<>,
-  charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}};
+  charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}
+};
 
 TEST(CharsetTest, CharMapExpectation) {
     EXPECT_EQ(token_charmap.size(), 256);

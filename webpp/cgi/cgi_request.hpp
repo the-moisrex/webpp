@@ -121,12 +121,11 @@ namespace webpp::http {
          * Get the environment value safely
          */
         [[nodiscard]] inline string_view_type env(char const* key) const noexcept {
-            if (const auto value = getenv(key))
+            if (auto const value = getenv(key)) {
                 return value;
+            }
             return {};
         }
-
-
 
         /**
          * @brief get the server's software
@@ -269,8 +268,9 @@ namespace webpp::http {
          * available as AUTH_USER.)
          */
         [[nodiscard]] string_view_type remote_user() const noexcept {
-            if (auto a = env("REMOTE_USER"); !a.empty())
+            if (auto a = env("REMOTE_USER"); !a.empty()) {
                 return a;
+            }
             return env("AUTH_USER");
         }
 
@@ -282,8 +282,9 @@ namespace webpp::http {
          * available as AUTH_USER.)
          */
         [[nodiscard]] string_view_type auth_user() const noexcept {
-            if (auto a = env("AUTH_USER"); !a.empty())
+            if (auto a = env("AUTH_USER"); !a.empty()) {
                 return a;
+            }
             return env("REMOTE_USER");
         }
 

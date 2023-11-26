@@ -33,31 +33,35 @@ namespace webpp::sql {
             return *stmt <=> *rhs.stmt;
         }
 
-
-        [[nodiscard]] constexpr inline cell_type operator[](size_type index) const noexcept {
+        [[nodiscard]] inline constexpr cell_type operator[](size_type index) const noexcept {
             return {*stmt, index};
         }
 
-
-        [[nodiscard]] constexpr inline cell_iterator_type begin() noexcept {
-            return {{*stmt, 0}};
+        [[nodiscard]] inline constexpr cell_iterator_type begin() noexcept {
+            return {
+              {*stmt, 0}
+            };
         }
 
-
-        [[nodiscard]] constexpr inline cell_iterator_type end() noexcept {
-            return {{*stmt, stmt->column_count()}};
+        [[nodiscard]] inline constexpr cell_iterator_type end() noexcept {
+            return {
+              {*stmt, stmt->column_count()}
+            };
         }
 
-        [[nodiscard]] constexpr inline cell_iterator_type begin() const noexcept {
-            return {{*stmt, 0}};
+        [[nodiscard]] inline constexpr cell_iterator_type begin() const noexcept {
+            return {
+              {*stmt, 0}
+            };
         }
 
-
-        [[nodiscard]] constexpr inline cell_iterator_type end() const noexcept {
-            return {{*stmt, stmt->column_count()}};
+        [[nodiscard]] inline constexpr cell_iterator_type end() const noexcept {
+            return {
+              {*stmt, stmt->column_count()}
+            };
         }
 
-        [[nodiscard]] constexpr inline size_type size() const noexcept {
+        [[nodiscard]] inline constexpr size_type size() const noexcept {
             return stmt->column_count();
         }
 
@@ -67,10 +71,13 @@ namespace webpp::sql {
 
         // return a tuple of N length containing cells
         template <stl::size_t N, template <typename...> typename TupleType = stl::tuple>
-        [[nodiscard]] constexpr inline auto as_tuple() const noexcept {
+        [[nodiscard]] inline constexpr auto as_tuple() const noexcept {
             using tuple = istl::repeat_type_t<N, cell_type, TupleType>;
             return ([this]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
-                return tuple{cell_type{*stmt, I}...};
+                return tuple{
+                  cell_type{*stmt, I}
+                  ...
+                };
             })(stl::make_index_sequence<N>{});
         }
     };
@@ -82,8 +89,8 @@ namespace webpp::sql {
         static constexpr bool is_const = stl::is_same_v<statement_type, StmtType>;
         using size_type                = typename statement_type::size_type;
         using difference_type          = size_type;
-        using raw_reference =
-          stl::add_lvalue_reference_t<value_type>;                // ref type without enforcing the constness
+        using raw_reference     = stl::add_lvalue_reference_t<value_type>; // ref type without enforcing the
+                                                                           // constness
         using raw_pointer       = stl::add_pointer_t<value_type>; // pointer type without the constness
         using const_reference   = stl::add_const_t<raw_reference>;
         using const_pointer     = stl::add_const_t<raw_pointer>;
@@ -97,22 +104,24 @@ namespace webpp::sql {
 
       public:
         constexpr row_iterator() noexcept = default;
+
         constexpr row_iterator(statement_type* stmt_ptr) noexcept : row{*stmt_ptr} {}
+
         constexpr row_iterator(row_iterator const&)                = default;
         constexpr row_iterator(row_iterator&&) noexcept            = default;
         constexpr row_iterator& operator=(row_iterator const&)     = default;
         constexpr row_iterator& operator=(row_iterator&&) noexcept = default;
         constexpr ~row_iterator()                                  = default;
 
-        constexpr bool operator==(const row_iterator& rhs) const noexcept {
+        constexpr bool operator==(row_iterator const& rhs) const noexcept {
             return row == rhs.row;
         }
 
-        constexpr bool operator!=(const row_iterator& rhs) const noexcept {
+        constexpr bool operator!=(row_iterator const& rhs) const noexcept {
             return row != rhs.row;
         }
 
-        constexpr auto operator<=>(const row_iterator& rhs) const noexcept {
+        constexpr auto operator<=>(row_iterator const& rhs) const noexcept {
             return row <=> rhs.row;
         }
 
@@ -135,7 +144,7 @@ namespace webpp::sql {
 
         constexpr row_iterator& operator++() noexcept {
             assert(row);
-            const bool has_next = row->statement().step();
+            bool const has_next = row->statement().step();
             if (!has_next) {
                 row.reset();
             }
@@ -148,7 +157,6 @@ namespace webpp::sql {
     };
 
 } // namespace webpp::sql
-
 
 template <size_t I, class... T>
 struct std::tuple_element<I, webpp::sql::sql_row<T...>> {

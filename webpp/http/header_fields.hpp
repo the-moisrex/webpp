@@ -5,7 +5,6 @@
 #include "../strings/iequals.hpp"
 #include "../traits/enable_traits.hpp"
 #include "http_concepts.hpp"
-#include "status_code.hpp"
 
 namespace webpp::http {
 
@@ -23,10 +22,10 @@ namespace webpp::http {
         using value_type                 = string_type;
         static constexpr bool is_mutable = istl::String<string_type> && !istl::StringView<string_type>;
 
-      public:
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         name_type  name;
         value_type value;
+
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
 
@@ -56,6 +55,7 @@ namespace webpp::http {
             requires(!is_mutable)
           : name(_name),
             value(_value) {}
+
         // NOLINTEND(bugprone-easily-swappable-parameters)
 
 
@@ -64,7 +64,6 @@ namespace webpp::http {
         constexpr basic_header_field& operator=(basic_header_field&&) noexcept      = default;
         constexpr basic_header_field& operator=(basic_header_field const&) noexcept = default;
         constexpr ~basic_header_field()                                             = default;
-
 
         /**
          * Check if the specified name is the same as the header name
@@ -102,7 +101,6 @@ namespace webpp::http {
         }
     };
 
-
     template <istl::String StringType>
     using header_field = basic_header_field<StringType>;
 
@@ -116,7 +114,6 @@ namespace webpp::http {
     template <Traits TraitsType>
     using header_field_of = basic_header_field<traits::general_string<TraitsType>>;
 
-
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
      * Even though we're not using this, we put it here for when/if we changed our mind and wanted to use it
@@ -125,14 +122,14 @@ namespace webpp::http {
     template <typename FieldType>
     struct header_field_hash {
       private:
-        constexpr static auto hash_mask = 0x9e3779b9;
-        constexpr static auto u6_units  = 6u;
+        static constexpr auto hash_mask = 0x9e37'79b9;
+        static constexpr auto u6_units  = 6U;
 
       public:
         using field_type = FieldType;
 
         template <class T>
-        constexpr void hash_combine(stl::size_t& seed, const T& v) noexcept {
+        constexpr void hash_combine(stl::size_t& seed, T const& v) noexcept {
             stl::hash<T> hasher;
             seed ^= hasher(v) + hash_mask + (seed << u6_units) + (seed >> 2u);
         }
@@ -152,13 +149,10 @@ namespace webpp::http {
     struct header_field_equals {
         using field_type = FieldType;
 
-        [[nodiscard]] constexpr bool operator()(const field_type& lhs, const field_type& rhs) const noexcept {
+        [[nodiscard]] constexpr bool operator()(field_type const& lhs, field_type const& rhs) const noexcept {
             return lhs.name == rhs.name;
         }
     };
-
-
-
 
     /**
      * @brief Vector of fields, used as a base for request/response headers
@@ -187,8 +181,8 @@ namespace webpp::http {
         constexpr header_fields_provider(ET& et) : fields{alloc::general_alloc_for<fields_type>(et)} {}
 
         template <HTTPHeaderFieldsProvider T>
-            requires(!istl::cvref_as<T, header_fields_provider> &&
-                     requires(T other) { other.get_allocator(); })
+            requires(
+              !istl::cvref_as<T, header_fields_provider> && requires(T other) { other.get_allocator(); })
         constexpr header_fields_provider(T const& other)
           : fields{other.begin(), other.end(), other.get_allocator()} {}
 
@@ -206,6 +200,7 @@ namespace webpp::http {
             requires(!istl::cvref_as<T, header_fields_provider>)
         constexpr header_fields_provider& operator=(T const& other) {
             stl::copy(other.begin(), other.end(), fields.begin());
+            return *this;
         }
 
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
@@ -244,14 +239,13 @@ namespace webpp::http {
         /**
          * Get a view of the underlying fields
          */
-        [[nodiscard]] constexpr stl::span<const field_type> as_view() const noexcept {
+        [[nodiscard]] constexpr stl::span<field_type const> as_view() const noexcept {
             return {fields};
         }
 
         [[nodiscard]] constexpr bool operator==(header_fields_provider const& other) const noexcept {
             return fields == other.fields;
         }
-
 
         [[nodiscard]] constexpr bool operator!=(header_fields_provider const& other) const noexcept {
             return fields != other.fields;

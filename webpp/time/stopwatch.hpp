@@ -21,8 +21,9 @@ namespace webpp::time {
         template <typename NDuration>
         constexpr explicit stopwatch(std::chrono::time_point<clock_type, NDuration> time) noexcept
           : _start{std::chrono::time_point_cast<duration>(time)} {}
+
         constexpr stopwatch() noexcept                            = default;
-        constexpr stopwatch(const stopwatch&) noexcept            = default;
+        constexpr stopwatch(stopwatch const&) noexcept            = default;
         constexpr stopwatch(stopwatch&&) noexcept                 = default;
         constexpr stopwatch& operator=(stopwatch const&) noexcept = default;
         constexpr stopwatch& operator=(stopwatch&&) noexcept      = default;
@@ -102,8 +103,8 @@ namespace webpp::time {
          * Duration till the specified time
          */
         template <typename NDuration>
-        [[nodiscard]] constexpr duration
-        elapse(std::chrono::time_point<clock_type, NDuration> new_time) const noexcept {
+        [[nodiscard]] constexpr duration elapse(
+          std::chrono::time_point<clock_type, NDuration> new_time) const noexcept {
             return new_time - _start;
         }
 

@@ -23,7 +23,6 @@ using data_type          = typename mustache_view_type::data_type;
 using variable_type      = typename data_type::value_type;
 using partial_type       = typename mustache_view_type::partial_type;
 
-
 TEST(TheViews, MustacheView) {
     enable_owner_traits<default_traits> et;
 
@@ -41,9 +40,7 @@ TEST(TheViews, MustacheView) {
     EXPECT_EQ(str, "My name is The Moisrex");
 }
 
-
 TEST(TheViews, ViewManagerTest) {
-
     enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
@@ -59,13 +56,12 @@ TEST(TheViews, ViewManagerTest) {
 
     auto data = object::make_general<data_type>(et);
     data.emplace_back(et, "name", "moisrex");
-    const auto res = man.mustache("assets/hello-world", data);
+    auto const res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
                                      << roots;
 }
 
 TEST(TheViews, MustacheViewPartials) {
-
     enable_owner_traits<default_traits> et;
 
     view_manager<default_traits> man{et};
@@ -79,10 +75,9 @@ TEST(TheViews, MustacheViewPartials) {
     data.emplace_back(et, "hello-world", partial_type([]() -> string_type {
                           return "Hello, {{name}}";
                       }));
-    const auto res = man.mustache("assets/hello-bob", data);
+    auto const res = man.mustache("assets/hello-bob", data);
     EXPECT_EQ(res, "Bob says: Hello, moisrex\n");
 }
-
 
 TEST(TheViews, FileView) {
     enable_owner_traits<default_traits> et;
@@ -98,7 +93,8 @@ TEST(TheViews, FileView) {
         roots += std::filesystem::absolute(root).lexically_normal().string() + ", ";
     }
 
-    const auto res = man.file("assets/hello-world.mustache");
-    EXPECT_EQ(res, "Hello, {{name}}") << "Check out the logs, it shouldn't be empty if the file was found.\n"
-                                      << roots;
+    auto const res = man.file("assets/hello-world.mustache");
+    EXPECT_EQ(res, "Hello, {{name}}")
+      << "Check out the logs, it shouldn't be empty if the file was found.\n"
+      << roots;
 }

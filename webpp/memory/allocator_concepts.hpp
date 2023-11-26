@@ -19,28 +19,49 @@ namespace webpp {
         typename stl::allocator_traits<A>::const_pointer;
         typename stl::allocator_traits<A>::void_pointer;
         typename stl::allocator_traits<A>::const_void_pointer;
-        requires requires(A                                                     a,
-                          A                                                     a1,
-                          typename stl::allocator_traits<A>::size_type          n,
-                          typename stl::allocator_traits<A>::pointer            p,
-                          typename stl::allocator_traits<A>::const_pointer      cp,
-                          typename stl::allocator_traits<A>::void_pointer       vp,
-                          typename stl::allocator_traits<A>::const_void_pointer cvp,
-                          decltype(*p)                                          r) {
-            { a.allocate(n) };
-            { *p };
-            { *cp };
+        requires requires(
+          A                                                     a,
+          A                                                     a1,
+          typename stl::allocator_traits<A>::size_type          n,
+          typename stl::allocator_traits<A>::pointer            p,
+          typename stl::allocator_traits<A>::const_pointer      cp,
+          typename stl::allocator_traits<A>::void_pointer       vp,
+          typename stl::allocator_traits<A>::const_void_pointer cvp,
+          decltype(*p)                                          r) {
+            {
+                a.allocate(n)
+            };
+            {
+                *p
+            };
+            {
+                *cp
+            };
             // {p->m};
             // {cp->m};
-            { static_cast<typename stl::allocator_traits<A>::pointer>(vp) };
-            { static_cast<typename stl::allocator_traits<A>::const_pointer>(cvp) };
-            { stl::pointer_traits<typename stl::allocator_traits<A>::pointer>::pointer_to(r) };
-            { a == a1 };
-            { a != a1 };
-            { A(a) };
+            {
+                static_cast<typename stl::allocator_traits<A>::pointer>(vp)
+            };
+            {
+                static_cast<typename stl::allocator_traits<A>::const_pointer>(cvp)
+            };
+            {
+                stl::pointer_traits<typename stl::allocator_traits<A>::pointer>::pointer_to(r)
+            };
+            {
+                a == a1
+            };
+            {
+                a != a1
+            };
+            {
+                A(a)
+            };
             // {A a1 = a};
             // A a(b)};
-            { A(stl::move(a)) };
+            {
+                A(stl::move(a))
+            };
             // {A a1 = stl::move(a)};
             // {A a(stl::move(b))};
         };
@@ -65,7 +86,9 @@ namespace webpp {
     template <typename I>
     concept ResourceDescriptor = requires {
         typename I::storage_type; // the resource type
-        { I::resource_features }; // the resource features of type alloc::feature_pack
+        {
+            I::resource_features
+        };                        // the resource features of type alloc::feature_pack
     };
 
     // one single allocator descriptor which describes an allocator and its features and its resources
@@ -73,7 +96,9 @@ namespace webpp {
     concept AllocatorDescriptor = requires {
         typename D::template allocator<char>; // get the allocator itself
         typename D::resources;                // resource types (a list of MemoryResource)
-        { D::allocator_features };            // parent features of type alloc::feature_pack
+        {
+            D::allocator_features
+        };                                    // parent features of type alloc::feature_pack
         typename D::default_resource;
         requires ResourceDescriptor<typename D::default_resource>;
     };
@@ -98,7 +123,6 @@ namespace webpp {
 
         template <ResourceDescriptor T>
         static constexpr auto resource_features = T::resource_features;
-
 
         template <ResourceDescriptor RD, typename T>
         static inline auto construct_allocator(storage<RD>& res) noexcept {
@@ -132,9 +156,6 @@ namespace webpp {
     template <typename... AllocatorDescriptorsTypes>
     using type_list = stl::tuple<AllocatorDescriptorsTypes...>;
 
-
-
-
     namespace details {
         /**
          * Extract the allocators (flatten the allocator descriptor list)
@@ -144,7 +165,6 @@ namespace webpp {
 
         template <template <typename...> typename TupleT, AllocatorDescriptor... AllocDescType>
         struct allocator_extractor_impl<TupleT<AllocDescType...>> {
-
             template <typename T>
             using type = TupleT<typename alloc::descriptors::allocator<AllocDescType>::template type<T>...>;
         };
@@ -191,7 +211,6 @@ namespace webpp {
 
         template <AllocatorDescriptor... AllocDescType>
         struct allocator_flattener_impl<type_list<AllocDescType...>> {
-
             template <typename T>
             struct type : public alloc::descriptors::allocator<AllocDescType>::template type<T>... {};
         };
@@ -211,7 +230,6 @@ namespace webpp {
 
         template <template <typename...> typename TupleT, AllocatorDescriptor AllocDescType>
         struct alloc_res_pair_maker_impl<TupleT<AllocDescType>> {
-
             template <typename T>
             struct pair_maker;
 

@@ -27,10 +27,9 @@ namespace webpp::is {
         return octet == 0U;
     }
 
-
     /**
      * Check if the specified string is a valid ipv4 subnet mask or not
-     * @param str
+     * @param subnet_str
      * @return bool an indication weather or not the specified string is a
      * valid ipv4 subnet mask or not
      */
@@ -69,7 +68,7 @@ namespace webpp::is {
 
     /**
      * @brief checks if the specified str is an ipv4
-     * @param str
+     * @param inp_str
      * @return true if str is a valid ipv4
      */
     template <istl::StringViewifiable StrV = stl::string_view>
@@ -101,7 +100,7 @@ namespace webpp::is {
      * is a valid IPv6 address according to the rules in
      * RFC 3986 (https://tools.ietf.org/html/rfc3986).
      *
-     * @param[in] address
+     * @param[in] inp_addr
      *     This is the IPv6 address to validate.
      *
      * @return
@@ -130,13 +129,13 @@ namespace webpp::is {
 
     /**
      * @brief check if the specified string is an ipv4 or ipv6
-     * @param str
+     * @param ip_str
      * @return true if str is ipv4 or ipv6
      * TODO: start supporting IPvF (IP version Future)
      */
     template <istl::StringViewifiable StrV = stl::string_view>
     [[nodiscard]] constexpr bool ip(StrV&& ip_str) noexcept {
-        const auto str = istl::string_viewify(stl::forward<StrV>(ip_str));
+        auto const str = istl::string_viewify(stl::forward<StrV>(ip_str));
         return is::ipv4(str) || ipv6(str);
     }
 

@@ -52,13 +52,12 @@ namespace webpp {
         stl::unreachable();
     }
 
-
     // NOLINTBEGIN(*-easily-swappable-parameters)
     // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic)
     // NOLINTBEGIN(*-magic-numbers)
 
     namespace details {
-        template <typename Iter = const char*, typename CIter = Iter>
+        template <typename Iter = char const*, typename CIter = Iter>
         static constexpr int parse_prefix(Iter& src, CIter src_endp) noexcept {
             int prefix; // NOLINT(*-init-variables)
             if (src == src_endp || *src < '0' || *src > '9') {
@@ -155,11 +154,12 @@ namespace webpp {
      * Parse IPv4 + prefix
      */
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
-    static constexpr inet_pton4_status inet_pton4(Iter&         src,
-                                                  CIter         end,
-                                                  stl::uint8_t* out,
-                                                  stl::uint8_t& prefix,
-                                                  CharT         prefix_character = '/') noexcept {
+    static constexpr inet_pton4_status inet_pton4(
+      Iter&         src,
+      CIter         end,
+      stl::uint8_t* out,
+      stl::uint8_t& prefix,
+      CharT         prefix_character = '/') noexcept {
         using enum inet_pton4_status;
         auto const res = inet_pton4(src, end, out, prefix_character);
         if (res == valid_special && *src == prefix_character) {
@@ -206,7 +206,7 @@ namespace webpp {
         auto         current_token = src;
         stl::size_t  hex_seen      = 0; // Number of hex digits since colon.
         unsigned int val           = 0;
-        char_type    cur_char; // NOLINT(*-init-variables)
+        char_type    cur_char;          // NOLINT(*-init-variables)
         while (src != src_endp) {
             cur_char        = *src++;
             int const digit = ascii::hex_digit_value(cur_char);
@@ -215,7 +215,7 @@ namespace webpp {
                     return invalid_octet_range;
                 }
                 val <<= 4U;
-                val |= static_cast<unsigned int>(digit);
+                val  |= static_cast<unsigned int>(digit);
                 if (val > 0xFFFF) {
                     return invalid_octet_range; // todo: is this if stmt even possible?
                 }
@@ -246,13 +246,14 @@ namespace webpp {
             if (cur_char == '.' &&                   // <-- possible ipv4 dot character
                 (out + ipv4_byte_count) <= endp &&   // <-- have enough octets of the ipv6 left for ipv4, and
                 (out != beg || colon_ptr != nullptr) // <-- we're not at the beginning of the string
-            ) {
+            )
+            {
                 src = current_token;
                 switch (inet_pton4(src, src_endp, out)) {
                     case inet_pton4_status::valid_special: cur_char = *src; [[fallthrough]];
                     case inet_pton4_status::valid: {
-                        out += ipv4_byte_count;
-                        hex_seen = 0;
+                        out      += ipv4_byte_count;
+                        hex_seen  = 0;
                         break;
                     }
                     case inet_pton4_status::bad_ending:
@@ -305,7 +306,8 @@ namespace webpp {
             for (; out != colon_ptr;) {
                 *--right_ptr = *--out;
             }
-            for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {}
+            for (; colon_ptr != right_ptr; *colon_ptr++ = 0) {
+            }
             out = endp;
         }
         if (out != endp) {
@@ -317,17 +319,16 @@ namespace webpp {
         return valid;
     }
 
-
-
     /**
      * Parse a ipv6 + prefix
      */
     template <typename Iter = char const*, typename CIter = Iter, istl::CharType CharT = char>
-    [[nodiscard]] static constexpr inet_pton6_status inet_pton6(Iter&         src,
-                                                                CIter         end,
-                                                                stl::uint8_t* out,
-                                                                stl::uint8_t& prefix,
-                                                                CharT prefix_character = '/') noexcept {
+    [[nodiscard]] static constexpr inet_pton6_status inet_pton6(
+      Iter&         src,
+      CIter         end,
+      stl::uint8_t* out,
+      stl::uint8_t& prefix,
+      CharT         prefix_character = '/') noexcept {
         using enum inet_pton6_status;
         auto const res = inet_pton6(src, end, out);
         if (res == valid_special && *src == prefix_character) {

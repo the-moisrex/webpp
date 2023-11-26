@@ -37,7 +37,9 @@ namespace webpp::views {
 
         requires Traits<typename T::traits_type>;
         requires requires(typename T::string_view_type str) {
-            { man.view(str) } -> istl::String;
+            {
+                man.view(str)
+            } -> istl::String;
         };
     };
 
@@ -63,7 +65,9 @@ namespace webpp::views {
                           typename T::data_type        dt) {
             view.scheme(sv); // reparse, and change the scheme
             view.render(out, dt);
-            { view.has_scheme() } -> stl::same_as<bool>;
+            {
+                view.has_scheme()
+            } -> stl::same_as<bool>;
         };
     };
 

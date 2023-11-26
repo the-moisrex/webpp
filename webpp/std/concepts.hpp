@@ -17,7 +17,9 @@
 namespace webpp::istl {
     template <typename D>
     concept Destructible = requires(D obj) {
-        { obj.~D() } noexcept;
+        {
+            obj.~D()
+        } noexcept;
     };
 
     template <typename T>
@@ -48,14 +50,11 @@ namespace webpp::istl {
     template <typename T>
     concept None = false;
 
-
-
     namespace details {
         template <typename T>
         struct returnable {
             T operator()() {}
         };
-
 
         template <auto Constraint>
         struct requires_arg_op {
@@ -63,7 +62,6 @@ namespace webpp::istl {
                 requires(Constraint.template operator()<T>())
             explicit operator T() {}
         };
-
 
         template <auto Constraint>
         struct requires_arg_op_cvref {
@@ -91,25 +89,31 @@ namespace webpp::istl {
      *           );
      *       };
      */
-#define requires_arg(...)                                                       \
-    webpp::istl::details::requires_arg_op<[]<typename RequiresT> {              \
-        return (requires {                                                      \
-            { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__; \
-        });                                                                     \
+#define requires_arg(...)                                          \
+    webpp::istl::details::requires_arg_op<[]<typename RequiresT> { \
+        return (requires {                                         \
+            {                                                      \
+                webpp::istl::details::returnable<RequiresT>()()    \
+            } -> __VA_ARGS__;                                      \
+        });                                                        \
     }> {}
 
     /**
      * Use std::remove_cvref_t to clean up the type first and then run it through the "requires_arg"
      */
-#define requires_arg_cvref(...)                                                                        \
-    webpp::istl::details::requires_arg_op_cvref<[]<typename RequiresT> {                               \
-        return (                                                                                       \
-          requires {                                                                                   \
-              { webpp::istl::details::returnable<RequiresT>()() } -> __VA_ARGS__;                      \
-          } ||                                                                                         \
-          requires {                                                                                   \
-              { webpp::istl::details::returnable<stl::remove_cvref_t<RequiresT>>()() } -> __VA_ARGS__; \
-          });                                                                                          \
+#define requires_arg_cvref(...)                                                        \
+    webpp::istl::details::requires_arg_op_cvref<[]<typename RequiresT> {               \
+        return (                                                                       \
+          requires {                                                                   \
+              {                                                                        \
+                  webpp::istl::details::returnable<RequiresT>()()                      \
+              } -> __VA_ARGS__;                                                        \
+          } ||                                                                         \
+          requires {                                                                   \
+              {                                                                        \
+                  webpp::istl::details::returnable<stl::remove_cvref_t<RequiresT>>()() \
+              } -> __VA_ARGS__;                                                        \
+          });                                                                          \
     }> {}
 
     /**
@@ -130,8 +134,6 @@ namespace webpp::istl {
     webpp::istl::details::requires_arg_op<[]<typename _> { \
         return __VA_ARGS__;                                \
     }> {}
-
-
 
     namespace details {
         template <auto Concept>
@@ -172,7 +174,6 @@ namespace webpp::istl {
     template <typename T>
     concept arithmetic = stl::is_arithmetic_v<T>;
 
-
     namespace details {
 
         template <typename First, typename... T>
@@ -201,9 +202,6 @@ namespace webpp::istl {
     // types
     template <typename T, typename... E>
     concept part_of = (stl::same_as<T, E> || ...);
-
-
-
 
     namespace details {
         // failure condition
@@ -245,6 +243,7 @@ namespace webpp::istl {
     concept cvref_as = same_as_all<stl::remove_cvref_t<T>...>;
 
 } // namespace webpp::istl
+
 // NOLINTEND(*-macro-usage)
 
 #endif // WEBPP_STD_CONCEPTS_H

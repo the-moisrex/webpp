@@ -28,8 +28,8 @@ namespace webpp::uri {
          * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
          */
         template <typename... T>
-        static constexpr bool
-        parse_host_ipv6(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr bool parse_host_ipv6(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
             webpp_assume(ctx.pos < ctx.end);
 
             auto const                                beg = ctx.pos;
@@ -69,8 +69,8 @@ namespace webpp::uri {
         }
 
         template <typename... T>
-        static constexpr void
-        parse_opaque_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        static constexpr void parse_opaque_host(parsing_uri_context<T...>& ctx) noexcept(
+          parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-opaque-host-parser
 
             using ctx_type = parsing_uri_context<T...>;
@@ -84,7 +84,8 @@ namespace webpp::uri {
             for (;;) {
                 if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                       C0_CONTROL_ENCODE_SET,
-                      interesting_characters)) {
+                      interesting_characters))
+                {
                     set_valid(ctx.status, uri_status::valid);
                     encoder.end_segment();
                     break;
@@ -130,13 +131,11 @@ namespace webpp::uri {
             encoder.set_value();
         }
 
-
         template <typename... T, typename Iter = typename parsing_uri_context<T...>::iterator>
-        static constexpr void
-        parse_credentials(parsing_uri_context<T...>& ctx,
-                          Iter                       beg,
-                          Iter password_token_pos) noexcept(parsing_uri_context<T...>::is_nothrow) {
-
+        static constexpr void parse_credentials(
+          parsing_uri_context<T...>& ctx,
+          Iter                       beg,
+          Iter                       password_token_pos) noexcept(parsing_uri_context<T...>::is_nothrow) {
             // todo: add "needs_encoding"
             // todo: See if there's a way to find the last atsign position instead of running this function for every atsign
             // todo: use already parsed host
@@ -160,9 +159,10 @@ namespace webpp::uri {
                 iterator const username_beg = beg;
                 iterator const username_end = stl::min(password_token_pos, atsign_pos);
                 component_encoder<components::username, ctx_type> user_encoder{ctx};
-                user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(username_beg,
-                                                                                       username_end,
-                                                                                       USER_INFO_ENCODE_SET);
+                user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
+                  username_beg,
+                  username_end,
+                  USER_INFO_ENCODE_SET);
 
                 // parse password
                 if (password_token_pos != ctx.end) {
@@ -177,11 +177,9 @@ namespace webpp::uri {
             }
         }
 
-
         template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
-
             using enum uri_status;
 
             using ctx_type = parsing_uri_context<T...>;
@@ -197,10 +195,10 @@ namespace webpp::uri {
             component_encoder<components::host, ctx_type> decoder(ctx);
             decoder.start_segment();
             for (;;) {
-
                 // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
                 if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
-                      interesting_characters)) {
+                      interesting_characters))
+                {
                     if constexpr (Options.empty_host_is_error) {
                         if (ctx.pos == authority_begin) {
                             set_error(ctx.status, host_missing);
@@ -338,8 +336,8 @@ namespace webpp::uri {
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_file_host(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_file_host(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
         details::parse_authority_pieces<uri_parsing_options{
@@ -360,8 +358,8 @@ namespace webpp::uri {
     /// Path start state (I like to call it authority end because it's more RFC like to say that,
     /// but WHATWG likes to call it "path start state")
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
 
         if (ctx.pos == ctx.end) {
@@ -403,14 +401,13 @@ namespace webpp::uri {
         }
     }
 
-
     /**
      * @brief Parse authority part of the URI (credentials, host, and port)
      * @param ctx Parsing Context containing all the details of the URI and the state of it
      */
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void
-    parse_authority(parsing_uri_context<T...>& ctx) noexcept(parsing_uri_context<T...>::is_nothrow) {
+    static constexpr void parse_authority(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
         // We merged the host parser and authority parser to make it single-pass for most use cases.
         // https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state
@@ -481,7 +478,6 @@ namespace webpp::uri {
         details::parse_authority_pieces<Options>(ctx);
     }
 
-
     template <istl::String StringType = stl::string>
     struct basic_username : StringType {
         using string_type = StringType;
@@ -544,7 +540,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr string_type& as_string() noexcept {
             return static_cast<string_type&>(*this);
         }
-
 
         /**
          * Get the string in the encoded shape

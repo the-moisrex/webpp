@@ -40,7 +40,7 @@ namespace webpp {
                 // stl::unique_ptr<char_type[]> result(static_cast<char_type*>(
                 //  this->alloc_pack.template local_allocator<char_type[]>().allocate(size)));
                 in.seekg(0, stl::ios_base::end);
-                const auto size = in.tellg();
+                auto const size = in.tellg();
                 out.resize(static_cast<stl::size_t>(
                   size)); // todo: don't need to zero it out; https://stackoverflow.com/a/29348072
                 in.seekg(0L);
@@ -61,7 +61,6 @@ namespace webpp {
             return result;
         }
 
-
         /**
          * Get the file, search the embedded files first before trying to read the file
          * The method may even cache the file and listen for changes in the file.
@@ -75,7 +74,6 @@ namespace webpp {
             // todo: cache
             return file::read_to(filepath, out);
         }
-
 
         /**
          * Same as "get_to" but it creates the string type and returns that or an empty string if it failed.

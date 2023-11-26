@@ -33,7 +33,6 @@ namespace webpp::istl {
         return impl;             \
     }())
 
-
     struct nothing_type {};
 
     template <typename T>
@@ -46,7 +45,6 @@ namespace webpp::istl {
 
     template <auto V>
     struct value_holder {};
-
 
     template <typename T>
     struct lazy_type {
@@ -97,7 +95,6 @@ namespace webpp::istl {
 
     template <bool Condition, typename T1, typename T2>
     using lazy_conditional_t = typename lazy_conditional<Condition, T1, T2>::type;
-
 
     ////////////////////////// Nth Types ////////////////////////////
 
@@ -163,7 +160,6 @@ namespace webpp::istl {
      */
     template <template <typename> typename ConditionOp, typename... Types>
     struct ranked_types {
-
         static_assert((stl::is_integral_v<stl::remove_cvref_t<decltype(ConditionOp<Types>::value)>> && ...),
                       "The specified Condition is not valid");
 
@@ -205,13 +201,9 @@ namespace webpp::istl {
             }
         };
 
-
         using best  = decltype((a_type<Types>() & ...));
         using worst = decltype((a_type<Types>() | ...));
     };
-
-
-
 
     ////////////////////////////////////////////////////////////////
     /////// changing template parameter type from Old to New ///////
@@ -243,10 +235,8 @@ namespace webpp::istl {
         using type = T<typename Transformer<Args>::type...>;
     };
 
-
     template <typename T, template <typename> typename Transformer>
     using transform_parameters = typename transform_parameters_type<T, Transformer>::type;
-
 
     namespace details {
 
@@ -453,7 +443,6 @@ namespace webpp::istl {
               templated_param_replacer<T, OldType, NewType, fake_tuple<>, fake_tuple<Types...>>::type;
         };
 
-
         ////////////////////////////// replace_parameters //////////////////////////////
 
         template <typename T, template <typename> typename Replacer>
@@ -490,7 +479,6 @@ namespace webpp::istl {
                                                      fake_tuple<>,
                                                      fake_tuple<Types...>>::type;
         };
-
 
         ////////////////////////////// recursively_change_templated_parameter //////////////////////////////
 
@@ -578,7 +566,9 @@ namespace webpp::istl {
     template <typename T, template <typename> typename Replacer>
         requires requires {
             typename Replacer<void>::type;
-            { Replacer<void>::value };
+            {
+                Replacer<void>::value
+            };
         }
     using recursive_parameter_replacer = typename details::replace_parameters<T, Replacer>::type;
 
@@ -591,7 +581,6 @@ namespace webpp::istl {
     template <template <typename...> typename TupleT, typename... Elements>
     struct parameter_count_type<TupleT<Elements...>>
       : public stl::integral_constant<stl::size_t, sizeof...(Elements)> {};
-
 
     template <typename T>
     static constexpr stl::size_t parameter_count = parameter_count_type<stl::remove_cvref_t<T>>::value;
@@ -611,7 +600,6 @@ namespace webpp::istl {
         using type = Head;
     };
 
-
     template <stl::size_t Index, typename... T>
     using nth_parameter_t = typename nth_parameter<Index, T...>::type;
 
@@ -624,7 +612,6 @@ namespace webpp::istl {
     // this same as std::tuple_element_t, but it supports any type of tuple not just std::tuple
     template <stl::size_t Index, typename T>
     using nth_parameter_of_t = typename nth_parameter_of<Index, T>::type;
-
 
     /**
      * Check if the type T is one of the TupleT's elements.
@@ -650,7 +637,6 @@ namespace webpp::istl {
     template <typename TupleT, typename T>
     concept contains_parameter_of = details::contains_parameter_of<TupleT, T>::value;
 
-
     /**
      * With the help of this, you can replace a "placeholder" type with the new object you give it.
      * It's good for using in codes like this:
@@ -673,7 +659,6 @@ namespace webpp::istl {
             return stl::forward<T>(obj);
         }
     }
-
 
     // todo: add replace_parameter_all as well
 
@@ -739,13 +724,13 @@ namespace webpp::istl {
     struct filter_parameters<Concept, TupleType<Types...>>
       : public details::filter_parameters_impl<Concept, TupleType<Types...>, TupleType<>, TupleType> {};
 
-
     template <template <typename...> typename Concept, typename Tup>
     using filter_parameters_t = typename filter_parameters<Concept, Tup>::type;
 
 
     template <typename Tup>
     using first_parameter = nth_parameter_of_t<0, Tup>;
+
     // todo: add last_parameter as well
 
     /**
@@ -764,13 +749,11 @@ namespace webpp::istl {
     template <typename... T>
     using first_type_t = typename first_type<T...>::type;
 
-
     /**
      * Get the last parameter type from a tuple-like type
      */
     template <typename... T>
     struct last_type {
-
         static_assert(sizeof...(T) > 0, "last_type won't work with empty type lists.");
 
         template <typename... FT>
@@ -803,14 +786,14 @@ namespace webpp::istl {
             // use TagT as the last type
             template <typename Tag>
                 requires(all_size < Limit)
-            constexpr tag<typename Tag::last, all>
-            operator|([[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
+            constexpr tag<typename Tag::last, all> operator|(
+              [[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
                 return {};
             }
 
             template <typename Tag>
-            constexpr tag
-            operator|([[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
+            constexpr tag operator|(
+              [[maybe_unused]] Tag&& inp_tag) const noexcept { // NOLINT(*-missing-std-forward)
                 return {};
             }
         };
@@ -862,7 +845,6 @@ namespace webpp::istl {
 
     template <>
     struct last_type<> {
-
         // last type
         using type = void;
 
@@ -932,8 +914,6 @@ namespace webpp::istl {
     template <typename... T>
     using merge_parameters = typename merge_parameters_type<T...>::type;
 
-
-
     /**
      * Same as stl::negation, but it takes a templated class instead of a class.
      */
@@ -953,10 +933,6 @@ namespace webpp::istl {
     struct rebind_parameters<TupleT<OldTs...>, NewTs...> {
         using type = TupleT<NewTs...>;
     };
-
-
-
-
 
     namespace details {
 
@@ -979,7 +955,6 @@ namespace webpp::istl {
         template <typename TupleT>
         struct unique_types;
 
-
         template <template <typename...> typename TupleT, typename First, typename... U>
         struct unique_types<TupleT<First, U...>> {
             using the_rest = typename unique_types<TupleT<U...>>::type;
@@ -995,7 +970,6 @@ namespace webpp::istl {
         };
 
     } // namespace details
-
 
     // prepend the specified type T at the beginning of the specified tuple-like type "TupleT"
     template <typename TupleT, typename T>
@@ -1036,7 +1010,6 @@ namespace webpp::istl {
     template <typename T, template <auto, typename...> typename Primary>
     concept is_valued_specialization_of_v = is_valued_specialization_of<T, Primary>::value;
 
-
     namespace details {
 
         template <typename FirstType, typename TheType, stl::size_t N>
@@ -1063,8 +1036,6 @@ namespace webpp::istl {
               typename... FirstTypes>
     using repeat_type_t = typename repeat_type<N, TheType, TemplateType, FirstTypes...>::type;
 
-
-
     namespace details {
         /**
          * Get a list of all indexes that `Evaluator<T>::value` is true
@@ -1089,7 +1060,6 @@ namespace webpp::istl {
                   stl::size_t... Indexes>
         struct indexes_if<Evaluator, From, type_list<F, T...>, Indexes...>
           : indexes_if<Evaluator, From + 1, type_list<T...>, Indexes...> {};
-
 
         // found another one
         template <template <typename> typename Evaluator,
@@ -1164,7 +1134,6 @@ namespace webpp::istl {
     template <typename T1, typename... T>
     using integer_sequence_cat_t = typename integer_sequence_cat<T1, T...>::type;
 
-
     namespace details {
         template <typename T, std::size_t = sizeof(T)>
         stl::true_type is_complete_impl(T*);
@@ -1182,8 +1151,6 @@ namespace webpp::istl {
 
     template <typename T>
     concept is_complete_v = is_complete<T>::value;
-
-
 
     /**
      * Call a callable with the specified args, no matter in which order the arguments are specified.
@@ -1207,8 +1174,9 @@ namespace webpp::istl {
     template <typename Callable, typename... Args>
         requires(stl::is_invocable_v<Callable, Args...>)
     struct invocable_inorder<Callable, Args...> : stl::true_type {
-        using result                               = stl::invoke_result_t<Callable, Args...>;
-        static constexpr bool           is_nothrow = stl::is_nothrow_invocable_v<Callable, Args...>;
+        using result                     = stl::invoke_result_t<Callable, Args...>;
+        static constexpr bool is_nothrow = stl::is_nothrow_invocable_v<Callable, Args...>;
+
         static constexpr decltype(auto) call(Callable callable, Args... args) noexcept(is_nothrow) {
             return stl::forward<Callable>(callable)(stl::forward<Args>(args)...);
         }
@@ -1216,13 +1184,13 @@ namespace webpp::istl {
 
     // rotate args once
     template <typename Callable, typename Arg1, typename... Args>
-        requires(invocable_inorder<Callable, Args..., Arg1>::value &&
-                 !invocable_inorder<Callable, Args...>::value)
+        requires(
+          invocable_inorder<Callable, Args..., Arg1>::value && !invocable_inorder<Callable, Args...>::value)
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args..., Arg1> {
         using parent_type = invocable_inorder<Callable, Args..., Arg1>;
 
-        static constexpr decltype(auto)
-        call(Callable callable, Arg1 arg1, Args... args) noexcept(parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Args... args) noexcept(
+          parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable),
                                      stl::forward<Args>(args)...,
                                      stl::forward<Arg1>(arg1));
@@ -1236,12 +1204,13 @@ namespace webpp::istl {
       : invocable_inorder<Callable, Arg2, Arg1, Args...> {
         using parent_type = invocable_inorder<Callable, Arg2, Arg1, Args...>;
 
-        static constexpr decltype(auto)
-        call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args) noexcept(parent_type::is_nothrow) {
-            return parent_type::call(stl::forward<Callable>(callable),
-                                     stl::forward<Arg2>(arg2),
-                                     stl::forward<Arg1>(arg1),
-                                     stl::forward<Args>(args)...);
+        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args) noexcept(
+          parent_type::is_nothrow) {
+            return parent_type::call(
+              stl::forward<Callable>(callable),
+              stl::forward<Arg2>(arg2),
+              stl::forward<Arg1>(arg1),
+              stl::forward<Args>(args)...);
         }
     };
 
@@ -1251,8 +1220,8 @@ namespace webpp::istl {
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args...> {
         using parent_type = invocable_inorder<Callable, Args...>;
 
-        static constexpr decltype(auto)
-        call(Callable callable, Arg1, Args... args) noexcept(parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1, Args... args) noexcept(
+          parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable), stl::forward<Args>(args)...);
         }
     };
@@ -1261,14 +1230,11 @@ namespace webpp::istl {
     concept invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
 
     template <typename Callable, typename... Args>
-    static constexpr decltype(auto)
-    invoke_inorder(Callable&& callable,
-                   Args&&... args) noexcept(invocable_inorder<Callable, Args...>::is_nothrow) {
+    static constexpr decltype(auto) invoke_inorder(Callable&& callable, Args&&... args) noexcept(
+      invocable_inorder<Callable, Args...>::is_nothrow) {
         return invocable_inorder<Callable, Args...>::call(stl::forward<Callable>(callable),
                                                           stl::forward<Args>(args)...);
     }
-
-
 
     /**
      * Give 2 param list, and check if Evaluator<L, R>::value on all of them are true or not
@@ -1297,11 +1263,8 @@ namespace webpp::istl {
         requires(sizeof...(L) == sizeof...(R) && Evaluator<L1, R1>::value)
     struct are_all<Evaluator, T<L1, L...>, T<R1, R...>> : are_all<Evaluator, T<L...>, T<R...>> {};
 
-
     template <template <typename, typename> typename Evaluator, typename L, typename R>
     concept are_all_v = are_all<Evaluator, L, R>::value;
-
-
 
     /**
      * Remove Templ out of T if it T is `Templ<NotT>`
@@ -1324,9 +1287,6 @@ namespace webpp::istl {
     template <template <typename> typename Templ, typename T>
     concept remove_template_of_v = remove_template_of<Templ, T>::value;
 
-
-
-
     /**
      * Remove Any template out of T if it T is `Templ<NotT>`
      * @tparam T
@@ -1347,7 +1307,6 @@ namespace webpp::istl {
     template <typename T>
     concept remove_template_v = remove_template<T>::value;
 
-
     /**
      * Check if T is `Templ<...>`
      * @tparam Templ
@@ -1362,10 +1321,6 @@ namespace webpp::istl {
     template <template <typename...> typename Templ, typename T>
     concept template_of_v = template_of<Templ, T>::value;
 
-
-
-
-
     /**
      * Pass Templ a non-cvref type, get the Templ<T>::type, then add the cvref again
      */
@@ -1375,12 +1330,12 @@ namespace webpp::istl {
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T> {
+    struct preserve_cvref<Templ, T volatile> {
         using type = volatile typename Templ<T>::type;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, const T> {
+    struct preserve_cvref<Templ, T const> {
         using type = const typename Templ<T>::type;
     };
 
@@ -1395,45 +1350,42 @@ namespace webpp::istl {
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile const T> {
-        using type = volatile const typename Templ<T>::type;
+    struct preserve_cvref<Templ, volatile T const> {
+        using type = const volatile typename Templ<T>::type;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, const T&> {
+    struct preserve_cvref<Templ, T const&> {
         using type = const typename Templ<T>::type&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, const T&&> {
+    struct preserve_cvref<Templ, T const&&> {
         using type = const typename Templ<T>::type&&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T&> {
+    struct preserve_cvref<Templ, T volatile&> {
         using type = volatile typename Templ<T>::type&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T&&> {
+    struct preserve_cvref<Templ, T volatile&&> {
         using type = volatile typename Templ<T>::type&&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile const T&> {
-        using type = volatile const typename Templ<T>::type&;
+    struct preserve_cvref<Templ, volatile T const&> {
+        using type = const volatile typename Templ<T>::type&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile const T&&> {
-        using type = volatile const typename Templ<T>::type&&;
+    struct preserve_cvref<Templ, volatile T const&&> {
+        using type = const volatile typename Templ<T>::type&&;
     };
-
 
     template <template <typename> typename Templ, typename T>
     using preserve_cvref_t = typename preserve_cvref<Templ, T>::type;
-
-
 
     namespace details {
         // NOLINTBEGIN(*-runtime-int)
@@ -1466,6 +1418,7 @@ namespace webpp::istl {
         struct remove_unsigned<unsigned long long> {
             using type = long long;
         };
+
         // NOLINTEND(*-runtime-int)
     } // namespace details
 
@@ -1478,7 +1431,6 @@ namespace webpp::istl {
 
     template <typename T>
     using remove_unsigned_t = typename remove_unsigned<T>::type;
-
 
     template <typename T>
     struct remove_rvalue_reference {

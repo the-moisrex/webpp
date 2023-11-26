@@ -14,21 +14,22 @@ namespace mtest {
         // using simd_type                 = eve::wide<char_type>;
         // static constexpr auto simd_size = simd_type::size();
 
-        const auto size1 = str1.size();
-        const auto size2 = str2.size();
-        if (size2 > size1)
+        auto const size1 = str1.size();
+        auto const size2 = str2.size();
+        if (size2 > size1) {
             return string_type::npos;
+        }
 
-        const auto it1start               = str1.data();
-        const auto it2start               = str2.data();
-        const auto it1end                 = it1start + size1;
-        const auto it2end                 = it2start + size2;
-        const auto last_possible_position = size1 - size2;
+        auto const it1start               = str1.data();
+        auto const it2start               = str2.data();
+        auto const it1end                 = it1start + size1;
+        auto const it2end                 = it2start + size2;
+        auto const last_possible_position = size1 - size2;
 
         auto it1 = str1.data();
         auto it2 = str2.data();
 
-        const auto    last_possible_end = it1end - last_possible_position;
+        auto const    last_possible_end = it1end - last_possible_position;
         decltype(it1) found             = nullptr;
         for (;; ++it1) {
             if (*it1 == *it2) {
@@ -44,8 +45,9 @@ namespace mtest {
                     it2   = it2start;
                     found = nullptr;
                 } else {
-                    if (it1 == last_possible_end)
+                    if (it1 == last_possible_end) {
                         break;
+                    }
                 }
             }
         }

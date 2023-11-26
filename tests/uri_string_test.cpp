@@ -134,27 +134,28 @@ TEST(URITests, WieredURIs) {
     EXPECT_FALSE(url1.is_urn());
 
     // some examples from https://rosettacode.org/wiki/URL_parser
-    const auto _uris = {"ftp://ftp.is.co.za/rfc/rfc1808.txt",
-                        "http://www.ietf.org/rfc/rfc2396.txt",
-                        "ldap://[2001:db8::7]/c=GB?objectClass?one",
-                        "mailto:John.Doe@example.com",
-                        "news:comp.infosystems.www.servers.unix",
-                        "tel:+1-816-555-1212",
-                        "telnet://192.0.2.16:80/",
-                        "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
-                        "foo://example.com:8042/over/there?name=ferret#nose",
-                        "urn:example:animal:ferret:nose",
-                        "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
-                        "ftp://ftp.is.co.za/rfc/rfc1808.txt",
-                        "http://www.ietf.org/rfc/rfc2396.txt#header1",
-                        "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
-                        "mailto:example@email.com",
-                        "news:comp.infosystems.www.servers.unix",
-                        "tel:+1-816-555-1212",
-                        "telnet://192.0.2.16:80/",
-                        "ssh://test@test.com",
-                        "https://bob:pass@test.com/place",
-                        "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
+    auto consto _uris = {
+      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+      "http://www.ietf.org/rfc/rfc2396.txt",
+      "ldap://[2001:db8::7]/c=GB?objectClass?one",
+      "mailto:John.Doe@example.com",
+      "news:comp.infosystems.www.servers.unix",
+      "tel:+1-816-555-1212",
+      "telnet://192.0.2.16:80/",
+      "urn:oasis:names:specification:docbook:dtd:xml:4.1.2",
+      "foo://example.com:8042/over/there?name=ferret#nose",
+      "urn:example:animal:ferret:nose",
+      "jdbc:mysql://test_user:test@test.com:3306/sakila?profileSQL=true",
+      "ftp://ftp.is.co.za/rfc/rfc1808.txt",
+      "http://www.ietf.org/rfc/rfc2396.txt#header1",
+      "ldap://[2001:db8::7]/c=GB?objectClass=one&objectClass=two",
+      "mailto:example@email.com",
+      "news:comp.infosystems.www.servers.unix",
+      "tel:+1-816-555-1212",
+      "telnet://192.0.2.16:80/",
+      "ssh://test@test.com",
+      "https://bob:pass@test.com/place",
+      "http://example.com/?a=1&b=2+2&c=3&c=4&d=%65%6e%63%6F%64%65%64"};
 
     for (auto const& _uri : _uris) {
         uri_view const view{_uri};
@@ -175,22 +176,23 @@ TEST(URITests, WieredURIs) {
 }
 
 TEST(URITests, URN) {
-    auto valid_urns = {"urn:isbn:0451450523",
-                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-                       "urn:publishing:book",
-                       "urn:isbn:0451450523",
-                       "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
-                       "urn:ISSN:0167-6423",
-                       "urn:ietf:rfc:2648",
-                       "urn:mpeg:mpeg7:schema:2001",
-                       "urn:oid:2.16.840",
-                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
-                       "urn:nbn:de:bvb:19-146642",
-                       "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
-                       "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
-                       "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
-                       "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
-                       "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
+    auto valid_urns = {
+      "urn:isbn:0451450523",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+      "urn:publishing:book",
+      "urn:isbn:0451450523",
+      "urn:isan:0000-0000-2CEA-0000-1-0000-0000-Y",
+      "urn:ISSN:0167-6423",
+      "urn:ietf:rfc:2648",
+      "urn:mpeg:mpeg7:schema:2001",
+      "urn:oid:2.16.840",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66",
+      "urn:nbn:de:bvb:19-146642",
+      "urn:lex:eu:council:directive:2010-03-09;2010-19-UE",
+      "urn:lsid:zoobank.org:pub:CDC8D258-8F57-41DC-B560-247E17D3DC8C",
+      "urn:mpeg:mpeg7:schema:2001urn:isbn:0451450523",
+      "urn:sha1:YNCKHTQCWBTRNJIV4WNAE52SJUQCZO5C",
+      "urn:uuid:6e8bc430-9c3a-11d9-9669-0800200c9a66"};
 
     for (auto const& _urn : valid_urns) {
         EXPECT_TRUE(uri_string(_urn).is_valid());
@@ -212,85 +214,87 @@ TEST(URITests, URN) {
 
 TEST(URITests, URL) {
     // these are valid urls but they shouldn't be considers part of urn
-    auto valid_urls = {"mailto:someone@example.com",
-                       "http://foo.com/blah_blah",
-                       "http://foo.com/blah_blah/",
-                       "http://foo.com/blah_blah_(wikipedia)",
-                       "http://foo.com/blah_blah_(wikipedia)_(again)",
-                       "http://www.example.com/wpstyle/?p=364",
-                       "https://www.example.com/foo/?bar=baz&inga=42&quux",
-                       "http://✪df.ws/123",
-                       "http://userid:password@example.com:8080",
-                       "http://userid:password@example.com:8080/",
-                       "http://userid@example.com",
-                       "http://userid@example.com/",
-                       "http://userid@example.com:8080",
-                       "http://userid@example.com:8080/",
-                       "http://userid:password@example.com",
-                       "http://userid:password@example.com/",
-                       "http://142.42.1.1/",
-                       "http://142.42.1.1:8080/",
-                       "http://➡.ws/䨹",
-                       "http://⌘.ws",
-                       "http://⌘.ws/",
-                       "http://foo.com/blah_(wikipedia)#cite-1",
-                       "http://foo.com/blah_(wikipedia)_blah#cite-1",
-                       "http://foo.com/unicode_(✪)_in_parens",
-                       "http://foo.com/(something)?after=parens",
-                       "http://☺.ha-ha.com/",
-                       "http://code.google.com/events/#&product=browser",
-                       "http://j.mp",
-                       "ftp://foo.bar/baz",
-                       "http://foo.bar/?q=Test%20URL-encoded%20stuff",
-                       "http://مثال.إختبار",
-                       "http://例子.测试",
-                       "http://उदाहरण.परीक्षा",
-                       "http://-.~_!$&()*+,;=:%40:80%2f::::::@example.com",
-                       "http://1337.net",
-                       "http://a.b-c.de",
-                       "http://223.255.255.254",
-                       "http://0.0.0.0",
-                       "http://10.1.1.0",
-                       "http://10.1.1.255",
-                       "http://224.1.1.1",
-                       "http://1.1.1.1.1",
-                       "http://123.123.123",
-                       "http://3628126748",
-                       "http://10.1.1.1",
-                       "http://10.1.1.254",
-                       "ftps://foo.bar/",
-                       "http://-error-.invalid/",
-                       "http://a.b--c.de/",
-                       "http://-a.b.co",
-                       "http://a.b-.co"};
+    auto valid_urls = {
+      "mailto:someone@example.com",
+      "http://foo.com/blah_blah",
+      "http://foo.com/blah_blah/",
+      "http://foo.com/blah_blah_(wikipedia)",
+      "http://foo.com/blah_blah_(wikipedia)_(again)",
+      "http://www.example.com/wpstyle/?p=364",
+      "https://www.example.com/foo/?bar=baz&inga=42&quux",
+      "http://✪df.ws/123",
+      "http://userid:password@example.com:8080",
+      "http://userid:password@example.com:8080/",
+      "http://userid@example.com",
+      "http://userid@example.com/",
+      "http://userid@example.com:8080",
+      "http://userid@example.com:8080/",
+      "http://userid:password@example.com",
+      "http://userid:password@example.com/",
+      "http://142.42.1.1/",
+      "http://142.42.1.1:8080/",
+      "http://➡.ws/䨹",
+      "http://⌘.ws",
+      "http://⌘.ws/",
+      "http://foo.com/blah_(wikipedia)#cite-1",
+      "http://foo.com/blah_(wikipedia)_blah#cite-1",
+      "http://foo.com/unicode_(✪)_in_parens",
+      "http://foo.com/(something)?after=parens",
+      "http://☺.ha-ha.com/",
+      "http://code.google.com/events/#&product=browser",
+      "http://j.mp",
+      "ftp://foo.bar/baz",
+      "http://foo.bar/?q=Test%20URL-encoded%20stuff",
+      "http://مثال.إختبار",
+      "http://例子.测试",
+      "http://उदाहरण.परीक्षा",
+      "http://-.~_!$&()*+,;=:%40:80%2f::::::@example.com",
+      "http://1337.net",
+      "http://a.b-c.de",
+      "http://223.255.255.254",
+      "http://0.0.0.0",
+      "http://10.1.1.0",
+      "http://10.1.1.255",
+      "http://224.1.1.1",
+      "http://1.1.1.1.1",
+      "http://123.123.123",
+      "http://3628126748",
+      "http://10.1.1.1",
+      "http://10.1.1.254",
+      "ftps://foo.bar/",
+      "http://-error-.invalid/",
+      "http://a.b--c.de/",
+      "http://-a.b.co",
+      "http://a.b-.co"};
 
     // these strings are not a valid URL (doesn't mean they are not a valid URI)
     // I'm kinda not sure about some of these; specially those with IP addresses
-    auto invalid_urls = {"http://",
-                         "http://.",
-                         "http://..",
-                         "http://../",
-                         "http://?",
-                         "http://??",
-                         "http://?\?/",
-                         "http://#",
-                         "http://##",
-                         "http://##/",
-                         "http://foo.bar?q=Spaces should be encoded",
-                         "//",
-                         "//a",
-                         "///a",
-                         "///",
-                         "http:///a",
-                         "foo.com",
-                         "rdar://1234",
-                         "h://test",
-                         "http:// should-fail.com",
-                         ":// should fail",
-                         "http://foo.bar/foo(bar)baz quux",
-                         "http://.www.foo.bar/",
-                         "http://www.foo.bar./",
-                         "http://.www.foo.bar./"};
+    auto invalid_urls = {
+      "http://",
+      "http://.",
+      "http://..",
+      "http://../",
+      "http://?",
+      "http://??",
+      "http://?\?/",
+      "http://#",
+      "http://##",
+      "http://##/",
+      "http://foo.bar?q=Spaces should be encoded",
+      "//",
+      "//a",
+      "///a",
+      "///",
+      "http:///a",
+      "foo.com",
+      "rdar://1234",
+      "h://test",
+      "http:// should-fail.com",
+      ":// should fail",
+      "http://foo.bar/foo(bar)baz quux",
+      "http://.www.foo.bar/",
+      "http://www.foo.bar./",
+      "http://.www.foo.bar./"};
 
     for (auto const& url : valid_urls) {
         auto url_a = uri_view(url);
@@ -411,7 +415,6 @@ TEST(URITests, EncodedDecoded) {
     // todo: add tests for UTF-8 string types after you implemented them
 }
 
-
 TEST(URITests, TypedVariables) {
     uri_string const url{"/user/{user_id}"};
     EXPECT_TRUE(url.has_path());
@@ -440,9 +443,8 @@ TEST(URITests, EqualPaths) {
     EXPECT_TRUE(equal_path("/two//", "/two//"));
     EXPECT_TRUE(equal_path("/two//three", "/two/three"));
 }
+
 TEST(URITests, Normalize) {}
-
-
 
 //// tests from: https://github.com/rhymu8354/Uri/blob/main/test/src/UriTests.cpp
 
@@ -495,18 +497,20 @@ TEST(UriTests, ParseFromStringPathCornerCases) {
         std::string              pathIn;
         std::vector<std::string> pathOut;
     };
+
     const std::vector<TestVector> testVectors{
-      {"", {}},
-      {"/", {""}}, // todo: should this be "" / "" or ""?
+      {    "",          {}},
+      {   "/",        {""}}, // todo: should this be "" / "" or ""?
       {"/foo", {"", "foo"}},
       {"foo/", {"foo", ""}},
     };
     size_t index = 0;
-    for (const auto& testVector : testVectors) {
-        mutable_uri uri;
-        ASSERT_TRUE(uri.operator=((testVector.pathIn)).is_valid()) << index;
-        ASSERT_EQ(testVector.pathOut, uri.slugs<std::vector<std::string>>()) << index;
-        ++index;
+    for{ auto consto& testVector : testVectors) {
+            mutable_uri uri;
+            ASSERT_TRUE(uri.operator=((testVector.pathIn)).is_valid()) << index;
+            ASSERT_EQ(testVector.pathOut, uri.slugs<std::vector<std::string>>()) << index;
+            ++index;
+        }
     }
 }
 
@@ -550,7 +554,7 @@ TEST(UriTests, ParseFromStringLargestValidPortNumber) {
     mutable_uri uri;
     ASSERT_TRUE(uri.operator=("http://www.example.com:65535/foo/bar").is_valid());
     ASSERT_TRUE(uri.has_port());
-    ASSERT_EQ(65535, uri.port_uint16());
+    ASSERT_EQ(65'535, uri.port_uint16());
 }
 
 TEST(UriTests, ParseFromStringBadPortNumberTooBig) {
@@ -573,14 +577,15 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativeReferences) {
         std::string uriString;
         bool        isRelativeReference;
     };
+
     const std::vector<TestVector> testVectors{
       {"http://www.example.com/", false},
-      {"http://www.example.com", false},
-      {"/", true},
-      {"foo", true},
+      { "http://www.example.com", false},
+      {                      "/",  true},
+      {                    "foo",  true},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.isRelativeReference, uri.is_relative_reference()) << index;
@@ -593,21 +598,22 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
         std::string uriString;
         bool        containsRelativePath;
     };
+
     const std::vector<TestVector> testVectors{
       {"http://www.example.com/", false},
-      {"http://www.example.com", false},
-      {"/", false},
-      {"foo", true},
+      { "http://www.example.com", false},
+      {                      "/", false},
+      {                    "foo",  true},
 
-      /*
-       * This is only a valid test vector if we understand
-       * correctly that an empty string IS a valid
-       * "relative reference" URI with an empty path.
-       */
-      {"", true},
+ /*
+  * This is only a valid test vector if we understand
+  * correctly that an empty string IS a valid
+  * "relative reference" URI with an empty path.
+  */
+      {                       "",  true},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.containsRelativePath, uri.is_path_relative()) << index;
@@ -622,24 +628,25 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
         std::string query;
         std::string fragment;
     };
-    const std::vector<TestVector> testVectors{
-      {"http://www.example.com/", "www.example.com", "", ""},
-      {"http://example.com?foo", "example.com", "foo", ""},
-      {"http://www.example.com#foo", "www.example.com", "", "foo"},
-      {"http://www.example.com?foo#bar", "www.example.com", "foo", "bar"},
-      {"http://www.example.com?earth?day#bar", "www.example.com", "earth?day", "bar"},
-      {"http://www.example.com/spam?foo#bar", "www.example.com", "foo", "bar"},
 
-      /*
-       * NOTE: curiously, but we think this is correct, that
-       * having a trailing question mark is equivalent to not having
-       * any question mark, because in both cases, the query element
-       * is empty string.  Perhaps research deeper to see if this is right.
-       */
-      {"http://www.example.com/?", "www.example.com", "", ""},
+    const std::vector<TestVector> testVectors{
+      {             "http://www.example.com/", "www.example.com",          "",    ""},
+      {              "http://example.com?foo",     "example.com",       "foo",    ""},
+      {          "http://www.example.com#foo", "www.example.com",          "", "foo"},
+      {      "http://www.example.com?foo#bar", "www.example.com",       "foo", "bar"},
+      {"http://www.example.com?earth?day#bar", "www.example.com", "earth?day", "bar"},
+      { "http://www.example.com/spam?foo#bar", "www.example.com",       "foo", "bar"},
+
+ /*
+  * NOTE: curiously, but we think this is correct, that
+  * having a trailing question mark is equivalent to not having
+  * any question mark, because in both cases, the query element
+  * is empty string.  Perhaps research deeper to see if this is right.
+  */
+      {            "http://www.example.com/?", "www.example.com",          "",    ""},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host()) << index;
@@ -649,23 +656,23 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
     }
 }
 
-
 TEST(UriTests, ParseFromStringUserInfo) {
     struct TestVector {
         std::string uriString;
         std::string userInfo;
     };
+
     const std::vector<TestVector> testVectors{
-      {"http://www.example.com/", ""},
-      {"http://joe@www.example.com", "joe"},
+      {                "http://www.example.com/",                 ""},
+      {             "http://joe@www.example.com",              "joe"},
       {"http://pepe:feelsbadman@www.example.com", "pepe:feelsbadman"},
-      {"//www.example.com", ""},
-      {"//bob@www.example.com", "bob"},
-      {"/", ""},
-      {"foo", ""},
+      {                      "//www.example.com",                 ""},
+      {                  "//bob@www.example.com",              "bob"},
+      {                                      "/",                 ""},
+      {                                    "foo",                 ""},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info()) << index;
@@ -689,8 +696,8 @@ TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
       {".://www.example.com/"},
       {"h@://www.example.com/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -702,16 +709,17 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
         std::string uriString;
         std::string scheme;
     };
+
     const std::vector<TestVector> testVectors{
-      {"h://www.example.com/", "h"},
+      { "h://www.example.com/",  "h"},
       {"x+://www.example.com/", "x+"},
       {"y-://www.example.com/", "y-"},
       {"z.://www.example.com/", "z."},
       {"aa://www.example.com/", "aa"},
       {"a0://www.example.com/", "a0"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.scheme, uri.scheme());
@@ -727,8 +735,8 @@ TEST(UriTests, ParseFromStringSchemeMixedCase) {
       {"Http://www.example.com/"},
       {"HttP://www.example.com/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("http", uri.scheme()) << ">>> Failed for test vector element " << index << " <<<";
@@ -747,8 +755,8 @@ TEST(UriTests, ParseFromStringUserInfoIllegalCharacters) {
       {"//%X@www.example.com/"},
       {"//{@www.example.com/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -760,17 +768,18 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
         std::string uriString;
         std::string userInfo;
     };
+
     const std::vector<TestVector> testVectors{
-      {"//%41@www.example.com/", "A"},
-      {"//@www.example.com/", ""},
-      {"//!@www.example.com/", "!"},
-      {"//'@www.example.com/", "'"},
-      {"//(@www.example.com/", "("},
-      {"//;@www.example.com/", ";"},
+      {   "//%41@www.example.com/", "A"},
+      {      "//@www.example.com/",  ""},
+      {     "//!@www.example.com/", "!"},
+      {     "//'@www.example.com/", "'"},
+      {     "//(@www.example.com/", "("},
+      {     "//;@www.example.com/", ";"},
       {"http://:@www.example.com/", ":"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info());
@@ -784,8 +793,8 @@ TEST(UriTests, ParseFromStringHostIllegalCharacters) {
       {"//@www:example.com/"},
       {"//[vX.:]/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -797,19 +806,20 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
         std::string uriString;
         std::string host;
     };
+
     const std::vector<TestVector> testVectors{
-      {"//%41/", "a"},
-      {"///", ""},
-      {"//!/", "!"},
-      {"//'/", "'"},
-      {"//(/", "("},
-      {"//;/", ";"},
+      {    "//%41/",       "a"},
+      {       "///",        ""},
+      {      "//!/",       "!"},
+      {      "//'/",       "'"},
+      {      "//(/",       "("},
+      {      "//;/",       ";"},
       {"//1.2.3.4/", "1.2.3.4"},
-      {"//[v7.:]/", "v7.:"},
-      {"//[v7.aB]/", "v7.aB"},
+      { "//[v7.:]/",    "v7.:"},
+      {"//[v7.aB]/",   "v7.aB"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host());
@@ -825,8 +835,8 @@ TEST(UriTests, ParseFromStringHostMixedCase) {
       {"http://www.example.cOM/"},
       {"http://wWw.exampLe.Com/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("www.example.com", uri.host()) << ">>> Failed for test vector element " << index << " <<<";
@@ -843,8 +853,8 @@ TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimite
       {"//[v7.:]/"},
       {"/:/foo"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_TRUE(uri.scheme().empty());
@@ -875,8 +885,8 @@ TEST(UriTests, ParseFromStringPathIllegalCharacters) {
       {"/foo]/"},
       {"/[/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -888,15 +898,16 @@ TEST(UriTests, ParseFromStringPathBarelyLegal) {
         std::string              uriString;
         std::vector<std::string> path;
     };
+
     const std::vector<TestVector> testVectors{
-      {"/:/foo", {"", ":", "foo"}},
-      {"bob@/foo", {"bob@", "foo"}},
-      {"hello!", {"hello!"}},
-      {"urn:hello,%20w%6Frld", {"hello, world"}},
+      {                  "/:/foo",         {"", ":", "foo"}},
+      {                "bob@/foo",          {"bob@", "foo"}},
+      {                  "hello!",               {"hello!"}},
+      {    "urn:hello,%20w%6Frld",         {"hello, world"}},
       {"//example.com/foo/(bar)/", {"", "foo", "(bar)", ""}},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.path, uri.slugs<std::vector<std::string>>());
@@ -927,8 +938,8 @@ TEST(UriTests, ParseFromStringQueryIllegalCharacters) {
       {"?foo]/"},
       {"?[/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -940,16 +951,17 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
         std::string uriString;
         std::string query;
     };
+
     const std::vector<TestVector> testVectors{
-      {"/?:/foo", ":/foo"},
-      {"?bob@/foo", "bob@/foo"},
-      {"?hello!", "hello!"},
-      {"urn:?hello,%20w%6Frld", "hello, world"},
-      {"//example.com/foo?(bar)/", "(bar)/"},
-      {"http://www.example.com/?foo?bar", "foo?bar"},
+      {                        "/?:/foo",        ":/foo"},
+      {                      "?bob@/foo",     "bob@/foo"},
+      {                        "?hello!",       "hello!"},
+      {          "urn:?hello,%20w%6Frld", "hello, world"},
+      {       "//example.com/foo?(bar)/",       "(bar)/"},
+      {"http://www.example.com/?foo?bar",      "foo?bar"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.query, uri.queries_string());
@@ -980,8 +992,8 @@ TEST(UriTests, ParseFromStringFragmentIllegalCharacters) {
       {"#foo]/"},
       {"#[/"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -993,16 +1005,17 @@ TEST(UriTests, ParseFromStringFragmentBarelyLegal) {
         std::string uriString;
         std::string fragment;
     };
+
     const std::vector<TestVector> testVectors{
-      {"/#:/foo", ":/foo"},
-      {"#bob@/foo", "bob@/foo"},
-      {"#hello!", "hello!"},
-      {"urn:#hello,%20w%6Frld", "hello, world"},
-      {"//example.com/foo#(bar)/", "(bar)/"},
-      {"http://www.example.com/#foo?bar", "foo?bar"},
+      {                        "/#:/foo",        ":/foo"},
+      {                      "#bob@/foo",     "bob@/foo"},
+      {                        "#hello!",       "hello!"},
+      {          "urn:#hello,%20w%6Frld", "hello, world"},
+      {       "//example.com/foo#(bar)/",       "(bar)/"},
+      {"http://www.example.com/#foo?bar",      "foo?bar"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.fragment, uri.fragment());
@@ -1015,19 +1028,20 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
         std::string uriString;
         std::string pathFirstSegment;
     };
+
     const std::vector<TestVector> testVectors{
-      {"%41", "A"},
-      {"%4A", "J"},
-      {"%4a", "J"},
-      {"%bc", "\xbc"},
-      {"%Bc", "\xbc"},
-      {"%bC", "\xbc"},
-      {"%BC", "\xbc"},
-      {"%41%42%43", "ABC"},
+      {         "%41",    "A"},
+      {         "%4A",    "J"},
+      {         "%4a",    "J"},
+      {         "%bc", "\xbc"},
+      {         "%Bc", "\xbc"},
+      {         "%bC", "\xbc"},
+      {         "%BC", "\xbc"},
+      {   "%41%42%43",  "ABC"},
       {"%41%4A%43%4b", "AJCK"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.pathFirstSegment, uri.slugs()[0]);
@@ -1040,44 +1054,45 @@ TEST(UriTests, NormalizePath) {
         std::string              uriString;
         std::vector<std::string> normalizedPathSegments;
     };
+
     const std::vector<TestVector> testVectors{
-      {"/a/b/c/./../../g", {"", "a", "g"}},
-      {"mid/content=5/../6", {"mid", "6"}},
-      {"http://example.com/a/../b", {"", "b"}},
-      {"http://example.com/../b", {"", "b"}},
-      {"http://example.com/a/../b/", {"", "b", ""}},
-      {"http://example.com/a/../../b", {"", "b"}},
-      {"./a/b", {"a", "b"}},
-      {"..", {}},
-      {"/", {""}},
-      {"a/b/..", {"a", ""}},
-      {"a/b/.", {"a", "b", ""}},
-      {"a/b/./c", {"a", "b", "c"}},
-      {"a/b/./c/", {"a", "b", "c", ""}},
-      {"/a/b/..", {"", "a", ""}},
-      {"/a/b/.", {"", "a", "b", ""}},
-      {"/a/b/./c", {"", "a", "b", "c"}},
-      {"/a/b/./c/", {"", "a", "b", "c", ""}},
-      {"./a/b/..", {"a", ""}},
-      {"./a/b/.", {"a", "b", ""}},
-      {"./a/b/./c", {"a", "b", "c"}},
-      {"./a/b/./c/", {"a", "b", "c", ""}},
-      {"../a/b/..", {"a", ""}},
-      {"../a/b/.", {"a", "b", ""}},
-      {"../a/b/./c", {"a", "b", "c"}},
-      {"../a/b/./c/", {"a", "b", "c", ""}},
-      {"../a/b/../c", {"a", "c"}},
-      {"../a/b/./../c/", {"a", "c", ""}},
-      {"../a/b/./../c", {"a", "c"}},
-      {"../a/b/./../c/", {"a", "c", ""}},
-      {"../a/b/.././c/", {"a", "c", ""}},
-      {"../a/b/.././c", {"a", "c"}},
-      {"../a/b/.././c/", {"a", "c", ""}},
-      {"/./c/d", {"", "c", "d"}},
-      {"/../c/d", {"", "c", "d"}},
+      {            "/a/b/c/./../../g",          {"", "a", "g"}},
+      {          "mid/content=5/../6",            {"mid", "6"}},
+      {   "http://example.com/a/../b",               {"", "b"}},
+      {     "http://example.com/../b",               {"", "b"}},
+      {  "http://example.com/a/../b/",           {"", "b", ""}},
+      {"http://example.com/a/../../b",               {"", "b"}},
+      {                       "./a/b",              {"a", "b"}},
+      {                          "..",                      {}},
+      {                           "/",                    {""}},
+      {                      "a/b/..",               {"a", ""}},
+      {                       "a/b/.",          {"a", "b", ""}},
+      {                     "a/b/./c",         {"a", "b", "c"}},
+      {                    "a/b/./c/",     {"a", "b", "c", ""}},
+      {                     "/a/b/..",           {"", "a", ""}},
+      {                      "/a/b/.",      {"", "a", "b", ""}},
+      {                    "/a/b/./c",     {"", "a", "b", "c"}},
+      {                   "/a/b/./c/", {"", "a", "b", "c", ""}},
+      {                    "./a/b/..",               {"a", ""}},
+      {                     "./a/b/.",          {"a", "b", ""}},
+      {                   "./a/b/./c",         {"a", "b", "c"}},
+      {                  "./a/b/./c/",     {"a", "b", "c", ""}},
+      {                   "../a/b/..",               {"a", ""}},
+      {                    "../a/b/.",          {"a", "b", ""}},
+      {                  "../a/b/./c",         {"a", "b", "c"}},
+      {                 "../a/b/./c/",     {"a", "b", "c", ""}},
+      {                 "../a/b/../c",              {"a", "c"}},
+      {              "../a/b/./../c/",          {"a", "c", ""}},
+      {               "../a/b/./../c",              {"a", "c"}},
+      {              "../a/b/./../c/",          {"a", "c", ""}},
+      {              "../a/b/.././c/",          {"a", "c", ""}},
+      {               "../a/b/.././c",              {"a", "c"}},
+      {              "../a/b/.././c/",          {"a", "c", ""}},
+      {                      "/./c/d",          {"", "c", "d"}},
+      {                     "/../c/d",          {"", "c", "d"}},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         uri.normalize();
@@ -1105,53 +1120,54 @@ TEST(UriTests, ReferenceResolution) {
         std::string relativeReferenceString;
         std::string targetString;
     };
-    const std::vector<TestVector> testVectors{
-      // These are all taken from section 5.4.1
-      // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
-      {"http://a/b/c/d;p?q", "g:h", "g:h"},
-      {"http://a/b/c/d;p?q", "g", "http://a/b/c/g"},
-      {"http://a/b/c/d;p?q", "./g", "http://a/b/c/g"},
-      {"http://a/b/c/d;p?q", "g/", "http://a/b/c/g/"},
-      {"http://a/b/c/d;p?q", "//g", "http://g"},
-      {"http://a/b/c/d;p?q", "?y", "http://a/b/c/d;p?y"},
-      {"http://a/b/c/d;p?q", "g?y", "http://a/b/c/g?y"},
-      {"http://a/b/c/d;p?q", "#s", "http://a/b/c/d;p?q#s"},
-      {"http://a/b/c/d;p?q", "g#s", "http://a/b/c/g#s"},
-      {"http://a/b/c/d;p?q", "g?y#s", "http://a/b/c/g?y#s"},
-      {"http://a/b/c/d;p?q", ";x", "http://a/b/c/;x"},
-      {"http://a/b/c/d;p?q", "g;x", "http://a/b/c/g;x"},
-      {"http://a/b/c/d;p?q", "g;x?y#s", "http://a/b/c/g;x?y#s"},
-      {"http://a/b/c/d;p?q", "", "http://a/b/c/d;p?q"},
-      {"http://a/b/c/d;p?q", ".", "http://a/b/c/"},
-      {"http://a/b/c/d;p?q", "./", "http://a/b/c/"},
-      {"http://a/b/c/d;p?q", "..", "http://a/b/"},
-      {"http://a/b/c/d;p?q", "../", "http://a/b/"},
-      {"http://a/b/c/d;p?q", "../g", "http://a/b/g"},
-      {"http://a/b/c/d;p?q", "../..", "http://a"},
-      {"http://a/b/c/d;p?q", "../../", "http://a"},
-      {"http://a/b/c/d;p?q", "../../g", "http://a/g"},
 
-      // Here are some examples of our own.
-      {"http://example.com", "foo", "http://example.com/foo"},
-      {"http://example.com/", "foo", "http://example.com/foo"},
-      {"http://example.com", "foo/", "http://example.com/foo/"},
-      {"http://example.com/", "foo/", "http://example.com/foo/"},
-      {"http://example.com", "/foo", "http://example.com/foo"},
-      {"http://example.com/", "/foo", "http://example.com/foo"},
-      {"http://example.com", "/foo/", "http://example.com/foo/"},
-      {"http://example.com/", "/foo/", "http://example.com/foo/"},
-      {"http://example.com/", "?foo", "http://example.com/?foo"},
-      {"http://example.com/", "#foo", "http://example.com/#foo"},
+    const std::vector<TestVector> testVectors{
+  // These are all taken from section 5.4.1
+  // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
+      { "http://a/b/c/d;p?q",     "g:h",                     "g:h"},
+      { "http://a/b/c/d;p?q",       "g",          "http://a/b/c/g"},
+      { "http://a/b/c/d;p?q",     "./g",          "http://a/b/c/g"},
+      { "http://a/b/c/d;p?q",      "g/",         "http://a/b/c/g/"},
+      { "http://a/b/c/d;p?q",     "//g",                "http://g"},
+      { "http://a/b/c/d;p?q",      "?y",      "http://a/b/c/d;p?y"},
+      { "http://a/b/c/d;p?q",     "g?y",        "http://a/b/c/g?y"},
+      { "http://a/b/c/d;p?q",      "#s",    "http://a/b/c/d;p?q#s"},
+      { "http://a/b/c/d;p?q",     "g#s",        "http://a/b/c/g#s"},
+      { "http://a/b/c/d;p?q",   "g?y#s",      "http://a/b/c/g?y#s"},
+      { "http://a/b/c/d;p?q",      ";x",         "http://a/b/c/;x"},
+      { "http://a/b/c/d;p?q",     "g;x",        "http://a/b/c/g;x"},
+      { "http://a/b/c/d;p?q", "g;x?y#s",    "http://a/b/c/g;x?y#s"},
+      { "http://a/b/c/d;p?q",        "",      "http://a/b/c/d;p?q"},
+      { "http://a/b/c/d;p?q",       ".",           "http://a/b/c/"},
+      { "http://a/b/c/d;p?q",      "./",           "http://a/b/c/"},
+      { "http://a/b/c/d;p?q",      "..",             "http://a/b/"},
+      { "http://a/b/c/d;p?q",     "../",             "http://a/b/"},
+      { "http://a/b/c/d;p?q",    "../g",            "http://a/b/g"},
+      { "http://a/b/c/d;p?q",   "../..",                "http://a"},
+      { "http://a/b/c/d;p?q",  "../../",                "http://a"},
+      { "http://a/b/c/d;p?q", "../../g",              "http://a/g"},
+
+ // Here are some examples of our own.
+      { "http://example.com",     "foo",  "http://example.com/foo"},
+      {"http://example.com/",     "foo",  "http://example.com/foo"},
+      { "http://example.com",    "foo/", "http://example.com/foo/"},
+      {"http://example.com/",    "foo/", "http://example.com/foo/"},
+      { "http://example.com",    "/foo",  "http://example.com/foo"},
+      {"http://example.com/",    "/foo",  "http://example.com/foo"},
+      { "http://example.com",   "/foo/", "http://example.com/foo/"},
+      {"http://example.com/",   "/foo/", "http://example.com/foo/"},
+      {"http://example.com/",    "?foo", "http://example.com/?foo"},
+      {"http://example.com/",    "#foo", "http://example.com/#foo"},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri baseUri;
         mutable_uri relativeReferenceUri;
         mutable_uri expectedTargetUri;
         ASSERT_TRUE(baseUri.operator=((testVector.baseString)).is_valid());
         ASSERT_TRUE(relativeReferenceUri.operator=((testVector.relativeReferenceString)).is_valid()) << index;
         ASSERT_TRUE(expectedTargetUri.operator=((testVector.targetString)).is_valid()) << index;
-        const auto actualTargetUri = baseUri.resolve(relativeReferenceUri);
+        auto constuto actualTargetUri = baseUri.resolve(relativeReferenceUri);
         ASSERT_EQ(expectedTargetUri, actualTargetUri) << index;
         ++index;
     }
@@ -1174,45 +1190,46 @@ TEST(UriTests, IPv6Address) {
         std::string expectedHost;
         bool        isValid;
     };
-    const std::vector<TestVector> testVectors{
-      // valid
-      {"http://[::1]/", "::1", true},
-      {"http://[::ffff:1.2.3.4]/", "::ffff:1.2.3.4", true},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/", "2001:db8:85a3:8d3:1319:8a2e:370:7348", true},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e:370::]/", "2001:db8:85a3:8d3:1319:8a2e:370::", true},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e::1]/", "2001:db8:85a3:8d3:1319:8a2e::1", true},
-      {"http://[fFfF::1]", "fFfF::1", true},
-      {"http://[1234::1]", "1234::1", true},
-      {"http://[fFfF:1:2:3:4:5:6:a]", "fFfF:1:2:3:4:5:6:a", true},
-      {"http://[2001:db8:85a3::8a2e:0]/", "2001:db8:85a3::8a2e:0", true},
-      {"http://[2001:db8:85a3:8a2e::]/", "2001:db8:85a3:8a2e::", true},
 
-      // invalid
-      {"http://[::fFfF::1]", "", false},
-      {"http://[::ffff:1.2.x.4]/", "", false},
-      {"http://[::ffff:1.2.3.4.8]/", "", false},
-      {"http://[::ffff:1.2.3]/", "", false},
-      {"http://[::ffff:1.2.3.]/", "", false},
-      {"http://[::ffff:1.2.3.256]/", "", false},
-      {"http://[::fxff:1.2.3.4]/", "", false},
-      {"http://[::ffff:1.2.3.-4]/", "", false},
-      {"http://[::ffff:1.2.3. 4]/", "", false},
-      {"http://[::ffff:1.2.3.4 ]/", "", false},
-      {"http://[::ffff:1.2.3.4/", "", false},
-      {"http://::ffff:1.2.3.4]/", "", false},
-      {"http://::ffff:a.2.3.4]/", "", false},
-      {"http://::ffff:1.a.3.4]/", "", false},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e:370:7348:0000]/", "", false},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e:370:7348::1]/", "", false},
-      {"http://[2001:db8:85a3:8d3:1319:8a2e:370::1]/", "", false},
-      {"http://[2001:db8:85a3::8a2e:0:]/", "", false},
-      {"http://[2001:db8:85a3::8a2e::]/", "", false},
-      {"http://[]/", "", false},
-      {"http://[:]/", "", false},
-      {"http://[v]/", "", false},
+    const std::vector<TestVector> testVectors{
+  // valid
+      {                                      "http://[::1]/",                                  "::1",  true},
+      {                           "http://[::ffff:1.2.3.4]/",                       "::ffff:1.2.3.4",  true},
+      {     "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/", "2001:db8:85a3:8d3:1319:8a2e:370:7348",  true},
+      {        "http://[2001:db8:85a3:8d3:1319:8a2e:370::]/",    "2001:db8:85a3:8d3:1319:8a2e:370::",  true},
+      {           "http://[2001:db8:85a3:8d3:1319:8a2e::1]/",       "2001:db8:85a3:8d3:1319:8a2e::1",  true},
+      {                                   "http://[fFfF::1]",                              "fFfF::1",  true},
+      {                                   "http://[1234::1]",                              "1234::1",  true},
+      {                        "http://[fFfF:1:2:3:4:5:6:a]",                   "fFfF:1:2:3:4:5:6:a",  true},
+      {                    "http://[2001:db8:85a3::8a2e:0]/",                "2001:db8:85a3::8a2e:0",  true},
+      {                     "http://[2001:db8:85a3:8a2e::]/",                 "2001:db8:85a3:8a2e::",  true},
+
+ // invalid
+      {                                 "http://[::fFfF::1]",                                     "", false},
+      {                           "http://[::ffff:1.2.x.4]/",                                     "", false},
+      {                         "http://[::ffff:1.2.3.4.8]/",                                     "", false},
+      {                             "http://[::ffff:1.2.3]/",                                     "", false},
+      {                            "http://[::ffff:1.2.3.]/",                                     "", false},
+      {                         "http://[::ffff:1.2.3.256]/",                                     "", false},
+      {                           "http://[::fxff:1.2.3.4]/",                                     "", false},
+      {                          "http://[::ffff:1.2.3.-4]/",                                     "", false},
+      {                          "http://[::ffff:1.2.3. 4]/",                                     "", false},
+      {                          "http://[::ffff:1.2.3.4 ]/",                                     "", false},
+      {                            "http://[::ffff:1.2.3.4/",                                     "", false},
+      {                            "http://::ffff:1.2.3.4]/",                                     "", false},
+      {                            "http://::ffff:a.2.3.4]/",                                     "", false},
+      {                            "http://::ffff:1.a.3.4]/",                                     "", false},
+      {"http://[2001:db8:85a3:8d3:1319:8a2e:370:7348:0000]/",                                     "", false},
+      {  "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348::1]/",                                     "", false},
+      {       "http://[2001:db8:85a3:8d3:1319:8a2e:370::1]/",                                     "", false},
+      {                   "http://[2001:db8:85a3::8a2e:0:]/",                                     "", false},
+      {                    "http://[2001:db8:85a3::8a2e::]/",                                     "", false},
+      {                                         "http://[]/",                                     "", false},
+      {                                        "http://[:]/",                                     "", false},
+      {                                        "http://[v]/",                                     "", false},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
@@ -1229,20 +1246,21 @@ TEST(UriTests, IPvFutureAddress) {
         std::string expectedHost;
         bool        isValid;
     };
-    const std::vector<TestVector> testVectors{
-      // valid
-      {"http://[v1.x]/", "v1.x", true},
-      {"http://[vf.xy]/", "vf.xy", true},
-      {"http://[vf.x:y]/", "vf.x:y", true},
 
-      // invalid
-      {"http://[vx]/", "", false},
-      {"http://[v12]/", "", false},
-      {"http://[v1.?]/", "", false},
-      {"http://[v1.x?]/", "", false},
+    const std::vector<TestVector> testVectors{
+  // valid
+      {  "http://[v1.x]/",   "v1.x",  true},
+      { "http://[vf.xy]/",  "vf.xy",  true},
+      {"http://[vf.x:y]/", "vf.x:y",  true},
+
+ // invalid
+      {    "http://[vx]/",       "", false},
+      {   "http://[v12]/",       "", false},
+      {  "http://[v1.?]/",       "", false},
+      { "http://[v1.x?]/",       "", false},
     };
-    size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    size_t           index = 0;
+    foauto constuto& testVector : testVectors) {
         mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
@@ -1267,147 +1285,108 @@ TEST(UriTests, ToString) {
         std::string              fragment;
         std::string              expectedUriString;
     };
+
     const std::vector<TestVector> testVectors{
-      // general test vectors
+  // general test vectors
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       8080,
+       "bob", "www.example.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       true,
-       "ch2",
-       "http://bob@www.example.com:8080/abc/def?foobar#ch2"},
+       true, "foobar",
+       true, "ch2",
+       "http://bob@www.example.com:8080/abc/def?foobar#ch2"                                                                                    },
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       0,
+       "bob", "www.example.com",
+       true,    0,
        {},
-       true,
-       "foobar",
-       true,
-       "ch2",
-       "http://bob@www.example.com:0?foobar#ch2"},
+       true, "foobar",
+       true, "ch2",
+       "http://bob@www.example.com:0?foobar#ch2"                                                                                               },
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       0,
+       "bob", "www.example.com",
+       true,    0,
        {},
-       true,
-       "foobar",
-       true,
-       "",
-       "http://bob@www.example.com:0?foobar#"},
-      {"", "", "example.com", false, 0, {}, true, "bar", false, "", "//example.com?bar"},
-      {"", "", "example.com", false, 0, {}, true, "", false, "", "//example.com?"},
-      {"", "", "example.com", false, 0, {}, false, "", false, "", "//example.com"},
-      {"", "", "example.com", false, 0, {""}, false, "", false, "", "//example.com/"},
-      {"", "", "example.com", false, 0, {"", "xyz"}, false, "", false, "", "//example.com/xyz"},
-      {"", "", "example.com", false, 0, {"", "xyz", ""}, false, "", false, "", "//example.com/xyz/"},
-      {"", "", "", false, 0, {""}, false, "", false, "", "/"},
-      {"", "", "", false, 0, {"", "xyz"}, false, "", false, "", "/xyz"},
-      {"", "", "", false, 0, {"", "xyz", ""}, false, "", false, "", "/xyz/"},
-      {"", "", "", false, 0, {}, false, "", false, "", ""},
-      {"", "", "", false, 0, {"xyz"}, false, "", false, "", "xyz"},
-      {"", "", "", false, 0, {"xyz", ""}, false, "", false, "", "xyz/"},
-      {"", "", "", false, 0, {}, true, "bar", false, "", "?bar"},
-      {"http", "", "", false, 0, {}, true, "bar", false, "", "http:?bar"},
-      {"http", "", "", false, 0, {}, false, "", false, "", "http:"},
-      {"http", "", "::1", false, 0, {}, false, "", false, "", "http://[::1]"},
-      {"http", "", "::1.2.3.4", false, 0, {}, false, "", false, "", "http://[::1.2.3.4]"},
-      {"http", "", "1.2.3.4", false, 0, {}, false, "", false, "", "http://1.2.3.4"},
-      {"", "", "", false, 0, {}, false, "", false, "", ""},
-      {"http", "bob", "", false, 0, {}, true, "foobar", false, "", "http://bob@?foobar"},
-      {"", "bob", "", false, 0, {}, true, "foobar", false, "", "//bob@?foobar"},
-      {"", "bob", "", false, 0, {}, false, "", false, "", "//bob@"},
+       true, "foobar",
+       true,    "",
+       "http://bob@www.example.com:0?foobar#"                                                                                                  },
+      {    "",    "",     "example.com", false,    0,              {},  true,    "bar", false,    "",                       "//example.com?bar"},
+      {    "",    "",     "example.com", false,    0,              {},  true,       "", false,    "",                          "//example.com?"},
+      {    "",    "",     "example.com", false,    0,              {}, false,       "", false,    "",                           "//example.com"},
+      {    "",    "",     "example.com", false,    0,            {""}, false,       "", false,    "",                          "//example.com/"},
+      {    "",    "",     "example.com", false,    0,     {"", "xyz"}, false,       "", false,    "",                       "//example.com/xyz"},
+      {    "",    "",     "example.com", false,    0, {"", "xyz", ""}, false,       "", false,    "",                      "//example.com/xyz/"},
+      {    "",    "",                "", false,    0,            {""}, false,       "", false,    "",                                       "/"},
+      {    "",    "",                "", false,    0,     {"", "xyz"}, false,       "", false,    "",                                    "/xyz"},
+      {    "",    "",                "", false,    0, {"", "xyz", ""}, false,       "", false,    "",                                   "/xyz/"},
+      {    "",    "",                "", false,    0,              {}, false,       "", false,    "",                                        ""},
+      {    "",    "",                "", false,    0,         {"xyz"}, false,       "", false,    "",                                     "xyz"},
+      {    "",    "",                "", false,    0,     {"xyz", ""}, false,       "", false,    "",                                    "xyz/"},
+      {    "",    "",                "", false,    0,              {},  true,    "bar", false,    "",                                    "?bar"},
+      {"http",    "",                "", false,    0,              {},  true,    "bar", false,    "",                               "http:?bar"},
+      {"http",    "",                "", false,    0,              {}, false,       "", false,    "",                                   "http:"},
+      {"http",    "",             "::1", false,    0,              {}, false,       "", false,    "",                            "http://[::1]"},
+      {"http",    "",       "::1.2.3.4", false,    0,              {}, false,       "", false,    "",                      "http://[::1.2.3.4]"},
+      {"http",    "",         "1.2.3.4", false,    0,              {}, false,       "", false,    "",                          "http://1.2.3.4"},
+      {    "",    "",                "", false,    0,              {}, false,       "", false,    "",                                        ""},
+      {"http", "bob",                "", false,    0,              {},  true, "foobar", false,    "",                      "http://bob@?foobar"},
+      {    "", "bob",                "", false,    0,              {},  true, "foobar", false,    "",                           "//bob@?foobar"},
+      {    "", "bob",                "", false,    0,              {}, false,       "", false,    "",                                  "//bob@"},
 
-      // percent-encoded character test vectors
+ // percent-encoded character test vectors
       {"http",
-       "b b",
-       "www.example.com",
-       true,
-       8080,
+       "b b", "www.example.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       true,
-       "ch2",
-       "http://b%20b@www.example.com:8080/abc/def?foobar#ch2"},
+       true, "foobar",
+       true, "ch2",
+       "http://b%20b@www.example.com:8080/abc/def?foobar#ch2"                                                                                  },
       {"http",
-       "bob",
-       "www.e ample.com",
-       true,
-       8080,
+       "bob", "www.e ample.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       true,
-       "ch2",
-       "http://bob@www.e%20ample.com:8080/abc/def?foobar#ch2"},
+       true, "foobar",
+       true, "ch2",
+       "http://bob@www.e%20ample.com:8080/abc/def?foobar#ch2"                                                                                  },
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       8080,
+       "bob", "www.example.com",
+       true, 8080,
        {"", "a c", "def"},
-       true,
-       "foobar",
-       true,
-       "ch2",
-       "http://bob@www.example.com:8080/a%20c/def?foobar#ch2"},
+       true, "foobar",
+       true, "ch2",
+       "http://bob@www.example.com:8080/a%20c/def?foobar#ch2"                                                                                  },
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       8080,
+       "bob", "www.example.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foo ar",
-       true,
-       "ch2",
-       "http://bob@www.example.com:8080/abc/def?foo%20ar#ch2"},
+       true, "foo ar",
+       true, "ch2",
+       "http://bob@www.example.com:8080/abc/def?foo%20ar#ch2"                                                                                  },
       {"http",
-       "bob",
-       "www.example.com",
-       true,
-       8080,
+       "bob", "www.example.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       true,
-       "c 2",
-       "http://bob@www.example.com:8080/abc/def?foobar#c%202"},
+       true, "foobar",
+       true, "c 2",
+       "http://bob@www.example.com:8080/abc/def?foobar#c%202"                                                                                  },
       {"http",
-       "bob",
-       "ሴ.example.com",
-       true,
-       8080,
+       "bob", "ሴ.example.com",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       false,
-       "",
-       "http://bob@%E1%88%B4.example.com:8080/abc/def?foobar"},
+       true, "foobar",
+       false,    "",
+       "http://bob@%E1%88%B4.example.com:8080/abc/def?foobar"                                                                                  },
 
-      // normalization of IPv6 address hex digits
+ // normalization of IPv6 address hex digits
       {"http",
-       "bob",
-       "fFfF::1",
-       true,
-       8080,
+       "bob",         "fFfF::1",
+       true, 8080,
        {"", "abc", "def"},
-       true,
-       "foobar",
-       true,
-       "c 2",
-       "http://bob@[ffff::1]:8080/abc/def?foobar#c%202"},
+       true, "foobar",
+       true, "c 2",
+       "http://bob@[ffff::1]:8080/abc/def?foobar#c%202"                                                                                        },
     };
     size_t index = 0;
-    for (const auto& testVector : testVectors) {
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         uri.scheme(testVector.scheme);
         uri.user_info(testVector.userinfo);
@@ -1428,7 +1407,7 @@ TEST(UriTests, ToString) {
         } else {
             uri.clear_fragment();
         }
-        const auto actualUriString = uri.to_string();
+        auto const actualUriString = uri.to_string();
         ASSERT_EQ(testVector.expectedUriString, actualUriString) << index;
         ++index;
     }
@@ -1512,9 +1491,7 @@ TEST(UriTests, PercentEncodePlusInQueries) {
     EXPECT_EQ("?foo%2Bbar", uri.to_string()) << uri.to_string();
 }
 
-
 TEST(UriTests, HTTPInHTTP) {
-
     /*
      * http://http://http://@http://http://?http://#http://
      * ----   ---- --------- ---- - ------- ------- -------
@@ -1523,7 +1500,8 @@ TEST(UriTests, HTTPInHTTP) {
      *    \       \              \         \          Fragment
      *  Scheme  Username        Host      Path
      *
-     * Got it from https://twitter.com/gregxsunday/status/1613154019760824322?s=20&t=TM26KRie72Ks1Tnw1GpSmw
+     * Got it from
+     * https://twitter.com/gregxsunday/status/1613154019760824322?s=20&t=TM26KRie72Ks1Tnw1GpSmw
      * https://daniel.haxx.se/blog/2022/09/08/http-http-http-http-http-http-http/
      *
      * Firefox and Chromium's `new URL(...)` function seems to not agree with that:
