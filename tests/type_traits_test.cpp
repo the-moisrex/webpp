@@ -64,8 +64,8 @@ using t8  = tuple<map<vector<list<string>>, vector<string>>>;
 using t9  = recursively_replace_templated_parameter<t8, allocator, pmr::polymorphic_allocator>;
 using t10 = tuple<map<string, string>>;
 using t11 = recursively_replace_templated_parameter<t10, allocator, pmr::polymorphic_allocator>;
-using t12 = tuple<allocator<char> const> using t13 =
-  recursively_replace_templated_parameter<t12, allocator, pmr::polymorphic_allocator>;
+using t12 = tuple<allocator<char> const>;
+using t13 = recursively_replace_templated_parameter<t12, allocator, pmr::polymorphic_allocator>;
 using t14 = tuple<tuple<allocator<char>> const>;
 using t15 = recursively_replace_templated_parameter<t14, allocator, pmr::polymorphic_allocator>;
 
@@ -74,8 +74,8 @@ static_assert(is_same_v<t3, tuple<double, string, vector<double>, double>>);
 static_assert(is_same_v<t4, tuple<int, pmr::string, pmr::vector<int>, int>>);
 static_assert(is_same_v<t6, tuple<pmr::vector<pmr::string>>>);
 static_assert(is_same_v<t7, tuple<int, string, list<int>, int>>);
-static_assert(is_same_v<t13, tuple<const pmr::polymorphic_allocator<char>>>);
-static_assert(is_same_v < t15, tuple<tuple<pmr::polymorphic_allocator<char>> const>);
+static_assert(is_same_v<t13, tuple<pmr::polymorphic_allocator<char> const>>);
+static_assert(is_same_v<t15, tuple<tuple<pmr::polymorphic_allocator<char>> const>>);
 static_assert(is_same_v<t11, tuple<pmr::map<pmr::string, pmr::string>>>);
 static_assert(is_same_v<t9, tuple<pmr::map<pmr::vector<pmr::list<pmr::string>>, pmr::vector<pmr::string>>>>);
 
