@@ -157,7 +157,7 @@ namespace webpp::modp_b64 {
      *
      * todo: this function can be "constexpr"
      */
-    [[nodiscard]] static inline std::size_t encode(char* dest, char constr* str, std::size_t len) noexcept {
+    [[nodiscard]] static inline std::size_t encode(char* dest, char const* str, std::size_t len) noexcept {
         std::size_t i = 0;
         auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
@@ -219,8 +219,7 @@ namespace webpp::modp_b64 {
      * if (len == -1) { error }
      * \endcode
      */
-    [[nodiscard]] static constexpr std::size_t
-    decode(char* dest, char constr* src, std::size_t len) noexcept {
+    [[nodiscard]] static constexpr std::size_t decode(char* dest, char const* src, std::size_t len) noexcept {
         if (len == 0) {
             return 0;
         }
@@ -252,7 +251,7 @@ namespace webpp::modp_b64 {
             auto*         p       = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t x       = 0;
             auto*         destInt = reinterpret_cast<std::uint32_t*>(p);
-            auto consto*  srcInt  = reinterpret_cast<std::uint32_t const*>(src);
+            auto const*   srcInt  = reinterpret_cast<std::uint32_t const*>(src);
             std::uint32_t y       = *srcInt++;
             for (i = 0; i < chunks; ++i) {
                 x = d0[y >> 24 & 0xff] | d1[y >> 16 & 0xff] | d2[y >> 8 & 0xff] | d3[y & 0xff];
@@ -305,7 +304,7 @@ namespace webpp::modp_b64 {
 
             auto*         p = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t x = 0;
-            auto consto*  y = reinterpret_cast<std::uint8_t const*>(src);
+            auto const*   y = reinterpret_cast<std::uint8_t const*>(src);
             for (i = 0; i < chunks; ++i, y += 4) {
                 x = d0[y[0]] | d1[y[1]] | d2[y[2]] | d3[y[3]];
                 if (x >= BADCHAR) {

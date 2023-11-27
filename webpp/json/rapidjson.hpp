@@ -3,7 +3,7 @@
 #ifndef WEBPP_RAPIDJSON_HPP
 #define WEBPP_RAPIDJSON_HPP
 
-#if __has_include(<rapidjson/document.h>)
+#if __has_include(<rapidjson/document.h> )
 #    define WEBPP_RAPIDJSON_READY
 #    include "../common/meta.hpp"
 #    include "../memory/allocators.hpp"
@@ -988,7 +988,7 @@ namespace webpp::json::rapidjson {
         // implement the parse method
         template <istl::StringViewifiable StrT>
         document& parse(StrT&& json_string) {
-            auto consto json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
+            auto const json_str_view = istl::string_viewify(stl::forward<StrT>(json_string));
             this->val_handle.Parse(json_str_view.data(), json_str_view.size());
             return *this;
         }

@@ -35,15 +35,23 @@ namespace webpp {
             }
 
             template <typename K, typename V>
-            void set(K&& key, V&& value, options_type opts = {}) {}
+            void set(K&& key, V&& value, options_type opts = {}) {
+                // todo
+            }
 
-            void set_options(key_type const& key, options_type opts) {}
+            void set_options(key_type const& key, options_type opts) {
+                // todo
+            }
 
             template <typename K>
-            void erase(K&& input) {}
+            void erase(K&& input) {
+                // todo
+            }
 
             template <typename Pred>
-            void erase_if(Pred&& predicate) {}
+            void erase_if(Pred&& predicate) {
+                // todo
+            }
         };
     };
 

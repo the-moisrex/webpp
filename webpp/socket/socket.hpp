@@ -291,13 +291,13 @@ namespace webpp {
         }
 
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-        bool bind(ipv4 ip, stl::uint16_t port) noexcept {
+        bool bind(ipv4 ip, stl::uint16_t const port) noexcept {
             auto addr     = make_sock_addr<sockaddr_in>(ip);
             addr.sin_port = static_cast<in_port_t>(hton(port));
             return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in)));
         }
 
-        bool bind(ipv6 const& ip, stl::uint16_t port) noexcept {
+        bool bind(ipv6 const& ip, stl::uint16_t const port) noexcept {
             auto addr      = make_sock_addr<sockaddr_in6>(ip);
             addr.sin6_port = static_cast<in_port_t>(hton(port));
             return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in6)));
@@ -409,10 +409,10 @@ namespace webpp {
          *
          * @return bool true if the value was set, false on error.
          */
-        bool set_option(int level, int optname, void constd* optval, socklen_t optlen) noexcept {
+        bool set_option(int level, int optname, void const* optval, socklen_t optlen) noexcept {
 #ifdef MSVC_COMPILER
             return check_ret_bool(
-              ::setsockopt(fd, level, optname, static_castchar constr* > (optval), static_cast<int>(optlen)));
+              ::setsockopt(fd, level, optname, static_cast<char const*>(optval), static_cast<int>(optlen)));
 #else
             return check_ret_bool(::setsockopt(fd, level, optname, optval, optlen));
 #endif
@@ -428,7 +428,7 @@ namespace webpp {
          * @return bool true if the value was set, false on error
          */
         template <typename T>
-        bool set_option(int level, int optname, t const&& val) noexcept {
+        bool set_option(int level, int optname, T const& val) noexcept {
             return set_option(level, optname, (void*) &val, sizeof(T));
         }
 

@@ -29,12 +29,12 @@ struct ConstMyCallable {
 };
 
 struct MyCallable {
-    int i = 0;
+    int index = 0;
 
     auto operator()(int limit) {
-        i++;
-        EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
-        return i;
+        index++;
+        EXPECT_TRUE(index < limit - 1) << "i is: " << index << "; limit: " << limit;
+        return index;
     }
 };
 
@@ -85,7 +85,7 @@ TEST(FunctionalTests, DebouncedFunctions) {
         EXPECT_LT(res, limit) << res;
     }
 
-    t debounce<ConstMyCallable> const const_debounced_classs;
+    debounce<ConstMyCallable> const const_debounced_class;
     for (int i = 0; i < limit; i++) {
         const_debounced_class(limit);
     }
@@ -453,10 +453,10 @@ TEST(FunctionalTests, FunctionRefWithCapture) {
 }
 
 TEST(FunctionalTests, FunctionRefWithCharPointer) {
-    auto charLengthFunc = [char constar* str) -> stl::size_t {
+    auto charLengthFunc = [](char const* str) -> stl::size_t {
         return strlen(str);
     };
-    function_ref<inchar constar*)> const ref(charLengthFunc);
+    function_ref<int(char const*)> const ref(charLengthFunc);
     EXPECT_EQ(ref("hello"), 5);
 }
 
@@ -536,7 +536,7 @@ TEST(FunctionalTests, MoveAssignment) {
         // Verify that ref2 has been moved
         ref2(2, 3);
         FAIL() << "Expected stl::bad_function_call";
-    } catchst stl::bad_function_ca const &l&) {
+    } catch (stl::bad_function_call const&) {
         SUCCEED();
     }
 }
@@ -566,7 +566,7 @@ TEST(FunctionalTests, EmptyFunctionRef) {
         // Calling an empty function_ref should cause a bad_function_call exception
         ref();
         FAIL() << "Expected std::bad_function_call";
-    } catchst stl::bad_function_ca const &l&) {
+    } catch (stl::bad_function_call const&) {
         SUCCEED();
     }
 }

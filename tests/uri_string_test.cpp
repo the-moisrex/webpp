@@ -134,7 +134,7 @@ TEST(URITests, WieredURIs) {
     EXPECT_FALSE(url1.is_urn());
 
     // some examples from https://rosettacode.org/wiki/URL_parser
-    auto consto _uris = {
+    auto const _uris = {
       "ftp://ftp.is.co.za/rfc/rfc1808.txt",
       "http://www.ietf.org/rfc/rfc2396.txt",
       "ldap://[2001:db8::7]/c=GB?objectClass?one",
@@ -498,19 +498,18 @@ TEST(UriTests, ParseFromStringPathCornerCases) {
         std::vector<std::string> pathOut;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {    "",          {}},
       {   "/",        {""}}, // todo: should this be "" / "" or ""?
       {"/foo", {"", "foo"}},
       {"foo/", {"foo", ""}},
     };
     size_t index = 0;
-    for{ auto consto& testVector : testVectors) {
-            mutable_uri uri;
-            ASSERT_TRUE(uri.operator=((testVector.pathIn)).is_valid()) << index;
-            ASSERT_EQ(testVector.pathOut, uri.slugs<std::vector<std::string>>()) << index;
-            ++index;
-        }
+    for (auto const& testVector : testVectors) {
+        mutable_uri uri;
+        ASSERT_TRUE(uri.operator=((testVector.pathIn)).is_valid()) << index;
+        ASSERT_EQ(testVector.pathOut, uri.slugs<std::vector<std::string>>()) << index;
+        ++index;
     }
 }
 
@@ -578,14 +577,14 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativeReferences) {
         bool        isRelativeReference;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {"http://www.example.com/", false},
       { "http://www.example.com", false},
       {                      "/",  true},
       {                    "foo",  true},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.isRelativeReference, uri.is_relative_reference()) << index;
@@ -599,7 +598,7 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
         bool        containsRelativePath;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {"http://www.example.com/", false},
       { "http://www.example.com", false},
       {                      "/", false},
@@ -612,8 +611,8 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
   */
       {                       "",  true},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.containsRelativePath, uri.is_path_relative()) << index;
@@ -629,7 +628,7 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
         std::string fragment;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {             "http://www.example.com/", "www.example.com",          "",    ""},
       {              "http://example.com?foo",     "example.com",       "foo",    ""},
       {          "http://www.example.com#foo", "www.example.com",          "", "foo"},
@@ -645,8 +644,8 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
   */
       {            "http://www.example.com/?", "www.example.com",          "",    ""},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host()) << index;
@@ -662,7 +661,7 @@ TEST(UriTests, ParseFromStringUserInfo) {
         std::string userInfo;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {                "http://www.example.com/",                 ""},
       {             "http://joe@www.example.com",              "joe"},
       {"http://pepe:feelsbadman@www.example.com", "pepe:feelsbadman"},
@@ -671,8 +670,8 @@ TEST(UriTests, ParseFromStringUserInfo) {
       {                                      "/",                 ""},
       {                                    "foo",                 ""},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info()) << index;
@@ -688,7 +687,7 @@ TEST(UriTests, ParseFromStringTwiceFirstUserInfoThenWithout) {
 }
 
 TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"://www.example.com/"},
       {"0://www.example.com/"},
       {"+://www.example.com/"},
@@ -696,8 +695,8 @@ TEST(UriTests, ParseFromStringSchemeIllegalCharacters) {
       {".://www.example.com/"},
       {"h@://www.example.com/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -710,7 +709,7 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
         std::string scheme;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       { "h://www.example.com/",  "h"},
       {"x+://www.example.com/", "x+"},
       {"y-://www.example.com/", "y-"},
@@ -718,8 +717,8 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
       {"aa://www.example.com/", "aa"},
       {"a0://www.example.com/", "a0"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.scheme, uri.scheme());
@@ -728,15 +727,15 @@ TEST(UriTests, ParseFromStringSchemeBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringSchemeMixedCase) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"http://www.example.com/"},
       {"hTtp://www.example.com/"},
       {"HTTP://www.example.com/"},
       {"Http://www.example.com/"},
       {"HttP://www.example.com/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("http", uri.scheme()) << ">>> Failed for test vector element " << index << " <<<";
@@ -751,12 +750,12 @@ TEST(UriTests, ParseFromStringHostEndsInDot) {
 }
 
 TEST(UriTests, ParseFromStringUserInfoIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"//%X@www.example.com/"},
       {"//{@www.example.com/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -769,7 +768,7 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
         std::string userInfo;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {   "//%41@www.example.com/", "A"},
       {      "//@www.example.com/",  ""},
       {     "//!@www.example.com/", "!"},
@@ -778,8 +777,8 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
       {     "//;@www.example.com/", ";"},
       {"http://:@www.example.com/", ":"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.userInfo, uri.user_info());
@@ -788,13 +787,13 @@ TEST(UriTests, ParseFromStringUserInfoBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringHostIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"//%X@www.example.com/"},
       {"//@www:example.com/"},
       {"//[vX.:]/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -807,7 +806,7 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
         std::string host;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {    "//%41/",       "a"},
       {       "///",        ""},
       {      "//!/",       "!"},
@@ -818,8 +817,8 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
       { "//[v7.:]/",    "v7.:"},
       {"//[v7.aB]/",   "v7.aB"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.host, uri.host());
@@ -828,15 +827,15 @@ TEST(UriTests, ParseFromStringHostBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringHostMixedCase) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"http://www.example.com/"},
       {"http://www.EXAMPLE.com/"},
       {"http://www.exAMple.com/"},
       {"http://www.example.cOM/"},
       {"http://wWw.exampLe.Com/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_EQ("www.example.com", uri.host()) << ">>> Failed for test vector element " << index << " <<<";
@@ -845,7 +844,7 @@ TEST(UriTests, ParseFromStringHostMixedCase) {
 }
 
 TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimiter) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"//foo:bar@www.example.com/"},
       {"//www.example.com/a:b"},
       {"//www.example.com/foo?a:b"},
@@ -853,8 +852,8 @@ TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimite
       {"//[v7.:]/"},
       {"/:/foo"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector)).is_valid()) << index;
         ASSERT_TRUE(uri.scheme().empty());
@@ -863,7 +862,7 @@ TEST(UriTests, ParseFromStringDontMisinterpretColonInOtherPlacesAsSchemeDelimite
 }
 
 TEST(UriTests, ParseFromStringPathIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"http://www.example.com/foo[bar"},
       {"http://www.example.com/]bar"},
       {"http://www.example.com/foo]"},
@@ -885,8 +884,8 @@ TEST(UriTests, ParseFromStringPathIllegalCharacters) {
       {"/foo]/"},
       {"/[/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -899,15 +898,15 @@ TEST(UriTests, ParseFromStringPathBarelyLegal) {
         std::vector<std::string> path;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {                  "/:/foo",         {"", ":", "foo"}},
       {                "bob@/foo",          {"bob@", "foo"}},
       {                  "hello!",               {"hello!"}},
       {    "urn:hello,%20w%6Frld",         {"hello, world"}},
       {"//example.com/foo/(bar)/", {"", "foo", "(bar)", ""}},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.path, uri.slugs<std::vector<std::string>>());
@@ -916,7 +915,7 @@ TEST(UriTests, ParseFromStringPathBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringQueryIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"http://www.example.com/?foo[bar"},
       {"http://www.example.com/?]bar"},
       {"http://www.example.com/?foo]"},
@@ -938,8 +937,8 @@ TEST(UriTests, ParseFromStringQueryIllegalCharacters) {
       {"?foo]/"},
       {"?[/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -952,7 +951,7 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
         std::string query;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {                        "/?:/foo",        ":/foo"},
       {                      "?bob@/foo",     "bob@/foo"},
       {                        "?hello!",       "hello!"},
@@ -960,8 +959,8 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
       {       "//example.com/foo?(bar)/",       "(bar)/"},
       {"http://www.example.com/?foo?bar",      "foo?bar"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.query, uri.queries_string());
@@ -970,7 +969,7 @@ TEST(UriTests, ParseFromStringQueryBarelyLegal) {
 }
 
 TEST(UriTests, ParseFromStringFragmentIllegalCharacters) {
-    const std::vector<std::string> testVectors{
+    std::vector<std::string> const testVectors{
       {"http://www.example.com/#foo[bar"},
       {"http://www.example.com/#]bar"},
       {"http://www.example.com/#foo]"},
@@ -992,8 +991,8 @@ TEST(UriTests, ParseFromStringFragmentIllegalCharacters) {
       {"#foo]/"},
       {"#[/"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_FALSE(uri.operator=((testVector)).is_valid()) << index;
         ++index;
@@ -1006,7 +1005,7 @@ TEST(UriTests, ParseFromStringFragmentBarelyLegal) {
         std::string fragment;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {                        "/#:/foo",        ":/foo"},
       {                      "#bob@/foo",     "bob@/foo"},
       {                        "#hello!",       "hello!"},
@@ -1014,8 +1013,8 @@ TEST(UriTests, ParseFromStringFragmentBarelyLegal) {
       {       "//example.com/foo#(bar)/",       "(bar)/"},
       {"http://www.example.com/#foo?bar",      "foo?bar"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.fragment, uri.fragment());
@@ -1029,7 +1028,7 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
         std::string pathFirstSegment;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {         "%41",    "A"},
       {         "%4A",    "J"},
       {         "%4a",    "J"},
@@ -1040,8 +1039,8 @@ TEST(UriTests, ParseFromStringPathsWithPercentEncodedCharacters) {
       {   "%41%42%43",  "ABC"},
       {"%41%4A%43%4b", "AJCK"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         ASSERT_EQ(testVector.pathFirstSegment, uri.slugs()[0]);
@@ -1055,7 +1054,7 @@ TEST(UriTests, NormalizePath) {
         std::vector<std::string> normalizedPathSegments;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
       {            "/a/b/c/./../../g",          {"", "a", "g"}},
       {          "mid/content=5/../6",            {"mid", "6"}},
       {   "http://example.com/a/../b",               {"", "b"}},
@@ -1091,8 +1090,8 @@ TEST(UriTests, NormalizePath) {
       {                      "/./c/d",          {"", "c", "d"}},
       {                     "/../c/d",          {"", "c", "d"}},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         ASSERT_TRUE(uri.operator=((testVector.uriString)).is_valid()) << index;
         uri.normalize();
@@ -1121,7 +1120,7 @@ TEST(UriTests, ReferenceResolution) {
         std::string targetString;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
   // These are all taken from section 5.4.1
   // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
       { "http://a/b/c/d;p?q",     "g:h",                     "g:h"},
@@ -1159,15 +1158,15 @@ TEST(UriTests, ReferenceResolution) {
       {"http://example.com/",    "?foo", "http://example.com/?foo"},
       {"http://example.com/",    "#foo", "http://example.com/#foo"},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri baseUri;
         mutable_uri relativeReferenceUri;
         mutable_uri expectedTargetUri;
         ASSERT_TRUE(baseUri.operator=((testVector.baseString)).is_valid());
         ASSERT_TRUE(relativeReferenceUri.operator=((testVector.relativeReferenceString)).is_valid()) << index;
         ASSERT_TRUE(expectedTargetUri.operator=((testVector.targetString)).is_valid()) << index;
-        auto constuto actualTargetUri = baseUri.resolve(relativeReferenceUri);
+        auto const actualTargetUri = baseUri.resolve(relativeReferenceUri);
         ASSERT_EQ(expectedTargetUri, actualTargetUri) << index;
         ++index;
     }
@@ -1191,7 +1190,7 @@ TEST(UriTests, IPv6Address) {
         bool        isValid;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
   // valid
       {                                      "http://[::1]/",                                  "::1",  true},
       {                           "http://[::ffff:1.2.3.4]/",                       "::ffff:1.2.3.4",  true},
@@ -1228,8 +1227,8 @@ TEST(UriTests, IPv6Address) {
       {                                        "http://[:]/",                                     "", false},
       {                                        "http://[v]/",                                     "", false},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
@@ -1247,7 +1246,7 @@ TEST(UriTests, IPvFutureAddress) {
         bool        isValid;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
   // valid
       {  "http://[v1.x]/",   "v1.x",  true},
       { "http://[vf.xy]/",  "vf.xy",  true},
@@ -1259,8 +1258,8 @@ TEST(UriTests, IPvFutureAddress) {
       {  "http://[v1.?]/",       "", false},
       { "http://[v1.x?]/",       "", false},
     };
-    size_t           index = 0;
-    foauto constuto& testVector : testVectors) {
+    size_t index = 0;
+    for (auto const& testVector : testVectors) {
         mutable_uri uri;
         uri = (testVector.uriString);
         ASSERT_EQ(testVector.isValid, uri.is_valid()) << index;
@@ -1286,7 +1285,7 @@ TEST(UriTests, ToString) {
         std::string              expectedUriString;
     };
 
-    const std::vector<TestVector> testVectors{
+    std::vector<TestVector> const testVectors{
   // general test vectors
       {"http",
        "bob", "www.example.com",
