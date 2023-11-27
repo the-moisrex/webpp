@@ -341,17 +341,14 @@ namespace webpp::views {
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type    = typename data_type::value_type;
         using items_type       = istl::vector<variable_type const*, traits_type>;
-        using items_value_type = typename items_type::value_type;
         using etraits          = enable_traits<traits_type>;
 
       private:
-        items_type items;
+        items_type items{alloc::general_alloc_for<items_type>(*this)};
 
       public:
         template <EnabledTraits ET>
-        context(ET&& et, variable_type const* data)
-          : etraits{et},
-            items{et.alloc_pack.template general_allocator<items_value_type>()} {
+        context(ET&& et, variable_type const* data) : etraits{stl::forward<ET>(et)} {
             push(data);
         }
 
@@ -363,9 +360,7 @@ namespace webpp::views {
         context& operator=(context const&)     = delete;
 
         template <EnabledTraits ET>
-        context(ET&& et, data_type const* data)
-          : etraits{et},
-            items{et.alloc_pack.template general_allocator<items_value_type>()} {
+        context(ET&& et, data_type const* data) : etraits{stl::forward<ET>(et)} {
             items.reserve(data->size());
             stl::transform(stl::begin(*data),
                            stl::end(*data),
@@ -391,8 +386,7 @@ namespace webpp::views {
             if (name.find('.') == string_view_type::npos) {
                 // process normal name without having to split which is slower
                 for (auto const& item : items) {
-                    auto const var = item->get(name);
-                    if (var) {
+                    if (auto const var = item->get(name)) {
                         return var;
                     }
                 }
@@ -418,8 +412,7 @@ namespace webpp::views {
 
         variable_type const* get_partial(string_view_type name) const {
             for (auto const& item : items) {
-                auto const var = item->get(name);
-                if (var) {
+                if (auto const var = item->get(name)) {
                     return var;
                 }
             }
@@ -651,7 +644,7 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        constexpr mustache_view(ET&& et) noexcept
+        explicit constexpr mustache_view(ET&& et) noexcept
           : etraits{et},
             root_component{et} {}
 
@@ -726,7 +719,7 @@ namespace webpp::views {
             if (!is_valid()) {
                 return;
             }
-            if constexpr (stl::same_as<stl::remove_cvref_t<DT>, data_type>) {
+            if constexpr (istl::cvref_as<DT, data_type>) {
                 context<traits_type>          ctx{*this, &data};
                 context_internal<traits_type> context{ctx};
                 // todo: optimization chance: out::reserve

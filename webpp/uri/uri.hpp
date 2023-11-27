@@ -238,16 +238,18 @@ namespace webpp::uri {
                 target.scheme   = this->scheme;
                 target.fragment = relative_uri.fragment;
                 if (!relative_uri.host.empty()) {
-                    target.host      = relative_uri.host;
-                    target.port      = relative_uri.port;
-                    target.user_info = relative_uri.user_info;
-                    target.path      = relative_uri.path;
-                    target.queries   = relative_uri.queries;
+                    target.host     = relative_uri.host;
+                    target.port     = relative_uri.port;
+                    target.username = relative_uri.username;
+                    target.password = relative_uri.password;
+                    target.path     = relative_uri.path;
+                    target.queries  = relative_uri.queries;
                     target.path.normalize();
                 } else {
-                    target.host      = this->host;
-                    target.user_info = this->user_info;
-                    target.port      = this->port;
+                    target.host     = this->host;
+                    target.username = this->username;
+                    target.password = this->password;
+                    target.port     = this->port;
                     if (relative_uri.path.empty()) {
                         target.path = this->path;
                         if (!relative_uri.queries.empty()) {
@@ -304,7 +306,7 @@ namespace webpp::uri {
         constexpr basic_uri& extract_from(StrVT&& url_str) {
             auto const str_view = istl::string_viewify(stl::forward<StrVT>(url_str));
             using str_view_t    = stl::remove_cvref_t<decltype(str_view)>;
-            uri_string<const string_type, str_view_t> const uri_str{str_view};
+            uri_string<string_type const, str_view_t> const uri_str{str_view};
             extract_from(uri_str);
             return *this;
         }
