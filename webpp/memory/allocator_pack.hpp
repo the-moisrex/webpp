@@ -3,7 +3,7 @@
 #ifndef WEBPP_ALLOCATOR_PACK_HPP
 #define WEBPP_ALLOCATOR_PACK_HPP
 
-#include "../std/concepts.hpp"
+#include "../common/meta.hpp"
 #include "../std/memory.hpp"
 #include "../std/type_traits.hpp"
 #include "allocator_concepts.hpp"
@@ -49,29 +49,29 @@ namespace webpp::alloc {
         using value_type = bool;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        value_type m_sync             : 1 = false;
-        value_type m_unsync           : 1 = false;
+        value_type m_sync   = false;
+        value_type m_unsync = false;
 
-        value_type m_noop_dealloc     : 1 = false;
-        value_type m_no_noop_dealloc  : 1 = false;
+        value_type m_noop_dealloc    = false;
+        value_type m_no_noop_dealloc = false;
 
-        value_type m_stateful         : 1 = false;
-        value_type m_stateless        : 1 = false;
+        value_type m_stateful  = false;
+        value_type m_stateless = false;
 
-        value_type m_high_contention  : 1 = false;
-        value_type m_low_contention   : 1 = false;
+        value_type m_high_contention = false;
+        value_type m_low_contention  = false;
 
-        value_type m_high_utilization : 1 = false;
-        value_type m_low_utilization  : 1 = false;
+        value_type m_high_utilization = false;
+        value_type m_low_utilization  = false;
 
-        value_type m_high_locality    : 1 = false;
-        value_type m_low_locality     : 1 = false;
+        value_type m_high_locality = false;
+        value_type m_low_locality  = false;
 
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <typename... FeaturesType>
             requires((stl::same_as<stl::remove_cvref_t<FeaturesType>, features> && ...))
-        constexpr feature_pack(FeaturesType... values) {
+        explicit constexpr feature_pack(FeaturesType... values) {
             set_features(values...);
         }
 
@@ -84,7 +84,7 @@ namespace webpp::alloc {
         template <typename... FeaturesType>
             requires((stl::same_as<stl::remove_cvref_t<FeaturesType>, features> && ...))
         constexpr void set_features(FeaturesType... values) noexcept {
-            (([this](features feature) {
+            (([this](features const feature) {
                  switch (feature) {
                      using enum features;
                      case sync: set_sync(true); break;
@@ -104,7 +104,7 @@ namespace webpp::alloc {
              ...);
         }
 
-        [[nodiscard]] constexpr bool is(features feature) const noexcept {
+        [[nodiscard]] constexpr bool is(features const feature) const noexcept {
             switch (feature) {
                 using enum features;
                 case sync: return is_sync();
@@ -257,7 +257,7 @@ namespace webpp::alloc {
 
         // only for those that are not a required feature; only include one of conflicting features.
         // the feature that if it's present it's usually better should be present here.
-        [[nodiscard]] static constexpr long long int rank(features feature) noexcept {
+        [[nodiscard]] static constexpr stl::int64_t rank(features const feature) noexcept {
             // NOLINTBEGIN(*-magic-numbers)
             switch (feature) {
                 using enum features;
@@ -278,8 +278,8 @@ namespace webpp::alloc {
             // NOLINTEND(*-magic-numbers)
         }
 
-        [[nodiscard]] constexpr long long int rank(feature_pack asked_features) const noexcept {
-            long long int res = 100; // NOLINT(*-magic-numbers)
+        [[nodiscard]] constexpr stl::int64_t rank(feature_pack const asked_features) const noexcept {
+            stl::int64_t res = 100; // NOLINT(*-magic-numbers)
 
             // Checking required features first:
             if ((asked_features.specified_state() && specified_state()) ||
@@ -352,13 +352,12 @@ namespace webpp::alloc {
         // sorting allocators only will not result in the best solution.
 
         using ranked =
-          typename istl::ranked_types<ranking_condition<AskedFeatures>::template ranker, AllocResPairType...>;
+          istl::ranked_types<ranking_condition<AskedFeatures>::template ranker, AllocResPairType...>;
 
-        using best_descriptors_pair     = typename ranked::best::type;
-        using best_allocator_descriptor = typename best_descriptors_pair::first_type;
-        using best_resource_descriptor  = typename best_descriptors_pair::second_type;
-        static constexpr bool has_resource =
-          !stl::is_void_v<typename descriptors::storage<best_resource_descriptor>>;
+        using best_descriptors_pair        = typename ranked::best::type;
+        using best_allocator_descriptor    = typename best_descriptors_pair::first_type;
+        using best_resource_descriptor     = typename best_descriptors_pair::second_type;
+        static constexpr bool has_resource = !stl::is_void_v<descriptors::storage<best_resource_descriptor>>;
     };
 
     // todo: add "allocator pack" merger mechanism that helps in merging two or more packs of allocators
@@ -530,19 +529,21 @@ namespace webpp::alloc {
         constexpr allocator_pack(allocator_pack&&) noexcept = default;
         constexpr allocator_pack(allocator_pack const&) = default; // some resources are not copy-able; so ...
 
-        constexpr allocator_pack(filtered_resources_type const& res) noexcept : resources{res} {};
-        constexpr allocator_pack(filtered_resources_type&& res) noexcept : resources{stl::move(res)} {};
+        explicit constexpr allocator_pack(filtered_resources_type const& res) noexcept : resources{res} {};
+        explicit constexpr allocator_pack(filtered_resources_type&& res) noexcept
+          : resources{stl::move(res)} {};
 
         template <typename... ResourceType>
             requires((has_resource<stl::decay_t<ResourceType>> && ...))
-        constexpr allocator_pack(ResourceType&&... res) noexcept
+        explicit constexpr allocator_pack(ResourceType&&... res) noexcept
           : resources{istl::make_tuple_no_order<filtered_resources_type, ResourceType...>(
               stl::forward<ResourceType>(res)...)} {}
 
         constexpr allocator_pack() noexcept  = default;
         constexpr ~allocator_pack() noexcept = default;
 
-        constexpr allocator_pack& operator=(allocator_pack const&) noexcept { // NOLINT(cert-oop54-cpp)
+        constexpr allocator_pack& operator=(
+          [[maybe_unused]] allocator_pack const& other) noexcept { // NOLINT(cert-oop54-cpp)
             // do nothing; really
             return *this;
         }
@@ -633,7 +634,7 @@ namespace webpp::alloc {
         [[nodiscard]] constexpr auto get_allocator() noexcept {
             using the_ranked = ranked<FPack>;
             using best_allocator_template =
-              typename descriptors::allocator<typename the_ranked::best_allocator_descriptor>;
+              descriptors::allocator<typename the_ranked::best_allocator_descriptor>;
             // replace allocators inside T with the new best allocator type
             using new_type            = replace_allocators<T, best_allocator_template::template type>;
             using best_allocator_type = typename best_allocator_template::template type<new_type>;
@@ -664,7 +665,7 @@ namespace webpp::alloc {
             static_assert(AllocatorDescriptor<alloc_desc>,
                           "We can't find the allocator descriptor for the specified allocator type.");
 
-            static_assert(allocator_pack::template has_allocator<AllocType>,
+            static_assert(allocator_pack::has_allocator<AllocType>,
                           "We don't have an allocator for this type, and you didn't specify "
                           "the features you'd like your allocator to have so we don't know "
                           "which allocator to choose.");
@@ -681,10 +682,10 @@ namespace webpp::alloc {
             if constexpr (has_allocator<type_allocator>) {
                 return get_allocator<type_allocator>();
             } else {
-                static_assert(false && sizeof(T),
-                              "This allocator pack doesn't support the specified "
-                              "allocator, you have to change the allocator; "
-                              "use make utility.");
+                static_assert_false(T,
+                                    "This allocator pack doesn't support the specified "
+                                    "allocator, you have to change the allocator; "
+                                    "use make utility.");
             }
         }
 
@@ -695,10 +696,10 @@ namespace webpp::alloc {
             if constexpr (has_allocator<type_allocator>) {
                 return get_allocator<FPack, type_allocator>();
             } else {
-                static_assert(false && sizeof(T),
-                              "This allocator pack doesn't support the specified "
-                              "allocator, you have to change the allocator; "
-                              "use make utility.");
+                static_assert_false(T,
+                                    "This allocator pack doesn't support the specified "
+                                    "allocator, you have to change the allocator; "
+                                    "use make utility.");
             }
         }
 
@@ -738,7 +739,7 @@ namespace webpp::alloc {
                 using selected_allocator = AllocType<value_type>;
                 using new_type =
                   replace_allocators<T, stl::allocator_traits<selected_allocator>::template rebind_alloc>;
-                return this->make<new_type, ResDescType, Args...>(stl::forward<Args>(args)...);
+                return this->template make<new_type, ResDescType, Args...>(stl::forward<Args>(args)...);
             }
         }
 
@@ -748,7 +749,7 @@ namespace webpp::alloc {
         [[nodiscard]] constexpr auto make(Args&&... args) {
             using alloc_type = typename T::allocator_type;
             using value_type = typename alloc_type::value_type;
-            auto the_alloc   = this->get_allocator<ResDescType, value_type>();
+            auto the_alloc   = this->template get_allocator<ResDescType, value_type>();
             if constexpr (requires { T::create(the_alloc, stl::forward<Args>(args)...); }) {
                 return T::create(the_alloc, stl::forward<Args>(args)...);
             } else if constexpr (requires { T::create(stl::forward<Args>(args)..., the_alloc); }) {
@@ -765,8 +766,7 @@ namespace webpp::alloc {
                 // as the last argument
                 return T{stl::forward<Args>(args)..., the_alloc};
             } else {
-                static_assert(false && sizeof(T),
-                              "We don't know how to pass the allocator to the specified type.");
+                static_assert_false(T, "We don't know how to pass the allocator to the specified type.");
                 return T{stl::forward<Args>(args)...};
             }
         }
@@ -785,29 +785,29 @@ namespace webpp::alloc {
             static_assert(AllocatorDescriptor<alloc_desc>,
                           "We can't find the allocator descriptor for the specified allocator type.");
 
-            static_assert(allocator_pack::template has_allocator<alloc_type>,
+            static_assert(allocator_pack::has_allocator<alloc_type>,
                           "We don't have an allocator for this type, and you didn't specify "
                           "the features you'd like your allocator to have so we don't know "
                           "which allocator to choose.");
 
             // using the default resource
             using resource_desc = typename alloc_desc::default_resource;
-            return this->make<T, resource_desc, Args...>(stl::forward<Args>(args)...);
+            return this->template make<T, resource_desc, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, feature_pack FPack, typename... Args>
         [[nodiscard]] constexpr auto make(Args&&... args) {
             if constexpr (FPack.is_empty()) {
-                return this->make<T, Args...>(stl::forward<Args>(args)...);
+                return this->template make<T, Args...>(stl::forward<Args>(args)...);
             } else {
                 using best_choice        = ranked<FPack>;
                 using best_resource_desc = typename best_choice::best_resource_descriptor;
                 using best_allocator_desc =
                   alloc::descriptors::allocator<typename best_choice::best_allocator_descriptor>;
-                return this->make<T,
-                                  best_allocator_desc::template type, // best allocator
-                                  best_resource_desc,
-                                  Args...>(stl::forward<Args>(args)...);
+                return this->template make<T,
+                                           best_allocator_desc::template type, // best allocator
+                                           best_resource_desc,
+                                           Args...>(stl::forward<Args>(args)...);
             }
         }
 
@@ -836,12 +836,12 @@ namespace webpp::alloc {
 
         template <typename T, typename... Args>
         [[nodiscard]] constexpr auto local(Args&&... args) {
-            return this->make<T, local_features, Args...>(stl::forward<Args>(args)...);
+            return this->template make<T, local_features, Args...>(stl::forward<Args>(args)...);
         }
 
         template <typename T, typename... Args>
         [[nodiscard]] constexpr auto general(Args&&... args) {
-            return this->make<T, general_features, Args...>(stl::forward<Args>(args)...);
+            return this->template make<T, general_features, Args...>(stl::forward<Args>(args)...);
         }
     };
 

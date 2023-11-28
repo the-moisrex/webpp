@@ -72,7 +72,7 @@ namespace webpp::views {
         }
 
       private:
-        constexpr basic_renderer(type t) noexcept : func{t} {}
+        explicit constexpr basic_renderer(type inp_func) noexcept : func{inp_func} {}
 
         type func;
 
@@ -285,7 +285,7 @@ namespace webpp::views {
             using type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
         };
 
-        enum class tag_type {
+        enum class tag_type : stl::uint8_t {
             text,
             variable,
             unescaped_variable,
@@ -297,7 +297,7 @@ namespace webpp::views {
             set_delimiter
         };
 
-        enum class render_lambda_escape {
+        enum class render_lambda_escape : stl::uint8_t {
             escape,
             unescape,
             optional,
@@ -324,7 +324,7 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        constexpr delimiter_set(ET& et)
+        explicit constexpr delimiter_set(ET& et)
           : begin{default_begin, alloc::general_alloc_for<string_type>(et)},
             end{default_end, alloc::general_alloc_for<string_type>(et)} {}
 
@@ -432,12 +432,12 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        constexpr line_buffer_state(ET& et) : data{alloc::general_alloc_for<string_type>(et)} {}
+        explicit constexpr line_buffer_state(ET& et) : data{alloc::general_alloc_for<string_type>(et)} {}
 
         [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
-            for (auto const ch : data) {
+            for (auto const cur_char : data) {
                 // don't look at newlines
-                if (ch != ' ' && ch != '\t') {
+                if (cur_char != ' ' && cur_char != '\t') {
                     return false;
                 }
             }
@@ -461,7 +461,7 @@ namespace webpp::views {
 
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
-        constexpr context_internal(context<traits_type>& ctx_ref)
+        explicit constexpr context_internal(context<traits_type>& ctx_ref)
           : ctx{&ctx_ref},
             delim_set{ctx_ref},
             line_buffer{ctx_ref} {}
@@ -474,7 +474,7 @@ namespace webpp::views {
         constexpr ~context_internal() = default;
 
         template <EnabledTraits ET>
-        constexpr context_internal(ET& et)
+        explicit constexpr context_internal(ET& et)
           : delim_set{et},
             line_buffer{et} {}
     };
@@ -495,7 +495,7 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        constexpr mstch_tag(ET& et)
+        explicit constexpr mstch_tag(ET& et)
           : name{alloc::general_alloc_for<string_type>(et)},
             delim_set{et} {}
 
@@ -552,7 +552,7 @@ namespace webpp::views {
 
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
-        enum class walk_control {
+        enum class walk_control : stl::uint8_t {
             walk, // "continue" is reserved :/
             stop,
             skip,
@@ -561,11 +561,13 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, component>)
-        constexpr component(ET&& et, string_view_type t = "", string_size_type p = string_view_type::npos)
-          : text(t, alloc::general_alloc_for<string_type>(et)),
+        explicit constexpr component(ET&&             et,
+                                     string_view_type inp_text = "",
+                                     string_size_type inp_pos  = string_view_type::npos)
+          : text(inp_text, alloc::general_alloc_for<string_type>(et)),
             tag{et},
             children{alloc::general_allocator<component>(et)},
-            position(p) {}
+            position(inp_pos) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -597,7 +599,8 @@ namespace webpp::views {
             walk_control control{callback(*this)};
             if (control == walk_control::stop) {
                 return control;
-            } else if (control == walk_control::skip) {
+            }
+            if (control == walk_control::skip) {
                 return walk_control::walk;
             }
             for (auto& child : children) {
@@ -684,8 +687,8 @@ namespace webpp::views {
         }
 
         constexpr string_type render(data_type const& data) {
-            stl::basic_ostringstream<typename string_type::value_type> ss;
-            return render(data, ss).str();
+            stl::basic_ostringstream<typename string_type::value_type> oss;
+            return render(data, oss).str();
         }
 
         template <typename stream_type>
@@ -700,8 +703,8 @@ namespace webpp::views {
         }
 
         constexpr string_type render(context<traits_type>& ctx) {
-            stl::basic_ostringstream<typename string_type::value_type> ss;
-            return render(ctx, ss).str();
+            stl::basic_ostringstream<typename string_type::value_type> oss;
+            return render(ctx, oss).str();
         }
 
         constexpr void render(data_type const& data, render_handler const& handler) {
@@ -736,7 +739,7 @@ namespace webpp::views {
                                stl::back_inserter(data_vec),
                                [this](auto&& item) -> variable_type {
                                    auto const& [key, value] = item;
-                                   return {*this, key, value};
+                                   return variable_type{*this, key, value};
                                });
                 render<data_type>(out, data_vec);
             } else {
@@ -779,14 +782,17 @@ namespace webpp::views {
 
             current_text.reserve(input_size);
 
-            auto const process_current_text = [this, &current_text, &current_text_position, &sections]() {
-                if (!current_text.empty()) {
-                    const component_type comp{*this, current_text, current_text_position};
-                    sections.back()->children.push_back(comp);
-                    current_text.clear();
-                    current_text_position = string_type::npos;
-                }
-            };
+            // NOLINTBEGIN(*-macro-usage, *-avoid-do-while)
+#define process_current_text()                                                     \
+    do {                                                                           \
+        if (!current_text.empty()) {                                               \
+            const component_type comp{*this, current_text, current_text_position}; \
+            sections.back()->children.push_back(comp);                             \
+            current_text.clear();                                                  \
+            current_text_position = string_type::npos;                             \
+        }                                                                          \
+    } while (false)
+            // NOLINTEND(*-macro-usage, *-avoid-do-while)
 
 
             for (string_size_type input_position = 0; input_position != input_size;) {
@@ -817,7 +823,7 @@ namespace webpp::views {
                             current_text_position = input_position;
                         }
                         current_text.append(1, input[input_position]);
-                        input_position++;
+                        ++input_position;
                     }
                 }
 
@@ -842,9 +848,9 @@ namespace webpp::views {
                 string_size_type const tag_location_end{
                   input.find(current_tag_delimiter_end, tag_contents_location)};
                 if (tag_location_end == string_view_type::npos) {
-                    streamstring ss;
-                    ss << "Unclosed tag at " << tag_location_start;
-                    error_msg.assign(ss.str());
+                    streamstring oss;
+                    oss << "Unclosed tag at " << tag_location_start;
+                    error_msg.assign(oss.str());
                     return;
                 }
 
@@ -855,9 +861,9 @@ namespace webpp::views {
                 component_type comp{*this};
                 if (!tag_contents.empty() && tag_contents[0] == '=') {
                     if (!parse_set_delimiter_tag(tag_contents, delim_set)) {
-                        streamstring ss;
-                        ss << "Invalid set delimiter tag at " << tag_location_start;
-                        error_msg.assign(ss.str());
+                        streamstring oss;
+                        oss << "Invalid set delimiter tag at " << tag_location_start;
+                        error_msg.assign(oss.str());
                         return;
                     }
                     current_delimiter_is_brace = delim_set.is_default();
@@ -879,9 +885,9 @@ namespace webpp::views {
                     section_starts.push_back(input_position);
                 } else if (comp.tag.is_section_end()) {
                     if (sections.size() == 1) {
-                        streamstring ss;
-                        ss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
-                        error_msg.assign(ss.str());
+                        streamstring oss;
+                        oss << "Unopened section \"" << comp.tag.name << "\" at " << comp.position;
+                        error_msg.assign(oss.str());
                         return;
                     }
                     sections.back()->tag.section_text = string_type{
@@ -902,9 +908,9 @@ namespace webpp::views {
                 if (comp.children.empty() || !comp.children.back().tag.is_section_end() ||
                     comp.children.back().tag.name != comp.tag.name)
                 {
-                    streamstring ss;
-                    ss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
-                    error_msg.assign(ss.str());
+                    streamstring oss;
+                    oss << "Unclosed section \"" << comp.tag.name << "\" at " << comp.position;
+                    error_msg.assign(oss.str());
                     return walk_control_type::stop;
                 }
                 comp.children.pop_back(); // remove now useless end section component
@@ -915,13 +921,14 @@ namespace webpp::views {
             if (!error_msg.empty()) {
                 return;
             }
+#undef process_current_text
         }
 
         constexpr bool is_set_delimiter_valid(string_view_type delimiter) const {
             // "Custom delimiters may not contain whitespace or the equals sign."
             // todo: optimize-able
-            for (auto const ch : delimiter) {
-                if (ch == '=' || stl::isspace(ch)) {
+            for (auto const cur_char : delimiter) {
+                if (cur_char == '=' || stl::isspace(cur_char)) {
                     return false;
                 }
             }

@@ -33,26 +33,26 @@ struct TheViews : testing::Test {
 TYPED_TEST_SUITE(TheViews, Types);
 
 TYPED_TEST(TheViews, MustacheView) {
-    enable_owner_traits<typename TestFixture::traits_type> et;
+    enable_owner_traits<typename TestFixture::traits_type> etraits;
 
-    typename TestFixture::mustache_view_type v{et};
-    v.scheme("My name is {{name}}");
+    typename TestFixture::mustache_view_type view{etraits};
+    view.scheme("My name is {{name}}");
     typename TestFixture::string_type str;
-    auto                              data = object::make_general<typename TestFixture::data_type>(et);
-    data.emplace_back(et, "name", "moisrex");
-    v.render(str, data);
+    auto                              data = object::make_general<typename TestFixture::data_type>(etraits);
+    data.emplace_back(etraits, "name", "moisrex");
+    view.render(str, data);
     EXPECT_EQ(str, "My name is moisrex");
     data.clear();
     str.clear();
-    data.emplace_back(et, "name", "The Moisrex");
-    v.render(str, data);
+    data.emplace_back(etraits, "name", "The Moisrex");
+    view.render(str, data);
     EXPECT_EQ(str, "My name is The Moisrex");
 }
 
 TYPED_TEST(TheViews, ViewManagerTest) {
-    enable_owner_traits<typename TestFixture::traits_type> et;
+    enable_owner_traits<typename TestFixture::traits_type> etraits;
 
-    view_manager<typename TestFixture::traits_type> man{et};
+    view_manager<typename TestFixture::traits_type> man{etraits};
     man.view_roots.emplace_back("../tests/assets");
     man.view_roots.emplace_back("../tests");
     man.view_roots.emplace_back("./tests");
@@ -63,25 +63,25 @@ TYPED_TEST(TheViews, ViewManagerTest) {
         roots += std::filesystem::absolute(root).lexically_normal().string() + ", ";
     }
 
-    auto data = object::make_general<typename TestFixture::data_type>(et);
-    data.emplace_back(et, "name", "moisrex");
+    auto data = object::make_general<typename TestFixture::data_type>(etraits);
+    data.emplace_back(etraits, "name", "moisrex");
     auto const res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
                                      << roots;
 }
 
 TYPED_TEST(TheViews, MustacheViewPartials) {
-    enable_owner_traits<typename TestFixture::traits_type> et;
+    enable_owner_traits<typename TestFixture::traits_type> etraits;
 
-    view_manager<typename TestFixture::traits_type> man{et};
+    view_manager<typename TestFixture::traits_type> man{etraits};
     man.view_roots.emplace_back("../tests/assets");
     man.view_roots.emplace_back("../tests");
     man.view_roots.emplace_back("./tests");
     man.view_roots.emplace_back("./tests/assets");
 
-    auto data = object::make_general<typename TestFixture::data_type>(et);
-    data.emplace_back(et, "name", "moisrex");
-    data.emplace_back(et,
+    auto data = object::make_general<typename TestFixture::data_type>(etraits);
+    data.emplace_back(etraits, "name", "moisrex");
+    data.emplace_back(etraits,
                       "hello-world",
                       typename TestFixture::partial_type([]() -> typename TestFixture::string_type {
                           return "Hello, {{name}}";
@@ -91,9 +91,9 @@ TYPED_TEST(TheViews, MustacheViewPartials) {
 }
 
 TYPED_TEST(TheViews, FileView) {
-    enable_owner_traits<typename TestFixture::traits_type> et;
+    enable_owner_traits<typename TestFixture::traits_type> etraits;
 
-    view_manager<typename TestFixture::traits_type> man{et};
+    view_manager<typename TestFixture::traits_type> man{etraits};
     man.view_roots.emplace_back("../tests/assets");
     man.view_roots.emplace_back("../tests");
     man.view_roots.emplace_back("./tests");

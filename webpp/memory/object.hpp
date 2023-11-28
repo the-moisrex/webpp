@@ -71,7 +71,8 @@ namespace webpp::object {
       public:
         // let the user know what's missing with a better error message.
         template <typename... Args>
-        constexpr object(alloc_pack_type&, Args&&...) {
+        explicit constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack,
+                                  [[maybe_unused]] Args&&... args) { // NOLINT(*-missing-std-forward)
             static_assert(!has_resource, "This allocator has resources, you need to pass it");
         }
 
@@ -79,7 +80,7 @@ namespace webpp::object {
 
         template <typename... Args>
             requires(support_tag_args<Args...> && !support_tag_alloc_args<Args...>)
-        constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr object([[maybe_unused]] alloc_pack_type& alloc_pack, Args&&... args)
           : super{stl::allocator_arg, stl::forward<Args>(args)...} {}
 
         template <typename... Args>
@@ -94,42 +95,48 @@ namespace webpp::object {
 
         template <typename... Args>
             requires(!has_resource && support_tag_alloc_args<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, void>(),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
             requires(!has_resource && support_alloc_args<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
             requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above
                                                              // version
                      support_args_alloc<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr object(alloc_pack_type& alloc_pack, Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
 
         /// these 3 are for when we don't have a resource but the user of this class passes an empty one
 
         template <typename... Args>
             requires(!has_resource && support_tag_alloc_args<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, [[maybe_unused]] istl::nothing_type, Args&&... args)
+        explicit constexpr object(alloc_pack_type&                    alloc_pack,
+                                  [[maybe_unused]] istl::nothing_type nothing,
+                                  Args&&... args)
           : super{stl::allocator_arg,
                   alloc_pack.template get_allocator<allocator_type, void>(),
                   stl::forward<Args>(args)...} {}
 
         template <typename... Args>
             requires(!has_resource && support_alloc_args<Args...> && !support_tag_alloc_args<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, [[maybe_unused]] istl::nothing_type, Args&&... args)
+        constexpr object(alloc_pack_type&                    alloc_pack,
+                         [[maybe_unused]] istl::nothing_type nothing,
+                         Args&&... args)
           : super{alloc_pack.template get_allocator<allocator_type, void>(), stl::forward<Args>(args)...} {}
 
         template <typename... Args>
             requires(!has_resource && sizeof...(Args) > 0 && // to resolve some ambiguity with the above
                                                              // version
                      support_args_alloc<Args...>)
-        constexpr object(alloc_pack_type& alloc_pack, [[maybe_unused]] istl::nothing_type, Args&&... args)
+        constexpr object(alloc_pack_type&                    alloc_pack,
+                         [[maybe_unused]] istl::nothing_type nothing,
+                         Args&&... args)
           : super{stl::forward<Args>(args)..., alloc_pack.template get_allocator<allocator_type, void>()} {}
 
         /// these 3 are for when you pass a valid resource
@@ -183,7 +190,7 @@ namespace webpp::object {
         using alloc_pack_type = alloc::allocator_pack<AllocDescList>;
 
         template <typename... Args>
-        constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
           : res_holder{.resource_holder_data{}, // the stack buffer
                        .resource_holder_res = resource_type{res_holder::resource_holder_data.data(),
                                                             res_holder::resource_holder_data.size(),
@@ -192,7 +199,7 @@ namespace webpp::object {
 
         template <typename... Args>
             requires(stl::is_void_v<resource_type>)
-        constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
+        explicit constexpr local(alloc_pack_type& alloc_pack, Args&&... args)
           : super{alloc_pack, stl::forward<Args>(args)...} {}
 
         // todo
@@ -230,7 +237,7 @@ namespace webpp::object {
     static constexpr local<T, stack<>, AllocDescType> make_local(
       alloc::allocator_pack<AllocDescType>& alloc_pack,
       Args&&... args) {
-        return {alloc_pack, stl::forward<Args>(args)...};
+        return local<T, stack<>, AllocDescType>{alloc_pack, stl::forward<Args>(args)...};
     }
 
     template <typename T, typename AllocHolderType, typename... Args>
@@ -252,10 +259,10 @@ namespace webpp::object {
             if constexpr (alloc_pack_type::template has_allocator<allocator_type>) {
                 return alloc_pack.template make<T, Args...>(stl::forward<Args>(args)...);
             } else {
-                return {stl::forward<T>(args)...};
+                return T{stl::forward<T>(args)...};
             }
         } else {
-            return {stl::forward<T>(args)...};
+            return T{stl::forward<T>(args)...};
         }
     }
 
