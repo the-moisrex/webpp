@@ -12,11 +12,25 @@ namespace webpp {
 
     template <stl::integral T = stl::size_t>
     struct atomic_counter {
+      private:
         stl::atomic<T> counter{0};
 
-        constexpr atomic_counter(T init) noexcept : counter{init} {}
+      public:
+        explicit constexpr atomic_counter(T init) noexcept : counter{init} {}
 
-        constexpr atomic_counter() noexcept = default;
+        constexpr atomic_counter() noexcept                 = default;
+        constexpr atomic_counter(atomic_counter const&)     = delete;
+        constexpr atomic_counter(atomic_counter&&) noexcept = default;
+        constexpr ~atomic_counter() noexcept                = default;
+
+        constexpr atomic_counter& operator=(atomic_counter&&) noexcept = default;
+
+        constexpr atomic_counter& operator=(atomic_counter const& rhs) {
+            if (&rhs != this) {
+                counter = rhs.counter.load(std::memory_order_relaxed);
+            }
+            return *this;
+        }
 
         constexpr void up() noexcept {
             add(1);
@@ -28,11 +42,6 @@ namespace webpp {
                 return true;
             }
             return false;
-        }
-
-        constexpr atomic_counter& operator=(atomic_counter const& rhs) {
-            counter = rhs.counter.load(std::memory_order_relaxed);
-            return *this;
         }
 
         constexpr T get() const noexcept {
@@ -69,11 +78,11 @@ namespace webpp {
             return *this;
         }
 
-        constexpr bool operator==(stl::integral auto value) const noexcept {
+        [[nodiscard]] constexpr bool operator==(stl::integral auto value) const noexcept {
             return counter == static_cast<T>(value);
         }
 
-        constexpr auto operator<=>(stl::integral auto value) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::integral auto value) const noexcept {
             return counter <=> static_cast<T>(value);
         }
     };
