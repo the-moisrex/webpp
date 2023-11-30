@@ -14,7 +14,7 @@ using namespace webpp::stl;
 TEST(ConcurrencyTest, AtomicCounter) {
     atomic_counter<int> counter;
 
-    thread th{[&] {
+    thread cur_th{[&] {
         for (int i = 0; i != 100; i++) {
             ++counter;
         }
@@ -24,16 +24,16 @@ TEST(ConcurrencyTest, AtomicCounter) {
         --counter;
     }
 
-    th.join();
+    cur_th.join();
 
-    EXPECT_EQ(counter.counter, 50);
+    EXPECT_EQ(counter.counter(), 50);
     EXPECT_LT(counter, 3000);
 }
 
 TEST(ConcurrencyTest, STDAtomicCounter) {
     std::atomic<int> counter;
 
-    thread th{[&] {
+    thread cur_th{[&] {
         for (int i = 0; i != 100; i++) {
             ++counter;
         }
@@ -43,7 +43,7 @@ TEST(ConcurrencyTest, STDAtomicCounter) {
         --counter;
     }
 
-    th.join();
+    cur_th.join();
 
     EXPECT_EQ(counter, 50);
     EXPECT_LT(counter, 3000);
