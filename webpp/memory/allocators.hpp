@@ -18,7 +18,7 @@ namespace webpp {
         struct temp_alloc_holder {
             stl::remove_cvref_t<T> alloc;
 
-            [[nodiscard]] inline auto operator|([[maybe_unused]] auto&& new_alloc) noexcept {
+            [[nodiscard]] constexpr auto operator|([[maybe_unused]] auto&& new_alloc) noexcept {
                 // just ignore the new alloc, our order is from right to left
                 return *this;
             }
@@ -73,7 +73,7 @@ namespace webpp {
      * in a different context as the standard library does.
      */
     template <typename... T>
-    [[nodiscard]] inline auto extract_allocator(T&&... args) noexcept {
+    [[nodiscard]] static constexpr auto extract_allocator(T&&... args) noexcept {
         details::alloc_finder_type<> const finder;
         auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
@@ -129,10 +129,10 @@ namespace webpp {
         using allocator_type_as = rebind_allocator<allocator_type, T>;
 
         template <typename... T>
-        constexpr allocator_holder(T&&... alloc_holders) noexcept
+        explicit constexpr allocator_holder(T&&... alloc_holders) noexcept
           : alloc{extract_allocator_of<AllocType, T...>(stl::forward<T>(alloc_holders)...)} {}
 
-        constexpr allocator_holder(allocator_type const& new_alloc = allocator_type{}) noexcept
+        explicit constexpr allocator_holder(allocator_type const& new_alloc = allocator_type{}) noexcept
           : alloc(new_alloc) {}
 
         template <typename T = allocator_value_type>
@@ -152,6 +152,29 @@ namespace webpp {
       private:
         allocator_type alloc;
     };
+
+    namespace details {
+        template <template <typename> typename AllocType>
+        struct allocator_replacer {
+            template <typename T>
+            struct replacer {
+                static constexpr bool value = false;
+                using type                  = T;
+            };
+
+            template <Allocator T>
+            struct replacer<T> {
+                static constexpr bool value = true;
+                using value_type            = typename T::value_type;
+                using type                  = AllocType<value_type>;
+            };
+        };
+    } // namespace details
+
+    template <typename T, template <typename> typename AllocType>
+    using replace_allocators =
+      istl::recursive_parameter_replacer<T, details::allocator_replacer<AllocType>::template replacer>;
+
 
 } // namespace webpp
 

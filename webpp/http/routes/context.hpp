@@ -90,7 +90,7 @@ namespace webpp::http {
             [[nodiscard]] constexpr HTTPResponse auto error(
               http::status_code_type error_code) const noexcept {
                 using str_t = traits::general_string<traits_type>;
-                str_t msg{alloc::allocator_for<str_t>(*this)};
+                str_t msg{general_alloc_for<str_t>(*this)};
                 fmt::format_to(stl::back_inserter(msg),
                                R"(<!doctype html>
 <html lang="en">

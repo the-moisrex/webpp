@@ -3,6 +3,7 @@
 #ifndef WEBPP_HTTP_BODY_CONCEPTS_HPP
 #define WEBPP_HTTP_BODY_CONCEPTS_HPP
 
+#include "../std/memory.hpp"
 #include "../std/tag_invoke.hpp"
 #include "../std/type_traits.hpp"
 

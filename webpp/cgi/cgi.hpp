@@ -180,7 +180,7 @@ namespace webpp::http {
             try {
                 HTTPResponse auto res = this->app(request_type{*this});
                 res.calculate_default_headers();
-                string_type header_str{alloc::general_alloc_for<string_type>(*this)};
+                string_type header_str{general_alloc_for<string_type>(*this)};
                 res.headers.string_to(header_str);
 
                 // From RFC: https://tools.ietf.org/html/rfc3875

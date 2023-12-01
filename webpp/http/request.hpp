@@ -159,7 +159,7 @@ namespace webpp::http {
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
             return istl::stringify_of<pstring_type>(stl::forward<T>(str),
-                                                    alloc::general_alloc_for<pstring_type>(*this));
+                                                    general_alloc_for<pstring_type>(*this));
         }
 
         [[nodiscard]] pstring_type get_method() const override {
@@ -179,8 +179,8 @@ namespace webpp::http {
             requires(!istl::cvref_as<ReqType, basic_request>)
         constexpr explicit basic_request(ReqType& req)
           : common_request_type{req},
-            requested_uri{req.uri(), alloc::general_alloc_for<string_type>(*this)},
-            requested_method{req.method(), alloc::general_alloc_for<string_type>(*this)},
+            requested_uri{req.uri(), general_alloc_for<string_type>(*this)},
+            requested_method{req.method(), general_alloc_for<string_type>(*this)},
             request_version{req.version()} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
@@ -194,9 +194,9 @@ namespace webpp::http {
           http::version ver        = http::http_2_0)
           : common_request_type{inp_etraits},
             requested_uri{istl::stringify_of<string_type>(stl::forward<UStrT>(url),
-                                                          alloc::general_alloc_for<string_type>(*this))},
+                                                          general_alloc_for<string_type>(*this))},
             requested_method{istl::stringify_of<string_type>(stl::forward<MStrT>(inp_method),
-                                                             alloc::general_alloc_for<string_type>(*this))},
+                                                             general_alloc_for<string_type>(*this))},
             request_version{ver} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)

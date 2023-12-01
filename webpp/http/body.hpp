@@ -542,7 +542,7 @@ namespace webpp::http {
                 }
             } else {
                 this->communicator().template emplace<string_communicator_type>(
-                  alloc::general_alloc_for<string_communicator_type>(*this));
+                  general_alloc_for<string_communicator_type>(*this));
                 auto& text_writer = stl::get<string_communicator_type>(this->communicator());
                 text_writer.append(data, count);
             }
@@ -584,7 +584,7 @@ namespace webpp::http {
                 return count;
             }
             this->communicator().template emplace<cstream_communicator_type>(
-              alloc::general_alloc_for<cstream_communicator_type>(*this));
+              general_alloc_for<cstream_communicator_type>(*this));
             auto& cstream_writer = stl::get<cstream_communicator_type>(this->communicator());
             return cstream_writer.write(data, count);
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -661,7 +661,7 @@ namespace webpp::http {
       private:
         void init_stream() {
             this->communicator().template emplace<stream_communicator_type>(stl::allocate_shared<stream_type>(
-              alloc::general_allocator<stream_type>(*this),
+              general_allocator<stream_type>(*this),
               std::ios_base::in | std::ios_base::out));
         }
     };

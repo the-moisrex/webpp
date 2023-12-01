@@ -3,7 +3,10 @@
 #ifndef WEBPP_TAG_INVOKE_HPP
 #define WEBPP_TAG_INVOKE_HPP
 
-#include "functional.hpp"
+#include "std.hpp"
+
+#include <type_traits>
+#include <utility>
 
 /**
  * `tag_invoke` is a C++ proposal
@@ -29,24 +32,24 @@ namespace webpp::stl {
 
     inline namespace tag_invoke_ns {
         inline constexpr tag_invoke_fn_ns::tag_invoke_fn tag_invoke = {};
-    }
+    } // namespace tag_invoke_ns
 
     template <typename Tag, typename... Args>
     concept tag_invocable =
-      requires(Tag tag, Args... args) { stl::tag_invoke((Tag&&) tag, (Args&&) args...); };
+      requires(Tag tag, Args... args) { tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...); };
 
     template <typename Tag, typename... Args>
     concept nothrow_tag_invocable = tag_invocable<Tag, Args...> && requires(Tag tag, Args... args) {
         {
-            stl::tag_invoke((Tag&&) tag, (Args&&) args...)
+            tag_invoke(stl::forward<Tag>(tag), stl::forward<Args>(args)...)
         } noexcept;
     };
 
     template <typename Tag, typename... Args>
-    using tag_invoke_result = invoke_result<decltype(stl::tag_invoke), Tag, Args...>;
+    using tag_invoke_result = invoke_result<decltype(tag_invoke), Tag, Args...>;
 
     template <typename Tag, typename... Args>
-    using tag_invoke_result_t = invoke_result_t<decltype(stl::tag_invoke), Tag, Args...>;
+    using tag_invoke_result_t = invoke_result_t<decltype(tag_invoke), Tag, Args...>;
 
     template <auto& Tag>
     using tag_t = decay_t<decltype(Tag)>;

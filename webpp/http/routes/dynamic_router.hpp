@@ -65,14 +65,14 @@ namespace webpp::http {
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
           : etraits{},
-            objects{alloc::general_alloc_for<objects_type>(*this)} {}
+            objects{general_alloc_for<objects_type>(*this)} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, basic_dynamic_router>)
         explicit constexpr basic_dynamic_router(ET&& inp_etraits)
           : etraits{stl::forward<ET>(inp_etraits)},
-            objects{alloc::general_alloc_for<objects_type>(*this)} {}
+            objects{general_alloc_for<objects_type>(*this)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -147,7 +147,7 @@ namespace webpp::http {
                     route->to_string(out);
                 } else {
                     // I know, looks not great, but to_string is a virtual call
-                    string_type inout{alloc::general_alloc_for<string_type>(*this)};
+                    string_type inout{general_alloc_for<string_type>(*this)};
                     to_string(inout);
                     out.append(stl::move(inout));
                 }
@@ -157,7 +157,7 @@ namespace webpp::http {
 
         template <istl::String StrT = string_type>
         [[nodiscard]] constexpr StrT to_string() const {
-            StrT out{alloc::general_alloc_for<StrT>(*this)};
+            StrT out{general_alloc_for<StrT>(*this)};
             to_string(out);
             return out;
         }

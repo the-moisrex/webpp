@@ -34,7 +34,7 @@ namespace webpp {
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
             return istl::stringify_of<pstring_type>(stl::forward<T>(str),
-                                                    alloc::general_alloc_for<pstring_type>(*this));
+                                                    general_alloc_for<pstring_type>(*this));
         }
 
         // get the dynamic request object

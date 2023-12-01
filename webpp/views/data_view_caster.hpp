@@ -25,7 +25,7 @@ namespace webpp::view {
         } else if constexpr (stl::integral<to_type>) {
             return lexical::cast<to_type>(stl::forward<From>(from));
         } else if constexpr (istl::String<to_type> || istl::StringView<to_type>) {
-            return lexical::cast<to_type>(stl::forward<From>(from), alloc::general_alloc_for<to_type>(et));
+            return lexical::cast<to_type>(stl::forward<From>(from), general_alloc_for<to_type>(et));
         } else if constexpr (stl::is_convertible_v<from_type, to_type>) {
             return stl::forward<From>(from);
         } else if constexpr (istl::Pair<to_type> && istl::Pair<from_type>) {
@@ -43,7 +43,7 @@ namespace webpp::view {
         } else if constexpr (istl::Collection<to_type>) {
             // standard collections like vector, ...
             using value_type = typename to_type::value_type;
-            to_type to{alloc::general_alloc_for<to_type>(et)};
+            to_type to{general_alloc_for<to_type>(et)};
             if constexpr (istl::ReadOnlyCollection<from_type>) {
                 for (auto const& item : from) {
                     istl::collection::emplace(to, data_view_caster<value_type>(et, item));
@@ -64,7 +64,7 @@ namespace webpp::view {
         if constexpr (istl::Collection<to_type>) {
             // standard collections like vector, ...
             using value_type = typename to_type::value_type;
-            to_type to{alloc::general_alloc_for<to_type>(et)};
+            to_type to{general_alloc_for<to_type>(et)};
             (istl::collection::emplace(to, data_view_caster<value_type>(et, from)), ...);
             return to;
         } else {

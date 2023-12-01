@@ -36,7 +36,7 @@ namespace webpp::http {
      * todo: remove this, extensions are removed
      */
     template <Traits TraitsType, Context ContextType>
-    struct string_context_extension : public ContextType {
+    struct string_context_extension : ContextType {
         using context_type  = ContextType;
         using traits_type   = TraitsType;
         using response_type = typename context_type::response_type;
@@ -54,7 +54,7 @@ namespace webpp::http {
         constexpr string_type format(StrT&& format_str, Args&&... args) const {
             // todo: it's possible to optimize this for constant expressions
             // todo: should this function return a HTTPResponse instead of string?
-            string_type str{alloc::general_alloc_for<string_type>(*this)};
+            string_type str{general_alloc_for<string_type>(*this)};
             fmt::vformat_to(stl::back_inserter(str),
                             istl::to_std_string_view(format_str),
                             fmt::make_format_args(stl::forward<Args>(args)...));
@@ -65,21 +65,20 @@ namespace webpp::http {
         [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
             auto result = object::make_general<string_type>(*this);
 
-            bool const res = file::get_to(filepath, result);
-            if (res) {
+            if (file::get_to(filepath, result)) {
                 // read the file successfully
                 return this->response_body(result);
+            }
+
+            this->logger.error("Response/File",
+                               fmt::format("Cannot load the specified file: {}", filepath.string()));
+            // todo: retry feature
+            if constexpr (context_type::is_debug()) {
+                return this->error(http::status_code::internal_server_error);
             } else {
-                this->logger.error("Response/File",
-                                   fmt::format("Cannot load the specified file: {}", filepath.string()));
-                // todo: retry feature
-                if constexpr (context_type::is_debug()) {
-                    return this->error(http::status_code::internal_server_error);
-                } else {
-                    return this->error(
-                      http::status_code::internal_server_error,
-                      fmt::format("We're not able to load the specified file: {}", filepath.string()));
-                }
+                return this->error(
+                  http::status_code::internal_server_error,
+                  fmt::format("We're not able to load the specified file: {}", filepath.string()));
             }
         }
     };
@@ -166,6 +165,7 @@ namespace webpp::http {
                             deserialize_cstream_body(str, body);
                             break;
                         }
+                        default: stl::unreachable();
                     }
                 } else if constexpr (TextBasedBodyReader<body_type>) {
                     deserialize_text_body(str, body);
@@ -191,6 +191,7 @@ namespace webpp::http {
                                   "You're asking us to get the data of a body type while the body doesn't "
                                   "contain "
                                   "a string so we can't get its data to put it in a string view.");
+                            default: stl::unreachable();
                         }
                     }
                     if constexpr (istl::StringViewifiableOf<type, body_type>) {
@@ -222,10 +223,10 @@ namespace webpp::http {
     constexpr auto tag_invoke(deserialize_body_tag, stl::type_identity<T>, BodyType&& body) {
         using type = T;
         if constexpr (stl::same_as<istl::char_type_of_t<type>, istl::char_type_of_t<decltype(body.data())>>) {
-            return body.data();
+            return stl::forward<BodyType>(body).data();
         } else {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-            return reinterpret_cast<type>(body.data());
+            return reinterpret_cast<type>(stl::forward<BodyType>(body).data());
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
         }
     }
@@ -234,34 +235,31 @@ namespace webpp::http {
     // own body to this function.
     template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr T tag_invoke(deserialize_body_tag, stl::type_identity<T>, BodyType&& body) {
+    constexpr T
+    tag_invoke([[maybe_unused]] deserialize_body_tag tag, stl::type_identity<T>, BodyType&& body) {
         using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>)
         {
-            return istl::stringify_of<type>(body, alloc::general_alloc_for<type>(body));
-        } else if constexpr (
-          istl::String<type> && EnabledTraits<BodyType> && requires {
-              requires alloc::HasAllocatorFor<type,
-                                              traits::allocator_pack_type<typename BodyType::traits_type>>;
-          })
-        {
-            type str{alloc::general_alloc_for<type>(body)};
-            details::deserialize_body_impl(str, body);
+            return istl::stringify_of<type>(stl::forward<BodyType>(body), general_alloc_for<type>(body));
+        } else if constexpr (istl::String<type> && EnabledTraits<BodyType>) {
+            type str{general_alloc_for<type>(body)};
+            details::deserialize_body_impl(str, stl::forward<BodyType>(body));
             return str;
         } else if constexpr (istl::String<type> && stl::is_default_constructible_v<type>) {
             type str;
-            details::deserialize_body_impl(str, body);
+            details::deserialize_body_impl(str, stl::forward<BodyType>(body));
             return str;
         } else if constexpr (istl::StringView<T>) {
             if constexpr (istl::StringViewifiableOf<type, BodyType>) {
-                return istl::string_viewify_of<type>(body);
+                return istl::string_viewify_of<type>(stl::forward<BodyType>(body));
             } else {
                 type str;
-                details::deserialize_body_impl(str, body);
+                details::deserialize_body_impl(str, stl::forward<BodyType>(body));
                 return str;
             }
         } else {
             static_assert_false(T, "We don't know how to get the string out of the body.");
+            return {}; // just to get rid of the warning
         }
     }
 
@@ -282,24 +280,28 @@ namespace webpp::http {
             // CGI supports writing "byte type"s as "char type"s; so we can skip the casting even though that
             // probably won't affect much, but it saves us 2 castings that happen because of this.
             if constexpr (requires(stl::streamsize s) { body.write(str.data(), s); }) {
-                auto*           byte_data = str.data();
-                auto            size      = static_cast<stl::streamsize>(str.size());
-                stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
-                do {
-                    ret_size   = body.write(byte_data, size);
-                    byte_data += ret_size;
-                    size      -= ret_size;
-                } while (size > 0);
+                auto* byte_data = str.data();
+                auto  size      = static_cast<stl::streamsize>(str.size());
+                for (;;) {
+                    stl::streamsize ret_size  = body.write(byte_data, size);
+                    byte_data                += ret_size;
+                    size                     -= ret_size;
+                    if (size <= 0) {
+                        break;
+                    }
+                }
             } else {
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-                auto*           byte_data = reinterpret_cast<byte_type const*>(str.data());
-                auto            size      = static_cast<stl::streamsize>(str.size());
-                stl::streamsize ret_size; // NOLINT(cppcoreguidelines-init-variables)
-                do {
-                    ret_size   = body.write(byte_data, size);
-                    byte_data += ret_size;
-                    size      -= ret_size;
-                } while (size > 0);
+                auto* byte_data = reinterpret_cast<byte_type const*>(str.data());
+                auto  size      = static_cast<stl::streamsize>(str.size());
+                for (;;) {
+                    stl::streamsize ret_size  = body.write(byte_data, size);
+                    byte_data                += ret_size;
+                    size                     -= ret_size;
+                    if (size <= 0) {
+                        break;
+                    }
+                }
                 // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
         }
@@ -331,6 +333,7 @@ namespace webpp::http {
                     details::serialize_stream_body(str_view, body);
                     break;
                 }
+                default: stl::unreachable();
             }
         } else if constexpr (TextBasedBodyWriter<body_type>) {
             details::serialize_text_body(str_view, body);

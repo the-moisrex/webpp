@@ -3,8 +3,6 @@
 #include "../webpp/memory/allocator_pack.hpp"
 #include "../webpp/memory/available_memory.hpp"
 #include "../webpp/memory/object.hpp"
-#include "../webpp/memory/std_allocator_pack.hpp"
-#include "../webpp/memory/std_pmr_allocator_pack.hpp"
 #include "../webpp/std/memory_resource.hpp"
 #include "../webpp/std/string.hpp"
 #include "common/tests_common_pch.hpp"

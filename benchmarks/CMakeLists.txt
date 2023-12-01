@@ -27,7 +27,6 @@ set(FILE_SOURCES
         lexical_cast/lexical_cast_benchmark.cpp
         string_join/string_join_benchmark.cpp
         str_to_integral_types/str_to_integral_types_benchmark.cpp
-        allocator_packs/allocator_packs_benchmark.cpp
         strview_find_method/strview_find_method_benchmark.cpp
         headers_has/headers_has.cpp
         # valves_vs_routes/valves_vs_routes_benchmark.cpp

@@ -37,7 +37,7 @@ namespace webpp::views {
         using path_type        = stl::filesystem::path;
         using view_roots_type  = stl::vector<path_type, traits::general_allocator<traits_type, path_type>>;
         using char_type        = traits::char_type<traits_type>;
-        using ifstream_type    = typename stl::basic_ifstream<char_type, stl::char_traits<char_type>>;
+        using ifstream_type    = stl::basic_ifstream<char_type>;
 
         using mustache_view_type = mustache_view<traits_type>;
         using json_view_type     = json_view<traits_type>;
@@ -74,7 +74,7 @@ namespace webpp::views {
           stl::size_t cache_limit = default_cache_limit) noexcept
           : etraits{et},
             cached_views{et, cache_limit},
-            view_roots{alloc::allocator_for<view_roots_type>(*this)} {}
+            view_roots{general_alloc_for<view_roots_type>(*this)} {}
 
 
       private:
@@ -100,7 +100,7 @@ namespace webpp::views {
 
             // an absolute path should
             if (request.starts_with('/')) {
-                const path_type file{request};
+                path_type const file{request};
                 if (!fs::is_regular_file(file, ec)) {
                     if (ec) {
                         this->logger.error(logging_category,
@@ -142,7 +142,7 @@ namespace webpp::views {
                         continue;
                     }
                     fs::recursive_directory_iterator       it     = fs::begin(iter);
-                    const fs::recursive_directory_iterator it_end = fs::end(iter);
+                    fs::recursive_directory_iterator const it_end = fs::end(iter);
                     for (; it != it_end; it.increment(ec)) {
                         if (ec) {
                             this->logger.error(logging_category,
@@ -150,7 +150,7 @@ namespace webpp::views {
                                                ec);
                             continue;
                         }
-                        const path_type file      = *it;
+                        path_type const file      = *it;
                         auto const      file_stem = file.stem();
                         if (file_stem == request) {
                             goto found_it;
@@ -198,7 +198,8 @@ namespace webpp::views {
                         status = fs::status(file, ec);
                         if (fs::exists(status)) {
                             return file;
-                        } else if (ec && !fs::status_known(status)) {
+                        }
+                        if (ec && !fs::status_known(status)) {
                             this->logger.error(logging_category,
                                                fmt::format("Cannot check file type of {}", dir.string()),
                                                ec);
@@ -287,7 +288,7 @@ namespace webpp::views {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr string_type file(StrT&& file_request) {
-            string_type out{alloc::general_alloc_for<string_type>(*this)};
+            string_type out{general_alloc_for<string_type>(*this)};
             view_to<file_view_type>(out, stl::forward<StrT>(file_request));
             return out;
         }
@@ -305,7 +306,7 @@ namespace webpp::views {
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
         [[nodiscard]] auto view(StrT&& file_request, DT&& data) {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
-            auto       out  = object::make_general<string_type>(this->alloc_pack);
+            auto       out  = object::make_general<string_type>(*this);
             if (!file) {
                 this->logger.error(logging_category,
                                    fmt::format("We can't find the specified view {}.", file_request));
@@ -327,7 +328,9 @@ namespace webpp::views {
                             // view.scheme(file_content);
                             // view.render(out, data);
                         }
+                        break;
                     }
+                    default: break;
                 }
             }
             view_to<file_view_type>(out, file.value());

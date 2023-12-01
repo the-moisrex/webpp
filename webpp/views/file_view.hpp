@@ -32,7 +32,7 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, file_view>)
-        constexpr file_view(ET&& et) : data{alloc::general_alloc_for<string_type>(et)} {}
+        constexpr file_view(ET&& et) : data{general_alloc_for<string_type>(et)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
