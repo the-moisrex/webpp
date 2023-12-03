@@ -4,6 +4,7 @@
 #define WEBPP_ALLOCATORS_HPP
 
 #include "../std/type_traits.hpp"
+#include "./allocator_concepts.hpp"
 
 #include <memory>
 
@@ -76,9 +77,7 @@ namespace webpp {
     [[nodiscard]] static constexpr auto extract_allocator(T&&... args) noexcept {
         details::alloc_finder_type<> const finder;
         auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
-        static_assert(
-          requires { res.alloc; },
-          "We didn't find any allocator in the inputs.");
+        static_assert(requires { res.alloc; }, "We didn't find any allocator in the inputs.");
         return res.alloc;
     }
 
