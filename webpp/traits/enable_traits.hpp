@@ -339,8 +339,8 @@ namespace webpp {
     // }
 
     template <typename T, AllocatorHolder AllocHolder>
-    [[nodiscard]] static constexpr auto const& general_allocator(AllocHolder&& holder) noexcept {
-        return stl::forward<AllocHolder>(holder).template general_allocator<T>();
+    [[nodiscard]] static constexpr decltype(auto) general_allocator(AllocHolder const& holder) noexcept {
+        return holder.template general_allocator<T>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder>
@@ -351,8 +351,8 @@ namespace webpp {
 
     template <typename T, AllocatorHolder AllocHolder>
         requires requires { typename T::value_type; }
-    [[nodiscard]] static constexpr auto const& general_alloc_for(AllocHolder&& holder) noexcept {
-        return stl::forward<AllocHolder>(holder).template general_allocator<typename T::value_type>();
+    [[nodiscard]] static constexpr decltype(auto) general_alloc_for(AllocHolder const& holder) noexcept {
+        return holder.template general_allocator<typename T::value_type>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder, typename... Args>

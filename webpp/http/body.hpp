@@ -78,7 +78,7 @@ namespace webpp::http {
         }
 
         constexpr void seek(stl::streamsize count) noexcept {
-            index = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0ul}, this->size());
+            index = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0UL}, this->size());
         }
     };
 
@@ -97,6 +97,7 @@ namespace webpp::http {
                                     "We don't know how to convert the request body to the specified type."
                                     " Did you import the right header?"
                                     " You can always write your own custom body (de)serializer functions.");
+                return {}; // just to get rid of the warning
             }
         }
 
@@ -149,7 +150,8 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, body_communicator>)
-        explicit constexpr body_communicator(ET&& et) : enable_traits<TraitsType>(et) {}
+        explicit constexpr body_communicator(ET&& etraits)
+          : enable_traits<TraitsType>(stl::forward<ET>(etraits)) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -158,8 +160,8 @@ namespace webpp::http {
                                    string_communicator_type,
                                    stream_communicator_type,
                                    cstream_communicator_type>)
-        explicit constexpr body_communicator(ET&& et, ComT&& inp_communicator)
-          : etraits_type{et},
+        explicit constexpr body_communicator(ET&& etraits, ComT&& inp_communicator)
+          : etraits_type{stl::forward<ET>(etraits)},
             communicator_var{stl::forward<ComT>(inp_communicator)} {}
 
         template <typename ComT>
@@ -177,7 +179,7 @@ namespace webpp::http {
             requires(EnabledTraits<ComT> && requires(ComT com) { com.as_string_communicator(); })
         explicit constexpr body_communicator(ComT&& inp_communicator)
           : etraits_type{inp_communicator},
-            communicator_var{inp_communicator.as_string_communicator()} {}
+            communicator_var{stl::forward<ComT>(inp_communicator).as_string_communicator()} {}
 
         template <TextBasedBodyReader ComT>
             requires(EnabledTraits<ComT>)
@@ -201,18 +203,18 @@ namespace webpp::http {
 
         template <EnabledTraits ET, TextBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{etraits},
+          : etraits_type{stl::forward<ET>(etraits)},
             communicator_var{string_communicator_type{body}} {}
 
         template <EnabledTraits ET, CStreamBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{etraits},
+          : etraits_type{stl::forward<ET>(etraits)},
             communicator_var{
               string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
 
         template <EnabledTraits ET, StreamBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
-          : etraits_type{etraits},
+          : etraits_type{stl::forward<ET>(etraits)},
             communicator_var{
               string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
 
@@ -443,11 +445,11 @@ namespace webpp::http {
         }
 
         [[nodiscard]] constexpr auto_converter<body_reader> as() const noexcept {
-            return {*this};
+            return auto_converter<body_reader>{*this};
         }
 
         [[nodiscard]] constexpr auto_converter<body_reader> as() noexcept {
-            return {*this};
+            return auto_converter<body_reader>{*this};
         }
 
         [[nodiscard]] constexpr string_communicator_type as_string_communicator() const {
@@ -481,14 +483,12 @@ namespace webpp::http {
                     auto const this_size = size();
                     return this_size == body.size() && stl::equal(data(), data() + this_size, body.data());
                 }
-                case stream_based: // we can't check equality of streams without
-                                   // changing them
-                case cstream_based: {
+                case stream_based: // we can't check equality of streams without changing them
+                case cstream_based:
                     return false;  // c-streams don't have a mechanism to read but don't modify, so always
                     // false too
-                }
+                default: stl::unreachable();
             }
-            return false;
         }
 
         [[nodiscard]] constexpr bool operator!=(body_reader const& body) const noexcept {
@@ -612,7 +612,7 @@ namespace webpp::http {
         template <typename T>
         constexpr body_writer& add(T&& obj) {
             if constexpr (SerializableResponseBody<T, body_writer>) {
-                serialize_response_body(stl::forward(obj), *this);
+                serialize_response_body(stl::forward<T>(obj), *this);
             } else if constexpr (SerializableBody<T, body_writer>) {
                 serialize_body(stl::forward<T>(obj), *this);
             } else {

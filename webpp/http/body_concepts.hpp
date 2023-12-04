@@ -242,7 +242,7 @@ namespace webpp::http {
     concept HTTPBody = HTTPRequestBody<T> || HTTPResponseBody<T>;
 
     // The order of this enum matters; the result of std::variant::index might be converted to this enum here
-    enum communicator_type {
+    enum communicator_type : stl::uint_fast8_t {
         nothing    = 0, // contains nothing (monostate)
         text_based = 1,
         cstream_based,

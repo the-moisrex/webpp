@@ -129,18 +129,18 @@ namespace webpp::http {
         using field_type = FieldType;
 
         template <class T>
-        constexpr void hash_combine(stl::size_t& seed, T const& v) noexcept {
+        constexpr void hash_combine(stl::size_t& seed, T const& val) noexcept {
             stl::hash<T> hasher;
-            seed ^= hasher(v) + hash_mask + (seed << u6_units) + (seed >> 2u);
+            seed ^= hasher(val) + hash_mask + (seed << u6_units) + (seed >> 2U);
         }
 
         using result_type = stl::size_t;
 
-        constexpr result_type operator()(field_type const& c) const noexcept {
+        constexpr result_type operator()(field_type const& field) const noexcept {
             // change the "same_as" method too if you ever touch this function
             result_type seed = 0;
-            hash_combine(seed, c.name);
-            hash_combine(seed, c.value);
+            hash_combine(seed, field.name);
+            hash_combine(seed, field.value);
             return seed;
         }
     };
@@ -164,8 +164,6 @@ namespace webpp::http {
         using value_type     = typename field_type::string_type;
         using string_type    = typename field_type::string_type;
         using allocator_type = typename string_type::allocator_type;
-        // using field_allocator_type =
-        //  typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, field_type>;
         // using field_allocator_type = traits::general_allocator<traits_type, field_type>;
 
       private:
@@ -178,17 +176,18 @@ namespace webpp::http {
       public:
         template <EnabledTraits ET>
             requires(!HTTPHeaderFieldsProvider<ET>)
-        constexpr header_fields_provider(ET& et) : fields{general_alloc_for<fields_type>(et)} {}
+        explicit constexpr header_fields_provider(ET& etraits)
+          : fields{general_alloc_for<fields_type>(etraits)} {}
 
         template <HTTPHeaderFieldsProvider T>
             requires(
               !istl::cvref_as<T, header_fields_provider> && requires(T other) { other.get_allocator(); })
-        constexpr header_fields_provider(T const& other)
+        explicit constexpr header_fields_provider(T const& other)
           : fields{other.begin(), other.end(), other.get_allocator()} {}
 
         template <EnabledTraits ET, HTTPHeaderFieldsProvider T>
-        constexpr header_fields_provider(ET&& et, T const& other)
-          : fields{other.begin(), other.end(), general_alloc_for<fields_type>(et)} {}
+        constexpr header_fields_provider([[maybe_unused]] ET const& etraits, T const& other)
+          : fields{other.begin(), other.end(), other.get_allocator()} {}
 
         constexpr header_fields_provider(header_fields_provider const&)                = default;
         constexpr header_fields_provider(header_fields_provider&&) noexcept            = default;

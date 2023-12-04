@@ -18,31 +18,32 @@ namespace webpp::http {
      * This concept is what the underlying Protocols expect to see in a response's header from apps.
      */
     template <typename T>
-    concept HTTPHeaders = requires(stl::remove_cvref_t<T> h) { typename stl::remove_cvref_t<T>::field_type; };
+    concept HTTPHeaders =
+      requires(stl::remove_cvref_t<T> headers) { typename stl::remove_cvref_t<T>::field_type; };
 
     template <typename T>
     concept HTTPRequestHeaders =
-      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h) { h["content-length"]; };
+      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> headers) { headers["content-length"]; };
 
     template <typename T>
     concept HTTPResponseHeaders =
-      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> h, stl::string out) { h.to_string(out); };
+      HTTPHeaders<T> && requires(stl::remove_cvref_t<T> headers, stl::string out) { headers.to_string(out); };
 
     template <typename T>
-    concept HTTPHeaderField = requires(T f) {
+    concept HTTPHeaderField = requires(T field) {
         typename T::string_type;
         typename T::name_type;
         typename T::value_type;
         requires requires(typename T::name_type name) {
             {
-                f.is_name(name)
+                field.is_name(name)
             } -> stl::same_as<bool>;
         };
         {
-            f.name
+            field.name
         } -> istl::StringViewifiable;
         {
-            f.value
+            field.value
         } -> istl::StringViewifiable;
     };
 
@@ -246,16 +247,16 @@ namespace webpp::http {
         constexpr auto_converter(auto_converter const&) noexcept = default;
         constexpr auto_converter(auto_converter&&) noexcept      = default;
 
-        constexpr auto_converter(BodyType& inp_obj) noexcept : obj{&inp_obj} {}
+        explicit constexpr auto_converter(BodyType& inp_obj) noexcept : obj{&inp_obj} {}
 
-        constexpr auto_converter(BodyType const& inp_obj) noexcept : obj{&inp_obj} {}
+        explicit constexpr auto_converter(BodyType const& inp_obj) noexcept : obj{&inp_obj} {}
 
         constexpr auto_converter& operator=(auto_converter const&) noexcept = default;
         constexpr auto_converter& operator=(auto_converter&&) noexcept      = default;
         constexpr ~auto_converter() noexcept                                = default;
 
         template <typename T>
-        explicit(HTTPRequest<T> || HTTPResponse<T>) constexpr operator T() const {
+        [[nodiscard]] explicit(HTTPRequest<T> || HTTPResponse<T>) constexpr operator T() const {
             return obj->template as<stl::remove_cvref_t<T>>();
         }
     };
@@ -266,7 +267,7 @@ namespace webpp::http {
     template <typename T, typename ObjT>
         requires(HTTPBody<ObjT> || HTTPResponse<ObjT> || HTTPRequest<ObjT>)
     [[nodiscard]] static constexpr decltype(auto) as(ObjT&& obj) noexcept(noexcept(obj.template as<T>())) {
-        return obj.template as<T>();
+        return stl::forward<ObjT>(obj).template as<T>();
     }
 
     template <typename T, typename BodyType, typename... NotThese>
