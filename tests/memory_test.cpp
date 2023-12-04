@@ -1,5 +1,7 @@
 // Created by moisrex on 1/27/20.
 
+#include "../webpp/std/memory.hpp"
+
 #include "../webpp/memory/available_memory.hpp"
 #include "../webpp/memory/object.hpp"
 #include "../webpp/std/memory_resource.hpp"
@@ -116,7 +118,7 @@ TEST(MemoryTest, DynamicType) {
         int val = 23;
     };
 
-    complete_type daddy{.baby = stl::allocator<incomplete_type>()};
+    complete_type daddy{.baby = dynamic<incomplete_type>{stl::allocator<incomplete_type>()}};
     EXPECT_EQ(daddy.baby->val, 23);
     daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
     EXPECT_EQ(daddy.val, 23);

@@ -3,6 +3,7 @@
 #ifndef WEBPP_OBJECT_HPP
 #define WEBPP_OBJECT_HPP
 
+#include "../common/meta.hpp"
 #include "../traits/traits.hpp"
 #include "allocator_concepts.hpp"
 #include "stack.hpp"

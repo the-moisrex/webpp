@@ -490,7 +490,7 @@ namespace webpp::istl {
 
         constexpr dynamic(dynamic&& other, allocator_type const& new_alloc) noexcept
           : alloc{new_alloc},
-            ptr{stl::exchange(stl::move(other).ptr, nullptr)} {}
+            ptr{stl::exchange(other.ptr, nullptr)} {}
 
         constexpr dynamic& operator=(value_type const& val) noexcept {
             if (ptr) {
