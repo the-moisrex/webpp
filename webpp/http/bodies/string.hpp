@@ -235,13 +235,16 @@ namespace webpp::http {
     // own body to this function.
     template <typename T, HTTPBody BodyType>
         requires(istl::String<T> || istl::StringView<T>)
-    constexpr T
-    tag_invoke([[maybe_unused]] deserialize_body_tag tag, stl::type_identity<T>, BodyType&& body) {
+    constexpr T tag_invoke([[maybe_unused]] deserialize_body_tag  tag,
+                           [[maybe_unused]] stl::type_identity<T> type_ident,
+                           BodyType&&                             body) {
         using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>)
         {
             return istl::stringify_of<type>(stl::forward<BodyType>(body), general_alloc_for<type>(body));
-        } else if constexpr (istl::String<type> && EnabledTraits<BodyType>) {
+        } else if constexpr (
+          istl::String<type> && EnabledTraits<BodyType> && traits::has_alloc_for<BodyType, type>)
+        {
             type str{general_alloc_for<type>(body)};
             details::deserialize_body_impl(str, stl::forward<BodyType>(body));
             return str;

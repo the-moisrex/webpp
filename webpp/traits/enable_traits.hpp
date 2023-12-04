@@ -50,10 +50,9 @@ namespace webpp {
 
         // NOLINTEND(*-forwarding-reference-overload)
 
-        explicit constexpr enable_owner_traits(logger_ref logger_obj = {}) noexcept : logger{logger_obj} {}
+        explicit constexpr enable_owner_traits(logger_ref logger_obj) noexcept : logger{logger_obj} {}
 
         constexpr enable_owner_traits() noexcept(
-
           stl::is_nothrow_default_constructible_v<logger_type>)            = default;
         constexpr enable_owner_traits(enable_owner_traits const&) noexcept = default;
         constexpr enable_owner_traits(enable_owner_traits&&) noexcept      = default;
@@ -351,9 +350,9 @@ namespace webpp {
     // }
 
     template <typename T, AllocatorHolder AllocHolder>
-        requires requires { typename T::allocator_type; }
+        requires requires { typename T::value_type; }
     [[nodiscard]] static constexpr auto const& general_alloc_for(AllocHolder&& holder) noexcept {
-        return stl::forward<AllocHolder>(holder).template general_allocator<typename T::allocator_type>();
+        return stl::forward<AllocHolder>(holder).template general_allocator<typename T::value_type>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder, typename... Args>

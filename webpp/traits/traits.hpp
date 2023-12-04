@@ -150,6 +150,17 @@ namespace webpp {
         template <Traits TT>
         using logger = typename TT::logger_type;
 
+        template <typename TT, typename T>
+        concept has_alloc_for =
+          (Traits<TT> && requires {
+              typename T::allocator_type;
+              requires stl::convertible_to<general_allocator<TT>, typename T::allocator_type>;
+          }) || (EnabledTraits<TT> && requires {
+              typename T::allocator_type;
+              requires stl::convertible_to<general_allocator<typename TT::traits_type>,
+                                           typename T::allocator_type>;
+          });
+
     } // namespace traits
 
 } // namespace webpp

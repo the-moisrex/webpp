@@ -37,81 +37,27 @@ namespace webpp::http {
     struct http_app_wrapper : public AppType {
         using application_type        = AppType;
         using traits_type             = TraitsType;
-        using logger_type             = traits::logger<traits_type>;
-        using logger_ref              = typename logger_type::logger_ref;
-        using string_view_type        = traits::string_view<traits_type>;
-        using char_type               = istl::char_type_of_t<string_view_type>;
-        using general_char_alloc_type = traits::general_allocator<traits_type, char_type>;
-        using allocator_pack_type     = traits::allocator_pack_type<traits_type>;
 
         struct enable_throws {};
-
-        template <typename AllocType>
-        static constexpr bool app_requires_logger_and_allocator =
-          ConstructibleWithLoggerAndAllocator<application_type, logger_ref, AllocType>;
-
-        template <typename AllocType>
-        static constexpr bool app_requires_allocator =
-          ConstructibleWithAllocator<application_type, AllocType>;
-
-        static constexpr bool app_requires_logger  = ConstructibleWithLogger<application_type, logger_ref>;
-        static constexpr bool app_requires_nothing = stl::is_default_constructible_v<application_type>;
 
         // ctor that passes the enabled_traits object to daddy :)
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
+        explicit constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj, stl::forward<Args>(args)...} {}
 
         template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
+        explicit constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
           : application_type{et_obj, stl::forward<Args>(args)..., et_obj} {}
 
         template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj.logger, et_obj.alloc_pack, stl::forward<Args>(args)...} {}
-
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj.alloc_pack, et_obj.logger, stl::forward<Args>(args)...} {}
-
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj.alloc_pack, stl::forward<Args>(args)...} {}
-
-        template <EnabledTraits ETT, typename... Args>
-            requires(stl::is_constructible_v<application_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, Args..., ETT> &&
-                     !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT& et_obj, Args&&... args)
-          : application_type{et_obj.logger, stl::forward<Args>(args)...} {}
-
-        template <EnabledTraits ETT, typename... Args>
             requires(stl::is_constructible_v<application_type, Args...> &&
-                     !stl::is_constructible_v<application_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, allocator_pack_type, Args...> &&
-                     !stl::is_constructible_v<application_type, allocator_pack_type, logger_ref, Args...> &&
-                     !stl::is_constructible_v<application_type, logger_ref, allocator_pack_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        constexpr http_app_wrapper(ETT&, Args&&... args) : application_type{stl::forward<Args>(args)...} {}
+        explicit constexpr http_app_wrapper([[maybe_unused]] ETT& etraits, Args&&... args)
+          : application_type{stl::forward<Args>(args)...} {}
 
         [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {
             if constexpr (requires {

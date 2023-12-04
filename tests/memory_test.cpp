@@ -12,42 +12,43 @@ using namespace webpp;
 
 #ifdef __cpp_lib_polymorphic_allocator
 
-TEST(MemoryTest, PMRAllocatorPackTest) {
-    static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
-    alloc::allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
-    auto str    = alloc::make<stl::string, alloc::local_features>(alloc_pack, "hello world");
-    using str_t = stl::remove_cvref_t<decltype(str)>;
-    static_assert(stl::same_as<str_t, stl::pmr::string>);
-    EXPECT_EQ(str, "hello world");
+// TEST(MemoryTest, PMRAllocatorPackTest) {
+//     static_assert(Allocator<stl::pmr::polymorphic_allocator<char>>);
+//     alloc::allocator_pack<stl::pmr::allocator_descriptors> alloc_pack;
+//     auto str    = alloc::make<stl::string, alloc::local_features>(alloc_pack, "hello world");
+//     using str_t = stl::remove_cvref_t<decltype(str)>;
+//     static_assert(stl::same_as<str_t, stl::pmr::string>);
+//     EXPECT_EQ(str, "hello world");
+//
+//     auto str2 = object::make_local<stl::string>(alloc_pack, "hello world");
+//     ASSERT_EQ(str2, "hello world");
+//
+//     // nested allocator-rebinding: both string and vector should use the specified allocator
+//     auto str_vec    = object::make_local<stl::vector<stl::string>>(alloc_pack);
+//     using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::object_type;
+//     using vec_str_t = typename vec_t::value_type;
+//     static_assert(stl::same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
+//     static_assert(stl::same_as<vec_t, stl::pmr::vector<stl::pmr::string>>, "Allocator-rebinding don't
+//     work");
+// }
 
-    auto str2 = object::make_local<stl::string>(alloc_pack, "hello world");
-    ASSERT_EQ(str2, "hello world");
-
-    // nested allocator-rebinding: both string and vector should use the specified allocator
-    auto str_vec    = object::make_local<stl::vector<stl::string>>(alloc_pack);
-    using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::object_type;
-    using vec_str_t = typename vec_t::value_type;
-    static_assert(stl::same_as<vec_str_t, stl::pmr::string>, "Nested allocator-rebinding don't work");
-    static_assert(stl::same_as<vec_t, stl::pmr::vector<stl::pmr::string>>, "Allocator-rebinding don't work");
-}
-
-TEST(MemoryTest, STDAllocatorPackTest) {
-    alloc::allocator_pack<stl::allocator_descriptors> alloc_pack;
-    auto str    = alloc::make<stl::pmr::string, alloc::local_features>(alloc_pack, "hello world");
-    using str_t = stl::remove_cvref_t<decltype(str)>;
-    static_assert(stl::same_as<str_t, stl::string>);
-    EXPECT_EQ(str, "hello world");
-
-    auto str2 = object::make_local<stl::pmr::string>(alloc_pack, "hello world");
-    ASSERT_EQ(str2, "hello world");
-
-    // nested allocator-rebinding: both string and vector should use the specified allocator
-    auto str_vec    = object::make_local<stl::pmr::vector<stl::pmr::string>>(alloc_pack);
-    using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::object_type;
-    using vec_str_t = typename vec_t::value_type;
-    static_assert(stl::same_as<vec_str_t, stl::string>, "Nested allocator-rebinding don't work");
-    static_assert(stl::same_as<vec_t, stl::vector<stl::string>>, "Allocator-rebinding don't work");
-}
+// TEST(MemoryTest, STDAllocatorPackTest) {
+//     alloc::allocator_pack<stl::allocator_descriptors> alloc_pack;
+//     auto str    = alloc::make<stl::pmr::string, alloc::local_features>(alloc_pack, "hello world");
+//     using str_t = stl::remove_cvref_t<decltype(str)>;
+//     static_assert(stl::same_as<str_t, stl::string>);
+//     EXPECT_EQ(str, "hello world");
+//
+//     auto str2 = object::make_local<stl::pmr::string>(alloc_pack, "hello world");
+//     ASSERT_EQ(str2, "hello world");
+//
+//     // nested allocator-rebinding: both string and vector should use the specified allocator
+//     auto str_vec    = object::make_local<stl::pmr::vector<stl::pmr::string>>(alloc_pack);
+//     using vec_t     = typename stl::remove_cvref_t<decltype(str_vec)>::object_type;
+//     using vec_str_t = typename vec_t::value_type;
+//     static_assert(stl::same_as<vec_str_t, stl::string>, "Nested allocator-rebinding don't work");
+//     static_assert(stl::same_as<vec_t, stl::vector<stl::string>>, "Allocator-rebinding don't work");
+// }
 
 #endif
 

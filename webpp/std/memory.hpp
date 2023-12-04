@@ -25,13 +25,13 @@ namespace webpp::istl {
     } // namespace detail
 
     template <class T>
-    inline constexpr T* first_scalar(T* p) noexcept {
-        return p;
+    inline constexpr T* first_scalar(T* ptr) noexcept {
+        return ptr;
     }
 
     template <class T, std::size_t N>
-    inline constexpr typename detail::make_scalar<T>::type* first_scalar(T (*p)[N]) noexcept {
-        return first_scalar(&(*p)[0]);
+    inline constexpr typename detail::make_scalar<T>::type* first_scalar(T (*ptr)[N]) noexcept {
+        return first_scalar(&(*ptr)[0]);
     }
 
     namespace details {
@@ -53,7 +53,7 @@ namespace webpp::istl {
 
         template <class T>
         struct sp_alloc_result {
-            typedef T type;
+            using type = T;
         };
 
         template <class T, stl::size_t N>
@@ -63,7 +63,7 @@ namespace webpp::istl {
 
         template <class T>
         struct sp_alloc_value {
-            using type = typename stl::remove_cv_t<stl::remove_extent_t<T>>;
+            using type = stl::remove_cv_t<stl::remove_extent_t<T>>;
         };
 
         template <class T, class P>
@@ -72,9 +72,9 @@ namespace webpp::istl {
 
             constexpr sp_alloc_ptr() noexcept = default;
 
-            constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
+            constexpr sp_alloc_ptr([[maybe_unused]] stl::size_t inp_size, P inp_p) noexcept : p(inp_p) {}
 
-            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+            explicit constexpr sp_alloc_ptr([[maybe_unused]] stl::nullptr_t inp_null) noexcept {};
 
             constexpr T& operator*() const {
                 return *p;
@@ -105,18 +105,17 @@ namespace webpp::istl {
         };
 
         template <class T, class P>
-        class sp_alloc_ptr<T[], P> {
-          public:
-            typedef T element_type;
+        struct sp_alloc_ptr<T[], P> {
+            using element_type = T;
 
             constexpr sp_alloc_ptr() noexcept = default;
 
-            constexpr sp_alloc_ptr(stl::size_t inp_n, P inp_p) noexcept : p(inp_p), n(inp_n) {}
+            constexpr sp_alloc_ptr(stl::size_t const inp_n, P inp_p) noexcept : p(inp_p), n(inp_n) {}
 
-            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+            explicit constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
 
-            constexpr T& operator[](stl::size_t i) const {
-                return p[i];
+            constexpr T& operator[](stl::size_t index) const {
+                return p[index];
             }
 
             constexpr explicit operator bool() const noexcept {
@@ -141,18 +140,17 @@ namespace webpp::istl {
         };
 
         template <class T, stl::size_t N, class P>
-        class sp_alloc_ptr<T[N], P> {
-          public:
-            typedef T element_type;
+        struct sp_alloc_ptr<T[N], P> {
+            using element_type = T;
 
             constexpr sp_alloc_ptr() noexcept = default;
 
-            constexpr sp_alloc_ptr(stl::size_t, P inp_p) noexcept : p(inp_p) {}
+            constexpr sp_alloc_ptr([[maybe_unused]] stl::size_t inp_n, P inp_p) noexcept : p(inp_p) {}
 
-            constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
+            explicit constexpr sp_alloc_ptr(stl::nullptr_t) noexcept {};
 
-            constexpr T& operator[](stl::size_t i) const {
-                return p[i];
+            constexpr T& operator[](stl::size_t index) const {
+                return p[index];
             }
 
             constexpr explicit operator bool() const noexcept {
@@ -207,9 +205,12 @@ namespace webpp::istl {
         }
 
         template <class A>
-        constexpr void
-        sp_alloc_clear(A& a, typename stl::allocator_traits<A>::pointer p, stl::size_t, stl::false_type) {
-            stl::destroy(a, stl::to_address(p));
+        constexpr void sp_alloc_clear(
+          A&                                         alloc,
+          typename stl::allocator_traits<A>::pointer ptr,
+          [[maybe_unused]] stl::size_t               inp_size,
+          [[maybe_unused]] stl::false_type           not_true) {
+            stl::destroy(alloc, stl::to_address(ptr));
         }
 
     } // namespace details
@@ -226,11 +227,11 @@ namespace webpp::istl {
       public:
         using pointer = details::sp_alloc_ptr<T, typename stl::allocator_traits<allocator>::pointer>;
 
-        constexpr explicit alloc_deleter(allocator const& a) noexcept : alloc{a} {}
+        constexpr explicit alloc_deleter(allocator const& inp_alloc) noexcept : alloc{inp_alloc} {}
 
-        constexpr void operator()(pointer p) {
-            details::sp_alloc_clear(alloc, p.ptr(), p.size(), stl::is_array<T>());
-            alloc.deallocate(p.ptr(), p.size());
+        constexpr void operator()(pointer inp_ptr) {
+            details::sp_alloc_clear(alloc, inp_ptr.ptr(), inp_ptr.size(), stl::is_array<T>());
+            alloc.deallocate(inp_ptr.ptr(), inp_ptr.size());
         }
     };
 
@@ -253,8 +254,8 @@ namespace webpp::istl {
             sp_alloc_make& operator=(sp_alloc_make const&) = delete;
             sp_alloc_make& operator=(sp_alloc_make&&)      = delete;
 
-            constexpr sp_alloc_make(A const& a, stl::size_t inp_n)
-              : alloc(a),
+            constexpr sp_alloc_make(A const& inp_alloc, stl::size_t const inp_n)
+              : alloc(inp_alloc),
                 n(inp_n),
                 ptr(stl::allocator_traits<A>::allocate(alloc, n)) {}
 
@@ -273,9 +274,9 @@ namespace webpp::istl {
             }
 
             constexpr type release() noexcept {
-                pointer p = ptr;
+                pointer loc_ptr = ptr;
                 ptr       = pointer();
-                return type(typename deleter::pointer(n, p), deleter(alloc));
+                return type(typename deleter::pointer(n, loc_ptr), deleter(alloc));
             }
 
           private:
@@ -289,50 +290,53 @@ namespace webpp::istl {
     template <class T, class A>
         requires(!stl::is_array_v<T>)
     constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(A const& alloc) {
-        details::sp_alloc_make<T, A> c(alloc, 1);
-        stl::allocator_traits<A>::construct(c.state(), c.get());
-        return c.release();
+        details::sp_alloc_make<T, A> alloc_maker(alloc, 1);
+        stl::allocator_traits<A>::construct(alloc_maker.state(), alloc_maker.get());
+        return alloc_maker.release();
     }
 
     template <class T, class A, class... Args>
         requires(!stl::is_array_v<T>)
     constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(A const& alloc, Args&&... args) {
-        details::sp_alloc_make<T, A> c(alloc, 1);
-        stl::allocator_traits<A>::construct(c.state(), c.get(), stl::forward<Args>(args)...);
-        return c.release();
+        details::sp_alloc_make<T, A> alloc_maker(alloc, 1);
+        stl::allocator_traits<A>::construct(
+          alloc_maker.state(),
+          alloc_maker.get(),
+          stl::forward<Args>(args)...);
+        return alloc_maker.release();
     }
 
     template <class T, class A>
         requires(!stl::is_array_v<T>)
     constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(
-      A const&                               alloc,
-      typename stl::type_identity<T>::type&& value) {
-        details::sp_alloc_make<T, A> c(alloc, 1);
-        stl::allocator_traits<A>::construct(c.state(), c.get(), stl::move(value));
-        return c.release();
+      A const&                  alloc,
+      stl::type_identity_t<T>&& value) {
+        details::sp_alloc_make<T, A> alloc_maker(alloc, 1);
+        stl::allocator_traits<A>::construct(alloc_maker.state(), alloc_maker.get(), stl::move(value));
+        return alloc_maker.release();
     }
 
     template <class T, class A>
         requires(stl::is_unbounded_array_v<T>)
     constexpr stl::unique_ptr<T, alloc_deleter<T, A>> allocate_unique(A const& alloc, stl::size_t size) {
-        details::sp_alloc_make<T, A> c(alloc, size);
+        details::sp_alloc_make<T, A> alloc_maker(alloc, size);
         stl::allocator_traits<A>::construct_n(
-          c.state(),
-          first_scalar(c.get()),
+          alloc_maker.state(),
+          first_scalar(alloc_maker.get()),
           size * details::sp_alloc_size<T>::value);
-        return c.release();
+        return alloc_maker.release();
     }
 
     template <class T, class A>
         requires(stl::is_unbounded_array_v<T>)
     constexpr stl::unique_ptr<typename details::sp_alloc_result<T>::type, alloc_deleter<T, A>>
     allocate_unique(A const& alloc) {
-        details::sp_alloc_make<T, A> c(alloc, stl::extent<T>::value);
+        details::sp_alloc_make<T, A> alloc_maker(alloc, stl::extent_v<T>);
         stl::allocator_traits<A>::construct_n(
-          c.state(),
-          first_scalar(c.get()),
+          alloc_maker.state(),
+          first_scalar(alloc_maker.get()),
           details::sp_alloc_size<T>::value);
-        return c.release();
+        return alloc_maker.release();
     }
 
     // doesn't support copy/move of T with other types of Allocator...
@@ -397,9 +401,9 @@ namespace webpp::istl {
         template <typename InheritedType>
             requires(!stl::is_constructible_v<value_type, InheritedType> &&
                      stl::is_base_of_v<value_type, stl::remove_cvref_t<InheritedType>>)
-        constexpr dynamic(stl::allocator_arg_t,
-                          allocator_type const& input_alloc,
-                          InheritedType&&       derived_obj)
+        constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
+                          allocator_type const&                 input_alloc,
+                          InheritedType&&                       derived_obj)
           : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
 
         template <typename InheritedType>
@@ -410,7 +414,7 @@ namespace webpp::istl {
 
         template <typename... Args>
             requires(stl::is_constructible_v<value_type, Args...>)
-        constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
+        explicit constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
           : alloc{input_alloc},
             ptr{alloc_traits::allocate(alloc, 1)} {
             static_assert(stl::is_constructible_v<T, Args...>,
@@ -420,12 +424,16 @@ namespace webpp::istl {
 
         template <typename... Args>
             requires(stl::is_constructible_v<value_type, Args...>)
-        constexpr dynamic(stl::allocator_arg_t, allocator_type const& input_alloc, Args&&... args)
+        constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
+                          allocator_type const&                 input_alloc,
+                          Args&&... args)
           : dynamic{input_alloc, stl::forward<Args>(args)...} {}
 
         template <typename C, typename... Args>
             requires(stl::is_constructible_v<C, Args...>)
-        constexpr dynamic(stl::type_identity<C>, allocator_type const& input_alloc, Args&&... args)
+        constexpr dynamic([[maybe_unused]] stl::type_identity<C> type_ident,
+                          allocator_type const&                  input_alloc,
+                          Args&&... args)
           : alloc{input_alloc} {
             emplace<C, Args...>(stl::forward<Args>(args)...);
         }
@@ -460,21 +468,21 @@ namespace webpp::istl {
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>> &&
                      stl::is_constructible_v<allocator_type, NewAllocT>)
-        constexpr dynamic(dynamic<DerivedT, NewAllocT> const& other)
+        explicit constexpr dynamic(dynamic<DerivedT, NewAllocT> const& other)
           : dynamic{other, other.get_allocator()} {}
 
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>> &&
                      stl::is_constructible_v<allocator_type, NewAllocT>)
-        constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other) noexcept
+        explicit constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other) noexcept
           : alloc{other.get_allocator()},
-            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
+            ptr{stl::exchange(stl::move(other).get_pointer(), nullptr)} {}
 
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
         constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other, allocator_type const& new_alloc) noexcept
           : alloc{new_alloc},
-            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
+            ptr{stl::exchange(stl::move(other).get_pointer(), nullptr)} {}
 
         constexpr dynamic(dynamic&& other) noexcept
           : alloc{other.alloc},
@@ -482,7 +490,7 @@ namespace webpp::istl {
 
         constexpr dynamic(dynamic&& other, allocator_type const& new_alloc) noexcept
           : alloc{new_alloc},
-            ptr{stl::exchange(other.ptr, nullptr)} {}
+            ptr{stl::exchange(stl::move(other).ptr, nullptr)} {}
 
         constexpr dynamic& operator=(value_type const& val) noexcept {
             if (ptr) {
@@ -511,7 +519,9 @@ namespace webpp::istl {
                 alloc = other.get_allocator();
             }
             stl::swap(ptr,
-                      other.get_pointer()); // so the "other"'s destructor will destroy this object's "ptr"
+                      stl::move(other).get_pointer()); // so the "other"'s destructor will destroy this
+                                                       // object's "ptr"
+            return *this;
         }
 
         template <typename DerivedT, typename NewAllocT>
@@ -521,6 +531,7 @@ namespace webpp::istl {
                 alloc = other.get_allocator();
             }
             emplace<DerivedT>(*other.pointer());
+            return *this;
         }
 
         constexpr dynamic& operator=(dynamic&& other) noexcept {
@@ -586,7 +597,7 @@ namespace webpp::istl {
             return ptr;
         }
 
-        constexpr operator T() const noexcept(stl::is_nothrow_copy_constructible_v<value_type>) {
+        explicit constexpr operator T() const noexcept(stl::is_nothrow_copy_constructible_v<value_type>) {
             return *ptr;
         }
 
@@ -677,7 +688,7 @@ namespace webpp::istl {
         template <typename T>
         using dynamic = dynamic<T, stl::pmr::polymorphic_allocator<stl::byte>>;
 
-    }
+    } // namespace pmr
 
     /**
      * Like std::remove_pointer for std::shared_ptr.

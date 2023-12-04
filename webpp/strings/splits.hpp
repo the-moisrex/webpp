@@ -5,6 +5,7 @@
 #include "../common/meta.hpp"
 #include "../std/algorithm.hpp"
 #include "../std/string.hpp"
+#include "../std/tuple.hpp"
 #include "size.hpp"
 #include "strings_concepts.hpp"
 
@@ -214,17 +215,18 @@ namespace webpp::strings {
             return delim;
         }
 
-        [[nodiscard]] static constexpr auto delimiter_clamp(stl::size_t index) noexcept {
+        [[nodiscard]] static constexpr auto delimiter_clamp(stl::size_t const index) noexcept {
             return stl::clamp(index, 0UL, sizeof...(DelimT) - 1UL);
         }
 
         template <typename FuncT>
-        constexpr void on_delimiter(stl::size_t index, FuncT&& functor) const {
+        constexpr void on_delimiter(stl::size_t const index, FuncT&& functor) const {
             auto const dindex = delimiter_clamp(index);
             istl::for_index(dindex, delims, stl::forward<FuncT>(functor));
         }
 
-        [[nodiscard]] constexpr string_view_type substr(stl::size_t start_pos, stl::size_t finish_pos) {
+        [[nodiscard]] constexpr string_view_type substr(stl::size_t const start_pos,
+                                                        stl::size_t const finish_pos) const noexcept {
             return str.substr(start_pos, finish_pos);
         }
 

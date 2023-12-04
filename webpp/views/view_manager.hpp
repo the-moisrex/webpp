@@ -266,7 +266,7 @@ namespace webpp::views {
          */
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) {
-            auto out = object::make_general<string_type>(this->alloc_pack);
+            auto out = object::make_general<string_type>(*this);
             view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
         }

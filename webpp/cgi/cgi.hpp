@@ -191,7 +191,7 @@ namespace webpp::http {
                 // reason-phrase  = *TEXT
 
                 // todo: give the user the ability to change the status phrase
-                auto status_line = object::make_local<string_type>(this->alloc_pack);
+                auto status_line = object::make_local<string_type>(*this);
                 fmt::format_to(stl::back_inserter(status_line),
                                "Status: {} {}\r\n",
                                res.headers.status_code_integer(),

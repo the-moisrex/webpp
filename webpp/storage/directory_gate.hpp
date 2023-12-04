@@ -158,13 +158,13 @@ namespace webpp {
 
             string_type serialize_key(key_type const& key) {
                 if (gate_opts.hash_keys) {
-                    return lexical::cast<string_type>(stl::hash<key_type>{}(key), this->alloc_pack);
+                    return lexical::cast<string_type>(stl::hash<key_type>{}(key), *this);
                 }
-                return lexical::cast<string_type>(key, this->alloc_pack);
+                return lexical::cast<string_type>(key, *this);
             }
 
             string_type serialize_opts(options_type const& opts) {
-                auto opts_str = lexical::cast<traits::general_string<traits_type>>(opts, this->alloc_pack);
+                auto opts_str = lexical::cast<traits::general_string<traits_type>>(opts, *this);
                 if (gate_opts.encode_options) {
                     base64::encode(opts_str, opts_str);
                 }
@@ -172,9 +172,9 @@ namespace webpp {
             }
 
             string_type serialize_file(bundle_type const& data) {
-                string_type data_str  = object::make_general<string_type>(this->alloc_pack);
-                string_type key_str   = lexical::cast<string_type>(data.key, this->alloc_pack);
-                auto        value_str = lexical::cast<string_type>(data.value, this->alloc_pack);
+                string_type data_str  = object::make_general<string_type>(*this);
+                string_type key_str   = lexical::cast<string_type>(data.key, *this);
+                auto        value_str = lexical::cast<string_type>(data.value, *this);
                 auto        opts_str  = serialize_opts(data.options);
                 if (gate_opts.encrypt_values) {
                     // todo
@@ -217,12 +217,12 @@ namespace webpp {
                 if (!gate_opts.encode_options) {
                     opts = lexical::cast<options_type>(
                       data.substr(end_key_index + 1, end_options_index - (end_key_index + 1)),
-                      this->alloc_pack);
+                      *this);
                 } else {
                     auto opts_str = data.substr(end_key_index + 1, end_options_index - (end_key_index + 1));
-                    string_type decoded_opts = object::make_general<string_type>(this->alloc_pack);
+                    string_type decoded_opts = object::make_general<string_type>(*this);
                     if (base64::decode(opts_str, decoded_opts)) {
-                        opts = lexical::cast<options_type>(decoded_opts, this->alloc_pack);
+                        opts = lexical::cast<options_type>(decoded_opts, *this);
                     } else {
                         this->logger.error(DIR_GATE_CAT, "Error decoding options.");
                         return stl::nullopt;
@@ -235,8 +235,8 @@ namespace webpp {
                 }
 
                 return bundle_type{
-                  .key     = lexical::cast<key_type>(key_str, this->alloc_pack),
-                  .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), this->alloc_pack),
+                  .key     = lexical::cast<key_type>(key_str, *this),
+                  .value   = lexical::cast<value_type>(data.substr(end_options_index + 1), *this),
                   .options = opts};
             }
 
@@ -252,7 +252,7 @@ namespace webpp {
                     return;
                 }
                 auto random_str = object::make_local<string_type>(
-                  this->alloc_pack,
+                  *this,
                   "0123456789"
                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                   "abcdefghijklmnopqrstuvwxyz");
@@ -275,8 +275,7 @@ namespace webpp {
             template <typename NameT>
             string_type hash_name(auto&& et, NameT&& name) const {
                 return lexical::cast<string_type>(
-                  stl::hash<string_type>{}(
-                    lexical::cast<string_type>(stl::forward<NameT>(name), et.alloc_pack)),
+                  stl::hash<string_type>{}(lexical::cast<string_type>(stl::forward<NameT>(name), et)),
                   et);
             }
 

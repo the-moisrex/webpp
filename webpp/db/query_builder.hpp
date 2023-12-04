@@ -4,6 +4,7 @@
 #include "../memory/object.hpp"
 #include "../std/collection.hpp"
 #include "../std/functional.hpp"
+#include "../std/memory.hpp"
 #include "../std/ranges.hpp"
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
@@ -26,7 +27,6 @@ namespace webpp::sql {
     struct name {                                                                                             \
         using database_type        = DBType;                                                                  \
         using traits_type          = typename database_type::traits_type;                                     \
-        using allocator_pack_type  = traits::allocator_pack_type<traits_type>;                                \
         using string_type          = traits::general_string<traits_type>;                                     \
         using string_view_type     = traits::string_view<traits_type>;                                        \
         using local_string_type    = traits::local_string<traits_type>;                                       \
@@ -63,35 +63,36 @@ namespace webpp::sql {
             return m_data;                                                                                    \
         }                                                                                                     \
                                                                                                               \
-        constexpr name(expr_data&& input_data) noexcept : m_data{stl::move(input_data)} {}                    \
+        explicit constexpr name(expr_data&& input_data) noexcept : m_data{stl::move(input_data)} {}           \
         constexpr name(name const&)                = default;                                                 \
         constexpr name(name&&) noexcept            = default;                                                 \
         constexpr ~name()                          = default;                                                 \
         constexpr name& operator=(name const&)     = default;                                                 \
         constexpr name& operator=(name&&) noexcept = default;                                                 \
                                                                                                               \
-        constexpr void operator()(local_string_type& out, [[maybe_unused]] database_ref db) const noexcept;   \
+        constexpr void operator()(local_string_type&            out,                                          \
+                                  [[maybe_unused]] database_ref db_ref) const noexcept;                       \
     };                                                                                                        \
     template <typename DBType>                                                                                \
     constexpr void name<DBType>::operator()(                                                                  \
       typename name<DBType>::local_string_type&            out,                                               \
-      [[maybe_unused]] typename name<DBType>::database_ref db) const noexcept
+      [[maybe_unused]] typename name<DBType>::database_ref db_ref) const noexcept
 
         // literal value
         define_expression(floating_expr, db_float_type val;) {
-            out.append(lexical::cast<local_string_type>(data().val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db_ref));
         }
 
         define_expression(integer_expr, db_integer_type val;) {
-            out.append(lexical::cast<local_string_type>(data().val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db_ref));
         }
 
         define_expression(string_expr, local_string_type val;) {
-            db.quoted_escape(data().val, out);
+            db_ref.quoted_escape(data().val, out);
         }
 
         define_expression(blob_expr, db_blob_type val;) {
-            out.append(lexical::cast<local_string_type>(data().val, db));
+            out.append(lexical::cast<local_string_type>(data().val, db_ref));
         }
 
         define_expression(bool_expr, bool val;) {
@@ -103,9 +104,9 @@ namespace webpp::sql {
         }
 
         define_expression(col_name_expr, local_string_type schema_name{}, table_name{}, column_name;) {
-            db.quoted_escape(data().schema_name, out);
-            db.quoted_escape(data().table_name, out);
-            db.quoted_escape(data().column_name, out);
+            db_ref.quoted_escape(data().schema_name, out);
+            db_ref.quoted_escape(data().table_name, out);
+            db_ref.quoted_escape(data().column_name, out);
         }
 
         // op expr
@@ -149,7 +150,7 @@ namespace webpp::sql {
                     out.append(unary_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data().op)]);
                 }
             }
-            data().expr(out, db);
+            data().expr(out, db_ref);
         }
 
         // expr op expr
@@ -169,20 +170,20 @@ namespace webpp::sql {
         define_expression(expr_op_expr, enum struct operation
                           : stl::uint_fast8_t{add, sub, mul, div, modulo, eq, neq, gt, lt, ge, le} op;
                           expr_func left_expr, right_expr;) {
-            data().left_expr(out, db);
+            data().left_expr(out, db_ref);
             out.append(expr_op_expr_op_strs[static_cast<stl::uint_fast8_t>(data().op)]);
-            data().right_expr(out, db);
+            data().right_expr(out, db_ref);
         }
 
         // ( expr, expr, expr, ... )
         define_expression(expr_list, expr_vec exprs;) {
             out.push_back('(');
-            auto       it     = data().exprs.begin();
+            auto       pos    = data().exprs.begin();
             auto const it_end = data().exprs.end();
             for (;;) {
-                (*it)(out, db);
-                ++it;
-                if (it == it_end) {
+                (*pos)(out, db_ref);
+                ++pos;
+                if (pos == it_end) {
                     break;
                 }
                 out.append(", ");
@@ -190,8 +191,10 @@ namespace webpp::sql {
             out.push_back(')');
         }
 
-        define_expression(expr_is_null, enum struct operation{is_null, not_null} op; expr_func expr;) {
-            data().expr(out, db);
+        define_expression(expr_is_null, enum struct operation
+                          : stl::uint8_t{is_null, not_null} op;
+                          expr_func expr;) {
+            data().expr(out, db_ref);
             out.push_back(' ');
             switch (data().op) {
                 case expr_data::operation::is_null: {
@@ -206,12 +209,14 @@ namespace webpp::sql {
                     out.append(keywords::null);
                     break;
                 }
+                default: stl::unreachable();
             }
         }
 
-        define_expression(expr_is_expr, enum struct operation{is, is_not, is_distinct, is_not_distinct} op;
+        define_expression(expr_is_expr, enum struct operation
+                          : stl::uint8_t{is, is_not, is_distinct, is_not_distinct} op;
                           expr_func left_expr, right_expr;) {
-            data().left_expr(out, db);
+            data().left_expr(out, db_ref);
             out.push_back(' ');
             switch (data().op) {
                 case expr_data::operation::is: {
@@ -242,17 +247,21 @@ namespace webpp::sql {
                     out.append(keywords::from);
                     break;
                 }
+                default: stl::unreachable();
             }
             out.push_back(' ');
-            data().right_expr(out, db);
+            data().right_expr(out, db_ref);
         }
 
         // left_expr not in (expr, expr, expr, ...)
         // left_expr in (select-stmt)
         define_expression(
-          expr_in_expr, enum struct operation{in, not_in} op; expr_func left_expr; expr_vec exprs;
+          expr_in_expr, enum struct operation
+          : stl::uint8_t{in, not_in} op;
+          expr_func    left_expr;
+          expr_vec     exprs;
           subquery_ptr select_stmt;) {
-            data().left_expr(out, db);
+            data().left_expr(out, db_ref);
             out.push_back(' ');
             if (data().op == expr_data::operation::not_in) {
                 out.append(keywords::not_word);
@@ -261,12 +270,12 @@ namespace webpp::sql {
             out.append(keywords::in);
             out.append(" (");
             if (!data().exprs.empty()) {
-                auto       it     = data().exprs.begin();
+                auto       pos    = data().exprs.begin();
                 auto const it_end = data().exprs.end();
                 for (;;) {
-                    (*it)(out, db);
-                    ++it;
-                    if (it == it_end) {
+                    (*pos)(out, db_ref);
+                    ++pos;
+                    if (pos == it_end) {
                         break;
                     }
                     out.append(", ");
@@ -305,7 +314,7 @@ namespace webpp::sql {
                     enclosing().from_cols.clear();
                     (enclosing().from_cols.push_back(istl::stringify_of<string_type>(
                        stl::forward<StrvT>(in_table_name),
-                       alloc::local_alloc_for<local_string_type>(enclosing().db))),
+                       local_alloc_for<local_string_type>(enclosing().db))),
                      ...);
                     return enclosing();
                 }
@@ -391,7 +400,6 @@ namespace webpp::sql {
     struct query_builder : public details::query_builder_subclasses<DBType> {
         using database_type       = DBType;
         using traits_type         = typename database_type::traits_type;
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
         using string_type         = traits::general_string<traits_type>;
         using string_view_type    = traits::string_view<traits_type>;
         using local_string_type   = traits::local_string<traits_type>;
@@ -444,7 +452,7 @@ namespace webpp::sql {
 
 
         // create query is not included in the query builder class
-        enum struct query_method {
+        enum struct query_method : stl::uint_fast8_t {
             select,
             insert,
             insert_default,
@@ -452,7 +460,7 @@ namespace webpp::sql {
             remove,
             none
         };
-        enum struct order_by_type {
+        enum struct order_by_type : stl::uint_fast8_t {
             asc,
             desc
         };
@@ -504,20 +512,20 @@ namespace webpp::sql {
         template <typename T>
             requires(is_stringify<T>)
         constexpr auto stringify(T&& str) const noexcept {
-            return istl::stringify_of<local_string_type>(stl::forward<T>(str),
-                                                         alloc::local_alloc_for<local_string_type>(db));
+            // todo: is it possible to use local allocator?
+            return istl::stringify_of<string_type>(stl::forward<T>(str), general_alloc_for<string_type>(db));
         }
 
 
       public:
-        constexpr query_builder(database_ref input_db) noexcept
+        explicit constexpr query_builder(database_ref input_db) noexcept
           : db{input_db},
-            from_cols{alloc::local_alloc_for<string_vec>(db)},
-            columns{alloc::local_alloc_for<string_vec>(db)},
-            values{alloc::local_alloc_for<expr_vec>(db)},
-            select_stmt{alloc::local_alloc_for<subquery_ptr>(db)},
-            where_clauses{alloc::local_alloc_for<expr_vec>(db)},
-            joins{alloc::local_alloc_for<join_vec>(db)} {}
+            from_cols{local_alloc_for<string_vec>(db)},
+            columns{local_alloc_for<string_vec>(db)},
+            values{local_alloc_for<expr_vec>(db)},
+            select_stmt{local_alloc_for<subquery_ptr>(db)},
+            where_clauses{local_alloc_for<expr_vec>(db)},
+            joins{local_alloc_for<join_vec>(db)} {}
 
         constexpr query_builder(query_builder&&) noexcept      = default;
         constexpr query_builder(query_builder const&) noexcept = default;
@@ -555,6 +563,7 @@ namespace webpp::sql {
          *    WHERE office_code IN (SELECT office_code
          *      FROM  office_revenue
          *      WHERE revenue < 200000);
+         * @param expr1
          * @param select_query
          * @return
          */
@@ -569,8 +578,8 @@ namespace webpp::sql {
             where_clauses.push_back(expressionify(expr_type{
               {.op          = expr_type::expr_data::operation::in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr(alloc::local_allocator<subquery_type>(db), select_query)}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr(local_allocator<subquery_type>(db), select_query)}
             }));
             return *this;
         }
@@ -586,8 +595,8 @@ namespace webpp::sql {
             where_clauses.push_back(expressionify(expr_type{
               {.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db), select_query}}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db), select_query}}
             }));
             return *this;
         }
@@ -611,7 +620,7 @@ namespace webpp::sql {
               {.op   = and_expr::expr_data::operation::and_op,
                .expr = expr_type{{.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
                .select_stmt = expressionify(select_query)}}}
             }));
             return *this;
@@ -636,7 +645,7 @@ namespace webpp::sql {
               {.op   = and_expr::expr_data::operation::or_op,
                .expr = expr_type{{.op          = expr_type::expr_data::operation::in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
                .select_stmt = expressionify(select_query)}}}
             }));
             return *this;
@@ -662,8 +671,8 @@ namespace webpp::sql {
                .expr = expr_type{
                {.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr(alloc::local_allocator<subquery_type>(db), select_query)}}}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr(local_allocator<subquery_type>(db), select_query)}}}
             }));
             return *this;
         }
@@ -679,11 +688,10 @@ namespace webpp::sql {
             using expr_type = details::expr_in_expr<database_type>;
 
             expr_type clause{
-              typename expr_type::expr_data{
-                                            .op          = expr_type::expr_data::operation::in,
+              typename expr_type::expr_data{.op          = expr_type::expr_data::operation::in,
                                             .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-                                            .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-                                            .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}
+                                            .exprs       = expr_vec{local_allocator<expr_func>(db)},
+                                            .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}
             };
             clause.data().exprs.reserve(sizeof...(exprs));
             (clause.data().exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
@@ -700,8 +708,8 @@ namespace webpp::sql {
             expr_type clause{
               {.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}
             };
             clause.data().exprs.reserve(sizeof...(exprs));
             (clause.data().exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
@@ -720,8 +728,8 @@ namespace webpp::sql {
                .expr = expressionify(
                expr_type{{.op          = expr_type::expr_data::operation::in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}})}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
@@ -742,8 +750,8 @@ namespace webpp::sql {
                .expr = expressionify(
                expr_type{{.op          = expr_type::expr_data::operation::in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}})}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
@@ -764,8 +772,8 @@ namespace webpp::sql {
                .expr = expressionify(
                expr_type{{.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}})}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
@@ -786,8 +794,8 @@ namespace webpp::sql {
                .expr = expressionify(
                expr_type{{.op          = expr_type::expr_data::operation::not_in,
                .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{alloc::local_allocator<expr_func>(db)},
-               .select_stmt = subquery_ptr{alloc::local_allocator<subquery_type>(db)}}})}
+               .exprs       = expr_vec{local_allocator<expr_func>(db)},
+               .select_stmt = subquery_ptr{local_allocator<subquery_type>(db)}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
@@ -813,12 +821,11 @@ namespace webpp::sql {
             requires(istl::StringifiableOf<local_string_type, ColT> &&
                      (istl::StringifiableOf<local_string_type, StrT> && ...))
         constexpr query_builder& left_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::left,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = stringify(stl::forward<ColT>(col_string)),
-              .expr      = expressionify(nullptr),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            joins.push_back(join_type{.cat       = join_type::join_cat::left,
+                                      .cond      = join_type::cond_type::using_cond,
+                                      .table     = stringify(stl::forward<ColT>(col_string)),
+                                      .expr      = expressionify(nullptr),
+                                      .col_names = string_vec{local_allocator<local_string_type>(db)}});
             auto& back = joins.back();
             (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
@@ -828,12 +835,11 @@ namespace webpp::sql {
             requires(istl::StringifiableOf<local_string_type, StrT> && ...)
         constexpr query_builder& left_join_using(query_builder const& sub_query,
                                                  StrT&&... col_names) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::left,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = sub_query,
-              .expr      = expressionify(nullptr),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            joins.push_back(join_type{.cat       = join_type::join_cat::left,
+                                      .cond      = join_type::cond_type::using_cond,
+                                      .table     = sub_query,
+                                      .expr      = expressionify(nullptr),
+                                      .col_names = string_vec{local_allocator<local_string_type>(db)}});
             auto& back = joins.back();
             (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
@@ -843,12 +849,11 @@ namespace webpp::sql {
             requires(istl::StringifiableOf<local_string_type, ColT> &&
                      (istl::StringifiableOf<local_string_type, StrT> && ...))
         constexpr query_builder& right_join_using(ColT&& col_string, StrT&&... col_names) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::right,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = stringify(stl::forward<ColT>(col_string)),
-              .expr      = expressionify(nullptr),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            joins.push_back(join_type{.cat       = join_type::join_cat::right,
+                                      .cond      = join_type::cond_type::using_cond,
+                                      .table     = stringify(stl::forward<ColT>(col_string)),
+                                      .expr      = expressionify(nullptr),
+                                      .col_names = string_vec{local_allocator<local_string_type>(db)}});
             auto& back = joins.back();
             (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
@@ -858,12 +863,11 @@ namespace webpp::sql {
             requires(istl::StringifiableOf<local_string_type, StrT> && ...)
         constexpr query_builder& right_join_using(query_builder const& sub_query,
                                                   StrT&&... col_names) noexcept {
-            joins.push_back(join_type{
-              .cat       = join_type::join_cat::right,
-              .cond      = join_type::cond_type::using_cond,
-              .table     = sub_query,
-              .expr      = expressionify(nullptr),
-              .col_names = string_vec{alloc::local_allocator<local_string_type>(db)}});
+            joins.push_back(join_type{.cat       = join_type::join_cat::right,
+                                      .cond      = join_type::cond_type::using_cond,
+                                      .table     = sub_query,
+                                      .expr      = expressionify(nullptr),
+                                      .col_names = string_vec{local_allocator<local_string_type>(db)}});
             auto& back = joins.back();
             (back.col_names.emplace_back(stringify(stl::forward<StrT>(col_names))), ...);
             return *this;
@@ -909,7 +913,7 @@ namespace webpp::sql {
 
         // insert a single row
         template <istl::ReadOnlyCollection VecOfColVal = stl::initializer_list<col_expr_pair>>
-        constexpr query_builder& insert(VecOfColVal&& input_cols_vals) noexcept {
+        constexpr query_builder& insert(VecOfColVal const& input_cols_vals) noexcept {
             method = query_method::insert;
             // Steps:
             //   1. merge columns (we might have a new column in the cols_vals that we didn't know
@@ -925,13 +929,13 @@ namespace webpp::sql {
             // 1. finding if we have a new column:
             // 3. sorting cols_vals based on the columns
             auto col_it = columns.begin();
-            auto it     = cols_vals.begin();
+            auto pos    = cols_vals.begin();
             for (;;) {
-                auto const& [col, val] = *it;
+                auto const& [col, val] = *pos;
                 if (col != *col_it) {
-                    auto next_it = stl::next(it);
+                    auto next_it = stl::next(pos);
                     if (next_it != cols_vals.end()) {
-                        stl::swap(it, next_it);
+                        stl::swap(pos, next_it);
                     } else {
                         // found a new column
                         using diff_type     = typename string_vec::iterator::difference_type;
@@ -952,8 +956,8 @@ namespace webpp::sql {
                     // now "it" and "col_it" are in the right order
                     values.push_back(expressionify(val));
                     ++col_it;
-                    ++it;
-                    if (it == cols_vals.end()) {
+                    ++pos;
+                    if (pos == cols_vals.end()) {
                         break;
                     }
                 }
@@ -1038,7 +1042,7 @@ namespace webpp::sql {
 
         template <typename StrT = string_type>
         constexpr StrT to_string() const noexcept {
-            auto out = object::make<StrT>(db);
+            auto out = object::make_general<StrT>(db);
             to_string<StrT>(out);
             return out;
         }
@@ -1047,54 +1051,61 @@ namespace webpp::sql {
         template <typename V>
         constexpr expr_func expressionify(V&& val) const noexcept {
             using vtype = stl::remove_cvref_t<V>;
+            using details::blob_expr;
+            using details::bool_expr;
+            using details::floating_expr;
+            using details::integer_expr;
+            using details::null_expr;
+            using details::string_expr;
             using stl::forward;
             using stl::same_as;
-            using namespace details;
             if constexpr (same_as<vtype, expr_variant>) {
-                if (auto* f = stl::get_if<db_float_type>(&val)) {
-                    return expressionify(*f);
-                } else if (auto* i = stl::get_if<db_integer_type>(&val)) {
-                    return expressionify(*i);
-                } else if (auto* s = stl::get_if<db_string_type>(&val)) {
-                    return expressionify(*s);
-                } else if (auto* b = stl::get_if<db_blob_type>(&val)) {
-                    return expressionify(*b);
-                } else {
-                    return expressionify(nullptr);
+                if (auto* float_ptr = stl::get_if<db_float_type>(&val)) {
+                    return expressionify(*float_ptr);
                 }
+                if (auto* int_ptr = stl::get_if<db_integer_type>(&val)) {
+                    return expressionify(*int_ptr);
+                }
+                if (auto* str_ptr = stl::get_if<db_string_type>(&val)) {
+                    return expressionify(*str_ptr);
+                }
+                if (auto* blob_ptr = stl::get_if<db_blob_type>(&val)) {
+                    return expressionify(*blob_ptr);
+                }
+                return expressionify(nullptr);
             } else if constexpr (same_as<vtype, expr_func>) {
                 return forward<V>(val);
             } else if constexpr (is_expression_v<vtype>) {
-                return {forward<V>(val), alloc::local_alloc_for<expr_func>(db)};
+                return {forward<V>(val), local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, db_float_type>) {
                 using expr_type = floating_expr<database_type>;
-                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{{.val = forward<V>(val)}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, db_integer_type>) {
                 using expr_type = integer_expr<database_type>;
-                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{{.val = forward<V>(val)}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, local_string_type>) {
                 using expr_type = string_expr<database_type>;
-                return {expr_type{{.val = forward<V>(val)}}, alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{{.val = forward<V>(val)}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, bool>) {
                 using expr_type = bool_expr<database_type>;
-                return {expr_type{{.val = val}}, alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{{.val = val}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (same_as<vtype, stl::nullptr_t>) {
                 using expr_type = null_expr<database_type>;
-                return {expr_type{typename expr_type::expr_data{}}, alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{typename expr_type::expr_data{}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (stl::floating_point<vtype>) {
                 using expr_type = floating_expr<database_type>;
-                return {expr_type{{.val = static_cast<db_float_type>(val)}},
-                        alloc::local_alloc_for<expr_func>(db)};
+                return {expr_type{{.val = static_cast<db_float_type>(val)}}, local_alloc_for<expr_func>(db)};
             } else if constexpr (stl::integral<vtype>) {
                 using expr_type = integer_expr<database_type>;
                 return {expr_type{{.val = static_cast<db_integer_type>(val)}},
-                        alloc::local_alloc_for<expr_func>(db)};
+                        local_alloc_for<expr_func>(db)};
             } else if constexpr (istl::StringifiableOf<local_string_type, V>) {
                 using expr_type = string_expr<database_type>;
                 return expr_func(expr_type{{.val = stringify(forward<V>(val))}},
-                                 alloc::local_alloc_for<expr_func>(db));
+                                 local_alloc_for<expr_func>(db));
             } else {
                 static_assert_false(V, "The specified type is not a valid SQL expression.");
+                return {}; // just to get rid of the warning
             }
         }
 
@@ -1110,20 +1121,20 @@ namespace webpp::sql {
         }
 
         constexpr void serialize_from(auto& out) const noexcept {
-            auto       it       = from_cols.begin();
+            auto       iter     = from_cols.begin();
             auto const from_end = from_cols.end();
-            if (it == from_end) {
+            if (iter == from_end) {
                 db.logger.error(LOG_CAT,
                                 "You requested a sql query but you didn't provide which table we should put "
                                 "into the sql query; did you miss the table name?");
                 return;
             }
-            db.quoted_escape(*it, out);
-            ++it;
-            while (it != from_end) {
+            db.quoted_escape(*iter, out);
+            ++iter;
+            while (iter != from_end) {
                 out.append(", ");
-                db.quoted_escape(*it, out);
-                ++it;
+                db.quoted_escape(*iter, out);
+                ++iter;
             }
         }
 
@@ -1171,16 +1182,16 @@ namespace webpp::sql {
             out.push_back(' ');
             out.append(keywords::set);
             out.push_back(' ');
-            auto       it     = values.begin();
+            auto       iter   = values.begin();
             auto const it_end = values.end();
             auto       cit    = columns.begin();
             for (;;) {
                 db.quoted_escape(*cit, out);
                 out.append(" = ");
-                serialize_expression(out, *it);
-                ++it;
+                serialize_expression(out, *iter);
+                ++iter;
                 ++cit;
-                if (it == it_end) {
+                if (iter == it_end) {
                     break;
                 }
                 out.append(", ");
@@ -1200,11 +1211,11 @@ namespace webpp::sql {
             if (!columns.empty()) {
                 out.push_back('(');
                 auto const it_end = columns.end();
-                auto       it     = columns.begin();
+                auto       pos    = columns.begin();
                 for (;;) {
-                    db.quoted_escape(*it, out);
-                    ++it;
-                    if (it == it_end) {
+                    db.quoted_escape(*pos, out);
+                    ++pos;
+                    if (pos == it_end) {
                         break;
                     }
                     out.append(", ");
@@ -1220,7 +1231,7 @@ namespace webpp::sql {
             } else {
                 // join
                 // example: (1, 2, 3), (1, 2, 3), ...
-                auto       it     = values.begin();
+                auto       pos    = values.begin();
                 auto const it_end = values.end();
 
                 using diff_type     = typename expr_vec::iterator::difference_type;
@@ -1231,30 +1242,30 @@ namespace webpp::sql {
 
                 // manual join (code duplication)
                 {
-                    auto const it_step_first = it + col_size - 1;
-                    for (; it != it_step_first; ++it) {
-                        serialize_expression(out, *it);
+                    auto const it_step_first = pos + col_size - 1;
+                    for (; pos != it_step_first; ++pos) {
+                        serialize_expression(out, *pos);
                         out.append(", ");
                     }
-                    serialize_expression(out, *it);
-                    ++it;
+                    serialize_expression(out, *pos);
+                    ++pos;
                 }
 
                 out.push_back(')');
 
                 // values and columns should be aligned so don't worry
-                for (; it != it_end;) {
+                for (; pos != it_end;) {
                     out.append(", (");
 
                     // manual join
                     {
-                        auto const it_step = it + col_size - 1;
-                        for (; it != it_step; ++it) {
-                            serialize_expression(out, *it);
+                        auto const it_step = pos + col_size - 1;
+                        for (; pos != it_step; ++pos) {
+                            serialize_expression(out, *pos);
                             out.append(", ");
                         }
-                        serialize_expression(out, *it);
-                        ++it;
+                        serialize_expression(out, *pos);
+                        ++pos;
                     }
 
                     out.push_back(')');
@@ -1279,7 +1290,6 @@ namespace webpp::sql {
 
 
 
-      private:
         // template <SQLKeywords words>
         // static constexpr stl::array<string_view_type, 4> join_strings{{
         //   " "+ keywords::left + " " + keywords::join + " ",  // 1
@@ -1294,7 +1304,6 @@ namespace webpp::sql {
         //   string_view_type{" "} + keywords::on_word + " "      // 1
         // }};
 
-      public:
         template <typename StrT>
         constexpr void serialize_joins(StrT& out) const noexcept {
             // todo: this is branch-less-able :)
@@ -1331,6 +1340,7 @@ namespace webpp::sql {
                         out.append(keywords::join);
                         break;
                     }
+                    default: stl::unreachable();
                 }
                 out.push_back(' ');
                 if (auto* table_name = stl::get_if<local_string_type>(&join.table)) {
@@ -1356,12 +1366,12 @@ namespace webpp::sql {
                         out.append(keywords::using_word);
                         out.append(" (");
                         // don't need to check if col_names are empty or not, they should be non-empty
-                        auto       it     = join.col_names.begin();
+                        auto       pos    = join.col_names.begin();
                         auto const it_end = join.col_names.end();
                         for (;;) {
-                            db.quoted_escape(*it, out);
-                            ++it;
-                            if (it == it_end) {
+                            db.quoted_escape(*pos, out);
+                            ++pos;
+                            if (pos == it_end) {
                                 break;
                             }
                             out.append(", ");
@@ -1369,6 +1379,7 @@ namespace webpp::sql {
                         out.push_back(')');
                         break;
                     }
+                    default: stl::unreachable();
                 }
             }
         }

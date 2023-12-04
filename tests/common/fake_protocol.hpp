@@ -270,12 +270,9 @@ namespace webpp {
     template <Application App>
     struct fake_proto : public common_http_protocol<default_dynamic_traits, App> {
         using traits_type         = default_dynamic_traits;
-        using super               = common_http_protocol<traits_type, App>;
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
+        using super                     = common_http_protocol<traits_type, App>;
         using char_type           = traits::char_type<traits_type>;
-        using fields_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
-        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
+        using fields_allocator_type     = traits::general_allocator<traits_type, char_type>;
         using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;
         using request_headers_type      = request_headers<fields_provider>;
@@ -290,11 +287,11 @@ namespace webpp {
         request_type req;
 
         template <typename... Args>
-        fake_proto(Args&&... args) noexcept
+        explicit fake_proto(Args&&... args) noexcept
           : super{stl::forward<Args>(args)...},
             req{*this} {}
 
-        constexpr bool is_ssl_available() noexcept {
+        [[nodiscard]] constexpr bool is_ssl_available() const noexcept {
             return false;
         }
 

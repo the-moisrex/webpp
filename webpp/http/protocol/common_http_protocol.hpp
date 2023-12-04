@@ -19,12 +19,11 @@ namespace webpp::http {
         using string_type         = traits::general_string<traits_type>;
         using etraits             = enable_owner_traits<traits_type>;
         using app_wrapper_type    = http_app_wrapper<traits_type, application_type>;
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
 
         app_wrapper_type app; // NOLINT(misc-non-private-member-variables-in-classes)
 
         template <typename... Args>
-        constexpr common_http_protocol(Args&&... args)
+        explicit constexpr common_http_protocol(Args&&... args)
           : app{this->get_traits(), stl::forward<Args>(args)...} {}
     };
 
