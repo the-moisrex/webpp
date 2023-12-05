@@ -7,8 +7,8 @@
 #    include <memory_resource>
 #    define webpp_has_memory_resource
 #elif __has_include(<boost/container/pmr/memory_resource.hpp>)
+#    include <boost/container/pmr/buffer_resource.hpp>
 #    include <boost/container/pmr/memory_resource.hpp>
-#    include <boost/container/pmr/monotonic_buffer_resource.hpp>
 #    include <boost/container/pmr/polymorphic_allocator.hpp>
 #    include <boost/container/pmr/synchronized_pool_resource.hpp>
 #    include <boost/container/pmr/unsynchronized_pool_resource.hpp>

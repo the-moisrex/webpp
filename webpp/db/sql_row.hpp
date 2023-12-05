@@ -34,7 +34,7 @@ namespace webpp::sql {
         }
 
         [[nodiscard]] inline constexpr cell_type operator[](size_type index) const noexcept {
-            return {*stmt, index};
+            return cell_type{*stmt, index};
         }
 
         [[nodiscard]] inline constexpr cell_iterator_type begin() noexcept {

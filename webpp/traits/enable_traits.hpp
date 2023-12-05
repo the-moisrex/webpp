@@ -338,9 +338,17 @@ namespace webpp {
     //     return stl::forward<AllocHolder>(holder).template local_allocator<T>();
     // }
 
+    /// get a general allocator from the specified allocator holder
     template <typename T, AllocatorHolder AllocHolder>
     [[nodiscard]] static constexpr decltype(auto) general_allocator(AllocHolder const& holder) noexcept {
         return holder.template general_allocator<T>();
+    }
+
+    /// if the specified type is an Allocator itself, we extract the value type from the allocator and return
+    /// the correspondning allocator
+    template <Allocator T, AllocatorHolder AllocHolder>
+    [[nodiscard]] static constexpr decltype(auto) general_allocator(AllocHolder const& holder) noexcept {
+        return holder.template general_allocator<typename stl::allocator_traits<T>::value_type>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder>

@@ -139,7 +139,8 @@ namespace webpp {
         using general_string_allocator = general_allocator<TT, char_type<TT>>;
 
         template <Traits TT, Allocator AllocType>
-        using string = typename TT::template string<AllocType>;
+        using string = typename TT::template string<
+          typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type<TT>>>;
 
         template <Traits TT>
         using general_string = string<TT, general_string_allocator<TT>>;

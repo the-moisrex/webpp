@@ -16,7 +16,7 @@ namespace webpp::sql {
      * A wrapper for the driver's statement type. This is what the user uses directly.
      */
     template <Traits TraitsType, SQLStatement StmtType>
-    struct sql_statement : public StmtType, public enable_traits<TraitsType> {
+    struct sql_statement : StmtType, enable_traits<TraitsType> {
         using traits_type       = TraitsType;
         using etraits           = enable_traits<TraitsType>;
         using driver_type       = StmtType;
@@ -56,14 +56,14 @@ namespace webpp::sql {
         };
 
         template <EnabledTraits ET>
-        sql_statement(ET&& et) noexcept
+        explicit sql_statement(ET&& inp_et) noexcept
           : driver_type{},
-            etraits{stl::forward<ET>(et)} {}
+            etraits{stl::forward<ET>(inp_et)} {}
 
         template <EnabledTraits ET>
-        sql_statement(driver_type&& driver, ET&& et) noexcept
+        sql_statement(driver_type&& driver, ET&& inp_et) noexcept
           : driver_type{stl::move(driver)},
-            etraits{stl::forward<ET>(et)} {}
+            etraits{stl::forward<ET>(inp_et)} {}
 
         sql_statement(sql_statement&&) noexcept = default;
         sql_statement(sql_statement const&)     = delete;
@@ -73,7 +73,7 @@ namespace webpp::sql {
         sql_statement& operator=(sql_statement const&)     = delete;
 
         sql_statement& operator=(driver_type&& new_driver) noexcept {
-            driver() = new_driver;
+            driver() = stl::move(new_driver);
             return *this;
         }
 
@@ -119,11 +119,11 @@ namespace webpp::sql {
         }
 
         inline cell_type column(size_type index) noexcept {
-            return {*this, index};
+            return cell_type{*this, index};
         }
 
         [[nodiscard]] inline cell_type operator[](size_type index) noexcept {
-            return {*this, index};
+            return cell_type{*this, index};
         }
 
         template <typename T>

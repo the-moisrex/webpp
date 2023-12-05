@@ -275,7 +275,7 @@ namespace webpp::istl {
 
             constexpr type release() noexcept {
                 pointer loc_ptr = ptr;
-                ptr       = pointer();
+                ptr             = pointer();
                 return type(typename deleter::pointer(n, loc_ptr), deleter(alloc));
             }
 
@@ -345,9 +345,8 @@ namespace webpp::istl {
         // attention: value_type might be an incomplete type at the type of constructing dynamic because it's
         // one of this classes' use cases. so you're not to change this class in a way that'll throw an error
         // for an incomplete type.
-        using value_type   = stl::remove_pointer_t<stl::remove_reference_t<T>>;
-        using alloc_traits = typename stl::allocator_traits<
-          stl::remove_reference_t<Allocator>>::template rebind_traits<value_type>;
+        using value_type     = stl::remove_pointer_t<stl::remove_reference_t<T>>;
+        using alloc_traits   = typename stl::allocator_traits<Allocator>::template rebind_traits<value_type>;
         using allocator_type = typename alloc_traits::allocator_type;
         using size_type      = typename alloc_traits::size_type;
         using pointer        = typename alloc_traits::pointer;
@@ -488,7 +487,8 @@ namespace webpp::istl {
           : alloc{other.alloc},
             ptr{stl::exchange(other.ptr, nullptr)} {}
 
-        constexpr dynamic(dynamic&& other, allocator_type const& new_alloc) noexcept
+        constexpr dynamic(dynamic&&             other, // NOLINT(*-rvalue-reference-param-not-moved)
+                          allocator_type const& new_alloc) noexcept
           : alloc{new_alloc},
             ptr{stl::exchange(other.ptr, nullptr)} {}
 
@@ -705,12 +705,12 @@ namespace webpp::istl {
 
     template <typename T>
     struct remove_shared_ptr<std::shared_ptr<T const>> {
-        using type = const T;
+        using type = T const;
     };
 
     template <typename T>
     struct remove_shared_ptr<T const> {
-        using type = const typename remove_shared_ptr<T>::type;
+        using type = typename remove_shared_ptr<T>::type const;
     };
 
     template <typename T>

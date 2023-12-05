@@ -10,35 +10,24 @@
 
 namespace webpp::object {
 
-    namespace details {
-
-        template <typename ResType, typename Data>
-        struct resource_holder {
-            Data    resource_holder_data;
-            ResType resource_holder_res;
-        };
-
-        template <typename Data>
-        struct resource_holder<void, Data> {};
-    } // namespace details
-
-    template <typename T, Allocator AllocT, typename... Args>
-    [[nodiscard]] static constexpr T make(AllocT const& alloc, Args&&... args) {
-        if constexpr (stl::constructible_from<T, stl::allocator_arg_t, AllocT, Args...>) {
-            return T{stl::allocator_arg, alloc, stl::forward<Args>(args)...};
-        } else if constexpr (stl::constructible_from<T, stl::allocator_arg_t, AllocT, Args...>) {
-            return T{stl::allocator_arg, alloc, stl::forward<Args>(args)...};
-        } else if constexpr (stl::constructible_from<T, Args..., AllocT>) {
-            return T{stl::forward<Args>(args)..., alloc};
-        } else if constexpr (stl::constructible_from<T, AllocT, Args...>) {
-            return T{alloc, stl::forward<Args>(args)...};
-        } else if constexpr (stl::constructible_from<T, Args...>) {
-            return T{stl::forward<Args>(args)...};
-        } else {
-            static_assert_false(T, "We don't know how to construct the specified type.");
-            return T{}; // to get rid of the warning
-        }
-    }
+    // use stl::make_obj_using_allocator
+    // template <typename T, Allocator AllocT, typename... Args>
+    // [[nodiscard]] static constexpr T make(AllocT const& alloc, Args&&... args) {
+    //     if constexpr (stl::constructible_from<T, stl::allocator_arg_t, AllocT, Args...>) {
+    //         return T{stl::allocator_arg, alloc, stl::forward<Args>(args)...};
+    //     } else if constexpr (stl::constructible_from<T, stl::allocator_arg_t, AllocT, Args...>) {
+    //         return T{stl::allocator_arg, alloc, stl::forward<Args>(args)...};
+    //     } else if constexpr (stl::constructible_from<T, Args..., AllocT>) {
+    //         return T{stl::forward<Args>(args)..., alloc};
+    //     } else if constexpr (stl::constructible_from<T, AllocT, Args...>) {
+    //         return T{alloc, stl::forward<Args>(args)...};
+    //     } else if constexpr (stl::constructible_from<T, Args...>) {
+    //         return T{stl::forward<Args>(args)...};
+    //     } else {
+    //         static_assert_false(AllocT, "We don't know how to construct the specified type.");
+    //         return T{}; // to get rid of the warning
+    //     }
+    // }
 
     /**
      * Local object.
@@ -49,22 +38,23 @@ namespace webpp::object {
      * @tparam AllocDesc
      */
     template <typename T, typename StackType, AllocatorDescriptor AllocDesc>
-    struct local : details::resource_holder<resource_type_of_t<T, AllocDesc>, StackType>, T {
+        requires stl::uses_allocator_v<T, typename AllocDesc::template allocator_type<T>>
+    struct local : T {
         using resource_type = resource_type_of_t<T, AllocDesc>;
 
       private:
-        using res_holder = details::resource_holder<resource_type, StackType>;
+        StackType                           data{};
+        [[no_unique_address]] resource_type res;
 
       public:
         using stack_type = StackType;
 
+        struct local_allocator_for_tag {};
+
         template <typename... Args>
         explicit constexpr local(Args&&... args)
-          : res_holder{.resource_holder_data{}, // the stack buffer
-                       .resource_holder_res = AllocDesc::template construct_allocator<T>(
-                         static_cast<void*>(res_holder::resource_holder_data.data()),
-                         res_holder::resource_holder_data.size())},
-            T{make<T>(construct_allocator_from(this->resource_holder_res), stl::forward<Args>(args)...)} {}
+          : T{stl::make_obj_using_allocator<T>(construct_allocator_from(res), stl::forward<Args>(args)...)},
+            res{AllocDesc::template construct_allocator<T>(static_cast<void*>(data.data()), data.size())} {}
 
         // todo
         // constexpr auto copy_general(alloc_pack_type& alloc_pack) {
@@ -75,7 +65,7 @@ namespace webpp::object {
     template <typename T, AllocatorHolder HolderT, typename... Args>
     [[nodiscard]] static constexpr T make_general(HolderT&& holder, Args&&... args) {
         auto const& alloc = stl::forward<HolderT>(holder).template general_allocator<T>();
-        return make<T>(alloc, stl::forward<Args>(args)...);
+        return stl::make_obj_using_allocator<T>(alloc, stl::forward<Args>(args)...);
     }
 
     template <typename T, MonotonicAllocatorDescriptor AllocDesc, typename... Args>
