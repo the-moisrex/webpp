@@ -35,6 +35,11 @@ namespace webpp {
         static constexpr bool debug = false;
 #endif
 
+      private:
+        [[no_unique_address]] general_allocator_type<stl::byte> alloc =
+          traits_type::general_allocator_descriptor::template construct_allocator<stl::byte>();
+
+      public:
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         [[no_unique_address]] logger_type logger{};
 
@@ -46,7 +51,12 @@ namespace webpp {
         // a copy constructor essentially; works on enable_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_owner_traits> && EnabledTraits<T>)
-        explicit constexpr enable_owner_traits(T&& obj) noexcept : logger{stl::forward<T>(obj).logger} {}
+        explicit constexpr enable_owner_traits(T&& obj) noexcept
+          : alloc{obj.alloc},
+            logger{stl::forward<T>(obj).logger} {}
+
+        explicit constexpr enable_owner_traits(general_allocator_type<stl::byte> const& inp_alloc) noexcept
+          : alloc{inp_alloc} {}
 
         // NOLINTEND(*-forwarding-reference-overload)
 
@@ -86,8 +96,7 @@ namespace webpp {
 
         template <typename T>
         [[nodiscard]] constexpr general_allocator_type<T> general_allocator() const noexcept {
-            // todo: should we store it?
-            return traits_type::general_allocator_descriptor::template construct_allocator<T>();
+            return general_allocator_type<T>{construct_allocator_from(alloc)};
         }
     };
 
@@ -121,6 +130,10 @@ namespace webpp {
         static constexpr bool debug = false;
 #endif
 
+      private:
+        [[no_unique_address]] general_allocator_type<stl::byte> alloc;
+
+      public:
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         [[no_unique_address]] logger_ref logger;
 
@@ -131,11 +144,11 @@ namespace webpp {
         // a copy constructor essentially; works on enable_owner_traits as well
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
-        explicit constexpr enable_traits(T&& obj) noexcept : logger{stl::forward<T>(obj).logger} {}
+        explicit constexpr enable_traits(T&& obj) noexcept
+          : alloc{obj.template general_allocator<stl::byte>()},
+            logger{stl::forward<T>(obj).logger} {}
 
         // NOLINTEND(*-forwarding-reference-overload)
-
-        explicit constexpr enable_traits(logger_ref logger_obj) noexcept : logger{logger_obj} {}
 
         constexpr enable_traits(enable_traits const&) noexcept = default;
         constexpr enable_traits(enable_traits&&) noexcept      = default;
@@ -169,8 +182,7 @@ namespace webpp {
 
         template <typename T>
         [[nodiscard]] constexpr general_allocator_type<T> general_allocator() const noexcept {
-            // todo: should we store it?
-            return traits_type::general_allocator_descriptor::template construct_allocator<T>();
+            return general_allocator_type<T>{alloc};
         }
     };
 
@@ -358,9 +370,10 @@ namespace webpp {
     // }
 
     template <typename T, AllocatorHolder AllocHolder>
-        requires requires { typename T::value_type; }
+        requires requires { typename T::allocator_type; }
     [[nodiscard]] static constexpr decltype(auto) general_alloc_for(AllocHolder const& holder) noexcept {
-        return holder.template general_allocator<typename T::value_type>();
+        using value_type = typename stl::allocator_traits<typename T::allocator_type>::value_type;
+        return holder.template general_allocator<value_type>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder, typename... Args>

@@ -11,7 +11,7 @@ namespace webpp::http {
 
 
     template <Traits TraitsType, Application App>
-    struct common_http_protocol : public enable_owner_traits<TraitsType> {
+    struct common_http_protocol : enable_owner_traits<TraitsType> {
         using traits_type         = TraitsType;
         using application_type    = stl::remove_cvref_t<App>;
         using string_view_type    = traits::string_view<traits_type>;

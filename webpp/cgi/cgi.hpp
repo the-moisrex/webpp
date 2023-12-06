@@ -8,6 +8,7 @@
 #include "../http/response.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/default_traits.hpp"
+#include "../traits/enable_traits.hpp"
 #include "./cgi_request.hpp"
 #include "./cgi_request_body_communicator.hpp"
 
@@ -16,7 +17,7 @@
 namespace webpp::http {
 
     template <Application App, Traits TraitsType = default_traits>
-    struct cgi : public common_http_protocol<TraitsType, App> {
+    struct cgi : common_http_protocol<TraitsType, App> {
         using traits_type               = TraitsType;
         using etraits                   = enable_owner_traits<traits_type>;
         using application_type          = App;
@@ -43,6 +44,8 @@ namespace webpp::http {
         static_assert(ApplicationAcceptingRequest<app_wrapper_type, request_type>,
                       "Your application type can't be called with a request type of our choosing or "
                       "its response is not of a valid response type.");
+
+        static_assert(AllocatorHolder<common_protocol_type>, "No allocator is available?");
 
       private:
         using super = common_http_protocol<TraitsType, App>;

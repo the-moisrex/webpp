@@ -493,6 +493,8 @@ namespace webpp::istl {
             ptr{stl::exchange(other.ptr, nullptr)} {}
 
         constexpr dynamic& operator=(value_type const& val) noexcept {
+            // value_type might be an incomplete type, so we're doing it with a static_assert
+            static_assert(stl::is_copy_constructible_v<value_type>, "It must be copy constructible.");
             if (ptr) {
                 alloc_traits::destroy(alloc, ptr);
             } else {

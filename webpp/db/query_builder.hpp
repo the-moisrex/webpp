@@ -18,7 +18,8 @@
 namespace webpp::sql {
 
 
-    template <typename DBType, Allocator AllocT>
+    template <typename DBType,
+              Allocator AllocT = traits::general_string_allocator<typename DBType::traits_type>>
     struct query_builder;
 
     namespace details {
@@ -401,28 +402,27 @@ namespace webpp::sql {
      * This is a query builder class
      * @tparam DBType Database type
      */
-    template <typename DBType,
-              Allocator AllocT = traits::general_string_allocator<typename DBType::traits_type>>
+    template <typename DBType, Allocator AllocT>
     struct query_builder : details::query_builder_subclasses<DBType> {
-        using database_type    = DBType;
-        using traits_type      = typename database_type::traits_type;
-        using allocator_type   = AllocT;
-        using string_type      = traits::string<traits_type, allocator_type>;
-        using string_view_type = traits::string_view<traits_type>;
-        using database_ref     = stl::add_lvalue_reference_t<database_type>;
-        using size_type        = typename database_type::size_type;
-        using db_float_type    = typename database_type::float_type;
-        using db_integer_type  = typename database_type::integer_type;
-        using db_string_type   = typename database_type::string_type;
-        using db_blob_type     = typename database_type::blob_type;
-        using keywords         = typename database_type::keywords;
-        using expression_sig   = void(string_type&, database_ref) const noexcept;
-        using alloc_traits     = stl::allocator_traits<allocator_type>;
+        using database_type      = DBType;
+        using traits_type        = typename database_type::traits_type;
+        using cur_allocator_type = AllocT;
+        using string_type        = traits::string<traits_type, cur_allocator_type>;
+        using string_view_type   = traits::string_view<traits_type>;
+        using database_ref       = stl::add_lvalue_reference_t<database_type>;
+        using size_type          = typename database_type::size_type;
+        using db_float_type      = typename database_type::float_type;
+        using db_integer_type    = typename database_type::integer_type;
+        using db_string_type     = typename database_type::string_type;
+        using db_blob_type       = typename database_type::blob_type;
+        using keywords           = typename database_type::keywords;
+        using expression_sig     = void(string_type&, database_ref) const noexcept;
+        using alloc_traits       = stl::allocator_traits<cur_allocator_type>;
         using expr_func =
           istl::function<expression_sig, typename alloc_traits::template rebind_alloc<stl::byte>>;
         using expression_allocator = typename alloc_traits::template rebind_alloc<expr_func>;
         using expr_vec             = stl::vector<expr_func, expression_allocator>;
-        using subquery_type        = query_builder<DBType, allocator_type>;
+        using subquery_type        = query_builder<DBType, cur_allocator_type>;
         using subquery_allocator   = typename alloc_traits::template rebind_alloc<subquery_type>;
         using subquery_ptr         = istl::dynamic<subquery_type, subquery_allocator>;
 
@@ -526,8 +526,8 @@ namespace webpp::sql {
 
 
       public:
-        template <typename InpAllocT = allocator_type>
-        explicit constexpr query_builder(database_ref input_db, InpAllocT const& alloc = {}) noexcept
+        template <typename InpAllocT = cur_allocator_type>
+        constexpr query_builder(database_ref input_db, InpAllocT const& alloc) noexcept
           : db{input_db},
             from_cols{alloc},
             columns{alloc},
@@ -535,6 +535,9 @@ namespace webpp::sql {
             select_stmt{alloc},
             where_clauses{alloc},
             joins{alloc} {}
+
+        explicit constexpr query_builder(database_ref input_db) noexcept
+          : query_builder(input_db, general_allocator<cur_allocator_type>(input_db)) {}
 
         constexpr query_builder(query_builder&&) noexcept      = default;
         constexpr query_builder(query_builder const&) noexcept = default;
@@ -588,7 +591,7 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
             where_clauses.clear();
             where_clauses.push_back(expressionify(expr_type{
               {.op          = expr_type::expr_data::operation::in,
@@ -605,7 +608,7 @@ namespace webpp::sql {
                 db.logger.error(LOG_CAT, "Only select queries are allowed inside where_in");
                 return *this;
             }
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
             where_clauses.clear();
             where_clauses.push_back(expressionify(expr_type{
               {.op          = expr_type::expr_data::operation::not_in,
@@ -629,8 +632,8 @@ namespace webpp::sql {
                 return *this;
             }
 
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
             where_clauses.push_back(expressionify(and_expr{
               {.op   = and_expr::expr_data::operation::and_op,
                .expr = expr_type{{.op          = expr_type::expr_data::operation::not_in,
@@ -654,8 +657,8 @@ namespace webpp::sql {
                 return *this;
             }
 
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
             where_clauses.push_back(expressionify(and_expr{
               {.op   = and_expr::expr_data::operation::or_op,
                .expr = expr_type{{.op          = expr_type::expr_data::operation::in,
@@ -679,8 +682,8 @@ namespace webpp::sql {
                 return *this;
             }
 
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
             where_clauses.push_back(expressionify(and_expr{
               {.op = and_expr::expr_data::operation::or_op,
                .expr =
@@ -700,7 +703,7 @@ namespace webpp::sql {
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
             where_clauses.clear();
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             expr_type clause{
               typename expr_type::expr_data{.op          = expr_type::expr_data::operation::in,
@@ -718,7 +721,7 @@ namespace webpp::sql {
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
             where_clauses.clear();
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             expr_type clause{
               {.op          = expr_type::expr_data::operation::not_in,
@@ -735,8 +738,8 @@ namespace webpp::sql {
         template <typename Expr1, typename... Exprs>
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& and_where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             and_expr clause{
               {.op   = and_expr::opreation::and_op,
@@ -757,8 +760,8 @@ namespace webpp::sql {
         template <typename Expr1, typename... Exprs>
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& or_where_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             and_expr clause{
               {.op   = and_expr::expr_data::operation::or_op,
@@ -779,8 +782,8 @@ namespace webpp::sql {
         template <typename Expr1, typename... Exprs>
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& or_where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             and_expr clause{
               {.op   = and_expr::opreation::or_op,
@@ -801,8 +804,8 @@ namespace webpp::sql {
         template <typename Expr1, typename... Exprs>
             requires(sizeof...(Exprs) >= 1)
         constexpr query_builder& and_where_not_in(Expr1&& expr1, Exprs&&... exprs) noexcept {
-            using and_expr  = details::unary_op_expr<database_type, allocator_type>;
-            using expr_type = details::expr_in_expr<database_type, allocator_type>;
+            using and_expr  = details::unary_op_expr<database_type, cur_allocator_type>;
+            using expr_type = details::expr_in_expr<database_type, cur_allocator_type>;
 
             and_expr clause{
               {.op   = and_expr::expr_data::operation::and_op,
@@ -822,7 +825,7 @@ namespace webpp::sql {
 
         template <typename Expr1, typename Expr2>
         constexpr query_builder& where(Expr1&& expr1, Expr2&& expr2) noexcept {
-            using expr_type = details::expr_op_expr<database_type, allocator_type>;
+            using expr_type = details::expr_op_expr<database_type, cur_allocator_type>;
             where_clauses.clear();
             where_clauses.push_back(expressionify(expr_type{
               {.op         = expr_type::expr_data::operation::eq,
@@ -1092,28 +1095,28 @@ namespace webpp::sql {
             } else if constexpr (is_expression_v<vtype>) {
                 return {stl::forward<V>(val), get_allocator<expr_func>()};
             } else if constexpr (same_as<vtype, db_float_type>) {
-                using expr_type = floating_expr<database_type, allocator_type>;
+                using expr_type = floating_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = stl::forward<V>(val)}}, get_allocator<expr_func>()};
             } else if constexpr (same_as<vtype, db_integer_type>) {
-                using expr_type = integer_expr<database_type, allocator_type>;
+                using expr_type = integer_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = stl::forward<V>(val)}}, get_allocator<expr_func>()};
             } else if constexpr (same_as<vtype, string_type>) {
-                using expr_type = string_expr<database_type, allocator_type>;
+                using expr_type = string_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = stl::forward<V>(val)}}, get_allocator<expr_func>()};
             } else if constexpr (same_as<vtype, bool>) {
-                using expr_type = bool_expr<database_type, allocator_type>;
+                using expr_type = bool_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = val}}, get_allocator<expr_func>()};
             } else if constexpr (same_as<vtype, stl::nullptr_t>) {
-                using expr_type = null_expr<database_type, allocator_type>;
+                using expr_type = null_expr<database_type, cur_allocator_type>;
                 return {expr_type{typename expr_type::expr_data{}}, get_allocator<expr_func>()};
             } else if constexpr (stl::floating_point<vtype>) {
-                using expr_type = floating_expr<database_type, allocator_type>;
+                using expr_type = floating_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = static_cast<db_float_type>(val)}}, get_allocator<expr_func>()};
             } else if constexpr (stl::integral<vtype>) {
-                using expr_type = integer_expr<database_type, allocator_type>;
+                using expr_type = integer_expr<database_type, cur_allocator_type>;
                 return {expr_type{{.val = static_cast<db_integer_type>(val)}}, get_allocator<expr_func>()};
             } else if constexpr (istl::StringifiableOf<string_type, V>) {
-                using expr_type = string_expr<database_type, allocator_type>;
+                using expr_type = string_expr<database_type, cur_allocator_type>;
                 return expr_func(expr_type{{.val = stringify(stl::forward<V>(val))}},
                                  get_allocator<expr_func>());
             } else {

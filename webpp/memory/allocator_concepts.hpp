@@ -75,8 +75,8 @@ namespace webpp {
         template <typename T>
             requires stl::tag_invocable<construct_allocator_from_type, T>
         [[nodiscard]] constexpr stl::tag_invoke_result_t<construct_allocator_from_type, T> operator()(
-          T&& next) const noexcept(stl::nothrow_tag_invocable<construct_allocator_from_type, T>) {
-            return stl::tag_invoke(*this, stl::forward<T>(next));
+          T&& resource) const noexcept(stl::nothrow_tag_invocable<construct_allocator_from_type, T>) {
+            return stl::tag_invoke(*this, stl::forward<T>(resource));
         }
 
         /// default impl: return the allocator itself
