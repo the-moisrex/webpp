@@ -4,6 +4,7 @@
 #define WEBPP_CASSERT_HPP
 
 // NOLINTBEGIN(*-macro-usage)
+#include "../common/meta.hpp"
 
 #include <cassert>
 
@@ -15,12 +16,6 @@
         } else {                     \
             __builtin_unreachable(); \
         }
-#endif
-
-#ifdef __has_cpp_attribute
-#    define WEBPP_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
-#else
-#    define WEBPP_HAS_CPP_ATTRIBUTE(x) 0
 #endif
 
 // [[noreturn]] is disabled on MSVC and NVCC because of bogus unreachable code
