@@ -21,7 +21,7 @@ namespace webpp {
             using bundle_type = typename storage_gate_type::bundle_type;
 
 
-            static constexpr stl::size_t default_max_size = 1024u;
+            static constexpr stl::size_t default_max_size = 1024U;
 
           private:
             stl::size_t       max_size;
@@ -49,16 +49,16 @@ namespace webpp {
           public:
             template <EnabledTraits ET, typename... Args>
                 requires(EnabledTraits<ET> && !stl::same_as<stl::remove_cvref_t<ET>, strategy>)
-            constexpr strategy(ET&&        et,
-                               stl::size_t max_size_value = default_max_size,
-                               Args&&... args) noexcept
+            explicit constexpr strategy(ET&&              etraits,
+                                        stl::size_t const max_size_value = default_max_size,
+                                        Args&&... args) noexcept
               : max_size{max_size_value},
-                gate{et, stl::forward<Args>(args)...} {}
+                gate{stl::forward<ET>(etraits), stl::forward<Args>(args)...} {}
 
-            constexpr strategy(storage_gate_type&& input_gate,
-                               stl::size_t         max_size_value = default_max_size) noexcept
+            explicit constexpr strategy(storage_gate_type&& input_gate,
+                                        stl::size_t const   max_size_value = default_max_size) noexcept
               : max_size{max_size_value},
-                gate{input_gate} {}
+                gate{stl::move(input_gate)} {}
 
             template <typename K, typename V>
                 requires(stl::convertible_to<K, key_type> && // it's a key

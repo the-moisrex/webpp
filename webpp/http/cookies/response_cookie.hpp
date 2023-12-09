@@ -168,6 +168,7 @@ namespace webpp::http {
                                       is{istl::stringify_of<string_type>(value, this->get_allocator())};
                             expires_t new_expires;
 #ifdef WEBPP_UTC_CLOCK_SUPPORTED
+                            // todo: use std::chrono::parse, maybe? when it gets implemented
                             stl::chrono::from_stream(is, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
 #else
                             tm t{};
