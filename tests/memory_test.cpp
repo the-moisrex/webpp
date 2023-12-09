@@ -60,7 +60,7 @@ TEST(MemoryTest, AvailableMemory) {
 
 #ifdef __cpp_lib_polymorphic_allocator
 TEST(MemoryTest, DynamicType) {
-    using webpp::istl::dynamic;
+    using istl::dynamic;
 
     EXPECT_TRUE((stl::uses_allocator_v<dynamic<int, stl::allocator<stl::byte>>, stl::allocator<stl::byte>>) );
 

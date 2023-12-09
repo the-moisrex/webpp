@@ -340,13 +340,13 @@ namespace webpp::istl {
     }
 
     // doesn't support copy/move of T with other types of Allocator...
-    template <typename T, typename Allocator = stl::allocator<T>>
+    template <typename T, typename AllocT = stl::allocator<T>>
     struct dynamic {
         // attention: value_type might be an incomplete type at the type of constructing dynamic because it's
         // one of this classes' use cases. so you're not to change this class in a way that'll throw an error
         // for an incomplete type.
         using value_type     = stl::remove_pointer_t<stl::remove_reference_t<T>>;
-        using alloc_traits   = typename stl::allocator_traits<Allocator>::template rebind_traits<value_type>;
+        using alloc_traits   = typename stl::allocator_traits<AllocT>::template rebind_traits<value_type>;
         using allocator_type = typename alloc_traits::allocator_type;
         using size_type      = typename alloc_traits::size_type;
         using pointer        = typename alloc_traits::pointer;
@@ -475,13 +475,13 @@ namespace webpp::istl {
                      stl::is_constructible_v<allocator_type, NewAllocT>)
         explicit constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other) noexcept
           : alloc{other.get_allocator()},
-            ptr{stl::exchange(stl::move(other).get_pointer(), nullptr)} {}
+            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
 
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
         constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other, allocator_type const& new_alloc) noexcept
           : alloc{new_alloc},
-            ptr{stl::exchange(stl::move(other).get_pointer(), nullptr)} {}
+            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
 
         constexpr dynamic(dynamic&& other) noexcept
           : alloc{other.alloc},
@@ -521,8 +521,8 @@ namespace webpp::istl {
                 alloc = other.get_allocator();
             }
             stl::swap(ptr,
-                      stl::move(other).get_pointer()); // so the "other"'s destructor will destroy this
-                                                       // object's "ptr"
+                      other.get_pointer()); // so the "other"'s destructor will destroy this
+                                            // object's "ptr"
             return *this;
         }
 
@@ -568,8 +568,8 @@ namespace webpp::istl {
         }
 
         constexpr void swap(dynamic& other) noexcept {
-            static_assert(stl::allocator_traits<Allocator>::propagate_on_container_swap::value ||
-                            stl::allocator_traits<Allocator>::is_always_equal::value,
+            static_assert(stl::allocator_traits<AllocT>::propagate_on_container_swap::value ||
+                            stl::allocator_traits<AllocT>::is_always_equal::value,
                           "Allocator is not swappable in a nothrow manner.");
             stl::swap(ptr, other.ptr);
             stl::swap(alloc, other.alloc);

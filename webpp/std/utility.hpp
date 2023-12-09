@@ -14,20 +14,22 @@ namespace webpp::istl {
      *  @brief  Convert a rvalue or lvalue to a value
      *  This has the same effect of auto(...) in C++23
      *  This implementation is very similar to the std::move but does "almost" the opposite
-     *  @param  t  A thing of arbitrary type.
+     *  @param  inp_type  A thing of arbitrary type.
      *  @return The parameter cast to a non-reference value.
      */
     template <typename T>
-    [[nodiscard]] constexpr stl::remove_reference_t<T> deref(T&& t) noexcept {
-        return static_cast<stl::remove_reference_t<T>>(t);
+    [[nodiscard]] constexpr stl::remove_reference_t<T> deref(
+      T&& inp_type) noexcept { // NOLINT(*-missing-std-forward)
+        return static_cast<stl::remove_reference_t<T>>(inp_type);
     }
 
     /**
      * The opposite of std::move; it's convert rvalue references into lvalue references.
      */
     template <typename T>
-    [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(T&& t) noexcept {
-        return static_cast<stl::remove_cvref_t<T>&>(t);
+    [[nodiscard]] constexpr stl::remove_cvref_t<T>& unmove(
+      T&& obj) noexcept { // NOLINT(*-missing-std-forward)
+        return static_cast<stl::remove_cvref_t<T>&>(obj);
     }
 
     namespace details {
@@ -105,19 +107,19 @@ namespace webpp::stl {
     // polyfill for C++20 (forward_like is a C++23 feature)
 #ifndef __cpp_lib_forward_like
     template <class T, class U>
-    [[nodiscard]] constexpr auto&& forward_like(U&& x) noexcept {
+    [[nodiscard]] constexpr auto&& forward_like(U&& inp) noexcept {
         constexpr bool is_adding_const = std::is_const_v<std::remove_reference_t<T>>;
         if constexpr (std::is_lvalue_reference_v<T&&>) {
             if constexpr (is_adding_const) {
-                return std::as_const(x);
+                return std::as_const(inp);
             } else {
-                return static_cast<U&>(x);
+                return static_cast<U&>(inp);
             }
         } else {
             if constexpr (is_adding_const) {
-                return std::move(std::as_const(x));
+                return std::move(std::as_const(inp));
             } else {
-                return std::move(x);
+                return std::move(inp); // NOLINT(*-move-forwarding-reference)
             }
         }
     }
