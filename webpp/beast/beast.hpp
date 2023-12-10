@@ -15,44 +15,38 @@ namespace webpp {
      * Beast Server
      */
     template <Application App, Traits TraitsType = default_traits>
-    struct beast : public http::common_http_protocol<TraitsType, App> {
-        using application_type          = stl::remove_cvref_t<App>;
-        using traits_type               = TraitsType;
-        using common_http_protocol_type = http::common_http_protocol<TraitsType, App>;
-        using etraits                   = typename common_http_protocol_type::etraits;
-        using protocol_type             = beast<application_type, traits_type>;
-        using duration                  = typename stl::chrono::steady_clock::duration;
-        using address_type              = asio::ip::address;
-        using string_view_type          = traits::string_view<traits_type>;
-        using port_type                 = unsigned short;
-        using endpoint_type             = asio::ip::tcp::endpoint;
-        using acceptor_type             = asio::ip::tcp::acceptor;
-        using socket_type               = asio::ip::tcp::socket;
-        using thread_worker_type        = beast_proto::thread_worker<protocol_type>;
-        using http_worker_type          = beast_proto::http_worker<protocol_type>;
-        using allocator_pack_type       = typename etraits::allocator_pack_type;
-        using char_allocator_type =
-          typename etraits::allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using thread_worker_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features,
-                                                                thread_worker_type>;
-        using thread_pool_type = asio::thread_pool;
-        using char_type        = traits::char_type<traits_type>;
-        using fields_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char_type>;
-        // using fields_allocator_type = traits::general_allocator<traits_type, char_type>;
-        using fields_provider           = http::header_fields_provider<http::header_field_of<traits_type>>;
-        using request_body_communicator = beast_proto::beast_request_body_communicator<protocol_type>;
-        using request_headers_type      = http::request_headers<fields_provider>;
-        using request_body_type         = http::request_body<traits_type, request_body_communicator>;
+    struct beast : http::common_http_protocol<TraitsType, App> {
+        using application_type             = stl::remove_cvref_t<App>;
+        using traits_type                  = TraitsType;
+        using common_http_protocol_type    = http::common_http_protocol<TraitsType, App>;
+        using etraits                      = typename common_http_protocol_type::etraits;
+        using protocol_type                = beast<application_type, traits_type>;
+        using duration                     = typename stl::chrono::steady_clock::duration;
+        using address_type                 = asio::ip::address;
+        using string_view_type             = traits::string_view<traits_type>;
+        using port_type                    = stl::uint16_t;
+        using endpoint_type                = asio::ip::tcp::endpoint;
+        using acceptor_type                = asio::ip::tcp::acceptor;
+        using socket_type                  = asio::ip::tcp::socket;
+        using thread_worker_type           = beast_proto::thread_worker<protocol_type>;
+        using http_worker_type             = beast_proto::http_worker<protocol_type>;
+        using char_allocator_type          = traits::general_allocator<traits_type>;
+        using thread_worker_allocator_type = traits::general_allocator<traits_type, thread_worker_type>;
+        using thread_pool_type             = asio::thread_pool;
+        using char_type                    = traits::char_type<traits_type>;
+        using fields_allocator_type        = traits::general_allocator<traits_type, char_type>;
+        using fields_provider              = http::header_fields_provider<http::header_field_of<traits_type>>;
+        using request_body_communicator    = beast_proto::beast_request_body_communicator<protocol_type>;
+        using request_headers_type         = http::request_headers<fields_provider>;
+        using request_body_type            = http::request_body<traits_type, request_body_communicator>;
         using request_type =
           http::simple_request<beast_proto::beast_request, request_headers_type, request_body_type>;
         using response_type = http::simple_response<traits_type>;
 
 
         static constexpr auto        log_cat                   = "Beast";
-        static constexpr port_type   default_http_port         = 80u;
-        static constexpr port_type   default_https_port        = 443u;
+        static constexpr port_type   default_http_port         = 80U;
+        static constexpr port_type   default_https_port        = 443U;
         static constexpr stl::size_t default_http_worker_count = 20;
 
       private:
@@ -93,9 +87,8 @@ namespace webpp {
             if (synced) {
                 stl::scoped_lock lock{app_call_mutex};
                 return stl::invoke(this->app, req);
-            } else {
-                return stl::invoke(this->app, req);
             }
+            return stl::invoke(this->app, req);
         }
 
         template <typename>
@@ -110,27 +103,27 @@ namespace webpp {
         ~beast()                       = default;
 
         template <typename... Args>
-        beast(Args&&... args)
+        explicit beast(Args&&... args)
           : super{stl::forward<Args>(args)...},
             acceptor{asio::make_strand(io)},
             thread_workers{*this} {}
 
         beast& address(string_view_type addr) noexcept {
-            asio::error_code ec;
-            bind_address = asio::ip::make_address(istl::to_std_string_view(addr), ec);
-            if (ec) {
-                this->logger.error(log_cat, "Cannot set address", ec);
+            asio::error_code err;
+            bind_address = asio::ip::make_address(istl::to_std_string_view(addr), err);
+            if (err) {
+                this->logger.error(log_cat, "Cannot set address", err);
             }
             return *this;
         }
 
-        beast& port(port_type p) noexcept {
-            bind_port = p;
+        beast& port(port_type const inp_port) noexcept {
+            bind_port = inp_port;
             return *this;
         }
 
-        beast& timeout(duration t) noexcept {
-            timeout_val = t;
+        beast& timeout(duration const dur) noexcept {
+            timeout_val = dur;
             return *this;
         }
 
@@ -138,7 +131,7 @@ namespace webpp {
             return timeout_val;
         }
 
-        beast& set_worker_count(stl::size_t val) {
+        beast& set_worker_count(stl::size_t const val) {
             http_worker_count = val;
             return *this;
         }
@@ -193,11 +186,11 @@ namespace webpp {
         }
 
         [[nodiscard]] auto bound_uri() {
-            auto u   = object::make_general<uri::uri>(*this);
-            u.scheme = is_ssl_active() ? "https" : "http";
-            u.host   = bind_address.to_string();
-            u.port   = bind_port;
-            return u;
+            auto res_url   = object::make_general<uri::uri>(*this);
+            res_url.scheme = is_ssl_active() ? "https" : "http";
+            res_url.host   = bind_address.to_string();
+            res_url.port   = bind_port;
+            return res_url;
         }
 
         [[nodiscard]] constexpr string_view_type server_name() const noexcept {
@@ -219,38 +212,38 @@ namespace webpp {
                 pool.stop();
             });
 
-            boost::beast::error_code ec;
-            const endpoint_type      ep{bind_address, bind_port};
+            boost::beast::error_code err;
+            endpoint_type const      endp{bind_address, bind_port};
 
             // open
-            acceptor.open(ep.protocol(), ec);
-            if (ec) {
+            acceptor.open(endp.protocol(), err);
+            if (err) {
                 this->logger.error(log_cat,
                                    fmt::format("Cannot open protocol for {}", bound_uri().to_string()),
-                                   ec);
+                                   err);
                 return -1;
             }
 
             // Allow address reuse
-            acceptor.set_option(asio::socket_base::reuse_address(true), ec);
-            if (ec) {
+            acceptor.set_option(asio::socket_base::reuse_address(true), err);
+            if (err) {
                 this->logger.error(log_cat,
                                    fmt::format("Cannot set reuse option on {}", bound_uri().to_string()),
-                                   ec);
+                                   err);
                 return -1;
             }
 
             // bind
-            acceptor.bind(ep, ec);
-            if (ec) {
-                this->logger.error(log_cat, fmt::format("Cannot bind to {}", bound_uri().to_string()), ec);
+            acceptor.bind(endp, err);
+            if (err) {
+                this->logger.error(log_cat, fmt::format("Cannot bind to {}", bound_uri().to_string()), err);
                 return -1;
             }
 
             // listen
-            acceptor.listen(asio::socket_base::max_listen_connections, ec);
-            if (ec) {
-                this->logger.error(log_cat, fmt::format("Cannot listen to {}", bound_uri().to_string()), ec);
+            acceptor.listen(asio::socket_base::max_listen_connections, err);
+            if (err) {
+                this->logger.error(log_cat, fmt::format("Cannot listen to {}", bound_uri().to_string()), err);
                 return -1;
             }
 
@@ -264,8 +257,8 @@ namespace webpp {
                                           bound_uri().to_string(),
                                           thread_worker_count));
 
-            auto get_thread = [this](stl::size_t i) noexcept {
-                return [this, io_index = i, tries = 0ul]() mutable noexcept {
+            auto get_thread = [this](stl::size_t index) noexcept {
+                return [this, io_index = index, tries = 0UL]() mutable noexcept {
                     for (; !io.stopped(); ++tries) {
                         try {
                             // run executor in this thread
@@ -295,7 +288,7 @@ namespace webpp {
 
 
             // start accepting in all workers
-            for (stl::size_t i = 1ul; i != thread_worker_count - 1; ++i) {
+            for (stl::size_t i = 1UL; i != thread_worker_count - 1; ++i) {
                 asio::post(pool, get_thread(i));
             }
 

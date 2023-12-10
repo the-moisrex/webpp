@@ -29,24 +29,22 @@ namespace webpp::beast_proto {
         // if you change, remember to sync these types with beast's http_worker's types, I'm not using
         // http_worker_type directly because it's a still an incomplete type at this point.
         using string_type         = traits::general_string<traits_type>;
-        using allocator_pack_type = traits::allocator_pack_type<traits_type>;
-        using char_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_body_type = string_body_of<string_type>;
+        using char_allocator_type = traits::general_string_allocator<traits_type>;
+        using beast_body_type     = string_body_of<string_type>;
         using beast_request_parser_type =
           boost::beast::http::request_parser<beast_body_type, char_allocator_type>;
         using request_type = typename beast_request_parser_type::value_type;
         using request_ptr  = stl::add_pointer_t<request_type>;
 
-        beast_request_body_communicator(auto&) noexcept {}
+        explicit beast_request_body_communicator(auto&) noexcept {}
 
         void set_beast_parser(beast_request_parser_type& input_parser) noexcept {
             request = &input_parser.get();
         }
 
-        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize count) {
+        [[nodiscard]] stl::streamsize read(byte_type* data, stl::streamsize const count) {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-            const stl::size_t length =
+            stl::size_t const length =
               stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0}, size() - read_position);
             stl::copy_n(reinterpret_cast<byte_type const*>(request->body().data() + read_position),
                         length,
@@ -57,7 +55,7 @@ namespace webpp::beast_proto {
         }
 
         [[nodiscard]] stl::streamsize read(byte_type* data) noexcept {
-            const stl::size_t the_size = size() - read_position;
+            stl::size_t const the_size = size() - read_position;
             stl::copy_n(request->body().data(), the_size, data);
             read_position = the_size;
             return the_size;

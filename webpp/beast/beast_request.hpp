@@ -26,19 +26,16 @@ namespace webpp::beast_proto {
         using traits_type              = typename common_http_request_type::traits_type;
         using string_type              = traits::general_string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
-        using allocator_pack_type      = typename common_http_request_type::allocator_pack_type;
         using headers_type             = typename common_http_request_type::headers_type;
         using field_type               = typename headers_type::field_type;
 
       private:
-        using request_header_type = typename common_http_request_type::headers_type;
-        using request_body_type   = typename common_http_request_type::body_type;
-        using char_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using fields_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_fields_type = boost::beast::http::basic_fields<fields_allocator_type>;
-        using beast_body_type   = string_body_of<string_type>;
+        using request_header_type   = typename common_http_request_type::headers_type;
+        using request_body_type     = typename common_http_request_type::body_type;
+        using char_allocator_type   = traits::general_string_allocator<traits_type>;
+        using fields_allocator_type = traits::general_string_allocator<traits_type>;
+        using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
+        using beast_body_type       = string_body_of<string_type>;
 
         using beast_request_type = boost::beast::http::request<beast_body_type, beast_fields_type>;
         using beast_request_ref  = beast_request_type&;
@@ -91,7 +88,7 @@ namespace webpp::beast_proto {
 
       public:
         template <typename... Args>
-        beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
+        explicit beast_request(Args&&... args) noexcept : super(stl::forward<Args>(args)...) {}
 
         beast_request(beast_request const&)                = delete; // no copying for now
         beast_request(beast_request&&) noexcept            = default;

@@ -60,7 +60,7 @@ namespace webpp::http {
           string_type,
           stl::hash<string_type>,
           stl::equal_to<string_type>,
-          rebind_allocator<string_allocator_type, stl::pair<const string_type, string_type>>>;
+          rebind_allocator<string_allocator_type, stl::pair<string_type const, string_type>>>;
 
 
         static constexpr max_age_t MAX_AGE_EXISTENCE_VALUE = stl::numeric_limits<max_age_t>::min();
@@ -165,15 +165,15 @@ namespace webpp::http {
                             using string_char_type = typename value_t::value_type;
                             stl::
                               basic_istringstream<string_char_type, char_traits_type, string_allocator_type>
-                                      is{istl::stringify_of<string_type>(value, this->get_allocator())};
+                                inp_stream{istl::stringify_of<string_type>(value, this->get_allocator())};
                             expires_t new_expires;
 #ifdef WEBPP_UTC_CLOCK_SUPPORTED
                             // todo: use std::chrono::parse, maybe? when it gets implemented
                             stl::chrono::from_stream(is, "%a, %d %b %Y %H:%M:%S GMT", new_expires);
 #else
-                            tm t{};
-                            is >> stl::get_time(&t, "%a, %d %b %Y %H:%M:%S GMT");
-                            new_expires = clock_type::from_time_t(stl::mktime(&t));
+                            tm tmp_time{};
+                            inp_stream >> stl::get_time(&tmp_time, "%a, %d %b %Y %H:%M:%S GMT");
+                            new_expires = clock_type::from_time_t(stl::mktime(&tmp_time));
 #endif
                             _expires = new_expires;
                         } else {

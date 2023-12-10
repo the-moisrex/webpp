@@ -98,12 +98,12 @@ namespace webpp::http {
             }
         }
 
-        [[nodiscard]] constexpr auto_converter<common_http_request> as() const {
-            return {*this};
+        [[nodiscard]] constexpr auto as() const {
+            return auto_converter<common_http_request>{*this};
         }
 
-        [[nodiscard]] constexpr auto_converter<common_http_request> as() {
-            return {*this};
+        [[nodiscard]] constexpr auto as() {
+            return auto_converter<common_http_request>{*this};
         }
 
         template <typename T>

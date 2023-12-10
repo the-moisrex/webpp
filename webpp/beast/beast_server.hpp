@@ -6,7 +6,6 @@
 #include "../http/http_version.hpp"
 #include "../http/request.hpp"
 #include "../libs/asio.hpp"
-#include "../memory/object.hpp"
 #include "../std/format.hpp"
 #include "../std/string_view.hpp"
 #include "../traits/enable_traits.hpp"
@@ -43,26 +42,23 @@ namespace webpp::beast_proto {
 
     template <typename ServerT>
     struct http_worker : enable_traits<typename ServerT::etraits> {
-        using server_type         = ServerT;
-        using etraits             = enable_traits<typename server_type::etraits>;
-        using duration            = typename server_type::duration;
-        using acceptor_type       = typename server_type::acceptor_type;
-        using traits_type         = typename server_type::traits_type;
-        using endpoint_type       = asio::ip::tcp::endpoint;
-        using steady_timer        = asio::steady_timer;
-        using request_type        = typename server_type::request_type;
-        using buffer_type         = boost::beast::flat_buffer;
-        using allocator_pack_type = typename server_type::allocator_pack_type;
-        using request_header_type = typename request_type::headers_type;
-        using request_body_type   = typename request_type::body_type;
-        using char_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using fields_allocator_type =
-          typename allocator_pack_type::template best_allocator<alloc::sync_pool_features, char>;
-        using beast_fields_type   = boost::beast::http::basic_fields<fields_allocator_type>;
-        using string_type         = traits::general_string<traits_type>;
-        using beast_body_type     = string_body_of<string_type>;
-        using beast_response_type = boost::beast::http::response<beast_body_type, beast_fields_type>;
+        using server_type           = ServerT;
+        using etraits               = enable_traits<typename server_type::etraits>;
+        using duration              = typename server_type::duration;
+        using acceptor_type         = typename server_type::acceptor_type;
+        using traits_type           = typename server_type::traits_type;
+        using endpoint_type         = asio::ip::tcp::endpoint;
+        using steady_timer          = asio::steady_timer;
+        using request_type          = typename server_type::request_type;
+        using buffer_type           = boost::beast::flat_buffer;
+        using request_header_type   = typename request_type::headers_type;
+        using request_body_type     = typename request_type::body_type;
+        using char_allocator_type   = traits::general_string_allocator<traits_type>;
+        using fields_allocator_type = traits::general_string_allocator<traits_type>;
+        using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
+        using string_type           = traits::general_string<traits_type>;
+        using beast_body_type       = string_body_of<string_type>;
+        using beast_response_type   = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
           boost::beast::http::response_serializer<beast_body_type, beast_fields_type>;
         using socket_type      = asio::ip::tcp::socket;
@@ -104,16 +100,15 @@ namespace webpp::beast_proto {
         http_worker& operator=(http_worker&&) noexcept = delete;
         ~http_worker()                                 = default;
 
-        http_worker(server_type* in_server)
+        explicit http_worker(server_type* in_server)
           : etraits{*in_server},
             server{in_server},
             req{*server},
             parser{
               stl::in_place,
               stl::piecewise_construct,
-              stl::make_tuple(),                                                                // body args
-              stl::make_tuple(
-                alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
+              stl::make_tuple(),                                           // body args
+              stl::make_tuple(general_allocator<beast_fields_type>(*this)) // fields args
             } {}
 
         /**
@@ -203,6 +198,7 @@ namespace webpp::beast_proto {
                     case text_based: set_response_body_string(body); return;
                     case cstream_based: set_response_body_cstream(body); return;
                     case stream_based: set_response_body_stream(body); return;
+                    default: stl::unreachable();
                 }
             } else if constexpr (http::TextBasedBodyReader<body_type>) {
                 set_response_body_string(body);
@@ -227,8 +223,8 @@ namespace webpp::beast_proto {
             bres.emplace();
             res.calculate_default_headers();
             bres->version(parser->get().version());
-            for (auto const& h : res.headers) {
-                bres->set(h.name, h.value);
+            for (auto const& hdr : res.headers) {
+                bres->set(hdr.name, hdr.value);
             }
 
             // bres.content_length(res.body.size());
@@ -244,18 +240,18 @@ namespace webpp::beast_proto {
               *stream,
               buf,
               *parser,
-              [this](boost::beast::error_code ec, [[maybe_unused]] std::size_t bytes_transferred) {
-                  if (!ec) [[likely]] {
+              [this](boost::beast::error_code err, [[maybe_unused]] std::size_t bytes_transferred) {
+                  if (!err) [[likely]] {
                       async_write_response();
                   } else [[unlikely]] {
                       // This means they closed the connection
-                      if (ec == boost::beast::http::error::end_of_stream) {
+                      if (err == boost::beast::http::error::end_of_stream) {
                           // try sending shutdown signal
                           // don't need to log if it fails
-                          stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+                          stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, err);
                           reset();
                       } else {
-                          this->logger.warning(log_cat, "Connection error.", ec);
+                          this->logger.warning(log_cat, "Connection error.", err);
 
                           // if we don't reset here, the connection will hang if there are too many concurrent
                           // connections for some reason.
@@ -271,14 +267,14 @@ namespace webpp::beast_proto {
             boost::beast::http::async_write(
               *stream,
               *str_serializer,
-              [this](boost::beast::error_code ec, stl::size_t) noexcept {
-                  if (ec) [[unlikely]] {
-                      this->logger.warning(log_cat, "Write error on socket.", ec);
+              [this](boost::beast::error_code err, stl::size_t) noexcept {
+                  if (err) [[unlikely]] {
+                      this->logger.warning(log_cat, "Write error on socket.", err);
                   } else {
                       // todo: check if we need the else part of this condition to be an else stmt.
-                      stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
-                      if (ec) [[unlikely]] {
-                          this->logger.warning(log_cat, "Error on sending shutdown into socket.", ec);
+                      stream->socket().shutdown(asio::ip::tcp::socket::shutdown_send, err);
+                      if (err) [[unlikely]] {
+                          this->logger.warning(log_cat, "Error on sending shutdown into socket.", err);
                       }
                   }
                   reset();
@@ -289,19 +285,17 @@ namespace webpp::beast_proto {
       public:
         void reset() noexcept {
             // todo: half of these things can be yanked out with the help of allocators
-            boost::beast::error_code ec;
-            stream->socket().close(ec);
-            if (ec) [[unlikely]] {
-                this->logger.warning(log_cat, "Error on closing the connection.", ec);
+            boost::beast::error_code err;
+            stream->socket().close(err);
+            if (err) [[unlikely]] {
+                this->logger.warning(log_cat, "Error on closing the connection.", err);
             }
 
             // destroy the request type + be ready for the next request
             req.emplace(*server);
-            parser.emplace(
-              stl::piecewise_construct,
-              stl::make_tuple(),                                                                // body args
-              stl::make_tuple(
-                alloc::featured_alloc_for<alloc::sync_pool_features, beast_fields_type>(*this)) // fields args
+            parser.emplace(stl::piecewise_construct,
+                           stl::make_tuple(),                                           // body args
+                           stl::make_tuple(general_allocator<beast_fields_type>(*this)) // fields args
             );
 
 
@@ -329,15 +323,13 @@ namespace webpp::beast_proto {
      */
     template <typename ServerT>
     struct thread_worker {
-        using server_type                           = ServerT;
-        using etraits                               = typename server_type::etraits;
-        using allocator_pack_type                   = typename etraits::allocator_pack_type;
-        using http_worker_type                      = http_worker<server_type>;
-        static constexpr auto worker_alloc_features = alloc::feature_pack{alloc::sync};
-        using http_worker_allocator_type =
-          typename allocator_pack_type::template best_allocator<worker_alloc_features, http_worker_type>;
-        using http_workers_type = stl::list<http_worker_type, http_worker_allocator_type>;
-        using socket_type       = asio::ip::tcp::socket;
+        using server_type                = ServerT;
+        using etraits                    = typename server_type::etraits;
+        using traits_type                = typename etraits::traits_type;
+        using http_worker_type           = http_worker<server_type>;
+        using http_worker_allocator_type = traits::general_allocator<traits_type, http_worker_type>;
+        using http_workers_type          = stl::list<http_worker_type, http_worker_allocator_type>;
+        using socket_type                = asio::ip::tcp::socket;
 
         static constexpr auto log_cat = "Beast";
 
@@ -347,10 +339,10 @@ namespace webpp::beast_proto {
         thread_worker& operator=(thread_worker&&) noexcept = delete;
         ~thread_worker()                                   = default;
 
-        thread_worker(server_type& input_server)
+        explicit thread_worker(server_type& input_server)
           : server(&input_server),
-            http_workers{alloc::featured_alloc_for<worker_alloc_features, http_workers_type>(*server)} {
-            for (stl::size_t i = 0ul; i != server->http_worker_count; ++i) {
+            http_workers{general_allocator<http_workers_type>(*server)} {
+            for (stl::size_t i = 0UL; i != server->http_worker_count; ++i) {
                 http_workers.emplace_back(server);
             }
             worker = http_workers.begin();
@@ -378,12 +370,15 @@ namespace webpp::beast_proto {
         // get the next available worker
         void next_worker() noexcept {
             // todo: a cooler algorithm can be used here, right? You can even give the user a choice
-            do {
+            for (;;) {
                 ++worker;
                 if (worker == http_workers.end()) {
                     worker = http_workers.begin();
                 }
-            } while (!worker->is_idle());
+                if (worker->is_idle()) {
+                    break;
+                }
+            }
         }
 
         server_type*                         server;
