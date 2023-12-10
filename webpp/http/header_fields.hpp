@@ -177,7 +177,7 @@ namespace webpp::http {
         template <EnabledTraits ET>
             requires(!HTTPHeaderFieldsProvider<ET>)
         explicit constexpr header_fields_provider(ET& etraits)
-          : fields{general_alloc_for<fields_type>(etraits)} {}
+          : fields{get_alloc_for<fields_type>(etraits)} {}
 
         template <HTTPHeaderFieldsProvider T>
             requires(

@@ -83,8 +83,7 @@ namespace webpp::http {
 
         template <typename T>
         [[nodiscard]] inline pstring_type pstringify(T&& str) const {
-            return istl::stringify_of<pstring_type>(stl::forward<T>(str),
-                                                    general_alloc_for<pstring_type>(*this));
+            return istl::stringify_of<pstring_type>(stl::forward<T>(str), get_alloc_for<pstring_type>(*this));
         }
 
         // get the dynamic request object
@@ -107,7 +106,7 @@ namespace webpp::http {
       public:
         template <typename ReqT>
         cgi_request(ReqT& svr) : super{svr},
-                                 cache{general_alloc_for<string_type>(*this)} {
+                                 cache{get_alloc_for<string_type>(*this)} {
             fill_headers();
         }
 

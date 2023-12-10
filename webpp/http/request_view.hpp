@@ -65,7 +65,7 @@ namespace webpp::http {
           protected:
             template <typename StrT, EnabledTraits ET>
             inline string_type stringify(StrT&& str, ET&& et) const {
-                return istl::stringify_of<string_type>(str, general_alloc_for<string_type>(et));
+                return istl::stringify_of<string_type>(str, get_alloc_for<string_type>(et));
             }
 
             [[nodiscard]] virtual string_type   get_uri() const              = 0;

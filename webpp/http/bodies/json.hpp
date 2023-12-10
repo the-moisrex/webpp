@@ -59,7 +59,7 @@ namespace webpp::http {
         using string_type = traits::string<traits_type>;
 
         // delegate the string to the serialize_body for the strings:
-        body = doc.template uglified<string_type>(general_alloc_for<string_type>(body));
+        body = doc.template uglified<string_type>(get_alloc_for<string_type>(body));
     }
 
     // Set the header for json and pass it to the serialize_body to set the body as well

@@ -54,7 +54,7 @@ namespace webpp::http {
         constexpr string_type format(StrT&& format_str, Args&&... args) const {
             // todo: it's possible to optimize this for constant expressions
             // todo: should this function return a HTTPResponse instead of string?
-            string_type str{general_alloc_for<string_type>(*this)};
+            string_type str{get_alloc_for<string_type>(*this)};
             fmt::vformat_to(stl::back_inserter(str),
                             istl::to_std_string_view(format_str),
                             fmt::make_format_args(stl::forward<Args>(args)...));
@@ -241,11 +241,11 @@ namespace webpp::http {
         using type = T;
         if constexpr (istl::String<type> && EnabledTraits<BodyType> && istl::StringifiableOf<type, BodyType>)
         {
-            return istl::stringify_of<type>(stl::forward<BodyType>(body), general_alloc_for<type>(body));
+            return istl::stringify_of<type>(stl::forward<BodyType>(body), get_alloc_for<type>(body));
         } else if constexpr (
           istl::String<type> && EnabledTraits<BodyType> && traits::has_alloc_for<BodyType, type>)
         {
-            type str{general_alloc_for<type>(body)};
+            type str{get_alloc_for<type>(body)};
             details::deserialize_body_impl(str, stl::forward<BodyType>(body));
             return str;
         } else if constexpr (istl::String<type> && stl::is_default_constructible_v<type>) {

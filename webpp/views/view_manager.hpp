@@ -74,7 +74,7 @@ namespace webpp::views {
           stl::size_t cache_limit = default_cache_limit) noexcept
           : etraits{et},
             cached_views{et, cache_limit},
-            view_roots{general_alloc_for<view_roots_type>(*this)} {}
+            view_roots{get_alloc_for<view_roots_type>(*this)} {}
 
 
       private:
@@ -288,7 +288,7 @@ namespace webpp::views {
 
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr string_type file(StrT&& file_request) {
-            string_type out{general_alloc_for<string_type>(*this)};
+            string_type out{get_alloc_for<string_type>(*this)};
             view_to<file_view_type>(out, stl::forward<StrT>(file_request));
             return out;
         }

@@ -182,7 +182,7 @@ namespace webpp::http {
             try {
                 HTTPResponse auto res = this->app(request_type{*this});
                 res.calculate_default_headers();
-                string_type header_str{general_alloc_for<string_type>(*this)};
+                string_type header_str{get_alloc_for<string_type>(*this)};
                 res.headers.string_to(header_str);
 
                 // From RFC: https://tools.ietf.org/html/rfc3875
@@ -193,7 +193,7 @@ namespace webpp::http {
                 // reason-phrase  = *TEXT
 
                 // todo: give the user the ability to change the status phrase
-                auto status_line = object::make_local<string_type>(*this);
+                auto status_line = object::make_object<string_type>(*this);
                 fmt::format_to(stl::back_inserter(status_line),
                                "Status: {} {}\r\n",
                                res.headers.status_code_integer(),

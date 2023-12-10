@@ -318,7 +318,7 @@ namespace webpp {
                      })
         explicit constexpr enable_traits_for(Args&&... args) noexcept(
           stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
-          : T{general_alloc_for<T>(et), stl::forward<Args>(args)...} {}
+          : T{get_alloc_for<T>(et), stl::forward<Args>(args)...} {}
 
         constexpr enable_traits_for(enable_traits_for const&) noexcept            = default;
         constexpr enable_traits_for(enable_traits_for&&) noexcept                 = default;
@@ -354,7 +354,7 @@ namespace webpp {
 
     template <typename T, AllocatorHolder AllocHolder>
         requires requires { typename T::allocator_type; }
-    [[nodiscard]] static constexpr decltype(auto) general_alloc_for(AllocHolder const& holder) noexcept {
+    [[nodiscard]] static constexpr decltype(auto) get_alloc_for(AllocHolder const& holder) noexcept {
         using value_type = typename stl::allocator_traits<typename T::allocator_type>::value_type;
         return holder.template get_allocator<value_type>();
     }

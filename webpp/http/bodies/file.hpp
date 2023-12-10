@@ -19,7 +19,7 @@ namespace webpp::http {
         using body_type   = stl::remove_cvref_t<BodyType>;
         using traits_type = typename body_type::traits_type;
         using string_type = traits::string<traits_type>;
-        string_type file_content{general_alloc_for<string_type>(body)};
+        string_type file_content{get_alloc_for<string_type>(body)};
         file::get_to(path, file_content);
         body = file_content;
     }

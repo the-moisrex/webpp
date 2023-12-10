@@ -30,7 +30,7 @@ namespace webpp::http::cgi_proto {
         string_type body_content;
 
       public:
-        cgi_request_body_communicator(auto& inp_cgi) : body_content{general_alloc_for<string_type>(inp_cgi)} {
+        cgi_request_body_communicator(auto& inp_cgi) : body_content{get_alloc_for<string_type>(inp_cgi)} {
             auto const content_length_str = inp_cgi.env("CONTENT_LENGTH");
             if (!content_length_str.empty()) {
                 auto const content_length = to_uint(content_length_str);

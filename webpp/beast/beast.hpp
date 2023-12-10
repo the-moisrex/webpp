@@ -23,6 +23,7 @@ namespace webpp {
         using protocol_type                = beast<application_type, traits_type>;
         using duration                     = typename stl::chrono::steady_clock::duration;
         using address_type                 = asio::ip::address;
+        using string_type                  = traits::string<traits_type>;
         using string_view_type             = traits::string_view<traits_type>;
         using port_type                    = stl::uint16_t;
         using endpoint_type                = asio::ip::tcp::endpoint;
@@ -186,7 +187,7 @@ namespace webpp {
         }
 
         [[nodiscard]] auto bound_uri() {
-            auto res_url   = object::make_object<uri::uri>(*this);
+            uri::basic_uri<string_type> res_url{get_alloc_for<string_type>(*this)};
             res_url.scheme = is_ssl_active() ? "https" : "http";
             res_url.host   = bind_address.to_string();
             res_url.port   = bind_port;

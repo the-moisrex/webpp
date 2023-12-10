@@ -520,7 +520,7 @@ namespace webpp::sql {
         template <typename T>
             requires(is_stringify<T>)
         constexpr auto stringify(T&& str) const noexcept {
-            return istl::stringify_of<string_type>(stl::forward<T>(str), general_alloc_for<string_type>(db));
+            return istl::stringify_of<string_type>(stl::forward<T>(str), get_alloc_for<string_type>(db));
         }
 
 

@@ -173,7 +173,7 @@ namespace webpp::views {
                         return stl::forward<T>(val);
                     } else {
                         return lexical::cast<string_type>(stl::forward<T>(val),
-                                                          general_alloc_for<string_type>(etraits));
+                                                          get_alloc_for<string_type>(etraits));
                     }
                 }
 
@@ -325,8 +325,8 @@ namespace webpp::views {
 
         template <EnabledTraits ET>
         explicit constexpr delimiter_set(ET& etraits)
-          : begin{default_begin, general_alloc_for<string_type>(etraits)},
-            end{default_end, general_alloc_for<string_type>(etraits)} {}
+          : begin{default_begin, get_alloc_for<string_type>(etraits)},
+            end{default_end, get_alloc_for<string_type>(etraits)} {}
 
         [[nodiscard]] constexpr bool is_default() const noexcept {
             return begin == default_begin && end == default_end;
@@ -344,7 +344,7 @@ namespace webpp::views {
         using etraits_type     = enable_traits<traits_type>;
 
       private:
-        items_type items{general_alloc_for<items_type>(*this)};
+        items_type items{get_alloc_for<items_type>(*this)};
 
       public:
         template <EnabledTraits ET>
@@ -432,7 +432,7 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        explicit constexpr line_buffer_state(ET& etraits) : data{general_alloc_for<string_type>(etraits)} {}
+        explicit constexpr line_buffer_state(ET& etraits) : data{get_alloc_for<string_type>(etraits)} {}
 
         [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
             for (auto const cur_char : data) {
@@ -496,7 +496,7 @@ namespace webpp::views {
 
         template <EnabledTraits ET>
         explicit constexpr mstch_tag(ET& etraits)
-          : name{general_alloc_for<string_type>(etraits)},
+          : name{get_alloc_for<string_type>(etraits)},
             delim_set{etraits} {}
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
@@ -564,7 +564,7 @@ namespace webpp::views {
         explicit constexpr component(ET&&             etraits,
                                      string_view_type inp_text = "",
                                      string_size_type inp_pos  = string_type::npos)
-          : text(inp_text, general_alloc_for<string_type>(etraits)),
+          : text(inp_text, get_alloc_for<string_type>(etraits)),
             tag{etraits},
             children{get_allocator<component>(etraits)},
             position(inp_pos) {}
@@ -640,7 +640,7 @@ namespace webpp::views {
         static constexpr auto MUSTACHE_CAT = "MustacheView";
 
       private:
-        string_type    error_msg{general_alloc_for<string_type>(*this)};
+        string_type    error_msg{get_alloc_for<string_type>(*this)};
         component_type root_component;
 
       public:
@@ -751,7 +751,7 @@ namespace webpp::views {
 
       private:
         [[nodiscard]] constexpr auto escaper(string_view_type val) {
-            string_type out{general_alloc_for<string_type>(*this)};
+            string_type out{get_alloc_for<string_type>(*this)};
             html_escape(val, out);
             return out;
         }
@@ -897,7 +897,7 @@ namespace webpp::views {
                     }
                     sections.back()->tag.section_text = string_type{
                       input.substr(section_starts.back(), tag_location_start - section_starts.back()),
-                      general_alloc_for<string_type>(*this)};
+                      get_alloc_for<string_type>(*this)};
                     sections.pop_back();
                     section_starts.pop_back();
                 }
@@ -1170,7 +1170,7 @@ namespace webpp::views {
                 return process_template(tmpl);
             };
             renderer_type const renderer{
-              typename renderer_type::type{render, general_alloc_for<typename renderer_type::type>(*this)}
+              typename renderer_type::type{render, get_alloc_for<typename renderer_type::type>(*this)}
             };
             // todo: in original source, the next line wouldn't run if the user is getting a renderer as input
             render_current_line(handler, ctx.line_buffer, nullptr);

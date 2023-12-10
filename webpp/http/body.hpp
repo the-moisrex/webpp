@@ -538,7 +538,7 @@ namespace webpp::http {
                 }
             } else {
                 this->communicator().template emplace<string_communicator_type>(
-                  general_alloc_for<string_communicator_type>(*this));
+                  get_alloc_for<string_communicator_type>(*this));
                 auto& text_writer = stl::get<string_communicator_type>(this->communicator());
                 text_writer.append(data, count);
             }
@@ -580,7 +580,7 @@ namespace webpp::http {
                 return count;
             }
             this->communicator().template emplace<cstream_communicator_type>(
-              general_alloc_for<cstream_communicator_type>(*this));
+              get_alloc_for<cstream_communicator_type>(*this));
             auto& cstream_writer = stl::get<cstream_communicator_type>(this->communicator());
             return cstream_writer.write(data, count);
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
