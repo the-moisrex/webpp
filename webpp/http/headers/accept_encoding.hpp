@@ -350,7 +350,7 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     using accept_encoding =
-      basic_accept_encoding<traits::general_string_allocator<TraitsType>, traits::string_view<TraitsType>>;
+      basic_accept_encoding<traits::string_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 

@@ -13,7 +13,7 @@ namespace webpp::http {
     template <Traits TraitsType, typename Callable>
     struct dynamic_route final : dynamic_route<TraitsType, void> {
         using traits_type   = TraitsType;
-        using string_type   = traits::general_string<traits_type>;
+        using string_type   = traits::string<traits_type>;
         using context_type  = basic_context<traits_type>;
         using callable_type = stl::remove_cvref_t<Callable>;
         using router_type   = basic_dynamic_router<traits_type>;
@@ -60,7 +60,7 @@ namespace webpp::http {
     template <Traits TraitsType>
     struct dynamic_route<TraitsType, void> {
         using traits_type  = TraitsType;
-        using string_type  = traits::general_string<traits_type>;
+        using string_type  = traits::string<traits_type>;
         using context_type = basic_context<traits_type>;
         using router_type  = basic_dynamic_router<traits_type>;
 

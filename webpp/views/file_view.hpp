@@ -18,7 +18,7 @@ namespace webpp::views {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = traits::char_type<traits_type>;
-        using string_type      = traits::general_string<traits_type>; // to satisfy View concept
+        using string_type      = traits::string<traits_type>; // to satisfy View concept
 
         using data_view_type = istl::nothing_type;
         using data_type      = istl::nothing_type;

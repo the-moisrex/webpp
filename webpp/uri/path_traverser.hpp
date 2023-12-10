@@ -301,8 +301,7 @@ namespace webpp::uri {
     };
 
     template <Traits TraitsType = default_traits>
-    using path_iterator =
-      basic_path_iterator<traits::general_string<TraitsType>, traits::string_view<TraitsType>>;
+    using path_iterator = basic_path_iterator<traits::string<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::uri
 

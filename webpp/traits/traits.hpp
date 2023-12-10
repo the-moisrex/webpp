@@ -48,13 +48,12 @@ namespace webpp {
      */
     template <typename T>
     concept Traits = requires {
-        requires AllocatorDescriptor<typename T::general_allocator_descriptor>;   // general allocator
-        requires AllocatorDescriptor<typename T::monotonic_allocator_descriptor>; // monotonic allocator
+        requires AllocatorDescriptor<typename T::allocator_descriptor>;           // general allocator
         requires Logger<typename T::logger_type>;                                 // logger type
 
         typename T::string_view;
-        typename T::template string<typename T::general_allocator_descriptor::template allocator_type<
-          typename T::string_view::value_type>>;
+        typename T::template string<
+          typename T::allocator_descriptor::template allocator_type<typename T::string_view::value_type>>;
 
         // todo: add String<typename T::string_type>; without adding a circular dependency
         // todo: add StringView<typename T::string_view_type>; without adding a circular dependency
@@ -70,9 +69,8 @@ namespace webpp {
      */
     template <typename T>
     concept AllocatorHolder = requires(stl::remove_cvref_t<T> holder) {
-        typename stl::remove_cvref_t<T>::template general_allocator_type<char>;
-        typename stl::remove_cvref_t<T>::template monotonic_allocator_type<char>;
-        holder.template general_allocator<char>();
+        typename stl::remove_cvref_t<T>::template allocator_type<char>;
+        holder.template get_allocator<char>();
         // holder.template monotonic_allocator<char>();
     };
 
@@ -105,26 +103,8 @@ namespace webpp {
      */
     namespace traits {
 
-        namespace details {
-
-            template <Traits TT, typename T>
-            struct monotonic_allocator_extractor {
-                using type = void;
-            };
-
-            template <Traits TT, typename T>
-                requires(!stl::is_void_v<typename TT::monotonic_allocator_descriptor>)
-            struct monotonic_allocator_extractor<TT, T> {
-                using type = typename TT::monotonic_allocator_descriptor::template allocator_type<T>;
-            };
-
-        } // namespace details
-
         template <Traits TT, typename T = stl::byte>
-        using local_allocator = typename details::monotonic_allocator_extractor<TT, T>::type;
-
-        template <Traits TT, typename T = stl::byte>
-        using general_allocator = typename TT::general_allocator_descriptor::template allocator_type<T>;
+        using allocator_type_of = typename TT::allocator_descriptor::template allocator_type<T>;
 
         template <Traits TT>
         using string_view = typename TT::string_view;
@@ -133,20 +113,11 @@ namespace webpp {
         using char_type = typename string_view<TT>::value_type; // we could use istl::char_type_of_t
 
         template <Traits TT>
-        using local_string_allocator = local_allocator<TT, char_type<TT>>;
+        using string_allocator = allocator_type_of<TT, char_type<TT>>;
 
-        template <Traits TT>
-        using general_string_allocator = general_allocator<TT, char_type<TT>>;
-
-        template <Traits TT, Allocator AllocType>
+        template <Traits TT, Allocator AllocType = string_allocator<TT>>
         using string = typename TT::template string<
           typename stl::allocator_traits<AllocType>::template rebind_alloc<char_type<TT>>>;
-
-        template <Traits TT>
-        using general_string = string<TT, general_string_allocator<TT>>;
-
-        template <Traits TT>
-        using local_string = string<TT, local_string_allocator<TT>>;
 
         template <Traits TT>
         using logger = typename TT::logger_type;
@@ -155,10 +126,10 @@ namespace webpp {
         concept has_alloc_for =
           (Traits<TT> && requires {
               typename T::allocator_type;
-              requires stl::convertible_to<general_allocator<TT>, typename T::allocator_type>;
+              requires stl::convertible_to<allocator_type_of<TT>, typename T::allocator_type>;
           }) || (EnabledTraits<TT> && requires {
               typename T::allocator_type;
-              requires stl::convertible_to<general_allocator<typename TT::traits_type>,
+              requires stl::convertible_to<allocator_type_of<typename TT::traits_type>,
                                            typename T::allocator_type>;
           });
 

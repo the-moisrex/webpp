@@ -252,7 +252,7 @@ namespace webpp::http {
         constexpr auto switch_context(ContextType&& ctx, ReqType const& req) const noexcept {
             using context_type = stl::remove_cvref_t<ContextType>;
             using traits_type  = typename context_type::traits_type;
-            using string_type  = traits::general_string<traits_type>;
+            using string_type  = traits::string<traits_type>;
 
             if constexpr (HasPathExtension<context_type>) {
                 return ctx;

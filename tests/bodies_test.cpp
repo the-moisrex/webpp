@@ -13,7 +13,7 @@ using namespace webpp::details;
 using namespace webpp::http::details;
 
 
-using string_type = traits::general_string<default_traits>;
+using string_type = traits::string<default_traits>;
 using body_type   = response_body<default_traits>;
 
 TEST(Body, Concepts) {

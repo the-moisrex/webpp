@@ -12,7 +12,7 @@ namespace webpp::fastcgi {
     struct fcgi_request : public CommonHTTPRequest {
         using common_http_request = CommonHTTPRequest;
         using traits_type         = TraitsType;
-        using string_type         = traits::general_string<traits_type>;
+        using string_type         = traits::string<traits_type>;
 
         istl::map<traits_type, string_type, string_type> data;
     };

@@ -28,8 +28,8 @@ namespace webpp::beast_proto {
 
         // if you change, remember to sync these types with beast's http_worker's types, I'm not using
         // http_worker_type directly because it's a still an incomplete type at this point.
-        using string_type         = traits::general_string<traits_type>;
-        using char_allocator_type = traits::general_string_allocator<traits_type>;
+        using string_type         = traits::string<traits_type>;
+        using char_allocator_type = traits::string_allocator<traits_type>;
         using beast_body_type     = string_body_of<string_type>;
         using beast_request_parser_type =
           boost::beast::http::request_parser<beast_body_type, char_allocator_type>;

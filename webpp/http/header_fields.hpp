@@ -112,7 +112,7 @@ namespace webpp::http {
     using header_field_view_of = basic_header_field<traits::string_view<TraitsType>>;
 
     template <Traits TraitsType>
-    using header_field_of = basic_header_field<traits::general_string<TraitsType>>;
+    using header_field_of = basic_header_field<traits::string<TraitsType>>;
 
     /**
      * hash function of std::unordered_set<webpp::basic_cookie>
@@ -164,7 +164,7 @@ namespace webpp::http {
         using value_type     = typename field_type::string_type;
         using string_type    = typename field_type::string_type;
         using allocator_type = typename string_type::allocator_type;
-        // using field_allocator_type = traits::general_allocator<traits_type, field_type>;
+        // using field_allocator_type = traits::allocator_type_of<traits_type, field_type>;
 
       private:
         using vector_allocator_type =

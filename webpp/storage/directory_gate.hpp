@@ -5,9 +5,7 @@
 #include "../crypto/base64.hpp"
 #include "../memory/object.hpp"
 #include "../storage/file.hpp"
-#include "../traits/default_traits.hpp"
 #include "../traits/enable_traits.hpp"
-#include "../version.hpp"
 #include "cache_concepts.hpp"
 
 #include <filesystem>
@@ -82,7 +80,7 @@ namespace webpp {
             }
 
           public:
-            file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{&the_gate} {}
+            explicit file_iterator(storage_gate_type& the_gate) : dir_iter{}, gate{&the_gate} {}
 
             file_iterator(stl::filesystem::path const& dir, storage_gate_type& the_gate)
               : dir_iter{dir, ec},
@@ -137,12 +135,12 @@ namespace webpp {
         template <Traits TraitsType, CacheFileKey KeyT, CacheFileValue ValueT, CacheFileOptions OptsT>
         struct storage_gate : enable_traits<TraitsType> {
             using traits_type      = TraitsType;
-            using etraits          = enable_traits<TraitsType>;
+            using etraits_type     = enable_traits<TraitsType>;
             using path_type        = stl::filesystem::path;
             using key_type         = KeyT;
             using value_type       = ValueT;
             using options_type     = OptsT;
-            using string_type      = traits::general_string<traits_type>;
+            using string_type      = traits::string<traits_type>;
             using iterator         = file_iterator<storage_gate>;
             using const_iterator   = iterator;
             using char_type        = typename string_type::value_type;
@@ -164,7 +162,7 @@ namespace webpp {
             }
 
             string_type serialize_opts(options_type const& opts) {
-                auto opts_str = lexical::cast<traits::general_string<traits_type>>(opts, *this);
+                auto opts_str = lexical::cast<traits::string<traits_type>>(opts, *this);
                 if (gate_opts.encode_options) {
                     base64::encode(opts_str, opts_str);
                 }
@@ -172,7 +170,7 @@ namespace webpp {
             }
 
             string_type serialize_file(bundle_type const& data) {
-                string_type data_str  = object::make_general<string_type>(*this);
+                string_type data_str  = object::make_object<string_type>(*this);
                 string_type key_str   = lexical::cast<string_type>(data.key, *this);
                 auto        value_str = lexical::cast<string_type>(data.value, *this);
                 auto        opts_str  = serialize_opts(data.options);
@@ -220,7 +218,7 @@ namespace webpp {
                       *this);
                 } else {
                     auto opts_str = data.substr(end_key_index + 1, end_options_index - (end_key_index + 1));
-                    string_type decoded_opts = object::make_general<string_type>(*this);
+                    string_type decoded_opts = object::make_object<string_type>(*this);
                     if (base64::decode(opts_str, decoded_opts)) {
                         opts = lexical::cast<options_type>(decoded_opts, *this);
                     } else {
@@ -242,16 +240,16 @@ namespace webpp {
 
             void set_temp_dir() {
                 static constexpr stl::size_t temp_dir_size = 32;
-                stl::error_code              ec;
-                dir = stl::filesystem::temp_directory_path(ec);
-                if (ec) {
+                stl::error_code              err;
+                dir = stl::filesystem::temp_directory_path(err);
+                if (err) {
                     this->logger.error(DIR_GATE_CAT,
                                        "Cannot get the OS's temp directory and you're not passing us any "
                                        "directory path to use as the cache directory.",
-                                       ec);
+                                       err);
                     return;
                 }
-                auto random_str = object::make_local<string_type>(
+                auto random_str = object::make_object<string_type>(
                   *this,
                   "0123456789"
                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -259,37 +257,37 @@ namespace webpp {
                 std::shuffle(random_str.begin(), random_str.end(), stl::mt19937{stl::random_device{}()});
                 random_str.resize(temp_dir_size);
                 dir.append(random_str.begin(), random_str.end());
-                if (stl::filesystem::exists(dir)) {
+                if (exists(dir)) {
                     set_temp_dir();
                 } else {
-                    stl::filesystem::create_directory(dir, ec);
-                    if (ec) {
+                    create_directory(dir, err);
+                    if (err) {
                         this->logger.error(
                           DIR_GATE_CAT,
                           "Cannot create a temp directory for cache files. Pass a good directory as input.",
-                          ec);
+                          err);
                     }
                 }
             }
 
             template <typename NameT>
-            string_type hash_name(auto&& et, NameT&& name) const {
+            string_type hash_name(auto&& etraits, NameT&& name) const {
                 return lexical::cast<string_type>(
-                  stl::hash<string_type>{}(lexical::cast<string_type>(stl::forward<NameT>(name), et)),
-                  et);
+                  stl::hash<string_type>{}(lexical::cast<string_type>(stl::forward<NameT>(name), etraits)),
+                  etraits);
             }
 
           public:
             template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&&         et,
+            storage_gate(ET&&         etraits,
                          path_type    cache_dir, // empty string will create a temp directory
                          NameT&&      name,
                          gate_options input_opts)
-              : etraits{et},
+              : etraits_type{etraits},
                 dir{stl::move(cache_dir)},
-                hashed_name{hash_name(et, stl::forward<NameT>(name))},
+                hashed_name{hash_name(etraits, stl::forward<NameT>(name))},
                 gate_opts{stl::move(input_opts)} {
                 // create a temp directory and use that if the specified path is empty
                 if (dir.empty()) {
@@ -300,12 +298,12 @@ namespace webpp {
             template <typename ET, typename NameT>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&&      et,
+            storage_gate(ET&&      etraits,
                          path_type cache_dir, // empty string will create a temp directory
                          NameT&&   name)
-              : etraits{et},
+              : etraits_type{etraits},
                 dir{stl::move(cache_dir)},
-                hashed_name{hash_name(et, stl::forward<NameT>(name))} {
+                hashed_name{hash_name(etraits, stl::forward<NameT>(name))} {
                 // create a temp directory and use that if the specified path is empty
                 if (dir.empty()) {
                     set_temp_dir();
@@ -315,8 +313,8 @@ namespace webpp {
             template <typename ET>
                 requires(EnabledTraits<ET> && !stl::same_as<ET, storage_gate const&> &&
                          !stl::same_as<ET, storage_gate &&>)
-            storage_gate(ET&& et, path_type cache_dir)
-              : etraits{et},
+            storage_gate(ET&& etraits, path_type cache_dir)
+              : etraits_type{etraits},
                 dir{stl::move(cache_dir)} {
                 if (dir.empty()) {
                     set_temp_dir();
@@ -326,8 +324,9 @@ namespace webpp {
             // NOLINTBEGIN(bugprone-forwarding-reference-overload)
             template <EnabledTraits ET>
                 requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
-            storage_gate(ET&& et) : etraits{et},
-                                    hashed_name{hash_name(et, "default")} {
+            explicit storage_gate(ET&& etraits)
+              : etraits_type{etraits},
+                hashed_name{hash_name(etraits, "default")} {
                 set_temp_dir();
             }
 
@@ -369,15 +368,13 @@ namespace webpp {
             }
 
             stl::optional<bundle_type> get_file(path_type const& filepath) {
-                auto       result = object::make_general<string_type>(*this);
-                bool const res    = file::read_to(filepath, result);
-                if (res) {
+                auto result = object::make_object<string_type>(*this);
+                if (file::read_to(filepath, result)) {
                     return deserialize_file(result);
-                } else {
-                    this->logger.error(DIR_GATE_CAT,
-                                       fmt::format("Cannot read the cache file {}", filepath.string()));
-                    return stl::nullopt;
                 }
+                this->logger.error(DIR_GATE_CAT,
+                                   fmt::format("Cannot read the cache file {}", filepath.string()));
+                return stl::nullopt;
             }
 
             stl::optional<bundle_type> get(key_type const& key) {
@@ -413,33 +410,33 @@ namespace webpp {
             }
 
             bool erase(key_type const& key) noexcept {
-                stl::error_code ec;
+                stl::error_code err;
                 auto const      key_file = key_path(key);
-                stl::filesystem::remove(key_file, ec);
-                if (ec) {
+                stl::filesystem::remove(key_file, err);
+                if (err) {
                     this->logger.error(
                       DIR_GATE_CAT,
                       fmt::format("Cannot remove cache file {} (key name: {})", key_file, key),
-                      ec);
+                      err);
                     return false;
                 }
                 return true;
             }
 
             void clear() {
-                stl::error_code ec;
-                for (auto const& file : stl::filesystem::directory_iterator(dir, ec)) {
+                stl::error_code err;
+                for (auto const& file : stl::filesystem::directory_iterator(dir, err)) {
                     if (!is_our_cache(file.path())) {
                         continue;
                     }
-                    stl::filesystem::remove(file, ec);
-                    if (ec) {
-                        this->logger.error(DIR_GATE_CAT, "Cannot remove cache file.", ec);
-                        ec.clear();
+                    stl::filesystem::remove(file, err);
+                    if (err) {
+                        this->logger.error(DIR_GATE_CAT, "Cannot remove cache file.", err);
+                        err.clear();
                     }
                 }
-                if (ec) {
-                    this->logger.error(DIR_GATE_CAT, "Cannot traverse the directory", ec);
+                if (err) {
+                    this->logger.error(DIR_GATE_CAT, "Cannot traverse the directory", err);
                 }
             }
 
@@ -447,8 +444,8 @@ namespace webpp {
             void erase_if(Pred&& predicate) {
                 namespace fs = stl::filesystem;
 
-                stl::error_code ec;
-                for (auto const& file : stl::filesystem::directory_iterator(dir, ec)) {
+                stl::error_code err;
+                for (auto const& file : stl::filesystem::directory_iterator(dir, err)) {
                     if (!is_our_cache(file.path())) {
                         continue;
                     }
@@ -457,33 +454,33 @@ namespace webpp {
                         continue;
                     }
                     if (predicate(data.value())) {
-                        fs::remove(file.path(), ec);
-                        if (ec) {
+                        fs::remove(file.path(), err);
+                        if (err) {
                             this->logger.error(
                               DIR_GATE_CAT,
                               fmt::format("Cannot remove cache file {} (key name: {})",
                                           file.path().string(),
                                           data->key),
-                              ec);
+                              err);
                         }
                     }
                 }
             }
 
-            const_iterator begin() const {
-                return {dir, *this};
+            [[nodiscard]] const_iterator begin() const {
+                return const_iterator{dir, *this};
             }
 
-            const_iterator end() const {
-                return {*this};
+            [[nodiscard]] const_iterator end() const {
+                return const_iterator{*this};
             }
 
-            iterator begin() {
-                return {dir, *this};
+            [[nodiscard]] iterator begin() {
+                return iterator{dir, *this};
             }
 
-            iterator end() {
-                return {*this};
+            [[nodiscard]] iterator end() {
+                return iterator{*this};
             }
         };
     };

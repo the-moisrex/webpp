@@ -53,10 +53,10 @@ namespace webpp::beast_proto {
         using buffer_type           = boost::beast::flat_buffer;
         using request_header_type   = typename request_type::headers_type;
         using request_body_type     = typename request_type::body_type;
-        using char_allocator_type   = traits::general_string_allocator<traits_type>;
-        using fields_allocator_type = traits::general_string_allocator<traits_type>;
+        using char_allocator_type   = traits::string_allocator<traits_type>;
+        using fields_allocator_type = traits::string_allocator<traits_type>;
         using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
-        using string_type           = traits::general_string<traits_type>;
+        using string_type           = traits::string<traits_type>;
         using beast_body_type       = string_body_of<string_type>;
         using beast_response_type   = boost::beast::http::response<beast_body_type, beast_fields_type>;
         using beast_response_serializer_type =
@@ -107,8 +107,8 @@ namespace webpp::beast_proto {
             parser{
               stl::in_place,
               stl::piecewise_construct,
-              stl::make_tuple(),                                           // body args
-              stl::make_tuple(general_allocator<beast_fields_type>(*this)) // fields args
+              stl::make_tuple(),                                       // body args
+              stl::make_tuple(get_allocator<beast_fields_type>(*this)) // fields args
             } {}
 
         /**
@@ -294,8 +294,8 @@ namespace webpp::beast_proto {
             // destroy the request type + be ready for the next request
             req.emplace(*server);
             parser.emplace(stl::piecewise_construct,
-                           stl::make_tuple(),                                           // body args
-                           stl::make_tuple(general_allocator<beast_fields_type>(*this)) // fields args
+                           stl::make_tuple(),                                       // body args
+                           stl::make_tuple(get_allocator<beast_fields_type>(*this)) // fields args
             );
 
 
@@ -327,7 +327,7 @@ namespace webpp::beast_proto {
         using etraits                    = typename server_type::etraits;
         using traits_type                = typename etraits::traits_type;
         using http_worker_type           = http_worker<server_type>;
-        using http_worker_allocator_type = traits::general_allocator<traits_type, http_worker_type>;
+        using http_worker_allocator_type = traits::allocator_type_of<traits_type, http_worker_type>;
         using http_workers_type          = stl::list<http_worker_type, http_worker_allocator_type>;
         using socket_type                = asio::ip::tcp::socket;
 
@@ -341,7 +341,7 @@ namespace webpp::beast_proto {
 
         explicit thread_worker(server_type& input_server)
           : server(&input_server),
-            http_workers{general_allocator<http_workers_type>(*server)} {
+            http_workers{get_allocator<http_workers_type>(*server)} {
             for (stl::size_t i = 0UL; i != server->http_worker_count; ++i) {
                 http_workers.emplace_back(server);
             }

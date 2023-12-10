@@ -60,10 +60,10 @@ namespace webpp::views {
     struct basic_renderer {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
 
         using type = istl::function<string_type(string_view_type, bool escaped),
-                                    traits::general_allocator<traits_type, stl::byte>>;
+                                    traits::allocator_type_of<traits_type, stl::byte>>;
 
         constexpr string_type operator()(string_view_type text, bool escaped = false) const {
             return func(text, escaped);
@@ -75,14 +75,14 @@ namespace webpp::views {
         type func;
 
         template <Traits>
-        friend class mustache_view;
+        friend struct mustache_view;
     };
 
     namespace details {
         template <Traits TraitsType>
         struct mustache_data_view_settings {
             using traits_type      = TraitsType;
-            using string_type      = traits::general_string<traits_type>;
+            using string_type      = traits::string<traits_type>;
             using char_type        = traits::char_type<traits_type>;
             using string_view_type = traits::string_view<traits_type>;
 
@@ -93,8 +93,10 @@ namespace webpp::views {
 
             template <typename V>
             static constexpr bool is_lambda = (
-              requires(V v) { v(requires_arg_cvref(istl::StringView)); } ||
-              requires(V v, renderer_type renderer) { v(requires_arg_cvref(istl::StringView), renderer); });
+              requires(V view) { view(requires_arg_cvref(istl::StringView)); } ||
+              requires(V view, renderer_type renderer) {
+                  view(requires_arg_cvref(istl::StringView), renderer);
+              });
 
             template <typename Func>
             struct lambda_fixer : Func {
@@ -114,9 +116,9 @@ namespace webpp::views {
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
                 template <typename ET>
                     requires(!istl::cvref_as<ET, mustache_data_view_settings>)
-                constexpr lambda_fixer(ET&& et, Func&& func) noexcept
+                constexpr lambda_fixer(ET const& etraits, Func&& func) noexcept
                   : Func{stl::forward<Func>(func)},
-                    string_allocator{general_allocator<char_type>(et)} {}
+                    string_allocator{get_allocator<char_type>(etraits)} {}
 
                 // NOLINTEND(cppcoreguidelines-pro-type-member-init)
 
@@ -143,21 +145,21 @@ namespace webpp::views {
                              lambda_type,
                              partial_type,
                              string_type,
-                             stl::vector<variable, traits::general_allocator<traits_type, variable>>> {
+                             stl::vector<variable, traits::allocator_type_of<traits_type, variable>>> {
                 using variant_type =
                   stl::variant<bool,
                                lambda_type,
                                partial_type,
                                string_type,
-                               stl::vector<variable, traits::general_allocator<traits_type, variable>>>;
+                               stl::vector<variable, traits::allocator_type_of<traits_type, variable>>>;
 
-                using list_type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
+                using list_type = stl::vector<variable, traits::allocator_type_of<traits_type, variable>>;
 
               private:
                 string_type key_value;
 
                 template <typename T, EnabledTraits ET>
-                constexpr auto convert(T&& val, ET&& et) const {
+                constexpr auto convert(T&& val, ET const& etraits) const {
                     using value_type = stl::remove_cvref_t<T>;
                     if constexpr (
                       istl::one_of<string_type,
@@ -171,31 +173,31 @@ namespace webpp::views {
                         return stl::forward<T>(val);
                     } else {
                         return lexical::cast<string_type>(stl::forward<T>(val),
-                                                          general_alloc_for<string_type>(et));
+                                                          general_alloc_for<string_type>(etraits));
                     }
                 }
 
               public:
                 template <EnabledTraits ET, typename StrT, typename T>
                     requires(istl::StringifiableOf<string_type, StrT>)
-                constexpr variable(ET&& et, StrT&& input_key, T&& input_value)
-                  : variant_type{convert(stl::forward<T>(input_value), et)},
+                constexpr variable(ET&& etraits, StrT&& input_key, T&& input_value)
+                  : variant_type{convert(stl::forward<T>(input_value), etraits)},
                     key_value{istl::stringify_of<string_type>(stl::forward<StrT>(input_key),
-                                                              general_allocator<char_type>(et))} {}
+                                                              get_allocator<char_type>(etraits))} {}
 
                 template <EnabledTraits ET, typename StrT, typename T>
-                constexpr variable(ET&& et, stl::pair<StrT, T> input)
-                  : variant_type{convert(stl::move(input.second), et)},
+                constexpr variable(ET&& etraits, stl::pair<StrT, T> input)
+                  : variant_type{convert(stl::move(input.second), etraits)},
                     key_value{istl::stringify_of<string_type>(stl::move(input.first),
-                                                              general_allocator<char_type>(et))} {}
+                                                              get_allocator<char_type>(etraits))} {}
 
                 [[nodiscard]] constexpr string_view_type key() const noexcept {
                     return istl::string_viewify_of<string_view_type>(key_value);
                 }
 
                 [[nodiscard]] constexpr bool is_false() const noexcept {
-                    if (auto const* v = get_if_bool()) {
-                        return *v;
+                    if (auto const* views = get_if_bool()) {
+                        return *views;
                     }
                     if (auto const* vlist = get_if_list()) {
                         return vlist->empty();
@@ -280,7 +282,7 @@ namespace webpp::views {
             };
 
             // data type
-            using type = stl::vector<variable, traits::general_allocator<traits_type, variable>>;
+            using type = stl::vector<variable, traits::allocator_type_of<traits_type, variable>>;
         };
 
         enum class tag_type : stl::uint8_t {
@@ -310,7 +312,7 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct delimiter_set {
         using traits_type = TraitsType;
-        using string_type = traits::general_string<traits_type>;
+        using string_type = traits::string<traits_type>;
 
         static constexpr auto default_begin = "{{";
         static constexpr auto default_end   = "}}";
@@ -322,9 +324,9 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        explicit constexpr delimiter_set(ET& et)
-          : begin{default_begin, general_alloc_for<string_type>(et)},
-            end{default_end, general_alloc_for<string_type>(et)} {}
+        explicit constexpr delimiter_set(ET& etraits)
+          : begin{default_begin, general_alloc_for<string_type>(etraits)},
+            end{default_end, general_alloc_for<string_type>(etraits)} {}
 
         [[nodiscard]] constexpr bool is_default() const noexcept {
             return begin == default_begin && end == default_end;
@@ -339,14 +341,14 @@ namespace webpp::views {
         using data_type        = typename details::mustache_data_view_settings<traits_type>::type;
         using variable_type    = typename data_type::value_type;
         using items_type       = istl::vector<variable_type const*, traits_type>;
-        using etraits          = enable_traits<traits_type>;
+        using etraits_type     = enable_traits<traits_type>;
 
       private:
         items_type items{general_alloc_for<items_type>(*this)};
 
       public:
         template <EnabledTraits ET>
-        context(ET&& et, variable_type const* data) : etraits{stl::forward<ET>(et)} {
+        context(ET&& etraits, variable_type const* data) : etraits_type{stl::forward<ET>(etraits)} {
             push(data);
         }
 
@@ -358,7 +360,7 @@ namespace webpp::views {
         context& operator=(context const&)     = delete;
 
         template <EnabledTraits ET>
-        context(ET&& et, data_type const* data) : etraits{stl::forward<ET>(et)} {
+        context(ET&& etraits, data_type const* data) : etraits_type{stl::forward<ET>(etraits)} {
             items.reserve(data->size());
             stl::transform(stl::begin(*data),
                            stl::end(*data),
@@ -391,7 +393,7 @@ namespace webpp::views {
                 return nullptr;
             }
             // process x.y-like name
-            auto names = object::make_local<stl::vector<string_view_type>>(*this);
+            auto names = object::make_object<stl::vector<string_view_type>>(*this); // todo: use local alloc
             strings::basic_splitter<string_view_type, char_type>(name, char_type{'.'}).split(names);
             for (auto const* item : items) {
                 auto* var = item;
@@ -421,7 +423,7 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct line_buffer_state {
         using traits_type = TraitsType;
-        using string_type = traits::general_string<traits_type>;
+        using string_type = traits::string<traits_type>;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
         string_type data;
@@ -430,7 +432,7 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        explicit constexpr line_buffer_state(ET& et) : data{general_alloc_for<string_type>(et)} {}
+        explicit constexpr line_buffer_state(ET& etraits) : data{general_alloc_for<string_type>(etraits)} {}
 
         [[nodiscard]] constexpr bool is_empty_or_contains_only_whitespace() const noexcept {
             for (auto const cur_char : data) {
@@ -472,15 +474,15 @@ namespace webpp::views {
         constexpr ~context_internal() = default;
 
         template <EnabledTraits ET>
-        explicit constexpr context_internal(ET& et)
-          : delim_set{et},
-            line_buffer{et} {}
+        explicit constexpr context_internal(ET& etraits)
+          : delim_set{etraits},
+            line_buffer{etraits} {}
     };
 
     template <Traits TraitsType>
     struct mstch_tag /* gcc doesn't allow "tag tag;" so rename the class :( */ {
         using traits_type = TraitsType;
-        using string_type = traits::general_string<traits_type>;
+        using string_type = traits::string<traits_type>;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 
@@ -493,9 +495,9 @@ namespace webpp::views {
         // NOLINTEND(misc-non-private-member-variables-in-classes)
 
         template <EnabledTraits ET>
-        explicit constexpr mstch_tag(ET& et)
-          : name{general_alloc_for<string_type>(et)},
-            delim_set{et} {}
+        explicit constexpr mstch_tag(ET& etraits)
+          : name{general_alloc_for<string_type>(etraits)},
+            delim_set{etraits} {}
 
         [[nodiscard]] constexpr bool is_section_begin() const noexcept {
             using enum details::tag_type;
@@ -533,11 +535,11 @@ namespace webpp::views {
     template <Traits TraitsType>
     struct component {
         using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
         using string_size_type = typename string_type::size_type;
 
-        using children_type = stl::vector<component, traits::general_allocator<traits_type, component>>;
+        using children_type = stl::vector<component, traits::allocator_type_of<traits_type, component>>;
 
         // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 
@@ -559,12 +561,12 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, component>)
-        explicit constexpr component(ET&&             et,
+        explicit constexpr component(ET&&             etraits,
                                      string_view_type inp_text = "",
                                      string_size_type inp_pos  = string_type::npos)
-          : text(inp_text, general_alloc_for<string_type>(et)),
-            tag{et},
-            children{general_allocator<component>(et)},
+          : text(inp_text, general_alloc_for<string_type>(etraits)),
+            tag{etraits},
+            children{get_allocator<component>(etraits)},
             position(inp_pos) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -613,9 +615,9 @@ namespace webpp::views {
 
     template <Traits TraitsType>
     struct mustache_view : enable_traits<TraitsType> {
-        using etraits          = enable_traits<TraitsType>;
+        using etraits_type     = enable_traits<TraitsType>;
         using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = typename string_type::value_type;
 
@@ -632,7 +634,7 @@ namespace webpp::views {
 
         using render_handler = istl::function<
           void(string_view_type),
-          traits::general_allocator<traits_type, stl::byte>>; // todo: see if we need this handler
+          traits::allocator_type_of<traits_type, stl::byte>>; // todo: see if we need this handler
         using renderer_type = basic_renderer<traits_type>;
 
         static constexpr auto MUSTACHE_CAT = "MustacheView";
@@ -645,9 +647,9 @@ namespace webpp::views {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, mustache_view>)
-        explicit constexpr mustache_view(ET&& et) noexcept
-          : etraits{et},
-            root_component{et} {}
+        explicit constexpr mustache_view(ET&& etraits) noexcept
+          : etraits_type{etraits},
+            root_component{etraits} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
@@ -730,7 +732,7 @@ namespace webpp::views {
                   },
                   context);
             } else if constexpr (stl::same_as<DT, data_type> || istl::Collection<DT>) {
-                auto data_vec = object::make_general<data_type>(*this);
+                auto data_vec = object::make_object<data_type>(*this);
                 data_vec.reserve(data.size());
                 stl::transform(stl::begin(data),
                                stl::end(data),
@@ -769,16 +771,19 @@ namespace webpp::views {
 
             bool current_delimiter_is_brace{delim_set.is_default()};
 
+            // originally, I used a local allocator here
             using sections_type =
-              stl::vector<component_type*, traits::local_allocator<traits_type, component_type*>>;
+              stl::vector<component_type*, traits::allocator_type_of<traits_type, component_type*>>;
             using section_starts_type =
-              stl::vector<string_size_type, traits::local_allocator<traits_type, component_type*>>;
+              stl::vector<string_size_type, traits::allocator_type_of<traits_type, string_size_type>>;
 
-            auto sections       = object::make_local<sections_type>(*this, &root_component);
-            auto section_starts = object::make_local<section_starts_type>(*this);
+            auto sections = object::make_object<sections_type>(*this, stl::initializer_list{&root_component});
+            auto section_starts = object::make_object<section_starts_type>(*this);
 
-            auto             current_text          = object::make_local<string_type>(*this);
+            auto             current_text          = object::make_object<string_type>(*this);
             string_size_type current_text_position = string_type::npos;
+
+            // todo: reserve, since we don't use local allocators anymore
 
             current_text.reserve(input_size);
 
@@ -1002,7 +1007,7 @@ namespace webpp::views {
 
 
         constexpr string_type render(context_internal<traits_type>& ctx) {
-            auto out = object::make_general<string_type>(*this);
+            auto out = object::make_object<string_type>(*this);
             // todo: optimization chance: out::reserve
             render(
               [&]<typename ContentT>(ContentT&& content) {

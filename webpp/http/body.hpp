@@ -35,13 +35,13 @@ namespace webpp::http {
     };
 
     template <Traits TraitsType>
-    using string_response_body_communicator = traits::general_string<TraitsType>;
+    using string_response_body_communicator = traits::string<TraitsType>;
 
     template <Traits TraitsType>
     using stream_response_body_communicator = stl::shared_ptr<
       stl::basic_stringstream<traits::char_type<TraitsType>,
                               stl::char_traits<traits::char_type<TraitsType>>,
-                              traits::general_allocator<TraitsType, traits::char_type<TraitsType>>>>;
+                              traits::allocator_type_of<TraitsType, traits::char_type<TraitsType>>>>;
 
     /**
      * CStreamBasedBodyCommunicator + SizableBody (Even though we don't need to support SizableBody but can be
@@ -191,15 +191,13 @@ namespace webpp::http {
             requires(EnabledTraits<ComT>)
         explicit constexpr body_communicator(ComT& body)
           : etraits_type{body},
-            communicator_var{
-              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
 
         template <StreamBasedBodyReader ComT>
             requires(EnabledTraits<ComT>)
         explicit constexpr body_communicator(ComT& body)
           : etraits_type{body},
-            communicator_var{
-              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
 
         template <EnabledTraits ET, TextBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
@@ -209,14 +207,12 @@ namespace webpp::http {
         template <EnabledTraits ET, CStreamBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
           : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{
-              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
 
         template <EnabledTraits ET, StreamBasedBodyReader ComT>
         constexpr body_communicator(ET&& etraits, ComT& body)
           : etraits_type{stl::forward<ET>(etraits)},
-            communicator_var{
-              string_communicator_type{details::get_as<traits::general_string<traits_type>>(body)}} {}
+            communicator_var{string_communicator_type{details::get_as<traits::string<traits_type>>(body)}} {}
 
         constexpr body_communicator(body_communicator const&)                = default;
         constexpr body_communicator(body_communicator&&) noexcept            = default;
@@ -460,12 +456,12 @@ namespace webpp::http {
             return as_string();
         }
 
-        [[nodiscard]] constexpr traits::general_string<traits_type> as_string() const {
-            return as<traits::general_string<traits_type>>();
+        [[nodiscard]] constexpr traits::string<traits_type> as_string() const {
+            return as<traits::string<traits_type>>();
         }
 
-        [[nodiscard]] constexpr traits::general_string<traits_type> as_string() {
-            return as<traits::general_string<traits_type>>();
+        [[nodiscard]] constexpr traits::string<traits_type> as_string() {
+            return as<traits::string<traits_type>>();
         }
 
         [[nodiscard]] constexpr bool operator==(body_reader const& body) const noexcept {
@@ -661,7 +657,7 @@ namespace webpp::http {
       private:
         void init_stream() {
             this->communicator().template emplace<stream_communicator_type>(stl::allocate_shared<stream_type>(
-              general_allocator<stream_type>(*this),
+              get_allocator<stream_type>(*this),
               std::ios_base::in | std::ios_base::out));
         }
     };

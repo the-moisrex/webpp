@@ -60,7 +60,7 @@ namespace webpp::http {
         struct request_view_interface {
             using traits_type      = TraitsType;
             using string_view_type = traits::string_view<traits_type>;
-            using string_type      = traits::general_string<traits_type>;
+            using string_type      = traits::string<traits_type>;
 
           protected:
             template <typename StrT, EnabledTraits ET>
@@ -147,7 +147,7 @@ namespace webpp::http {
     struct basic_request_view {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using fields_provider  = details::dynamic_header_fields_provider<traits_type>;
         using headers_type     = request_headers<fields_provider>;
 

@@ -389,7 +389,7 @@ namespace webpp::json::rapidjson {
               "The specified ValueType doesn't seem to be a valid rapidjson value");
 
             using traits_type            = TraitsType;
-            using string_type            = traits::general_string<traits_type>;
+            using string_type            = traits::string<traits_type>;
             using string_view_type       = traits::string_view<traits_type>;
             using char_type              = traits::char_type<traits_type>;
             using generic_value_type     = generic_value<traits_type, value_type>;
@@ -932,9 +932,9 @@ namespace webpp::json::rapidjson {
     struct document : public details::generic_value<TraitsType, ::rapidjson::Document> {
         using traits_type              = TraitsType;
         using string_view_type         = traits::string_view<traits_type>;
-        using string_type              = traits::general_string<traits_type>;
+        using string_type              = traits::string<traits_type>;
         using char_type                = traits::char_type<traits_type>;
-        using general_allocator_type   = traits::general_allocator<traits_type, char_type>;
+        using general_allocator_type   = traits::allocator_type_of<traits_type, char_type>;
         using value_type               = value<traits_type>;
         using rapidjson_document_type  = ::rapidjson::Document;
         using rapidjson_value_type     = typename rapidjson_document_type::ValueType;

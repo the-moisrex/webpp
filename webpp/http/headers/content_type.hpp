@@ -16,19 +16,20 @@ namespace webpp::http {
         using string_tokenizer_type = string_tokenizer<str_v, str_const_iterator>;
 
         // ctor
-        constexpr basic_content_type(auto&&... args) noexcept : data{stl::forward<decltype(args)>(args)...} {}
+        explicit constexpr basic_content_type(auto&&... args) noexcept
+          : data{stl::forward<decltype(args)>(args)...} {}
 
         void parse() noexcept {
             // todo
         }
 
-        mime_type media_type() const {
+        [[nodiscard]] mime_type media_type() const {
             //
         }
 
-        string_view_type boundary() const {}
+        [[nodiscard]] string_view_type boundary() const {}
 
-        bool is_multipart();
+        [[nodiscard]] bool is_multipart();
 
         auto charset() const;
 
@@ -39,7 +40,7 @@ namespace webpp::http {
 
     template <Traits TraitsType>
     using content_type =
-      basic_content_type<traits::general_string_allocator<TraitsType>, traits::string_view<TraitsType>>;
+      basic_content_type<traits::string_allocator<TraitsType>, traits::string_view<TraitsType>>;
 
 } // namespace webpp::http
 

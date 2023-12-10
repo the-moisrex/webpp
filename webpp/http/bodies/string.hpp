@@ -41,7 +41,7 @@ namespace webpp::http {
         using traits_type   = TraitsType;
         using response_type = typename context_type::response_type;
         using body_type     = typename response_type::body_type;
-        using string_type   = traits::general_string<traits_type>;
+        using string_type   = traits::string<traits_type>;
 
         using context_type::context_type; // inherit the constructors
 
@@ -63,7 +63,7 @@ namespace webpp::http {
 
         // load a file as a string body and return a response
         [[nodiscard]] response_type file(stl::filesystem::path const& filepath) noexcept {
-            auto result = object::make_general<string_type>(*this);
+            auto result = object::make_object<string_type>(*this);
 
             if (file::get_to(filepath, result)) {
                 // read the file successfully

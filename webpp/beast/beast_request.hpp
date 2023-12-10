@@ -24,7 +24,7 @@ namespace webpp::beast_proto {
         protected http::details::request_view_interface<typename CommonHTTPRequest::traits_type> {
         using common_http_request_type = CommonHTTPRequest;
         using traits_type              = typename common_http_request_type::traits_type;
-        using string_type              = traits::general_string<traits_type>;
+        using string_type              = traits::string<traits_type>;
         using string_view_type         = traits::string_view<traits_type>;
         using headers_type             = typename common_http_request_type::headers_type;
         using field_type               = typename headers_type::field_type;
@@ -32,8 +32,8 @@ namespace webpp::beast_proto {
       private:
         using request_header_type   = typename common_http_request_type::headers_type;
         using request_body_type     = typename common_http_request_type::body_type;
-        using char_allocator_type   = traits::general_string_allocator<traits_type>;
-        using fields_allocator_type = traits::general_string_allocator<traits_type>;
+        using char_allocator_type   = traits::string_allocator<traits_type>;
+        using fields_allocator_type = traits::string_allocator<traits_type>;
         using beast_fields_type     = boost::beast::http::basic_fields<fields_allocator_type>;
         using beast_body_type       = string_body_of<string_type>;
 

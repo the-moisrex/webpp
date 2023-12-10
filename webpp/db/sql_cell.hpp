@@ -16,7 +16,6 @@ namespace webpp::sql {
     struct sql_cell {
         using statement_type    = SQLStmtType;
         using size_type         = typename statement_type::size_type;
-        using local_string_type = typename statement_type::local_string_type;
         using char_type         = typename statement_type::char_type;
         using string_type       = typename statement_type::string_type;
 
@@ -34,31 +33,31 @@ namespace webpp::sql {
         // define operators
         // todo: replace this with spaceship op, it's not implemented as of this time.
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(op)                                                                                       \
-    template <typename T>                                                                                   \
-    inline bool operator op(T&& val) const {                                                                \
-        switch (category()) {                                                                               \
-            case column_category::string: {                                                                 \
-                auto const str     = as_string<local_string_type>();                                        \
-                auto const val_str = lexical::cast<local_string_type>(stl::forward<T>(val),                 \
-                                                                      general_allocator<char_type>(*stmt)); \
-                                                                                                            \
-                return str op val_str;                                                                      \
-            }                                                                                               \
-            case column_category::number: {                                                                 \
-                if constexpr (stl::integral<T>) {                                                           \
-                    return val op as_number<T>();                                                           \
-                } else {                                                                                    \
-                    /* todo: add debug info                                                                 \
-                     * todo: should we use long double?                                                     \
-                     */                                                                                     \
-                    return lexical::cast<double>(stl::forward<T>(val)) op as_number<double>();              \
-                }                                                                                           \
-            }                                                                                               \
-            case column_category::blob:                                                                     \
-            case column_category::unknown:                                                                  \
-            default: return false;                                                                          \
-        }                                                                                                   \
+#define webpp_def(op)                                                                                \
+    template <typename T>                                                                            \
+    inline bool operator op(T&& val) const {                                                         \
+        switch (category()) {                                                                        \
+            case column_category::string: {                                                          \
+                auto const str = as_string<string_type>();                                           \
+                auto const val_str =                                                                 \
+                  lexical::cast<string_type>(stl::forward<T>(val), get_allocator<char_type>(*stmt)); \
+                                                                                                     \
+                return str op val_str;                                                               \
+            }                                                                                        \
+            case column_category::number: {                                                          \
+                if constexpr (stl::integral<T>) {                                                    \
+                    return val op as_number<T>();                                                    \
+                } else {                                                                             \
+                    /* todo: add debug info                                                          \
+                     * todo: should we use long double?                                              \
+                     */                                                                              \
+                    return lexical::cast<double>(stl::forward<T>(val)) op as_number<double>();       \
+                }                                                                                    \
+            }                                                                                        \
+            case column_category::blob:                                                              \
+            case column_category::unknown:                                                           \
+            default: return false;                                                                   \
+        }                                                                                            \
     }
 
         webpp_def(>)
@@ -73,7 +72,7 @@ namespace webpp::sql {
 
         template <istl::String StrT = stl::string>
         [[nodiscard]] inline StrT as_string() const {
-            auto str = object::make_general<StrT>(*stmt);
+            auto str = object::make_object<StrT>(*stmt);
             stmt->as_string(index, str);
             return str;
         }
@@ -199,7 +198,7 @@ namespace webpp::sql {
 
         template <typename T>
         [[nodiscard]] inline auto as() {
-            auto errmsg = object::make_general<string_type>(*stmt);
+            auto errmsg = object::make_object<string_type>(*stmt);
             if constexpr (stl::is_arithmetic_v<T>) {
                 return as_number<T>();
             } else if constexpr (istl::String<T>) {

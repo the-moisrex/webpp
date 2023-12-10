@@ -28,11 +28,11 @@ namespace webpp::http {
         using traits_type        = TraitsType;
         using etraits            = enable_traits<traits_type>;
         using route_type         = dynamic_route<traits_type>;
-        using dynamic_route_type = istl::dynamic<route_type, traits::general_allocator<traits_type>>;
-        using vector_allocator   = traits::general_allocator<traits_type, dynamic_route_type>;
-        using string_type        = traits::general_string<traits_type>;
+        using dynamic_route_type = istl::dynamic<route_type, traits::allocator_type_of<traits_type>>;
+        using vector_allocator   = traits::allocator_type_of<traits_type, dynamic_route_type>;
+        using string_type        = traits::string<traits_type>;
         using string_view_type   = traits::string_view<traits_type>;
-        using objects_type       = stl::vector<stl::any, traits::general_allocator<traits_type, stl::any>>;
+        using objects_type       = stl::vector<stl::any, traits::allocator_type_of<traits_type, stl::any>>;
         using routes_type        = stl::vector<dynamic_route_type, vector_allocator>;
         using response_type      = basic_response<traits_type>;
         using context_type       = basic_context<traits_type>;

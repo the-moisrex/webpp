@@ -16,7 +16,7 @@ namespace webpp {
         using logger_type = stderr_logger;
         using string_view = stl::basic_string_view<char_type, stl::char_traits<char_type>>;
 
-        struct general_allocator_descriptor {
+        struct allocator_descriptor {
             template <typename T>
             using allocator_type = stl::allocator<T>;
 
@@ -25,10 +25,6 @@ namespace webpp {
                 return {};
             }
         };
-
-        /// standard library doesn't provide a monotonic allocator for std::allocator (only for pmr)
-        /// "void" is used to indicate that we don't provide one
-        using monotonic_allocator_descriptor = void;
 
         template <typename AllocT>
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;

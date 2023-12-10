@@ -34,7 +34,7 @@ namespace webpp::http {
      * todo: add other version of constructor as well here
      */
     template <Traits TraitsType, Application AppType>
-    struct http_app_wrapper : public AppType {
+    struct http_app_wrapper : AppType {
         using application_type        = AppType;
         using traits_type             = TraitsType;
 

@@ -103,8 +103,8 @@ namespace webpp {
     };
 
     template <Traits      TraitsType   = default_traits,
-              CacheKey    KeyT         = traits::general_string<TraitsType>,
-              CacheValue  ValT         = traits::general_string<TraitsType>,
+              CacheKey    KeyT         = traits::string<TraitsType>,
+              CacheValue  ValT         = traits::string<TraitsType>,
               StorageGate StorageGateT = memory_gate<directory_gate>>
     using lru_cache = cache<TraitsType, KeyT, ValT, lru_strategy, StorageGateT>;
 

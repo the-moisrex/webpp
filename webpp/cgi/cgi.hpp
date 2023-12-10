@@ -24,9 +24,8 @@ namespace webpp::http {
         using protocol_type             = cgi;
         using string_view_type          = traits::string_view<traits_type>;
         using char_type                 = traits::char_type<traits_type>;
-        using string_type               = traits::general_string<traits_type>;
-        using local_allocator_type      = traits::local_allocator<traits_type, char_type>;
-        using general_allocator_type    = traits::general_allocator<traits_type, char_type>;
+        using string_type               = traits::string<traits_type>;
+        using general_allocator_type    = traits::allocator_type_of<traits_type, char_type>;
         using common_protocol_type      = common_http_protocol<TraitsType, App>;
         using app_wrapper_type          = typename common_protocol_type::app_wrapper_type;
         using request_body_communicator = cgi_proto::cgi_request_body_communicator<protocol_type>;

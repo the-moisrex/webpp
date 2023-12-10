@@ -32,10 +32,10 @@ namespace webpp::views {
     struct view_manager : enable_traits<TraitsType> {
         using etraits          = enable_traits<TraitsType>;
         using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
         using path_type        = stl::filesystem::path;
-        using view_roots_type  = stl::vector<path_type, traits::general_allocator<traits_type, path_type>>;
+        using view_roots_type  = stl::vector<path_type, traits::allocator_type_of<traits_type, path_type>>;
         using char_type        = traits::char_type<traits_type>;
         using ifstream_type    = stl::basic_ifstream<char_type>;
 
@@ -236,7 +236,7 @@ namespace webpp::views {
             auto* cached    = get_view<view_type>(file);
             auto& view      = stl::get<view_type>(*cached);
             if (!view.has_scheme()) {
-                auto file_content = object::make_general<string_type>(*this);
+                auto file_content = object::make_object<string_type>(*this);
                 if (!read_file(file, file_content)) {
                     return; // We weren't able to read the file.
                 }
@@ -266,7 +266,7 @@ namespace webpp::views {
          */
         template <istl::StringViewifiable StrT>
         [[nodiscard]] constexpr auto mustache(StrT&& file_request, mustache_data_type const& data) {
-            auto out = object::make_general<string_type>(*this);
+            auto out = object::make_object<string_type>(*this);
             view_to<mustache_view_type>(out, stl::forward<StrT>(file_request), data);
             return out;
         }
@@ -306,7 +306,7 @@ namespace webpp::views {
                      PossibleDataTypes<file_view_type, stl::remove_cvref_t<DT>>)
         [[nodiscard]] auto view(StrT&& file_request, DT&& data) {
             auto const file = find_file(istl::to_std_string_view(stl::forward<StrT>(file_request)));
-            auto       out  = object::make_general<string_type>(*this);
+            auto       out  = object::make_object<string_type>(*this);
             if (!file) {
                 this->logger.error(logging_category,
                                    fmt::format("We can't find the specified view {}.", file_request));

@@ -23,7 +23,7 @@ namespace webpp::http {
     template <Traits TraitsType>
     struct http_request_parser {
         using traits_type      = TraitsType;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
         using status_code_type = uint_fast16_t;
 

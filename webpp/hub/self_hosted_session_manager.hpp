@@ -29,7 +29,7 @@ namespace webpp::http::shosted {
         using traits_type      = TraitsType;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = istl::char_type_of_t<string_view_type>;
-        using allocator_type   = traits::general_allocator<traits_type, char_type>;
+        using allocator_type   = traits::allocator_type_of<traits_type, char_type>;
         using buffer_type      = stl::array<char_type, buffer_size>;
         using request_type     = RequestType;
         using app_wrapper_type = AppWrapperType;

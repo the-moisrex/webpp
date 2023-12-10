@@ -92,9 +92,8 @@ namespace webpp::sql {
         using driver_statement_type = typename driver_type::statement_type;
         using statement_type        = sql_statement<traits_type, driver_statement_type>;
         using string_view_type      = traits::string_view<traits_type>;
-        using string_type           = traits::general_string<traits_type>;
+        using string_type           = traits::string<traits_type>;
         using char_type             = traits::char_type<traits_type>;
-        using local_string_type     = traits::local_string<traits_type>;
         using query_builder_type    = query_builder<basic_sql_database>;
         using connection_type       = typename driver_type::connection_type;
         using grammar_type          = typename driver_type::grammar_type;
@@ -150,7 +149,7 @@ namespace webpp::sql {
         using TraitsEnabler::TraitsEnabler;
 
         constexpr basic_sql_database() {
-            auto errmsg = object::make_general<string_type>(*this);
+            auto errmsg = object::make_object<string_type>(*this);
             driver().open(errmsg);
             log(errmsg);
         }
@@ -163,7 +162,7 @@ namespace webpp::sql {
             // the driver's prepare function will throw "driver_statement_type",
             // and the "statement_type" will accept a "driver_statement_type" as its ctor argument.
 
-            auto           errmsg = object::make_general<string_type>(*this);
+            auto           errmsg = object::make_object<string_type>(*this);
             statement_type stmt{this->get_traits()};
             driver().prepare(string_viewify(stl::forward<StrT>(sql_str)), stmt, errmsg);
             log(errmsg);
@@ -176,7 +175,7 @@ namespace webpp::sql {
                               stmt.execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
                           })
             {
-                auto errmsg = object::make_general<string_type>(*this);
+                auto errmsg = object::make_object<string_type>(*this);
                 driver().execute(string_viewify(stl::forward<StrT>(sql_str)), errmsg);
                 log(errmsg);
                 return errmsg.empty();

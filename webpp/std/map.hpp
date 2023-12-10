@@ -15,14 +15,14 @@ namespace webpp::istl {
               typename Key,
               typename T,
               typename Compare   = stl::less<Key>,
-              typename Allocator = traits::general_allocator<Traits, stl::pair<const Key, T>>>
+              typename Allocator = traits::allocator_type_of<Traits, stl::pair<const Key, T>>>
     using map = stl::map<Key, T, Compare, Allocator>;
 
     template <typename Traits,
               typename Key,
               typename T,
               typename Compare   = stl::less<Key>,
-              typename Allocator = traits::general_allocator<Traits, stl::pair<const Key, T>>>
+              typename Allocator = traits::allocator_type_of<Traits, stl::pair<const Key, T>>>
     using multimap = stl::multimap<Key, T, Compare, Allocator>;
 
 

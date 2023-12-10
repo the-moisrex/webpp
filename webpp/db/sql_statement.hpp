@@ -21,10 +21,9 @@ namespace webpp::sql {
         using etraits           = enable_traits<TraitsType>;
         using driver_type       = StmtType;
         using size_type         = typename driver_type::size_type;
-        using string_type       = traits::general_string<traits_type>;
+        using string_type       = traits::string<traits_type>;
         using row_type          = sql_row<sql_statement>;
         using cell_type         = sql_cell<sql_statement>;
-        using local_string_type = traits::local_string<traits_type>;
         using char_type         = traits::char_type<traits_type>;
         using string_view_type  = traits::string_view<traits_type>;
         using iterator          = row_iterator<sql_statement>;
@@ -84,7 +83,7 @@ namespace webpp::sql {
          */
         template <typename T>
         sql_statement& bind(size_type index, T&& val) noexcept {
-            auto errmsg = object::make_general<string_type>(*this);
+            auto errmsg = object::make_object<string_type>(*this);
             if constexpr (requires { this->bind(index, stl::forward<T>(val), errmsg); }) {
                 driver().bind(index, stl::forward<T>(val), errmsg);
             } else if constexpr (istl::StringViewifiable<T>) {
@@ -97,7 +96,7 @@ namespace webpp::sql {
         }
 
         inline bool step() noexcept {
-            auto       errmsg          = object::make_general<string_type>(*this);
+            auto       errmsg          = object::make_object<string_type>(*this);
             bool const continue_or_not = driver().step(errmsg);
             if (!errmsg.empty()) {
                 this->logger.error(LOG_CAT, errmsg);
@@ -112,7 +111,7 @@ namespace webpp::sql {
         }
 
         inline sql_statement& reset() noexcept {
-            auto errmsg = object::make_general<string_type>(*this);
+            auto errmsg = object::make_object<string_type>(*this);
             driver().reset(errmsg);
             log(errmsg);
             return *this;

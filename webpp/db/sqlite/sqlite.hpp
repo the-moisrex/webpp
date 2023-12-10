@@ -20,8 +20,8 @@ namespace webpp::sql {
         using size_type       = int;
         using float_type      = double;
         using integer_type    = int;
-        using string_type     = traits::general_string<traits_type>;
-        using blob_type       = stl::vector<char, traits::general_allocator<traits_type, char>>;
+        using string_type     = traits::string<traits_type>;
+        using blob_type       = stl::vector<char, traits::allocator_type_of<traits_type, char>>;
 
         template <typename T>
         static constexpr bool supports_string_view =

@@ -51,7 +51,7 @@ namespace webpp {
         using logger_type = stderr_logger;
         using string_view = stl::basic_string_view<char_type>;
 
-        struct general_allocator_descriptor {
+        struct allocator_descriptor {
             template <typename T = stl::byte>
             using allocator_type = stl::pmr::polymorphic_allocator<T>;
 
@@ -63,29 +63,27 @@ namespace webpp {
 
         /// standard library doesn't provide a monotonic allocator for std::allocator (only for pmr)
         /// "void" is used to indicate that we don't provide one
-        struct monotonic_allocator_descriptor {
-            /// we're ignoring the returned type
-            template <typename T = stl::byte>
-            using allocator_type = stl::pmr::polymorphic_allocator<T>;
+        // struct monotonic_allocator_descriptor {
+        //     /// we're ignoring the returned type
+        //     template <typename T = stl::byte>
+        //     using allocator_type = stl::pmr::polymorphic_allocator<T>;
 
-            template <typename T>
-            using alloc_traits = stl::allocator_traits<allocator_type<T>>;
+        //     template <typename T>
+        //     using alloc_traits = stl::allocator_traits<allocator_type<T>>;
 
-            /// return a resource instead of an allocator, the library will call "construct_allocator_from"
-            /// CPO on it Even though the standard doesn't specify "noexcept", it is
-            template <typename T>
-            [[nodiscard]] static auto construct_allocator(void* const       buffer,
-                                                          stl::size_t const size) noexcept {
-                return details::resource_wrapper<T>{
-                  stl::pmr::monotonic_buffer_resource{buffer, size}
-                };
-            }
-        };
+        //     /// return a resource instead of an allocator, the library will call "construct_allocator_from"
+        //     /// CPO on it Even though the standard doesn't specify "noexcept", it is
+        //     template <typename T>
+        //     [[nodiscard]] static auto construct_allocator(void* const       buffer,
+        //                                                   stl::size_t const size) noexcept {
+        //         return details::resource_wrapper<T>{
+        //           stl::pmr::monotonic_buffer_resource{buffer, size}
+        //         };
+        //     }
+        // };
 
-        static_assert(GeneralAllocatorDescriptor<general_allocator_descriptor>,
+        static_assert(GeneralAllocatorDescriptor<allocator_descriptor>,
                       "Wrong Descriptions for allocator descriptor");
-        static_assert(MonotonicAllocatorDescriptor<monotonic_allocator_descriptor>,
-                      "Monotonic descriptor should be compliant with the concept");
 
         template <typename AllocT>
         using string = stl::basic_string<char_type, stl::char_traits<char_type>, AllocT>;

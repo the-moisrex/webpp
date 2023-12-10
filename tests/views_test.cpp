@@ -23,7 +23,7 @@ using Types = testing::Types<std_traits, std_pmr_traits, default_dynamic_traits,
 template <Traits T>
 struct TheViews : testing::Test {
     using traits_type        = T;
-    using string_type        = traits::general_string<traits_type>;
+    using string_type        = traits::string<traits_type>;
     using mustache_view_type = mustache_view<traits_type>;
     using data_type          = typename mustache_view_type::data_type;
     using variable_type      = typename data_type::value_type;
@@ -38,7 +38,7 @@ TYPED_TEST(TheViews, MustacheView) {
     typename TestFixture::mustache_view_type view{etraits};
     view.scheme("My name is {{name}}");
     typename TestFixture::string_type str;
-    auto                              data = object::make_general<typename TestFixture::data_type>(etraits);
+    auto                              data = object::make_object<typename TestFixture::data_type>(etraits);
     data.emplace_back(etraits, "name", "moisrex");
     view.render(str, data);
     EXPECT_EQ(str, "My name is moisrex");
@@ -63,7 +63,7 @@ TYPED_TEST(TheViews, ViewManagerTest) {
         roots += std::filesystem::absolute(root).lexically_normal().string() + ", ";
     }
 
-    auto data = object::make_general<typename TestFixture::data_type>(etraits);
+    auto data = object::make_object<typename TestFixture::data_type>(etraits);
     data.emplace_back(etraits, "name", "moisrex");
     auto const res = man.mustache("assets/hello-world", data);
     EXPECT_EQ(res, "Hello, moisrex") << "Check out the logs, it shouldn't be empty if the file was found.\n"
@@ -79,7 +79,7 @@ TYPED_TEST(TheViews, MustacheViewPartials) {
     man.view_roots.emplace_back("./tests");
     man.view_roots.emplace_back("./tests/assets");
 
-    auto data = object::make_general<typename TestFixture::data_type>(etraits);
+    auto data = object::make_object<typename TestFixture::data_type>(etraits);
     data.emplace_back(etraits, "name", "moisrex");
     data.emplace_back(etraits,
                       "hello-world",

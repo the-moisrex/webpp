@@ -89,7 +89,7 @@ namespace webpp::http {
              */
             [[nodiscard]] constexpr HTTPResponse auto error(
               http::status_code_type error_code) const noexcept {
-                using str_t = traits::general_string<traits_type>;
+                using str_t = traits::string<traits_type>;
                 str_t msg{general_alloc_for<str_t>(*this)};
                 fmt::format_to(stl::back_inserter(msg),
                                R"(<!doctype html>
@@ -191,7 +191,7 @@ namespace webpp::http {
         using request_type        = basic_request<traits_type>;
         using static_context_type = simple_context<request_type>;
         using response_type       = basic_response<traits_type>;
-        using string_type         = traits::general_string<traits_type>;
+        using string_type         = traits::string<traits_type>;
         using slug_type           = string_type;
         using path_traverser_type = uri::path_traverser<string_type>;
         using dynamic_route_type  = dynamic_route<traits_type>;

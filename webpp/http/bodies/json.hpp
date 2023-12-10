@@ -56,7 +56,7 @@ namespace webpp::http {
     constexpr void tag_invoke(serialize_body_tag, DocT const& doc, BodyType& body) {
         using body_type   = stl::remove_cvref_t<BodyType>;
         using traits_type = typename body_type::traits_type;
-        using string_type = traits::general_string<traits_type>;
+        using string_type = traits::string<traits_type>;
 
         // delegate the string to the serialize_body for the strings:
         body = doc.template uglified<string_type>(general_alloc_for<string_type>(body));

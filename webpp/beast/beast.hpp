@@ -30,11 +30,11 @@ namespace webpp {
         using socket_type                  = asio::ip::tcp::socket;
         using thread_worker_type           = beast_proto::thread_worker<protocol_type>;
         using http_worker_type             = beast_proto::http_worker<protocol_type>;
-        using char_allocator_type          = traits::general_allocator<traits_type>;
-        using thread_worker_allocator_type = traits::general_allocator<traits_type, thread_worker_type>;
+        using char_allocator_type          = traits::allocator_type_of<traits_type>;
+        using thread_worker_allocator_type = traits::allocator_type_of<traits_type, thread_worker_type>;
         using thread_pool_type             = asio::thread_pool;
         using char_type                    = traits::char_type<traits_type>;
-        using fields_allocator_type        = traits::general_allocator<traits_type, char_type>;
+        using fields_allocator_type        = traits::allocator_type_of<traits_type, char_type>;
         using fields_provider              = http::header_fields_provider<http::header_field_of<traits_type>>;
         using request_body_communicator    = beast_proto::beast_request_body_communicator<protocol_type>;
         using request_headers_type         = http::request_headers<fields_provider>;
@@ -186,7 +186,7 @@ namespace webpp {
         }
 
         [[nodiscard]] auto bound_uri() {
-            auto res_url   = object::make_general<uri::uri>(*this);
+            auto res_url   = object::make_object<uri::uri>(*this);
             res_url.scheme = is_ssl_active() ? "https" : "http";
             res_url.host   = bind_address.to_string();
             res_url.port   = bind_port;

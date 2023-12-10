@@ -23,7 +23,7 @@ namespace webpp {
                                 http::details::request_view_interface<default_dynamic_traits> {
         using super       = CommonHTTPRequest;
         using traits_type = typename super::traits_type;
-        using string_type = traits::general_string<traits_type>;
+        using string_type = traits::string<traits_type>;
         using string_view = traits::string_view<traits_type>;
 
         stl::map<string_type, string_type> data{};
@@ -272,7 +272,7 @@ namespace webpp {
         using traits_type         = default_dynamic_traits;
         using super                     = common_http_protocol<traits_type, App>;
         using char_type           = traits::char_type<traits_type>;
-        using fields_allocator_type     = traits::general_allocator<traits_type, char_type>;
+        using fields_allocator_type     = traits::allocator_type_of<traits_type, char_type>;
         using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;
         using request_headers_type      = request_headers<fields_provider>;

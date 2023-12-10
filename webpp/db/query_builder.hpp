@@ -18,8 +18,7 @@
 namespace webpp::sql {
 
 
-    template <typename DBType,
-              Allocator AllocT = traits::general_string_allocator<typename DBType::traits_type>>
+    template <typename DBType, Allocator AllocT = traits::string_allocator<typename DBType::traits_type>>
     struct query_builder;
 
     namespace details {
@@ -298,8 +297,8 @@ namespace webpp::sql {
         struct query_builder_subclasses {
             using database_type  = DBType;
             using traits_type    = typename database_type::traits_type;
-            using string_type    = traits::general_string<traits_type>;
-            using allocator_type = traits::general_string_allocator<traits_type>;
+            using string_type    = traits::string<traits_type>;
+            using allocator_type = traits::string_allocator<traits_type>;
             using subquery_type  = query_builder<database_type, allocator_type>;
 
             [[no_unique_address]] struct table_type {
@@ -362,7 +361,7 @@ namespace webpp::sql {
     struct column_builder {
         using database_type     = DBType;
         using traits_type       = typename database_type::traits_type;
-        using allocator_type    = traits::general_string_allocator<traits_type>;
+        using allocator_type    = traits::string_allocator<traits_type>;
         using subquery_type     = query_builder<database_type, allocator_type>;
         using query_builder_ref = stl::add_lvalue_reference_t<subquery_type>;
         using key_type          = KeyType;
@@ -537,7 +536,7 @@ namespace webpp::sql {
             joins{alloc} {}
 
         explicit constexpr query_builder(database_ref input_db) noexcept
-          : query_builder(input_db, general_allocator<cur_allocator_type>(input_db)) {}
+          : query_builder(input_db, webpp::get_allocator<typename alloc_traits::value_type>(input_db)) {}
 
         constexpr query_builder(query_builder&&) noexcept      = default;
         constexpr query_builder(query_builder const&) noexcept = default;
@@ -1060,7 +1059,7 @@ namespace webpp::sql {
 
         template <typename StrT = string_type>
         constexpr StrT to_string() const noexcept {
-            auto out = object::make_general<StrT>(db);
+            auto out = object::make_object<StrT>(db);
             to_string<StrT>(out);
             return out;
         }

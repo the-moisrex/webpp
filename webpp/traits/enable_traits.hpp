@@ -19,13 +19,10 @@ namespace webpp {
         using logger_ref       = typename logger_type::logger_ref;
         using string_view_type = traits::string_view<traits_type>;
         using char_type        = typename string_view_type::value_type;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
 
         template <typename T = stl::byte>
-        using general_allocator_type = traits::general_allocator<traits_type, T>;
-
-        template <typename T = stl::byte>
-        using monotonic_allocator_type = traits::local_allocator<traits_type, T>;
+        using allocator_type = traits::allocator_type_of<traits_type, T>;
 
         static constexpr bool is_resource_owner = true;
 
@@ -36,8 +33,8 @@ namespace webpp {
 #endif
 
       private:
-        [[no_unique_address]] general_allocator_type<stl::byte> alloc =
-          traits_type::general_allocator_descriptor::template construct_allocator<stl::byte>();
+        [[no_unique_address]] allocator_type<stl::byte> alloc =
+          traits_type::allocator_descriptor::template construct_allocator<stl::byte>();
 
       public:
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
@@ -55,7 +52,7 @@ namespace webpp {
           : alloc{obj.alloc},
             logger{stl::forward<T>(obj).logger} {}
 
-        explicit constexpr enable_owner_traits(general_allocator_type<stl::byte> const& inp_alloc) noexcept
+        explicit constexpr enable_owner_traits(allocator_type<stl::byte> const& inp_alloc) noexcept
           : alloc{inp_alloc} {}
 
         // NOLINTEND(*-forwarding-reference-overload)
@@ -95,8 +92,8 @@ namespace webpp {
         }
 
         template <typename T>
-        [[nodiscard]] constexpr general_allocator_type<T> general_allocator() const noexcept {
-            return general_allocator_type<T>{construct_allocator_from(alloc)};
+        [[nodiscard]] constexpr allocator_type<T> get_allocator() const noexcept {
+            return allocator_type<T>{construct_allocator_from(alloc)};
         }
     };
 
@@ -112,13 +109,10 @@ namespace webpp {
         using logger_ref         = typename logger_type::logger_ref;
         using string_view_type   = traits::string_view<traits_type>;
         using char_type          = typename string_view_type::value_type;
-        using string_type        = traits::general_string<traits_type>;
+        using string_type        = traits::string<traits_type>;
 
         template <typename T = stl::byte>
-        using general_allocator_type = traits::general_allocator<traits_type, T>;
-
-        template <typename T = stl::byte>
-        using monotonic_allocator_type = traits::local_allocator<traits_type, T>;
+        using allocator_type = traits::allocator_type_of<traits_type, T>;
 
         static_assert(Traits<traits_type>, "The specified TraitsType is not of a valid Traits.");
 
@@ -131,7 +125,7 @@ namespace webpp {
 #endif
 
       private:
-        [[no_unique_address]] general_allocator_type<stl::byte> alloc;
+        [[no_unique_address]] allocator_type<stl::byte> alloc;
 
       public:
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
@@ -145,7 +139,7 @@ namespace webpp {
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, enable_traits> && EnabledTraits<T>)
         explicit constexpr enable_traits(T&& obj) noexcept
-          : alloc{obj.template general_allocator<stl::byte>()},
+          : alloc{obj.template get_allocator<stl::byte>()},
             logger{stl::forward<T>(obj).logger} {}
 
         // NOLINTEND(*-forwarding-reference-overload)
@@ -181,8 +175,8 @@ namespace webpp {
         }
 
         template <typename T>
-        [[nodiscard]] constexpr general_allocator_type<T> general_allocator() const noexcept {
-            return general_allocator_type<T>{alloc};
+        [[nodiscard]] constexpr allocator_type<T> get_allocator() const noexcept {
+            return allocator_type<T>{alloc};
         }
     };
 
@@ -319,7 +313,7 @@ namespace webpp {
                          // allocators are convertible to each other
                          requires stl::convertible_to<
                            typename T::allocator_type,
-                           typename etraits::template general_allocator_type<
+                           typename etraits::template allocator_type<
                              typename stl::allocator_traits<typename T::allocator_type>::value_type>>;
                      })
         explicit constexpr enable_traits_for(Args&&... args) noexcept(
@@ -345,47 +339,30 @@ namespace webpp {
                    };
     };
 
-    // template <typename T, AllocatorHolder AllocHolder>
-    // [[nodiscard]] static constexpr auto const& local_allocator(AllocHolder&& holder) noexcept {
-    //     return stl::forward<AllocHolder>(holder).template local_allocator<T>();
-    // }
-
     /// get a general allocator from the specified allocator holder
     template <typename T, AllocatorHolder AllocHolder>
-    [[nodiscard]] static constexpr decltype(auto) general_allocator(AllocHolder const& holder) noexcept {
-        return holder.template general_allocator<T>();
+    [[nodiscard]] static constexpr decltype(auto) get_allocator(AllocHolder const& holder) noexcept {
+        return holder.template get_allocator<T>();
     }
 
     /// if the specified type is an Allocator itself, we extract the value type from the allocator and return
     /// the correspondning allocator
     template <Allocator T, AllocatorHolder AllocHolder>
-    [[nodiscard]] static constexpr decltype(auto) general_allocator(AllocHolder const& holder) noexcept {
-        return holder.template general_allocator<typename stl::allocator_traits<T>::value_type>();
+    [[nodiscard]] static constexpr decltype(auto) get_allocator(AllocHolder const& holder) noexcept {
+        return holder.template get_allocator<typename stl::allocator_traits<T>::value_type>();
     }
-
-    // template <typename T, AllocatorHolder AllocHolder>
-    //     requires requires {  typename T::allocator_type; }
-    // [[nodiscard]] static constexpr auto const& local_alloc_for(AllocHolder&& holder) noexcept {
-    //     return stl::forward<AllocHolder>(holder).template local_alloc_for<typename T::allocator_type>();
-    // }
 
     template <typename T, AllocatorHolder AllocHolder>
         requires requires { typename T::allocator_type; }
     [[nodiscard]] static constexpr decltype(auto) general_alloc_for(AllocHolder const& holder) noexcept {
         using value_type = typename stl::allocator_traits<typename T::allocator_type>::value_type;
-        return holder.template general_allocator<value_type>();
+        return holder.template get_allocator<value_type>();
     }
 
     // template <typename T, AllocatorHolder AllocHolder, typename... Args>
     // [[nodiscard]] static constexpr auto allocate_unique_general(AllocHolder&& holder,
     //                                                             Args&&... args) noexcept {
     //     return stl::forward<AllocHolder>(holder).template allocate_unique_general<T>(
-    //       stl::forward<Args>(args)...);
-    // }
-
-    // template <typename T, AllocatorHolder AllocHolder, typename... Args>
-    // static constexpr auto allocate_unique_local(AllocHolder&& holder, Args&&... args) noexcept {
-    //     return stl::forward<AllocHolder>(holder).template allocate_unique_local<T>(
     //       stl::forward<Args>(args)...);
     // }
 

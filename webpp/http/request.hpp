@@ -30,7 +30,7 @@ namespace webpp::http {
         using body_type        = BodyType;
         using traits_type      = typename body_type::traits_type;
         using etraits          = enable_traits<traits_type>;
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
 
         static_assert(HTTPRequestHeaders<headers_type>,
@@ -145,7 +145,7 @@ namespace webpp::http {
         using body_type    = request_body<TraitsType, body_writer<TraitsType>>;
         using traits_type  = typename body_type::traits_type;
 
-        using string_type      = traits::general_string<traits_type>;
+        using string_type      = traits::string<traits_type>;
         using string_view_type = traits::string_view<traits_type>;
 
       private:
