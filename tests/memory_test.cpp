@@ -108,7 +108,13 @@ TYPED_TEST(MemoryTest, DynamicType) {
         int val = 23;
     };
 
-    complete_type daddy{.baby = dynamic<incomplete_type>{stl::allocator<incomplete_type>()}};
+    stl::allocator<incomplete_type> alloc;
+    dynamic<incomplete_type>        normal{alloc, istl::initialize};
+    EXPECT_EQ(normal->val, 23);
+
+    complete_type daddy{
+      .baby = dynamic<incomplete_type>{alloc, istl::initialize}
+    };
     EXPECT_EQ(daddy.baby->val, 23);
     daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
     EXPECT_EQ(daddy.val, 23);
@@ -152,7 +158,7 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, dynamic<daughter, alloc_t>, alloc_t>) );
     EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, daughter, alloc_t>) );
 
-    dynamic<mother> family_member{stl::allocator<mother>()};
+    dynamic<mother> family_member;
     family_member.template emplace<son>(); // replace a son
     EXPECT_EQ(family_member->to_string(), "son");
     family_member = daughter{};            // replace a daughter, using move

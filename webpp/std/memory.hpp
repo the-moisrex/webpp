@@ -5,9 +5,16 @@
 #include "./type_traits.hpp"
 #include "./utility.hpp"
 
+#include <cassert>
 #include <memory>
 
 namespace webpp::istl {
+
+    /// a helper to initialize dynamic
+    /// Usage:
+    ///   dynamic<int> val{initialize};
+    static constexpr struct initialize_tag {
+    } initialize;
 
     // NOLINTBEGIN(*-avoid-c-arrays)
     namespace detail {
@@ -367,8 +374,6 @@ namespace webpp::istl {
 
 
       public:
-        explicit constexpr dynamic(allocator_type const& input_alloc) noexcept : alloc{input_alloc} {}
-
         // You don't have to pass the allocator if the allocator is default constructible.
         // This will allocate the space, but only constructs the object if it's default constructible
         // constexpr dynamic() noexcept
@@ -411,14 +416,50 @@ namespace webpp::istl {
         constexpr dynamic(InheritedType&& derived_obj, allocator_type const& input_alloc)
           : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
 
+        /// default construct the object
         template <typename... Args>
             requires(stl::is_constructible_v<value_type, Args...>)
-        explicit constexpr dynamic(allocator_type const& input_alloc, Args&&... args)
+        explicit constexpr dynamic([[maybe_unused]] initialize_tag tag,
+                                   allocator_type const&           input_alloc,
+                                   Args&&... args)
           : alloc{input_alloc},
             ptr{alloc_traits::allocate(alloc, 1)} {
             static_assert(stl::is_constructible_v<T, Args...>,
                           "The specified type is cannot be initialized with the specified arguments.");
             alloc_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
+        }
+
+        /// default construct the object
+        template <typename... Args>
+            requires(stl::is_constructible_v<value_type, Args...>)
+        explicit constexpr dynamic(allocator_type const& input_alloc, initialize_tag tag, Args&&... args)
+          : dynamic{tag, input_alloc, stl::forward<Args>(args)...} {}
+
+        /// default construct the object
+        explicit constexpr dynamic([[maybe_unused]] initialize_tag tag)
+            requires(is_complete_v<value_type> && stl::is_default_constructible_v<allocator_type>)
+          : dynamic{allocator_type{}} {
+            // we're not adding this as a constraint to the constructor in order to let the user use
+            // incomplete types
+            static_assert(stl::is_default_constructible_v<value_type>,
+                          "This type must be default constructible");
+        }
+
+        /// construct nothing because the type is not constructible (pure virtual classes), you now have to
+        /// use .emplace
+        /// we're not adding this as a constraint to the constructor in order to let the user use
+        /// incomplete types
+        constexpr dynamic() noexcept
+            requires(stl::is_default_constructible_v<allocator_type>)
+        = default;
+
+        /// construct nothing because the type is not constructible yet (pure virtual classes), you now have
+        /// to use .empalce
+        explicit constexpr dynamic(allocator_type const& input_alloc) noexcept(
+          stl::is_nothrow_copy_constructible_v<allocator_type>)
+          : alloc{input_alloc} {
+            // we're not adding this as a constraint to the constructor in order to let the user use
+            // incomplete types
         }
 
         template <typename... Args>
@@ -583,26 +624,32 @@ namespace webpp::istl {
         }
 
         constexpr T& operator*() & noexcept {
+            assert(ptr != nullptr);
             return *ptr;
         }
 
         constexpr T const& operator*() const& noexcept {
+            assert(ptr != nullptr);
             return *ptr;
         }
 
         constexpr T&& operator*() && noexcept {
+            assert(ptr != nullptr);
             return *ptr;
         }
 
         constexpr T const&& operator*() const&& noexcept {
+            assert(ptr != nullptr);
             return *ptr;
         }
 
         constexpr pointer operator->() noexcept {
+            assert(ptr != nullptr);
             return ptr;
         }
 
         constexpr pointer operator->() const noexcept {
+            assert(ptr != nullptr);
             return ptr;
         }
 
@@ -691,6 +738,12 @@ namespace webpp::istl {
             }
         }
     };
+
+    template <typename T>
+    dynamic(T&&) -> dynamic<stl::remove_cvref_t<T>>;
+
+    template <typename T, typename AllocT>
+    dynamic(T&&, AllocT const&) -> dynamic<stl::remove_cvref_t<T>, AllocT>;
 
     namespace pmr {
 

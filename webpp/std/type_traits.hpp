@@ -1136,9 +1136,13 @@ namespace webpp::istl {
 
     namespace details {
         template <typename T, std::size_t = sizeof(T)>
-        stl::true_type is_complete_impl(T*);
+        static stl::true_type is_complete_impl([[maybe_unused]] T* ptr) noexcept {
+            return {};
+        }
 
-        stl::false_type is_complete_impl(...);
+        static stl::false_type is_complete_impl([[maybe_unused]] auto&& arg) noexcept {
+            return {};
+        }
     } // namespace details
 
     /**
@@ -1331,12 +1335,12 @@ namespace webpp::istl {
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T volatile> {
-        using type = volatile typename Templ<T>::type;
+        using type = typename Templ<T>::type volatile;
     };
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T const> {
-        using type = const typename Templ<T>::type;
+        using type = typename Templ<T>::type const;
     };
 
     template <template <typename> typename Templ, typename T>
@@ -1350,38 +1354,38 @@ namespace webpp::istl {
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T const> {
-        using type = const volatile typename Templ<T>::type;
+    struct preserve_cvref<Templ, T const volatile> {
+        using type = typename Templ<T>::type const volatile;
     };
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T const&> {
-        using type = const typename Templ<T>::type&;
+        using type = typename Templ<T>::type const&;
     };
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T const&&> {
-        using type = const typename Templ<T>::type&&;
+        using type = typename Templ<T>::type const&&;
     };
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T volatile&> {
-        using type = volatile typename Templ<T>::type&;
+        using type = typename Templ<T>::type volatile&;
     };
 
     template <template <typename> typename Templ, typename T>
     struct preserve_cvref<Templ, T volatile&&> {
-        using type = volatile typename Templ<T>::type&&;
+        using type = typename Templ<T>::type volatile&&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T const&> {
-        using type = const volatile typename Templ<T>::type&;
+    struct preserve_cvref<Templ, T const volatile&> {
+        using type = typename Templ<T>::type const volatile&;
     };
 
     template <template <typename> typename Templ, typename T>
-    struct preserve_cvref<Templ, volatile T const&&> {
-        using type = const volatile typename Templ<T>::type&&;
+    struct preserve_cvref<Templ, T const volatile&&> {
+        using type = typename Templ<T>::type const volatile&&;
     };
 
     template <template <typename> typename Templ, typename T>
