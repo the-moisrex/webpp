@@ -473,13 +473,15 @@ namespace webpp::istl {
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>> &&
                      stl::is_constructible_v<allocator_type, NewAllocT>)
-        explicit constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other) noexcept
+        explicit constexpr dynamic(
+          dynamic<DerivedT, NewAllocT>&& other) noexcept // NOLINT(*-rvalue-reference-param-not-moved)
           : alloc{other.get_allocator()},
             ptr{stl::exchange(other.get_pointer(), nullptr)} {}
 
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other, allocator_type const& new_alloc) noexcept
+        constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other, // NOLINT(*-rvalue-reference-param-not-moved)
+                          allocator_type const&          new_alloc) noexcept
           : alloc{new_alloc},
             ptr{stl::exchange(other.get_pointer(), nullptr)} {}
 
@@ -495,11 +497,15 @@ namespace webpp::istl {
         constexpr dynamic& operator=(value_type const& val) noexcept {
             // value_type might be an incomplete type, so we're doing it with a static_assert
             static_assert(stl::is_copy_constructible_v<value_type>, "It must be copy constructible.");
-            if (ptr) {
-                alloc_traits::destroy(alloc, ptr);
-            } else {
-                ptr = alloc_traits::allocate(alloc, 1);
+            if constexpr (stl::is_copy_assignable_v<value_type>) {
+                if (ptr) {
+                    // use copy assignable opereator
+                    *ptr = val;
+                    return *this;
+                }
             }
+            // create a new object and destroy the last one
+            ptr = alloc_traits::allocate(alloc, 1);
             alloc_traits::construct(alloc, ptr, val);
             return *this;
         }
@@ -516,7 +522,8 @@ namespace webpp::istl {
 
         template <typename DerivedT, typename NewAllocT>
             requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic& operator=(dynamic<DerivedT, NewAllocT>&& other) noexcept {
+        constexpr dynamic& operator=(
+          dynamic<DerivedT, NewAllocT>&& other) noexcept { // NOLINT(*-rvalue-reference-param-not-moved)
             if constexpr (stl::is_assignable_v<allocator_type, NewAllocT>) {
                 alloc = other.get_allocator();
             }

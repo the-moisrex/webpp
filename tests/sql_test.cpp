@@ -11,6 +11,16 @@ using sql_db = sql_database<sqlite>;
 
 static_assert(SQLStatement<sqlite_statement>, "sqlite statement is not a statement.");
 
+TEST(Database, Concepts) {
+    using query_builder_type = query_builder<sql_db>;
+    static_assert(stl::is_copy_assignable_v<query_builder_type>, "It should be copyable");
+    static_assert(stl::is_copy_constructible_v<query_builder_type>, "It should be copyable");
+    static_assert(stl::copyable<query_builder_type>, "It should be copyable");
+    static_assert(stl::movable<query_builder_type>, "It should be movable");
+    static_assert(stl::copyable<typename query_builder_type::subquery_ptr>,
+                  "sub-query must be copyble because a query builder is copyable itself.");
+}
+
 TEST(Database, SQLiteWrapper) {
     sql_database<sqlite> db; // in memory database
     ASSERT_TRUE(db.is_open());
