@@ -64,18 +64,18 @@ namespace webpp::uri {
                             }
                             in_value = true;
                         }
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         continue;
                     case '&':
                         if constexpr (ctx_type::is_segregated) {
                             encoder.set_query_value();
                             in_value = false;
                         }
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         continue;
                     default:
                         set_warning(ctx.status, uri_status::invalid_character);
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         // invalid characters are not errors
                         continue;
                 }

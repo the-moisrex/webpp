@@ -204,23 +204,23 @@ namespace webpp::uri {
                     if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
                         ++dotted_segment_count;
                     }
-                    ++ctx.pos;
+                    encoder.skip_separator();
                     continue;
                 case '\\':
                     if (ctx.is_special) {
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
                     } else {
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         continue;
                     }
                     [[fallthrough]];
                 case '/':
                     if constexpr (ctx_type::is_segregated) {
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         encoder.reset_segment_start();
                     } else {
                         encoder.reset_segment_start();
-                        ++ctx.pos;
+                        encoder.skip_separator();
                     }
                     break;
                 case '\0':
@@ -241,7 +241,7 @@ namespace webpp::uri {
                     }
                     // %2E or %2e is equal to a "." (dot)
                     if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
-                        ctx.pos              += 3;
+                        encoder.skip_separator(3);
                         dotted_segment_count += 3;
                         continue;
                     }
