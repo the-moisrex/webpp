@@ -48,8 +48,9 @@ namespace website {
                 doc["valid"] = false;
                 doc["error"] = "No URI specified.";
             } else {
-                using iterator = typename stl::remove_cvref_t<decltype(query)>::const_iterator;
-                uri::parsing_uri_context<iterator> context{
+                using query_type = stl::remove_cvref_t<decltype(query)>;
+                using iterator   = typename query_type::const_iterator;
+                uri::parsing_uri_context<query_type, iterator> context{
                   .beg = query.begin(),
                   .pos = query.begin(),
                   .end = query.end()};
@@ -62,14 +63,14 @@ namespace website {
 
                 auto const parsing_time = duration_cast<nanoseconds>(start - fin).count();
                 doc["parsing-time"]     = parsing_time;
-                doc["scheme"]           = context.out.scheme();
-                doc["username"]         = context.out.username();
-                doc["password"]         = context.out.password();
-                doc["host"]             = context.out.host();
-                doc["port"]             = context.out.port();
-                doc["path"]             = context.out.path();
-                doc["queries"]          = context.out.queries();
-                doc["fragment"]         = context.out.fragment();
+                doc["scheme"]           = context.out.get_scheme();
+                doc["username"]         = context.out.get_username();
+                doc["password"]         = context.out.get_password();
+                doc["host"]             = context.out.get_hostname();
+                doc["port"]             = context.out.get_port();
+                doc["path"]             = context.out.get_path();
+                doc["queries"]          = context.out.get_queries();
+                doc["fragment"]         = context.out.get_fragment();
             }
             return doc;
         }

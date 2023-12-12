@@ -777,7 +777,9 @@ namespace webpp::views {
             using section_starts_type =
               stl::vector<string_size_type, traits::allocator_type_of<traits_type, string_size_type>>;
 
-            auto sections = object::make_object<sections_type>(*this, stl::initializer_list{&root_component});
+            auto sections = object::make_object<sections_type>(
+              *this,
+              stl::initializer_list<component_type*>{&root_component});
             auto section_starts = object::make_object<section_starts_type>(*this);
 
             auto             current_text          = object::make_object<string_type>(*this);

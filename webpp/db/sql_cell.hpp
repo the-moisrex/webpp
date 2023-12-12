@@ -14,10 +14,10 @@ namespace webpp::sql {
 
     template <typename SQLStmtType>
     struct sql_cell {
-        using statement_type    = SQLStmtType;
-        using size_type         = typename statement_type::size_type;
-        using char_type         = typename statement_type::char_type;
-        using string_type       = typename statement_type::string_type;
+        using statement_type = SQLStmtType;
+        using size_type      = typename statement_type::size_type;
+        using char_type      = typename statement_type::char_type;
+        using string_type    = typename statement_type::string_type;
 
         static constexpr auto CELL_CAT = "SqlCell";
 

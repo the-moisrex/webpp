@@ -81,6 +81,14 @@ namespace webpp::uri::details {
             return details::get_output<Comp>(*ctx);
         }
 
+        [[nodiscard]] constexpr decltype(auto) get_out_seg() const noexcept {
+            if constexpr (is_seg) {
+                return *output;
+            } else {
+                return details::get_output<Comp>(*ctx);
+            }
+        }
+
       public:
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
@@ -123,11 +131,7 @@ namespace webpp::uri::details {
           iterator                             end,
           [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                if constexpr (is_vec) {
-                    encode_uri_component<Policy>(pos, end, *output, policy_chars);
-                } else {
-                    encode_uri_component<Policy>(pos, end, get_output(), policy_chars);
-                }
+                encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars);
             } else {
                 set_value(pos, end);
             }
@@ -140,11 +144,7 @@ namespace webpp::uri::details {
           [[maybe_unused]] CharSet auto const& policy_chars,
           CharSet auto const&                  invalid_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                if constexpr (is_vec) {
-                    return encode_uri_component<Policy>(pos, end, *output, policy_chars, invalid_chars);
-                } else {
-                    return encode_uri_component<Policy>(pos, end, get_output(), policy_chars, invalid_chars);
-                }
+                return encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars, invalid_chars);
             } else {
                 if constexpr (Policy == uri_encoding_policy::skip_chars) {
                     pos = invalid_chars.find_first_not_in(pos, end);
@@ -196,11 +196,7 @@ namespace webpp::uri::details {
         [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars) noexcept(
           ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                if constexpr (is_vec) {
-                    return decode_uri_component<Policy>(ctx->pos, ctx->end, *output, policy_chars);
-                } else {
-                    return decode_uri_component<Policy>(ctx->pos, ctx->end, get_output(), policy_chars);
-                }
+                return decode_uri_component<Policy>(ctx->pos, ctx->end, get_out_seg(), policy_chars);
             } else {
                 if constexpr (Policy == uri_encoding_policy::skip_chars) {
                     ctx->pos = policy_chars.find_first_not_in(ctx->pos, ctx->end);
@@ -233,7 +229,7 @@ namespace webpp::uri::details {
         }
 
         constexpr void skip_separator(stl::size_t index = 1) noexcept {
-            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+            if constexpr (ctx_type::is_modifiable && !is_seg) {
                 append_to(get_output(), *ctx->pos);
             }
             ctx->pos += index;

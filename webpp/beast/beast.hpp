@@ -266,14 +266,14 @@ namespace webpp {
                             io.run();
                             this->logger.info(log_cat,
                                               fmt::format("Thread {} went down peacefully.", io_index));
-                        } catch (stl::exception const& err) {
+                        } catch (stl::exception const& err_exc) {
                             this->logger.error(
                               log_cat,
                               fmt::format("Error while starting io server; restarting io "
                                           "runner; io runner id: {}; tries: {}",
                                           io_index,
                                           tries),
-                              err);
+                              err_exc);
                         } catch (...) {
                             // todo: possible data race
                             this->logger.error(

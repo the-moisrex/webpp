@@ -718,11 +718,13 @@ namespace webpp::istl {
 
       private:
         template <typename C, typename... Args>
-            requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
+            requires(stl::is_base_of_v<T, C>)
         constexpr void init(Args&&... args) {
             using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
             using new_pointer          = typename new_allocator_traits::pointer;
+
+            static_assert(stl::is_constructible_v<C, Args...>, "We cannot construct the type.");
 
             new_allocator_type new_alloc{alloc};
 

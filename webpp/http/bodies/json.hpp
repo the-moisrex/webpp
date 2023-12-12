@@ -47,8 +47,8 @@ namespace webpp::http {
     } // namespace details
 
     template <json::JSONDocument DocT, HTTPBody BodyType>
-    constexpr void tag_invoke(deserialize_body_tag, stl::type_identity<DocT>, BodyType const& body) {
-        // todo
+    constexpr DocT tag_invoke(deserialize_body_tag, stl::type_identity<DocT>, BodyType const& body) {
+        DocT{body};
     }
 
     // Only sets the body

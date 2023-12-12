@@ -17,17 +17,17 @@ namespace webpp::sql {
      */
     template <Traits TraitsType, SQLStatement StmtType>
     struct sql_statement : StmtType, enable_traits<TraitsType> {
-        using traits_type       = TraitsType;
-        using etraits           = enable_traits<TraitsType>;
-        using driver_type       = StmtType;
-        using size_type         = typename driver_type::size_type;
-        using string_type       = traits::string<traits_type>;
-        using row_type          = sql_row<sql_statement>;
-        using cell_type         = sql_cell<sql_statement>;
-        using char_type         = traits::char_type<traits_type>;
-        using string_view_type  = traits::string_view<traits_type>;
-        using iterator          = row_iterator<sql_statement>;
-        using const_iterator    = row_iterator<sql_statement const>;
+        using traits_type      = TraitsType;
+        using etraits          = enable_traits<TraitsType>;
+        using driver_type      = StmtType;
+        using size_type        = typename driver_type::size_type;
+        using string_type      = traits::string<traits_type>;
+        using row_type         = sql_row<sql_statement>;
+        using cell_type        = sql_cell<sql_statement>;
+        using char_type        = traits::char_type<traits_type>;
+        using string_view_type = traits::string_view<traits_type>;
+        using iterator         = row_iterator<sql_statement>;
+        using const_iterator   = row_iterator<sql_statement const>;
 
         static constexpr auto LOG_CAT = "SQLStmt";
 

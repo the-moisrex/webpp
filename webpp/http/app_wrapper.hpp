@@ -35,8 +35,8 @@ namespace webpp::http {
      */
     template <Traits TraitsType, Application AppType>
     struct http_app_wrapper : AppType {
-        using application_type        = AppType;
-        using traits_type             = TraitsType;
+        using application_type = AppType;
+        using traits_type      = TraitsType;
 
         struct enable_throws {};
 

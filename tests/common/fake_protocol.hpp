@@ -268,9 +268,9 @@ namespace webpp {
 
     template <Application App>
     struct fake_proto : public common_http_protocol<default_dynamic_traits, App> {
-        using traits_type         = default_dynamic_traits;
+        using traits_type               = default_dynamic_traits;
         using super                     = common_http_protocol<traits_type, App>;
-        using char_type           = traits::char_type<traits_type>;
+        using char_type                 = traits::char_type<traits_type>;
         using fields_allocator_type     = traits::allocator_type_of<traits_type, char_type>;
         using fields_provider           = header_fields_provider<header_field_of<traits_type>>;
         using request_body_communicator = fake_request_body_communicator<fake_proto>;

@@ -48,8 +48,8 @@ namespace webpp {
      */
     template <typename T>
     concept Traits = requires {
-        requires AllocatorDescriptor<typename T::allocator_descriptor>;           // general allocator
-        requires Logger<typename T::logger_type>;                                 // logger type
+        requires AllocatorDescriptor<typename T::allocator_descriptor>; // general allocator
+        requires Logger<typename T::logger_type>;                       // logger type
 
         typename T::string_view;
         typename T::template string<

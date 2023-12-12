@@ -300,7 +300,6 @@ namespace webpp {
          * Call next and get the token
          *
          * @tparam StrT String|StringView
-         * @tparam ErrorType Enum
          * @param delims Delimiters
          * @param out output string
          * @return true if we found the token
