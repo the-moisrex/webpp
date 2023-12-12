@@ -66,7 +66,10 @@ namespace webpp {
     constexpr bool append_to(istl::String auto& str, ValueType value, R&&... args) noexcept {
         using value_type = stl::remove_cvref_t<ValueType>;
 
-        if constexpr (istl::StringViewifiable<value_type>) {
+        if constexpr (istl::CharType<value_type>) {
+            str += value;
+            return true;
+        } else if constexpr (istl::StringViewifiable<value_type>) {
             str.append(value);
             (append_to(str, stl::forward<R>(args)), ...);
             return true;

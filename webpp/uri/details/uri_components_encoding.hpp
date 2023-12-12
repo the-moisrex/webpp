@@ -232,6 +232,13 @@ namespace webpp::uri::details {
             return beg;
         }
 
+        constexpr void skip_separator(stl::size_t index = 1) noexcept {
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                append_to(get_output(), *ctx->pos);
+            }
+            ctx->pos += index;
+        }
+
         constexpr void pop_back() noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 using difference_type = typename seg_type::difference_type;

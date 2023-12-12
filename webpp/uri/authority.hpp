@@ -266,7 +266,7 @@ namespace webpp::uri {
                             decoder.reset_begin();
                             decoder.start_segment();
                         } else {
-                            ++ctx.pos; // todo: append to the output
+                            decoder.skip_separator();
                         }
                         continue;
                     case '?':
@@ -312,7 +312,7 @@ namespace webpp::uri {
                         [[fallthrough]];
                     [[unlikely]] default:
                         set_warning(ctx.status, invalid_character);
-                        ++ctx.pos;
+                        decoder.skip_separator();
                         continue;
                 }
                 if (ctx.pos == host_begin) {
