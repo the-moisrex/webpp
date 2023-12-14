@@ -49,18 +49,14 @@ namespace webpp::http {
          * This method checks the context and see if we have reached the end of the routing or not.
          */
         template <typename CtxT>
-        [[nodiscard]] constexpr bool continue_routing(CtxT& ctx) const noexcept {
+        [[nodiscard]] static constexpr bool continue_routing(CtxT& ctx) noexcept {
             return ctx.response.empty();
         }
 
       public:
-        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
-
         /// These are the objects that will be used by the valves to make it
         /// easier for the user to pass member functions as valves in the routes.
-        objects_type objects;
-
-        // NOLINTEND(*-non-private-member-variables-in-classes)
+        objects_type objects; // NOLINT(*-non-private-member-variables-in-classes)
 
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
@@ -78,17 +74,20 @@ namespace webpp::http {
 
 
         /**
-         * Response with the specified status code.
+         * Get a response with the specified error code
          */
-        constexpr response_type error(status_code code) {
-            return response(code);
-        }
-
-        constexpr response_type response(status_code code) {
+        constexpr response_type response(status_code const code) {
             return response_type{this->get_traits(), code};
         }
 
-        // Append a migration
+        /**
+         * Response with the specified status code.
+         */
+        constexpr response_type error(status_code const code) {
+            return response(code);
+        }
+
+        /// Append a migration
         template <typename C>
         constexpr basic_dynamic_router& operator+=(C&& callable) {
             using callable_type  = stl::remove_cvref_t<C>;
