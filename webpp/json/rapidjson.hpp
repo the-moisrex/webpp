@@ -982,7 +982,7 @@ namespace webpp::json::rapidjson {
         /**
          * Get the file and parse it.
          */
-        explicit document(stl::filesystem::path const& file_path) {
+        explicit document(stl::filesystem::path const& file_path) : generic_value_type{} {
             stl::FILE* fp = stl::fopen(file_path.c_str(), "rbe");
 
             stack<65'536>               read_buffer;

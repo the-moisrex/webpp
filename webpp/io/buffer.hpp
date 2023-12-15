@@ -42,7 +42,7 @@ namespace webpp::io {
         constexpr buffer(buffer&&) noexcept            = default;
         constexpr buffer& operator=(buffer&&) noexcept = default;
 
-        buffer(stl::size_t len, allocator_type const& inp_alloc = {})
+        explicit buffer(stl::size_t len, allocator_type const& inp_alloc = {})
           : allocator{inp_alloc},
             iov{.iov_base = alloc_traits::allocate(allocator, iov.iov_len), .iov_len = len} {}
 
@@ -50,7 +50,7 @@ namespace webpp::io {
             alloc_traits::deallocate(allocator, reinterpret_cast<pointer>(iov.iov_base), iov.iov_len);
         }
 
-        operator iovec() const noexcept {
+        [[nodiscard]] explicit operator iovec() const noexcept {
             return iov;
         }
 
@@ -74,13 +74,14 @@ namespace webpp::io {
         using buffer_type    = buffer<buffer_allocator_type>;
         using allocator_type = stl::allocator_traits<Allocator>::template rebind_alloc<buffer_type>;
 
-        constexpr buffer_manager(allocator_type const& inp_alloc = {}) noexcept : buffers{inp_alloc} {}
+        explicit constexpr buffer_manager(allocator_type const& inp_alloc = {}) noexcept
+          : buffers{inp_alloc} {}
 
         buffer_type& new_buffer(stl::size_t len) {
             return buffers.emplace_back(len, buffers.get_allocator());
         }
 
-        constexpr operator iovec*() const noexcept {
+        [[nodiscard]] explicit constexpr operator iovec*() const noexcept {
             return buffers.data();
         }
 

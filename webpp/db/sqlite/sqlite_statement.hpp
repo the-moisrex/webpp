@@ -25,7 +25,7 @@ namespace webpp::sql {
       private:
         ::sqlite3_stmt* stmt = nullptr;
 
-        void check_bind_result(int result, istl::String auto& err_msg) {
+        void check_bind_result(int const result, istl::String auto& err_msg) {
             switch (result) {
                 [[likely]] case SQLITE_OK:
                     return;
@@ -45,7 +45,7 @@ namespace webpp::sql {
       public:
         constexpr sqlite_statement() noexcept = default;
 
-        constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
+        explicit constexpr sqlite_statement(::sqlite3_stmt* in_stmt) noexcept : stmt{in_stmt} {}
 
         constexpr sqlite_statement(sqlite_statement const&) = delete;
 
@@ -85,7 +85,7 @@ namespace webpp::sql {
         }
 
         inline void destroy() noexcept {
-            if (stmt) {
+            if (stmt != nullptr) {
                 (void) sqlite3_finalize(stmt);
             }
         }
@@ -206,7 +206,7 @@ namespace webpp::sql {
          * Get the column name based on its index
          */
         template <istl::String StrT>
-        void column_name(int index, StrT& name_ref) const {
+        void column_name(int const index, StrT& name_ref) const {
             using str_value_type = typename StrT::value_type;
             if constexpr (istl::UTF16<StrT>) {
                 void const* name = sqlite3_column_name16(stmt, index);
@@ -236,11 +236,11 @@ namespace webpp::sql {
             return sqlite3_column_count(stmt);
         }
 
-        [[nodiscard]] inline supported_column_types column_type(int index) const noexcept {
+        [[nodiscard]] inline supported_column_types column_type(int const index) const noexcept {
             return static_cast<supported_column_types>(sqlite3_column_type(stmt, index));
         }
 
-        [[nodiscard]] inline column_category column_cat(int index) const noexcept {
+        [[nodiscard]] inline column_category column_cat(int const index) const noexcept {
             switch (sqlite3_column_type(stmt, index)) {
                 case SQLITE_FLOAT: [[fallthrough]];
                 case SQLITE_INTEGER: return column_category::number;
@@ -250,32 +250,32 @@ namespace webpp::sql {
             }
         }
 
-        [[nodiscard]] inline bool is_column_null(int index) const noexcept {
+        [[nodiscard]] inline bool is_column_null(int const index) const noexcept {
             return sqlite3_column_type(stmt, index) == SQLITE_NULL;
         }
 
-        [[nodiscard]] inline bool is_column_float(int index) const noexcept {
+        [[nodiscard]] inline bool is_column_float(int const index) const noexcept {
             return sqlite3_column_type(stmt, index) == SQLITE_FLOAT;
         }
 
-        [[nodiscard]] inline bool is_column_integer(int index) const noexcept {
+        [[nodiscard]] inline bool is_column_integer(int const index) const noexcept {
             return sqlite3_column_type(stmt, index) == SQLITE_INTEGER;
         }
 
-        [[nodiscard]] inline int as_int(int index) const noexcept {
+        [[nodiscard]] inline int as_int(int const index) const noexcept {
             return sqlite3_column_int(stmt, index);
         }
 
-        [[nodiscard]] inline stl::int64_t as_int64(int index) const noexcept {
+        [[nodiscard]] inline stl::int64_t as_int64(int const index) const noexcept {
             return static_cast<stl::int64_t>(sqlite3_column_int64(stmt, index));
         }
 
-        [[nodiscard]] inline double as_double(int index) const noexcept {
+        [[nodiscard]] inline double as_double(int const index) const noexcept {
             return sqlite3_column_double(stmt, index);
         }
 
         template <istl::String StrT = stl::string>
-        void as_string(int index, StrT& out) const noexcept {
+        void as_string(int const index, StrT& out) const noexcept {
             // todo: handle text16
             char const* str     = reinterpret_cast<char const*>(sqlite3_column_text(stmt, index));
             auto const  str_len = static_cast<stl::size_t>(sqlite3_column_bytes(stmt, index));

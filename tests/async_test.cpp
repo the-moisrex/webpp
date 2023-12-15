@@ -18,7 +18,7 @@ TEST(AsyncTest, ChainableTask) {
         return "Hello World.";
     } >> [](stl::string_view str) {
         return str.substr(str.find(' '));
-    } >> [](stl::string_view str) {
+    } >> [](stl::string_view const str) {
         EXPECT_EQ(str, "Hello");
     };
 

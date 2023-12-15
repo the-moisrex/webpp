@@ -33,7 +33,7 @@ namespace webpp::http {
       charset{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}
     };
 
-    static constexpr bool is_http_token(char item) noexcept {
+    static constexpr bool is_http_token(char const item) noexcept {
         return token_charmap.contains(item);
     }
 

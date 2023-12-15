@@ -2,6 +2,7 @@
 #define WEBPP_CONTENT_TYPE_HPP
 
 #include "../../http/codec/common.hpp"
+#include "../../memory/allocator_concepts.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/string_tokenizer.hpp"
 

@@ -15,7 +15,7 @@ namespace webpp {
         invalid_base       // not a valid character in the specified base
     };
 
-    constexpr stl::string_view to_string(integer_casting_errors err) noexcept {
+    constexpr stl::string_view to_string(integer_casting_errors const err) noexcept {
         using enum integer_casting_errors;
         switch (err) {
             case invalid_character: return {"Invalid character found"};
@@ -47,44 +47,44 @@ namespace webpp {
             return ret;
         }
 
-        auto c = str.begin();
-        if (*c == '-' || *c == '+') {
-            c++; // first character can be - or +
+        auto pos = str.begin();
+        if (*pos == '-' || *pos == '+') {
+            ++pos; // first character can be - or +
         }
-        for (; c != str.end(); c++) {
-            auto ch = *c;
+        for (; pos != str.end(); ++pos) {
+            auto cur_ch = *pos;
             if constexpr (base <= 10) {
                 if constexpr (strategy == error_handling_strategy::throw_errors) {
-                    if (ch < '0' || ch > '9') {
+                    if (cur_ch < '0' || cur_ch > '9') {
                         throw stl::invalid_argument(
                           to_string(integer_casting_errors::invalid_character).data());
                     }
                 } else if constexpr (strategy == error_handling_strategy::use_expected) {
-                    if (ch < '0' || ch > '9') {
+                    if (cur_ch < '0' || cur_ch > '9') {
                         return stl::unexpected(integer_casting_errors::invalid_character);
                     }
                 }
-                ch -= '0';
+                cur_ch -= '0';
             } else if (base > 10) {
-                if (ch >= 'a') {
-                    ch -= 'a' - 10;
-                } else if (ch >= 'A') {
-                    ch -= 'A' - 10;
+                if (cur_ch >= 'a') {
+                    cur_ch -= 'a' - 10;
+                } else if (cur_ch >= 'A') {
+                    cur_ch -= 'A' - 10;
                 } else {
-                    ch -= '0';
+                    cur_ch -= '0';
                 }
                 if constexpr (strategy == error_handling_strategy::throw_errors) {
-                    if (ch > base) {
+                    if (cur_ch > base) {
                         throw stl::invalid_argument(to_string(integer_casting_errors::invalid_base).data());
                     }
                 } else if constexpr (strategy == error_handling_strategy::use_expected) {
-                    if (ch > base) {
+                    if (cur_ch > base) {
                         return stl::unexpected(integer_casting_errors::invalid_base);
                     }
                 }
             }
             ret *= base;
-            ret += static_cast<T>(ch);
+            ret += static_cast<T>(cur_ch);
         }
         ret *= static_cast<T>(str.front() == '-' ? -1 : 1);
         return ret;

@@ -90,15 +90,15 @@ namespace webpp::unicode {
         template <typename T>
             requires(
               sizeof(T) == sizeof(char_type) && !stl::same_as<T, char_type>) // same size but not char_type
-        constexpr unicode_ptr(T* p) noexcept : start{reinterpret_cast<pointer>(p)} {}
+        explicit constexpr unicode_ptr(T* inp_ptr) noexcept : start{reinterpret_cast<pointer>(inp_ptr)} {}
 
-        constexpr unicode_ptr(pointer p) noexcept : start{p} {}
+        explicit constexpr unicode_ptr(pointer inp_ptr) noexcept : start{inp_ptr} {}
 
-        constexpr unicode_ptr(reference r) noexcept : start{&r.value} {}
+        explicit constexpr unicode_ptr(reference inp_ref) noexcept : start{&inp_ref.value} {}
 
         // this is used by std::pointer_traits<T>::pointer_to
-        static constexpr unicode_ptr pointer_to(reference r) noexcept {
-            return r;
+        static constexpr unicode_ptr pointer_to(reference inp_ref) noexcept {
+            return inp_ref;
         }
 
         // this is used by std::pointer_traits<T>::to_address
@@ -110,19 +110,19 @@ namespace webpp::unicode {
             return p;
         }
 
-        constexpr operator pointer() noexcept {
+        [[nodiscard]] constexpr explicit operator pointer() noexcept {
             return start;
         }
 
-        constexpr operator element_type() noexcept {
+        [[nodiscard]] explicit constexpr operator element_type() noexcept {
             return {*start};
         }
 
-        constexpr operator element_type const*() const noexcept {
+        [[nodiscard]] explicit constexpr operator element_type const*() const noexcept {
             return reinterpret_cast<element_type const*>(start);
         }
 
-        constexpr operator element_type*() noexcept {
+        [[nodiscard]] explicit constexpr operator element_type*() noexcept {
             return reinterpret_cast<element_type*>(start);
         }
 
@@ -249,7 +249,7 @@ namespace webpp::unicode {
          */
         template <typename IntType>
             requires(stl::is_integral_v<stl::remove_cvref_t<IntType>>)
-        constexpr operator IntType() const noexcept {
+        [[nodiscard]] explicit constexpr operator IntType() const noexcept {
             return static_cast<IntType>(value);
         }
 

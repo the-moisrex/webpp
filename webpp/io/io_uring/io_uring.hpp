@@ -23,6 +23,7 @@
 #    include <bit>
 #    include <cstdint>
 #    include <iterator>
+#    include <new> // std::launder
 #    include <system_error>
 
 namespace webpp::io {
@@ -94,8 +95,8 @@ namespace webpp::io {
                              callback_type,
                              callback_type&&>;
 
-        [[nodiscard]] constexpr bool error_on_res(stl::integral auto     ret,
-                                                  io_uring_service_state err_cat) noexcept {
+        [[nodiscard]] constexpr bool error_on_res(stl::integral auto           ret,
+                                                  io_uring_service_state const err_cat) noexcept {
             if (ret < 0 && ret != -ETIME) {
                 last_err_val = -ret;
                 last_err_cat = err_cat;
@@ -106,7 +107,7 @@ namespace webpp::io {
             return true;
         }
 
-        constexpr bool error_on_errno(stl::integral auto ret, io_uring_service_state err_cat) noexcept {
+        constexpr bool error_on_errno(stl::integral auto ret, io_uring_service_state const err_cat) noexcept {
             if (ret < 0) {
                 last_err_val = errno;
                 last_err_cat = err_cat;
@@ -241,7 +242,7 @@ namespace webpp::io {
         }
 
         [[nodiscard]] io_uring_sqe* sqe(rvalue_callback callback) noexcept(is_callback_optimizable) {
-            auto req = io_uring_get_sqe(&ring);
+            auto const req = io_uring_get_sqe(&ring);
             set_callback(req, stl::move(callback));
             return req;
         }

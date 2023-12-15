@@ -10,7 +10,7 @@ using namespace webpp::http;
 using req_parser = http_request_parser<std_traits>;
 
 TEST(HTTPRequestParser, RequestLine) {
-    std::vector<std::string_view> accepted_req_lines{
+    std::vector<std::string_view> const accepted_req_lines{
       "GET / HTTP/1.1",
       "POST / HTTP/1.1",
       "HEAD / HTTP/1.1",
@@ -20,13 +20,13 @@ TEST(HTTPRequestParser, RequestLine) {
       "SOMETHING /some/path.html HTTP/1.0",
       "GET some/path.html HTTP/1.0"};
 
-    for (std::string_view line : accepted_req_lines) {
+    for (std::string_view const line : accepted_req_lines) {
         req_parser parser;
         auto       original_line = line;
         EXPECT_EQ(200, parser.parse_request_line(line)) << "Request Line: " << original_line;
     }
 
-    std::vector<std::string_view> not_accepted_req_lines{
+    std::vector<std::string_view> const not_accepted_req_lines{
       "SOME/THING / HTTP/1.1",
       // "SOMETHING # HTTP/1.1", // we don't want this method to check if the uri is right or wrong
       "TEST test",
@@ -36,7 +36,7 @@ TEST(HTTPRequestParser, RequestLine) {
       // "GET1 / HTTP/1.1",
     };
 
-    for (std::string_view line : not_accepted_req_lines) {
+    for (std::string_view const line : not_accepted_req_lines) {
         req_parser parser;
         auto       original_line = line;
         EXPECT_NE(200, parser.parse_request_line(line)) << "Request Line: " << original_line;

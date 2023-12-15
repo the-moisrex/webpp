@@ -382,7 +382,7 @@ namespace webpp {
                     return stl::nullopt;
                 }
 
-                path_type file = key_path(key);
+                path_type const file = key_path(key);
                 return get_file(file);
             }
 

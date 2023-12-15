@@ -30,7 +30,8 @@ namespace webpp::http::cgi_proto {
         string_type body_content;
 
       public:
-        cgi_request_body_communicator(auto& inp_cgi) : body_content{get_alloc_for<string_type>(inp_cgi)} {
+        explicit cgi_request_body_communicator(auto& inp_cgi)
+          : body_content{get_alloc_for<string_type>(inp_cgi)} {
             auto const content_length_str = inp_cgi.env("CONTENT_LENGTH");
             if (!content_length_str.empty()) {
                 auto const content_length = to_uint(content_length_str);
@@ -47,12 +48,12 @@ namespace webpp::http::cgi_proto {
         }
 
         // set the body with char type as the byte type
-        void write(char const* data, size_type count) noexcept {
+        void write(char const* data, size_type const count) noexcept {
             body_content.append(data, static_cast<stl::size_t>(count));
         }
 
         // set the body
-        void write(byte_type const* data, size_type count) noexcept {
+        void write(byte_type const* data, size_type const count) noexcept {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             body_content.append(reinterpret_cast<char const*>(data), static_cast<stl::size_t>(count));
             // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

@@ -28,7 +28,7 @@ namespace webpp::http {
         /**
          * Source here is in "name = value" syntax and only one single cookie
          */
-        constexpr request_cookie(string_view_type const source) noexcept {
+        explicit constexpr request_cookie(string_view_type const source) noexcept {
             // parsing name and value
             details::parse_SE_value(source, _name, _value, _valid);
         }
@@ -46,7 +46,7 @@ namespace webpp::http {
         constexpr request_cookie& operator=(request_cookie const& c)     = default;
         constexpr request_cookie& operator=(request_cookie&& c) noexcept = default;
 
-        constexpr explicit operator bool() {
+        [[nodiscard]] constexpr explicit operator bool() const noexcept {
             return is_valid();
         }
 

@@ -14,7 +14,7 @@ using namespace webpp;
 using namespace webpp::io;
 
 TEST(IO, FileOptionsTest) {
-    file_options const options = "r+";
+    file_options const options{"r+"};
     EXPECT_EQ(options, "r+");
     EXPECT_TRUE(options.is_writeable());
     EXPECT_FALSE(options.is_readonly());
@@ -54,7 +54,7 @@ TEST(IO, BasicIOUring) {
       file,
       buffer_view{reinterpret_cast<stl::byte const*>(data.data()), data.size()},
       0ull,
-      stl::function<void(io_result)>{[data, &executed](io_result result) {
+      stl::function<void(io_result)>{[data, &executed](io_result const result) {
           ++executed;
           EXPECT_TRUE(result.is_ok());
           EXPECT_FALSE(result.is_error()) << result.to_string();
@@ -66,7 +66,7 @@ TEST(IO, BasicIOUring) {
       file,
       buffer_span{reinterpret_cast<stl::byte*>(buf.data()), buf.size()},
       0ull,
-      [data, &buf, &executed](io_result result) {
+      [data, &buf, &executed](io_result const result) {
           ++executed;
           EXPECT_TRUE(result.is_ok());
           std::string_view const buf_value{buf.data(), static_cast<stl::size_t>(result.value())};

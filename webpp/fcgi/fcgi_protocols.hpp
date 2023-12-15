@@ -17,7 +17,7 @@ namespace webpp::fastcgi {
         T                            value;
         static constexpr stl::size_t index = Index;
 
-        constexpr indexed_value(T value) noexcept : value(value) {}
+        explicit constexpr indexed_value(T value) noexcept : value(value) {}
     };
 
     /**
@@ -155,10 +155,10 @@ namespace webpp::fastcgi {
         /* reserved for later use */
         uint8_t reserved = 0;
 
-        constexpr header(record_type _type,
-                         uint16_t    _req_id,
-                         uint16_t    _content_length,
-                         uint8_t     _padd_len) noexcept
+        constexpr header(record_type const _type,
+                         uint16_t const    _req_id,
+                         uint16_t const    _content_length,
+                         uint8_t const     _padd_len) noexcept
           : type{_type},
             request_id_b1{static_cast<uint8_t>(_req_id >> 8u)},
             request_id_b0{static_cast<uint8_t>(_req_id)},
@@ -170,7 +170,7 @@ namespace webpp::fastcgi {
             return join_pieces<uint16_t, uint8_t>(request_id_b1, request_id_b0);
         }
 
-        void request_id(uint16_t req_id) noexcept {
+        void request_id(uint16_t const req_id) noexcept {
             split_pieces<uint16_t, uint8_t>(req_id, request_id_b1, request_id_b0);
         }
 
@@ -178,7 +178,7 @@ namespace webpp::fastcgi {
             return join_pieces<uint16_t, uint8_t>(content_length_b1, content_length_b0);
         }
 
-        void content_length(uint16_t _content_length) noexcept {
+        void content_length(uint16_t const _content_length) noexcept {
             split_pieces<uint16_t, uint8_t>(_content_length, content_length_b1, content_length_b0);
         }
 
@@ -232,7 +232,7 @@ namespace webpp::fastcgi {
         uint8_t protocol_status_value;
         uint8_t reserved[3] = {};
 
-        void app_status(uint32_t status_code) noexcept {
+        void app_status(uint32_t const status_code) noexcept {
             split_pieces<uint32_t, uint8_t>(
               status_code,
               app_status_b3,

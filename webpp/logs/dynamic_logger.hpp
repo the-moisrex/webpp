@@ -58,13 +58,14 @@ namespace webpp {
         basic_dynamic_logger& operator=(basic_dynamic_logger&&) noexcept = default;
         ~basic_dynamic_logger() override                                 = default;
 
-        basic_dynamic_logger(logger_type&& logger) noexcept : actual_logger{stl::move(logger)} {}
+        explicit basic_dynamic_logger(logger_type&& logger) noexcept : actual_logger{stl::move(logger)} {}
 
-        basic_dynamic_logger(logger_type const& logger) noexcept : actual_logger{logger} {}
+        explicit basic_dynamic_logger(logger_type const& logger) noexcept : actual_logger{logger} {}
 
         template <typename... Args>
             requires(stl::is_constructible_v<logger_type, Args...>)
-        basic_dynamic_logger(Args&&... args) noexcept(stl::is_nothrow_constructible_v<logger_type, Args...>)
+        explicit basic_dynamic_logger(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<logger_type, Args...>)
           : actual_logger{stl::forward<Args>(args)...} {}
 
 #define WEBPP_DEFINE_METHOD(method_name)                                                              \
@@ -124,9 +125,10 @@ namespace webpp {
         template <Logger LoggerType,
                   typename Allocator = stl::allocator<basic_dynamic_logger<LoggerType>>,
                   typename... Args>
-        constexpr basic_dynamic_logger(stl::type_identity<LoggerType>,
-                                       Allocator const& alloc = {},
-                                       Args&&... args)
+        explicit constexpr basic_dynamic_logger(
+          stl::type_identity<LoggerType>,
+          Allocator const& alloc = {},
+          Args&&... args)
             requires(stl::is_constructible_v<LoggerType, Args...>)
           : m_logger_ptr{
               stl::allocate_shared<basic_dynamic_logger<LoggerType>>(alloc, stl::forward<Args>(args)...)} {}
@@ -134,7 +136,7 @@ namespace webpp {
         /// default logger
         template <typename Allocator = stl::allocator<basic_dynamic_logger<default_static_logger>>,
                   typename... Args>
-        constexpr basic_dynamic_logger(Allocator const& alloc = {}, Args&&... args)
+        explicit constexpr basic_dynamic_logger(Allocator const& alloc = {}, Args&&... args)
           : m_logger_ptr{stl::allocate_shared<basic_dynamic_logger<default_static_logger>>(
               alloc,
               stl::forward<Args>(args)...)} {}

@@ -21,7 +21,7 @@ namespace webpp::http {
         using traits_type      = default_traits;
         using application_type = application_holder;
 
-        int operator()() noexcept {
+        [[nodiscard]] constexpr int operator()() const noexcept {
             return EXIT_SUCCESS;
         }
     };

@@ -33,7 +33,7 @@ namespace webpp::http {
     struct route_disabler : valve<route_disabler<ConditionType>> {
         constexpr route_disabler() noexcept = default;
 
-        constexpr route_disabler(bool inp_is_enabled) noexcept : is_enabled_value{inp_is_enabled} {}
+        explicit constexpr route_disabler(bool inp_is_enabled) noexcept : is_enabled_value{inp_is_enabled} {}
 
         constexpr route_disabler(route_disabler const&) noexcept                  = delete;
         constexpr route_disabler(route_disabler&&) noexcept                       = default;

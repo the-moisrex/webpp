@@ -343,9 +343,9 @@ namespace webpp::http {
     }
 
     // Returns the text representation of a request method verb.
-    static constexpr stl::string_view to_string(verb v) noexcept {
+    static constexpr stl::string_view to_string(verb const inp_verb) noexcept {
         using namespace std::literals::string_view_literals;
-        switch (v) {
+        switch (inp_verb) {
             case verb::del: return "DELETE"sv;
             case verb::get: return "GET"sv;
             case verb::head: return "HEAD"sv;
@@ -392,12 +392,12 @@ namespace webpp::http {
     }
 
     // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
-    [[nodiscard]] static constexpr bool is_verb_safe(stl::string_view method) noexcept {
+    [[nodiscard]] static constexpr bool is_verb_safe(stl::string_view const method) noexcept {
         return method == "GET" || method == "HEAD" || method == "OPTIONS" || method == "TRACE";
     }
 
     // Returns true if the request method is "safe" (per section 4.2.1 of RFC 7231).
-    [[nodiscard]] static constexpr bool is_verb_safe(verb method) noexcept {
+    [[nodiscard]] static constexpr bool is_verb_safe(verb const method) noexcept {
         switch (method) {
             case verb::get:
             case verb::head:
@@ -408,12 +408,12 @@ namespace webpp::http {
     }
 
     // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
-    [[nodiscard]] static constexpr bool is_verb_idempotent(stl::string_view method) noexcept {
+    [[nodiscard]] static constexpr bool is_verb_idempotent(stl::string_view const method) noexcept {
         return is_verb_safe(method) || method == "PUT" || method == "DELETE";
     }
 
     // Returns true if the request method is idempotent (per section 4.2.2 of RFC 7231).
-    [[nodiscard]] static constexpr bool is_verb_idempotent(verb method) noexcept {
+    [[nodiscard]] static constexpr bool is_verb_idempotent(verb const method) noexcept {
         switch (method) {
             case verb::put:
             case verb::del: return true;

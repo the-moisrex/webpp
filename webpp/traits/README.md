@@ -17,7 +17,7 @@ struct traits_example {
 };
 ```
 
-- `stderr_logger` is an standard _Logger_ type which satisfies the concept (look at the `logs` directory).
+- `stderr_logger` is a standard _Logger_ type which satisfies the concept (look at the `logs` directory).
 - `stl::alloc_descriptors` describes the possible allocators you want the library to use internally 
   (look at the `memory` directory).
 

@@ -72,7 +72,7 @@ namespace webpp {
                 return string_type(data, ndata);
             }
 
-            auto full_length = ndata;
+            auto const full_length = ndata;
 
             auto decompressed = string_type(full_length * 2, 0);
             bool done         = false;
@@ -93,10 +93,10 @@ namespace webpp {
                 if (strm.total_out >= decompressed.length()) {
                     decompressed.resize(decompressed.length() * 2);
                 }
-                strm.next_out  = (Bytef*) decompressed.data() + strm.total_out;
-                strm.avail_out = static_cast<uInt>(decompressed.length() - strm.total_out);
+                strm.next_out    = (Bytef*) decompressed.data() + strm.total_out;
+                strm.avail_out   = static_cast<uInt>(decompressed.length() - strm.total_out);
                 // Inflate another chunk
-                int status     = inflate(&strm, Z_SYNC_FLUSH);
+                int const status = inflate(&strm, Z_SYNC_FLUSH);
                 if (status == Z_STREAM_END) {
                     done = true;
                 } else if (status != Z_OK) {

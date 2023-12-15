@@ -43,10 +43,11 @@ namespace webpp {
 
           public:
             template <typename... Args>
-            constexpr debounce_ctors(Args&&... args) noexcept : Callable{stl::forward<Args>(args)...} {}
+            explicit constexpr debounce_ctors(Args&&... args) noexcept
+              : Callable{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
-            constexpr debounce_ctors(Interval i_interval, Args&&... args) noexcept
+            explicit constexpr debounce_ctors(Interval i_interval, Args&&... args) noexcept
               : Callable{stl::forward<Args>(args)...},
                 _interval(stl::move(i_interval)) {}
 

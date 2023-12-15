@@ -332,23 +332,23 @@ namespace webpp {
             return ipv6(istl::string_viewify<stl::string_view>(stl::forward<StrT>(ip_addr))).data == data;
         }
 
-        [[nodiscard]] constexpr bool operator==(ipv6 ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(ipv6 const ip_addr) const noexcept {
             return _prefix == ip_addr._prefix && data == ip_addr.data;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets8_t ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(octets8_t const ip_addr) const noexcept {
             return data == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets16_t ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(octets16_t const ip_addr) const noexcept {
             return octets16() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets32_t ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(octets32_t const ip_addr) const noexcept {
             return octets32() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(octets64_t ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(octets64_t const ip_addr) const noexcept {
             return octets64() == ip_addr;
         }
 
@@ -1012,13 +1012,14 @@ namespace webpp {
          */
         template <stl::size_t N>
             requires(N <= ipv6_byte_count)
-        [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> inp_octets,
-                                                 stl::size_t                 inp_prefix) const noexcept {
+        [[nodiscard]] constexpr bool starts_with(stl::array<stl::uint8_t, N> const inp_octets,
+                                                 stl::size_t const inp_prefix) const noexcept {
             auto const masked = mask(inp_prefix);
             return stl::equal(inp_octets.data(), inp_octets.data() + N, masked.octets8().data());
         }
 
-        [[nodiscard]] constexpr bool starts_with(ipv6 const& ip_addr, stl::size_t inp_prefix) const noexcept {
+        [[nodiscard]] constexpr bool starts_with(ipv6 const&       ip_addr,
+                                                 stl::size_t const inp_prefix) const noexcept {
             auto const masked    = mask(inp_prefix).octets8();
             auto const ip_octets = ip_addr.mask(inp_prefix).octets8();
             return stl::equal(ip_octets.begin(), ip_octets.end(), masked.begin());

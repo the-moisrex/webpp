@@ -29,37 +29,41 @@ namespace webpp::ascii {
         both_unknown
     };
 
-    [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case c) noexcept {
-        switch (c) {
+    [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case const inp_case) noexcept {
+        switch (inp_case) {
             using enum char_case;
             using enum char_case_side;
             case lowered: return both_lowered;
             case uppered: return both_uppered;
             case unknown: return both_unknown;
+            default: stl::unreachable();
         }
     }
 
     // NOLINTBEGIN(bugprone-easily-swappable-parameters)
-    [[nodiscard]] static constexpr char_case_side char_case_to_side(char_case a, char_case b) noexcept {
-        switch (a) {
+    [[nodiscard]] static constexpr char_case_side char_case_to_side(
+      char_case const inp_case_a,
+      char_case const inp_case_b) noexcept {
+        switch (inp_case_a) {
             using enum char_case;
             using enum char_case_side;
             case lowered:
-                switch (b) {
+                switch (inp_case_b) {
                     case lowered: return both_lowered;
                     default: return first_lowered;
                 }
             case uppered:
-                switch (b) {
+                switch (inp_case_b) {
                     case uppered: return both_uppered;
                     default: return first_uppered;
                 }
             case unknown:
-                switch (b) {
+                switch (inp_case_b) {
                     case lowered: return second_lowered;
                     case uppered: return second_uppered;
                     case unknown: return both_unknown;
                 }
+            default: stl::unreachable();
         }
     }
 

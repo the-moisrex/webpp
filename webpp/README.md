@@ -34,25 +34,15 @@ int main() {
 
 ```
 
-## Servers
-Even though it's not the best name for it, we do call them _servers_ because
-they don't know about the protocol that they're transferring (except TCP/UDP/...);
-but they know how to __communicate with the operating system__.
-
-Examples used in the [server](./server) directory:
-
-- __asio__: utilizing `boost::asio` or `asio` or `std::net` (when it comes)
-- __posix__: communicating directly with the *nix OSes to do the same thing.
-
 ## Protocols
 Protocols are usually a way of communication between the high level application layer,
 and the low level transmission layers.
 
 The protocols that interests us in this project know what will the other side
-understands so they can __convert the request and responses from and to their corresponding
+understands, so they can __convert the request and responses from and to their corresponding
 data structures known to the framework__.
 
-But those are not what we call protocols in this project. These are:
+But those are not what we are calling "protocols" in this project. These are:
 
 - __CGI__: A _CGI_ client. (doesn't use _servers_)
 - __FastCGI__: A _FastCGI_ client. (uses _servers_)
@@ -69,11 +59,11 @@ The _Protocol_:
 The `Protocol` instantiates the `Application` so it does have access to it.
 
 There can be more than one _protocol_ inside an executable.
-For example you can accept request from a FastCGI on port 2020,
+For example, you can accept request from a FastCGI on port 2020,
 and at the same time you can accept HTTP request on port 80.
 
 ### Applications
-`Application`s are the struct that the user will create. it  _might_ includes:
+`Application`s are the struct that the user will create. It  _might_ include:
 
  - A `Router` and its `Route`s, `Context` and its extensions
  - templated operator()
@@ -106,8 +96,8 @@ will process creation stuff at compile-time and won't cost you
 anything at runtime.
 
 There's also a _dynamic router_ which will let the user 
-to dynamically change the routes at runtime but it will cost you
-some runtime processing which is not that much and you can
+to dynamically change the routes at runtime, but it will cost you
+some runtime processing which is not that much, and you can
 ignore it for the most part.
 
  

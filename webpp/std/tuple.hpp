@@ -142,7 +142,7 @@ namespace webpp::istl {
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
         requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t index, Tup<Tp...>& t, FuncT&& f) {
+    static constexpr void for_index(stl::size_t const index, Tup<Tp...>& t, FuncT&& f) {
         if (index == 0) {
             f(stl::get<I>(t));
         }
@@ -151,7 +151,7 @@ namespace webpp::istl {
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
         requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t index, Tup<Tp...> const& t, FuncT&& f) {
+    static constexpr void for_index(stl::size_t const index, Tup<Tp...> const& t, FuncT&& f) {
         if (index == 0) {
             f(stl::get<I>(t));
         }
@@ -244,14 +244,14 @@ namespace webpp::istl {
         // using typename last_type<T...>::template remove<tuple>::tuple;
 
         template <typename... Args>
-        constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
+        explicit constexpr ituple(Args&&... args) : this_tuple{stl::forward<Args>(args)...} {}
 
         template <template <typename...> typename Tup, typename... Args>
-        constexpr ituple(ituple<Args...>&& tup)
+        explicit constexpr ituple(ituple<Args...>&& tup)
           : this_tuple{stl::forward<Args>(stl::move(stl::get<Args>(tup)))...} {}
 
         template <typename... TupT>
-        constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
+        explicit constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
             ([this, &tup]<stl::size_t... I>(stl::index_sequence<I...>) constexpr noexcept {
                 ((stl::get<I>(as_tuple()) = stl::move(stl::get<I>(tup))), ...);
             })(stl::make_index_sequence<native_tuple_size>{});
@@ -351,9 +351,9 @@ namespace webpp::istl {
 
         using Iter::Iter;
 
-        constexpr ituple_iterator(Iter const& iter) : Iter{iter} {}
+        explicit constexpr ituple_iterator(Iter const& iter) : Iter{iter} {}
 
-        constexpr ituple_iterator(Iter&& iter) : Iter{stl::move(iter)} {}
+        explicit constexpr ituple_iterator(Iter&& iter) : Iter{stl::move(iter)} {}
 
         // value type is an ituple
         using value_type =
@@ -407,14 +407,14 @@ namespace webpp::istl {
 
         iterable_ref object;
 
-        constexpr ituple_iterable(iterable_ref obj) noexcept : object{obj} {}
+        explicit constexpr ituple_iterable(iterable_ref obj) noexcept : object{obj} {}
 
         constexpr ituple_iterable(ituple_iterable const&)     = default;
         constexpr ituple_iterable(ituple_iterable&&) noexcept = default;
 
         // move ctor
         template <stl::size_t NewSize>
-        constexpr ituple_iterable(
+        explicit constexpr ituple_iterable(
           ituple_iterable<IterableT, typename OptsT::template resize<NewSize>>& in_iterable) noexcept
           : object{in_iterable.object} {}
 

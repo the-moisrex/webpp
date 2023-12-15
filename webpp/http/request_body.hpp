@@ -80,13 +80,13 @@ namespace webpp::http {
 
         template <typename T>
             requires(HTTPConvertibleBody<T, request_body>)
-        constexpr operator T() const {
+        [[nodiscard]] explicit constexpr operator T() const {
             return as<T>();
         }
 
         template <typename T>
             requires(HTTPConvertibleBody<T, request_body>)
-        constexpr operator T() {
+        [[nodiscard]] explicit constexpr operator T() {
             return as<T>();
         }
 

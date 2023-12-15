@@ -29,19 +29,19 @@
 #ifndef WEBPP_STD_EXPECTED_IMPL_HPP
 #define WEBPP_STD_EXPECTED_IMPL_HPP
 
-#if __has_include(<bits/exception.h>)
+#if __has_include(<bits/exception.h> )
 #    include <bits/exception.h> // exception
 #else
 #    include <exception>
 #endif
 
-#if __has_include(<bits/stl_construct.h>)
+#if __has_include(<bits/stl_construct.h> )
 #    include <bits/stl_construct.h> // construct_at
 #else
 #    include <memory>
 #endif
 
-#if __has_include(<bits/utility.h>)
+#if __has_include(<bits/utility.h> )
 #    include <bits/utility.h> // std::in_place_t
 #else
 #    include <utility>
@@ -706,9 +706,9 @@ namespace webpp::stl {
         // && noexcept(bool(x.error() == y.error())))
         {
             if (x.has_value()) {
-                return y.has_value() && bool(*x == *y);
+                return y.has_value() && static_cast<bool>(*x == *y);
             } else {
-                return !y.has_value() && bool(x.error() == y.error());
+                return !y.has_value() && static_cast<bool>(x.error() == y.error());
             }
         }
 
@@ -716,14 +716,14 @@ namespace webpp::stl {
         friend constexpr bool operator==(expected const& x, U const& v)
         // FIXME: noexcept(noexcept(bool(*x == v)))
         {
-            return x.has_value() && bool(*x == v);
+            return x.has_value() && static_cast<bool>(*x == v);
         }
 
         template <typename E2>
         friend constexpr bool operator==(expected const& x, unexpected<E2> const& e)
         // FIXME: noexcept(noexcept(bool(x.error() == e.error())))
         {
-            return !x.has_value() && bool(x.error() == e.error());
+            return !x.has_value() && static_cast<bool>(x.error() == e.error());
         }
 
         friend constexpr void swap(expected& x, expected& y) noexcept(noexcept(x.swap(y)))
@@ -1032,14 +1032,14 @@ namespace webpp::stl {
             if (x.has_value()) {
                 return y.has_value();
             }
-            return !y.has_value() && bool(x.error() == y.error());
+            return !y.has_value() && static_cast<bool>(x.error() == y.error());
         }
 
         template <typename E2>
         friend constexpr bool operator==(expected const& x, unexpected<E2> const& e)
         // FIXME: noexcept(noexcept(bool(x.error() == e.error())))
         {
-            return !x.has_value() && bool(x.error() == e.error());
+            return !x.has_value() && static_cast<bool>(x.error() == e.error());
         }
 
         friend constexpr void swap(expected& x, expected& y) noexcept(noexcept(x.swap(y)))

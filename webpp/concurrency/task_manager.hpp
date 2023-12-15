@@ -26,26 +26,26 @@ namespace webpp {
         stl::condition_variable                           _ready;
 
       public:
-        notification_queue(allocator_type const& alloc = allocator_type{}) : _q{alloc} {}
+        explicit notification_queue(allocator_type const& alloc = allocator_type{}) : _q{alloc} {}
 
-        bool try_pop(stl::function<void()>& x) noexcept {
+        bool try_pop(stl::function<void()>& inp_func) noexcept {
             stl::unique_lock<stl::mutex> lock{_mutex, stl::try_to_lock};
             if (!lock || _q.empty()) {
                 return false;
             }
-            x = move(_q.front());
+            inp_func = move(_q.front());
             _q.pop_front();
             return true;
         }
 
         template <typename F>
-        bool try_push(F&& f) noexcept {
+        bool try_push(F&& inp_func) noexcept {
             {
                 stl::unique_lock<stl::mutex> lock{_mutex, stl::try_to_lock};
                 if (!lock) {
                     return false;
                 }
-                _q.emplace_back(forward<F>(f));
+                _q.emplace_back(stl::forward<F>(inp_func));
             }
             _ready.notify_one();
             return true;
@@ -73,10 +73,10 @@ namespace webpp {
         }
 
         template <typename F>
-        void push(F&& f) noexcept {
+        void push(F&& inp_func) noexcept {
             {
                 [[maybe_unused]] stl::scoped_lock lock{_mutex};
-                _q.emplace_back(forward<F>(f));
+                _q.emplace_back(stl::forward<F>(inp_func));
             }
             _ready.notify_one();
         }
@@ -94,27 +94,27 @@ namespace webpp {
 
         void run(unsigned i) noexcept {
             while (true) {
-                stl::function<void()> f;
+                stl::function<void()> func;
 
-                for (unsigned n = 0; n != _count * 32; ++n) {
-                    if (_q[(i + n) % _count].try_pop(f)) {
+                for (unsigned pos = 0; pos != _count * 32; ++pos) {
+                    if (_q[(i + pos) % _count].try_pop(func)) {
                         break;
                     }
                 }
-                if (!f && !_q[i].pop(f)) {
+                if (!func && !_q[i].pop(func)) {
                     break;
                 }
 
-                f();
+                func();
             }
         }
 
       public:
-        task_system(allocator_type const& alloc = allocator_type{}) : _threads{alloc}, _q{alloc} {
+        explicit task_system(allocator_type const& alloc = allocator_type{}) : _threads{alloc}, _q{alloc} {
             _threads.reserve(_count);
-            for (unsigned n = 0; n != _count; ++n) {
-                _threads.emplace_back([this, n] {
-                    run(n);
+            for (unsigned pos = 0; pos != _count; ++pos) {
+                _threads.emplace_back([this, pos] {
+                    run(pos);
                 });
             }
         }
@@ -125,25 +125,25 @@ namespace webpp {
         task_system& operator=(task_system&&) noexcept = delete; // todo: implement this if needed
 
         ~task_system() {
-            for (auto& e : _q) {
-                e.done();
+            for (auto& noti_queue : _q) {
+                noti_queue.done();
             }
-            for (auto& e : _threads) {
-                e.join();
+            for (auto& cur_thread : _threads) {
+                cur_thread.join();
             }
         }
 
         template <typename F>
-        void async_(F&& f) {
-            auto i = _index++;
+        void async_(F&& inp_func) {
+            auto const init_index = _index++;
 
-            for (unsigned n = 0; n != _count; ++n) {
-                if (_q[(i + n) % _count].try_push(stl::forward<F>(f))) {
+            for (unsigned pos = 0; pos != _count; ++pos) {
+                if (_q[(init_index + pos) % _count].try_push(stl::forward<F>(inp_func))) {
                     return;
                 }
             }
 
-            _q[i % _count].push(stl::forward<F>(f));
+            _q[init_index % _count].push(stl::forward<F>(inp_func));
         }
     };
 

@@ -16,7 +16,7 @@ namespace webpp {
     /**
      * Get the error message as a string view
      */
-    static constexpr stl::string_view to_string(inet_pton4_status status) noexcept {
+    static constexpr stl::string_view to_string(inet_pton4_status const status) noexcept {
         switch (status) {
             using enum inet_pton4_status;
             case valid: return {"Valid IPv4 address"};
@@ -37,7 +37,7 @@ namespace webpp {
     /**
      * Get the error message as a string view
      */
-    static constexpr stl::string_view to_string(inet_pton6_status status) noexcept {
+    static constexpr stl::string_view to_string(inet_pton6_status const status) noexcept {
         switch (status) {
             using enum inet_pton6_status;
             case valid: return {"Valid IPv6 address"};

@@ -69,7 +69,7 @@ namespace webpp::istl {
                 requires((!stl::same_as<stl::decay_t<OArgs>, functor_object> && ...) &&
                          (!stl::same_as<stl::decay_t<OArgs>, allocate_caller> && ...) &&
                          stl::is_constructible_v<object_type, OArgs...>)
-            constexpr functor_object(OArgs&&... args)
+            explicit constexpr functor_object(OArgs&&... args)
               : caller{FunctionType::template call_stub<CallableObject>},
                 action_runner{run_action<FunctionType, CallableObject>},
                 obj{stl::forward<OArgs>(args)...} {}
@@ -80,7 +80,7 @@ namespace webpp::istl {
         };
 
         template <typename FunctionType, typename Callable>
-        constexpr void run_action(FunctionType const& func, void* other, details::action_list action) {
+        constexpr void run_action(FunctionType const& func, void* other, details::action_list const action) {
             using function_type         = FunctionType;
             using function_ptr          = stl::add_pointer_t<function_type>;
             using callable              = stl::decay_t<Callable>;
@@ -320,7 +320,8 @@ namespace webpp::istl {
                           "The specified allocator is not default constructible.");
         }
 
-        constexpr function(stl::nullptr_t) noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
+        explicit constexpr function(stl::nullptr_t) noexcept(
+          stl::is_nothrow_default_constructible_v<allocator_type>) {
             static_assert(stl::is_default_constructible_v<allocator_type>,
                           "The specified allocator is not default constructible.");
         }
@@ -481,7 +482,7 @@ namespace webpp::istl {
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
                      !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
                      stl::is_default_constructible_v<allocator_type>)
-        constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
+        explicit constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
           : alloc{},
             ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));

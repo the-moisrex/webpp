@@ -31,7 +31,7 @@ namespace webpp {
             // NOLINTBEGIN(bugprone-forwarding-reference-overload)
             template <EnabledTraits ET>
                 requires(!stl::same_as<stl::remove_cvref_t<ET>, storage_gate>)
-            constexpr storage_gate(ET&& et) : map{get_alloc_for<map_type>(et)} {}
+            explicit constexpr storage_gate(ET&& et) : map{get_alloc_for<map_type>(et)} {}
 
             // NOLINTEND(bugprone-forwarding-reference-overload)
 

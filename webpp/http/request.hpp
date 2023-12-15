@@ -187,10 +187,10 @@ namespace webpp::http {
             requires(!istl::cvref_as<ET, basic_request> && istl::StringifiableOf<string_type, UStrT> &&
                      istl::StringifiableOf<string_type, MStrT>)
         constexpr explicit basic_request(
-          ET&&          inp_etraits,
-          MStrT&&       inp_method = "GET",
-          UStrT&&       url        = "/",
-          http::version ver        = http::http_2_0)
+          ET&&                inp_etraits,
+          MStrT&&             inp_method = "GET",
+          UStrT&&             url        = "/",
+          http::version const ver        = http::http_2_0)
           : common_request_type{inp_etraits},
             requested_uri{
               istl::stringify_of<string_type>(stl::forward<UStrT>(url), get_alloc_for<string_type>(*this))},
@@ -240,7 +240,7 @@ namespace webpp::http {
             return request_version;
         }
 
-        constexpr basic_request& version(http::version ver) noexcept {
+        constexpr basic_request& version(http::version const ver) noexcept {
             request_version = ver;
             return *this;
         }

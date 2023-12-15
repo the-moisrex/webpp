@@ -33,7 +33,7 @@ namespace webpp::http {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(!stl::same_as<stl::remove_cvref_t<T>, version> && istl::StringViewifiable<T>)
-        constexpr version(T&& str) noexcept
+        explicit constexpr version(T&& str) noexcept
           : value(parse_string(istl::string_viewify(stl::forward<decltype(str)>(str)))) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
@@ -46,7 +46,7 @@ namespace webpp::http {
         constexpr ~version() = default;
 
         // Build from unsigned major/minor pair.
-        constexpr version(stl::uint16_t major, stl::uint16_t minor) noexcept
+        constexpr version(stl::uint16_t const major, stl::uint16_t const minor) noexcept
           : value(static_cast<stl::uint32_t>(major << uint_16_bits | minor)) {}
 
         // Major version number.
@@ -79,15 +79,16 @@ namespace webpp::http {
             }
             str.remove_prefix(ascii::size(http_string));
             if (str.starts_with("/")) {
-                return {str.substr(1)};
-            } else if (str.starts_with("S/")) {
-                return {str.substr(2)};
+                return version{str.substr(1)};
+            }
+            if (str.starts_with("S/")) {
+                return version{str.substr(2)};
             }
             return unknown();
         }
 
         [[nodiscard]] static constexpr version from_string(istl::StringView auto str) noexcept {
-            return {str};
+            return version{str};
         }
 
         // Overloaded operators:
@@ -130,7 +131,8 @@ namespace webpp::http {
         using array_type = stl::array<version, N>;
 
         template <typename... T>
-        constexpr version_list(T&&... versions) noexcept : array_type{stl::forward<T>(versions)...} {}
+        explicit constexpr version_list(T&&... versions) noexcept
+          : array_type{stl::forward<T>(versions)...} {}
 
         [[nodiscard]] constexpr bool include_version(version ver) noexcept {
             for (auto const& v : *this) {

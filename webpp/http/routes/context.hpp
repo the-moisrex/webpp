@@ -25,11 +25,11 @@ namespace webpp::http {
             using request_cref  = request_type const&;
 
             template <HTTPRequest ReqT>
-            constexpr common_context_methods(ReqT const& inp_req) noexcept : etraits{inp_req} {}
+            explicit constexpr common_context_methods(ReqT const& inp_req) noexcept : etraits{inp_req} {}
 
             template <Context CtxT>
                 requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-            constexpr common_context_methods(CtxT const& ctx) noexcept
+            explicit constexpr common_context_methods(CtxT const& ctx) noexcept
               : common_context_methods{ctx.request} {}
 
             constexpr common_context_methods(common_context_methods&& ctx) noexcept        = default;
@@ -164,13 +164,13 @@ namespace webpp::http {
 
         // NOLINTEND(*-non-private-member-variables-in-classes)
 
-        constexpr common_context_view(request_ref inp_req) noexcept
+        explicit constexpr common_context_view(request_ref inp_req) noexcept
           : context_methods{inp_req},
             request{inp_req} {}
 
         template <Context CtxT>
             requires(stl::same_as<typename stl::remove_cvref_t<CtxT>::request_type, request_type>)
-        constexpr common_context_view(CtxT const& ctx) noexcept : common_context_view{ctx.request} {}
+        explicit constexpr common_context_view(CtxT const& ctx) noexcept : common_context_view{ctx.request} {}
 
         constexpr common_context_view(common_context_view&& ctx) noexcept        = default;
         constexpr common_context_view(common_context_view const& ctx) noexcept   = default;
@@ -212,13 +212,13 @@ namespace webpp::http {
       public:
         template <HTTPRequest ReqT>
             requires(!istl::cvref_as<ReqT, request_type>)
-        constexpr basic_context(ReqT& req)
+        explicit constexpr basic_context(ReqT& req)
           : context_methods{req},
             request{req},
             response{req.get_traits()},
             traverser{request.uri()} {}
 
-        constexpr basic_context(request_type& req)
+        explicit constexpr basic_context(request_type& req)
           : context_methods{req},
             request{req},
             response{req.get_traits()},
@@ -226,7 +226,7 @@ namespace webpp::http {
 
         template <Context CtxT>
             requires(!istl::cvref_as<CtxT, basic_context>)
-        constexpr basic_context(CtxT const& ctx) noexcept : basic_context(ctx.request) {}
+        explicit constexpr basic_context(CtxT const& ctx) noexcept : basic_context(ctx.request) {}
 
         constexpr basic_context(basic_context&& ctx) noexcept        = default;
         constexpr basic_context(basic_context const& ctx) noexcept   = default;

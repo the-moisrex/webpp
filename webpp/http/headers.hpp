@@ -47,7 +47,7 @@ namespace webpp::http {
         constexpr header_field_reference& operator=(header_field_reference&&) noexcept = default;
         constexpr ~header_field_reference()                                            = default;
 
-        constexpr operator value_type() const noexcept {
+        [[nodiscard]] explicit constexpr operator value_type() const noexcept {
             return value;
         }
 
@@ -100,12 +100,13 @@ namespace webpp::http {
         using Container::Container;
 
         template <HTTPHeadersHolder H>
-        constexpr headers_container(H& holder) noexcept(stl::is_nothrow_constructible_v<Container, H&>)
+        explicit constexpr headers_container(H& holder) noexcept(
+          stl::is_nothrow_constructible_v<Container, H&>)
           : Container{holder.headers} {}
 
         template <EnabledTraits ET>
             requires(!HTTPHeadersHolder<ET>)
-        constexpr headers_container(ET&& et) noexcept : Container{stl::forward<ET>(et)} {}
+        explicit constexpr headers_container(ET&& et) noexcept : Container{stl::forward<ET>(et)} {}
 
         constexpr headers_container(headers_container const&)                = default;
         constexpr headers_container(headers_container&&) noexcept            = default;

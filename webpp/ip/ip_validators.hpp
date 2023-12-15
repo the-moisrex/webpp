@@ -57,7 +57,7 @@ namespace webpp::is {
      * @return bool an indication weather or not the specified input is a
      * valid ipv4 subnet mask or not
      */
-    [[nodiscard]] constexpr bool subnet(stl::array<stl::uint8_t, ipv4_byte_count> octets) noexcept {
+    [[nodiscard]] constexpr bool subnet(stl::array<stl::uint8_t, ipv4_byte_count> const octets) noexcept {
         for (auto const& octet : octets) {
             if (!subnet_octet(octet)) {
                 return false;

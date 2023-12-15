@@ -972,8 +972,8 @@ namespace webpp::views {
         }
 
         constexpr void parse_tag_contents(
-          bool                    is_unescaped_var,
-          string_view_type        contents,
+          bool const              is_unescaped_var,
+          string_view_type const  contents,
           mstch_tag<traits_type>& tag) const {
             using enum details::tag_type;
             if (is_unescaped_var) {
@@ -1019,8 +1019,9 @@ namespace webpp::views {
             return out;
         }
 
-        constexpr void
-        render(render_handler const& handler, context_internal<traits_type>& ctx, bool root_renderer = true) {
+        constexpr void render(render_handler const&          handler,
+                              context_internal<traits_type>& ctx,
+                              bool const                     root_renderer = true) {
             root_component.walk_children([&handler, &ctx, this](component_type& comp) -> walk_control_type {
                 return render_component(handler, ctx, comp);
             });

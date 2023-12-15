@@ -1,10 +1,11 @@
 // Created by moisrex on 4/22/20.
 
-#ifndef WEBPP_ENCODED_WORD_H
-#define WEBPP_ENCODED_WORD_H
+#ifndef WEBPP_ENCODED_WORD_HPP
+#define WEBPP_ENCODED_WORD_HPP
 
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
+#include "../traits/traits.hpp"
 
 namespace webpp::http {
 
@@ -63,7 +64,8 @@ namespace webpp::http {
         string_type      output;
 
       public:
-        encoded_word(istl::StringViewifiable auto&& _input, allocator_type const& alloc = allocator_type{})
+        explicit encoded_word(istl::StringViewifiable auto&& _input,
+                              allocator_type const&          alloc = allocator_type{})
           : input(istl::string_viewify(stl::forward<decltype(_input)>(input))),
             output(alloc) {}
 
@@ -115,4 +117,4 @@ namespace webpp::http {
 
 } // namespace webpp::http
 
-#endif // WEBPP_ENCODED_WORD_H
+#endif // WEBPP_ENCODED_WORD_HPP

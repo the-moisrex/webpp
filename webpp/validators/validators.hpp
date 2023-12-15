@@ -327,7 +327,7 @@ namespace webpp::is {
         using char_type = istl::char_type_of_t<decltype(str)>;
 
         // converting to lower case
-        stl::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) {
+        stl::transform(str.begin(), str.end(), str.begin(), [](unsigned char const c) {
             return stl::tolower(c);
         });
 

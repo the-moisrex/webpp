@@ -27,7 +27,7 @@
 #endif
 
 namespace webpp::details {
-    WEBPP_NORETURN inline void assert_fail(char const* file, int line, char const* message) {
+    WEBPP_NORETURN inline void assert_fail(char const* file, int const line, char const* message) {
         // Use unchecked std::fprintf to avoid triggering another assertion when writing to stderr fails
         std::fprintf(stderr, "%s:%d: assertion failed: %s", file, line, message);
         // Chosen instead of std::abort to satisfy Clang in CUDA mode during device code pass.

@@ -16,11 +16,11 @@ using fake_protocol = fake_proto<fake_app>;
 using req_t         = typename fake_protocol::request_type;
 
 TEST(HTTPRequestTest, ConceptTests) {
-    EXPECT_TRUE(bool(HTTPRequest<request>)) << "Request is not a valid request!!";
-    EXPECT_TRUE(bool(HTTPRequest<req_t>));
-    EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
-    EXPECT_TRUE(bool(HTTPRequestHeaders<typename req_t::headers_type>));
-    EXPECT_TRUE(bool(HTTPRequestBody<typename req_t::body_type>));
+    EXPECT_TRUE(static_cast<bool>(HTTPRequest<request>)) << "Request is not a valid request!!";
+    EXPECT_TRUE(static_cast<bool>(HTTPRequest<req_t>));
+    EXPECT_TRUE(static_cast<bool>(HTTPRequestHeaders<typename req_t::headers_type>));
+    EXPECT_TRUE(static_cast<bool>(HTTPRequestHeaders<typename req_t::headers_type>));
+    EXPECT_TRUE(static_cast<bool>(HTTPRequestBody<typename req_t::body_type>));
 }
 
 TEST(HTTPRequestTest, Constructors) {

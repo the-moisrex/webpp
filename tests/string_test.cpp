@@ -102,10 +102,10 @@ TEST(String, Splitter) {
     EXPECT_EQ(it, it);
     EXPECT_EQ(eit, eit);
     EXPECT_NE(it, eit);
-    it++;
+    ++it;
     EXPECT_NE(it, eit);
     EXPECT_EQ(*it, "email");
-    it++;
+    ++it;
     EXPECT_EQ(*it, "com");
     ++it;
     EXPECT_EQ(it, eit);
@@ -143,7 +143,7 @@ TEST(String, SplitterConstexpr) {
 }
 
 TEST(String, StringViewConcept) {
-    EXPECT_FALSE(bool(StringViewifiable<stl::array<char const *, 4>>));
+    EXPECT_FALSE(static_cast<bool>(StringViewifiable<stl::array<char const *, 4>>));
 }
 
 // NOLINTEND(*-avoid-c-arrays,*-magic-numbers)

@@ -42,7 +42,7 @@ namespace webpp::http {
 
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, response_body>)
-        constexpr response_body(ET&& et) : body_communicator_type{et.get_traits()} {}
+        explicit constexpr response_body(ET&& et) : body_communicator_type{et.get_traits()} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

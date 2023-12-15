@@ -44,7 +44,7 @@ struct URITests : testing::Test {
     }
 
     template <typename SpecifiedTypeParam>
-    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view str) {
+    [[nodiscard]] constexpr SpecifiedTypeParam parse_from_string(stl::string_view const str) {
         auto ctx = get_context<SpecifiedTypeParam, stl::string_view>(str);
         uri::parse_uri(ctx);
         return ctx;

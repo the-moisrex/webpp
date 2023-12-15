@@ -156,15 +156,20 @@ namespace webpp {
         }
 
       public:
-        basic_socket(int domain, int type, ipproto_type protocol = ipproto::ip) noexcept
+        basic_socket(int const domain, int const type, ipproto_type const protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(), ::socket(domain, type, protocol))} {}
 
-        basic_socket(ip_address addr, int type, ipproto_type protocol = ipproto::ip) noexcept
+        basic_socket(ip_address const   addr,
+                     int const          type,
+                     ipproto_type const protocol = ipproto::ip) noexcept
           : fd{(socket_initializer::initialize(),
                 addr.is_valid() ? ::socket(addr.is_v4() ? AF_INET : AF_INET6, type, protocol)
                                 : invalid_handle_value)} {}
 
-        basic_socket(ip_address addr, int type, ipproto_type protocol, in_port_t port) noexcept
+        basic_socket(ip_address const   addr,
+                     int const          type,
+                     ipproto_type const protocol,
+                     in_port_t const    port) noexcept
           : basic_socket{addr, type, protocol} {
             if (is_valid()) {
                 this->bind(addr, port);
@@ -175,7 +180,7 @@ namespace webpp {
             socket_initializer::initialize();
         }
 
-        basic_socket(native_handle_type d) noexcept : fd(d) {
+        explicit basic_socket(native_handle_type const inp_desc) noexcept : fd(inp_desc) {
             // no need to initialize, they already got a socket!
         }
 
@@ -193,10 +198,10 @@ namespace webpp {
 
         basic_socket& operator=(basic_socket&&) noexcept = default;
 
-        basic_socket& operator=(native_handle_type d) noexcept {
-            if (d != fd) {
+        basic_socket& operator=(native_handle_type const inp_desc) noexcept {
+            if (inp_desc != fd) {
                 close();
-                fd = d;
+                fd = inp_desc;
                 clear_error();
             }
             return *this;
@@ -247,16 +252,16 @@ namespace webpp {
          * A typical use of this is to have separate threads for using the socket.
          */
         [[nodiscard]] basic_socket clone() const noexcept {
-            native_handle_type h = invalid_handle_value;
+            native_handle_type cur_handle = invalid_handle_value;
 #ifdef MSVC_COMPILER
             WSAPROTOCOL_INFOW protInfo;
             if (::WSADuplicateSocketW(handle_, ::GetCurrentProcessId(), &protInfo) == 0) {
                 h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
             }
 #else
-            h              = ::dup(fd);
+            cur_handle     = ::dup(fd);
 #endif
-            return {h};
+            return basic_socket{cur_handle};
         }
 
         /**
@@ -318,7 +323,7 @@ namespace webpp {
          * Start listening
          * @param queue_size The listener queue size
          */
-        bool listen(int queue_size = default_queue_size) noexcept {
+        bool listen(int const queue_size = default_queue_size) noexcept {
             return check_ret_bool(::listen(fd, queue_size));
         }
 
@@ -329,7 +334,9 @@ namespace webpp {
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv4 ip, stl::uint16_t port, int queue_size = default_queue_size) noexcept {
+        bool listen(ipv4 const          ip,
+                    stl::uint16_t const port,
+                    int const           queue_size = default_queue_size) noexcept {
             return bind(ip, port) && listen(queue_size);
         }
 
@@ -340,7 +347,9 @@ namespace webpp {
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv6 const& ip, stl::uint16_t port, int queue_size = default_queue_size) noexcept {
+        bool listen(ipv6 const&         ip,
+                    stl::uint16_t const port,
+                    int const           queue_size = default_queue_size) noexcept {
             return bind(ip, port) && listen(queue_size);
         }
 
@@ -352,8 +361,8 @@ namespace webpp {
          * @return true if successful
          */
         bool listen(struct ip_address const& ip,
-                    stl::uint16_t            port,
-                    int                      queue_size = default_queue_size) noexcept {
+                    stl::uint16_t const      port,
+                    int const                queue_size = default_queue_size) noexcept {
             return bind(ip, port) && listen(queue_size);
         }
 
@@ -393,7 +402,7 @@ namespace webpp {
          * @return bool true if the value was retrieved, false on error.
          */
         template <typename T>
-        bool get_option(int level, int optname, T* val) const noexcept {
+        bool get_option(int const level, int const optname, T* val) const noexcept {
             socklen_t len = sizeof(T);
             return get_option(level, optname, (void*) val, &len);
         }
@@ -428,7 +437,7 @@ namespace webpp {
          * @return bool true if the value was set, false on error
          */
         template <typename T>
-        bool set_option(int level, int optname, T const& val) noexcept {
+        bool set_option(int const level, int const optname, T const& val) noexcept {
             return set_option(level, optname, (void*) &val, sizeof(T));
         }
 
@@ -448,7 +457,7 @@ namespace webpp {
             return flags;
         }
 
-        bool set_flags(int flags) noexcept {
+        bool set_flags(int const flags) noexcept {
             if (::fcntl(fd, F_SETFL, flags) == -1) { // NOLINT(cppcoreguidelines-pro-type-vararg)
                 last_errno = errno;
                 return false;
@@ -456,7 +465,7 @@ namespace webpp {
             return true;
         }
 
-        bool set_flag(int flag, bool on = true) noexcept {
+        bool set_flag(int const flag, bool const on = true) noexcept {
             int const flags = get_flags();
             if (flags == -1) {
                 return false;
@@ -479,7 +488,7 @@ namespace webpp {
          *  	@li SHUT_RDWR (2) Further reads and writes disallowed.
          * @return true on success, false on error.
          */
-        bool shutdown(int how = SHUT_RDWR) noexcept {
+        bool shutdown(int const how = SHUT_RDWR) noexcept {
             if (is_open()) {
                 return check_ret_bool(::shutdown(release(), how));
             }
@@ -532,7 +541,7 @@ namespace webpp {
             return last_errno == 0;
         }
 
-        [[nodiscard]] operator bool() const noexcept {
+        [[nodiscard]] explicit operator bool() const noexcept {
             return is_valid();
         }
 
@@ -544,7 +553,7 @@ namespace webpp {
          * Clears the error flag for the object.
          * @param val The value to set the flag, normally zero.
          */
-        void clear_error(int val = 0) noexcept {
+        void clear_error(int const val = 0) noexcept {
             last_errno = val;
         }
 
@@ -557,15 +566,11 @@ namespace webpp {
 
 #include <functional>
 
-namespace std {
-
-    template <>
-    struct hash<webpp::basic_socket> {
-        size_t operator()(webpp::basic_socket const& s) const noexcept {
-            return hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
-        }
-    };
-
-} // namespace std
+template <>
+struct std::hash<webpp::basic_socket> {
+    size_t operator()(webpp::basic_socket const& s) const noexcept {
+        return hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
+    }
+};
 
 #endif // WEBPP_SOCKET_HPP

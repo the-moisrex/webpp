@@ -19,7 +19,7 @@
 namespace webpp::http {
 
 
-    struct bad_cross_talk : stl::invalid_argument {
+    struct bad_cross_talk final : stl::invalid_argument {
         using stl::invalid_argument::invalid_argument;
     };
 
@@ -62,7 +62,7 @@ namespace webpp::http {
         mutable stl::size_t index = 0;
 
       public:
-        [[nodiscard]] constexpr stl::streamsize write(byte_type const* data, stl::streamsize count) {
+        [[nodiscard]] constexpr stl::streamsize write(byte_type const* data, stl::streamsize const count) {
             this->insert(this->begin(),
                          data,
                          data + count); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
@@ -77,7 +77,7 @@ namespace webpp::http {
             return count;
         }
 
-        constexpr void seek(stl::streamsize count) noexcept {
+        constexpr void seek(stl::streamsize const count) noexcept {
             index = stl::clamp(static_cast<stl::size_t>(count), stl::size_t{0UL}, this->size());
         }
     };

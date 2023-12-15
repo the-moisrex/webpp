@@ -59,7 +59,7 @@ namespace webpp {
 
             template <typename... Args>
                 requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
-            constexpr vctor([[maybe_unused]] Args&&... args) noexcept : Parent{} {}
+            explicit constexpr vctor([[maybe_unused]] Args&&... args) noexcept : Parent{} {}
         };
 
         template <typename Parent>
@@ -72,7 +72,7 @@ namespace webpp {
             //   : Parent{stl::forward<Args>(args)...} {}
 
             template <typename... Args>
-            constexpr ctor([[maybe_unused]] Args&&... args) noexcept
+            explicit constexpr ctor([[maybe_unused]] Args&&... args) noexcept
                 requires(!stl::constructible_from<Parent, Args...> && stl::is_default_constructible_v<Parent>)
               : Parent{} {}
         };

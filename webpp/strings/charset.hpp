@@ -477,7 +477,7 @@ namespace webpp {
          * @brief checks if all the chars in the inp_set is in the chars list or not
          * @param inp_set
          */
-        [[nodiscard]] constexpr bool contains(stl::basic_string_view<bool> inp_set) const noexcept {
+        [[nodiscard]] constexpr bool contains(stl::basic_string_view<bool> const inp_set) const noexcept {
             for (auto const character : inp_set) {
                 if (!contains(character)) {
                     return false;

@@ -116,7 +116,7 @@ struct fake_descriptor {
         static constexpr bool mid_level = true;
 
         template <typename... Args>
-        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
+        explicit mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
     };
 
     template <typename ExtensionListType, typename TraitsType, typename EList>
@@ -124,7 +124,7 @@ struct fake_descriptor {
         static constexpr bool final_level = true;
 
         template <typename... Args>
-        final_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
+        explicit final_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
     };
 };
 
@@ -206,7 +206,7 @@ struct ctor_one {
         int a  = 1;
         type() = default;
 
-        type(int _a, int _b) : a{_a + _b} {}
+        type(int const inp_a, int const inp_b) : a{inp_a + inp_b} {}
     };
 };
 
@@ -272,7 +272,7 @@ struct fake_descriptor_no_final {
         static constexpr bool mid_level = true;
 
         template <typename... Args>
-        mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
+        explicit mid_level_extensie_type(Args&&... args) noexcept : EList{std::forward<Args>(args)...} {}
     };
 
     // mno

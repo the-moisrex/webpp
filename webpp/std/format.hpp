@@ -102,19 +102,19 @@ namespace webpp::istl {
     } // namespace details
 
     // Thread-safe replacement for std::localtime
-    inline std::tm safe_localtime(std::time_t time) {
+    inline std::tm safe_localtime(std::time_t const time) {
         struct dispatcher {
             std::time_t time_;
             std::tm     tm_;
 
-            dispatcher(std::time_t t) : time_(t) {}
+            explicit dispatcher(std::time_t const inp_time) : time_(inp_time) {}
 
             bool run() {
                 using namespace details;
                 return handle(localtime_r(&time_, &tm_));
             }
 
-            bool handle(std::tm* tm) {
+            bool handle(std::tm const* tm) {
                 return tm != nullptr;
             }
 
@@ -123,7 +123,7 @@ namespace webpp::istl {
                 return fallback(localtime_s(&tm_, &time_));
             }
 
-            bool fallback(int res) {
+            bool fallback(int const res) {
                 return res == 0;
             }
 
@@ -147,7 +147,7 @@ namespace webpp::istl {
         return lt.tm_;
     }
 
-    inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> time_point) {
+    inline std::tm safe_localtime(std::chrono::time_point<std::chrono::system_clock> const time_point) {
         auto const time = std::chrono::system_clock::to_time_t(time_point);
         return *localtime(stl::addressof(time));
     }

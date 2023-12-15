@@ -28,6 +28,23 @@ TYPED_TEST(MemoryTest, AvailableMemory) {
     EXPECT_TRUE(available_memory() > 0);
 }
 
+TYPED_TEST(MemoryTest, Concepts) {
+    class incomplete_type;
+    using alloc_type = traits::allocator_type_of<TypeParam, int>;
+    using dync_type  = istl::dynamic<int, alloc_type>;
+    static_assert(stl::is_copy_assignable_v<dync_type>, "It should be copyable");
+    static_assert(stl::is_copy_constructible_v<dync_type>, "It should be copyable");
+    static_assert(stl::copyable<dync_type>, "It should be copyable");
+    static_assert(stl::movable<dync_type>, "It should be movable");
+
+    using inc_alloc_type = traits::allocator_type_of<TypeParam, incomplete_type>;
+    using inc_dync_type  = istl::dynamic<incomplete_type, inc_alloc_type>;
+    static_assert(stl::is_copy_assignable_v<inc_dync_type>, "It should be copyable");
+    static_assert(stl::is_copy_constructible_v<inc_dync_type>, "It should be copyable");
+    static_assert(stl::copyable<inc_dync_type>, "It should be copyable");
+    static_assert(stl::movable<inc_dync_type>, "It should be movable");
+}
+
 // TYPED_TEST(MemoryTest, LocalAllocTest) {
 //     using traits_type = TypeParam;
 //     enable_owner_traits<traits_type> etraits;
@@ -92,9 +109,11 @@ TYPED_TEST(MemoryTest, DynamicType) {
     *d1 = 25;
     EXPECT_EQ(*d1, 25);
 
-    istl::pmr::dynamic<stl::pmr::string> d2{stl::pmr::get_default_resource()};
-    d2 = "hello world";
-    EXPECT_EQ(*d2, "hello world");
+    istl::pmr::dynamic<stl::pmr::string> d2{stl::allocator_arg, {stl::pmr::get_default_resource()}};
+    // d2 = "hello world";
+    // EXPECT_EQ(*d2, "hello world");
+    *d2 = "hello world 2";
+    EXPECT_EQ(*d2, "hello world 2");
 
 
     struct incomplete_type;
@@ -109,17 +128,33 @@ TYPED_TEST(MemoryTest, DynamicType) {
     };
 
     stl::allocator<incomplete_type> alloc;
-    dynamic<incomplete_type>        normal{alloc, istl::initialize};
+    dynamic<incomplete_type>        normal{alloc};
     EXPECT_EQ(normal->val, 23);
 
-    complete_type daddy{
-      .baby = dynamic<incomplete_type>{alloc, istl::initialize}
-    };
+    complete_type daddy{.baby = dynamic<incomplete_type>{alloc}};
     EXPECT_EQ(daddy.baby->val, 23);
     daddy.baby = incomplete_type{.val = 24}; // this constructs the object with the allocator in the type
     EXPECT_EQ(daddy.val, 23);
     EXPECT_EQ(daddy.baby->val, 24);
 }
+
+TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
+    using istl::dynamic;
+    dynamic one{1};
+    dynamic two{2};
+    EXPECT_EQ(*one, 1);
+    EXPECT_EQ(*two, 2);
+
+    static constexpr auto  long_3s = "3333333333333333333333333333333333333333333333333333333333";
+    stl::array<char, 1024> data{};
+    stl::pmr::monotonic_buffer_resource res{data.data(), data.size()};
+
+    // use the pmr string's allocator (both type and it's pass it down)
+    dynamic<stl::pmr::string> three{stl::allocator_arg, {&res}, long_3s};
+    EXPECT_EQ(*three, long_3s);
+    EXPECT_EQ((stl::pmr::string{data.data(), three->size()}), long_3s);
+}
+
 #endif
 
 TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
@@ -131,6 +166,9 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     };
 
     struct son : mother {
+        int value  = 12;
+        int value2 = 13;
+
         stl::string to_string() override {
             return "son";
         }
@@ -139,8 +177,10 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     static int side_effect = 20;
 
     struct daughter : mother {
+        int value = 20;
+
         daughter() {
-            side_effect = 20;
+            side_effect = value;
         }
 
         stl::string to_string() override {
@@ -158,14 +198,30 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, dynamic<daughter, alloc_t>, alloc_t>) );
     EXPECT_TRUE((stl::is_constructible_v<dynamic<mother, alloc_t>, daughter, alloc_t>) );
 
-    dynamic<mother> family_member;
+    dynamic<mother> family_member{istl::no_init};
     family_member.template emplace<son>(); // replace a son
     EXPECT_EQ(family_member->to_string(), "son");
+    EXPECT_EQ(family_member.template as<son>().value2, 13);
     family_member = daughter{};            // replace a daughter, using move
     EXPECT_EQ(family_member->to_string(), "daughter");
+    EXPECT_EQ(family_member.template as<daughter>().value, 20);
 
     // memory leak check
     int const side_effect_now = side_effect;
     family_member.reset();
     EXPECT_EQ(side_effect, side_effect_now + 10);
+
+
+    dynamic<mother> girl{daughter{}};
+    EXPECT_EQ(girl->to_string(), "daughter");
+    EXPECT_EQ(girl.template as<daughter>().value, 20);
+
+    dynamic<mother> boy{stl::allocator_arg, {}, son{}};
+    EXPECT_EQ(boy->to_string(), "son");
+    EXPECT_EQ(boy.template as<son>().value, 12);
+
+
+    boy = girl;
+    EXPECT_EQ(boy->to_string(), "daughter");
+    EXPECT_EQ(boy.template as<daughter>().value, 20);
 }

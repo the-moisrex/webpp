@@ -426,18 +426,18 @@ namespace webpp::uri {
 
 
       public:
-        constexpr uri_string(char_type const* u) noexcept : data(u) {}
+        explicit(false) constexpr uri_string(char_type const* u) noexcept : data(u) {}
 
         /**
          * @brief parse from string, it will trim the spaces for generality too
          * @param inp_uri URI string
          */
-        constexpr uri_string(stored_str_t const& inp_uri) noexcept : data(inp_uri) {}
+        explicit(false) constexpr uri_string(stored_str_t const& inp_uri) noexcept : data(inp_uri) {}
 
         /**
          * If the user uses this
          */
-        constexpr uri_string(stored_str_t&& u) noexcept : data(stl::move(u)) {}
+        explicit(false) constexpr uri_string(stored_str_t&& inp_url) noexcept : data(stl::move(inp_url)) {}
 
         constexpr uri_string(uri_string const& bu) noexcept
           : alloc_holder_type{bu.get_allocator()},
@@ -462,30 +462,30 @@ namespace webpp::uri {
             fragment_start{stl::move(bu.fragment_start)} {}
 
         // assignment operators
-        constexpr uri_string& operator=(uri_string const& u) noexcept {
-            if (this != &u) {
-                data            = u.data;
-                scheme_end      = u.scheme_end;
-                authority_start = u.authority_start;
-                user_info_end   = u.user_info_end;
-                port_start      = u.port_start;
-                authority_end   = u.authority_end;
-                query_start     = u.query_start;
-                fragment_start  = u.fragment_start;
+        constexpr uri_string& operator=(uri_string const& inp_url) noexcept {
+            if (this != &inp_url) {
+                data            = inp_url.data;
+                scheme_end      = inp_url.scheme_end;
+                authority_start = inp_url.authority_start;
+                user_info_end   = inp_url.user_info_end;
+                port_start      = inp_url.port_start;
+                authority_end   = inp_url.authority_end;
+                query_start     = inp_url.query_start;
+                fragment_start  = inp_url.fragment_start;
             }
             return *this;
         }
 
-        constexpr uri_string& operator=(uri_string&& u) noexcept {
-            if (this != &u) {
-                data            = stl::move(u.data);
-                scheme_end      = stl::move(u.scheme_end);
-                authority_start = stl::move(u.authority_start);
-                user_info_end   = stl::move(u.user_info_end);
-                port_start      = stl::move(u.port_start);
-                authority_end   = stl::move(u.authority_end);
-                query_start     = stl::move(u.query_start);
-                fragment_start  = stl::move(u.fragment_start);
+        constexpr uri_string& operator=(uri_string&& inp_url) noexcept {
+            if (this != &inp_url) {
+                data            = stl::move(inp_url.data);
+                scheme_end      = stl::move(inp_url.scheme_end);
+                authority_start = stl::move(inp_url.authority_start);
+                user_info_end   = stl::move(inp_url.user_info_end);
+                port_start      = stl::move(inp_url.port_start);
+                authority_end   = stl::move(inp_url.authority_end);
+                query_start     = stl::move(inp_url.query_start);
+                fragment_start  = stl::move(inp_url.fragment_start);
             }
             return *this;
         }
@@ -502,7 +502,7 @@ namespace webpp::uri {
         //            return *this;
         //        }
 
-        constexpr uri_string(allocator_type const& inp_alloc = allocator_type{}) noexcept
+        explicit constexpr uri_string(allocator_type const& inp_alloc = allocator_type{}) noexcept
           : alloc_holder_type{inp_alloc} {
             static_assert(is_mutable(),
                           "You can't modify this basic_uri, there's no point in "
@@ -1181,7 +1181,7 @@ namespace webpp::uri {
             }
             if (sds.empty()) // special check for when we want to remove the SDS
             {
-                bef_last_dot++;
+                ++bef_last_dot;
             }
             static_cast<void>(host(strings::join(string_type(sds), string_type(_host.substr(bef_last_dot)))));
             return *this;
@@ -1766,8 +1766,7 @@ namespace webpp::uri {
             static_assert(istl::String<map_key_type>, "The specified container can't hold the query keys.");
             static_assert(istl::String<map_value_type>,
                           "The specified container can't hold the query values.");
-            auto _query = queries_raw();
-            for (; !_query.empty();) {
+            for (auto _query = queries_raw(); !_query.empty();) {
                 auto const and_sep = _query.find('&'); // find the delimiter
                 auto const eq_sep  = _query.find('=');
                 auto const name    = _query.substr(0, stl::min(eq_sep, and_sep));

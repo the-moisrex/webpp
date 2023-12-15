@@ -18,7 +18,7 @@ TEST(ConstListTest, ConstList) {
         EXPECT_TRUE(one.has(value));
     });
 
-    auto str_one = one.reduce(
+    auto const str_one = one.reduce(
       [](string const& data, auto const& value) {
           auto _data = data;
           _data.append(string((data.empty() ? "" : " ")));

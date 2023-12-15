@@ -31,15 +31,15 @@ namespace webpp::io {
          *  - If n <  -1, then it considers n as the invalid val
          * @param n The number of bytes read or written.
          */
-        constexpr io_result(int n) noexcept : val{n == -1 ? -errno : n} {}
+        explicit constexpr io_result(int const n) noexcept : val{n == -1 ? -errno : n} {}
 
-        static constexpr io_result invalid(int n = errno) noexcept {
-            return {-n};
+        static constexpr io_result invalid(int const inp_val = errno) noexcept {
+            return io_result{-inp_val};
         }
 
         // Set the error val
-        constexpr void error(int n = errno) noexcept {
-            val = -n;
+        constexpr void error(int const inp_val = errno) noexcept {
+            val = -inp_val;
         }
 
         // Determines if the result is OK (not an error)
@@ -52,7 +52,7 @@ namespace webpp::io {
             return val < 0;
         }
 
-        [[nodiscard]] constexpr operator bool() const noexcept {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_ok();
         }
 
@@ -60,7 +60,7 @@ namespace webpp::io {
             return val;
         }
 
-        [[nodiscard]] constexpr operator int() const noexcept {
+        [[nodiscard]] explicit constexpr operator int() const noexcept {
             return val;
         }
 

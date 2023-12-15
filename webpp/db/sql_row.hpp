@@ -23,7 +23,7 @@ namespace webpp::sql {
         constexpr sql_row& operator=(sql_row const&) noexcept = default;
         constexpr sql_row& operator=(sql_row&&) noexcept      = default;
 
-        constexpr sql_row(statement_type& stmt_ref) noexcept : stmt{stl::addressof(stmt_ref)} {}
+        explicit constexpr sql_row(statement_type& stmt_ref) noexcept : stmt{stl::addressof(stmt_ref)} {}
 
         constexpr bool operator==(sql_row const& rhs) const noexcept {
             return *stmt == *rhs.stmt;
@@ -105,7 +105,7 @@ namespace webpp::sql {
       public:
         constexpr row_iterator() noexcept = default;
 
-        constexpr row_iterator(statement_type* stmt_ptr) noexcept : row{*stmt_ptr} {}
+        explicit constexpr row_iterator(statement_type* stmt_ptr) noexcept : row{*stmt_ptr} {}
 
         constexpr row_iterator(row_iterator const&)                = default;
         constexpr row_iterator(row_iterator&&) noexcept            = default;

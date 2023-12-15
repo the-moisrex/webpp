@@ -38,11 +38,11 @@ namespace webpp::http {
          * The Args template parameters here are reserved for any other field providers
          */
         template <EnabledTraits ET, typename... Args>
-        constexpr request_headers(ET&& et, Args&&... args)
+        explicit constexpr request_headers(ET&& et, Args&&... args)
           : fields_provider_type{et, stl::forward<Args>(args)...} {}
 
         template <HTTPHeadersHolder T>
-        constexpr request_headers(T& holder) : fields_provider_type{holder} {}
+        explicit constexpr request_headers(T& holder) : fields_provider_type{holder} {}
 
         constexpr request_headers(request_headers const&)                = default;
         constexpr request_headers(request_headers&&) noexcept            = default;

@@ -65,8 +65,8 @@ TEST(DynamicRouter, RouteRegistration) {
 
     enable_traits_for<dynamic_router> router;
 
-    auto const page  = root / "page";
-    router          += page / "about" >> [] {
+    constexpr auto page  = root / "page";
+    router              += page / "about" >> [] {
         return "About";
     };
     router += page / "index" >> [] {
@@ -434,7 +434,7 @@ struct custom_callable {
   public:
     constexpr custom_callable() noexcept = default;
 
-    constexpr custom_callable(int inp) noexcept : res{inp} {}
+    explicit constexpr custom_callable(int const inp) noexcept : res{inp} {}
 
     constexpr custom_callable(custom_callable const&) noexcept            = default;
     constexpr custom_callable(custom_callable&&) noexcept                 = default;

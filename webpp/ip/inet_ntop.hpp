@@ -153,18 +153,18 @@ namespace webpp {
 
         if (longest_index == -1) {
             for (int i = 0; i != 7; ++i) {
-                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; hex_ptr++) {
+                for (hex_ptr = hexa + i * 5; *hex_ptr != '\0'; ++hex_ptr) {
                     *out++ = *hex_ptr;
                 }
                 *out++ = ':';
             }
-            for (hex_ptr = hexa + 7 * 5; *hex_ptr != '\0'; hex_ptr++) {
+            for (hex_ptr = hexa + 7 * 5; *hex_ptr != '\0'; ++hex_ptr) {
                 *out++ = *hex_ptr;
             }
         } else {
             int index = 0;
             for (; index != longest_index; ++index) {
-                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; hex_ptr++) {
+                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; ++hex_ptr) {
                     *out++ = *hex_ptr;
                 }
                 if (index != 7) {
@@ -175,7 +175,7 @@ namespace webpp {
             *out++  = ':';
             index  += longest_count;
             for (; index != 8; ++index) {
-                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; hex_ptr++) {
+                for (hex_ptr = hexa + index * 5; *hex_ptr != '\0'; ++hex_ptr) {
                     *out++ = *hex_ptr;
                 }
                 if (index != 7) {

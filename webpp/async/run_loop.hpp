@@ -45,7 +45,8 @@ namespace webpp::async {
 
         /// Since only the run loop itself should be allowed to initialize the scheduler, it's a private
         /// constructor to prevent anyone from misusing this class
-        constexpr run_loop_scheduler(run_loop_type& inp_loop) noexcept : loop{stl::addressof(inp_loop)} {}
+        explicit constexpr run_loop_scheduler(run_loop_type& inp_loop) noexcept
+          : loop{stl::addressof(inp_loop)} {}
 
         run_loop_type* loop;
     };
@@ -64,7 +65,7 @@ namespace webpp::async {
 
         static_assert(Scheduler<scheduler_type>, "Run Loop's Scheduler is not a valid scheduler.");
 
-        constexpr basic_run_loop(allocator_type const& alloc = {}) noexcept : tasks{alloc} {}
+        explicit constexpr basic_run_loop(allocator_type const& alloc = {}) noexcept : tasks{alloc} {}
 
         constexpr basic_run_loop(basic_run_loop const&)                = default;
         constexpr basic_run_loop(basic_run_loop&&) noexcept            = default;

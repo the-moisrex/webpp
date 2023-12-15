@@ -50,7 +50,7 @@ namespace webpp::http {
 
       public:
         template <typename... Args>
-        basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {}
+        explicit basic_cookie_jar(Args&&... args) : super{std::forward<Args>(args)...} {}
 
         typename super::const_iterator find(typename cookie_type::name_t const& name) const noexcept {
             return stl::find_if(super::cbegin(), super::cend(), [&](auto const& a) {

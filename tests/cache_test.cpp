@@ -96,9 +96,9 @@ TEST(Cache, DirectoryGateTest) {
     for (auto const& [key, value] : c2) {
         try {
             EXPECT_TRUE(key < 10) << key << istl::to_std_string(value);
-        } catch (stl::bad_alloc const& b) {
+        } catch (stl::bad_alloc const& err) {
             // I'm doing this to get the key when it fails. (the issue is fixed now)
-            EXPECT_NO_THROW(throw b) << key;
+            EXPECT_NO_THROW(throw err) << key;
         }
     }
 

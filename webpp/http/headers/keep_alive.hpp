@@ -10,9 +10,9 @@
 namespace webpp::http {
 
     struct keep_alive {
-        constexpr keep_alive() noexcept {}
+        constexpr keep_alive() noexcept = default;
 
-        constexpr operator bool() {
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return false;
         }
     };

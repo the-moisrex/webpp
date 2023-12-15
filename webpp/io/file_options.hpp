@@ -24,10 +24,11 @@ namespace webpp::io {
 
         template <istl::StringViewifiable StrT>
             requires(!stl::is_constructible_v<str_v, StrT>)
-        constexpr basic_path_view(StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
+        explicit constexpr basic_path_view(
+          StrT&& inp_path) noexcept // NOLINT(*-forwarding-reference-overload)
           : stl::basic_string_view<CharT>{istl::string_viewify_of<str_v>(stl::forward<StrT>(inp_path))} {}
 
-        constexpr basic_path_view(stl::filesystem::path const& inp_path) noexcept
+        explicit constexpr basic_path_view(stl::filesystem::path const& inp_path) noexcept
           : stl::basic_string_view<CharT>{inp_path.native().data(), inp_path.native().size()} {}
     };
 
@@ -91,35 +92,41 @@ namespace webpp::io {
 
         template <typename... FlagsT>
             requires(stl::same_as<FlagsT, flags_type> && ...)
-        constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
+        explicit constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
 
         template <typename CharT = char>
-        constexpr file_options(CharT const* mode) noexcept {
+        explicit constexpr file_options(CharT const* mode) noexcept {
             parse(mode);
         }
 
-#define def(the_op)                                                                             \
+        // NOLINTNEXTLINE(*-macro-usage)
+#define webpp_def(the_op)                                                                       \
     [[nodiscard]] constexpr file_options operator the_op(file_options other) const noexcept {   \
-        return {oflags the_op other.oflags};                                                    \
+        return file_options{oflags the_op other.oflags};                                        \
     }                                                                                           \
                                                                                                 \
     [[nodiscard]] constexpr file_options operator the_op(flags_type inp_flags) const noexcept { \
-        return {oflags the_op inp_flags};                                                       \
+        return file_options{oflags the_op inp_flags};                                           \
     }
 
-        def(|) def(&) def(+) def(-) def(*) def(/) def(%)
+        webpp_def(|)
+        webpp_def(&)
+        webpp_def(+)
+        webpp_def(-)
+        webpp_def(*)
+        webpp_def(/)
+        webpp_def(%)
 #undef def
 
-          [[nodiscard]] constexpr file_options
-          operator~() const noexcept {
-            return {~oflags};
+        [[nodiscard]] constexpr file_options operator~() const noexcept {
+            return file_options{~oflags};
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
             return (oflags & invalid) == 0;
         }
 
-        [[nodiscard]] constexpr bool operator==(file_options other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(file_options const other) const noexcept {
             return oflags == other.oflags;
         }
 

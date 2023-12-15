@@ -1,6 +1,7 @@
 #ifndef WEBPP_STD_MEMORY_HPP
 #define WEBPP_STD_MEMORY_HPP
 
+#include "./concepts.hpp"
 #include "./memory_resource.hpp"
 #include "./type_traits.hpp"
 #include "./utility.hpp"
@@ -10,11 +11,28 @@
 
 namespace webpp::istl {
 
+    /**
+     * @brief Use T's allocator if it has, otherwise, use the specified default allocator
+     */
+    template <typename T, template <typename> typename DefaultAllocT = stl::allocator>
+    struct allocator_from_or {
+        using type = DefaultAllocT<T>;
+    };
+
+    template <typename T, template <typename> typename DefaultAllocT>
+        requires requires { typename T::allocator_type; }
+    struct allocator_from_or<T, DefaultAllocT> {
+        using type = typename stl::allocator_traits<typename T::allocator_type>::template rebind_alloc<T>;
+    };
+
+    template <typename T, template <typename> typename DefaultAllocT = stl::allocator>
+    using allocator_from_or_t = typename allocator_from_or<T, DefaultAllocT>::type;
+
     /// a helper to initialize dynamic
     /// Usage:
     ///   dynamic<int> val{initialize};
-    static constexpr struct initialize_tag {
-    } initialize;
+    static constexpr struct no_initialize_tag {
+    } no_init;
 
     // NOLINTBEGIN(*-avoid-c-arrays)
     namespace detail {
@@ -346,19 +364,44 @@ namespace webpp::istl {
         return alloc_maker.release();
     }
 
-    // doesn't support copy/move of T with other types of Allocator...
-    template <typename T, typename AllocT = stl::allocator<T>>
+    /**
+     * Doesn't support copy/move of T with other types of Allocator...
+     *
+     * Attention: T might be an incomplete type at the type of constructing dynamic because it's
+     *            one of this classes' use cases.
+     *
+     * Constructors:
+     *   args... = arguments
+     *   alloc   = allocator
+     *   derived = dynamic<D> where D is a derived class of T or is convertible to T
+     *
+     *   - dynamic(dynamic const&)                          <- copy ctor
+     *   - dynamic(dynamic&&)                               <- move ctor
+     *   - dynamic(args...)
+     *     - dynamic()                                      <- default constructor
+     *   - dynamic(alloc, args...)
+     *     - dynamic(alloc, args...)                        <- pass alloc to object as well if possible
+     *   - dynamic(std::allocator_arg, alloc, args...)
+     *     - dynamic(std::allocator_arg, alloc, args...)    <- pass alloc to object as well if possible
+     *   - dynamic(no_init)                                 <- doesn't initialize the object at all
+     *     - dynamic(no_init, alloc)
+     *     - dynamic(alloc, no_init)
+     *     - dynamic(stl::allocator_arg, alloc, no_init)
+     *   - dynamic(dynamic<derived> const&)                 <- copy from a derived dynamic
+     *   - dynamic(dynamic<derived>&&)                      <- move from a derived dynamic
+     *   - dynamic(derived const&)                          <- copy derived
+     *   - dynamic(derived&&)                               <- move derived
+     *   - dynamic(type_identity<T>{}, args...)
+     */
+    template <typename T, typename AllocT = allocator_from_or_t<T, stl::allocator>>
     struct dynamic {
-        // attention: value_type might be an incomplete type at the type of constructing dynamic because it's
-        // one of this classes' use cases. so you're not to change this class in a way that'll throw an error
-        // for an incomplete type.
-        using value_type     = stl::remove_pointer_t<stl::remove_reference_t<T>>;
-        using alloc_traits   = typename stl::allocator_traits<AllocT>::template rebind_traits<value_type>;
-        using allocator_type = typename alloc_traits::allocator_type;
-        using size_type      = typename alloc_traits::size_type;
-        using pointer        = typename alloc_traits::pointer;
-        using const_pointer  = stl::add_const_t<typename alloc_traits::pointer>;
-
+        using value_type         = T; // do we need to remove the pointer and reference with T?
+        using alloc_traits       = typename stl::allocator_traits<AllocT>::template rebind_traits<value_type>;
+        using allocator_type     = typename alloc_traits::allocator_type;
+        using size_type          = typename alloc_traits::size_type;
+        using pointer            = typename alloc_traits::pointer;
+        using const_pointer      = stl::add_const_t<typename alloc_traits::pointer>;
+        using obj_allocator_type = allocator_from_or_t<T>;
 
       private:
         template <typename NT>
@@ -367,6 +410,17 @@ namespace webpp::istl {
 
         template <typename NT>
         using rebind_alloc_type = typename rebind_alloc_traits<NT>::allocator_type;
+
+        /// only derrived classes
+        template <typename NT>
+        static constexpr bool derived_type =
+          !stl::is_constructible_v<value_type, NT> && stl::is_base_of_v<value_type, stl::remove_cvref_t<NT>>;
+
+        /// all types that we can put instead of T
+        template <typename NT>
+        static constexpr bool compatible_type =
+          stl::convertible_to<NT, T> || istl::cvref_as<T, NT> || derived_type<NT> ||
+          stl::constructible_from<T, NT>;
 
         // alloc needs to be before the ptr because it is required for constructing the ptr
         [[no_unique_address]] allocator_type alloc;
@@ -386,107 +440,80 @@ namespace webpp::istl {
         // }
 
         template <typename InheritedType>
-            requires(!stl::is_constructible_v<value_type, InheritedType> &&
-                     stl::is_base_of_v<value_type, stl::remove_cvref_t<InheritedType>>)
+            requires(derived_type<InheritedType>)
         constexpr dynamic(allocator_type const& input_alloc, InheritedType&& derived_obj)
-          : alloc{input_alloc},
-            ptr{static_cast<pointer>(rebind_alloc_traits<InheritedType>::allocate(
-              istl::unmove(typename rebind_alloc_traits<InheritedType>::allocator_type{alloc}),
-              1))} {
-            using derived_alloc_traits = rebind_alloc_traits<InheritedType>;
-            using derived_alloc_type   = typename derived_alloc_traits::allocator_type;
-            using derived_pointer      = typename derived_alloc_traits::pointer;
-            derived_alloc_traits::construct(
-              istl::unmove(derived_alloc_type{alloc}),
-              static_cast<derived_pointer>(ptr),
-              stl::forward<InheritedType>(derived_obj));
+          : alloc{input_alloc} {
+            init<InheritedType>(stl::forward<InheritedType>(derived_obj));
         }
 
         template <typename InheritedType>
-            requires(!stl::is_constructible_v<value_type, InheritedType> &&
-                     stl::is_base_of_v<value_type, stl::remove_cvref_t<InheritedType>>)
+            requires(derived_type<InheritedType>)
         constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
                           allocator_type const&                 input_alloc,
                           InheritedType&&                       derived_obj)
           : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
 
         template <typename InheritedType>
-            requires(!stl::is_constructible_v<value_type, InheritedType> &&
-                     stl::is_base_of_v<value_type, stl::remove_cvref_t<InheritedType>>)
-        constexpr dynamic(InheritedType&& derived_obj, allocator_type const& input_alloc)
+            requires(derived_type<InheritedType>)
+        explicit constexpr dynamic(InheritedType&& derived_obj, allocator_type const& input_alloc = {})
           : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
 
         /// default construct the object
         template <typename... Args>
-            requires(stl::is_constructible_v<value_type, Args...>)
-        explicit constexpr dynamic([[maybe_unused]] initialize_tag tag,
-                                   allocator_type const&           input_alloc,
-                                   Args&&... args)
+        explicit constexpr dynamic(allocator_type const& input_alloc = {}, Args&&... args)
           : alloc{input_alloc},
             ptr{alloc_traits::allocate(alloc, 1)} {
-            static_assert(stl::is_constructible_v<T, Args...>,
-                          "The specified type is cannot be initialized with the specified arguments.");
-            alloc_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
+            stl::uninitialized_construct_using_allocator(ptr, alloc, stl::forward<Args>(args)...);
+            // alloc_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
         }
 
-        /// default construct the object
+        /// construct the object
+        template <typename Arg1, typename... Args>
+            requires(stl::is_default_constructible_v<allocator_type> &&
+                     !stl::same_as<stl::remove_cvref_t<Arg1>, allocator_type>)
+        explicit constexpr dynamic(Arg1&& arg1, Args&&... args)
+          : dynamic{allocator_type{}, stl::forward<Arg1>(arg1), stl::forward<Args>(args)...} {}
+
+        /// with allocator_arg tag
         template <typename... Args>
-            requires(stl::is_constructible_v<value_type, Args...>)
-        explicit constexpr dynamic(allocator_type const& input_alloc, initialize_tag tag, Args&&... args)
-          : dynamic{tag, input_alloc, stl::forward<Args>(args)...} {}
-
-        /// default construct the object
-        explicit constexpr dynamic([[maybe_unused]] initialize_tag tag)
-            requires(is_complete_v<value_type> && stl::is_default_constructible_v<allocator_type>)
-          : dynamic{allocator_type{}} {
-            // we're not adding this as a constraint to the constructor in order to let the user use
-            // incomplete types
-            static_assert(stl::is_default_constructible_v<value_type>,
-                          "This type must be default constructible");
-        }
-
-        /// construct nothing because the type is not constructible (pure virtual classes), you now have to
-        /// use .emplace
-        /// we're not adding this as a constraint to the constructor in order to let the user use
-        /// incomplete types
-        constexpr dynamic() noexcept
-            requires(stl::is_default_constructible_v<allocator_type>)
-        = default;
-
-        /// construct nothing because the type is not constructible yet (pure virtual classes), you now have
-        /// to use .empalce
-        explicit constexpr dynamic(allocator_type const& input_alloc) noexcept(
-          stl::is_nothrow_copy_constructible_v<allocator_type>)
-          : alloc{input_alloc} {
-            // we're not adding this as a constraint to the constructor in order to let the user use
-            // incomplete types
-        }
-
-        template <typename... Args>
-            requires(stl::is_constructible_v<value_type, Args...>)
         constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
                           allocator_type const&                 input_alloc,
                           Args&&... args)
           : dynamic{input_alloc, stl::forward<Args>(args)...} {}
 
-        template <typename C, typename... Args>
-            requires(stl::is_constructible_v<C, Args...>)
-        constexpr dynamic([[maybe_unused]] stl::type_identity<C> type_ident,
-                          allocator_type const&                  input_alloc,
-                          Args&&... args)
+        /// construct nothing because the type is not constructible (pure virtual classes),
+        /// you now have to use .emplace to actualy use the object
+        explicit constexpr dynamic([[maybe_unused]] no_initialize_tag tag) noexcept(
+          stl::is_nothrow_default_constructible_v<allocator_type>)
+            requires(stl::is_default_constructible_v<allocator_type>)
+        {}
+
+        /// no init with allocator
+        explicit constexpr dynamic(
+          [[maybe_unused]] no_initialize_tag tag,
+          allocator_type const& input_alloc) noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
+          : alloc{input_alloc} {}
+
+        /// no init with allocator in reverse
+        explicit constexpr dynamic(allocator_type const& input_alloc,
+                                   [[maybe_unused]] no_initialize_tag
+                                     tag) noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
           : alloc{input_alloc} {
-            emplace<C, Args...>(stl::forward<Args>(args)...);
+            // we're not adding this as a constraint to the constructor in order to let the user use
+            // incomplete types
         }
 
-        // template <typename... Args>
-        //     requires(stl::is_default_constructible_v<allocator_type> /*&&
-        //              stl::is_constructible_v<value_type, Args...>*/)
-        // constexpr dynamic(Args&&... args) : alloc{},
-        //                                     ptr{allocator_traits::allocate(alloc, 1)} {
-        //     allocator_traits::construct(alloc, ptr, stl::forward<Args>(args)...);
-        // }
+        /// helper constructor for this kinda usages:
+        ///   dynamic {type_identity<int>{}, alloc, 1};
+        ///   dynamic {type_identity<int>{}, 1};
+        template <typename... Args>
+        explicit constexpr dynamic([[maybe_unused]] stl::type_identity<T> type_ident, Args&&... args)
+          : dynamic{stl::forward<Args>(args)...} {}
 
-        constexpr dynamic(dynamic const& other, allocator_type const& new_alloc) : alloc{new_alloc} {
+        /// copy ctor
+        constexpr dynamic(dynamic const& other)
+            requires stl::copyable<value_type>
+          : alloc{other.get_allocator()} {
             if (other.ptr) {
                 // todo: if T is a virtual type, then this will call a copy constructor on a virtual type:
                 // https://isocpp.org/wiki/faq/virtual-functions#virtual-ctors
@@ -494,64 +521,42 @@ namespace webpp::istl {
             }
         }
 
-        constexpr dynamic(dynamic const& other) : dynamic{other, other.alloc} {}
+        /// move ctor
+        constexpr dynamic(dynamic&& other) noexcept
+          : alloc{other.alloc},
+            ptr{stl::exchange(other.ptr, nullptr)} {}
 
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic(dynamic<DerivedT, NewAllocT> const& other, allocator_type const& new_alloc)
-          : alloc{new_alloc} {
+        /// kinda copy ctor
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
+        explicit constexpr dynamic(dynamic<DerivedT, allocator_type> const& other)
+          : alloc{other.get_allocator()} {
             if (other.get_pointer()) {
                 init<DerivedT>(*other.get_pointer());
             }
         }
 
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>> &&
-                     stl::is_constructible_v<allocator_type, NewAllocT>)
-        explicit constexpr dynamic(dynamic<DerivedT, NewAllocT> const& other)
-          : dynamic{other, other.get_allocator()} {}
-
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>> &&
-                     stl::is_constructible_v<allocator_type, NewAllocT>)
+        /// kinda move ctor
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
         explicit constexpr dynamic(
-          dynamic<DerivedT, NewAllocT>&& other) noexcept // NOLINT(*-rvalue-reference-param-not-moved)
+          dynamic<DerivedT, allocator_type>&& other) noexcept // NOLINT(*-rvalue-reference-param-not-moved)
           : alloc{other.get_allocator()},
             ptr{stl::exchange(other.get_pointer(), nullptr)} {}
 
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic(dynamic<DerivedT, NewAllocT>&& other, // NOLINT(*-rvalue-reference-param-not-moved)
-                          allocator_type const&          new_alloc) noexcept
-          : alloc{new_alloc},
-            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
-
-        constexpr dynamic(dynamic&& other) noexcept
-          : alloc{other.alloc},
-            ptr{stl::exchange(other.ptr, nullptr)} {}
-
-        constexpr dynamic(dynamic&&             other, // NOLINT(*-rvalue-reference-param-not-moved)
-                          allocator_type const& new_alloc) noexcept
-          : alloc{new_alloc},
-            ptr{stl::exchange(other.ptr, nullptr)} {}
-
-        constexpr dynamic& operator=(value_type const& val) noexcept {
-            // value_type might be an incomplete type, so we're doing it with a static_assert
-            static_assert(stl::is_copy_constructible_v<value_type>, "It must be copy constructible.");
-            if constexpr (stl::is_copy_assignable_v<value_type>) {
-                if (ptr) {
-                    // use copy assignable opereator
-                    *ptr = val;
-                    return *this;
-                }
-            }
-            // create a new object and destroy the last one
-            ptr = alloc_traits::allocate(alloc, 1);
-            alloc_traits::construct(alloc, ptr, val);
+        /// assignment operator
+        template <typename V>
+            requires compatible_type<V>
+        constexpr dynamic& operator=(V&& val) {
+            emplace<V>(stl::forward<V>(val));
             return *this;
         }
 
-        constexpr dynamic& operator=(dynamic const& other) noexcept {
+        /// copy assignment operator
+        constexpr dynamic& operator=(dynamic const& other) /* noexcept(
+          stl::is_nothrow_copy_assignable_v<value_type> &&
+          stl::is_nothrow_copy_assignable_v<allocator_type>) */
+        {
             if (&other != this) {
                 *ptr = *other.ptr;
                 if constexpr (stl::is_copy_assignable_v<allocator_type>) {
@@ -561,29 +566,7 @@ namespace webpp::istl {
             return *this;
         }
 
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic& operator=(
-          dynamic<DerivedT, NewAllocT>&& other) noexcept { // NOLINT(*-rvalue-reference-param-not-moved)
-            if constexpr (stl::is_assignable_v<allocator_type, NewAllocT>) {
-                alloc = other.get_allocator();
-            }
-            stl::swap(ptr,
-                      other.get_pointer()); // so the "other"'s destructor will destroy this
-                                            // object's "ptr"
-            return *this;
-        }
-
-        template <typename DerivedT, typename NewAllocT>
-            requires(stl::is_base_of_v<value_type, stl::remove_cvref_t<DerivedT>>)
-        constexpr dynamic& operator=(dynamic<DerivedT, NewAllocT> const& other) noexcept {
-            if constexpr (stl::is_assignable_v<allocator_type, NewAllocT>) {
-                alloc = other.get_allocator();
-            }
-            emplace<DerivedT>(*other.pointer());
-            return *this;
-        }
-
+        /// move assignment operator
         constexpr dynamic& operator=(dynamic&& other) noexcept {
             if (&other != this) {
                 if constexpr (stl::is_copy_assignable_v<allocator_type>) {
@@ -594,21 +577,49 @@ namespace webpp::istl {
             return *this;
         }
 
-        constexpr dynamic& operator=(stl::nullptr_t) noexcept {
-            destroy();
-            ptr = nullptr;
+        constexpr dynamic& operator=(stl::nullptr_t) {
+            reset();
             return *this;
         }
 
-        constexpr auto operator<=>(value_type const& val) const noexcept {
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
+        constexpr dynamic& operator=(
+          dynamic<DerivedT, allocator_type>&& other) noexcept { // NOLINT(*-rvalue-reference-param-not-moved)
+            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
+                alloc = other.get_allocator();
+            }
+            stl::swap(ptr,
+                      other.get_pointer()); // so the "other"'s destructor will destroy this
+                                            // object's "ptr"
+            return *this;
+        }
+
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
+        constexpr dynamic& operator=(dynamic<DerivedT, allocator_type> const& other) noexcept {
+            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
+                alloc = other.get_allocator();
+            }
+            emplace<DerivedT>(*other.pointer());
+            return *this;
+        }
+
+        [[nodiscard]] constexpr auto operator<=>(value_type const& val) const noexcept {
             return *ptr <=> val;
         }
 
-        template <typename C>
-            requires(stl::is_base_of_v<T, C>)
-        constexpr dynamic& operator=(C&& new_type) noexcept {
-            emplace<C>(stl::forward<C>(new_type));
-            return *this;
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
+        [[nodiscard]] constexpr auto operator<=>(
+          dynamic<DerivedT, allocator_type> const& other) const noexcept {
+            return *ptr <=> *other.ptr;
+        }
+
+        template <typename DerivedT>
+            requires(derived_type<DerivedT>)
+        [[nodiscard]] constexpr auto operator<=>(DerivedT const& other) const noexcept {
+            return *ptr <=> other;
         }
 
         constexpr ~dynamic() {
@@ -657,9 +668,6 @@ namespace webpp::istl {
             return *ptr;
         }
 
-        // void reset() noexcept { destroy(); release(); }
-        // pointer release() noexcept {  }
-
         [[nodiscard]] constexpr bool valid() const noexcept {
             return ptr != nullptr;
         }
@@ -671,24 +679,24 @@ namespace webpp::istl {
 
         template <typename C>
             requires(stl::is_base_of_v<T, C>)
-        constexpr C& as() noexcept {
+        [[nodiscard]] constexpr C& as() noexcept {
             return *static_cast<C*>(ptr);
         }
 
-        constexpr allocator_type const& get_allocator() const noexcept {
+        [[nodiscard]] constexpr allocator_type const& get_allocator() const noexcept {
             return alloc;
         }
 
-        constexpr pointer get_pointer() noexcept {
+        [[nodiscard]] constexpr pointer get_pointer() noexcept {
             return ptr;
         }
 
-        constexpr const_pointer get_pointer() const noexcept {
+        [[nodiscard]] constexpr const_pointer get_pointer() const noexcept {
             return ptr;
         }
 
         template <typename C, typename... Args>
-            requires(stl::is_base_of_v<T, C> && stl::is_constructible_v<C, Args...>)
+            requires(compatible_type<C>)
         constexpr dynamic& emplace(Args&&... args) {
             using new_allocator_traits = typename alloc_traits::template rebind_traits<C>;
             using new_allocator_type   = typename new_allocator_traits::allocator_type;
@@ -711,8 +719,13 @@ namespace webpp::istl {
             } else {
                 new_ptr = new_allocator_traits::allocate(new_alloc, 1);
             }
-            new_allocator_traits::construct(new_alloc, new_ptr, stl::forward<Args>(args)...);
-            ptr = static_cast<pointer>(new_ptr);
+            // new_allocator_traits::construct(new_alloc, new_ptr, stl::forward<Args>(args)...);
+            stl::uninitialized_construct_using_allocator(new_ptr, new_alloc, stl::forward<Args>(args)...);
+            if constexpr (stl::same_as<T, C>) {
+                ptr = new_ptr;
+            } else {
+                ptr = dynamic_cast<pointer>(new_ptr);
+            }
             return *this;
         }
 
@@ -729,11 +742,16 @@ namespace webpp::istl {
             new_allocator_type new_alloc{alloc};
 
             new_pointer new_ptr = new_allocator_traits::allocate(new_alloc, 1);
-            new_allocator_traits::construct(new_alloc, new_ptr, stl::forward<Args>(args)...);
-            ptr = static_cast<pointer>(new_ptr);
+            // new_allocator_traits::construct(new_alloc, new_ptr, stl::forward<Args>(args)...);
+            stl::uninitialized_construct_using_allocator(new_ptr, new_alloc, stl::forward<Args>(args)...);
+            if constexpr (stl::same_as<T, C>) {
+                ptr = new_ptr;
+            } else {
+                ptr = dynamic_cast<pointer>(new_ptr);
+            }
         }
 
-        inline constexpr void destroy() {
+        inline constexpr void destroy() { // todo: add noexcept conditions
             if (ptr) {
                 alloc_traits::destroy(alloc, ptr);
                 alloc_traits::deallocate(alloc, ptr, 1);
@@ -746,6 +764,10 @@ namespace webpp::istl {
 
     template <typename T, typename AllocT>
     dynamic(T&&, AllocT const&) -> dynamic<stl::remove_cvref_t<T>, AllocT>;
+
+    template <typename T, typename AllocT>
+    dynamic(stl::type_identity<T>, stl::allocator_arg_t, AllocT const&)
+      -> dynamic<stl::remove_cvref_t<T>, AllocT>;
 
     namespace pmr {
 

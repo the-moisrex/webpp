@@ -215,10 +215,10 @@ TEST(TypeTraits, ITupleIteratorTestWithTuple) {
 }
 
 TEST(TypeTraits, OneOfTest) {
-    EXPECT_TRUE(bool(one_of<int, double, int>));
-    EXPECT_FALSE(bool(one_of<float, double, int>));
-    EXPECT_FALSE(bool(one_of<float, short, unsigned, double, int>));
-    EXPECT_TRUE(bool(one_of<float, short, unsigned, int, double, int>));
+    EXPECT_TRUE(static_cast<bool>(one_of<int, double, int>));
+    EXPECT_FALSE(static_cast<bool>(one_of<float, double, int>));
+    EXPECT_FALSE(static_cast<bool>(one_of<float, short, unsigned, double, int>));
+    EXPECT_TRUE(static_cast<bool>(one_of<float, short, unsigned, int, double, int>));
 }
 
 struct one {};
@@ -233,25 +233,30 @@ TEST(TypeTraits, InvocableInOrder) {
     using std::function;
     using webpp::istl::invocable_inorder_v;
 
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void()>>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int)>, int>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int, double)>, int, double>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(int, int)>, int, int, int>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(double, int)>, int, double, int>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, one)>, one, one, two>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, one)>, two, one, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, two)>, two, one, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(one, two, three)>, two, three, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(four, one, two, three)>, two, four, three, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(four, two, three, one)>, two, four, three, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, four, three, one)>, two, four, three, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, two, three, one)>, two, four, two, three, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<void(two, four, two, one), two, four, two, one>));
-    EXPECT_FALSE(bool(invocable_inorder_v<void(two, two, four), two, two, one>));
-    EXPECT_TRUE(bool(invocable_inorder_v<void(two, two const&, four), two, two&, one, four&>));
-    EXPECT_TRUE(bool(invocable_inorder_v<void(two const&, four const&), two&, one, four&&>));
-    EXPECT_FALSE(bool(invocable_inorder_v<void(two&, four const&), two const&, one, four&&>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void()>>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(int)>, int>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(int, double)>, int, double>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(int, int)>, int, int, int>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(double, int)>, int, double, int>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, one)>, one, one, two>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, one)>, two, one, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, two)>, two, one, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<function<void(one, two, three)>, two, three, one>));
+    EXPECT_TRUE(
+      static_cast<bool>(invocable_inorder_v<function<void(four, one, two, three)>, two, four, three, one>));
+    EXPECT_TRUE(
+      static_cast<bool>(invocable_inorder_v<function<void(four, two, three, one)>, two, four, three, one>));
+    EXPECT_TRUE(
+      static_cast<bool>(invocable_inorder_v<function<void(two, four, three, one)>, two, four, three, one>));
+    EXPECT_TRUE(static_cast<bool>(
+      invocable_inorder_v<function<void(two, two, three, one)>, two, four, two, three, one>));
+    EXPECT_TRUE(
+      static_cast<bool>(invocable_inorder_v<function<void(two, four, two, one)>, two, four, two, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<void(two, four, two, one), two, four, two, one>));
+    EXPECT_FALSE(static_cast<bool>(invocable_inorder_v<void(two, two, four), two, two, one>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<void(two, two const&, four), two, two&, one, four&>));
+    EXPECT_TRUE(static_cast<bool>(invocable_inorder_v<void(two const&, four const&), two&, one, four&&>));
+    EXPECT_FALSE(static_cast<bool>(invocable_inorder_v<void(two&, four const&), two const&, one, four&&>));
 
     auto const ok = [](one, two, three) -> bool {
         return true;
@@ -262,36 +267,39 @@ TEST(TypeTraits, InvocableInOrder) {
 }
 
 TEST(TypeTraits, SameAsAllTest) {
-    EXPECT_TRUE(bool(same_as_all<>));
-    EXPECT_FALSE(bool(same_as_all<one>));
-    EXPECT_TRUE(bool(same_as_all<one, one>));
-    EXPECT_TRUE(bool(same_as_all<one, two, three, one, two, three>));
-    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three>));
-    EXPECT_TRUE(bool(cvref_as<one const&, one&&>));
-    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three const>));
-    EXPECT_TRUE(bool(cvref_as<one const&, two, three const&, one, two, three&&>));
-    EXPECT_FALSE(bool(same_as_all<one, two, three, one, four, three>));
-    EXPECT_FALSE(bool(cvref_as<one const&, four, three const&, one, two, three>));
-    EXPECT_FALSE(bool(same_as_all<one, two, three, one, one, three>));
-    EXPECT_FALSE(bool(cvref_as<one const&, one, three const&, one, two, three>));
+    EXPECT_TRUE(static_cast<bool>(same_as_all<>));
+    EXPECT_FALSE(static_cast<bool>(same_as_all<one>));
+    EXPECT_TRUE(static_cast<bool>(same_as_all<one, one>));
+    EXPECT_TRUE(static_cast<bool>(same_as_all<one, two, three, one, two, three>));
+    EXPECT_TRUE(static_cast<bool>(cvref_as<one const&, two, three const&, one, two, three>));
+    EXPECT_TRUE(static_cast<bool>(cvref_as<one const&, one&&>));
+    EXPECT_TRUE(static_cast<bool>(cvref_as<one const&, two, three const&, one, two, three const>));
+    EXPECT_TRUE(static_cast<bool>(cvref_as<one const&, two, three const&, one, two, three&&>));
+    EXPECT_FALSE(static_cast<bool>(same_as_all<one, two, three, one, four, three>));
+    EXPECT_FALSE(static_cast<bool>(cvref_as<one const&, four, three const&, one, two, three>));
+    EXPECT_FALSE(static_cast<bool>(same_as_all<one, two, three, one, one, three>));
+    EXPECT_FALSE(static_cast<bool>(cvref_as<one const&, one, three const&, one, two, three>));
 }
 
 template <typename T>
 using is_one = is_same<T, one>;
 
 TEST(TypeTraits, IndexesIfTest) {
-    EXPECT_TRUE(bool(same_as<indexes_if<is_one, two, one, three>, index_sequence<1>>));
-    EXPECT_TRUE(bool(same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
-    EXPECT_TRUE(
-      bool(same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<indexes_if<is_one, two, one, three>, index_sequence<1>>));
+    EXPECT_TRUE(static_cast<bool>(
+      same_as<indexes_if<is_one, one, one, four, three, two, three>, index_sequence<0, 1>>));
+    EXPECT_TRUE(static_cast<bool>(
+      same_as<indexes_if<is_one, two, one, four, three, two, one, three>, index_sequence<1, 5>>));
 }
 
 TEST(TypeTraits, RmoeveUnsignedTest) {
-    EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<char>>));
-    EXPECT_TRUE(bool(same_as<char, remove_unsigned_t<unsigned char>>));
-    EXPECT_TRUE(bool(same_as<char volatile, remove_unsigned_t<unsigned char volatile>>));
-    EXPECT_TRUE(bool(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
-    EXPECT_TRUE(bool(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<char, remove_unsigned_t<char>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<char, remove_unsigned_t<unsigned char>>));
+    EXPECT_TRUE(static_cast<bool>(same_as<char volatile, remove_unsigned_t<unsigned char volatile>>));
+    EXPECT_TRUE(
+      static_cast<bool>(same_as<char const volatile, remove_unsigned_t<unsigned char const volatile>>));
+    EXPECT_TRUE(
+      static_cast<bool>(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
 }
 
 // NOLINTEND(*-magic-numbers)

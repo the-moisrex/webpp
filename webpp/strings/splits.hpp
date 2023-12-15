@@ -45,10 +45,10 @@ namespace webpp::strings {
         using iterator_concept  = stl::forward_iterator_tag;
 
         constexpr explicit splitter_iterator(
-          splitter_ptr    ptr,
-          difference_type start_pos_val   = 0,
-          difference_type finish_pos_val  = 0,
-          stl::size_t     delim_index_val = 0) noexcept
+          splitter_ptr          ptr,
+          difference_type const start_pos_val   = 0,
+          difference_type const finish_pos_val  = 0,
+          stl::size_t const     delim_index_val = 0) noexcept
           : spltr{ptr},
             start_pos{start_pos_val},
             finish_pos{finish_pos_val},
@@ -103,7 +103,7 @@ namespace webpp::strings {
                    delim_index == other.delim_index;
         }
 
-        [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(iterator const other) const noexcept {
             return !this->operator==(other);
         }
 
@@ -178,7 +178,7 @@ namespace webpp::strings {
 
         template <typename Arr = default_array_type>
         constexpr void split_array(Arr& data) const noexcept {
-            constexpr auto array_size = stl::tuple_size<Arr>::value;
+            constexpr auto array_size = stl::tuple_size_v<Arr>;
             ([&, this]<stl::size_t... I>(stl::index_sequence<I...>) {
                 auto pos_finder =
                   [this, last_pos = 0UL]<stl::size_t Index>(istl::value_holder<Index>) mutable {

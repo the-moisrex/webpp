@@ -65,7 +65,9 @@ namespace webpp {
             udp = SOCK_DGRAM
         };
 
-        constexpr ip_endpoint(protocol inp_proto, ip_address inp_addr, stl::uint16_t inp_port) noexcept
+        constexpr ip_endpoint(protocol const      inp_proto,
+                              ip_address const    inp_addr,
+                              stl::uint16_t const inp_port) noexcept
           : ip_address{inp_addr},
             proto{inp_proto},
             port_num{inp_port} {}
@@ -85,7 +87,7 @@ namespace webpp {
             return proto == tcp;
         }
 
-        [[nodiscard]] constexpr bool operator==(protocol inp_proto) const noexcept {
+        [[nodiscard]] constexpr bool operator==(protocol const inp_proto) const noexcept {
             return proto == inp_proto;
         }
 

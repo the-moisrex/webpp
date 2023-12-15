@@ -42,7 +42,7 @@ namespace webpp::http {
         return {"application/octet-stream"};
     }
 
-    [[nodiscard]] static constexpr stl::string_view mime_type_for(stl::string_view file_name) noexcept {
+    [[nodiscard]] static constexpr stl::string_view mime_type_for(stl::string_view const file_name) noexcept {
         if (auto const pos = file_name.find_last_of('.'); pos != stl::string_view::npos) {
             return mime_type_of(file_name.substr(pos + 1));
         }

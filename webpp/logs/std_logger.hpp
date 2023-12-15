@@ -35,7 +35,7 @@ namespace webpp {
         static constexpr bool is_debug              = IsDebug;
         static constexpr auto default_category_name = is_debug ? "Debug" : "Default";
 
-        static constexpr auto logging_type_to_string(details::logging_type lt) noexcept {
+        static constexpr auto logging_type_to_string(details::logging_type const lt) noexcept {
             switch (lt) {
                 using enum details::logging_type;
                 case info: return "INFO";
@@ -47,7 +47,7 @@ namespace webpp {
             return "UNSPECIFIED";
         }
 
-        static constexpr stl::size_t logging_type_string_size(details::logging_type lt) noexcept {
+        static constexpr stl::size_t logging_type_string_size(details::logging_type const lt) noexcept {
             return stl::string_view{logging_type_to_string(lt)}.size();
         }
 

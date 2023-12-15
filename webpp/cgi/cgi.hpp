@@ -62,14 +62,14 @@ namespace webpp::http {
 
       public:
         template <typename... Args>
-        cgi(Args&&... args) : super{stl::forward<Args>(args)...} {
+        explicit cgi(Args&&... args) : super{stl::forward<Args>(args)...} {
             ctor();
         }
 
         /**
          * Read the body of the string
          */
-        static stl::streamsize read(char* data, stl::streamsize length) {
+        static stl::streamsize read(char* data, stl::streamsize const length) {
             stl::cin.read(data, length);
             return stl::cin.gcount();
         }

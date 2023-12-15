@@ -157,7 +157,7 @@ namespace webpp::strings {
             constexpr stl::size_t vec_size = stl::tuple_size_v<C>;
 
             if constexpr (vec_size >= 1) {
-                stl::size_t sep_merged_size = stl::apply(
+                stl::size_t const sep_merged_size = stl::apply(
                   [&]<typename... T>(T const&... item) {
                       return ((istl::Stringifiable<T> ? ascii::max_size(item) : 0) + ...);
                   },

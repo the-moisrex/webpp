@@ -83,7 +83,7 @@ namespace webpp::http {
           typename stl::allocator_traits<allocator_type>::template rebind_alloc<compression_algo_type>>;
 
         // ctor
-        constexpr basic_accept_encoding(auto&&... args) noexcept
+        explicit constexpr basic_accept_encoding(auto&&... args) noexcept
           : data{stl::forward<decltype(args)>(args)...} {}
 
         void parse() noexcept {

@@ -42,9 +42,9 @@ namespace webpp {
         T data;
 
       public:
-        constexpr property(T const& t) noexcept : data(t) {}
+        explicit constexpr property(T const& t) noexcept : data(t) {}
 
-        constexpr property(T&& t) noexcept : data(std::move(t)) {}
+        explicit constexpr property(T&& t) noexcept : data(std::move(t)) {}
 
         ~property() noexcept = default;
 

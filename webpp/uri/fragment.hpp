@@ -19,19 +19,17 @@ namespace webpp::uri {
 
         if constexpr (Options.parse_fragment) {
             details::component_encoder<details::components::fragment, ctx_type> encoder{ctx};
-            for (;;) {
-                if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-                      details::FRAGMENT_ENCODE_SET,
-                      charset<char_type, 1>('%')))
-                {
-                    break;
-                }
+            while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+              details::FRAGMENT_ENCODE_SET,
+              charset<char_type, 1>('%')))
+            {
                 switch (*ctx.pos) {
                     case '%':
                         if (validate_percent_encode(ctx.pos, ctx.end)) {
                             continue;
                         }
                         break;
+                    default: break;
                 }
                 set_warning(ctx.status, uri_status::invalid_character);
             }
@@ -55,7 +53,7 @@ namespace webpp::uri {
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         template <typename... T>
-        constexpr basic_fragment(T&&... args) : string_type{stl::forward<T>(args)...} {}
+        explicit constexpr basic_fragment(T&&... args) : string_type{stl::forward<T>(args)...} {}
 
         void append_to(istl::String auto& str) const {
             if (!this->empty()) {

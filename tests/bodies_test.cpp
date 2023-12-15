@@ -55,8 +55,8 @@ TEST(Body, Text) {
 
     EXPECT_STREQ(b.as<char const*>(), "hello");
 
-    std::string_view const sth = "nice";
-    b                          = sth;
+    constexpr std::string_view sth = "nice";
+    b                              = sth;
     EXPECT_STREQ(b.as<char const*>(), "nice");
 
     b = string_type("cool");

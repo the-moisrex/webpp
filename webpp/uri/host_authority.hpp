@@ -79,7 +79,7 @@ namespace webpp::uri {
         constexpr host_authority& operator=(host_authority const&) noexcept = default;
         constexpr host_authority& operator=(host_authority&&) noexcept      = default;
 
-        explicit constexpr host_authority(stl::string_view hostname) noexcept {
+        explicit constexpr host_authority(stl::string_view const hostname) noexcept {
             if (hostname.empty()) {
                 return;
             }
@@ -229,7 +229,7 @@ namespace webpp::uri {
             return {};
         }
 
-        [[nodiscard]] constexpr struct ipv4 ipv4_or(struct ipv4 default_ip) const noexcept {
+        [[nodiscard]] constexpr struct ipv4 ipv4_or(struct ipv4 const default_ip) const noexcept {
             if (auto const* ip_ptr = stl::get_if<struct ipv4>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
@@ -244,7 +244,7 @@ namespace webpp::uri {
             return {};
         }
 
-        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 default_ip) const noexcept {
+        [[nodiscard]] constexpr struct ipv6 ipv6_or(struct ipv6 const default_ip) const noexcept {
             if (auto const* ip_ptr = stl::get_if<struct ipv6>(&endpoint); ip_ptr != nullptr) {
                 return *ip_ptr;
             }
@@ -275,11 +275,12 @@ namespace webpp::uri {
             return {default_domain};
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::uint16_t rhs_port) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(
+          stl::uint16_t const rhs_port) const noexcept {
             return port() <=> rhs_port;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::string_view rhs_host) const {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(stl::string_view const rhs_host) const {
             return *this <=> host_authority{rhs_host};
         }
 

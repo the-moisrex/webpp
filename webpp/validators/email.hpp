@@ -13,7 +13,7 @@ namespace webpp {
         std::string domain;
 
       public:
-        email(std::string mail);
+        explicit email(std::string mail);
 
         /**
          * @brief checks if the specified email has a valid syntax or not

@@ -10,11 +10,11 @@
 namespace webpp {
     //////////////////////////////////////// To ipv4/ipv6/addresses ////////////////////////////////////////
 
-    static constexpr void to_addr(ipv4& to_ip, sockaddr_in from_in) noexcept {
+    static constexpr void to_addr(ipv4& to_ip, sockaddr_in const from_in) noexcept {
         to_ip = static_cast<stl::uint32_t>(ntoh(from_in.sin_addr.s_addr)); // s_addr is uint32_t
     }
 
-    static constexpr void to_addr(ip_address& to_ip, sockaddr_in from_in) noexcept {
+    static constexpr void to_addr(ip_address& to_ip, sockaddr_in const from_in) noexcept {
         to_ip = ipv4{static_cast<stl::uint32_t>(ntoh(from_in.sin_addr.s_addr))}; // s_addr is uint32_t
     }
 
@@ -26,11 +26,11 @@ namespace webpp {
         to_ip = ipv6{from_in.sin6_addr.s6_addr};
     }
 
-    static constexpr void to_addr(ip_address& to_ip, in_addr from_in) noexcept {
+    static constexpr void to_addr(ip_address& to_ip, in_addr const from_in) noexcept {
         to_ip = ipv4{static_cast<stl::uint32_t>(ntoh(from_in.s_addr))};
     }
 
-    static constexpr void to_addr(ipv4& to_ip, in_addr from_in) noexcept {
+    static constexpr void to_addr(ipv4& to_ip, in_addr const from_in) noexcept {
         to_ip = static_cast<stl::uint32_t>(ntoh(from_in.s_addr));
     }
 
@@ -109,12 +109,12 @@ namespace webpp {
 
     //////////////////////////////////////// To Socket Addresses ////////////////////////////////////////
 
-    static constexpr void to_sock_addr(sockaddr_in& to_addr, ipv4 from_ip) noexcept {
+    static constexpr void to_sock_addr(sockaddr_in& to_addr, ipv4 const from_ip) noexcept {
         to_addr.sin_family      = AF_INET;
         to_addr.sin_addr.s_addr = hton(from_ip.integer()); // s_addr is uint32_t
     }
 
-    static constexpr void to_sock_addr(in_addr& to_addr, ipv4 from_ip) noexcept {
+    static constexpr void to_sock_addr(in_addr& to_addr, ipv4 const from_ip) noexcept {
         to_addr.s_addr = hton(from_ip.integer());
     }
 
@@ -156,7 +156,7 @@ namespace webpp {
         }
     }
 
-    static inline void to_sock_addr(sockaddr_storage& to_addr, ipv4 from_ip) noexcept {
+    static inline void to_sock_addr(sockaddr_storage& to_addr, ipv4 const from_ip) noexcept {
         to_sock_addr(reinterpret_cast<sockaddr_in&>(to_addr), from_ip);
     }
 
@@ -246,19 +246,19 @@ namespace webpp {
         /**
          * Constructs an address.
          * @param addr Pointer to a buffer holding the address.
-         * @param n The number of valid bytes in the address
+         * @param inp_len The number of valid bytes in the address
          */
-        sock_address_any(sockaddr const* addr, socklen_t n) noexcept : addr_len{n} {
-            std::memcpy(&addr_storage, addr, n);
+        sock_address_any(sockaddr const* addr, socklen_t const inp_len) noexcept : addr_len{inp_len} {
+            std::memcpy(&addr_storage, addr, inp_len);
         }
 
         /**
          * Constructs an address.
          * @param addr The buffer holding the address.
-         * @param n The number of valid bytes in the address
+         * @param inp_len The number of valid bytes in the address
          */
-        sock_address_any(sockaddr_storage const& addr, socklen_t n) noexcept : addr_len{n} {
-            std::memcpy(&addr_storage, &addr, n);
+        sock_address_any(sockaddr_storage const& addr, socklen_t const inp_len) noexcept : addr_len{inp_len} {
+            std::memcpy(&addr_storage, &addr, inp_len);
         }
 
         /**
@@ -313,15 +313,15 @@ namespace webpp {
             return is_valid();
         }
 
-        [[nodiscard]] operator ip_address() const noexcept {
+        [[nodiscard]] explicit operator ip_address() const noexcept {
             return make_addr<ip_address>(addr_storage);
         }
 
-        [[nodiscard]] operator ipv4() const noexcept {
+        [[nodiscard]] explicit operator ipv4() const noexcept {
             return make_addr<ipv4>(addr_storage);
         }
 
-        [[nodiscard]] operator ipv6() const noexcept {
+        [[nodiscard]] explicit operator ipv6() const noexcept {
             return make_addr<ipv6>(addr_storage);
         }
 

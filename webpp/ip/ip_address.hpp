@@ -46,7 +46,7 @@ namespace webpp {
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <istl::StringViewifiable StrT>
             requires(!istl::cvref_as<StrT, ip_address>)
-        constexpr ip_address(StrT&& ip_addr) noexcept {
+        explicit constexpr ip_address(StrT&& ip_addr) noexcept {
             parse(istl::string_viewify(stl::forward<StrT>(ip_addr)));
         }
 
@@ -63,50 +63,52 @@ namespace webpp {
 
         // NOLINTBEGIN(bugprone-easily-swappable-parameters)
         constexpr ip_address(
-          ipv4_octet octet1,
-          ipv4_octet octet2,
-          ipv4_octet octet3,
-          ipv4_octet octet4,
-          ipv4_octet prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
+          ipv4_octet const octet1,
+          ipv4_octet const octet2,
+          ipv4_octet const octet3,
+          ipv4_octet const octet4,
+          ipv4_octet const prefix_val = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
               ipv4{octet1, octet2, octet3, octet4, prefix_val}
         } {}
 
         constexpr ip_address(
-          ipv4_octet       octet1,
-          ipv4_octet       octet2,
-          ipv4_octet       octet3,
-          ipv4_octet       octet4,
-          stl::string_view subnet) noexcept
+          ipv4_octet const       octet1,
+          ipv4_octet const       octet2,
+          ipv4_octet const       octet3,
+          ipv4_octet const       octet4,
+          stl::string_view const subnet) noexcept
           : ip_address{
               ipv4{octet1, octet2, octet3, octet4, subnet}
         } {}
 
-        constexpr explicit ip_address(stl::uint32_t ip,
-                                      ipv4_octet    prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        constexpr explicit ip_address(
+          stl::uint32_t const ip,
+          ipv4_octet const    prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
               ipv4{ip, prefix}
         } {}
 
         template <istl::StringViewifiable StrT>
-        constexpr explicit ip_address(stl::uint32_t ip_addr, StrT&& subnet) noexcept
+        constexpr explicit ip_address(stl::uint32_t const ip_addr, StrT&& subnet) noexcept
           : ip_address{
               ipv4{ip_addr, stl::forward<StrT>(subnet)}
         } {}
 
-        constexpr ip_address(ipv4_octets ip_addr,
-                             ipv4_octet  prefix = prefix_status(inet_pton4_status::valid)) noexcept
+        explicit constexpr ip_address(
+          ipv4_octets const ip_addr,
+          ipv4_octet const  prefix = prefix_status(inet_pton4_status::valid)) noexcept
           : ip_address{
               ipv4{ip_addr, prefix}
         } {}
 
         template <istl::StringViewifiable StrT>
-        constexpr ip_address(ipv4_octets ip_addr, StrT&& subnet) noexcept
+        constexpr ip_address(ipv4_octets const ip_addr, StrT&& subnet) noexcept
           : ip_address{
               ipv4{ip_addr, stl::forward<StrT>(subnet)}
         } {}
 
-        constexpr ip_address(ipv4_octets ip_addr, ipv4_octets subnet) noexcept
+        constexpr ip_address(ipv4_octets const ip_addr, ipv4_octets const subnet) noexcept
           : ip_address{
               ipv4{ip_addr, subnet}
         } {}
@@ -116,37 +118,41 @@ namespace webpp {
 
         ////////////////////////////// IPv6 Constructors //////////////////////////////
 
-        constexpr ip_address(ipv6::octets8_t const& inp_octets,
-                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        explicit constexpr ip_address(
+          ipv6::octets8_t const& inp_octets,
+          stl::uint8_t const     prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : ip_address{
               ipv6{inp_octets, prefix_value}
         } {}
 
-        constexpr ip_address(ipv6::octets16_t const& inp_octets,
-                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        explicit constexpr ip_address(
+          ipv6::octets16_t const& inp_octets,
+          stl::uint8_t const      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : ip_address{
               ipv6{inp_octets, prefix_value}
         } {}
 
-        constexpr ip_address(ipv6::octets32_t const& inp_octets,
-                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        explicit constexpr ip_address(
+          ipv6::octets32_t const& inp_octets,
+          stl::uint8_t const      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : ip_address{
               ipv6{inp_octets, prefix_value}
         } {}
 
-        constexpr ip_address(ipv6::octets64_t const& inp_octets,
-                             stl::uint8_t prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
+        explicit constexpr ip_address(
+          ipv6::octets64_t const& inp_octets,
+          stl::uint8_t const      prefix_value = prefix_status(inet_pton6_status::valid)) noexcept
           : ip_address{
               ipv6{inp_octets, prefix_value}
         } {}
 
         ////////////////////////////// Common Functions //////////////////////////////
 
-        [[nodiscard]] constexpr bool operator==(ipv4 ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(ipv4 const ip_addr) const noexcept {
             return is_v4() && as_v4() == ip_addr;
         }
 
-        [[nodiscard]] constexpr bool operator==(ipv6 ip_addr) const noexcept {
+        [[nodiscard]] constexpr bool operator==(ipv6 const ip_addr) const noexcept {
             return is_v6() && as_v6() == ip_addr;
         }
 
@@ -165,7 +171,7 @@ namespace webpp {
             return false;
         }
 
-        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv4 ip_addr) const noexcept {
+        [[nodiscard]] constexpr stl::partial_ordering operator<=>(ipv4 const ip_addr) const noexcept {
             if (!is_v4()) {
                 return stl::partial_ordering::unordered;
             }

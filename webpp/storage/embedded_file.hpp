@@ -27,7 +27,7 @@ namespace webpp {
         string_view_type _content;
 
       public:
-        constexpr embedded_file(string_view_type file_path, string_view_type content) noexcept
+        constexpr embedded_file(string_view_type const file_path, string_view_type const content) noexcept
           : _file_path(file_path),
             _content(content) {}
 
@@ -59,7 +59,7 @@ namespace webpp {
         }
 #else
         [[nodiscard]] static constexpr std::optional<embedded_file> search(
-          std::filesystem::path const&) noexcept {
+          [[maybe_unused]] std::filesystem::path const& inp_path) noexcept {
             return std::nullopt;
         }
 #endif

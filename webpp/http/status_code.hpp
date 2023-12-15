@@ -174,7 +174,7 @@ namespace webpp::http {
         network_connect_timeout_error   = 599
     };
 
-    constexpr auto status_code_reason_phrase(status_code_type code) noexcept {
+    constexpr auto status_code_reason_phrase(status_code_type const code) noexcept {
         switch (code) {
             case 100: return "Continue";
             case 101: return "Switching Protocols";
@@ -301,7 +301,7 @@ namespace webpp::http {
         return status_code_reason_phrase(static_cast<status_code_type>(code));
     }
 
-    static constexpr status_code_category get_status_code_category(status_code_type code) noexcept {
+    static constexpr status_code_category get_status_code_category(status_code_type const code) noexcept {
         if (code >= 100 && code < 200) {
             return status_code_category::informational;
         } else if (code >= 200 && code < 300) {
@@ -314,7 +314,7 @@ namespace webpp::http {
         return status_code_category::unknown;
     }
 
-    static constexpr bool is_fatal_error(status_code_type code) noexcept {
+    static constexpr bool is_fatal_error(status_code_type const code) noexcept {
         return (code == 400) || (code >= 500) || (code == 408) || ((code >= 411) && (code <= 415));
     }
 

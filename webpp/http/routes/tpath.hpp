@@ -21,11 +21,11 @@ namespace webpp::http {
 
         using ptr_t = decltype(_templ.data());
 
-        ptr_t templ_start = _templ.data();
-        ptr_t templ_end   = _templ.data() + _templ.size();
-        ptr_t curly_start = templ_end;
-        ptr_t colon       = templ_end;
-        ptr_t path_char   = _path.data();
+        ptr_t const templ_start = _templ.data();
+        ptr_t const templ_end   = _templ.data() + _templ.size();
+        ptr_t       curly_start = templ_end;
+        ptr_t       colon       = templ_end;
+        ptr_t       path_char   = _path.data();
 
         for (ptr_t c = templ_start; *c; c++) {
             // breaks out of the loop when the template and the paths don't
@@ -183,7 +183,7 @@ namespace webpp::http {
         stl::string_view tpath_str;
 
       public:
-        constexpr tpath_condition(stl::string_view str) noexcept : tpath_str(str) {}
+        explicit constexpr tpath_condition(stl::string_view const str) noexcept : tpath_str(str) {}
 
         constexpr tpath_condition() noexcept = default;
 

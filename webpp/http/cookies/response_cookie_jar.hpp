@@ -29,7 +29,7 @@ namespace webpp::http {
          */
         template <typename T>
         void make_it_unique(const_iterator const& dont_touch, T const& check) noexcept {
-            for (auto it = super::begin(); it != super::end(); it++) {
+            for (auto it = super::begin(); it != super::end(); ++it) {
                 if (check(*it) && dont_touch != it && dont_touch->same_as(*it)) {
                     super::erase(it);
                     break;
@@ -70,7 +70,8 @@ namespace webpp::http {
 
       public:
         template <typename... Args>
-        constexpr response_cookie_jar(Args&&... args) noexcept(noexcept(super(stl::forward<Args>(args)...)))
+        explicit constexpr response_cookie_jar(Args&&... args) noexcept(
+          noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
         template <typename Iter>

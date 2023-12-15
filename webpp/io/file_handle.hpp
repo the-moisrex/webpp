@@ -31,21 +31,21 @@ namespace webpp::io {
         using handle_type = int;
 
       public:
-        constexpr file_handle(handle_type inp_handle) noexcept : handle{inp_handle} {}
+        explicit constexpr file_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
 
-        [[nodiscard]] static constexpr file_handle invalid(handle_type error_number = errno) noexcept {
-            return {error_number};
+        [[nodiscard]] static constexpr file_handle invalid(handle_type const error_number = errno) noexcept {
+            return file_handle{error_number};
         }
 
-        [[nodiscard]] static file_handle invalid(stl::error_code ec) noexcept {
-            return {ec.value()};
+        [[nodiscard]] static file_handle invalid(stl::error_code const err) noexcept {
+            return file_handle{err.value()};
         }
 
-        [[nodiscard]] static file_handle check(handle_type inp_handle) noexcept {
+        [[nodiscard]] static file_handle check(handle_type const inp_handle) noexcept {
             return inp_handle >= 0 ? file_handle{inp_handle} : invalid(errno);
         }
 
-        file_handle(stl::error_code ec) noexcept : handle{ec.value()} {}
+        explicit file_handle(stl::error_code const err) noexcept : handle{err.value()} {}
 
         constexpr file_handle() noexcept                              = default;
         constexpr file_handle(file_handle const&) noexcept            = default;
@@ -54,24 +54,24 @@ namespace webpp::io {
         constexpr file_handle& operator=(file_handle&&) noexcept      = default;
         constexpr ~file_handle() noexcept                             = default;
 
-        constexpr file_handle& operator=(handle_type inp_handle) noexcept {
+        constexpr file_handle& operator=(handle_type const inp_handle) noexcept {
             handle = inp_handle;
             return *this;
         }
 
-        [[nodiscard]] constexpr bool operator==(handle_type inp_handle) const noexcept {
+        [[nodiscard]] constexpr bool operator==(handle_type const inp_handle) const noexcept {
             return handle == inp_handle;
         }
 
-        [[nodiscard]] constexpr bool operator==(file_handle other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(file_handle const other) const noexcept {
             return handle == other.handle;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(file_handle other) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(file_handle const other) const noexcept {
             return handle <=> other.handle;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(handle_type other) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(handle_type const other) const noexcept {
             return handle <=> other;
         }
 
@@ -88,7 +88,7 @@ namespace webpp::io {
             return is_valid();
         }
 
-        [[nodiscard]] constexpr operator handle_type() const noexcept {
+        [[nodiscard]] explicit constexpr operator handle_type() const noexcept {
             return handle;
         }
 
@@ -124,7 +124,7 @@ namespace webpp::io {
     struct synced_file_handle {
         constexpr synced_file_handle() noexcept = default;
 
-        constexpr synced_file_handle(file_handle inp_fh) noexcept : fh{inp_fh} {}
+        explicit constexpr synced_file_handle(file_handle const inp_fh) noexcept : fh{inp_fh} {}
 
         constexpr synced_file_handle(synced_file_handle&&) noexcept            = default;
         synced_file_handle(synced_file_handle const&)                          = delete;

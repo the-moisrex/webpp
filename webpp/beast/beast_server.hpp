@@ -157,8 +157,9 @@ namespace webpp::beast_proto {
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
             // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
             stl::array<char, default_buffer_size> static_buf;
-            while (stl::streamsize read_size = body.read(reinterpret_cast<byte_type*>(static_buf.data()),
-                                                         static_cast<stl::streamsize>(static_buf.size())))
+            while (stl::streamsize const read_size =
+                     body.read(reinterpret_cast<byte_type*>(static_buf.data()),
+                               static_cast<stl::streamsize>(static_buf.size())))
             {
                 bres->body().append(static_buf.data(), static_cast<stl::size_t>(read_size));
             }

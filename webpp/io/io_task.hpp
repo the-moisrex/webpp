@@ -16,7 +16,7 @@ namespace webpp::io {
      * Exception thrown when you attempt to retrieve the result of a task that has been
      * detached from its promise/coroutine.
      */
-    struct broken_promise : public std::logic_error {
+    struct broken_promise final : public std::logic_error {
         broken_promise() : std::logic_error("broken promise") {}
     };
 
@@ -48,7 +48,7 @@ namespace webpp::io {
                 return {};
             }
 
-            void set_continuation(stl::coroutine_handle<> continuation) noexcept {
+            void set_continuation(stl::coroutine_handle<> const continuation) noexcept {
                 m_continuation = continuation;
             }
 
@@ -112,9 +112,13 @@ namespace webpp::io {
             }
 
             template <typename... ARGS>
-            void* operator new(std::size_t sz, std::allocator_arg_t, Allocator& allocator, ARGS&... args) {
+            void* operator new(std::size_t const                     inp_size,
+                               [[maybe_unused]] std::allocator_arg_t tag,
+                               Allocator&                            allocator,
+                               [[maybe_unused]] ARGS&... args) {
                 // Round up sz to next multiple of Allocator alignment
-                std::size_t allocatorOffset = (sz + alignof(Allocator) - 1u) & ~(alignof(Allocator) - 1u);
+                std::size_t const allocatorOffset =
+                  (inp_size + alignof(Allocator) - 1U) & ~(alignof(Allocator) - 1U);
 
                 // Call onto allocator to allocate space for coroutine frame.
                 void* ptr = allocator.allocate(allocatorOffset + sizeof(Allocator));
@@ -224,7 +228,8 @@ namespace webpp::io {
         struct awaitable_base {
             stl::coroutine_handle<promise_type> coro_handle;
 
-            awaitable_base(stl::coroutine_handle<promise_type> coroutine) noexcept : coro_handle(coroutine) {}
+            explicit awaitable_base(stl::coroutine_handle<promise_type> coroutine) noexcept
+              : coro_handle(coroutine) {}
 
             [[nodiscard]] bool await_ready() const noexcept {
                 return !coro_handle || coro_handle.done();

@@ -16,7 +16,7 @@ namespace webpp {
     /**
      * Check if the error handling strategy throws errors or not
      */
-    consteval bool is_noexcept(error_handling_strategy err) noexcept {
+    consteval bool is_noexcept(error_handling_strategy const err) noexcept {
         using enum error_handling_strategy;
         return err != throw_errors;
     }

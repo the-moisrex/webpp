@@ -35,7 +35,7 @@ namespace webpp::fastcgi {
         app_wrapper_type                     app;
 
         template <typename... Args>
-        fcgi(Args&&... args)
+        explicit fcgi(Args&&... args)
           : super{stl::forward<Args>(args)...},
             app{*this},
             endpoints{}, // todo: pass allocator

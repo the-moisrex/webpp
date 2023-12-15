@@ -62,7 +62,7 @@ namespace webpp::sql {
             open(sqlite_config{}, errmsg);
         }
 
-        void open(sqlite_config conf, istl::String auto& errmsg) noexcept {
+        void open(sqlite_config const conf, istl::String auto& errmsg) noexcept {
             int const rc = sqlite3_open_v2(
               conf.filename.data(),
               &handle,
@@ -94,7 +94,7 @@ namespace webpp::sql {
             }
         }
 
-        void execute(std::string_view sql, istl::String auto& errmsg) noexcept {
+        void execute(std::string_view const sql, istl::String auto& errmsg) noexcept {
             char*     err;
             int const rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
             if (rc != SQLITE_OK) {
@@ -137,11 +137,11 @@ namespace webpp::sql {
             static_cast<void>(close());
         }
 
-        ::sqlite3* native_handle() noexcept {
+        ::sqlite3* native_handle() const noexcept {
             return handle;
         }
 
-        std::uint64_t last_insert_id() noexcept {
+        std::uint64_t last_insert_id() const noexcept {
             return static_cast<std::uint64_t>(sqlite3_last_insert_rowid(handle));
         }
 

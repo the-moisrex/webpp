@@ -73,7 +73,8 @@ namespace webpp::async {
         task_list_type* tasks;
 
       public:
-        constexpr task_chain_iterator(task_list_type* inp_tasks = nullptr) noexcept : tasks{inp_tasks} {}
+        explicit constexpr task_chain_iterator(task_list_type* inp_tasks = nullptr) noexcept
+          : tasks{inp_tasks} {}
 
         // default implementation for the last two task
         template <Task TaskT1, Task TaskT2>
@@ -138,7 +139,7 @@ namespace webpp::async {
 
       public:
         constexpr task_chain() noexcept = default;
-        constexpr task_chain(tuple_type&& tasks_tup) noexcept : tasks{stl::move(tasks_tup)} {};
+        explicit constexpr task_chain(tuple_type&& tasks_tup) noexcept : tasks{stl::move(tasks_tup)} {};
         constexpr task_chain(task_chain const&) noexcept            = default;
         constexpr task_chain(task_chain&&) noexcept                 = default;
         constexpr task_chain& operator=(task_chain const&) noexcept = default;

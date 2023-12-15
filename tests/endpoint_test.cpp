@@ -16,6 +16,6 @@ TEST(EndPoint, Concept) {
 
 TEST(EndPoint, IsBindable) {
     // testing localhost
-    ip_endpoint const ep{ip_endpoint::tcp, ipv4_localhost, test_port};
+    constexpr ip_endpoint ep{ip_endpoint::tcp, ipv4_localhost, test_port};
     EXPECT_TRUE(ep.is_bindable());
 }

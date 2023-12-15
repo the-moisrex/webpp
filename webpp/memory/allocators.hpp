@@ -3,6 +3,7 @@
 #ifndef WEBPP_ALLOCATORS_HPP
 #define WEBPP_ALLOCATORS_HPP
 
+#include "../common/meta.hpp"
 #include "../std/type_traits.hpp"
 #include "./allocator_concepts.hpp"
 
@@ -75,8 +76,8 @@ namespace webpp {
      */
     template <typename... T>
     [[nodiscard]] static constexpr auto extract_allocator(T&&... args) noexcept {
-        details::alloc_finder_type<> const finder;
-        auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
+        webpp_static_constexpr details::alloc_finder_type<> finder;
+        auto const res = (finder | ... | finder(stl::forward<T>(args)));
         static_assert(
           requires { res.alloc; },
           "We didn't find any allocator in the inputs.");
@@ -85,8 +86,8 @@ namespace webpp {
 
     template <typename Default = stl::allocator<void>, typename... T>
     [[nodiscard]] inline auto extract_allocator_or_default(T&&... args) noexcept {
-        details::alloc_finder_type<> const finder;
-        auto const                         res = (finder | ... | finder(stl::forward<T>(args)));
+        webpp_static_constexpr details::alloc_finder_type<> finder;
+        auto const res = (finder | ... | finder(stl::forward<T>(args)));
         if constexpr (requires { res.alloc; }) {
             return res.alloc;
         } else {

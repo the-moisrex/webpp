@@ -80,16 +80,16 @@ namespace webpp::http {
         /**
          * Get the nth route
          * @tparam N
-         * @param i
+         * @param index
          * @return
          */
         template <stl::size_t N = 0>
-        consteval auto& operator[](stl::size_t i) const noexcept {
-            if (N == i) {
+        consteval auto& operator[](stl::size_t const index) const noexcept {
+            if (N == index) {
                 return stl::get<N>(routes);
             }
             if constexpr (N + 1 < route_count()) {
-                return operator[]<N + 1>(i);
+                return operator[]<N + 1>(index);
             }
             // The specified index is not valid
             stl::terminate();

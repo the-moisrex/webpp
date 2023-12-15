@@ -37,7 +37,7 @@ namespace webpp::http {
 
         // get the parsed http version
         [[nodiscard]] http::version get_http_version() const noexcept {
-            return {http_version_view};
+            return http::version{http_version_view};
         }
 
         // parse the request status line (the first line of the request)

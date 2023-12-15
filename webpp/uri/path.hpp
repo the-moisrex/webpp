@@ -429,7 +429,7 @@ namespace webpp::uri {
             return !is_absolute();
         }
 
-        constexpr void normalize(bool remove_empty_segments = false) {
+        constexpr void normalize(bool const remove_empty_segments = false) {
             remove_dot_segments(is_absolute(), remove_empty_segments);
         }
 
@@ -437,7 +437,8 @@ namespace webpp::uri {
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
          * Refer to uri_normalize_benchmark for more related algorithms of this
          */
-        constexpr void remove_dot_segments(bool remove_leading, bool remove_empty_segments = false) {
+        constexpr void remove_dot_segments(bool const remove_leading,
+                                           bool const remove_empty_segments = false) {
             if (this->empty()) {
                 return;
             }
@@ -476,7 +477,7 @@ namespace webpp::uri {
                         continue;
                     }
                 }
-                pos++;
+                ++pos;
             }
         }
 

@@ -27,7 +27,7 @@ namespace webpp {
             path_type cache_file;
 
           public:
-            storage_gate(path_type output_file) : cache_file{stl::move(output_file)} {}
+            explicit storage_gate(path_type output_file) : cache_file{stl::move(output_file)} {}
 
             template <typename V>
             stl::optional<bundle_type> get(V&& value) {

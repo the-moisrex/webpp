@@ -66,8 +66,8 @@ namespace webpp::modp_b64 {
      *
      * +1 is for any extra null.
      */
-    static constexpr std::size_t encode_len(std::size_t A) noexcept {
-        return (A + 2) / 3 * 4 + 1;
+    static constexpr std::size_t encode_len(std::size_t const inp_A) noexcept {
+        return (inp_A + 2) / 3 * 4 + 1;
     }
 
     /**
@@ -79,8 +79,8 @@ namespace webpp::modp_b64 {
      * decode  4 chars turn into 3 bytes
      * floor[len * 3/4] + 2
      */
-    static constexpr std::size_t decode_len(std::size_t A) noexcept {
-        return A / 4 * 3 + 2;
+    static constexpr std::size_t decode_len(std::size_t const inp_A) noexcept {
+        return inp_A / 4 * 3 + 2;
     }
 
     /**
@@ -106,8 +106,8 @@ namespace webpp::modp_b64 {
      * // foo is filled out now
      * \endcode
      */
-    static constexpr std::size_t encode_strlen(std::size_t A) noexcept {
-        return (A + 2) / 3 * 4;
+    static constexpr std::size_t encode_strlen(std::size_t const inp_A) noexcept {
+        return (inp_A + 2) / 3 * 4;
     }
 
     static constexpr std::size_t error = static_cast<std::size_t>(-1);
@@ -157,7 +157,8 @@ namespace webpp::modp_b64 {
      *
      * todo: this function can be "constexpr"
      */
-    [[nodiscard]] static inline std::size_t encode(char* dest, char const* str, std::size_t len) noexcept {
+    [[nodiscard]] static inline std::size_t
+    encode(char* dest, char const* str, std::size_t const len) noexcept {
         std::size_t i = 0;
         auto*       p = reinterpret_cast<std::uint8_t*>(dest);
 
@@ -298,9 +299,9 @@ namespace webpp::modp_b64 {
 
         } else { // Little Endian - Intel and Friends
 
-            std::size_t i;
-            std::size_t leftover = len % 4;
-            std::size_t chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
+            std::size_t       i;
+            std::size_t const leftover = len % 4;
+            std::size_t const chunks   = (leftover == 0) ? len / 4 - 1 : len / 4;
 
             auto*         p = reinterpret_cast<std::uint8_t*>(dest);
             std::uint32_t x = 0;

@@ -22,7 +22,7 @@ namespace webpp {
                 options_type options;
             };
 
-            constexpr storage_gate(auto&&...) {}
+            explicit constexpr storage_gate(auto&&...) {}
 
             template <typename V>
             constexpr stl::optional<bundle_type> get([[maybe_unused]] V&& value) {

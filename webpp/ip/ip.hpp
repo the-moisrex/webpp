@@ -107,17 +107,17 @@ namespace webpp {
         invalid_colon_usage = stl::to_underlying(ip_address_status::invalid_colon_usage)
     };
 
-    [[nodiscard]] static constexpr bool is_valid(inet_pton4_status status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(inet_pton4_status const status) noexcept {
         using enum inet_pton4_status;
         return status == valid || status == valid_special;
     }
 
-    [[nodiscard]] static constexpr bool is_valid(inet_pton6_status status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(inet_pton6_status const status) noexcept {
         using enum inet_pton6_status;
         return status == valid || status == valid_special;
     }
 
-    [[nodiscard]] static constexpr bool is_valid(ip_address_status status) noexcept {
+    [[nodiscard]] static constexpr bool is_valid(ip_address_status const status) noexcept {
         using enum ip_address_status;
         return status == valid || status == valid_special;
     }

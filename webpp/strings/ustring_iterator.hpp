@@ -33,10 +33,10 @@ namespace webpp {
       public:
         constexpr unicode_iterator() noexcept = default;
 
-        explicit constexpr unicode_iterator(pointer const& i) noexcept : current(i) {}
+        explicit constexpr unicode_iterator(pointer const& inp_ptr) noexcept : current(inp_ptr) {}
 
         // Allow iterator to const_iterator conversion
-        constexpr unicode_iterator(iterator_type const& i) noexcept : current(i.content) {}
+        constexpr unicode_iterator(iterator_type const& inp_iter) noexcept : current(inp_iter.content) {}
 
         // Forward iterator requirements
         constexpr reference operator*() const noexcept {

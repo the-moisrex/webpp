@@ -118,7 +118,7 @@ namespace webpp::uri {
         static constexpr uint16_t well_known_upper_port = 1024;
 
         template <typename... T>
-        constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
+        explicit constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
             // todo: make sure if it's a valid port number
             // if (!is::digit(*this)) {
             // convert the service name to port number

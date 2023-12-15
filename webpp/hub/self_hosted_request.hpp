@@ -21,7 +21,7 @@ namespace webpp::http::shosted {
 
       public:
         template <typename... Args>
-        self_hosted_request(session_manager_type& _session, Args&&... args)
+        explicit self_hosted_request(session_manager_type& _session, Args&&... args)
           : super(stl::forward<Args>(args)...),
             session{_session} {}
 

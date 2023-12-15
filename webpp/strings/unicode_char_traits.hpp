@@ -45,32 +45,32 @@ namespace webpp {
         using comparison_category = stl::strong_ordering;
 #endif
 
-        static constexpr void assign(char_type& c1, char_type const& c2) {
-            c1 = c2;
+        static constexpr void assign(char_type& ch1, char_type const& ch2) {
+            ch1 = ch2;
         }
 
-        static constexpr bool eq(char_type const& c1, char_type const& c2) {
-            return c1 == c2;
+        static constexpr bool eq(char_type const& ch1, char_type const& ch2) {
+            return ch1 == ch2;
         }
 
-        static constexpr bool lt(char_type const& c1, char_type const& c2) {
-            return c1 < c2;
+        static constexpr bool lt(char_type const& ch1, char_type const& ch2) {
+            return ch1 < ch2;
         }
 
-        static constexpr int compare(char_type const* s1, char_type const* s2, stl::size_t n) {
-            for (stl::size_t i = 0; i < n; ++i) {
-                if (lt(s1[i], s2[i])) {
+        static constexpr int compare(char_type const* str1, char_type const* str2, stl::size_t const count) {
+            for (stl::size_t i = 0; i < count; ++i) {
+                if (lt(str1[i], str2[i])) {
                     return -1;
                 }
-                if (lt(s2[i], s1[i])) {
+                if (lt(str2[i], str1[i])) {
                     return 1;
                 }
             }
             return 0;
         }
 
-        static constexpr stl::size_t length(char_type const* pp) noexcept {
-            return unicode::unchecked::count(stl::addressof(pp->value));
+        static constexpr stl::size_t length(char_type const* ch_ptr) noexcept {
+            return unicode::unchecked::count(stl::addressof(ch_ptr->value));
             // stl::size_t      i = 0;
             // const char_type* p = pp;
             // while (!eq(*p, char_type())) {
@@ -92,55 +92,56 @@ namespace webpp {
         }
 
         static constexpr char_type const*
-        find(char_type const* s, stl::size_t n, char_type const& a) noexcept {
-            for (stl::size_t i = 0; i < n; ++i) {
-                if (eq(s[i], a)) {
-                    return s + i;
+        find(char_type const* str, stl::size_t const count, char_type const& inp_ch) noexcept {
+            for (stl::size_t i = 0; i < count; ++i) {
+                if (eq(str[i], inp_ch)) {
+                    return str + i;
                 }
             }
             return nullptr;
         }
 
-        static constexpr char_type* move(char_type* s1, char_type const* s2, stl::size_t n) {
-            if (n == 0) {
-                return s1;
+        static constexpr char_type* move(char_type* str1, char_type const* str2, stl::size_t const count) {
+            if (count == 0) {
+                return str1;
             }
 #ifdef __cpp_lib_is_constant_evaluated
             if (stl::is_constant_evaluated()) {
-                if (s1 > s2 && s1 < s2 + n) {
-                    stl::copy_backward(s2, s2 + n, s1);
+                if (str1 > str2 && str1 < str2 + count) {
+                    stl::copy_backward(str2, str2 + count, str1);
                 } else {
-                    stl::copy(s2, s2 + n, s1);
+                    stl::copy(str2, str2 + count, str1);
                 }
-                return s1;
+                return str1;
             }
 #endif
             // todo
-            return static_cast<CharT*>(builtin_memmove(s1, s2, n * sizeof(char_type)));
+            return static_cast<CharT*>(builtin_memmove(str1, str2, count * sizeof(char_type)));
         }
 
-        static constexpr char_type* copy(char_type* s1, char_type const* s2, stl::size_t n) {
+        static constexpr char_type* copy(char_type* str1, char_type const* str2, stl::size_t const count) {
             // NB: Inline stl::copy so no recursive dependencies.
-            stl::copy(s2, s2 + n, s1);
-            return s1;
+            stl::copy(str2, str2 + count, str1);
+            return str1;
         }
 
-        static constexpr char_type* assign(char_type* s, stl::size_t n, char_type a) noexcept {
+        static constexpr char_type*
+        assign(char_type* str, stl::size_t const count, char_type inp_ch) noexcept {
             // NB: Inline stl::fill_n so no recursive dependencies.
-            stl::fill_n(s, n, a);
-            return s;
+            stl::fill_n(str, count, inp_ch);
+            return str;
         }
 
-        static constexpr char_type to_char_type(int_type const& c) {
-            return static_cast<char_type>(c);
+        static constexpr char_type to_char_type(int_type const& inp_ch) {
+            return static_cast<char_type>(inp_ch);
         }
 
-        static constexpr int_type to_int_type(char_type const& c) {
-            return static_cast<int_type>(c);
+        static constexpr int_type to_int_type(char_type const& inp_ch) {
+            return static_cast<int_type>(inp_ch);
         }
 
-        static constexpr bool eq_int_type(int_type const& c1, int_type const& c2) {
-            return c1 == c2;
+        static constexpr bool eq_int_type(int_type const& ch1, int_type const& ch2) {
+            return ch1 == ch2;
         }
 
         static constexpr int_type eof() {

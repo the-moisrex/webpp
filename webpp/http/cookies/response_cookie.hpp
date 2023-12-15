@@ -86,7 +86,7 @@ namespace webpp::http {
         // todo: encapsulate this
         attrs_t attrs;
 
-        constexpr response_cookie(string_allocator_type const& alloc = {}) noexcept
+        explicit constexpr response_cookie(string_allocator_type const& alloc = {}) noexcept
           : _name{alloc},
             _value{alloc},
             _domain{alloc},
@@ -265,7 +265,7 @@ namespace webpp::http {
             return name().get_allocator(); // what? you've got a better solution? :)
         }
 
-        constexpr auto& remove(bool i_remove = true) noexcept {
+        constexpr auto& remove(bool const i_remove = true) noexcept {
             // NOLINTBEGIN(*-magic-numbers)
 
             // difference between year_dur and std::chrono::year is the integer type
@@ -395,7 +395,7 @@ namespace webpp::http {
         /**
          * If both Expires and Max-Age are set, Max-Age has precedence.
          */
-        constexpr void max_age(max_age_t val) noexcept {
+        constexpr void max_age(max_age_t const val) noexcept {
             _max_age = val;
             if (has_expires()) {
                 _expires = stl::nullopt;

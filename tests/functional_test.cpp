@@ -14,14 +14,14 @@ using namespace webpp::istl;
 
 // NOLINTBEGIN(*-magic-numbers)
 
-void test(int limit) {
+void test(int const limit) {
     static auto i = 0;
     i++;
     EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
 }
 
 struct ConstMyCallable {
-    void operator()(int limit) const {
+    void operator()(int const limit) const {
         static auto i = 0;
         i++;
         EXPECT_TRUE(i < limit - 1) << "i is: " << i << "; limit: " << limit;
@@ -31,7 +31,7 @@ struct ConstMyCallable {
 struct MyCallable {
     int index = 0;
 
-    auto operator()(int limit) {
+    auto operator()(int const limit) {
         index++;
         EXPECT_TRUE(index < limit - 1) << "i is: " << index << "; limit: " << limit;
         return index;
@@ -67,7 +67,7 @@ TEST(FunctionalTests, DebouncedFunctions) {
 
     // lambdas
 
-    auto lambda_test = debounce([](int _limit) {
+    auto lambda_test = debounce([](int const _limit) {
         static auto i = 0;
         i++;
         EXPECT_LT(i, _limit);
@@ -129,7 +129,7 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
     func_clone = func_copy;
     EXPECT_EQ(func_clone(), -369);
     func_copy = nullptr;
-    EXPECT_FALSE(bool(func_copy));
+    EXPECT_FALSE(static_cast<bool>(func_copy));
     func_copy = stl::move(func_clone);
     EXPECT_EQ(func_copy(), -369);
 
@@ -186,7 +186,7 @@ TEST(FunctionalTests, FunctionWithPMRAllocators) {
     func_clone = func_copy;
     EXPECT_EQ(func_clone(), -369);
     func_copy = nullptr;
-    EXPECT_FALSE(bool(func_copy));
+    EXPECT_FALSE(static_cast<bool>(func_copy));
     func_copy = stl::move(func_clone);
     EXPECT_EQ(func_copy(), -369);
 
@@ -270,16 +270,15 @@ int mmmax(int a, int b) {
 }
 
 TEST(FunctionalTests, FunctionRefTests) {
-    function_ref<int()> view;
+    auto ret20 = [] {
+        return 20;
+    };
+    function_ref<int()> view = ret20;
 
     function_ref<int()> const view40{[]() noexcept(false) -> int {
         return 40;
     }};
 
-    auto ret20 = [] {
-        return 20;
-    };
-    view = ret20;
     EXPECT_EQ(view40(), 40);
     EXPECT_EQ(view(), 20);
 
@@ -297,8 +296,8 @@ TEST(FunctionalTests, FunctionRefTests) {
         }
     };
 
-    object_type const one{.value = 101};
-    object_type const two{.value = 102};
+    constexpr object_type one{.value = 101};
+    constexpr object_type two{.value = 102};
 
     view = one;
     EXPECT_EQ(view(), 101);
@@ -433,7 +432,7 @@ TEST(FunctionalTests, MemberFunctionRef) {
 
 
 TEST(FunctionalTests, FunctionRefWithLambda) {
-    auto addFunc = [](int a, int b) -> int {
+    auto addFunc = [](int const a, int const b) -> int {
         return a + b;
     };
     function_ref<int(int, int)> const ref(addFunc);
@@ -461,7 +460,7 @@ TEST(FunctionalTests, FunctionRefWithCharPointer) {
 }
 
 TEST(FunctionalTests, FunctionRefWithThreeIntParams) {
-    auto addThreeFunc = [](int a, int b, int c) -> int {
+    auto addThreeFunc = [](int const a, int const b, int const c) -> int {
         return a + b + c;
     };
     function_ref<int(int, int, int)> const ref(addThreeFunc);
@@ -469,7 +468,7 @@ TEST(FunctionalTests, FunctionRefWithThreeIntParams) {
 }
 
 TEST(FunctionalTests, FunctionRefWithMultiplyLambda) {
-    auto multiplyFunc = [](int a, int b) -> int {
+    auto multiplyFunc = [](int const a, int const b) -> int {
         return a * b;
     };
     function_ref<int(int, int)> const ref(multiplyFunc);

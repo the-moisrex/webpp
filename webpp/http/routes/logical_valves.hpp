@@ -17,7 +17,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
-        constexpr not_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+        explicit constexpr not_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
         constexpr not_valve(not_valve const&)                     = default;
@@ -63,7 +63,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
-        constexpr negative_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+        explicit constexpr negative_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
         constexpr negative_valve(negative_valve const&)                     = default;
@@ -108,7 +108,7 @@ namespace webpp::http {
       public:
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <stl::convertible_to<Callable> C>
-        constexpr positive_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
+        explicit constexpr positive_valve(C&& inp_next) : next{stl::forward<C>(inp_next)} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

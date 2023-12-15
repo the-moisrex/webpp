@@ -106,13 +106,13 @@ namespace webpp::json {
 
         key_type key{};
 
-        constexpr field(key_type input_key) noexcept : key{input_key} {}
+        explicit constexpr field(key_type const input_key) noexcept : key{input_key} {}
 
-        constexpr field(key_type input_key, value_type const& input_value) noexcept
+        constexpr field(key_type const input_key, value_type const& input_value) noexcept
           : optional_value_type{input_value},
             key{input_key} {}
 
-        constexpr field(key_type input_key, value_type&& input_value) noexcept
+        constexpr field(key_type const input_key, value_type&& input_value) noexcept
           : optional_value_type{stl::move(input_value)},
             key{input_key} {}
 
