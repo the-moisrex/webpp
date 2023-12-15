@@ -50,9 +50,10 @@ namespace webpp::uri::details {
      */
     template <components Comp, typename CtxType>
     struct component_encoder {
-        using ctx_type = CtxType;
-        using seg_type = typename ctx_type::seg_type;
-        using iterator = typename ctx_type::iterator;
+        using ctx_type        = CtxType;
+        using seg_type        = typename ctx_type::seg_type;
+        using iterator        = typename ctx_type::iterator;
+        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
 
       private:
@@ -228,7 +229,7 @@ namespace webpp::uri::details {
             return beg;
         }
 
-        constexpr void skip_separator(stl::size_t index = 1) noexcept {
+        constexpr void skip_separator(difference_type index = 1) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {
                 append_to(get_output(), *ctx->pos);
             }
@@ -237,7 +238,7 @@ namespace webpp::uri::details {
 
         constexpr void pop_back() noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
-                using difference_type = typename seg_type::difference_type;
+                // using difference_type = typename seg_type::difference_type;
                 if (!get_output().empty()) {
                     get_output().pop_back();
                 }
@@ -248,7 +249,7 @@ namespace webpp::uri::details {
                 }
             } else if constexpr (ctx_type::is_modifiable) {
                 if (!get_output().empty()) {
-                    get_output().erase(ctx->pos - beg);
+                    get_output().erase(static_cast<stl::size_t>(ctx->pos - beg));
                 }
             }
         }
@@ -259,7 +260,7 @@ namespace webpp::uri::details {
                 // contain the right value at this point in time
                 if constexpr (ctx_type::is_modifiable) {
                     istl::collection::emplace_one(get_output(), get_output().get_allocator());
-                    using difference_type = typename seg_type::difference_type;
+                    // using difference_type = typename seg_type::difference_type;
                     output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
                 }
             }

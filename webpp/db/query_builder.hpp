@@ -1359,7 +1359,7 @@ namespace webpp::sql {
                 if (auto* table_name = stl::get_if<string_type>(&join.table)) {
                     db->quoted_escape(*table_name, out);
                 } else {
-                    auto query = stl::get<subquery>(join.table);
+                    auto const& query = stl::get<subquery>(join.table);
                     query->template to_string<StrT>(out);
                 }
                 out.push_back(' ');
