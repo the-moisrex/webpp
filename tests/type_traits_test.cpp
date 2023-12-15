@@ -170,11 +170,11 @@ struct iterable_type {
     }
 
     iterator begin() {
-        return data.begin();
+        return iterator{data.begin()};
     }
 
     iterator end() {
-        return data.end();
+        return iterator{data.end()};
     }
 };
 
