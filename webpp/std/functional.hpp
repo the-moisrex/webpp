@@ -125,7 +125,7 @@ namespace webpp::istl {
             requires(stl::is_invocable_r_v<R, Callable, Args...>)
         inline constexpr R call_stub(void* data, Args... args) noexcept(IsNoexcept) {
             using callable_decay = stl::decay_t<Callable>;
-            using cast_to        = stl::conditional_t<Const, const callable_decay, callable_decay>;
+            using cast_to        = stl::conditional_t<Const, callable_decay const, callable_decay>;
             if constexpr (stl::is_void_v<R>) {
                 (*static_cast<cast_to*>(data))(static_cast<Args&&>(args)...);
             } else {
@@ -382,7 +382,7 @@ namespace webpp::istl {
         // kinda copy constructor but with an allocator specified
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr explicit function(Alloc2 const& alloc2, function const& other) : alloc{alloc2} {
+        constexpr function(Alloc2 const& alloc2, function const& other) : alloc{alloc2} {
             this->clone_from(&other);
         }
 
@@ -412,7 +412,7 @@ namespace webpp::istl {
         // (same as above) kinda move constructor but with an allocator specified
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr explicit function(Alloc2 const& alloc2, function&& other)
+        constexpr function(Alloc2 const& alloc2, function&& other)
           : function{stl::allocator_arg_t{}, alloc2, stl::move(other)} {}
 
         // almost move ctor; the signature has a different const-ness than our signature, so it is possible to
@@ -430,7 +430,7 @@ namespace webpp::istl {
         template <typename Signature2, Allocator Alloc2, Allocator Alloc3>
             requires(!is_movable_v<Signature2> && is_convertible_v<function<Signature2>> &&
                      compatible_allocator_v<Alloc3>)
-        constexpr explicit function(Alloc3 const& input_alloc, function<Signature2, Alloc2>&& other)
+        constexpr function(Alloc3 const& input_alloc, function<Signature2, Alloc2>&& other)
           : alloc{input_alloc},
             ptr{other.ptr} {
             // todo: test this, I think we need to disable this constructor
@@ -482,9 +482,8 @@ namespace webpp::istl {
             requires(!stl::is_null_pointer_v<Callable> && not_alloc_v<Callable> &&
                      !is_compatible_function_v<Callable> && is_convertible_v<Callable> &&
                      stl::is_default_constructible_v<allocator_type>)
-        explicit constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
-          : alloc{},
-            ptr{allocate<stl::decay_t<Callable>>()} {
+        explicit(false) constexpr function(Callable&& call) // NOLINT(bugprone-forwarding-reference-overload)
+          : ptr{allocate<stl::decay_t<Callable>>()} {
             construct<Callable>(stl::forward<Callable>(call));
         }
 

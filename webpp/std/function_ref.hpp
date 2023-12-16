@@ -5,12 +5,12 @@
 
 
 // Initially named functional.h by moisrex on 12/6/19.
-#include "../common/meta.hpp"
 #include "concepts.hpp"
 #include "type_traits.hpp"
 
 #include <functional>
 
+// NOLINTBEGIN(*-explicit-constructor, *-explicit-conversions, *-missing-std-forward)
 namespace webpp::istl {
 
     /**
@@ -53,7 +53,7 @@ namespace webpp::istl {
 #define MEMBER_FUNCTION_POINTER_IMPL_no_volatile
 #define MEMBER_FUNCTION_POINTER_IMPL_noexcept       noexcept
 #define MEMBER_FUNCTION_POINTER_IMPL_const          const
-#define MEMBER_FUNCTION_POINTER_IMPL_ref            &
+#define MEMBER_FUNCTION_POINTER_IMPL_ref            & // NOLINT(*-macro-parentheses)
 #define MEMBER_FUNCTION_POINTER_IMPL_move           &&
 #define MEMBER_FUNCTION_POINTER_IMPL_volatile       volatile
 #define MEMBER_FUNCTION_POINTER_IMPL_OPT(OPTION)    MEMBER_FUNCTION_POINTER_IMPL_##OPTION
@@ -187,23 +187,25 @@ namespace webpp::istl {
 
             template <typename T>
                 requires stl::is_object_v<T>
-            explicit constexpr storage(T* inp_ptr) noexcept : obj_ptr(inp_ptr) {}
+            explicit(false) constexpr storage(T* inp_ptr) noexcept : obj_ptr(inp_ptr) {}
 
             template <typename T>
                 requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
-            explicit constexpr storage(T& inp_ptr) noexcept : obj_ptr(stl::addressof(inp_ptr)) {}
+            explicit(false) constexpr storage(T& inp_ptr) noexcept : obj_ptr(stl::addressof(inp_ptr)) {}
 
             template <typename T>
                 requires stl::is_object_v<T>
-            explicit constexpr storage(T const* inp_ptr) noexcept : const_obj_ptr(inp_ptr) {}
+            explicit(false) constexpr storage(T const* inp_ptr) noexcept : const_obj_ptr(inp_ptr) {}
 
             template <typename T>
                 requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
-            explicit constexpr storage(T const& inp_ptr) noexcept : const_obj_ptr(stl::addressof(inp_ptr)) {}
+            explicit(false) constexpr storage(T const& inp_ptr) noexcept
+              : const_obj_ptr(stl::addressof(inp_ptr)) {}
 
             template <typename T>
                 requires stl::is_function_v<T>
-            explicit constexpr storage(T* inp_ptr) noexcept : func_ptr(reinterpret_cast<SigPtr>(inp_ptr)) {}
+            explicit(false) constexpr storage(T* inp_ptr) noexcept
+              : func_ptr(reinterpret_cast<SigPtr>(inp_ptr)) {}
 
             template <typename T>
                 requires stl::is_object_v<T>
@@ -214,29 +216,29 @@ namespace webpp::istl {
 
             template <typename T>
                 requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
-            constexpr storage& operator=(T& p) noexcept {
-                obj_ptr = stl::addressof(p);
+            constexpr storage& operator=(T& inp_ptr) noexcept {
+                obj_ptr = stl::addressof(inp_ptr);
                 return *this;
             }
 
             template <typename T>
                 requires stl::is_object_v<T>
-            constexpr storage& operator=(T const* p) noexcept {
-                const_obj_ptr = p;
+            constexpr storage& operator=(T const* inp_ptr) noexcept {
+                const_obj_ptr = inp_ptr;
                 return *this;
             }
 
             template <typename T>
                 requires(stl::is_object_v<T> && !istl::cvref_as<T, storage>)
-            constexpr storage& operator=(T const& p) noexcept {
-                const_obj_ptr = stl::addressof(p);
+            constexpr storage& operator=(T const& inp_ptr) noexcept {
+                const_obj_ptr = stl::addressof(inp_ptr);
                 return *this;
             }
 
             template <typename T>
                 requires stl::is_function_v<T>
-            constexpr storage& operator=(T* p) noexcept {
-                func_ptr = reinterpret_cast<SigPtr>(p);
+            constexpr storage& operator=(T* inp_ptr) noexcept {
+                func_ptr = reinterpret_cast<SigPtr>(inp_ptr);
                 return *this;
             }
         };
@@ -294,25 +296,26 @@ namespace webpp::istl {
 
         using self_signature = Return (*)(storage_type, Args...);
 
-        static constexpr Return error(storage_type, Args...) noexcept(false) {
+        static constexpr Return error([[maybe_unused]] storage_type obj,
+                                      [[maybe_unused]] Args... args) noexcept(false) {
             throw stl::bad_function_call{};
         }
 
         template <typename T>
             requires stl::is_invocable_v<T, Args...>
-        static constexpr Return invoker(storage_type obj, Args... xs) noexcept(
-          noexcept((*get<T>(obj))(stl::forward<Args>(xs)...))) {
-            return static_cast<Return>((*details::get<T>(obj))(stl::forward<Args>(xs)...));
+        static constexpr Return invoker(storage_type obj, Args... args) noexcept(
+          noexcept((*get<T>(obj))(stl::forward<Args>(args)...))) {
+            return static_cast<Return>((*details::get<T>(obj))(stl::forward<Args>(args)...));
         }
 
         template <typename NewRet, typename... NewArgs>
-        static constexpr Return func_invoker(storage_type obj, Args... xs) noexcept(
-          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...))) {
+        static constexpr Return func_invoker(storage_type obj, Args... args) noexcept(
+          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>(
-              (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...));
+              (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...));
         }
 
-        storage_type   obj         = this;
+        storage_type   obj{this};
         self_signature erased_func = &function_ref::error;
 
 
@@ -322,26 +325,26 @@ namespace webpp::istl {
       public:
         template <typename T>
             requires(invocable_using<T>)
-        constexpr explicit function_ref(T& x) noexcept
-          : obj{x},
+        explicit(false) constexpr function_ref(T& inp_func) noexcept
+          : obj{inp_func},
             erased_func{&function_ref::invoker<T>} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <typename T>
             requires(invocable_using<T> && stl::is_assignable_v<signature_ptr&, T>)
-        explicit constexpr function_ref(T&& x) noexcept
-          : obj{+x},
+        explicit(false) constexpr function_ref(T&& inp_func) noexcept
+          : obj{+inp_func},
             erased_func{&function_ref::func_invoker<Return, Args...>} {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 
         template <typename T>
             requires(invocable_using<T>)
-        explicit constexpr function_ref(T const& x) noexcept
-          : obj{x},
+        explicit(false) constexpr function_ref(T const& inp_func) noexcept
+          : obj{inp_func},
             erased_func{&function_ref::invoker<T const>} {}
 
-        explicit constexpr function_ref(signature_ptr inp_func) noexcept
+        explicit(false) constexpr function_ref(signature_ptr inp_func) noexcept
           : obj{inp_func},
             erased_func{&function_ref::func_invoker<Return, Args...>} {
             if (!inp_func) {
@@ -351,7 +354,7 @@ namespace webpp::istl {
 
         template <typename NewRet, typename... NewArgs>
             requires(is_convertible_function<NewRet, NewArgs...>)
-        explicit constexpr function_ref(NewRet (*const inp_func)(NewArgs...)) noexcept
+        explicit(false) constexpr function_ref(NewRet (*const inp_func)(NewArgs...)) noexcept
           : obj{inp_func},
             erased_func{&function_ref::func_invoker<NewRet, NewArgs...>} {
             if (!inp_func) {
@@ -362,11 +365,11 @@ namespace webpp::istl {
         // converting copy constructor
         template <typename NewRet, typename... NewArgs>
             requires(is_convertible_function<NewRet, NewArgs...>)
-        explicit constexpr function_ref(function_ref<NewRet(NewArgs...)> const& func) noexcept
+        explicit(false) constexpr function_ref(function_ref<NewRet(NewArgs...)> const& func) noexcept
           : obj{func.obj},
             erased_func{func.erased_func} {}
 
-        explicit constexpr function_ref(stl::nullptr_t) noexcept {}
+        explicit(false) constexpr function_ref(stl::nullptr_t) noexcept {}
 
         constexpr function_ref() noexcept                               = default;
         constexpr function_ref(function_ref const&) noexcept            = default;
@@ -377,24 +380,24 @@ namespace webpp::istl {
 
         template <typename T>
             requires(invocable_using<T> && stl::is_assignable_v<signature_ptr&, T>)
-        constexpr function_ref& operator=(T&& x) noexcept {
-            obj         = +x;
+        constexpr function_ref& operator=(T&& inp_obj) noexcept {
+            obj         = +inp_obj;
             erased_func = &function_ref::func_invoker<Return, Args...>;
             return *this;
         }
 
         template <typename T>
             requires(invocable_using<T>)
-        constexpr function_ref& operator=(T& x) noexcept {
-            obj         = x;
+        constexpr function_ref& operator=(T& inp_obj) noexcept {
+            obj         = inp_obj;
             erased_func = &function_ref::invoker<T>;
             return *this;
         }
 
         template <typename T>
             requires(invocable_using<T>)
-        constexpr function_ref& operator=(T const& x) noexcept {
-            obj         = x;
+        constexpr function_ref& operator=(T const& inp_obj) noexcept {
+            obj         = inp_obj;
             erased_func = &function_ref::invoker<T const>;
             return *this;
         }
@@ -431,9 +434,9 @@ namespace webpp::istl {
             return erased_func != &function_ref::error;
         }
 
-        constexpr Return operator()(Args... xs) const
-          noexcept(noexcept((*erased_func)(obj, stl::forward<Args>(xs)...))) {
-            return (*erased_func)(obj, stl::forward<Args>(xs)...);
+        constexpr Return operator()(Args... args) const
+          noexcept(noexcept((*erased_func)(obj, stl::forward<Args>(args)...))) {
+            return (*erased_func)(obj, stl::forward<Args>(args)...);
         }
     };
 
@@ -443,7 +446,7 @@ namespace webpp::istl {
           typename WEBPP_COMMA typename WEBPP_COMMA bool,
           typename Sig WEBPP_COMMA typename ObjT WEBPP_COMMA bool IsConst,
           Sig WEBPP_COMMA ObjT WEBPP_COMMA                        IsConst);
-    }
+    } // namespace details
 
     template <typename T>
     struct member_function_ref<T*> : member_function_ref<T> {
@@ -558,7 +561,7 @@ namespace webpp::istl {
           sizeof(member_function_holder<non_void_object_type, Return, Args...>);
 
       public:
-        explicit constexpr member_function_ref(stl::nullptr_t) noexcept {}
+        explicit(false) constexpr member_function_ref(stl::nullptr_t) noexcept {}
 
         constexpr member_function_ref() noexcept                           = default;
         constexpr member_function_ref(member_function_ref const&) noexcept = default;
@@ -576,11 +579,11 @@ namespace webpp::istl {
         // converting copy constructor
         template <typename NRet, typename... NArgs, bool NIsConst>
             requires((!is_const || NIsConst) && is_convertible_function<NRet, NArgs...>)
-        explicit constexpr member_function_ref(
+        explicit(false) constexpr member_function_ref(
           member_function_ref<NRet(NArgs...), ObjType, NIsConst> const& other) noexcept
           : obj{other.obj},
-            erased_func{other.erased_func},
-            mem_ptr_storage{other.mem_ptr_storage} {}
+            mem_ptr_storage{other.mem_ptr_storage},
+            erased_func{other.erased_func} {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
 
@@ -588,7 +591,7 @@ namespace webpp::istl {
 
         template <typename T>
             requires(is_object_type<T> && invocable_by<Return, T, Args...>)
-        explicit constexpr member_function_ref(T&& inp_obj) noexcept
+        explicit(false) constexpr member_function_ref(T&& inp_obj) noexcept
           : member_function_ref{inp_obj, &stl::remove_cvref_t<T>::operator()} {}
 
         template <typename T, typename NRet, typename... NArgs>
@@ -669,39 +672,40 @@ namespace webpp::istl {
         // situation.
         template <typename T, typename NRet, typename... NArgs>
             requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
-        explicit constexpr member_function_ref(member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
+        explicit(false) constexpr member_function_ref(member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, NRet, NArgs...>} {
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
             requires(is_object_type<T>)
-        explicit constexpr member_function_ref(member_of<T, Return, Args...> inp_mem_ptr) noexcept
+        explicit(false) constexpr member_function_ref(member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, Return, Args...>} {
             construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
         }
 
         template <typename T, typename NRet, typename... NArgs>
             requires(is_object_type<T> && is_convertible_function<NRet, NArgs...>)
-        explicit constexpr member_function_ref(const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
+        explicit(false) constexpr member_function_ref(const_member_of<T, NRet, NArgs...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, NRet, NArgs...>} {
             construct<member_function_holder<T, NRet, NArgs...>>(inp_mem_ptr);
         }
 
         template <typename T>
             requires(is_object_type<T>)
-        explicit constexpr member_function_ref(const_member_of<T, Return, Args...> inp_mem_ptr) noexcept
+        explicit(false) constexpr member_function_ref(
+          const_member_of<T, Return, Args...> inp_mem_ptr) noexcept
           : erased_func{&invoker<T, Return, Args...>} {
             construct<member_function_holder<T, Return, Args...>>(inp_mem_ptr);
         }
 
         template <typename NRet, typename... NArgs>
             requires(is_convertible_function<NRet, NArgs...>)
-        explicit constexpr member_function_ref(NRet (*inp_mem_ptr)(NArgs...)) noexcept
+        explicit(false) constexpr member_function_ref(NRet (*inp_mem_ptr)(NArgs...)) noexcept
           : obj{inp_mem_ptr},
             erased_func{&member_function_ref::func_invoker<NRet, NArgs...>} {}
 
-        explicit constexpr member_function_ref(signature_ptr inp_mem_ptr) noexcept
+        explicit(false) constexpr member_function_ref(signature_ptr inp_mem_ptr) noexcept
           : obj{inp_mem_ptr},
             erased_func{&member_function_ref::func_invoker<Return, Args...>} {}
 
@@ -913,25 +917,26 @@ namespace webpp::istl {
             return *this;
         }
 
-        constexpr Return operator()(Args... xs) const noexcept(noexcept(
-          (*erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(xs)...))) {
-            return (*erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(xs)...);
+        constexpr Return operator()(Args... args) const noexcept(noexcept(
+          (*erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(args)...))) {
+            return (
+              *erased_func)(static_cast<void const*>(mem_ptr_storage), obj, stl::forward<Args>(args)...);
         }
 
         template <typename NewObjType>
             requires(istl::cvref_as<NewObjType, object_type> && !stl::is_void_v<object_type>)
-        constexpr Return operator()(NewObjType&& new_obj, Args... xs) const noexcept(noexcept(
-          (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...))) {
+        constexpr Return operator()(NewObjType&& new_obj, Args... args) const noexcept(noexcept(
+          (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(args)...))) {
             return (
-              *erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...);
+              *erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(args)...);
         }
 
         template <typename NewObjType>
             requires(stl::is_void_v<object_type>)
-        constexpr Return operator()(NewObjType&& new_obj, Args... xs) const noexcept(noexcept(
-          (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...))) {
+        constexpr Return operator()(NewObjType&& new_obj, Args... args) const noexcept(noexcept(
+          (*erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(args)...))) {
             return (
-              *erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(xs)...);
+              *erased_func)(static_cast<void const*>(mem_ptr_storage), new_obj, stl::forward<Args>(args)...);
         }
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
@@ -939,15 +944,18 @@ namespace webpp::istl {
         }
 
       private:
-        static constexpr Return error(void const*, storage_type, Args...) noexcept(false) {
+        static constexpr Return error([[maybe_unused]] void const*  mem_ptr,
+                                      [[maybe_unused]] storage_type obj,
+                                      [[maybe_unused]] Args... args) noexcept(false) {
             throw stl::bad_function_call{};
         }
 
         template <typename NewRet, typename... NewArgs>
-        static constexpr Return func_invoker(void const*, storage_type obj, Args... xs) noexcept(
-          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...))) {
+        static constexpr Return
+        func_invoker([[maybe_unused]] void const* mem_ptr, storage_type obj, Args... args) noexcept(
+          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>(
-              (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(xs)...));
+              (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...));
         }
 
         template <typename T, typename NRet, typename... NArgs>
@@ -986,7 +994,7 @@ namespace webpp::istl {
 
 
         // NOLINTBEGIN(*-avoid-c-arrays)
-        storage_type   obj = this;
+        storage_type   obj{this};
         stl::byte      mem_ptr_storage[member_holder_required_storage]{};
         self_signature erased_func = &member_function_ref::error;
         // NOLINTEND(*-avoid-c-arrays)
@@ -1065,31 +1073,31 @@ namespace webpp::istl {
 
 
     template <typename Callable>
-    using make_inheritable = istl::lazy_conditional_t<
+    using make_inheritable = lazy_conditional_t<
       stl::is_class_v<Callable>, // if it's a class
 
-      istl::lazy_type< // it's the requirement of the istl::lazy_conditional_t, even though we could avoid it,
-                       // but let's keep it because there might be changes later time
-        istl::lazy_conditional_t<    // if
+      lazy_type<            // it's the requirement of the lazy_conditional_t, even though we could avoid it,
+                            // but let's keep it because there might be changes later time
+        lazy_conditional_t< // if
           stl::is_final_v<Callable>, // if it's final, we can use it as a field
-          istl::templated_lazy_type<details::lazy_callable_as_field, Callable>, // making "callable_as_field"
-                                                                                // a lazy type so it wouldn't
-                                                                                // be evaluated if the
-                                                                                // conditions are not right
-          istl::lazy_type<                                // if it's not final, and a class
-            istl::lazy_conditional_t<                     // if
+          templated_lazy_type<details::lazy_callable_as_field, Callable>, // making "callable_as_field"
+                                                                          // a lazy type so it wouldn't
+                                                                          // be evaluated if the
+                                                                          // conditions are not right
+          lazy_type<                                                      // if it's not final, and a class
+            lazy_conditional_t<                                           // if
               !stl::is_default_constructible_v<Callable>, // if it's default constructible, we can just use it
-              istl::templated_lazy_type<details::lazy_callable_as_field, Callable>, // also I'm doing it lazy
-                                                                                    // here
-              istl::lazy_type<Callable>>                                            // lazy_conditional_t
-            >                                                                       // lazy_type
-          >                                                                         // lazy_conditional_t
-        >,                                                                          // lazy_type
+              templated_lazy_type<details::lazy_callable_as_field, Callable>, // also I'm doing it lazy
+                                                                              // here
+              lazy_type<Callable>>                                            // lazy_conditional_t
+            >                                                                 // lazy_type
+          >                                                                   // lazy_conditional_t
+        >,                                                                    // lazy_type
 
-      istl::templated_lazy_type<details::lazy_func_ptr_inheritable,
-                                Callable> // making "make_func_ptr_inheritable" a lazy one so it doesn't go
-                                          // and evaluate that expression because if it's not, it might throw
-                                          // an error
+      templated_lazy_type<details::lazy_func_ptr_inheritable,
+                          Callable> // making "make_func_ptr_inheritable" a lazy one so it doesn't go
+                                    // and evaluate that expression because if it's not, it might throw
+                                    // an error
       >;
 
     template <class... Ts>
@@ -1105,6 +1113,7 @@ namespace webpp::istl {
 
 } // namespace webpp::istl
 
+// NOLINTEND(*-explicit-constructor, *-explicit-conversions, *-missing-std-forward)
 
 
 #endif // WEBPP_FUNCTION_REF_HPP
