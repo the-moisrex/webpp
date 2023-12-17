@@ -302,4 +302,19 @@ TEST(TypeTraits, RmoeveUnsignedTest) {
       static_cast<bool>(same_as<char const volatile&, remove_unsigned_t<unsigned char const volatile&>>));
 }
 
+struct expl_type {
+    explicit expl_type() = default;
+
+    explicit expl_type([[maybe_unused]] int inp) {}
+};
+
+TEST(TypeTraits, Explicitness) {
+    EXPECT_TRUE(static_cast<bool>(explicitly_default_constructible<expl_type>));
+    EXPECT_FALSE(static_cast<bool>(implicitly_default_constructible<expl_type>));
+
+    EXPECT_TRUE(static_cast<bool>(constructible_from<expl_type, int>));
+    EXPECT_TRUE(static_cast<bool>(explicitly_constructible<expl_type, int>));
+    EXPECT_FALSE(static_cast<bool>(implicitly_constructible<expl_type, int>));
+}
+
 // NOLINTEND(*-magic-numbers)

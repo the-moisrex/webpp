@@ -6,7 +6,7 @@
 #include "std.hpp"
 #include "type_traits.hpp"
 
-#if __has_include(<concepts>) && __cpp_lib_concepts
+#if __has_include(<concepts> ) && __cpp_lib_concepts
 #    include <concepts>
 #else
 #    include "./concepts_impl.hpp"
@@ -241,6 +241,52 @@ namespace webpp::istl {
      */
     template <typename... T>
     concept cvref_as = same_as_all<stl::remove_cvref_t<T>...>;
+
+
+    /// Constraint for a non-explicit constructor.
+    template <typename T, typename Arg>
+    concept implicitly_constructible = stl::constructible_from<T, Arg> && stl::convertible_to<Arg, T>;
+
+    /// Constraint for a non-explicit constructor.
+    template <typename T, typename Arg>
+    concept explicitly_constructible = stl::constructible_from<T, Arg> && !stl::convertible_to<Arg, T>;
+
+    namespace details {
+        struct do_is_implicitly_default_constructible_impl {
+            template <typename T>
+            static void helper([[maybe_unused]] T const& inp) {}
+
+            template <typename T>
+            static stl::true_type test([[maybe_unused]] T const&                        inp,
+                                       [[maybe_unused]] decltype(helper<T const&>({}))* arg = nullptr) {
+                return {};
+            }
+
+            static stl::false_type test(...) { // NOLINT(*-dcl50-cpp)
+                return {};
+            }
+        };
+
+        template <typename T>
+        struct is_implicitly_default_constructible_impl : do_is_implicitly_default_constructible_impl {
+            using type = decltype(test(stl::declval<T>()));
+        };
+
+        template <typename T>
+        struct is_implicitly_default_constructible_safe : is_implicitly_default_constructible_impl<T>::type {
+        };
+
+    } // namespace details
+
+    template <typename T>
+    concept implicitly_default_constructible =
+      stl::is_default_constructible_v<T> && details::is_implicitly_default_constructible_safe<T>::value;
+
+    template <typename T>
+    concept explicitly_default_constructible =
+      stl::is_default_constructible_v<T> && !implicitly_default_constructible<T>;
+
+
 
 } // namespace webpp::istl
 
