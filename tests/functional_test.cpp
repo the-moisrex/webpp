@@ -12,7 +12,7 @@
 using namespace webpp;
 using namespace webpp::istl;
 
-// NOLINTBEGIN(*-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers, *-identifier-length)
 
 void test(int const limit) {
     static auto i = 0;
@@ -29,7 +29,7 @@ struct ConstMyCallable {
 };
 
 struct MyCallable {
-    int index = 0;
+    int index = 0; // NOLINT(*-non-private-member-variables-in-classes)
 
     auto operator()(int const limit) {
         index++;
@@ -134,7 +134,7 @@ TEST(FunctionalTests, FunctionWithSTDAllocators) {
     EXPECT_EQ(func_copy(), -369);
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    istl::function<int()> func2 = [i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
+    istl::function<int()> func2 = [i = 10UL, big = stl::array<stl::size_t, 100>{}]() mutable {
         ++i;
         big[i % 30] = i;
         return big[i % 30];
@@ -191,7 +191,7 @@ TEST(FunctionalTests, FunctionWithPMRAllocators) {
     EXPECT_EQ(func_copy(), -369);
 
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    istl::pmr::function<int()> func2{[i = 10ul, big = stl::array<stl::size_t, 100>{}]() mutable {
+    istl::pmr::function<int()> func2{[i = 10UL, big = stl::array<stl::size_t, 100>{}]() mutable {
                                          ++i;
                                          big[i % 30] = i;
                                          return big[i % 30];
@@ -846,4 +846,4 @@ TEST_F(MemberFunctionRefTest, FunctionRefTest) {
     EXPECT_EQ(x, 42);
 }
 
-// NOLINTEND(*-magic-numbers)
+// NOLINTEND(*-magic-numbers, *-identifier-length)
