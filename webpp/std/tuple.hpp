@@ -136,54 +136,70 @@ namespace webpp::istl {
      */
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
         requires(I >= sizeof...(Tp))
-    static constexpr void for_index(stl::size_t, Tup<Tp...> const&, FuncT&&) {
+    static constexpr void for_index(
+      [[maybe_unused]] stl::size_t       index,
+      [[maybe_unused]] Tup<Tp...> const& inp_tp,
+      [[maybe_unused]] FuncT&&           inp_func) {
         // ending condition function
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
         requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t const index, Tup<Tp...>& t, FuncT&& f) {
+    static constexpr void for_index(stl::size_t const index, Tup<Tp...>& inp_tup, FuncT&& inp_func) {
         if (index == 0) {
-            f(stl::get<I>(t));
+            inp_func(stl::get<I>(inp_tup));
         }
-        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
+        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, inp_tup, stl::forward<FuncT>(inp_func));
     }
 
     template <stl::size_t I = 0, typename FuncT, template <typename...> typename Tup, typename... Tp>
         requires(I < sizeof...(Tp))
-    static constexpr void for_index(stl::size_t const index, Tup<Tp...> const& t, FuncT&& f) {
+    static constexpr void for_index(stl::size_t const index, Tup<Tp...> const& inp_tup, FuncT&& inp_func) {
         if (index == 0) {
-            f(stl::get<I>(t));
+            inp_func(stl::get<I>(inp_tup));
         }
-        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, t, stl::forward<FuncT>(f));
+        for_index<I + 1, FuncT, Tup, Tp...>(index - 1, inp_tup, stl::forward<FuncT>(inp_func));
     }
 
     template <stl::size_t From, stl::size_t... indices, typename T1, typename T2, typename Func>
-    void tuple_transform(T1&& s, T2& t, Func f, stl::index_sequence<indices...>) {
+    void tuple_transform(T1&&                                             inp_tup1,
+                         T2&                                              inp_tup2,
+                         Func                                             inp_func,
+                         [[maybe_unused]] stl::index_sequence<indices...> indeces) {
         (void) stl::initializer_list<int>{
-          (stl::get<indices + From>(t) = f(stl::forward_like<T1>(get<indices>(s))), 0)...};
+          (stl::get<indices + From>(inp_tup2) = inp_func(stl::forward_like<T1>(get<indices>(inp_tup1))),
+           0)...};
     }
 
     template <stl::size_t From, stl::size_t To, typename T1, typename T2, typename Func>
-    void tuple_transform(T1&& s, T2& t, Func f) {
-        tuple_transform<From>(stl::forward<T1>(s), t, f, stl::make_index_sequence<To - From + 1>());
+    void tuple_transform(T1&& inp_tup1, T2& inp_tup2, Func inp_func) {
+        tuple_transform<From>(
+          stl::forward<T1>(inp_tup1),
+          inp_tup2,
+          inp_func,
+          stl::make_index_sequence<To - From + 1>());
     }
 
-    template <stl::size_t... indices, typename Tup, typename Func>
-    [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f, stl::index_sequence<indices...>) {
-        return stl::tuple{(f(stl::forward_like<Tup>(get<indices>(s))), ...)};
+    template <stl::size_t... Indeces, typename Tup, typename Func>
+    [[nodiscard]] static constexpr auto tuple_transform(
+      Tup&&                                            inp_tup1,
+      Func                                             inp_func,
+      [[maybe_unused]] stl::index_sequence<Indeces...> inp_indeces) {
+        return stl::tuple{(inp_func(stl::forward_like<Tup>(get<Indeces>(inp_tup1))), ...)};
     }
 
     template <typename Tup, typename Func>
-    [[nodiscard]] static constexpr auto tuple_transform(Tup&& s, Func f) {
-        return tuple_transform(stl::forward<Tup>(s), f, stl::make_index_sequence<stl::tuple_size_v<Tup>>());
+    [[nodiscard]] static constexpr auto tuple_transform(Tup&& inp_tup1, Func inp_func) {
+        return tuple_transform(stl::forward<Tup>(inp_tup1),
+                               inp_func,
+                               stl::make_index_sequence<stl::tuple_size_v<Tup>>());
     }
 
     ////////////////////////////// ituple //////////////////////////////
 
 
     template <typename T>
-    concept ItupleOptions = requires(T o) {
+    concept ItupleOptions = requires(T opts) {
         typename T::default_type;
         T::size;
         typename T::template resize<2>;
@@ -248,7 +264,7 @@ namespace webpp::istl {
 
         template <template <typename...> typename Tup, typename... Args>
         explicit constexpr ituple(ituple<Args...>&& tup)
-          : this_tuple{stl::forward<Args>(stl::move(stl::get<Args>(tup)))...} {}
+          : this_tuple{stl::forward<Args>(stl::move(stl::get<Args>(tup)))...} {} // todo: forward_like?
 
         template <typename... TupT>
         explicit constexpr ituple(stl::tuple<T..., TupT...>&& tup) : this_tuple{} {
@@ -484,58 +500,58 @@ namespace webpp::istl {
 
     namespace details {
         template <typename T>
-        constexpr auto explode(T&& t, char) {
-            return stl::forward_as_tuple(stl::forward<T>(t));
+        constexpr auto explode(T&& inp_tup, [[maybe_unused]] char inp) {
+            return stl::forward_as_tuple(stl::forward<T>(inp_tup));
         }
 
         template <typename T, stl::size_t I = stl::tuple_size_v<stl::decay_t<T>>>
-        constexpr auto explode(T&& t, int);
+        constexpr auto explode(T&& inp_tup, [[maybe_unused]] int inp);
 
         template <typename T, stl::size_t... Is>
-        constexpr auto explode(T&& t, stl::index_sequence<Is...>) {
-            return tuple_cat(explode(stl::forward_like<T>(get<Is>(t)), 0)...);
+        constexpr auto explode(T&& inp_tup, [[maybe_unused]] stl::index_sequence<Is...> indeces) {
+            return tuple_cat(explode(stl::forward_like<T>(get<Is>(inp_tup)), 0)...);
         }
 
         template <typename T, stl::size_t I>
-        constexpr auto explode(T&& t, int) {
-            return explode(stl::forward<T>(t), stl::make_index_sequence<I>{});
+        constexpr auto explode(T&& inp_tup, [[maybe_unused]] int inp) {
+            return explode(stl::forward<T>(inp_tup), stl::make_index_sequence<I>{});
         }
 
         template <typename T, stl::size_t... Is>
-        constexpr auto decay_tuple(T&& t, stl::index_sequence<Is...>) {
-            return stl::make_tuple(stl::forward_like<T>(get<Is>(t))...);
+        constexpr auto decay_tuple(T&& inp_tup, [[maybe_unused]] stl::index_sequence<Is...> indeces) {
+            return stl::make_tuple(stl::forward_like<T>(get<Is>(inp_tup))...);
         }
 
         template <typename T>
-        constexpr auto decay_tuple(T&& t) {
-            return decay_tuple(stl::forward<T>(t),
+        constexpr auto decay_tuple(T&& inp_tup) {
+            return decay_tuple(stl::forward<T>(inp_tup),
                                stl::make_index_sequence<stl::tuple_size_v<stl::decay_t<T>>>{});
         }
 
         template <typename T, stl::size_t... Is>
-        constexpr auto flatten_tuple(T&& t, stl::index_sequence<Is...>) {
-            return decay_tuple(tuple_cat(explode(stl::forward_like<T>(get<Is>(t)), 0)...));
+        constexpr auto flatten_tuple(T&& inp_tup, [[maybe_unused]] stl::index_sequence<Is...> inp) {
+            return decay_tuple(tuple_cat(explode(stl::forward_like<T>(get<Is>(inp_tup)), 0)...));
         }
 
     } // namespace details
 
     // todo: check this, it's not tested.
     template <typename T>
-    constexpr auto flatten_tuple(T&& t) {
-        return details::flatten_tuple(stl::forward<T>(t),
+    constexpr auto flatten_tuple(T&& inp_tup) {
+        return details::flatten_tuple(stl::forward<T>(inp_tup),
                                       stl::make_index_sequence<stl::tuple_size_v<stl::decay_t<T>>>{});
     }
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
     [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
-    sub_tuple(TupTempl<T...>&& tup, stl::index_sequence<I...>) noexcept(
+    sub_tuple(TupTempl<T...>&& tup, [[maybe_unused]] stl::index_sequence<I...> indeces) noexcept(
       stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(stl::move(tup))...};
     }
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
     [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
-    sub_tuple(TupTempl<T...> const& tup, stl::index_sequence<I...>) noexcept(
+    sub_tuple(TupTempl<T...> const& tup, [[maybe_unused]] stl::index_sequence<I...> indeces) noexcept(
       stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(tup)...};
     }
@@ -601,17 +617,19 @@ namespace webpp::istl {
      * Re-Order the tuple's element based on the specified index_sequence
      */
     template <typename Tup, stl::size_t... I>
-    [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&& tup, stl::index_sequence<I...>) {
+    [[nodiscard]] constexpr auto tuple_reorder_elements(Tup&&                                      tup,
+                                                        [[maybe_unused]] stl::index_sequence<I...> indeces) {
         return stl::make_tuple(stl::forward_like<Tup>(get<I>(tup))...);
     }
 
     namespace details {
         template <typename TupleT, typename F, stl::size_t... Indices>
-        static constexpr void for_each_impl(F&& f, TupleT&& tup, stl::index_sequence<Indices...>) {
-            using swallow = int[];
+        static constexpr void
+        for_each_impl(F&& inp_func, TupleT&& tup, [[maybe_unused]] stl::index_sequence<Indices...> indeces) {
+            using swallow = int[]; // NOLINT(*-avoid-c-arrays)
             (void) swallow{
               1,
-              (stl::forward<F>(f)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...};
+              (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...};
         }
     } // namespace details
 
@@ -619,23 +637,23 @@ namespace webpp::istl {
     // The order of the elements are reversed to match std::apply
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...))
-    static constexpr void for_each_element(F&& f, TupleT<Args...> const& tup) noexcept(
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...> const& tup) noexcept(
       (stl::is_nothrow_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...)) {
-        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+        details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...))
-    static constexpr void for_each_element(F&& f, TupleT<Args...>& tup) noexcept(
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>& tup) noexcept(
       (stl::is_nothrow_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...)) {
-        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+        details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...))
-    static constexpr void for_each_element(F&& f, TupleT<Args...>&& tup) noexcept(
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>&& tup) noexcept(
       (stl::is_nothrow_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...)) {
-        details::for_each_impl(stl::forward<F>(f), tup, stl::index_sequence_for<Args...>{});
+        details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 } // namespace webpp::istl
 
