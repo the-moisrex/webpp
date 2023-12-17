@@ -153,22 +153,22 @@ namespace webpp::sql {
         // row iterator
         [[nodiscard]] iterator begin() noexcept {
             execute();
-            return {this};
+            return iterator{this};
         }
 
         // end of row iterator
         [[nodiscard]] iterator end() noexcept {
-            return {};
+            return iterator{};
         }
 
         // end of row iterator
         [[nodiscard]] const_iterator end() const noexcept {
-            return {};
+            return iterator{};
         }
 
         [[nodiscard]] row_type first() noexcept {
             execute();
-            return {*this};
+            return row_type{*this};
         }
 
         inline void log(istl::String auto const& errmsg) noexcept {

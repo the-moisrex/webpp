@@ -425,19 +425,19 @@ namespace webpp::istl {
         }
 
         [[nodiscard]] iterator begin() noexcept {
-            return object.begin();
+            return iterator{object.begin()};
         }
 
         [[nodiscard]] const_iterator begin() const noexcept {
-            return object.begin();
+            return const_iterator{object.begin()};
         }
 
         [[nodiscard]] iterator end() noexcept {
-            return object.end();
+            return iterator{object.end()};
         }
 
         [[nodiscard]] const_iterator end() const noexcept {
-            return object.end();
+            return const_iterator{object.end()};
         }
     };
 
