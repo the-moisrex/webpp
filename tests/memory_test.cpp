@@ -29,20 +29,26 @@ TYPED_TEST(MemoryTest, AvailableMemory) {
 }
 
 TYPED_TEST(MemoryTest, Concepts) {
-    class incomplete_type;
+    class incomplete_class;
     using alloc_type = traits::allocator_type_of<TypeParam, int>;
     using dync_type  = istl::dynamic<int, alloc_type>;
     static_assert(stl::is_copy_assignable_v<dync_type>, "It should be copyable");
     static_assert(stl::is_copy_constructible_v<dync_type>, "It should be copyable");
     static_assert(stl::copyable<dync_type>, "It should be copyable");
     static_assert(stl::movable<dync_type>, "It should be movable");
+    static_assert(istl::implicitly_default_constructible<dync_type>, "It should be constructible");
+    static_assert(!istl::explicitly_default_constructible<dync_type>,
+                  "It should be constructible only implicitly");
 
-    using inc_alloc_type = traits::allocator_type_of<TypeParam, incomplete_type>;
-    using inc_dync_type  = istl::dynamic<incomplete_type, inc_alloc_type>;
+    using inc_alloc_type = traits::allocator_type_of<TypeParam, incomplete_class>;
+    using inc_dync_type  = istl::dynamic<incomplete_class, inc_alloc_type>;
     static_assert(stl::is_copy_assignable_v<inc_dync_type>, "It should be copyable");
     static_assert(stl::is_copy_constructible_v<inc_dync_type>, "It should be copyable");
     static_assert(stl::copyable<inc_dync_type>, "It should be copyable");
     static_assert(stl::movable<inc_dync_type>, "It should be movable");
+    static_assert(istl::implicitly_default_constructible<inc_dync_type>, "It should be constructible");
+    static_assert(!istl::explicitly_default_constructible<inc_dync_type>,
+                  "It should be constructible only implicitly");
 }
 
 // TYPED_TEST(MemoryTest, LocalAllocTest) {
@@ -145,8 +151,8 @@ TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
     EXPECT_EQ(*one, 1);
     EXPECT_EQ(*two, 2);
 
-    static constexpr auto  long_3s = "3333333333333333333333333333333333333333333333333333333333";
-    stl::array<char, 1024> data{};
+    static constexpr stl::string_view long_3s = "3333333333333333333333333333333333333333333333333333333333";
+    stl::array<char, 1024>            data{};
     stl::pmr::monotonic_buffer_resource res{data.data(), data.size()};
 
     // use the pmr string's allocator (both type and it's pass it down)

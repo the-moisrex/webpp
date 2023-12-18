@@ -532,7 +532,7 @@ namespace webpp::sql {
             from_cols{alloc},
             columns{alloc},
             values{alloc},
-            select_stmt{alloc},
+            select_stmt{stl::allocator_arg, alloc, istl::no_init},
             where_clauses{alloc},
             joins{alloc} {}
 
@@ -705,11 +705,13 @@ namespace webpp::sql {
             where_clauses.clear();
             using expr_type = details::expr_in_expr<database_type, base_allocator_type>;
 
+
             expr_type clause{
-              typename expr_type::expr_data{.op          = expr_type::expr_data::operation::in,
+              typename expr_type::expr_data{
+                                            .op          = expr_type::expr_data::operation::in,
                                             .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
                                             .exprs       = expr_vec{get_allocator<expr_func>()},
-                                            .select_stmt = subquery_ptr{get_allocator<subquery_type>()}}
+                                            .select_stmt = subquery_ptr{get_allocator<subquery_type>(), *db}}
             };
             clause.data().exprs.reserve(sizeof...(exprs));
             (clause.data().exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
@@ -724,10 +726,11 @@ namespace webpp::sql {
             using expr_type = details::expr_in_expr<database_type, base_allocator_type>;
 
             expr_type clause{
-              {.op          = expr_type::expr_data::operation::not_in,
-               .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{get_allocator<expr_func>()},
-               .select_stmt = subquery_ptr{get_allocator<subquery_type>()}}
+              {.op        = expr_type::expr_data::operation::not_in,
+               .left_expr = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+               .exprs     = expr_vec{get_allocator<expr_func>()},
+               .select_stmt =
+               subquery_ptr{stl::allocator_arg, get_allocator<subquery_type>(), istl::no_init}}
             };
             clause.data().exprs.reserve(sizeof...(exprs));
             (clause.data().exprs.push_back(expressionify<Exprs>(stl::forward<Exprs>(exprs))), ...);
@@ -765,11 +768,12 @@ namespace webpp::sql {
 
             and_expr clause{
               {.op   = and_expr::expr_data::operation::or_op,
-               .expr = expressionify(
-               expr_type{{.op          = expr_type::expr_data::operation::in,
-               .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{get_allocator<expr_func>()},
-               .select_stmt = subquery_ptr{get_allocator<subquery_type>()}}})}
+               .expr = expressionify(expr_type{
+               {.op        = expr_type::expr_data::operation::in,
+               .left_expr = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+               .exprs     = expr_vec{get_allocator<expr_func>()},
+               .select_stmt =
+               subquery_ptr{stl::allocator_arg, get_allocator<subquery_type>(), istl::no_init}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
@@ -809,11 +813,12 @@ namespace webpp::sql {
 
             and_expr clause{
               {.op   = and_expr::expr_data::operation::and_op,
-               .expr = expressionify(
-               expr_type{{.op          = expr_type::expr_data::operation::not_in,
-               .left_expr   = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
-               .exprs       = expr_vec{get_allocator<expr_func>()},
-               .select_stmt = subquery_ptr{get_allocator<subquery_type>()}}})}
+               .expr = expressionify(expr_type{
+               {.op        = expr_type::expr_data::operation::not_in,
+               .left_expr = expressionify<Expr1>(stl::forward<Expr1>(expr1)),
+               .exprs     = expr_vec{get_allocator<expr_func>()},
+               .select_stmt =
+               subquery_ptr{stl::allocator_arg, get_allocator<subquery_type>(), istl::no_init}}})}
             };
             clause.data().expr.template as<expr_type>().data().exprs.reserve(sizeof...(exprs));
             (clause.data().expr.template as<expr_type>().data().exprs.push_back(
