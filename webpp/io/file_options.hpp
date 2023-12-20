@@ -83,21 +83,26 @@ namespace webpp::io {
         def random     = OS_VALUE(0, _O_RANDOM);
         def shortlived = OS_VALUE(0, _O_CREAT | _O_SHORT_LIVED);
 
+        // NOLINTBEGIN(*-signed-bitwise)
         def invalid =
           ~readonly & ~writeonly & ~readwrite & ~create & ~trunc & ~append & ~direct & ~temporary &
           ~closeonexec & ~excl & ~binary & ~text & ~sequential & ~random & ~shortlived;
+        // NOLINTEND(*-signed-bitwise)
 #undef def
 
         constexpr file_options() noexcept = default;
 
+        // NOLINTBEGIN(*-explicit-constructor)
         template <typename... FlagsT>
             requires(stl::same_as<FlagsT, flags_type> && ...)
-        explicit constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
+        explicit(false) constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
 
         template <typename CharT = char>
-        explicit constexpr file_options(CharT const* mode) noexcept {
+        explicit(false) constexpr file_options(CharT const* mode) noexcept {
             parse(mode);
         }
+
+        // NOLINTEND(*-explicit-constructor)
 
         // NOLINTNEXTLINE(*-macro-usage)
 #define webpp_def(the_op)                                                                       \

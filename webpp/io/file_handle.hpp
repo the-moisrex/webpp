@@ -30,7 +30,6 @@ namespace webpp::io {
     struct file_handle {
         using handle_type = int;
 
-      public:
         explicit constexpr file_handle(handle_type const inp_handle) noexcept : handle{inp_handle} {}
 
         [[nodiscard]] static constexpr file_handle invalid(handle_type const error_number = errno) noexcept {
@@ -88,13 +87,14 @@ namespace webpp::io {
             return is_valid();
         }
 
-        [[nodiscard]] explicit constexpr operator handle_type() const noexcept {
+        // NOLINTNEXTLINE(*-explicit-*)
+        [[nodiscard]] explicit(false) constexpr operator handle_type() const noexcept {
             return handle;
         }
 
         template <istl::String StrT>
         constexpr void to_string(StrT& out) const {
-            auto const str  = stl::strerror(-handle);
+            auto const str  = stl::strerror(-handle); // todo: unsafe?
             out            += str;
         }
 

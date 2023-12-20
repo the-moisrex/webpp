@@ -31,7 +31,8 @@ namespace webpp::io {
          *  - If n <  -1, then it considers n as the invalid val
          * @param n The number of bytes read or written.
          */
-        explicit constexpr io_result(int const n) noexcept : val{n == -1 ? -errno : n} {}
+        // NOLINTNEXTLINE(*-explicit-*)
+        explicit(false) constexpr io_result(int const n) noexcept : val{n == -1 ? -errno : n} {}
 
         static constexpr io_result invalid(int const inp_val = errno) noexcept {
             return io_result{-inp_val};
