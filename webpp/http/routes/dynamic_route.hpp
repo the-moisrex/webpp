@@ -22,9 +22,9 @@ namespace webpp::http {
         callable_type callable;
 
       public:
-        explicit dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
+        explicit(false) dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
 
-        explicit dynamic_route(Callable const& new_callable) noexcept(
+        explicit(false) dynamic_route(Callable const& new_callable) noexcept(
           stl::is_nothrow_copy_constructible_v<callable_type>)
           : callable(new_callable) {}
 

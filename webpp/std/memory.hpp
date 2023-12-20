@@ -414,10 +414,15 @@ namespace webpp::istl {
         /// only derrived classes
         template <typename NT>
         static constexpr bool derived_type =
-          !stl::constructible_from<value_type,
-                                   NT> /*requires {
-  requires requires(NT obj) { value_type{obj}; };
-}*/ && stl::is_base_of_v<value_type, stl::remove_cvref_t<NT>>;
+          !stl::constructible_from<value_type, NT> && stl::is_base_of_v<value_type, stl::remove_cvref_t<NT>>;
+
+        /// check if the specified type is a "dynamic" type (ourself)
+        template <typename NT>
+        static constexpr bool is_derived_dynamic = requires {
+            typename stl::remove_cvref_t<NT>::value_type;
+            requires derived_type<typename stl::remove_cvref_t<NT>::value_type>;
+            requires stl::same_as<dynamic, dynamic<value_type, allocator_type>>;
+        };
 
         /// all types that we can put instead of T
         template <typename NT>
@@ -442,29 +447,33 @@ namespace webpp::istl {
         //     }
         // }
 
-        template <typename InheritedType>
-            requires(derived_type<InheritedType>)
-        constexpr dynamic(allocator_type const& input_alloc, InheritedType&& derived_obj)
-          : alloc{input_alloc} {
-            init<InheritedType>(stl::forward<InheritedType>(derived_obj));
-        }
-
-        template <typename InheritedType>
-            requires(derived_type<InheritedType>)
-        constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
-                          allocator_type const&                 input_alloc,
-                          InheritedType&&                       derived_obj)
-          : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
+        // template <typename InheritedType>
+        //     requires(derived_type<InheritedType>)
+        // constexpr dynamic(allocator_type const& input_alloc, InheritedType&& derived_obj)
+        //   : alloc{input_alloc} {
+        //     init<InheritedType>(stl::forward<InheritedType>(derived_obj));
+        // }
 
         // template <typename InheritedType>
         //     requires(derived_type<InheritedType>)
-        // explicit constexpr dynamic(InheritedType&& derived_obj, allocator_type const& input_alloc = {})
+        // constexpr dynamic([[maybe_unused]] stl::allocator_arg_t tag,
+        //                   allocator_type const&                 input_alloc,
+        //                   InheritedType&&                       derived_obj)
         //   : dynamic{input_alloc, stl::forward<InheritedType>(derived_obj)} {}
 
-        /// default construct the object (or its derived type)
-        template <typename... Args>
-        explicit constexpr dynamic(allocator_type const& input_alloc, Args&&... args) : alloc{input_alloc} {
-            init(stl::forward<Args>(args)...);
+        // template <typename InheritedType>
+        // explicit constexpr dynamic(InheritedType&& derived_obj, allocator_type const& input_alloc)
+        //   : dynamic{stl::allocator_arg, input_alloc, stl::forward<InheritedType>(derived_obj)} {}
+
+        explicit constexpr dynamic(allocator_type const& input_alloc) : alloc{input_alloc} {
+            init<value_type>(); // default construct
+        }
+
+        /// default construct the object
+        template <typename Arg1, typename... Args>
+        explicit constexpr dynamic(allocator_type const& input_alloc, Arg1&& arg1, Args&&... args)
+          : alloc{input_alloc} {
+            init(stl::forward<Arg1>(arg1), stl::forward<Args>(args)...);
         }
 
         /// default constructor is expected to be not explicit
@@ -509,11 +518,33 @@ namespace webpp::istl {
         }
 
         /// helper constructor for this kinda usages:
-        ///   dynamic {type_identity<int>{}, alloc, 1};
         ///   dynamic {type_identity<int>{}, 1};
-        template <typename... Args>
-        explicit constexpr dynamic([[maybe_unused]] stl::type_identity<T> type_ident, Args&&... args)
-          : dynamic{stl::forward<Args>(args)...} {}
+        template <typename NT, typename... Args>
+        explicit constexpr dynamic([[maybe_unused]] stl::type_identity<NT> type_ident, Args&&... args) {
+            init<NT>(stl::forward<Args>(args)...);
+        }
+
+        /// helper constructor for this kinda usages:
+        ///   dynamic {type_identity<int>{}, alloc, 1};
+        template <typename NT, typename... Args>
+        explicit constexpr dynamic([[maybe_unused]] stl::type_identity<NT> type_ident,
+                                   allocator_type const&                   inp_alloc,
+                                   Args&&... args)
+          : alloc{inp_alloc} {
+            init<NT>(stl::forward<Args>(args)...);
+        }
+
+        /// helper constructor for this kinda usages:
+        ///   dynamic {allocator_tag, alloc, type_identity<int>{}, 1};
+        template <typename NT, typename... Args>
+        explicit constexpr dynamic(
+          [[maybe_unused]] stl::allocator_arg_t   tag,
+          allocator_type const&                   inp_alloc,
+          [[maybe_unused]] stl::type_identity<NT> type_ident,
+          Args&&... args)
+          : alloc{inp_alloc} {
+            init<NT>(stl::forward<Args>(args)...);
+        }
 
         /// copy ctor
         constexpr dynamic(dynamic const& other)
@@ -532,22 +563,35 @@ namespace webpp::istl {
             ptr{stl::exchange(other.ptr, nullptr)} {}
 
         /// kinda copy ctor
-        template <typename DerivedT>
+        template <typename DerivedT, typename NAllocT>
             requires(derived_type<DerivedT>)
-        explicit constexpr dynamic(dynamic<DerivedT, allocator_type> const& other)
-          : alloc{other.get_allocator()} {
+        explicit constexpr dynamic(allocator_type const& inp_alloc, dynamic<DerivedT, NAllocT> const& other)
+          : alloc{inp_alloc} {
             if (other.get_pointer()) {
                 init<DerivedT>(*other.get_pointer());
             }
         }
 
+        /// kinda copy ctor
+        template <typename DerivedT, typename NAllocT>
+            requires(derived_type<DerivedT>)
+        explicit constexpr dynamic(dynamic<DerivedT, NAllocT> const& other)
+          : dynamic{other.get_allocator(), other} {}
+
         /// kinda move ctor
-        template <typename DerivedT>
+        template <typename DerivedT, typename NAllocT>
             requires(derived_type<DerivedT>)
         explicit constexpr dynamic(
-          dynamic<DerivedT, allocator_type>&& other) noexcept // NOLINT(*-rvalue-reference-param-not-moved)
-          : alloc{other.get_allocator()},
-            ptr{stl::exchange(other.get_pointer(), nullptr)} {}
+          allocator_type const&        inp_alloc,
+          dynamic<DerivedT, NAllocT>&& other) noexcept // NOLINT(*-rvalue-reference-param-not-moved)
+          : alloc{inp_alloc},
+            ptr{stl::exchange(other.ptr, nullptr)} {}
+
+        /// kinda move ctor
+        template <typename DerivedT, typename NAllocT>
+            requires(derived_type<DerivedT>)
+        explicit constexpr dynamic(dynamic<DerivedT, NAllocT>&& other) noexcept
+          : dynamic{other.get_allocator(), stl::move(other)} {}
 
         /// assignment operator
         template <typename V>
@@ -771,6 +815,9 @@ namespace webpp::istl {
                 alloc_traits::deallocate(alloc, ptr, 1);
             }
         }
+
+        template <typename TT, typename UU>
+        friend struct dynamic;
     };
 
     template <typename T>

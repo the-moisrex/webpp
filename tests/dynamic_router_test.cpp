@@ -61,7 +61,7 @@ struct pages {
 };
 
 TEST(DynamicRouter, RouteRegistration) {
-    EXPECT_TRUE(bool(HTTPRequest<request>));
+    EXPECT_TRUE(HTTPRequest<request>);
 
     enable_traits_for<dynamic_router> router;
 

@@ -72,6 +72,19 @@ TYPED_TEST(MemoryTest, Concepts) {
 //     work");
 // }
 
+
+/// todo: if we move this into TYPED_TEST, clang will be confused with a weird error
+struct incomplete_type;
+
+struct complete_type {
+    istl::dynamic<incomplete_type> baby{istl::no_init};
+    int                            val = 23;
+};
+
+struct incomplete_type {
+    int val = 23;
+};
+
 TYPED_TEST(MemoryTest, DynamicType) {
     using istl::dynamic;
 
@@ -121,17 +134,6 @@ TYPED_TEST(MemoryTest, DynamicType) {
     *d2 = "hello world 2";
     EXPECT_EQ(*d2, "hello world 2");
 
-
-    struct incomplete_type;
-
-    struct complete_type {
-        dynamic<incomplete_type> baby;
-        int                      val = 23;
-    };
-
-    struct incomplete_type {
-        int val = 23;
-    };
 
     stl::allocator<incomplete_type> alloc;
     dynamic<incomplete_type>        normal{alloc};
@@ -218,11 +220,11 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     EXPECT_EQ(side_effect, side_effect_now + 10);
 
 
-    dynamic<mother> girl{daughter{}};
+    dynamic<mother> girl{stl::type_identity<daughter>{}};
     EXPECT_EQ(girl->to_string(), "daughter");
     EXPECT_EQ(girl.template as<daughter>().value, 20);
 
-    dynamic<mother> boy{stl::allocator_arg, {}, son{}};
+    dynamic<mother> boy{stl::allocator_arg, {}, stl::type_identity<son>{}};
     EXPECT_EQ(boy->to_string(), "son");
     EXPECT_EQ(boy.template as<son>().value, 12);
 

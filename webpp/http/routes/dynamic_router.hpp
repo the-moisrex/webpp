@@ -93,9 +93,9 @@ namespace webpp::http {
             using callable_type  = stl::remove_cvref_t<C>;
             using new_route_type = dynamic_route<traits_type, callable_type>;
 
-            new_route_type route{stl::forward<C>(callable)};
-            route.setup(*this);
-            routes.emplace_back(stl::move(route));
+            auto& route =
+              routes.emplace_back(stl::type_identity<new_route_type>{}, stl::forward<C>(callable));
+            route->setup(*this);
             return *this;
         }
 
