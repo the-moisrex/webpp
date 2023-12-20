@@ -603,14 +603,26 @@ namespace webpp::istl {
 
         /// copy assignment operator
         constexpr dynamic& operator=(dynamic const& other) /* noexcept(
-          stl::is_nothrow_copy_assignable_v<value_type> &&
-          stl::is_nothrow_copy_assignable_v<allocator_type>) */
+          stl::is_nothrow_copy_assignable_v<value_type> && stl::is_nothrow_copy_assignable_v<allocator_type>)
+            requires(stl::is_copy_constructible_v<value_type>) */
         {
+            // todo: add support for runtime checking on if the specified type is a derived class (and then stop, or do the copy)
+
+            // So this means insead of this:
+            //   dynamic<mother> mother, girl;
+            //   girl.template emplae<daughter>();
+            //   mother = girl; // this will probably be UB if mother is actually copy constructible
+            // use this:
+            //   mother.template emplace<daughter>(girl.template as<daughter>());
+            static_assert(stl::is_copy_constructible_v<value_type>,
+                          "Value should be copy constructible; virtual classes should not use copy "
+                          "assignments anyway because the children classes might be of different size than "
+                          "their parent class; use .emplace<children> directly.");
             if (&other != this) {
-                *ptr = *other.ptr;
                 if constexpr (stl::is_copy_assignable_v<allocator_type>) {
                     alloc = other.alloc;
                 }
+                emplace<value_type>(*other);
             }
             return *this;
         }
@@ -631,11 +643,11 @@ namespace webpp::istl {
             return *this;
         }
 
-        template <typename DerivedT>
+        template <typename DerivedT, typename NAllocT>
             requires(derived_type<DerivedT>)
         constexpr dynamic& operator=(
-          dynamic<DerivedT, allocator_type>&& other) noexcept { // NOLINT(*-rvalue-reference-param-not-moved)
-            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
+          dynamic<DerivedT, NAllocT>&& other) noexcept { // NOLINT(*-rvalue-reference-param-not-moved)
+            if constexpr (stl::is_assignable_v<allocator_type, NAllocT>) {
                 alloc = other.get_allocator();
             }
             stl::swap(ptr,
@@ -644,10 +656,10 @@ namespace webpp::istl {
             return *this;
         }
 
-        template <typename DerivedT>
+        template <typename DerivedT, typename NAllocT>
             requires(derived_type<DerivedT>)
-        constexpr dynamic& operator=(dynamic<DerivedT, allocator_type> const& other) noexcept {
-            if constexpr (stl::is_copy_assignable_v<allocator_type>) {
+        constexpr dynamic& operator=(dynamic<DerivedT, NAllocT> const& other) noexcept {
+            if constexpr (stl::is_assignable_v<allocator_type, NAllocT>) {
                 alloc = other.get_allocator();
             }
             emplace<DerivedT>(*other.pointer());
@@ -745,7 +757,19 @@ namespace webpp::istl {
         }
 
         template <typename C, typename... Args>
-            requires(compatible_type<C>)
+            requires(istl::cvref_as<value_type, C>)
+        constexpr dynamic& emplace(Args&&... args) {
+            if (ptr) {
+                alloc_traits::destroy(alloc, ptr);
+            } else {
+                ptr = alloc_traits::allocate(alloc, 1);
+            }
+            stl::uninitialized_construct_using_allocator(ptr, alloc, stl::forward<Args>(args)...);
+            return *this;
+        }
+
+        template <typename C, typename... Args>
+            requires(compatible_type<C> && !istl::cvref_as<value_type, C>)
         constexpr dynamic& emplace(Args&&... args) {
             using new_value_type       = stl::remove_cvref_t<C>;
             using new_allocator_traits = typename alloc_traits::template rebind_traits<new_value_type>;

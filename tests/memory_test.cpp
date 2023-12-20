@@ -3,7 +3,6 @@
 #include "../webpp/std/memory.hpp"
 
 #include "../webpp/memory/available_memory.hpp"
-#include "../webpp/memory/object.hpp"
 #include "../webpp/std/memory_resource.hpp"
 #include "../webpp/std/string.hpp"
 #include "../webpp/traits/enable_traits.hpp"
@@ -232,7 +231,8 @@ TYPED_TEST(MemoryTest, PolymorphicTestForDynamicType) {
     EXPECT_EQ(boy.template as<son>().value, 12);
 
 
-    boy = girl;
+    // boy = girl;
+    boy.template emplace<daughter>(girl.template as<daughter>());
     EXPECT_EQ(boy->to_string(), "daughter");
     EXPECT_EQ(boy.template as<daughter>().value, 20);
 }
