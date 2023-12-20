@@ -160,7 +160,10 @@ TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
     // use the pmr string's allocator (both type and it's pass it down)
     dynamic<stl::pmr::string> three{stl::allocator_arg, {&res}, long_3s};
     EXPECT_EQ(*three, long_3s);
-    EXPECT_EQ((stl::pmr::string{data.data(), three->size()}), long_3s);
+    EXPECT_EQ(three->size(), long_3s.size());
+
+    // the dynamic itself uses the allocator that you pass to it, so long_3s is not gonna start fron zero
+    EXPECT_TRUE((stl::string_view{data.data(), data.size()}.contains(long_3s)));
 }
 
 #endif
