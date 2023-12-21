@@ -232,24 +232,26 @@ namespace webpp::uri::details {
 
         constexpr void skip_separator(difference_type index = 1) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {
-                append_to(get_output(), *ctx->pos);
+                for (; index != 0; --index) {
+                    append_to(get_output(), *ctx->pos++);
+                }
+            } else {
+                ctx->pos += index;
             }
-            ctx->pos += index;
         }
 
         /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
         [[nodiscard]] constexpr bool validate_percent_encode() noexcept {
             using ascii::is_hex_digit;
             if constexpr (stl::is_pointer_v<iterator>) { // Dereferencing iterators have side effects, so we
-                                                         // get a
-                                                         // warning in clang
+                                                         // get a warning in clang
                 webpp_assume(*ctx->pos == '%');
             }
 
             auto cur = ctx->pos;
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur++);
+            bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur);
             skip_separator(cur - ctx->pos);
             return is_valid;
         }
