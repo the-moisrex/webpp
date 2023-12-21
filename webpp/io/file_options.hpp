@@ -35,6 +35,7 @@ namespace webpp::io {
     using wpath_view = basic_path_view<wchar_t>;
     using path_view  = basic_path_view<char>;
 
+    // NOLINTBEGIN(*-signed-bitwise)
     /**
      * File options used to open a file descriptor
      */
@@ -92,7 +93,7 @@ namespace webpp::io {
 
         constexpr file_options() noexcept = default;
 
-        // NOLINTBEGIN(*-explicit-constructor)
+        // NOLINTBEGIN(*-explicit-*)
         template <typename... FlagsT>
             requires(stl::same_as<FlagsT, flags_type> && ...)
         explicit(false) constexpr file_options(FlagsT... inp_flags) noexcept : oflags{(inp_flags | ...)} {}
@@ -102,7 +103,7 @@ namespace webpp::io {
             parse(mode);
         }
 
-        // NOLINTEND(*-explicit-constructor)
+        // NOLINTEND(*-explicit-*)
 
         // NOLINTNEXTLINE(*-macro-usage)
 #define webpp_def(the_op)                                                                       \
@@ -202,8 +203,10 @@ namespace webpp::io {
             // todo: handle unicode options
         }
 
-        flags_type oflags = 0u;
+        flags_type oflags = 0U;
     };
+
+    // NOLINTEND(*-signed-bitwise)
 
 } // namespace webpp::io
 

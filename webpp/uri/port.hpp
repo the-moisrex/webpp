@@ -111,14 +111,14 @@ namespace webpp::uri {
      * todo: implement handling of services at construction and to convert port number to a service
      */
     template <istl::String StringType = stl::string>
-    struct basic_port : stl::remove_cvref_t<StringType> {
-        using string_type = stl::remove_cvref_t<StringType>;
+    struct basic_port : StringType {
+        using string_type = StringType;
 
         static constexpr uint16_t max_port_number       = 65'535;
         static constexpr uint16_t well_known_upper_port = 1024;
 
         template <typename... T>
-        explicit constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
+        explicit(false) constexpr basic_port(T&&... args) : string_type{stl::forward<T>(args)...} {
             // todo: make sure if it's a valid port number
             // if (!is::digit(*this)) {
             // convert the service name to port number
@@ -129,7 +129,7 @@ namespace webpp::uri {
             requires(
               stl::is_integral_v<stl::remove_cvref_t<T>> && (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
               !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
-        constexpr explicit basic_port(T port_num) : string_type{} {
+        explicit constexpr basic_port(T port_num) : string_type{} {
             if (port_num < 0 || port_num > max_port_number) {
                 throw stl::invalid_argument("The specified port number is not in a valid range.");
             }
@@ -153,13 +153,13 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            auto const val = value();
-            return val >= 0 && val <= stl::numeric_limits<uint16_t>::max();
+            auto const val = to<int, error_handling_strategy::use_expected>(*this);
+            return val && *val >= 0 && *val < max_port_number;
         }
 
         [[nodiscard]] constexpr bool is_well_known() const noexcept {
-            auto const val = value();
-            return val >= 0 && val < well_known_upper_port;
+            auto const val = to<int, error_handling_strategy::use_expected>(*this);
+            return val && *val >= 0 && *val < well_known_upper_port;
         }
 
         [[nodiscard]] constexpr stl::uint16_t value() const noexcept {

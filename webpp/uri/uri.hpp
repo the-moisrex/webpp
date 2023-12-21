@@ -118,7 +118,7 @@ namespace webpp::uri {
         template <typename T, typename Allocator = allocator_type>
             requires((URIString<T> || istl::StringViewifiable<T>) &&
                      stl::is_constructible_v<allocator_type, Allocator>)
-        constexpr explicit(false) basic_uri(T&& uri_str, Allocator const& alloc = {})
+        explicit(false) constexpr basic_uri(T&& uri_str, Allocator const& alloc = {})
           : scheme{alloc},
             username{alloc},
             password{alloc},

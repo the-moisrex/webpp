@@ -53,7 +53,8 @@ namespace webpp::uri {
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         template <typename... T>
-        explicit constexpr basic_fragment(T&&... args) : string_type{stl::forward<T>(args)...} {}
+        explicit(false) constexpr basic_fragment(T&&... args) // NOLINT(*-explicit-*)
+          : string_type{stl::forward<T>(args)...} {}
 
         void append_to(istl::String auto& str) const {
             if (!this->empty()) {
