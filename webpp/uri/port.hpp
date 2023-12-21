@@ -153,12 +153,12 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            auto const val = to<int, error_handling_strategy::use_expected>(*this);
+            auto const val = try_to_int(*this);
             return val && *val >= 0 && *val < max_port_number;
         }
 
         [[nodiscard]] constexpr bool is_well_known() const noexcept {
-            auto const val = to<int, error_handling_strategy::use_expected>(*this);
+            auto const val = try_to_int(*this);
             return val && *val >= 0 && *val < well_known_upper_port;
         }
 

@@ -10,7 +10,7 @@
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp {
 
-    enum struct integer_casting_errors {
+    enum struct integer_casting_errors : stl::uint_fast8_t {
         invalid_character, // includes an invalid character
         invalid_base       // not a valid character in the specified base
     };
@@ -90,12 +90,20 @@ namespace webpp {
         return ret;
     }
 
-#define WEBPP_TO_FUNCTION(name, type)                                                  \
-    template <type                    base     = 10,                                   \
-              error_handling_strategy strategy = error_handling_strategy::assume_safe, \
-              istl::StringViewifiable StrT     = stl::string_view>                     \
-    constexpr auto to_##name(StrT&& str) noexcept {                                    \
-        return to<type, base, strategy, StrT>(stl::forward<StrT>(str));                \
+    // NOLINTNEXTLINE(*-macro-usage)
+#define WEBPP_TO_FUNCTION(name, type)                                                   \
+    template <type                    base     = 10,                                    \
+              error_handling_strategy strategy = error_handling_strategy::assume_safe,  \
+              istl::StringViewifiable StrT     = stl::string_view>                      \
+    constexpr auto to_##name(StrT&& str) noexcept {                                     \
+        return to<type, base, strategy, StrT>(stl::forward<StrT>(str));                 \
+    }                                                                                   \
+                                                                                        \
+    template <type                    base     = 10,                                    \
+              error_handling_strategy strategy = error_handling_strategy::use_expected, \
+              istl::StringViewifiable StrT     = stl::string_view>                      \
+    constexpr auto try_to_##name(StrT&& str) noexcept {                                 \
+        return to<type, base, strategy, StrT>(stl::forward<StrT>(str));                 \
     }
 
     WEBPP_TO_FUNCTION(int, int)

@@ -5,9 +5,11 @@
 
 #include "../std/expected.hpp"
 
+#include <cstdint>
+
 namespace webpp {
 
-    enum struct error_handling_strategy {
+    enum struct error_handling_strategy : stl::uint_fast8_t {
         assume_safe,  // assume there will be no errors, if there are, it's undefined behaviour
         throw_errors, // throw the mistakes
         use_expected  // std::expected<Value, Error>
@@ -16,7 +18,7 @@ namespace webpp {
     /**
      * Check if the error handling strategy throws errors or not
      */
-    consteval bool is_noexcept(error_handling_strategy const err) noexcept {
+    [[nodiscard]] consteval bool is_noexcept(error_handling_strategy const err) noexcept {
         using enum error_handling_strategy;
         return err != throw_errors;
     }

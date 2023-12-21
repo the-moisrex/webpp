@@ -75,9 +75,11 @@ namespace webpp::uri {
 
             using ctx_type = parsing_uri_context<T...>;
 
-            webpp_static_constexpr auto interesting_characters =
+            webpp_static_constexpr auto interesting_characters = ascii_bitmap{
               ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
-                                      : FORBIDDEN_HOST_CODE_POINTS;
+                                      : FORBIDDEN_HOST_CODE_POINTS,
+              '%'
+            };
 
             component_encoder<components::host, ctx_type> encoder(ctx);
             encoder.start_segment();
@@ -93,13 +95,9 @@ namespace webpp::uri {
 
                 switch (*ctx.pos) {
                     case '%': {
-                        if (ctx.pos + 2 < ctx.end) {
-                            if (validate_percent_encode(ctx.pos, ctx.end)) {
-                                continue;
-                            }
-                            ++ctx.pos;
+                        if (!encoder.validate_percent_encode()) {
+                            set_warning(ctx.status, uri_status::invalid_character);
                         }
-                        set_warning(ctx.status, uri_status::invalid_character);
                         continue;
                     }
                     case '/':
@@ -110,17 +108,17 @@ namespace webpp::uri {
                         set_valid(ctx.status, uri_status::valid_fragment);
                         encoder.end_segment();
                         encoder.set_value();
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         return;
                     case '?':
                         set_valid(ctx.status, uri_status::valid_queries);
                         encoder.end_segment();
                         encoder.set_value();
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         return;
                     case '.':
                         encoder.end_segment();
-                        ++ctx.pos;
+                        encoder.skip_separator();
                         continue;
                     [[unlikely]] default:
                         set_error(ctx.status, uri_status::invalid_host_code_point);

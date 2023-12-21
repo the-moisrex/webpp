@@ -54,6 +54,7 @@ namespace webpp::uri::details {
         using seg_type        = typename ctx_type::seg_type;
         using iterator        = typename ctx_type::iterator;
         using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+        using value_type      = typename stl::iterator_traits<iterator>::value_type;
 
 
       private:
@@ -234,6 +235,23 @@ namespace webpp::uri::details {
                 append_to(get_output(), *ctx->pos);
             }
             ctx->pos += index;
+        }
+
+        /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
+        [[nodiscard]] constexpr bool validate_percent_encode() noexcept {
+            using ascii::is_hex_digit;
+            if constexpr (stl::is_pointer_v<iterator>) { // Dereferencing iterators have side effects, so we
+                                                         // get a
+                                                         // warning in clang
+                webpp_assume(*ctx->pos == '%');
+            }
+
+            auto cur = ctx->pos;
+
+            // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+            bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur++);
+            skip_separator(cur - ctx->pos);
+            return is_valid;
         }
 
         constexpr void pop_back() noexcept {
