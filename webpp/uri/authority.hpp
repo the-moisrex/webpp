@@ -74,7 +74,6 @@ namespace webpp::uri {
             webpp_assume(ctx.pos != ctx.end);
         }
 
-
         template <typename... T, typename Iter = typename parsing_uri_context<T...>::iterator>
         static constexpr void parse_credentials(
           parsing_uri_context<T...>& ctx,
@@ -123,7 +122,7 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = false, typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = true, typename... T>
         static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             using enum uri_status;
@@ -153,7 +152,7 @@ namespace webpp::uri {
             coder.start_segment();
             for (;;) {
                 bool done; // NOLINT(*-init-variables)
-                if constexpr (IsSpecial) {
+                if constexpr (!IsSpecial) {
                     // for opaque hosts:
                     done = coder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                       C0_CONTROL_ENCODE_SET,
@@ -253,15 +252,15 @@ namespace webpp::uri {
                         }
                         break;
                     case '%':
-                        if constexpr (IsSpecial) {
+                        if constexpr (!IsSpecial) {
                             if (!coder.validate_percent_encode()) {
-                                set_warning(ctx.status, uri_status::invalid_character);
+                                set_warning(ctx.status, invalid_character);
                             }
                             continue;
                         } else {
-                            stl::unreachable();
+                            set_error(ctx.status, invalid_domain_code_point);
+                            return;
                         }
-                        break;
                     case '@':
                         if constexpr (Options.parse_credentails) {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
@@ -290,22 +289,17 @@ namespace webpp::uri {
                         }
                         [[fallthrough]];
                     default:
-                        if constexpr (IsSpecial) {
-                            set_warning(ctx.status, invalid_character);
-                            coder.skip_separator();
-                            continue;
-                        } else {
-                            set_error(ctx.status, invalid_host_code_point);
-                            return;
-                        }
+                        set_error(ctx.status,
+                                  IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                        return;
                 }
                 if (ctx.pos == host_begin) {
-                    if constexpr (Options.empty_host_is_error) {
+                    if constexpr (Options.empty_host_is_error && IsSpecial) {
                         set_error(ctx.status, host_missing);
-                    } else {
+                        return;
+                    } else if (ctx.pos == ctx.end) {
                         set_valid(ctx.status, valid);
                     }
-                    return;
                 }
                 break;
             }
@@ -448,20 +442,25 @@ namespace webpp::uri {
             case '/':
             case '#':
                 if constexpr (Options.empty_host_is_error) {
-                    set_error(ctx.status, host_missing);
+                    if (ctx.is_special) {
+                        set_error(ctx.status, host_missing);
+                        return;
+                    }
+                    set_valid(ctx.status, valid);
                 } else {
                     set_valid(ctx.status, valid);
+                    return;
                 }
-                return;
+                break;
             default: break;
         }
 
         if (!ctx.is_special) {
-            details::parse_authority_pieces<Options, true>(ctx);
+            details::parse_authority_pieces<Options, false>(ctx);
             return;
         }
 
-        details::parse_authority_pieces<Options>(ctx);
+        details::parse_authority_pieces<Options, true>(ctx);
     }
 
     template <istl::String StringType = stl::string>

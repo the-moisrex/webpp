@@ -373,7 +373,7 @@ TYPED_TEST(URITests, FragmentOnNonSpecialSchemeAsFirstChar) {
 }
 
 TYPED_TEST(URITests, IPv4AsHost) {
-    constexpr stl::string_view str = "http://127.0.0.1/page/one";
+    constexpr stl::string_view str = "https://127.0.0.1/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -381,13 +381,13 @@ TYPED_TEST(URITests, IPv4AsHost) {
     ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
-    EXPECT_EQ(context.out.get_scheme(), "http");
+    EXPECT_EQ(context.out.get_scheme(), "https");
     EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }
 
 TYPED_TEST(URITests, InvalidIPv4AsHost) {
-    constexpr stl::string_view str = "http://12l.0.0.1/page/one";
+    constexpr stl::string_view str = "https://12l.0.0.1/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -398,7 +398,7 @@ TYPED_TEST(URITests, InvalidIPv4AsHost) {
 }
 
 TYPED_TEST(URITests, PathDot) {
-    constexpr stl::string_view str = "http://127.0.0.1/./one";
+    constexpr stl::string_view str = "https://127.0.0.1/./one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -414,7 +414,7 @@ TYPED_TEST(URITests, PathDot) {
 }
 
 TYPED_TEST(URITests, PathDotNormalized) {
-    stl::string const str = "http://127.0.0.1/./one";
+    stl::string const str = "https://127.0.0.1/./one";
 
     uri::parsing_uri_context_string<stl::string> context{
       .beg = str.begin(),
@@ -431,7 +431,7 @@ TYPED_TEST(URITests, PathDotNormalized) {
 
 TYPED_TEST(URITests, PathDotNormalizedABunch) {
     constexpr stl::string_view str =
-      "http://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
+      "https://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -488,8 +488,8 @@ TYPED_TEST(URITests, FuckedUpURL) {
 
 TYPED_TEST(URITests, EmptyCredentials) {
     constexpr stl::array<stl::string_view, 4> strs{
-      "http://@example.com/",
-      "http://:@example.com/",
+      "https://@example.com/",
+      "https://:@example.com/",
 
       // opaque hosts:
       "opaque://@example.com/",
@@ -506,7 +506,7 @@ TYPED_TEST(URITests, EmptyCredentials) {
 }
 
 TYPED_TEST(URITests, AtSign2Percent40) {
-    constexpr stl::string_view str = "http://@@:@:@::::@@a:1/page/one";
+    constexpr stl::string_view str = "https://@@:@:@::::@@a:1/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -523,14 +523,14 @@ TYPED_TEST(URITests, AtSign2Percent40) {
 
 TYPED_TEST(URITests, HostMissing) {
     constexpr stl::array<stl::string_view, 16> strs{
-      "http://username@:8080/",
-      "http://username:password@/",
-      "http:///",
-      "http://:8080/",
-      "http://username@more-username@/",
-      "http://username@more-username:password@/",
-      "http://username@more-username:password@:8080/",
-      "http://username@@:8080/",
+      "https://username@:8080/",
+      "https://username:password@/",
+      "https:///",
+      "https://:8080/",
+      "https://username@more-username@/",
+      "https://username@more-username:password@/",
+      "https://username@more-username:password@:8080/",
+      "https://username@@:8080/",
 
       // opaque hosts:
       "opaque://username@:8080/",
@@ -557,23 +557,23 @@ TYPED_TEST(URITests, HostMissing) {
 
 TYPED_TEST(URITests, LocalIPv4Addr) {
     constexpr stl::array<stl::string_view, 17> strs{
-      "http://127.0.0.1/",
-      "http://0x7F.1/",
-      "http://0x7f000001",
-      "http://0x0000000007F.0X1",
-      "http://127.0.0x0.1",
-      "http://127.0X0.0x0.1",
-      "http://127.0X0.0x0.0x1",
-      "http://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001",
-      "http://0x7F.0x00000000000000000000000001",
-      "http://0x000000000000000007F.0x00000000000000000000000001",
-      "http://0x000000000000000007F.0.0x00000000000000000000000001",
-      "http://0x7f.0.0.0x1",
-      "http://0x7F.0.0x000.0x1",
-      "http://2130706433",
-      "http://127.1",
-      "http://127.0x00.1",
-      "http://127.0x000000000000000.0.1",
+      "https://127.0.0.1/",
+      "https://0x7F.1/",
+      "https://0x7f000001",
+      "https://0x0000000007F.0X1",
+      "https://127.0.0x0.1",
+      "https://127.0X0.0x0.1",
+      "https://127.0X0.0x0.0x1",
+      "https://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001",
+      "https://0x7F.0x00000000000000000000000001",
+      "https://0x000000000000000007F.0x00000000000000000000000001",
+      "https://0x000000000000000007F.0.0x00000000000000000000000001",
+      "https://0x7f.0.0.0x1",
+      "https://0x7F.0.0x000.0x1",
+      "https://2130706433",
+      "https://127.1",
+      "https://127.0x00.1",
+      "https://127.0x000000000000000.0.1",
     };
 
     for (auto const str : strs) {
@@ -613,7 +613,7 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
 // }
 
 TYPED_TEST(URITests, IPv6WithCredentials) {
-    constexpr stl::string_view str = "http://user:pass@[::1]:8080/page/one";
+    constexpr stl::string_view str = "https://user:pass@[::1]:8080/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -624,7 +624,7 @@ TYPED_TEST(URITests, IPv6WithCredentials) {
 }
 
 TYPED_TEST(URITests, PortLikePassword) {
-    constexpr stl::string_view str = "http://user:123@host/page/one";
+    constexpr stl::string_view str = "https://user:123@host/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -636,7 +636,7 @@ TYPED_TEST(URITests, PortLikePassword) {
 }
 
 TYPED_TEST(URITests, InvlaidPort) {
-    constexpr stl::string_view str = "http://user:123@host:invalid/page/one";
+    constexpr stl::string_view str = "https://user:123@host:invalid/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -647,7 +647,7 @@ TYPED_TEST(URITests, InvlaidPort) {
 }
 
 TYPED_TEST(URITests, OutOfRangePort) {
-    constexpr stl::string_view str = "http://user:123@host:77777/page/one";
+    constexpr stl::string_view str = "https://user:123@host:77777/page/one";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
