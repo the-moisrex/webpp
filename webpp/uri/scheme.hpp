@@ -134,7 +134,8 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\':
-                    case '/': set_warning(ctx.status, uri_status::missing_following_solidus);
+                    case '/': set_warning(ctx.status, uri_status::missing_following_solidus); break;
+                    default: break;
                 }
                 ++ctx.pos;
 

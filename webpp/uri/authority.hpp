@@ -73,6 +73,9 @@ namespace webpp::uri {
           parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-opaque-host-parser
 
+            webpp_assume(ctx.pos != ctx.end);
+
+            // todo: opaque host also needs to check for credentials
             using ctx_type = parsing_uri_context<T...>;
 
             webpp_static_constexpr auto interesting_characters = ascii_bitmap{
@@ -80,6 +83,16 @@ namespace webpp::uri {
                                       : FORBIDDEN_HOST_CODE_POINTS,
               '%'
             };
+
+            switch (*ctx.pos) {
+                case '[': {
+                    if (!details::parse_host_ipv6(ctx)) {
+                        return;
+                    }
+                    break;
+                }
+                default: break;
+            }
 
             component_encoder<components::host, ctx_type> encoder(ctx);
             encoder.start_segment();
@@ -468,7 +481,6 @@ namespace webpp::uri {
         }
 
         if (!ctx.is_special) {
-            // todo: opaque host also needs to check for credentials
             details::parse_opaque_host(ctx);
             return;
         }
