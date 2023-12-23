@@ -21,8 +21,6 @@ namespace webpp::uri {
 
 
     namespace details {
-
-
         /**
          * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
          * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
@@ -68,79 +66,14 @@ namespace webpp::uri {
             return true;
         }
 
-        template <typename... T>
-        static constexpr void parse_opaque_host(parsing_uri_context<T...>& ctx) noexcept(
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        static constexpr void handle_characters(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#concept-opaque-host-parser
 
             webpp_assume(ctx.pos != ctx.end);
-
-            // todo: opaque host also needs to check for credentials
-            using ctx_type = parsing_uri_context<T...>;
-
-            webpp_static_constexpr auto interesting_characters = ascii_bitmap{
-              ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
-                                      : FORBIDDEN_HOST_CODE_POINTS,
-              '%'
-            };
-
-            switch (*ctx.pos) {
-                case '[': {
-                    if (!details::parse_host_ipv6(ctx)) {
-                        return;
-                    }
-                    break;
-                }
-                default: break;
-            }
-
-            component_encoder<components::host, ctx_type> encoder(ctx);
-            encoder.start_segment();
-            for (;;) {
-                if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-                      C0_CONTROL_ENCODE_SET,
-                      interesting_characters))
-                {
-                    set_valid(ctx.status, uri_status::valid);
-                    encoder.end_segment();
-                    break;
-                }
-
-                switch (*ctx.pos) {
-                    case '%': {
-                        if (!encoder.validate_percent_encode()) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                        }
-                        continue;
-                    }
-                    case '/':
-                        encoder.end_segment();
-                        set_valid(ctx.status, uri_status::valid_path);
-                        break;
-                    case '#':
-                        set_valid(ctx.status, uri_status::valid_fragment);
-                        encoder.end_segment();
-                        encoder.set_value();
-                        encoder.skip_separator();
-                        return;
-                    case '?':
-                        set_valid(ctx.status, uri_status::valid_queries);
-                        encoder.end_segment();
-                        encoder.set_value();
-                        encoder.skip_separator();
-                        return;
-                    case '.':
-                        encoder.end_segment();
-                        encoder.skip_separator();
-                        continue;
-                    [[unlikely]] default:
-                        set_error(ctx.status, uri_status::invalid_host_code_point);
-                        return;
-                }
-                break;
-            }
-            encoder.set_value();
         }
+
 
         template <typename... T, typename Iter = typename parsing_uri_context<T...>::iterator>
         static constexpr void parse_credentials(
@@ -169,6 +102,7 @@ namespace webpp::uri {
                 // parse username
                 iterator const username_beg = beg;
                 iterator const username_end = stl::min(password_token_pos, atsign_pos);
+
                 component_encoder<components::username, ctx_type> user_encoder{ctx};
                 user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
                   username_beg,
@@ -177,8 +111,9 @@ namespace webpp::uri {
 
                 // parse password
                 if (password_token_pos != ctx.end) {
-                    iterator const                                    password_beg = password_token_pos + 1;
-                    iterator const                                    password_end = atsign_pos;
+                    iterator const password_beg = password_token_pos + 1;
+                    iterator const password_end = atsign_pos;
+
                     component_encoder<components::password, ctx_type> pass_encoder{ctx};
                     pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
                       password_beg,
@@ -188,29 +123,49 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = false, typename... T>
         static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             using enum uri_status;
+            using details::ascii_bitmap;
+            using details::FORBIDDEN_DOMAIN_CODE_POINTS;
+            using details::FORBIDDEN_HOST_CODE_POINTS;
 
             using ctx_type = parsing_uri_context<T...>;
             using iterator = typename ctx_type::iterator;
 
-            webpp_static_constexpr auto interesting_characters =
-              ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+            webpp_static_constexpr auto forbidden_hosts = ascii_bitmap{
+              ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
+                                      : FORBIDDEN_HOST_CODE_POINTS,
+              '%'
+            };
+
+            webpp_static_constexpr auto forbidden_domains = ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+
+            webpp_static_constexpr ascii_bitmap interesting_characters =
+              IsSpecial ? forbidden_hosts : forbidden_domains;
 
             auto const authority_begin = ctx.pos;
             auto       host_begin      = authority_begin;
             iterator   colon_pos       = ctx.end; // start of password or port
 
-            component_encoder<components::host, ctx_type> decoder(ctx);
-            decoder.start_segment();
+            component_encoder<components::host, ctx_type> coder(ctx);
+            coder.start_segment();
             for (;;) {
-                // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                if (decoder.template decode_or_validate<uri_encoding_policy::encode_chars>(
-                      interesting_characters))
-                {
-                    if constexpr (Options.empty_host_is_error) {
+                bool done; // NOLINT(*-init-variables)
+                if constexpr (IsSpecial) {
+                    // for opaque hosts:
+                    done = coder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+                      C0_CONTROL_ENCODE_SET,
+                      interesting_characters);
+                } else {
+                    // for domain names:
+                    // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
+                    done = coder.template decode_or_validate<uri_encoding_policy::encode_chars>(
+                      interesting_characters);
+                }
+                if (done) {
+                    if constexpr (Options.empty_host_is_error && !IsSpecial) {
                         if (ctx.pos == authority_begin) {
                             set_error(ctx.status, host_missing);
                             return;
@@ -221,12 +176,11 @@ namespace webpp::uri {
                 }
 
                 switch (*ctx.pos) {
-                    case '[': {
+                    case '[': // it's not in the beginning because of the credentials may come before it
                         if (!details::parse_host_ipv6(ctx)) {
                             return;
                         }
                         break;
-                    }
                     case ':': {
                         if constexpr (!Options.parse_credentails && !Options.parse_port) {
                             set_warning(ctx.status, invalid_character);
@@ -253,31 +207,31 @@ namespace webpp::uri {
                                 continue;
                             }
 
-                            decoder.end_segment(decoder.segment_begin(), pre_port_pos);
-                            decoder.set_value(host_begin, pre_port_pos);
+                            coder.end_segment(coder.segment_begin(), pre_port_pos);
+                            coder.set_value(host_begin, pre_port_pos);
                             return;
                         }
                         break;
                     }
                     case '\\':
-                        if (!ctx.is_special) {
+                        if (!IsSpecial) {
                             // todo: check for non-specials
                             break;
                         }
                         [[fallthrough]];
                     case '/':
-                        decoder.end_segment();
-                        decoder.set_value();
+                        coder.end_segment();
+                        coder.set_value();
                         set_valid(ctx.status, valid_path);
                         return;
                     case '.':
                         if constexpr (ctx_type::is_segregated) {
-                            decoder.end_segment();
-                            ++ctx.pos;
-                            decoder.reset_begin();
-                            decoder.start_segment();
+                            coder.end_segment();
+                            coder.skip_separator();
+                            coder.reset_begin();
+                            coder.start_segment();
                         } else {
-                            decoder.skip_separator();
+                            coder.skip_separator();
                         }
                         continue;
                     case '?':
@@ -285,6 +239,8 @@ namespace webpp::uri {
                             set_valid(ctx.status, valid_queries);
                         } else {
                             set_warning(ctx.status, invalid_character);
+                            coder.skip_separator();
+                            continue;
                         }
                         break;
                     case '#':
@@ -292,6 +248,18 @@ namespace webpp::uri {
                             set_valid(ctx.status, valid_fragment);
                         } else {
                             set_warning(ctx.status, invalid_character);
+                            coder.skip_separator();
+                            continue;
+                        }
+                        break;
+                    case '%':
+                        if constexpr (IsSpecial) {
+                            if (!coder.validate_percent_encode()) {
+                                set_warning(ctx.status, uri_status::invalid_character);
+                            }
+                            continue;
+                        } else {
+                            stl::unreachable();
                         }
                         break;
                     case '@':
@@ -299,8 +267,8 @@ namespace webpp::uri {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
                             ++ctx.pos;
                             ctx.out.clear_hostname();
-                            decoder.reset_begin();
-                            decoder.start_segment();
+                            coder.reset_begin();
+                            coder.start_segment();
                             host_begin = ctx.pos;
                             continue;
                         } else {
@@ -321,10 +289,15 @@ namespace webpp::uri {
                             break;
                         }
                         [[fallthrough]];
-                    [[unlikely]] default:
-                        set_warning(ctx.status, invalid_character);
-                        decoder.skip_separator();
-                        continue;
+                    default:
+                        if constexpr (IsSpecial) {
+                            set_warning(ctx.status, invalid_character);
+                            coder.skip_separator();
+                            continue;
+                        } else {
+                            set_error(ctx.status, invalid_host_code_point);
+                            return;
+                        }
                 }
                 if (ctx.pos == host_begin) {
                     if constexpr (Options.empty_host_is_error) {
@@ -337,8 +310,8 @@ namespace webpp::uri {
                 break;
             }
 
-            decoder.end_segment();
-            decoder.set_value();
+            coder.end_segment();
+            coder.set_value();
             if (ctx.pos != ctx.end) {
                 ++ctx.pos;
             }
@@ -423,11 +396,14 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state
 
+        using enum uri_status;
+
+
         if (ctx.pos == ctx.end) {
             if constexpr (Options.empty_host_is_error) {
-                set_error(ctx.status, uri_status::host_missing);
+                set_error(ctx.status, host_missing);
             } else {
-                set_valid(ctx.status, uri_status::valid);
+                set_valid(ctx.status, valid);
             }
             return;
         }
@@ -445,9 +421,9 @@ namespace webpp::uri {
             case ':':
                 if constexpr (!Options.parse_credentails) {
                     if constexpr (Options.empty_host_is_error) {
-                        set_error(ctx.status, uri_status::host_missing);
+                        set_error(ctx.status, host_missing);
                     } else {
-                        set_valid(ctx.status, uri_status::valid);
+                        set_valid(ctx.status, valid);
                     }
                     return;
                 }
@@ -457,9 +433,9 @@ namespace webpp::uri {
                     break;
                 } else {
                     if constexpr (Options.empty_host_is_error) {
-                        set_error(ctx.status, uri_status::host_missing);
+                        set_error(ctx.status, host_missing);
                     } else {
-                        set_valid(ctx.status, uri_status::valid);
+                        set_valid(ctx.status, valid);
                     }
                     return;
                 }
@@ -472,16 +448,16 @@ namespace webpp::uri {
             case '/':
             case '#':
                 if constexpr (Options.empty_host_is_error) {
-                    set_error(ctx.status, uri_status::host_missing);
+                    set_error(ctx.status, host_missing);
                 } else {
-                    set_valid(ctx.status, uri_status::valid);
+                    set_valid(ctx.status, valid);
                 }
                 return;
             default: break;
         }
 
         if (!ctx.is_special) {
-            details::parse_opaque_host(ctx);
+            details::parse_authority_pieces<Options, true>(ctx);
             return;
         }
 

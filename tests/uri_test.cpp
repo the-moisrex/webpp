@@ -316,6 +316,16 @@ TYPED_TEST(URITests, OpaqueHostParserWarning) {
     EXPECT_EQ(context.out.get_path(), "/is/a/path");
 }
 
+TYPED_TEST(URITests, InvalidHostCharacter) {
+    constexpr stl::string_view str = "https://th%is/is/a/path";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_FALSE(uri::is_valid(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::invalid_domain_code_point)
+      << to_string(uri::get_value(context.status));
+}
+
 TYPED_TEST(URITests, OpaqueHostWithIPv6) {
     constexpr stl::string_view str = "ldap://[2001:db8::7]/c=GB?objectClass?one";
 
@@ -327,6 +337,24 @@ TYPED_TEST(URITests, OpaqueHostWithIPv6) {
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_scheme(), "ldap");
     EXPECT_EQ(context.out.get_hostname(), "[2001:db8::7]");
+    EXPECT_EQ(context.out.get_path(), "/c=GB");
+    EXPECT_EQ(context.out.get_queries(), "objectClass?one");
+}
+
+TYPED_TEST(URITests, OpaqueHostWithCredentials) {
+    constexpr stl::string_view str = "ldap://username:password@[2001:db8::7]:1515/c=GB?objectClass?one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_TRUE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    EXPECT_EQ(context.out.get_scheme(), "ldap");
+    EXPECT_EQ(context.out.get_hostname(), "[2001:db8::7]");
+    EXPECT_EQ(context.out.get_username(), "username");
+    EXPECT_EQ(context.out.get_password(), "password");
+    EXPECT_EQ(context.out.get_port(), "1515");
     EXPECT_EQ(context.out.get_path(), "/c=GB");
     EXPECT_EQ(context.out.get_queries(), "objectClass?one");
 }
