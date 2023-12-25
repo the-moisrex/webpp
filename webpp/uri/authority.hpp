@@ -208,7 +208,8 @@ namespace webpp::uri {
 
                             coder.end_segment(coder.segment_begin(), pre_port_pos);
                             coder.set_value(host_begin, pre_port_pos);
-                            return;
+
+                            host_begin = ctx.pos; // to make missing_host work
                         }
                         break;
                     }
@@ -222,7 +223,7 @@ namespace webpp::uri {
                         coder.end_segment();
                         coder.set_value();
                         set_valid(ctx.status, valid_path);
-                        return;
+                        break;
                     case '.':
                         if constexpr (ctx_type::is_segregated) {
                             coder.end_segment();
@@ -279,7 +280,7 @@ namespace webpp::uri {
                     [[unlikely]] case '\0':
                         if constexpr (Options.eof_is_valid) {
                             if constexpr (Options.empty_host_is_error) {
-                                if (ctx.pos == authority_begin) {
+                                if (ctx.pos == host_begin) {
                                     set_error(ctx.status, host_missing);
                                     return;
                                 }
