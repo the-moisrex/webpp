@@ -532,15 +532,15 @@ TYPED_TEST(URITests, HostMissing) {
       "https://username@more-username:password@:8080/",
       "https://username@@:8080/",
 
-      // opaque hosts:
-      "opaque://username@:8080/",
-      "opaque://username:password@/",
-      "opaque:///",
-      "opaque://:8080/",
-      "opaque://username@more-username@/",
-      "opaque://username@more-username:password@/",
-      "opaque://username@more-username:password@:8080/",
-      "opaque://username@@:8080/",
+      // opaque hosts: (opaque hosts don't have ports, nor empty-host is an error)
+      // "opaque://username@:8080/",
+      // "opaque://username:password@/",
+      // "opaque:///",
+      // "opaque://:8080/",
+      // "opaque://username@more-username@/",
+      // "opaque://username@more-username:password@/",
+      // "opaque://username@more-username:password@:8080/",
+      // "opaque://username@@:8080/",
     };
 
     for (auto const str : strs) {

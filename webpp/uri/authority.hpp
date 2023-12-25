@@ -209,7 +209,15 @@ namespace webpp::uri {
                             coder.end_segment(coder.segment_begin(), pre_port_pos);
                             coder.set_value(host_begin, pre_port_pos);
 
-                            host_begin = ctx.pos; // to make missing_host work
+                            if (pre_port_pos == host_begin) {
+                                if constexpr (Options.empty_host_is_error && IsSpecial) {
+                                    set_error(ctx.status, host_missing);
+                                    return;
+                                } else if (ctx.pos == ctx.end) {
+                                    set_valid(ctx.status, valid);
+                                }
+                            }
+                            return;
                         }
                         break;
                     }
@@ -219,11 +227,7 @@ namespace webpp::uri {
                             break;
                         }
                         [[fallthrough]];
-                    case '/':
-                        coder.end_segment();
-                        coder.set_value();
-                        set_valid(ctx.status, valid_path);
-                        break;
+                    case '/': set_valid(ctx.status, valid_path); break;
                     case '.':
                         if constexpr (ctx_type::is_segregated) {
                             coder.end_segment();
