@@ -150,6 +150,8 @@ namespace webpp::uri {
             auto       host_begin      = authority_begin;
             iterator   colon_pos       = ctx.end; // start of password or port
 
+            bool skip_last_char = false;
+
             component_encoder<components::host, ctx_type> coder(ctx);
             coder.start_segment();
             for (;;) {
@@ -242,6 +244,7 @@ namespace webpp::uri {
                         continue;
                     case '?':
                         if constexpr (Options.parse_queries) {
+                            skip_last_char = true;
                             set_valid(ctx.status, valid_queries);
                         } else {
                             set_warning(ctx.status, invalid_character);
@@ -251,6 +254,7 @@ namespace webpp::uri {
                         break;
                     case '#':
                         if constexpr (Options.parse_fragment) {
+                            skip_last_char = true;
                             set_valid(ctx.status, valid_fragment);
                         } else {
                             set_warning(ctx.status, invalid_character);
@@ -313,7 +317,7 @@ namespace webpp::uri {
 
             coder.end_segment();
             coder.set_value();
-            if (ctx.pos != ctx.end) {
+            if (skip_last_char) {
                 ++ctx.pos;
             }
         }
