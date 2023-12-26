@@ -17,6 +17,7 @@ namespace webpp::uri {
 
     /// URI Parsing Options,
     /// These options are designed to
+    /// Default values are WHATWG-Compliant values (if relavant)
     struct uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
@@ -40,6 +41,16 @@ namespace webpp::uri {
 
         /// Parse fragment
         bool parse_fragment = true;
+
+        /// Only one single IPv4 empty octet are allowed in WHATWG; it is a warning to have ANY dots at the
+        /// end, but if it's an ERROR to have multiple dots at the end of IPv4s of hosts in WHATWG specs.
+        ///
+        ///                   https://127.0.0.1/      ==> OK
+        /// Example if false: https://127.0.0.1./     ==> Warning
+        /// Example if false: https://127.0.0.1..../  ==> Error
+        /// Example if true:  https://127.0.0.1./     ==> Warning
+        /// Example if true:  https://127.0.0.1..../  ==> Warning
+        bool multiple_trailing_empty_ipv4_octets = false;
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
