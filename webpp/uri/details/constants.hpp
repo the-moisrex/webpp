@@ -109,13 +109,13 @@ namespace webpp::uri::details {
     static constexpr ascii_bitmap ASCII_ALPHA{ALPHA<char>};
 
     /// https://infra.spec.whatwg.org/#c0-control
-    static constexpr ascii_bitmap C0_CONTROL_SET = bitmap_range<0X0ULL, 0X001FULL, 256U>();
+    static constexpr ascii_bitmap C0_CONTROL_SET = bitmap_range<0x0ULL, 0x001FULL, 256U>();
 
 
 
     /// https://url.spec.whatwg.org/#c0-control-percent-encode-set
     /// C0 controls and all code points greater than U+007E (~)
-    static constexpr ascii_bitmap C0_CONTROL_ENCODE_SET{C0_CONTROL_SET, bitmap_range<0X007EULL, 0X00FFULL>()};
+    static constexpr ascii_bitmap C0_CONTROL_ENCODE_SET{C0_CONTROL_SET, bitmap_range<0x007EULL, 0x00FFULL>()};
 
     /// https://url.spec.whatwg.org/#fragment-percent-encode-set
     /// C0 control percent-encode set and U+0020 SPACE, U+0022 ("), U+003C (<), U+003E (>), and U+0060 (`)

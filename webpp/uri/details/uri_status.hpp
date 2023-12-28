@@ -79,6 +79,21 @@ namespace webpp::uri {
       .allow_invalid_characters            = false,
     };
 
+    static constexpr uri_parsing_options loose_uri_parsing_options{
+      .eof_is_valid                        = true,
+      .parse_credentails                   = true,
+      .empty_host_is_error                 = true,
+      .parse_punycodes                     = true,
+      .parse_port                          = true,
+      .parse_queries                       = true,
+      .parse_fragment                      = true,
+      .multiple_trailing_empty_ipv4_octets = true,
+      .allow_ipv4_hex_octets               = true,
+      .allow_ipv4_octal_octets             = true,
+      .allow_ipv4_empty_octets             = true,
+      .allow_invalid_characters            = true,
+    };
+
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
     /// only one error is possible.
     /// This warning bit helps with:

@@ -556,7 +556,7 @@ TYPED_TEST(URITests, HostMissing) {
 }
 
 TYPED_TEST(URITests, LocalIPv4Addr) {
-    constexpr stl::array<stl::string_view, 17> strs{
+    constexpr stl::array<stl::string_view, 17 * 2> strs{
       "https://127.0.0.1/",
       "https://0x7F.1/",
       "https://0x7f000001",
@@ -574,6 +574,25 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
       "https://127.1",
       "https://127.0x00.1",
       "https://127.0x000000000000000.0.1",
+
+      // with dots at the end:
+      "https://127.0.0.1...../",
+      "https://0x7F.1..../",
+      "https://0x7f000001.",
+      "https://0x0000000007F.0X1...",
+      "https://127.0.0x0.1............",
+      "https://127.0X0.0x0.1.............",
+      "https://127.0X0.0x0.0x1..",
+      "https://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001.........",
+      "https://0x7F.0x00000000000000000000000001.",
+      "https://0x000000000000000007F.0x00000000000000000000000001...",
+      "https://0x000000000000000007F.0.0x00000000000000000000000001.....",
+      "https://0x7f.0.0.0x1..........",
+      "https://0x7F.0.0x000.0x1................................................................",
+      "https://2130706433.................",
+      "https://127.1............",
+      "https://127.0x00.1........................",
+      "https://127.0x000000000000000.0.1................",
     };
 
     for (auto const str : strs) {
@@ -583,8 +602,62 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
           << str << "\n"
           << to_string(uri::get_value(context.status));
         if constexpr (TypeParam::is_modifiable) {
-            EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
+            EXPECT_EQ(context.out.get_hostname(), "127.0.0.1") << str;
         }
+    }
+}
+
+TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
+    constexpr stl::array<stl::string_view, 17> strs{
+      // with dots at the end:
+      "https://127.0.0.1...../",
+      "https://0x7F.1..../",
+      "https://0x7f000001.",
+      "https://0x0000000007F.0X1...",
+      "https://127.0.0x0.1............",
+      "https://127.0X0.0x0.1.............",
+      "https://127.0X0.0x0.0x1..",
+      "https://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001.........",
+      "https://0x7F.0x00000000000000000000000001.",
+      "https://0x000000000000000007F.0x00000000000000000000000001...",
+      "https://0x000000000000000007F.0.0x00000000000000000000000001.....",
+      "https://0x7f.0.0.0x1..........",
+      "https://0x7F.0.0x000.0x1................................................................",
+      "https://2130706433.................",
+      "https://127.1............",
+      "https://127.0x00.1........................",
+      "https://127.0x000000000000000.0.1................",
+    };
+
+    for (auto const str : strs) {
+        auto strict_context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(strict_context);
+        EXPECT_TRUE(uri::is_valid(strict_context.status))
+          << str << "\n"
+          << to_string(uri::get_value(strict_context.status));
+
+        // todo: strict_context should not be ipv4 localhost, write a test for that
+
+        auto loose_context = this->template get_context<TypeParam>(str);
+        uri::parse_uri<uri::loose_uri_parsing_options>(loose_context);
+        EXPECT_TRUE(uri::is_valid(loose_context.status))
+          << str << "\n"
+          << to_string(uri::get_value(loose_context.status));
+        if constexpr (TypeParam::is_modifiable) {
+            EXPECT_EQ(loose_context.out.get_hostname(), "127.0.0.1") << str;
+        }
+    }
+}
+
+TYPED_TEST(URITests, IPv4EndingWithX) {
+    constexpr stl::string_view str = "https://127.0.0.0x/";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_hostname(), "127.0.0.0");
+    } else {
+        EXPECT_EQ(context.out.get_hostname(), "127.0.0.0x");
     }
 }
 

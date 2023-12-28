@@ -214,6 +214,10 @@ namespace webpp::uri::details {
             beg = ctx->pos;
         }
 
+        [[nodiscard]] constexpr bool is_segment_empty() const noexcept {
+            return beg == ctx->pos;
+        }
+
         constexpr void reset_segment_start() noexcept {
             if constexpr (is_vec || ctx_type::is_modifiable) {
                 reset_begin();
@@ -230,13 +234,21 @@ namespace webpp::uri::details {
             return beg;
         }
 
-        constexpr void skip_separator(difference_type index = 1) noexcept {
+        constexpr void skip_separator(difference_type index) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {
                 for (; index != 0; --index) {
                     append_to(get_output(), *ctx->pos++);
                 }
             } else {
                 ctx->pos += index;
+            }
+        }
+
+        constexpr void skip_separator() noexcept {
+            if constexpr (ctx_type::is_modifiable && !is_seg) {
+                append_to(get_output(), *ctx->pos++);
+            } else {
+                ++ctx->pos;
             }
         }
 
@@ -256,7 +268,7 @@ namespace webpp::uri::details {
             return is_valid;
         }
 
-        constexpr void pop_back() noexcept {
+        constexpr void pop_back([[maybe_unused]] difference_type hint = 0) noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 // using difference_type = typename seg_type::difference_type;
                 if (!get_output().empty()) {
@@ -269,7 +281,7 @@ namespace webpp::uri::details {
                 }
             } else if constexpr (ctx_type::is_modifiable) {
                 if (!get_output().empty()) {
-                    get_output().erase(static_cast<stl::size_t>(ctx->pos - beg));
+                    get_output().erase(get_output().size() - hint);
                 }
             }
         }
@@ -287,7 +299,7 @@ namespace webpp::uri::details {
         }
 
         /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
-        /// for path) This is the same as next_segment, except it also sets the result first
+        /// for path)
         constexpr void end_segment(iterator inp_beg, iterator end) noexcept(ctx_type::is_nothrow || !is_vec) {
             if constexpr (is_vec) {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
@@ -301,6 +313,15 @@ namespace webpp::uri::details {
 
         constexpr void end_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
             end_segment(beg, ctx->pos);
+        }
+
+        /// 1. Skip the separator, and
+        /// 2. Set the segment start
+        constexpr void next_segment(difference_type sep_count = 1) noexcept(ctx_type::is_nothrow) {
+            skip_separator(sep_count);
+            end_segment();
+            reset_segment_start();
+            start_segment();
         }
 
         constexpr void set_query_name() noexcept(ctx_type::is_nothrow)

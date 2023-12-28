@@ -37,24 +37,24 @@ namespace webpp::uri {
         }
     }
 
-    template <typename... T>
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void parse_uri(parsing_uri_context<T...>& ctx) noexcept(
       parsing_uri_context<T...>::is_nothrow) {
-        continue_parsing_uri(ctx);
+        continue_parsing_uri<Options>(ctx);
     }
 
-    template <istl::StringView StrV = stl::string_view>
+    template <uri_parsing_options Options = uri_parsing_options{}, istl::StringView StrV = stl::string_view>
     static constexpr auto parse_uri(StrV str) noexcept {
         using iterator     = typename StrV::const_iterator;
         using context_type = parsing_uri_context<StrV, iterator>;
         context_type context{.beg = str.begin(),
                              .pos = str.begin(), // current position is start
                              .end = str.end()};
-        parse_uri(context);
+        parse_uri<Options>(context);
         return context;
     }
 
-    template <istl::StringLike StrT, typename SegType>
+    template <uri_parsing_options Options = uri_parsing_options{}, istl::StringLike StrT, typename SegType>
     static constexpr auto parse_uri(
       StrT const&                    the_url,
       uri_components<SegType> const& origin_context) noexcept(istl::StringView<StrT>) {
@@ -67,11 +67,13 @@ namespace webpp::uri {
                              .pos  = the_url.begin(), // current position is start
                              .end  = the_url.end(),
                              .base = origin_context};
-        parse_uri(context);
+        parse_uri<Options>(context);
         return context;
     }
 
-    template <istl::StringLike StrT, istl::StringViewifiable OStrV>
+    template <uri_parsing_options     Options = uri_parsing_options{},
+              istl::StringLike        StrT,
+              istl::StringViewifiable OStrV>
     static constexpr auto parse_uri(StrT const& the_url, OStrV&& origin_url) noexcept(
       istl::StringView<StrT>) {
         using iterator = typename StrT::const_iterator;
@@ -82,9 +84,9 @@ namespace webpp::uri {
         using base_context_type = parsing_uri_context<stl::uint32_t, iterator>;
 
         base_context_type origin_context{.beg = origin.begin(), .pos = origin.begin(), .end = origin.end()};
-        parse_uri(origin_context);
+        parse_uri<Options>(origin_context);
 
-        return parse_uri(the_url, origin_context.out);
+        return parse_uri<Options>(the_url, origin_context.out);
     }
 
     template <istl::String StringType>

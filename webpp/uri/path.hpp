@@ -157,7 +157,11 @@ namespace webpp::uri {
 
         using details::ascii_bitmap;
 
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type        = parsing_uri_context<T...>;
+        using iterator        = typename ctx_type::iterator;
+        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+
+
         webpp_static_constexpr auto encode_set =
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
@@ -184,76 +188,85 @@ namespace webpp::uri {
         }
 
 
-        unsigned int dotted_segment_count = 0;
+        stl::uint_fast8_t dotted_segment_count = 0b1U;
+
+
+        webpp_static_constexpr auto a_byte =
+          static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
+        webpp_static_constexpr auto slash_mask =
+          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
+        stl::uint64_t slash_loc_cache = 0;
 
         bool is_done = false;
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
         for (;;) {
-            if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+            if (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
                   details::PATH_ENCODE_SET,
                   interesting_chars))
             {
-                set_valid(ctx.status, uri_status::valid);
-                encoder.end_segment();
-                break;
-            }
-            switch (*ctx.pos) {
-                case '.':
-                    if (encoder.segment_begin() + dotted_segment_count == ctx.pos) {
-                        ++dotted_segment_count;
-                    }
-                    encoder.skip_separator();
-                    continue;
-                case '\\':
-                    if (ctx.is_special) {
-                        set_warning(ctx.status, uri_status::reverse_solidus_used);
-                    } else {
+                switch (*ctx.pos) {
+                    case '.':
+                        dotted_segment_count += ctx.pos - encoder.segment_begin();
                         encoder.skip_separator();
                         continue;
-                    }
-                    [[fallthrough]];
-                case '/':
-                    if constexpr (ctx_type::is_segregated) {
-                        encoder.skip_separator();
-                        encoder.reset_segment_start();
-                    } else {
-                        encoder.reset_segment_start();
-                        encoder.skip_separator();
-                    }
-                    break;
-                case '\0':
-                    is_done = true; // todo: is this correct?
-                    break;
-                case '?':
-                    set_valid(ctx.status, uri_status::valid_queries);
-                    is_done = true;
-                    break;
-                case '#':
-                    set_valid(ctx.status, uri_status::valid_fragment);
-                    is_done = true;
-                    break;
-                case '%':
-                    if (ctx.pos + 2 >= ctx.end) {
-                        set_warning(ctx.status, uri_status::invalid_character);
+                    case '\\':
+                        if (ctx.is_special) {
+                            set_warning(ctx.status, uri_status::reverse_solidus_used);
+                        } else {
+                            ++ctx.pos;
+                            continue;
+                        }
+                        [[fallthrough]];
+                    [[likely]] case '/':
+
+                        if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                            slash_loc_cache <<= a_byte;
+                            if (ctx.pos - encoder.segment_begin() < slash_mask) {
+                                slash_loc_cache |=
+                                  static_cast<stl::uint8_t>(ctx.pos - encoder.segment_begin());
+                            }
+                        }
+
                         break;
-                    }
-                    // %2E or %2e is equal to a "." (dot)
-                    if (*ctx.pos != '2' || ctx.pos[1] == 'e' || ctx.pos[1] == 'E') {
-                        encoder.skip_separator(3);
-                        dotted_segment_count += 3;
+                    case '?':
+                        set_valid(ctx.status, uri_status::valid_queries);
+                        is_done = true;
+                        break;
+                    case '#':
+                        set_valid(ctx.status, uri_status::valid_fragment);
+                        is_done = true;
+                        break;
+                    [[likely]] case '%':
+                        if (ctx.pos + 2 >= ctx.end) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            break;
+                        }
+                        // %2E or %2e is equal to a "." (dot)
+                        if (ctx.pos[1] == '2' && (ctx.pos[2] == 'e' || ctx.pos[2] == 'E')) {
+                            encoder.skip_separator(3);
+                            dotted_segment_count += ctx.pos - encoder.segment_begin();
+                            continue;
+                        }
+                        if (encoder.validate_percent_encode()) {
+                            continue;
+                        }
+                        set_warning(ctx.status, uri_status::invalid_character);
                         continue;
-                    }
-                    if (encoder.validate_percent_encode()) {
-                        continue;
-                    }
-                    set_warning(ctx.status, uri_status::invalid_character);
-                    [[fallthrough]];
-                default: continue;
+                    [[unlikely]] case '\0':
+                        if constexpr (Options.eof_is_valid) {
+                            is_done = true; // todo: is this correct?
+                            break;
+                        }
+                        [[fallthrough]];
+                    default: set_warning(ctx.status, uri_status::invalid_character); break;
+                }
+            } else {
+                is_done = true;
             }
 
-            if ((dotted_segment_count & 0b1U) == 0b1U) { // single dot
+            if ((dotted_segment_count & (~0U ^ 0b110U)) == 0b1U) { // single dot
                 // Number of chars of each dot (or %2e):
                 //   3 3 = 6  0b110 > double dot
                 //   3 1 = 4  0b100 > double dot
@@ -264,26 +277,38 @@ namespace webpp::uri {
                 //                ^
                 //         The deciding bit
                 dotted_segment_count = 0;
-                // encoder.reset_begin();
                 encoder.clear_segment();
-                continue;                    // ignore this path segment
+                continue;                                                // ignore this path segment
             }
-            if (dotted_segment_count != 0) { // double dot
+            if (dotted_segment_count & 0b110U == dotted_segment_count) { // double dot
                 // remove the last segment as well
-                dotted_segment_count = 0;
-                encoder.pop_back();
+                dotted_segment_count   = 0;
+                slash_loc_cache      >>= a_byte;
+                if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                    auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask);
+                    if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
+                        // find the last slash
+                        for (auto pos = ctx.pos; pos == ctx.beg || *pos == '/'; --pos) {
+                            ++hint;
+                        }
+                    }
+                    encoder.pop_back(hint);
+                } else {
+                    encoder.pop_back();
+                }
                 encoder.reset_segment_start();
                 continue;
             }
 
+
             // Append the last segment (not the current one)
-            encoder.end_segment();
 
             if (!is_done) {
-                encoder.start_segment();
+                encoder.next_segment();
                 continue;
             }
 
+            encoder.end_segment();
             break;
         }
         encoder.set_value();
@@ -291,6 +316,8 @@ namespace webpp::uri {
         // ignore the last "?" or "#" character
         if (ctx.pos != ctx.end) {
             ++ctx.pos;
+        } else {
+            set_valid(ctx.status, uri_status::valid);
         }
     }
 
@@ -352,8 +379,8 @@ namespace webpp::uri {
             }
 
             for (;;) {
-                const stl::size_t slash_start = path.find(separator);
-                const stl::size_t the_size    = stl::min(slash_start, path.size());
+                stl::size_t const slash_start = path.find(separator);
+                stl::size_t const the_size    = stl::min(slash_start, path.size());
                 value_type        val{this->get_allocator()};
                 if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
                     // error: invalid string passed as a path
@@ -378,8 +405,8 @@ namespace webpp::uri {
             }
 
             for (;;) {
-                const stl::size_t slash_start = path.find(separator);
-                const stl::size_t the_size    = stl::min(slash_start, path.size());
+                stl::size_t const slash_start = path.find(separator);
+                stl::size_t const the_size    = stl::min(slash_start, path.size());
                 value_type        val{this->get_allocator()};
                 if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
                     // error: invalid string passed as a path

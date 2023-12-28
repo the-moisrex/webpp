@@ -21,6 +21,108 @@ namespace webpp::uri {
 
 
     namespace details {
+
+
+        /// Checks the last octet of a possible ipv4 address to see if we should parse the host as an ipv4, or
+        /// we should parse it normally.
+        /// If the last host segment is
+        ///   - a number, or
+        ///   - an hexadecimal starting with 0x, or 0X
+        ///   - an octal value,
+        /// then the host MUST be an ipv4, otherwise, it's an INVALID HOST.
+        template <uri_parsing_options Options, typename Iter, typename... T>
+        static constexpr bool
+        is_possible_ends_with_ipv4(Iter beg, Iter fin, parsing_uri_context<T...>& ctx) noexcept {
+            // https://url.spec.whatwg.org/#ends-in-a-number-checker
+            using ctx_type = parsing_uri_context<T...>;
+
+            // The string is not empty and does not contain upper case ASCII characters.
+            //
+            // Optimization. To be considered as a possible ipv4, the string must end
+            // with 'x' or a lowercase hex character.
+            // Most of the time, this will be false so this simple check will save a lot
+            // of effort.
+
+            webpp_assume(fin != ctx.end);
+
+            // Prunning last dot characters (considering them as empty IPv4 octets)
+            // todo: move this to the end of the algorithm if possible
+            if constexpr (Options.multiple_trailing_empty_ipv4_octets) {
+                while (*fin == '.') {
+                    set_warning(ctx.status, uri_status::ipv4_empty_octet);
+                    if (--fin == beg) {
+                        return false;
+                    }
+                }
+            } else {
+                if (*fin == '.') {
+                    set_warning(ctx.status, uri_status::ipv4_empty_octet);
+                    if (--fin == beg) {
+                        return false;
+                    }
+                }
+            }
+
+
+            bool is_hex      = false;
+            bool must_be_hex = false;
+            auto pos         = fin;
+            for (; pos != beg; --pos) {
+                switch (*pos) {
+                    case '.': break;
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9': continue;
+                    case 'X':
+                        if constexpr (ctx_type::is_modifiable) {
+                            stl::unreachable();
+                        }
+                        [[fallthrough]];
+                    case 'x':
+                        // next characters now must be ".0x"
+                        // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                        if (pos - beg <= 2 || *--pos != '0' || *--pos != '.') {
+                            return false;
+                        }
+                        is_hex = true;
+                        break;
+                    case 'A':
+                    case 'B':
+                    case 'C':
+                    case 'D':
+                    case 'E':
+                    case 'F':
+                        // if it's modifiable, then we should be lowercasing the characters before we reach
+                        // here in this function.
+                        if constexpr (ctx_type::is_modifiable) {
+                            stl::unreachable();
+                        }
+                        [[fallthrough]];
+                    case 'a':
+                    case 'b':
+                    case 'c':
+                    case 'd':
+                    case 'e':
+                    case 'f':
+                        must_be_hex = true;
+                        continue;
+                    [[likely]] default:
+                        return false;
+                }
+                break;
+            }
+
+            // the size and what not will be check while parsing the IPv4
+            return !must_be_hex || is_hex;
+        }
+
         /**
          * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
          * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
@@ -233,14 +335,15 @@ namespace webpp::uri {
                         [[fallthrough]];
                     case '/': set_valid(ctx.status, valid_path); break;
                     case '.':
-                        if constexpr (ctx_type::is_segregated) {
-                            coder.end_segment();
-                            coder.skip_separator();
-                            coder.reset_begin();
-                            coder.start_segment();
-                        } else {
-                            coder.skip_separator();
-                        }
+                        // if constexpr (ctx_type::is_segregated) {
+                        //     coder.end_segment();
+                        //     coder.skip_separator();
+                        //     coder.reset_begin();
+                        //     coder.start_segment();
+                        // } else {
+                        //     coder.skip_separator();
+                        // }
+                        coder.next_segment();
                         continue;
                     case '?':
                         if constexpr (Options.parse_queries) {
@@ -314,6 +417,10 @@ namespace webpp::uri {
                 }
                 break;
             }
+
+            // if (is_possible_ipv4_segment(coder)) {
+            //     parse_as_ipv4();
+            // }
 
             coder.end_segment();
             coder.set_value();
