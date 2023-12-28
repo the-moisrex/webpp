@@ -51,6 +51,32 @@ namespace webpp::uri {
         /// Example if true:  https://127.0.0.1./     ==> Warning
         /// Example if true:  https://127.0.0.1..../  ==> Warning
         bool multiple_trailing_empty_ipv4_octets = false;
+
+        /// Hexadecimals and Octals octets are allowed to be used in IPv4 addresses (not in IPv6 though)
+        bool allow_ipv4_hex_octets   = true;
+        bool allow_ipv4_octal_octets = true;
+
+        /// Empty octets are a warning in WHATWG, not an error
+        bool allow_ipv4_empty_octets = true;
+
+        /// Invalid characters (except in domains and schems and what not) are considered a warning, not an
+        /// error in WHATWG
+        bool allow_invalid_characters = true;
+    };
+
+    static constexpr uri_parsing_options strict_uri_parsing_options{
+      .eof_is_valid                        = false,
+      .parse_credentails                   = true,
+      .empty_host_is_error                 = true,
+      .parse_punycodes                     = true,
+      .parse_port                          = true,
+      .parse_queries                       = true,
+      .parse_fragment                      = true,
+      .multiple_trailing_empty_ipv4_octets = false,
+      .allow_ipv4_hex_octets               = false,
+      .allow_ipv4_octal_octets             = false,
+      .allow_ipv4_empty_octets             = false,
+      .allow_invalid_characters            = false,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
@@ -125,7 +151,7 @@ namespace webpp::uri {
         has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
-        // ipv4_empty_octet = warning_bit | stl::to_underlying(inet_pton4_status::empty_octet),
+        ipv4_empty_octet = warning_bit >> 3U,
 
         // ipv4 and ipv6 errors:
         ip_too_little_octets    = error_bit | stl::to_underlying(ip_address_status::too_little_octets),
@@ -147,9 +173,9 @@ namespace webpp::uri {
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 8U,
         valid_opaque_path            = valid_bit | 9U,
-        reverse_solidus_used         = warning_bit >> 3U,
-        windows_drive_letter_used    = warning_bit >> 4U,
-        windows_drive_letter_as_host = warning_bit >> 5U,
+        reverse_solidus_used         = warning_bit >> 4U,
+        windows_drive_letter_used    = warning_bit >> 5U,
+        windows_drive_letter_as_host = warning_bit >> 6U,
 
         // queries-specific errors/warnings:
         valid_queries = valid_bit | 10U,
@@ -368,6 +394,8 @@ namespace webpp::uri {
         status = stl::to_underlying(value);
     }
 
+    /// multiple calls with the same value must not affect the result, meaning, if you set an specific warning
+    /// 5 times, the status should not be corrupted.
     static constexpr void set_warning(stl::underlying_type_t<uri_status>& status,
                                       uri_status const                    value) noexcept {
         status |= stl::to_underlying(value);
