@@ -61,16 +61,16 @@ namespace webpp::ascii {
     /// Attention: use this utility where you KNOW the input is valid hex character,
     /// otherwise use hex_digit_value
     template <typename ResType = unsigned, typename CharT = char>
-    [[nodiscard]] static constexpr ResType hex_to_binary(CharT c) noexcept {
-        webpp_assume(c >= '0' && c <= 'f');
-        return details::hex_to_binary_table<ResType>[static_cast<unsigned>(c - '0')];
+    [[nodiscard]] static constexpr ResType hex_to_binary(CharT inp_char) noexcept {
+        webpp_assume(inp_char >= '0' && inp_char <= 'f');
+        return details::hex_to_binary_table<ResType>[static_cast<unsigned>(inp_char - '0')];
     }
 
     /**
      * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
      * Almost the same as hex_to_binary
      */
-    template <typename IntegerType = int, typename CharT = char>
+    template <typename IntegerType = int, bool SupportUppercase = true, typename CharT = char>
     [[nodiscard]] static constexpr IntegerType hex_digit_value(
       CharT       inp_char,
       IntegerType default_value = static_cast<IntegerType>(-1)) noexcept {
@@ -80,8 +80,10 @@ namespace webpp::ascii {
         if ('a' <= inp_char && inp_char <= 'f') {
             return static_cast<IntegerType>(inp_char - 'a' + static_cast<CharT>(10));
         }
-        if ('A' <= inp_char && inp_char <= 'F') {
-            return static_cast<IntegerType>(inp_char - 'A' + static_cast<CharT>(10));
+        if constexpr (SupportUppercase) {
+            if ('A' <= inp_char && inp_char <= 'F') {
+                return static_cast<IntegerType>(inp_char - 'A' + static_cast<CharT>(10));
+            }
         }
         return default_value;
     }

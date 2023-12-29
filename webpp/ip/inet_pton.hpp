@@ -59,11 +59,10 @@ namespace webpp {
     namespace details {
         template <typename Iter = char const*, typename CIter = Iter>
         static constexpr int parse_prefix(Iter& src, CIter src_endp) noexcept {
-            int prefix; // NOLINT(*-init-variables)
             if (src == src_endp || *src < '0' || *src > '9') {
                 return -1;
             }
-            prefix = *src - '0';
+            int prefix = *src - '0';
             ++src;
             if (src == src_endp) {
                 return prefix;
