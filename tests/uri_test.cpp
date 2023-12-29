@@ -2,6 +2,7 @@
 
 #include "../webpp/uri/uri.hpp"
 
+#include "../webpp/ip/ipv4.hpp"
 #include "../webpp/uri/path_traverser.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -802,7 +803,7 @@ TYPED_TEST(URITests, ToLowered) {
 }
 
 /// IPv4 host parsing is different than inet_pton4, so we need to test it separately
-TYPED_TEST(URITests, HostIPv4) {
+TYPED_TEST(URITests, NormalHostIPv4) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv4s[]{
       "0.0.0.0",         "192.168.1.1",     "255.255.255.255", "192.0.2.1",       "198.51.100.2",
@@ -825,10 +826,10 @@ TYPED_TEST(URITests, HostIPv4) {
       "255.254.1.0",     "255.254.253.1",   "1.1.253.0",       "255.1.1.0",       "255.254.1.1",
       "1.254.1.0",       "1.1.1.0",         "255.255.1.0",     "255.255.254.0",   "255.255.255.1",
       "255.255.254.1",   "255.254.255.1",   "254.255.255.1",   "255.1.255.0",     "1.255.254.0",
-      "1.254.255.0",     "254.1.255.0",     "254.255.1.0"};
+      "1.254.255.0",     "254.1.255.0",     "254.255.1.0",
+    };
 
     static constexpr stl::string_view invalid_ipv4s[]{
-      "10.168.0001.100",
       "0.0.0.256",
       "256.255.255.255",
       "256.0.0.0",
@@ -849,6 +850,61 @@ TYPED_TEST(URITests, HostIPv4) {
                                      << "." << static_cast<int>(ip_octets[1]) << "."
                                      << static_cast<int>(ip_octets[2]) << "."
                                      << static_cast<int>(ip_octets[3]);
+        EXPECT_EQ(ipv4{_ip}, ip_octets)
+          << "Expected IP: " << ipv4{_ip}.string() << "\n"
+          << "Parsed IP: " << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+          << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
+    }
+
+    for (auto const& _ip : invalid_ipv4s) {
+        auto       context         = this->template get_context<TypeParam>(_ip);
+        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
+          _ip.begin(),
+          _ip.end(),
+          ip_octets,
+          context);
+
+        EXPECT_FALSE(should_continue)
+          << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0]) << "."
+          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+          << static_cast<int>(ip_octets[3]);
+    }
+    // NOLINTEND(*-avoid-c-arrays)
+}
+
+/// IPv4 host parsing is different than inet_pton4, so we need to test it separately
+TYPED_TEST(URITests, AbormalHostIPv4) {
+    // NOLINTBEGIN(*-avoid-c-arrays)
+    static constexpr stl::pair<stl::string_view, ipv4> valid_ipv4s[]{
+      stl::pair{stl::string_view{"0000000.0.0.0"}, ipv4::any()},
+      {                 "0x000000.0.0.0", ipv4::any()},
+      {                 "0X000000.0.0.0", ipv4::any()},
+      {                 "0X0000.00x.0.0", ipv4::any()},
+      {                              "0", ipv4::any()},
+      {                          "00000", ipv4::any()},
+      {                         "0x0000", ipv4::any()},
+    };
+
+    static constexpr stl::string_view
+                 invalid_ipv4s[]{"0.0.0.256", "0X000000.00x.0.0", "bad", "0.com", "0x", "00x0"};
+    stl::uint8_t ip_octets[4]{};
+
+    for (auto const& [_ip, expected_ip] : valid_ipv4s) {
+        auto       context         = this->template get_context<TypeParam>(_ip);
+        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
+          _ip.begin(),
+          _ip.end(),
+          ip_octets,
+          context);
+
+        EXPECT_TRUE(should_continue) << "ip: " << _ip << "; compiled ip: " << static_cast<int>(ip_octets[0])
+                                     << "." << static_cast<int>(ip_octets[1]) << "."
+                                     << static_cast<int>(ip_octets[2]) << "."
+                                     << static_cast<int>(ip_octets[3]);
+        EXPECT_EQ(expected_ip, ip_octets)
+          << "Expected IP: " << ipv4{_ip}.string() << "\n"
+          << "Parsed IP: " << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+          << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
     }
 
     for (auto const& _ip : invalid_ipv4s) {

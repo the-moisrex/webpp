@@ -121,7 +121,7 @@ namespace webpp::uri::details {
 
         char_type octet_base = 0;
         bool      saw_digit  = false;
-        int       octets     = 0;
+        int       octets     = 1;
         *out                 = 0;
         while (src != end) {
             auto const cur_char = *src++;
@@ -133,7 +133,8 @@ namespace webpp::uri::details {
                     }
                     octet_base = 0;
                     *++out     = 0;
-                    break;
+                    ++octets;
+                    continue;
                 case 'X':
                     if constexpr (ctx_type::is_modifiable) {
                         stl::unreachable();
@@ -153,20 +154,26 @@ namespace webpp::uri::details {
                         continue;
                     }
                     break;
+                default:
+                    if (octet_base == 0) {
+                        octet_base = 10; // decimal
+                    }
+                    break;
             }
-            // 256 = any number bigger than 255
-            auto new_i = ascii::hex_digit_value<int, !ctx_type::is_modifiable>(cur_char, 256);
-            if (new_i == 256) {
-                set_error(ctx.status, uri_status::ip_invalid_character);
-                return false;
-            }
-            new_i += *out * octet_base;
+            // 256 * 2 = any number bigger than 255, we chose 256; multiplied by 2 so we can check if it's an
+            // invalid character or out of range without putting 2 if statements on the main loop
+            auto new_i  = ascii::hex_digit_value<int, !ctx_type::is_modifiable>(cur_char, 256 * 2);
+            new_i      += *out * octet_base;
             if (new_i > 255) {
+                if (new_i > 255 * 2) {
+                    set_error(ctx.status, uri_status::ip_invalid_character);
+                    return false;
+                }
                 set_error(ctx.status, uri_status::ip_invalid_octet_range);
                 return false;
             }
             *out = static_cast<uint8_t>(new_i);
-            if (++octets > 4) {
+            if (octets > 4) {
                 set_error(ctx.status, uri_status::ip_too_many_octets);
                 return false;
             }
