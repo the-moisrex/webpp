@@ -85,3 +85,72 @@ IP_webpp_v6_random_normal        56.2 ns         56.1 ns     12476946 <-- new ne
 IP_webpp_v6_random_manual        55.4 ns         55.3 ns     12059806
 IP_webpp_v6_random_memmove       53.2 ns         53.1 ns     12919261
 ```
+
+
+### IPv4 Host Parser vs inet_pton4
+
+They are different parsers.
+
+The `webpp_host` are the IPv4 host parsers:
+
+GCC:
+```
+./a.out --benchmark_filter=v4                                                                                dev ✚ ✱ ◼
+2023-12-30T14:47:07-08:00
+Running ./a.out
+Run on (32 X 5499.53 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 2.02, 2.61, 2.91
+---------------------------------------------------------------------------
+Benchmark                                 Time             CPU   Iterations
+---------------------------------------------------------------------------
+IP_asio_v4                             10.3 ns         10.3 ns     67726407
+IP_webpp_v4                           0.546 ns        0.546 ns   1281457446
+IP_webpp_host_v4                  -->  7.56 ns         7.56 ns     92266146
+IP_asio_v4_random                      15.8 ns         15.8 ns     44288629
+IP_webpp_v4_random                     12.0 ns         12.0 ns     59213399
+IP_webpp_host_v4_random           -->  9.49 ns         9.49 ns     70555190
+IP_webpp_v4_random_inet_pton4_v1       12.1 ns         12.1 ns     58103551
+IP_webpp_v4_random_inet_pton4_v2       13.4 ns         13.4 ns     52157009
+IP_webpp_v4_random_ipv4_v1             16.9 ns         16.9 ns     42716760
+IP_webpp_v4_random_ipv4_v2             11.3 ns         11.3 ns     61946371
+ipv4_prefix_parsing_v1                 14.8 ns         14.8 ns     47545510
+ipv4_prefix_parsing_v2                 12.2 ns         12.2 ns     57685667
+```
+
+Clang:
+
+```
+./a.out --benchmark_filter=v4                                                                                dev ✚ ✱ ◼
+2023-12-30T14:45:04-08:00
+Running ./a.out
+Run on (32 X 5500.11 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 2.69, 2.91, 3.04
+---------------------------------------------------------------------------
+Benchmark                                 Time             CPU   Iterations
+---------------------------------------------------------------------------
+IP_asio_v4                             12.2 ns         12.2 ns     58456527
+IP_webpp_v4                            7.31 ns         7.30 ns     95780319
+IP_webpp_host_v4                 -->   9.91 ns         9.90 ns     71235842
+IP_asio_v4_random                      16.0 ns         16.0 ns     43664800
+IP_webpp_v4_random                     12.4 ns         12.4 ns     56222317
+IP_webpp_host_v4_random          -->   13.0 ns         13.0 ns     53660340
+IP_webpp_v4_random_inet_pton4_v1       12.5 ns         12.5 ns     56104611
+IP_webpp_v4_random_inet_pton4_v2       12.7 ns         12.7 ns     54273108
+IP_webpp_v4_random_ipv4_v1             18.3 ns         18.2 ns     38370496
+IP_webpp_v4_random_ipv4_v2             10.9 ns         10.9 ns     63444557
+ipv4_prefix_parsing_v1                 16.5 ns         16.5 ns     42504564
+ipv4_prefix_parsing_v2                 10.7 ns         10.7 ns     65534687
+```
+
+It seems like the IPv4 HOST Parser is winning in GCC which 
+it not losing is completely surprises me since it needs to do more.

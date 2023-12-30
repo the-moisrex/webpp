@@ -78,7 +78,7 @@ namespace using_memmove {
                         break;
                     }
                     case inet_pton4_status::bad_ending:
-                    case inet_pton4_status::invalid_octet:
+                    // case inet_pton4_status::invalid_octet:
                     case inet_pton4_status::too_little_octets:
                     case inet_pton4_status::invalid_leading_zero:
                     case inet_pton4_status::too_many_octets: return bad_ending;
@@ -235,7 +235,7 @@ namespace manual_algorithm {
                         break;
                     }
                     case inet_pton4_status::bad_ending:
-                    case inet_pton4_status::invalid_octet:
+                    // case inet_pton4_status::invalid_octet:
                     case inet_pton4_status::too_little_octets:
                     case inet_pton4_status::invalid_leading_zero:
                     case inet_pton4_status::too_many_octets: return bad_ending;

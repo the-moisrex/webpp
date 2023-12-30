@@ -110,10 +110,10 @@ namespace webpp::uri::details {
      */
     template <uri_parsing_options Options, typename Iter, typename... T>
     static constexpr bool
-    parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, parsing_uri_context<T...>& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
+        // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
         using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename stl::iterator_traits<Iter>::value_type;
 
@@ -123,8 +123,6 @@ namespace webpp::uri::details {
         webpp_static_constexpr auto invalid_num =
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max());
 
-        auto const beg = ctx.pos;
-
         char_type     octet_base = 0;
         int           octets     = 1;
         stl::uint64_t octet      = 0;
@@ -132,6 +130,7 @@ namespace webpp::uri::details {
             // find the current octet's base
             if (*src == '0') {
                 octet_base = 8; // octal or hex
+                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
                 if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
                     octet_base = 16;
                     ++src;
@@ -182,7 +181,7 @@ namespace webpp::uri::details {
         }
 
         for (;;) {
-            *out++  = static_cast<uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
+            *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
             octet  &= ~(0xFFULL << ((4 - octets) * 8ULL));
             if (octets++ == 4) {
                 break;
@@ -192,6 +191,8 @@ namespace webpp::uri::details {
             set_error(ctx.status, uri_status::ip_too_many_octets);
             return false;
         }
+
+        // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
         return true;
     }
 

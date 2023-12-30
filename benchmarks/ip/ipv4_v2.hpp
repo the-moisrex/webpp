@@ -7,6 +7,7 @@
 #include "../../webpp/strings/append.hpp"
 #include "../../webpp/strings/to_case.hpp"
 #include "../../webpp/validators/validators.hpp"
+#include "./inet_pton4_parser.hpp"
 
 #include <array>
 #include <compare>
@@ -48,11 +49,11 @@ namespace webpp::v2 {
      */
     template <istl::StringViewifiable StrT>
     constexpr uint8_t to_prefix(StrT&& inp_str) noexcept {
-        coauto const            str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto const              str = istl::string_viewify(stl::forward<StrT>(inp_str));
         stl::array<uint8_t, 4u> bin;
-        auto const              res = inet_pton4(str.data(), str.data() + str.size(), bin.data());
+        auto const              res = ::v2::inet_pton4(str.data(), str.data() + str.size(), bin.data());
         switch (res) {
-            case inet_pton4_status::valid: {
+            case ::inet_pton4_status::valid: {
                 return to_prefix(bin);
             }
             default: {
@@ -94,13 +95,14 @@ namespace webpp::v2 {
         constexpr void parse(istl::StringViewifiable auto&& m_data) noexcept {
             auto const              _data = istl::string_viewify(stl::forward<decltype(m_data)>(m_data));
             stl::array<uint8_t, 4u> bin;
-            auto const res = inet_pton4(_data.data(), _data.data() + _data.size(), bin.data(), _prefix);
+            auto                    ptr = _data.data();
+            auto const              res = inet_pton4(ptr, _data.data() + _data.size(), bin.data(), _prefix);
             switch (res) {
-                case inet_pton4_status::valid: {
+                case webpp::inet_pton4_status::valid: {
                     data = parse(bin);
                     break;
                 }
-                case inet_pton4_status::invalid_prefix: {
+                case webpp::inet_pton4_status::invalid_prefix: {
                     _prefix = 253u;
                     break;
                 }

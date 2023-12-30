@@ -133,7 +133,7 @@ namespace webpp {
 
 namespace webpp::details {
 
-    auto non_constexpr() -> void {}
+    static auto non_constexpr() -> void {}
 
     template <typename BoolLike>
 #    ifdef __cpp_concepts

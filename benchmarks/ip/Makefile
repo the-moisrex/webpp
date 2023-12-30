@@ -9,7 +9,7 @@ gcc: $(files)
 	g++ $(flags) $(optflags) $(files)
 
 clang: $(files)
-	clang++ $(flags) $(optflags) $(files)
+	clang++ $(flags) $(optflags) $(files) -v
 
 gcc-noopt: $(files)
 	g++ $(flags) $(files)
