@@ -79,6 +79,7 @@ namespace webpp::uri::details {
         ctx_type*                         ctx;
         iterator                          beg = ctx->pos;
 
+      public:
         [[nodiscard]] constexpr decltype(auto) get_output() const noexcept {
             return details::get_output<Comp>(*ctx);
         }
@@ -91,7 +92,6 @@ namespace webpp::uri::details {
             }
         }
 
-      public:
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
         constexpr void set_value(iterator start, iterator end) noexcept(

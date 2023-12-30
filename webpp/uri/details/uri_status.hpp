@@ -166,7 +166,8 @@ namespace webpp::uri {
         has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
-        ipv4_empty_octet = warning_bit >> 3U,
+        ipv4_empty_octet       = warning_bit >> 3U,
+        ipv4_non_decimal_octet = warning_bit >> 4U,
 
         // ipv4 and ipv6 errors:
         ip_too_little_octets    = error_bit | stl::to_underlying(ip_address_status::too_little_octets),
@@ -188,9 +189,9 @@ namespace webpp::uri {
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 8U,
         valid_opaque_path            = valid_bit | 9U,
-        reverse_solidus_used         = warning_bit >> 4U,
-        windows_drive_letter_used    = warning_bit >> 5U,
-        windows_drive_letter_as_host = warning_bit >> 6U,
+        reverse_solidus_used         = warning_bit >> 5U,
+        windows_drive_letter_used    = warning_bit >> 6U,
+        windows_drive_letter_as_host = warning_bit >> 7U,
 
         // queries-specific errors/warnings:
         valid_queries = valid_bit | 10U,
@@ -286,6 +287,16 @@ namespace webpp::uri {
                   "more info: https://url.spec.whatwg.org/#invalid-credentials "
                   "and https://httpwg.org/specs/rfc9110.html#http.userinfo"};
 
+                // ipv4 specific warnings/errors:
+
+            case ipv4_empty_octet:
+                return {
+                  "IPv4 in the host has empty octet(s); "
+                  "more info: https://url.spec.whatwg.org/#ipv4-empty-part"};
+            case ipv4_non_decimal_octet:
+                return {
+                  "The input has non-decimal IPv4 in it's host;"
+                  " more info: https://url.spec.whatwg.org/#ipv4-non-decimal-part"};
 
                 // ipv4 and ipv6 errors:
             case ip_too_little_octets:

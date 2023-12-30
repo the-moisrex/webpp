@@ -263,9 +263,26 @@ namespace webpp::uri {
                 break;
             }
 
-            // if (is_possible_ipv4_segment(coder)) {
-            //     parse_as_ipv4();
-            // }
+            // Parse IPv4 (if it ends with ipv4 octet)
+            if (details::is_possible_ends_with_ipv4<Options>(coder.segment_begin(), ctx.pos, ctx)) {
+                // we don't need to initialize it to zero
+                stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
+                bool const                  should_continue = details::parse_host_ipv4<Options>(
+                  coder.segment_begin(),
+                  ctx.pos,
+                  ipv4_octets_data.data(),
+                  ctx);
+                if (!should_continue) {
+                    return;
+                }
+                if constexpr (ctx_type::is_modifiable) {
+                    ipv4{ipv4_octets_data}.to_string(coder.get_out_seg());
+                    if (skip_last_char) {
+                        ++ctx.pos;
+                    }
+                    return;
+                }
+            }
 
             coder.end_segment();
             coder.set_value();

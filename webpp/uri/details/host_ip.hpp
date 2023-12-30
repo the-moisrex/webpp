@@ -117,12 +117,18 @@ namespace webpp::uri::details {
         using ctx_type  = parsing_uri_context<T...>;
         using char_type = typename stl::iterator_traits<Iter>::value_type;
 
+        // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
+        // if it's an invalid character or out of range without putting 2 if statements on the main loop
+        // Octet 4294967295 (256 ^ 4) is a valid first octet, anything bigger is invalid.
+        webpp_static_constexpr auto invalid_num =
+          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max());
+
         auto const beg = ctx.pos;
 
         char_type octet_base = 0;
-        bool      saw_digit  = false;
         int       octets     = 1;
         *out                 = 0;
+        stl::uint64_t octet  = 0;
         while (src != end) {
             auto const cur_char = *src++;
             switch (cur_char) {
@@ -131,8 +137,17 @@ namespace webpp::uri::details {
                         set_error(ctx.status, uri_status::ip_bad_ending);
                         return false;
                     }
+
+                    if (octet >= (256 * (5 - octets))) {
+                        if (octet > 255) {
+                            break;
+                        }
+                        set_error(ctx.status, uri_status::ip_invalid_octet_range);
+                        return false;
+                    }
+                    *out++     = static_cast<stl::uint8_t>(octet);
                     octet_base = 0;
-                    *++out     = 0;
+                    octet      = 0;
                     ++octets;
                     continue;
                 case 'X':
@@ -147,7 +162,7 @@ namespace webpp::uri::details {
                         set_error(ctx.status, uri_status::ip_invalid_character);
                         return false;
                     }
-                    break;
+                    continue;
                 case '0':
                     if (octet_base == 0) {
                         octet_base = 8; // octal or hex
@@ -160,26 +175,24 @@ namespace webpp::uri::details {
                     }
                     break;
             }
-            // 256 * 2 = any number bigger than 255, we chose 256; multiplied by 2 so we can check if it's an
-            // invalid character or out of range without putting 2 if statements on the main loop
-            auto new_i  = ascii::hex_digit_value<int, !ctx_type::is_modifiable>(cur_char, 256 * 2);
-            new_i      += *out * octet_base;
-            if (new_i > 255) {
-                if (new_i > 255 * 2) {
-                    set_error(ctx.status, uri_status::ip_invalid_character);
-                    return false;
-                }
-                set_error(ctx.status, uri_status::ip_invalid_octet_range);
-                return false;
-            }
-            *out = static_cast<uint8_t>(new_i);
-            if (octets > 4) {
-                set_error(ctx.status, uri_status::ip_too_many_octets);
+
+            octet *= octet_base;
+            octet += ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable>(cur_char, invalid_num);
+            if (octet >= invalid_num) {
+                set_error(ctx.status, uri_status::ip_invalid_character);
                 return false;
             }
         }
-        if (octets != 4) {
-            set_error(ctx.status, uri_status::ip_too_little_octets);
+
+        for (;;) {
+            *out++  = static_cast<uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
+            octet  &= ~(0xFFULL << ((4 - octets) * 8ULL));
+            if (octets++ == 4) {
+                break;
+            }
+        }
+        if (octet != 0) {
+            set_error(ctx.status, uri_status::ip_too_many_octets);
             return false;
         }
         return true;
