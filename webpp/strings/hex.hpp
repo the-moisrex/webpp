@@ -70,19 +70,24 @@ namespace webpp::ascii {
      * Return the value of CH as a hexademical digit, or -1 if it is a different type of character.
      * Almost the same as hex_to_binary
      */
-    template <typename IntegerType = int, bool SupportUppercase = true, typename CharT = char>
+    template <typename IntegerType  = int,
+              bool SupportUppercase = true,
+              bool SupportHex       = true,
+              typename CharT        = char>
     [[nodiscard]] static constexpr IntegerType hex_digit_value(
       CharT       inp_char,
       IntegerType default_value = static_cast<IntegerType>(-1)) noexcept {
         if ('0' <= inp_char && inp_char <= '9') {
             return static_cast<IntegerType>(inp_char - '0');
         }
-        if ('a' <= inp_char && inp_char <= 'f') {
-            return static_cast<IntegerType>(inp_char - 'a' + static_cast<CharT>(10));
-        }
-        if constexpr (SupportUppercase) {
-            if ('A' <= inp_char && inp_char <= 'F') {
-                return static_cast<IntegerType>(inp_char - 'A' + static_cast<CharT>(10));
+        if constexpr (SupportHex) {
+            if ('a' <= inp_char && inp_char <= 'f') {
+                return static_cast<IntegerType>(inp_char - 'a' + static_cast<CharT>(10));
+            }
+            if constexpr (SupportUppercase) {
+                if ('A' <= inp_char && inp_char <= 'F') {
+                    return static_cast<IntegerType>(inp_char - 'A' + static_cast<CharT>(10));
+                }
             }
         }
         return default_value;

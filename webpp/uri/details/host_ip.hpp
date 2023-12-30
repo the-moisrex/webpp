@@ -123,17 +123,33 @@ namespace webpp::uri::details {
         webpp_static_constexpr auto invalid_num =
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max());
 
+        if (src == end) {
+            set_error(ctx.status, uri_status::ip_bad_ending);
+            return false;
+        }
+
         auto const beg = ctx.pos;
 
-        char_type octet_base = 0;
-        int       octets     = 1;
-        *out                 = 0;
-        stl::uint64_t octet  = 0;
-        while (src != end) {
-            auto const cur_char = *src++;
-            switch (cur_char) {
-                case '.':
-                    if (octets == 4 && (!Options.allow_ipv4_empty_octets || octet_base == 0)) {
+        char_type     octet_base = 0;
+        int           octets     = 1;
+        stl::uint64_t octet      = 0;
+        for (;;) {
+            // find the current octet's base
+            if (*src == '0') {
+                octet_base = 8; // octal or hex
+                if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
+                    octet_base = 16;
+                    ++src;
+                }
+            } else {
+                octet_base = 10;
+            }
+
+            // parse
+            while (src != end) {
+                auto const cur_char = *src++;
+                if (cur_char == '.') {
+                    if (octets == 4 && !Options.allow_ipv4_empty_octets) {
                         set_error(ctx.status, uri_status::ip_bad_ending);
                         return false;
                     }
@@ -145,42 +161,29 @@ namespace webpp::uri::details {
                         set_error(ctx.status, uri_status::ip_invalid_octet_range);
                         return false;
                     }
-                    *out++     = static_cast<stl::uint8_t>(octet);
-                    octet_base = 0;
-                    octet      = 0;
+                    *out++ = static_cast<stl::uint8_t>(octet);
+                    octet  = 0;
                     ++octets;
-                    continue;
-                case 'X':
-                    if constexpr (ctx_type::is_modifiable) {
-                        stl::unreachable();
-                    }
-                    [[fallthrough]];
-                case 'x':
-                    if (octet_base == 8) {
-                        octet_base = 16; // it's hex
-                    } else {
-                        set_error(ctx.status, uri_status::ip_invalid_character);
-                        return false;
-                    }
-                    continue;
-                case '0':
-                    if (octet_base == 0) {
-                        octet_base = 8; // octal or hex
-                        continue;
-                    }
-                    break;
-                default:
-                    if (octet_base == 0) {
-                        octet_base = 10; // decimal
-                    }
-                    break;
+                    break; // go back and find the base again for the next octet
+                }
+
+                octet *= octet_base;
+                if (octet_base == 16) {
+                    octet +=
+                      ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable>(cur_char, invalid_num);
+                } else {
+                    octet += ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable, false>(
+                      cur_char,
+                      invalid_num);
+                }
+                if (octet >= invalid_num) {
+                    set_error(ctx.status, uri_status::ip_invalid_character);
+                    return false;
+                }
             }
 
-            octet *= octet_base;
-            octet += ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable>(cur_char, invalid_num);
-            if (octet >= invalid_num) {
-                set_error(ctx.status, uri_status::ip_invalid_character);
-                return false;
+            if (src == end) {
+                break;
             }
         }
 
