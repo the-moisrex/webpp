@@ -123,11 +123,6 @@ namespace webpp::uri::details {
         webpp_static_constexpr auto invalid_num =
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max());
 
-        if (src == end) {
-            set_error(ctx.status, uri_status::ip_bad_ending);
-            return false;
-        }
-
         auto const beg = ctx.pos;
 
         char_type     octet_base = 0;
@@ -149,15 +144,14 @@ namespace webpp::uri::details {
             while (src != end) {
                 auto const cur_char = *src++;
                 if (cur_char == '.') {
-                    if (octets == 4 && !Options.allow_ipv4_empty_octets) {
-                        set_error(ctx.status, uri_status::ip_bad_ending);
-                        return false;
+                    if constexpr (!Options.allow_ipv4_empty_octets) {
+                        if (octets == 4 && octet == 0) {
+                            set_error(ctx.status, uri_status::ipv4_empty_octet);
+                            return false;
+                        }
                     }
 
-                    if (octet >= (256 * (5 - octets))) {
-                        if (octet > 255) {
-                            break;
-                        }
+                    if (octet > 255) {
                         set_error(ctx.status, uri_status::ip_invalid_octet_range);
                         return false;
                     }

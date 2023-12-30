@@ -865,6 +865,8 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                      TypeParam::is_modifiable ? "0X" : "0x",        ipv4::any()},
       {                                                     "00000",        ipv4::any()},
       {                                                    "0x0000",        ipv4::any()},
+      {                                                          "",        ipv4::any()},
+      {                                                         ".",        ipv4::any()},
 
  // 127.0.0.1 localhost IPs
       {                                                 "127.0.0.1",   ipv4::loopback()},
@@ -888,6 +890,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
  // other
       {                                                    "000123",  ipv4{0, 0, 0, 83}},
       {                                                      "0xff", ipv4{0, 0, 0, 255}},
+      {                                                     "1.256",   ipv4{1, 0, 1, 0}},
     };
 
     static constexpr stl::string_view invalid_ipv4s[]{
@@ -897,7 +900,6 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       "0.com",
       "00x0",
       "0X0000.00x.0.0",
-      "",
       "x",
       "X",
       "00x",
@@ -908,7 +910,42 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       "0xx",
       "00xx",
       "0XX",
-      " "};
+      "0.0.0.256",
+      "256.255.255.255",
+      "255.256.255.255",
+      "255.255.255.256",
+      "256.1",
+      "256.0.0.0",
+      "192.168. 224.0",
+      "192.168.224.0 1",
+      " ",
+      // with dot at the end:
+
+      "0.0.0.256.",
+      "0X000000.00x.0.0.",
+      "bad.",
+      "0.com.",
+      "00x0.",
+      "0X0000.00x.0.0.",
+      "x.",
+      "X.",
+      "00x.",
+      "123x.",
+      "x123.",
+      "x.",
+      "xxx.",
+      "0xx.",
+      "00xx.",
+      "0XX.",
+      "0.0.0.256.",
+      "256.255.255.255.",
+      "255.256.255.255.",
+      "255.255.255.256.",
+      "256.1.",
+      "256.0.0.0.",
+      "192.168. 224.0.",
+      "192.168.224.0 1.",
+    };
     stl::uint8_t ip_octets[4]{};
 
     for (auto const& [_ip, expected_ip] : valid_ipv4s) {
