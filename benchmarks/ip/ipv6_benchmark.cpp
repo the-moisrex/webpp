@@ -38,7 +38,7 @@ namespace using_memmove {
         char         ch;                // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
-            int const digit = ascii::hex_digit_value(ch);
+            int const digit = ascii::hex_digit_safe(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;
@@ -195,7 +195,7 @@ namespace manual_algorithm {
         char         ch;                // NOLINT(cppcoreguidelines-init-variables)
         while (src != src_endp) {
             ch              = *src++;
-            int const digit = ascii::hex_digit_value(ch);
+            int const digit = ascii::hex_digit_safe(ch);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;

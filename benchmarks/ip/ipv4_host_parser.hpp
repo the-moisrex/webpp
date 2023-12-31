@@ -60,9 +60,9 @@ namespace webpp::v1 {
 
                 octet *= octet_base;
                 if (octet_base == 16) {
-                    octet += ascii::hex_digit_value<uint64_t, true>(cur_char, invalid_num);
+                    octet += ascii::hex_digit_safe<uint64_t, true>(cur_char, invalid_num);
                 } else {
-                    octet += ascii::hex_digit_value<uint64_t, true, false>(cur_char, invalid_num);
+                    octet += ascii::hex_digit_safe<uint64_t, true, false>(cur_char, invalid_num);
                 }
                 if (octet >= invalid_num) {
                     return false;

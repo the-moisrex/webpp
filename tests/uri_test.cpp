@@ -859,19 +859,26 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     static constexpr stl::pair<stl::string_view, ipv4> valid_ipv4s[]{
       stl::pair{                           stl::string_view{"0000000.0.0.0"},        ipv4::any()},
       {                                            "0x000000.0.0.0",        ipv4::any()},
+      {                                           "0x000000.0.0.0.",        ipv4::any()},
       {TypeParam::is_modifiable ? "0X0000.0x.0.0" : "0x0000.0x.0.0",        ipv4::any()},
       {                                                         "0",        ipv4::any()},
       {                                                        "0x",        ipv4::any()},
       {                      TypeParam::is_modifiable ? "0X" : "0x",        ipv4::any()},
       {                                                     "00000",        ipv4::any()},
+      {                                                    "00000.",        ipv4::any()},
       {                                                    "0x0000",        ipv4::any()},
+ // {                                                 "0x0000...",        ipv4::any()},
       {                                                          "",        ipv4::any()},
       {                                                         ".",        ipv4::any()},
 
  // 127.0.0.1 localhost IPs
       {                                                 "127.0.0.1",   ipv4::loopback()},
+      {                                                "127.0.0.1.",   ipv4::loopback()},
       {                                                    "0x7f.1",   ipv4::loopback()},
+ // {                                                  "0x7f.1..",   ipv4::loopback()},
+      {                                                   "0x7f.1.",   ipv4::loopback()},
       {                                                "0x7f000001",   ipv4::loopback()},
+      {                                               "0x7f000001.",   ipv4::loopback()},
       {                                         "0x0000000007f.0x1",   ipv4::loopback()},
       {                                               "127.0.0x0.1",   ipv4::loopback()},
       {                                             "127.0x0.0x0.1",   ipv4::loopback()},
@@ -880,6 +887,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                 "0x7f.0x000000000000000001",   ipv4::loopback()},
       {                 "0x000000000000000007f.0x00000000000000001",   ipv4::loopback()},
       {               "0x000000000000000007f.0.0x00000000000000001",   ipv4::loopback()},
+      {              "0x000000000000000007f.0.0x00000000000000001.",   ipv4::loopback()},
       {                                              "0x7f.0.0.0x1",   ipv4::loopback()},
       {                                          "0x7f.0.0x000.0x1",   ipv4::loopback()},
       {                                                "2130706433",   ipv4::loopback()},
@@ -891,12 +899,20 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                                    "000123",  ipv4{0, 0, 0, 83}},
       {                                                      "0xff", ipv4{0, 0, 0, 255}},
       {                                                     "1.256",   ipv4{1, 0, 1, 0}},
+ // {                                                "1.256.....",   ipv4{1, 0, 1, 0}},
+      {                                                "4294967295",  ipv4::broadcast()},
+      {                                               "4294967295.",  ipv4::broadcast()},
+ // {                                              "4294967295..",  ipv4::broadcast()},
+  // {                                             "4294967295...",  ipv4::broadcast()},
     };
 
     static constexpr stl::string_view invalid_ipv4s[]{
       "0.0.0.256",
       "0X000000.00x.0.0",
       "bad",
+      "aaaaaaaaaaaaaa.123",
+      "f.123",
+      "0xfffffffffffffffffffff.123",
       "0.com",
       "00x0",
       "0X0000.00x.0.0",
@@ -918,7 +934,20 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       "256.0.0.0",
       "192.168. 224.0",
       "192.168.224.0 1",
+      "4294967296",
+      "1.4294967296",
+      ".4294967296",
+      ".1",
       " ",
+      "192.168..1",
+      "192...1",
+      "192...1.",
+      "..1",
+      "..0",
+      ".1..",
+      ".0..",
+      ".0x1",
+      "0..0x1",
       // with dot at the end:
 
       "0.0.0.256.",
@@ -944,6 +973,8 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       "256.1.",
       "256.0.0.0.",
       "192.168. 224.0.",
+      "4294967296.",
+      ".1.",
       "192.168.224.0 1.",
     };
     stl::uint8_t ip_octets[4]{};
@@ -980,5 +1011,29 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
           << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
           << static_cast<int>(ip_octets[3]);
     }
+    // NOLINTEND(*-avoid-c-arrays)
+}
+
+TYPED_TEST(URITests, EmptyIPv4) {
+    // NOLINTBEGIN(*-avoid-c-arrays)
+    stl::uint8_t               ip_octets[4]{};
+    constexpr stl::string_view _ip = "192.168.1.";
+
+    auto       context         = this->template get_context<TypeParam>(_ip);
+    bool const should_continue = uri::details::parse_host_ipv4<uri::strict_uri_parsing_options>(
+      _ip.begin(),
+      _ip.end(),
+      ip_octets,
+      context);
+
+    EXPECT_FALSE(should_continue) << "Original IP String: " << _ip
+                                  << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
+                                  << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2])
+                                  << "." << static_cast<int>(ip_octets[3]);
+
+    EXPECT_FALSE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::uri_status::ip_bad_ending, uri::get_value(context.status))
+      << to_string(uri::get_value(context.status));
+
     // NOLINTEND(*-avoid-c-arrays)
 }

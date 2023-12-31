@@ -145,8 +145,8 @@ namespace v2 {
                     return false;
                 }
 
-                int decoded_char  = ascii::hex_digit_value<int>(*pos++, -1) << 4u;
-                decoded_char     |= ascii::hex_digit_value<int>(*pos, -1);
+                int decoded_char  = ascii::hex_digit_safe<int>(*pos++, -1) << 4u;
+                decoded_char     |= ascii::hex_digit_safe<int>(*pos, -1);
 
                 if ((decoded_char & ~0xFF) == 0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);
@@ -210,8 +210,8 @@ namespace v3 {
                     return false;
                 }
 
-                int decoded_char  = ascii::hex_digit_value<int>(*pos++, ~0) << 4u;
-                decoded_char     |= ascii::hex_digit_value<int>(*pos, ~0);
+                int decoded_char  = ascii::hex_digit_safe<int>(*pos++, ~0) << 4u;
+                decoded_char     |= ascii::hex_digit_safe<int>(*pos, ~0);
 
                 if (decoded_char != ~0) [[likely]] { // NOLINT(*-magic-numbers)
                     *out++ = static_cast<char_type>(decoded_char);

@@ -208,7 +208,7 @@ namespace webpp {
         char_type    cur_char;          // NOLINT(*-init-variables)
         while (src != src_endp) {
             cur_char        = *src++;
-            int const digit = ascii::hex_digit_value(cur_char);
+            int const digit = ascii::hex_digit_safe(cur_char);
             if (digit >= 0) {
                 if (hex_seen == 4) {
                     return invalid_octet_range;

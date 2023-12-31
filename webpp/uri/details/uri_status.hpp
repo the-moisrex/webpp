@@ -42,6 +42,10 @@ namespace webpp::uri {
         /// Parse fragment
         bool parse_fragment = true;
 
+        /// Trailing empty octets are a warning in WHATWG, not an error
+        /// This option only allows for one empty dot at the end, not multiple of them
+        bool allow_trailing_empty_ipv4_octet = true;
+
         /// Only one single IPv4 empty octet are allowed in WHATWG; it is a warning to have ANY dots at the
         /// end, but if it's an ERROR to have multiple dots at the end of IPv4s of hosts in WHATWG specs.
         ///
@@ -50,14 +54,11 @@ namespace webpp::uri {
         /// Example if false: https://127.0.0.1..../  ==> Error
         /// Example if true:  https://127.0.0.1./     ==> Warning
         /// Example if true:  https://127.0.0.1..../  ==> Warning
-        bool multiple_trailing_empty_ipv4_octets = false;
+        bool allow_multiple_trailing_empty_ipv4_octets = false;
 
         /// Hexadecimals and Octals octets are allowed to be used in IPv4 addresses (not in IPv6 though)
         bool allow_ipv4_hex_octets   = true;
         bool allow_ipv4_octal_octets = true;
-
-        /// Empty octets are a warning in WHATWG, not an error
-        bool allow_ipv4_empty_octets = true;
 
         /// Invalid characters (except in domains and schems and what not) are considered a warning, not an
         /// error in WHATWG
@@ -65,33 +66,33 @@ namespace webpp::uri {
     };
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
-      .eof_is_valid                        = false,
-      .parse_credentails                   = true,
-      .empty_host_is_error                 = true,
-      .parse_punycodes                     = true,
-      .parse_port                          = true,
-      .parse_queries                       = true,
-      .parse_fragment                      = true,
-      .multiple_trailing_empty_ipv4_octets = false,
-      .allow_ipv4_hex_octets               = false,
-      .allow_ipv4_octal_octets             = false,
-      .allow_ipv4_empty_octets             = false,
-      .allow_invalid_characters            = false,
+      .eof_is_valid                              = false,
+      .parse_credentails                         = true,
+      .empty_host_is_error                       = true,
+      .parse_punycodes                           = true,
+      .parse_port                                = true,
+      .parse_queries                             = true,
+      .parse_fragment                            = true,
+      .allow_trailing_empty_ipv4_octet           = false,
+      .allow_multiple_trailing_empty_ipv4_octets = false,
+      .allow_ipv4_hex_octets                     = false,
+      .allow_ipv4_octal_octets                   = false,
+      .allow_invalid_characters                  = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
-      .eof_is_valid                        = true,
-      .parse_credentails                   = true,
-      .empty_host_is_error                 = true,
-      .parse_punycodes                     = true,
-      .parse_port                          = true,
-      .parse_queries                       = true,
-      .parse_fragment                      = true,
-      .multiple_trailing_empty_ipv4_octets = true,
-      .allow_ipv4_hex_octets               = true,
-      .allow_ipv4_octal_octets             = true,
-      .allow_ipv4_empty_octets             = true,
-      .allow_invalid_characters            = true,
+      .eof_is_valid                              = true,
+      .parse_credentails                         = true,
+      .empty_host_is_error                       = true,
+      .parse_punycodes                           = true,
+      .parse_port                                = true,
+      .parse_queries                             = true,
+      .parse_fragment                            = true,
+      .allow_trailing_empty_ipv4_octet           = true,
+      .allow_multiple_trailing_empty_ipv4_octets = true,
+      .allow_ipv4_hex_octets                     = true,
+      .allow_ipv4_octal_octets                   = true,
+      .allow_invalid_characters                  = true,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
@@ -166,8 +167,8 @@ namespace webpp::uri {
         has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
-        ipv4_empty_octet       = warning_bit >> 3U,
-        ipv4_non_decimal_octet = warning_bit >> 4U,
+        ipv4_trailing_empty_octet = warning_bit >> 3U,
+        ipv4_non_decimal_octet    = warning_bit >> 4U,
 
         // ipv4 and ipv6 errors:
         ip_too_little_octets    = error_bit | stl::to_underlying(ip_address_status::too_little_octets),
@@ -289,7 +290,7 @@ namespace webpp::uri {
 
                 // ipv4 specific warnings/errors:
 
-            case ipv4_empty_octet:
+            case ipv4_trailing_empty_octet:
                 return {
                   "IPv4 in the host has empty octet(s); "
                   "more info: https://url.spec.whatwg.org/#ipv4-empty-part"};

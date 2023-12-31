@@ -26,16 +26,16 @@ namespace webpp::uri::details {
 
         // Prunning last dot characters (considering them as empty IPv4 octets)
         // todo: move this to the end of the algorithm if possible
-        if constexpr (Options.multiple_trailing_empty_ipv4_octets) {
+        if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
             while (*fin == '.') {
-                set_warning(ctx.status, uri_status::ipv4_empty_octet);
+                set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
                 if (--fin == beg) {
                     return false;
                 }
             }
         } else {
             if (*fin == '.') {
-                set_warning(ctx.status, uri_status::ipv4_empty_octet);
+                set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
                 if (--fin == beg) {
                     return false;
                 }
@@ -121,71 +121,98 @@ namespace webpp::uri::details {
         // if it's an invalid character or out of range without putting 2 if statements on the main loop
         // Octet 4294967295 (256 ^ 4) is a valid first octet, anything bigger is invalid.
         webpp_static_constexpr auto invalid_num =
-          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max());
+          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint32_t>::max()) + 1;
 
-        char_type     octet_base = 0;
+        webpp_static_constexpr bool support_uppercase = !ctx_type::is_modifiable;
+
+        char_type     octet_base = 10;
         int           octets     = 1;
         stl::uint64_t octet      = 0;
         for (;;) {
             // find the current octet's base
-            if (*src == '0') {
-                octet_base = 8; // octal or hex
-                // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
-                    octet_base = 16;
-                    ++src;
+            if (*src == '0') {      // octet, hex, or a seris of zeros (000000)
+                if constexpr (Options.allow_ipv4_octal_octets) {
+                    octet_base = 8; // asume it's octal (all zero decimals will be parsed correctly as octals)
+                }
+                if constexpr (Options.allow_ipv4_hex_octets) {
+                    // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                    if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
+                        octet_base = 16; // it's definitely hex or invalid octet now
+                        ++src;
+                    }
                 }
             } else {
                 octet_base = 10;
             }
 
-            // parse
+            // parse an octet
+            char_type cur_char;
             while (src != end) {
-                auto const cur_char = *src++;
-                if (cur_char == '.') {
-                    if constexpr (!Options.allow_ipv4_empty_octets) {
-                        if (octets == 4 && octet == 0) {
-                            set_error(ctx.status, uri_status::ipv4_empty_octet);
-                            return false;
-                        }
-                    }
+                cur_char  = *src++;
+                octet    *= octet_base;
 
-                    if (octet > 255) {
-                        set_error(ctx.status, uri_status::ip_invalid_octet_range);
-                        return false;
-                    }
-                    *out++ = static_cast<stl::uint8_t>(octet);
-                    octet  = 0;
-                    ++octets;
-                    break; // go back and find the base again for the next octet
-                }
-
-                octet *= octet_base;
-                if (octet_base == 16) {
-                    octet +=
-                      ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable>(cur_char, invalid_num);
+                if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
+                    octet += ascii::hex_digit<stl::uint64_t, true, invalid_num>(cur_char);
                 } else {
-                    octet += ascii::hex_digit_value<stl::uint64_t, ctx_type::is_modifiable, false>(
-                      cur_char,
-                      invalid_num);
+                    octet += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
                 }
                 if (octet >= invalid_num) {
-                    set_error(ctx.status, uri_status::ip_invalid_character);
-                    return false;
+                    if (cur_char == '.') {
+                        octet -= invalid_num;
+                        octet /= octet_base;
+                    } else {
+                        set_error(ctx.status, uri_status::ip_invalid_character);
+                        return false;
+                    }
+                    break; // invalid character, or a dot
+                }
+            }
+
+            if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
+                if (octet_base != 10 && octet != 0) {
+                    set_warning(ctx.status, uri_status::ipv4_non_decimal_octet);
                 }
             }
 
             if (src == end) {
                 break;
             }
+
+            // dealing with invalid octet range or invalid characters
+            if (octet > 255) {
+                set_error(ctx.status, uri_status::ip_invalid_octet_range);
+                return false;
+            }
+
+            *out++ = static_cast<stl::uint8_t>(octet);
+            octet  = 0;
+            ++octets;
+
+            if (octets == 5) { // empty octet (two dots after each other)
+                if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
+                    for (; src != end; ++src) {
+                        if (*src != '.') {
+                            set_error(ctx.status, uri_status::invalid_character);
+                            return false;
+                        }
+                    }
+                } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
+                    // empty octet at the end is found:
+                    set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+                    break;
+                }
+
+                // this also could be "too-many-octets" kinda situation, but we're not gonna parse
+                // around to find out
+                set_error(ctx.status, uri_status::ip_bad_ending);
+                return false;
+            }
         }
 
-        for (;;) {
+        // the last octet can fill multiple octets
+        for (; octets != 5; ++octets) {
             *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
-            octet  &= ~(0xFFULL << ((4 - octets) * 8ULL));
-            if (octets++ == 4) {
-                break;
-            }
+            octet   &= ~(0xFFULL << ((4 - octets) * 8ULL));
         }
         if (octet != 0) {
             set_error(ctx.status, uri_status::ip_too_many_octets);

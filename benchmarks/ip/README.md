@@ -95,7 +95,7 @@ The `webpp_host` are the IPv4 host parsers:
 
 GCC:
 ```
-./a.out --benchmark_filter=v4                                                                                dev ✚ ✱ ◼
+./a.out --benchmark_filter=v4
 2023-12-30T14:47:07-08:00
 Running ./a.out
 Run on (32 X 5499.53 MHz CPU s)
@@ -125,7 +125,7 @@ ipv4_prefix_parsing_v2                 12.2 ns         12.2 ns     57685667
 Clang:
 
 ```
-./a.out --benchmark_filter=v4                                                                                dev ✚ ✱ ◼
+./a.out --benchmark_filter=v4
 2023-12-30T14:45:04-08:00
 Running ./a.out
 Run on (32 X 5500.11 MHz CPU s)
