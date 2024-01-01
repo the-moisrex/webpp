@@ -128,7 +128,7 @@ namespace webpp {
 #    if defined(_MSC_VER) || defined(__ICC) // ICC seems to support both __builtin_assume and __assume
 #        define webpp_assume_func(...) __assume(__VA_ARGS__)
 #    else
-#        define webpp_assume_func(...) __builtin_assume(__VA_ARGS__)
+#        define webpp_assume_func(...) __builtin_assume(static_cast<bool>(__VA_ARGS__))
 #    endif
 
 namespace webpp::details {

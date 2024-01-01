@@ -128,9 +128,9 @@ namespace webpp::uri::details {
             return false;
         }
 
-        char_type     octet_base = 10;
         int           octets     = 1;
         stl::uint64_t octet      = 0;
+        stl::uint64_t octet_base = 10;
         for (;;) {
             // find the current octet's base
             if (*src == '0') {
@@ -219,7 +219,7 @@ namespace webpp::uri::details {
         // the last octet can fill multiple octets
         for (; octets != 5; ++octets) {
             *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
-            octet   &= ~(0xFFULL << ((4 - octets) * 8ULL));
+            octet   &= ~(0xFFULL << static_cast<stl::uint64_t>((4 - octets) * 8));
         }
         if (octet != 0) {
             set_error(ctx.status, uri_status::ip_too_many_octets);
@@ -237,8 +237,6 @@ namespace webpp::uri::details {
     template <typename... T>
     static constexpr bool parse_host_ipv6(parsing_uri_context<T...>& ctx) noexcept(
       parsing_uri_context<T...>::is_nothrow) {
-        webpp_assume(ctx.pos < ctx.end);
-
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 

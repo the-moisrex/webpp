@@ -53,7 +53,8 @@ namespace webpp::uri::details {
         using ctx_type        = CtxType;
         using seg_type        = typename ctx_type::seg_type;
         using iterator        = typename ctx_type::iterator;
-        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+        using iter_traits     = stl::iterator_traits<iterator>;
+        using difference_type = typename iter_traits::difference_type;
         using value_type      = typename stl::iterator_traits<iterator>::value_type;
 
 
@@ -280,8 +281,10 @@ namespace webpp::uri::details {
                     get_output().pop_back();
                 }
             } else if constexpr (ctx_type::is_modifiable) {
+                using output_t  = stl::remove_cvref_t<decltype(get_output())>;
+                using size_type = typename output_t::size_type;
                 if (!get_output().empty()) {
-                    get_output().erase(get_output().size() - hint);
+                    get_output().erase(get_output().size() - static_cast<size_type>(hint));
                 }
             }
         }

@@ -56,7 +56,7 @@ namespace webpp::http {
             requires(stl::is_constructible_v<application_type, Args...> &&
                      !stl::is_constructible_v<application_type, Args..., ETT> &&
                      !stl::is_constructible_v<application_type, ETT, Args...>)
-        explicit constexpr http_app_wrapper([[maybe_unused]] ETT& etraits, Args&&... args)
+        explicit constexpr http_app_wrapper([[maybe_unused]] ETT& inp_etraits, Args&&... args)
           : application_type{stl::forward<Args>(args)...} {}
 
         [[nodiscard]] constexpr HTTPResponse auto response(HTTPRequest auto& req) {

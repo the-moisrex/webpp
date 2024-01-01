@@ -208,7 +208,8 @@ namespace webpp::uri {
             {
                 switch (*ctx.pos) {
                     case '.':
-                        dotted_segment_count += ctx.pos - encoder.segment_begin();
+                        dotted_segment_count +=
+                          static_cast<stl::uint_fast8_t>(ctx.pos - encoder.segment_begin());
                         encoder.skip_separator();
                         continue;
                     case '\\':
@@ -223,7 +224,7 @@ namespace webpp::uri {
 
                         if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                             slash_loc_cache <<= a_byte;
-                            if (ctx.pos - encoder.segment_begin() < slash_mask) {
+                            if (static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) < slash_mask) {
                                 slash_loc_cache |=
                                   static_cast<stl::uint8_t>(ctx.pos - encoder.segment_begin());
                             }
@@ -246,7 +247,8 @@ namespace webpp::uri {
                         // %2E or %2e is equal to a "." (dot)
                         if (ctx.pos[1] == '2' && (ctx.pos[2] == 'e' || ctx.pos[2] == 'E')) {
                             encoder.skip_separator(3);
-                            dotted_segment_count += ctx.pos - encoder.segment_begin();
+                            dotted_segment_count +=
+                              static_cast<stl::uint_fast8_t>(ctx.pos - encoder.segment_begin());
                             continue;
                         }
                         if (encoder.validate_percent_encode()) {
@@ -280,7 +282,7 @@ namespace webpp::uri {
                 encoder.clear_segment();
                 continue;                                                // ignore this path segment
             }
-            if (dotted_segment_count & 0b110U == dotted_segment_count) { // double dot
+            if ((dotted_segment_count & 0b110U) == dotted_segment_count) { // double dot
                 // remove the last segment as well
                 dotted_segment_count   = 0;
                 slash_loc_cache      >>= a_byte;
