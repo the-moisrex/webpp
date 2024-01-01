@@ -154,3 +154,51 @@ ipv4_prefix_parsing_v2                 10.7 ns         10.7 ns     65534687
 
 It seems like the IPv4 HOST Parser is winning in GCC which 
 it not losing is completely surprises me since it needs to do more.
+
+#### Hex Lookup table vs. Math-based hex to binary conversion
+
+It's surprising that lookup-table hex conversion is losing to math based with if conditions!
+
+GCC 13.2.1:
+```
+2023-12-31T20:46:03-08:00
+Running ./a.out
+Run on (32 X 5500 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 1.08, 1.62, 1.78
+---------------------------------------------------------------------
+Benchmark                           Time             CPU   Iterations
+---------------------------------------------------------------------
+IP_webpp_host_ipv4               8.64 ns         8.56 ns     82931653
+IP_webpp_host_ipv4_v2            7.15 ns         7.08 ns     99788511
+IP_webpp_host_ipv4_v3            8.60 ns         8.51 ns     81753459
+IP_webpp_host_v4_random          10.2 ns         10.1 ns     69574651
+IP_webpp_host_v4_random_v2       9.50 ns         9.41 ns     73932220
+IP_webpp_host_v4_random_v3       11.5 ns         11.4 ns     61455280
+```
+
+Clang 16.0.6:
+```
+2023-12-31T20:46:03-08:00
+Running ./a.out
+Run on (32 X 5500 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 1.08, 1.62, 1.78
+---------------------------------------------------------------------
+Benchmark                           Time             CPU   Iterations
+---------------------------------------------------------------------
+IP_webpp_host_ipv4               8.64 ns         8.56 ns     82931653
+IP_webpp_host_ipv4_v2            7.15 ns         7.08 ns     99788511
+IP_webpp_host_ipv4_v3            8.60 ns         8.51 ns     81753459
+IP_webpp_host_v4_random          10.2 ns         10.1 ns     69574651
+IP_webpp_host_v4_random_v2       9.50 ns         9.41 ns     73932220
+IP_webpp_host_v4_random_v3       11.5 ns         11.4 ns     61455280
+```

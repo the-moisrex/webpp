@@ -34,7 +34,7 @@ static void IP_webpp_v4(benchmark::State& state) {
 
 BENCHMARK(IP_webpp_v4);
 
-static void IP_webpp_host_v4(benchmark::State& state) {
+static void IP_webpp_host_ipv4(benchmark::State& state) {
     std::array<uint8_t, 4> out{};
     std::string_view const ip_str = "192.168.1.8";
     for (auto _ : state) {
@@ -44,7 +44,31 @@ static void IP_webpp_host_v4(benchmark::State& state) {
     }
 }
 
-BENCHMARK(IP_webpp_host_v4);
+BENCHMARK(IP_webpp_host_ipv4);
+
+static void IP_webpp_host_ipv4_v2(benchmark::State& state) {
+    std::array<uint8_t, 4> out{};
+    std::string_view const ip_str = "192.168.1.8";
+    for (auto _ : state) {
+        bool res = webpp::v2::parse_host_ipv4(ip_str.begin(), ip_str.end(), out.data());
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(out);
+    }
+}
+
+BENCHMARK(IP_webpp_host_ipv4_v2);
+
+static void IP_webpp_host_ipv4_v3(benchmark::State& state) {
+    std::array<uint8_t, 4> out{};
+    std::string_view const ip_str = "192.168.1.8";
+    for (auto _ : state) {
+        bool res = webpp::v3::parse_host_ipv4(ip_str.begin(), ip_str.end(), out.data());
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(out);
+    }
+}
+
+BENCHMARK(IP_webpp_host_ipv4_v3);
 
 /////////////////// Random ///////////////////////////
 
@@ -102,6 +126,32 @@ static void IP_webpp_host_v4_random(benchmark::State& state) {
 }
 
 BENCHMARK(IP_webpp_host_v4_random);
+
+static void IP_webpp_host_v4_random_v2(benchmark::State& state) {
+    ipv4_data();
+    std::array<uint8_t, 4> out{};
+    for (auto _ : state) {
+        auto const ip_str = ipv4_data();
+        bool       res    = webpp::v2::parse_host_ipv4(ip_str.begin(), ip_str.end(), out.data());
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(out);
+    }
+}
+
+BENCHMARK(IP_webpp_host_v4_random_v2);
+
+static void IP_webpp_host_v4_random_v3(benchmark::State& state) {
+    ipv4_data();
+    std::array<uint8_t, 4> out{};
+    for (auto _ : state) {
+        auto const ip_str = ipv4_data();
+        bool       res    = webpp::v3::parse_host_ipv4(ip_str.begin(), ip_str.end(), out.data());
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(out);
+    }
+}
+
+BENCHMARK(IP_webpp_host_v4_random_v3);
 
 static void IP_webpp_v4_random_inet_pton4_v1(benchmark::State& state) {
     ipv4_data();
