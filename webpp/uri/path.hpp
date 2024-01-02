@@ -268,7 +268,7 @@ namespace webpp::uri {
                 is_done = true;
             }
 
-            if ((dotted_segment_count & (~0U ^ 0b110U)) == 0b1U) { // single dot
+            if (dotted_segment_count & (~0U ^ 0b110U) == 0b1U) { // single dot
                 // Number of chars of each dot (or %2e):
                 //   3 3 = 6  0b110 > double dot
                 //   3 1 = 4  0b100 > double dot

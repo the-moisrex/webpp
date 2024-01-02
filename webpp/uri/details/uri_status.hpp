@@ -315,8 +315,7 @@ namespace webpp::uri {
                   "https://url.spec.whatwg.org/#ipv4-too-many-parts"};
             case ip_invalid_octet_range:
                 return {
-                  "At least one octet of host's IP address is out of range "
-                  "(IPv4's limit is 255, and IPv6's limit is ); "
+                  "Out of range IP address octet found; "
                   "more info at https://url.spec.whatwg.org/#ipv4-out-of-range-part and "
                   "https://url.spec.whatwg.org/#ipv4-in-ipv6-out-of-range-part"};
             case ip_invalid_leading_zero: return {"Host's IPv4's octet starts with a leading zero"};

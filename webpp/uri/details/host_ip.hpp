@@ -108,7 +108,7 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_parsing_options Options, typename Iter, typename... T>
+    template <uri_parsing_options Options = {}, typename Iter, typename... T>
     static constexpr bool
     parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, parsing_uri_context<T...>& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
@@ -146,6 +146,22 @@ namespace webpp::uri::details {
                     }
                 }
             } else if (*src == '.') {
+                if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
+                    for (; src != end; ++src) {
+                        if (*src != '.') {
+                            set_error(ctx.status, uri_status::invalid_character);
+                            return false;
+                        }
+                    }
+                    break;
+                } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
+                    // empty octet at the end is found:
+                    if (++src == end) {
+                        set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+                        break;
+                    }
+                }
+
                 set_error(ctx.status, uri_status::ip_invalid_character);
                 return false;
             } else {
@@ -180,7 +196,6 @@ namespace webpp::uri::details {
                 }
             }
 
-
             if (src == end) {
                 break;
             }
@@ -195,25 +210,12 @@ namespace webpp::uri::details {
             octet  = 0;
             ++octets;
 
-            if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
-                if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
-                    for (; src != end; ++src) {
-                        if (*src != '.') {
-                            set_error(ctx.status, uri_status::invalid_character);
-                            return false;
-                        }
-                    }
-                } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
-                    // empty octet at the end is found:
-                    set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
-                    break;
-                }
-
-                // this also could be "too-many-octets" kinda situation, but we're not gonna parse
-                // around to find out
-                set_error(ctx.status, uri_status::ip_bad_ending);
-                return false;
-            }
+            // if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
+            //     // this also could be "too-many-octets" kinda situation, but we're not gonna parse
+            //     // around to find out
+            //     set_error(ctx.status, uri_status::ip_bad_ending);
+            //     return false;
+            // }
         }
 
         // the last octet can fill multiple octets

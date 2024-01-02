@@ -594,13 +594,13 @@ TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
       // with dots at the end:
       "https://127.0.0.1...../",
       "https://0x7F.1..../",
-      "https://0x7f000001.",
+      "https://0x7f000001..",
       "https://0x0000000007F.0X1...",
       "https://127.0.0x0.1............",
       "https://127.0X0.0x0.1.............",
       "https://127.0X0.0x0.0x1..",
       "https://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001.........",
-      "https://0x7F.0x00000000000000000000000001.",
+      "https://0x7F.0x00000000000000000000000001..",
       "https://0x000000000000000007F.0x00000000000000000000000001...",
       "https://0x000000000000000007F.0.0x00000000000000000000000001.....",
       "https://0x7f.0.0.0x1..........",
@@ -614,7 +614,7 @@ TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
     for (auto const str : strs) {
         auto strict_context = this->template get_context<TypeParam>(str);
         uri::parse_uri(strict_context);
-        EXPECT_TRUE(uri::is_valid(strict_context.status))
+        EXPECT_FALSE(uri::is_valid(strict_context.status))
           << str << "\n"
           << to_string(uri::get_value(strict_context.status));
 
@@ -867,43 +867,55 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                                     "00000",        ipv4::any()},
       {                                                    "00000.",        ipv4::any()},
       {                                                    "0x0000",        ipv4::any()},
- // {                                                 "0x0000...",        ipv4::any()},
-  // {                                                          "",        ipv4::any()},
-  // {                                                         ".",        ipv4::any()},
+      {                                                 "0x0000...",        ipv4::any()},
+ // {                                                          "",        ipv4::any()},
+      {                                                         ".",        ipv4::any()},
 
-  // 127.0.0.1 localhost IPs
+ // 127.0.0.1 localhost IPs
       {                                                 "127.0.0.1",   ipv4::loopback()},
       {                                                "127.0.0.1.",   ipv4::loopback()},
+      {                                               "127.0.0.1..",   ipv4::loopback()},
       {                                                    "0x7f.1",   ipv4::loopback()},
- // {                                                  "0x7f.1..",   ipv4::loopback()},
+      {                                                "2130706433",   ipv4::loopback()},
+      {                                                  "0x7f.1..",   ipv4::loopback()},
       {                                                   "0x7f.1.",   ipv4::loopback()},
+      {                                                  "0x7f.1..",   ipv4::loopback()},
       {                                                "0x7f000001",   ipv4::loopback()},
       {                                               "0x7f000001.",   ipv4::loopback()},
+      {                                              "0x7f000001..",   ipv4::loopback()},
       {                                         "0x0000000007f.0x1",   ipv4::loopback()},
       {                                               "127.0.0x0.1",   ipv4::loopback()},
       {                                             "127.0x0.0x0.1",   ipv4::loopback()},
       {                                           "127.0x0.0x0.0x1",   ipv4::loopback()},
       {                              "127.0.0x0.0x0000000000000001",   ipv4::loopback()},
+      {                             "127.0.0x0.0x0000000000000001.",   ipv4::loopback()},
       {                                 "0x7f.0x000000000000000001",   ipv4::loopback()},
+      {                                "0x7f.0x000000000000000001.",   ipv4::loopback()},
+      {                               "0x7f.0x000000000000000001..",   ipv4::loopback()},
       {                 "0x000000000000000007f.0x00000000000000001",   ipv4::loopback()},
       {               "0x000000000000000007f.0.0x00000000000000001",   ipv4::loopback()},
       {              "0x000000000000000007f.0.0x00000000000000001.",   ipv4::loopback()},
+      {             "0x000000000000000007f.0.0x00000000000000001..",   ipv4::loopback()},
       {                                              "0x7f.0.0.0x1",   ipv4::loopback()},
       {                                          "0x7f.0.0x000.0x1",   ipv4::loopback()},
       {                                                "2130706433",   ipv4::loopback()},
+      {                                               "2130706433.",   ipv4::loopback()},
+      {                                              "2130706433..",   ipv4::loopback()},
       {                                                     "127.1",   ipv4::loopback()},
       {                                                "127.0x00.1",   ipv4::loopback()},
       {                                 "127.0x000000000000000.0.1",   ipv4::loopback()},
+      {                                "127.0x000000000000000.0.1.",   ipv4::loopback()},
+      {                              "127.0x000000000000000.0.1...",   ipv4::loopback()},
 
  // other
       {                                                    "000123",  ipv4{0, 0, 0, 83}},
       {                                                      "0xff", ipv4{0, 0, 0, 255}},
       {                                                     "1.256",   ipv4{1, 0, 1, 0}},
- // {                                                "1.256.....",   ipv4{1, 0, 1, 0}},
+      {                                                "1.256.....",   ipv4{1, 0, 1, 0}},
       {                                                "4294967295",  ipv4::broadcast()},
       {                                               "4294967295.",  ipv4::broadcast()},
- // {                                              "4294967295..",  ipv4::broadcast()},
-  // {                                             "4294967295...",  ipv4::broadcast()},
+      {                                              "4294967295..",  ipv4::broadcast()},
+      {                                             "4294967295...",  ipv4::broadcast()},
     };
 
     static constexpr stl::string_view invalid_ipv4s[]{
@@ -940,7 +952,6 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       ".1",
       " ",
       "",
-      ".",
       "....",
       "192.168..1",
       "192...1",
@@ -1002,12 +1013,9 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
     }
 
     for (auto const& _ip : invalid_ipv4s) {
-        auto       context         = this->template get_context<TypeParam>(_ip);
-        bool const should_continue = uri::details::parse_host_ipv4<uri::loose_uri_parsing_options>(
-          _ip.begin(),
-          _ip.end(),
-          ip_octets,
-          context);
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
 
         EXPECT_FALSE(should_continue)
           << "Original IP String: '" << _ip << "'\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
