@@ -146,33 +146,18 @@ namespace webpp::uri::details {
                     }
                 }
             } else if (*src == '.') {
-                if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
-                    for (; src != end; ++src) {
-                        if (*src != '.') {
-                            set_error(ctx.status, uri_status::invalid_character);
-                            return false;
-                        }
-                    }
-                    break;
-                } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
-                    // empty octet at the end is found:
-                    if (++src == end) {
-                        set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
-                        break;
-                    }
-                }
-
-                set_error(ctx.status, uri_status::ip_invalid_character);
-                return false;
+                break;
             } else {
                 octet_base = 10;
             }
 
             // parse an octet
             char_type cur_char;
+            octet = 0;
             while (src != end) {
                 cur_char = *src++;
 
+                // todo: possible integer overflow
                 stl::uint64_t digit  = octet;
                 digit               *= octet_base;
                 if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
@@ -180,14 +165,18 @@ namespace webpp::uri::details {
                 } else {
                     digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
                 }
-                if (digit >= invalid_num) {
-                    if (cur_char != '.') [[unlikely]] {
-                        set_error(ctx.status, uri_status::ip_invalid_character);
-                        return false;
-                    }
-                    break; // invalid character, or a dot
+                if (cur_char == '.') {
+                    break; // invalid character
                 }
                 octet = digit;
+            }
+
+            // invalid character found, we're gonna check this at end of each octet instead of for each
+            // character we parse; we're guessing this would make the correct path, faster than the failure
+            // path
+            if (octet >= invalid_num) [[unlikely]] {
+                set_error(ctx.status, uri_status::ip_invalid_character);
+                return false;
             }
 
             if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
@@ -196,7 +185,7 @@ namespace webpp::uri::details {
                 }
             }
 
-            if (src == end) {
+            if (src == end || *src == '.') {
                 break;
             }
 
@@ -207,7 +196,6 @@ namespace webpp::uri::details {
             }
 
             *out++ = static_cast<stl::uint8_t>(octet);
-            octet  = 0;
             ++octets;
 
             // if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
@@ -216,6 +204,22 @@ namespace webpp::uri::details {
             //     set_error(ctx.status, uri_status::ip_bad_ending);
             //     return false;
             // }
+        }
+
+        if (src != end && *src == '.') {
+            if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
+                for (; src != end; ++src) {
+                    if (*src != '.') {
+                        set_error(ctx.status, uri_status::invalid_character);
+                        return false;
+                    }
+                }
+            } else if constexpr (Options.allow_trailing_empty_ipv4_octet) {
+                // empty octet at the end is found:
+                if (++src == end) {
+                    set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+                }
+            }
         }
 
         // the last octet can fill multiple octets
