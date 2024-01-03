@@ -1043,7 +1043,7 @@ TYPED_TEST(URITests, EmptyIPv4) {
                                   << "." << static_cast<int>(ip_octets[3]);
 
     EXPECT_FALSE(uri::is_valid(context.status)) << to_string(uri::get_value(context.status));
-    EXPECT_EQ(uri::uri_status::ip_bad_ending, uri::get_value(context.status))
+    EXPECT_EQ(uri::uri_status::ip_too_little_octets, uri::get_value(context.status))
       << to_string(uri::get_value(context.status));
 
     // NOLINTEND(*-avoid-c-arrays)

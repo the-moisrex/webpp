@@ -131,86 +131,88 @@ namespace webpp::uri::details {
         int           octets     = 1;
         stl::uint64_t octet      = 0;
         stl::uint64_t octet_base = 10;
-        for (;;) {
-            // find the current octet's base
-            if (*src == '0') {
-                // octet, hex, or a seris of zeros (000000)
-                if constexpr (Options.allow_ipv4_octal_octets) {
-                    octet_base = 8; // asume it's octal (all zero decimals will be parsed correctly as octals)
+        if (*src != '.') {
+            for (;;) {
+                // find the current octet's base
+                if (*src == '0') {
+                    // octet, hex, or a seris of zeros (000000)
+                    if constexpr (Options.allow_ipv4_octal_octets) {
+                        octet_base = 8; // asume it's octal (all zero decimals will be parsed correctly as
+                                        // octals)
+                    }
+                    if constexpr (Options.allow_ipv4_hex_octets) {
+                        // NOLINTNEXTLINE(*-inc-dec-in-conditions)
+                        if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
+                            octet_base = 16; // it's definitely hex or invalid octet now
+                            ++src;
+                        }
+                    }
+                } else {
+                    octet_base = 10;
                 }
-                if constexpr (Options.allow_ipv4_hex_octets) {
-                    // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                    if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
-                        octet_base = 16; // it's definitely hex or invalid octet now
-                        ++src;
+
+
+                // parse an octet
+                char_type cur_char;
+                octet = 0;
+                while (src != end) {
+                    cur_char = *src++;
+
+                    // todo: possible integer overflow
+                    stl::uint64_t digit  = octet;
+                    digit               *= octet_base;
+                    if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
+                        digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(cur_char);
+                    } else {
+                        digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
+                    }
+                    if (cur_char == '.') {
+                        break; // invalid character
+                    }
+                    octet = digit;
+                }
+
+                // invalid character found, we're gonna check this at end of each octet instead of for each
+                // character we parse; we're guessing this would make the correct path, faster than the
+                // failure path
+                if (octet >= invalid_num) [[unlikely]] {
+                    set_error(ctx.status, uri_status::ip_invalid_character);
+                    return false;
+                }
+
+                if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
+                    if (octet_base != 10 && octet != 0) [[unlikely]] {
+                        set_warning(ctx.status, uri_status::ipv4_non_decimal_octet);
                     }
                 }
-            } else if (*src == '.') {
-                break;
-            } else {
-                octet_base = 10;
-            }
 
-            // parse an octet
-            char_type cur_char;
-            octet = 0;
-            while (src != end) {
-                cur_char = *src++;
-
-                // todo: possible integer overflow
-                stl::uint64_t digit  = octet;
-                digit               *= octet_base;
-                if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
-                    digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(cur_char);
-                } else {
-                    digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
+                if (src == end || *src == '.') {
+                    break;
                 }
-                if (cur_char == '.') {
-                    break; // invalid character
+
+                // dealing with invalid octet range or invalid characters
+                if (octet > 255) [[unlikely]] {
+                    set_error(ctx.status, uri_status::ip_invalid_octet_range);
+                    return false;
                 }
-                octet = digit;
+
+                *out++ = static_cast<stl::uint8_t>(octet);
+                ++octets;
+
+                // if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
+                //     // this also could be "too-many-octets" kinda situation, but we're not gonna parse
+                //     // around to find out
+                //     set_error(ctx.status, uri_status::ip_bad_ending);
+                //     return false;
+                // }
             }
-
-            // invalid character found, we're gonna check this at end of each octet instead of for each
-            // character we parse; we're guessing this would make the correct path, faster than the failure
-            // path
-            if (octet >= invalid_num) [[unlikely]] {
-                set_error(ctx.status, uri_status::ip_invalid_character);
-                return false;
-            }
-
-            if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
-                if (octet_base != 10 && octet != 0) [[unlikely]] {
-                    set_warning(ctx.status, uri_status::ipv4_non_decimal_octet);
-                }
-            }
-
-            if (src == end || *src == '.') {
-                break;
-            }
-
-            // dealing with invalid octet range or invalid characters
-            if (octet > 255) [[unlikely]] {
-                set_error(ctx.status, uri_status::ip_invalid_octet_range);
-                return false;
-            }
-
-            *out++ = static_cast<stl::uint8_t>(octet);
-            ++octets;
-
-            // if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
-            //     // this also could be "too-many-octets" kinda situation, but we're not gonna parse
-            //     // around to find out
-            //     set_error(ctx.status, uri_status::ip_bad_ending);
-            //     return false;
-            // }
         }
 
         if (src != end && *src == '.') {
             if constexpr (Options.allow_multiple_trailing_empty_ipv4_octets) {
                 for (; src != end; ++src) {
                     if (*src != '.') {
-                        set_error(ctx.status, uri_status::invalid_character);
+                        set_error(ctx.status, uri_status::ip_invalid_character);
                         return false;
                     }
                 }
@@ -218,14 +220,29 @@ namespace webpp::uri::details {
                 // empty octet at the end is found:
                 if (++src == end) {
                     set_warning(ctx.status, uri_status::ipv4_trailing_empty_octet);
+                } else {
+                    set_error(ctx.status, uri_status::ip_invalid_character);
+                    return false;
                 }
+            } else {
+                set_error(ctx.status, uri_status::ip_invalid_character);
+                return false;
             }
         }
 
         // the last octet can fill multiple octets
-        for (; octets != 5; ++octets) {
-            *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
-            octet   &= ~(0xFFULL << static_cast<stl::uint64_t>((4 - octets) * 8));
+        if constexpr (
+          Options.allow_multiple_trailing_empty_ipv4_octets || Options.allow_trailing_empty_ipv4_octet)
+        {
+            for (; octets != 5; ++octets) {
+                *out++  = static_cast<stl::uint8_t>(octet >> static_cast<stl::uint64_t>((4 - octets) * 8));
+                octet  &= ~(0xFFULL << static_cast<stl::uint64_t>((4 - octets) * 8));
+            }
+        } else {
+            if (octets != 5) {
+                set_error(ctx.status, uri_status::ip_too_little_octets);
+                return false;
+            }
         }
         if (octet != 0) {
             set_error(ctx.status, uri_status::ip_too_many_octets);
