@@ -108,14 +108,13 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_parsing_options Options = {}, typename Iter, typename... T>
+    template <uri_parsing_options Options = standard_uri_parsing_options, typename Iter, typename... T>
     static constexpr bool
     parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, parsing_uri_context<T...>& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
-        using ctx_type  = parsing_uri_context<T...>;
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
+        using ctx_type = parsing_uri_context<T...>;
 
         // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
         // if it's an invalid character or out of range without putting 2 if statements on the main loop
@@ -128,11 +127,11 @@ namespace webpp::uri::details {
             return false;
         }
 
-        int           octets     = 1;
-        stl::uint64_t octet      = 0;
-        stl::uint64_t octet_base = 10;
+        int           octets = 1;
+        stl::uint64_t octet  = 0;
         if (*src != '.') {
             for (;;) {
+                stl::uint64_t octet_base = 10;
                 // find the current octet's base
                 if (*src == '0') {
                     // octet, hex, or a seris of zeros (000000)
@@ -147,37 +146,28 @@ namespace webpp::uri::details {
                             ++src;
                         }
                     }
-                } else {
-                    octet_base = 10;
                 }
 
 
                 // parse an octet
-                char_type cur_char;
                 octet = 0;
-                while (src != end) {
-                    cur_char = *src++;
-
-                    // todo: possible integer overflow
+                for (; src != end; ++src) {
                     stl::uint64_t digit  = octet;
                     digit               *= octet_base;
                     if (Options.allow_ipv4_hex_octets && octet_base == 16) [[unlikely]] {
-                        digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(cur_char);
+                        digit += ascii::hex_digit<stl::uint64_t, true, invalid_num>(*src);
                     } else {
-                        digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(cur_char);
+                        digit += ascii::hex_digit<stl::uint64_t, false, invalid_num>(*src);
                     }
-                    if (cur_char == '.') {
-                        break; // invalid character
+                    if (digit >= invalid_num) {
+                        if (*src == '.') {
+                            ++src;
+                            break; // invalid character
+                        }
+                        set_error(ctx.status, uri_status::ip_invalid_character);
+                        return false;
                     }
                     octet = digit;
-                }
-
-                // invalid character found, we're gonna check this at end of each octet instead of for each
-                // character we parse; we're guessing this would make the correct path, faster than the
-                // failure path
-                if (octet >= invalid_num) [[unlikely]] {
-                    set_error(ctx.status, uri_status::ip_invalid_character);
-                    return false;
                 }
 
                 if constexpr (Options.allow_ipv4_hex_octets || Options.allow_ipv4_octal_octets) {
@@ -186,7 +176,11 @@ namespace webpp::uri::details {
                     }
                 }
 
-                if (src == end || *src == '.') {
+                if (src == end) {
+                    break;
+                }
+                if (*src == '.') {
+                    --src;
                     break;
                 }
 

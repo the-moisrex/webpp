@@ -23,15 +23,15 @@ namespace webpp::is {
 
     /**
      * @brief check if str contains seed
-     * @param str
-     * @param seed
+     * @param inp_str
+     * @param inp_seed
      * @return true if it does contain it
      */
 
-    [[nodiscard]] constexpr bool contains(istl::StringViewifiable auto&& _str,
-                                          istl::StringViewifiable auto&& _seed) noexcept {
-        auto str  = istl::string_viewify(_str);
-        auto seed = istl::string_viewify(_seed);
+    [[nodiscard]] constexpr bool contains(istl::StringViewifiable auto&& inp_str,
+                                          istl::StringViewifiable auto&& inp_seed) noexcept {
+        auto str  = istl::string_viewify(inp_str);
+        auto seed = istl::string_viewify(inp_seed);
         return str.find(seed) != decltype(str)::npos;
     }
 
@@ -69,11 +69,11 @@ namespace webpp::is {
 
     /**
      * @brief check if the specified str is an email or not
-     * @param str
+     * @param inp_str
      * @return true if the specified str is an email
      */
-    [[nodiscard]] bool email(istl::StringViewifiable auto&& _str) noexcept {
-        auto const str = istl::string_viewify(stl::forward<decltype(_str)>(_str));
+    [[nodiscard]] bool email(istl::StringViewifiable auto&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<decltype(inp_str)>(inp_str));
         // constexpr auto pattern =
         //   ctll::fixed_string{R"regex(^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+)regex"};
         // constexpr auto pattern =
@@ -83,19 +83,19 @@ namespace webpp::is {
         return false;
     }
 
-    [[nodiscard]] constexpr bool FQDN(istl::StringViewifiable auto&& _str) noexcept;
+    // [[nodiscard]] constexpr bool FQDN(istl::StringViewifiable auto&& _str) noexcept;
 
 
-    [[nodiscard]] constexpr bool url(istl::StringViewifiable auto&& _str) noexcept;
+    // [[nodiscard]] constexpr bool url(istl::StringViewifiable auto&& _str) noexcept;
 
     /**
      * @brief checks if an string is a valid host based on RFC3986
      * (https://tools.ietf.org/html/rfc3986)
-     * @param str
+     * @param inp_str
      * @return
      */
-    [[nodiscard]] constexpr bool host(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
+    [[nodiscard]] constexpr bool host(istl::StringViewifiable auto&& inp_str) noexcept {
+        auto str = istl::string_viewify(inp_str);
 
         using str_view_t = decltype(str);
         using char_type  = typename str_view_t::value_type;
@@ -197,44 +197,45 @@ namespace webpp::is {
         return QUERY_OR_FRAGMENT_NOT_PCT_ENCODED.contains(str);
     }
 
-    [[nodiscard]] constexpr bool ip_range(istl::StringViewifiable auto&& _str) noexcept;
+    // [[nodiscard]] constexpr bool ip_range(istl::StringViewifiable auto&& _str) noexcept;
 
 
-    [[nodiscard]] constexpr bool ipv4_range(istl::StringViewifiable auto&& _str) noexcept;
+    // [[nodiscard]] constexpr bool ipv4_range(istl::StringViewifiable auto&& _str) noexcept;
 
 
-    [[nodiscard]] constexpr bool ipv6_range(istl::StringViewifiable auto&& _str) noexcept;
+    // [[nodiscard]] constexpr bool ipv6_range(istl::StringViewifiable auto&& _str) noexcept;
 
     // bool isImage(something) noexcept;
 
     /**
      * Check if the specified string is a hexadecimal color
-     * @param str
+     * @param inp_str
      * @return
      */
 
-    [[nodiscard]] constexpr bool hex_color(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
+    [[nodiscard]] constexpr bool hex_color(istl::StringViewifiable auto&& inp_str) noexcept {
+        auto str = istl::string_viewify(inp_str);
         if (!ascii::starts_with(str, '#')) {
             return false;
         }
+        // NOLINTBEGIN(*-magic-numbers)
         switch (str.size()) {
             case 3 + 1:
             case 6 + 1:
             case 8 + 1: return ascii::is::hex(str.substr(1));
             default: return false;
         }
+        // NOLINTEND(*-magic-numbers)
     }
 
     /**
      * Check if the specified string is an RGB color
-     * @param str
-     * @return
+     * @param inp_str
      */
-    [[nodiscard]] bool rgb_color(istl::StringViewifiable auto&& _sstr) noexcept {
+    [[nodiscard]] bool rgb_color(istl::StringViewifiable auto&& inp_str) noexcept {
         // TODO: there are better ways to do it, check performance
 
-        auto sstr       = istl::string_viewify(_sstr);
+        auto sstr       = istl::string_viewify(inp_str);
         using char_type = typename decltype(sstr)::value_type;
 
         constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
@@ -246,33 +247,33 @@ namespace webpp::is {
         sstr.remove_prefix(4);
         sstr.remove_suffix(1);
         rtrim(sstr);
-        auto it = sstr.find_first_not_of(numbers);
-        if (!ascii::is::uint8(sstr.substr(0, it))) {
+        auto pos = sstr.find_first_not_of(numbers);
+        if (!ascii::is::uint8(sstr.substr(0, pos))) {
             return false;
         }
-        sstr.remove_suffix(it);
+        sstr.remove_suffix(pos);
         ltrim(sstr);
         if (ascii::starts_with(sstr, ',')) {
             return false;
         }
         sstr.remove_prefix(1);
         ltrim(sstr);
-        it = sstr.find_first_not_of(numbers);
-        if (!ascii::is::uint8(sstr.substr(0, it))) {
+        pos = sstr.find_first_not_of(numbers);
+        if (!ascii::is::uint8(sstr.substr(0, pos))) {
             return false;
         }
-        sstr.remove_prefix(it);
+        sstr.remove_prefix(pos);
         ltrim(sstr);
         if (!ascii::starts_with(sstr, ',')) {
             return false;
         }
         sstr.remove_prefix(1);
         ltrim(sstr);
-        it = sstr.find_first_not_of(numbers);
-        if (!ascii::is::uint8(sstr.substr(0, it))) {
+        pos = sstr.find_first_not_of(numbers);
+        if (!ascii::is::uint8(sstr.substr(0, pos))) {
             return false;
         }
-        sstr.remove_prefix(it);
+        sstr.remove_prefix(pos);
         ltrim(sstr);
         return sstr.empty();
     }
@@ -283,52 +284,50 @@ namespace webpp::is {
      * @return bool
      */
 
-    [[nodiscard]] bool rgba_color(istl::StringViewifiable auto&& _str) noexcept {
-        // TODO: there are better ways to do it, check performance
-        auto str                                                  = istl::string_viewify(_str);
-        using char_type                                           = typename decltype(str)::value_type;
-        constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
-        return true; // TODO: I'm just gonna make it compilable
-    }
+    // [[nodiscard]] bool rgba_color(istl::StringViewifiable auto&& _str) noexcept {
+    //     // TODO: there are better ways to do it, check performance
+    //     auto str                                                  = istl::string_viewify(_str);
+    //     using char_type                                           = typename decltype(str)::value_type;
+    //     constexpr stl::initializer_list<char_type const*> numbers = "0123456789";
+    //     return true; // TODO: I'm just gonna make it compilable
+    // }
 
     /**
      * Check if the specified string is a valid HSL and HSLA color or not
-     * @param str
+     * @param _str
      * @return bool
      */
-
-    [[nodiscard]] bool hsl_color(istl::StringViewifiable auto&& _str) noexcept {
-        return true; // FIXME: implement this
-    }
+    // [[nodiscard]] bool hsl_color(istl::StringViewifiable auto&& _str) noexcept {
+    //     return true; // FIXME: implement this
+    // }
 
     /**
      * Check if the specified string is a valid HSLA color or not
      * It's just an alias for hsl_color. Read more about the reason here:
      * https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#hsl()
      *
-     * @param str
+     * @param inp_str
      * @return bool
      */
-
-    [[nodiscard]] bool hsla_color(istl::StringViewifiable auto&& _str) noexcept {
-        return hsl_color(_str);
+    [[nodiscard]] bool hsla_color(istl::StringViewifiable auto&& inp_str) noexcept {
+        return hsl_color(inp_str);
     }
 
     /**
      * Check if the specified string is a valid HTML color
-     * @param str
+     * @param inp_str
      * @return bool
      *
      * todo: add allocator for the basic_string
      * todo: add Traits support
      */
-    [[nodiscard]] bool name_color(istl::StringViewifiable auto&& _str) noexcept {
-        stl::basic_string str{_str};
+    [[nodiscard]] bool name_color(istl::StringViewifiable auto&& inp_str) noexcept {
+        stl::basic_string str{inp_str};
         using char_type = istl::char_type_of_t<decltype(str)>;
 
         // converting to lower case
-        stl::transform(str.begin(), str.end(), str.begin(), [](unsigned char const c) {
-            return stl::tolower(c);
+        stl::transform(str.begin(), str.end(), str.begin(), [](unsigned char const inp_ch) {
+            return stl::tolower(inp_ch);
         });
 
         static constexpr stl::initializer_list<char_type const*> names = {
@@ -675,11 +674,11 @@ namespace webpp::is {
           "yellow green",
           "zombie green"};
 
-        auto it =
-          stl::lower_bound(stl::cbegin(names), stl::end(names), str, [](auto const& l, auto const& r) {
-              return l < r;
+        auto pos =
+          stl::lower_bound(stl::cbegin(names), stl::end(names), str, [](auto const& lhs, auto const& rhs) {
+              return lhs < rhs;
           });
-        return it != stl::end(names) && *it == str;
+        return pos != stl::end(names) && *pos == str;
     }
 
     /**
@@ -693,76 +692,76 @@ namespace webpp::is {
         return hex_color(str) || name_color(str) || rgb_color(str) || rgba_color(str) || hsl_color(str);
     }
 
-    [[nodiscard]] constexpr bool mimetype(istl::StringViewifiable auto&& str) noexcept;
+    // [[nodiscard]] constexpr bool mimetype(istl::StringViewifiable auto&& str) noexcept;
 
 
-    [[nodiscard]] constexpr bool UUID(istl::StringViewifiable auto&& str) noexcept;
+    // [[nodiscard]] constexpr bool UUID(istl::StringViewifiable auto&& str) noexcept;
 
 
-    [[nodiscard]] constexpr bool port(istl::StringViewifiable auto&& str) noexcept;
+    // [[nodiscard]] constexpr bool port(istl::StringViewifiable auto&& str) noexcept;
 
 
-    [[nodiscard]] constexpr bool mongoid(istl::StringViewifiable auto&& str) noexcept;
+    // [[nodiscard]] constexpr bool mongoid(istl::StringViewifiable auto&& str) noexcept;
 
 
     // you may want to change the string to a date of some sort or add both
 
-    [[nodiscard]] bool today(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool tomorrow(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool yesterday(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool this_year(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool next_year(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool prev_year(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool this_month(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool next_month(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool prev_month(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool this_week(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool next_week(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool prev_week(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool between(istl::StringViewifiable auto&& str,
-                               istl::StringViewifiable auto&& from,
-                               istl::StringViewifiable auto&& after) noexcept;
-
-
-    [[nodiscard]] bool after(istl::StringViewifiable auto&& str,
-                             istl::StringViewifiable auto&& pointintime) noexcept;
-
-
-    [[nodiscard]] bool before(istl::StringViewifiable auto&& str,
-                              istl::StringViewifiable auto&& pointintime) noexcept;
-
-
-    [[nodiscard]] bool base64(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool escaped(istl::StringViewifiable auto&& str) noexcept;
-
-
-    [[nodiscard]] bool username(istl::StringViewifiable auto&& str) noexcept;
+    // [[nodiscard]] bool today(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool tomorrow(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool yesterday(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool this_year(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool next_year(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool prev_year(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool this_month(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool next_month(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool prev_month(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool this_week(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool next_week(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool prev_week(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool between(istl::StringViewifiable auto&& str,
+    //                            istl::StringViewifiable auto&& from,
+    //                            istl::StringViewifiable auto&& after) noexcept;
+    //
+    //
+    // [[nodiscard]] bool after(istl::StringViewifiable auto&& str,
+    //                          istl::StringViewifiable auto&& pointintime) noexcept;
+    //
+    //
+    // [[nodiscard]] bool before(istl::StringViewifiable auto&& str,
+    //                           istl::StringViewifiable auto&& pointintime) noexcept;
+    //
+    //
+    // [[nodiscard]] bool base64(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool escaped(istl::StringViewifiable auto&& str) noexcept;
+    //
+    //
+    // [[nodiscard]] bool username(istl::StringViewifiable auto&& str) noexcept;
 } // namespace webpp::is
 
 #endif // WEBPP_VALIDATION_H

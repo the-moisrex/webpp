@@ -593,18 +593,18 @@ TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
     constexpr stl::array<stl::string_view, 17> strs{
       // with dots at the end:
       "https://127.0.0.1...../",
-      "https://0x7F.1..../",
+      "https://0x7f.1..../",
       "https://0x7f000001..",
-      "https://0x0000000007F.0X1...",
+      "https://0x0000000007f.0x1...",
       "https://127.0.0x0.1............",
-      "https://127.0X0.0x0.1.............",
-      "https://127.0X0.0x0.0x1..",
+      "https://127.0x0.0x0.1.............",
+      "https://127.0x0.0x0.0x1..",
       "https://127.0.0x0.0x0000000000000000000000000000000000000000000000000000000000000001.........",
-      "https://0x7F.0x00000000000000000000000001..",
-      "https://0x000000000000000007F.0x00000000000000000000000001...",
-      "https://0x000000000000000007F.0.0x00000000000000000000000001.....",
+      "https://0x7f.0x00000000000000000000000001..",
+      "https://0x000000000000000007f.0x00000000000000000000000001...",
+      "https://0x000000000000000007f.0.0x00000000000000000000000001.....",
       "https://0x7f.0.0.0x1..........",
-      "https://0x7F.0.0x000.0x1................................................................",
+      "https://0x7f.0.0x000.0x1................................................................",
       "https://2130706433.................",
       "https://127.1............",
       "https://127.0x00.1........................",
@@ -854,7 +854,7 @@ TYPED_TEST(URITests, NormalHostIPv4) {
 }
 
 /// IPv4 host parsing is different than inet_pton4, so we need to test it separately
-TYPED_TEST(URITests, AbormalHostIPv4) {
+TYPED_TEST(URITests, AbormalHostIPv4Loose) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::pair<stl::string_view, ipv4> valid_ipv4s[]{
       stl::pair{                           stl::string_view{"0000000.0.0.0"},        ipv4::any()},
@@ -867,6 +867,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                                     "00000",        ipv4::any()},
       {                                                    "00000.",        ipv4::any()},
       {                                                    "0x0000",        ipv4::any()},
+      {                                                  "0x0000..",        ipv4::any()},
       {                                                 "0x0000...",        ipv4::any()},
  // {                                                          "",        ipv4::any()},
       {                                                         ".",        ipv4::any()},
@@ -875,6 +876,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                                 "127.0.0.1",   ipv4::loopback()},
       {                                                "127.0.0.1.",   ipv4::loopback()},
       {                                               "127.0.0.1..",   ipv4::loopback()},
+      {                                              "127.0.0.1...",   ipv4::loopback()},
       {                                                    "0x7f.1",   ipv4::loopback()},
       {                                                "2130706433",   ipv4::loopback()},
       {                                                  "0x7f.1..",   ipv4::loopback()},
@@ -892,6 +894,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                 "0x7f.0x000000000000000001",   ipv4::loopback()},
       {                                "0x7f.0x000000000000000001.",   ipv4::loopback()},
       {                               "0x7f.0x000000000000000001..",   ipv4::loopback()},
+      {                              "0x7f.0x000000000000000001...",   ipv4::loopback()},
       {                 "0x000000000000000007f.0x00000000000000001",   ipv4::loopback()},
       {               "0x000000000000000007f.0.0x00000000000000001",   ipv4::loopback()},
       {              "0x000000000000000007f.0.0x00000000000000001.",   ipv4::loopback()},
@@ -1000,6 +1003,210 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
           _ip.end(),
           ip_octets,
           context);
+
+        EXPECT_TRUE(should_continue)
+          << "Original IP String: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
+          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+          << static_cast<int>(ip_octets[3]);
+        EXPECT_EQ(expected_ip, ip_octets)
+          << "Original IP String: " << _ip << "\n"
+          << "Expected IP: " << expected_ip.string() << "\n"
+          << "Parsed IP: " << static_cast<int>(ip_octets[0]) << "." << static_cast<int>(ip_octets[1]) << "."
+          << static_cast<int>(ip_octets[2]) << "." << static_cast<int>(ip_octets[3]);
+    }
+
+    for (auto const& _ip : invalid_ipv4s) {
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
+
+        EXPECT_FALSE(should_continue)
+          << "Original IP String: '" << _ip << "'\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."
+          << static_cast<int>(ip_octets[1]) << "." << static_cast<int>(ip_octets[2]) << "."
+          << static_cast<int>(ip_octets[3]);
+    }
+    // NOLINTEND(*-avoid-c-arrays)
+}
+
+TYPED_TEST(URITests, AbormalHostIPv4) {
+    // NOLINTBEGIN(*-avoid-c-arrays)
+    static constexpr stl::pair<stl::string_view, ipv4> valid_ipv4s[]{
+      stl::pair{                           stl::string_view{"0000000.0.0.0"},        ipv4::any()},
+      {                                            "0x000000.0.0.0",        ipv4::any()},
+      {                                           "0x000000.0.0.0.",        ipv4::any()},
+      {TypeParam::is_modifiable ? "0X0000.0x.0.0" : "0x0000.0x.0.0",        ipv4::any()},
+      {                                                         "0",        ipv4::any()},
+      {                                                        "0x",        ipv4::any()},
+      {                      TypeParam::is_modifiable ? "0X" : "0x",        ipv4::any()},
+      {                                                     "00000",        ipv4::any()},
+      {                                                    "00000.",        ipv4::any()},
+      {                                                    "0x0000",        ipv4::any()},
+      {                                                   "0x0000.",        ipv4::any()},
+      {                                                   "0x0000.",        ipv4::any()},
+      {                                                         ".",        ipv4::any()},
+
+ // 127.0.0.1 localhost IPs
+      {                                                 "127.0.0.1",   ipv4::loopback()},
+      {                                                "127.0.0.1.",   ipv4::loopback()},
+      {                                                    "0x7f.1",   ipv4::loopback()},
+      {                                                "2130706433",   ipv4::loopback()},
+      {                                                   "0x7f.1.",   ipv4::loopback()},
+      {                                                "0x7f000001",   ipv4::loopback()},
+      {                                               "0x7f000001.",   ipv4::loopback()},
+      {                                         "0x0000000007f.0x1",   ipv4::loopback()},
+      {                                               "127.0.0x0.1",   ipv4::loopback()},
+      {                                             "127.0x0.0x0.1",   ipv4::loopback()},
+      {                                           "127.0x0.0x0.0x1",   ipv4::loopback()},
+      {                              "127.0.0x0.0x0000000000000001",   ipv4::loopback()},
+      {                             "127.0.0x0.0x0000000000000001.",   ipv4::loopback()},
+      {                                 "0x7f.0x000000000000000001",   ipv4::loopback()},
+      {                                "0x7f.0x000000000000000001.",   ipv4::loopback()},
+      {                 "0x000000000000000007f.0x00000000000000001",   ipv4::loopback()},
+      {               "0x000000000000000007f.0.0x00000000000000001",   ipv4::loopback()},
+      {              "0x000000000000000007f.0.0x00000000000000001.",   ipv4::loopback()},
+      {                                              "0x7f.0.0.0x1",   ipv4::loopback()},
+      {                                          "0x7f.0.0x000.0x1",   ipv4::loopback()},
+      {                                                "2130706433",   ipv4::loopback()},
+      {                                               "2130706433.",   ipv4::loopback()},
+      {                                                     "127.1",   ipv4::loopback()},
+      {                                                "127.0x00.1",   ipv4::loopback()},
+      {                                 "127.0x000000000000000.0.1",   ipv4::loopback()},
+      {                                "127.0x000000000000000.0.1.",   ipv4::loopback()},
+
+ // other
+      {                                                    "000123",  ipv4{0, 0, 0, 83}},
+      {                                                      "0xff", ipv4{0, 0, 0, 255}},
+      {                                                     "1.256",   ipv4{1, 0, 1, 0}},
+      {                                                "4294967295",  ipv4::broadcast()},
+      {                                               "4294967295.",  ipv4::broadcast()},
+    };
+
+    static constexpr stl::string_view invalid_ipv4s[]{
+      "0000000.0.0.0..",
+      "0x000000.0.0.0..",
+      "0x0000.0x.0.0..",
+      "0..",
+      "0x..",
+      "0x..",
+      "00000..",
+      "00000..",
+      ".0x0000",
+      ".0x0000.",
+      "..0x0000.",
+      ".",
+
+      // 127.0.0.1 localhost IPs
+      "127.0.0.1..",
+      "127.0.0.1...",
+      "0x7f.1..",
+      "2130706433..",
+      "0x7f.1...",
+      "0x7f000001..",
+      "0x7f000001...",
+      "0x0000000007f.0x1..",
+      "127.0.0x0.1..",
+      "127.0x0.0x0.1..",
+      "127.0x0.0x0.0x1..",
+      "127.0.0x0.0x0000000000000001..",
+      "127.0.0x0.0x0000000000000001...",
+      "0x7f.0x000000000000000001..",
+      "0x7f.0x000000000000000001...",
+      "0x000000000000000007f.0x00000000000000001..",
+      "0x000000000000000007f.0.0x00000000000000001..",
+      "0x000000000000000007f.0.0x00000000000000001...",
+      "0x7f.0.0.0x1..",
+      "0x7f.0.0x000.0x1..",
+      "2130706433..",
+      "2130706433...",
+      "127.1..",
+      "127.0x00.1..",
+      "127.0x000000000000000.0.1..",
+      "127.0x000000000000000.0.1...",
+
+      // other
+      "000123....",
+      "0xff....",
+      "1.256....",
+      "4294967295....",
+      "4294967295.....",
+      "0.0.0.256",
+      "0X000000.00x.0.0",
+      "bad",
+      "aaaaaaaaaaaaaa.123",
+      "f.123",
+      "0xfffffffffffffffffffff.123",
+      "0.com",
+      "00x0",
+      "0X0000.00x.0.0",
+      "x",
+      "X",
+      "00x",
+      "123x",
+      "x123",
+      "x",
+      "xxx",
+      "0xx",
+      "00xx",
+      "0XX",
+      "0.0.0.256",
+      "256.255.255.255",
+      "255.256.255.255",
+      "255.255.255.256",
+      "256.1",
+      "256.0.0.0",
+      "192.168. 224.0",
+      "192.168.224.0 1",
+      "4294967296",
+      "1.4294967296",
+      ".4294967296",
+      ".1",
+      " ",
+      "",
+      "....",
+      "192.168..1",
+      "192...1",
+      "192...1.",
+      "..1",
+      "..0",
+      ".1..",
+      ".0..",
+      ".0x1",
+      "0..0x1",
+      // with dot at the end:
+
+      "0.0.0.256.",
+      "0X000000.00x.0.0.",
+      "bad.",
+      "0.com.",
+      "00x0.",
+      "0X0000.00x.0.0.",
+      "x.",
+      "X.",
+      "00x.",
+      "123x.",
+      "x123.",
+      "x.",
+      "xxx.",
+      "0xx.",
+      "00xx.",
+      "0XX.",
+      "0.0.0.256.",
+      "256.255.255.255.",
+      "255.256.255.255.",
+      "255.255.255.256.",
+      "256.1.",
+      "256.0.0.0.",
+      "192.168. 224.0.",
+      "4294967296.",
+      ".1.",
+      "192.168.224.0 1.",
+    };
+    stl::uint8_t ip_octets[4]{};
+
+    for (auto const& [_ip, expected_ip] : valid_ipv4s) {
+        auto       context = this->template get_context<TypeParam>(_ip);
+        bool const should_continue =
+          uri::details::parse_host_ipv4(_ip.begin(), _ip.end(), ip_octets, context);
 
         EXPECT_TRUE(should_continue)
           << "Original IP String: " << _ip << "\nParsed IP: " << static_cast<int>(ip_octets[0]) << "."

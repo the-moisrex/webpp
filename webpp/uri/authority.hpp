@@ -277,6 +277,7 @@ namespace webpp::uri {
                 }
                 if constexpr (ctx_type::is_modifiable) {
                     ctx.out.clear_hostname();
+                    coder.start_segment();
                     ipv4{ipv4_octets_data}.to_string(coder.get_out_seg());
                     if (skip_last_char) {
                         ++ctx.pos;
