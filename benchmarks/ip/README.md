@@ -202,3 +202,56 @@ IP_webpp_host_v4_random          10.2 ns         10.1 ns     69574651
 IP_webpp_host_v4_random_v2       9.50 ns         9.41 ns     73932220
 IP_webpp_host_v4_random_v3       11.5 ns         11.4 ns     61455280
 ```
+
+
+#### V4 of host ipv4 parser
+
+The tests are passing now for ipv4 host parser.
+
+GCC:
+```
+2024-01-03T23:15:43-08:00
+Running ./a.out
+Run on (32 X 5499.96 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 2.87, 2.67, 1.93
+---------------------------------------------------------------------
+Benchmark                           Time             CPU   Iterations
+---------------------------------------------------------------------
+IP_webpp_host_ipv4               7.49 ns         7.49 ns     90733829
+IP_webpp_host_ipv4_v2            6.89 ns         6.89 ns    102854109
+IP_webpp_host_ipv4_v3            6.82 ns         6.82 ns    102589467
+IP_webpp_host_ipv4_v4            7.16 ns         7.16 ns     98377115
+IP_webpp_host_v4_random          10.5 ns         10.5 ns     67313455
+IP_webpp_host_v4_random_v2       9.86 ns         9.86 ns     69417854
+IP_webpp_host_v4_random_v3       9.85 ns         9.85 ns     71099113
+IP_webpp_host_v4_random_v4       9.70 ns         9.70 ns     71895030
+```
+
+Clang:
+```
+2024-01-03T23:17:17-08:00
+Running ./a.out
+Run on (32 X 5500 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 2.00, 2.44, 1.92
+---------------------------------------------------------------------
+Benchmark                           Time             CPU   Iterations
+---------------------------------------------------------------------
+IP_webpp_host_ipv4               9.56 ns         9.55 ns     74313946
+IP_webpp_host_ipv4_v2            10.3 ns         10.3 ns     67115418
+IP_webpp_host_ipv4_v3            10.2 ns         10.2 ns     68715330
+IP_webpp_host_ipv4_v4            7.32 ns         7.31 ns     96679580
+IP_webpp_host_v4_random          11.3 ns         11.3 ns     62638711
+IP_webpp_host_v4_random_v2       13.0 ns         13.0 ns     52991512
+IP_webpp_host_v4_random_v3       14.8 ns         14.7 ns     47480760
+IP_webpp_host_v4_random_v4       10.2 ns         10.2 ns     68991765
+```

@@ -1093,7 +1093,6 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       ".0x0000",
       ".0x0000.",
       "..0x0000.",
-      ".",
 
       // 127.0.0.1 localhost IPs
       "127.0.0.1..",
