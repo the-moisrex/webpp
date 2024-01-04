@@ -643,6 +643,18 @@ TYPED_TEST(URITests, IPv4EndingWithX) {
     }
 }
 
+TYPED_TEST(URITests, StartingAndEndingWithX) {
+    constexpr stl::string_view str = "https://0x/";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_hostname(), "0.0.0.0");
+    } else {
+        EXPECT_EQ(context.out.get_hostname(), "0x");
+    }
+}
+
 // TYPED_TEST(URITests, PunnycodeBasic) {
 //     constexpr stl::string_view str = "http://☕.example";
 //

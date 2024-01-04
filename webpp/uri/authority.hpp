@@ -264,14 +264,11 @@ namespace webpp::uri {
             }
 
             // Parse IPv4 (if it ends with ipv4 octet)
-            if (details::is_possible_ends_with_ipv4<Options>(coder.segment_begin(), ctx.pos - 1, ctx)) {
+            if (details::is_possible_ends_with_ipv4<Options>(host_begin, ctx.pos - 1, ctx)) {
                 // we don't need to initialize it to zero
                 stl::array<stl::uint8_t, 4> ipv4_octets_data; // NOLINT(*-init)
-                bool const                  should_continue = details::parse_host_ipv4<Options>(
-                  coder.segment_begin(),
-                  ctx.pos,
-                  ipv4_octets_data.data(),
-                  ctx);
+                bool const                  should_continue =
+                  details::parse_host_ipv4<Options>(host_begin, ctx.pos, ipv4_octets_data.data(), ctx);
                 if (!should_continue) {
                     return;
                 }
