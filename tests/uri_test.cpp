@@ -592,9 +592,9 @@ TYPED_TEST(URITests, LocalIPv4Addr) {
 TYPED_TEST(URITests, LocalIPv4AddrTrailingDots) {
     constexpr stl::array<stl::string_view, 17> strs{
       // with dots at the end:
+      "https://0x7f000001..",
       "https://127.0.0.1...../",
       "https://0x7f.1..../",
-      "https://0x7f000001..",
       "https://0x0000000007f.0x1...",
       "https://127.0.0x0.1............",
       "https://127.0x0.0x0.1.............",

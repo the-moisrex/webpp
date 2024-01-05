@@ -66,7 +66,7 @@ namespace webpp::uri::details {
                 case 'x':
                     // next characters now must be ".0x"
                     // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                    if (pos - beg <= 2 || *--pos != '0' || *--pos != '.') {
+                    if (pos - beg < 1 || *--pos != '0' || (pos != beg && *--pos != '.')) {
                         return false;
                     }
                     is_hex = true;
@@ -162,7 +162,7 @@ namespace webpp::uri::details {
                     if (digit >= invalid_num) {
                         if (*src == '.') {
                             ++src;
-                            break; // invalid character
+                            break;
                         }
                         set_error(ctx.status, uri_status::ip_invalid_character);
                         return false;
@@ -192,13 +192,6 @@ namespace webpp::uri::details {
 
                 *out++ = static_cast<stl::uint8_t>(octet);
                 ++octets;
-
-                // if (octets == 5) [[unlikely]] { // empty octet (two dots after each other)
-                //     // this also could be "too-many-octets" kinda situation, but we're not gonna parse
-                //     // around to find out
-                //     set_error(ctx.status, uri_status::ip_bad_ending);
-                //     return false;
-                // }
             }
         }
 
