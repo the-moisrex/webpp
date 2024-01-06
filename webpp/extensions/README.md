@@ -1,5 +1,7 @@
 # Extension system
 
+> **Extensions are deprecated (at least for now)!**
+
 Definitions:
 
 - __Extension__: some type that adds features to the extensie, e.g.: cookie
