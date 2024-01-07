@@ -68,6 +68,7 @@ namespace webpp::uri {
             return ASCII_ALPHA.contains(*ctx.pos) && ctx.pos[1] == ':';
         }
 
+        // todo: remove this if it's not needed anymore
         template <typename... T>
         static constexpr void append_path(
           parsing_uri_context<T...>&                   ctx,
@@ -183,13 +184,7 @@ namespace webpp::uri {
         bool const is_windows_path =
           details::has_normalized_windows_driver_letter(ctx) && ctx.out.get_scheme() == "file";
 
-        if constexpr (ctx_type::is_modifiable) {
-            // encode_uri_component_set_capacity(ctx.pos, ctx.end, ctx.out.host_ref());
-        }
-
-
         stl::uint_fast8_t dotted_segment_count = 0b1U;
-
 
         webpp_static_constexpr auto a_byte =
           static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
@@ -210,7 +205,9 @@ namespace webpp::uri {
                     case '.':
                         dotted_segment_count +=
                           static_cast<stl::uint_fast8_t>(ctx.pos - encoder.segment_begin());
-                        encoder.skip_separator();
+                        if constexpr (!ctx_type::is_segregated) {
+                            encoder.skip_separator();
+                        }
                         continue;
                     case '\\':
                         if (ctx.is_special) {
@@ -226,7 +223,7 @@ namespace webpp::uri {
                             slash_loc_cache <<= a_byte;
                             if (static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) < slash_mask) {
                                 slash_loc_cache |=
-                                  static_cast<stl::uint8_t>(ctx.pos - encoder.segment_begin());
+                                  static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
                             }
                         }
 
@@ -280,7 +277,7 @@ namespace webpp::uri {
                 //         The deciding bit
                 dotted_segment_count = 0;
                 encoder.clear_segment();
-                continue;                                                // ignore this path segment
+                continue;                                                  // ignore this path segment
             }
             if ((dotted_segment_count & 0b110U) == dotted_segment_count) { // double dot
                 // remove the last segment as well
