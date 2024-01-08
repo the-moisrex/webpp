@@ -120,10 +120,24 @@ namespace webpp::uri {
         /// %2E or %2e is equal to a "." (dot)
         template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void handle_dots_in_paths(
-          parsing_uri_context<T...>& ctx,
-          component_encoder<components::path, parsing_uri_context<T...>>&
-            encoder) noexcept(parsing_uri_context<T...>::is_nothrow) {
-            using ctx_type = parsing_uri_context<T...>;
+          parsing_uri_context<T...>&                                      ctx,
+          component_encoder<components::path, parsing_uri_context<T...>>& encoder,
+          stl::uint64_t& slash_loc_cache) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            using ctx_type        = parsing_uri_context<T...>;
+            using iterator        = typename ctx_type::iterator;
+            using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+
+            webpp_static_constexpr auto a_byte =
+              static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
+            webpp_static_constexpr auto slash_mask =
+              static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
+
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                slash_loc_cache <<= a_byte;
+                if (static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) < slash_mask) {
+                    slash_loc_cache |= static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
+                }
+            }
 
             auto pos = ctx.pos + 1;
             switch (*pos) {
@@ -140,6 +154,7 @@ namespace webpp::uri {
             ++pos;
             if (pos == ctx.end) {
                 encoder.clear_segment();
+                ctx.pos = pos;
                 return;
             }
 
@@ -152,6 +167,7 @@ namespace webpp::uri {
                     [[fallthrough]];
                 [[likely]] case '/':
                     encoder.clear_segment();
+                    ctx.pos = pos;
                     return;
                 [[unlikely]] case '%':
                     if (ascii::inc_if(pos, ctx.end, '2') && (*pos == 'e' || *pos == 'E')) {
@@ -164,8 +180,8 @@ namespace webpp::uri {
             }
 
             ++pos;
-            if (pos != ctx.end) {
-                switch (*pos) {
+            if (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
                     [[unlikely]] case '\\':
                         if (!ctx.is_special) {
                             return;
@@ -178,15 +194,16 @@ namespace webpp::uri {
                 }
             }
 
+            ctx.pos = pos;
+
 
             // remove the last segment as well
             slash_loc_cache >>= a_byte;
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask);
-                if (hint == 0) { // the cache is empty, too many /../../../.. in
-                                 // the URL.
+                if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
                     // find the last slash
-                    for (auto pos = ctx.pos; pos == ctx.beg || *pos == '/'; --pos) {
+                    for (auto cur = ctx.pos; cur == ctx.beg || *cur == '/'; --cur) {
                         ++hint;
                     }
                 }
@@ -246,9 +263,7 @@ namespace webpp::uri {
 
         using details::ascii_bitmap;
 
-        using ctx_type        = parsing_uri_context<T...>;
-        using iterator        = typename ctx_type::iterator;
-        using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+        using ctx_type = parsing_uri_context<T...>;
 
 
         webpp_static_constexpr auto encode_set =
@@ -273,13 +288,8 @@ namespace webpp::uri {
           details::has_normalized_windows_driver_letter(ctx) && ctx.out.get_scheme() == "file";
 
 
-        webpp_static_constexpr auto a_byte =
-          static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
-        webpp_static_constexpr auto slash_mask =
-          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
         stl::uint64_t slash_loc_cache = 0;
-
-        bool is_done = false;
+        bool          is_done         = false;
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
@@ -299,15 +309,10 @@ namespace webpp::uri {
                         [[fallthrough]];
                     [[likely]] case '/':
 
-                        if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                            slash_loc_cache <<= a_byte;
-                            if (static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) < slash_mask) {
-                                slash_loc_cache |=
-                                  static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
-                            }
+                        details::handle_dots_in_paths(ctx, encoder, slash_loc_cache);
+                        if (ctx.pos == ctx.end) {
+                            is_done = true;
                         }
-
-                        details::handle_dots_in_paths(ctx, encoder);
 
                         break;
                     case '?':

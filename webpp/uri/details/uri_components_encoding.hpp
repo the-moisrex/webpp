@@ -322,8 +322,13 @@ namespace webpp::uri::details {
         /// 2. Set the segment start
         constexpr void next_segment(difference_type sep_count = 1) noexcept(ctx_type::is_nothrow) {
             skip_separator(sep_count);
-            end_segment();
-            reset_segment_start();
+            if constexpr (is_seg) {
+                reset_segment_start();
+                end_segment();
+            } else {
+                end_segment();
+                reset_segment_start();
+            }
             start_segment();
         }
 
