@@ -272,10 +272,12 @@ namespace webpp::uri::details {
         constexpr void pop_back([[maybe_unused]] difference_type hint = 0) noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 // using difference_type = typename seg_type::difference_type;
-                if (!get_output().empty()) {
+                if (get_output().size() > 1) {
                     get_output().pop_back();
+                    output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+                } else if (get_output().size() == 1) {
+                    output->clear();
                 }
-                output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
             } else if constexpr (is_vec) {
                 if (!get_output().empty()) {
                     get_output().pop_back();

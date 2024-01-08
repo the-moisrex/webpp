@@ -444,7 +444,7 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
         EXPECT_EQ(context.out.get_path(), "//three/");
     } else {
         EXPECT_EQ(context.out.get_path(),
-                  "..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e");
+                  "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e");
     }
 }
 
