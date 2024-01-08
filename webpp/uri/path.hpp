@@ -8,6 +8,7 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
+#include "../strings/peek.hpp"
 #include "details/constants.hpp"
 #include "details/uri_components_encoding.hpp"
 #include "encoding.hpp"
@@ -108,6 +109,93 @@ namespace webpp::uri {
             }
         }
 
+        /// Handle special cases:
+        ///   /.
+        ///   /..
+        ///   /%2e
+        ///   /%2e%2e
+        ///   /.%2e
+        ///   /%2e.
+        ///
+        /// %2E or %2e is equal to a "." (dot)
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        static constexpr void handle_dots_in_paths(
+          parsing_uri_context<T...>& ctx,
+          component_encoder<components::path, parsing_uri_context<T...>>&
+            encoder) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            using ctx_type = parsing_uri_context<T...>;
+
+            auto pos = ctx.pos + 1;
+            switch (*pos) {
+                [[unlikely]] case '%':
+                    if (ascii::inc_if(pos, ctx.end, '2') && (*pos == 'e' || *pos == 'E')) {
+                        break;
+                    }
+                    return;
+                case '.':
+                    break;
+                [[likely]] default:
+                    return;
+            }
+            ++pos;
+            if (pos == ctx.end) {
+                encoder.clear_segment();
+                return;
+            }
+
+            switch (*pos) {
+                [[unlikely]] case '\\':
+                    if (!ctx.is_special) {
+                        return;
+                    }
+                    set_warning(ctx.status, uri_status::reverse_solidus_used);
+                    [[fallthrough]];
+                [[likely]] case '/':
+                    encoder.clear_segment();
+                    return;
+                [[unlikely]] case '%':
+                    if (ascii::inc_if(pos, ctx.end, '2') && (*pos == 'e' || *pos == 'E')) {
+                        break;
+                    }
+                    return;
+                [[likely]] case '.':
+                    break;
+                default: return;
+            }
+
+            ++pos;
+            if (pos != ctx.end) {
+                switch (*pos) {
+                    [[unlikely]] case '\\':
+                        if (!ctx.is_special) {
+                            return;
+                        }
+                        set_warning(ctx.status, uri_status::reverse_solidus_used);
+                        [[fallthrough]];
+                    [[likely]] case '/':
+                        break;
+                    default: return;
+                }
+            }
+
+
+            // remove the last segment as well
+            slash_loc_cache >>= a_byte;
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask);
+                if (hint == 0) { // the cache is empty, too many /../../../.. in
+                                 // the URL.
+                    // find the last slash
+                    for (auto pos = ctx.pos; pos == ctx.beg || *pos == '/'; --pos) {
+                        ++hint;
+                    }
+                }
+                encoder.pop_back(hint);
+            } else {
+                encoder.pop_back();
+            }
+            encoder.reset_segment_start();
+        }
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
@@ -167,7 +255,7 @@ namespace webpp::uri {
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
         webpp_static_constexpr auto interesting_chars =
-          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%', '.'});
+          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%'});
 
 
         if (ctx.pos == ctx.end) {
@@ -184,7 +272,6 @@ namespace webpp::uri {
         bool const is_windows_path =
           details::has_normalized_windows_driver_letter(ctx) && ctx.out.get_scheme() == "file";
 
-        stl::uint_fast8_t dotted_segment_count = 0b1U;
 
         webpp_static_constexpr auto a_byte =
           static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
@@ -202,18 +289,11 @@ namespace webpp::uri {
                   interesting_chars))
             {
                 switch (*ctx.pos) {
-                    case '.':
-                        dotted_segment_count +=
-                          static_cast<stl::uint_fast8_t>(ctx.pos - encoder.segment_begin());
-                        if constexpr (!ctx_type::is_segregated) {
-                            encoder.skip_separator();
-                        }
-                        continue;
                     case '\\':
                         if (ctx.is_special) {
                             set_warning(ctx.status, uri_status::reverse_solidus_used);
                         } else {
-                            ++ctx.pos;
+                            encoder.skip_separator();
                             continue;
                         }
                         [[fallthrough]];
@@ -226,6 +306,8 @@ namespace webpp::uri {
                                   static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
                             }
                         }
+
+                        details::handle_dots_in_paths(ctx, encoder);
 
                         break;
                     case '?':
@@ -240,13 +322,6 @@ namespace webpp::uri {
                         if (ctx.pos + 2 >= ctx.end) {
                             set_warning(ctx.status, uri_status::invalid_character);
                             break;
-                        }
-                        // %2E or %2e is equal to a "." (dot)
-                        if (ctx.pos[1] == '2' && (ctx.pos[2] == 'e' || ctx.pos[2] == 'E')) {
-                            encoder.skip_separator(3);
-                            dotted_segment_count +=
-                              static_cast<stl::uint_fast8_t>(ctx.pos - encoder.segment_begin());
-                            continue;
                         }
                         if (encoder.validate_percent_encode()) {
                             continue;
@@ -263,40 +338,6 @@ namespace webpp::uri {
                 }
             } else {
                 is_done = true;
-            }
-
-            if (dotted_segment_count & (~0U ^ 0b110U) == 0b1U) { // single dot
-                // Number of chars of each dot (or %2e):
-                //   3 3 = 6  0b110 > double dot
-                //   3 1 = 4  0b100 > double dot
-                //   1 3 = 4  0b100 > double dot
-                //   1 1 = 2  0b010 > double dot
-                //   1   = 1  0b001 > single dot
-                //   3   = 3  0b011 > single dot
-                //                ^
-                //         The deciding bit
-                dotted_segment_count = 0;
-                encoder.clear_segment();
-                continue;                                                  // ignore this path segment
-            }
-            if ((dotted_segment_count & 0b110U) == dotted_segment_count) { // double dot
-                // remove the last segment as well
-                dotted_segment_count   = 0;
-                slash_loc_cache      >>= a_byte;
-                if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                    auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask);
-                    if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
-                        // find the last slash
-                        for (auto pos = ctx.pos; pos == ctx.beg || *pos == '/'; --pos) {
-                            ++hint;
-                        }
-                    }
-                    encoder.pop_back(hint);
-                } else {
-                    encoder.pop_back();
-                }
-                encoder.reset_segment_start();
-                continue;
             }
 
 
@@ -344,10 +385,11 @@ namespace webpp::uri {
         using iterator         = typename container_type::iterator;
         using const_iterator   = typename container_type::const_iterator;
 
-        static constexpr string_view_type parent_dir  = "..";
-        static constexpr string_view_type current_dir = ".";
-        static constexpr string_view_type separator   = "/"; // todo: make sure the user can use ":" as well
-        static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except slash char
+        static constexpr string_view_type parent_dir    = "..";
+        static constexpr string_view_type current_dir   = ".";
+        static constexpr string_view_type separator     = "/"; // todo: make sure the user can use ":" as well
+        static constexpr auto             allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except
+                                                                                         // slash char
 
         template <typename... T>
             requires(stl::is_constructible_v<container_type, T...>)

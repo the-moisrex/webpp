@@ -12,7 +12,7 @@ namespace webpp::ascii {
         requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
     [[nodiscard]] static constexpr bool peek(Iter pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
-            return pos != end && val == *pos;
+            return pos != end && ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
             return pos + sizeof...(ValT) < end && ((val == *pos++) && ...);
@@ -24,7 +24,7 @@ namespace webpp::ascii {
         requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
     [[nodiscard]] static constexpr bool peek_or_end(Iter pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
-            return pos == end || val == *pos;
+            return pos == end || ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
             return pos + sizeof...(ValT) < end && ((val == *pos++) && ...) || pos == end;
@@ -37,7 +37,7 @@ namespace webpp::ascii {
         requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
     [[nodiscard]] static constexpr bool peek(Iter pos, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
-            return val == *pos;
+            return ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
             return ((val == *pos++) && ...);
@@ -50,7 +50,7 @@ namespace webpp::ascii {
         requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
     [[nodiscard]] static constexpr bool inc_if(Iter& pos, EIter end, ValT... val) noexcept {
         if constexpr (sizeof...(ValT) == 1) {
-            if (pos != end && val == *pos) {
+            if (pos != end && ((val == *pos) && ...)) {
                 ++pos;
                 return true;
             }
