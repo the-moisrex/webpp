@@ -228,6 +228,8 @@ namespace webpp::uri::details {
         constexpr void clear_segment() noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 output->clear();
+            } else if constexpr (!ctx_type::is_modifiable) {
+                reset_segment_start();
             }
         }
 
@@ -279,8 +281,12 @@ namespace webpp::uri::details {
                     output->clear();
                 }
             } else if constexpr (is_vec) {
-                if (!get_output().empty()) {
-                    get_output().pop_back();
+                if (is_segment_empty()) {
+                    if (!get_output().empty()) {
+                        get_output().pop_back();
+                    }
+                } else {
+                    reset_segment_start();
                 }
             } else if constexpr (ctx_type::is_modifiable) {
                 using output_t  = stl::remove_cvref_t<decltype(get_output())>;
@@ -323,11 +329,17 @@ namespace webpp::uri::details {
         /// 1. Skip the separator, and
         /// 2. Set the segment start
         constexpr void next_segment(difference_type sep_count = 1) noexcept(ctx_type::is_nothrow) {
-            skip_separator(sep_count);
             if constexpr (is_seg) {
-                reset_segment_start();
-                end_segment();
+                if constexpr (ctx_type::is_modifiable) {
+                    skip_separator(sep_count);
+                    reset_segment_start();
+                    end_segment();
+                } else {
+                    end_segment();
+                    skip_separator(sep_count);
+                }
             } else {
+                skip_separator(sep_count);
                 end_segment();
                 reset_segment_start();
             }

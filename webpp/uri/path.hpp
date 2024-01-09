@@ -157,6 +157,7 @@ namespace webpp::uri {
                 ++pos;
                 if (pos == ctx.end) {
                     ctx.pos = pos;
+                    encoder.clear_segment();
                     return;
                 }
 
@@ -168,8 +169,8 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
                         [[fallthrough]];
                     [[likely]] case '/':
-                        encoder.clear_segment();
                         ctx.pos = pos;
+                        encoder.clear_segment();
                         continue;
                     [[unlikely]] case '%':
                         ++pos;
@@ -198,13 +199,12 @@ namespace webpp::uri {
                 }
 
 
-
                 // remove the last segment as well
                 if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                     auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask) + 1;
                     if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
                         // find the last slash
-                        for (auto cur = ctx.pos;;) {
+                        for (auto cur = pos;;) {
                             ++hint;
                             --cur;
                             if (cur == ctx.beg) {
@@ -221,6 +221,8 @@ namespace webpp::uri {
                     encoder.pop_back();
                 }
                 ctx.pos = pos;
+                encoder.reset_segment_start();
+                encoder.start_segment();
             }
         }
     } // namespace details
@@ -318,13 +320,6 @@ namespace webpp::uri {
                         }
                         [[fallthrough]];
                     [[likely]] case '/':
-
-                        details::handle_dots_in_paths(ctx, encoder, slash_loc_cache);
-                        encoder.reset_segment_start();
-                        if (ctx.pos == ctx.end) {
-                            is_done = true;
-                        }
-
                         break;
                     case '?':
                         set_valid(ctx.status, uri_status::valid_queries);
@@ -356,6 +351,10 @@ namespace webpp::uri {
             // Append the last segment (not the current one)
 
             if (!is_done) {
+                details::handle_dots_in_paths(ctx, encoder, slash_loc_cache);
+                if (ctx.pos == ctx.end) {
+                    break;
+                }
                 encoder.next_segment();
                 continue;
             }
