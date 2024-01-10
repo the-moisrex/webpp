@@ -49,13 +49,13 @@ namespace webpp::uri {
                     case '8':
                     case '9':
                         // "65535".count() == 5
-                        if (ctx.pos - beg == 5U) { // NOLINT(*-magic-numbers)
-                            set_error(ctx.status, uri_status::port_out_of_range);
-                            return;
-                        }
                         port_value *= 10U; // NOLINT(*-magic-numbers)
                         port_value += static_cast<port_type>(*ctx.pos - '0');
                         ++ctx.pos;
+                        if (port_value > max_port_number) {
+                            set_error(ctx.status, uri_status::port_out_of_range);
+                            return;
+                        }
                         continue;
                     case '\\':
                         if (ctx.is_special) {
@@ -67,10 +67,6 @@ namespace webpp::uri {
                     case '?':
                     case '#':
                         // it's unsigned, we don't need to check for it being lower than 0
-                        if (port_value > max_port_number) {
-                            set_error(ctx.status, uri_status::port_out_of_range);
-                            return;
-                        }
                         if (port_value == known_port(ctx.out.get_scheme())) {
                             ctx.out.clear_port();
                         } else if constexpr (

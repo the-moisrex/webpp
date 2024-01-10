@@ -151,7 +151,7 @@ namespace webpp::uri {
                             parse_port(ctx);
 
                             // rollback if it's not a port, we rollback and assume it's a password
-                            if (get_value(ctx.status) != valid_authority_end) {
+                            if (get_value(ctx.status) == port_invalid) {
                                 // it might be a "password" or an "invalid port"
                                 ctx.pos = pre_port_pos + 1;
                                 continue;
