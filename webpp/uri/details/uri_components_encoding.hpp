@@ -228,9 +228,8 @@ namespace webpp::uri::details {
         constexpr void clear_segment() noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 output->clear();
-            } else if constexpr (!ctx_type::is_modifiable) {
-                reset_segment_start();
             }
+            reset_segment_start();
         }
 
         [[nodiscard]] constexpr iterator segment_begin() const noexcept {
@@ -337,6 +336,7 @@ namespace webpp::uri::details {
                 } else {
                     end_segment();
                     skip_separator(sep_count);
+                    reset_segment_start();
                 }
             } else {
                 skip_separator(sep_count);

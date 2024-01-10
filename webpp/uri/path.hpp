@@ -221,8 +221,7 @@ namespace webpp::uri {
                     encoder.pop_back();
                 }
                 ctx.pos = pos;
-                encoder.reset_segment_start();
-                encoder.start_segment();
+                encoder.clear_segment();
             }
         }
     } // namespace details
