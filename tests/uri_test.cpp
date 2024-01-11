@@ -732,6 +732,17 @@ TYPED_TEST(URITests, InvlaidPort) {
       << to_string(uri::get_value(context.status));
 }
 
+TYPED_TEST(URITests, InvlaidPort2) {
+    constexpr stl::string_view str = "https://user:123@host:invalid[/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_FALSE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_EQ(uri::uri_status::port_invalid, uri::get_value(context.status))
+      << str << "\n"
+      << to_string(uri::get_value(context.status));
+}
+
 TYPED_TEST(URITests, OutOfRangePort) {
     constexpr stl::string_view str = "https://user:123@host:77777/page/one";
 

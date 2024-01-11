@@ -152,6 +152,9 @@ namespace webpp::uri {
 
                             // rollback if it's not a port, we rollback and assume it's a password
                             if (get_value(ctx.status) == port_invalid) {
+                                if (*ctx.pos != '@') {
+                                    return;
+                                }
                                 // it might be a "password" or an "invalid port"
                                 ctx.pos = pre_port_pos + 1;
                                 continue;
@@ -178,7 +181,13 @@ namespace webpp::uri {
                             break;
                         }
                         [[fallthrough]];
-                    case '/': set_valid(ctx.status, valid_path); break;
+                    case '/':
+                        // escape if invalid port found
+                        if (has_error(ctx.status)) {
+                            return;
+                        }
+                        set_valid(ctx.status, valid_path);
+                        break;
                     case '.':
                         // if constexpr (ctx_type::is_segregated) {
                         //     coder.end_segment();
@@ -191,6 +200,10 @@ namespace webpp::uri {
                         coder.next_segment();
                         continue;
                     case '?':
+                        // escape if invalid port found
+                        if (has_error(ctx.status)) {
+                            return;
+                        }
                         if constexpr (Options.parse_queries) {
                             skip_last_char = true;
                             set_valid(ctx.status, valid_queries);
@@ -201,6 +214,10 @@ namespace webpp::uri {
                         }
                         break;
                     case '#':
+                        // escape if invalid port found
+                        if (has_error(ctx.status)) {
+                            return;
+                        }
                         if constexpr (Options.parse_fragment) {
                             skip_last_char = true;
                             set_valid(ctx.status, valid_fragment);
@@ -236,6 +253,10 @@ namespace webpp::uri {
                             return;
                         }
                     [[unlikely]] case '\0':
+                        // invalid port
+                        if (has_error(ctx.status)) {
+                            return;
+                        }
                         if constexpr (Options.eof_is_valid) {
                             if constexpr (Options.empty_host_is_error) {
                                 if (ctx.pos == host_begin) {
@@ -312,8 +333,8 @@ namespace webpp::uri {
         }
     }
 
-    /// Path start state (I like to call it authority end because it's more RFC like to say that,
-    /// but WHATWG likes to call it "path start state")
+    /// Path start state (I like to call it authority end because it's more RFC like to
+    /// say that, but WHATWG likes to call it "path start state")
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(
       parsing_uri_context<T...>::is_nothrow) {
@@ -360,13 +381,14 @@ namespace webpp::uri {
 
     /**
      * @brief Parse authority part of the URI (credentials, host, and port)
-     * @param ctx Parsing Context containing all the details of the URI and the state of it
+     * @param ctx Parsing Context containing all the details of the URI and the state of
+     * it
      */
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
     static constexpr void parse_authority(parsing_uri_context<T...>& ctx) noexcept(
       parsing_uri_context<T...>::is_nothrow) {
-        // We merged the host parser and authority parser to make it single-pass for most use cases.
-        // https://url.spec.whatwg.org/#authority-state
+        // We merged the host parser and authority parser to make it single-pass for most
+        // use cases. https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state
 
         using enum uri_status;
@@ -388,8 +410,8 @@ namespace webpp::uri {
         }
 
         // Handle missing host situation, and ipv6:
-        // attention: since we have merge the authority and host parsing, it's possible to have
-        // something like "http://username@:8080/" which the host is missing too
+        // attention: since we have merge the authority and host parsing, it's possible to
+        // have something like "http://username@:8080/" which the host is missing too
         switch (*ctx.pos) {
             case ':':
                 if constexpr (!Options.parse_credentails) {
@@ -510,7 +532,8 @@ namespace webpp::uri {
          */
         constexpr void append_to(istl::String auto& out) const {
             if (!this->empty()) {
-                // out.reserve(password.size() + 1); // much better chance of removing one memory allocation
+                // out.reserve(password.size() + 1); // much better chance of removing one
+                // memory allocation
                 out += '@';
                 encode_uri_component(as_string(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
             }

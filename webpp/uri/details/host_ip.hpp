@@ -250,6 +250,11 @@ namespace webpp::uri::details {
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
+        if (ctx.out.has_hostname()) {
+            set_error(ctx.status, uri_status::invalid_domain_code_point);
+            return false;
+        }
+
         ++ctx.pos; // first char should be '[' now
 
         // todo: use context's output host for storing ipv6 bytes if the host supports it
