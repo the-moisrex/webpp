@@ -523,7 +523,7 @@ TYPED_TEST(URITests, AtSign2Percent40) {
 }
 
 TYPED_TEST(URITests, HostMissing) {
-    constexpr stl::array<stl::string_view, 16> strs{
+    constexpr stl::array<stl::string_view, 8> strs{
       "https://username@:8080/",
       "https://username:password@/",
       "https:///",
