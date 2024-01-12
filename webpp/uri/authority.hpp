@@ -97,7 +97,8 @@ namespace webpp::uri {
             auto       host_begin      = authority_begin;
             iterator   colon_pos       = ctx.end; // start of password or port
 
-            bool skip_last_char = false;
+            bool skip_last_char           = false;
+            bool must_contain_credentials = false;
 
             component_encoder<components::host, ctx_type> coder(ctx);
             coder.start_segment();
@@ -152,10 +153,9 @@ namespace webpp::uri {
 
                             // rollback if it's not a port, we rollback and assume it's a password
                             if (get_value(ctx.status) == port_invalid) {
-                                if (*ctx.pos != '@') {
-                                    return;
-                                }
-                                // it might be a "password" or an "invalid port"
+                                must_contain_credentials = true;
+                                ctx.out.clear_port();
+                                // it might be a "password" or it's invalid port
                                 ctx.pos = pre_port_pos + 1;
                                 continue;
                             }
@@ -183,7 +183,7 @@ namespace webpp::uri {
                         [[fallthrough]];
                     case '/':
                         // escape if invalid port found
-                        if (has_error(ctx.status)) {
+                        if (must_contain_credentials) {
                             return;
                         }
                         set_valid(ctx.status, valid_path);
@@ -201,7 +201,7 @@ namespace webpp::uri {
                         continue;
                     case '?':
                         // escape if invalid port found
-                        if (has_error(ctx.status)) {
+                        if (must_contain_credentials) {
                             return;
                         }
                         if constexpr (Options.parse_queries) {
@@ -215,7 +215,7 @@ namespace webpp::uri {
                         break;
                     case '#':
                         // escape if invalid port found
-                        if (has_error(ctx.status)) {
+                        if (must_contain_credentials) {
                             return;
                         }
                         if constexpr (Options.parse_fragment) {
@@ -238,6 +238,7 @@ namespace webpp::uri {
                             return;
                         }
                     case '@':
+                        must_contain_credentials = false;
                         if constexpr (Options.parse_credentails) {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
                             ++ctx.pos;
@@ -254,7 +255,7 @@ namespace webpp::uri {
                         }
                     [[unlikely]] case '\0':
                         // invalid port
-                        if (has_error(ctx.status)) {
+                        if (must_contain_credentials) {
                             return;
                         }
                         if constexpr (Options.eof_is_valid) {
@@ -272,6 +273,9 @@ namespace webpp::uri {
                         set_error(ctx.status,
                                   IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
                         return;
+                }
+                if (must_contain_credentials) {
+                    return;
                 }
                 if (ctx.pos == host_begin) {
                     if constexpr (Options.empty_host_is_error && IsSpecial) {
