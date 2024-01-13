@@ -322,15 +322,14 @@ namespace webpp::uri {
       parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
-        details::parse_authority_pieces<uri_parsing_options{
-          .eof_is_valid        = Options.eof_is_valid,
-          .parse_credentails   = false,
-          .empty_host_is_error = false,
-          .parse_punycodes     = Options.parse_punycodes,
-          .parse_port          = false,
-          .parse_queries       = Options.parse_queries,
-          .parse_fragment      = Options.parse_fragment,
-        }>(ctx);
+        static constexpr auto parsing_options = [] constexpr noexcept {
+            uri_parsing_options options = Options;
+            options.parse_credentails   = false;
+            options.empty_host_is_error = false;
+            options.parse_port          = false;
+            return options;
+        }();
+        details::parse_authority_pieces<parsing_options>(ctx);
 
         if (ctx.out.has_hostname() && ctx.out.get_hostname() == "localhost") {
             ctx.out.clear_hostname();

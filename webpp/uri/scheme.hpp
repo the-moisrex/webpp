@@ -8,6 +8,7 @@
 #include "../std/string_like.hpp"
 #include "../std/utility.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/peek.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "./details/uri_status.hpp"
@@ -150,8 +151,7 @@ namespace webpp::uri {
         static constexpr void special_relative_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
-            if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) {
-                ctx.pos += 2;
+            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
@@ -163,8 +163,7 @@ namespace webpp::uri {
         static constexpr void path_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
             // https://url.spec.whatwg.org/#path-or-authority-state
 
-            if (ctx.pos != ctx.end && *ctx.pos == '/') {
-                ++ctx.pos;
+            if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                 set_valid(ctx.status, uri_status::valid_authority);
                 return;
             }
