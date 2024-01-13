@@ -65,6 +65,20 @@ namespace webpp::ascii {
             return false;
         }
     }
+
+    /// Look ahead and see if the next values are the ones that we expect, if it is, move "pos" there,
+    /// otherwise, do nothing.
+    /// If any of the specified values are there, the increment will happen
+    template <typename Iter, typename EIter = Iter, typename... ValT>
+        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+    [[nodiscard]] static constexpr bool inc_if_any(Iter& pos, EIter end, ValT... val) noexcept {
+        if (pos != end && ((val == *pos) || ...)) {
+            ++pos;
+            return true;
+        }
+        return false;
+    }
+
 } // namespace webpp::ascii
 
 #endif // WEBPP_STRINGS_PEAK_HPP

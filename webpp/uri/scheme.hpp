@@ -119,8 +119,7 @@ namespace webpp::uri {
         static constexpr void special_authority_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
             /// https://url.spec.whatwg.org/#special-authority-slashes-state
 
-            if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) {
-                ctx.pos += 2;
+            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
                 special_authority_ignore_slashes_state(ctx);
                 return;
             }
@@ -132,13 +131,8 @@ namespace webpp::uri {
           parsing_uri_context<T...>& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
-            if (ctx.pos != ctx.end) {
-                switch (*ctx.pos) {
-                    case '\\':
-                    case '/': set_warning(ctx.status, uri_status::missing_following_solidus); break;
-                    default: break;
-                }
-                ++ctx.pos;
+            if (ascii::inc_if_any(ctx.pos, ctx.end, '\\', '/')) {
+                set_warning(ctx.status, uri_status::missing_following_solidus);
 
                 // todo: set authority
                 set_valid(ctx.status, uri_status::valid_authority);

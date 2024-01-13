@@ -9,6 +9,7 @@
 #include "details/host_ip.hpp"
 #include "details/uri_components_encoding.hpp"
 #include "details/uri_status.hpp"
+#include "details/windows_drive_letter.hpp"
 #include "encoding.hpp"
 #include "host_authority.hpp"
 #include "port.hpp"
@@ -331,8 +332,12 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
-        if (ctx.out.has_hostname() && ctx.out.get_hostname() == "localhost") {
-            ctx.out.clear_hostname();
+        if (ctx.out.has_hostname()) {
+            if (ctx.out.get_hostname() == "localhost") {
+                ctx.out.clear_hostname();
+            } else if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
+            }
         }
     }
 

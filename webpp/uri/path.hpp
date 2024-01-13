@@ -11,6 +11,7 @@
 #include "../strings/peek.hpp"
 #include "details/constants.hpp"
 #include "details/uri_components_encoding.hpp"
+#include "details/windows_drive_letter.hpp"
 #include "encoding.hpp"
 
 #include <compare>
@@ -63,11 +64,6 @@ namespace webpp::uri {
         //           // inclusive, excluding surrogates and noncharacters.
         //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
-
-        template <typename... T>
-        static constexpr bool has_normalized_windows_driver_letter(parsing_uri_context<T...>& ctx) noexcept {
-            return ASCII_ALPHA.contains(*ctx.pos) && ctx.pos[1] == ':';
-        }
 
         // todo: remove this if it's not needed anymore
         template <typename... T>
@@ -296,7 +292,7 @@ namespace webpp::uri {
         }
 
         bool const is_windows_path =
-          details::has_normalized_windows_driver_letter(ctx) && ctx.out.get_scheme() == "file";
+          details::has_normalized_windows_driver_letter(ctx.pos) && ctx.out.get_scheme() == "file";
 
 
         stl::uint64_t slash_loc_cache = 0;
