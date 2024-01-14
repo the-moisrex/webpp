@@ -340,8 +340,10 @@ namespace webpp::uri {
                 ctx.out.clear_hostname();
             }
         }
-        if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-            set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
+        if constexpr (Options.allow_windows_drive_letters) {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
+            }
         }
     }
 

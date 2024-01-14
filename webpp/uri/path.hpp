@@ -292,7 +292,8 @@ namespace webpp::uri {
         }
 
         bool const is_windows_path =
-          details::has_normalized_windows_driver_letter(ctx.pos) && ctx.out.get_scheme() == "file";
+          Options.allow_windows_drive_letters && details::has_normalized_windows_driver_letter(ctx.pos) &&
+          ctx.out.get_scheme() == "file";
 
 
         stl::uint64_t slash_loc_cache = 0;
