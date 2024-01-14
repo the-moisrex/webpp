@@ -323,6 +323,9 @@ namespace webpp::uri {
       parsing_uri_context<T...>::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
+        static_assert(Options.allow_file_hosts,
+                      "This function should not be reached if hosts in 'file://' scheme are not allowed.");
+
         static constexpr auto parsing_options = [] constexpr noexcept {
             uri_parsing_options options = Options;
             options.parse_credentails   = false;
@@ -335,9 +338,10 @@ namespace webpp::uri {
         if (ctx.out.has_hostname()) {
             if (ctx.out.get_hostname() == "localhost") {
                 ctx.out.clear_hostname();
-            } else if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
             }
+        }
+        if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+            set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
         }
     }
 
@@ -411,10 +415,12 @@ namespace webpp::uri {
             return;
         }
 
-        if (ctx.is_special && ctx.out.get_scheme() == "file") {
-            // todo: should we set the status instead?
-            parse_file_host(ctx);
-            return;
+        if constexpr (Options.allow_file_hosts) {
+            if (ctx.is_special && ctx.out.get_scheme() == "file") {
+                // todo: should we set the status instead?
+                parse_file_host(ctx);
+                return;
+            }
         }
 
         // Handle missing host situation, and ipv6:

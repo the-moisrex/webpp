@@ -33,7 +33,7 @@ namespace webpp::uri {
             }
         }
 
-        template <typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void file_slash_state(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
@@ -42,7 +42,13 @@ namespace webpp::uri {
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                    case '/': set_valid(ctx.status, uri_status::valid_file_host); return;
+                    case '/':
+                        if constexpr (Options.allow_file_hosts) {
+                            set_valid(ctx.status, uri_status::valid_file_host);
+                        } else {
+                            set_valid(ctx.status, uri_status::valid_path);
+                        }
+                        return;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -59,7 +65,7 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_path);
         }
 
-        template <typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void file_state(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
@@ -75,7 +81,7 @@ namespace webpp::uri {
             // todo: check for end
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                case '/': file_slash_state(ctx); return;
+                case '/': file_slash_state<Options>(ctx); return;
             }
 
             if constexpr (ctx_type::has_base_uri) {
@@ -87,7 +93,7 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_path);
         }
 
-        template <typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void no_scheme_state(parsing_uri_context<T...>& ctx) noexcept(
           parsing_uri_context<T...>::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
@@ -108,7 +114,7 @@ namespace webpp::uri {
                     relative_state(ctx);
                     return;
                 } else {
-                    file_state(ctx);
+                    file_state<Options>(ctx);
                     return;
                 }
             }
@@ -193,7 +199,7 @@ namespace webpp::uri {
             // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
             ctx.pos = ctx.beg;
             ctx.out.clear_scheme();
-            details::no_scheme_state(ctx);
+            details::no_scheme_state<Options>(ctx);
         }
 
         ++ctx.pos;
@@ -234,12 +240,10 @@ namespace webpp::uri {
             if (ctx.out.get_scheme() == "file") {
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
-                if (ctx.end - ctx.pos >= 2 && (ctx.pos[0] == '/' && ctx.pos[1] == '/')) [[likely]] {
-                    ctx.pos += 2;
-                } else {
+                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
-                details::file_state(ctx);
+                details::file_state<Options>(ctx);
                 return;
             }
             if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
@@ -253,8 +257,7 @@ namespace webpp::uri {
                 }
             }
 
-            if (ctx.pos != ctx.end && *ctx.pos == '/') {
-                ++ctx.pos;
+            if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
                 details::path_or_authority_state(ctx);
                 return;
             }

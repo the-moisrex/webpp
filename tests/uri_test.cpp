@@ -262,6 +262,48 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(context.out.has_fragment());
 }
 
+TYPED_TEST(URITests, InvalidSchemes) {
+    constexpr stl::array<stl::string_view, 5> strs{
+      "https::",
+      "http::",
+      "file|",
+      "file/",
+      "urn/",
+      // todo: add more
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+
+        EXPECT_TRUE(uri::has_error(context.status))
+          << to_string(uri::get_value(context.status)) << "\n"
+          << str;
+    }
+}
+
+TYPED_TEST(URITests, ValidSchemes) {
+    constexpr stl::array<stl::string_view, 7> strs{
+      "file::",      // yep, I know!
+      "file:::::::", // I know, I know!
+      "https:",
+      "http:",
+      "file:",
+      "file:",
+      "urn:",
+      // todo: add more
+    };
+
+    for (auto const str : strs) {
+        auto context = this->template get_context<TypeParam>(str);
+        uri::parse_uri(context);
+
+        EXPECT_FALSE(uri::has_error(context.status))
+          << to_string(uri::get_value(context.status)) << "\n"
+          << str;
+    }
+}
+
 TYPED_TEST(URITests, PathIteratorTest) {
     uri::path_iterator<default_traits> iter{"/page/one"};
     EXPECT_TRUE(iter.check_segment("page"));
@@ -785,6 +827,17 @@ TYPED_TEST(URITests, LocalhostFileScheme) {
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
     EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
     EXPECT_EQ(context.out.get_path(), "/page/one");
+}
+
+TYPED_TEST(URITests, LocalhostFileSchemeStrict) {
+    constexpr stl::string_view str = "file://localhost/page/one";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::strict_uri_parsing_options>(context);
+    EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
+    EXPECT_EQ(context.out.get_path(), "localhost/page/one");
+    // todo: should this have a warning too?
 }
 
 TYPED_TEST(URITests, InsaneUrl) {

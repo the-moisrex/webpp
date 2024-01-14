@@ -63,6 +63,10 @@ namespace webpp::uri {
         /// Invalid characters (except in domains and schems and what not) are considered a warning, not an
         /// error in WHATWG
         bool allow_invalid_characters = true;
+
+        /// file:// scheme can have hosts in WHATWG, even though not everyone using URL parser would need such
+        /// a feature, so you can disable it now
+        bool allow_file_hosts = true;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -78,6 +82,7 @@ namespace webpp::uri {
       .allow_ipv4_hex_octets                     = false,
       .allow_ipv4_octal_octets                   = false,
       .allow_invalid_characters                  = false,
+      .allow_file_hosts                          = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -93,6 +98,7 @@ namespace webpp::uri {
       .allow_ipv4_hex_octets                     = true,
       .allow_ipv4_octal_octets                   = true,
       .allow_invalid_characters                  = true,
+      .allow_file_hosts                          = true,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
