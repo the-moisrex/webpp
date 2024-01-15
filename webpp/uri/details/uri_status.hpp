@@ -18,7 +18,7 @@ namespace webpp::uri {
     /// URI Parsing Options,
     /// These options are designed to
     /// Default values are WHATWG-Compliant values (if relavant)
-    static constexpr struct uri_parsing_options {
+    static constexpr struct alignas(16) uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
         bool eof_is_valid = false;
@@ -157,10 +157,11 @@ namespace webpp::uri {
         empty_string      = error_bit | 2U,    // the URI/URL/.. is empty
 
         // scheme-specific errors/warnings:
-        scheme_ended_unexpectedly       = error_bit | 3U,
-        incompatible_schemes            = error_bit | 4U,
+        invalid_scheme_character        = error_bit | 3U,
+        scheme_ended_unexpectedly       = error_bit | 4U,
+        incompatible_schemes            = error_bit | 5U,
         missing_following_solidus       = warning_bit >> 1U, // Missing '//' after 'file:'
-        missing_scheme_non_relative_url = error_bit | 5U,
+        missing_scheme_non_relative_url = error_bit | 6U,
 
         // host-specific errors:
         valid_path_or_authority = valid_bit | 3U,
@@ -168,15 +169,15 @@ namespace webpp::uri {
         valid_file_host         = valid_bit | 5U,
         valid_port              = valid_bit | 6U,
         valid_authority_end     = valid_bit | 7U,
-        subdomain_too_long      = error_bit | 6U, // the subdomain is too long
-        dot_at_end              = error_bit | 7U, // the domain ended unexpectedly
-        begin_with_hyphen       = error_bit | 8U, // the domain cannot start with hyphens
-        end_with_hyphen         = error_bit | 9U, // the domain cannot end with hyphens
-        double_hyphen   = error_bit | 10U, // the domain cannot have double hyphens unless it's a punycode
-        empty_subdomain = error_bit | 11U, // a domain/subdomain cannot be empty (no double dotting)
-        host_missing    = error_bit | 12U,
-        invalid_host_code_point   = error_bit | 13U, // non-special (opaque) host contains invalid character
-        invalid_domain_code_point = error_bit | 14U, // domain name contains invalid chars
+        subdomain_too_long      = error_bit | 7U,  // the subdomain is too long
+        dot_at_end              = error_bit | 8U,  // the domain ended unexpectedly
+        begin_with_hyphen       = error_bit | 9U,  // the domain cannot start with hyphens
+        end_with_hyphen         = error_bit | 10U, // the domain cannot end with hyphens
+        double_hyphen   = error_bit | 11U, // the domain cannot have double hyphens unless it's a punycode
+        empty_subdomain = error_bit | 12U, // a domain/subdomain cannot be empty (no double dotting)
+        host_missing    = error_bit | 13U,
+        invalid_host_code_point   = error_bit | 14U, // non-special (opaque) host contains invalid character
+        invalid_domain_code_point = error_bit | 15U, // domain name contains invalid chars
         has_credentials           = warning_bit >> 2U,
 
         // ipv4-specific errors and warnings:
@@ -193,12 +194,12 @@ namespace webpp::uri {
         ip_invalid_colon_usage  = error_bit | stl::to_underlying(ip_address_status::invalid_colon_usage),
 
         // ipv6-specific errors and warnings:
-        ipv6_unclosed           = error_bit | 15U,
-        ipv6_char_after_closing = error_bit | 16U,
+        ipv6_unclosed           = error_bit | 16U,
+        ipv6_char_after_closing = error_bit | 17U,
 
         // port-specific errors:
-        port_out_of_range = error_bit | 17U,
-        port_invalid      = error_bit | 18U, // invalid characters and what not
+        port_out_of_range = error_bit | 18U,
+        port_invalid      = error_bit | 19U, // invalid characters and what not
 
         // path-specific errors/warnings:
         valid_path                   = valid_bit | 8U,
@@ -239,7 +240,7 @@ namespace webpp::uri {
                 return {"The URI is empty."};
 
 
-                // scheme-specific errors:
+                // authority-specific errors:
             case valid_path_or_authority:
                 return {"Valid scheme that should be followed by a path or an authority."};
             case valid_authority:
@@ -255,6 +256,9 @@ namespace webpp::uri {
                   "(meaning the next part of the URI should be a path, query, "
                   "fragment, or a combination of them); "
                   "parsing is not done yet."};
+
+                // scheme-specific errors:
+            case invalid_scheme_character: return {"Invlaid character found in the scheme of the URI."};
             case scheme_ended_unexpectedly:
                 return {"This URI doesn't seem to have enough information, not even a qualified scheme."};
             case incompatible_schemes:

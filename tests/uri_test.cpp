@@ -95,7 +95,7 @@ TYPED_TEST(URITests, IntegralSchemeParsing) {
     constexpr stl::string_view      str = "http://";
     uri::parsing_uri_context_view<> context{.beg = str.begin(), .pos = str.begin(), .end = str.end()};
     uri::parse_scheme(context);
-    auto const res = static_cast<uri::uri_status>(context.status);
+    auto const res = uri::get_value(context.status);
     EXPECT_EQ(res, uri::uri_status::valid_authority) << to_string(res);
     EXPECT_EQ(context.out.get_scheme(), "http");
     EXPECT_EQ(context.pos - str.begin(), 7);
@@ -283,10 +283,14 @@ TYPED_TEST(URITests, InvalidSchemes) {
 }
 
 TYPED_TEST(URITests, ValidSchemes) {
-    constexpr stl::array<stl::string_view, 7> strs{
+    constexpr stl::array<stl::string_view, 11> strs{
       "file::",      // yep, I know!
       "file:::::::", // I know, I know!
       "https:",
+      "https:/",
+      "https://",
+      "https:///",
+      "https:///////////////////////",
       "http:",
       "file:",
       "file:",
@@ -296,7 +300,7 @@ TYPED_TEST(URITests, ValidSchemes) {
 
     for (auto const str : strs) {
         auto context = this->template get_context<TypeParam>(str);
-        uri::parse_uri(context);
+        uri::parse_scheme(context);
 
         EXPECT_FALSE(uri::has_error(context.status))
           << to_string(uri::get_value(context.status)) << "\n"

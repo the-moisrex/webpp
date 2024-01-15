@@ -122,29 +122,14 @@ namespace webpp::uri {
         }
 
         template <typename... T>
-        static constexpr void special_authority_slashes_state(parsing_uri_context<T...>& ctx) noexcept {
-            /// https://url.spec.whatwg.org/#special-authority-slashes-state
-
-            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
-                special_authority_ignore_slashes_state(ctx);
-                return;
-            }
-            set_warning(ctx.status, uri_status::missing_following_solidus);
-        }
-
-        template <typename... T>
         static constexpr void special_authority_ignore_slashes_state(
           parsing_uri_context<T...>& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
-            if (ascii::inc_if_any(ctx.pos, ctx.end, '\\', '/')) {
+            while (ascii::inc_if_any(ctx.pos, ctx.end, '\\', '/')) {
                 set_warning(ctx.status, uri_status::missing_following_solidus);
-
-                // todo: set authority
-                set_valid(ctx.status, uri_status::valid_authority);
-                return;
             }
-            set_warning(ctx.status, uri_status::missing_following_solidus);
+            set_valid(ctx.status, uri_status::valid_authority);
         }
 
         template <typename... T>
@@ -160,15 +145,7 @@ namespace webpp::uri {
         }
 
         template <typename... T>
-        static constexpr void path_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
-            // https://url.spec.whatwg.org/#path-or-authority-state
-
-            if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
-                set_valid(ctx.status, uri_status::valid_authority);
-                return;
-            }
-            set_valid(ctx.status, uri_status::valid_path);
-        }
+        static constexpr void path_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {}
 
 
     } // namespace details
@@ -187,7 +164,7 @@ namespace webpp::uri {
           details::ascii_bitmap(details::ascii_bitmap{ALPHA_DIGIT<char_type>}, '+', '-', '.');
 
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
-        if (ctx.pos == ctx.end) {
+        if (ctx.pos == ctx.end) [[unlikely]] {
             ctx.status = stl::to_underlying(empty_string);
             return;
         }
@@ -207,37 +184,17 @@ namespace webpp::uri {
         // scheme state (https://url.spec.whatwg.org/#scheme-state)
         // handling alpha, num, +, -, .
         ctx.pos = alnum_plus.find_first_not_in(ctx.pos, ctx.end);
-        if (ctx.pos == ctx.end) {
+        if (ctx.pos == ctx.end) [[unlikely]] {
             ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
             return;
         }
 
         // handling ":" character
-        if (*ctx.pos == ':') {
-            // if constexpr (ctx_type::is_overridable) {
-            //     const auto url_scheme =
-            //       stl::basic_string_view<char_type>{ctx.pos,
-            //                                         static_cast<stl::size_t>(ctx.pos - ctx.beg)};
-            //     if (is_special_scheme(url_scheme) != is_special_scheme(ctx.out.scheme)) {
-            //         ctx.status = stl::to_underlying(incompatible_schemes);
-            //         return;
-            //     }
-
-
-            //     if (ctx.in.scheme() == "file") {
-            //         if (ctx.in.has_credentials() || ctx.out.has_port() || ctx.in.has_host()) {
-            //             ctx.status = stl::to_underlying(incompatible_schemes);
-            //             return;
-            //         }
-            //     }
-
-            //     ctx.out.clear_port();
-            // }
-
+        if (*ctx.pos == ':') [[likely]] {
             ctx.out.set_scheme(ctx.beg, ctx.pos);
             ++ctx.pos;
 
-            if (ctx.out.get_scheme() == "file") {
+            if (ctx.out.get_scheme() == "file") [[unlikely]] {
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
@@ -255,14 +212,29 @@ namespace webpp::uri {
                         details::special_relative_or_authority_state(ctx);
                     }
                 }
+
+                /// https://url.spec.whatwg.org/#special-authority-slashes-state
+                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
+                    set_warning(ctx.status, missing_following_solidus);
+                }
+                details::special_authority_ignore_slashes_state(ctx);
+                return;
             }
 
             if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
-                details::path_or_authority_state(ctx);
+                // https://url.spec.whatwg.org/#path-or-authority-state
+                if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
+                    set_valid(ctx.status, valid_authority);
+                    return;
+                }
+                set_valid(ctx.status, valid_path);
                 return;
             }
+
             ctx.out.clear_path();
             set_valid(ctx.status, valid_opaque_path);
+        } else {
+            set_error(ctx.status, invalid_scheme_character);
         }
     }
 

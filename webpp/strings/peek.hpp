@@ -15,7 +15,7 @@ namespace webpp::ascii {
             return pos != end && ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            return pos + sizeof...(ValT) < end && ((val == *pos++) && ...);
+            return pos + sizeof...(ValT) <= end && ((val == *pos++) && ...);
         }
     }
 
@@ -27,7 +27,7 @@ namespace webpp::ascii {
             return pos == end || ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            return pos + sizeof...(ValT) < end && ((val == *pos++) && ...) || pos == end;
+            return pos + sizeof...(ValT) <= end && ((val == *pos++) && ...) || pos == end;
         }
     }
 
@@ -58,7 +58,7 @@ namespace webpp::ascii {
         } else {
             auto tmp_pos = pos;
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            if (pos + sizeof...(ValT) < end && ((val == *tmp_pos++) && ...)) {
+            if (pos + sizeof...(ValT) <= end && ((val == *tmp_pos++) && ...)) {
                 pos = tmp_pos;
                 return true;
             }
