@@ -177,6 +177,7 @@ namespace webpp::uri {
             ctx.pos = ctx.beg;
             ctx.out.clear_scheme();
             details::no_scheme_state<Options>(ctx);
+            return;
         }
 
         ++ctx.pos;

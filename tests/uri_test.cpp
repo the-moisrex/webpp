@@ -283,7 +283,7 @@ TYPED_TEST(URITests, InvalidSchemes) {
 }
 
 TYPED_TEST(URITests, ValidSchemes) {
-    constexpr stl::array<stl::string_view, 11> strs{
+    constexpr stl::array<stl::string_view, 12> strs{
       "file::",      // yep, I know!
       "file:::::::", // I know, I know!
       "https:",
@@ -295,6 +295,11 @@ TYPED_TEST(URITests, ValidSchemes) {
       "file:",
       "file:",
       "urn:",
+
+      // binary of "hello world" encoded within:
+      "https:/\\\\//\\\\////\\\\\\\\//\\\\/\\\\/\\\\\\\\/\\\\\\\\///\\\\\\\\/\\\\\\\\///\\\\\\\\/"
+      "\\\\\\\\\\\\\\\\//\\\\//////\\\\/\\\\/\\\\\\\\\\\\/\\\\\\\\/\\\\\\\\\\\\\\\\/\\\\\\\\\\\\//\\\\//"
+      "\\\\\\\\/\\\\\\\\///\\\\\\\\//\\\\//",
       // todo: add more
     };
 
@@ -523,6 +528,18 @@ TYPED_TEST(URITests, DontGetFooledURI) {
 
 TYPED_TEST(URITests, FuckedUpURL) {
     constexpr stl::string_view str = "file://C|\\windows";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
+    }
+}
+
+TYPED_TEST(URITests, FuckedUpURLUppercasedScheme) {
+    constexpr stl::string_view str = "FiLE://C|\\windows";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);

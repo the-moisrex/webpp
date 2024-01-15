@@ -28,17 +28,17 @@ namespace webpp::ascii {
      * not affect that.
      */
     template <istl::CharType CharT>
-    [[nodiscard]] constexpr CharT to_upper_copy(CharT c) noexcept {
+    [[nodiscard]] constexpr CharT to_upper_copy(CharT inp_char) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
-        return c >= 'a' && c <= 'z' ? c - diff : c;
+        return inp_char >= 'a' && inp_char <= 'z' ? inp_char - diff : inp_char;
     }
 
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
-    static constexpr void to_upper(CharT& c) noexcept {
+    static constexpr void to_upper(CharT& inp_char) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
-        if (c >= 'a' && c <= 'z') {
-            c -= diff;
+        if (inp_char >= 'a' && inp_char <= 'z') {
+            inp_char -= diff;
         }
     }
 
@@ -49,17 +49,17 @@ namespace webpp::ascii {
      * not affect that.
      */
     template <istl::CharType CharT>
-    [[nodiscard]] constexpr auto to_lower_copy(CharT c) noexcept {
+    [[nodiscard]] constexpr auto to_lower_copy(CharT inp_char) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
-        return c >= 'A' && c <= 'Z' ? c + diff : c;
+        return inp_char >= 'A' && inp_char <= 'Z' ? inp_char + diff : inp_char;
     }
 
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
-    static constexpr void to_lower(CharT& c) noexcept {
+    static constexpr void to_lower(CharT& inp_char) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
-        if (c >= 'A' && c <= 'Z') {
-            c += diff;
+        if (inp_char >= 'A' && inp_char <= 'Z') {
+            inp_char += diff;
         }
     }
 
@@ -67,23 +67,22 @@ namespace webpp::ascii {
      * The "algo" namespace is used for when there are multiple algorithms for the same purpose.
      */
     namespace algo {
+        // NOLINTNEXTLINE(*-macro-usage)
 #define WEBPP_ALGO(method)                                                           \
     template <istl::CharType CharT>                                                  \
         requires(!stl::is_const_v<CharT>)                                            \
     static constexpr void simple_##method(CharT* start, const CharT* end) noexcept { \
-        auto* it = start;                                                            \
-        for (; it != end; ++it) {                                                    \
-            method(*it);                                                             \
+        for (; start != end; ++start) {                                              \
+            method(*start);                                                          \
         }                                                                            \
     }                                                                                \
                                                                                      \
     static constexpr void simple_##method(istl::Stringifiable auto& str) noexcept {  \
         using str_t          = stl::remove_cvref_t<decltype(str)>;                   \
         using char_type      = istl::char_type_of_t<str_t>;                          \
-        char_type*       it  = istl::string_data(str);                               \
-        const char_type* end = it + size(str);                                       \
-        for (; it != end; ++it) {                                                    \
-            method(*it);                                                             \
+        const char_type* end = istl::string_data(str) + size(str);                   \
+        for (char_type* pos = istl::string_data(str); pos != end; ++pos) {           \
+            method(*pos);                                                            \
         }                                                                            \
     }
 
@@ -120,11 +119,12 @@ namespace webpp::ascii {
 #endif
     } // namespace algo
 
+    // NOLINTNEXTLINE(*-macro-usage)
 #define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                    \
     template <istl::CharType CharT>                                                                   \
-    static constexpr_state void method(CharT* it) noexcept {                                          \
-        for (; *it != '\0'; ++it)                                                                     \
-            method(*it);                                                                              \
+    static constexpr_state void method(CharT* pos) noexcept {                                         \
+        for (; *pos != '\0'; ++pos)                                                                   \
+            method(*pos);                                                                             \
     }                                                                                                 \
                                                                                                       \
     static constexpr_state void method(istl::Stringifiable auto& str) noexcept {                      \
@@ -158,19 +158,19 @@ namespace webpp::ascii {
 #undef WEBPP_TO_METHOD
 
     template <typename T>
-    [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& _str, T&& data) noexcept {
-        return istl::string_viewify(_str).starts_with(stl::forward<T>(data));
+    [[nodiscard]] constexpr bool starts_with(istl::StringViewifiable auto&& inp_str, T&& data) noexcept {
+        return istl::string_viewify(inp_str).starts_with(stl::forward<T>(data));
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&       _str,
-                                           istl::char_type_of_t<decltype(_str)> c) noexcept {
-        auto const str = istl::string_viewify(_str);
-        return !str.empty() && str.back() == c;
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&&          inp_str,
+                                           istl::char_type_of_t<decltype(inp_str)> inp_char) noexcept {
+        auto const str = istl::string_viewify(inp_str);
+        return !str.empty() && str.back() == inp_char;
     }
 
-    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& _str,
-                                           istl::StringViewifiable auto&& _ending) noexcept {
-        return istl::string_viewify(_str).ends_with(istl::string_viewify(_ending));
+    [[nodiscard]] constexpr bool ends_with(istl::StringViewifiable auto&& inp_str,
+                                           istl::StringViewifiable auto&& inp_ending) noexcept {
+        return istl::string_viewify(inp_str).ends_with(istl::string_viewify(inp_ending));
     }
 
     //    template <typename ValueType, typename... R>
