@@ -911,3 +911,44 @@ static void TLR_UtopiaToLowerString3(benchmark::State& state) {
 }
 
 BENCHMARK(TLR_UtopiaToLowerString3);
+
+///////////////////////// To Lower Ascii from ada-url ///////////////////////////////
+
+constexpr uint64_t broadcast(uint8_t v) noexcept {
+    return 0x101'0101'0101'0101ull * v;
+}
+
+constexpr bool to_lower_ascii(char* input, size_t length) noexcept {
+    uint64_t broadcast_80 = broadcast(0x80);
+    uint64_t broadcast_Ap = broadcast(128 - 'A');
+    uint64_t broadcast_Zp = broadcast(128 - 'Z' - 1);
+    uint64_t non_ascii    = 0;
+    size_t   i            = 0;
+
+    for (; i + 7 < length; i += 8) {
+        uint64_t word{};
+        memcpy(&word, input + i, sizeof(word));
+        non_ascii |= (word & broadcast_80);
+        word      ^= (((word + broadcast_Ap) ^ (word + broadcast_Zp)) & broadcast_80) >> 2;
+        memcpy(input + i, &word, sizeof(word));
+    }
+    if (i < length) {
+        uint64_t word{};
+        memcpy(&word, input + i, length - i);
+        non_ascii |= (word & broadcast_80);
+        word      ^= (((word + broadcast_Ap) ^ (word + broadcast_Zp)) & broadcast_80) >> 2;
+        memcpy(input + i, &word, length - i);
+    }
+    return non_ascii == 0;
+}
+
+static void TLR_AdaToLowerAscii(benchmark::State& state) {
+    auto str = str_generator();
+    for (auto _ : state) {
+        std::string istr = str;
+        to_lower_ascii(istr.data(), istr.size());
+        benchmark::DoNotOptimize(istr);
+    }
+}
+
+BENCHMARK(TLR_AdaToLowerAscii);
