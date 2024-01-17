@@ -144,10 +144,6 @@ namespace webpp::uri {
             relative_state(ctx);
         }
 
-        template <typename... T>
-        static constexpr void path_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {}
-
-
     } // namespace details
 
     /**
