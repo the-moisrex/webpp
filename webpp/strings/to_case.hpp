@@ -199,6 +199,78 @@ namespace webpp::ascii {
     //    }
     //
 
+    [[nodiscard]] static consteval stl::uint64_t broadcast(stl::uint8_t const val) noexcept {
+        return 0x101'0101'0101'0101ULL * val; // NOLINT(*-magic-numbers)
+    }
+
+    template <typename InpIter, typename OutIter>
+    constexpr void lower_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
+        // using char_type = typename stl::iterator_traits<InpIter>::value_type;
+        // if constexpr (sizeof(char_type) == sizeof(char)) {
+        //     webpp_static_constexpr auto broadcast_80 = broadcast(0x80U);
+        //     webpp_static_constexpr auto A_pack       = broadcast(128 - 'A');
+        //     webpp_static_constexpr auto Z_pack       = broadcast(128 - 'Z' - 1);
+        //     stl::size_t                 index        = 0;
+        //
+        //     // using SWAR (SIMD Within A Register)
+        //     for (; index - sizeof(stl::uint64_t) <= length;
+        //          index                       += sizeof(stl::uint64_t))
+        //     {
+        //         webpp_assume(*inp < 128 && *inp >= 0);
+        //         stl::uint64_t word{};
+        //         stl::memcpy(&word, inp + index, sizeof(word));
+        //         word ^= (((word + A_pack) ^ (word + Z_pack)) & broadcast_80) >> 2U;
+        //         stl::memcpy(out + index, &word, sizeof(word));
+        //     }
+        //
+        //     // the remaining characters:
+        //     if (index < length) {
+        //         stl::uint64_t word{};
+        //         stl::memcpy(&word, inp + index, length - index);
+        //         word ^= (((word + A_pack) ^ (word + Z_pack)) & broadcast_80) >> 2U;
+        //         stl::memcpy(out + index, &word, length - index);
+        //     }
+        // } else {
+        auto const end = inp + length;
+        while (inp != end) {
+            *out++ = to_lower_copy(*inp++);
+        }
+        // }
+    }
+
+    template <typename InpIter, typename OutIter>
+    constexpr void upper_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
+        auto const end = inp + length;
+        while (inp != end) {
+            *out++ = to_upper_copy(*inp++);
+        }
+    }
+
+    template <typename It, typename EIt = It>
+    constexpr void lower_to(istl::String auto& out, It beg, EIt end) {
+#if __cpp_lib_string_resize_and_overwrite
+        out.resize_and_overwrite(end - beg, [beg](auto* ptr, stl::size_t const length) constexpr noexcept {
+            lower_to(beg, ptr, length);
+            return length;
+        });
+#else
+        out.resize(end - beg);
+        lower_to(beg, out.begin(), end - beg);
+#endif
+    }
+
+    template <typename It, typename EIt = It>
+    constexpr void upper_to(istl::String auto& out, It beg, EIt end) {
+#if __cpp_lib_string_resize_and_overwrite
+        out.resize_and_overwrite(end - beg, [beg](auto* ptr, stl::size_t const length) constexpr noexcept {
+            upper_to(beg, ptr, length);
+            return length;
+        });
+#else
+        out.resize(end - beg);
+        upper_to(beg, out.begin(), end - beg);
+#endif
+    }
 
 } // namespace webpp::ascii
 

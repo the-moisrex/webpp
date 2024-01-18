@@ -188,7 +188,7 @@ namespace webpp::uri {
 
         // handling ":" character
         if (*ctx.pos == ':') [[likely]] {
-            ctx.out.set_scheme(ctx.beg, ctx.pos);
+            ctx.out.set_lowered_scheme(ctx.beg, ctx.pos);
             ++ctx.pos;
 
             if (ctx.out.get_scheme() == "file") [[unlikely]] {

@@ -7,6 +7,7 @@
 #include "../../std/map.hpp"
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
+#include "../../strings/to_case.hpp"
 #include "./uri_status.hpp"
 
 #include <cstdint>
@@ -81,6 +82,10 @@ namespace webpp::uri {
         constexpr void set_scheme(iterator beg, iterator end) noexcept {
             uri_beg    = beg;
             scheme_end = uri_end = static_cast<seg_type>(end - beg);
+        }
+
+        constexpr void set_lowered_scheme(iterator beg, iterator end) noexcept {
+            set_scheme(beg, end);
         }
 
         constexpr void set_path(seg_type beg, seg_type end) noexcept {
@@ -356,34 +361,50 @@ namespace webpp::uri {
 
       public:
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                          \
-    template <istl::StringView StrVT = stl::basic_string_view<char_type>>         \
-    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                  \
-        return {m_##field.data(), m_##field.size()};                              \
-    }                                                                             \
-                                                                                  \
-    constexpr void clear_##field() noexcept {                                     \
-        istl::clear(m_##field);                                                   \
-    }                                                                             \
-                                                                                  \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {                   \
-        return !m_##field.empty();                                                \
-    }                                                                             \
-                                                                                  \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) { \
-        istl::assign(m_##field, beg, end);                                        \
-    }                                                                             \
-                                                                                  \
-    constexpr void set_##field(string_type str) noexcept(is_nothrow) {            \
-        m_##field = stl::move(str);                                               \
-    }                                                                             \
-                                                                                  \
-    constexpr string_type& field##_ref() noexcept {                               \
-        return m_##field;                                                         \
-    }                                                                             \
-                                                                                  \
-    constexpr string_type const& field##_ref() const noexcept {                   \
-        return m_##field;                                                         \
+#define webpp_def(field)                                                                  \
+    template <istl::StringView StrVT = stl::basic_string_view<char_type>>                 \
+    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                          \
+        return {m_##field.data(), m_##field.size()};                                      \
+    }                                                                                     \
+                                                                                          \
+    constexpr void clear_##field() noexcept {                                             \
+        istl::clear(m_##field);                                                           \
+    }                                                                                     \
+                                                                                          \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                           \
+        return !m_##field.empty();                                                        \
+    }                                                                                     \
+                                                                                          \
+    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) { \
+        if constexpr (is_modifiable) {                                                    \
+            ascii::lower_to(m_##field, beg, end);                                         \
+        } else {                                                                          \
+            set_##field(beg, end);                                                        \
+        }                                                                                 \
+    }                                                                                     \
+                                                                                          \
+    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {            \
+        if constexpr (is_modifiable) {                                                    \
+            ascii::lower_to(m_##field, str.begin(), str.end());                           \
+        } else {                                                                          \
+            set_##field(stl::move(str));                                                  \
+        }                                                                                 \
+    }                                                                                     \
+                                                                                          \
+    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {         \
+        istl::assign(m_##field, beg, end);                                                \
+    }                                                                                     \
+                                                                                          \
+    constexpr void set_##field(string_type str) noexcept(is_nothrow) {                    \
+        m_##field = stl::move(str);                                                       \
+    }                                                                                     \
+                                                                                          \
+    constexpr string_type& field##_ref() noexcept {                                       \
+        return m_##field;                                                                 \
+    }                                                                                     \
+                                                                                          \
+    constexpr string_type const& field##_ref() const noexcept {                           \
+        return m_##field;                                                                 \
     }
 
 
@@ -538,6 +559,26 @@ namespace webpp::uri {
         requires(is_##field##_modifiable)                                                           \
     {                                                                                               \
         m_##field = stl::move(str);                                                                 \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow)             \
+        requires(is_##field##_modifiable)                                                           \
+    {                                                                                               \
+        if constexpr (is_modifiable) {                                                              \
+            ascii::lower_to(m_##field, beg, end);                                                   \
+        } else {                                                                                    \
+            set_##field(beg, end);                                                                  \
+        }                                                                                           \
+    }                                                                                               \
+                                                                                                    \
+    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow)                        \
+        requires(is_##field##_modifiable)                                                           \
+    {                                                                                               \
+        if constexpr (is_modifiable) {                                                              \
+            ascii::lower_to(m_##field, str.begin(), str.end());                                     \
+        } else {                                                                                    \
+            set_##field(stl::move(str));                                                            \
+        }                                                                                           \
     }                                                                                               \
                                                                                                     \
     constexpr auto& field##_ref() noexcept {                                                        \
