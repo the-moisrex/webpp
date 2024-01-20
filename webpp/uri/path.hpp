@@ -293,7 +293,7 @@ namespace webpp::uri {
 
         bool const is_windows_path =
           Options.allow_windows_drive_letters && details::has_normalized_windows_driver_letter(ctx.pos) &&
-          ctx.out.get_scheme() == "file";
+          is_file_scheme(ctx.out.get_scheme());
 
 
         stl::uint64_t slash_loc_cache = 0;
@@ -376,9 +376,9 @@ namespace webpp::uri {
 
     template <Slug SlugType = stl::string>
     struct basic_path
-      : public stl::vector<stl::remove_cvref_t<SlugType>,
-                           rebind_allocator<typename stl::remove_cvref_t<SlugType>::allocator_type,
-                                            stl::remove_cvref_t<SlugType>>> {
+      : stl::vector<stl::remove_cvref_t<SlugType>,
+                    rebind_allocator<typename stl::remove_cvref_t<SlugType>::allocator_type,
+                                     stl::remove_cvref_t<SlugType>>> {
         using slug_type           = stl::remove_cvref_t<SlugType>;
         using slug_allocator_type = typename slug_type::allocator_type;
         using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector

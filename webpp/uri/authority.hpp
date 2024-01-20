@@ -316,6 +316,13 @@ namespace webpp::uri {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
+        if constexpr (Options.allow_windows_drive_letters) {
+            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                set_valid(ctx.status, uri_status::valid_path);
+                return;
+            }
+        }
+
         static constexpr auto parsing_options = [] constexpr noexcept {
             uri_parsing_options options = Options;
             options.parse_credentails   = false;
@@ -326,7 +333,7 @@ namespace webpp::uri {
         details::parse_authority_pieces<parsing_options>(ctx);
 
         if (ctx.out.has_hostname()) {
-            if (ctx.out.get_hostname() == "localhost") {
+            if (ascii::iequals<ascii::char_case_side::first_lowered>("localhost", ctx.out.get_hostname())) {
                 ctx.out.clear_hostname();
             }
         }
@@ -408,7 +415,7 @@ namespace webpp::uri {
         }
 
         if constexpr (Options.allow_file_hosts) {
-            if (ctx.is_special && ctx.out.get_scheme() == "file") {
+            if (ctx.is_special && is_file_scheme(ctx.out.get_scheme())) {
                 // todo: should we set the status instead?
                 parse_file_host(ctx);
                 return;

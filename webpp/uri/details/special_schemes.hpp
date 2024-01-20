@@ -4,10 +4,16 @@
 #define WEBPP_SPECIAL_SCHEMES_HPP
 
 #include "../../std/string_view.hpp"
+#include "../../strings/iequals.hpp"
 
 #include <cstdint>
 
 namespace webpp::uri {
+
+    template <istl::StringView StrT>
+    [[nodiscard]] constexpr bool is_file_scheme(StrT scheme) noexcept {
+        return ascii::iequals<ascii::char_case_side::first_lowered>("file", stl::forward<StrT>(scheme));
+    }
 
     /**
      * @return 0 if unknown, otherwise return the port
@@ -17,29 +23,30 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-magic-numbers)
         switch (scheme.size()) {
             case 2:
-                if (scheme[0] == 'w' && scheme[1] == 's') {
-                    return 80u;
+                if ((scheme[0] == 'w' || scheme[0] == 'W') && (scheme[1] == 's' || scheme[1] == 'S')) {
+                    return 80U;
                 }
                 break;
             case 3:
-                if (scheme == "wss") {
-                    return 443u;
-                } else if (scheme == "ftp") {
+                if (ascii::iequals<ascii::char_case_side::first_lowered>("wss", scheme)) {
+                    return 443U;
+                } else if (ascii::iequals<ascii::char_case_side::first_lowered>("ftp", scheme)) {
                     return 21;
                 }
                 break;
             case 4:
-                if (scheme == "http") {
-                    return 80u;
+                if (ascii::iequals<ascii::char_case_side::first_lowered>("http", scheme)) {
+                    return 80U;
                 }
                 break;
             case 5:
-                if (scheme == "https") {
-                    return 443;
+                if (ascii::iequals<ascii::char_case_side::first_lowered>("https", scheme)) {
+                    return 443U;
                 }
                 break;
+            default: break;
         }
-        return 0u;
+        return 0U;
         // NOLINTEND(*-magic-numbers)
     }
 
@@ -62,7 +69,7 @@ namespace webpp::uri {
      */
     template <istl::StringView StrT>
     [[nodiscard]] constexpr bool is_special_scheme(StrT scheme) noexcept {
-        return known_port(scheme) != 0u || scheme == "file";
+        return known_port(scheme) != 0U || is_file_scheme(scheme);
     }
 
 } // namespace webpp::uri

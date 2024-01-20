@@ -13,13 +13,13 @@
 
 namespace webpp::ascii {
 
-    enum struct char_case {
+    enum struct char_case : stl::uint_fast8_t {
         lowered,
         uppered,
         unknown
     };
 
-    enum struct char_case_side {
+    enum struct char_case_side : stl::uint_fast8_t {
         first_lowered,
         second_lowered,
         both_lowered,
@@ -75,42 +75,42 @@ namespace webpp::ascii {
      * todo: benchmark this
      */
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
-    [[nodiscard]] static constexpr bool iequals(CharT a, CharT b) noexcept {
+    [[nodiscard]] static constexpr bool iequals(CharT lhs, CharT rhs) noexcept {
         using enum char_case_side;
         if constexpr (both_lowered == Side || both_uppered == Side) {
-            return a == b;
+            return lhs == rhs;
         } else if constexpr (first_lowered == Side) {
-            return a == b || a == to_lower_copy(b);
+            return lhs == rhs || lhs == to_lower_copy(rhs);
         } else if constexpr (first_uppered == Side) {
-            return a == b || a == to_upper_copy(b);
+            return lhs == rhs || lhs == to_upper_copy(rhs);
         } else if constexpr (second_lowered == Side) {
-            return a == b || to_lower_copy(a) == b;
+            return lhs == rhs || to_lower_copy(lhs) == rhs;
         } else if constexpr (second_uppered == Side) {
-            return a == b || to_upper_copy(a) == b;
+            return lhs == rhs || to_upper_copy(lhs) == rhs;
         } else {
-            if (a == b) {
+            if (lhs == rhs) {
                 return true;
             }
-            to_lower(a);
-            to_lower(b);
-            return a == b;
+            to_lower(lhs);
+            to_lower(rhs);
+            return lhs == rhs;
         }
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
-    [[nodiscard]] static constexpr bool iequals(istl::StringViewifiable auto&& a, CharT b) noexcept {
-        if (a.size() != 1ul) {
+    [[nodiscard]] static constexpr bool iequals(istl::StringViewifiable auto&& lhs, CharT rhs) noexcept {
+        if (lhs.size() != 1UL) {
             return false;
         }
-        return iequals<Side, CharT>(a[0ul], b);
+        return iequals<Side, CharT>(lhs[0UL], rhs);
     }
 
     template <char_case_side Side = char_case_side::both_unknown, istl::CharType CharT>
-    [[nodiscard]] static constexpr bool iequals(CharT a, istl::StringViewifiable auto&& b) noexcept {
-        if (a.size() != 1ul) {
+    [[nodiscard]] static constexpr bool iequals(CharT lhs, istl::StringViewifiable auto&& rhs) noexcept {
+        if (lhs.size() != 1UL) {
             return false;
         }
-        return iequals<Side, CharT>(a, b[0ul]);
+        return iequals<Side, CharT>(lhs, rhs[0UL]);
     }
 
     /**

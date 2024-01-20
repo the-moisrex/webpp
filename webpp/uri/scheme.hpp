@@ -27,7 +27,7 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 // Assert base's scheme is not file
-                assert(ctx.base.scheme() != "file");
+                assert(is_file_scheme(ctx.base.scheme()));
 
                 ctx.out.scheme(ctx.base.scheme());
             }
@@ -52,7 +52,7 @@ namespace webpp::uri {
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.scheme() == "file") {
+                if (is_file_scheme(ctx.base.scheme())) {
                     ctx.out.scheme(ctx.base.scheme());
 
                     // todo:
@@ -85,7 +85,7 @@ namespace webpp::uri {
             }
 
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.scheme() == "file") {
+                if (is_file_scheme(ctx.base.scheme())) {
                     // todo
                 }
             }
@@ -110,7 +110,7 @@ namespace webpp::uri {
                         set_valid(ctx.status, uri_status::valid_fragment);
                         return;
                     }
-                } else if (ctx.base.scheme() != "file") {
+                } else if (is_file_scheme(ctx.base.scheme())) {
                     relative_state(ctx);
                     return;
                 } else {
@@ -191,7 +191,7 @@ namespace webpp::uri {
             ctx.out.set_lowered_scheme(ctx.beg, ctx.pos);
             ++ctx.pos;
 
-            if (ctx.out.get_scheme() == "file") [[unlikely]] {
+            if (is_file_scheme(ctx.out.get_scheme())) [[unlikely]] {
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
