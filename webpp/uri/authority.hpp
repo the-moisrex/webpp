@@ -189,17 +189,7 @@ namespace webpp::uri {
                         }
                         set_valid(ctx.status, valid_path);
                         break;
-                    case '.':
-                        // if constexpr (ctx_type::is_segregated) {
-                        //     coder.end_segment();
-                        //     coder.skip_separator();
-                        //     coder.reset_begin();
-                        //     coder.start_segment();
-                        // } else {
-                        //     coder.skip_separator();
-                        // }
-                        coder.next_segment();
-                        continue;
+                    case '.': coder.next_segment(); continue;
                     case '?':
                         // escape if invalid port found
                         if (must_contain_credentials) {
