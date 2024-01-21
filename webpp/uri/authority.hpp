@@ -15,7 +15,7 @@
 #include "port.hpp"
 
 /**
- * Attention: User infos in URIs are DEPRECATED in URI, but we SHOULD parse it
+ * Attention: User infos in URIs are DEPRECATED, but we SHOULD parse it anyway
  *   https://httpwg.org/specs/rfc9110.html#http.userinfo
  */
 namespace webpp::uri {
@@ -318,6 +318,7 @@ namespace webpp::uri {
 
         if constexpr (Options.allow_windows_drive_letters) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
                 set_valid(ctx.status, uri_status::valid_path);
                 return;
             }

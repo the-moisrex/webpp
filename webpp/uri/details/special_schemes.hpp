@@ -30,7 +30,8 @@ namespace webpp::uri {
             case 3:
                 if (ascii::iequals<ascii::char_case_side::first_lowered>("wss", scheme)) {
                     return 443U;
-                } else if (ascii::iequals<ascii::char_case_side::first_lowered>("ftp", scheme)) {
+                }
+                if (ascii::iequals<ascii::char_case_side::first_lowered>("ftp", scheme)) {
                     return 21;
                 }
                 break;

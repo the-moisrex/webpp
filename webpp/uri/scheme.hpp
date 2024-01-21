@@ -49,6 +49,7 @@ namespace webpp::uri {
                             set_valid(ctx.status, uri_status::valid_path);
                         }
                         return;
+                    default: break;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -82,6 +83,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': file_slash_state<Options>(ctx); return;
+                default: break;
             }
 
             if constexpr (ctx_type::has_base_uri) {

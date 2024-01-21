@@ -408,6 +408,17 @@ namespace webpp::uri {
         return has_warnings(stl::to_underlying(status));
     }
 
+    [[nodiscard]] static constexpr bool has_warning(stl::underlying_type_t<uri_status> const status,
+                                                    uri_status const warning) noexcept {
+        return (status & warnings_mask) != stl::to_underlying(warning);
+    }
+
+    [[nodiscard]] static constexpr bool has_warning(
+      stl::underlying_type_t<uri_status> const status,
+      stl::underlying_type_t<uri_status> const warning) noexcept {
+        return (status & warnings_mask) != warning;
+    }
+
     [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status) noexcept {
         return (error_bit & status) == error_bit;
     }
