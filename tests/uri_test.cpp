@@ -535,8 +535,26 @@ TYPED_TEST(URITests, FuckedUpURL) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
     } else {
-        EXPECT_EQ(context.out.get_path(), "C|\\windows");
+        EXPECT_EQ(context.out.get_path(), "/C|\\windows");
+    }
+}
+
+TYPED_TEST(URITests, SaneFuckedUpURL) {
+    constexpr stl::string_view str = "file:///C|\\windows";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
+      << to_string(uri::get_warning(context.status));
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/C|\\windows");
     }
 }
 
@@ -549,8 +567,10 @@ TYPED_TEST(URITests, FuckedUpURLUppercasedScheme) {
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
     } else {
-        EXPECT_EQ(context.out.get_path(), "C|\\windows");
+        EXPECT_EQ(context.out.get_path(), "/C|\\windows");
     }
 }
 

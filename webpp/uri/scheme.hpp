@@ -79,11 +79,18 @@ namespace webpp::uri {
             }
             ctx.out.clear_hostname();
 
-            // todo: check for end
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+                return;
+            }
+
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': file_slash_state<Options>(ctx); return;
-                default: break;
+                default:
+                    // we have to move one back because the "path" needs to start with a "/" or a "\"
+                    --ctx.pos;
+                    break;
             }
 
             if constexpr (ctx_type::has_base_uri) {
@@ -194,6 +201,7 @@ namespace webpp::uri {
             ++ctx.pos;
 
             if (is_file_scheme(ctx.out.get_scheme())) [[unlikely]] {
+                ctx.is_special = true;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {

@@ -41,6 +41,33 @@ namespace webpp::uri::details {
         }
     }
 
+    template <typename Iter, typename EIter = Iter>
+    [[nodiscard]] static constexpr bool starts_with_windows_driver_letter_slashes(
+      Iter  pos,
+      EIter end) noexcept {
+        // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
+        webpp_assume(end >= pos);
+        switch (end - pos) {
+            case 0:
+            case 1: return false;
+            case 2: return has_windows_driver_letter(pos);
+            default:
+                if (*pos == '/' || *pos == '\\') {
+                    ++pos;
+                }
+                if (!has_windows_driver_letter(pos)) {
+                    return false;
+                }
+                switch (pos[2]) {
+                    case '/':
+                    case '\\':
+                    case '?':
+                    case '#': return true;
+                    default: return false;
+                }
+        }
+    }
+
 
 } // namespace webpp::uri::details
 

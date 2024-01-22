@@ -220,6 +220,33 @@ namespace webpp::uri {
                 encoder.clear_segment();
             }
         }
+
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        static constexpr void handle_windows_driver_letter(
+          parsing_uri_context<T...>& ctx,
+          component_encoder<components::path, parsing_uri_context<T...>>&
+            encoder) noexcept(parsing_uri_context<T...>::is_nothrow) {
+            using ctx_type = parsing_uri_context<T...>;
+            bool const is_windows_path =
+              Options.allow_windows_drive_letters &&
+              details::starts_with_windows_driver_letter_slashes(ctx.pos, ctx.end) &&
+              is_file_scheme(ctx.out.get_scheme());
+
+
+            if constexpr (ctx_type::is_modifiable && Options.allow_windows_drive_letters) {
+                if (is_windows_path) {
+                    encoder.next_segment();
+                    encoder.append_n(1);
+                    encoder.append_inplace_of(':');
+                    if constexpr (!ctx_type::is_segregated) {
+                        encoder.append_inplace_of('/');
+                        encoder.next_segment(0);
+                    } else {
+                        encoder.next_segment();
+                    }
+                }
+            }
+        }
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
@@ -291,15 +318,12 @@ namespace webpp::uri {
             return;
         }
 
-        bool const is_windows_path =
-          Options.allow_windows_drive_letters && details::has_normalized_windows_driver_letter(ctx.pos) &&
-          is_file_scheme(ctx.out.get_scheme());
-
 
         stl::uint64_t slash_loc_cache = 0;
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
+        details::handle_windows_driver_letter(ctx, encoder);
         for (;;) {
             bool is_done = false;
             if (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(

@@ -56,6 +56,7 @@ namespace webpp::uri::details {
         using iter_traits     = stl::iterator_traits<iterator>;
         using difference_type = typename iter_traits::difference_type;
         using value_type      = typename stl::iterator_traits<iterator>::value_type;
+        using char_type       = typename ctx_type::char_type;
 
 
       private:
@@ -251,6 +252,27 @@ namespace webpp::uri::details {
                 append_to(get_output(), *ctx->pos++);
             } else {
                 ++ctx->pos;
+            }
+        }
+
+        constexpr void append_n(difference_type index) noexcept {
+            if constexpr (ctx_type::is_modifiable) {
+                for (; index != 0; --index) {
+                    append_to(get_out_seg(), *ctx->pos++);
+                }
+            }
+        }
+
+        constexpr void append(char_type inp_char) noexcept {
+            if constexpr (ctx_type::is_modifiable) {
+                append_to(get_out_seg(), inp_char);
+            }
+        }
+
+        constexpr void append_inplace_of(char_type inp_char, difference_type index = 1) noexcept {
+            if constexpr (ctx_type::is_modifiable) {
+                append_to(get_out_seg(), inp_char);
+                ctx->pos += index;
             }
         }
 
