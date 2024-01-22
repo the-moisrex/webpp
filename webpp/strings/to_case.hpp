@@ -49,7 +49,7 @@ namespace webpp::ascii {
      * not affect that.
      */
     template <istl::CharType CharT>
-    [[nodiscard]] constexpr auto to_lower_copy(CharT inp_char) noexcept {
+    [[nodiscard]] constexpr CharT to_lower_copy(CharT inp_char) noexcept {
         webpp_static_constexpr CharT diff = 'a' - 'A';
         return inp_char >= 'A' && inp_char <= 'Z' ? inp_char + diff : inp_char;
     }
@@ -205,7 +205,7 @@ namespace webpp::ascii {
 
     template <typename InpIter, typename OutIter>
     constexpr void lower_to(InpIter inp, OutIter out, stl::size_t const length) noexcept {
-        // using char_type = typename stl::iterator_traits<InpIter>::value_type;
+        using char_type = typename stl::iterator_traits<InpIter>::value_type;
         // if constexpr (sizeof(char_type) == sizeof(char)) {
         //     webpp_static_constexpr auto broadcast_80 = broadcast(0x80U);
         //     webpp_static_constexpr auto A_pack       = broadcast(128 - 'A');
@@ -233,7 +233,9 @@ namespace webpp::ascii {
         // } else {
         auto const end = inp + length;
         while (inp != end) {
-            *out++ = to_lower_copy(*inp++);
+            *out = to_lower_copy<char_type>(*inp);
+            ++out;
+            ++inp;
         }
         // }
     }
@@ -273,5 +275,6 @@ namespace webpp::ascii {
     }
 
 } // namespace webpp::ascii
+
 
 #endif // WEBPP_UTILS_STRINGS_H

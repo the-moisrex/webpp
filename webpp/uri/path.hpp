@@ -235,9 +235,13 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::is_modifiable && Options.allow_windows_drive_letters) {
                 if (is_windows_path) {
+                    set_warning(ctx.status, uri_status::windows_drive_letter_used);
                     encoder.next_segment();
                     encoder.append_n(1);
                     encoder.append_inplace_of(':');
+                    if (*ctx.pos == '\\') {
+                        set_warning(ctx.status, uri_status::reverse_solidus_used);
+                    }
                     if constexpr (!ctx_type::is_segregated) {
                         encoder.append_inplace_of('/');
                         encoder.next_segment(0);
@@ -323,7 +327,7 @@ namespace webpp::uri {
 
         details::component_encoder<details::components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
-        details::handle_windows_driver_letter(ctx, encoder);
+        details::handle_windows_driver_letter<Options>(ctx, encoder);
         for (;;) {
             bool is_done = false;
             if (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(

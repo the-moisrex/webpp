@@ -526,7 +526,7 @@ TYPED_TEST(URITests, DontGetFooledURI) {
     EXPECT_EQ(context.out.get_hostname(), "real.example.org");
 }
 
-TYPED_TEST(URITests, FuckedUpURL) {
+TYPED_TEST(URITests, WindowsDriveLetterAsHost) {
     constexpr stl::string_view str = "file://C|\\windows";
 
     auto context = this->template get_context<TypeParam>(str);
@@ -542,12 +542,12 @@ TYPED_TEST(URITests, FuckedUpURL) {
     }
 }
 
-TYPED_TEST(URITests, SaneFuckedUpURL) {
+TYPED_TEST(URITests, WindowsDriveLetterUsed) {
     constexpr stl::string_view str = "file:///C|\\windows";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
-    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_used))
       << to_string(uri::get_warning(context.status));
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(context.out.get_path(), "/C:/windows");
@@ -558,7 +558,21 @@ TYPED_TEST(URITests, SaneFuckedUpURL) {
     }
 }
 
-TYPED_TEST(URITests, FuckedUpURLUppercasedScheme) {
+TYPED_TEST(URITests, WindowsDriveLetterUsedStrict) {
+    constexpr stl::string_view str = "file:///C|\\windows";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri<uri::strict_uri_parsing_options>(context);
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::reverse_solidus_used))
+      << to_string(uri::get_warning(context.status));
+    if constexpr (TypeParam::is_segregated || TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_path(), "/C|/windows");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/C|\\windows");
+    }
+}
+
+TYPED_TEST(URITests, WindowsDriveLetterAsHostUppercasedScheme) {
     constexpr stl::string_view str = "FiLE://C|\\windows";
 
     auto context = this->template get_context<TypeParam>(str);

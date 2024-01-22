@@ -87,10 +87,7 @@ namespace webpp::uri {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/': file_slash_state<Options>(ctx); return;
-                default:
-                    // we have to move one back because the "path" needs to start with a "/" or a "\"
-                    --ctx.pos;
-                    break;
+                default: set_valid(ctx.status, uri_status::valid_file_host); return;
             }
 
             if constexpr (ctx_type::has_base_uri) {

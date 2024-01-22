@@ -115,21 +115,21 @@ namespace webpp::uri {
     ///   - which warnings we have found
     ///   - distinguish between a warning flag and an error flag or a success flag
     ///
-    /// indexes: [ 0 1 2 3  4 5 6 7    8 9 A B  C D E F ] == 16bits
-    /// integer: [ B W W W  W W W W    N N N N  N N N N ]
-    ///            ^ --------------    ----------------
-    ///            |       ^                 ^
-    ///            |       |                 |
-    ///            |       |         valid/error number
-    ///            |       |
-    ///            |       ----> Each warning bit
+    /// indexes: [       B A 9 8    7 6 5 4  3 2 1 0    7 6 5 4  3 2 1 0 ] == 21bits
+    /// integer: [ E     W W W W    W W W W  W W W W    N N N N  N N N N ]
+    ///            ^     -------    ----------------    ----------------
+    ///            |        ^               ^                 ^
+    ///            |        |               |                 |
+    ///            |        |               |         valid/error number
+    ///            |        |               |
+    ///            |        --------------------> Each warning bit
     ///            |
     ///            |
     ///         error bit == 1
     ///         valid bit == 0
-    using uri_status_type                        = stl::uint_fast16_t;
+    using uri_status_type                        = stl::uint_fast32_t;
     static constexpr uri_status_type valid_bit   = 0U;
-    static constexpr uri_status_type error_bit   = 1U << 15U;
+    static constexpr uri_status_type error_bit   = 1U << 20U;
     static constexpr uri_status_type warning_bit = error_bit >> 1U;
 
     /// maximum number between errors and valids must go here,
@@ -202,11 +202,12 @@ namespace webpp::uri {
         port_invalid      = error_bit | 19U, // invalid characters and what not
 
         // path-specific errors/warnings:
-        valid_path                   = valid_bit | 8U,
-        valid_opaque_path            = valid_bit | 9U,
-        reverse_solidus_used         = warning_bit >> 5U,
-        windows_drive_letter_used    = warning_bit >> 6U,
-        windows_drive_letter_as_host = warning_bit >> 7U,
+        valid_path                           = valid_bit | 8U,
+        valid_opaque_path                    = valid_bit | 9U,
+        reverse_solidus_used                 = warning_bit >> 5U,
+        windows_drive_letter_used            = warning_bit >> 6U,
+        windows_drive_letter_in_ralative_url = warning_bit >> 7U,
+        windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
         valid_queries = valid_bit | 10U,
@@ -370,6 +371,8 @@ namespace webpp::uri {
                   "The URI is using backslash instead of a forward slash; "
                   "more info: https://url.spec.whatwg.org/#invalid-reverse-solidus"};
             case windows_drive_letter_used:
+                return {"Windows Drive Letters is being used inside the 'file:' scheme."};
+            case windows_drive_letter_in_ralative_url:
                 return {
                   "The URI is relative, starts with Windows Drive Letter, "
                   "and the base URI's scheme is 'file:'; "
@@ -410,13 +413,13 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr bool has_warning(stl::underlying_type_t<uri_status> const status,
                                                     uri_status const warning) noexcept {
-        return (status & warnings_mask) != stl::to_underlying(warning);
+        return (status & stl::to_underlying(warning)) == stl::to_underlying(warning);
     }
 
     [[nodiscard]] static constexpr bool has_warning(
       stl::underlying_type_t<uri_status> const status,
       stl::underlying_type_t<uri_status> const warning) noexcept {
-        return (status & warnings_mask) != warning;
+        return (status & warning) == warning;
     }
 
     [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status) noexcept {

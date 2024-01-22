@@ -318,6 +318,10 @@ namespace webpp::uri {
 
         if constexpr (Options.allow_windows_drive_letters) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+                if (*ctx.pos != '/' || *ctx.pos != '\\') {
+                    // we have to move one back because the "path" needs to start with a "/" or a "\"
+                    --ctx.pos;
+                }
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
                 set_valid(ctx.status, uri_status::valid_path);
                 return;
