@@ -160,6 +160,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/details/special_schemes.hpp
         ${LIB_INCLUDE_DIR}/uri/details/host_ip.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
+        ${LIB_INCLUDE_DIR}/uri/credentials.hpp
         ${LIB_INCLUDE_DIR}/uri/fragment.hpp
         ${LIB_INCLUDE_DIR}/uri/host.hpp
         ${LIB_INCLUDE_DIR}/uri/host_authority.hpp

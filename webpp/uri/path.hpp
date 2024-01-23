@@ -318,7 +318,7 @@ namespace webpp::uri {
         }
 
         if (!ctx.is_special) {
-            parse_opaque_path(ctx);
+            parse_opaque_path<Options>(ctx);
             return;
         }
 
@@ -375,7 +375,7 @@ namespace webpp::uri {
             // Append the last segment (not the current one)
 
             if (!is_done) {
-                details::handle_dots_in_paths(ctx, encoder, slash_loc_cache);
+                details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache);
                 if (ctx.pos == ctx.end) {
                     break;
                 }
