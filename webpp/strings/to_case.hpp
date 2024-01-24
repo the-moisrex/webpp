@@ -231,7 +231,7 @@ namespace webpp::ascii {
         //         stl::memcpy(out + index, &word, length - index);
         //     }
         // } else {
-        auto const end = inp + length;
+        auto const end  = inp + length;
         while (inp != end) {
             *out++ = to_lower_copy<char_type>(*inp++);
         }

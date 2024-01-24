@@ -3,14 +3,13 @@
 #ifndef WEBPP_URI_AUTHORITY_HPP
 #define WEBPP_URI_AUTHORITY_HPP
 
-#include "../std/utility.hpp"
+#include "../ip/ipv4.hpp"
 #include "./credentials.hpp"
 #include "./details/host_ip.hpp"
 #include "./details/uri_components_encoding.hpp"
 #include "./details/uri_status.hpp"
 #include "./details/windows_drive_letter.hpp"
 #include "./encoding.hpp"
-#include "./host_authority.hpp"
 #include "./port.hpp"
 
 /**
