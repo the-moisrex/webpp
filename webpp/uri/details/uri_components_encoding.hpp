@@ -211,6 +211,29 @@ namespace webpp::uri::details {
             }
         }
 
+        /// Convert to lowercase and also decode
+        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
+        [[nodiscard]] constexpr bool decode_or_tolower(CharSet auto const& policy_chars) noexcept(
+          ctx_type::is_nothrow) {
+            if constexpr (ctx_type::is_modifiable) {
+                while (ctx->pos != ctx->end) {
+                    if (decode_uri_component<Policy>(ctx->pos, ctx->end, get_out_seg(), policy_chars)) {
+                        return true;
+                    }
+                    webpp_static_constexpr char_type diff = 'a' - 'A';
+                    if (*ctx->pos >= 'A' && *ctx->pos <= 'Z') {
+                        get_out_seg() += *ctx->pos + diff;
+                        ++ctx->pos;
+                        continue;
+                    }
+                    return false;
+                }
+                return true;
+            } else {
+                return decode_or_validate<Policy>(policy_chars);
+            }
+        }
+
         /// Set the beginning to current position
         constexpr void reset_begin() noexcept {
             beg = ctx->pos;

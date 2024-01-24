@@ -41,7 +41,10 @@ namespace webpp::uri {
             webpp_static_constexpr auto forbidden_domains = ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
             webpp_static_constexpr ascii_bitmap interesting_characters =
-              IsSpecial ? forbidden_hosts : forbidden_domains;
+              IsSpecial
+                ? (ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
+                                           : forbidden_domains)
+                : forbidden_hosts;
 
             auto const authority_begin = ctx.pos;
             auto       host_begin      = authority_begin;
@@ -62,7 +65,7 @@ namespace webpp::uri {
                 } else {
                     // for domain names:
                     // todo: domain to ascii (https://url.spec.whatwg.org/#concept-domain-to-ascii)
-                    done = coder.template decode_or_validate<uri_encoding_policy::encode_chars>(
+                    done = coder.template decode_or_tolower<uri_encoding_policy::encode_chars>(
                       interesting_characters);
                 }
                 if (done) {
