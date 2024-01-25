@@ -894,6 +894,7 @@ TYPED_TEST(URITests, LocalhostFileSchemeStrict) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri<uri::strict_uri_parsing_options>(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
+    EXPECT_FALSE(context.out.has_fragment()) << "This url doesn't have a hash.";
     EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
     EXPECT_EQ(context.out.get_path(), "localhost/page/one");
     // todo: should this have a warning too?
