@@ -59,10 +59,10 @@ namespace webpp::uri::details {
                 case '8':
                 case '9': continue;
                 case 'X':
-                    if constexpr (ctx_type::is_modifiable) {
-                        stl::unreachable();
-                    }
-                    [[fallthrough]];
+                    // if constexpr (ctx_type::is_modifiable) {
+                    //     stl::unreachable();
+                    // }
+                    // [[fallthrough]];
                 case 'x':
                     // next characters now must be ".0x"
                     // NOLINTNEXTLINE(*-inc-dec-in-conditions)
@@ -79,10 +79,10 @@ namespace webpp::uri::details {
                 case 'F':
                     // if it's modifiable, then we should be lowercasing the characters before we reach
                     // here in this function.
-                    if constexpr (ctx_type::is_modifiable) {
-                        stl::unreachable();
-                    }
-                    [[fallthrough]];
+                    // if constexpr (ctx_type::is_modifiable) {
+                    //     stl::unreachable();
+                    // }
+                    // [[fallthrough]];
                 case 'a':
                 case 'b':
                 case 'c':
