@@ -279,21 +279,23 @@ namespace webpp::uri::details {
         }
 
         constexpr void append_n(difference_type index) noexcept {
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (ctx_type::is_modifiable && !is_map) {
                 for (; index != 0; --index) {
                     append_to(get_out_seg(), *ctx->pos++);
                 }
+            } else {
+                ctx->pos += index;
             }
         }
 
         constexpr void append(char_type inp_char) noexcept {
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (ctx_type::is_modifiable && !is_map) {
                 append_to(get_out_seg(), inp_char);
             }
         }
 
         constexpr void append_inplace_of(char_type inp_char, difference_type index = 1) noexcept {
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (ctx_type::is_modifiable && !is_map) {
                 append_to(get_out_seg(), inp_char);
                 ctx->pos += index;
             }
@@ -311,7 +313,7 @@ namespace webpp::uri::details {
 
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
             bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur);
-            skip_separator(cur - ctx->pos);
+            append_n(cur - ctx->pos);
             return is_valid;
         }
 

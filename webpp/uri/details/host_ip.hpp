@@ -132,16 +132,17 @@ namespace webpp::uri::details {
         if (*src != '.') {
             for (;;) {
                 stl::uint64_t octet_base = 10;
+
                 // find the current octet's base
                 if (*src == '0') {
                     // octet, hex, or a seris of zeros (000000)
                     if constexpr (Options.allow_ipv4_octal_octets) {
-                        octet_base = 8; // asume it's octal (all zero decimals will be parsed correctly as
-                                        // octals)
+                        // asume it's octal (all zero decimals will be parsed correctly as octals)
+                        octet_base = 8;
                     }
                     if constexpr (Options.allow_ipv4_hex_octets) {
-                        // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                        if (++src != end && (*src == 'x' || *src == 'X')) {
+                        ++src;
+                        if (src != end && (*src == 'x' || *src == 'X')) {
                             octet_base = 16; // it's definitely hex or invalid octet now
                             ++src;
                         }
