@@ -659,10 +659,10 @@ TYPED_TEST(URITests, HostMissing) {
 
 TYPED_TEST(URITests, LocalIPv4Addr) {
     constexpr stl::array<stl::string_view, 17 * 2> strs{
+      "https://0x0000000007F.0X1",
       "https://127.0.0.1/",
       "https://0x7F.1/",
       "https://0x7f000001",
-      "https://0x0000000007F.0X1",
       "https://127.0.0x0.1",
       "https://127.0X0.0x0.1",
       "https://127.0X0.0x0.0x1",

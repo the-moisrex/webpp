@@ -141,7 +141,7 @@ namespace webpp::uri::details {
                     }
                     if constexpr (Options.allow_ipv4_hex_octets) {
                         // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-                        if (++src != end && (*src == 'x' || (ctx_type::is_modifiable && *src == 'X'))) {
+                        if (++src != end && (*src == 'x' || *src == 'X')) {
                             octet_base = 16; // it's definitely hex or invalid octet now
                             ++src;
                         }
