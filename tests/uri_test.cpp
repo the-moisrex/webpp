@@ -530,6 +530,36 @@ TYPED_TEST(URITests, DoubleAtSign) {
     EXPECT_EQ(context.out.get_fragment(), "hash");
 }
 
+TYPED_TEST(URITests, DoubleEqual) {
+    constexpr stl::string_view str = "http://127.0.0.1/?one==a&&&&page=====one#hash";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_path(), "/");
+    EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
+    if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_queries(), "one==a&page=====one");
+    } else {
+        EXPECT_EQ(context.out.get_queries(), "one==a&&&&page=====one");
+    }
+    EXPECT_EQ(context.out.get_fragment(), "hash");
+}
+
+TYPED_TEST(URITests, EmptyQueryName) {
+    constexpr stl::string_view str = "http://127.0.0.1/?=a&&&&page=====one#hash";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_EQ(context.out.get_path(), "/");
+    EXPECT_EQ(context.out.get_hostname(), "127.0.0.1");
+    if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_queries(), "=a&page=====one");
+    } else {
+        EXPECT_EQ(context.out.get_queries(), "=a&&&&page=====one");
+    }
+    EXPECT_EQ(context.out.get_fragment(), "hash");
+}
+
 TYPED_TEST(URITests, DontGetFooledURI) {
     constexpr stl::string_view str = "https://example.com:8080@real.example.org/";
 

@@ -62,14 +62,16 @@ namespace webpp::uri {
                         }
                         continue;
                     case '=':
-                        if constexpr (ctx_type::is_segregated) {
-                            if (!in_value) {
+                        if (!in_value) {
+                            if constexpr (ctx_type::is_segregated) {
                                 encoder.set_query_name();
                             }
-                            in_value = true;
+                            encoder.skip_separator();
+                            encoder.reset_begin();
+                        } else {
+                            encoder.append_query_value(1);
                         }
-                        encoder.skip_separator();
-                        encoder.reset_begin();
+                        in_value = true;
                         continue;
                     case '&':
                         if constexpr (ctx_type::is_segregated) {

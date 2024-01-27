@@ -408,14 +408,25 @@ namespace webpp::uri::details {
                 istl::assign(output.second, beg, ctx->pos);
                 beg = ctx->pos + 1;
             }
+        }
 
-            // next query
-            get_output().emplace(output);
+        constexpr void append_query_value(difference_type count) noexcept(ctx_type::is_nothrow) {
+            if constexpr (is_map) {
+                if constexpr (!ctx_type::is_modifiable) {
+                    ctx->pos += count;
+                    istl::assign(output.second, beg, ctx->pos);
+                } else {
+                    output.second += *ctx->pos;
+                    ctx->pos      += count;
+                }
+            }
         }
 
         constexpr void next_query() noexcept(ctx_type::is_nothrow) {
             if constexpr (is_map) {
-                get_output().insert(output);
+                if (!output.first.empty() || !output.second.empty()) {
+                    get_output().emplace(output);
+                }
                 istl::clear(output.first);
                 istl::clear(output.second);
             }
