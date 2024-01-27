@@ -262,6 +262,21 @@ TYPED_TEST(URITests, BasicURIParsing) {
     EXPECT_TRUE(context.out.has_fragment());
 }
 
+TYPED_TEST(URITests, QueriesEnding) {
+    constexpr stl::string_view str = "https://example.com/this/is/the/path?query1=";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_EQ(context.out.get_hostname(), "example.com");
+    EXPECT_EQ(context.out.get_path(), "/this/is/the/path");
+    if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_queries(), "query1");
+    } else {
+        EXPECT_EQ(context.out.get_queries(), "query1=");
+    }
+}
+
 TYPED_TEST(URITests, InvalidSchemes) {
     constexpr stl::array<stl::string_view, 5> strs{
       "https::",

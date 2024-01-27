@@ -398,7 +398,6 @@ namespace webpp::uri::details {
         {
             if constexpr (!ctx_type::is_modifiable) {
                 istl::assign(output.first, beg, ctx->pos);
-                reset_begin();
             }
         }
 
@@ -413,22 +412,16 @@ namespace webpp::uri::details {
             // next query
             get_output().emplace(output);
         }
-    };
 
-    template <components Comp, typename... T>
-    static constexpr void next_append_lowered(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
-        using ctx_type = parsing_uri_context<T...>;
-        if constexpr (ctx_type::is_modifiable) {
-            if constexpr (ctx_type::is_segregated) {
-                // todo
-            } else {
-                append_to(get_output<Comp>(ctx), ascii::to_lower_copy(*ctx.pos));
+        constexpr void next_query() noexcept(ctx_type::is_nothrow) {
+            if constexpr (is_map) {
+                get_output().insert(output);
+                istl::clear(output.first);
+                istl::clear(output.second);
             }
+            reset_begin();
         }
-
-        ++ctx.pos;
-    }
+    };
 
 
 } // namespace webpp::uri::details

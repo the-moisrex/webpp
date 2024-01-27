@@ -53,7 +53,12 @@ namespace webpp::uri {
                         break;
                     case '%':
                         if (!encoder.validate_percent_encode()) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            if constexpr (Options.allow_invalid_characters) {
+                                set_warning(ctx.status, uri_status::invalid_character);
+                            } else {
+                                set_error(ctx.status, uri_status::invalid_queries_character);
+                                return;
+                            }
                         }
                         continue;
                     case '=':
@@ -64,6 +69,7 @@ namespace webpp::uri {
                             in_value = true;
                         }
                         encoder.skip_separator();
+                        encoder.reset_begin();
                         continue;
                     case '&':
                         if constexpr (ctx_type::is_segregated) {
@@ -71,14 +77,27 @@ namespace webpp::uri {
                             in_value = false;
                         }
                         encoder.skip_separator();
+                        encoder.next_query();
                         continue;
                     default:
-                        set_warning(ctx.status, uri_status::invalid_character);
+                        if constexpr (Options.allow_invalid_characters) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        } else {
+                            set_error(ctx.status, uri_status::invalid_queries_character);
+                            return;
+                        }
                         encoder.skip_separator();
                         // invalid characters are not errors
                         continue;
                 }
                 break;
+            }
+            if constexpr (ctx_type::is_segregated) {
+                if (in_value) {
+                    encoder.set_query_value();
+                } else {
+                    encoder.set_query_name();
+                }
             }
             encoder.set_value();
 
@@ -87,12 +106,17 @@ namespace webpp::uri {
             } else {
                 ++ctx.pos;
             }
+            encoder.next_query();
 
         } else { // don't parse queries
             if (ctx.pos == ctx.end) {
                 set_valid(ctx.status, uri_status::valid);
             } else {
-                set_warning(ctx.status, uri_status::invalid_character);
+                if constexpr (Options.allow_invalid_characters) {
+                    set_warning(ctx.status, uri_status::invalid_character);
+                } else {
+                    set_error(ctx.status, uri_status::invalid_queries_character);
+                }
             }
         }
     }

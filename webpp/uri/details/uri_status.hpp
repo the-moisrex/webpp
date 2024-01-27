@@ -210,7 +210,8 @@ namespace webpp::uri {
         windows_drive_letter_as_host         = warning_bit >> 8U,
 
         // queries-specific errors/warnings:
-        valid_queries = valid_bit | 10U,
+        valid_queries             = valid_bit | 10U,
+        invalid_queries_character = error_bit | 20U,
 
         // fragment-specific errors/warnings:
         valid_fragment = valid_bit | 11U,
@@ -384,8 +385,9 @@ namespace webpp::uri {
 
 
             // queries-specific errors/warnings:
-            case valid_queries:
-                return {"Valid URI until queries, parsing is not done yet."};
+            case valid_queries: return {"Valid URI until queries, parsing is not done yet."};
+            case invalid_queries_character:
+                return {"Invalid character found in queries."};
 
 
                 // fragment-specific errors/warnings:
