@@ -20,7 +20,6 @@ namespace webpp::uri::details {
     static constexpr bool
     is_possible_ends_with_ipv4(Iter beg, Iter fin, parsing_uri_context<T...>& ctx) noexcept {
         // https://url.spec.whatwg.org/#ends-in-a-number-checker
-        using ctx_type = parsing_uri_context<T...>;
 
         webpp_assume(fin != ctx.end);
 
@@ -114,7 +113,6 @@ namespace webpp::uri::details {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
-        using ctx_type = parsing_uri_context<T...>;
 
         // 256 ^ 4 + 1 = any number bigger than 255, we chose 256; multiplied by 4 so we can check
         // if it's an invalid character or out of range without putting 2 if statements on the main loop
@@ -264,7 +262,11 @@ namespace webpp::uri::details {
             case inet_pton6_status::valid_special:
                 if (*ctx.pos == ']') {
                     ++ctx.pos;
-                    ctx.out.set_hostname(beg, ctx.pos);
+                    if constexpr (requires { ctx.out.set_hostname(ipv6_bytes); }) {
+                        ctx.out.set_hostname(ipv6_bytes);
+                    } else {
+                        ctx.out.set_hostname(beg, ctx.pos);
+                    }
                     if (ctx.pos == ctx.end) {
                         set_valid(ctx.status, uri_status::valid);
                         return false;

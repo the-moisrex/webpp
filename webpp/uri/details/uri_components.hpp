@@ -526,6 +526,7 @@ namespace webpp::uri {
         // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(field)                                                                            \
     static constexpr bool is_##field##_modifiable = stl::same_as<decltype(m_##field), string_type>; \
+    static constexpr bool is_##field##_vec        = stl::same_as<decltype(m_##field), vec_type>;    \
                                                                                                     \
     template <istl::StringView StrVT = stl::string_view>                                            \
         requires(is_##field##_modifiable)                                                           \
@@ -546,7 +547,11 @@ namespace webpp::uri {
     }                                                                                               \
                                                                                                     \
     [[nodiscard]] constexpr bool has_##field() const noexcept {                                     \
-        return !m_##field.empty();                                                                  \
+        if constexpr (is_##field##_vec) {                                                           \
+            return !m_##field.empty() && !(m_##field.size() == 1 && m_##field.front().empty());     \
+        } else {                                                                                    \
+            return !m_##field.empty();                                                              \
+        }                                                                                           \
     }                                                                                               \
                                                                                                     \
     constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow)                     \

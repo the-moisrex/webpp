@@ -3,7 +3,6 @@
 #ifndef WEBPP_URI_QUERIES_HPP
 #define WEBPP_URI_QUERIES_HPP
 
-#include "../memory/allocators.hpp"
 #include "../std/map.hpp"
 #include "./details/constants.hpp"
 #include "./details/uri_components_encoding.hpp"
@@ -20,8 +19,8 @@ namespace webpp::uri {
 
         if constexpr (Options.parse_queries) {
             webpp_static_constexpr auto interesting_characters =
-              ctx_type::is_segregated ? details::ascii_bitmap('#', '%')
-                                      : details::ascii_bitmap('#', '%', '=', '&');
+              !ctx_type::is_segregated ? details::ascii_bitmap('#', '%')
+                                       : details::ascii_bitmap('#', '%', '=', '&');
 
 
             if (ctx.pos == ctx.end) {
@@ -100,7 +99,7 @@ namespace webpp::uri {
 
     template <typename StringType = stl::string,
               typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
-    struct basic_queries : public istl::map_of_strings<StringType, AllocType> {
+    struct basic_queries : istl::map_of_strings<StringType, AllocType> {
         using super                         = istl::map_of_strings<StringType, AllocType>;
         using string_type                   = stl::remove_cvref_t<StringType>;
         using key_type                      = typename super::key_type;
