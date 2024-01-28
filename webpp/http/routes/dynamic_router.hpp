@@ -33,9 +33,10 @@ namespace webpp::http {
         using string_type        = traits::string<traits_type>;
         using string_view_type   = traits::string_view<traits_type>;
         using objects_type       = stl::vector<stl::any, traits::allocator_type_of<traits_type, stl::any>>;
-        using routes_type        = stl::vector<dynamic_route_type, vector_allocator>;
-        using response_type      = basic_response<traits_type>;
-        using context_type       = basic_context<traits_type>;
+        using objects_allocator_type = typename objects_type::allocator_type;
+        using routes_type            = stl::vector<dynamic_route_type, vector_allocator>;
+        using response_type          = basic_response<traits_type>;
+        using context_type           = basic_context<traits_type>;
 
         static constexpr auto log_cat = "DRouter";
 
@@ -61,14 +62,16 @@ namespace webpp::http {
         constexpr basic_dynamic_router() noexcept
             requires(etraits::is_resource_owner)
           : etraits{},
-            objects{get_alloc_for<objects_type>(*this)} {}
+            // do not use {} instead of () here, it'll construct an "any" object instead.
+            objects(get_allocator<objects_allocator_type>(*this)) {}
 
         // NOLINTBEGIN(bugprone-forwarding-reference-overload)
         template <EnabledTraits ET>
             requires(!istl::cvref_as<ET, basic_dynamic_router>)
         explicit constexpr basic_dynamic_router(ET&& inp_etraits)
           : etraits{stl::forward<ET>(inp_etraits)},
-            objects{get_alloc_for<objects_type>(*this)} {}
+            // do not use {} instead of () here, it'll construct an "any" object instead.
+            objects(get_allocator<objects_allocator_type>(*this)) {}
 
         // NOLINTEND(bugprone-forwarding-reference-overload)
 

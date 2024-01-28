@@ -21,7 +21,7 @@ namespace webpp::http {
         using member_ptr_type = MemPtr;
         using mem_traits      = istl::member_function_pointer_traits<member_ptr_type>;
         using object_type     = typename mem_traits::type;
-        using object_ptr      = object_type*;
+        using object_ptr      = stl::add_pointer_t<object_type>;
 
       private:
         struct method_holder {
@@ -88,13 +88,16 @@ namespace webpp::http {
                 // dynamic router's object:
 
                 for (auto& object : router.objects) {
-                    auto const& obj_type_info = object.type();
-                    if (obj_type_info == typeid(object_type)) {
-                        set_object(stl::any_cast<object_type>(stl::addressof(object)));
-                        return;
+                    if (!object.has_value()) {
+                        continue;
                     }
+                    auto const& obj_type_info = object.type();
                     if (obj_type_info == typeid(object_ptr)) {
                         set_object(stl::any_cast<object_ptr>(object));
+                        return;
+                    }
+                    if (obj_type_info == typeid(object_type)) {
+                        set_object(stl::any_cast<object_type>(stl::addressof(object)));
                         return;
                     }
                 }

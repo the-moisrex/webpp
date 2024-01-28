@@ -20,6 +20,11 @@ namespace website {
             setup_view_manager();
         }
 
+        app(app const&)            = delete;
+        app(app&&)                 = delete;
+        app& operator=(app const&) = delete;
+        app& operator=(app&&)      = delete;
+
         auto home() {
             return resources.view("index.html");
         }
@@ -82,7 +87,7 @@ namespace website {
 
       private:
         void setup_routes() {
-            router.objects.emplace_back(this);
+            router.objects.emplace_back(stl::in_place_type<app*>, this);
 
             router += http::get / "assets" % &app::assets;
             router += http::get % "parse-uri" >> &app::parse_uri;
