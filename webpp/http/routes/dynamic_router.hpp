@@ -114,7 +114,7 @@ namespace webpp::http {
             // if it didn't fill the response:
             if (ctx.response.empty()) {
                 // fill the response with 404 error page
-                ctx.response = error(http::status_code::not_found);
+                ctx.response = error(status_code::not_found);
             }
 
             return ctx.response;

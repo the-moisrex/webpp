@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Routing" pattern="file[webpp]:webpp/http/routes//*||file[webpp]:webpp/http/routes/*||file:tests/router_test.cpp||file:tests/routes_test.cpp||file:tests/dynamic_router_test.cpp||file:tests/response_test.cpp||file:tests/request_test.cpp||file:webpp/http/request_body.hpp||file:webpp/http/request_headers.hpp||file:webpp/http/request_view.hpp||file:webpp/http/response.hpp||file:webpp/http/response_body.hpp||file:webpp/http/response_headers.hpp||file:webpp/http/body_concepts.hpp||file:webpp/http/header_fields.hpp||file:webpp/http/headers.hpp||file:webpp/http/body.hpp||file:webpp/uri/path_traverser.hpp" />
+</component>

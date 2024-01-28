@@ -27,7 +27,7 @@ namespace webpp::ascii {
             return pos == end || ((val == *pos) && ...);
         } else {
             // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            return pos + sizeof...(ValT) <= end && ((val == *pos++) && ...) || pos == end;
+            return (pos + sizeof...(ValT) <= end && ((val == *pos++) && ...)) || pos == end;
         }
     }
 

@@ -1804,10 +1804,10 @@ namespace webpp::uri {
             return *this;
         }
 
-        constexpr uri_string& append_query(string_view_type key, string_view_type value) noexcept {
-            // todo
-            return *this;
-        }
+        // constexpr uri_string& append_query(string_view_type key, string_view_type value) noexcept {
+        //     // todo
+        //     return *this;
+        // }
 
         ///////////////////////////////////////////// Fragment /////////////////////////////////////////////
 

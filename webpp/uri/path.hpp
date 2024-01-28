@@ -10,6 +10,7 @@
 #include "../std/vector.hpp"
 #include "../strings/peek.hpp"
 #include "details/constants.hpp"
+#include "details/special_schemes.hpp"
 #include "details/uri_components_encoding.hpp"
 #include "details/windows_drive_letter.hpp"
 #include "encoding.hpp"

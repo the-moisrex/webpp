@@ -279,7 +279,7 @@ namespace webpp::uri {
             }
         }
 
-        static constexpr auto parsing_options = [] constexpr noexcept {
+        webpp_static_constexpr auto parsing_options = []() constexpr noexcept {
             uri_parsing_options options = Options;
             options.parse_credentails   = false;
             options.empty_host_is_error = false;
