@@ -279,6 +279,6 @@ TEST(DomainsTest, DomainTooLongError) {
 }
 
 TEST(DomainsTest, TLDTest) {
-    domain_name domain{"example.com"};
+    basic_domain domain{"example.com"};
     EXPECT_EQ(domain.tld(), "com");
 }

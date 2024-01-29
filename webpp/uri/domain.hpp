@@ -3,15 +3,18 @@
 #ifndef WEBPP_URI_DOMAIN_HPP
 #define WEBPP_URI_DOMAIN_HPP
 
+#include "../std/string_like.hpp"
 #include "../strings/charset.hpp"
 #include "./details/uri_status.hpp"
 
+#include <compare>
 #include <cstdint>
 
 namespace webpp {
     enum struct domain_name_status : stl::underlying_type_t<uri::uri_status> { // NOLINT(*-enum-size)
     // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
+        webpp_def(unparsed),           // Not yet parsed
         webpp_def(valid),              // valid ascii domain name
         webpp_def(valid_punycode),     // valid domain name which is a punycode
         webpp_def(invalid_character),  // found an invalid character
@@ -32,6 +35,7 @@ namespace webpp {
     static constexpr stl::string_view to_string(domain_name_status const status) noexcept {
         switch (status) {
             using enum domain_name_status;
+            case unparsed: return {"The domain name is not parsed yet"};
             case valid: return {"Valid ascii domain name"};
             case valid_punycode: return {"Valid unicode domain name which contains punycode"};
             case invalid_character: return {"Found an invalid character in the domain name"};
@@ -63,7 +67,7 @@ namespace webpp {
      * @return status of the parsing
      */
     template <typename Iter, typename EIter = Iter>
-    constexpr domain_name_status parse_domain_name(Iter& pos, EIter end) noexcept {
+    constexpr domain_name_status parse_domain_name(Iter pos, EIter end) noexcept {
         // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
         using enum domain_name_status;
 
@@ -133,29 +137,46 @@ namespace webpp {
     }
 
     /**
-     * Domain Name
+     * Structured Domain Name
      */
-    struct domain_name : stl::string_view {
-        using stl::string_view::basic_string_view;
+    template <istl::StringLike StorageT = stl::string_view>
+    struct basic_domain {
+        using storage_type = StorageT;
+
+      private:
+        storage_type       storage;
+        domain_name_status status = domain_name_status::unparsed;
+
+      public:
+        template <typename... Args>
+        explicit constexpr basic_domain(Args&&... args) noexcept(
+          stl::is_nothrow_constructible_v<storage_type, Args...>)
+          : storage{stl::forward<Args>(args)...},
+            status{parse_domain_name(storage.begin(), storage.end())} {}
 
         [[nodiscard]] constexpr bool is_valid() const noexcept {
-            return !empty();
+            using enum domain_name_status;
+            return status == valid || status == valid_punycode;
         }
 
         [[nodiscard]] constexpr bool has_punycode() const noexcept {
-            return starts_with("xn--");
+            return status == domain_name_status::valid_punycode;
         }
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
         }
 
-        // Top-Level-Domain
-        [[nodiscard]] constexpr stl::string_view tld() const noexcept {
-            if (auto const pos = this->rfind('.'); pos != npos) {
-                return this->substr(pos + 1);
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(
+          basic_domain const& other) const noexcept = default;
+
+        /// Top-Level-Domain
+        template <istl::StringLike StrT = storage_type>
+        [[nodiscard]] constexpr StrT tld() const noexcept {
+            if (auto const pos = storage.rfind('.'); pos != StrT::npos) {
+                return storage.substr(pos + 1);
             }
-            return *this; // the whole thing is a TLD
+            return storage; // the whole thing is a TLD
         }
     };
 

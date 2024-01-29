@@ -67,7 +67,7 @@ namespace webpp::uri {
      *     reg-name         = *( unreserved / pct-encoded / sub-delims )
      */
     struct host_authority {
-        using domain_type = domain_name;
+        using domain_type = basic_domain;
 
         static constexpr stl::uint16_t max_port_number    = 65'535u;
         static constexpr stl::uint16_t default_http_port  = 80u;
