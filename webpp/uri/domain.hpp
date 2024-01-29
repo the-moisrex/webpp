@@ -62,9 +62,13 @@ namespace webpp {
      * @param end end
      * @return status of the parsing
      */
-    constexpr domain_name_status parse_domain_name(char const*& pos, char const* end) noexcept {
+    template <typename Iter, typename EIter = Iter>
+    constexpr domain_name_status parse_domain_name(Iter& pos, EIter end) noexcept {
         // NOLINTBEGIN(*-pro-bounds-pointer-arithmetic, *-inc-dec-in-conditions)
         using enum domain_name_status;
+
+        using char_type = typename stl::iterator_traits<Iter>::value_type;
+
         if (pos == end) {
             return empty_subdomain;
         }
@@ -83,21 +87,22 @@ namespace webpp {
         while (pos != end) {
             if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
                 has_punycode = true;
-                pos          = charset{ALPHA_DIGIT<char>, charset{'-'}}.find_first_not_in(pos, end);
+                pos = charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{'-'}}.find_first_not_in(pos, end);
                 continue;
             }
 
-            char const cur_char = *pos++;
-
-            switch (cur_char) {
+            switch (char const cur_char = *pos++) {
                 case '.':
                     if (pos == end) {
                         return dot_at_end;
-                    } else if (*pos == '.') {
+                    }
+                    if (*pos == '.') {
                         return empty_subdomain;
-                    } else if (*pos == '-') {
+                    }
+                    if (*pos == '-') {
                         return begin_with_hyphen;
-                    } else if (pos - subdomain_start > details::subdomain_threshold) {
+                    }
+                    if (pos - subdomain_start > details::subdomain_threshold) {
                         return subdomain_too_long;
                     }
                     subdomain_start = pos;
@@ -105,18 +110,19 @@ namespace webpp {
                 case '-':
                     if (pos == end || *pos == '.') {
                         return end_with_hyphen;
-                    } else if (*pos == '-') {
+                    }
+                    if (*pos == '-') {
                         return double_hyphen;
                     }
                     break;
                 default: {
-                    if (!ALPHA_DIGIT<char>.contains(cur_char)) {
+                    if (!ALPHA_DIGIT<char_type>.contains(cur_char)) {
                         --pos; // make sure the invalid character is selected
                         return invalid_character;
                     }
                 }
             }
-            pos = ALPHA_DIGIT<char>.find_first_not_in(pos, end);
+            pos = ALPHA_DIGIT<char_type>.find_first_not_in(pos, end);
         }
         // checking if the TLD is of valid length
         if (end - subdomain_start > details::subdomain_threshold) {
