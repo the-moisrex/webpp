@@ -229,3 +229,7 @@ QualifierOrder:
   - const
   - volatile
   - restrict
+
+---
+Language: Json
+BasedOnStyle: llvm
