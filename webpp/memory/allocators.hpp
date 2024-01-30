@@ -186,13 +186,13 @@ namespace webpp {
     };
 
     template <typename T, typename DefAllocT>
-        requires(typename T::allocator_type)
+        requires requires { typename T::allocator_type; }
     struct allocator_type_from<T, DefAllocT> {
         using type = typename T::allocator_type;
     };
 
     template <typename T, typename DefaultAllocatorType = stl::allocator<char>>
-    using allocator_type_from_t = allocator_type_from<T, DefaultAllocatorType>;
+    using allocator_type_from_t = typename allocator_type_from<T, DefaultAllocatorType>::type;
 
 } // namespace webpp
 
