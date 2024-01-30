@@ -1,12 +1,13 @@
 {
-    "name": "webpp",
-    "version": "0.0.1",
-    "dependencies": [
-        "brotli",
-        "zlib",
-        "fmt",
-        "gtest",
-        "rapidjson",
-        "date"
-    ]
+  "name": "webpp",
+  "version": "0.0.1",
+  "builtin-baseline": "7dc284a6ad0b9cb8ccd618c8dc78c360fbd93b83",
+  "dependencies": [
+    "brotli",
+    "zlib",
+    "fmt",
+    "gtest",
+    "rapidjson",
+    "date"
+  ]
 }
