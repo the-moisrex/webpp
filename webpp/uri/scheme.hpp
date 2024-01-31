@@ -77,7 +77,7 @@ namespace webpp::uri {
                 // set scheme to "file"
                 ctx.scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
             }
-            ctx.out.clear_hostname();
+            clear<components::host>(ctx);
 
             if (ctx.pos == ctx.end) {
                 set_valid(ctx.status, uri_status::valid);
@@ -118,7 +118,7 @@ namespace webpp::uri {
                         ctx.out.scheme(ctx.base.scheme());
                         ctx.out.set_path(ctx.base.get_path());
                         ctx.out.set_query(ctx.base.get_query());
-                        ctx.out.clear_fragment();
+                        clear<components::fragment>(ctx);
                         set_valid(ctx.status, uri_status::valid_fragment);
                         return;
                     }
@@ -183,7 +183,7 @@ namespace webpp::uri {
             //
             // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
             ctx.pos = ctx.beg;
-            ctx.out.clear_scheme();
+            clear<components::scheme>(ctx);
             details::no_scheme_state<Options>(ctx);
             return;
         }
@@ -203,8 +203,8 @@ namespace webpp::uri {
             ctx.out.set_lowered_scheme(ctx.beg, ctx.pos);
             ++ctx.pos;
 
-            if (is_file_scheme(ctx.out.get_scheme())) [[unlikely]] {
-                ctx.is_special = true;
+            if (is_file_scheme(get_output_value<components::scheme>(ctx))) [[unlikely]] {
+                ctx.scheme = scheme_type::file;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
                 if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
@@ -214,7 +214,7 @@ namespace webpp::uri {
                 return;
             }
             if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
-                ctx.is_special = true;
+                ctx.scheme = scheme_type::special_scheme;
                 // todo: first check the constexpr if
                 if constexpr (ctx_type::has_base_uri) {
                     if (ctx.out.scheme() == ctx.base.scheme()) {
@@ -241,7 +241,7 @@ namespace webpp::uri {
                 return;
             }
 
-            ctx.out.clear_path();
+            clear<components::path>(ctx);
             set_valid(ctx.status, valid_opaque_path);
         } else {
             set_error(ctx.status, invalid_scheme_character);

@@ -106,7 +106,7 @@ namespace webpp::uri {
                             // rollback if it's not a port, we rollback and assume it's a password
                             if (get_value(ctx.status) == port_invalid) {
                                 must_contain_credentials = true;
-                                ctx.out.clear_port();
+                                clear<components::port>(ctx);
                                 // it might be a "password" or it's invalid port
                                 ctx.pos = pre_port_pos + 1;
                                 continue;
@@ -184,7 +184,7 @@ namespace webpp::uri {
                         if constexpr (Options.parse_credentails) {
                             details::parse_credentials(ctx, authority_begin, colon_pos);
                             ++ctx.pos;
-                            ctx.out.clear_hostname();
+                            clear<components::host>(ctx);
                             coder.reset_begin();
                             coder.start_segment();
                             host_begin = ctx.pos;
@@ -240,7 +240,7 @@ namespace webpp::uri {
                     return;
                 }
                 if constexpr (ctx_type::is_modifiable) {
-                    ctx.out.clear_hostname();
+                    clear<components::host>(ctx);
                     coder.start_segment();
                     ipv4{ipv4_octets_data}.to_string(coder.get_out_seg());
                     if (skip_last_char) {
@@ -290,7 +290,7 @@ namespace webpp::uri {
 
         if (ctx.out.has_hostname()) {
             if (ascii::iequals<ascii::char_case_side::first_lowered>("localhost", ctx.out.get_hostname())) {
-                ctx.out.clear_hostname();
+                clear<components::host>(ctx);
             }
         }
         if constexpr (Options.allow_windows_drive_letters) {
@@ -312,7 +312,7 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid);
             return;
         }
-        if (ctx.is_special) {
+        if (is_special_scheme(ctx.scheme)) {
             switch (*ctx.pos) {
                 case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
                 case '/':
@@ -324,7 +324,7 @@ namespace webpp::uri {
                     if constexpr (Options.parse_queries) {
                         set_valid(ctx.status, uri_status::valid_queries);
                         ++ctx.pos;
-                        ctx.out.clear_queries();
+                        clear<components::queries>(ctx);
                     } else {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
@@ -333,14 +333,14 @@ namespace webpp::uri {
                     if constexpr (Options.parse_fragment) {
                         set_valid(ctx.status, uri_status::valid_fragment);
                         ++ctx.pos;
-                        ctx.out.clear_fragment();
+                        clear<components::fragment>(ctx);
                     } else {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
                     return;
                 default:
                     set_valid(ctx.status, uri_status::valid_path);
-                    ctx.out.clear_path();
+                    clear<components::path>(ctx);
                     break;
             }
         }
@@ -371,7 +371,7 @@ namespace webpp::uri {
         }
 
         if constexpr (Options.allow_file_hosts) {
-            if (ctx.is_special && is_file_scheme(ctx.out.get_scheme())) {
+            if (is_special_scheme(ctx.scheme) && is_file_scheme(ctx.out.get_scheme())) {
                 // todo: should we set the status instead?
                 parse_file_host(ctx);
                 return;
@@ -404,7 +404,7 @@ namespace webpp::uri {
                     return;
                 }
             case '?':
-                if (!ctx.is_special) {
+                if (!is_special_scheme(ctx.scheme)) {
                     break;
                 }
                 [[fallthrough]];
@@ -412,7 +412,7 @@ namespace webpp::uri {
             case '/':
             case '#':
                 if constexpr (Options.empty_host_is_error) {
-                    if (ctx.is_special) {
+                    if (is_special_scheme(ctx.scheme)) {
                         set_error(ctx.status, host_missing);
                         return;
                     }
@@ -425,7 +425,7 @@ namespace webpp::uri {
             default: break;
         }
 
-        if (!ctx.is_special) {
+        if (!is_special_scheme(ctx.scheme)) {
             details::parse_authority_pieces<Options, false>(ctx);
             return;
         }

@@ -78,7 +78,7 @@ namespace webpp::uri {
             if ((ctx_type::is_segregated || ctx_type::is_modifiable) && needs_encoding) { // slow path
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                     auto path_ref = ctx.out.path_ref();
-                    istl::collection::emplace_one(path_ref, path_ref.get_allocator());
+                    istl::emplace_one(path_ref, path_ref.get_allocator());
                     encode_uri_component<uri_encoding_policy::encode_chars>(
                       start,
                       end,
@@ -93,11 +93,7 @@ namespace webpp::uri {
                 }
             } else { // quicker
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                    istl::collection::emplace_one(
-                      ctx.out.path_ref(),
-                      start,
-                      end,
-                      ctx.out.path_ref().get_allocator());
+                    istl::emplace_one(ctx.out.path_ref(), start, end, ctx.out.path_ref().get_allocator());
                 } else if constexpr (ctx_type::is_modifiable) {
                     ctx.out.path_ref().append(start, end);
                     // } else {
@@ -160,7 +156,7 @@ namespace webpp::uri {
 
                 switch (*pos) {
                     [[unlikely]] case '\\':
-                        if (!ctx.is_special) {
+                        if (!is_special_scheme(ctx.scheme)) {
                             return;
                         }
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
@@ -184,7 +180,7 @@ namespace webpp::uri {
                 if (pos != ctx.end) {
                     switch (*pos) {
                         [[unlikely]] case '\\':
-                            if (!ctx.is_special) {
+                            if (!is_special_scheme(ctx.scheme)) {
                                 return;
                             }
                             set_warning(ctx.status, uri_status::reverse_solidus_used);
@@ -231,7 +227,7 @@ namespace webpp::uri {
             bool const is_windows_path =
               Options.allow_windows_drive_letters &&
               details::starts_with_windows_driver_letter_slashes(ctx.pos, ctx.end) &&
-              is_file_scheme(ctx.out.get_scheme());
+              is_file_scheme(ctx.scheme);
 
 
             if constexpr (ctx_type::is_modifiable && Options.allow_windows_drive_letters) {
@@ -263,7 +259,7 @@ namespace webpp::uri {
 
         webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
 
-        details::component_encoder<details::components::path, ctx_type> encoder(ctx);
+        details::component_encoder<components::path, ctx_type> encoder(ctx);
         encoder.start_segment();
         for (;;) {
             if (encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
@@ -313,12 +309,12 @@ namespace webpp::uri {
 
 
         if (ctx.pos == ctx.end) {
-            ctx.out.clear_path();
+            clear<components::path>(ctx);
             set_valid(ctx.status, uri_status::valid);
             return;
         }
 
-        if (!ctx.is_special) {
+        if (!is_special_scheme(ctx.scheme)) {
             parse_opaque_path<Options>(ctx);
             return;
         }
@@ -326,7 +322,7 @@ namespace webpp::uri {
 
         stl::uint64_t slash_loc_cache = 0;
 
-        details::component_encoder<details::components::path, ctx_type> encoder{ctx};
+        details::component_encoder<components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
         details::handle_windows_driver_letter<Options>(ctx, encoder);
         for (;;) {
@@ -337,7 +333,7 @@ namespace webpp::uri {
             {
                 switch (*ctx.pos) {
                     case '\\':
-                        if (ctx.is_special) {
+                        if (is_special_scheme(ctx.scheme)) {
                             set_warning(ctx.status, uri_status::reverse_solidus_used);
                         } else {
                             encoder.skip_separator();
@@ -401,16 +397,20 @@ namespace webpp::uri {
      * Including normal string and string view types
      */
     template <typename T>
-    concept Slug = istl::String<T>;
+    concept Slug = istl::StringLike<T>;
 
-    template <Slug SlugType = stl::string>
-    struct basic_path
-      : stl::vector<stl::remove_cvref_t<SlugType>,
-                    rebind_allocator<typename stl::remove_cvref_t<SlugType>::allocator_type,
-                                     stl::remove_cvref_t<SlugType>>> {
-        using slug_type           = stl::remove_cvref_t<SlugType>;
-        using slug_allocator_type = typename slug_type::allocator_type;
-        using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector
+    /**
+     * @brief Basic Structured URI Path
+     * @tparam SlugType The type of each segment of the path to use in the vector
+     *                  If the slug type is a string view (and not a string), some of the parsing features
+     *                  will be disabled, and that might be a security problem for you. So if the input is
+     *                  from an untrusted source, make sure to slug type is a modifiable string.
+     */
+    template <Slug SlugType = stl::string, typename AllocT = allocator_type_from_t<SlugType>>
+    struct basic_path {
+        using slug_type           = SlugType;
+        using slug_allocator_type = AllocT;
+        using allocator_type      = rebind_allocator<slug_allocator_type, slug_type>; // vector's alloc
         using container_type      = stl::vector<slug_type, allocator_type>;
         using value_type          = slug_type;
         using char_type           = istl::char_type_of_t<slug_type>;
@@ -421,96 +421,96 @@ namespace webpp::uri {
         using iterator         = typename container_type::iterator;
         using const_iterator   = typename container_type::const_iterator;
 
-        static constexpr string_view_type parent_dir    = "..";
-        static constexpr string_view_type current_dir   = ".";
-        static constexpr string_view_type separator     = "/"; // todo: make sure the user can use ":" as well
-        static constexpr auto             allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>; // except
-                                                                                         // slash char
+        using size_type       = typename container_type::size_type;
+        using reference       = typename container_type::reference;
+        using const_reference = typename container_type::const_reference;
 
+
+        static constexpr string_view_type parent_dir  = "..";
+        static constexpr string_view_type current_dir = ".";
+        static constexpr string_view_type separator   = "/"; // todo: make sure the user can use ":" as well
+
+        // except slash char
+        static constexpr auto allowed_chars = details::PCHAR_NOT_PCT_ENCODED<char_type>;
+
+      private:
+        container_type storage;
+
+      public:
         template <typename... T>
             requires(stl::is_constructible_v<container_type, T...>)
-        explicit constexpr basic_path(T&&... args) : container_type{stl::forward<T>(args)...} {}
+        explicit constexpr basic_path(T&&... args) : storage{stl::forward<T>(args)...} {}
 
         // NOLINTBEGIN(*-forwarding-reference-overload)
-        template <istl::StringViewifiable T>
+        template <istl::StringViewifiable T, typename InpAlloc = allocator_type>
             requires(!istl::cvref_as<T, basic_path>)
-        explicit constexpr basic_path(T&& str, allocator_type const& alloc = allocator_type{})
-          : container_type{alloc} {
-            parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
+        explicit constexpr basic_path(T&& str, InpAlloc const& alloc = {}) : storage{alloc} {
+            parse(stl::forward<T>(str));
         }
 
         template <istl::String T>
             requires(
               !istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
         explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
-            parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
+            // parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
         }
 
         // NOLINTEND(*-forwarding-reference-overload)
 
-        template <istl::StringifiableOf<string_view_type> StrT>
-        constexpr bool parse(StrT&& str) {
-            auto path = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
-            if (path.empty()) {
-                return true;
-            }
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        constexpr void parse(parsing_uri_context<T...>& ctx) {
+            parse_path<Options>(ctx);
+        }
 
-            for (;;) {
-                stl::size_t const slash_start = path.find(separator);
-                stl::size_t const the_size    = stl::min(slash_start, path.size());
-                value_type        val{this->get_allocator()};
-                if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
-                    // error: invalid string passed as a path
-                    this->clear();
-                    // val = path.substr(0, the_size); // put the non-decoded value
-                    return false;
-                }
-                this->push_back(stl::move(val));
-                if (slash_start == string_view_type::npos) {
-                    break;
-                }
-                path.remove_prefix(slash_start + 1);
-            }
-            return true;
+        template <uri_parsing_options Options = uri_parsing_options{}, typename StrT>
+        constexpr bool parse(StrT&& str) {
+            auto const path     = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+            using iterator_type = typename string_view_type::iterator;
+            parsing_uri_context<container_type*, iterator_type> ctx;
+            ctx.beg = path.begin();
+            ctx.end = path.end();
+            ctx.pos = path.begin();
+            ctx.out = stl::addressof(storage);
+            parse<Options>(ctx);
+            return is_valid(ctx.status);
         }
 
         template <istl::StringViewifiable SegStrT>
         constexpr basic_path& operator/=(SegStrT&& seg_str) {
-            auto path = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(seg_str));
-            if (path.empty()) {
-                return *this;
-            }
-
-            for (;;) {
-                stl::size_t const slash_start = path.find(separator);
-                stl::size_t const the_size    = stl::min(slash_start, path.size());
-                value_type        val{this->get_allocator()};
-                if (!decode_uri_component(path.substr(0, the_size), val, allowed_chars)) {
-                    // error: invalid string passed as a path
-                    val = path.substr(0, the_size); // put the non-decoded value
-                }
-                this->push_back(stl::move(val));
-                if (slash_start == string_view_type::npos) {
-                    break;
-                }
-                path.remove_prefix(slash_start + 1);
-            }
+            parse(stl::forward<SegStrT>(seg_str));
             return *this;
         }
 
         constexpr basic_path& operator=(value_type str) {
-            this->clear();
+            storage.clear();
             parse(stl::move(str));
             return *this;
         }
 
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return storage.size();
+        }
+
+        [[nodiscard]] constexpr auto begin() const noexcept {
+            return storage.begin();
+        }
+
+        [[nodiscard]] constexpr auto end() const noexcept {
+            return storage.end();
+        }
+
+        template <typename Arg>
+        [[nodiscard]] constexpr auto operator[](Arg&& arg) noexcept {
+            return storage.operator[](stl::forward<Arg>(arg));
+        }
+
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
-            auto const lhs_size = this->size();
+            auto const lhs_size = storage.size();
             auto const rhs_size = rhs.size();
             if (lhs_size != rhs_size) {
                 return stl::compare_partial_order_fallback(lhs_size, rhs_size);
             }
-            if (stl::equal(this->begin(), this->end(), rhs.begin(), rhs.end())) {
+            if (stl::equal(storage.begin(), storage.end(), rhs.begin(), rhs.end())) {
                 return stl::partial_ordering::equivalent;
             }
             return stl::partial_ordering::unordered;
@@ -521,12 +521,12 @@ namespace webpp::uri {
         [[nodiscard]] constexpr auto operator<=>(SegStrT&& rhs) const {
             // todo: optimize this
             auto const      path_str = istl::string_viewify_of<string_view_type>(stl::forward<SegStrT>(rhs));
-            path_type const rhs_path{path_str, this->get_allocator()};
+            path_type const rhs_path{path_str, storage.get_allocator()};
             return *this <=> rhs_path;
         }
 
         [[nodiscard]] constexpr bool is_absolute() const noexcept {
-            return !this->empty() && this->front().empty();
+            return !storage.empty() && storage.front().empty();
         }
 
         [[nodiscard]] constexpr bool is_relative() const noexcept {
@@ -543,41 +543,41 @@ namespace webpp::uri {
          */
         constexpr void remove_dot_segments(bool const remove_leading,
                                            bool const remove_empty_segments = false) {
-            if (this->empty()) {
+            if (storage.empty()) {
                 return;
             }
 
-            auto pos = this->begin();
+            auto pos = storage.begin();
 
             // handle the first part
-            while (pos != this->end()) {
+            while (pos != storage.end()) {
                 if (remove_empty_segments && pos->empty()) {
-                    pos = this->erase(pos);
+                    pos = storage.erase(pos);
                     continue;
                 }
                 if (*pos == current_dir) {
-                    pos = this->erase(pos);
+                    pos = storage.erase(pos);
                     continue;
                 }
                 if (*pos == parent_dir) {
-                    if (pos != this->begin()) {
+                    if (pos != storage.begin()) {
                         auto const last_el = std::prev(pos);
                         if (last_el->empty()) {
                             // remove just this one
-                            pos = this->erase(pos);
+                            pos = storage.erase(pos);
                             continue;
                         }
                         if (*last_el != parent_dir) {
                             // remove the previous one and this one
-                            pos = this->erase(last_el, std::next(pos));
-                            if (pos == this->begin()) {
+                            pos = storage.erase(last_el, std::next(pos));
+                            if (pos == storage.begin()) {
                                 return;
                             }
                             --pos;
                             continue;
                         }
                     } else if (remove_leading) {
-                        pos = this->erase(pos);
+                        pos = storage.erase(pos);
                         continue;
                     }
                 }
@@ -586,20 +586,20 @@ namespace webpp::uri {
         }
 
         constexpr basic_path const& append_to(istl::String auto& str) const {
-            if (this->size() == 0) {
+            if (storage.size() == 0) {
                 return *this;
             }
 
-            auto pos = this->cbegin();
+            auto pos = storage.cbegin();
 
             // handling empty this special path: "/"
-            if (pos->empty() && this->size() == 1) {
+            if (pos->empty() && storage.size() == 1) {
                 str.append(separator);
                 return *this;
             }
 
             str.append(*pos++);
-            for (; pos != this->cend(); ++pos) {
+            for (; pos != storage.cend(); ++pos) {
                 str.append(separator);
                 encode_uri_component(*pos, str, allowed_chars);
             }
@@ -607,7 +607,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr string_type to_string() const {
-            string_type str{this->get_allocator()};
+            string_type str{storage.get_allocator()};
             append_to(str);
             return str;
         }
@@ -624,13 +624,13 @@ namespace webpp::uri {
                     sum += slug.size();
                 }
                 return sum;
-            }() + this->size() - 1;
+            }() + storage.size() - 1;
         }
 
         constexpr void fix() {
             // remove the last empty string
-            if (this->size() && this->back().empty()) {
-                (void) this->pop_back();
+            if (!storage.empty() && storage.back().empty()) {
+                stl::ignore(storage.pop_back());
             }
         }
     };

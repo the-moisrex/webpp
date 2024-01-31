@@ -18,7 +18,7 @@ namespace webpp::uri {
         using char_type = typename ctx_type::char_type;
 
         if constexpr (Options.parse_fragment) {
-            details::component_encoder<details::components::fragment, ctx_type> encoder{ctx};
+            details::component_encoder<components::fragment, ctx_type> encoder{ctx};
             while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
               details::FRAGMENT_ENCODE_SET,
               charset<char_type, 1>('%')))

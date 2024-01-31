@@ -83,7 +83,7 @@ TEST(String, JoinWith) {
     stl::string const        two   = "two";
     stl::string const        three = "three";
     stl::vector<stl::string> strings;
-    istl::collection::emplace(strings, one, two, three, "four");
+    istl::emplace(strings, one, two, three, "four");
     auto const res = join_with(strings, ' ');
     static_assert(
       stl::same_as<typename decltype(res)::allocator_type, typename decltype(two)::allocator_type>);

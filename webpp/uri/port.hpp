@@ -58,7 +58,7 @@ namespace webpp::uri {
                         }
                         continue;
                     case '\\':
-                        if (ctx.is_special) {
+                        if (is_special_scheme(ctx.scheme)) {
                             break; // invalid port
                         }
                         [[fallthrough]];
@@ -68,7 +68,7 @@ namespace webpp::uri {
                     case '#':
                         // it's unsigned, we don't need to check for it being lower than 0
                         if (port_value == known_port(ctx.out.get_scheme())) {
-                            ctx.out.clear_port();
+                            clear<components::port>(ctx);
                         } else if constexpr (
                           requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); })
                         {
@@ -80,11 +80,12 @@ namespace webpp::uri {
                                              })
                         {
                             // store the position of it relative to the beginning of the URI
-                            ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
-                                             static_cast<seg_type>(ctx.pos - ctx.beg));
+                            set_value<components::port>(ctx,
+                                                        static_cast<seg_type>(beg - ctx.beg),
+                                                        static_cast<seg_type>(ctx.pos - ctx.beg));
                         } else {
                             // store it as a string
-                            ctx.out.set_port(beg, ctx.pos);
+                            set_value<components::port>(ctx, beg, ctx.pos);
                         }
 
                         // https://url.spec.whatwg.org/#path-start-state

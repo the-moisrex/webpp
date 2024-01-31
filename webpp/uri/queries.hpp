@@ -29,11 +29,13 @@ namespace webpp::uri {
             }
 
             auto const query_percent_encode_set =
-              ctx.is_special ? details::SPECIAL_QUERIES_ENCODE_SET : details::QUERIES_ENCODE_SET;
+              is_special_scheme(ctx.scheme)
+                ? details::SPECIAL_QUERIES_ENCODE_SET
+                : details::QUERIES_ENCODE_SET;
 
             bool in_value = false;
 
-            details::component_encoder<details::components::queries, ctx_type> encoder{ctx};
+            details::component_encoder<components::queries, ctx_type> encoder{ctx};
 
             // find the end of the queries
             for (;;) {
@@ -48,7 +50,7 @@ namespace webpp::uri {
 
                 switch (*ctx.pos) {
                     case '#':
-                        ctx.out.clear_fragment();
+                        clear<components::fragment>(ctx);
                         set_valid(ctx.status, uri_status::valid_fragment);
                         break;
                     case '%':

@@ -8,6 +8,7 @@
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
 #include "../../strings/to_case.hpp"
+#include "./special_schemes.hpp"
 #include "./uri_status.hpp"
 
 #include <cstdint>
@@ -543,7 +544,7 @@ namespace webpp::uri {
     constexpr void clear_##field() noexcept                                                         \
         requires(!is_##field##_modifiable)                                                          \
     {                                                                                               \
-        istl::collection::clear(m_##field);                                                         \
+        istl::clear(m_##field);                                                                     \
     }                                                                                               \
                                                                                                     \
     [[nodiscard]] constexpr bool has_##field() const noexcept {                                     \
@@ -609,20 +610,20 @@ namespace webpp::uri {
         // NOLINTEND(*-macro-usage)
 
         constexpr void set_hostname(iterator beg, iterator end) {
-            istl::collection::clear(m_hostname);
+            istl::clear(m_hostname);
             if constexpr (is_modifiable) {
-                istl::collection::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
+                istl::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
             } else {
-                istl::collection::emplace_one(m_hostname, beg, end);
+                istl::emplace_one(m_hostname, beg, end);
             }
         }
 
         constexpr void set_path(iterator beg, iterator end) {
-            istl::collection::clear(m_path);
+            istl::clear(m_path);
             if constexpr (is_modifiable) {
-                istl::collection::emplace_one(m_path, beg, end, m_path.get_allocator());
+                istl::emplace_one(m_path, beg, end, m_path.get_allocator());
             } else {
-                istl::collection::emplace_one(m_path, beg, end);
+                istl::emplace_one(m_path, beg, end);
             }
         }
 
@@ -634,20 +635,18 @@ namespace webpp::uri {
             // first "name" is chosen for the whole value, because of the algorithm that gets the queries will
             // be correct that way
 
-            istl::collection::clear(m_queries);
+            istl::clear(m_queries);
             if constexpr (is_modifiable) {
-                istl::collection::emplace_one(
-                  m_queries,
-                  pack_type{
-                    key_type{beg, end, m_queries.get_allocator()},
-                    value_type{m_queries.get_allocator()}
+                istl::emplace_one(m_queries,
+                                  pack_type{
+                                    key_type{beg, end, m_queries.get_allocator()},
+                                    value_type{m_queries.get_allocator()}
                 });
             } else {
-                istl::collection::emplace_one(
-                  m_queries,
-                  pack_type{
-                    key_type{beg, end},
-                    value_type{}
+                istl::emplace_one(m_queries,
+                                  pack_type{
+                                    key_type{beg, end},
+                                    value_type{}
                 });
             }
         }
@@ -732,20 +731,26 @@ namespace webpp::uri {
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = stl::underlying_type_t<uri_status>;
 
+        using map_iterator   = typename out_type::map_iterator;
+        using vec_iterator   = typename out_type::vec_iterator;
+        using map_value_type = typename out_type::map_value_type;
+
+
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
         static constexpr bool is_modifiable = out_type::is_modifiable;
         static constexpr bool is_segregated = out_type::is_segregated;
 
-        iterator   beg{}; // the beginning of the string, not going to change during parsing
-        iterator   pos{}; // current position
-        iterator   end{}; // the end of the string
-        out_type   out{}; // the output uri components
-        state_type status     = stl::to_underlying(uri_status::unparsed);
-        bool       is_special = false;
+        iterator    beg{}; // the beginning of the string, not going to change during parsing
+        iterator    pos{}; // current position
+        iterator    end{}; // the end of the string
+        out_type    out{}; // the output uri components
+        state_type  status = stl::to_underlying(uri_status::unparsed);
+        scheme_type scheme = scheme_type::not_special;
     };
 
     template <typename OutSegType, istl::StringLike OutIter, typename BaseSegType, typename BaseIter>
+        requires(!stl::integral<OutSegType>)
     struct parsing_uri_context<OutSegType, OutIter, BaseSegType, BaseIter> {
         using out_seg_type    = OutSegType;
         using base_seg_type   = BaseSegType;
@@ -755,6 +760,10 @@ namespace webpp::uri {
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
         using state_type      = stl::underlying_type_t<uri_status>;
+
+        using map_iterator   = typename out_type::map_iterator;
+        using vec_iterator   = typename out_type::vec_iterator;
+        using map_value_type = typename out_type::map_value_type;
 
         static constexpr bool is_nothrow    = out_type::is_nothrow;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -775,8 +784,79 @@ namespace webpp::uri {
         iterator end{};
         out_type out{};
         [[no_unique_address]] base_type base{};
-        state_type                      status     = stl::to_underlying(uri_status::unparsed);
-        bool                            is_special = false;
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        scheme_type                     scheme = scheme_type::not_special;
+    };
+
+    namespace details {
+        template <typename>
+        struct is_modifiable_string_if_vector {
+            static constexpr bool value = false;
+        };
+
+        template <typename T>
+            requires istl::LinearContainer<T>
+        struct is_modifiable_string_if_vector<T> {
+            static constexpr bool value = istl::ModifiableString<T>;
+        };
+
+        template <typename T>
+        concept ModifiableVectorOfStrings = is_modifiable_string_if_vector<T>::value;
+
+        template <typename T>
+        struct extract_types_from_out_type {
+            using map_iterator   = T*;
+            using vec_iterator   = T*;
+            using map_value_type = T;
+        };
+
+        template <typename T>
+            requires istl::LinearContainer<T>
+        struct extract_types_from_out_type<T> {
+            using map_iterator   = T*;
+            using vec_iterator   = typename T::iterator;
+            using map_value_type = T;
+        };
+
+        template <typename T>
+            requires istl::MapContainer<T>
+        struct extract_types_from_out_type<T> {
+            using map_iterator = typename T::iterator;
+            using vec_iterator = T*;
+
+            // map_type::value_type is const, we need a modifiable name
+            using map_value_type = stl::pair<typename T::key_type, typename T::mapped_type>;
+        };
+    } // namespace details
+
+    template <typename OutType, typename Iter, typename BaseSegType, typename BaseIter>
+        requires(stl::is_pointer_v<OutType> && !stl::integral<OutType>)
+    struct parsing_uri_context<OutType, Iter, BaseSegType, BaseIter>
+      : details::extract_types_from_out_type<stl::remove_pointer_t<OutType>> {
+        using base_seg_type   = BaseSegType;
+        using out_type        = OutType;
+        using seg_type        = OutType;
+        using base_type       = uri_components<base_seg_type, BaseIter>;
+        using iterator        = Iter;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using state_type      = stl::underlying_type_t<uri_status>;
+
+        using out_container_type = stl::remove_pointer_t<out_type>;
+
+        static constexpr bool is_nothrow    = stl::is_nothrow_copy_assignable_v<out_container_type>;
+        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_segregated = istl::LinearContainer<out_container_type>;
+        static constexpr bool is_modifiable = istl::ModifiableString<out_container_type> ||
+                                              details::ModifiableVectorOfStrings<out_container_type>;
+
+        iterator beg{}; // the beginning of the string, not going to change during parsing
+        iterator pos{};
+        iterator end{};
+        out_type out{}; // it's a pointer to string, string_view, vector, or a map
+        [[no_unique_address]] base_type base{};
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        scheme_type                     scheme = scheme_type::not_special;
     };
 
     using parsing_uri_context_u32 = parsing_uri_context<stl::uint32_t, char const*>;
@@ -794,6 +874,120 @@ namespace webpp::uri {
 
     template <typename Allocator = stl::allocator<char>>
     using parsing_uri_context_segregated_view = parsing_uri_context_segregated<stl::string_view, Allocator>;
+
+
+    enum struct components : stl::uint8_t {
+        scheme,
+        host,
+        username,
+        password,
+        port,
+        path,
+        queries,
+        fragment
+    };
+
+    template <components Comp, typename... T>
+    [[nodiscard]] constexpr decltype(auto) get_output(parsing_uri_context<T...>& ctx) noexcept {
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
+            return *ctx.out;
+        } else if constexpr (components::scheme == Comp) {
+            return ctx.out.scheme_ref();
+        } else if constexpr (components::username == Comp) {
+            return ctx.out.username_ref();
+        } else if constexpr (components::password == Comp) {
+            return ctx.out.password_ref();
+        } else if constexpr (components::port == Comp) {
+            return ctx.out.port_ref();
+        } else if constexpr (components::host == Comp) {
+            return ctx.out.hostname_ref();
+        } else if constexpr (components::path == Comp) {
+            return ctx.out.path_ref();
+        } else if constexpr (components::queries == Comp) {
+            return ctx.out.queries_ref();
+        } else if constexpr (components::fragment == Comp) {
+            return ctx.out.fragment_ref();
+        }
+    }
+
+    template <components Comp, typename... T>
+    [[nodiscard]] constexpr decltype(auto) get_output_value(parsing_uri_context<T...>& ctx) noexcept {
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
+            return istl::unmove(*ctx.out); // todo: C++32 auto()
+        } else if constexpr (components::scheme == Comp) {
+            return ctx.out.get_scheme();
+        } else if constexpr (components::username == Comp) {
+            return ctx.out.get_username();
+        } else if constexpr (components::password == Comp) {
+            return ctx.out.get_password();
+        } else if constexpr (components::port == Comp) {
+            return ctx.out.get_port();
+        } else if constexpr (components::host == Comp) {
+            return ctx.out.get_hostname();
+        } else if constexpr (components::path == Comp) {
+            return ctx.out.get_path();
+        } else if constexpr (components::queries == Comp) {
+            return ctx.out.get_queries();
+        } else if constexpr (components::fragment == Comp) {
+            return ctx.out.get_fragment();
+        }
+    }
+
+    template <components Comp, typename... T, typename... Args>
+    constexpr void set_value(parsing_uri_context<T...>& ctx, Args&&... args) {
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
+            // works for strings only
+            return istl::assign(*ctx.out, stl::forward<Args>(args)...);
+        } else if constexpr (components::scheme == Comp) {
+            ctx.out.set_scheme(stl::forward<Args>(args)...);
+        } else if constexpr (components::username == Comp) {
+            ctx.out.set_username(stl::forward<Args>(args)...);
+        } else if constexpr (components::password == Comp) {
+            ctx.out.set_password(stl::forward<Args>(args)...);
+        } else if constexpr (components::port == Comp) {
+            ctx.out.set_port(stl::forward<Args>(args)...);
+        } else if constexpr (components::host == Comp) {
+            ctx.out.set_hostname(stl::forward<Args>(args)...);
+        } else if constexpr (components::path == Comp) {
+            ctx.out.set_path(stl::forward<Args>(args)...);
+        } else if constexpr (components::queries == Comp) {
+            ctx.out.set_queries(stl::forward<Args>(args)...);
+        } else if constexpr (components::fragment == Comp) {
+            ctx.out.set_fragment(stl::forward<Args>(args)...);
+        }
+    }
+
+    template <components Comp, typename... T>
+    constexpr void clear(parsing_uri_context<T...>& ctx) noexcept {
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
+            // won't work with the integers
+            return istl::clear(*ctx.out);
+        } else if constexpr (components::scheme == Comp) {
+            ctx.out.clear_scheme();
+        } else if constexpr (components::username == Comp) {
+            ctx.out.clear_username();
+        } else if constexpr (components::password == Comp) {
+            ctx.out.clear_password();
+        } else if constexpr (components::port == Comp) {
+            ctx.out.clear_port();
+        } else if constexpr (components::host == Comp) {
+            ctx.out.clear_hostname();
+        } else if constexpr (components::path == Comp) {
+            ctx.out.clear_path();
+        } else if constexpr (components::queries == Comp) {
+            ctx.out.clear_queries();
+        } else if constexpr (components::fragment == Comp) {
+            ctx.out.clear_fragment();
+        }
+    }
 
 
 } // namespace webpp::uri

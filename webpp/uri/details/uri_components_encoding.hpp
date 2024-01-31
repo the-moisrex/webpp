@@ -11,38 +11,6 @@
 
 namespace webpp::uri::details {
 
-    enum struct components : stl::uint8_t {
-        scheme,
-        host,
-        username,
-        password,
-        port,
-        path,
-        queries,
-        fragment
-    };
-
-    template <components Comp, typename... T>
-    [[nodiscard]] constexpr decltype(auto) get_output(parsing_uri_context<T...>& ctx) noexcept {
-        if constexpr (components::scheme == Comp) {
-            return ctx.out.scheme_ref();
-        } else if constexpr (components::username == Comp) {
-            return ctx.out.username_ref();
-        } else if constexpr (components::password == Comp) {
-            return ctx.out.password_ref();
-        } else if constexpr (components::port == Comp) {
-            return ctx.out.port_ref();
-        } else if constexpr (components::host == Comp) {
-            return ctx.out.hostname_ref();
-        } else if constexpr (components::path == Comp) {
-            return ctx.out.path_ref();
-        } else if constexpr (components::queries == Comp) {
-            return ctx.out.queries_ref();
-        } else if constexpr (components::fragment == Comp) {
-            return ctx.out.fragment_ref();
-        }
-    }
-
     /**
      * @brief Encode/Decode a piece of URI
      * @tparam Comp URI Component that's being parsed
@@ -71,10 +39,10 @@ namespace webpp::uri::details {
         /// else if it's not segregated but still modifiable:
         ///   vec_iterator which is seg_type*
         /// otherwise, nothing_type
-        using output_type = stl::conditional_t<
-          is_map,
-          typename ctx_type::out_type::map_value_type,
-          stl::conditional_t<is_vec, typename ctx_type::out_type::vec_iterator, istl::nothing_type>>;
+        using output_type =
+          stl::conditional_t<is_map,
+                             typename ctx_type::map_value_type,
+                             stl::conditional_t<is_vec, typename ctx_type::vec_iterator, istl::nothing_type>>;
 
 
         [[no_unique_address]] output_type output{};
@@ -83,14 +51,14 @@ namespace webpp::uri::details {
 
       public:
         [[nodiscard]] constexpr decltype(auto) get_output() const noexcept {
-            return details::get_output<Comp>(*ctx);
+            return uri::get_output<Comp>(*ctx);
         }
 
         [[nodiscard]] constexpr decltype(auto) get_out_seg() const noexcept {
             if constexpr (is_seg) {
                 return *output;
             } else {
-                return details::get_output<Comp>(*ctx);
+                return uri::get_output<Comp>(*ctx);
             }
         }
 
@@ -99,23 +67,7 @@ namespace webpp::uri::details {
         constexpr void set_value(iterator start, iterator end) noexcept(
           ctx_type::is_nothrow || is_seg || ctx_type::is_modifiable) {
             if constexpr (!is_seg && !ctx_type::is_modifiable) {
-                if constexpr (components::scheme == Comp) {
-                    ctx->out.set_scheme(start, end);
-                } else if constexpr (components::username == Comp) {
-                    ctx->out.set_username(start, end);
-                } else if constexpr (components::password == Comp) {
-                    ctx->out.set_password(start, end);
-                } else if constexpr (components::port == Comp) {
-                    ctx->out.set_port(start, end);
-                } else if constexpr (components::host == Comp) {
-                    ctx->out.set_hostname(start, end);
-                } else if constexpr (components::path == Comp) {
-                    ctx->out.set_path(start, end);
-                } else if constexpr (components::queries == Comp) {
-                    ctx->out.set_queries(start, end);
-                } else if constexpr (components::fragment == Comp) {
-                    ctx->out.set_fragment(start, end);
-                }
+                uri::set_value<Comp>(*ctx, start, end);
             }
         }
 
@@ -348,7 +300,7 @@ namespace webpp::uri::details {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
                 if constexpr (ctx_type::is_modifiable) {
-                    istl::collection::emplace_one(get_output(), get_output().get_allocator());
+                    istl::emplace_one(get_output(), get_output().get_allocator());
                     // using difference_type = typename seg_type::difference_type;
                     output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
                 }
@@ -362,7 +314,7 @@ namespace webpp::uri::details {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
                 if constexpr (!ctx_type::is_modifiable) {
-                    istl::collection::emplace_one(get_output(), inp_beg, end);
+                    istl::emplace_one(get_output(), inp_beg, end);
                     reset_begin();
                 }
             }

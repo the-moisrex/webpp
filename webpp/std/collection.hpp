@@ -41,57 +41,53 @@ namespace webpp::istl {
         obj.end();
     };
 
-    namespace collection {
-
-        template <Collection T, typename... Args>
-        void emplace(T& vec, Args&&... args) {
-            if constexpr (details::supports_emplace_back<T>) {
-                (vec.emplace_back(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_emplace<T>) {
-                (vec.emplace(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_push_back<T>) {
-                (vec.push_back(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_push<T>) {
-                (vec.push(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_add<T>) {
-                (vec.add(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_append<T>) {
-                (vec.append(stl::forward<Args>(args)), ...);
-            } else if constexpr (details::supports_insert<T>) {
-                (vec.insert(stl::forward<Args>(args)), ...);
-            } else {
-                static_assert_false(T, "We don't know how to add things to this collection");
-            }
+    template <Collection T, typename... Args>
+    void emplace(T& vec, Args&&... args) {
+        if constexpr (details::supports_emplace_back<T>) {
+            (vec.emplace_back(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_emplace<T>) {
+            (vec.emplace(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_push_back<T>) {
+            (vec.push_back(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_push<T>) {
+            (vec.push(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_add<T>) {
+            (vec.add(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_append<T>) {
+            (vec.append(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_insert<T>) {
+            (vec.insert(stl::forward<Args>(args)), ...);
+        } else {
+            static_assert_false(T, "We don't know how to add things to this collection");
         }
+    }
 
-        template <Collection T, typename... Args>
-        void emplace_one(T& vec, Args&&... args) {
-            if constexpr (details::supports_emplace_back<T>) {
-                vec.emplace_back(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_emplace<T>) {
-                vec.emplace(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_push_back<T>) {
-                vec.push_back(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_push<T>) {
-                vec.push(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_add<T>) {
-                vec.add(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_append<T>) {
-                vec.append(stl::forward<Args>(args)...);
-            } else if constexpr (details::supports_insert<T>) {
-                vec.insert(stl::forward<Args>(args)...);
-            } else {
-                static_assert_false(T, "We don't know how to add things to this collection");
-            }
+    template <Collection T, typename... Args>
+    void emplace_one(T& vec, Args&&... args) {
+        if constexpr (details::supports_emplace_back<T>) {
+            vec.emplace_back(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_emplace<T>) {
+            vec.emplace(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_push_back<T>) {
+            vec.push_back(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_push<T>) {
+            vec.push(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_add<T>) {
+            vec.add(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_append<T>) {
+            vec.append(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_insert<T>) {
+            vec.insert(stl::forward<Args>(args)...);
+        } else {
+            static_assert_false(T, "We don't know how to add things to this collection");
         }
+    }
 
-        template <Collection T>
-        constexpr void clear(T& vec) noexcept {
-            vec.clear(); // doesn't deallocate actually, so it's nothrow
-        }
-
-
-    } // namespace collection
+    template <Collection T>
+        requires(!String<T>)
+    constexpr void clear(T& vec) noexcept {
+        vec.clear(); // doesn't deallocate actually, so it's nothrow
+    }
 
     template <typename T>
     concept LinearContainer = ReadOnlyCollection<T> && AppendableCollection<T> && requires(T container) {

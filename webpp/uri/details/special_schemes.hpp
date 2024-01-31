@@ -3,6 +3,7 @@
 #ifndef WEBPP_SPECIAL_SCHEMES_HPP
 #define WEBPP_SPECIAL_SCHEMES_HPP
 
+#include "../../std/string_like.hpp"
 #include "../../std/string_view.hpp"
 #include "../../strings/iequals.hpp"
 
@@ -10,9 +11,19 @@
 
 namespace webpp::uri {
 
-    template <istl::StringView StrT>
+    enum struct scheme_type : stl::uint8_t {
+        not_special,    // everything else
+        special_scheme, // http(s), ws(s), ftp
+        file,           // file scheme
+    };
+
+    template <istl::StringLike StrT>
     [[nodiscard]] constexpr bool is_file_scheme(StrT scheme) noexcept {
         return ascii::iequals<ascii::char_case_side::first_lowered>("file", stl::forward<StrT>(scheme));
+    }
+
+    [[nodiscard]] constexpr bool is_file_scheme(scheme_type const scheme) noexcept {
+        return scheme == scheme_type::file;
     }
 
     /**
@@ -68,9 +79,13 @@ namespace webpp::uri {
      *
      * from https://url.spec.whatwg.org/#is-special
      */
-    template <istl::StringView StrT>
+    template <istl::StringLike StrT>
     [[nodiscard]] constexpr bool is_special_scheme(StrT scheme) noexcept {
         return known_port(scheme) != 0U || is_file_scheme(scheme);
+    }
+
+    [[nodiscard]] constexpr bool is_special_scheme(scheme_type const scheme) noexcept {
+        return scheme != scheme_type::not_special;
     }
 
 } // namespace webpp::uri

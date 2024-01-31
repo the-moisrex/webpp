@@ -46,10 +46,10 @@ namespace webpp::view {
             to_type to{get_alloc_for<to_type>(et)};
             if constexpr (istl::ReadOnlyCollection<from_type>) {
                 for (auto const& item : from) {
-                    istl::collection::emplace(to, data_view_caster<value_type>(et, item));
+                    istl::emplace(to, data_view_caster<value_type>(et, item));
                 }
             } else {
-                istl::collection::emplace(to, data_view_caster<value_type>(et, stl::forward<From>(from)));
+                istl::emplace(to, data_view_caster<value_type>(et, stl::forward<From>(from)));
             }
             return to;
         } else {
@@ -65,7 +65,7 @@ namespace webpp::view {
             // standard collections like vector, ...
             using value_type = typename to_type::value_type;
             to_type to{get_alloc_for<to_type>(et)};
-            (istl::collection::emplace(to, data_view_caster<value_type>(et, from)), ...);
+            (istl::emplace(to, data_view_caster<value_type>(et, from)), ...);
             return to;
         } else {
             static_assert_false(To, "We're not able to convert the specified type to the desired value.");

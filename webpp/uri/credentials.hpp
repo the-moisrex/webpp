@@ -23,7 +23,6 @@ namespace webpp::uri {
 
             using details::ascii_bitmap;
             using details::component_encoder;
-            using details::components;
             using details::USER_INFO_ENCODE_SET;
 
             using ctx_type = parsing_uri_context<T...>;
@@ -40,7 +39,7 @@ namespace webpp::uri {
                 iterator const username_beg = beg;
                 iterator const username_end = stl::min(password_token_pos, atsign_pos);
 
-                ctx.out.clear_username(); // todo: it's optimizable
+                clear<components::username>(ctx); // todo: it's optimizable
                 component_encoder<components::username, ctx_type> user_encoder{ctx};
                 user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
                   username_beg,
@@ -52,7 +51,7 @@ namespace webpp::uri {
                     iterator const password_beg = password_token_pos + 1;
                     iterator const password_end = atsign_pos;
 
-                    ctx.out.clear_password(); // todo: it's optimizable
+                    clear<components::password>(ctx); // todo: it's optimizable
                     component_encoder<components::password, ctx_type> pass_encoder{ctx};
                     pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
                       password_beg,
