@@ -452,7 +452,7 @@ namespace webpp::uri {
             requires(
               !istl::cvref_as<T, basic_path> && istl::cvref_as<typename T::allocator_type, allocator_type>)
         explicit constexpr basic_path(T&& str) : container_type{str.get_allocator()} {
-            // parse(istl::string_viewify_of<string_view_type>(stl::forward<T>(str)));
+            parse(stl::forward<T>(str));
         }
 
         // NOLINTEND(*-forwarding-reference-overload)
@@ -471,6 +471,7 @@ namespace webpp::uri {
             ctx.end = path.end();
             ctx.pos = path.begin();
             ctx.out = stl::addressof(storage);
+            ctx.scheme = scheme_type::special_scheme;
             parse<Options>(ctx);
             return is_valid(ctx.status);
         }
@@ -586,7 +587,7 @@ namespace webpp::uri {
         }
 
         constexpr basic_path const& append_to(istl::String auto& str) const {
-            if (storage.size() == 0) {
+            if (storage.empty()) {
                 return *this;
             }
 

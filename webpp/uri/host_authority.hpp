@@ -67,11 +67,11 @@ namespace webpp::uri {
      *     reg-name         = *( unreserved / pct-encoded / sub-delims )
      */
     struct host_authority {
-        using domain_type = basic_domain;
+        using domain_type = basic_domain<>;
 
-        static constexpr stl::uint16_t max_port_number    = 65'535u;
-        static constexpr stl::uint16_t default_http_port  = 80u;
-        static constexpr stl::uint16_t default_https_port = 443u;
+        static constexpr stl::uint16_t max_port_number    = 65'535U;
+        static constexpr stl::uint16_t default_http_port  = 80U;
+        static constexpr stl::uint16_t default_https_port = 443U;
 
         constexpr ~host_authority() noexcept                                = default;
         constexpr host_authority(host_authority const&) noexcept            = default;
@@ -251,12 +251,12 @@ namespace webpp::uri {
             return default_ip;
         }
 
-        [[nodiscard]] constexpr struct ip_address address() const noexcept {
+        [[nodiscard]] constexpr ip_address address() const noexcept {
             if (auto const* ip4_ptr = stl::get_if<struct ipv4>(&endpoint); ip4_ptr != nullptr) {
-                return {*ip4_ptr};
+                return ip_address{*ip4_ptr};
             }
             if (auto const* ip6_ptr = stl::get_if<struct ipv6>(&endpoint); ip6_ptr != nullptr) {
-                return {*ip6_ptr};
+                return ip_address{*ip6_ptr};
             }
             return ip_address::invalid();
         }
@@ -265,7 +265,7 @@ namespace webpp::uri {
             if (auto const* domain_ptr = get_if<domain_type>(&endpoint); domain_ptr != nullptr) {
                 return *domain_ptr;
             }
-            return {}; // empty domain
+            return domain_type{}; // empty domain
         }
 
         [[nodiscard]] constexpr domain_type domain_or(domain_type default_domain) const noexcept {

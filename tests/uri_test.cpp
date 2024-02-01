@@ -71,7 +71,7 @@ TYPED_TEST(URITests, Generation) {
 
 TYPED_TEST(URITests, PathFromString) {
     uri::basic_path path{"/a/b/c/../d"};
-    ASSERT_EQ(path.size(), 6);
+    ASSERT_EQ(path.size(), 5);
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
     path /= "nice";
