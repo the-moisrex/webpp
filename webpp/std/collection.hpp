@@ -84,9 +84,9 @@ namespace webpp::istl {
     }
 
     template <Collection T>
-        requires(!String<T>)
+        requires(!requires { T::npos; }) // exclude strings, there's an istl::clear for strings
     constexpr void clear(T& vec) noexcept {
-        vec.clear(); // doesn't deallocate actually, so it's nothrow
+        vec.clear();                     // doesn't deallocate actually, so it's nothrow
     }
 
     template <typename T>
