@@ -49,7 +49,7 @@ let result =
 // Use ${filename} to generate this file, DO NOT EDIT MANUALLY.
 //
 // If you ever update "urltestdata.json" and regenerated this file,
-// make sure to update the link in the README.md file as well.
+// make sure to update the link in the assets/whatwg/README.md file as well.
 
 #include "../webpp/uri/uri.hpp"
 
@@ -124,6 +124,7 @@ TYPED_TEST_SUITE(URIWhatwgTest, Types);
 
 let reason = "";
 let index = 1;
+let testNum = 1;
 
 // Iterate over the tests
 for (const test of Object.values(jsonData)) {
@@ -141,7 +142,7 @@ for (const test of Object.values(jsonData)) {
   const testName = `${convertToCamelCase(reason)}${index}`;
 
   result += `
-// ${reason} (${index})
+// ${testNum} - ${reason} (${index})
 TYPED_TEST(URIWhatwgTest, ${testName}) {
 `
   if (test.base !== null) {
@@ -171,6 +172,18 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
         escapeForCppString(test.protocol.slice(0, -1))}");`;
   }
 
+  // username
+  if (test.username !== undefined) {
+    result += `
+    EXPECT_EQ(ctx.out.get_username(), "${escapeForCppString(test.username)}");`;
+  }
+
+  // password
+  if (test.password !== undefined) {
+    result += `
+    EXPECT_EQ(ctx.out.get_password(), "${escapeForCppString(test.password)}");`;
+  }
+
   // host
   if (test.host !== undefined) {
     //     result += `
@@ -189,16 +202,10 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
     EXPECT_EQ(ctx.out.get_port(), "${escapeForCppString(test.port)}");`;
   }
 
-  // username
-  if (test.username !== undefined) {
+  // path
+  if (test.pathname !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_username(), "${escapeForCppString(test.username)}");`;
-  }
-
-  // password
-  if (test.password !== undefined) {
-    result += `
-    EXPECT_EQ(ctx.out.get_password(), "${escapeForCppString(test.password)}");`;
+    EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");`;
   }
 
   // queries
@@ -215,6 +222,20 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
         escapeForCppString(test.hash.substr(1))}");`;
   }
 
+  // href
+  if (test.href !== undefined) {
+    // result += `
+    // EXPECT_EQ(ctx.out.get_href(), "${
+    //    escapeForCppString(test.href)}");`;
+  }
+
+  // origin??
+  if (test.origin !== undefined) {
+    // result += `
+    // EXPECT_EQ(ctx.out.get_href(), "${
+    //    escapeForCppString(test.href)}");`;
+  }
+
   // the end of the test:
   result += `
 }
@@ -222,6 +243,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
 `;
 
   ++index;
+  ++testNum;
 }
 
 const rl =
