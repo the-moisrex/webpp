@@ -80,16 +80,15 @@ namespace webpp::uri {
     template <uri_parsing_options     Options = uri_parsing_options{},
               istl::StringLike        StrT,
               istl::StringViewifiable OStrV>
-    static constexpr auto parse_uri(StrT const& the_url, OStrV&& origin_url) noexcept(
-      istl::StringView<StrT>) {
+    static constexpr auto parse_uri(StrT const& the_url, OStrV&& base_uri) noexcept(istl::StringView<StrT>) {
         using iterator = typename StrT::const_iterator;
         static_assert(
           stl::same_as<iterator, typename OStrV::const_iterator>,
           "Origin's string's char type must be the same as the specified URI's string's char type.");
-        auto const origin       = istl::string_viewify(stl::forward<OStrV>(origin_url));
+        auto const base         = istl::string_viewify(stl::forward<OStrV>(base_uri));
         using base_context_type = parsing_uri_context<stl::uint32_t, iterator>;
 
-        base_context_type origin_context{.beg = origin.begin(), .pos = origin.begin(), .end = origin.end()};
+        base_context_type origin_context{.beg = base.begin(), .pos = base.begin(), .end = base.end()};
         parse_uri<Options>(origin_context);
 
         return parse_uri<Options>(the_url, origin_context.out);

@@ -233,3 +233,8 @@ QualifierOrder:
 ---
 Language: Json
 BasedOnStyle: llvm
+
+
+---
+Language: JavaScript
+BasedOnStyle: LLVM
