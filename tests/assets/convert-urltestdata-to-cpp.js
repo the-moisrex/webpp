@@ -8,7 +8,7 @@ function convertToCamelCase(sentence) {
       sentence.replace(/[^a-zA-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').split(' ');
 
   // Convert words to CamelCase
-  const camelCaseWords = words.map((word, index) => {
+  const camelCaseWords = words.map((word) => {
     // Convert subsequent words to uppercase first letter
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
   });
@@ -24,10 +24,18 @@ function escapeForCppString(str) {
       .replace(/\n/g, '\\n')  // Escape newlines
       .replace(/\r/g, '\\r')  // Escape carriage returns
       .replace(/\t/g, '\\t')  // Escape tabs
-      .replace(/[\x00-\x1F\x7F-\xFF]/g, (match) => {
-        // Replace non-printable ASCII characters with Unicode escape sequences
-        return '\\u' + match.charCodeAt(0).toString(16).padStart(4, '0');
+      .replace(/\x00/, '\\0')
+      // Replace unpaired UTF-8 bidirectional control characters with a suitable
+      // replacement
+      .replace(/[\u202A-\u202E\u200E\u200F]/g, ch => {
+        return '\\u' +
+               ch.charCodeAt(0).toString(16).padStart(4, '0').toUpperCase();
       });
+  // .replace(/[^ -~]/g, ch => {
+  //     // Replace non-printable ASCII characters with Unicode escape sequences
+  //     return '\\u' + ch.charCodeAt(0).toString(16).padStart(4,
+  //     '0').toUpperCase();
+  // });
 }
 
 // Read the JSON file
@@ -157,7 +165,7 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
             escapeForCppString(test.input)}");`;
   }
 
-  if (test.failure) {
+  if (test.failure !== undefined) {
     result += `
     EXPECT_FALSE(uri::is_valid(ctx.status));`;
   } else {
@@ -212,14 +220,14 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   if (test.search !== undefined) {
     result += `
     EXPECT_EQ(ctx.out.get_queries(), "${
-        escapeForCppString(test.search.substr(1))}");`;
+        escapeForCppString(test.search.substring(1))}");`;
   }
 
   // fragment
   if (test.hash !== undefined) {
     result += `
     EXPECT_EQ(ctx.out.get_fragment(), "${
-        escapeForCppString(test.hash.substr(1))}");`;
+        escapeForCppString(test.hash.substring(1))}");`;
   }
 
   // href
@@ -246,14 +254,14 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   ++testNum;
 }
 
-const rl =
+const line =
     readline.createInterface({input : process.stdin, output : process.stdout});
 
-rl.question(`Write to ${outFile} [Y/n]: `, (answer) => {
-  if (answer.toLowerCase() != 'y' && answer.toLowerCase() != 'yes' &&
-      answer != "") {
+line.question(`Write to ${outFile} [Y/n]: `, (answer) => {
+  if (answer.toLowerCase() !== 'y' && answer.toLowerCase() !== 'yes' &&
+      answer !== "") {
     console.log("Not written.");
-    rl.close();
+    line.close();
     return;
   }
 
@@ -264,6 +272,6 @@ rl.question(`Write to ${outFile} [Y/n]: `, (answer) => {
     } else {
       console.log('File written successfully!');
     }
-    rl.close();
+    line.close();
   });
 });
