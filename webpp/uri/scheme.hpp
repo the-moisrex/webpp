@@ -29,7 +29,7 @@ namespace webpp::uri {
                 // Assert base's scheme is not file
                 assert(is_file_scheme(ctx.base.scheme()));
 
-                ctx.out.scheme(ctx.base.scheme());
+                set_value<components::scheme>(ctx, ctx.base.get_scheme());
             }
         }
 
@@ -53,8 +53,8 @@ namespace webpp::uri {
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
-                if (is_file_scheme(ctx.base.scheme())) {
-                    ctx.out.scheme(ctx.base.scheme());
+                if (is_file_scheme(ctx.base.get_scheme())) {
+                    set_value<components::scheme>(ctx, ctx.base.get_scheme());
 
                     // todo:
                     // 2. If the code point substring from pointer to the end of input does not
@@ -75,7 +75,9 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 // set scheme to "file"
-                ctx.scheme(ctx.base.scheme.data(), ctx.base.data() + 4);
+                set_value<components::scheme>(ctx,
+                                              ctx.base.get_scheme().data(),
+                                              ctx.base.get_scheme().data() + 4);
             }
             clear<components::host>(ctx);
 
@@ -97,7 +99,7 @@ namespace webpp::uri {
             }
 
             if constexpr (ctx_type::has_base_uri) {
-                if (is_file_scheme(ctx.base.scheme())) {
+                if (is_file_scheme(ctx.base.get_scheme())) {
                     // todo
                 }
             }
@@ -113,16 +115,16 @@ namespace webpp::uri {
             using ctx_type = parsing_uri_context<T...>;
 
             if constexpr (ctx_type::has_base_uri) {
-                if (ctx.base.has_opaque_path()) {
+                if (ctx.base.has_path()) { // todo: specs say opaque path
                     if (*ctx.pos == '#') {
-                        ctx.out.scheme(ctx.base.scheme());
-                        ctx.out.set_path(ctx.base.get_path());
-                        ctx.out.set_query(ctx.base.get_query());
+                        set_value<components::scheme>(ctx, ctx.base.get_scheme());
+                        set_value<components::path>(ctx, ctx.base.get_path());
+                        set_value<components::queries>(ctx, ctx.base.get_queries());
                         clear<components::fragment>(ctx);
                         set_valid(ctx.status, uri_status::valid_fragment);
                         return;
                     }
-                } else if (is_file_scheme(ctx.base.scheme())) {
+                } else if (is_file_scheme(ctx.base.get_scheme())) {
                     relative_state(ctx);
                     return;
                 } else {
@@ -217,7 +219,7 @@ namespace webpp::uri {
                 ctx.scheme = scheme_type::special_scheme;
                 // todo: first check the constexpr if
                 if constexpr (ctx_type::has_base_uri) {
-                    if (ctx.out.scheme() == ctx.base.scheme()) {
+                    if (ctx.out.get_scheme() == ctx.base.get_scheme()) {
                         // todo: Assert: base is special (and therefore does not have an opaque path).
                         details::special_relative_or_authority_state(ctx);
                     }

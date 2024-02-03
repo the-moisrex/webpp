@@ -741,12 +741,13 @@ namespace webpp::uri {
         static constexpr bool is_modifiable = out_type::is_modifiable;
         static constexpr bool is_segregated = out_type::is_segregated;
 
-        iterator    beg{}; // the beginning of the string, not going to change during parsing
-        iterator    pos{}; // current position
-        iterator    end{}; // the end of the string
-        out_type    out{}; // the output uri components
-        state_type  status = stl::to_underlying(uri_status::unparsed);
-        scheme_type scheme = scheme_type::not_special;
+        iterator beg{}; // the beginning of the string, not going to change during parsing
+        iterator pos{}; // current position
+        iterator end{}; // the end of the string
+        out_type out{}; // the output uri components
+        [[no_unique_address]] base_type base{};
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        scheme_type                     scheme = scheme_type::not_special;
     };
 
     template <typename OutSegType, istl::StringLike OutIter, typename BaseSegType, typename BaseIter>
