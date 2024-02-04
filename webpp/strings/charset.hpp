@@ -132,6 +132,10 @@ namespace webpp {
             }
         }
 
+        [[nodiscard]] constexpr bool unsafe_contains(value_type character) const noexcept {
+            return contains(character);
+        }
+
         /**
          * @brief Checks if all the characters in the string view are present in the list of characters.
          *
@@ -469,7 +473,15 @@ namespace webpp {
          *     is in the character map is returned.
          */
         template <typename CharT>
+        [[nodiscard]] constexpr bool unsafe_contains(CharT character) const noexcept {
+            return this->operator[](static_cast<stl::size_t>(character));
+        }
+
+        template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
+            if (character < 0 || character > N) {
+                return false;
+            }
             return this->operator[](static_cast<stl::size_t>(character));
         }
 
@@ -634,9 +646,17 @@ namespace webpp {
         }
 
         template <typename CharT>
-        [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
+        [[nodiscard]] constexpr bool unsafe_contains(CharT character) const noexcept {
             webpp_assume(character >= 0 && static_cast<stl::size_t>(character) <= N);
             return this->operator[](static_cast<stl::size_t>(character));
+        }
+
+        template <typename CharT>
+        [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
+            if (character >= 0 && static_cast<stl::size_t>(character) <= N) {
+                return this->operator[](static_cast<stl::size_t>(character));
+            }
+            return false;
         }
 
         template <typename CharT>
