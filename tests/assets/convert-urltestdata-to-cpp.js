@@ -167,10 +167,10 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
 
   if (test.failure !== undefined) {
     result += `
-    EXPECT_FALSE(uri::is_valid(ctx.status));`;
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));`;
   } else {
     result += `
-    EXPECT_TRUE(uri::is_valid(ctx.status));`;
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));`;
   }
 
   // scheme

@@ -394,13 +394,13 @@ namespace webpp {
         explicit consteval charmap(bool const (&bools)[N]) noexcept : super{bools} {}
 
         template <typename CharT, stl::size_t... I>
-        explicit consteval charmap(CharT const (&... str)[I]) noexcept
+        explicit consteval charmap(CharT const (&... strs)[I]) noexcept
           : super{} // init with false
         {
             (
-              [this, &str]() {
+              [this](CharT const(&str)[I]) {
                   webpp_set_at(str, *this);
-              }(),
+              }(strs),
               ...); // make them true
         }
 
@@ -425,9 +425,9 @@ namespace webpp {
             webpp_xor_all(set1, *this);
             webpp_xor_all(set2, *this);
             (
-              [this, &c_sets]() {
-                  webpp_xor_all(c_sets, *this);
-              }(),
+              [this](charmap<NN> const& set) {
+                  webpp_xor_all(set, *this);
+              }(c_sets),
               ...);
         }
 
@@ -437,9 +437,9 @@ namespace webpp {
           : super{} // init with false values
         {
             (
-              [this, &c_sets]() {
-                  webpp_set_at(c_sets, *this);
-              }(),
+              [this](charset<CharT, NN> const& set) {
+                  webpp_set_at(set, *this);
+              }(c_sets),
               ...);
         }
 
@@ -479,8 +479,12 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
-            if (character < 0 || character > N) {
-                return false;
+            if constexpr (
+              stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
+            {
+                if (character < 0 || character > N) {
+                    return false;
+                }
             }
             return this->operator[](static_cast<stl::size_t>(character));
         }
@@ -653,10 +657,14 @@ namespace webpp {
 
         template <typename CharT>
         [[nodiscard]] constexpr bool contains(CharT character) const noexcept {
-            if (character >= 0 && static_cast<stl::size_t>(character) <= N) {
-                return this->operator[](static_cast<stl::size_t>(character));
+            if constexpr (
+              stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
+            {
+                if (character < 0 || static_cast<stl::size_t>(character) > N) {
+                    return false;
+                }
             }
-            return false;
+            return this->operator[](static_cast<stl::size_t>(character));
         }
 
         template <typename CharT>

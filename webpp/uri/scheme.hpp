@@ -19,17 +19,74 @@ namespace webpp::uri {
 
     namespace details { // states
 
-        template <typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void relative_state(parsing_uri_context<T...>& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
 
             using ctx_type = parsing_uri_context<T...>;
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+                return;
+            }
 
             if constexpr (ctx_type::has_base_uri) {
                 // Assert base's scheme is not file
-                assert(is_file_scheme(ctx.base.scheme()));
+                assert(!is_file_scheme(ctx.base.scheme()));
 
                 set_value<components::scheme>(ctx, ctx.base.get_scheme());
+            }
+            switch (*ctx.pos) {
+                case '/': break;
+                case '\\':
+                    if (is_special_scheme(ctx.scheme)) {
+                        set_warning(ctx.status, uri_status::reverse_solidus_used);
+                    }
+                    break;
+                default: break;
+            }
+            ++ctx.pos;
+            if (ctx.pos == ctx.end) {
+                set_valid(ctx.status, uri_status::valid);
+                return;
+            }
+
+
+            // from now on in the algorithms: realtive slash state
+            // https://url.spec.whatwg.org/#relative-slash-state
+            if constexpr (ctx_type::has_base_uri) {
+                set_value<components::username>(ctx, ctx.base.get_username());
+                set_value<components::password>(ctx, ctx.base.get_password());
+                set_value<components::host>(ctx, ctx.base.get_hostname());
+                set_value<components::port>(ctx, ctx.base.get_port());
+                set_value<components::path>(
+                  ctx,
+                  ctx.base.get_path()); // todo: https://infra.spec.whatwg.org/#list-clone
+                set_value<components::queries>(ctx, ctx.base.get_queries());
+            }
+            switch (*ctx.pos) {
+                case '?':
+                    clear<components::queries>(ctx);
+                    set_valid(ctx.status, uri_status::valid_queries);
+                    ++ctx.pos;
+                    break;
+                case '#':
+                    clear<components::fragment>(ctx);
+                    set_valid(ctx.status, uri_status::valid_fragment);
+                    ++ctx.pos;
+                    break;
+                case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        set_valid(ctx.status, uri_status::valid);
+                        return;
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    [[fallthrough]];
+                default:
+                    clear<components::queries>(ctx);
+                    // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
+                    set_valid(ctx.status, uri_status::valid_path);
+                    break;
             }
         }
 
@@ -125,7 +182,7 @@ namespace webpp::uri {
                         return;
                     }
                 } else if (is_file_scheme(ctx.base.get_scheme())) {
-                    relative_state(ctx);
+                    relative_state<Options>(ctx);
                     return;
                 } else {
                     file_state<Options>(ctx);
@@ -146,7 +203,7 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_authority);
         }
 
-        template <typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
         static constexpr void special_relative_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
@@ -155,7 +212,7 @@ namespace webpp::uri {
                 return;
             }
             set_warning(ctx.status, uri_status::missing_following_solidus);
-            relative_state(ctx);
+            relative_state<Options>(ctx);
         }
 
     } // namespace details
@@ -221,7 +278,7 @@ namespace webpp::uri {
                 if constexpr (ctx_type::has_base_uri) {
                     if (ctx.out.get_scheme() == ctx.base.get_scheme()) {
                         // todo: Assert: base is special (and therefore does not have an opaque path).
-                        details::special_relative_or_authority_state(ctx);
+                        details::special_relative_or_authority_state<Options>(ctx);
                     }
                 }
 
