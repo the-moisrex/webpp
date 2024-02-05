@@ -79,10 +79,27 @@ namespace webpp::uri {
         seg_type fragment_start  = omitted; // query end
         seg_type uri_end         = omitted; // string end
 
+        constexpr void set_min_authority_end(seg_type end) noexcept {
+            if (authority_end != omitted) {
+                authority_end = stl::max(authority_end, end);
+            } else {
+                authority_end = end;
+            }
+        }
+
+        constexpr void set_min_uri_end(seg_type end) noexcept {
+            if (uri_end != omitted) {
+                uri_end = stl::max(uri_end, end);
+            } else {
+                uri_end = end;
+            }
+        }
+
       public:
         constexpr void set_scheme(iterator beg, iterator end) noexcept {
             uri_beg    = beg;
-            scheme_end = uri_end = static_cast<seg_type>(end - beg);
+            scheme_end = static_cast<seg_type>(end - beg);
+            set_min_uri_end(scheme_end);
         }
 
         constexpr void set_lowered_scheme(iterator beg, iterator end) noexcept {
@@ -91,7 +108,7 @@ namespace webpp::uri {
 
         constexpr void set_path(seg_type beg, seg_type end) noexcept {
             authority_end = beg;
-            uri_end       = end;
+            set_min_uri_end(end);
         }
 
         constexpr void set_path(iterator beg, iterator end) noexcept {
@@ -100,7 +117,8 @@ namespace webpp::uri {
 
         constexpr void set_username(seg_type beg, seg_type end) noexcept {
             authority_start = beg;
-            uri_end = authority_end = end;
+            set_min_authority_end(end);
+            set_min_uri_end(end);
         }
 
         constexpr void set_username(iterator beg, iterator end) noexcept {
@@ -109,7 +127,8 @@ namespace webpp::uri {
 
         constexpr void set_password(seg_type beg, seg_type end) noexcept {
             password_start = beg;
-            uri_end = authority_end = end;
+            set_min_authority_end(end);
+            set_min_uri_end(end);
         }
 
         constexpr void set_password(iterator beg, iterator end) noexcept {
@@ -118,7 +137,8 @@ namespace webpp::uri {
 
         constexpr void set_hostname(seg_type beg, seg_type end) noexcept {
             host_start = beg;
-            uri_end    = end;
+            set_min_authority_end(end);
+            set_min_uri_end(end);
         }
 
         constexpr void set_hostname(iterator beg, iterator end) noexcept {
@@ -126,8 +146,9 @@ namespace webpp::uri {
         }
 
         constexpr void set_port(seg_type start, seg_type end) noexcept {
-            port_start    = start;
-            authority_end = uri_end = end;
+            port_start = start;
+            set_min_authority_end(end);
+            set_min_uri_end(end);
         }
 
         constexpr void set_port(iterator beg, iterator end) noexcept {
@@ -136,7 +157,7 @@ namespace webpp::uri {
 
         constexpr void set_queries(seg_type start, seg_type end) noexcept {
             queries_start = start;
-            uri_end       = end;
+            set_min_uri_end(end);
         }
 
         constexpr void set_queries(iterator beg, iterator end) noexcept {
@@ -145,42 +166,63 @@ namespace webpp::uri {
 
         constexpr void set_fragment(seg_type start, seg_type end) noexcept {
             fragment_start = start;
-            uri_end        = end;
+            set_min_uri_end(end);
         }
 
         constexpr void set_fragment(iterator beg, iterator end) noexcept {
             set_fragment(static_cast<seg_type>(beg - uri_beg), static_cast<seg_type>(end - uri_beg));
         }
 
+      private:
+        constexpr void clean_authority_end() noexcept {
+            if (authority_start == omitted && password_start == omitted && port_start == omitted &&
+                host_start == omitted)
+            {
+                authority_end = omitted;
+            }
+        }
+
+      public:
         constexpr void clear_scheme() noexcept {
             scheme_end = omitted;
         }
 
         constexpr void clear_hostname() noexcept {
-            host_start = omitted; // todo: should we reset authority_start and password_start as well?
+            host_start = omitted;
+            clean_authority_end();
         }
 
         constexpr void clear_port() noexcept {
             port_start = omitted;
+            clean_authority_end();
         }
 
         constexpr void clear_username() noexcept {
             authority_start = omitted;
+            clean_authority_end();
         }
 
         constexpr void clear_password() noexcept {
             password_start = omitted;
+            clean_authority_end();
         }
 
         constexpr void clear_path() noexcept {
-            authority_end = omitted;
+            if (queries_start == omitted && fragment_start == omitted) {
+                uri_end = stl::min(authority_end, uri_end);
+            }
+            authority_end = stl::min(authority_end, uri_end);
         }
 
         constexpr void clear_queries() noexcept {
+            if (fragment_start == omitted) {
+                uri_end = stl::min(fragment_start, uri_end);
+            }
             queries_start = omitted;
         }
 
         constexpr void clear_fragment() noexcept {
+            uri_end        = stl::min(fragment_start, uri_end);
             fragment_start = omitted;
         }
 
@@ -261,7 +303,8 @@ namespace webpp::uri {
             if (password_start == omitted) {
                 return {};
             }
-            return view<StrT>(password_start, host_start - 1 - password_start);
+            return view<StrT>(password_start,
+                              stl::min(stl::min(host_start, port_start), authority_end) - 1 - password_start);
         }
 
         template <istl::StringView StrT = stl::string_view>
