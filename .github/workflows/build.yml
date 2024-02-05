@@ -1568,6 +1568,46 @@ jobs:
         run: cmake --build --preset test-string
       - name: Run test-string
         run: ./build/test-string
+  build-test-structured-uri:
+    name: Build test-structured-uri
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-structured-uri
+        run: cmake --build --preset test-structured-uri
+  run-test-structured-uri:
+    name: Run test-structured-uri
+    needs: build-test-structured-uri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-structured-uri
+        run: cmake --build --preset test-structured-uri
+      - name: Run test-structured-uri
+        run: ./build/test-structured-uri
   build-test-time:
     name: Build test-time
     needs: install
@@ -1928,6 +1968,46 @@ jobs:
         run: cmake --build --preset test-uri
       - name: Run test-uri
         run: ./build/test-uri
+  build-test-uri-whatwg:
+    name: Build test-uri-whatwg
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Build test-uri-whatwg
+        run: cmake --build --preset test-uri-whatwg
+  run-test-uri-whatwg:
+    name: Run test-uri-whatwg
+    needs: build-test-uri-whatwg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.compiler }}-${{ env.BUILD_TYPE }}-${{
+            hashFiles('**/CMakeLists.txt') }}-${{
+            hashFiles('./CMakePresets.json')}}
+          restore-keys: ${{ runner.os }}-${{ env.BUILD_TYPE }}-
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libboost-all-dev zlib1g-dev googletest g++-12 ninja-build
+          version: 1
+      - name: Run test-uri-whatwg
+        run: cmake --build --preset test-uri-whatwg
+      - name: Run test-uri-whatwg
+        run: ./build/test-uri-whatwg
   build-test-ustring:
     name: Build test-ustring
     needs: install
