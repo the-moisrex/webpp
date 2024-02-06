@@ -257,7 +257,8 @@ namespace webpp::uri {
 
         using ctx_type = parsing_uri_context<T...>;
 
-        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('%', '#', '?');
+        // todo: URI Code Points are among interesting characters as well
+        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('\0', '%', '#', '?');
 
         details::component_encoder<components::path, ctx_type> encoder(ctx);
         encoder.start_segment();
@@ -272,8 +273,21 @@ namespace webpp::uri {
                 break;
             }
             switch (*ctx.pos) {
-                case '?': set_valid(ctx.status, uri_status::valid_queries); break;
-                case '#': set_valid(ctx.status, uri_status::valid_fragment); break;
+                case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        set_valid(ctx.status, uri_status::valid);
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    break;
+                case '?':
+                    clear<components::queries>(ctx);
+                    set_valid(ctx.status, uri_status::valid_queries);
+                    break;
+                case '#':
+                    clear<components::fragment>(ctx);
+                    set_valid(ctx.status, uri_status::valid_fragment);
+                    break;
                 case '%':
                     if (encoder.validate_percent_encode()) {
                         continue;
@@ -467,10 +481,10 @@ namespace webpp::uri {
             auto const path     = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             using iterator_type = typename string_view_type::iterator;
             parsing_uri_context<container_type*, iterator_type> ctx;
-            ctx.beg = path.begin();
-            ctx.end = path.end();
-            ctx.pos = path.begin();
-            ctx.out = stl::addressof(storage);
+            ctx.beg    = path.begin();
+            ctx.end    = path.end();
+            ctx.pos    = path.begin();
+            ctx.out    = stl::addressof(storage);
             ctx.scheme = scheme_type::special_scheme;
             parse<Options>(ctx);
             return is_valid(ctx.status);

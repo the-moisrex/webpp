@@ -95,10 +95,10 @@ namespace webpp::uri::details {
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
         [[nodiscard]] constexpr bool encode_or_validate(
-          iterator&                            pos,
-          iterator                             end,
-          [[maybe_unused]] CharSet auto const& policy_chars,
-          CharSet auto const&                  invalid_chars) noexcept(ctx_type::is_nothrow) {
+          iterator&           pos,
+          iterator            end,
+          CharSet auto const& policy_chars,
+          CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 return encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars, invalid_chars);
             } else {
@@ -106,6 +106,24 @@ namespace webpp::uri::details {
                     pos = invalid_chars.find_first_not_in(pos, end);
                 } else {
                     pos = invalid_chars.find_first_in(pos, end);
+                }
+                return pos == end;
+            }
+        }
+
+        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
+        [[nodiscard]] constexpr bool encode_or_validate(
+          iterator&           pos,
+          iterator            end,
+          CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+            if constexpr (ctx_type::is_modifiable) {
+                encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars);
+                return pos == end;
+            } else {
+                if constexpr (Policy == uri_encoding_policy::skip_chars) {
+                    pos = policy_chars.find_first_not_in(pos, end);
+                } else {
+                    pos = policy_chars.find_first_in(pos, end);
                 }
                 return pos == end;
             }
@@ -120,9 +138,15 @@ namespace webpp::uri::details {
          */
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
         [[nodiscard]] constexpr bool encode_or_validate(
-          [[maybe_unused]] CharSet auto const& policy_chars,
-          CharSet auto const&                  invalid_chars) noexcept(ctx_type::is_nothrow) {
+          CharSet auto const& policy_chars,
+          CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
             return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars, invalid_chars);
+        }
+
+        template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
+        [[nodiscard]] constexpr bool encode_or_validate(CharSet auto const& policy_chars) noexcept(
+          ctx_type::is_nothrow) {
+            return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars);
         }
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>

@@ -212,15 +212,51 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
 
   // path
   if (test.pathname !== undefined) {
-    result += `
+    if (test.pathname.indexOf('%') != -1) {
+      try {
+        result += `
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");
+    } else {
+        EXPECT_EQ(ctx.out.get_path(), "${
+            escapeForCppString(decodeURIComponent(test.pathname))}");
+    }`;
+      } catch (e) {
+        result += `
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");
+    }`;
+      }
+    } else {
+      result += `
     EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");`;
+    }
   }
 
   // queries
   if (test.search !== undefined) {
-    result += `
+    if (test.search.indexOf('%') != -1) {
+      try {
+        result += `
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_queries(), "${
+            escapeForCppString(test.search.substring(1))}");
+    } else {
+        EXPECT_EQ(ctx.out.get_queries(), "${
+            escapeForCppString(decodeURIComponent(test.search.substring(1)))}");
+    }`;
+      } catch (e) {
+        result += `
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_queries(), "${
+            escapeForCppString(test.search.substring(1))}");
+    }`;
+      }
+    } else {
+      result += `
     EXPECT_EQ(ctx.out.get_queries(), "${
-        escapeForCppString(test.search.substring(1))}");`;
+          escapeForCppString(test.search.substring(1))}");`;
+    }
   }
 
   // fragment
