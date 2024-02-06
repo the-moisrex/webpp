@@ -21,7 +21,7 @@ namespace webpp::uri {
     static constexpr struct alignas(16) uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
-        bool eof_is_valid = false;
+        bool eof_is_valid = true;
 
         /// Parse username and password part of the authority (you may want to disable it if you're trying to
         /// parse Host Authority which doesn't have credentials)
@@ -440,6 +440,16 @@ namespace webpp::uri {
 
     [[nodiscard]] static constexpr uri_status get_value(uri_status const status) noexcept {
         return get_value(stl::to_underlying(status));
+    }
+
+    [[nodiscard]] static constexpr bool has_error(stl::underlying_type_t<uri_status> const status,
+                                                  uri_status const expected_err) noexcept {
+        return get_value(status) == expected_err;
+    }
+
+    [[nodiscard]] static constexpr bool has_error(uri_status const status,
+                                                  uri_status const expected_err) noexcept {
+        return has_error(stl::to_underlying(status), expected_err);
     }
 
     static constexpr void set_valid(stl::underlying_type_t<uri_status>& status,

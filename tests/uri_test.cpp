@@ -1454,3 +1454,23 @@ TYPED_TEST(URITests, EmptyIPv4) {
 
     // NOLINTEND(*-avoid-c-arrays)
 }
+
+TYPED_TEST(URITests, NewlinesInURI) {
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example\t.\norg");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
+    EXPECT_EQ(ctx.out.get_scheme(), "http");
+    EXPECT_EQ(ctx.out.get_hostname(), "example.org");
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_path(), "/");
+    } else {
+        EXPECT_EQ(ctx.out.get_path(), "");
+    }
+}
+
+TYPED_TEST(URITests, SpacesInURIs) {
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example. org");
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::invalid_domain_code_point))
+      << to_string(uri::get_value(ctx.status));
+}
