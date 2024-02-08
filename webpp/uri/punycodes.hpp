@@ -77,8 +77,8 @@ namespace webpp::uri {
             return static_cast<int>(input_length + 1);
         }
         std::memcpy(output, "xn--", 4);
-        output                            += 4;
-        char constchar* const init_output  = output;
+        output                        += 4;
+        char const* const init_output  = output;
 
         stl::array<stl::uint32_t, 64> all_buffer;
         stl::uint32_t*                all{all_buffer.data()};
@@ -168,7 +168,7 @@ namespace webpp::uri {
         }
 
         auto const number_of_chars = static_cast<stl::size_t const>(all - all_buffer.data());
-        auto const basic_count     = static_cast<const stl::size_t>(output - init_output);
+        auto const basic_count     = static_cast<stl::size_t const>(output - init_output);
 
         if (basic_count > 0) {
             *output++ = '-';
@@ -201,7 +201,7 @@ namespace webpp::uri {
           };
 
         sort_unique_values(non_basic_buffer,
-                           static_cast<const stl::size_t>(non_basic - non_basic_buffer.data()));
+                           static_cast<stl::size_t const>(non_basic - non_basic_buffer.data()));
         non_basic = non_basic_buffer.data();
 
         auto const adapt = [](stl::uint32_t delta, stl::uint32_t n_points, bool is_first) noexcept {

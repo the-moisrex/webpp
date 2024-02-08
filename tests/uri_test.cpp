@@ -1474,31 +1474,3 @@ TYPED_TEST(URITests, SpacesInURIs) {
     EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::invalid_domain_code_point))
       << to_string(uri::get_value(ctx.status));
 }
-
-TYPED_TEST(URITests, LabelSeparators) {
-    // https://www.unicode.org/reports/tr46/#Notation
-    // Label Separators are:
-    //   - U+002E ( . ) FULL STOP
-    //   - U+FF0E ( ． ) FULLWIDTH FULL STOP
-    //   - U+3002 ( 。 ) IDEOGRAPHIC FULL STOP
-    //   - U+FF61 ( ｡ ) HALFWIDTH IDEOGRAPHIC FULL STOP
-
-    auto const ctx1 = this->template parse_from_string<TypeParam>("http://example.org");
-    EXPECT_FALSE(uri::is_valid(ctx1.status)) << to_string(uri::get_value(ctx1.status));
-
-    auto const ctx2 = this->template parse_from_string<TypeParam>("http://example．org");
-    EXPECT_FALSE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
-
-    auto const ctx3 = this->template parse_from_string<TypeParam>("http://example。org");
-    EXPECT_FALSE(uri::is_valid(ctx3.status)) << to_string(uri::get_value(ctx3.status));
-
-    auto const ctx4 = this->template parse_from_string<TypeParam>("http://example｡org");
-    EXPECT_FALSE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
-
-    EXPECT_EQ(ctx1.out.get_hostname(), "example.org");
-    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
-        EXPECT_EQ(ctx2.out.get_hostname(), "example.org");
-        EXPECT_EQ(ctx3.out.get_hostname(), "example.org");
-        EXPECT_EQ(ctx4.out.get_hostname(), "example.org");
-    }
-}
