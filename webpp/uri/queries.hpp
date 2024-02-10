@@ -125,23 +125,34 @@ namespace webpp::uri {
         }
     }
 
-    template <typename StringType = stl::string,
-              typename AllocType  = typename stl::remove_cvref_t<StringType>::allocator_type>
+    /**
+     * @brief Basic Queries (or sometimes called Searches, like in WHATWG) stored as key-values
+     * @tparam StringType String or String View type used as the storage type
+     * @tparam AllocType Allocator type
+     */
+    template <istl::StringLike StringType = stl::string,
+              Allocator        AllocType  = allocator_type_from_t<StringType>>
     struct basic_queries : istl::map_of_strings<StringType, AllocType> {
-        using super                         = istl::map_of_strings<StringType, AllocType>;
-        using string_type                   = stl::remove_cvref_t<StringType>;
-        using key_type                      = typename super::key_type;
-        using mapped_type                   = typename super::mapped_type;
-        using char_type                     = typename string_type::value_type;
-        using value_type                    = stl::pair<key_type, mapped_type>;
-        using allocator_type                = typename super::allocator_type;
+        using map_type       = istl::map_of_strings<StringType, AllocType>;
+        using string_type    = StringType;
+        using key_type       = typename map_type::key_type;
+        using mapped_type    = typename map_type::mapped_type;
+        using char_type      = typename string_type::value_type;
+        using value_type     = stl::pair<key_type, mapped_type>;
+        using pack_type      = typename map_type::value_type;
+        using allocator_type = typename map_type::allocator_type;
+
+        using iterator       = typename map_type::iterator;
+        using const_iterator = typename map_type::const_iterator;
+
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         template <typename... Args>
-            requires requires(Args... args) { super{stl::forward<Args>(args)...}; }
+            requires requires(Args... args) { map_type{stl::forward<Args>(args)...}; }
         explicit constexpr basic_queries(Args&&... args) noexcept(
-          noexcept(super(stl::forward<Args>(args)...)))
-          : super{stl::forward<Args>(args)...} {}
+          noexcept(map_type(stl::forward<Args>(args)...)))
+          : map_type{stl::forward<Args>(args)...} {}
 
         /**
          * Get the raw string non-decoded size
@@ -158,15 +169,63 @@ namespace webpp::uri {
             }() + (this->size() * 2) - 2;
         }
 
-        void append_to(istl::String auto& str) const {
-            str.append("?");
-            for (auto const& [key, value] : *this) {
-                encode_uri_component(key, str, allowed_chars);
-                str.append("=");
-                encode_uri_component(value, str, allowed_chars);
-                str.append("&");
+        /**
+         * @brief Replace the values with the specified raw data, without parsing
+         * @param beg start of the value
+         * @param end the end of the value
+         */
+        constexpr void set_raw_value(iterator beg, iterator end) {
+            // first "name" is chosen for the whole value, because of the algorithm that gets the queries will
+            // be correct that way
+
+            this->clear();
+            if constexpr (is_modifiable) {
+                istl::emplace_one(static_cast<basic_queries&>(*this),
+                                  pack_type{
+                                    key_type{beg, end, this->get_allocator()},
+                                    mapped_type{this->get_allocator()}
+                });
+            } else {
+                istl::emplace_one(static_cast<basic_queries&>(*this),
+                                  pack_type{
+                                    key_type{beg, end},
+                                    mapped_type{}
+                });
             }
-            str.pop_back(); // remove the "&" (or remove the unneeded "?" if it's empty)
+        }
+
+        /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !this->empty();
+        }
+
+        template <istl::String NStrT = stl::string>
+        constexpr void to_string(NStrT& out) const {
+            if (this->empty()) {
+                return;
+            }
+            for (auto pos = this->begin();;) {
+                auto const [name, value]  = *pos;
+                out                      += name;
+                if (!value.empty()) {
+                    out += '=';
+                    out += value;
+                }
+                if (++pos == this->end()) {
+                    break;
+                }
+                out += '&';
+            }
+        }
+
+        template <istl::String NStrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
     };
 

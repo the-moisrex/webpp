@@ -281,16 +281,16 @@ namespace webpp::uri {
             return uri_end == omitted ? 0 : uri_end;
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_scheme() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_scheme() const noexcept(!istl::ModifiableString<StrT>) {
             if (scheme_end == omitted) {
                 return {};
             }
             return view<StrT>(0, stl::min(scheme_end, size()));
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_username() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_username() const noexcept(!istl::ModifiableString<StrT>) {
             if (authority_start == omitted) {
                 return {};
             }
@@ -298,8 +298,8 @@ namespace webpp::uri {
                               stl::min(password_start - 1, host_start - 1) - authority_start);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_password() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_password() const noexcept(!istl::ModifiableString<StrT>) {
             if (password_start == omitted) {
                 return {};
             }
@@ -307,8 +307,8 @@ namespace webpp::uri {
                               stl::min(stl::min(host_start, port_start), authority_end) - 1 - password_start);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_hostname() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_hostname() const noexcept(!istl::ModifiableString<StrT>) {
             if (host_start == omitted) {
                 return {};
             }
@@ -316,16 +316,16 @@ namespace webpp::uri {
                               stl::min(stl::min(port_start - 1, authority_end), size()) - host_start);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_port() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_port() const noexcept(!istl::ModifiableString<StrT>) {
             if (port_start == omitted) {
                 return {};
             }
             return view<StrT>(port_start, stl::min(authority_end, size()) - port_start);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_path() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_path() const noexcept(!istl::ModifiableString<StrT>) {
             if (authority_end == omitted) {
                 return {};
             }
@@ -334,16 +334,16 @@ namespace webpp::uri {
               stl::min(stl::min(queries_start - 1, fragment_start - 1), size()) - authority_end);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_queries() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_queries() const noexcept(!istl::ModifiableString<StrT>) {
             if (queries_start == omitted) {
                 return {};
             }
             return view<StrT>(queries_start, stl::min(fragment_start - 1, size()) - queries_start);
         }
 
-        template <istl::StringView StrT = stl::string_view>
-        [[nodiscard]] constexpr StrT get_fragment() const noexcept {
+        template <istl::StringLike StrT = stl::string_view>
+        [[nodiscard]] constexpr StrT get_fragment() const noexcept(!istl::ModifiableString<StrT>) {
             if (fragment_start == omitted) {
                 return {};
             }
@@ -405,50 +405,50 @@ namespace webpp::uri {
 
       public:
         // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(field)                                                                  \
-    template <istl::StringView StrVT = stl::basic_string_view<char_type>>                 \
-    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                          \
-        return {m_##field.data(), m_##field.size()};                                      \
-    }                                                                                     \
-                                                                                          \
-    constexpr void clear_##field() noexcept {                                             \
-        istl::clear(m_##field);                                                           \
-    }                                                                                     \
-                                                                                          \
-    [[nodiscard]] constexpr bool has_##field() const noexcept {                           \
-        return !m_##field.empty();                                                        \
-    }                                                                                     \
-                                                                                          \
-    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) { \
-        if constexpr (is_modifiable) {                                                    \
-            ascii::lower_to(m_##field, beg, end);                                         \
-        } else {                                                                          \
-            set_##field(beg, end);                                                        \
-        }                                                                                 \
-    }                                                                                     \
-                                                                                          \
-    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {            \
-        if constexpr (is_modifiable) {                                                    \
-            ascii::lower_to(m_##field, str.begin(), str.end());                           \
-        } else {                                                                          \
-            set_##field(stl::move(str));                                                  \
-        }                                                                                 \
-    }                                                                                     \
-                                                                                          \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {         \
-        istl::assign(m_##field, beg, end);                                                \
-    }                                                                                     \
-                                                                                          \
-    constexpr void set_##field(string_type str) noexcept(is_nothrow) {                    \
-        m_##field = stl::move(str);                                                       \
-    }                                                                                     \
-                                                                                          \
-    constexpr string_type& field##_ref() noexcept {                                       \
-        return m_##field;                                                                 \
-    }                                                                                     \
-                                                                                          \
-    constexpr string_type const& field##_ref() const noexcept {                           \
-        return m_##field;                                                                 \
+#define webpp_def(field)                                                                         \
+    template <istl::StringLike StrVT = stl::basic_string_view<char_type>>                        \
+    [[nodiscard]] constexpr StrVT get_##field() const noexcept(!istl::ModifiableString<StrVT>) { \
+        return {m_##field.data(), m_##field.size()};                                             \
+    }                                                                                            \
+                                                                                                 \
+    constexpr void clear_##field() noexcept {                                                    \
+        istl::clear(m_##field);                                                                  \
+    }                                                                                            \
+                                                                                                 \
+    [[nodiscard]] constexpr bool has_##field() const noexcept {                                  \
+        return !m_##field.empty();                                                               \
+    }                                                                                            \
+                                                                                                 \
+    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) {        \
+        if constexpr (is_modifiable) {                                                           \
+            ascii::lower_to(m_##field, beg, end);                                                \
+        } else {                                                                                 \
+            set_##field(beg, end);                                                               \
+        }                                                                                        \
+    }                                                                                            \
+                                                                                                 \
+    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {                   \
+        if constexpr (is_modifiable) {                                                           \
+            ascii::lower_to(m_##field, str.begin(), str.end());                                  \
+        } else {                                                                                 \
+            set_##field(stl::move(str));                                                         \
+        }                                                                                        \
+    }                                                                                            \
+                                                                                                 \
+    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {                \
+        istl::assign(m_##field, beg, end);                                                       \
+    }                                                                                            \
+                                                                                                 \
+    constexpr void set_##field(string_type str) noexcept(is_nothrow) {                           \
+        m_##field = stl::move(str);                                                              \
+    }                                                                                            \
+                                                                                                 \
+    constexpr string_type& field##_ref() noexcept {                                              \
+        return m_##field;                                                                        \
+    }                                                                                            \
+                                                                                                 \
+    constexpr string_type const& field##_ref() const noexcept {                                  \
+        return m_##field;                                                                        \
     }
 
 
@@ -466,7 +466,7 @@ namespace webpp::uri {
         // NOLINTEND(*-macro-usage)
 
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
-            return has_username(); // password cannot exist without the username
+            return has_username() || has_password();
         }
 
         /// Create a URI Component using an allocator
@@ -574,7 +574,7 @@ namespace webpp::uri {
                                                                                                     \
     template <istl::StringView StrVT = stl::string_view>                                            \
         requires(is_##field##_modifiable)                                                           \
-    [[nodiscard]] constexpr StrVT get_##field() const noexcept {                                    \
+    [[nodiscard]] constexpr StrVT get_##field() const noexcept(!istl::ModifiableString<StrVT>) {    \
         return {m_##field.data(), m_##field.size()};                                                \
     }                                                                                               \
                                                                                                     \
@@ -749,7 +749,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
-            return has_username(); // password cannot exist without the username
+            return has_username() || has_password();
         }
     };
 

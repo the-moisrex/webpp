@@ -110,6 +110,9 @@ namespace webpp::uri {
     template <istl::String StringType = stl::string>
     struct basic_port : StringType {
         using string_type = StringType;
+        using iterator    = typename string_type::iterator;
+
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
         static constexpr uint16_t max_port_number       = 65'535;
         static constexpr uint16_t well_known_upper_port = 1024;
@@ -161,6 +164,23 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr stl::uint16_t value() const noexcept {
             return to_uint16(*this);
+        }
+
+        /**
+         * @brief Replace the value with the specified raw data, without parsing
+         * @param beg start of the value
+         * @param end the end of the value
+         */
+        constexpr void set_raw_value(iterator beg, iterator end) noexcept(!is_modifiable) {
+            istl::assign(static_cast<string_type&>(*this), beg, end);
+        }
+
+        /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !this->empty();
         }
     };
 

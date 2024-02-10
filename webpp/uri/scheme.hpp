@@ -315,6 +315,9 @@ namespace webpp::uri {
     struct basic_scheme : StringType {
         using string_type = StringType;
         using char_type   = istl::char_type_of_t<string_type>;
+        using iterator    = typename string_type::iterator;
+
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
         using StringType::StringType;
         using StringType::operator=;
@@ -324,6 +327,23 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr bool is_relative_reference() const noexcept {
             return this->empty();
+        }
+
+        /**
+         * @brief Replace the value with the specified raw data, without parsing
+         * @param beg start of the value
+         * @param end the end of the value
+         */
+        constexpr void set_raw_value(iterator beg, iterator end) noexcept(!is_modifiable) {
+            istl::assign(static_cast<string_type&>(*this), beg, end);
+        }
+
+        /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !this->empty();
         }
 
         void append_to(istl::String auto& out) const {

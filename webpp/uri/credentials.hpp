@@ -101,6 +101,14 @@ namespace webpp::uri {
         }
 
         /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !this->empty();
+        }
+
+        /**
          * Convert to string without encoding it
          */
         [[nodiscard]] constexpr string_type to_raw_string() const {
@@ -150,6 +158,14 @@ namespace webpp::uri {
                 out.push_back('@');
                 out.append(as_string());
             }
+        }
+
+        /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !this->empty();
         }
 
         /**

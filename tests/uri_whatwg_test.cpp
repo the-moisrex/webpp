@@ -72,9 +72,6 @@ struct URIWhatwgTest : testing::Test {
 
 TYPED_TEST_SUITE(URIWhatwgTest, Types);
 
-
-
-
 // 1 - See ../README.md for a description of the format. (1)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat1) {
     auto const ctx =
@@ -89,7 +86,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 2 - See ../README.md for a description of the format. (2)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat2) {
@@ -107,7 +103,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat2) {
     EXPECT_EQ(ctx.out.get_fragment(), "c");
 }
 
-
 // 3 - See ../README.md for a description of the format. (3)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat3) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://test:@test");
@@ -121,7 +116,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 4 - See ../README.md for a description of the format. (4)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat4) {
@@ -137,7 +131,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 5 - See ../README.md for a description of the format. (5)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat5) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://test:@test/x");
@@ -152,7 +145,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 6 - See ../README.md for a description of the format. (6)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat6) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://:@test/x");
@@ -166,7 +158,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 7 - See ../README.md for a description of the format. (7)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat7) {
@@ -183,7 +174,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 8 - See ../README.md for a description of the format. (8)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat8) {
     auto const ctx =
@@ -199,7 +189,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat8) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 9 - See ../README.md for a description of the format. (9)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat9) {
     auto const ctx = this->template parse_from_string<TypeParam>(" foo.com  ", "http://example.org/foo/bar");
@@ -213,7 +202,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat9) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 10 - See ../README.md for a description of the format. (10)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat10) {
@@ -229,7 +217,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 11 - See ../README.md for a description of the format. (11)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat11) {
@@ -254,7 +241,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat11) {
     EXPECT_EQ(ctx.out.get_fragment(), "%20e");
 }
 
-
 // 12 - See ../README.md for a description of the format. (12)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat12) {
     auto const ctx = this->template parse_from_string<TypeParam>("lolscheme:x x#x x");
@@ -269,7 +255,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat12) {
     EXPECT_EQ(ctx.out.get_fragment(), "x%20x");
 }
 
-
 // 13 - See ../README.md for a description of the format. (13)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat13) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://f:/c", "http://example.org/foo/bar");
@@ -283,7 +268,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat13) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 14 - See ../README.md for a description of the format. (14)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat14) {
@@ -300,7 +284,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat14) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 15 - See ../README.md for a description of the format. (15)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat15) {
     auto const ctx =
@@ -315,7 +298,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat15) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 16 - See ../README.md for a description of the format. (16)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat16) {
@@ -333,7 +315,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat16) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 17 - See ../README.md for a description of the format. (17)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat17) {
     auto const ctx =
@@ -341,14 +322,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat17) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 18 - See ../README.md for a description of the format. (18)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat18) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://f: /c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 19 - See ../README.md for a description of the format. (19)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat19) {
@@ -365,14 +344,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat19) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 20 - See ../README.md for a description of the format. (20)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat20) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://f:fifty-two/c", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 21 - See ../README.md for a description of the format. (21)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat21) {
@@ -381,7 +358,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat21) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 22 - See ../README.md for a description of the format. (22)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat22) {
     auto const ctx =
@@ -389,14 +365,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat22) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 23 - See ../README.md for a description of the format. (23)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat23) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://f: 21 / b ? d # e ", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 24 - See ../README.md for a description of the format. (24)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat24) {
@@ -412,7 +386,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat24) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 25 - See ../README.md for a description of the format. (25)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat25) {
     auto const ctx = this->template parse_from_string<TypeParam>("  \t", "http://example.org/foo/bar");
@@ -426,7 +399,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat25) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 26 - See ../README.md for a description of the format. (26)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat26) {
@@ -442,7 +414,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat26) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 27 - See ../README.md for a description of the format. (27)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat27) {
     auto const ctx = this->template parse_from_string<TypeParam>(":foo.com\\", "http://example.org/foo/bar");
@@ -456,7 +427,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat27) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 28 - See ../README.md for a description of the format. (28)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat28) {
@@ -472,7 +442,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat28) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 29 - See ../README.md for a description of the format. (29)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat29) {
     auto const ctx = this->template parse_from_string<TypeParam>(":a", "http://example.org/foo/bar");
@@ -486,7 +455,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat29) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 30 - See ../README.md for a description of the format. (30)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat30) {
@@ -502,7 +470,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat30) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 31 - See ../README.md for a description of the format. (31)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat31) {
     auto const ctx = this->template parse_from_string<TypeParam>(":\\", "http://example.org/foo/bar");
@@ -516,7 +483,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat31) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 32 - See ../README.md for a description of the format. (32)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat32) {
@@ -532,7 +498,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat32) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 33 - See ../README.md for a description of the format. (33)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat33) {
     auto const ctx = this->template parse_from_string<TypeParam>("#", "http://example.org/foo/bar");
@@ -546,7 +511,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat33) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 34 - See ../README.md for a description of the format. (34)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat34) {
@@ -562,7 +526,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat34) {
     EXPECT_EQ(ctx.out.get_fragment(), "/");
 }
 
-
 // 35 - See ../README.md for a description of the format. (35)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat35) {
     auto const ctx = this->template parse_from_string<TypeParam>("#\\", "http://example.org/foo/bar");
@@ -576,7 +539,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat35) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "\\");
 }
-
 
 // 36 - See ../README.md for a description of the format. (36)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat36) {
@@ -592,7 +554,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat36) {
     EXPECT_EQ(ctx.out.get_fragment(), ";?");
 }
 
-
 // 37 - See ../README.md for a description of the format. (37)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat37) {
     auto const ctx = this->template parse_from_string<TypeParam>("?", "http://example.org/foo/bar");
@@ -606,7 +567,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat37) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 38 - See ../README.md for a description of the format. (38)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat38) {
@@ -622,7 +582,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat38) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 39 - See ../README.md for a description of the format. (39)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat39) {
     auto const ctx = this->template parse_from_string<TypeParam>(":23", "http://example.org/foo/bar");
@@ -636,7 +595,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat39) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 40 - See ../README.md for a description of the format. (40)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat40) {
@@ -652,7 +610,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat40) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 41 - See ../README.md for a description of the format. (41)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat41) {
     auto const ctx = this->template parse_from_string<TypeParam>("\\x", "http://example.org/foo/bar");
@@ -666,7 +623,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat41) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 42 - See ../README.md for a description of the format. (42)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat42) {
@@ -683,7 +639,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat42) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 43 - See ../README.md for a description of the format. (43)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat43) {
     auto const ctx = this->template parse_from_string<TypeParam>("::", "http://example.org/foo/bar");
@@ -697,7 +652,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat43) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 44 - See ../README.md for a description of the format. (44)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat44) {
@@ -713,7 +667,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat44) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 45 - See ../README.md for a description of the format. (45)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat45) {
     auto const ctx = this->template parse_from_string<TypeParam>("foo://", "http://example.org/foo/bar");
@@ -727,7 +680,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat45) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 46 - See ../README.md for a description of the format. (46)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat46) {
@@ -744,7 +696,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat46) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 47 - See ../README.md for a description of the format. (47)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat47) {
     auto const ctx = this->template parse_from_string<TypeParam>("http::@c:29", "http://example.org/foo/bar");
@@ -758,7 +709,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat47) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 48 - See ../README.md for a description of the format. (48)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat48) {
@@ -775,7 +725,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat48) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 49 - See ../README.md for a description of the format. (49)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat49) {
     auto const ctx =
@@ -790,7 +739,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat49) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 50 - See ../README.md for a description of the format. (50)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat50) {
@@ -807,7 +755,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat50) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 51 - See ../README.md for a description of the format. (51)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat51) {
     auto const ctx =
@@ -823,7 +770,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat51) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 52 - See ../README.md for a description of the format. (52)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat52) {
     auto const ctx =
@@ -838,7 +784,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat52) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 53 - See ../README.md for a description of the format. (53)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat53) {
@@ -856,7 +801,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat53) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 54 - See ../README.md for a description of the format. (54)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat54) {
     auto const ctx = this->template parse_from_string<TypeParam>("foo:/", "http://example.org/foo/bar");
@@ -870,7 +814,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat54) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 55 - See ../README.md for a description of the format. (55)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat55) {
@@ -887,7 +830,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat55) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 56 - See ../README.md for a description of the format. (56)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat56) {
     auto const ctx =
@@ -902,7 +844,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat56) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 57 - See ../README.md for a description of the format. (57)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat57) {
@@ -919,7 +860,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat57) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 58 - See ../README.md for a description of the format. (58)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat58) {
     auto const ctx =
@@ -935,7 +875,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat58) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 59 - See ../README.md for a description of the format. (59)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat59) {
     auto const ctx = this->template parse_from_string<TypeParam>("c:/foo", "http://example.org/foo/bar");
@@ -950,7 +889,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat59) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 60 - See ../README.md for a description of the format. (60)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat60) {
     auto const ctx = this->template parse_from_string<TypeParam>("//foo/bar", "http://example.org/foo/bar");
@@ -964,7 +902,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat60) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 61 - See ../README.md for a description of the format. (61)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat61) {
@@ -981,7 +918,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat61) {
     EXPECT_EQ(ctx.out.get_fragment(), "f#g");
 }
 
-
 // 62 - See ../README.md for a description of the format. (62)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat62) {
     auto const ctx =
@@ -996,7 +932,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat62) {
     EXPECT_EQ(ctx.out.get_queries(), "efgh?ijkl");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 63 - See ../README.md for a description of the format. (63)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat63) {
@@ -1013,7 +948,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat63) {
     EXPECT_EQ(ctx.out.get_fragment(), "foo?bar");
 }
 
-
 // 64 - See ../README.md for a description of the format. (64)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat64) {
     auto const ctx =
@@ -1028,7 +962,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat64) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 65 - See ../README.md for a description of the format. (65)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat65) {
@@ -1045,14 +978,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat65) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 66 - See ../README.md for a description of the format. (66)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat66) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://[1::2]:3:4", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 67 - See ../README.md for a description of the format. (67)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat67) {
@@ -1061,7 +992,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat67) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 68 - See ../README.md for a description of the format. (68)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat68) {
     auto const ctx =
@@ -1069,14 +999,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat68) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 69 - See ../README.md for a description of the format. (69)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat69) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://2001::1]:80", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 70 - See ../README.md for a description of the format. (70)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat70) {
@@ -1093,7 +1021,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat70) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 71 - See ../README.md for a description of the format. (71)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat71) {
     auto const ctx =
@@ -1109,14 +1036,12 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat71) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 72 - See ../README.md for a description of the format. (72)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat72) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://[::127.0.0.1.]", "http://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 73 - See ../README.md for a description of the format. (73)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat73) {
@@ -1134,7 +1059,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat73) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 74 - See ../README.md for a description of the format. (74)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat74) {
     auto const ctx =
@@ -1149,7 +1073,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat74) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 75 - See ../README.md for a description of the format. (75)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat75) {
@@ -1166,7 +1089,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat75) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 76 - See ../README.md for a description of the format. (76)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat76) {
     auto const ctx =
@@ -1181,7 +1103,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat76) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 77 - See ../README.md for a description of the format. (77)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat77) {
@@ -1198,7 +1119,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat77) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 78 - See ../README.md for a description of the format. (78)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat78) {
     auto const ctx =
@@ -1213,7 +1133,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat78) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 79 - See ../README.md for a description of the format. (79)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat79) {
@@ -1230,13 +1149,11 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat79) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 80 - See ../README.md for a description of the format. (80)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat80) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://example:1/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 81 - See ../README.md for a description of the format. (81)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat81) {
@@ -1244,20 +1161,17 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat81) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 82 - See ../README.md for a description of the format. (82)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat82) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://example%/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 83 - See ../README.md for a description of the format. (83)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat83) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://[example]/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 84 - See ../README.md for a description of the format. (84)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat84) {
@@ -1274,7 +1188,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat84) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 85 - See ../README.md for a description of the format. (85)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat85) {
     auto const ctx =
@@ -1289,7 +1202,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat85) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 86 - See ../README.md for a description of the format. (86)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat86) {
@@ -1306,7 +1218,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat86) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 87 - See ../README.md for a description of the format. (87)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat87) {
     auto const ctx =
@@ -1321,7 +1232,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat87) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 88 - See ../README.md for a description of the format. (88)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat88) {
@@ -1338,7 +1248,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat88) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 89 - See ../README.md for a description of the format. (89)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat89) {
     auto const ctx =
@@ -1353,7 +1262,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat89) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 90 - See ../README.md for a description of the format. (90)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat90) {
@@ -1370,7 +1278,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat90) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 91 - See ../README.md for a description of the format. (91)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat91) {
     auto const ctx =
@@ -1385,7 +1292,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat91) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 92 - See ../README.md for a description of the format. (92)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat92) {
@@ -1402,7 +1308,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat92) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 93 - See ../README.md for a description of the format. (93)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat93) {
     auto const ctx =
@@ -1417,7 +1322,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat93) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 94 - See ../README.md for a description of the format. (94)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat94) {
@@ -1434,7 +1338,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat94) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 95 - See ../README.md for a description of the format. (95)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat95) {
     auto const ctx =
@@ -1449,7 +1352,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat95) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 96 - See ../README.md for a description of the format. (96)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat96) {
@@ -1466,7 +1368,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat96) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 97 - See ../README.md for a description of the format. (97)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat97) {
     auto const ctx =
@@ -1481,7 +1382,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat97) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 98 - See ../README.md for a description of the format. (98)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat98) {
@@ -1498,7 +1398,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat98) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 99 - See ../README.md for a description of the format. (99)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat99) {
     auto const ctx =
@@ -1513,7 +1412,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat99) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 100 - See ../README.md for a description of the format. (100)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat100) {
@@ -1530,7 +1428,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat100) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 101 - See ../README.md for a description of the format. (101)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat101) {
     auto const ctx =
@@ -1546,7 +1443,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat101) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 102 - See ../README.md for a description of the format. (102)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat102) {
     auto const ctx = this->template parse_from_string<TypeParam>("/a/b/c", "http://example.org/foo/bar");
@@ -1560,7 +1456,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat102) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 103 - See ../README.md for a description of the format. (103)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat103) {
@@ -1580,7 +1475,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat103) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 104 - See ../README.md for a description of the format. (104)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat104) {
     auto const ctx = this->template parse_from_string<TypeParam>("/a%2fc", "http://example.org/foo/bar");
@@ -1598,7 +1492,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat104) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 105 - See ../README.md for a description of the format. (105)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat105) {
@@ -1618,7 +1511,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat105) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 106 - See ../README.md for a description of the format. (106)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat106) {
     auto const ctx = this->template parse_from_string<TypeParam>("#β", "http://example.org/foo/bar");
@@ -1632,7 +1524,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat106) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "%CE%B2");
 }
-
 
 // 107 - See ../README.md for a description of the format. (107)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat107) {
@@ -1649,7 +1540,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat107) {
     EXPECT_EQ(ctx.out.get_fragment(), "test");
 }
 
-
 // 108 - See ../README.md for a description of the format. (108)
 TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat108) {
     auto const ctx =
@@ -1664,7 +1554,6 @@ TYPED_TEST(URIWhatwgTest, SeeReadmeMdForADescriptionOfTheFormat108) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 109 - # Based on https://felixfbecker.github.io/whatwg-url-custom-host-repro/ (1)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpsFelixfbeckerGithubIoWhatwgUrlCustomHostRepro1) {
@@ -1681,7 +1570,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpsFelixfbeckerGithubIoWhatwgUrlCustomHostRep
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 110 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (1)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml1) {
     auto const ctx =
@@ -1696,7 +1584,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 111 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (2)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml2) {
@@ -1713,7 +1600,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 112 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (3)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml3) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|/foo/bar", "file:///tmp/mock/path");
@@ -1727,7 +1613,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 113 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (4)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml4) {
@@ -1743,7 +1628,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 114 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (5)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml5) {
     auto const ctx = this->template parse_from_string<TypeParam>("//C|/foo/bar", "file:///tmp/mock/path");
@@ -1757,7 +1641,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 115 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (6)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml6) {
@@ -1773,7 +1656,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 116 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (7)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml7) {
     auto const ctx = this->template parse_from_string<TypeParam>("\\\\server\\file", "file:///tmp/mock/path");
@@ -1788,7 +1670,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 117 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (8)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml8) {
     auto const ctx = this->template parse_from_string<TypeParam>("/\\server/file", "file:///tmp/mock/path");
@@ -1802,7 +1683,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 118 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (9)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml9) {
@@ -1819,7 +1699,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 119 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (10)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml10) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///home/me", "file:///tmp/mock/path");
@@ -1833,7 +1712,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 120 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (11)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml11) {
@@ -1849,7 +1727,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 121 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (12)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml12) {
     auto const ctx = this->template parse_from_string<TypeParam>("///", "file:///tmp/mock/path");
@@ -1863,7 +1740,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 122 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (13)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml13) {
@@ -1879,7 +1755,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 123 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (14)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml14) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://test", "file:///tmp/mock/path");
@@ -1894,7 +1769,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 124 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (15)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml15) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://localhost", "file:///tmp/mock/path");
@@ -1908,7 +1782,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 125 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (16)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml16) {
@@ -1925,7 +1798,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 126 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (17)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml17) {
     auto const ctx =
@@ -1941,7 +1813,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 127 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (18)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml18) {
     auto const ctx = this->template parse_from_string<TypeParam>("test", "file:///tmp/mock/path");
@@ -1955,7 +1826,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 128 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html (19)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlFileHtml19) {
@@ -1971,7 +1841,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 129 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (1)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/././foo");
@@ -1985,7 +1854,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 130 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (2)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs2) {
@@ -2001,7 +1869,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 131 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (3)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/.");
@@ -2015,7 +1882,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 132 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (4)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs4) {
@@ -2031,7 +1897,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 133 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (5)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/bar/..");
@@ -2045,7 +1910,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 134 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (6)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs6) {
@@ -2061,7 +1925,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 135 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (7)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs7) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/..bar");
@@ -2075,7 +1938,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 136 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (8)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs8) {
@@ -2091,7 +1953,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 137 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (9)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs9) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/bar/../ton/../../a");
@@ -2105,7 +1966,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 138 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (10)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs10) {
@@ -2121,7 +1981,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 139 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (11)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs11) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/../../../ton");
@@ -2136,7 +1995,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 140 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (12)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs12) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/%2e");
@@ -2150,7 +2008,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 141 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (13)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs13) {
@@ -2167,7 +2024,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 142 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (14)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs14) {
@@ -2188,7 +2044,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 143 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (15)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs15) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com////../..");
@@ -2202,7 +2057,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 144 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (16)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs16) {
@@ -2218,7 +2072,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 145 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (17)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs17) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo/bar//..");
@@ -2233,7 +2086,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 146 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (18)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs18) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo");
@@ -2247,7 +2099,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 147 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (19)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs19) {
@@ -2267,7 +2118,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 148 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (20)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs20) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo%");
@@ -2283,7 +2133,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 149 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (21)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs21) {
@@ -2301,7 +2150,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 150 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (22)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs22) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo%2zbar");
@@ -2318,7 +2166,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 151 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (23)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs23) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo%2Â©zbar");
@@ -2334,7 +2181,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 152 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (24)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs24) {
@@ -2354,7 +2200,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 153 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (25)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs25) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo\t%91");
@@ -2370,7 +2215,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 154 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (26)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs26) {
@@ -2390,7 +2234,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 155 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (27)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs27) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/(%28:%3A%29)");
@@ -2408,7 +2251,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 156 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (28)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs28) {
@@ -2428,7 +2270,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 157 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (29)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs29) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/foo\tbar");
@@ -2443,7 +2284,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 158 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (30)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs30) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com\\\\foo\\\\bar");
@@ -2457,7 +2297,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 159 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (31)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs31) {
@@ -2478,7 +2317,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 160 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (32)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs32) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/@asdf%40");
@@ -2496,7 +2334,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 161 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (33)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs33) {
@@ -2516,7 +2353,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 162 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (34)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs34) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/‥/foo");
@@ -2534,7 +2370,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 163 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (35)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs35) {
@@ -2554,7 +2389,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 164 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js (36)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsPathJs36) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.com/\u202E/foo/\u202D/bar");
@@ -2573,7 +2407,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 165 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (1)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://www.google.com/foo?bar=baz#");
@@ -2587,7 +2420,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "bar=baz");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 166 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (2)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs2) {
@@ -2603,7 +2435,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "%20%C2%BB");
 }
 
-
 // 167 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (3)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs3) {
     auto const ctx = this->template parse_from_string<TypeParam>("data:test# »");
@@ -2617,7 +2448,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "%20%C2%BB");
 }
-
 
 // 168 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (4)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs4) {
@@ -2633,7 +2463,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 169 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (5)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://192.0x00A80001");
@@ -2647,7 +2476,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 170 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (6)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs6) {
@@ -2667,7 +2495,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 171 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (7)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs7) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://www/foo/%2E/html");
@@ -2682,13 +2509,11 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 172 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (8)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs8) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://user:pass@/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 173 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (9)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs9) {
@@ -2704,7 +2529,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 174 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (10)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs10) {
     auto const ctx = this->template parse_from_string<TypeParam>("http:\\\\www.google.com\\foo");
@@ -2718,7 +2542,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 175 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (11)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs11) {
@@ -2734,7 +2557,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 176 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (12)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs12) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo:81/");
@@ -2748,7 +2570,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 177 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (13)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs13) {
@@ -2764,13 +2585,11 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 178 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (14)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs14) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo:-80/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 179 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (15)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs15) {
@@ -2786,7 +2605,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 180 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (16)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs16) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://foo:80/");
@@ -2800,7 +2618,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 181 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (17)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs17) {
@@ -2816,7 +2633,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 182 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (18)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs18) {
     auto const ctx = this->template parse_from_string<TypeParam>("ftp://foo:80/");
@@ -2830,7 +2646,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 183 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (19)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs19) {
@@ -2846,7 +2661,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 184 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (20)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs20) {
     auto const ctx = this->template parse_from_string<TypeParam>("gopher://foo:443/");
@@ -2860,7 +2674,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 185 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (21)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs21) {
@@ -2876,7 +2689,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 186 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (22)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs22) {
     auto const ctx = this->template parse_from_string<TypeParam>("ws://foo:81/");
@@ -2890,7 +2702,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 187 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (23)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs23) {
@@ -2906,7 +2717,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 188 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (24)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs24) {
     auto const ctx = this->template parse_from_string<TypeParam>("ws://foo:815/");
@@ -2920,7 +2730,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 189 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (25)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs25) {
@@ -2936,7 +2745,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 190 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (26)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs26) {
     auto const ctx = this->template parse_from_string<TypeParam>("wss://foo:81/");
@@ -2950,7 +2758,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 191 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (27)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs27) {
@@ -2966,7 +2773,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 192 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (28)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs28) {
     auto const ctx = this->template parse_from_string<TypeParam>("wss://foo:815/");
@@ -2980,7 +2786,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 193 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (29)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs29) {
@@ -2996,7 +2801,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 194 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (30)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs30) {
     auto const ctx = this->template parse_from_string<TypeParam>("ftp:/example.com/");
@@ -3010,7 +2814,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 195 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (31)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs31) {
@@ -3026,7 +2829,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 196 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (32)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs32) {
     auto const ctx = this->template parse_from_string<TypeParam>("madeupscheme:/example.com/");
@@ -3040,7 +2842,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 197 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (33)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs33) {
@@ -3056,7 +2857,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 198 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (34)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs34) {
     auto const ctx = this->template parse_from_string<TypeParam>("ftps:/example.com/");
@@ -3070,7 +2870,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 199 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (35)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs35) {
@@ -3086,7 +2885,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 200 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (36)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs36) {
     auto const ctx = this->template parse_from_string<TypeParam>("ws:/example.com/");
@@ -3100,7 +2898,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 201 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (37)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs37) {
@@ -3116,7 +2913,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 202 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (38)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs38) {
     auto const ctx = this->template parse_from_string<TypeParam>("data:/example.com/");
@@ -3130,7 +2926,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 203 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (39)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs39) {
@@ -3146,7 +2941,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 204 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (40)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs40) {
     auto const ctx = this->template parse_from_string<TypeParam>("mailto:/example.com/");
@@ -3160,7 +2954,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 205 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (41)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs41) {
@@ -3176,7 +2969,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 206 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (42)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs42) {
     auto const ctx = this->template parse_from_string<TypeParam>("ftp:example.com/");
@@ -3190,7 +2982,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 207 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (43)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs43) {
@@ -3206,7 +2997,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 208 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (44)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs44) {
     auto const ctx = this->template parse_from_string<TypeParam>("madeupscheme:example.com/");
@@ -3220,7 +3010,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 209 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (45)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs45) {
@@ -3236,7 +3025,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 210 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (46)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs46) {
     auto const ctx = this->template parse_from_string<TypeParam>("gopher:example.com/");
@@ -3250,7 +3038,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 211 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (47)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs47) {
@@ -3266,7 +3053,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 212 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (48)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs48) {
     auto const ctx = this->template parse_from_string<TypeParam>("wss:example.com/");
@@ -3280,7 +3066,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 213 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (49)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs49) {
@@ -3296,7 +3081,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 214 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (50)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs50) {
     auto const ctx = this->template parse_from_string<TypeParam>("javascript:example.com/");
@@ -3310,7 +3094,6 @@ TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrl
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 215 - # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js (51)
 TYPED_TEST(URIWhatwgTest, BasedOnHttpTracWebkitOrgBrowserTrunkLayouttestsFastUrlScriptTestsRelativeJs51) {
@@ -3661,7 +3444,6 @@ TYPED_TEST(URIWhatwgTest,
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 244 - # Others (1)
 TYPED_TEST(URIWhatwgTest, Others1) {
     auto const ctx = this->template parse_from_string<TypeParam>("/", "http://www.example.com/test");
@@ -3675,7 +3457,6 @@ TYPED_TEST(URIWhatwgTest, Others1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 245 - # Others (2)
 TYPED_TEST(URIWhatwgTest, Others2) {
@@ -3691,7 +3472,6 @@ TYPED_TEST(URIWhatwgTest, Others2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 246 - # Others (3)
 TYPED_TEST(URIWhatwgTest, Others3) {
     auto const ctx = this->template parse_from_string<TypeParam>(".", "http://www.example.com/test");
@@ -3705,7 +3485,6 @@ TYPED_TEST(URIWhatwgTest, Others3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 247 - # Others (4)
 TYPED_TEST(URIWhatwgTest, Others4) {
@@ -3721,7 +3500,6 @@ TYPED_TEST(URIWhatwgTest, Others4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 248 - # Others (5)
 TYPED_TEST(URIWhatwgTest, Others5) {
     auto const ctx = this->template parse_from_string<TypeParam>("test.txt", "http://www.example.com/test");
@@ -3736,7 +3514,6 @@ TYPED_TEST(URIWhatwgTest, Others5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 249 - # Others (6)
 TYPED_TEST(URIWhatwgTest, Others6) {
     auto const ctx = this->template parse_from_string<TypeParam>("./test.txt", "http://www.example.com/test");
@@ -3750,7 +3527,6 @@ TYPED_TEST(URIWhatwgTest, Others6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 250 - # Others (7)
 TYPED_TEST(URIWhatwgTest, Others7) {
@@ -3767,7 +3543,6 @@ TYPED_TEST(URIWhatwgTest, Others7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 251 - # Others (8)
 TYPED_TEST(URIWhatwgTest, Others8) {
     auto const ctx =
@@ -3783,7 +3558,6 @@ TYPED_TEST(URIWhatwgTest, Others8) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 252 - # Others (9)
 TYPED_TEST(URIWhatwgTest, Others9) {
     auto const ctx =
@@ -3798,7 +3572,6 @@ TYPED_TEST(URIWhatwgTest, Others9) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 253 - # Others (10)
 TYPED_TEST(URIWhatwgTest, Others10) {
@@ -3819,7 +3592,6 @@ TYPED_TEST(URIWhatwgTest, Others10) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 254 - # Others (11)
 TYPED_TEST(URIWhatwgTest, Others11) {
     auto const ctx =
@@ -3834,7 +3606,6 @@ TYPED_TEST(URIWhatwgTest, Others11) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 255 - # Others (12)
 TYPED_TEST(URIWhatwgTest, Others12) {
@@ -3851,7 +3622,6 @@ TYPED_TEST(URIWhatwgTest, Others12) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 256 - # Others (13)
 TYPED_TEST(URIWhatwgTest, Others13) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:...", "http://www.example.com/test");
@@ -3865,7 +3635,6 @@ TYPED_TEST(URIWhatwgTest, Others13) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 257 - # Others (14)
 TYPED_TEST(URIWhatwgTest, Others14) {
@@ -3881,7 +3650,6 @@ TYPED_TEST(URIWhatwgTest, Others14) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 258 - # Others (15)
 TYPED_TEST(URIWhatwgTest, Others15) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:a", "http://www.example.com/test");
@@ -3895,7 +3663,6 @@ TYPED_TEST(URIWhatwgTest, Others15) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 259 - Basic canonicalization, uppercase should be converted to lowercase (1)
 TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLowercase1) {
@@ -3911,14 +3678,12 @@ TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLower
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 260 - Basic canonicalization, uppercase should be converted to lowercase (2)
 TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLowercase2) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://example example.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 261 - Basic canonicalization, uppercase should be converted to lowercase (3)
 TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLowercase3) {
@@ -3927,20 +3692,17 @@ TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLower
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 262 - Basic canonicalization, uppercase should be converted to lowercase (4)
 TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLowercase4) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 263 - Basic canonicalization, uppercase should be converted to lowercase (5)
 TYPED_TEST(URIWhatwgTest, BasicCanonicalizationUppercaseShouldBeConvertedToLowercase5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[:]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 264 - U+3000 is mapped to U+0020 (space) which is disallowed (1)
 TYPED_TEST(URIWhatwgTest, U3000IsMappedToU0020SpaceWhichIsDisallowed1) {
@@ -3965,7 +3727,6 @@ TYPED_TEST(
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 266 - Leading and trailing C0 control or space (1)
 TYPED_TEST(URIWhatwgTest, LeadingAndTrailingC0ControlOrSpace1) {
@@ -3998,13 +3759,11 @@ TYPED_TEST(URIWhatwgTest,
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 268 - Invalid unicode characters should fail... U+FDD0 is disallowed; %ef%b7%90 is U+FDD0 (1)
 TYPED_TEST(URIWhatwgTest, InvalidUnicodeCharactersShouldFailUFdd0IsDisallowedEfB790IsUFdd01) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://﷐zyx.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 269 - This is the same as previous but escaped (1)
 TYPED_TEST(URIWhatwgTest, ThisIsTheSameAsPreviousButEscaped1) {
@@ -4013,20 +3772,17 @@ TYPED_TEST(URIWhatwgTest, ThisIsTheSameAsPreviousButEscaped1) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 270 - U+FFFD (1)
 TYPED_TEST(URIWhatwgTest, UFffd1) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://�");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 271 - U+FFFD (2)
 TYPED_TEST(URIWhatwgTest, UFffd2) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://%EF%BF%BD");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 272 - U+FFFD (3)
 TYPED_TEST(URIWhatwgTest, UFffd3) {
@@ -4050,13 +3806,11 @@ TYPED_TEST(URIWhatwgTest, UFffd3) {
     EXPECT_EQ(ctx.out.get_fragment(), "%EF%BF%BD");
 }
 
-
 // 273 - Domain is ASCII, but a label is invalid IDNA (1)
 TYPED_TEST(URIWhatwgTest, DomainIsAsciiButALabelIsInvalidIdna1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a.b.c.xn--pokxncvks");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 274 - Domain is ASCII, but a label is invalid IDNA (2)
 TYPED_TEST(URIWhatwgTest, DomainIsAsciiButALabelIsInvalidIdna2) {
@@ -4064,13 +3818,11 @@ TYPED_TEST(URIWhatwgTest, DomainIsAsciiButALabelIsInvalidIdna2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 275 - IDNA labels should be matched case-insensitively (1)
 TYPED_TEST(URIWhatwgTest, IdnaLabelsShouldBeMatchedCaseInsensitively1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a.b.c.XN--pokxncvks");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 276 - IDNA labels should be matched case-insensitively (2)
 TYPED_TEST(URIWhatwgTest, IdnaLabelsShouldBeMatchedCaseInsensitively2) {
@@ -4078,13 +3830,11 @@ TYPED_TEST(URIWhatwgTest, IdnaLabelsShouldBeMatchedCaseInsensitively2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 277 - IDNA labels should be matched case-insensitively (3)
 TYPED_TEST(URIWhatwgTest, IdnaLabelsShouldBeMatchedCaseInsensitively3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://10.0.0.XN--pokxncvks");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 278 - IDNA labels should be matched case-insensitively (4)
 TYPED_TEST(URIWhatwgTest, IdnaLabelsShouldBeMatchedCaseInsensitively4) {
@@ -4108,13 +3858,11 @@ TYPED_TEST(URIWhatwgTest,
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 280 - URL spec forbids the following. https://www.w3.org/Bugs/Public/show_bug.cgi?id=24257 (1)
 TYPED_TEST(URIWhatwgTest, UrlSpecForbidsTheFollowingHttpsWwwW3OrgBugsPublicShowBugCgiId242571) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://％４１.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 281 - URL spec forbids the following. https://www.w3.org/Bugs/Public/show_bug.cgi?id=24257 (2)
 TYPED_TEST(URIWhatwgTest, UrlSpecForbidsTheFollowingHttpsWwwW3OrgBugsPublicShowBugCgiId242572) {
@@ -4124,13 +3872,11 @@ TYPED_TEST(URIWhatwgTest, UrlSpecForbidsTheFollowingHttpsWwwW3OrgBugsPublicShowB
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 282 - ...%00 in fullwidth should fail (also as escaped UTF-8 input) (1)
 TYPED_TEST(URIWhatwgTest, 00InFullwidthShouldFailAlsoAsEscapedUtf8Input1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://％００.com", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 283 - ...%00 in fullwidth should fail (also as escaped UTF-8 input) (2)
 TYPED_TEST(URIWhatwgTest, 00InFullwidthShouldFailAlsoAsEscapedUtf8Input2) {
@@ -4139,7 +3885,6 @@ TYPED_TEST(URIWhatwgTest, 00InFullwidthShouldFailAlsoAsEscapedUtf8Input2) {
       "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 284 - Basic IDN support, UTF-8 and UTF-16 input should be converted to IDN (1)
 TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn1) {
@@ -4155,7 +3900,6 @@ TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 285 - Basic IDN support, UTF-8 and UTF-16 input should be converted to IDN (2)
 TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn2) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://faß.ExAmPlE/");
@@ -4169,7 +3913,6 @@ TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 286 - Basic IDN support, UTF-8 and UTF-16 input should be converted to IDN (3)
 TYPED_TEST(URIWhatwgTest, BasicIdnSupportUtf8AndUtf16InputShouldBeConvertedToIdn3) {
@@ -4194,20 +3937,17 @@ TYPED_TEST(
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 288 - If we get an invalid character that has been escaped. (1)
 TYPED_TEST(URIWhatwgTest, IfWeGetAnInvalidCharacterThatHasBeenEscaped1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://%25", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 289 - If we get an invalid character that has been escaped. (2)
 TYPED_TEST(URIWhatwgTest, IfWeGetAnInvalidCharacterThatHasBeenEscaped2) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://hello%00", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 290 - Escaped numbers should be treated like IP addresses if they are. (1)
 TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre1) {
@@ -4225,7 +3965,6 @@ TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre1
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 291 - Escaped numbers should be treated like IP addresses if they are. (2)
 TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre2) {
     auto const ctx = this->template parse_from_string<TypeParam>(
@@ -4242,13 +3981,11 @@ TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre2
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 292 - Escaped numbers should be treated like IP addresses if they are. (3)
 TYPED_TEST(URIWhatwgTest, EscapedNumbersShouldBeTreatedLikeIpAddressesIfTheyAre3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://192.168.0.257", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 293 - Invalid escaping in hosts causes failure (1)
 TYPED_TEST(URIWhatwgTest, InvalidEscapingInHostsCausesFailure1) {
@@ -4258,7 +3995,6 @@ TYPED_TEST(URIWhatwgTest, InvalidEscapingInHostsCausesFailure1) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 294 - A space in a host causes failure (1)
 TYPED_TEST(URIWhatwgTest, ASpaceInAHostCausesFailure1) {
     auto const ctx =
@@ -4266,13 +4002,11 @@ TYPED_TEST(URIWhatwgTest, ASpaceInAHostCausesFailure1) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 295 - A space in a host causes failure (2)
 TYPED_TEST(URIWhatwgTest, ASpaceInAHostCausesFailure2) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://x x:12");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 296 - Fullwidth and escaped UTF-8 fullwidth should still be treated as IP (1)
 TYPED_TEST(URIWhatwgTest, FullwidthAndEscapedUtf8FullwidthShouldStillBeTreatedAsIp1) {
@@ -4289,7 +4023,6 @@ TYPED_TEST(URIWhatwgTest, FullwidthAndEscapedUtf8FullwidthShouldStillBeTreatedAs
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 297 - Domains with empty labels (1)
 TYPED_TEST(URIWhatwgTest, DomainsWithEmptyLabels1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://./");
@@ -4303,7 +4036,6 @@ TYPED_TEST(URIWhatwgTest, DomainsWithEmptyLabels1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 298 - Domains with empty labels (2)
 TYPED_TEST(URIWhatwgTest, DomainsWithEmptyLabels2) {
@@ -4319,7 +4051,6 @@ TYPED_TEST(URIWhatwgTest, DomainsWithEmptyLabels2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 299 - Non-special domains with empty labels (1)
 TYPED_TEST(URIWhatwgTest, NonSpecialDomainsWithEmptyLabels1) {
     auto const ctx = this->template parse_from_string<TypeParam>("h://.");
@@ -4334,13 +4065,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialDomainsWithEmptyLabels1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 300 - Broken IPv6 (1)
 TYPED_TEST(URIWhatwgTest, BrokenIpv61) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[www.google.com]/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 301 - Broken IPv6 (2)
 TYPED_TEST(URIWhatwgTest, BrokenIpv62) {
@@ -4348,13 +4077,11 @@ TYPED_TEST(URIWhatwgTest, BrokenIpv62) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 302 - Broken IPv6 (3)
 TYPED_TEST(URIWhatwgTest, BrokenIpv63) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[::1.2.3.4x]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 303 - Broken IPv6 (4)
 TYPED_TEST(URIWhatwgTest, BrokenIpv64) {
@@ -4362,13 +4089,11 @@ TYPED_TEST(URIWhatwgTest, BrokenIpv64) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 304 - Broken IPv6 (5)
 TYPED_TEST(URIWhatwgTest, BrokenIpv65) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[::1.2.]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 305 - Broken IPv6 (6)
 TYPED_TEST(URIWhatwgTest, BrokenIpv66) {
@@ -4376,13 +4101,11 @@ TYPED_TEST(URIWhatwgTest, BrokenIpv66) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 306 - Broken IPv6 (7)
 TYPED_TEST(URIWhatwgTest, BrokenIpv67) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[::1.]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 307 - Broken IPv6 (8)
 TYPED_TEST(URIWhatwgTest, BrokenIpv68) {
@@ -4390,20 +4113,17 @@ TYPED_TEST(URIWhatwgTest, BrokenIpv68) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 308 - Broken IPv6 (9)
 TYPED_TEST(URIWhatwgTest, BrokenIpv69) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[::%31]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 309 - Broken IPv6 (10)
 TYPED_TEST(URIWhatwgTest, BrokenIpv610) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://%5B::1]", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 310 - Misc Unicode (1)
 TYPED_TEST(URIWhatwgTest, MiscUnicode1) {
@@ -4420,7 +4140,6 @@ TYPED_TEST(URIWhatwgTest, MiscUnicode1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 311 - # resolving a fragment against any scheme succeeds (1)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds1) {
     auto const ctx = this->template parse_from_string<TypeParam>("#", "test:test");
@@ -4434,7 +4153,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 312 - # resolving a fragment against any scheme succeeds (2)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds2) {
@@ -4450,7 +4168,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds2) {
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
 
-
 // 313 - # resolving a fragment against any scheme succeeds (3)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds3) {
     auto const ctx = this->template parse_from_string<TypeParam>("#x", "data:,");
@@ -4464,7 +4181,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
-
 
 // 314 - # resolving a fragment against any scheme succeeds (4)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds4) {
@@ -4480,7 +4196,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds4) {
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
 
-
 // 315 - # resolving a fragment against any scheme succeeds (5)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds5) {
     auto const ctx = this->template parse_from_string<TypeParam>("#x:y", "about:blank");
@@ -4495,7 +4210,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds5) {
     EXPECT_EQ(ctx.out.get_fragment(), "x:y");
 }
 
-
 // 316 - # resolving a fragment against any scheme succeeds (6)
 TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds6) {
     auto const ctx = this->template parse_from_string<TypeParam>("#", "test:test?test");
@@ -4509,7 +4223,6 @@ TYPED_TEST(URIWhatwgTest, ResolvingAFragmentAgainstAnySchemeSucceeds6) {
     EXPECT_EQ(ctx.out.get_queries(), "test");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 317 - # multiple @ in authority state (1)
 TYPED_TEST(URIWhatwgTest, MultipleInAuthorityState1) {
@@ -4526,7 +4239,6 @@ TYPED_TEST(URIWhatwgTest, MultipleInAuthorityState1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 318 - # multiple @ in authority state (2)
 TYPED_TEST(URIWhatwgTest, MultipleInAuthorityState2) {
     auto const ctx =
@@ -4541,7 +4253,6 @@ TYPED_TEST(URIWhatwgTest, MultipleInAuthorityState2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 319 - non-az-09 characters (1)
 TYPED_TEST(URIWhatwgTest, NonAz09Characters1) {
@@ -4562,7 +4273,6 @@ TYPED_TEST(URIWhatwgTest, NonAz09Characters1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 320 - byte is ' and url is special (1)
 TYPED_TEST(URIWhatwgTest, ByteIsAndUrlIsSpecial1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://host/?'");
@@ -4581,7 +4291,6 @@ TYPED_TEST(URIWhatwgTest, ByteIsAndUrlIsSpecial1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 321 - byte is ' and url is special (2)
 TYPED_TEST(URIWhatwgTest, ByteIsAndUrlIsSpecial2) {
     auto const ctx = this->template parse_from_string<TypeParam>("notspecial://host/?'");
@@ -4595,7 +4304,6 @@ TYPED_TEST(URIWhatwgTest, ByteIsAndUrlIsSpecial2) {
     EXPECT_EQ(ctx.out.get_queries(), "'");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 322 - # Credentials in base (1)
 TYPED_TEST(URIWhatwgTest, CredentialsInBase1) {
@@ -4612,7 +4320,6 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 323 - # Credentials in base (2)
 TYPED_TEST(URIWhatwgTest, CredentialsInBase2) {
     auto const ctx = this->template parse_from_string<TypeParam>("", "http://user:pass@example.org:21/smth");
@@ -4626,7 +4333,6 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 324 - # Credentials in base (3)
 TYPED_TEST(URIWhatwgTest, CredentialsInBase3) {
@@ -4643,20 +4349,17 @@ TYPED_TEST(URIWhatwgTest, CredentialsInBase3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 325 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (1)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes1) {
     auto const ctx = this->template parse_from_string<TypeParam>("i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 326 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (2)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes2) {
     auto const ctx = this->template parse_from_string<TypeParam>("i", "sc:sd/sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 327 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (3)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes3) {
@@ -4672,7 +4375,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 328 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (4)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes4) {
     auto const ctx = this->template parse_from_string<TypeParam>("i", "sc://ho/pa");
@@ -4686,7 +4388,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 329 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (5)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes5) {
@@ -4702,20 +4403,17 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 330 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (6)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes6) {
     auto const ctx = this->template parse_from_string<TypeParam>("../i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 331 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (7)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes7) {
     auto const ctx = this->template parse_from_string<TypeParam>("../i", "sc:sd/sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 332 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (8)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes8) {
@@ -4731,7 +4429,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 333 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (9)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes9) {
     auto const ctx = this->template parse_from_string<TypeParam>("../i", "sc://ho/pa");
@@ -4745,7 +4442,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 334 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (10)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes10) {
@@ -4761,20 +4457,17 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 335 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (11)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes11) {
     auto const ctx = this->template parse_from_string<TypeParam>("/i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 336 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (12)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes12) {
     auto const ctx = this->template parse_from_string<TypeParam>("/i", "sc:sd/sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 337 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (13)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes13) {
@@ -4790,7 +4483,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 338 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (14)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes14) {
     auto const ctx = this->template parse_from_string<TypeParam>("/i", "sc://ho/pa");
@@ -4804,7 +4496,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 339 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (15)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes15) {
@@ -4820,20 +4511,17 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 340 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (16)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes16) {
     auto const ctx = this->template parse_from_string<TypeParam>("?i", "sc:sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 341 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (17)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes17) {
     auto const ctx = this->template parse_from_string<TypeParam>("?i", "sc:sd/sd");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 342 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (18)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes18) {
@@ -4849,7 +4537,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 343 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (19)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes19) {
     auto const ctx = this->template parse_from_string<TypeParam>("?i", "sc://ho/pa");
@@ -4863,7 +4550,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "i");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 344 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (20)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes20) {
@@ -4879,7 +4565,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 345 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (21)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes21) {
     auto const ctx = this->template parse_from_string<TypeParam>("#i", "sc:sd");
@@ -4893,7 +4578,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "i");
 }
-
 
 // 346 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (22)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes22) {
@@ -4909,7 +4593,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "i");
 }
 
-
 // 347 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (23)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes23) {
     auto const ctx = this->template parse_from_string<TypeParam>("#i", "sc:/pa/pa");
@@ -4923,7 +4606,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "i");
 }
-
 
 // 348 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (24)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes24) {
@@ -4939,7 +4621,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_fragment(), "i");
 }
 
-
 // 349 - # a set of tests designed by zcorpan for relative URLs with unknown schemes (25)
 TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknownSchemes25) {
     auto const ctx = this->template parse_from_string<TypeParam>("#i", "sc:///pa/pa");
@@ -4953,7 +4634,6 @@ TYPED_TEST(URIWhatwgTest, ASetOfTestsDesignedByZcorpanForRelativeUrlsWithUnknown
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "i");
 }
-
 
 // 350 - # make sure that relative URL logic works on known typically non-relative schemes too (1)
 TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRelativeSchemesToo1) {
@@ -4969,7 +4649,6 @@ TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRe
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 351 - # make sure that relative URL logic works on known typically non-relative schemes too (2)
 TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRelativeSchemesToo2) {
     auto const ctx = this->template parse_from_string<TypeParam>("data:/../");
@@ -4983,7 +4662,6 @@ TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRe
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 352 - # make sure that relative URL logic works on known typically non-relative schemes too (3)
 TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRelativeSchemesToo3) {
@@ -4999,7 +4677,6 @@ TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRe
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 353 - # make sure that relative URL logic works on known typically non-relative schemes too (4)
 TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRelativeSchemesToo4) {
     auto const ctx = this->template parse_from_string<TypeParam>("mailto:/../");
@@ -5013,7 +4690,6 @@ TYPED_TEST(URIWhatwgTest, MakeSureThatRelativeUrlLogicWorksOnKnownTypicallyNonRe
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 354 - # unknown schemes and their hosts (1)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts1) {
@@ -5029,7 +4705,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 355 - # unknown schemes and their hosts (2)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts2) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://%/");
@@ -5044,13 +4719,11 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 356 - # unknown schemes and their hosts (3)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts3) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://@/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 357 - # unknown schemes and their hosts (4)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts4) {
@@ -5058,20 +4731,17 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts4) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 358 - # unknown schemes and their hosts (5)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts5) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 359 - # unknown schemes and their hosts (6)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts6) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://:12/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 360 - # unknown schemes and their hosts (7)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts7) {
@@ -5087,7 +4757,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndTheirHosts7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 361 - # unknown schemes and backslashes (1)
 TYPED_TEST(URIWhatwgTest, UnknownSchemesAndBackslashes1) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc:\\../");
@@ -5102,7 +4771,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemesAndBackslashes1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 362 - # unknown scheme with path looking like a password (1)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithPathLookingLikeAPassword1) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc::a@example.net");
@@ -5116,7 +4784,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithPathLookingLikeAPassword1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 363 - # unknown scheme with bogus percent-encoding (1)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithBogusPercentEncoding1) {
@@ -5134,7 +4801,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithBogusPercentEncoding1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 364 - # unknown scheme with bogus percent-encoding (2)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithBogusPercentEncoding2) {
     auto const ctx = this->template parse_from_string<TypeParam>("wow:%1G");
@@ -5150,7 +4816,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithBogusPercentEncoding2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 365 - # unknown scheme with non-URL characters (1)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters1) {
@@ -5169,7 +4834,6 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 366 - # unknown scheme with non-URL characters (2)
 TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters2) {
@@ -5196,13 +4860,11 @@ TYPED_TEST(URIWhatwgTest, UnknownSchemeWithNonUrlCharacters2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 367 - Forbidden host code points (1)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints1) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://a\0b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 368 - Forbidden host code points (2)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints2) {
@@ -5210,13 +4872,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 369 - Forbidden host code points (3)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints3) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://a<b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 370 - Forbidden host code points (4)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints4) {
@@ -5224,13 +4884,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints4) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 371 - Forbidden host code points (5)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints5) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://a[b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 372 - Forbidden host code points (6)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints6) {
@@ -5238,13 +4896,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints6) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 373 - Forbidden host code points (7)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints7) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://a]b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 374 - Forbidden host code points (8)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints8) {
@@ -5252,13 +4908,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints8) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 375 - Forbidden host code points (9)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodePoints9) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://a|b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 376 - Forbidden host codepoints: tabs and newlines are removed during preprocessing (1)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing1) {
@@ -5274,7 +4928,6 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuring
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 377 - Forbidden host codepoints: tabs and newlines are removed during preprocessing (2)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing2) {
     auto const ctx = this->template parse_from_string<TypeParam>("foo://ho\nst/");
@@ -5288,7 +4941,6 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuring
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 378 - Forbidden host codepoints: tabs and newlines are removed during preprocessing (3)
 TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing3) {
@@ -5304,13 +4956,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenHostCodepointsTabsAndNewlinesAreRemovedDuring
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 379 - Forbidden domain code-points (1)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a\0b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 380 - Forbidden domain code-points (2)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints2) {
@@ -5318,13 +4968,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 381 - Forbidden domain code-points (3)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 382 - Forbidden domain code-points (4)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints4) {
@@ -5332,13 +4980,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints4) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 383 - Forbidden domain code-points (5)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 384 - Forbidden domain code-points (6)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints6) {
@@ -5346,13 +4992,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints6) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 385 - Forbidden domain code-points (7)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints7) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 386 - Forbidden domain code-points (8)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints8) {
@@ -5360,13 +5004,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints8) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 387 - Forbidden domain code-points (9)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints9) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 388 - Forbidden domain code-points (10)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints10) {
@@ -5374,13 +5016,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints10) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 389 - Forbidden domain code-points (11)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints11) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 390 - Forbidden domain code-points (12)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints12) {
@@ -5388,13 +5028,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints12) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 391 - Forbidden domain code-points (13)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints13) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 392 - Forbidden domain code-points (14)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints14) {
@@ -5402,13 +5040,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints14) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 393 - Forbidden domain code-points (15)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints15) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 394 - Forbidden domain code-points (16)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints16) {
@@ -5416,13 +5052,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints16) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 395 - Forbidden domain code-points (17)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints17) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 396 - Forbidden domain code-points (18)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints18) {
@@ -5430,13 +5064,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints18) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 397 - Forbidden domain code-points (19)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints19) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 398 - Forbidden domain code-points (20)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints20) {
@@ -5444,13 +5076,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints20) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 399 - Forbidden domain code-points (21)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints21) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 400 - Forbidden domain code-points (22)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints22) {
@@ -5458,13 +5088,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints22) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 401 - Forbidden domain code-points (23)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints23) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 402 - Forbidden domain code-points (24)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints24) {
@@ -5472,13 +5100,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints24) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 403 - Forbidden domain code-points (25)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints25) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 404 - Forbidden domain code-points (26)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints26) {
@@ -5486,13 +5112,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints26) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 405 - Forbidden domain code-points (27)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints27) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 406 - Forbidden domain code-points (28)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints28) {
@@ -5500,13 +5124,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints28) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 407 - Forbidden domain code-points (29)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints29) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 408 - Forbidden domain code-points (30)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints30) {
@@ -5514,13 +5136,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints30) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 409 - Forbidden domain code-points (31)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints31) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a%b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 410 - Forbidden domain code-points (32)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints32) {
@@ -5528,13 +5148,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints32) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 411 - Forbidden domain code-points (33)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints33) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a>b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 412 - Forbidden domain code-points (34)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints34) {
@@ -5542,13 +5160,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints34) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 413 - Forbidden domain code-points (35)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints35) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a]b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 414 - Forbidden domain code-points (36)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints36) {
@@ -5556,20 +5172,17 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints36) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 415 - Forbidden domain code-points (37)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints37) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://a|b/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 416 - Forbidden domain code-points (38)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodePoints38) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ab/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 417 - Forbidden domain codepoints: tabs and newlines are removed during preprocessing (1)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing1) {
@@ -5585,7 +5198,6 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuri
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 418 - Forbidden domain codepoints: tabs and newlines are removed during preprocessing (2)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing2) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho\nst/");
@@ -5599,7 +5211,6 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuri
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 419 - Forbidden domain codepoints: tabs and newlines are removed during preprocessing (3)
 TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuringPreprocessing3) {
@@ -5615,13 +5226,11 @@ TYPED_TEST(URIWhatwgTest, ForbiddenDomainCodepointsTabsAndNewlinesAreRemovedDuri
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 420 - Encoded forbidden domain codepoints in special URLs (1)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%00st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 421 - Encoded forbidden domain codepoints in special URLs (2)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls2) {
@@ -5629,13 +5238,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 422 - Encoded forbidden domain codepoints in special URLs (3)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%02st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 423 - Encoded forbidden domain codepoints in special URLs (4)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls4) {
@@ -5643,13 +5250,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls4) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 424 - Encoded forbidden domain codepoints in special URLs (5)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%04st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 425 - Encoded forbidden domain codepoints in special URLs (6)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls6) {
@@ -5657,13 +5262,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls6) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 426 - Encoded forbidden domain codepoints in special URLs (7)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls7) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%06st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 427 - Encoded forbidden domain codepoints in special URLs (8)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls8) {
@@ -5671,13 +5274,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls8) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 428 - Encoded forbidden domain codepoints in special URLs (9)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls9) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%08st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 429 - Encoded forbidden domain codepoints in special URLs (10)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls10) {
@@ -5685,13 +5286,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls10) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 430 - Encoded forbidden domain codepoints in special URLs (11)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls11) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%0Ast/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 431 - Encoded forbidden domain codepoints in special URLs (12)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls12) {
@@ -5699,13 +5298,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls12) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 432 - Encoded forbidden domain codepoints in special URLs (13)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls13) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%0Cst/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 433 - Encoded forbidden domain codepoints in special URLs (14)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls14) {
@@ -5713,13 +5310,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls14) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 434 - Encoded forbidden domain codepoints in special URLs (15)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls15) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%0Est/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 435 - Encoded forbidden domain codepoints in special URLs (16)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls16) {
@@ -5727,13 +5322,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls16) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 436 - Encoded forbidden domain codepoints in special URLs (17)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls17) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%10st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 437 - Encoded forbidden domain codepoints in special URLs (18)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls18) {
@@ -5741,13 +5334,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls18) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 438 - Encoded forbidden domain codepoints in special URLs (19)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls19) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%12st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 439 - Encoded forbidden domain codepoints in special URLs (20)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls20) {
@@ -5755,13 +5346,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls20) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 440 - Encoded forbidden domain codepoints in special URLs (21)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls21) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%14st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 441 - Encoded forbidden domain codepoints in special URLs (22)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls22) {
@@ -5769,13 +5358,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls22) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 442 - Encoded forbidden domain codepoints in special URLs (23)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls23) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%16st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 443 - Encoded forbidden domain codepoints in special URLs (24)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls24) {
@@ -5783,13 +5370,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls24) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 444 - Encoded forbidden domain codepoints in special URLs (25)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls25) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%18st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 445 - Encoded forbidden domain codepoints in special URLs (26)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls26) {
@@ -5797,13 +5382,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls26) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 446 - Encoded forbidden domain codepoints in special URLs (27)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls27) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%1Ast/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 447 - Encoded forbidden domain codepoints in special URLs (28)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls28) {
@@ -5811,13 +5394,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls28) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 448 - Encoded forbidden domain codepoints in special URLs (29)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls29) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%1Cst/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 449 - Encoded forbidden domain codepoints in special URLs (30)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls30) {
@@ -5825,13 +5406,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls30) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 450 - Encoded forbidden domain codepoints in special URLs (31)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls31) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%1Est/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 451 - Encoded forbidden domain codepoints in special URLs (32)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls32) {
@@ -5839,13 +5418,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls32) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 452 - Encoded forbidden domain codepoints in special URLs (33)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls33) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%20st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 453 - Encoded forbidden domain codepoints in special URLs (34)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls34) {
@@ -5853,13 +5430,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls34) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 454 - Encoded forbidden domain codepoints in special URLs (35)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls35) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%25st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 455 - Encoded forbidden domain codepoints in special URLs (36)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls36) {
@@ -5867,13 +5442,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls36) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 456 - Encoded forbidden domain codepoints in special URLs (37)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls37) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%3Ast/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 457 - Encoded forbidden domain codepoints in special URLs (38)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls38) {
@@ -5881,13 +5454,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls38) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 458 - Encoded forbidden domain codepoints in special URLs (39)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls39) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%3Est/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 459 - Encoded forbidden domain codepoints in special URLs (40)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls40) {
@@ -5895,13 +5466,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls40) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 460 - Encoded forbidden domain codepoints in special URLs (41)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls41) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%40st/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 461 - Encoded forbidden domain codepoints in special URLs (42)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls42) {
@@ -5909,13 +5478,11 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls42) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 462 - Encoded forbidden domain codepoints in special URLs (43)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls43) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%5Cst/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 463 - Encoded forbidden domain codepoints in special URLs (44)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls44) {
@@ -5923,20 +5490,17 @@ TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls44) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 464 - Encoded forbidden domain codepoints in special URLs (45)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls45) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%7Cst/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 465 - Encoded forbidden domain codepoints in special URLs (46)
 TYPED_TEST(URIWhatwgTest, EncodedForbiddenDomainCodepointsInSpecialUrls46) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://ho%7Fst/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 466 - Allowed host/domain code points (1)
 TYPED_TEST(URIWhatwgTest, AllowedHostDomainCodePoints1) {
@@ -5951,7 +5515,6 @@ TYPED_TEST(URIWhatwgTest, AllowedHostDomainCodePoints1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 467 - Allowed host/domain code points (2)
 TYPED_TEST(URIWhatwgTest, AllowedHostDomainCodePoints2) {
@@ -5970,13 +5533,11 @@ TYPED_TEST(URIWhatwgTest, AllowedHostDomainCodePoints2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 468 - # Hosts and percent-encoding (1)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding1) {
     auto const ctx = this->template parse_from_string<TypeParam>("ftp://example.com%80/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 469 - # Hosts and percent-encoding (2)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding2) {
@@ -5984,20 +5545,17 @@ TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 470 - # Hosts and percent-encoding (3)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding3) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://example.com%80/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 471 - # Hosts and percent-encoding (4)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding4) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://example.com%A0/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 472 - # Hosts and percent-encoding (5)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding5) {
@@ -6013,7 +5571,6 @@ TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 473 - # Hosts and percent-encoding (6)
 TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding6) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://%e2%98%83");
@@ -6027,7 +5584,6 @@ TYPED_TEST(URIWhatwgTest, HostsAndPercentEncoding6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 474 - # tests from jsdom/whatwg-url designed for code coverage (1)
 TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage1) {
@@ -6043,7 +5599,6 @@ TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 475 - # tests from jsdom/whatwg-url designed for code coverage (2)
 TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage2) {
@@ -6063,7 +5618,6 @@ TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 476 - # tests from jsdom/whatwg-url designed for code coverage (3)
 TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage3) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://localhost:3000/jqueryui@1.2.3");
@@ -6077,7 +5631,6 @@ TYPED_TEST(URIWhatwgTest, TestsFromJsdomWhatwgUrlDesignedForCodeCoverage3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 477 - # tab/LF/CR (1)
 TYPED_TEST(URIWhatwgTest, TabLfCr1) {
@@ -6094,7 +5647,6 @@ TYPED_TEST(URIWhatwgTest, TabLfCr1) {
     EXPECT_EQ(ctx.out.get_fragment(), "frag");
 }
 
-
 // 478 - # Stringification of URL.searchParams (1)
 TYPED_TEST(URIWhatwgTest, StringificationOfUrlSearchparams1) {
     auto const ctx = this->template parse_from_string<TypeParam>("?a=b&c=d", "http://example.org/foo/bar");
@@ -6108,7 +5660,6 @@ TYPED_TEST(URIWhatwgTest, StringificationOfUrlSearchparams1) {
     EXPECT_EQ(ctx.out.get_queries(), "a=b&c=d");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 479 - # Stringification of URL.searchParams (2)
 TYPED_TEST(URIWhatwgTest, StringificationOfUrlSearchparams2) {
@@ -6124,7 +5675,6 @@ TYPED_TEST(URIWhatwgTest, StringificationOfUrlSearchparams2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 480 - # Scheme only (1)
 TYPED_TEST(URIWhatwgTest, SchemeOnly1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http:", "http://example.org/foo/bar");
@@ -6139,13 +5689,11 @@ TYPED_TEST(URIWhatwgTest, SchemeOnly1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 481 - # Scheme only (2)
 TYPED_TEST(URIWhatwgTest, SchemeOnly2) {
     auto const ctx = this->template parse_from_string<TypeParam>("http:", "https://example.org/foo/bar");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 482 - # Scheme only (3)
 TYPED_TEST(URIWhatwgTest, SchemeOnly3) {
@@ -6161,7 +5709,6 @@ TYPED_TEST(URIWhatwgTest, SchemeOnly3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 483 - # Percent encoding of fragments (1)
 TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.bar/baz?qux#foobar");
@@ -6175,7 +5722,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments1) {
     EXPECT_EQ(ctx.out.get_queries(), "qux");
     EXPECT_EQ(ctx.out.get_fragment(), "foo%08bar");
 }
-
 
 // 484 - # Percent encoding of fragments (2)
 TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments2) {
@@ -6191,7 +5737,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments2) {
     EXPECT_EQ(ctx.out.get_fragment(), "foo%22bar");
 }
 
-
 // 485 - # Percent encoding of fragments (3)
 TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments3) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.bar/baz?qux#foo<bar");
@@ -6205,7 +5750,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments3) {
     EXPECT_EQ(ctx.out.get_queries(), "qux");
     EXPECT_EQ(ctx.out.get_fragment(), "foo%3Cbar");
 }
-
 
 // 486 - # Percent encoding of fragments (4)
 TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments4) {
@@ -6221,7 +5765,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments4) {
     EXPECT_EQ(ctx.out.get_fragment(), "foo%3Ebar");
 }
 
-
 // 487 - # Percent encoding of fragments (5)
 TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments5) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.bar/baz?qux#foo`bar");
@@ -6235,7 +5778,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodingOfFragments5) {
     EXPECT_EQ(ctx.out.get_queries(), "qux");
     EXPECT_EQ(ctx.out.get_fragment(), "foo%60bar");
 }
-
 
 // 488 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (1)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103171) {
@@ -6251,7 +5793,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103171) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 489 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (2)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103172) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://1.2.3.4./", "http://other.com/");
@@ -6265,7 +5806,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103172) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 490 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (3)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103173) {
@@ -6281,7 +5821,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103173) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 491 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (4)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103174) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://192.168.257.", "http://other.com/");
@@ -6295,7 +5834,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103174) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 492 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (5)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103175) {
@@ -6312,7 +5850,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103175) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 493 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (6)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103176) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://256", "http://other.com/");
@@ -6326,7 +5863,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103176) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 494 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (7)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103177) {
@@ -6342,7 +5878,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103177) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 495 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (8)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103178) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://999999999", "http://other.com/");
@@ -6356,7 +5891,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103178) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 496 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (9)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103179) {
@@ -6372,7 +5906,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull103179) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 497 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (10)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031710) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://999999999.com", "http://other.com/");
@@ -6387,13 +5920,11 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031710) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 498 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (11)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031711) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://10000000000", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 499 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (12)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031712) {
@@ -6410,7 +5941,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031712) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 500 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (13)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031713) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://4294967295", "http://other.com/");
@@ -6425,13 +5955,11 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031713) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 501 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (14)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031714) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://4294967296", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 502 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (15)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031715) {
@@ -6447,13 +5975,11 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031715) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 503 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (16)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031716) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0xffffffff1", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 504 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (17)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031717) {
@@ -6461,7 +5987,6 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031717) {
       this->template parse_from_string<TypeParam>("http://256.256.256.256", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 505 - # IPv4 parsing (via https://github.com/nodejs/node/pull/10317) (18)
 TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031718) {
@@ -6477,20 +6002,17 @@ TYPED_TEST(URIWhatwgTest, Ipv4ParsingViaHttpsGithubComNodejsNodePull1031718) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 506 - More IPv4 parsing (via https://github.com/jsdom/whatwg-url/issues/92) (1)
 TYPED_TEST(URIWhatwgTest, MoreIpv4ParsingViaHttpsGithubComJsdomWhatwgUrlIssues921) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://0x100000000/test");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 507 - More IPv4 parsing (via https://github.com/jsdom/whatwg-url/issues/92) (2)
 TYPED_TEST(URIWhatwgTest, MoreIpv4ParsingViaHttpsGithubComJsdomWhatwgUrlIssues922) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://256.0.0.1/test");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 508 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (1)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork1) {
@@ -6510,7 +6032,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 509 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (2)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork2) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///C%7C/");
@@ -6529,13 +6050,11 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 510 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (3)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork3) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://%43%3A");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 511 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (4)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork4) {
@@ -6543,13 +6062,11 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 512 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (5)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork5) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://%43|");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 513 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (6)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork6) {
@@ -6557,13 +6074,11 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 514 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (7)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork7) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://%43%7C/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 515 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (8)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork8) {
@@ -6571,13 +6086,11 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 516 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (9)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork9) {
     auto const ctx = this->template parse_from_string<TypeParam>("asdf://%43|/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 517 - # file URLs containing percent-encoded Windows drive letters (shouldn't work) (10)
 TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersShouldnTWork10) {
@@ -6592,7 +6105,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsContainingPercentEncodedWindowsDriveLettersSho
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 518 - # file URLs relative to other file URLs (via https://github.com/jsdom/whatwg-url/pull/60) (1)
 TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomWhatwgUrlPull601) {
@@ -6611,7 +6123,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomW
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 519 - # file URLs relative to other file URLs (via https://github.com/jsdom/whatwg-url/pull/60) (2)
 TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomWhatwgUrlPull602) {
     auto const ctx = this->template parse_from_string<TypeParam>("..", "file:///C:/");
@@ -6625,7 +6136,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomW
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 520 - # file URLs relative to other file URLs (via https://github.com/jsdom/whatwg-url/pull/60) (3)
 TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomWhatwgUrlPull603) {
@@ -6641,7 +6151,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsRelativeToOtherFileUrlsViaHttpsGithubComJsdomW
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 521 - # More file URL tests by zcorpan and annevk (1)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk1) {
     auto const ctx = this->template parse_from_string<TypeParam>("/", "file:///C:/a/b");
@@ -6655,7 +6164,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 522 - # More file URL tests by zcorpan and annevk (2)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk2) {
@@ -6671,7 +6179,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 523 - # More file URL tests by zcorpan and annevk (3)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk3) {
     auto const ctx = this->template parse_from_string<TypeParam>("/", "file://h/a/b");
@@ -6685,7 +6192,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 524 - # More file URL tests by zcorpan and annevk (4)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk4) {
@@ -6701,7 +6207,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 525 - # More file URL tests by zcorpan and annevk (5)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk5) {
     auto const ctx = this->template parse_from_string<TypeParam>("//d:/..", "file:///C:/a/b");
@@ -6715,7 +6220,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk5) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 526 - # More file URL tests by zcorpan and annevk (6)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk6) {
@@ -6731,7 +6235,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk6) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 527 - # More file URL tests by zcorpan and annevk (7)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk7) {
     auto const ctx = this->template parse_from_string<TypeParam>("..", "file:///1:/");
@@ -6745,7 +6248,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk7) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 528 - # More file URL tests by zcorpan and annevk (8)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk8) {
@@ -6761,7 +6263,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk8) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 529 - # More file URL tests by zcorpan and annevk (9)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk9) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:", "file:///test?test#test");
@@ -6775,7 +6276,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk9) {
     EXPECT_EQ(ctx.out.get_queries(), "test");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 530 - # More file URL tests by zcorpan and annevk (10)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk10) {
@@ -6791,7 +6291,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk10) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 531 - # More file URL tests by zcorpan and annevk (11)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk11) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:?x", "file:///test?test#test");
@@ -6805,7 +6304,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk11) {
     EXPECT_EQ(ctx.out.get_queries(), "x");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 532 - # More file URL tests by zcorpan and annevk (12)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk12) {
@@ -6821,7 +6319,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk12) {
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
 
-
 // 533 - # More file URL tests by zcorpan and annevk (13)
 TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk13) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:#x", "file:///test?test#test");
@@ -6835,7 +6332,6 @@ TYPED_TEST(URIWhatwgTest, MoreFileUrlTestsByZcorpanAndAnnevk13) {
     EXPECT_EQ(ctx.out.get_queries(), "test");
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
-
 
 // 534 - # File URLs and many (back)slashes (1)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes1) {
@@ -6851,7 +6347,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 535 - # File URLs and many (back)slashes (2)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes2) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:\\\\\\\\");
@@ -6865,7 +6360,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 536 - # File URLs and many (back)slashes (3)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes3) {
@@ -6881,7 +6375,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 537 - # File URLs and many (back)slashes (4)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes4) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:\\\\\\\\#guppy");
@@ -6895,7 +6388,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "guppy");
 }
-
 
 // 538 - # File URLs and many (back)slashes (5)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes5) {
@@ -6911,7 +6403,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 539 - # File URLs and many (back)slashes (6)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes6) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:\\\\localhost//");
@@ -6925,7 +6416,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 540 - # File URLs and many (back)slashes (7)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes7) {
@@ -6941,7 +6431,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 541 - # File URLs and many (back)slashes (8)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes8) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://\\/localhost//cat");
@@ -6955,7 +6444,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 542 - # File URLs and many (back)slashes (9)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes9) {
@@ -6971,7 +6459,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 543 - # File URLs and many (back)slashes (10)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes10) {
     auto const ctx = this->template parse_from_string<TypeParam>("/////mouse", "file:///elephant");
@@ -6985,7 +6472,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 544 - # File URLs and many (back)slashes (11)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes11) {
@@ -7001,7 +6487,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes11) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 545 - # File URLs and many (back)slashes (12)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes12) {
     auto const ctx = this->template parse_from_string<TypeParam>("\\/localhost//pig", "file://lion/");
@@ -7015,7 +6500,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes12) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 546 - # File URLs and many (back)slashes (13)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes13) {
@@ -7031,7 +6515,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes13) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 547 - # File URLs and many (back)slashes (14)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes14) {
     auto const ctx = this->template parse_from_string<TypeParam>("/..//localhost//pig", "file://lion/");
@@ -7045,7 +6528,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes14) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 548 - # File URLs and many (back)slashes (15)
 TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes15) {
@@ -7061,7 +6543,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsAndManyBackSlashes15) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 549 - # File URLs with non-empty hosts (1)
 TYPED_TEST(URIWhatwgTest, FileUrlsWithNonEmptyHosts1) {
     auto const ctx = this->template parse_from_string<TypeParam>("/rooibos", "file://tea/");
@@ -7075,7 +6556,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsWithNonEmptyHosts1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 550 - # File URLs with non-empty hosts (2)
 TYPED_TEST(URIWhatwgTest, FileUrlsWithNonEmptyHosts2) {
@@ -7091,7 +6571,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsWithNonEmptyHosts2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 551 - # Windows drive letter handling with the 'file:' base URL (1)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl1) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|", "file://host/dir/file");
@@ -7105,7 +6584,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 552 - # Windows drive letter handling with the 'file:' base URL (2)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl2) {
@@ -7121,7 +6599,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 553 - # Windows drive letter handling with the 'file:' base URL (3)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl3) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|#", "file://host/dir/file");
@@ -7135,7 +6612,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 554 - # Windows drive letter handling with the 'file:' base URL (4)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl4) {
@@ -7151,7 +6627,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 555 - # Windows drive letter handling with the 'file:' base URL (5)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl5) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|/", "file://host/dir/file");
@@ -7165,7 +6640,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl5) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 556 - # Windows drive letter handling with the 'file:' base URL (6)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl6) {
@@ -7181,7 +6655,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl6) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 557 - # Windows drive letter handling with the 'file:' base URL (7)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl7) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|\\", "file://host/dir/file");
@@ -7195,7 +6668,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl7) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 558 - # Windows drive letter handling with the 'file:' base URL (8)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl8) {
@@ -7211,7 +6683,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl8) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 559 - # Windows drive letter handling with the 'file:' base URL (9)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl9) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|a", "file://host/dir/file");
@@ -7225,7 +6696,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterHandlingWithTheFileBaseUrl9) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 560 - # Windows drive letter quirk in the file slash state (1)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState1) {
@@ -7241,7 +6711,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 561 - # Windows drive letter quirk in the file slash state (2)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState2) {
     auto const ctx = this->template parse_from_string<TypeParam>("/c|/foo/bar", "file:///c:/baz/qux");
@@ -7255,7 +6724,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 562 - # Windows drive letter quirk in the file slash state (3)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState3) {
@@ -7271,7 +6739,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 563 - # Windows drive letter quirk in the file slash state (4)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState4) {
     auto const ctx = this->template parse_from_string<TypeParam>("/c:/foo/bar", "file://host/path");
@@ -7285,7 +6752,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkInTheFileSlashState4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 564 - # Do not drop the host in the presence of a drive letter (1)
 TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter1) {
@@ -7301,7 +6767,6 @@ TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 565 - # Do not drop the host in the presence of a drive letter (2)
 TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter2) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://1.2.3.4/C:/");
@@ -7315,7 +6780,6 @@ TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 566 - # Do not drop the host in the presence of a drive letter (3)
 TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter3) {
@@ -7331,7 +6795,6 @@ TYPED_TEST(URIWhatwgTest, DoNotDropTheHostInThePresenceOfADriveLetter3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 567 - # Copy the host from the base URL in the following cases (1)
 TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases1) {
     auto const ctx = this->template parse_from_string<TypeParam>("C|/", "file://host/");
@@ -7345,7 +6808,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 568 - # Copy the host from the base URL in the following cases (2)
 TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases2) {
@@ -7361,7 +6823,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 569 - # Copy the host from the base URL in the following cases (3)
 TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases3) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:C:/", "file://host/");
@@ -7375,7 +6836,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 570 - # Copy the host from the base URL in the following cases (4)
 TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases4) {
@@ -7391,7 +6851,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheHostFromTheBaseUrlInTheFollowingCases4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 571 - # Copy the empty host from the input in the following cases (1)
 TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases1) {
     auto const ctx = this->template parse_from_string<TypeParam>("//C:/", "file://host/");
@@ -7405,7 +6864,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 572 - # Copy the empty host from the input in the following cases (2)
 TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases2) {
@@ -7421,7 +6879,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 573 - # Copy the empty host from the input in the following cases (3)
 TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases3) {
     auto const ctx = this->template parse_from_string<TypeParam>("///C:/", "file://host/");
@@ -7435,7 +6892,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 574 - # Copy the empty host from the input in the following cases (4)
 TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases4) {
@@ -7451,7 +6907,6 @@ TYPED_TEST(URIWhatwgTest, CopyTheEmptyHostFromTheInputInTheFollowingCases4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 575 - # Windows drive letter quirk (no host) (1)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkNoHost1) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:/C|/");
@@ -7465,7 +6920,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkNoHost1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 576 - # Windows drive letter quirk (no host) (2)
 TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkNoHost2) {
@@ -7481,7 +6935,6 @@ TYPED_TEST(URIWhatwgTest, WindowsDriveLetterQuirkNoHost2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 577 - # file URLs without base URL by Rimas Misevičius (1)
 TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus1) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:");
@@ -7495,7 +6948,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 578 - # file URLs without base URL by Rimas Misevičius (2)
 TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus2) {
@@ -7511,7 +6963,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 579 - # file URLs without base URL by Rimas Misevičius (3)
 TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus3) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:#frag");
@@ -7525,7 +6976,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlsWithoutBaseUrlByRimasMiseviIus3) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "frag");
 }
-
 
 // 580 - # file: drive letter cases from https://crbug.com/1078698 (1)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786981) {
@@ -7541,7 +6991,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786981) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 581 - # file: drive letter cases from https://crbug.com/1078698 (2)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786982) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///Y:/");
@@ -7555,7 +7004,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786982) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 582 - # file: drive letter cases from https://crbug.com/1078698 (3)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786983) {
@@ -7571,7 +7019,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786983) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 583 - # file: drive letter cases from https://crbug.com/1078698 (4)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786984) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///./Y:");
@@ -7586,13 +7033,11 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786984) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 584 - # file: drive letter cases from https://crbug.com/1078698 (5)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom10786985) {
     auto const ctx = this->template parse_from_string<TypeParam>("\\\\\\.\\Y:");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 585 - # file: drive letter cases from https://crbug.com/1078698 but lowercased (1)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowercased1) {
@@ -7608,7 +7053,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowerca
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 586 - # file: drive letter cases from https://crbug.com/1078698 but lowercased (2)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowercased2) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///y:/");
@@ -7622,7 +7066,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowerca
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 587 - # file: drive letter cases from https://crbug.com/1078698 but lowercased (3)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowercased3) {
@@ -7638,7 +7081,6 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowerca
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 588 - # file: drive letter cases from https://crbug.com/1078698 but lowercased (4)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowercased4) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///./y:");
@@ -7653,13 +7095,11 @@ TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowerca
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 589 - # file: drive letter cases from https://crbug.com/1078698 but lowercased (5)
 TYPED_TEST(URIWhatwgTest, FileDriveLetterCasesFromHttpsCrbugCom1078698ButLowercased5) {
     auto const ctx = this->template parse_from_string<TypeParam>("\\\\\\.\\y:");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 590 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (1)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4051) {
@@ -7675,7 +7115,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 591 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (2)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4052) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://localhost////foo");
@@ -7689,7 +7128,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 592 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (3)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4053) {
@@ -7705,7 +7143,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 593 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (4)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4054) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:///one/two", "file:///");
@@ -7719,7 +7156,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 594 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (5)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4055) {
@@ -7735,7 +7171,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 595 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (6)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4056) {
     auto const ctx = this->template parse_from_string<TypeParam>("//one/two", "file:///");
@@ -7749,7 +7184,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 596 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (7)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4057) {
@@ -7765,7 +7199,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 597 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (8)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4058) {
     auto const ctx = this->template parse_from_string<TypeParam>("////one/two", "file:///");
@@ -7779,7 +7212,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 598 - # Additional file URL tests for (https://github.com/whatwg/url/issues/405) (9)
 TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues4059) {
@@ -7795,7 +7227,6 @@ TYPED_TEST(URIWhatwgTest, AdditionalFileUrlTestsForHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 599 - File URL tests for https://github.com/whatwg/url/issues/549 (1)
 TYPED_TEST(URIWhatwgTest, FileUrlTestsForHttpsGithubComWhatwgUrlIssues5491) {
     auto const ctx = this->template parse_from_string<TypeParam>("file:.//p");
@@ -7809,7 +7240,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlTestsForHttpsGithubComWhatwgUrlIssues5491) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 600 - File URL tests for https://github.com/whatwg/url/issues/549 (2)
 TYPED_TEST(URIWhatwgTest, FileUrlTestsForHttpsGithubComWhatwgUrlIssues5492) {
@@ -7825,7 +7255,6 @@ TYPED_TEST(URIWhatwgTest, FileUrlTestsForHttpsGithubComWhatwgUrlIssues5492) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 601 - # IPv6 tests (1)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[1:0::]", "http://example.net/");
@@ -7840,7 +7269,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 602 - # IPv6 tests (2)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests2) {
     auto const ctx =
@@ -7848,13 +7276,11 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 603 - # IPv6 tests (3)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests3) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://[0::0::0]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 604 - # IPv6 tests (4)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests4) {
@@ -7862,13 +7288,11 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests4) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 605 - # IPv6 tests (5)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests5) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://[0:0:]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 606 - # IPv6 tests (6)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests6) {
@@ -7876,13 +7300,11 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests6) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 607 - # IPv6 tests (7)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests7) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://[0:1.00.0.0.0]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 608 - # IPv6 tests (8)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests8) {
@@ -7890,13 +7312,11 @@ TYPED_TEST(URIWhatwgTest, Ipv6Tests8) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 609 - # IPv6 tests (9)
 TYPED_TEST(URIWhatwgTest, Ipv6Tests9) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://[0:1.23.23]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 610 - # Empty host (1)
 TYPED_TEST(URIWhatwgTest, EmptyHost1) {
@@ -7904,13 +7324,11 @@ TYPED_TEST(URIWhatwgTest, EmptyHost1) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 611 - # Empty host (2)
 TYPED_TEST(URIWhatwgTest, EmptyHost2) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://#");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 612 - Port overflow (2^32 + 81) (1)
 TYPED_TEST(URIWhatwgTest, PortOverflow232811) {
@@ -7919,14 +7337,12 @@ TYPED_TEST(URIWhatwgTest, PortOverflow232811) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 613 - Port overflow (2^64 + 81) (1)
 TYPED_TEST(URIWhatwgTest, PortOverflow264811) {
     auto const ctx =
       this->template parse_from_string<TypeParam>("http://f:18446744073709551697/c", "http://example.org/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 614 - Port overflow (2^128 + 81) (1)
 TYPED_TEST(URIWhatwgTest, PortOverflow2128811) {
@@ -7935,7 +7351,6 @@ TYPED_TEST(URIWhatwgTest, PortOverflow2128811) {
       "http://example.org/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 615 - # Non-special-URL path tests (1)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests1) {
@@ -7951,7 +7366,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 616 - # Non-special-URL path tests (2)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests2) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://ñ?x");
@@ -7965,7 +7379,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests2) {
     EXPECT_EQ(ctx.out.get_queries(), "x");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 617 - # Non-special-URL path tests (3)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests3) {
@@ -7981,7 +7394,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests3) {
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
 
-
 // 618 - # Non-special-URL path tests (4)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests4) {
     auto const ctx = this->template parse_from_string<TypeParam>("#x", "sc://ñ");
@@ -7995,7 +7407,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "x");
 }
-
 
 // 619 - # Non-special-URL path tests (5)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests5) {
@@ -8011,7 +7422,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 620 - # Non-special-URL path tests (6)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests6) {
     auto const ctx = this->template parse_from_string<TypeParam>("sc://?");
@@ -8025,7 +7435,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 621 - # Non-special-URL path tests (7)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests7) {
@@ -8041,7 +7450,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 622 - # Non-special-URL path tests (8)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests8) {
     auto const ctx = this->template parse_from_string<TypeParam>("///", "sc://x/");
@@ -8055,7 +7463,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 623 - # Non-special-URL path tests (9)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests9) {
@@ -8071,7 +7478,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 624 - # Non-special-URL path tests (10)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests10) {
     auto const ctx = this->template parse_from_string<TypeParam>("////x/", "sc://x/");
@@ -8085,7 +7491,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 625 - # Non-special-URL path tests (11)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests11) {
@@ -8102,7 +7507,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests11) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 626 - # Non-special-URL path tests (12)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests12) {
     auto const ctx = this->template parse_from_string<TypeParam>("telnet://user:pass@foobar.com:23/");
@@ -8117,7 +7521,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests12) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 627 - # Non-special-URL path tests (13)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests13) {
     auto const ctx = this->template parse_from_string<TypeParam>("ut2004://10.10.10.10:7777/Index.ut2");
@@ -8131,7 +7534,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests13) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 628 - # Non-special-URL path tests (14)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests14) {
@@ -8148,7 +7550,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests14) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 629 - # Non-special-URL path tests (15)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests15) {
     auto const ctx = this->template parse_from_string<TypeParam>("rsync://foo@host:911/sup");
@@ -8162,7 +7563,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests15) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 630 - # Non-special-URL path tests (16)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests16) {
@@ -8178,7 +7578,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests16) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 631 - # Non-special-URL path tests (17)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests17) {
     auto const ctx = this->template parse_from_string<TypeParam>("irc://myserver.com:6999/channel?passwd");
@@ -8192,7 +7591,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests17) {
     EXPECT_EQ(ctx.out.get_queries(), "passwd");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 632 - # Non-special-URL path tests (18)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests18) {
@@ -8209,7 +7607,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests18) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 633 - # Non-special-URL path tests (19)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests19) {
     auto const ctx =
@@ -8225,7 +7622,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests19) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 634 - # Non-special-URL path tests (20)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests20) {
     auto const ctx = this->template parse_from_string<TypeParam>("git+https://github.com/foo/bar");
@@ -8239,7 +7635,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests20) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 635 - # Non-special-URL path tests (21)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests21) {
@@ -8255,7 +7650,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests21) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 636 - # Non-special-URL path tests (22)
 TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests22) {
     auto const ctx = this->template parse_from_string<TypeParam>("tag:joe@example.org,2001:foo/bar");
@@ -8269,7 +7663,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialUrlPathTests22) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 637 - Serialize /. in path (1)
 TYPED_TEST(URIWhatwgTest, SerializeInPath1) {
@@ -8285,7 +7678,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 638 - Serialize /. in path (2)
 TYPED_TEST(URIWhatwgTest, SerializeInPath2) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-spec:/..//");
@@ -8299,7 +7691,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 639 - Serialize /. in path (3)
 TYPED_TEST(URIWhatwgTest, SerializeInPath3) {
@@ -8315,7 +7706,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 640 - Serialize /. in path (4)
 TYPED_TEST(URIWhatwgTest, SerializeInPath4) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-spec:/.//path");
@@ -8329,7 +7719,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 641 - Serialize /. in path (5)
 TYPED_TEST(URIWhatwgTest, SerializeInPath5) {
@@ -8345,7 +7734,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 642 - Serialize /. in path (6)
 TYPED_TEST(URIWhatwgTest, SerializeInPath6) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-spec:/a/..//path");
@@ -8359,7 +7747,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 643 - Serialize /. in path (7)
 TYPED_TEST(URIWhatwgTest, SerializeInPath7) {
@@ -8375,7 +7762,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 644 - Serialize /. in path (8)
 TYPED_TEST(URIWhatwgTest, SerializeInPath8) {
     auto const ctx = this->template parse_from_string<TypeParam>("/..//path", "non-spec:/p");
@@ -8389,7 +7775,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 645 - Serialize /. in path (9)
 TYPED_TEST(URIWhatwgTest, SerializeInPath9) {
@@ -8405,7 +7790,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 646 - Serialize /. in path (10)
 TYPED_TEST(URIWhatwgTest, SerializeInPath10) {
     auto const ctx = this->template parse_from_string<TypeParam>("a/..//path", "non-spec:/p");
@@ -8419,7 +7803,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 647 - Serialize /. in path (11)
 TYPED_TEST(URIWhatwgTest, SerializeInPath11) {
@@ -8435,7 +7818,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath11) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 648 - Serialize /. in path (12)
 TYPED_TEST(URIWhatwgTest, SerializeInPath12) {
     auto const ctx = this->template parse_from_string<TypeParam>("path", "non-spec:/..//p");
@@ -8449,7 +7831,6 @@ TYPED_TEST(URIWhatwgTest, SerializeInPath12) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 649 - Do not serialize /. in path (1)
 TYPED_TEST(URIWhatwgTest, DoNotSerializeInPath1) {
@@ -8465,7 +7846,6 @@ TYPED_TEST(URIWhatwgTest, DoNotSerializeInPath1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 650 - # percent encoded hosts in non-special-URLs (1)
 TYPED_TEST(URIWhatwgTest, PercentEncodedHostsInNonSpecialUrls1) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://%E2%80%A0/");
@@ -8479,7 +7859,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedHostsInNonSpecialUrls1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 651 - # percent encoded hosts in non-special-URLs (2)
 TYPED_TEST(URIWhatwgTest, PercentEncodedHostsInNonSpecialUrls2) {
@@ -8495,7 +7874,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedHostsInNonSpecialUrls2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 652 - # IPv6 in non-special-URLs (1)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls1) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://[1:2:0:0:5:0:0:0]/");
@@ -8509,7 +7887,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 653 - # IPv6 in non-special-URLs (2)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls2) {
@@ -8525,7 +7902,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 654 - # IPv6 in non-special-URLs (3)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls3) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://[1:2::3]:80/");
@@ -8540,13 +7916,11 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 655 - # IPv6 in non-special-URLs (4)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls4) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special://[:80/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 656 - # IPv6 in non-special-URLs (5)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls5) {
@@ -8562,7 +7936,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 657 - # IPv6 in non-special-URLs (6)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls6) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:http://example.org:88/");
@@ -8576,7 +7949,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 658 - # IPv6 in non-special-URLs (7)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls7) {
@@ -8592,7 +7964,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 659 - # IPv6 in non-special-URLs (8)
 TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls8) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:");
@@ -8606,7 +7977,6 @@ TYPED_TEST(URIWhatwgTest, Ipv6InNonSpecialUrls8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 660 - blob: in blob: (1)
 TYPED_TEST(URIWhatwgTest, BlobInBlob1) {
@@ -8622,7 +7992,6 @@ TYPED_TEST(URIWhatwgTest, BlobInBlob1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 661 - blob: in blob: (2)
 TYPED_TEST(URIWhatwgTest, BlobInBlob2) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:blob:https://example.org/");
@@ -8636,7 +8005,6 @@ TYPED_TEST(URIWhatwgTest, BlobInBlob2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 662 - Non-http(s): in blob: (1)
 TYPED_TEST(URIWhatwgTest, NonHttpSInBlob1) {
@@ -8652,7 +8020,6 @@ TYPED_TEST(URIWhatwgTest, NonHttpSInBlob1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 663 - Non-http(s): in blob: (2)
 TYPED_TEST(URIWhatwgTest, NonHttpSInBlob2) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:file://host/path");
@@ -8666,7 +8033,6 @@ TYPED_TEST(URIWhatwgTest, NonHttpSInBlob2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 664 - Non-http(s): in blob: (3)
 TYPED_TEST(URIWhatwgTest, NonHttpSInBlob3) {
@@ -8682,7 +8048,6 @@ TYPED_TEST(URIWhatwgTest, NonHttpSInBlob3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 665 - Non-http(s): in blob: (4)
 TYPED_TEST(URIWhatwgTest, NonHttpSInBlob4) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:ws://example.org/");
@@ -8697,7 +8062,6 @@ TYPED_TEST(URIWhatwgTest, NonHttpSInBlob4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 666 - Non-http(s): in blob: (5)
 TYPED_TEST(URIWhatwgTest, NonHttpSInBlob5) {
     auto const ctx = this->template parse_from_string<TypeParam>("blob:wss://example.org/");
@@ -8711,7 +8075,6 @@ TYPED_TEST(URIWhatwgTest, NonHttpSInBlob5) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 667 - Percent-encoded http: in blob: (1)
 TYPED_TEST(URIWhatwgTest, PercentEncodedHttpInBlob1) {
@@ -8731,7 +8094,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedHttpInBlob1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 668 - Invalid IPv4 radix digits (1)
 TYPED_TEST(URIWhatwgTest, InvalidIpv4RadixDigits1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0x7f.0.0.0x7g");
@@ -8745,7 +8107,6 @@ TYPED_TEST(URIWhatwgTest, InvalidIpv4RadixDigits1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 669 - Invalid IPv4 radix digits (2)
 TYPED_TEST(URIWhatwgTest, InvalidIpv4RadixDigits2) {
@@ -8761,13 +8122,11 @@ TYPED_TEST(URIWhatwgTest, InvalidIpv4RadixDigits2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 670 - Invalid IPv4 portion of IPv6 address (1)
 TYPED_TEST(URIWhatwgTest, InvalidIpv4PortionOfIpv6Address1) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[::127.0.0.0.1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 671 - Uncompressed IPv6 addresses with 0 (1)
 TYPED_TEST(URIWhatwgTest, UncompressedIpv6AddressesWith01) {
@@ -8783,7 +8142,6 @@ TYPED_TEST(URIWhatwgTest, UncompressedIpv6AddressesWith01) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 672 - Uncompressed IPv6 addresses with 0 (2)
 TYPED_TEST(URIWhatwgTest, UncompressedIpv6AddressesWith02) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://[1:0:1:0:1:0:1:0]");
@@ -8797,7 +8155,6 @@ TYPED_TEST(URIWhatwgTest, UncompressedIpv6AddressesWith02) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 673 - Percent-encoded query and fragment (1)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment1) {
@@ -8817,7 +8174,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 674 - Percent-encoded query and fragment (2)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment2) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.org/test?#");
@@ -8831,7 +8187,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 675 - Percent-encoded query and fragment (3)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment3) {
@@ -8851,7 +8206,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 676 - Percent-encoded query and fragment (4)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment4) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.org/test?>");
@@ -8869,7 +8223,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment4) {
     }
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 677 - Percent-encoded query and fragment (5)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment5) {
@@ -8889,7 +8242,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 678 - Percent-encoded query and fragment (6)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment6) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.org/test?%23%23");
@@ -8908,7 +8260,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment6) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 679 - Percent-encoded query and fragment (7)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment7) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.org/test?%GH");
@@ -8925,7 +8276,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 680 - Percent-encoded query and fragment (8)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment8) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://example.org/test?a#%EF");
@@ -8939,7 +8289,6 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment8) {
     EXPECT_EQ(ctx.out.get_queries(), "a");
     EXPECT_EQ(ctx.out.get_fragment(), "%EF");
 }
-
 
 // 681 - Percent-encoded query and fragment (9)
 TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment9) {
@@ -8955,13 +8304,11 @@ TYPED_TEST(URIWhatwgTest, PercentEncodedQueryAndFragment9) {
     EXPECT_EQ(ctx.out.get_fragment(), "%GH");
 }
 
-
 // 682 - URLs that require a non-about:blank base. (Also serve as invalid base tests.) (1)
 TYPED_TEST(URIWhatwgTest, UrlsThatRequireANonAboutBlankBaseAlsoServeAsInvalidBaseTests1) {
     auto const ctx = this->template parse_from_string<TypeParam>("a");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 683 - URLs that require a non-about:blank base. (Also serve as invalid base tests.) (2)
 TYPED_TEST(URIWhatwgTest, UrlsThatRequireANonAboutBlankBaseAlsoServeAsInvalidBaseTests2) {
@@ -8969,13 +8316,11 @@ TYPED_TEST(URIWhatwgTest, UrlsThatRequireANonAboutBlankBaseAlsoServeAsInvalidBas
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 684 - URLs that require a non-about:blank base. (Also serve as invalid base tests.) (3)
 TYPED_TEST(URIWhatwgTest, UrlsThatRequireANonAboutBlankBaseAlsoServeAsInvalidBaseTests3) {
     auto const ctx = this->template parse_from_string<TypeParam>("a//");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 685 - Bases that don't fail to parse but fail to be bases (1)
 TYPED_TEST(URIWhatwgTest, BasesThatDonTFailToParseButFailToBeBases1) {
@@ -8983,13 +8328,11 @@ TYPED_TEST(URIWhatwgTest, BasesThatDonTFailToParseButFailToBeBases1) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 686 - Bases that don't fail to parse but fail to be bases (2)
 TYPED_TEST(URIWhatwgTest, BasesThatDonTFailToParseButFailToBeBases2) {
     auto const ctx = this->template parse_from_string<TypeParam>("test-a-colon-b.html", "a:b");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 687 - Other base URL tests, that must succeed (1)
 TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed1) {
@@ -9005,7 +8348,6 @@ TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 688 - Other base URL tests, that must succeed (2)
 TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed2) {
     auto const ctx = this->template parse_from_string<TypeParam>("test-a-colon-slash-slash.html", "a://");
@@ -9019,7 +8361,6 @@ TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 689 - Other base URL tests, that must succeed (3)
 TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed3) {
@@ -9035,7 +8376,6 @@ TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 690 - Other base URL tests, that must succeed (4)
 TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed4) {
     auto const ctx = this->template parse_from_string<TypeParam>("test-a-colon-slash-slash-b.html", "a://b");
@@ -9049,7 +8389,6 @@ TYPED_TEST(URIWhatwgTest, OtherBaseUrlTestsThatMustSucceed4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 691 - Null code point in fragment (1)
 TYPED_TEST(URIWhatwgTest, NullCodePointInFragment1) {
@@ -9065,7 +8404,6 @@ TYPED_TEST(URIWhatwgTest, NullCodePointInFragment1) {
     EXPECT_EQ(ctx.out.get_fragment(), "b%00c");
 }
 
-
 // 692 - Null code point in fragment (2)
 TYPED_TEST(URIWhatwgTest, NullCodePointInFragment2) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-spec://example.org/test?a#b\0c");
@@ -9080,7 +8418,6 @@ TYPED_TEST(URIWhatwgTest, NullCodePointInFragment2) {
     EXPECT_EQ(ctx.out.get_fragment(), "b%00c");
 }
 
-
 // 693 - Null code point in fragment (3)
 TYPED_TEST(URIWhatwgTest, NullCodePointInFragment3) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-spec:/test?a#b\0c");
@@ -9094,7 +8431,6 @@ TYPED_TEST(URIWhatwgTest, NullCodePointInFragment3) {
     EXPECT_EQ(ctx.out.get_queries(), "a");
     EXPECT_EQ(ctx.out.get_fragment(), "b%00c");
 }
-
 
 // 694 - First scheme char - not allowed: https://github.com/whatwg/url/issues/464 (1)
 TYPED_TEST(URIWhatwgTest, FirstSchemeCharNotAllowedHttpsGithubComWhatwgUrlIssues4641) {
@@ -9111,7 +8447,6 @@ TYPED_TEST(URIWhatwgTest, FirstSchemeCharNotAllowedHttpsGithubComWhatwgUrlIssues
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 695 - Subsequent scheme chars - not allowed (1)
 TYPED_TEST(URIWhatwgTest, SubsequentSchemeCharsNotAllowed1) {
     auto const ctx =
@@ -9126,7 +8461,6 @@ TYPED_TEST(URIWhatwgTest, SubsequentSchemeCharsNotAllowed1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 696 - First and subsequent scheme chars - allowed (1)
 TYPED_TEST(URIWhatwgTest, FirstAndSubsequentSchemeCharsAllowed1) {
@@ -9143,7 +8477,6 @@ TYPED_TEST(URIWhatwgTest, FirstAndSubsequentSchemeCharsAllowed1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 697 - IDNA ignored code points in file URLs hosts (1)
 TYPED_TEST(URIWhatwgTest, IdnaIgnoredCodePointsInFileUrlsHosts1) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://a­b/p");
@@ -9157,7 +8490,6 @@ TYPED_TEST(URIWhatwgTest, IdnaIgnoredCodePointsInFileUrlsHosts1) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 698 - IDNA ignored code points in file URLs hosts (2)
 TYPED_TEST(URIWhatwgTest, IdnaIgnoredCodePointsInFileUrlsHosts2) {
@@ -9173,7 +8505,6 @@ TYPED_TEST(URIWhatwgTest, IdnaIgnoredCodePointsInFileUrlsHosts2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 699 - IDNA hostnames which get mapped to 'localhost' (1)
 TYPED_TEST(URIWhatwgTest, IdnaHostnamesWhichGetMappedToLocalhost1) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://loC𝐀𝐋𝐇𝐨𝐬𝐭/usr/bin");
@@ -9188,13 +8519,11 @@ TYPED_TEST(URIWhatwgTest, IdnaHostnamesWhichGetMappedToLocalhost1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 700 - Empty host after the domain to ASCII (1)
 TYPED_TEST(URIWhatwgTest, EmptyHostAfterTheDomainToAscii1) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://­/p");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 701 - Empty host after the domain to ASCII (2)
 TYPED_TEST(URIWhatwgTest, EmptyHostAfterTheDomainToAscii2) {
@@ -9202,13 +8531,11 @@ TYPED_TEST(URIWhatwgTest, EmptyHostAfterTheDomainToAscii2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 702 - Empty host after the domain to ASCII (3)
 TYPED_TEST(URIWhatwgTest, EmptyHostAfterTheDomainToAscii3) {
     auto const ctx = this->template parse_from_string<TypeParam>("file://xn--/p");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 703 - https://bugzilla.mozilla.org/show_bug.cgi?id=1647058 (1)
 TYPED_TEST(URIWhatwgTest, HttpsBugzillaMozillaOrgShowBugCgiId16470581) {
@@ -9223,7 +8550,6 @@ TYPED_TEST(URIWhatwgTest, HttpsBugzillaMozillaOrgShowBugCgiId16470581) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "link");
 }
-
 
 // 704 - UTF-8 percent-encode of C0 control percent-encode set and supersets (1)
 TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSupersets1) {
@@ -9243,7 +8569,6 @@ TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSuperse
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 705 - UTF-8 percent-encode of C0 control percent-encode set and supersets (2)
 TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSupersets2) {
@@ -9268,7 +8593,6 @@ TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSuperse
     EXPECT_EQ(ctx.out.get_fragment(), "fragment%3C%7Ffragment");
 }
 
-
 // 706 - UTF-8 percent-encode of C0 control percent-encode set and supersets (3)
 TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSupersets3) {
     auto const ctx =
@@ -9283,7 +8607,6 @@ TYPED_TEST(URIWhatwgTest, Utf8PercentEncodeOfC0ControlPercentEncodeSetAndSuperse
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 707 - Tests for the distinct percent-encode sets (1)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets1) {
@@ -9300,7 +8623,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 708 - Tests for the distinct percent-encode sets (2)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets2) {
     auto const ctx = this->template parse_from_string<TypeParam>("wss:// !\"$%&'()*+,-.;<=>@[]^_`{|}~@host/");
@@ -9314,7 +8636,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 709 - Tests for the distinct percent-encode sets (3)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets3) {
@@ -9331,7 +8652,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 710 - Tests for the distinct percent-encode sets (4)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets4) {
     auto const ctx =
@@ -9347,7 +8667,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets4) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 711 - Tests for the distinct percent-encode sets (5)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets5) {
     auto const ctx = this->template parse_from_string<TypeParam>("foo://!\"$%&'()*+,-.;=_`{}~/");
@@ -9362,7 +8681,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 712 - Tests for the distinct percent-encode sets (6)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets6) {
     auto const ctx = this->template parse_from_string<TypeParam>("wss://!\"$&'()*+,-.;=_`{}~/");
@@ -9376,7 +8694,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 713 - Tests for the distinct percent-encode sets (7)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets7) {
@@ -9395,7 +8712,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 714 - Tests for the distinct percent-encode sets (8)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets8) {
     auto const ctx =
@@ -9412,7 +8728,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 715 - Tests for the distinct percent-encode sets (9)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets9) {
@@ -9431,7 +8746,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 716 - Tests for the distinct percent-encode sets (10)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets10) {
     auto const ctx =
@@ -9449,7 +8763,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets10) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 717 - Tests for the distinct percent-encode sets (11)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets11) {
     auto const ctx =
@@ -9464,7 +8777,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets11) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "%20!%22#$%&'()*+,-./:;%3C=%3E?@[\\]^_%60{|}~");
 }
-
 
 // 718 - Tests for the distinct percent-encode sets (12)
 TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets12) {
@@ -9481,7 +8793,6 @@ TYPED_TEST(URIWhatwgTest, TestsForTheDistinctPercentEncodeSets12) {
     EXPECT_EQ(ctx.out.get_fragment(), "%20!%22#$%&'()*+,-./:;%3C=%3E?@[\\]^_%60{|}~");
 }
 
-
 // 719 - Ensure that input schemes are not ignored when resolving non-special URLs (1)
 TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpecialUrls1) {
     auto const ctx = this->template parse_from_string<TypeParam>("abc:rootless", "abc://host/path");
@@ -9495,7 +8806,6 @@ TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpe
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 720 - Ensure that input schemes are not ignored when resolving non-special URLs (2)
 TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpecialUrls2) {
@@ -9511,7 +8821,6 @@ TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpe
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 721 - Ensure that input schemes are not ignored when resolving non-special URLs (3)
 TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpecialUrls3) {
     auto const ctx = this->template parse_from_string<TypeParam>("abc:rootless", "abc:path");
@@ -9525,7 +8834,6 @@ TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpe
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 722 - Ensure that input schemes are not ignored when resolving non-special URLs (4)
 TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpecialUrls4) {
@@ -9541,13 +8849,11 @@ TYPED_TEST(URIWhatwgTest, EnsureThatInputSchemesAreNotIgnoredWhenResolvingNonSpe
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 723 - Empty query and fragment with blank should throw an error (1)
 TYPED_TEST(URIWhatwgTest, EmptyQueryAndFragmentWithBlankShouldThrowAnError1) {
     auto const ctx = this->template parse_from_string<TypeParam>("#");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 724 - Empty query and fragment with blank should throw an error (2)
 TYPED_TEST(URIWhatwgTest, EmptyQueryAndFragmentWithBlankShouldThrowAnError2) {
@@ -9555,13 +8861,11 @@ TYPED_TEST(URIWhatwgTest, EmptyQueryAndFragmentWithBlankShouldThrowAnError2) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 725 - Last component looks like a number, but not valid IPv4 (1)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv41) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://1.2.3.4.5", "http://other.com/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 726 - Last component looks like a number, but not valid IPv4 (2)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv42) {
@@ -9569,20 +8873,17 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv42) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 727 - Last component looks like a number, but not valid IPv4 (3)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv43) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0..0x300/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 728 - Last component looks like a number, but not valid IPv4 (4)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv44) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0..0x300./");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 729 - Last component looks like a number, but not valid IPv4 (5)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv45) {
@@ -9591,7 +8892,6 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv45) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 730 - Last component looks like a number, but not valid IPv4 (6)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv46) {
     auto const ctx =
@@ -9599,13 +8899,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv46) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 731 - Last component looks like a number, but not valid IPv4 (7)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv47) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://1.2.3.08");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 732 - Last component looks like a number, but not valid IPv4 (8)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv48) {
@@ -9613,13 +8911,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv48) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 733 - Last component looks like a number, but not valid IPv4 (9)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv49) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://1.2.3.09");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 734 - Last component looks like a number, but not valid IPv4 (10)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv410) {
@@ -9627,13 +8923,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv410) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 735 - Last component looks like a number, but not valid IPv4 (11)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv411) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://09.2.3.4.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 736 - Last component looks like a number, but not valid IPv4 (12)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv412) {
@@ -9641,13 +8935,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv412) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 737 - Last component looks like a number, but not valid IPv4 (13)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv413) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://01.2.3.4.5.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 738 - Last component looks like a number, but not valid IPv4 (14)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv414) {
@@ -9655,13 +8947,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv414) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 739 - Last component looks like a number, but not valid IPv4 (15)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv415) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0x100.2.3.4.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 740 - Last component looks like a number, but not valid IPv4 (16)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv416) {
@@ -9669,13 +8959,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv416) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 741 - Last component looks like a number, but not valid IPv4 (17)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv417) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0x1.2.3.4.5.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 742 - Last component looks like a number, but not valid IPv4 (18)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv418) {
@@ -9683,13 +8971,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv418) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 743 - Last component looks like a number, but not valid IPv4 (19)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv419) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.1.2.3.4.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 744 - Last component looks like a number, but not valid IPv4 (20)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv420) {
@@ -9697,13 +8983,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv420) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 745 - Last component looks like a number, but not valid IPv4 (21)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv421) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.2.3.4.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 746 - Last component looks like a number, but not valid IPv4 (22)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv422) {
@@ -9711,13 +8995,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv422) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 747 - Last component looks like a number, but not valid IPv4 (23)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv423) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.09.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 748 - Last component looks like a number, but not valid IPv4 (24)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv424) {
@@ -9725,13 +9007,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv424) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 749 - Last component looks like a number, but not valid IPv4 (25)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv425) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.0x4.");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 750 - Last component looks like a number, but not valid IPv4 (26)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv426) {
@@ -9747,13 +9027,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv426) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 751 - Last component looks like a number, but not valid IPv4 (27)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv427) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://0999999999999999999/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 752 - Last component looks like a number, but not valid IPv4 (28)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv428) {
@@ -9761,13 +9039,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv428) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 753 - Last component looks like a number, but not valid IPv4 (29)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv429) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://foo.0XFfFfFfFfFfFfFfFfFfAcE123");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 754 - Last component looks like a number, but not valid IPv4 (30)
 TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv430) {
@@ -9775,13 +9051,11 @@ TYPED_TEST(URIWhatwgTest, LastComponentLooksLikeANumberButNotValidIpv430) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 755 - U+0000 and U+FFFF in various places (1)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces1) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://\0y");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 756 - U+0000 and U+FFFF in various places (2)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces2) {
@@ -9801,7 +9075,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces2) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 757 - U+0000 and U+FFFF in various places (3)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces3) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://x/?\0y");
@@ -9820,7 +9093,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 758 - U+0000 and U+FFFF in various places (4)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces4) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://x/?#\0y");
@@ -9835,13 +9107,11 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces4) {
     EXPECT_EQ(ctx.out.get_fragment(), "%00y");
 }
 
-
 // 759 - U+0000 and U+FFFF in various places (5)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces5) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://￿y");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 760 - U+0000 and U+FFFF in various places (6)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces6) {
@@ -9861,7 +9131,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces6) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 761 - U+0000 and U+FFFF in various places (7)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces7) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://x/?￿y");
@@ -9880,7 +9149,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 762 - U+0000 and U+FFFF in various places (8)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces8) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://x/?#￿y");
@@ -9894,7 +9162,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces8) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "%EF%BF%BFy");
 }
-
 
 // 763 - U+0000 and U+FFFF in various places (9)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces9) {
@@ -9914,7 +9181,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 764 - U+0000 and U+FFFF in various places (10)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces10) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special:x/\0y");
@@ -9932,7 +9198,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 765 - U+0000 and U+FFFF in various places (11)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces11) {
@@ -9952,7 +9217,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces11) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 766 - U+0000 and U+FFFF in various places (12)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces12) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special:x/?#\0y");
@@ -9966,7 +9230,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces12) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "%00y");
 }
-
 
 // 767 - U+0000 and U+FFFF in various places (13)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces13) {
@@ -9986,7 +9249,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces13) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 768 - U+0000 and U+FFFF in various places (14)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces14) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special:x/￿y");
@@ -10004,7 +9266,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces14) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 769 - U+0000 and U+FFFF in various places (15)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces15) {
@@ -10024,7 +9285,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces15) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 770 - U+0000 and U+FFFF in various places (16)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces16) {
     auto const ctx = this->template parse_from_string<TypeParam>("non-special:x/?#￿y");
@@ -10039,13 +9299,11 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces16) {
     EXPECT_EQ(ctx.out.get_fragment(), "%EF%BF%BFy");
 }
 
-
 // 771 - U+0000 and U+FFFF in various places (17)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces17) {
     auto const ctx = this->template parse_from_string<TypeParam>("");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 772 - U+0000 and U+FFFF in various places (18)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces18) {
@@ -10065,7 +9323,6 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces18) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 773 - U+0000 and U+FFFF in various places (19)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces19) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://a%C2%ADb/");
@@ -10080,13 +9337,11 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces19) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 774 - U+0000 and U+FFFF in various places (20)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces20) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://­/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 775 - U+0000 and U+FFFF in various places (21)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces21) {
@@ -10094,13 +9349,11 @@ TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces21) {
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 776 - U+0000 and U+FFFF in various places (22)
 TYPED_TEST(URIWhatwgTest, U0000AndUFfffInVariousPlaces22) {
     auto const ctx = this->template parse_from_string<TypeParam>("https://xn--/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 777 - Non-special schemes that some implementations might incorrectly treat as special (1)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial1) {
@@ -10117,7 +9370,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 778 - Non-special schemes that some implementations might incorrectly treat as special (2)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial2) {
     auto const ctx = this->template parse_from_string<TypeParam>("data:///test");
@@ -10131,7 +9383,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 779 - Non-special schemes that some implementations might incorrectly treat as special (3)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial3) {
@@ -10147,13 +9398,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 780 - Non-special schemes that some implementations might incorrectly treat as special (4)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial4) {
     auto const ctx = this->template parse_from_string<TypeParam>("data://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 781 - Non-special schemes that some implementations might incorrectly treat as special (5)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial5) {
@@ -10161,13 +9410,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 782 - Non-special schemes that some implementations might incorrectly treat as special (6)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial6) {
     auto const ctx = this->template parse_from_string<TypeParam>("data://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 783 - Non-special schemes that some implementations might incorrectly treat as special (7)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial7) {
@@ -10184,7 +9431,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 784 - Non-special schemes that some implementations might incorrectly treat as special (8)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial8) {
     auto const ctx = this->template parse_from_string<TypeParam>("javascript:///test");
@@ -10198,7 +9444,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 785 - Non-special schemes that some implementations might incorrectly treat as special (9)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial9) {
@@ -10214,13 +9459,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 786 - Non-special schemes that some implementations might incorrectly treat as special (10)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial10) {
     auto const ctx = this->template parse_from_string<TypeParam>("javascript://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 787 - Non-special schemes that some implementations might incorrectly treat as special (11)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial11) {
@@ -10228,13 +9471,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 788 - Non-special schemes that some implementations might incorrectly treat as special (12)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial12) {
     auto const ctx = this->template parse_from_string<TypeParam>("javascript://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 789 - Non-special schemes that some implementations might incorrectly treat as special (13)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial13) {
@@ -10251,7 +9492,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 790 - Non-special schemes that some implementations might incorrectly treat as special (14)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial14) {
     auto const ctx = this->template parse_from_string<TypeParam>("mailto:///test");
@@ -10265,7 +9505,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 791 - Non-special schemes that some implementations might incorrectly treat as special (15)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial15) {
@@ -10281,13 +9520,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 792 - Non-special schemes that some implementations might incorrectly treat as special (16)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial16) {
     auto const ctx = this->template parse_from_string<TypeParam>("mailto://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 793 - Non-special schemes that some implementations might incorrectly treat as special (17)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial17) {
@@ -10295,13 +9532,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 794 - Non-special schemes that some implementations might incorrectly treat as special (18)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial18) {
     auto const ctx = this->template parse_from_string<TypeParam>("mailto://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 795 - Non-special schemes that some implementations might incorrectly treat as special (19)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial19) {
@@ -10318,7 +9553,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 796 - Non-special schemes that some implementations might incorrectly treat as special (20)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial20) {
     auto const ctx = this->template parse_from_string<TypeParam>("intent:///test");
@@ -10332,7 +9566,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 797 - Non-special schemes that some implementations might incorrectly treat as special (21)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial21) {
@@ -10348,13 +9581,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 798 - Non-special schemes that some implementations might incorrectly treat as special (22)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial22) {
     auto const ctx = this->template parse_from_string<TypeParam>("intent://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 799 - Non-special schemes that some implementations might incorrectly treat as special (23)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial23) {
@@ -10362,13 +9593,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 800 - Non-special schemes that some implementations might incorrectly treat as special (24)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial24) {
     auto const ctx = this->template parse_from_string<TypeParam>("intent://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 801 - Non-special schemes that some implementations might incorrectly treat as special (25)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial25) {
@@ -10385,7 +9614,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 802 - Non-special schemes that some implementations might incorrectly treat as special (26)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial26) {
     auto const ctx = this->template parse_from_string<TypeParam>("urn:///test");
@@ -10399,7 +9627,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 803 - Non-special schemes that some implementations might incorrectly treat as special (27)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial27) {
@@ -10415,13 +9642,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 804 - Non-special schemes that some implementations might incorrectly treat as special (28)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial28) {
     auto const ctx = this->template parse_from_string<TypeParam>("urn://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 805 - Non-special schemes that some implementations might incorrectly treat as special (29)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial29) {
@@ -10429,13 +9654,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 806 - Non-special schemes that some implementations might incorrectly treat as special (30)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial30) {
     auto const ctx = this->template parse_from_string<TypeParam>("urn://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 807 - Non-special schemes that some implementations might incorrectly treat as special (31)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial31) {
@@ -10452,7 +9675,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 808 - Non-special schemes that some implementations might incorrectly treat as special (32)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial32) {
     auto const ctx = this->template parse_from_string<TypeParam>("turn:///test");
@@ -10466,7 +9688,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 809 - Non-special schemes that some implementations might incorrectly treat as special (33)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial33) {
@@ -10482,13 +9703,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 810 - Non-special schemes that some implementations might incorrectly treat as special (34)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial34) {
     auto const ctx = this->template parse_from_string<TypeParam>("turn://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 811 - Non-special schemes that some implementations might incorrectly treat as special (35)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial35) {
@@ -10496,13 +9715,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 812 - Non-special schemes that some implementations might incorrectly treat as special (36)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial36) {
     auto const ctx = this->template parse_from_string<TypeParam>("turn://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 813 - Non-special schemes that some implementations might incorrectly treat as special (37)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial37) {
@@ -10519,7 +9736,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "hash");
 }
 
-
 // 814 - Non-special schemes that some implementations might incorrectly treat as special (38)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial38) {
     auto const ctx = this->template parse_from_string<TypeParam>("stun:///test");
@@ -10533,7 +9749,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 815 - Non-special schemes that some implementations might incorrectly treat as special (39)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial39) {
@@ -10549,13 +9764,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 816 - Non-special schemes that some implementations might incorrectly treat as special (40)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial40) {
     auto const ctx = this->template parse_from_string<TypeParam>("stun://:443");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 817 - Non-special schemes that some implementations might incorrectly treat as special (41)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial41) {
@@ -10563,13 +9776,11 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
-
 // 818 - Non-special schemes that some implementations might incorrectly treat as special (42)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial42) {
     auto const ctx = this->template parse_from_string<TypeParam>("stun://[:1]");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
-
 
 // 819 - Non-special schemes that some implementations might incorrectly treat as special (43)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial43) {
@@ -10585,7 +9796,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 820 - Non-special schemes that some implementations might incorrectly treat as special (44)
 TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrectlyTreatAsSpecial44) {
     auto const ctx = this->template parse_from_string<TypeParam>("west://x:0");
@@ -10599,7 +9809,6 @@ TYPED_TEST(URIWhatwgTest, NonSpecialSchemesThatSomeImplementationsMightIncorrect
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 821 - Scheme relative path starting with multiple slashes (1)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes1) {
@@ -10615,7 +9824,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes1) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 822 - Scheme relative path starting with multiple slashes (2)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes2) {
     auto const ctx = this->template parse_from_string<TypeParam>("///\\//\\//test", "http://example.org/");
@@ -10629,7 +9837,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes2) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 823 - Scheme relative path starting with multiple slashes (3)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes3) {
@@ -10646,7 +9853,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes3) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 824 - Scheme relative path starting with multiple slashes (4)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes4) {
     auto const ctx =
@@ -10661,7 +9867,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes4) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 825 - Scheme relative path starting with multiple slashes (5)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes5) {
@@ -10678,7 +9883,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes5) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 826 - Scheme relative path starting with multiple slashes (6)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes6) {
     auto const ctx =
@@ -10693,7 +9897,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes6) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 827 - Scheme relative path starting with multiple slashes (7)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes7) {
@@ -10710,7 +9913,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes7) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 828 - Scheme relative path starting with multiple slashes (8)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes8) {
     auto const ctx =
@@ -10726,7 +9928,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes8) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 829 - Scheme relative path starting with multiple slashes (9)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes9) {
     auto const ctx = this->template parse_from_string<TypeParam>("///abcdef/../", "file:///");
@@ -10741,7 +9942,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes9) {
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
 
-
 // 830 - Scheme relative path starting with multiple slashes (10)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes10) {
     auto const ctx = this->template parse_from_string<TypeParam>("/\\//\\/a/../", "file:///");
@@ -10755,7 +9955,6 @@ TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes10) {
     EXPECT_EQ(ctx.out.get_queries(), "");
     EXPECT_EQ(ctx.out.get_fragment(), "");
 }
-
 
 // 831 - Scheme relative path starting with multiple slashes (11)
 TYPED_TEST(URIWhatwgTest, SchemeRelativePathStartingWithMultipleSlashes11) {

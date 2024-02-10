@@ -438,7 +438,9 @@ namespace webpp::uri {
         using size_type       = typename container_type::size_type;
         using reference       = typename container_type::reference;
         using const_reference = typename container_type::const_reference;
+        using vector_type     = container_type; // used in uri's uri_components
 
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -553,6 +555,28 @@ namespace webpp::uri {
         }
 
         /**
+         * @brief check if we have value
+         * @return true if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return !storage.empty() && !(storage.size() == 1 && storage.front().empty());
+        }
+
+        /**
+         * @brief Replace the values with the specified raw data, without parsing
+         * @param beg start of the value
+         * @param end the end of the value
+         */
+        constexpr void set_raw_value(iterator beg, iterator end) {
+            storage.clear();
+            if constexpr (is_modifiable) {
+                istl::emplace_one(storage, beg, end, storage.get_allocator());
+            } else {
+                istl::emplace_one(storage, beg, end);
+            }
+        }
+
+        /**
          * Remove Dot Segments from https://tools.ietf.org/html/rfc3986#section-5.2.4
          * Refer to uri_normalize_benchmark for more related algorithms of this
          */
@@ -600,31 +624,26 @@ namespace webpp::uri {
             }
         }
 
-        constexpr basic_path const& append_to(istl::String auto& str) const {
+        template <istl::String NStrT = stl::string>
+        constexpr void to_string(NStrT& out) const {
             if (storage.empty()) {
-                return *this;
+                return;
             }
-
-            auto pos = storage.cbegin();
-
-            // handling empty this special path: "/"
-            if (pos->empty() && storage.size() == 1) {
-                str.append(separator);
-                return *this;
+            auto seg = storage.begin();
+            for (;;) {
+                out += *seg;
+                if (++seg == storage.end()) {
+                    break;
+                }
+                out += '/';
             }
-
-            str.append(*pos++);
-            for (; pos != storage.cend(); ++pos) {
-                str.append(separator);
-                encode_uri_component(*pos, str, allowed_chars);
-            }
-            return *this;
         }
 
-        [[nodiscard]] constexpr string_type to_string() const {
-            string_type str{storage.get_allocator()};
-            append_to(str);
-            return str;
+        template <istl::String NStrT = stl::string, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
 
         /**
@@ -642,7 +661,7 @@ namespace webpp::uri {
             }() + storage.size() - 1;
         }
 
-        constexpr void fix() {
+        constexpr void trim() {
             // remove the last empty string
             if (!storage.empty() && storage.back().empty()) {
                 stl::ignore(storage.pop_back());
