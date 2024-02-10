@@ -50,7 +50,7 @@ namespace webpp {
      */
     template <istl::CharType CharT, stl::size_t N>
         requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
-    struct charset : public stl::array<CharT, N> {
+    struct charset : stl::array<CharT, N> {
         using value_type                        = CharT;
         static constexpr stl::size_t array_size = N;
 
@@ -90,9 +90,6 @@ namespace webpp {
         /**
          * This constructs a character set that contains all the
          * characters in all the other given character sets.
-         *
-         * @param[in] characterSets
-         *     These are the character sets to include.
          */
         template <stl::size_t N1, stl::size_t N2, stl::size_t... NN>
         explicit consteval charset(charset<value_type, N1> const& set1,
@@ -287,10 +284,13 @@ namespace webpp {
      * This constructs a character set that contains all the characters between the given
      * "first" and "last" characters, inclusive.
      *
-     * @param[in] first
+     * @tparam[in] CharT
+     *     Character Type
+     *
+     * @tparam[in] First
      *     This is the first of the range of characters to put in the set.
      *
-     * @param[in] last
+     * @tparam[in] Last
      *     This is the last of the range of characters to put in the set.
      */
     template <istl::CharType CharT = char, CharT First, CharT Last>
@@ -482,7 +482,7 @@ namespace webpp {
             if constexpr (
               stl::is_signed_v<CharT> || N < static_cast<stl::size_t>(stl::numeric_limits<CharT>::max()))
             {
-                if (character < 0 || character > N) {
+                if (character < 0 || static_cast<stl::size_t>(character) > N) {
                     return false;
                 }
             }
