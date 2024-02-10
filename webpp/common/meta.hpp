@@ -125,7 +125,10 @@ namespace webpp {
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
 #elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \
   defined(_MSC_VER) || defined(__ICC)
-#    if defined(_MSC_VER) || defined(__ICC) // ICC seems to support both __builtin_assume and __assume
+#    if defined(__clang__)
+  // fixme: clang can use __bultin_assume, but it gives a warning, so I'm disabling it for clang
+#        define webpp_assume_func(...)
+#    elif defined(_MSC_VER) || defined(__ICC) // ICC seems to support both __builtin_assume and __assume
 #        define webpp_assume_func(...) __assume(__VA_ARGS__)
 #    else
 #        define webpp_assume_func(...) __builtin_assume(static_cast<bool>(__VA_ARGS__))
