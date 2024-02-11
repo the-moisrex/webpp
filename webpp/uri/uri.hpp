@@ -353,7 +353,9 @@ namespace webpp::uri {
             username.append_to(out);
             password.append_to(out);
             host.append_to(out);
-            port.append_to(out);
+            if (port.is_default_port(scheme.view())) {
+                port.to_string(out, true);
+            }
             path.to_string(out);
             queries.to_string(out);
             fragment.append_to(out);

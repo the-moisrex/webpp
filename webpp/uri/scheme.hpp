@@ -338,6 +338,15 @@ namespace webpp::uri {
             istl::assign(static_cast<string_type&>(*this), beg, end);
         }
 
+        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr StrVT view() const noexcept {
+            return StrVT{this->data(), this->size()};
+        }
+
+        [[nodiscard]] constexpr bool is_special() const noexcept {
+            return is_special_scheme(this->view());
+        }
+
         /**
          * @brief check if we have value
          * @return true if we don't have anything
