@@ -349,7 +349,7 @@ namespace webpp::uri {
               queries.raw_string_size() + // queries size
               fragment.size()             // fragments size
             );
-            scheme.append_to(out);
+            scheme.to_string(out, true);
             username.append_to(out);
             password.append_to(out);
             host.append_to(out);

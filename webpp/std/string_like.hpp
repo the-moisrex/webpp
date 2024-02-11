@@ -23,6 +23,15 @@ namespace webpp::istl {
         }
     }
 
+    template <StringLike StrT, StringLike StrTInput>
+    constexpr void append(StrT& out, StrTInput const& inp) noexcept(StringView<StrT>) {
+        if constexpr (StringView<StrT>) {
+            out = inp;
+        } else {
+            out.append(inp);
+        }
+    }
+
     template <StringLike StrT>
     constexpr void clear(StrT& str) noexcept {
         if constexpr (StringView<StrT>) {

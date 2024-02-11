@@ -346,15 +346,29 @@ namespace webpp::uri {
             return !this->empty();
         }
 
-        void append_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                // out.reserve(out.size() + this->size() + 1);
-                out.append(*this);
-                out.push_back(':');
-                out.append("//");
-            } else {
-                out.append("//");
+        template <istl::StringLike NStrT = stl::string_view>
+        constexpr void to_string(NStrT& out, bool const append_separators = false) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            // out.reserve(out.size() + this->size() + 1);
+            istl::append(out, static_cast<string_type const&>(*this));
+            if constexpr (istl::ModifiableString<NStrT>) {
+                if (append_separators) {
+                    if (!this->empty()) {
+                        out.push_back(':');
+                        out.append("//");
+                    } else {
+                        out.append("//");
+                    }
+                }
             }
+        }
+
+        template <istl::StringLike NStrT = stl::string_view, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
     };
 
