@@ -86,8 +86,8 @@ namespace webpp {
             default: break;
         }
 
-        bool        has_punycode    = false;
-        auto const* subdomain_start = pos;
+        bool has_punycode    = false;
+        auto subdomain_start = pos;
         while (pos != end) {
             if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
                 has_punycode = true;

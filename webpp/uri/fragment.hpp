@@ -55,33 +55,43 @@ namespace webpp::uri {
         using iterator    = typename string_type::iterator;
         using size_type   = typename string_type::size_type;
 
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-        // todo: check RFC and see if this is the right one; remove this comment if it's all right
-        static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
       private:
         string_type storage;
 
       public:
-        template <typename... T>
-        explicit(false) constexpr basic_fragment(T&&... args) // NOLINT(*-explicit-*)
-          : storage{stl::forward<T>(args)...} {}
-
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return storage.size();
-        }
-
-        template <uri_parsing_options Options = uri_parsing_options{},
-                  istl::StringView    StrT    = stl::basic_string_view<char_type>>
-        constexpr uri_status parse(StrT inp) noexcept(!is_modifiable) {
-            parsing_uri_context<string_type*, iterator> ctx{
-              .beg = inp.begin(),
-              .pos = inp.begin(),
-              .end = inp.end(),
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{
+              .beg = beg,
+              .pos = beg,
+              .end = end,
               .out = stl::addressof(storage)};
             parse_fragment<Options>(ctx);
             return ctx.status;
+        }
+
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        explicit constexpr basic_fragment(AllocT const& alloc = {}) noexcept : storage{alloc} {}
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_fragment(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+        }
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_fragment& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+            return *this;
+        }
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return storage.size();
         }
 
         // todo: add base support to parse

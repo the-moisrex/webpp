@@ -6,14 +6,7 @@
 
 using namespace webpp;
 
-using Types =
-  testing::Types<uri::parsing_uri_context_string<stl::string>,
-                 uri::parsing_uri_context_string<stl::string_view>,
-                 // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
-                 uri::parsing_uri_context_u32,
-                 uri::parsing_uri_context_segregated<>,
-                 uri::parsing_uri_context_segregated_view<>,
-                 uri::parsing_uri_context<stl::string_view, char const*>>;
+using Types = testing::Types<stl::string, stl::string_view>;
 
 template <class T>
 struct StructuredURITests : testing::Test {
@@ -50,8 +43,22 @@ struct StructuredURITests : testing::Test {
 TYPED_TEST_SUITE(StructuredURITests, Types);
 
 TYPED_TEST(StructuredURITests, StructuredDomain) {
-    constexpr stl::string_view           inp_domain = "domain.tld";
-    basic_domain<stl::string_view> const domain{inp_domain};
+    static TypeParam const        inp_domain = "domain.tld";
+    basic_domain<TypeParam> const domain{inp_domain};
     EXPECT_TRUE(domain.is_valid());
     EXPECT_EQ(domain.tld(), "tld");
+}
+
+TYPED_TEST(StructuredURITests, StructuredFragment) {
+    static TypeParam const               data{"this is a fragment"};
+    uri::basic_fragment<TypeParam> const fragment{data};
+    EXPECT_TRUE(fragment.has_value());
+    if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {
+#ifdef __cpp_lib_string_contains
+        EXPECT_FALSE(fragment.view().contains(' '));
+#endif
+        EXPECT_NE(data, fragment.view());
+    } else {
+        EXPECT_EQ(data, fragment.view());
+    }
 }
