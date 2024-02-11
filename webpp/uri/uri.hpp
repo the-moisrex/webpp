@@ -358,7 +358,7 @@ namespace webpp::uri {
             }
             path.to_string(out);
             queries.to_string(out);
-            fragment.append_to(out);
+            fragment.to_string(out, true);
         }
 
         template <istl::String StrT = string_type>
