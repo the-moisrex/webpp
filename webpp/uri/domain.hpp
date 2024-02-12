@@ -81,29 +81,33 @@ namespace webpp {
         }
 
         switch (*pos) {
-            case '.': return empty_subdomain;
-            case '-': return begin_with_hyphen;
+            case static_cast<char_type>('.'): return empty_subdomain;
+            case static_cast<char_type>('-'): return begin_with_hyphen;
             default: break;
         }
 
         bool has_punycode    = false;
         auto subdomain_start = pos;
         while (pos != end) {
-            if (*pos == 'x' && end - pos > 4 && *++pos == 'n' && *++pos == '-' && *++pos == '-') {
+            if (*pos == static_cast<char_type>('x') && end - pos > 4 &&
+                *++pos == static_cast<char_type>('n') && *++pos == static_cast<char_type>('-') &&
+                *++pos == static_cast<char_type>('-'))
+            {
                 has_punycode = true;
-                pos = charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{'-'}}.find_first_not_in(pos, end);
+                pos = charset{ALPHA_DIGIT<char_type>, charset<char_type, 1>{static_cast<char_type>('-')}}
+                        .find_first_not_in(pos, end);
                 continue;
             }
 
-            switch (char const cur_char = *pos++) {
-                case '.':
+            switch (char_type const cur_char = *pos++) {
+                case static_cast<char_type>('.'):
                     if (pos == end) {
                         return dot_at_end;
                     }
-                    if (*pos == '.') {
+                    if (*pos == static_cast<char_type>('.')) {
                         return empty_subdomain;
                     }
-                    if (*pos == '-') {
+                    if (*pos == static_cast<char_type>('-')) {
                         return begin_with_hyphen;
                     }
                     if (pos - subdomain_start > details::subdomain_threshold) {
@@ -111,11 +115,11 @@ namespace webpp {
                     }
                     subdomain_start = pos;
                     continue;
-                case '-':
-                    if (pos == end || *pos == '.') {
+                case static_cast<char_type>('-'):
+                    if (pos == end || *pos == static_cast<char_type>('.')) {
                         return end_with_hyphen;
                     }
-                    if (*pos == '-') {
+                    if (*pos == static_cast<char_type>('-')) {
                         return double_hyphen;
                     }
                     break;

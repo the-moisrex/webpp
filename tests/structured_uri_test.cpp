@@ -6,7 +6,7 @@
 
 using namespace webpp;
 
-using Types = testing::Types<stl::string, stl::string_view>;
+using Types = testing::Types<stl::string, stl::string_view, stl::wstring, stl::wstring_view>;
 
 template <class T>
 struct StructuredURITests : testing::Test {
@@ -40,17 +40,29 @@ struct StructuredURITests : testing::Test {
     }
 };
 
+template <typename T, typename Arg1, typename... Args>
+constexpr decltype(auto) get_one(Arg1&& arg1, Args&&... args) {
+    if constexpr (stl::is_convertible_v<T, Arg1>) {
+        return stl::forward<Arg1>(arg1);
+    } else if constexpr (stl::is_constructible_v<T, Arg1>) {
+        return T{stl::forward<Arg1>(arg1)};
+    } else {
+        static_assert(sizeof...(Args) > 0, "No option for conversion");
+        return get_one<T>(stl::forward<Args>(args)...);
+    }
+}
+
 TYPED_TEST_SUITE(StructuredURITests, Types);
 
 TYPED_TEST(StructuredURITests, StructuredDomain) {
-    static TypeParam const        inp_domain = "domain.tld";
+    static TypeParam const        inp_domain = get_one<TypeParam>("domain.tld", L"domain.tld");
     basic_domain<TypeParam> const domain{inp_domain};
     EXPECT_TRUE(domain.is_valid());
-    EXPECT_EQ(domain.tld(), "tld");
+    EXPECT_EQ(domain.tld(), get_one<TypeParam>("tld", L"tld"));
 }
 
 TYPED_TEST(StructuredURITests, StructuredFragment) {
-    static TypeParam const               data{"this is a fragment"};
+    static TypeParam const data{get_one<TypeParam>("this is a fragment", L"this is a fragment")};
     uri::basic_fragment<TypeParam> const fragment{data};
     EXPECT_TRUE(fragment.has_value());
     if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {

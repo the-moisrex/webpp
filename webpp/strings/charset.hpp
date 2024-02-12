@@ -19,26 +19,30 @@ namespace webpp {
     // NOLINTBEGIN(*-avoid-c-arrays)
 
     template <typename T>
-    concept CharSet = requires(stl::remove_cvref_t<T> set, char const* beg, char const* end) {
+    concept CharSet = requires(stl::remove_cvref_t<T> set) {
+        typename stl::remove_cvref_t<T>::value_type;
         stl::remove_cvref_t<T>::array_size;
 
-        {
-            set.size()
-        } noexcept -> stl::same_as<stl::size_t>;
-        {
-            set.contains('a')
-        } noexcept -> stl::same_as<bool>;
-        {
-            set.contains("")
-        } noexcept -> stl::same_as<bool>;
-        {
-            set.find_first_in(beg, end)
-        } noexcept -> stl::same_as<char const*>;
-        {
-            set.find_first_not_in(beg, end)
-        } noexcept -> stl::same_as<char const*>;
-        set.set(1);
-
+        requires requires(typename stl::remove_cvref_t<T>::value_type const* beg,
+                          typename stl::remove_cvref_t<T>::value_type const* end,
+                          typename stl::remove_cvref_t<T>::value_type        a_char) {
+            {
+                set.size()
+            } noexcept -> stl::same_as<stl::size_t>;
+            {
+                set.contains(a_char)
+            } noexcept -> stl::same_as<bool>;
+            {
+                set.contains(beg)
+            } noexcept -> stl::same_as<bool>;
+            {
+                set.find_first_in(beg, end)
+            } noexcept -> stl::same_as<typename stl::remove_cvref_t<T>::value_type const*>;
+            {
+                set.find_first_not_in(beg, end)
+            } noexcept -> stl::same_as<typename stl::remove_cvref_t<T>::value_type const*>;
+            set.set(1);
+        };
 
         // Depends on CharSet itself:
         // { set.except(set) } noexcept;

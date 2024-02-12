@@ -14,31 +14,34 @@ namespace webpp::istl {
 
     template <typename T>
     concept String = requires(stl::remove_cvref_t<T> str) {
-        //        { T{"str"} };
-        str.empty();
-        str.at(0);
-        str.data();
-        str.c_str();
-        {
-            str = "str"
-        };
-        str.size();
-        str.capacity();
-        str.shrink_to_fit();
-        str.clear();
-        str.append("str");
-        str.starts_with('a');
-        str.ends_with('a');
-        str.substr('a');
-        str.resize(1);
-        str.begin();
-        str.end();
-        str.cbegin();
-        str.cend();
-        stl::remove_cvref_t<T>::npos;
-
         typename stl::remove_cvref_t<T>::value_type;
         typename stl::remove_cvref_t<T>::allocator_type;
+
+        requires requires(typename stl::remove_cvref_t<T>::value_type       a_char,
+                          typename stl::remove_cvref_t<T>::value_type const char_str[3]) {
+            //        { T{"str"} };
+            str.empty();
+            str.at(0);
+            str.data();
+            str.c_str();
+            {
+                str = char_str
+            };
+            str.size();
+            str.capacity();
+            str.shrink_to_fit();
+            str.clear();
+            str.append(char_str);
+            str.starts_with(a_char);
+            str.ends_with(a_char);
+            str.substr(a_char);
+            str.resize(1);
+            str.begin();
+            str.end();
+            str.cbegin();
+            str.cend();
+            stl::remove_cvref_t<T>::npos;
+        };
     };
 
     namespace details::string {
