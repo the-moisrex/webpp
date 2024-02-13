@@ -101,21 +101,21 @@ namespace webpp::uri {
             return StrVT{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::string_view>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
             // out.reserve(out.size() + storage.size() + 1);
             if constexpr (istl::ModifiableString<NStrT>) {
                 if (append_separators) {
                     if (!storage.empty()) {
-                        out.push_back('#');
+                        out.push_back(static_cast<char_type>('#'));
                     }
                 }
             }
             istl::append(out, storage);
         }
 
-        template <istl::StringLike NStrT = stl::string_view, typename... Args>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
           noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};

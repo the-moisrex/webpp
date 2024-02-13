@@ -18,27 +18,25 @@ namespace webpp {
 
     template <typename Iter, typename CIter>
     static constexpr void encode_uri_component_set_capacity(Iter pos, CIter end, istl::String auto& output) {
+        // todo: see if this is necessary/performant
         auto const input_size = end - pos;
-        { // todo: see if this is necessary/performant
-            auto const new_capacity =
-              output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
-                                                                                               // chance
-            if (output.capacity() < new_capacity) {
-                output.reserve(new_capacity);
-            }
+        auto const new_capacity =
+          output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
+                                                                                           // chance
+        if (output.capacity() < new_capacity) {
+            output.reserve(new_capacity);
         }
     }
 
     static constexpr void encode_uri_component_set_capacity(istl::StringView auto str,
                                                             istl::String auto&    output) {
+        // todo: see if this is necessary/performant
         auto const input_size = str.size();
-        { // todo: see if this is necessary/performant
-            auto const new_capacity =
-              output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
-                                                                                               // chance
-            if (output.capacity() < new_capacity) {
-                output.reserve(new_capacity);
-            }
+        auto const new_capacity =
+          output.size() + static_cast<stl::size_t>(static_cast<double>(input_size) * 1.5); // 1.5 is by
+                                                                                           // chance
+        if (output.capacity() < new_capacity) {
+            output.reserve(new_capacity);
         }
     }
 

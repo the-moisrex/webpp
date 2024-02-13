@@ -63,41 +63,107 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <istl::String StringType = stl::string>
-    struct basic_username : StringType {
+    /// parse username
+    /// This function doesn't care about boundaries, encodes and validates
+    /// This function is not being used inside the URI parsing at all
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+    static constexpr void parse_username(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
+        using details::ascii_bitmap;
+        using details::component_encoder;
+        using details::USER_INFO_ENCODE_SET;
+
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (Options.parse_credentails) {
+            if (ctx.pos == ctx.end) {
+                return;
+            }
+
+            webpp_assume(ctx.pos < ctx.end);
+            set_warning(ctx.status, uri_status::has_credentials);
+
+            clear<components::username>(ctx);
+            component_encoder<components::username, ctx_type> user_encoder{ctx};
+            user_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
+              ctx.pos,
+              ctx.end,
+              USER_INFO_ENCODE_SET);
+        }
+    }
+
+    /// parse password
+    /// This function doesn't care about boundaries, encodes and validates
+    /// This function is not being used inside the URI parsing at all
+    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+    static constexpr void parse_password(parsing_uri_context<T...>& ctx) noexcept(
+      parsing_uri_context<T...>::is_nothrow) {
+        using details::ascii_bitmap;
+        using details::component_encoder;
+        using details::USER_INFO_ENCODE_SET;
+
+        using ctx_type = parsing_uri_context<T...>;
+
+        if constexpr (Options.parse_credentails) {
+            if (ctx.pos == ctx.end) {
+                return;
+            }
+
+            webpp_assume(ctx.pos < ctx.end);
+            set_warning(ctx.status, uri_status::has_credentials);
+
+            clear<components::password>(ctx);
+            component_encoder<components::password, ctx_type> pass_encoder{ctx};
+            pass_encoder.template encode_or_set<uri_encoding_policy::encode_chars>(
+              ctx.pos,
+              ctx.end,
+              USER_INFO_ENCODE_SET);
+        }
+    }
+
+    /**
+     * @brief Basic structured username
+     * @tparam StringType Storage Type
+     */
+    template <istl::StringLike StringType = stl::string_view>
+    struct basic_username {
         using string_type = StringType;
         using char_type   = typename string_type::value_type;
+        using iterator    = typename string_type::iterator;
+        using size_type   = typename string_type::size_type;
 
-        using StringType::StringType;
-        using StringType::operator=;
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-        [[nodiscard]] constexpr string_type const& as_string() const noexcept {
-            return static_cast<string_type const&>(*this);
+      private:
+        string_type storage;
+
+      public:
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{
+              .beg = beg,
+              .pos = beg,
+              .end = end,
+              .out = stl::addressof(storage)};
+            parse_username<Options>(ctx);
+            return ctx.status;
         }
 
-        [[nodiscard]] constexpr string_type& as_string() noexcept {
-            return static_cast<string_type&>(*this);
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        explicit constexpr basic_username(AllocT const& alloc = {}) noexcept : storage{alloc} {}
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_username(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
         }
 
-        /**
-         * Get the string in the encoded shape
-         */
-        constexpr void append_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                encode_uri_component(as_string(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
-            }
-        }
-
-        [[nodiscard]] constexpr string_type to_string() const {
-            string_type res{this->get_allocator()};
-            append_to(res);
-            return res;
-        }
-
-        constexpr void append_raw_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                out.append(as_string());
-            }
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_username& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+            return *this;
         }
 
         /**
@@ -105,59 +171,116 @@ namespace webpp::uri {
          * @return true if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !this->empty();
+            return !storage.empty();
         }
 
-        /**
-         * Convert to string without encoding it
-         */
-        [[nodiscard]] constexpr string_type to_raw_string() const {
-            string_type res{this->get_allocator()};
-            append_raw_to(res);
-            return res;
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return storage.size();
+        }
+
+        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr StrVT view() const noexcept {
+            return StrVT{storage.data(), storage.size()};
+        }
+
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        constexpr void to_string(NStrT& out, bool const append_separators = false) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            // out.reserve(out.size() + storage.size() + 1);
+            istl::append(out, storage);
+            if constexpr (istl::ModifiableString<NStrT>) {
+                if (append_separators) {
+                    if (!storage.empty()) {
+                        out.push_back(static_cast<char_type>('@'));
+                    }
+                }
+            }
+        }
+
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
     };
 
-    template <istl::String StringType = stl::string>
-    struct basic_password : StringType {
+    /**
+     * @brief Basic structured password
+     * @tparam StringType Storage type
+     */
+    template <istl::StringLike StringType = stl::string_view>
+    struct basic_password {
         using string_type = StringType;
         using char_type   = typename string_type::value_type;
+        using iterator    = typename string_type::iterator;
+        using size_type   = typename string_type::size_type;
 
-        using StringType::StringType;
-        using StringType::operator=;
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-        [[nodiscard]] constexpr string_type const& as_string() const noexcept {
-            return static_cast<string_type const&>(*this);
+
+      private:
+        string_type storage;
+
+      public:
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{
+              .beg = beg,
+              .pos = beg,
+              .end = end,
+              .out = stl::addressof(storage)};
+            parse_username<Options>(ctx);
+            return ctx.status;
         }
 
-        [[nodiscard]] constexpr string_type& as_string() noexcept {
-            return static_cast<string_type&>(*this);
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        explicit constexpr basic_password(AllocT const& alloc = {}) noexcept : storage{alloc} {}
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_password(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
         }
 
-        /**
-         * Get the string in the encoded shape
-         */
-        constexpr void append_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                // out.reserve(password.size() + 1); // much better chance of removing one
-                // memory allocation
-                out += '@';
-                encode_uri_component(as_string(), out, details::USER_INFO_NOT_PCT_ENCODED<char_type>);
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_password& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+            return *this;
+        }
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return storage.size();
+        }
+
+        template <istl::StringView StrVT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr StrVT view() const noexcept {
+            return StrVT{storage.data(), storage.size()};
+        }
+
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
+        constexpr void to_string(NStrT& out, bool const append_separators = false) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            // out.reserve(out.size() + storage.size() + 1);
+            if constexpr (istl::ModifiableString<NStrT>) {
+                if (append_separators) {
+                    if (!storage.empty()) {
+                        out.push_back(static_cast<char_type>('@'));
+                    }
+                }
             }
+            istl::append(out, storage);
         }
 
-        [[nodiscard]] constexpr string_type to_string() const {
-            string_type res{this->get_allocator()};
-            append_to(res);
-            return res;
-        }
-
-        constexpr void append_raw_to(istl::String auto& out) const {
-            if (!this->empty()) {
-                // out.reserve(out.size() + password.size() + 1);
-                out.push_back('@');
-                out.append(as_string());
-            }
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
+          noexcept(!istl::ModifiableString<NStrT>) {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
 
         /**
@@ -165,16 +288,7 @@ namespace webpp::uri {
          * @return true if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !this->empty();
-        }
-
-        /**
-         * Convert to string without encoding it
-         */
-        [[nodiscard]] constexpr string_type to_raw_string() const {
-            string_type res{this->get_allocator()};
-            append_raw_to(res);
-            return res;
+            return !storage.empty();
         }
     };
 

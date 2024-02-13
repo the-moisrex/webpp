@@ -350,8 +350,8 @@ namespace webpp::uri {
               fragment.size()             // fragments size
             );
             scheme.to_string(out, true);
-            username.append_to(out);
-            password.append_to(out);
+            username.to_string(out);
+            password.to_string(out, true);
             host.append_to(out);
             if (port.is_default_port(scheme.view())) {
                 port.to_string(out, true);
