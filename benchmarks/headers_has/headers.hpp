@@ -34,7 +34,7 @@ struct S : std::vector<std::string> { // I know, I know
             auto const names = stl::forward_as_tuple<NameType...>(name...);
             auto const filler =
               [&]<stl::size_t... I>(auto const& field, stl::index_sequence<I...>) constexpr noexcept {
-                  ((field == stl::get<I>(names) && (stl::get<I>(tup) = true)), ...);
+                  ((field == stl::get<I>(names) && (stl::get<I>(tup) == true)), ...);
               };
             for (auto const& field : *this) {
                 filler(field, stl::make_index_sequence<sizeof...(NameType)>{});

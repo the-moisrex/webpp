@@ -6,12 +6,10 @@
 #include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 
-#include <algorithm>
 #include <array>
-#include <bitset>
-#include <cassert>
-#include <concepts>
-#include <initializer_list>
+#ifdef __cpp_lib_constexpr_bitset
+#    include <bitset>
+#endif
 #include <limits>
 #include <utility>
 
@@ -129,7 +127,14 @@ namespace webpp {
                 return character == super::operator[](0) || character == super::operator[](1) ||
                        character == super::operator[](2) || character == super::operator[](3);
             } else {
-                return stl::find(super::begin(), super::end(), character) != super::end();
+                // I don't want to include <algorithm>, it's like 9000 lines of code
+                // return stl::find(super::begin(), super::end(), character) != super::end();
+                for (auto const cur_ch : static_cast<super const&>(*this)) {
+                    if (cur_ch == character) {
+                        return true;
+                    }
+                }
+                return false;
             }
         }
 

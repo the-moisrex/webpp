@@ -7,8 +7,6 @@
 #include "../std/string_view.hpp"
 #include "size.hpp"
 
-#include <algorithm>
-
 
 #ifdef WEBPP_EVE
 #    include <eve/algo/transform.hpp>
