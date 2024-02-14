@@ -887,6 +887,7 @@ namespace webpp::uri {
         using state_type      = stl::underlying_type_t<uri_status>;
 
         using out_container_type = stl::remove_pointer_t<out_type>;
+        using out_seg_type       = out_container_type;
 
         static constexpr bool is_nothrow    = stl::is_nothrow_copy_assignable_v<out_container_type>;
         static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
@@ -978,6 +979,32 @@ namespace webpp::uri {
             return ctx.out.get_queries();
         } else if constexpr (components::fragment == Comp) {
             return ctx.out.get_fragment();
+        }
+    }
+
+    template <components Comp, typename... T>
+    [[nodiscard]] constexpr auto get_output_view(parsing_uri_context<T...>& ctx) noexcept {
+        using ctx_type         = parsing_uri_context<T...>;
+        using char_type        = typename ctx_type::char_type;
+        using string_view_type = stl::basic_string_view<char_type>;
+        if constexpr (stl::is_pointer_v<typename ctx_type::out_type>) {
+            return string_view_type{ctx.out->data(), ctx.out->data() + ctx.out->size()};
+        } else if constexpr (components::scheme == Comp) {
+            return ctx.out.template get_scheme<string_view_type>();
+        } else if constexpr (components::username == Comp) {
+            return ctx.out.template get_username<string_view_type>();
+        } else if constexpr (components::password == Comp) {
+            return ctx.out.template get_password<string_view_type>();
+        } else if constexpr (components::port == Comp) {
+            return ctx.out.template get_port<string_view_type>();
+        } else if constexpr (components::host == Comp) {
+            return ctx.out.template get_hostname<string_view_type>();
+        } else if constexpr (components::path == Comp) {
+            return ctx.out.template get_path<string_view_type>();
+        } else if constexpr (components::queries == Comp) {
+            return ctx.out.template get_queries<string_view_type>();
+        } else if constexpr (components::fragment == Comp) {
+            return ctx.out.template get_fragment<string_view_type>();
         }
     }
 

@@ -127,8 +127,7 @@ namespace webpp::http {
                 }
                 auto param_name = params.substr(0, equals_pos);
                 http::trim_lws(param_name);
-                if (!ascii::iequals<ascii::char_case_side::second_lowered>(param_name, 'q'))
-                { // the size is checked inside of iequals
+                if (!ascii::iequals_sl(param_name, 'q')) { // the size is checked inside of iequals
                     _is_valid = false;
                     return;
                 }

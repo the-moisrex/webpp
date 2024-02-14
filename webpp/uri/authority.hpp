@@ -289,7 +289,7 @@ namespace webpp::uri {
         details::parse_authority_pieces<parsing_options>(ctx);
 
         if (ctx.out.has_hostname()) {
-            if (ascii::iequals<ascii::char_case_side::first_lowered>("localhost", ctx.out.get_hostname())) {
+            if (ascii::iequals_fl("localhost", ctx.out.get_hostname())) {
                 clear<components::host>(ctx);
             }
         }

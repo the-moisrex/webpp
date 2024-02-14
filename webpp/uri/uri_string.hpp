@@ -179,10 +179,7 @@ namespace webpp::uri {
                     } else {
                         // it should be a URN or an invalid URI at this point
                         authority_start = data.size();
-                        if (!ascii::iequals<ascii::char_case_side::second_lowered>(
-                              _data.substr(0, scheme_end),
-                              "urn"))
-                        {
+                        if (!ascii::iequals_sl(_data.substr(0, scheme_end), "urn")) {
                             errors.scheme = true;
                         }
                     }
@@ -265,8 +262,7 @@ namespace webpp::uri {
             auto const _data = this->string_view();
 
             bool const is_urn =
-              scheme_end != data.size() &&
-              ascii::iequals<ascii::char_case_side::second_lowered>(_data.substr(0, scheme_end), "urn");
+              scheme_end != data.size() && ascii::iequals_sl(_data.substr(0, scheme_end), "urn");
             stl::size_t starting_point; // NOLINT(cppcoreguidelines-init-variables)
             if (authority_start != data.size()) {
                 starting_point        = authority_start;
@@ -1986,8 +1982,7 @@ namespace webpp::uri {
          *
          */
         [[nodiscard]] constexpr bool is_urn() const noexcept {
-            return ascii::iequals<ascii::char_case_side::second_lowered>(scheme(), "urn") &&
-                   authority_start == data.size();
+            return ascii::iequals_sl(scheme(), "urn") && authority_start == data.size();
         }
 
         /**

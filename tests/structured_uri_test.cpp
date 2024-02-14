@@ -102,3 +102,10 @@ TYPED_TEST(StructuredURITests, StructuredPassword) {
         EXPECT_EQ(data, pass.view());
     }
 }
+
+TYPED_TEST(StructuredURITests, StructuredPort) {
+    static TypeParam const           data{get_one<TypeParam>("8080", L"8080")};
+    uri::basic_port<TypeParam> const port{data};
+    EXPECT_TRUE(port.has_value());
+    EXPECT_EQ(8080, port.value());
+}

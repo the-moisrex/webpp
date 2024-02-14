@@ -8,6 +8,7 @@
 #include "../strings/append.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
+#include "host_authority.hpp"
 
 #include <charconv>
 
@@ -65,38 +66,34 @@ namespace webpp::uri {
                     case '\0':
                     case '/':
                     case '?':
-                    case '#':
-                        // it's unsigned, we don't need to check for it being lower than 0
-                        if (port_value == known_port(ctx.out.get_scheme())) {
-                            clear<components::port>(ctx);
-                        } else if constexpr (
-                          requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); })
-                        {
-                            // store the integer port value
-                            ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-                        } else if constexpr (requires {
-                                                 ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
-                                                                  static_cast<seg_type>(ctx.pos - ctx.beg));
-                                             })
-                        {
-                            // store the position of it relative to the beginning of the URI
-                            set_value<components::port>(ctx,
-                                                        static_cast<seg_type>(beg - ctx.beg),
-                                                        static_cast<seg_type>(ctx.pos - ctx.beg));
-                        } else {
-                            // store it as a string
-                            set_value<components::port>(ctx, beg, ctx.pos);
-                        }
-
-                        // https://url.spec.whatwg.org/#path-start-state
-                        set_valid(ctx.status, uri_status::valid_authority_end);
-                        return;
-                    default: break;
+                    case '#': break;
+                    default: set_error(ctx.status, uri_status::port_invalid); return;
                 }
                 break;
             }
 
-            set_error(ctx.status, uri_status::port_invalid);
+            // it's unsigned, we don't need to check for it being lower than 0
+            if (port_value == known_port(get_output_view<components::scheme>(ctx))) {
+                clear<components::port>(ctx);
+            } else if constexpr (requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); }) {
+                // store the integer port value
+                ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
+            } else if constexpr (requires {
+                                     ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
+                                                      static_cast<seg_type>(ctx.pos - ctx.beg));
+                                 })
+            {
+                // store the position of it relative to the beginning of the URI
+                set_value<components::port>(ctx,
+                                            static_cast<seg_type>(beg - ctx.beg),
+                                            static_cast<seg_type>(ctx.pos - ctx.beg));
+            } else {
+                // store it as a string
+                set_value<components::port>(ctx, beg, ctx.pos);
+            }
+
+            // https://url.spec.whatwg.org/#path-start-state
+            set_valid(ctx.status, uri_status::valid_authority_end);
         }
     }
 
@@ -107,14 +104,17 @@ namespace webpp::uri {
      *
      * todo: implement handling of services at construction and to convert port number to a service
      */
-    template <istl::String StringType = stl::string>
+    template <istl::StringLike StringType = stl::string_view>
     struct basic_port {
         using string_type = StringType;
         using char_type   = istl::char_type_of_t<string_type>;
         using iterator    = typename string_type::iterator;
         using size_type   = typename string_type::size_type;
 
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
+
 
         static constexpr uint16_t max_port_number       = 65'535;
         static constexpr uint16_t well_known_upper_port = 1024;
@@ -125,29 +125,29 @@ namespace webpp::uri {
         string_type storage;
 
       public:
-        template <typename... T>
-        explicit(false) constexpr basic_port(T&&... args) : storage{stl::forward<T>(args)...} {
-            // todo: make sure if it's a valid port number
-            // if (!is::digit(storage)) {
-            // convert the service name to port number
-            // }
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            ctx.beg = beg;
+            ctx.pos = beg;
+            ctx.end = end;
+            ctx.out = stl::addressof(storage);
+            parse_port<Options>(ctx);
+            return ctx.status;
         }
 
-        template <typename T>
-            requires(
-              stl::is_integral_v<stl::remove_cvref_t<T>> && (sizeof(stl::remove_cvref_t<T>) > sizeof(char)) &&
-              !stl::is_floating_point_v<stl::remove_cvref_t<T>>)
-        explicit constexpr basic_port(T port_num) : storage{} {
-            if (port_num < 0 || port_num > max_port_number) {
-                throw stl::invalid_argument("The specified port number is not in a valid range.");
-            }
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        explicit constexpr basic_port(AllocT const& alloc = {}) noexcept : storage{alloc} {}
 
-            webpp::append_to(storage, port_num, stl::chars_format::fixed);
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_port(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
         }
 
-        constexpr basic_port& operator=(stl::integral auto val) {
-            storage.clear();
-            webpp::append_to(storage, val, stl::chars_format::fixed);
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_port& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
             return *this;
         }
 
@@ -165,7 +165,7 @@ namespace webpp::uri {
             return StrVT{storage.data(), storage.size()};
         }
 
-        template <istl::StringLike NStrT = stl::string_view>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
             // out.reserve(out.size() + storage.size() + 1);
@@ -179,7 +179,7 @@ namespace webpp::uri {
             istl::append(out, storage);
         }
 
-        template <istl::StringLike NStrT = stl::string_view, typename... Args>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
           noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};

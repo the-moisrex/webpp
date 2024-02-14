@@ -115,21 +115,17 @@ namespace webpp::ascii {
 
     /**
      * Check if two strings are equal case-insensitively
+     * If Character Types are not equal, since we're in ascii namespace, this means we can simply cast to
+     * other character types without worrying about unicode.
      * todo: update with the new eve project tools; example: https://godbolt.org/z/qzjsG4Prd
      */
     template <char_case_side Side = char_case_side::both_unknown>
     [[nodiscard]] static inline bool iequals(istl::StringViewifiable auto&& _str1,
                                              istl::StringViewifiable auto&& _str2) noexcept {
         using enum char_case_side;
-        using str1_type  = decltype(_str1);
-        using str2_type  = decltype(_str2);
-        using str1_t     = stl::remove_cvref_t<str1_type>;
-        using str2_t     = stl::remove_cvref_t<str2_type>;
-        using char_type  = istl::char_type_of_t<str1_t>;
-        using char_type2 = istl::char_type_of_t<str2_t>;
-        static_assert(stl::is_same_v<char_type, char_type2>,
-                      "The specified strings do not have the same character type, we're not able to compare "
-                      "them with this algorithm.");
+        using str1_type = decltype(_str1);
+        using str1_t    = stl::remove_cvref_t<str1_type>;
+        using char_type = istl::char_type_of_t<str1_t>;
 
         auto _size = size(_str1);
         if (_size != size(_str2)) {
@@ -140,6 +136,13 @@ namespace webpp::ascii {
             return istl::string_viewify(_str1) == istl::string_viewify(_str2);
         } else {
 #ifdef WEBPP_EVE
+            using str2_type  = decltype(_str2);
+            using str2_t     = stl::remove_cvref_t<str2_type>;
+            using char_type2 = istl::char_type_of_t<str2_t>;
+            static_assert(
+              stl::is_same_v<char_type, char_type2>,
+              "The specified strings do not have the same character type, we're not able to compare "
+              "them with this algorithm.");
 
             // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
 
@@ -198,32 +201,32 @@ namespace webpp::ascii {
             auto const* it1_end = it1 + _size;
 
             for (; it1 != it1_end; ++it1, ++it2) {
-                if (*it1 != *it2) {
+                if (*it1 != static_cast<char_type>(*it2)) {
                     // compiler seems to be able to optimize this better than us
                     if constexpr (first_lowered == Side) {
                         auto ch2_lowered = to_lower_copy(*it2);
-                        if (*it1 != ch2_lowered) {
+                        if (*it1 != static_cast<char_type>(ch2_lowered)) {
                             return false;
                         }
                     } else if constexpr (second_lowered == Side) {
                         auto ch1_lowered = to_lower_copy(*it1);
-                        if (ch1_lowered != *it2) {
+                        if (ch1_lowered != static_cast<char_type>(*it2)) {
                             return false;
                         }
                     } else if constexpr (first_uppered == Side) {
                         auto ch2_uppered = to_upper_copy(*it2);
-                        if (*it1 != ch2_uppered) {
+                        if (*it1 != static_cast<char_type>(ch2_uppered)) {
                             return false;
                         }
                     } else if constexpr (second_uppered == Side) {
                         auto ch1_uppered = to_upper_copy(*it1);
-                        if (ch1_uppered == *it2) {
+                        if (ch1_uppered == static_cast<char_type>(*it2)) {
                             return false;
                         }
                     } else {
                         auto ch1_lowered = to_lower_copy(*it1);
                         auto ch2_lowered = to_lower_copy(*it2);
-                        if (ch1_lowered != ch2_lowered) {
+                        if (ch1_lowered != static_cast<char_type>(ch2_lowered)) {
                             return false;
                         }
                     }
@@ -232,6 +235,30 @@ namespace webpp::ascii {
             return true;
 #endif
         }
+    }
+
+    /// first lowered
+    template <typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iequals_fl(LT&& lhs, RT&& rhs) noexcept {
+        return iequals<char_case_side::first_lowered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// second lowered
+    template <typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iequals_sl(LT&& lhs, RT&& rhs) noexcept {
+        return iequals<char_case_side::second_lowered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// first uppered
+    template <typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iequals_fu(LT&& lhs, RT&& rhs) noexcept {
+        return iequals<char_case_side::first_uppered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+    }
+
+    /// second uppered
+    template <typename LT, typename RT>
+    [[nodiscard]] static constexpr bool iequals_su(LT&& lhs, RT&& rhs) noexcept {
+        return iequals<char_case_side::second_uppered>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
     }
 
 } // namespace webpp::ascii

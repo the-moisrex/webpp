@@ -34,7 +34,7 @@ namespace webpp::http {
     [[nodiscard]] static constexpr stl::string_view mime_type_of(stl::string_view inp_extension) noexcept {
         // todo: optimize this based on first character of the extension
         for (auto const [extension, mime_type] : details::mappings) {
-            if (ascii::iequals<ascii::char_case_side::second_lowered>(extension, inp_extension)) {
+            if (ascii::iequals_sl(extension, inp_extension)) {
                 return mime_type;
             }
         }

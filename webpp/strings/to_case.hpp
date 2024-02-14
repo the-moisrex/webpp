@@ -29,15 +29,17 @@ namespace webpp::ascii {
      */
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_upper_copy(CharT inp_char) noexcept {
-        webpp_static_constexpr CharT diff = 'a' - 'A';
-        return inp_char >= 'a' && inp_char <= 'z' ? inp_char - diff : inp_char;
+        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        return inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z')
+                 ? inp_char - diff
+                 : inp_char;
     }
 
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_upper(CharT& inp_char) noexcept {
-        webpp_static_constexpr CharT diff = 'a' - 'A';
-        if (inp_char >= 'a' && inp_char <= 'z') {
+        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        if (inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z')) {
             inp_char -= diff;
         }
     }
@@ -50,15 +52,17 @@ namespace webpp::ascii {
      */
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_lower_copy(CharT inp_char) noexcept {
-        webpp_static_constexpr CharT diff = 'a' - 'A';
-        return inp_char >= 'A' && inp_char <= 'Z' ? inp_char + diff : inp_char;
+        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')
+                 ? inp_char + diff
+                 : inp_char;
     }
 
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_lower(CharT& inp_char) noexcept {
-        webpp_static_constexpr CharT diff = 'a' - 'A';
-        if (inp_char >= 'A' && inp_char <= 'Z') {
+        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        if (inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')) {
             inp_char += diff;
         }
     }
@@ -123,7 +127,7 @@ namespace webpp::ascii {
 #define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                    \
     template <istl::CharType CharT>                                                                   \
     static constexpr_state void method(CharT* pos) noexcept {                                         \
-        for (; *pos != '\0'; ++pos)                                                                   \
+        for (; *pos != static_cast<CharT>('\0'); ++pos)                                               \
             method(*pos);                                                                             \
     }                                                                                                 \
                                                                                                       \

@@ -19,7 +19,7 @@ namespace webpp::uri {
 
     template <istl::StringLike StrT>
     [[nodiscard]] constexpr bool is_file_scheme(StrT scheme) noexcept {
-        return ascii::iequals<ascii::char_case_side::first_lowered>("file", stl::forward<StrT>(scheme));
+        return ascii::iequals_fl("file", stl::forward<StrT>(scheme));
     }
 
     [[nodiscard]] constexpr bool is_file_scheme(scheme_type const scheme) noexcept {
@@ -39,20 +39,20 @@ namespace webpp::uri {
                 }
                 break;
             case 3:
-                if (ascii::iequals<ascii::char_case_side::first_lowered>("wss", scheme)) {
+                if (ascii::iequals_fl("wss", scheme)) {
                     return 443U;
                 }
-                if (ascii::iequals<ascii::char_case_side::first_lowered>("ftp", scheme)) {
+                if (ascii::iequals_fl("ftp", scheme)) {
                     return 21;
                 }
                 break;
             case 4:
-                if (ascii::iequals<ascii::char_case_side::first_lowered>("http", scheme)) {
+                if (ascii::iequals_fl("http", scheme)) {
                     return 80U;
                 }
                 break;
             case 5:
-                if (ascii::iequals<ascii::char_case_side::first_lowered>("https", scheme)) {
+                if (ascii::iequals_fl("https", scheme)) {
                     return 443U;
                 }
                 break;

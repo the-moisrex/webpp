@@ -160,7 +160,7 @@ namespace webpp::http {
                 }
                 switch (ascii::to_lower_copy(key[0])) {
                     case 'e':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "expires")) {
+                        if (ascii::iequals_sl(key, "expires")) {
                             using char_traits_type = typename value_t::traits_type;
                             using string_char_type = typename value_t::value_type;
                             stl::
@@ -181,7 +181,7 @@ namespace webpp::http {
                         }
                         break;
                     case 'c':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "comment")) {
+                        if (ascii::iequals_sl(key, "comment")) {
                             ascii::rtrim(value);
                             _comment = value;
                         } else {
@@ -189,7 +189,7 @@ namespace webpp::http {
                         }
                         break;
                     case 'd':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "domain")) {
+                        if (ascii::iequals_sl(key, "domain")) {
                             ascii::rtrim(value);
                             _domain = value;
                         } else {
@@ -197,10 +197,10 @@ namespace webpp::http {
                         }
                         break;
                     case 'p':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "path")) {
+                        if (ascii::iequals_sl(key, "path")) {
                             ascii::rtrim(value);
                             _path = value; // todo: should we store escaped or unescaped?
-                        } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "priority")) {
+                        } else if (ascii::iequals_sl(key, "priority")) {
                             ascii::rtrim(value);
                             _priority = value;
                         } else {
@@ -208,15 +208,15 @@ namespace webpp::http {
                         }
                         break;
                     case 's':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "secure")) {
+                        if (ascii::iequals_sl(key, "secure")) {
                             _secure = true;
-                        } else if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "samesite")) {
+                        } else if (ascii::iequals_sl(key, "samesite")) {
                             ascii::rtrim(value);
-                            if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "strict")) {
+                            if (ascii::iequals_sl(value, "strict")) {
                                 _same_site = same_site_value::strict;
-                            } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "lax")) {
+                            } else if (ascii::iequals_sl(value, "lax")) {
                                 _same_site = same_site_value::lax;
-                            } else if (ascii::iequals<ascii::char_case_side::second_lowered>(value, "none")) {
+                            } else if (ascii::iequals_sl(value, "none")) {
                                 _same_site = same_site_value::none;
                             } else {
                                 attrs.emplace(key, value);
@@ -227,21 +227,21 @@ namespace webpp::http {
                         }
                         break;
                     case 'h':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "httponly")) {
+                        if (ascii::iequals_sl(key, "httponly")) {
                             _http_only = true;
                         } else {
                             attrs.emplace(key, value);
                         }
                         break;
                     case 'm':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "max-age")) {
+                        if (ascii::iequals_sl(key, "max-age")) {
                             max_age(to<max_age_t>(value));
                         } else {
                             attrs.emplace(key, value);
                         }
                         break;
                     case 'v':
-                        if (ascii::iequals<ascii::char_case_side::second_lowered>(key, "version")) {
+                        if (ascii::iequals_sl(key, "version")) {
                             ascii::rtrim(value);
                             if (value == "0") {
                                 _version = version_t::version_0;
