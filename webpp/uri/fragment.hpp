@@ -66,11 +66,11 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{
-              .beg = beg,
-              .pos = beg,
-              .end = end,
-              .out = stl::addressof(storage)};
+            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            ctx.beg = beg;
+            ctx.pos = beg;
+            ctx.end = end;
+            ctx.out = stl::addressof(storage);
             parse_fragment<Options>(ctx);
             return ctx.status;
         }
