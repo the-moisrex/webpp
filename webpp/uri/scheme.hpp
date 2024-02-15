@@ -19,11 +19,11 @@ namespace webpp::uri {
 
     namespace details { // states
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        static constexpr void relative_state(parsing_uri_context<T...>& ctx) noexcept {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void relative_state(CtxT& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
                 set_valid(ctx.status, uri_status::valid);
                 return;
@@ -90,12 +90,11 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        static constexpr void file_slash_state(parsing_uri_context<T...>& ctx) noexcept(
-          parsing_uri_context<T...>::is_nothrow) {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void file_slash_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-slash-state
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
             if (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
@@ -123,12 +122,11 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_path);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        static constexpr void file_state(parsing_uri_context<T...>& ctx) noexcept(
-          parsing_uri_context<T...>::is_nothrow) {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void file_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#file-state
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
 
             if constexpr (ctx_type::has_base_uri) {
                 // set scheme to "file"
@@ -164,12 +162,11 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_path);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        static constexpr void no_scheme_state(parsing_uri_context<T...>& ctx) noexcept(
-          parsing_uri_context<T...>::is_nothrow) {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void no_scheme_state(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             // https://url.spec.whatwg.org/#no-scheme-state
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
 
             if constexpr (ctx_type::has_base_uri) {
                 if (ctx.base.has_path()) { // todo: specs say opaque path
@@ -192,9 +189,8 @@ namespace webpp::uri {
             set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
         }
 
-        template <typename... T>
-        static constexpr void special_authority_ignore_slashes_state(
-          parsing_uri_context<T...>& ctx) noexcept {
+        template <ParsingURIContext CtxT>
+        static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
             while (ascii::inc_if_any(ctx.pos, ctx.end, '\\', '/')) {
@@ -203,8 +199,8 @@ namespace webpp::uri {
             set_valid(ctx.status, uri_status::valid_authority);
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        static constexpr void special_relative_or_authority_state(parsing_uri_context<T...>& ctx) noexcept {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
             if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
@@ -220,10 +216,9 @@ namespace webpp::uri {
     /**
      * Parse scheme (or sometimes called Protocol)
      */
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_scheme(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
-        using ctx_type  = parsing_uri_context<T...>;
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
 
@@ -259,10 +254,10 @@ namespace webpp::uri {
 
         // handling ":" character
         if (*ctx.pos == ':') [[likely]] {
-            ctx.out.set_lowered_scheme(ctx.beg, ctx.pos);
+            set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
             ++ctx.pos;
 
-            if (is_file_scheme(get_output_value<components::scheme>(ctx))) [[unlikely]] {
+            if (is_file_scheme(get_output_view<components::scheme>(ctx))) [[unlikely]] {
                 ctx.scheme = scheme_type::file;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
@@ -272,11 +267,11 @@ namespace webpp::uri {
                 details::file_state<Options>(ctx);
                 return;
             }
-            if (is_special_scheme(ctx.out.get_scheme())) [[likely]] {
+            if (is_special_scheme(get_output_view<components::scheme>(ctx))) [[likely]] {
                 ctx.scheme = scheme_type::special_scheme;
                 // todo: first check the constexpr if
                 if constexpr (ctx_type::has_base_uri) {
-                    if (ctx.out.get_scheme() == ctx.base.get_scheme()) {
+                    if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {
                         // todo: Assert: base is special (and therefore does not have an opaque path).
                         details::special_relative_or_authority_state<Options>(ctx);
                     }
@@ -311,22 +306,57 @@ namespace webpp::uri {
      * Scheme or Protocol
      * @tparam StringType
      */
-    template <istl::StringLike StringType = stl::string>
-    struct basic_scheme : StringType {
+    template <istl::StringLike StringType = stl::string_view>
+    struct basic_scheme {
         using string_type = StringType;
         using char_type   = istl::char_type_of_t<string_type>;
         using iterator    = typename string_type::iterator;
+        using size_type   = typename string_type::size_type;
 
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-        using StringType::StringType;
-        using StringType::operator=;
+
+      private:
+        string_type storage;
+
+      public:
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_component_context<components::scheme, string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            ctx.beg = beg;
+            ctx.pos = beg;
+            ctx.end = end;
+            ctx.out = stl::addressof(storage);
+            parse_scheme<Options>(ctx);
+            return ctx.status;
+        }
+
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        explicit constexpr basic_scheme(AllocT const& alloc = {}) noexcept : storage{alloc} {}
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_scheme(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+        }
+
+        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_scheme& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+            return *this;
+        }
+
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            return storage.size();
+        }
 
         /**
          * @brief checks if the URI is a relative reference
          */
         [[nodiscard]] constexpr bool is_relative_reference() const noexcept {
-            return this->empty();
+            return storage.empty();
         }
 
         /**
@@ -335,16 +365,16 @@ namespace webpp::uri {
          * @param end the end of the value
          */
         constexpr void set_raw_value(iterator beg, iterator end) noexcept(!is_modifiable) {
-            istl::assign(static_cast<string_type&>(*this), beg, end);
+            istl::assign(storage, beg, end);
         }
 
         template <istl::StringView StrVT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr StrVT view() const noexcept {
-            return StrVT{this->data(), this->size()};
+            return StrVT{storage.data(), storage.size()};
         }
 
         [[nodiscard]] constexpr bool is_special() const noexcept {
-            return is_special_scheme(this->view());
+            return is_special_scheme(storage.view());
         }
 
         /**
@@ -352,17 +382,17 @@ namespace webpp::uri {
          * @return true if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
-            return !this->empty();
+            return !storage.empty();
         }
 
-        template <istl::StringLike NStrT = stl::string_view>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
-            // out.reserve(out.size() + this->size() + 1);
-            istl::append(out, static_cast<string_type const&>(*this));
+            // out.reserve(out.size() + storage.size() + 1);
+            istl::append(out, storage);
             if constexpr (istl::ModifiableString<NStrT>) {
                 if (append_separators) {
-                    if (!this->empty()) {
+                    if (!storage.empty()) {
                         out.push_back(':');
                         out.append("//");
                     } else {
@@ -372,7 +402,7 @@ namespace webpp::uri {
             }
         }
 
-        template <istl::StringLike NStrT = stl::string_view, typename... Args>
+        template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const
           noexcept(!istl::ModifiableString<NStrT>) {
             NStrT out{stl::forward<Args>(args)...};

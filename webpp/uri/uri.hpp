@@ -15,9 +15,8 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void continue_parsing_uri(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         while (!has_error(ctx.status)) {
             switch (get_value(ctx.status)) {
                 using enum uri_status;
@@ -43,9 +42,8 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_uri(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         continue_parsing_uri<Options>(ctx);
     }
 

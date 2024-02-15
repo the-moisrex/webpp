@@ -63,7 +63,7 @@ TYPED_TEST(URITests, Generation) {
     stl::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
 
-    url.scheme = "https";
+    url.scheme = stl::string_view{"https"};
     EXPECT_EQ(url.to_string(), "https://");
     url.host = "webpp.dev";
     EXPECT_EQ(url.to_string(), "https://webpp.dev");

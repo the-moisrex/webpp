@@ -79,7 +79,7 @@ TYPED_TEST(StructuredURITests, StructuredUsername) {
     static TypeParam const               data{get_one<TypeParam>("it's username", L"it's username")};
     uri::basic_username<TypeParam> const user{data};
     EXPECT_TRUE(user.has_value());
-    if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {
+    if constexpr (uri::basic_username<TypeParam>::is_modifiable) {
 #ifdef __cpp_lib_string_contains
         EXPECT_FALSE(user.view().contains(' '));
 #endif
@@ -93,7 +93,7 @@ TYPED_TEST(StructuredURITests, StructuredPassword) {
     static TypeParam const               data{get_one<TypeParam>("it's password", L"it's password")};
     uri::basic_password<TypeParam> const pass{data};
     EXPECT_TRUE(pass.has_value());
-    if constexpr (uri::basic_fragment<TypeParam>::is_modifiable) {
+    if constexpr (uri::basic_password<TypeParam>::is_modifiable) {
 #ifdef __cpp_lib_string_contains
         EXPECT_FALSE(pass.view().contains(' '));
 #endif
@@ -108,4 +108,29 @@ TYPED_TEST(StructuredURITests, StructuredPort) {
     uri::basic_port<TypeParam> const port{data};
     EXPECT_TRUE(port.has_value());
     EXPECT_EQ(8080, port.value());
+}
+
+TYPED_TEST(StructuredURITests, StructuredScheme) {
+    static TypeParam const             data{get_one<TypeParam>("https:", L"https:")};
+    uri::basic_scheme<TypeParam> const scheme{data};
+    EXPECT_TRUE(scheme.has_value());
+    EXPECT_EQ(data.substr(0, data.size() - 1), scheme.view());
+}
+
+TYPED_TEST(StructuredURITests, StructuredSchemeLowered) {
+    static TypeParam const data{get_one<TypeParam>("HTTPS:", L"HtTPS:")};
+
+    EXPECT_EQ(data.size(), 6);
+
+    uri::basic_scheme<TypeParam> const scheme{data};
+    EXPECT_TRUE(scheme.has_value());
+    if constexpr (uri::basic_scheme<TypeParam>::is_modifiable) {
+        TypeParam out_str;
+        ascii::lower_to(out_str, data.begin(), data.begin() + (data.size() - 1));
+        EXPECT_EQ(out_str, ascii::to_lower_copy(data.substr(0, data.size() - 1)));
+
+        EXPECT_EQ(get_one<TypeParam>("https", L"https"), scheme.view());
+    } else {
+        EXPECT_EQ(data.substr(0, data.size() - 1), scheme.view());
+    }
 }

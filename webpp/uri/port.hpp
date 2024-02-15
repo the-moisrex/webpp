@@ -5,23 +5,19 @@
 
 #include "../convert/casts.hpp"
 #include "../std/string.hpp"
-#include "../strings/append.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "host_authority.hpp"
-
-#include <charconv>
 
 namespace webpp::uri {
 
     static constexpr stl::uint16_t max_port_number = 65'535U;
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_port(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
 
-        using ctx_type  = parsing_uri_context<T...>;
+        using ctx_type  = CtxT;
         using seg_type  = typename ctx_type::out_seg_type;
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
@@ -127,7 +123,7 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::port, string_type*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;

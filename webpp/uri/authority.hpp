@@ -20,15 +20,16 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <uri_parsing_options Options = uri_parsing_options{}, bool IsSpecial = true, typename... T>
-        static constexpr void parse_authority_pieces(parsing_uri_context<T...>& ctx) noexcept(
-          parsing_uri_context<T...>::is_nothrow) {
+        template <uri_parsing_options Options   = uri_parsing_options{},
+                  bool                IsSpecial = true,
+                  ParsingURIContext   CtxT>
+        static constexpr void parse_authority_pieces(CtxT& ctx) noexcept(CtxT::is_nothrow) {
             using enum uri_status;
             using details::ascii_bitmap;
             using details::FORBIDDEN_DOMAIN_CODE_POINTS;
             using details::FORBIDDEN_HOST_CODE_POINTS;
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
             using iterator = typename ctx_type::iterator;
 
             webpp_static_constexpr auto forbidden_hosts = ascii_bitmap{
@@ -259,9 +260,8 @@ namespace webpp::uri {
 
     } // namespace details
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_file_host(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
         static_assert(Options.allow_file_hosts,
@@ -302,9 +302,8 @@ namespace webpp::uri {
 
     /// Path start state (I like to call it authority end because it's more RFC like to
     /// say that, but WHATWG likes to call it "path start state")
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_authority_end(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_authority_end(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-start-state
 
         if (ctx.pos == ctx.end) {
@@ -351,9 +350,8 @@ namespace webpp::uri {
      * @param ctx Parsing Context containing all the details of the URI and the state of
      * it
      */
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_authority(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // We merged the host parser and authority parser to make it single-pass for most
         // use cases. https://url.spec.whatwg.org/#authority-state
         // https://url.spec.whatwg.org/#host-state

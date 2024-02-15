@@ -23,6 +23,7 @@ Checks: >
     -llvm-header-guard,
   altera-*,
     -altera-unroll-loops,
+    -altera-id-dependent-backward-branch,
   android-*,
   fuchsia-*,
     -fuchsia-overloaded-operator,

@@ -16,9 +16,8 @@ namespace webpp::uri::details {
     ///   - an hexadecimal starting with 0x, or 0X
     ///   - an octal value,
     /// then the host MUST be an ipv4, otherwise, it's an INVALID HOST.
-    template <uri_parsing_options Options, typename Iter, typename... T>
-    static constexpr bool
-    is_possible_ends_with_ipv4(Iter beg, Iter fin, parsing_uri_context<T...>& ctx) noexcept {
+    template <uri_parsing_options Options, typename Iter, ParsingURIContext CtxT>
+    static constexpr bool is_possible_ends_with_ipv4(Iter beg, Iter fin, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#ends-in-a-number-checker
 
         webpp_assume(fin != ctx.end);
@@ -107,9 +106,10 @@ namespace webpp::uri::details {
      *          possibly error-prone features which as an implementer, I disagree with the WHATWG standard.
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <uri_parsing_options Options = standard_uri_parsing_options, typename Iter, typename... T>
-    static constexpr bool
-    parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, parsing_uri_context<T...>& ctx) noexcept {
+    template <uri_parsing_options Options = standard_uri_parsing_options,
+              typename Iter,
+              ParsingURIContext CtxT>
+    static constexpr bool parse_host_ipv4(Iter src, Iter end, stl::uint8_t* out, CtxT& ctx) noexcept {
         // https://url.spec.whatwg.org/#concept-ipv4-parser
 
         // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
@@ -243,9 +243,8 @@ namespace webpp::uri::details {
      * @brief Parse ipv6 of a host (starts with '[' and ends with ']')
      * @returns true if we need to continue parsing (has nothing to do with it being valid or not)
      */
-    template <typename... T>
-    static constexpr bool parse_host_ipv6(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <ParsingURIContext CtxT>
+    static constexpr bool parse_host_ipv6(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 

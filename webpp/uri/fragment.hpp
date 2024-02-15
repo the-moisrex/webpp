@@ -10,11 +10,10 @@
 
 namespace webpp::uri {
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_fragment(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_fragment(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#fragment-state
-        using ctx_type  = parsing_uri_context<T...>;
+        using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
 
         if constexpr (Options.parse_fragment) {
@@ -66,7 +65,8 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::fragment, string_type*, stl::remove_cvref_t<Iter>>
+              ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
@@ -93,8 +93,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr size_type size() const noexcept {
             return storage.size();
         }
-
-        // todo: add base support to parse
 
         template <istl::StringView StrVT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr StrVT view() const noexcept {
@@ -139,8 +137,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool has_value() const noexcept {
             return !storage.empty();
         }
-
-        // todo: add to and from json, xml, and other string types that makes sense to use in uri's fragments
     };
 
 

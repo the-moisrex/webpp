@@ -75,9 +75,8 @@ namespace webpp::uri::details {
             set_value(beg, ctx->pos);
         }
 
-        template <typename... T>
-        explicit constexpr component_encoder(parsing_uri_context<T...>& inp_ctx) noexcept(
-          ctx_type::is_nothrow)
+        template <ParsingURIContext InpCtxT>
+        explicit constexpr component_encoder(InpCtxT& inp_ctx) noexcept(ctx_type::is_nothrow)
           : ctx{&inp_ctx},
             beg{ctx->pos} {}
 

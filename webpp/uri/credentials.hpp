@@ -12,11 +12,9 @@ namespace webpp::uri {
 
     namespace details {
 
-        template <typename... T, typename Iter = typename parsing_uri_context<T...>::iterator>
-        static constexpr void parse_credentials(
-          parsing_uri_context<T...>& ctx,
-          Iter                       beg,
-          Iter                       password_token_pos) noexcept(parsing_uri_context<T...>::is_nothrow) {
+        template <ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
+        static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos) noexcept(
+          CtxT::is_nothrow) {
             // todo: add "needs_encoding"
             // todo: See if there's a way to find the last atsign position instead of running this function for every atsign
             // todo: use already parsed host
@@ -25,7 +23,7 @@ namespace webpp::uri {
             using details::component_encoder;
             using details::USER_INFO_ENCODE_SET;
 
-            using ctx_type = parsing_uri_context<T...>;
+            using ctx_type = CtxT;
             using iterator = typename ctx_type::iterator;
 
             webpp_assume(ctx.pos < ctx.end);
@@ -66,14 +64,13 @@ namespace webpp::uri {
     /// parse username
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_username(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_username(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::component_encoder;
         using details::USER_INFO_ENCODE_SET;
 
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type = CtxT;
 
         if constexpr (Options.parse_credentails) {
             if (ctx.pos == ctx.end) {
@@ -95,14 +92,13 @@ namespace webpp::uri {
     /// parse password
     /// This function doesn't care about boundaries, encodes and validates
     /// This function is not being used inside the URI parsing at all
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_password(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_password(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         using details::ascii_bitmap;
         using details::component_encoder;
         using details::USER_INFO_ENCODE_SET;
 
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type = CtxT;
 
         if constexpr (Options.parse_credentails) {
             if (ctx.pos == ctx.end) {
@@ -142,7 +138,8 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::username, string_type*, stl::remove_cvref_t<Iter>>
+              ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
@@ -228,12 +225,13 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_context<string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::password, string_type*, stl::remove_cvref_t<Iter>>
+              ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
             ctx.out = stl::addressof(storage);
-            parse_username<Options>(ctx);
+            parse_password<Options>(ctx);
             return ctx.status;
         }
 

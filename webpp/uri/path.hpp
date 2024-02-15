@@ -67,13 +67,13 @@ namespace webpp::uri {
 
 
         // todo: remove this if it's not needed anymore
-        template <typename... T>
+        template <ParsingURIContext CtxT>
         static constexpr void append_path(
-          parsing_uri_context<T...>&                   ctx,
-          typename parsing_uri_context<T...>::iterator start,
-          typename parsing_uri_context<T...>::iterator end,
-          bool const needs_encoding) noexcept(parsing_uri_context<T...>::is_nothrow) {
-            using ctx_type = parsing_uri_context<T...>;
+          CtxT&                   ctx,
+          typename CtxT::iterator start,
+          typename CtxT::iterator end,
+          bool const              needs_encoding) noexcept(CtxT::is_nothrow) {
+            using ctx_type = CtxT;
 
             if ((ctx_type::is_segregated || ctx_type::is_modifiable) && needs_encoding) { // slow path
                 if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
@@ -111,12 +111,12 @@ namespace webpp::uri {
         ///   /%2e.
         ///
         /// %2E or %2e is equal to a "." (dot)
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void handle_dots_in_paths(
-          parsing_uri_context<T...>&                                      ctx,
-          component_encoder<components::path, parsing_uri_context<T...>>& encoder,
-          stl::uint64_t& slash_loc_cache) noexcept(parsing_uri_context<T...>::is_nothrow) {
-            using ctx_type        = parsing_uri_context<T...>;
+          CtxT&                                      ctx,
+          component_encoder<components::path, CtxT>& encoder,
+          stl::uint64_t&                             slash_loc_cache) noexcept(CtxT::is_nothrow) {
+            using ctx_type        = CtxT;
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
@@ -218,12 +218,11 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void handle_windows_driver_letter(
-          parsing_uri_context<T...>& ctx,
-          component_encoder<components::path, parsing_uri_context<T...>>&
-            encoder) noexcept(parsing_uri_context<T...>::is_nothrow) {
-            using ctx_type = parsing_uri_context<T...>;
+          CtxT&                                      ctx,
+          component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
+            using ctx_type = CtxT;
             bool const is_windows_path =
               Options.allow_windows_drive_letters &&
               details::starts_with_windows_driver_letter_slashes(ctx.pos, ctx.end) &&
@@ -250,12 +249,11 @@ namespace webpp::uri {
         }
     } // namespace details
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_opaque_path(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_opaque_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#cannot-be-a-base-url-path-state
 
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type = CtxT;
 
         // todo: URI Code Points are among interesting characters as well
         webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('\0', '%', '#', '?');
@@ -305,14 +303,13 @@ namespace webpp::uri {
         }
     }
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_path(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_path(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#path-state
 
         using details::ascii_bitmap;
 
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type = CtxT;
 
 
         webpp_static_constexpr auto encode_set =
@@ -473,8 +470,8 @@ namespace webpp::uri {
 
         // NOLINTEND(*-forwarding-reference-overload)
 
-        template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-        constexpr void parse(parsing_uri_context<T...>& ctx) {
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        constexpr void parse(CtxT& ctx) {
             parse_path<Options>(ctx);
         }
 
@@ -482,7 +479,7 @@ namespace webpp::uri {
         constexpr bool parse(StrT&& str) {
             auto const path     = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             using iterator_type = typename string_view_type::iterator;
-            parsing_uri_context<container_type*, iterator_type> ctx;
+            parsing_uri_component_context<components::path, container_type*, iterator_type> ctx;
             ctx.beg    = path.begin();
             ctx.end    = path.end();
             ctx.pos    = path.begin();

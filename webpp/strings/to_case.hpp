@@ -27,7 +27,7 @@ namespace webpp::ascii {
      */
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_upper_copy(CharT inp_char) noexcept {
-        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
         return inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z')
                  ? inp_char - diff
                  : inp_char;
@@ -36,7 +36,7 @@ namespace webpp::ascii {
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_upper(CharT& inp_char) noexcept {
-        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
         if (inp_char >= static_cast<CharT>('a') && inp_char <= static_cast<CharT>('z')) {
             inp_char -= diff;
         }
@@ -50,7 +50,7 @@ namespace webpp::ascii {
      */
     template <istl::CharType CharT>
     [[nodiscard]] constexpr CharT to_lower_copy(CharT inp_char) noexcept {
-        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
         return inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')
                  ? inp_char + diff
                  : inp_char;
@@ -59,7 +59,7 @@ namespace webpp::ascii {
     template <istl::CharType CharT>
         requires(!stl::is_const_v<CharT>)
     static constexpr void to_lower(CharT& inp_char) noexcept {
-        webpp_static_constexpr CharT diff = static_cast<CharT>('a' - 'A');
+        webpp_static_constexpr auto diff = static_cast<CharT>('a' - 'A');
         if (inp_char >= static_cast<CharT>('A') && inp_char <= static_cast<CharT>('Z')) {
             inp_char += diff;
         }
@@ -121,6 +121,7 @@ namespace webpp::ascii {
 #endif
     } // namespace algo
 
+    // NOLINTBEGIN(*-macro-parentheses)
     // NOLINTNEXTLINE(*-macro-usage)
 #define WEBPP_TO_METHOD(method, chosen_algorithm, constexpr_state)                                    \
     template <istl::CharType CharT>                                                                   \
@@ -155,6 +156,7 @@ namespace webpp::ascii {
     WEBPP_TO_METHOD(to_upper, simple, constexpr)
     WEBPP_TO_METHOD(to_lower, simple, constexpr)
 #endif
+    // NOLINTEND(*-macro-parentheses)
 
 
 #undef WEBPP_TO_METHOD
@@ -253,10 +255,13 @@ namespace webpp::ascii {
     template <typename It, typename EIt = It, istl::String StrT>
     constexpr void lower_to(StrT& out, It beg, EIt end) {
 #if __cpp_lib_string_resize_and_overwrite
-        out.resize_and_overwrite(end - beg, [beg](auto* ptr, stl::size_t const length) constexpr noexcept {
-            lower_to(beg, ptr, length);
-            return length;
-        });
+        stl::size_t const count = end - beg;
+        out.resize_and_overwrite(
+          count,
+          [beg, count](auto* ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
+              lower_to(beg, ptr, count);
+              return count;
+          });
 #else
         using size_type = typename StrT::size_type;
         out.resize(static_cast<size_type>(end - beg));
@@ -267,10 +272,13 @@ namespace webpp::ascii {
     template <typename It, typename EIt = It, istl::String StrT>
     constexpr void upper_to(StrT& out, It beg, EIt end) {
 #if __cpp_lib_string_resize_and_overwrite
-        out.resize_and_overwrite(end - beg, [beg](auto* ptr, stl::size_t const length) constexpr noexcept {
-            upper_to(beg, ptr, length);
-            return length;
-        });
+        stl::size_t const count = end - beg;
+        out.resize_and_overwrite(
+          count,
+          [beg, count](auto* ptr, [[maybe_unused]] stl::size_t const length) constexpr noexcept {
+              upper_to(beg, ptr, count);
+              return count;
+          });
 #else
         using size_type = typename StrT::size_type;
         out.resize(static_cast<size_type>(end - beg));

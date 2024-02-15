@@ -11,11 +11,10 @@
 namespace webpp::uri {
 
 
-    template <uri_parsing_options Options = uri_parsing_options{}, typename... T>
-    static constexpr void parse_queries(parsing_uri_context<T...>& ctx) noexcept(
-      parsing_uri_context<T...>::is_nothrow) {
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr void parse_queries(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#query-state
-        using ctx_type = parsing_uri_context<T...>;
+        using ctx_type = CtxT;
 
         if constexpr (Options.parse_queries) {
             webpp_static_constexpr auto interesting_characters =
