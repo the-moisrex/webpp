@@ -59,7 +59,7 @@ namespace webpp::uri {
 
         /**
          * @brief check if we have value
-         * @return true if we don't have anything
+         * @return false if we don't have anything
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
             return !this->empty() && !(this->size() == 1 && this->front().empty());
