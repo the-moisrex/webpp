@@ -501,15 +501,27 @@ namespace webpp::uri {
             return *this;
         }
 
+        [[nodiscard]] constexpr allocator_type const& get_allocator() const noexcept {
+            return storage.get_allocator();
+        }
+
         [[nodiscard]] constexpr size_type size() const noexcept {
             return storage.size();
         }
 
-        [[nodiscard]] constexpr auto begin() const noexcept {
+        [[nodiscard]] constexpr decltype(auto) begin() const noexcept {
             return storage.begin();
         }
 
-        [[nodiscard]] constexpr auto end() const noexcept {
+        [[nodiscard]] constexpr decltype(auto) end() const noexcept {
+            return storage.end();
+        }
+
+        [[nodiscard]] constexpr decltype(auto) begin() noexcept {
+            return storage.begin();
+        }
+
+        [[nodiscard]] constexpr decltype(auto) end() noexcept {
             return storage.end();
         }
 
@@ -564,13 +576,17 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void set_raw_value(iterator beg, iterator end) {
+        constexpr void assign(iterator beg, iterator end) {
             storage.clear();
             if constexpr (is_modifiable) {
                 istl::emplace_one(storage, beg, end, storage.get_allocator());
             } else {
                 istl::emplace_one(storage, beg, end);
             }
+        }
+
+        constexpr void clear() {
+            return storage.clear();
         }
 
         /**
@@ -663,6 +679,11 @@ namespace webpp::uri {
             if (!storage.empty() && storage.back().empty()) {
                 stl::ignore(storage.pop_back());
             }
+        }
+
+        template <typename... Args>
+        decltype(auto) emplace_back(Args&&... args) {
+            return storage.emplace_back(stl::forward<Args>(args)...);
         }
     };
 

@@ -264,6 +264,8 @@ namespace webpp::uri {
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
+        using ctx_type = CtxT;
+
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
@@ -288,9 +290,15 @@ namespace webpp::uri {
         }();
         details::parse_authority_pieces<parsing_options>(ctx);
 
-        if (ctx.out.has_hostname()) {
-            if (ascii::iequals_fl("localhost", ctx.out.get_hostname())) {
-                clear<components::host>(ctx);
+        if (has_value<components::host>(ctx)) {
+            if constexpr (ctx_type::is_segregated) {
+                if (ascii::iequals_fl("localhost", get_output<components::host>(ctx).front())) {
+                    clear<components::host>(ctx);
+                }
+            } else {
+                if (ascii::iequals_fl("localhost", get_output_value<components::host>(ctx))) {
+                    clear<components::host>(ctx);
+                }
             }
         }
         if constexpr (Options.allow_windows_drive_letters) {
@@ -369,7 +377,7 @@ namespace webpp::uri {
         }
 
         if constexpr (Options.allow_file_hosts) {
-            if (is_special_scheme(ctx.scheme) && is_file_scheme(ctx.out.get_scheme())) {
+            if (is_file_scheme(ctx.scheme)) {
                 // todo: should we set the status instead?
                 parse_file_host(ctx);
                 return;

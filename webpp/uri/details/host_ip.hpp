@@ -248,7 +248,7 @@ namespace webpp::uri::details {
         auto const                                beg = ctx.pos;
         stl::array<stl::uint8_t, ipv6_byte_count> ipv6_bytes{};
 
-        if (ctx.out.has_hostname()) {
+        if (has_value<components::host>(ctx)) {
             set_error(ctx.status, uri_status::invalid_domain_code_point);
             return false;
         }
@@ -263,8 +263,10 @@ namespace webpp::uri::details {
                     ++ctx.pos;
                     if constexpr (requires { ctx.out.set_hostname(ipv6_bytes); }) {
                         ctx.out.set_hostname(ipv6_bytes);
+                    } else if constexpr (requires { ctx.out->set_hostname(ipv6_bytes); }) {
+                        ctx.out->set_hostname(ipv6_bytes);
                     } else {
-                        ctx.out.set_hostname(beg, ctx.pos);
+                        set_value<components::host>(ctx, beg, ctx.pos);
                     }
                     if (ctx.pos == ctx.end) {
                         set_valid(ctx.status, uri_status::valid);

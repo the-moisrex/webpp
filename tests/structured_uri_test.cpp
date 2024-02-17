@@ -134,3 +134,11 @@ TYPED_TEST(StructuredURITests, StructuredSchemeLowered) {
         EXPECT_EQ(data.substr(0, data.size() - 1), scheme.view());
     }
 }
+
+TYPED_TEST(StructuredURITests, StructuredURI) {
+    static TypeParam const data{get_one<TypeParam>("HTTPS:", L"HtTPS:")};
+
+    uri::basic_uri<TypeParam> const url{data};
+    EXPECT_TRUE(url.has_value());
+    EXPECT_TRUE(url.has_scheme());
+}

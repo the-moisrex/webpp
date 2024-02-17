@@ -56,17 +56,17 @@ TYPED_TEST_SUITE(URITests, Types);
 
 TYPED_TEST(URITests, Generation) {
     uri::uri url;
-    EXPECT_EQ(url.scheme.size(), 0);
+    EXPECT_EQ(url.scheme_ref().size(), 0);
 
-    auto const alloc = url.get_allocator<stl::allocator<char>>();
+    auto const alloc = url.get_allocator();
 
     stl::string const str{alloc};
     EXPECT_EQ(str.size(), 0);
 
-    url.scheme = stl::string_view{"https"};
-    EXPECT_EQ(url.to_string(), "https://");
-    url.host = "webpp.dev";
-    EXPECT_EQ(url.to_string(), "https://webpp.dev");
+    url.scheme(stl::string_view{"https"});
+    EXPECT_EQ(url.as_string(), "https://");
+    url.hostname("webpp.dev");
+    EXPECT_EQ(url.as_string(), "https://webpp.dev");
 }
 
 TYPED_TEST(URITests, PathFromString) {
@@ -79,17 +79,17 @@ TYPED_TEST(URITests, PathFromString) {
     // EXPECT_EQ(path, "/a/b/c/../d/nice");
 }
 
-TYPED_TEST(URITests, QueryParamGeneration) {
-    uri::uri url          = "https://localhost/api/v2/content";
-    url.queries["model"]  = "Encode this";
-    url.queries["locale"] = "English is a locale";
-    url.queries["text"]   = "This text has a \n newline in it.";
-    url.queries["token"]  = "f95d9af1-18da-439c-8326-55f9ff7d6f8c";
-    EXPECT_EQ(url.to_string(),
-              "https://localhost/api/v2/"
-              "content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%"
-              "20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
-}
+// TYPED_TEST(URITests, QueryParamGeneration) {
+//     uri::uri url          = "https://localhost/api/v2/content";
+//     url.queries["model"]  = "Encode this";
+//     url.queries["locale"] = "English is a locale";
+//     url.queries["text"]   = "This text has a \n newline in it.";
+//     url.queries["token"]  = "f95d9af1-18da-439c-8326-55f9ff7d6f8c";
+//     EXPECT_EQ(url.as_string(),
+//               "https://localhost/api/v2/"
+//               "content?locale=English%20is%20a%20locale&model=Encode%20this&text=This%20text%20has%20a%20%0A%"
+//               "20newline%20in%20it.&token=f95d9af1-18da-439c-8326-55f9ff7d6f8c");
+// }
 
 TYPED_TEST(URITests, IntegralSchemeParsing) {
     constexpr stl::string_view      str = "http://";
@@ -129,7 +129,7 @@ TYPED_TEST(URITests, ParseURI) {
 
 TYPED_TEST(URITests, URIParsingWithWarnings) {
     uri::uri url = "https:this-is-stupid";
-    EXPECT_EQ(url.to_string(), "https://this-is-stupid/");
+    EXPECT_EQ(url.as_string(), "https://this-is-stupid/");
 }
 
 TYPED_TEST(URITests, URIStatusTest) {

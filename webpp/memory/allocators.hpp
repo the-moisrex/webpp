@@ -11,7 +11,6 @@
 
 namespace webpp {
 
-    // todo: see if it's the right choice to use rebind_alloc
     template <typename AllocType, typename NewValueType>
     using rebind_allocator = typename stl::allocator_traits<AllocType>::template rebind_alloc<NewValueType>;
 

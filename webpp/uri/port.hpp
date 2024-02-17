@@ -117,7 +117,7 @@ namespace webpp::uri {
 
       private:
         // we're not making this public, because we want this value to be always correct, unless the user
-        // explicitly puts invalid values with set_raw_value
+        // explicitly puts invalid values with assign
         string_type storage;
 
       public:
@@ -136,14 +136,20 @@ namespace webpp::uri {
             requires needs_allocator
         explicit constexpr basic_port(AllocT const& alloc = {}) noexcept : storage{alloc} {}
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
-        explicit constexpr basic_port(InpStr const& inp_str) noexcept(is_nothrow) {
-            parse(inp_str.begin(), inp_str.end());
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires(!needs_allocator)
+        explicit constexpr basic_port([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
+
+        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        explicit constexpr basic_port(InpStr&& inp_str) noexcept(is_nothrow) {
+            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            parse(str.begin(), str.end());
         }
 
-        template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
-        constexpr basic_port& operator=(InpStr const& inp_str) noexcept(is_nothrow) {
-            parse(inp_str.begin(), inp_str.end());
+        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_port& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
+            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            parse(str.begin(), str.end());
             return *this;
         }
 
@@ -202,8 +208,12 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void set_raw_value(iterator beg, iterator end) noexcept(!is_modifiable) {
+        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
             istl::assign(storage, beg, end);
+        }
+
+        constexpr void clear() {
+            storage.clear();
         }
 
         /**

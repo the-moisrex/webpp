@@ -152,6 +152,10 @@ namespace webpp::uri {
             requires needs_allocator
         explicit constexpr basic_username(AllocT const& alloc = {}) noexcept : storage{alloc} {}
 
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires(!needs_allocator)
+        explicit constexpr basic_username([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
+
         template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
         explicit constexpr basic_username(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
@@ -173,6 +177,10 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr size_type size() const noexcept {
             return storage.size();
+        }
+
+        constexpr void clear() {
+            return storage.clear();
         }
 
         template <istl::StringView StrVT = stl::basic_string_view<char_type>>
@@ -239,6 +247,10 @@ namespace webpp::uri {
             requires needs_allocator
         explicit constexpr basic_password(AllocT const& alloc = {}) noexcept : storage{alloc} {}
 
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires(!needs_allocator)
+        explicit constexpr basic_password([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
+
         template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
         explicit constexpr basic_password(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
@@ -252,6 +264,10 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr size_type size() const noexcept {
             return storage.size();
+        }
+
+        constexpr void clear() {
+            return storage.clear();
         }
 
         template <istl::StringView StrVT = stl::basic_string_view<char_type>>

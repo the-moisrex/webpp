@@ -173,7 +173,7 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void set_raw_value(iterator beg, iterator end) {
+        constexpr void assign(iterator beg, iterator end) {
             // first "name" is chosen for the whole value, because of the algorithm that gets the queries will
             // be correct that way
 

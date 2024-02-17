@@ -337,6 +337,10 @@ namespace webpp::uri {
             requires needs_allocator
         explicit constexpr basic_scheme(AllocT const& alloc = {}) noexcept : storage{alloc} {}
 
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires(!needs_allocator)
+        explicit constexpr basic_scheme([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
+
         template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
         explicit constexpr basic_scheme(InpStr const& inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
@@ -364,7 +368,7 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void set_raw_value(iterator beg, iterator end) noexcept(!is_modifiable) {
+        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
             istl::assign(storage, beg, end);
         }
 
@@ -393,8 +397,7 @@ namespace webpp::uri {
             if constexpr (istl::ModifiableString<NStrT>) {
                 if (append_separators) {
                     if (!storage.empty()) {
-                        out.push_back(':');
-                        out.append("//");
+                        out.append("://"); // todo: opaque path
                     } else {
                         out.append("//");
                     }

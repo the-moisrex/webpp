@@ -4,6 +4,7 @@
 #define WEBPP_URI_HPP
 
 #include "../std/string_view.hpp"
+#include "../strings/to_case.hpp"
 #include "authority.hpp"
 #include "fragment.hpp"
 #include "host.hpp"
@@ -104,18 +105,18 @@ namespace webpp::uri {
         using allocator_type = AllocT;
 
         using scheme_type   = basic_scheme<string_type>;
-        using host_type     = basic_host<string_type>;
+        using host_type     = basic_host<string_type, allocator_type>;
         using username_type = basic_username<string_type>;
         using password_type = basic_password<string_type>;
         using port_type     = basic_port<string_type>;
-        using path_type     = basic_path<string_type>;
+        using path_type     = basic_path<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
         using queries_type  = basic_queries<string_type, allocator_type>;
 
         using vec_type     = typename path_type::vector_type;
         using map_type     = typename queries_type::map_type;
         using seg_type     = string_type;
-        using iterator     = typename string_type::iterator;
+        using iterator     = typename string_type::const_iterator;
         using char_type    = typename string_type::value_type;
         using size_type    = typename string_type::size_type;
         using map_iterator = typename map_type::iterator;
@@ -146,15 +147,38 @@ namespace webpp::uri {
         fragment_type m_fragment{};
 
       public:
+        constexpr uri_components() = default;
+
+        explicit constexpr uri_components(allocator_type const& alloc)
+          : m_scheme{alloc},
+            m_username{alloc},
+            m_password{alloc},
+            m_hostname{alloc},
+            m_port{alloc},
+            m_path{alloc},
+            m_queries{alloc},
+            m_fragment{alloc} {}
+
         // NOLINTBEGIN(*-macro-usage)
 #define webpp_def(field)                                                                            \
-    static constexpr bool is_##field##_modifiable = stl::same_as<decltype(m_##field), string_type>; \
-    static constexpr bool is_##field##_vec        = stl::same_as<decltype(m_##field), vec_type>;    \
+    template <istl::StringLike NStrT = stl::basic_string_view<char_type>>                           \
+    [[nodiscard]] constexpr NStrT field##_view() const noexcept                                     \
+        requires(!is_modifiable)                                                                    \
+    {                                                                                               \
+        return m_##field.template view<NStrT>();                                                    \
+    }                                                                                               \
                                                                                                     \
-    template <istl::StringLike NStrT = stl::string_view, typename... Args>                          \
+    template <istl::StringLike NStrT = typename decltype(m_##field)::string_type, typename... Args> \
     [[nodiscard]] constexpr NStrT get_##field(Args&&... args)                                       \
       const noexcept(!istl::ModifiableString<NStrT>) {                                              \
         return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                    \
+    }                                                                                               \
+                                                                                                    \
+    template <uri_parsing_options     Options = uri_parsing_options{},                              \
+              istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>                  \
+    constexpr void field(NStrT&& inp_str) noexcept(!istl::ModifiableString<NStrT>) {                \
+        auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));                        \
+        m_##field.template parse<Options>(str.begin(), str.end());                                  \
     }                                                                                               \
                                                                                                     \
     constexpr void clear_##field() noexcept {                                                       \
@@ -165,21 +189,15 @@ namespace webpp::uri {
         return m_##field.has_value();                                                               \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow)                     \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
-        m_##field.set_raw_value(beg, end);                                                          \
+    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {                   \
+        m_##field.assign(beg, end);                                                                 \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow)                      \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
+    constexpr void set_##field(decltype(m_##field)&& str) noexcept(is_nothrow) {                    \
         m_##field = stl::move(str);                                                                 \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow)             \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
+    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) {           \
         if constexpr (is_modifiable) {                                                              \
             ascii::lower_to(m_##field, beg, end);                                                   \
         } else {                                                                                    \
@@ -187,9 +205,7 @@ namespace webpp::uri {
         }                                                                                           \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow)                        \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
+    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {                      \
         if constexpr (is_modifiable) {                                                              \
             ascii::lower_to(m_##field, str.begin(), str.end());                                     \
         } else {                                                                                    \
@@ -197,11 +213,15 @@ namespace webpp::uri {
         }                                                                                           \
     }                                                                                               \
                                                                                                     \
-    constexpr auto& field##_ref() noexcept {                                                        \
+    [[nodiscard]] constexpr auto const& field() const noexcept {                                    \
         return m_##field;                                                                           \
     }                                                                                               \
                                                                                                     \
-    constexpr auto const& field##_ref() const noexcept {                                            \
+    [[nodiscard]] constexpr auto& field##_ref() noexcept {                                          \
+        return m_##field;                                                                           \
+    }                                                                                               \
+                                                                                                    \
+    [[nodiscard]] constexpr auto const& field##_ref() const noexcept {                              \
         return m_##field;                                                                           \
     }
 
@@ -219,90 +239,61 @@ namespace webpp::uri {
 
         // NOLINTEND(*-macro-usage)
 
-        constexpr void set_hostname(iterator beg, iterator end) {
-            istl::clear(m_hostname);
-            if constexpr (is_modifiable) {
-                istl::emplace_one(m_hostname, beg, end, m_hostname.get_allocator());
-            } else {
-                istl::emplace_one(m_hostname, beg, end);
-            }
-        }
-
-        template <istl::String NStrT = stl::string, typename... Args>
-        [[nodiscard]] constexpr NStrT get_hostname(Args&&... args) const {
-            NStrT out{stl::forward<Args>(args)...};
-            if (m_hostname.empty()) {
-                return out;
-            }
-            for (auto pos = m_hostname.begin();;) {
-                out += *pos;
-                if (++pos == m_hostname.end()) {
-                    break;
-                }
-                out += '.';
-            }
-            return out;
-        }
-
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username() || has_password();
         }
     };
 
-    template <istl::String StringType>
-    struct basic_uri {
-        using string_type    = stl::remove_cvref_t<StringType>;
-        using char_type      = typename string_type::value_type;
-        using allocator_type = typename string_type::allocator_type;
+    /**
+     * @brief Basic Structured URI
+     * @tparam StringType Storage Type
+     * @tparam AllocT Allocator type
+     */
+    template <istl::StringLike StringType, Allocator AllocT = allocator_type_from_t<StringType>>
+    struct basic_uri : uri_components<StringType, rebind_allocator<AllocT, typename StringType::value_type>> {
+        using string_type     = StringType;
+        using char_type       = typename string_type::value_type;
+        using allocator_type  = rebind_allocator<AllocT, char_type>;
+        using components_type = uri_components<string_type, allocator_type>;
+        using iterator        = typename string_type::const_iterator;
+        using size_type       = typename string_type::size_type;
+
+        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow    = !is_modifiable;
+
+        /// same as string_type if it's modifiable, otherwise, std::string
+        using modifiable_string_type =
+          stl::conditional_t<is_modifiable, string_type, stl::basic_string<char_type, allocator_type>>;
 
         using scheme_type   = basic_scheme<string_type>;
         using username_type = basic_username<string_type>;
         using password_type = basic_password<string_type>;
-        using host_type     = basic_host<string_type>;
+        using host_type     = basic_host<string_type, allocator_type>;
         using port_type     = basic_port<string_type>;
-        using path_type     = basic_path<string_type>;
-        using queries_type  = basic_queries<string_type>;
+        using path_type     = basic_path<string_type, allocator_type>;
+        using queries_type  = basic_queries<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
 
-        // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
-        scheme_type   scheme{};
-        username_type username{};
-        password_type password{};
-        host_type     host{};
-        port_type     port{};
-        path_type     path{};
-        queries_type  queries{};
-        fragment_type fragment{};
-
-        // NOLINTEND(misc-non-private-member-variables-in-classes)
-
-
-        template <typename T, typename Allocator = allocator_type>
-            requires((URIString<T> || istl::StringViewifiable<T>) &&
-                     stl::is_constructible_v<allocator_type, Allocator>)
-        explicit(false) constexpr basic_uri(T&& uri_str, Allocator const& alloc = {}) // NOLINT(*-explicit-*)
-          : scheme{alloc},
-            username{alloc},
-            password{alloc},
-            host{alloc},
-            port{alloc},
-            path{alloc},
-            queries{alloc},
-            fragment{alloc} {
-            extract_from(stl::forward<T>(uri_str));
+        template <uri_parsing_options Options = uri_parsing_options{}>
+        constexpr uri_status_type parse(iterator beg, iterator end) noexcept(is_nothrow) {
+            parsing_uri_context<components_type*, allocator_type> ctx{};
+            ctx.beg = beg;
+            ctx.pos = beg;
+            ctx.end = end;
+            ctx.out = static_cast<components_type*>(this);
+            parse_uri<Options>(ctx);
+            return ctx.status;
         }
 
-        template <typename Allocator = allocator_type>
-            requires(stl::is_constructible_v<allocator_type, Allocator>)
-        constexpr explicit basic_uri(Allocator const& alloc)
-          : scheme{alloc},
-            username{alloc},
-            password{alloc},
-            host{alloc},
-            port{alloc},
-            path{alloc},
-            queries{alloc},
-            fragment{alloc} {}
+        template <istl::StringViewifiable T, Allocator InpAllocT = allocator_type>
+        explicit(false) constexpr basic_uri(T&& uri_str, InpAllocT const& alloc = {}) // NOLINT(*-explicit-*)
+          : components_type{alloc} {
+            auto const str = istl::string_viewify_of<string_type>(stl::forward<T>(uri_str));
+            parse(str.begin(), str.end());
+        }
+
+        template <Allocator InpAllocT = allocator_type>
+        constexpr explicit basic_uri(InpAllocT const& alloc) : components_type{alloc} {}
 
         constexpr basic_uri()
             requires(stl::is_default_constructible_v<string_type>)
@@ -313,57 +304,57 @@ namespace webpp::uri {
         constexpr basic_uri& operator=(basic_uri&&) noexcept = default;
         constexpr ~basic_uri()                               = default;
 
-        template <istl::String StrT      = StringType,
-                  typename AllocatorType = typename stl::remove_cvref_t<StrT>::allocator_type>
-        [[nodiscard]] static constexpr auto create(AllocatorType const& alloc = AllocatorType{}) {
-            using str_t = stl::remove_cvref_t<StrT>;
-            return basic_uri<str_t>{alloc};
+        [[nodiscard]] constexpr auto get_allocator() const noexcept {
+            return this->get_hostname().get_allocator();
         }
 
-        template <typename DefaultAlloc = allocator_type>
-        constexpr auto get_allocator() const noexcept {
-            return extract_allocator_of_or_default<DefaultAlloc>(
-              scheme,
-              username,
-              password,
-              host,
-              port,
-              path,
-              queries,
-              fragment);
+        template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
+        constexpr basic_uri& operator=(InpStr&& inp_str) {
+            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
+            parse(str.begin(), str.end());
+            return *this;
         }
 
-        constexpr void append_to(istl::String auto& out) {
-            // estimate the size
-            // todo: check if it has a good impact on performance or it's just in the way
-            out.reserve(
-              out.size() +                // the size of out itself
-              scheme.size() +             // the scheme size
-              username.size() +           // the username size
-              password.size() + 1 +       // the password size + 1 character for @
-              host.size() +               // host size
-              port.size() + 1 +           // port size + 1 character for :
-              path.raw_string_size() +    // path size
-              queries.raw_string_size() + // queries size
-              fragment.size()             // fragments size
-            );
-            scheme.to_string(out, true);
-            username.to_string(out);
-            password.to_string(out, true);
-            host.append_to(out);
-            if (port.is_default_port(scheme.view())) {
-                port.to_string(out, true);
+        /**
+         * @brief check if we have value
+         * @return false if we don't have anything
+         */
+        [[nodiscard]] constexpr bool has_value() const noexcept {
+            return this->has_scheme() || this->has_authority() || this->has_path() || this->has_queries() ||
+                   this->has_fragment();
+        }
+
+        /// Get the total string size WITHOUT DELIMITTERS, and not considering the the encoding bloat
+        ///
+        /// Attention: The size will be different based on the string type used because non-modifiable string
+        ///            types won't be able to hold decoded/encoded values.
+        [[nodiscard]] constexpr size_type size() const noexcept {
+            // todo: queries, host, and path's sizes are not string sizes
+            return this->scheme_ref().size() + this->username_ref().size() + this->password_ref().size() +
+                   this->hostname_ref().size() + this->port_ref().size() + this->path_ref().size() +
+                   this->queries_ref().size() + this->fragment_ref().size();
+        }
+
+        template <istl::String NStrT = modifiable_string_type>
+        constexpr void to_string(NStrT& out) const {
+            out.reserve(size());
+            this->scheme_ref().to_string(out, true);
+            this->username_ref().to_string(out);
+            this->password_ref().to_string(out, true);
+            this->hostname_ref().append_to(out);
+            if (this->port_ref().is_default_port(this->scheme_ref().view())) {
+                this->port_ref().to_string(out, true);
             }
-            path.to_string(out);
-            queries.to_string(out);
-            fragment.to_string(out, true);
+            this->path_ref().to_string(out);
+            this->queries_ref().to_string(out);
+            this->fragment_ref().to_string(out, true);
         }
 
-        template <istl::String StrT = string_type>
-        [[nodiscard]] constexpr StrT to_string() {
-            StrT str{get_allocator<typename StrT::allocator_type>()};
-            append_to(str);
-            return str;
+        template <istl::String NStrT = modifiable_string_type, typename... Args>
+        [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
+            NStrT out{stl::forward<Args>(args)...};
+            to_string(out);
+            return out;
         }
 
         /**
@@ -372,7 +363,7 @@ namespace webpp::uri {
          * @return bool
          */
         [[nodiscard]] constexpr bool has_authority() const noexcept {
-            return !host.empty() || !username.empty() || !password.empty() || !port.empty();
+            return this->has_hostname() || this->has_port() || this->has_username() || this->has_password();
         }
 
         /**
@@ -445,41 +436,6 @@ namespace webpp::uri {
             }
 
             return target;
-        }
-
-        template <istl::StringViewifiable StrT>
-        constexpr uri_status set_scheme(StrT&& inp_str) noexcept {
-            return scheme.parse_from(stl::forward<StrT>(inp_str));
-        }
-
-        template <URIString URIType>
-        constexpr basic_uri& extract_from(URIType const& uri_str) {
-            scheme   = uri_str.scheme();
-            username = uri_str.username().value_or("");
-            password = uri_str.password().value_or("");
-            host     = uri_str.host();
-            port     = uri_str.port();
-            path     = uri_str.path();
-            queries  = uri_str.queries();
-            fragment = uri_str.fragment();
-            return *this;
-        }
-
-        template <istl::StringViewifiable StrVT>
-            requires(!URIString<StrVT>)
-        constexpr basic_uri& extract_from(StrVT&& url_str) {
-            auto const str_view = istl::string_viewify(stl::forward<StrVT>(url_str));
-            using str_view_t    = stl::remove_cvref_t<decltype(str_view)>;
-            uri_string<string_type const, str_view_t> const uri_str{str_view};
-            extract_from(uri_str);
-            return *this;
-        }
-
-        template <typename T>
-            requires(URIString<T> || istl::StringViewifiable<T>)
-        constexpr basic_uri& operator=(T&& uri_str) {
-            extract_from(stl::forward<T>(uri_str));
-            return *this;
         }
     };
 
