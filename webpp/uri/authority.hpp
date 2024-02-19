@@ -292,7 +292,8 @@ namespace webpp::uri {
 
         if (has_value<components::host>(ctx)) {
             if constexpr (ctx_type::is_segregated) {
-                if (ascii::iequals_fl("localhost", get_output<components::host>(ctx).front())) {
+                auto const host = get_output<components::host>(ctx);
+                if (host.size() == 1 && ascii::iequals_fl("localhost", host.back())) {
                     clear<components::host>(ctx);
                 }
             } else {

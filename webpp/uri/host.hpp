@@ -31,6 +31,7 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr bool is_nothrow    = !is_modifiable;
+        static constexpr bool is_segregated = true;
 
         /// string_type if it's modifiable, otherwise, std::string
         using modifiable_string_type =
@@ -151,6 +152,10 @@ namespace webpp::uri {
             return storage.front();
         }
 
+        [[nodiscard]] constexpr decltype(auto) back() const noexcept {
+            return storage.back();
+        }
+
         [[nodiscard]] constexpr decltype(auto) begin() const noexcept {
             return storage.begin();
         }
@@ -171,7 +176,7 @@ namespace webpp::uri {
             return storage.size();
         }
 
-        constexpr void clear() {
+        constexpr void clear() noexcept {
             return storage.clear();
         }
 

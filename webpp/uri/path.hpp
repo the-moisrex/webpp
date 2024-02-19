@@ -438,6 +438,7 @@ namespace webpp::uri {
         using vector_type     = container_type; // used in uri's uri_components
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated = true;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";

@@ -145,6 +145,7 @@ namespace webpp::uri {
         using const_iterator = typename map_type::const_iterator;
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_segregated = true;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
 
         template <typename... Args>

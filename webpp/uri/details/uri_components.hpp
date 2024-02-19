@@ -17,6 +17,9 @@
 namespace webpp::uri {
 
     template <typename T>
+    concept SegregatedContainer = istl::LinearContainer<T> || requires { requires T::is_segregated; };
+
+    template <typename T>
     concept ParsingURIContext = requires(T ctx) {
         typename T::iterator;
         typename T::out_type;
@@ -940,7 +943,7 @@ namespace webpp::uri {
         static constexpr components component     = Comp;
         static constexpr bool       is_nothrow    = stl::is_nothrow_copy_assignable_v<out_container_type>;
         static constexpr bool       has_base_uri  = !stl::is_void_v<BaseSegType>;
-        static constexpr bool       is_segregated = istl::LinearContainer<out_container_type>;
+        static constexpr bool       is_segregated = SegregatedContainer<out_container_type>;
         static constexpr bool       is_modifiable = istl::ModifiableString<out_container_type> ||
                                               details::ModifiableVectorOfStrings<out_container_type>;
 
@@ -1119,7 +1122,11 @@ namespace webpp::uri {
 
         if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                return *ctx.out;
+                if constexpr (requires { ctx.out->storage_reF(); }) {
+                    return ctx.out->storage_ref();
+                } else {
+                    return *ctx.out;
+                }
             }
             // else return void to get a compile time error
         } else {
@@ -1184,7 +1191,11 @@ namespace webpp::uri {
         if constexpr (requires { ctx_type::component; }) {
             // won't work with the integers
             if constexpr (Comp == ctx_type::component) {
-                istl::clear(*ctx.out);
+                if constexpr (requires { ctx.out->clear(); }) {
+                    ctx.out->clear();
+                } else {
+                    istl::clear(*ctx.out);
+                }
             }
         } else {
             details::clear_from<Comp>(details::get_output_ref(ctx));
