@@ -479,11 +479,11 @@ namespace webpp::uri {
         constexpr bool parse(StrT&& str) {
             auto const path     = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
             using iterator_type = typename string_view_type::iterator;
-            parsing_uri_component_context<components::path, container_type*, iterator_type> ctx;
+            parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
             ctx.beg    = path.begin();
             ctx.end    = path.end();
             ctx.pos    = path.begin();
-            ctx.out    = stl::addressof(storage);
+            ctx.out    = this;
             ctx.scheme = scheme_type::special_scheme;
             parse<Options>(ctx);
             return is_valid(ctx.status);
@@ -587,6 +587,14 @@ namespace webpp::uri {
 
         constexpr void clear() {
             return storage.clear();
+        }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return storage.empty();
+        }
+
+        constexpr void pop_back() noexcept {
+            return storage.pop_back();
         }
 
         /**

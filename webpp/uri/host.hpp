@@ -44,11 +44,11 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_component_context<components::host, container_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::host, basic_host*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
-            ctx.out = stl::addressof(storage);
+            ctx.out = this;
             // todo: parse hose not authority (even though they will be ignored)
             parse_authority<Options>(ctx);
             return ctx.status;
@@ -173,6 +173,10 @@ namespace webpp::uri {
 
         constexpr void clear() {
             return storage.clear();
+        }
+
+        constexpr void pop_back() noexcept {
+            return storage.pop_back();
         }
     };
 
