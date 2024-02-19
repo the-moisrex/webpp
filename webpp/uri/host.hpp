@@ -83,12 +83,13 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void assign(iterator beg, iterator end) {
+        template <typename Iter = iterator>
+        constexpr void assign(Iter beg, Iter end) {
             storage.clear();
             if constexpr (is_modifiable) {
-                istl::emplace_one(*this, beg, end, storage.get_allocator());
+                istl::emplace_one(storage, beg, end, storage.get_allocator());
             } else {
-                istl::emplace_one(*this, beg, end);
+                istl::emplace_one(storage, beg, end);
             }
         }
 
@@ -136,6 +137,14 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
             return storage.get_allocator();
+        }
+
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return storage;
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return storage;
         }
 
         [[nodiscard]] constexpr decltype(auto) front() const noexcept {

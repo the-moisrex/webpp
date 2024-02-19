@@ -199,7 +199,7 @@ namespace webpp::uri {
                                                                                                     \
     constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) {           \
         if constexpr (is_modifiable) {                                                              \
-            ascii::lower_to(m_##field, beg, end);                                                   \
+            ascii::lower_to(field##_ref(), beg, end);                                               \
         } else {                                                                                    \
             set_##field(beg, end);                                                                  \
         }                                                                                           \
@@ -218,11 +218,11 @@ namespace webpp::uri {
     }                                                                                               \
                                                                                                     \
     [[nodiscard]] constexpr auto& field##_ref() noexcept {                                          \
-        return m_##field;                                                                           \
+        return m_##field.storage_ref();                                                             \
     }                                                                                               \
                                                                                                     \
     [[nodiscard]] constexpr auto const& field##_ref() const noexcept {                              \
-        return m_##field;                                                                           \
+        return m_##field.storage_ref();                                                             \
     }
 
 
@@ -338,16 +338,16 @@ namespace webpp::uri {
         template <istl::String NStrT = modifiable_string_type>
         constexpr void to_string(NStrT& out) const {
             out.reserve(size());
-            this->scheme_ref().to_string(out, true);
-            this->username_ref().to_string(out);
-            this->password_ref().to_string(out, true);
-            this->hostname_ref().append_to(out);
-            if (this->port_ref().is_default_port(this->scheme_ref().view())) {
-                this->port_ref().to_string(out, true);
+            this->scheme().to_string(out, true);
+            this->username().to_string(out);
+            this->password().to_string(out, true);
+            this->hostname().append_to(out);
+            if (this->port().is_default_port(this->scheme().view())) {
+                this->port().to_string(out, true);
             }
-            this->path_ref().to_string(out);
-            this->queries_ref().to_string(out);
-            this->fragment_ref().to_string(out, true);
+            this->path().to_string(out);
+            this->queries().to_string(out);
+            this->fragment().to_string(out, true);
         }
 
         template <istl::String NStrT = modifiable_string_type, typename... Args>

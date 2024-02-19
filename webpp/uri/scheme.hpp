@@ -356,6 +356,10 @@ namespace webpp::uri {
             return storage.size();
         }
 
+        constexpr void clear() noexcept {
+            istl::clear(storage);
+        }
+
         /**
          * @brief checks if the URI is a relative reference
          */
@@ -411,6 +415,14 @@ namespace webpp::uri {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
             return out;
+        }
+
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return storage;
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return storage;
         }
     };
 

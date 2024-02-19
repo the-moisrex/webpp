@@ -685,6 +685,14 @@ namespace webpp::uri {
         decltype(auto) emplace_back(Args&&... args) {
             return storage.emplace_back(stl::forward<Args>(args)...);
         }
+
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return storage;
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return storage;
+        }
     };
 
     template <istl::Stringifiable S>

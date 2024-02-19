@@ -193,6 +193,14 @@ namespace webpp::uri {
             }
         }
 
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return static_cast<map_type&>(*this);
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return static_cast<map_type const&>(*this);
+        }
+
         /**
          * @brief check if we have value
          * @return false if we don't have anything

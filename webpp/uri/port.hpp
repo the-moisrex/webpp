@@ -208,12 +208,13 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
+        template <typename Iter = iterator>
+        constexpr void assign(Iter beg, Iter end) noexcept(!is_modifiable) {
             istl::assign(storage, beg, end);
         }
 
         constexpr void clear() {
-            storage.clear();
+            istl::clear(storage);
         }
 
         /**
@@ -222,6 +223,14 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
             return !storage.empty();
+        }
+
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return storage;
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return storage;
         }
     };
 

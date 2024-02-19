@@ -99,7 +99,7 @@ namespace webpp::uri {
         }
 
         constexpr void clear() {
-            return storage.clear();
+            istl::clear(storage);
         }
 
         template <istl::StringView StrVT = stl::basic_string_view<char_type>>
@@ -144,6 +144,18 @@ namespace webpp::uri {
          */
         [[nodiscard]] constexpr bool has_value() const noexcept {
             return !storage.empty();
+        }
+
+        [[nodiscard]] constexpr auto const& get_allocator() const noexcept {
+            return storage.get_allocator();
+        }
+
+        [[nodiscard]] constexpr auto& storage_ref() noexcept {
+            return storage;
+        }
+
+        [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
+            return storage;
         }
     };
 
