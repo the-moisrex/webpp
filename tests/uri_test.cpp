@@ -65,6 +65,9 @@ TYPED_TEST(URITests, Generation) {
 
     url.scheme(stl::string_view{"https"});
     EXPECT_EQ(url.as_string(), "https://");
+    url.clear_scheme();
+    url.scheme(stl::string_view{"https:"});
+    EXPECT_EQ(url.as_string(), "https://");
     url.hostname("webpp.dev");
     EXPECT_EQ(url.as_string(), "https://webpp.dev");
 }

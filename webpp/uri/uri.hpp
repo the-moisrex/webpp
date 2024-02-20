@@ -341,7 +341,7 @@ namespace webpp::uri {
             this->scheme().to_string(out, true);
             this->username().to_string(out);
             this->password().to_string(out, true);
-            this->hostname().append_to(out);
+            this->hostname().to_string(out);
             if (this->port().is_default_port(this->scheme().view())) {
                 this->port().to_string(out, true);
             }

@@ -130,11 +130,6 @@ namespace webpp::uri {
             return storage.back();
         }
 
-        void append_to(istl::String auto& str) const {
-            for (auto const& subdomain : *this) {
-                str.append(subdomain);
-            }
-        }
 
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
             return storage.get_allocator();

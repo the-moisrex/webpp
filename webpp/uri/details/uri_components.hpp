@@ -1122,7 +1122,7 @@ namespace webpp::uri {
 
         if constexpr (requires { ctx_type::component; }) {
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (requires { ctx.out->storage_reF(); }) {
+                if constexpr (requires { ctx.out->storage_ref(); }) {
                     return ctx.out->storage_ref();
                 } else {
                     return *ctx.out;
