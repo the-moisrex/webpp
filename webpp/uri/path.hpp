@@ -702,6 +702,24 @@ namespace webpp::uri {
         [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
             return storage;
         }
+
+        /// Equality check
+        /// Attention: this function doesn't parse your input
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            for (auto const& piece : storage) {
+                if (!str.starts_with(piece)) {
+                    return false;
+                }
+                str.remove_prefix(piece.size() + 1);
+            }
+            return true;
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_path const& other) const noexcept {
+            return storage == other.storage_ref();
+        }
     };
 
     template <istl::Stringifiable S>

@@ -142,3 +142,18 @@ TYPED_TEST(StructuredURITests, StructuredURI) {
     EXPECT_TRUE(url.has_value());
     EXPECT_TRUE(url.has_scheme());
 }
+
+TYPED_TEST(StructuredURITests, StructuredURIEquality) {
+    static TypeParam const data{get_one<TypeParam>(
+      "HTTPS://example.org/page/one?option=value&opt=val#fragment",
+      L"HtTPS://example.org/page/one?option=value&opt=val#fragment")};
+
+    uri::basic_uri<TypeParam> const url{data};
+    EXPECT_TRUE(url.has_value());
+    EXPECT_TRUE(url.has_scheme());
+    EXPECT_EQ(url.scheme(), get_one<TypeParam>("https", L"https"));
+    EXPECT_EQ(url.hostname(), get_one<TypeParam>("EXAMPLE.ORG", L"EXAMPLE.ORG"));
+    EXPECT_EQ(url.path(), get_one<TypeParam>("/page/one", L"/page/one"));
+    EXPECT_EQ(url.fragment(), get_one<TypeParam>("fragment", L"fragment"));
+    EXPECT_EQ(url.queries(), get_one<TypeParam>("option=value&opt=val", L"option=value&opt=val"));
+}

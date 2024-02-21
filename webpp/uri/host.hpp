@@ -130,7 +130,6 @@ namespace webpp::uri {
             return storage.back();
         }
 
-
         [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept {
             return storage.get_allocator();
         }
@@ -177,6 +176,36 @@ namespace webpp::uri {
 
         constexpr void pop_back() noexcept {
             return storage.pop_back();
+        }
+
+        /// Equality check
+        /// Attention: this function doesn't parse your input
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            auto str      = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            auto piece_it = storage.begin();
+            for (; piece_it != storage.end(); ++piece_it) {
+                bool should_continue = false;
+                if constexpr (is_modifiable) {
+                    should_continue = ascii::iequals_fl(*piece_it, str.substr(0, piece_it->size()));
+                } else {
+                    should_continue = ascii::iequals(*piece_it, str.substr(0, piece_it->size()));
+                }
+                if (!should_continue) {
+                    return false;
+                }
+                str.remove_prefix(piece_it->size());
+                if (!str.starts_with('.')) {
+                    ++piece_it;
+                    break;
+                }
+                str.remove_prefix(1);
+            }
+            return str.empty() && piece_it == storage.end();
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
+            return storage == other.storage_ref();
         }
     };
 

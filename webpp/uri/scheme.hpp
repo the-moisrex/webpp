@@ -424,6 +424,19 @@ namespace webpp::uri {
         [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
             return storage;
         }
+
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            if constexpr (is_modifiable) {
+                return ascii::iequals_fl(storage, stl::forward<NStrT>(inp_str));
+            } else {
+                return ascii::iequals(storage, stl::forward<NStrT>(inp_str));
+            }
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_scheme const& other) const noexcept {
+            return storage == other.storage_ref();
+        }
     };
 
 } // namespace webpp::uri

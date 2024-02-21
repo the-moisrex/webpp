@@ -131,8 +131,16 @@ namespace webpp::uri {
      */
     template <istl::StringLike StringType = stl::string,
               Allocator        AllocType  = allocator_type_from_t<StringType>>
-    struct basic_queries : istl::map_of_strings<StringType, AllocType> {
-        using map_type       = istl::map_of_strings<StringType, AllocType>;
+    struct basic_queries
+      : stl::map<StringType,
+                 StringType,
+                 stl::less<>,
+                 rebind_allocator<AllocType, stl::pair<stl::add_const_t<StringType>, StringType>>> {
+        using map_type =
+          stl::map<StringType,
+                   StringType,
+                   stl::less<>,
+                   rebind_allocator<AllocType, stl::pair<stl::add_const_t<StringType>, StringType>>>;
         using string_type    = StringType;
         using key_type       = typename map_type::key_type;
         using mapped_type    = typename map_type::mapped_type;
@@ -234,6 +242,37 @@ namespace webpp::uri {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
             return out;
+        }
+
+        /// Equality check
+        /// Attention: this function doesn't parse your input
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            static constexpr char_type queries_seperators[3]{'=', '&', '\0'};
+
+            auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            while (!str.empty()) {
+                auto const name = str.substr(0, str.find_first_of(queries_seperators));
+                str.remove_prefix(name.size());
+                if (str.starts_with('=')) {
+                    str.remove_prefix(1);
+                }
+                auto const value = str.substr(0, str.find_first_of('&'));
+                if (auto const res = storage_ref().find(name);
+                    name.empty() || res == this->end() || res->second != value)
+                {
+                    return false;
+                }
+                str.remove_prefix(value.size());
+                if (str.starts_with('&')) {
+                    str.remove_prefix(1);
+                }
+            }
+            return true;
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_queries const& other) const noexcept {
+            return storage_ref() == other.storage_ref();
         }
     };
 
