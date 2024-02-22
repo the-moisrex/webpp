@@ -425,12 +425,11 @@ namespace webpp::uri {
         using container_type      = stl::vector<slug_type, allocator_type>;
         using value_type          = slug_type;
         using char_type           = istl::char_type_of_t<slug_type>;
-        using string_type         = stl::
-          conditional_t<istl::String<value_type>, value_type, stl::basic_string<char_type, allocator_type>>;
-        using string_view_type = istl::string_view_type_of<value_type>;
-        using path_type        = basic_path;
-        using iterator         = typename container_type::iterator;
-        using const_iterator   = typename container_type::const_iterator;
+        using string_type         = istl::defaulted_string<value_type, allocator_type>;
+        using string_view_type    = istl::string_view_type_of<value_type>;
+        using path_type           = basic_path;
+        using iterator            = typename container_type::iterator;
+        using const_iterator      = typename container_type::const_iterator;
 
         using size_type       = typename container_type::size_type;
         using reference       = typename container_type::reference;
@@ -439,6 +438,7 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr bool is_segregated = true;
+        static constexpr bool is_nothrow    = !is_modifiable;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -471,22 +471,16 @@ namespace webpp::uri {
 
         // NOLINTEND(*-forwarding-reference-overload)
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-        constexpr void parse(CtxT& ctx) {
-            parse_path<Options>(ctx);
-        }
-
-        template <uri_parsing_options Options = uri_parsing_options{}, typename StrT>
-        constexpr bool parse(StrT&& str) {
-            auto const path     = istl::string_viewify_of<string_view_type>(stl::forward<StrT>(str));
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             using iterator_type = typename string_view_type::iterator;
             parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
-            ctx.beg    = path.begin();
-            ctx.end    = path.end();
-            ctx.pos    = path.begin();
+            ctx.beg    = beg;
+            ctx.end    = end;
+            ctx.pos    = beg;
             ctx.out    = this;
             ctx.scheme = scheme_type::special_scheme;
-            parse<Options>(ctx);
+            parse_path<Options>(ctx);
             return is_valid(ctx.status);
         }
 

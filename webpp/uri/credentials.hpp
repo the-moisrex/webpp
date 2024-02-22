@@ -225,6 +225,17 @@ namespace webpp::uri {
         [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
             return storage;
         }
+
+        /// Equality check
+        /// Attention: this function doesn't parse your input
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            return storage == stl::forward<NStrT>(inp_str);
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_username const& other) const noexcept {
+            return storage == other.storage_ref();
+        }
     };
 
     /**
@@ -335,6 +346,17 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr auto const& storage_ref() const noexcept {
             return storage;
+        }
+
+        /// Equality check
+        /// Attention: this function doesn't parse your input
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            return storage == stl::forward<NStrT>(inp_str);
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_password const& other) const noexcept {
+            return storage == other.storage_ref();
         }
     };
 

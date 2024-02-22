@@ -248,7 +248,8 @@ namespace webpp::uri {
         /// Attention: this function doesn't parse your input
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
-            static constexpr char_type queries_seperators[3]{'=', '&', '\0'};
+            // NOLINTNEXTLINE(*-avoid-c-arrays)
+            webpp_static_constexpr char_type queries_seperators[3]{'=', '&', '\0'};
 
             auto str = istl::string_viewify(stl::forward<NStrT>(inp_str));
             while (!str.empty()) {

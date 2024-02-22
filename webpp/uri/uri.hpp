@@ -176,9 +176,9 @@ namespace webpp::uri {
                                                                                                     \
     template <uri_parsing_options     Options = uri_parsing_options{},                              \
               istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>                  \
-    constexpr void field(NStrT&& inp_str) noexcept(!istl::ModifiableString<NStrT>) {                \
+    constexpr uri_status_type field(NStrT&& inp_str) noexcept(!istl::ModifiableString<NStrT>) {     \
         auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));                        \
-        m_##field.template parse<Options>(str.begin(), str.end());                                  \
+        return m_##field.template parse<Options>(str.begin(), str.end());                           \
     }                                                                                               \
                                                                                                     \
     constexpr void clear_##field() noexcept {                                                       \
@@ -252,7 +252,7 @@ namespace webpp::uri {
     template <istl::StringLike StringType, Allocator AllocT = allocator_type_from_t<StringType>>
     struct basic_uri : uri_components<StringType, rebind_allocator<AllocT, typename StringType::value_type>> {
         using string_type     = StringType;
-        using char_type       = typename string_type::value_type;
+        using char_type       = istl::char_type_of_t<string_type>;
         using allocator_type  = rebind_allocator<AllocT, char_type>;
         using components_type = uri_components<string_type, allocator_type>;
         using iterator        = typename string_type::const_iterator;
@@ -262,8 +262,7 @@ namespace webpp::uri {
         static constexpr bool is_nothrow    = !is_modifiable;
 
         /// same as string_type if it's modifiable, otherwise, std::string
-        using modifiable_string_type =
-          stl::conditional_t<is_modifiable, string_type, stl::basic_string<char_type, allocator_type>>;
+        using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
 
         using scheme_type   = basic_scheme<string_type>;
         using username_type = basic_username<string_type>;
@@ -355,6 +354,11 @@ namespace webpp::uri {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);
             return out;
+        }
+
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr uri_status_type href(NStrT&& inp_str) {
+            return parse(stl::forward<NStrT>(inp_str));
         }
 
         /**

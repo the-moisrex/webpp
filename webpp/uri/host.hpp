@@ -34,10 +34,7 @@ namespace webpp::uri {
         static constexpr bool is_segregated = true;
 
         /// string_type if it's modifiable, otherwise, std::string
-        using modifiable_string_type =
-          stl::conditional_t<is_modifiable,
-                             string_type,
-                             stl::basic_string<char_type, rebind_allocator<allocator_type, char_type>>>;
+        using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
 
       private:
         container_type storage;

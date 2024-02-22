@@ -179,7 +179,7 @@ namespace webpp {
     /**
      * Get allocator of T, if it has an allocator, otherwise, revert back to the DefaultAllocatorType
      */
-    template <typename T, typename DefaultAllocatorType = stl::allocator<char>>
+    template <typename T, typename DefaultAllocatorType = stl::allocator<typename T::value_type>>
     struct allocator_type_from {
         using type = DefaultAllocatorType;
     };
@@ -190,7 +190,7 @@ namespace webpp {
         using type = typename T::allocator_type;
     };
 
-    template <typename T, typename DefaultAllocatorType = stl::allocator<char>>
+    template <typename T, typename DefaultAllocatorType = stl::allocator<typename T::value_type>>
     using allocator_type_from_t = typename allocator_type_from<T, DefaultAllocatorType>::type;
 
 } // namespace webpp

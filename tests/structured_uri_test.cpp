@@ -157,3 +157,27 @@ TYPED_TEST(StructuredURITests, StructuredURIEquality) {
     EXPECT_EQ(url.fragment(), get_one<TypeParam>("fragment", L"fragment"));
     EXPECT_EQ(url.queries(), get_one<TypeParam>("option=value&opt=val", L"option=value&opt=val"));
 }
+
+TYPED_TEST(StructuredURITests, AddDotToPath) {
+    static TypeParam const data{get_one<TypeParam>("non-spec:/", L"non-spec:/")};
+
+    uri::basic_uri<TypeParam> url{data};
+    // EXPECT_TRUE(url);
+    url.path(get_one<TypeParam>("//p", L"//p"));
+    EXPECT_EQ(url.path(), get_one<TypeParam>("//p", L"//p"));
+    EXPECT_EQ(url.as_string(), get_one<TypeParam>("non-spec:/.//p", L"non-spec:/.//p"));
+}
+
+TYPED_TEST(StructuredURITests, UpdatePassword) {
+    static TypeParam const data{get_one<TypeParam>(
+      "https://username:password@host:8000/path?query#fragment",
+      L"https://username:password@host:8000/path?query#fragment")};
+
+    uri::basic_uri<TypeParam> url{data};
+    // EXPECT_TRUE(url);
+    url.password(get_one<TypeParam>("test", L"test"));
+    EXPECT_EQ(url.password(), get_one<TypeParam>("test", L"test"));
+    EXPECT_EQ(url.as_string(),
+              get_one<TypeParam>("https://username:test@host:8000/path?query#fragment",
+                                 L"https://username:test@host:8000/path?query#fragment"));
+}

@@ -401,9 +401,12 @@ namespace webpp::uri {
             if constexpr (istl::ModifiableString<NStrT>) {
                 if (append_separators) {
                     if (!storage.empty()) {
-                        out.append("://"); // todo: opaque path
+                        out.push_back(':');
+                        out.push_back('/');
+                        out.push_back('/');
                     } else {
-                        out.append("//");
+                        out.push_back('/');
+                        out.push_back('/');
                     }
                 }
             }
