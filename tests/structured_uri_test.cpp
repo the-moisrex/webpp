@@ -188,7 +188,26 @@ TYPED_TEST(StructuredURITests, SchemeChangeParsing) {
       get_one<TypeParam>("file:///var/log/system.log", L"file:///var/log/system.log")};
 
     uri::basic_uri<TypeParam> url{data};
+    url.href(get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0"));
+    EXPECT_EQ(url.scheme(), get_one<TypeParam>("http", L"http"));
+    if constexpr (uri::basic_scheme<TypeParam>::is_modifiable) {
+        EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://192.168.0.240/", L"http://192.168.0.240/"));
+    } else {
+        EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://0300.168.0xF0/", L"http://0300.168.0xF0/"));
+    }
+}
+
+TYPED_TEST(StructuredURITests, ClearOnSet) {
+    static TypeParam const data{
+      get_one<TypeParam>("https://example.org/about", L"https://example.org/about")};
+
+    uri::basic_uri<TypeParam> url{data};
     url = get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0");
     EXPECT_EQ(url.scheme(), get_one<TypeParam>("http", L"http"));
-    EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://192.168.0.240/", L"http://192.168.0.240/"));
+    EXPECT_FALSE(url.has_path());
+    if constexpr (uri::basic_scheme<TypeParam>::is_modifiable) {
+        EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://192.168.0.240", L"http://192.168.0.240"));
+    } else {
+        EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0"));
+    }
 }

@@ -353,8 +353,24 @@ namespace webpp::uri {
             return this->get_hostname().get_allocator();
         }
 
+        constexpr void clear_authority() noexcept(is_nothrow) {
+            this->clear_username();
+            this->clear_password();
+            this->clear_hostname();
+            this->clear_port();
+        }
+
+        constexpr void clear() noexcept(is_nothrow) {
+            this->clear_scheme();
+            this->clear_authority();
+            this->clear_path();
+            this->clear_queries();
+            this->clear_fragment();
+        }
+
         template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
         constexpr basic_uri& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
+            this->clear();
             parse(stl::forward<InpStr>(inp_str));
             return *this;
         }
