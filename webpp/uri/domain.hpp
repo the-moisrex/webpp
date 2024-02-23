@@ -5,6 +5,7 @@
 
 #include "../std/string_like.hpp"
 #include "../strings/charset.hpp"
+#include "../strings/iequals.hpp"
 #include "./details/uri_status.hpp"
 
 #include <compare>
@@ -145,7 +146,13 @@ namespace webpp {
      */
     template <istl::StringLike StorageT = stl::string_view>
     struct basic_domain {
+        using string_type  = StorageT;
+        using char_type    = typename string_type::value_type;
         using storage_type = StorageT;
+
+        static constexpr bool is_modifiable   = istl::ModifiableString<string_type>;
+        static constexpr bool is_nothrow      = !is_modifiable;
+        static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
       private:
         storage_type       storage;
@@ -169,6 +176,19 @@ namespace webpp {
 
         [[nodiscard]] explicit constexpr operator bool() const noexcept {
             return is_valid();
+        }
+
+        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
+        [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
+            if constexpr (is_modifiable) {
+                return ascii::iequals_fl(storage, stl::forward<NStrT>(inp_str));
+            } else {
+                return ascii::iequals(storage, stl::forward<NStrT>(inp_str));
+            }
+        }
+
+        [[nodiscard]] constexpr bool operator==(basic_domain const& other) const noexcept {
+            return storage == other.storage && status == other.status;
         }
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(
