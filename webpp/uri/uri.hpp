@@ -417,9 +417,10 @@ namespace webpp::uri {
             return out;
         }
 
-        template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
-        [[nodiscard]] constexpr uri_status_type href(NStrT&& inp_str) {
-            return parse(stl::forward<NStrT>(inp_str));
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type href(NStrT&& inp_str) {
+            return parse<Options>(stl::forward<NStrT>(inp_str));
         }
 
         /**
