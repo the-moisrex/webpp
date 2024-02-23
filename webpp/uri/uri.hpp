@@ -406,7 +406,7 @@ namespace webpp::uri {
                 this->port().to_string(out, true);
             }
             this->path().to_string(out);
-            this->queries().to_string(out);
+            this->queries().to_string(out, true);
             this->fragment().to_string(out, true);
         }
 

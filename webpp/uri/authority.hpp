@@ -356,8 +356,7 @@ namespace webpp::uri {
 
     /**
      * @brief Parse authority part of the URI (credentials, host, and port)
-     * @param ctx Parsing Context containing all the details of the URI and the state of
-     * it
+     * @param ctx Parsing Context containing all the details of the URI and the state of it
      */
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_authority(CtxT& ctx) noexcept(CtxT::is_nothrow) {

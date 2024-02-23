@@ -219,9 +219,12 @@ namespace webpp::uri {
         }
 
         template <istl::String NStrT = stl::string>
-        constexpr void to_string(NStrT& out) const {
+        constexpr void to_string(NStrT& out, bool const add_separator = false) const {
             if (this->empty()) {
                 return;
+            }
+            if (add_separator) {
+                out += '?';
             }
             for (auto pos = this->begin();;) {
                 auto const [name, value]  = *pos;
