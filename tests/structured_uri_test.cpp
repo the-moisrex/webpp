@@ -181,3 +181,14 @@ TYPED_TEST(StructuredURITests, UpdatePassword) {
               get_one<TypeParam>("https://username:test@host:8000/path?query#fragment",
                                  L"https://username:test@host:8000/path?query#fragment"));
 }
+
+// https://github.com/nodejs/node/issues/46755
+TYPED_TEST(StructuredURITests, SchemeChangeParsing) {
+    static TypeParam const data{
+      get_one<TypeParam>("file:///var/log/system.log", L"file:///var/log/system.log")};
+
+    uri::basic_uri<TypeParam> url{data};
+    url = get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0");
+    EXPECT_EQ(url.scheme(), get_one<TypeParam>("http", L"http"));
+    EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://192.168.0.240/", L"http://192.168.0.240/"));
+}

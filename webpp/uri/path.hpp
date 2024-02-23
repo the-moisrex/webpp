@@ -438,7 +438,7 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr bool is_segregated = true;
-        static constexpr bool is_nothrow    = !is_modifiable;
+        static constexpr bool is_nothrow    = false;
 
         static constexpr string_view_type parent_dir  = "..";
         static constexpr string_view_type current_dir = ".";
@@ -451,6 +451,25 @@ namespace webpp::uri {
         container_type storage;
 
       public:
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            using iterator_type = typename string_view_type::iterator;
+            parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
+            ctx.beg    = beg;
+            ctx.end    = end;
+            ctx.pos    = beg;
+            ctx.out    = this;
+            ctx.scheme = scheme_type::special_scheme;
+            parse_path<Options>(ctx);
+            return ctx.status;
+        }
+
+        template <uri_parsing_options Options = uri_parsing_options{}, istl::StringViewifiable StrT>
+        constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
+            auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+            return parse<Options>(str.begin(), str.end());
+        }
+
         template <typename... T>
             requires(stl::is_constructible_v<container_type, T...>)
         explicit constexpr basic_path(T&&... args) : storage{stl::forward<T>(args)...} {}
@@ -470,19 +489,6 @@ namespace webpp::uri {
         }
 
         // NOLINTEND(*-forwarding-reference-overload)
-
-        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
-        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            using iterator_type = typename string_view_type::iterator;
-            parsing_uri_component_context<components::path, basic_path*, iterator_type> ctx;
-            ctx.beg    = beg;
-            ctx.end    = end;
-            ctx.pos    = beg;
-            ctx.out    = this;
-            ctx.scheme = scheme_type::special_scheme;
-            parse_path<Options>(ctx);
-            return is_valid(ctx.status);
-        }
 
         template <istl::StringViewifiable SegStrT>
         constexpr basic_path& operator/=(SegStrT&& seg_str) {

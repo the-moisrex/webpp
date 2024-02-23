@@ -189,7 +189,8 @@ namespace webpp::uri {
         return m_##field.has_value();                                                               \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {                   \
+    template <typename Iter = iterator>                                                             \
+    constexpr void set_##field(Iter beg, Iter end) noexcept(is_nothrow) {                           \
         m_##field.assign(beg, end);                                                                 \
     }                                                                                               \
                                                                                                     \
@@ -197,7 +198,8 @@ namespace webpp::uri {
         m_##field = stl::move(str);                                                                 \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) {           \
+    template <typename Iter = iterator>                                                             \
+    constexpr void set_lowered_##field(Iter beg, Iter end) noexcept(is_nothrow) {                   \
         if constexpr (is_modifiable) {                                                              \
             ascii::lower_to(field##_ref(), beg, end);                                               \
         } else {                                                                                    \
@@ -245,6 +247,44 @@ namespace webpp::uri {
     };
 
     /**
+     * A class used during parsing a URI
+     */
+    template <typename OutComponentType, typename Iter, typename BaseSegType = void, typename BaseIter = void>
+    struct parsing_structured_uri_context {
+        using out_seg_type   = OutComponentType;
+        using base_seg_type  = BaseSegType;
+        using out_type       = OutComponentType;
+        using clean_out_type = stl::remove_pointer_t<out_type>;
+        using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
+                                             BaseSegType,
+                                             uri_components<base_seg_type, BaseIter>>;
+        using seg_type       = typename clean_out_type::seg_type; // this might be different than
+                                                                  // OutSegType
+        using iterator       = Iter;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using state_type      = stl::underlying_type_t<uri_status>;
+
+        using map_iterator   = typename clean_out_type::map_iterator;
+        using vec_iterator   = typename clean_out_type::vec_iterator;
+        using map_value_type = typename clean_out_type::map_value_type;
+
+
+        static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
+        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_modifiable = clean_out_type::is_modifiable;
+        static constexpr bool is_segregated = clean_out_type::is_segregated;
+
+        iterator beg{}; // the beginning of the string, not going to change during parsing
+        iterator pos{}; // current position
+        iterator end{}; // the end of the string
+        out_type out{}; // the output uri components
+        [[no_unique_address]] base_type base{};
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        scheme_type                     scheme = scheme_type::not_special;
+    };
+
+    /**
      * @brief Basic Structured URI
      * @tparam StringType Storage Type
      * @tparam AllocT Allocator type
@@ -259,7 +299,7 @@ namespace webpp::uri {
         using size_type       = typename string_type::size_type;
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
-        static constexpr bool is_nothrow    = !is_modifiable;
+        static constexpr bool is_nothrow    = false;
 
         /// same as string_type if it's modifiable, otherwise, std::string
         using modifiable_string_type = istl::defaulted_string<string_type, allocator_type>;
@@ -273,9 +313,9 @@ namespace webpp::uri {
         using queries_type  = basic_queries<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
 
-        template <uri_parsing_options Options = uri_parsing_options{}>
-        constexpr uri_status_type parse(iterator beg, iterator end) noexcept(is_nothrow) {
-            parsing_uri_context<components_type*, allocator_type> ctx{};
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_structured_uri_context<components_type*, Iter> ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
@@ -284,11 +324,17 @@ namespace webpp::uri {
             return ctx.status;
         }
 
+        template <uri_parsing_options Options = uri_parsing_options{}, istl::StringViewifiable StrT>
+        constexpr uri_status_type parse(StrT&& inp_str) noexcept(is_nothrow) {
+            auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+            return parse<Options>(str.begin(), str.end());
+        }
+
         template <istl::StringViewifiable T, Allocator InpAllocT = allocator_type>
         explicit(false) constexpr basic_uri(T&& uri_str, InpAllocT const& alloc = {}) // NOLINT(*-explicit-*)
+          noexcept(is_nothrow)
           : components_type{alloc} {
-            auto const str = istl::string_viewify_of<string_type>(stl::forward<T>(uri_str));
-            parse(str.begin(), str.end());
+            parse(stl::forward<T>(uri_str));
         }
 
         template <Allocator InpAllocT = allocator_type>
@@ -308,9 +354,8 @@ namespace webpp::uri {
         }
 
         template <istl::StringViewifiable InpStr = stl::basic_string_view<char_type>>
-        constexpr basic_uri& operator=(InpStr&& inp_str) {
-            auto const str = istl::string_viewify(stl::forward<InpStr>(inp_str));
-            parse(str.begin(), str.end());
+        constexpr basic_uri& operator=(InpStr&& inp_str) noexcept(is_nothrow) {
+            parse(stl::forward<InpStr>(inp_str));
             return *this;
         }
 
