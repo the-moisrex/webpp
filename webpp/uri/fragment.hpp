@@ -43,6 +43,27 @@ namespace webpp::uri {
         }
     }
 
+    /// Serialize fragment
+    template <istl::StringLike StorageStrT, istl::StringLike StrT>
+    static constexpr void render_fragment(
+      StorageStrT& storage,
+      StrT&        out,
+      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+        // https://url.spec.whatwg.org/#url-serializing
+        using string_type = StrT;
+        using char_type   = typename string_type::value_type;
+
+        if (!storage.empty()) {
+            return;
+        }
+        if constexpr (istl::ModifiableString<StrT>) {
+            if (add_separators) {
+                out.push_back(static_cast<char_type>('#'));
+            }
+        }
+        istl::append(out, storage);
+    }
+
     /**
      * @brief Basic Fragment (or sometimes called Hash, like in WHATWG)
      * @tparam StringType String or String View type to be used as a storage
@@ -110,15 +131,7 @@ namespace webpp::uri {
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
-            // out.reserve(out.size() + storage.size() + 1);
-            if constexpr (istl::ModifiableString<NStrT>) {
-                if (append_separators) {
-                    if (!storage.empty()) {
-                        out.push_back(static_cast<char_type>('#'));
-                    }
-                }
-            }
-            istl::append(out, storage);
+            render_fragment(storage, out, append_separators);
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
