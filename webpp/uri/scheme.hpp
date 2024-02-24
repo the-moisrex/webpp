@@ -302,6 +302,29 @@ namespace webpp::uri {
         }
     }
 
+    /// Serialize scheme
+    template <istl::StringLike StorageStrT, istl::StringLike StrT>
+    static constexpr void render_scheme(
+      StorageStrT& storage,
+      StrT&        out,
+      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+        // https://url.spec.whatwg.org/#url-serializing
+
+        istl::append(out, storage);
+        if constexpr (istl::ModifiableString<StrT>) {
+            if (add_separators) {
+                if (!storage.empty()) {
+                    out.push_back(':');
+                    out.push_back('/');
+                    out.push_back('/');
+                } else {
+                    out.push_back('/');
+                    out.push_back('/');
+                }
+            }
+        }
+    }
+
     /**
      * Scheme or Protocol
      * @tparam StringType
@@ -396,20 +419,7 @@ namespace webpp::uri {
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
-            // out.reserve(out.size() + storage.size() + 1);
-            istl::append(out, storage);
-            if constexpr (istl::ModifiableString<NStrT>) {
-                if (append_separators) {
-                    if (!storage.empty()) {
-                        out.push_back(':');
-                        out.push_back('/');
-                        out.push_back('/');
-                    } else {
-                        out.push_back('/');
-                        out.push_back('/');
-                    }
-                }
-            }
+            render_scheme(storage, out, append_separators);
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
