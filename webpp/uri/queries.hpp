@@ -154,7 +154,19 @@ namespace webpp::uri {
 
         static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
         static constexpr bool is_segregated = true;
+        static constexpr bool is_nothrow    = false;
         static constexpr auto allowed_chars = details::QUERY_OR_FRAGMENT_NOT_PCT_ENCODED<char_type>;
+
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
+        constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
+            parsing_uri_component_context<components::queries, map_type*, stl::remove_cvref_t<Iter>> ctx{};
+            ctx.beg = beg;
+            ctx.pos = beg;
+            ctx.end = end;
+            ctx.out = static_cast<map_type*>(this);
+            parse_fragment<Options>(ctx);
+            return ctx.status;
+        }
 
         template <typename... Args>
             requires requires(Args... args) { map_type{stl::forward<Args>(args)...}; }
