@@ -124,6 +124,34 @@ namespace webpp::uri {
         }
     }
 
+    /// Serialize queries
+    /// Storage type is structured (not string-like)
+    template <typename StorageType, istl::StringLike StrT>
+    static constexpr void render_queries(
+      StorageType& storage,
+      StrT&        out,
+      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+        // https://url.spec.whatwg.org/#url-serializing
+        if (storage.empty()) {
+            return;
+        }
+        if (add_separators) {
+            out += '?';
+        }
+        for (auto pos = storage.begin();;) {
+            auto const [name, value]  = *pos;
+            out                      += name;
+            if (!value.empty()) {
+                out += '=';
+                out += value;
+            }
+            if (++pos == storage.end()) {
+                break;
+            }
+            out += '&';
+        }
+    }
+
     /**
      * @brief Basic Queries (or sometimes called Searches, like in WHATWG) stored as key-values
      * @tparam StringType String or String View type used as the storage type
@@ -232,24 +260,7 @@ namespace webpp::uri {
 
         template <istl::String NStrT = stl::string>
         constexpr void to_string(NStrT& out, bool const add_separator = false) const {
-            if (this->empty()) {
-                return;
-            }
-            if (add_separator) {
-                out += '?';
-            }
-            for (auto pos = this->begin();;) {
-                auto const [name, value]  = *pos;
-                out                      += name;
-                if (!value.empty()) {
-                    out += '=';
-                    out += value;
-                }
-                if (++pos == this->end()) {
-                    break;
-                }
-                out += '&';
-            }
+            render_queries(storage_ref(), out, add_separator);
         }
 
         template <istl::String NStrT = stl::string, typename... Args>

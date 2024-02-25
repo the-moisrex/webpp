@@ -53,7 +53,7 @@ namespace webpp::uri {
         using string_type = StrT;
         using char_type   = typename string_type::value_type;
 
-        if (!storage.empty()) {
+        if (storage.empty()) {
             return;
         }
         if constexpr (istl::ModifiableString<StrT>) {
