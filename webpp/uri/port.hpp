@@ -11,7 +11,8 @@
 
 namespace webpp::uri {
 
-    static constexpr stl::uint16_t max_port_number = 65'535U;
+    static constexpr stl::uint16_t max_port_number       = 65'535U;
+    static constexpr uint16_t      well_known_upper_port = 1024;
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -31,8 +32,17 @@ namespace webpp::uri {
         if constexpr (!Options.parse_port) {
             set_warning(ctx.status, uri_status::invalid_character);
         } else {
+            // ignoring starting zeros
+            while (*ctx.pos == '0') {
+                ++ctx.pos;
+                if (ctx.pos == ctx.end) {
+                    break;
+                }
+            }
+
             auto const beg        = ctx.pos;
             port_type  port_value = 0;
+
             while (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
                     case '0':
@@ -93,6 +103,26 @@ namespace webpp::uri {
         }
     }
 
+    /// Serialize port
+    template <typename StorageType, istl::StringLike StrT>
+    static constexpr void render_port(
+      StorageType const& storage,
+      StrT&              out,
+      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+        // https://url.spec.whatwg.org/#url-serializing
+        // https://url.spec.whatwg.org/#serialize-an-integer
+        if (storage.empty()) {
+            return;
+        }
+
+        if constexpr (istl::ModifiableString<StrT>) {
+            if (add_separators) {
+                out.push_back(':');
+            }
+        }
+        istl::append(out, storage);
+    }
+
     /**
      * Basic port is designed as a string because it also should be able to handle services,
      * not that URIs can handle services but that operating systems APIs like Unix systems can
@@ -111,9 +141,6 @@ namespace webpp::uri {
         static constexpr bool is_nothrow      = !is_modifiable;
         static constexpr bool needs_allocator = requires { typename string_type::allocator_type; };
 
-
-        static constexpr uint16_t max_port_number       = 65'535;
-        static constexpr uint16_t well_known_upper_port = 1024;
 
       private:
         // we're not making this public, because we want this value to be always correct, unless the user
@@ -170,15 +197,7 @@ namespace webpp::uri {
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
         constexpr void to_string(NStrT& out, bool const append_separators = false) const
           noexcept(!istl::ModifiableString<NStrT>) {
-            // out.reserve(out.size() + storage.size() + 1);
-            if constexpr (istl::ModifiableString<NStrT>) {
-                if (append_separators) {
-                    if (!storage.empty()) {
-                        out.push_back(':');
-                    }
-                }
-            }
-            istl::append(out, storage);
+            render_port(storage, out, append_separators);
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
@@ -199,8 +218,14 @@ namespace webpp::uri {
             return val && *val >= 0 && *val < well_known_upper_port;
         }
 
-        [[nodiscard]] constexpr stl::uint16_t value() const noexcept {
-            return to_uint16(storage);
+        template <stl::integral T = stl::uint16_t>
+        [[nodiscard]] constexpr T value() const noexcept {
+            return to<T>(storage);
+        }
+
+        template <stl::integral T = stl::uint16_t>
+        [[nodiscard]] explicit constexpr operator T() const noexcept {
+            return value<T>(storage);
         }
 
         /**
@@ -244,6 +269,10 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr bool operator==(basic_port const& other) const noexcept {
             return storage == other.storage_ref();
+        }
+
+        [[nodiscard]] constexpr bool operator==(stl::integral auto other) const noexcept {
+            return value() == other;
         }
     };
 

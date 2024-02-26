@@ -211,3 +211,15 @@ TYPED_TEST(StructuredURITests, ClearOnSet) {
         EXPECT_EQ(url.as_string(), get_one<TypeParam>("http://0300.168.0xF0", L"http://0300.168.0xF0"));
     }
 }
+
+TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized) {
+    // https://url.spec.whatwg.org/#serialize-an-integer
+    static TypeParam const data{
+      get_one<TypeParam>("https://example.org:080/about", L"https://example.org:080/about")};
+
+    uri::basic_uri<TypeParam> const url{data};
+    EXPECT_EQ(url.as_string(),
+              get_one<TypeParam>("https://example.org:80/about", L"https://example.org:80/about"));
+    EXPECT_EQ(url.port(), 80);
+    EXPECT_EQ(url.port(), get_one<TypeParam>("80", L"80"));
+}

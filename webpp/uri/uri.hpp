@@ -402,7 +402,7 @@ namespace webpp::uri {
             this->username().to_string(out);
             this->password().to_string(out, true);
             this->hostname().to_string(out);
-            if (this->port().is_default_port(this->scheme().view())) {
+            if (!this->port().is_default_port(this->scheme().view())) {
                 this->port().to_string(out, true);
             }
             this->path().to_string(out);
