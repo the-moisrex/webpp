@@ -125,7 +125,8 @@ namespace webpp::uri {
     }
 
     /// Serialize queries
-    /// Storage type is structured (not string-like)
+    /// Storage type can be structured (not string-like), and also
+    /// Storage type can be string-like (not-structured)
     template <typename StorageType, istl::StringLike StrT>
     static constexpr void render_queries(
       StorageType const& storage,
@@ -138,17 +139,21 @@ namespace webpp::uri {
         if (add_separators) {
             out += '?';
         }
-        for (auto pos = storage.begin();;) {
-            auto const [name, value]  = *pos;
-            out                      += name;
-            if (!value.empty()) {
-                out += '=';
-                out += value;
+        if constexpr (istl::StringLike<StorageType>) {
+            istl::append(out, storage);
+        } else {
+            for (auto pos = storage.begin();;) {
+                auto const [name, value]  = *pos;
+                out                      += name;
+                if (!value.empty()) {
+                    out += '=';
+                    out += value;
+                }
+                if (++pos == storage.end()) {
+                    break;
+                }
+                out += '&';
             }
-            if (++pos == storage.end()) {
-                break;
-            }
-            out += '&';
         }
     }
 
