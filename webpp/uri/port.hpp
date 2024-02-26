@@ -12,7 +12,7 @@
 namespace webpp::uri {
 
     static constexpr stl::uint16_t max_port_number       = 65'535U;
-    static constexpr uint16_t      well_known_upper_port = 1024;
+    static constexpr stl::uint16_t well_known_upper_port = 1024;
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
@@ -32,16 +32,8 @@ namespace webpp::uri {
         if constexpr (!Options.parse_port) {
             set_warning(ctx.status, uri_status::invalid_character);
         } else {
-            // ignoring starting zeros
-            while (*ctx.pos == '0') {
-                ++ctx.pos;
-                if (ctx.pos == ctx.end) {
-                    break;
-                }
-            }
-
-            auto const beg        = ctx.pos;
-            port_type  port_value = 0;
+            auto      beg        = ctx.pos;
+            port_type port_value = 0;
 
             while (ctx.pos != ctx.end) {
                 switch (*ctx.pos) {
@@ -76,6 +68,11 @@ namespace webpp::uri {
                     default: set_error(ctx.status, uri_status::port_invalid); return;
                 }
                 break;
+            }
+
+            // ignoring the leading zeros
+            if (beg != (ctx.pos - 1) && *beg == '0') {
+                ++beg;
             }
 
             // it's unsigned, we don't need to check for it being lower than 0
