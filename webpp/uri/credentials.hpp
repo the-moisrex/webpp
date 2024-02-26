@@ -120,9 +120,9 @@ namespace webpp::uri {
     /// Serialize username
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
     static constexpr void render_username(
-      StorageStrT& storage,
-      StrT&        out,
-      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+      StorageStrT const& storage,
+      StrT&              out,
+      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         using string_type = StrT;
         using char_type   = typename string_type::value_type;
@@ -141,9 +141,9 @@ namespace webpp::uri {
     /// Serialize password
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
     static constexpr void render_password(
-      StorageStrT& storage,
-      StrT&        out,
-      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+      StorageStrT const& storage,
+      StrT&              out,
+      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         using string_type = StrT;
         using char_type   = typename string_type::value_type;

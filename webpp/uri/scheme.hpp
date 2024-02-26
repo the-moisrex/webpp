@@ -305,9 +305,9 @@ namespace webpp::uri {
     /// Serialize scheme
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
     static constexpr void render_scheme(
-      StorageStrT& storage,
-      StrT&        out,
-      bool const   add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+      StorageStrT const& storage,
+      StrT&              out,
+      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
 
         istl::append(out, storage);
