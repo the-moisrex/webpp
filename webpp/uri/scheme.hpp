@@ -269,7 +269,6 @@ namespace webpp::uri {
             }
             if (is_special_scheme(get_output_view<components::scheme>(ctx))) [[likely]] {
                 ctx.scheme = scheme_type::special_scheme;
-                // todo: first check the constexpr if
                 if constexpr (ctx_type::has_base_uri) {
                     if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {
                         // todo: Assert: base is special (and therefore does not have an opaque path).
@@ -310,17 +309,13 @@ namespace webpp::uri {
       bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
 
+        if (storage.empty()) {
+            return;
+        }
         istl::append(out, storage);
         if constexpr (istl::ModifiableString<StrT>) {
             if (add_separators) {
-                if (!storage.empty()) {
-                    out.push_back(':');
-                    out.push_back('/');
-                    out.push_back('/');
-                } else {
-                    out.push_back('/');
-                    out.push_back('/');
-                }
+                out.push_back(':');
             }
         }
     }

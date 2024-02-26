@@ -404,6 +404,25 @@ namespace webpp::uri {
         }
     }
 
+    /// Serialize path
+    /// todo: do we need to handle opaque paths?
+    template <typename StorageType, istl::String StrT>
+    static constexpr void render_path(StorageType const& storage, StrT& out) {
+        // https://url.spec.whatwg.org/#url-serializing
+        // https://url.spec.whatwg.org/#url-path-serializer
+        if (storage.empty()) {
+            return;
+        }
+        auto seg = storage.begin();
+        for (;;) {
+            out += *seg;
+            if (++seg == storage.end()) {
+                break;
+            }
+            out += '/';
+        }
+    }
+
     /**
      * Including normal string and string view types
      */
@@ -436,7 +455,7 @@ namespace webpp::uri {
         using const_reference = typename container_type::const_reference;
         using vector_type     = container_type; // used in uri's uri_components
 
-        static constexpr bool is_modifiable = istl::ModifiableString<string_type>;
+        static constexpr bool is_modifiable = istl::ModifiableString<value_type>;
         static constexpr bool is_segregated = true;
         static constexpr bool is_nothrow    = false;
 
@@ -646,22 +665,12 @@ namespace webpp::uri {
             }
         }
 
-        template <istl::String NStrT = stl::string>
+        template <istl::String NStrT = string_type>
         constexpr void to_string(NStrT& out) const {
-            if (storage.empty()) {
-                return;
-            }
-            auto seg = storage.begin();
-            for (;;) {
-                out += *seg;
-                if (++seg == storage.end()) {
-                    break;
-                }
-                out += '/';
-            }
+            render_path(storage_ref(), out);
         }
 
-        template <istl::String NStrT = stl::string, typename... Args>
+        template <istl::String NStrT = string_type, typename... Args>
         [[nodiscard]] constexpr NStrT as_string(Args&&... args) const {
             NStrT out{stl::forward<Args>(args)...};
             to_string(out);

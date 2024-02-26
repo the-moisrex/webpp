@@ -119,42 +119,22 @@ namespace webpp::uri {
 
     /// Serialize username
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_username(
-      StorageStrT const& storage,
-      StrT&              out,
-      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+    static constexpr void render_username(StorageStrT const& storage, StrT& out) noexcept(
+      !istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
-        using string_type = StrT;
-        using char_type   = typename string_type::value_type;
-
         if (storage.empty()) {
             return;
         }
         istl::append(out, storage);
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(static_cast<char_type>('@'));
-            }
-        }
     }
 
     /// Serialize password
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_password(
-      StorageStrT const& storage,
-      StrT&              out,
-      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+    static constexpr void render_password(StorageStrT const& storage, StrT& out) noexcept(
+      !istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
-        using string_type = StrT;
-        using char_type   = typename string_type::value_type;
-
         if (storage.empty()) {
             return;
-        }
-        if constexpr (istl::ModifiableString<StrT>) {
-            if (add_separators) {
-                out.push_back(static_cast<char_type>('@'));
-            }
         }
         istl::append(out, storage);
     }
@@ -235,9 +215,8 @@ namespace webpp::uri {
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
-        constexpr void to_string(NStrT& out, bool const append_separators = false) const
-          noexcept(!istl::ModifiableString<NStrT>) {
-            render_username(storage, out, append_separators);
+        constexpr void to_string(NStrT& out) const noexcept(!istl::ModifiableString<NStrT>) {
+            render_username(storage, out);
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>
@@ -341,9 +320,8 @@ namespace webpp::uri {
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>>
-        constexpr void to_string(NStrT& out, bool const append_separators = false) const
-          noexcept(!istl::ModifiableString<NStrT>) {
-            render_password(storage, out, append_separators);
+        constexpr void to_string(NStrT& out) const noexcept(!istl::ModifiableString<NStrT>) {
+            render_password(storage, out);
         }
 
         template <istl::StringLike NStrT = stl::basic_string_view<char_type>, typename... Args>

@@ -223,3 +223,12 @@ TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized) {
     EXPECT_EQ(url.port(), 80);
     EXPECT_EQ(url.port(), get_one<TypeParam>("80", L"80"));
 }
+
+TYPED_TEST(StructuredURITests, OpaquePath) {
+    static TypeParam const data{get_one<TypeParam>("opaque:this:is/the:path", L"opaque:this:is/the:path")};
+
+    uri::basic_uri<TypeParam> const url{data};
+    EXPECT_FALSE(url.has_authority());
+    EXPECT_EQ(url.as_string(), get_one<TypeParam>("opaque:this:is/the:path", L"opaque:this:is/the:path"));
+    EXPECT_EQ(url.path().as_string(), get_one<TypeParam>("this:is/the:path", L"this:is/the:path"));
+}

@@ -399,11 +399,22 @@ namespace webpp::uri {
         constexpr void to_string(NStrT& out) const {
             out.reserve(size());
             this->scheme().to_string(out, true);
-            this->username().to_string(out);
-            this->password().to_string(out, true);
-            this->hostname().to_string(out);
-            if (!this->port().is_default_port(this->scheme().view())) {
-                this->port().to_string(out, true);
+            if (this->hostname().has_value()) {
+                istl::append(out, '/');
+                istl::append(out, '/');
+                if (this->has_credentials()) {
+                    this->username().to_string(out);
+                    if (this->has_password()) {
+                        istl::append(out, ':');
+                        this->password().to_string(out);
+                    } else {
+                        istl::append(out, '@');
+                    }
+                }
+                this->hostname().to_string(out);
+                if (!this->port().is_default_port(this->scheme().view())) {
+                    this->port().to_string(out, true);
+                }
             }
             this->path().to_string(out);
             this->queries().to_string(out, true);

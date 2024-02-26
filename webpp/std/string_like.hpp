@@ -23,10 +23,13 @@ namespace webpp::istl {
         }
     }
 
-    template <StringLike StrT, StringLike StrTInput>
+    template <StringLike StrT, typename StrTInput>
+        requires(StringLike<StrTInput> || CharType<StrTInput>)
     constexpr void append(StrT& out, StrTInput const& inp) noexcept(StringView<StrT>) {
         if constexpr (StringView<StrT>) {
             out = inp;
+        } else if constexpr (String<StrT> && CharType<StrTInput>) {
+            out += inp;
         } else {
             out.append(inp);
         }
