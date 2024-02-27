@@ -130,6 +130,8 @@ TYPED_TEST_SUITE(URIWhatwgTest, Types);
 
 `
 
+function testDetails(test) { return `details`; }
+
 let reason = "";
 let index = 1;
 let testNum = 1;
@@ -152,6 +154,8 @@ for (const test of Object.values(jsonData)) {
   result += `
 // ${testNum} - ${reason} (${index})
 TYPED_TEST(URIWhatwgTest, ${testName}) {
+    static constexpr auto details = "\\n${
+      escapeForCppString(JSON.stringify(test, null, 4))}";
 `
   if (test.base !== null) {
     result +=
@@ -167,47 +171,55 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
 
   if (test.failure !== undefined) {
     result += `
-    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));`;
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << ${
+        testDetails(test)};`;
   } else {
     result += `
-    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));`;
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status)) << ${
+        testDetails(test)};`;
   }
 
   // scheme
   if (test.protocol !== undefined) {
     result += `
     EXPECT_EQ(ctx.out.get_scheme(), "${
-        escapeForCppString(test.protocol.slice(0, -1))}");`;
+        escapeForCppString(
+            test.protocol.slice(0, -1))}") << ${testDetails(test)};`;
   }
 
   // username
   if (test.username !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_username(), "${escapeForCppString(test.username)}");`;
+    EXPECT_EQ(ctx.out.get_username(), "${
+        escapeForCppString(test.username)}") << ${testDetails(test)};`;
   }
 
   // password
   if (test.password !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_password(), "${escapeForCppString(test.password)}");`;
+    EXPECT_EQ(ctx.out.get_password(), "${
+        escapeForCppString(test.password)}") << ${testDetails(test)};`;
   }
 
   // host
   if (test.host !== undefined) {
     //     result += `
-    // EXPECT_EQ(ctx.out.get_host(), "${escapeForCppString(test.host)}");`;
+    // EXPECT_EQ(ctx.out.get_host(), "${escapeForCppString(test.host)}") <<
+    // ${testDetails(test)};`;
   }
 
   // hostname
   if (test.hostname !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_hostname(), "${escapeForCppString(test.hostname)}");`;
+    EXPECT_EQ(ctx.out.get_hostname(), "${
+        escapeForCppString(test.hostname)}") << ${testDetails(test)};`;
   }
 
   // port
   if (test.port !== undefined) {
     result += `
-    EXPECT_EQ(ctx.out.get_port(), "${escapeForCppString(test.port)}");`;
+    EXPECT_EQ(ctx.out.get_port(), "${escapeForCppString(test.port)}") << ${
+        testDetails(test)};`;
   }
 
   // path
@@ -216,20 +228,24 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
       try {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");
+        EXPECT_EQ(ctx.out.get_path(), "${
+            escapeForCppString(test.pathname)}") << ${testDetails(test)};
     } else {
         EXPECT_EQ(ctx.out.get_path(), "${
-            escapeForCppString(decodeURIComponent(test.pathname))}");
+            escapeForCppString(
+                decodeURIComponent(test.pathname))}") << ${testDetails(test)};
     }`;
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
-        EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");
+        EXPECT_EQ(ctx.out.get_path(), "${
+            escapeForCppString(test.pathname)}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
-    EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}");`;
+    EXPECT_EQ(ctx.out.get_path(), "${escapeForCppString(test.pathname)}") << ${
+          testDetails(test)};`;
     }
   }
 
@@ -240,22 +256,26 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(ctx.out.get_queries(), "${
-            escapeForCppString(test.search.substring(1))}");
+            escapeForCppString(
+                test.search.substring(1))}") << ${testDetails(test)};
     } else {
         EXPECT_EQ(ctx.out.get_queries(), "${
-            escapeForCppString(decodeURIComponent(test.search.substring(1)))}");
+            escapeForCppString(decodeURIComponent(
+                test.search.substring(1)))}") << ${testDetails(test)};
     }`;
       } catch (e) {
         result += `
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(ctx.out.get_queries(), "${
-            escapeForCppString(test.search.substring(1))}");
+            escapeForCppString(
+                test.search.substring(1))}") << ${testDetails(test)};
     }`;
       }
     } else {
       result += `
     EXPECT_EQ(ctx.out.get_queries(), "${
-          escapeForCppString(test.search.substring(1))}");`;
+          escapeForCppString(
+              test.search.substring(1))}") << ${testDetails(test)};`;
     }
   }
 
@@ -263,21 +283,21 @@ TYPED_TEST(URIWhatwgTest, ${testName}) {
   if (test.hash !== undefined) {
     result += `
     EXPECT_EQ(ctx.out.get_fragment(), "${
-        escapeForCppString(test.hash.substring(1))}");`;
+        escapeForCppString(test.hash.substring(1))}") << ${testDetails(test)};`;
   }
 
   // href
   if (test.href !== undefined) {
     // result += `
     // EXPECT_EQ(ctx.out.get_href(), "${
-    //    escapeForCppString(test.href)}");`;
+    //    escapeForCppString(test.href)}") << ${testDetails(test)};`;
   }
 
   // origin??
   if (test.origin !== undefined) {
     // result += `
     // EXPECT_EQ(ctx.out.get_href(), "${
-    //    escapeForCppString(test.href)}");`;
+    //    escapeForCppString(test.href)}") << ${testDetails(test)};`;
   }
 
   // the end of the test:

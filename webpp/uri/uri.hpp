@@ -97,7 +97,7 @@ namespace webpp::uri {
      * @brief Customization of uri components that holds all of the URI components with all the bells and the
      * whistles
      * @tparam StrT String or String View type
-     * @tparam AllocT Allocator type (we're not extractinig it from StrT, because you may pass a string view)
+     * @tparam AllocT Allocator type (we're not extracting it from StrT, because you may pass a string view)
      */
     template <istl::StringLike StrT, Allocator AllocT>
     struct uri_components<StrT, AllocT> {
@@ -124,10 +124,6 @@ namespace webpp::uri {
 
         // map_type::value_type is const, we need a modifiable name
         using map_value_type = stl::pair<typename map_type::key_type, typename map_type::mapped_type>;
-
-
-        /// maximum number that this url component class supports
-        static constexpr auto max_supported_length = stl::numeric_limits<size_type>::max() - 1;
 
         /// is resetting the values are noexcept or not
         static constexpr bool is_nothrow = false;
@@ -258,8 +254,7 @@ namespace webpp::uri {
         using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
                                              BaseSegType,
                                              uri_components<base_seg_type, BaseIter>>;
-        using seg_type       = typename clean_out_type::seg_type; // this might be different than
-                                                                  // OutSegType
+        using seg_type        = typename clean_out_type::seg_type; // this might be different from OutSegType
         using iterator       = Iter;
         using iterator_traits = stl::iterator_traits<iterator>;
         using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
@@ -384,7 +379,7 @@ namespace webpp::uri {
                    this->has_fragment();
         }
 
-        /// Get the total string size WITHOUT DELIMITTERS, and not considering the the encoding bloat
+        /// Get the total string size WITHOUT DELIMITERS, and not considering the the encoding bloat
         ///
         /// Attention: The size will be different based on the string type used because non-modifiable string
         ///            types won't be able to hold decoded/encoded values.
@@ -407,9 +402,8 @@ namespace webpp::uri {
                     if (this->has_password()) {
                         istl::append(out, ':');
                         this->password().to_string(out);
-                    } else {
-                        istl::append(out, '@');
                     }
+                    istl::append(out, '@');
                 }
                 this->hostname().to_string(out);
                 if (!this->port().is_default_port(this->scheme().view())) {
