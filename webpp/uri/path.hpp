@@ -224,12 +224,12 @@ namespace webpp::uri {
           component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
             using ctx_type = CtxT;
             bool const is_windows_path =
-              Options.allow_windows_drive_letters &&
+              Options.handle_windows_drive_letters &&
               details::starts_with_windows_driver_letter_slashes(ctx.pos, ctx.end) &&
               is_file_scheme(ctx.scheme);
 
 
-            if constexpr (ctx_type::is_modifiable && Options.allow_windows_drive_letters) {
+            if constexpr (ctx_type::is_modifiable && Options.handle_windows_drive_letters) {
                 if (is_windows_path) {
                     set_warning(ctx.status, uri_status::windows_drive_letter_used);
                     encoder.next_segment();
@@ -387,7 +387,7 @@ namespace webpp::uri {
                 if (ctx.pos == ctx.end) {
                     break;
                 }
-                encoder.next_segment();
+                encoder.next_segment_of('/');
                 continue;
             }
 

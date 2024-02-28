@@ -269,7 +269,7 @@ namespace webpp::uri {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
-        if constexpr (Options.allow_windows_drive_letters) {
+        if constexpr (Options.handle_windows_drive_letters) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
                 if (*ctx.pos != '/' || *ctx.pos != '\\') {
                     // we have to move one back because the "path" needs to start with a "/" or a "\"
@@ -302,7 +302,7 @@ namespace webpp::uri {
                 }
             }
         }
-        if constexpr (Options.allow_windows_drive_letters) {
+        if constexpr (Options.handle_windows_drive_letters) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
             }

@@ -70,8 +70,8 @@ namespace webpp::uri {
 
 
         /// Windows drive letters "C:\" or "file://C|" are allowed in WHATWG; not everybody needs them, so you
-        /// can disable it here.
-        bool allow_windows_drive_letters = true;
+        /// can disable handling it here (this doesn't mean you'd get an error if used)
+        bool handle_windows_drive_letters = true;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -88,7 +88,7 @@ namespace webpp::uri {
       .allow_ipv4_octal_octets                   = false,
       .allow_invalid_characters                  = false,
       .allow_file_hosts                          = false,
-      .allow_windows_drive_letters               = false,
+      .handle_windows_drive_letters              = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -105,7 +105,7 @@ namespace webpp::uri {
       .allow_ipv4_octal_octets                   = true,
       .allow_invalid_characters                  = true,
       .allow_file_hosts                          = true,
-      .allow_windows_drive_letters               = true,
+      .handle_windows_drive_letters              = true,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but

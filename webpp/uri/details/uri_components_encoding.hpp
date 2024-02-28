@@ -245,6 +245,17 @@ namespace webpp::uri::details {
             }
         }
 
+        /// parsing path requires this so we can make sure the modifable strings's separator is always '/' and
+        /// not '\\' if the input contains that separator
+        constexpr void skip_separator(char_type separator) noexcept {
+            if constexpr (ctx_type::is_modifiable && !is_seg) {
+                append_to(get_output(), separator);
+                ++ctx->pos;
+            } else {
+                return skip_separator();
+            }
+        }
+
         constexpr void skip_separator() noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {
                 append_to(get_output(), *ctx->pos++);
@@ -362,6 +373,25 @@ namespace webpp::uri::details {
                 }
             } else {
                 skip_separator(sep_count);
+                end_segment();
+                reset_segment_start();
+            }
+            start_segment();
+        }
+
+        constexpr void next_segment_of(char_type separator) noexcept(ctx_type::is_nothrow) {
+            if constexpr (is_seg) {
+                if constexpr (ctx_type::is_modifiable) {
+                    skip_separator(separator);
+                    reset_segment_start();
+                    end_segment();
+                } else {
+                    end_segment();
+                    skip_separator(separator);
+                    reset_segment_start();
+                }
+            } else {
+                skip_separator(separator);
                 end_segment();
                 reset_segment_start();
             }

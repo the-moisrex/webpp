@@ -131,7 +131,7 @@ TYPED_TEST(URITests, ParseURI) {
 }
 
 TYPED_TEST(URITests, URIParsingWithWarnings) {
-    uri::uri url = "https:this-is-stupid";
+    uri::uri const url = "https:this-is-stupid";
     EXPECT_EQ(url.as_string(), "https://this-is-stupid/");
 }
 
