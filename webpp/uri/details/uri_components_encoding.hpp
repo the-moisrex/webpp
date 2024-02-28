@@ -379,19 +379,24 @@ namespace webpp::uri::details {
             start_segment();
         }
 
-        constexpr void next_segment_of(char_type separator) noexcept(ctx_type::is_nothrow) {
+        constexpr void next_segment_of(char_type separator, difference_type sep_count = 1) noexcept(
+          ctx_type::is_nothrow) {
             if constexpr (is_seg) {
                 if constexpr (ctx_type::is_modifiable) {
-                    skip_separator(separator);
+                    skip_separator(sep_count);
                     reset_segment_start();
                     end_segment();
                 } else {
                     end_segment();
-                    skip_separator(separator);
+                    skip_separator(sep_count);
                     reset_segment_start();
                 }
             } else {
-                skip_separator(separator);
+                if constexpr (ctx_type::is_modifiable) {
+                    skip_separator(separator);
+                } else {
+                    skip_separator(sep_count);
+                }
                 end_segment();
                 reset_segment_start();
             }

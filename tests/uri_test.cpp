@@ -1490,3 +1490,21 @@ TYPED_TEST(URITests, EmptyHostNotAllowed) {
     EXPECT_TRUE(uri::has_error(ctx2.status, uri::uri_status::host_missing))
       << to_string(uri::get_value(ctx2.status));
 }
+
+TYPED_TEST(URITests, StupidSchemes) {
+    // http
+    auto const ctx = this->template parse_from_string<TypeParam>("http:");
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+
+    // random
+    auto const ctx2 = this->template parse_from_string<TypeParam>("any-random-scheme:");
+    EXPECT_TRUE(uri::is_valid(ctx2.status)) << to_string(uri::get_value(ctx2.status));
+
+    // file
+    auto const ctx3 = this->template parse_from_string<TypeParam>("file:");
+    EXPECT_TRUE(uri::is_valid(ctx3.status)) << to_string(uri::get_value(ctx3.status));
+
+    // ws
+    auto const ctx4 = this->template parse_from_string<TypeParam>("ws:");
+    EXPECT_FALSE(uri::is_valid(ctx4.status)) << to_string(uri::get_value(ctx4.status));
+}
