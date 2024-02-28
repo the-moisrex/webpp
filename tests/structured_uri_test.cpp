@@ -224,6 +224,17 @@ TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized) {
     EXPECT_EQ(url.port(), get_one<TypeParam>("80", L"80"));
 }
 
+TYPED_TEST(StructuredURITests, StructuredPortGetsSerialized2) {
+    static TypeParam const data{
+      get_one<TypeParam>("https://example.org:00000000000/about", L"https://example.org:00000000000/about")};
+
+    uri::basic_uri<TypeParam> const url{data};
+    EXPECT_EQ(url.as_string(),
+              get_one<TypeParam>("https://example.org:0/about", L"https://example.org:0/about"));
+    EXPECT_EQ(url.port(), 0);
+    EXPECT_EQ(url.port(), get_one<TypeParam>("0", L"0"));
+}
+
 TYPED_TEST(StructuredURITests, OpaquePath) {
     static TypeParam const data{get_one<TypeParam>("opaque:this:is/the:path", L"opaque:this:is/the:path")};
 
