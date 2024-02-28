@@ -1479,7 +1479,7 @@ TYPED_TEST(URITests, SpacesInURIs) {
 }
 
 TYPED_TEST(URITests, EmptyHostNotAllowed) {
-    auto const ctx = this->template parse_from_string<TypeParam>("http://username@password:/");
+    auto const ctx = this->template parse_from_string<TypeParam>("http://username:password@:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
     EXPECT_TRUE(uri::has_error(ctx.status, uri::uri_status::host_missing))
       << to_string(uri::get_value(ctx.status));
