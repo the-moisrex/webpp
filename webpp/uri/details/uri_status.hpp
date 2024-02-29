@@ -72,6 +72,12 @@ namespace webpp::uri {
         /// Windows drive letters "C:\" or "file://C|" are allowed in WHATWG; not everybody needs them, so you
         /// can disable handling it here (this doesn't mean you'd get an error if used)
         bool handle_windows_drive_letters = true;
+
+
+        /// For some reason, WHATWG just simply removes tabs and newlines (TAB, LF, and CR) characters before
+        /// it starts the parsing process; I don't think everybody needs such a feature and it may even cause
+        /// problems for some people, so here's an option to not ignore the newliens and tabs.
+        bool ignore_tabs_or_newlines = true;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -89,6 +95,7 @@ namespace webpp::uri {
       .allow_invalid_characters                  = false,
       .allow_file_hosts                          = false,
       .handle_windows_drive_letters              = false,
+      .ignore_tabs_or_newlines                   = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -106,6 +113,7 @@ namespace webpp::uri {
       .allow_invalid_characters                  = true,
       .allow_file_hosts                          = true,
       .handle_windows_drive_letters              = true,
+      .ignore_tabs_or_newlines                   = true,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
