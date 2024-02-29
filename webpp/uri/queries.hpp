@@ -18,8 +18,8 @@ namespace webpp::uri {
 
         if constexpr (Options.parse_queries) {
             webpp_static_constexpr auto interesting_characters =
-              !ctx_type::is_segregated ? details::ascii_bitmap('#', '%')
-                                       : details::ascii_bitmap('#', '%', '=', '&');
+              !ctx_type::is_segregated ? details::ascii_bitmap('#', '%', '\r', '\n', '\t', '\0')
+                                       : details::ascii_bitmap('#', '%', '=', '&', '\r', '\n', '\t', '\0');
 
 
             if (ctx.pos == ctx.end) {
@@ -82,16 +82,30 @@ namespace webpp::uri {
                         encoder.skip_separator();
                         encoder.next_query();
                         continue;
-                    default:
-                        if constexpr (Options.allow_invalid_characters) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                        } else {
-                            set_error(ctx.status, uri_status::invalid_queries_character);
-                            return;
+                    [[unlikely]] case '\0':
+                        if constexpr (Options.eof_is_valid) {
+                            break;
                         }
-                        encoder.skip_separator();
-                        // invalid characters are not errors
-                        continue;
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            encoder.ignore_character();
+                            continue;
+                        }
+                        [[fallthrough]];
+                        default: {
+                            if constexpr (Options.allow_invalid_characters) {
+                                set_warning(ctx.status, uri_status::invalid_character);
+                            } else {
+                                set_error(ctx.status, uri_status::invalid_queries_character);
+                                return;
+                            }
+                            encoder.skip_separator();
+                            // invalid characters are not errors
+                            continue;
+                        }
                 }
                 break;
             }

@@ -264,6 +264,10 @@ namespace webpp::uri::details {
             }
         }
 
+        constexpr void ignore_character(difference_type count = 1) noexcept {
+            ctx->pos += count;
+        }
+
         constexpr void append_n(difference_type index) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
                 for (; index != 0; --index) {

@@ -66,42 +66,6 @@ namespace webpp::uri {
         //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
 
-        // todo: remove this if it's not needed anymore
-        template <ParsingURIContext CtxT>
-        static constexpr void append_path(
-          CtxT&                   ctx,
-          typename CtxT::iterator start,
-          typename CtxT::iterator end,
-          bool const              needs_encoding) noexcept(CtxT::is_nothrow) {
-            using ctx_type = CtxT;
-
-            if ((ctx_type::is_segregated || ctx_type::is_modifiable) && needs_encoding) { // slow path
-                if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                    auto path_ref = ctx.out.path_ref();
-                    istl::emplace_one(path_ref, path_ref.get_allocator());
-                    encode_uri_component<uri_encoding_policy::encode_chars>(
-                      start,
-                      end,
-                      path_ref.back(),
-                      PATH_ENCODE_SET);
-                } else if constexpr (ctx_type::is_modifiable) {
-                    encode_uri_component<uri_encoding_policy::encode_chars>(
-                      start,
-                      end,
-                      ctx.out.path_ref(),
-                      PATH_ENCODE_SET);
-                }
-            } else { // quicker
-                if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
-                    istl::emplace_one(ctx.out.path_ref(), start, end, ctx.out.path_ref().get_allocator());
-                } else if constexpr (ctx_type::is_modifiable) {
-                    ctx.out.path_ref().append(start, end);
-                    // } else {
-                    //     ctx.out.path(start, end);
-                }
-            }
-        }
-
         /// Handle special cases:
         ///   /.
         ///   /..
@@ -111,6 +75,8 @@ namespace webpp::uri {
         ///   /%2e.
         ///
         /// %2E or %2e is equal to a "." (dot)
+        ///
+        /// It's possible to have newlines and tabs in between these things
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void handle_dots_in_paths(
           CtxT&                                      ctx,
@@ -256,7 +222,8 @@ namespace webpp::uri {
         using ctx_type = CtxT;
 
         // todo: URI Code Points are among interesting characters as well
-        webpp_static_constexpr auto interesting_characters = details::ascii_bitmap('\0', '%', '#', '?');
+        webpp_static_constexpr auto interesting_characters =
+          details::ascii_bitmap('\0', '%', '#', '?', '\r', '\t', '\n');
 
         details::component_encoder<components::path, ctx_type> encoder(ctx);
         encoder.start_segment();
@@ -271,13 +238,15 @@ namespace webpp::uri {
                 break;
             }
             switch (*ctx.pos) {
-                case '\0':
+                [[unlikely]] case '\0':
                     if constexpr (Options.eof_is_valid) {
                         set_valid(ctx.status, uri_status::valid);
+                        break;
                     } else {
+                        ++ctx.pos;
                         set_warning(ctx.status, uri_status::invalid_character);
+                        continue;
                     }
-                    break;
                 case '?':
                     clear<components::queries>(ctx);
                     set_valid(ctx.status, uri_status::valid_queries);
@@ -291,6 +260,9 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
+                [[unlikely]] case '\r':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\t':
                 default:
                     ++ctx.pos;
                     set_warning(ctx.status, uri_status::invalid_character);
@@ -316,7 +288,7 @@ namespace webpp::uri {
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
         webpp_static_constexpr auto interesting_chars =
-          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%'});
+          ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%', '\r', '\n', '\t'});
 
 
         if (ctx.pos == ctx.end) {
@@ -367,9 +339,20 @@ namespace webpp::uri {
                         }
                         set_warning(ctx.status, uri_status::invalid_character);
                         continue;
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            encoder.ignore_character();
+                            continue;
+                        } else {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            break;
+                        }
                     [[unlikely]] case '\0':
                         if constexpr (Options.eof_is_valid) {
-                            is_done = true; // todo: is this correct?
+                            is_done = true;
                             break;
                         }
                         [[fallthrough]];

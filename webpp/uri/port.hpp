@@ -65,6 +65,17 @@ namespace webpp::uri {
                     case '/':
                     case '?':
                     case '#': break;
+
+                    // handling tabs and newlines
+                    case '\t':
+                    case '\n':
+                    case '\r':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        }
+                        [[fallthrough]];
                     default: set_error(ctx.status, uri_status::port_invalid); return;
                 }
                 break;

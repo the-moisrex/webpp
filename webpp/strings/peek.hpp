@@ -79,6 +79,17 @@ namespace webpp::ascii {
         return false;
     }
 
+    /// trim left
+    template <typename Iter, typename EIter = Iter, typename... ValT>
+        requires(stl::convertible_to<ValT, typename stl::iterator_traits<Iter>::value_type> && ...)
+    static constexpr bool inc_until_any(Iter& pos, EIter end, ValT... val) noexcept {
+        bool found_value = false;
+        while (pos != end && ((val == *pos) || ...)) {
+            ++pos;
+            found_value = true;
+        }
+        return found_value;
+    }
 } // namespace webpp::ascii
 
 #endif // WEBPP_STRINGS_PEAK_HPP

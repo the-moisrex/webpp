@@ -180,6 +180,20 @@ namespace webpp::uri {
                             set_error(ctx.status, invalid_domain_code_point);
                             return;
                         }
+
+                    // handling tabs and newlines
+                    [[unlikely]] case '\t':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            coder.ignore_character();
+                            continue;
+                        } else {
+                            set_error(ctx.status,
+                                      IsSpecial ? invalid_domain_code_point : invalid_host_code_point);
+                            return;
+                        }
                     case '@':
                         must_contain_credentials = false;
                         if constexpr (Options.parse_credentails) {
@@ -190,7 +204,8 @@ namespace webpp::uri {
                             coder.start_segment();
                             host_begin = ctx.pos;
                             continue;
-                        } else {
+                        }
+                        else {
                             // todo: set an error
                             set_warning(ctx.status, has_credentials);
                             set_warning(ctx.status, invalid_character);
@@ -269,6 +284,23 @@ namespace webpp::uri {
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
 
+
+        // handling tabs and newlines
+        if constexpr (Options.ignore_tabs_or_newlines) {
+            while (ctx.pos != ctx.end) {
+                switch (*ctx.pos) {
+                    [[unlikely]] case '\t':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        ++ctx.pos;
+                        continue;
+                    default: break;
+                }
+                break;
+            }
+        }
+
         if constexpr (Options.handle_windows_drive_letters) {
             if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
                 if (*ctx.pos != '/' || *ctx.pos != '\\') {
@@ -321,35 +353,59 @@ namespace webpp::uri {
             return;
         }
         if (is_special_scheme(ctx.scheme)) {
-            switch (*ctx.pos) {
-                case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                case '/':
-                default: set_valid(ctx.status, uri_status::valid_path); break;
+            for (;;) {
+                switch (*ctx.pos) {
+                    [[unlikely]] case '\t':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        }
+                        set_valid(ctx.status, uri_status::valid_path);
+                        break;
+                    case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                    case '/':
+                    default: set_valid(ctx.status, uri_status::valid_path); break;
+                }
+                break;
             }
         } else {
-            switch (*ctx.pos) {
-                case '?':
-                    if constexpr (Options.parse_queries) {
-                        set_valid(ctx.status, uri_status::valid_queries);
-                        ++ctx.pos;
-                        clear<components::queries>(ctx);
-                    } else {
-                        set_warning(ctx.status, uri_status::invalid_character);
-                    }
-                    return;
-                case '#':
-                    if constexpr (Options.parse_fragment) {
-                        set_valid(ctx.status, uri_status::valid_fragment);
-                        ++ctx.pos;
-                        clear<components::fragment>(ctx);
-                    } else {
-                        set_warning(ctx.status, uri_status::invalid_character);
-                    }
-                    return;
-                default:
-                    set_valid(ctx.status, uri_status::valid_path);
-                    clear<components::path>(ctx);
-                    break;
+            for (;;) {
+                switch (*ctx.pos) {
+                    case '?':
+                        if constexpr (Options.parse_queries) {
+                            set_valid(ctx.status, uri_status::valid_queries);
+                            ++ctx.pos;
+                            clear<components::queries>(ctx);
+                        } else {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        }
+                        return;
+                    case '#':
+                        if constexpr (Options.parse_fragment) {
+                            set_valid(ctx.status, uri_status::valid_fragment);
+                            ++ctx.pos;
+                            clear<components::fragment>(ctx);
+                        } else {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        }
+                        return;
+                    [[unlikely]] case '\t':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        }
+                        [[fallthrough]];
+                        default: set_valid(ctx.status, uri_status::valid_path);
+                        clear<components::path>(ctx);
+                        break;
+                }
+                break;
             }
         }
     }
@@ -387,48 +443,60 @@ namespace webpp::uri {
         // Handle missing host situation, and ipv6:
         // attention: since we have merge the authority and host parsing, it's possible to
         // have something like "http://username@:8080/" which the host is missing too
-        switch (*ctx.pos) {
-            case ':':
-                if constexpr (!Options.parse_credentails) {
-                    if constexpr (Options.empty_host_is_error) {
-                        set_error(ctx.status, host_missing);
-                    } else {
-                        set_valid(ctx.status, valid);
-                    }
-                    return;
-                }
-                break;
-            case '\0':
-                if constexpr (Options.eof_is_valid) {
-                    break;
-                } else {
-                    if constexpr (Options.empty_host_is_error) {
-                        set_error(ctx.status, host_missing);
-                    } else {
-                        set_valid(ctx.status, valid);
-                    }
-                    return;
-                }
-            case '?':
-                if (!is_special_scheme(ctx.scheme)) {
-                    break;
-                }
-                [[fallthrough]];
-            case '\\':
-            case '/':
-            case '#':
-                if constexpr (Options.empty_host_is_error) {
-                    if (is_special_scheme(ctx.scheme)) {
-                        set_error(ctx.status, host_missing);
+        for (;;) {
+            switch (*ctx.pos) {
+                case ':':
+                    if constexpr (!Options.parse_credentails) {
+                        if constexpr (Options.empty_host_is_error) {
+                            set_error(ctx.status, host_missing);
+                        } else {
+                            set_valid(ctx.status, valid);
+                        }
                         return;
                     }
-                    set_valid(ctx.status, valid);
-                } else {
-                    set_valid(ctx.status, valid);
-                    return;
-                }
-                break;
-            default: break;
+                    break;
+                case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        break;
+                    } else {
+                        if constexpr (Options.empty_host_is_error) {
+                            set_error(ctx.status, host_missing);
+                        } else {
+                            set_valid(ctx.status, valid);
+                        }
+                        return;
+                    }
+                case '?':
+                    if (!is_special_scheme(ctx.scheme)) {
+                        break;
+                    }
+                    [[fallthrough]];
+                case '\\':
+                case '/':
+                case '#':
+                    if constexpr (Options.empty_host_is_error) {
+                        if (is_special_scheme(ctx.scheme)) {
+                            set_error(ctx.status, host_missing);
+                            return;
+                        }
+                        set_valid(ctx.status, valid);
+                    } else {
+                        set_valid(ctx.status, valid);
+                        return;
+                    }
+                    break;
+                [[unlikely]] case '\t':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\r':
+                    if constexpr (Options.ignore_tabs_or_newlines) {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        ++ctx.pos;
+                        continue;
+                    }
+                    [[fallthrough]];
+                    default: break;
+            }
+            break;
         }
 
         if (!is_special_scheme(ctx.scheme)) {

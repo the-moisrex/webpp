@@ -17,11 +17,42 @@
 
 namespace webpp::uri {
 
-    namespace details { // states
+    namespace details {
+
+        template <uri_parsing_options Options, ParsingURIContext CtxT, typename... ValT>
+        [[nodiscard]] static constexpr bool safely_inc_if(CtxT& ctx, ValT... val) noexcept {
+            if constexpr (Options.ignore_tabs_or_newlines) {
+                using ctx_type  = CtxT;
+                using char_type = typename ctx_type::char_type;
+                stl::array<char_type, sizeof...(ValT)> const arr{static_cast<char_type>(val)...};
+
+                stl::size_t index = 0;
+                for (; ctx.pos != ctx.end && index != sizeof...(ValT); ++ctx.pos) {
+                    switch (*ctx.pos) {
+                        // ignoring tabs and newlines
+                        case '\n':
+                        case '\r':
+                        case '\t': set_warning(ctx.status, uri_status::invalid_character); continue;
+
+                        default:
+                            if (*ctx.pos != arr[index]) {
+                                return false;
+                            }
+                            ++index;
+                            continue;
+                    }
+                    break;
+                }
+                return true;
+            } else {
+                return ascii::inc_if(ctx.pos, ctx.end, val...);
+            }
+        }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void relative_state(CtxT& ctx) noexcept {
             // relative scheme state (https://url.spec.whatwg.org/#relative-state)
+            // https://url.spec.whatwg.org/#relative-slash-state
 
             using ctx_type = CtxT;
             if (ctx.pos == ctx.end) {
@@ -42,7 +73,22 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::reverse_solidus_used);
                     }
                     break;
-                default: break;
+                case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        set_valid(ctx.status, uri_status::valid);
+                        return;
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    break;
+                [[unlikely]] case '\r':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\t':
+                    if constexpr (Options.ignore_tabs_or_newlines) {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    [[fallthrough]];
+                    default: break;
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
@@ -68,12 +114,12 @@ namespace webpp::uri {
                     clear<components::queries>(ctx);
                     set_valid(ctx.status, uri_status::valid_queries);
                     ++ctx.pos;
-                    break;
+                    return;
                 case '#':
                     clear<components::fragment>(ctx);
                     set_valid(ctx.status, uri_status::valid_fragment);
                     ++ctx.pos;
-                    break;
+                    return;
                 case '\0':
                     if constexpr (Options.eof_is_valid) {
                         set_valid(ctx.status, uri_status::valid);
@@ -81,13 +127,19 @@ namespace webpp::uri {
                     } else {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
-                    [[fallthrough]];
-                default:
-                    clear<components::queries>(ctx);
-                    // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
-                    set_valid(ctx.status, uri_status::valid_path);
                     break;
+                [[unlikely]] case '\r':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\t':
+                    if constexpr (Options.ignore_tabs_or_newlines) {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    [[fallthrough]];
+                    default: break;
             }
+            clear<components::queries>(ctx);
+            // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
+            set_valid(ctx.status, uri_status::valid_path);
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
@@ -105,7 +157,14 @@ namespace webpp::uri {
                             set_valid(ctx.status, uri_status::valid_path);
                         }
                         return;
-                    default: break;
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        }
+                        [[fallthrough]];
+                        default: break;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -132,25 +191,44 @@ namespace webpp::uri {
                 // set scheme to "file"
                 set_value<components::scheme>(ctx,
                                               ctx.base.get_scheme().data(),
-                                              ctx.base.get_scheme().data() + 4);
+                                              ctx.base.get_scheme().data() + ctx.base.get_scheme().size());
             }
             clear<components::host>(ctx);
 
-            if (ctx.pos == ctx.end) {
-                set_valid(ctx.status, uri_status::valid);
-                return;
-            }
+            for (;; ++ctx.pos) {
+                if (ctx.pos == ctx.end) {
+                    set_valid(ctx.status, uri_status::valid);
+                    return;
+                }
 
-            switch (*ctx.pos) {
-                case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
-                case '/': file_slash_state<Options>(ctx); return;
-                default:
-                    if constexpr (Options.allow_file_hosts) {
-                        set_valid(ctx.status, uri_status::valid_file_host);
+                switch (*ctx.pos) {
+                    case '\\': set_warning(ctx.status, uri_status::reverse_solidus_used); [[fallthrough]];
+                    case '/':
+                        file_slash_state<Options>(ctx);
                         return;
-                    } else {
+                    [[unlikely]] case '\0':
+                        if constexpr (Options.eof_is_valid) {
+                            set_valid(ctx.status, uri_status::valid);
+                            return;
+                        } else {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        }
                         break;
-                    }
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            continue;
+                        }
+                        [[fallthrough]];
+                        default: break;
+                }
+                if constexpr (Options.allow_file_hosts) {
+                    set_valid(ctx.status, uri_status::valid_file_host);
+                    return;
+                }
+                break;
             }
 
             if constexpr (ctx_type::has_base_uri) {
@@ -170,15 +248,35 @@ namespace webpp::uri {
 
             if constexpr (ctx_type::has_base_uri) {
                 if (ctx.base.has_path()) { // todo: specs say opaque path
-                    if (*ctx.pos == '#') {
-                        set_value<components::scheme>(ctx, ctx.base.get_scheme());
-                        set_value<components::path>(ctx, ctx.base.get_path());
-                        set_value<components::queries>(ctx, ctx.base.get_queries());
-                        clear<components::fragment>(ctx);
-                        set_valid(ctx.status, uri_status::valid_fragment);
-                        return;
+                    for (; ctx.pos != ctx.end; ++ctx.pos) {
+                        switch (*ctx.pos) {
+                            [[likely]] case '#':
+                                set_value<components::scheme>(ctx, ctx.base.get_scheme());
+                                set_value<components::path>(ctx, ctx.base.get_path());
+                                set_value<components::queries>(ctx, ctx.base.get_queries());
+                                clear<components::fragment>(ctx);
+                                set_valid(ctx.status, uri_status::valid_fragment);
+                                return;
+
+                            [[unlikely]] case '\0':
+                                if constexpr (Options.eof_is_valid) {
+                                    set_error(ctx.status, uri_status::empty_string);
+                                    return;
+                                }
+                                break;
+                            [[unlikely]] case '\r':
+                            [[unlikely]] case '\n':
+                            [[unlikely]] case '\t':
+                                if constexpr (Options.ignore_tabs_or_newlines) {
+                                    set_warning(ctx.status, uri_status::invalid_character);
+                                    continue;
+                                }
+                                [[fallthrough]];
+                                default: break;
+                        }
+                        break;
                     }
-                } else if (is_file_scheme(ctx.base.get_scheme())) {
+                } else if (!is_file_scheme(ctx.base.get_scheme())) {
                     relative_state<Options>(ctx);
                     return;
                 } else {
@@ -189,12 +287,33 @@ namespace webpp::uri {
             set_error(ctx.status, uri_status::missing_scheme_non_relative_url);
         }
 
-        template <ParsingURIContext CtxT>
+        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void special_authority_ignore_slashes_state(CtxT& ctx) noexcept {
             // special authority ignore slashes state
             // (https://url.spec.whatwg.org/#special-authority-ignore-slashes-state)
-            while (ascii::inc_if_any(ctx.pos, ctx.end, '\\', '/')) {
-                set_warning(ctx.status, uri_status::missing_following_solidus);
+            for (; ctx.pos != ctx.end; ++ctx.pos) {
+                switch (*ctx.pos) {
+                    case '\\':
+                    case '/':
+                        set_warning(ctx.status, uri_status::missing_following_solidus);
+                        continue;
+                    [[unlikely]] case '\0':
+                        if constexpr (Options.eof_is_valid) {
+                            set_error(ctx.status, uri_status::scheme_ended_unexpectedly);
+                            return;
+                        }
+                        break;
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            continue;
+                        }
+                        [[fallthrough]];
+                        [[likely]] default : break;
+                }
+                break;
             }
             set_valid(ctx.status, uri_status::valid_authority);
         }
@@ -203,8 +322,8 @@ namespace webpp::uri {
         static constexpr void special_relative_or_authority_state(CtxT& ctx) noexcept {
             // special authority slashes state
             // (https://url.spec.whatwg.org/#special-authority-slashes-state):
-            if (ascii::inc_if(ctx.pos, ctx.end, '/', '/')) {
-                special_authority_ignore_slashes_state(ctx);
+            if (safely_inc_if<Options>(ctx, '/', '/')) {
+                special_authority_ignore_slashes_state<Options>(ctx);
                 return;
             }
             set_warning(ctx.status, uri_status::missing_following_solidus);
@@ -218,6 +337,9 @@ namespace webpp::uri {
      */
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void parse_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        using details::encoded_scheme;
+        using details::safely_inc_if;
+
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
         using enum uri_status;
@@ -225,80 +347,138 @@ namespace webpp::uri {
         webpp_static_constexpr auto alnum_plus =
           details::ascii_bitmap(details::ascii_bitmap{ALPHA_DIGIT<char_type>}, '+', '-', '.');
 
+
         // scheme start (https://url.spec.whatwg.org/#scheme-start-state)
         if (ctx.pos == ctx.end) [[unlikely]] {
             ctx.status = stl::to_underlying(empty_string);
             return;
         }
 
-        if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
-            // Otherwise, if state override is not given, set buffer to the empty string, state to no
-            // scheme state, and start over (from the first code point in input).
-            //
-            // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
-            ctx.pos = ctx.beg;
-            clear<components::scheme>(ctx);
-            details::no_scheme_state<Options>(ctx);
-            return;
+        // this is designed to find out which scheme type we're dealing with here
+        stl::uint64_t scheme_code = 0ULL;
+
+        // handling of the first character:
+        for (;;) {
+            if (!details::ASCII_ALPHA.contains(*ctx.pos)) [[unlikely]] {
+                if constexpr (Options.ignore_tabs_or_newlines) {
+                    if (ascii::inc_until_any(ctx.pos, ctx.end, '\n', '\t', '\r')) {
+                        set_warning(ctx.status, invalid_character);
+                        continue;
+                    }
+                }
+
+                // if state override is not given, set buffer to the empty string, state to no
+                // scheme state, and start over (from the first code point in input).
+                //
+                // no scheme state (https://url.spec.whatwg.org/#no-scheme-state)
+                ctx.pos = ctx.beg;
+                clear<components::scheme>(ctx);
+                details::no_scheme_state<Options>(ctx);
+                return;
+            }
+            break;
         }
 
+        scheme_code  |= ascii::to_lower_copy(*ctx.pos);
+        scheme_code <<= details::one_byte;
         ++ctx.pos;
 
         // scheme state (https://url.spec.whatwg.org/#scheme-state)
         // handling alpha, num, +, -, .
-        ctx.pos = alnum_plus.find_first_not_in(ctx.pos, ctx.end);
-        if (ctx.pos == ctx.end) [[unlikely]] {
-            ctx.status = stl::to_underlying(scheme_ended_unexpectedly);
-            return;
+        for (;; ++ctx.pos) {
+            if (ctx.pos == ctx.end) {
+                set_error(ctx.status, scheme_ended_unexpectedly);
+                return;
+            }
+            switch (*ctx.pos) {
+                case ':':
+                    break;
+                [[unlikely]] case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        set_error(ctx.status, scheme_ended_unexpectedly);
+                    } else {
+                        set_error(ctx.status, invalid_scheme_character);
+                    }
+                    return;
+                [[unlikely]] case '\r':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\t':
+                    if constexpr (Options.ignore_tabs_or_newlines) {
+                        set_warning(ctx.status, invalid_character);
+                        continue;
+                    }
+                    [[fallthrough]];
+                    [[likely]] default : if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
+                        set_error(ctx.status, invalid_scheme_character);
+                        return;
+                    }
+                    scheme_code  |= ascii::to_lower_copy(*ctx.pos);
+                    scheme_code <<= details::one_byte;
+                    continue;
+            }
+            if (ctx.pos == ctx.end) [[unlikely]] {
+                set_error(ctx.status, scheme_ended_unexpectedly);
+                return;
+            }
+            break;
         }
 
-        // handling ":" character
-        if (*ctx.pos == ':') [[likely]] {
-            set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
-            ++ctx.pos;
 
-            if (is_file_scheme(get_output_view<components::scheme>(ctx))) [[unlikely]] {
+        set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
+        ++ctx.pos;
+
+        switch (scheme_code) {
+            case encoded_scheme("file"): {
                 ctx.scheme = scheme_type::file;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
-                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
+                if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
                 details::file_state<Options>(ctx);
                 return;
             }
-            if (is_special_scheme(get_output_view<components::scheme>(ctx))) [[likely]] {
+            [[likely]] case encoded_scheme("http") :
+            [[likely]] case encoded_scheme("https") :
+            case encoded_scheme("ws"):
+            case encoded_scheme("ftp"):
+            case encoded_scheme("wss"): {
                 ctx.scheme = scheme_type::special_scheme;
+
                 if constexpr (ctx_type::has_base_uri) {
                     if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {
                         // todo: Assert: base is special (and therefore does not have an opaque path).
                         details::special_relative_or_authority_state<Options>(ctx);
+                        return;
                     }
                 }
 
                 /// https://url.spec.whatwg.org/#special-authority-slashes-state
-                if (!ascii::inc_if(ctx.pos, ctx.end, '/', '/')) [[unlikely]] {
+                if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
                     set_warning(ctx.status, missing_following_solidus);
                 }
-                details::special_authority_ignore_slashes_state(ctx);
+                details::special_authority_ignore_slashes_state<Options>(ctx);
                 return;
             }
-
-            if (ascii::inc_if(ctx.pos, ctx.end, '/')) {
-                // https://url.spec.whatwg.org/#path-or-authority-state
-                if (ascii::inc_if(ctx.pos, ctx.end, '/')) [[likely]] {
-                    set_valid(ctx.status, valid_authority);
-                    return;
+                [[unlikely]] default : {
+                    ctx.scheme = scheme_type::not_special;
+                    break;
                 }
-                set_valid(ctx.status, valid_path);
+        }
+
+
+        if (safely_inc_if<Options>(ctx, '/')) {
+            // https://url.spec.whatwg.org/#path-or-authority-state
+            if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
+                set_valid(ctx.status, valid_authority);
                 return;
             }
-
-            clear<components::path>(ctx);
-            set_valid(ctx.status, valid_opaque_path);
-        } else {
-            set_error(ctx.status, invalid_scheme_character);
+            set_valid(ctx.status, valid_path);
+            return;
         }
+
+        clear<components::path>(ctx);
+        set_valid(ctx.status, valid_opaque_path);
     }
 
     /// Serialize scheme

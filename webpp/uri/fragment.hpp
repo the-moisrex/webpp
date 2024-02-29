@@ -16,6 +16,11 @@ namespace webpp::uri {
         using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
 
+        if (ctx.pos == ctx.end) {
+            set_valid(ctx.status, uri_status::valid);
+            return;
+        }
+
         if constexpr (Options.parse_fragment) {
             details::component_encoder<components::fragment, ctx_type> encoder{ctx};
             while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(

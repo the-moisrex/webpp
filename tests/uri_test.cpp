@@ -517,6 +517,27 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
     }
 }
 
+TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
+    constexpr stl::string_view str =
+      "https://127.0.0.1/.\r.//./one/%2\nE./%\n2e/two/./.\n/\n././%2e\n/%2e/.././three/f\nour/\r%2e%\r2e/"
+      "five/\r.\r%2E/%2e";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
+      << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "//three/");
+    } else {
+        EXPECT_EQ(context.out.get_path(),
+                  "/.\r.//./one/%2\nE./%\n2e/two/./.\n/\n././%2e\n/%2e/.././three/f\nour/\r%2e%\r2e/five/"
+                  "\r.\r%2E/%2e");
+    }
+}
+
 TYPED_TEST(URITests, DoubleAtSign) {
     constexpr stl::string_view str = "http://username@username@127.0.0.1/?one==a#hash";
 
@@ -587,6 +608,24 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHost) {
         EXPECT_EQ(context.out.get_path(), "/C|/windows");
     } else {
         EXPECT_EQ(context.out.get_path(), "/C|\\windows");
+    }
+}
+
+TYPED_TEST(URITests, WindowsDriveLetterAsHostWithNewLine) {
+    constexpr stl::string_view str = "file://\nC\r|\t\\\twind\tows";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::windows_drive_letter_as_host))
+      << to_string(uri::get_warning(context.status));
+    EXPECT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
+      << to_string(uri::get_warning(context.status));
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(context.out.get_path(), "/C:/windows");
+    } else if constexpr (TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "\nC\r|\t/\twind\tows");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "C\r|\t\\\twind\tows");
     }
 }
 
@@ -1463,12 +1502,40 @@ TYPED_TEST(URITests, NewlinesInURI) {
     EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
     EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
     EXPECT_EQ(ctx.out.get_scheme(), "http");
-    EXPECT_EQ(ctx.out.get_hostname(), "example.org");
     if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_hostname(), "example.org");
         EXPECT_EQ(ctx.out.get_path(), "/");
     } else {
+        EXPECT_EQ(ctx.out.get_hostname(), "example\t.\norg");
         EXPECT_EQ(ctx.out.get_path(), "");
     }
+}
+
+TYPED_TEST(URITests, NewlinesInLocalhost) {
+    auto const ctx = this->template parse_from_string<TypeParam>("file:///loc\nal\th\rost/page");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
+    EXPECT_EQ(ctx.out.get_scheme(), "file");
+    EXPECT_EQ(ctx.out.get_hostname(), "");
+    EXPECT_EQ(ctx.out.get_path(), "/page");
+}
+
+TYPED_TEST(URITests, NewlinesInScheme) {
+    auto const ctx = this->template parse_from_string<TypeParam>("\n\n\rhtt\rps\n:\r/\r/\rexample.org");
+    EXPECT_TRUE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    EXPECT_TRUE(uri::has_warning(ctx.status, uri::uri_status::invalid_character));
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_scheme(), "https");
+    } else {
+        EXPECT_EQ(ctx.out.get_scheme(), "\n\n\rhtt\rps\n");
+    }
+    EXPECT_EQ(ctx.out.get_hostname(), "example.org");
+}
+
+TYPED_TEST(URITests, BlowUp) {
+    // somehow this caused a crash, so I'm writing a test for it
+    auto const ctx = this->template parse_from_string<TypeParam>("test-a-colon.html");
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
 }
 
 TYPED_TEST(URITests, SpacesInURIs) {
