@@ -24,18 +24,26 @@ namespace webpp::uri {
             if constexpr (Options.ignore_tabs_or_newlines) {
                 using ctx_type  = CtxT;
                 using char_type = typename ctx_type::char_type;
+
                 stl::array<char_type, sizeof...(ValT)> const arr{static_cast<char_type>(val)...};
 
                 stl::size_t index = 0;
-                for (; ctx.pos != ctx.end && index != sizeof...(ValT); ++ctx.pos) {
+                for (; ctx.pos != ctx.end; ++ctx.pos) {
+                    if (index == sizeof...(ValT)) {
+                        return true;
+                    }
                     switch (*ctx.pos) {
                         // ignoring tabs and newlines
-                        case '\n':
-                        case '\r':
-                        case '\t': set_warning(ctx.status, uri_status::invalid_character); continue;
+                        [[unlikely]] case '\n':
+                        [[unlikely]] case '\r':
+                        [[unlikely]] case '\t':
+                            if constexpr (Options.ignore_tabs_or_newlines) {
+                                set_warning(ctx.status, uri_status::invalid_character);
+                                continue;
+                            }
+                            [[fallthrough]];
 
-                        default:
-                            if (*ctx.pos != arr[index]) {
+                            [[likely]] default : if (*ctx.pos != arr[index]) {
                                 return false;
                             }
                             ++index;
@@ -43,7 +51,7 @@ namespace webpp::uri {
                     }
                     break;
                 }
-                return true;
+                return false;
             } else {
                 return ascii::inc_if(ctx.pos, ctx.end, val...);
             }
@@ -408,13 +416,15 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                    [[likely]] default : if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
-                        set_error(ctx.status, invalid_scheme_character);
-                        return;
+                    [[likely]] default : {
+                        if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
+                            set_error(ctx.status, invalid_scheme_character);
+                            return;
+                        }
+                        scheme_code  |= ascii::to_lower_copy(*ctx.pos);
+                        scheme_code <<= details::one_byte;
+                        continue;
                     }
-                    scheme_code  |= ascii::to_lower_copy(*ctx.pos);
-                    scheme_code <<= details::one_byte;
-                    continue;
             }
             if (ctx.pos == ctx.end) [[unlikely]] {
                 set_error(ctx.status, scheme_ended_unexpectedly);

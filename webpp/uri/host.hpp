@@ -206,7 +206,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool operator==(basic_host const& other) const noexcept {
-            return storage == other.storage_ref();
+            return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, other.storage_ref());
         }
     };
 
