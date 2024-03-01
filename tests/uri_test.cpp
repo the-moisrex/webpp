@@ -3,6 +3,7 @@
 #include "../webpp/uri/uri.hpp"
 
 #include "../webpp/ip/ipv4.hpp"
+#include "../webpp/uri/details/iiequals.hpp"
 #include "../webpp/uri/path_traverser.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -10,6 +11,11 @@
 //  - domain-test
 
 using namespace webpp;
+
+TEST(URIHelperTests, IIEquals) {
+    EXPECT_TRUE(uri::iiequals("\t\th\tel\rlo world\t.\n", "hello wor\t\t\t\t\tl\nd."));
+}
+
 
 using Types =
   testing::Types<uri::parsing_uri_context_string<stl::string>,

@@ -2,7 +2,10 @@
 #include "../../webpp/strings/iequals.hpp"
 #include "../../webpp/strings/to_case.hpp"
 #include "../benchmark.hpp"
+#include "./iiequals_impl.hpp"
 
+#include <array>
+#include <string>
 #include <strings.h>
 
 
@@ -16,6 +19,8 @@
 #endif
 
 using namespace webpp;
+
+static auto strs = str_array_generator<1000>();
 
 [[nodiscard]] constexpr bool iequal_tolower_all_the_way(istl::StringViewifiable auto&& _str1,
                                                         istl::StringViewifiable auto&& _str2) noexcept {
@@ -192,8 +197,9 @@ using namespace webpp;
 }
 
 static void IEQ_Strcasecmp(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto        res   = ::strcasecmp(istr.data(), istr2.data());
@@ -206,8 +212,9 @@ static void IEQ_Strcasecmp(benchmark::State& state) {
 BENCHMARK(IEQ_Strcasecmp);
 
 static void IEQ_Strncasecmp(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto        res   = ::strncasecmp(istr.data(), istr2.data(), istr.size());
@@ -220,8 +227,9 @@ static void IEQ_Strncasecmp(benchmark::State& state) {
 BENCHMARK(IEQ_Strncasecmp);
 
 static void IEQ_Default(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto        res   = webpp::ascii::iequals(istr, istr2);
@@ -234,8 +242,9 @@ static void IEQ_Default(benchmark::State& state) {
 BENCHMARK(IEQ_Default);
 
 static void IEQ_DefaultLowered(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto        res   = webpp::ascii::iequals<webpp::ascii::char_case_side::second_lowered>(istr, istr2);
@@ -248,8 +257,9 @@ static void IEQ_DefaultLowered(benchmark::State& state) {
 BENCHMARK(IEQ_DefaultLowered);
 
 static void IEQ_SIMD(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         auto        res   = iequals_simd(istr, istr2);
@@ -262,8 +272,9 @@ static void IEQ_SIMD(benchmark::State& state) {
 BENCHMARK(IEQ_SIMD);
 
 static void IEQ_ToLowerAllTheWay(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(iequal_tolower_all_the_way(istr, istr2));
@@ -275,8 +286,9 @@ static void IEQ_ToLowerAllTheWay(benchmark::State& state) {
 BENCHMARK(IEQ_ToLowerAllTheWay);
 
 static void IEQ_SimpleForLoop(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(simple_for_loop(istr, istr2));
@@ -288,8 +300,9 @@ static void IEQ_SimpleForLoop(benchmark::State& state) {
 BENCHMARK(IEQ_SimpleForLoop);
 
 static void IEQ_SimplerForLoop(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(simpler_for_loop(istr, istr2));
@@ -304,8 +317,9 @@ BENCHMARK(IEQ_SimplerForLoop);
 
 #ifdef BOOST_STRING_COMPARE_HPP
 static void IEQ_Boost(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(boost::iequals(istr, istr2));
@@ -319,8 +333,9 @@ BENCHMARK(IEQ_Boost);
 
 #ifdef BEAST_IEQUALS
 static void IEQ_Boost_Beast(benchmark::State& state) {
+    int index = 0;
     for (auto _ : state) {
-        std::string str   = str_generator();
+        auto const& str   = strs[index++ % strs.size()];
         auto        istr  = str;
         auto        istr2 = webpp::ascii::to_lower_copy(istr);
         benchmark::DoNotOptimize(boost::beast::iequals(istr, istr2));
@@ -331,3 +346,49 @@ static void IEQ_Boost_Beast(benchmark::State& state) {
 
 BENCHMARK(IEQ_Boost_Beast);
 #endif
+
+
+static void IEQ_IgnoreSpecialCharacters(benchmark::State& state) {
+    int index = 0;
+    for (auto _ : state) {
+        auto const& str   = strs[index++ % strs.size()];
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto        res   = test::iiequals<true, std::string_view, std::string_view>(istr, istr2);
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+
+BENCHMARK(IEQ_IgnoreSpecialCharacters);
+
+static void IEQ_IgnoreSpecialCharacters2(benchmark::State& state) {
+    int index = 0;
+    for (auto _ : state) {
+        auto const& str   = strs[index++ % strs.size()];
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto        res   = test2::iiequals<true, std::string_view, std::string_view>(istr, istr2);
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+
+BENCHMARK(IEQ_IgnoreSpecialCharacters2);
+
+static void IEQ_IgnoreSpecialCharacters3(benchmark::State& state) {
+    int index = 0;
+    for (auto _ : state) {
+        auto const& str   = strs[index++ % strs.size()];
+        auto        istr  = str;
+        auto        istr2 = webpp::ascii::to_lower_copy(istr);
+        auto        res   = test3::iiequals<true, std::string_view, std::string_view>(istr, istr2);
+        benchmark::DoNotOptimize(res);
+        benchmark::DoNotOptimize(istr);
+        benchmark::DoNotOptimize(istr2);
+    }
+}
+
+BENCHMARK(IEQ_IgnoreSpecialCharacters3);

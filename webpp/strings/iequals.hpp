@@ -3,6 +3,7 @@
 #ifndef WEBPP_IEQUALS_HPP
 #define WEBPP_IEQUALS_HPP
 
+#include "../std/utility.hpp" // for std::unreachable
 #include "size.hpp"
 #include "to_case.hpp"
 
