@@ -9,6 +9,9 @@ namespace webpp::uri::details {
 
     // NOLINTBEGIN(*-magic-numbers)
 
+    template <istl::CharType CharT>
+    static constexpr auto TABS_OR_NEWLINES = charset<CharT, 3>{'\n', '\t', '\r'};
+
     /**
      * source:
      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI

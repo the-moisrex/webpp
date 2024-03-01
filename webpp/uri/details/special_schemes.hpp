@@ -5,7 +5,8 @@
 
 #include "../../std/string_like.hpp"
 #include "../../std/string_view.hpp"
-#include "../../strings/iequals.hpp"
+#include "./constants.hpp"
+#include "./iiequals.hpp"
 
 #include <cstdint>
 
@@ -34,7 +35,8 @@ namespace webpp::uri {
 
     template <istl::StringLike StrT>
     [[nodiscard]] constexpr bool is_file_scheme(StrT scheme) noexcept {
-        return ascii::iequals_fl("file", stl::forward<StrT>(scheme));
+        using char_type = istl::char_type_of_t<StrT>;
+        return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>("file", stl::forward<StrT>(scheme));
     }
 
     [[nodiscard]] constexpr bool is_file_scheme(scheme_type const scheme) noexcept {

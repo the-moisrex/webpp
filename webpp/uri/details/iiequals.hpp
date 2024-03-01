@@ -1,7 +1,7 @@
 // Created by moisrex on 2/29/24.
 
-#ifndef URI_HELPERS_HPP
-#define URI_HELPERS_HPP
+#ifndef URI_IIEQUALS_HPP
+#define URI_IIEQUALS_HPP
 
 #include "../../std/string_view.hpp"
 #include "../../strings/charset.hpp"
@@ -9,11 +9,13 @@
 
 namespace webpp::uri {
 
+    static constexpr auto empty_charset = charset<char, 0>{};
+
     /**
      * Almost same as iequals, but it'll ignore `\r`, `\n`, and `\t` characters
      */
-    template <ascii::char_case_side   Side             = ascii::char_case_side::both_unknown,
-              CharSet auto            IgnoreCharacters = charset{'\r', '\t', '\n'},
+    template <CharSet auto            IgnoreCharacters = empty_charset,
+              ascii::char_case_side   Side             = ascii::char_case_side::both_unknown,
               istl::StringViewifiable LT,
               istl::StringViewifiable RT>
     [[nodiscard]] static constexpr bool iiequals(LT&& lhs, RT&& rhs) noexcept {
@@ -50,37 +52,37 @@ namespace webpp::uri {
     }
 
     /// first lowered
-    template <CharSet auto IgnoreCharacters = charset{'\r', '\t', '\n'}, typename LT, typename RT>
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
     [[nodiscard]] static constexpr bool iiequals_fl(LT&& lhs, RT&& rhs) noexcept {
-        return iiequals<ascii::char_case_side::first_lowered, IgnoreCharacters>(
+        return iiequals<IgnoreCharacters, ascii::char_case_side::first_lowered>(
           stl::forward<LT>(lhs),
           stl::forward<RT>(rhs));
     }
 
     /// second lowered
-    template <CharSet auto IgnoreCharacters = charset{'\r', '\t', '\n'}, typename LT, typename RT>
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
     [[nodiscard]] static constexpr bool iiequals_sl(LT&& lhs, RT&& rhs) noexcept {
-        return iiequals<ascii::char_case_side::second_lowered, IgnoreCharacters>(
+        return iiequals<IgnoreCharacters, ascii::char_case_side::second_lowered>(
           stl::forward<LT>(lhs),
           stl::forward<RT>(rhs));
     }
 
     /// first uppered
-    template <CharSet auto IgnoreCharacters = charset{'\r', '\t', '\n'}, typename LT, typename RT>
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
     [[nodiscard]] static constexpr bool iiequals_fu(LT&& lhs, RT&& rhs) noexcept {
-        return iiequals<ascii::char_case_side::first_uppered, IgnoreCharacters>(
+        return iiequals<IgnoreCharacters, ascii::char_case_side::first_uppered>(
           stl::forward<LT>(lhs),
           stl::forward<RT>(rhs));
     }
 
     /// second uppered
-    template <CharSet auto IgnoreCharacters = charset{'\r', '\t', '\n'}, typename LT, typename RT>
+    template <CharSet auto IgnoreCharacters = empty_charset, typename LT, typename RT>
     [[nodiscard]] static constexpr bool iiequals_su(LT&& lhs, RT&& rhs) noexcept {
-        return iiequals<ascii::char_case_side::second_uppered, IgnoreCharacters>(
+        return iiequals<IgnoreCharacters, ascii::char_case_side::second_uppered>(
           stl::forward<LT>(lhs),
           stl::forward<RT>(rhs));
     }
 
 } // namespace webpp::uri
 
-#endif // URI_HELPERS_HPP
+#endif // URI_IIEQUALS_HPP

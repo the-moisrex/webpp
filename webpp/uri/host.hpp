@@ -184,9 +184,13 @@ namespace webpp::uri {
             for (; piece_it != storage.end(); ++piece_it) {
                 bool should_continue = false;
                 if constexpr (is_modifiable) {
-                    should_continue = ascii::iequals_fl(*piece_it, str.substr(0, piece_it->size()));
+                    should_continue = iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(
+                      *piece_it,
+                      str.substr(0, piece_it->size()));
                 } else {
-                    should_continue = ascii::iequals(*piece_it, str.substr(0, piece_it->size()));
+                    should_continue = iiequals<details::TABS_OR_NEWLINES<char_type>>(
+                      *piece_it,
+                      str.substr(0, piece_it->size()));
                 }
                 if (!should_continue) {
                     return false;

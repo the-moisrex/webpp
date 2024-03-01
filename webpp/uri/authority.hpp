@@ -280,6 +280,7 @@ namespace webpp::uri {
         // https://url.spec.whatwg.org/#file-host-state
 
         using ctx_type = CtxT;
+        using char_type = typename ctx_type::char_type;
 
         static_assert(Options.allow_file_hosts,
                       "This function should not be reached if hosts in 'file://' scheme are not allowed.");
@@ -325,11 +326,16 @@ namespace webpp::uri {
         if (has_value<components::host>(ctx)) {
             if constexpr (ctx_type::is_segregated) {
                 auto const host = get_output<components::host>(ctx);
-                if (host.size() == 1 && ascii::iequals_fl("localhost", host.back())) {
+                if (host.size() == 1 &&
+                    iiequals_fl<details::TABS_OR_NEWLINES<char_type>>("localhost", host.back()))
+                {
                     clear<components::host>(ctx);
                 }
             } else {
-                if (ascii::iequals_fl("localhost", get_output_value<components::host>(ctx))) {
+                if (iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(
+                      "localhost",
+                      get_output_value<components::host>(ctx)))
+                {
                     clear<components::host>(ctx);
                 }
             }

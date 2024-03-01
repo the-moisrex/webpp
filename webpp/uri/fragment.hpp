@@ -5,6 +5,7 @@
 
 #include "../std/string_like.hpp"
 #include "./details/constants.hpp"
+#include "./details/iiequals.hpp"
 #include "./details/uri_components_encoding.hpp"
 #include "encoding.hpp"
 
@@ -179,9 +180,12 @@ namespace webpp::uri {
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
-                return ascii::iequals_fl(storage, stl::forward<NStrT>(inp_str));
+                return iiequals_fl<uri::details::TABS_OR_NEWLINES<char_type>>(
+                  storage,
+                  stl::forward<NStrT>(inp_str));
             } else {
-                return ascii::iequals(storage, stl::forward<NStrT>(inp_str));
+                return iiequals<uri::details::TABS_OR_NEWLINES<char_type>>(storage,
+                                                                           stl::forward<NStrT>(inp_str));
             }
         }
 

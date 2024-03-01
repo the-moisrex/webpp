@@ -40,6 +40,9 @@ namespace webpp {
                 set.find_first_not_in(beg, end)
             } noexcept -> stl::same_as<typename stl::remove_cvref_t<T>::value_type const*>;
             set.set(1);
+            {
+                set.empty()
+            } noexcept -> stl::same_as<bool>;
         };
 
         // Depends on CharSet itself:
@@ -374,7 +377,7 @@ namespace webpp {
      */
     template <stl::size_t N>
         requires(N <= stl::numeric_limits<unsigned char>::max() + 1)
-    struct charmap : public stl::array<bool, N> {
+    struct charmap : stl::array<bool, N> {
         static constexpr stl::size_t array_size = N;
         using value_type                        = bool;
 
@@ -718,6 +721,10 @@ namespace webpp {
                 }
             }
             return end;
+        }
+
+        [[nodiscard]] constexpr bool empty() const noexcept {
+            return this->size() == 0;
         }
     };
 
