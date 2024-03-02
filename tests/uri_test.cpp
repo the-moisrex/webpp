@@ -70,10 +70,10 @@ TYPED_TEST(URITests, Generation) {
     EXPECT_EQ(str.size(), 0);
 
     url.scheme(stl::string_view{"https"});
-    EXPECT_EQ(url.as_string(), "https://");
+    EXPECT_EQ(url.as_string(), "");
     url.clear_scheme();
     url.scheme(stl::string_view{"https:"});
-    EXPECT_EQ(url.as_string(), "https://");
+    EXPECT_EQ(url.as_string(), "https:");
     url.hostname("webpp.dev");
     EXPECT_EQ(url.as_string(), "https://webpp.dev");
 }

@@ -43,11 +43,13 @@ namespace webpp::uri {
                             }
                             [[fallthrough]];
 
-                            [[likely]] default : if (*ctx.pos != arr[index]) {
-                                return false;
+                            [[likely]] default : {
+                                if (*ctx.pos != arr[index]) {
+                                    return false;
+                                }
+                                ++index;
+                                continue;
                             }
-                            ++index;
-                            continue;
                     }
                     break;
                 }
