@@ -11,6 +11,7 @@
 #include "../strings/peek.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
+#include "./details/uri_helpers.hpp"
 #include "./details/uri_status.hpp"
 
 #include <cassert>
@@ -18,46 +19,6 @@
 namespace webpp::uri {
 
     namespace details {
-
-        template <uri_parsing_options Options, ParsingURIContext CtxT, typename... ValT>
-        [[nodiscard]] static constexpr bool safely_inc_if(CtxT& ctx, ValT... val) noexcept {
-            if constexpr (Options.ignore_tabs_or_newlines) {
-                using ctx_type  = CtxT;
-                using char_type = typename ctx_type::char_type;
-
-                stl::array<char_type, sizeof...(ValT)> const arr{static_cast<char_type>(val)...};
-
-                stl::size_t index = 0;
-                for (; ctx.pos != ctx.end; ++ctx.pos) {
-                    if (index == sizeof...(ValT)) {
-                        return true;
-                    }
-                    switch (*ctx.pos) {
-                        // ignoring tabs and newlines
-                        [[unlikely]] case '\n':
-                        [[unlikely]] case '\r':
-                        [[unlikely]] case '\t':
-                            if constexpr (Options.ignore_tabs_or_newlines) {
-                                set_warning(ctx.status, uri_status::invalid_character);
-                                continue;
-                            }
-                            [[fallthrough]];
-
-                            [[likely]] default : {
-                                if (*ctx.pos != arr[index]) {
-                                    return false;
-                                }
-                                ++index;
-                                continue;
-                            }
-                    }
-                    break;
-                }
-                return false;
-            } else {
-                return ascii::inc_if(ctx.pos, ctx.end, val...);
-            }
-        }
 
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
         static constexpr void relative_state(CtxT& ctx) noexcept {

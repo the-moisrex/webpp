@@ -279,7 +279,7 @@ namespace webpp::uri {
     static constexpr void parse_file_host(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#file-host-state
 
-        using ctx_type = CtxT;
+        using ctx_type  = CtxT;
         using char_type = typename ctx_type::char_type;
 
         static_assert(Options.allow_file_hosts,
@@ -287,26 +287,36 @@ namespace webpp::uri {
 
 
         // handling tabs and newlines
-        if constexpr (Options.ignore_tabs_or_newlines) {
-            while (ctx.pos != ctx.end) {
-                switch (*ctx.pos) {
-                    [[unlikely]] case '\t':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\r':
-                        set_warning(ctx.status, uri_status::invalid_character);
-                        ++ctx.pos;
-                        continue;
-                    default: break;
-                }
-                break;
-            }
-        }
+        // if constexpr (Options.ignore_tabs_or_newlines) {
+        //     while (ctx.pos != ctx.end) {
+        //         switch (*ctx.pos) {
+        //             [[unlikely]] case '\t':
+        //             [[unlikely]] case '\n':
+        //             [[unlikely]] case '\r':
+        //                 set_warning(ctx.status, uri_status::invalid_character);
+        //                 ++ctx.pos;
+        //                 continue;
+        //             default: break;
+        //         }
+        //         break;
+        //     }
+        // }
 
         if constexpr (Options.handle_windows_drive_letters) {
-            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
-                if (*ctx.pos != '/' || *ctx.pos != '\\') {
-                    // we have to move one back because the "path" needs to start with a "/" or a "\"
-                    --ctx.pos;
+            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
+                for (;;) {
+                    switch (*ctx.pos) {
+                        case '/':
+                        case '\\': break;
+                        default:
+                            // we have to move one back because the "path" needs to start with a "/" or a "\"
+                            --ctx.pos;
+                            if (ctx.pos == ctx.beg) {
+                                break;
+                            }
+                            continue;
+                    }
+                    break;
                 }
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
                 set_valid(ctx.status, uri_status::valid_path);
@@ -341,7 +351,7 @@ namespace webpp::uri {
             }
         }
         if constexpr (Options.handle_windows_drive_letters) {
-            if (details::starts_with_windows_driver_letter(ctx.pos, ctx.end)) {
+            if (details::starts_with_windows_driver_letter<Options>(ctx.pos, ctx.end)) {
                 set_warning(ctx.status, uri_status::windows_drive_letter_as_host);
             }
         }

@@ -629,9 +629,9 @@ TYPED_TEST(URITests, WindowsDriveLetterAsHostWithNewLine) {
     if constexpr (TypeParam::is_modifiable) {
         EXPECT_EQ(context.out.get_path(), "/C:/windows");
     } else if constexpr (TypeParam::is_segregated) {
-        EXPECT_EQ(context.out.get_path(), "\nC\r|\t/\twind\tows");
+        EXPECT_EQ(context.out.get_path(), "/\nC\r|\t/\twind\tows");
     } else {
-        EXPECT_EQ(context.out.get_path(), "C\r|\t\\\twind\tows");
+        EXPECT_EQ(context.out.get_path(), "/\nC\r|\t\\\twind\tows");
     }
 }
 

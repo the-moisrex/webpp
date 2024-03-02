@@ -284,11 +284,11 @@ namespace webpp::uri::details {
             }
         }
 
-        constexpr void append_inplace_of(char_type inp_char, difference_type index = 1) noexcept {
+        constexpr void append_inplace_of(char_type inp_char, difference_type count = 1) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
                 append_to(get_out_seg(), inp_char);
-                ctx->pos += index;
             }
+            ctx->pos += count;
         }
 
         /// Check if the next 2 characters are valid percent encoded ascii-hex digits.

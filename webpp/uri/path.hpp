@@ -9,6 +9,7 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../strings/peek.hpp"
+#include "./details/uri_helpers.hpp"
 #include "details/constants.hpp"
 #include "details/special_schemes.hpp"
 #include "details/uri_components_encoding.hpp"
@@ -104,14 +105,22 @@ namespace webpp::uri {
                 switch (*pos) {
                     [[unlikely]] case '%':
                         ++pos;
-                        if (ascii::inc_if(pos, ctx.end, '2') && (*pos == 'e' || *pos == 'E')) {
+                        if (safely_inc_if<Options>(pos, ctx.end, ctx, '2') && (*pos == 'e' || *pos == 'E')) {
                             break;
                         }
                         return;
                     case '.':
                         break;
-                    [[likely]] default:
-                        return;
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        }
+                        [[fallthrough]];
+                        [[likely]] default : return;
                 }
                 ++pos;
                 if (pos == ctx.end) {
@@ -121,6 +130,15 @@ namespace webpp::uri {
                 }
 
                 switch (*pos) {
+                    [[unlikely]] case '\n':
+                    [[unlikely]] case '\r':
+                    [[unlikely]] case '\t':
+                        if constexpr (Options.ignore_tabs_or_newlines) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                            ++ctx.pos;
+                            continue;
+                        }
+                        return;
                     [[unlikely]] case '\\':
                         if (!is_special_scheme(ctx.scheme)) {
                             return;
@@ -133,7 +151,7 @@ namespace webpp::uri {
                         continue;
                     [[unlikely]] case '%':
                         ++pos;
-                        if (ascii::inc_if(pos, ctx.end, '2') && (*pos == 'e' || *pos == 'E')) {
+                        if (safely_inc_if<Options>(pos, ctx.end, ctx, '2') && (*pos == 'e' || *pos == 'E')) {
                             break;
                         }
                         return;
@@ -143,8 +161,17 @@ namespace webpp::uri {
                 }
 
                 ++pos;
-                if (pos != ctx.end) {
+                while (pos != ctx.end) {
                     switch (*pos) {
+                        [[unlikely]] case '\n':
+                        [[unlikely]] case '\r':
+                        [[unlikely]] case '\t':
+                            if constexpr (Options.ignore_tabs_or_newlines) {
+                                set_warning(ctx.status, uri_status::invalid_character);
+                                ++ctx.pos;
+                                continue;
+                            }
+                            return;
                         [[unlikely]] case '\\':
                             if (!is_special_scheme(ctx.scheme)) {
                                 return;
@@ -155,6 +182,7 @@ namespace webpp::uri {
                             break;
                         default: return;
                     }
+                    break;
                 }
 
 
@@ -184,35 +212,6 @@ namespace webpp::uri {
             }
         }
 
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-        static constexpr void handle_windows_driver_letter(
-          CtxT&                                      ctx,
-          component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
-            using ctx_type = CtxT;
-            bool const is_windows_path =
-              Options.handle_windows_drive_letters &&
-              details::starts_with_windows_driver_letter_slashes(ctx.pos, ctx.end) &&
-              is_file_scheme(ctx.scheme);
-
-
-            if constexpr (ctx_type::is_modifiable && Options.handle_windows_drive_letters) {
-                if (is_windows_path) {
-                    set_warning(ctx.status, uri_status::windows_drive_letter_used);
-                    encoder.next_segment();
-                    encoder.append_n(1);
-                    encoder.append_inplace_of(':');
-                    if (*ctx.pos == '\\') {
-                        set_warning(ctx.status, uri_status::reverse_solidus_used);
-                    }
-                    if constexpr (!ctx_type::is_segregated) {
-                        encoder.append_inplace_of('/');
-                        encoder.next_segment(0);
-                    } else {
-                        encoder.next_segment();
-                    }
-                }
-            }
-        }
     } // namespace details
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>

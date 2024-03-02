@@ -5,6 +5,8 @@
 
 #include "constants.hpp"
 
+#include <iterator>
+
 namespace webpp::uri::details {
 
     template <typename Iter>
@@ -19,55 +21,141 @@ namespace webpp::uri::details {
         return ASCII_ALPHA.contains(*pos) && pos[1] == ':';
     }
 
-    template <typename Iter, typename EIter = Iter>
+    template <uri_parsing_options Options, typename Iter, typename EIter = Iter>
     [[nodiscard]] static constexpr bool starts_with_windows_driver_letter(Iter pos, EIter end) noexcept {
         // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-        webpp_assume(end >= pos);
+
+        using char_type = typename stl::iterator_traits<Iter>::value_type;
+
         switch (end - pos) {
             case 0:
             case 1: return false;
             case 2: return has_windows_driver_letter(pos);
-            default:
-                if (!has_windows_driver_letter(pos)) {
+            default: {
+                stl::array<char_type, 3> letters{};
+                // ignoring first (back-)slash character
+                for (int index = 0; index != 3 && pos != end; ++pos) {
+                    switch (*pos) {
+                        [[unlikely]] case '\r':
+                        [[unlikely]] case '\n':
+                        [[unlikely]] case '\t':
+                            if constexpr (Options.ignore_tabs_or_newlines) {
+                                continue;
+                            }
+                            return false;
+                        case '\\':
+                        case '/':
+                            if (index == 0) {
+                                continue;
+                            }
+                            [[fallthrough]];
+                        [[likely]] default:
+                            letters[index] = *pos;
+                            ++index;
+                            continue;
+                    }
+                    break;
+                }
+                if (!has_windows_driver_letter(letters.begin())) {
                     return false;
                 }
-                switch (pos[2]) {
+
+                switch (letters[2]) {
                     case '/':
                     case '\\':
                     case '?':
                     case '#': return true;
-                    default: return false;
+                    default: break;
                 }
+            }
         }
+        return false;
     }
 
-    template <typename Iter, typename EIter = Iter>
-    [[nodiscard]] static constexpr bool starts_with_windows_driver_letter_slashes(
-      Iter  pos,
-      EIter end) noexcept {
-        // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
-        webpp_assume(end >= pos);
-        switch (end - pos) {
-            case 0:
-            case 1: return false;
-            case 2: return has_windows_driver_letter(pos);
-            default:
-                if (*pos == '/' || *pos == '\\') {
-                    ++pos;
+    template <uri_parsing_options Options, ParsingURIContext CtxT>
+    static constexpr void handle_windows_driver_letter(
+      CtxT&                                      ctx,
+      component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
+        using ctx_type  = CtxT;
+        using char_type = typename ctx_type::char_type;
+        if constexpr (Options.handle_windows_drive_letters) {
+            if (!is_file_scheme(ctx.scheme)) {
+                return;
+            }
+
+            // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
+            stl::array<char_type, 3> letters{};
+            auto                     pos = ctx.pos;
+            switch (ctx.end - pos) {
+                case 0:
+                case 1: return;
+                case 2:
+                    if (!has_windows_driver_letter(pos)) {
+                        return;
+                    }
+                    letters[0]  = *pos;
+                    letters[1]  = ':'; // normalizing it
+                    pos        += 2;
+                    break;
+                default: {
+                    // ignoring first (back-)slash character
+                    for (int index = 0; index != 3 && pos != ctx.end; ++pos) {
+                        switch (*pos) {
+                            [[unlikely]] case '\r':
+                            [[unlikely]] case '\n':
+                            [[unlikely]] case '\t':
+                                if constexpr (Options.ignore_tabs_or_newlines) {
+                                    set_warning(ctx.status, uri_status::invalid_character);
+                                    continue;
+                                }
+                                return;
+                            case '\\':
+                                set_warning(ctx.status, uri_status::reverse_solidus_used);
+                                [[fallthrough]];
+                            case '/':
+                                if (index == 0) {
+                                    continue;
+                                }
+                                [[fallthrough]];
+                            [[likely]] default:
+                                letters[index] = *pos;
+                                ++index;
+                                continue;
+                        }
+                        break;
+                    }
+                    if (!has_windows_driver_letter(letters.begin())) {
+                        return;
+                    }
+                    letters[1] = ':'; // normalizing the windows drive letter
+
+                    switch (letters[2]) {
+                        case '/':
+                        case '\\': letters[2] = '/'; break;
+                        case '?':
+                        case '#': --pos; break;
+                        default: return;
+                    }
                 }
-                if (!has_windows_driver_letter(pos)) {
-                    return false;
+            }
+
+            set_warning(ctx.status, uri_status::windows_drive_letter_used);
+            encoder.next_segment();
+            encoder.append_inplace_of(letters[0]);
+            encoder.append_inplace_of(letters[1]);
+            encoder.ignore_character(pos - ctx.pos - 1);
+            if (letters[2] == '/') {
+                if constexpr (!ctx_type::is_segregated) {
+                    encoder.append_inplace_of('/');
+                    encoder.next_segment(0);
+                } else {
+                    encoder.next_segment();
                 }
-                switch (pos[2]) {
-                    case '/':
-                    case '\\':
-                    case '?':
-                    case '#': return true;
-                    default: return false;
-                }
+            } else {
+                encoder.end_segment();
+            }
         }
     }
-
 
 } // namespace webpp::uri::details
 
