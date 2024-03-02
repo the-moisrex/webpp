@@ -103,6 +103,9 @@ namespace webpp::uri {
             for (;;) {
                 auto pos = ctx.pos + 1;
                 switch (*pos) {
+                    [[unlikely]] case '\0':
+                        // doesn't matter if Option.eof_is_valid is, the warning will be set somewhere else
+                        return;
                     [[unlikely]] case '%':
                         ++pos;
                         if (safely_inc_if<Options>(pos, ctx.end, ctx, '2') && (*pos == 'e' || *pos == 'E')) {
@@ -123,7 +126,7 @@ namespace webpp::uri {
                         [[likely]] default : return;
                 }
                 ++pos;
-                if (pos == ctx.end) {
+                if (pos == ctx.end || (Options.eof_is_valid && *pos == '\0')) {
                     ctx.pos = pos;
                     encoder.clear_segment();
                     return;
@@ -163,6 +166,11 @@ namespace webpp::uri {
                 ++pos;
                 while (pos != ctx.end) {
                     switch (*pos) {
+                        [[unlikely]] case '\0':
+                            if constexpr (Options.eof_is_valid) {
+                                break;
+                            }
+                            return;
                         [[unlikely]] case '\n':
                         [[unlikely]] case '\r':
                         [[unlikely]] case '\t':
@@ -366,7 +374,7 @@ namespace webpp::uri {
 
             if (!is_done) {
                 details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache);
-                if (ctx.pos == ctx.end) {
+                if (ctx.pos == ctx.end || (Options.eof_is_valid && *ctx.pos == '\0')) {
                     break;
                 }
                 encoder.next_segment_of('/');
@@ -379,7 +387,7 @@ namespace webpp::uri {
         encoder.set_value();
 
         // ignore the last "?" or "#" character
-        if (ctx.pos != ctx.end) {
+        if (ctx.pos != ctx.end && (Options.eof_is_valid && *ctx.pos != '\0')) {
             ++ctx.pos;
         } else {
             set_valid(ctx.status, uri_status::valid);
