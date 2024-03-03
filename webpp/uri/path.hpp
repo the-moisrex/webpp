@@ -100,124 +100,104 @@ namespace webpp::uri {
             }
 
             // It's a loop to make sure it can handle multiple segments like /../../..
-            for (;;) {
-                auto pos = ctx.pos + 1;
+            // NOLINTBEGIN(*-magic-numbers)
+            auto         pos    = ctx.pos + 1;
+            auto         status = ctx.status;
+            stl::uint8_t state  = 0;
+            for (;; ++pos) {
+                if (pos == ctx.end) {
+                    break;
+                }
                 switch (*pos) {
-                    [[unlikely]] case '\0':
-                        // doesn't matter if Option.eof_is_valid is, the warning will be set somewhere else
-                        return;
-                    [[unlikely]] case '%':
-                        ++pos;
-                        if (safely_inc_if<Options>(pos, ctx.end, ctx, '2') && (*pos == 'e' || *pos == 'E')) {
-                            break;
-                        }
-                        return;
+                    case '%':
+                        // save the result of last %2e
+                        state += 0b0001'0000U;
+
+                        // make sure this bit is activated
+                        state |= 0b0001'0000U;
+                        continue;
+                    case '2': state ^= 0b0111'0000U; continue;
+                    case 'e':
+                    case 'E': state ^= 0b0001'0000U; continue;
                     case '.':
+                        ++state;
+
+                        // only 2 dots are allowed
+                        if (state & 0b1111U == 3U) {
+                            return;
+                        }
+                        continue;
+                    [[unlikely]] case '\0' : {
+                        if constexpr (Options.eof_is_valid) {
+                            break;
+                        } else {
+                            return;
+                        }
+                    }
+                    [[unlikely]] case '\\':
+                        if (!is_special_scheme(ctx.scheme)) {
+                            return;
+                        }
+                        set_warning(status, uri_status::reverse_solidus_used);
+                        [[fallthrough]];
+                    case '/':
                         break;
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\r':
                     [[unlikely]] case '\t':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                            ++ctx.pos;
+                            set_warning(status, uri_status::invalid_character);
                             continue;
                         }
                         [[fallthrough]];
                         [[likely]] default : return;
                 }
-                ++pos;
-                if (pos == ctx.end || (Options.eof_is_valid && *pos == '\0')) {
-                    ctx.pos = pos;
+                break;
+            }
+
+            switch (state) {
+                // single dot found:
+                case 0b0000'0001U: // .
+                case 0b0111'0000U: // %2e
+                    ctx.pos    = pos;
+                    ctx.status = status;
                     encoder.clear_segment();
                     return;
-                }
 
-                switch (*pos) {
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                            ++ctx.pos;
-                            continue;
-                        }
-                        return;
-                    [[unlikely]] case '\\':
-                        if (!is_special_scheme(ctx.scheme)) {
-                            return;
-                        }
-                        set_warning(ctx.status, uri_status::reverse_solidus_used);
-                        [[fallthrough]];
-                    [[likely]] case '/':
-                        ctx.pos = pos;
-                        encoder.clear_segment();
-                        continue;
-                    [[unlikely]] case '%':
-                        ++pos;
-                        if (safely_inc_if<Options>(pos, ctx.end, ctx, '2') && (*pos == 'e' || *pos == 'E')) {
-                            break;
-                        }
-                        return;
-                    [[likely]] case '.':
-                        break;
-                    default: return;
-                }
-
-                ++pos;
-                while (pos != ctx.end) {
-                    switch (*pos) {
-                        [[unlikely]] case '\0':
-                            if constexpr (Options.eof_is_valid) {
-                                break;
-                            }
-                            return;
-                        [[unlikely]] case '\n':
-                        [[unlikely]] case '\r':
-                        [[unlikely]] case '\t':
-                            if constexpr (Options.ignore_tabs_or_newlines) {
-                                set_warning(ctx.status, uri_status::invalid_character);
-                                ++ctx.pos;
-                                continue;
-                            }
-                            return;
-                        [[unlikely]] case '\\':
-                            if (!is_special_scheme(ctx.scheme)) {
-                                return;
-                            }
-                            set_warning(ctx.status, uri_status::reverse_solidus_used);
-                            [[fallthrough]];
-                        [[likely]] case '/':
-                            break;
-                        default: return;
-                    }
+                // two dots found:
+                case 0b0000'0010U: // ..
+                case 0b0111'0001U: // %2e. or .%2e
+                case 0b1111'0000U: // %2e%2e
                     break;
-                }
+                default: return;
+            }
+            // NOLINTEND(*-magic-numbers)
 
 
-                // remove the last segment as well
-                if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                    auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask) + 1;
-                    if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
-                        // find the last slash
-                        for (auto cur = pos;;) {
-                            ++hint;
-                            --cur;
-                            if (cur == ctx.beg) {
-                                break;
-                            }
-                            if (*cur == '/') {
-                                break;
-                            }
+            // remove the last segment as well
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask) + 1;
+                if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
+                    // find the last slash
+                    for (auto cur = pos;;) {
+                        ++hint;
+                        --cur;
+                        if (cur == ctx.beg) {
+                            break;
+                        }
+                        if (*cur == '/') {
+                            break;
                         }
                     }
-                    encoder.pop_back(hint);
-                    slash_loc_cache >>= a_byte;
-                } else {
-                    encoder.pop_back();
                 }
-                ctx.pos = pos;
-                encoder.clear_segment();
+                encoder.pop_back(hint);
+                slash_loc_cache >>= a_byte;
+            } else {
+                encoder.pop_back();
             }
+            ctx.status = status;
+            ctx.pos    = pos;
+            encoder.clear_segment();
         }
 
     } // namespace details
@@ -369,11 +349,9 @@ namespace webpp::uri {
                 is_done = true;
             }
 
-
-            // Append the last segment (not the current one)
+            details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache);
 
             if (!is_done) {
-                details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache);
                 if (ctx.pos == ctx.end || (Options.eof_is_valid && *ctx.pos == '\0')) {
                     break;
                 }
