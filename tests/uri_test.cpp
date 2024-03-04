@@ -523,6 +523,29 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
     }
 }
 
+TYPED_TEST(URITests, Percent2ECheck) {
+    constexpr stl::string_view str =
+      "https://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/"
+      "%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_TRUE(uri::has_warning(context.status, uri::uri_status::invalid_character))
+      << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(
+          context.out.get_path(),
+          "//three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+    } else {
+        EXPECT_EQ(context.out.get_path(),
+                  "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
+                  "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+    }
+}
+
 TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
     constexpr stl::string_view str =
       "https://127.0.0.1/.\r.//./one/%2\nE./%\n2e/two/./.\n/\n././%2e\n/%2e/.././three/f\nour/\r%2e%\r2e/"

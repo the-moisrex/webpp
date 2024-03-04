@@ -16,6 +16,7 @@
 #include "details/windows_drive_letter.hpp"
 #include "encoding.hpp"
 
+#include <bit>
 #include <compare>
 #include <numeric>
 
@@ -67,6 +68,10 @@ namespace webpp::uri {
         //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
 
+        static constexpr auto a_byte = static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
+        static constexpr auto slash_mask =
+          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
+
         /// Handle special cases:
         ///   /.
         ///   /..
@@ -78,8 +83,9 @@ namespace webpp::uri {
         /// %2E or %2e is equal to a "." (dot)
         ///
         /// It's possible to have newlines and tabs in between these things
+        /// @returns true if we found one or two dots
         template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
-        static constexpr void handle_dots_in_paths(
+        [[nodiscard]] static constexpr bool handle_dots_in_paths(
           CtxT&                                      ctx,
           component_encoder<components::path, CtxT>& encoder,
           stl::uint64_t&                             slash_loc_cache) noexcept(CtxT::is_nothrow) {
@@ -87,56 +93,64 @@ namespace webpp::uri {
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
-            webpp_static_constexpr auto a_byte =
-              static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
-            webpp_static_constexpr auto slash_mask =
-              static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
-
-            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                slash_loc_cache <<= a_byte;
-                if (static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) < slash_mask) {
-                    slash_loc_cache |= static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
-                }
-            }
-
-            // It's a loop to make sure it can handle multiple segments like /../../..
             // NOLINTBEGIN(*-magic-numbers)
-            auto         pos    = ctx.pos + 1;
-            auto         status = ctx.status;
-            stl::uint8_t state  = 0;
+            auto pos    = ctx.pos + 1;
+            auto status = ctx.status;
+
+            // X X X X - X X X X
+            // ^ ^ ^ ^       ^ ^
+            // | -----       ---
+            // |   |          |
+            // |   |          ----> the number of dots found
+            // |   |
+            // |   ------> if all 3 are 1, we have one single %2e sequence
+            // |
+            // -----> activated if 2 of %2e found
+            stl::uint8_t state = 0;
+
             for (;; ++pos) {
                 if (pos == ctx.end) {
                     break;
                 }
+
+                // only 2 dots (or %2e) are allowed
+                if (stl::popcount(state & 0b1001'1111U) == 3U) {
+                    return false;
+                }
+
                 switch (*pos) {
                     case '%':
                         // save the result of last %2e
                         state += 0b0001'0000U;
 
-                        // make sure this bit is activated
+                        // make sure this bit is activated (for the first % that we find)
                         state |= 0b0001'0000U;
                         continue;
-                    case '2': state ^= 0b0111'0000U; continue;
+                    case '2':
+                        // XORing makes the above bit go away, and set the other 2 bits
+                        state ^= 0b0111'0000U;
+                        continue;
                     case 'e':
-                    case 'E': state ^= 0b0001'0000U; continue;
+                    case 'E':
+                        // This XOR makes the first 1 come back if it existed before,
+                        // and also preserves the other 3 bits,
+                        // and also if the order of the three %2e operations are wrong, we'd get
+                        // the wrong value at the end.
+                        state ^= 0b0001'0000U;
+                        continue;
                     case '.':
                         ++state;
-
-                        // only 2 dots are allowed
-                        if (state & 0b1111U == 3U) {
-                            return;
-                        }
                         continue;
                     [[unlikely]] case '\0' : {
                         if constexpr (Options.eof_is_valid) {
                             break;
                         } else {
-                            return;
+                            return false;
                         }
                     }
                     [[unlikely]] case '\\':
                         if (!is_special_scheme(ctx.scheme)) {
-                            return;
+                            return false;
                         }
                         set_warning(status, uri_status::reverse_solidus_used);
                         [[fallthrough]];
@@ -150,7 +164,9 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        [[likely]] default : return;
+                        [[likely]] default : {
+                            return false;
+                        }
                 }
                 break;
             }
@@ -162,35 +178,35 @@ namespace webpp::uri {
                     ctx.pos    = pos;
                     ctx.status = status;
                     encoder.clear_segment();
-                    return;
+                    return true;
 
                 // two dots found:
                 case 0b0000'0010U: // ..
                 case 0b0111'0001U: // %2e. or .%2e
                 case 0b1111'0000U: // %2e%2e
                     break;
-                default: return;
+                default: return false;
             }
             // NOLINTEND(*-magic-numbers)
 
 
             // remove the last segment as well
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                auto hint = static_cast<difference_type>(slash_loc_cache & slash_mask) + 1;
-                if (hint == 0) { // the cache is empty, too many /../../../.. in the URL.
+                auto slash_loc = static_cast<difference_type>(slash_loc_cache & slash_mask);
+
+                // the cache is empty, too many /../../../.. in the URL that can't be stored in one single
+                // uint64, or the difference is larger than 255 characters.
+                if (slash_loc == 0) {
                     // find the last slash
-                    for (auto cur = pos;;) {
-                        ++hint;
+                    for (auto cur = ctx.pos;;) {
+                        ++slash_loc;
                         --cur;
-                        if (cur == ctx.beg) {
-                            break;
-                        }
-                        if (*cur == '/') {
+                        if (cur == ctx.beg || *cur == '/') {
                             break;
                         }
                     }
                 }
-                encoder.pop_back(hint);
+                encoder.pop_back(slash_loc);
                 slash_loc_cache >>= a_byte;
             } else {
                 encoder.pop_back();
@@ -198,6 +214,7 @@ namespace webpp::uri {
             ctx.status = status;
             ctx.pos    = pos;
             encoder.clear_segment();
+            return true;
         }
 
     } // namespace details
@@ -290,6 +307,7 @@ namespace webpp::uri {
         }
 
 
+        // store the slashes that we find in each byte of this variable if it fits
         stl::uint64_t slash_loc_cache = 0;
 
         details::component_encoder<components::path, ctx_type> encoder{ctx};
@@ -301,6 +319,10 @@ namespace webpp::uri {
                   details::PATH_ENCODE_SET,
                   interesting_chars))
             {
+                if (details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache)) {
+                    continue;
+                }
+
                 switch (*ctx.pos) {
                     case '\\':
                         if (is_special_scheme(ctx.scheme)) {
@@ -311,6 +333,14 @@ namespace webpp::uri {
                         }
                         [[fallthrough]];
                     [[likely]] case '/':
+                        if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                            auto const loc_diff =
+                              static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
+                            slash_loc_cache <<= details::a_byte;
+                            if (loc_diff < details::slash_mask) {
+                                slash_loc_cache |= loc_diff;
+                            }
+                        }
                         break;
                     case '?':
                         set_valid(ctx.status, uri_status::valid_queries);
@@ -349,7 +379,6 @@ namespace webpp::uri {
                 is_done = true;
             }
 
-            details::handle_dots_in_paths<Options>(ctx, encoder, slash_loc_cache);
 
             if (!is_done) {
                 if (ctx.pos == ctx.end || (Options.eof_is_valid && *ctx.pos == '\0')) {
