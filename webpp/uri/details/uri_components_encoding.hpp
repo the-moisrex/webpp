@@ -50,6 +50,14 @@ namespace webpp::uri::details {
         iterator                          beg = ctx->pos;
 
       public:
+        [[nodiscard]] constexpr auto const& context() const noexcept {
+            return *ctx;
+        }
+
+        [[nodiscard]] constexpr auto& context() noexcept {
+            return *ctx;
+        }
+
         [[nodiscard]] constexpr decltype(auto) get_output() const noexcept {
             return uri::get_output<Comp>(*ctx);
         }
@@ -292,19 +300,54 @@ namespace webpp::uri::details {
         }
 
         /// Check if the next 2 characters are valid percent encoded ascii-hex digits.
+        template <bool CheckNewlinesAndTabs = false>
         [[nodiscard]] constexpr bool validate_percent_encode() noexcept {
             using ascii::is_hex_digit;
-            if constexpr (stl::is_pointer_v<iterator>) { // Dereferencing iterators have side effects, so we
-                                                         // get a warning in clang
-                webpp_assume(*ctx->pos == '%');
+
+            // NOLINTBEGIN(*-inc-dec-in-conditions)
+            if constexpr (!CheckNewlinesAndTabs) {
+                auto       cur      = ctx->pos;
+                bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur);
+                append_n(cur - ctx->pos);
+                return is_valid;
+            } else {
+                append_n(1);
+                switch (ctx->pos - ctx->end) {
+                    case 0:
+                    case 1: return false;
+                    case 2: return is_hex_digit(*ctx->pos++) && is_hex_digit(*ctx->pos);
+                    default: {
+                        int count = 0;
+                        for (;;) {
+                            switch (*ctx->pos) {
+                                case '\t':
+                                case '\r':
+                                case '\n':
+                                    ++ctx->pos;
+                                    if (ctx->pos == ctx->end) {
+                                        return false;
+                                    }
+                                    continue;
+                                default: {
+                                    bool const is_valid_char = is_hex_digit(*ctx->pos);
+                                    append_inplace_of(*ctx->pos, 1);
+                                    if (!is_valid_char) {
+                                        return false;
+                                    }
+                                    ++count;
+                                    if (count == 2 || ctx->pos == ctx->end) {
+                                        break;
+                                    }
+                                    continue;
+                                }
+                            }
+                            break;
+                        }
+                        return count == 2;
+                    }
+                }
             }
-
-            auto cur = ctx->pos;
-
-            // NOLINTNEXTLINE(*-inc-dec-in-conditions)
-            bool const is_valid = cur++ + 2 <= ctx->end && is_hex_digit(*cur++) && is_hex_digit(*cur);
-            append_n(cur - ctx->pos);
-            return is_valid;
+            // NOLINTEND(*-inc-dec-in-conditions)
         }
 
         constexpr void pop_back([[maybe_unused]] difference_type hint = 0) noexcept {

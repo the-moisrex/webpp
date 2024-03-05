@@ -172,7 +172,7 @@ namespace webpp::uri {
                         break;
                     case '%':
                         if constexpr (!IsSpecial) {
-                            if (!coder.validate_percent_encode()) {
+                            if (!coder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
                                 set_warning(ctx.status, invalid_character);
                             }
                             continue;

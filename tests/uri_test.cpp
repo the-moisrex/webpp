@@ -75,7 +75,7 @@ TYPED_TEST(URITests, Generation) {
     url.scheme(stl::string_view{"https:"});
     EXPECT_EQ(url.as_string(), "https:");
     url.hostname("webpp.dev");
-    EXPECT_EQ(url.as_string(), "https://webpp.dev");
+    EXPECT_EQ(url.as_string(), "https://webpp.dev/");
 }
 
 TYPED_TEST(URITests, PathFromString) {
@@ -543,6 +543,21 @@ TYPED_TEST(URITests, Percent2ECheck) {
         EXPECT_EQ(context.out.get_path(),
                   "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
                   "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+    }
+}
+
+TYPED_TEST(URITests, BackingUpOnEmptySegments) {
+    constexpr stl::string_view str = "http://example.com////../..";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "//");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "////../..");
     }
 }
 

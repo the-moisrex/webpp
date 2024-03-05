@@ -265,10 +265,7 @@ namespace webpp {
     template <typename Iter, typename CIter = Iter>
     [[nodiscard]] static constexpr bool validate_percent_encode(Iter& pos, CIter end) noexcept {
         using ascii::is_hex_digit;
-        if constexpr (stl::is_pointer_v<Iter>) { // Dereferencing iterators have side effects, so we get a
-                                                 // warning in clang
-            webpp_assume(*pos == '%');
-        }
+        webpp_assume(*pos == '%');
 
         // NOLINTNEXTLINE(*-inc-dec-in-conditions)
         return pos++ + 2 <= end && is_hex_digit(*pos++) && is_hex_digit(*pos++);

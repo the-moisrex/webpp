@@ -409,6 +409,8 @@ namespace webpp::uri {
                 if (!this->port().is_default_port(this->scheme().view())) {
                     this->port().to_string(out, true);
                 }
+                // } else if (this->path().size() > 1 && this->scheme().is_special() && this->path().) {
+                //
             }
             this->path().to_string(out);
             this->queries().to_string(out, true);

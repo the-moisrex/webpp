@@ -30,7 +30,7 @@ namespace webpp::uri {
             {
                 switch (*ctx.pos) {
                     case '%':
-                        if (validate_percent_encode(ctx.pos, ctx.end)) {
+                        if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
                             continue;
                         }
                         break;

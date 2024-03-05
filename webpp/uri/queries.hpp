@@ -53,7 +53,7 @@ namespace webpp::uri {
                         set_valid(ctx.status, uri_status::valid_fragment);
                         break;
                     case '%':
-                        if (!encoder.validate_percent_encode()) {
+                        if (!encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
                             if constexpr (Options.allow_invalid_characters) {
                                 set_warning(ctx.status, uri_status::invalid_character);
                             } else {
