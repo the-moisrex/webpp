@@ -553,7 +553,7 @@ namespace webpp::uri {
         }
 
         [[nodiscard]] constexpr bool is_special() const noexcept {
-            return is_special_scheme(storage.view());
+            return is_special_scheme(this->view());
         }
 
         /**

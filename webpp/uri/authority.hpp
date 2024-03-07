@@ -75,7 +75,7 @@ namespace webpp::uri {
                             return;
                         }
                     }
-                    set_valid(ctx.status, valid);
+                    set_valid(ctx.status, valid_path);
                     break;
                 }
 
@@ -121,7 +121,7 @@ namespace webpp::uri {
                                     set_error(ctx.status, host_missing);
                                     return;
                                 } else if (ctx.pos == ctx.end) {
-                                    set_valid(ctx.status, valid);
+                                    set_valid(ctx.status, valid_path);
                                 }
                             }
                             return;
@@ -223,7 +223,7 @@ namespace webpp::uri {
                                     return;
                                 }
                             }
-                            set_valid(ctx.status, valid);
+                            set_valid(ctx.status, valid_path);
                             break;
                         }
                         [[fallthrough]];
@@ -240,7 +240,7 @@ namespace webpp::uri {
                         set_error(ctx.status, host_missing);
                         return;
                     } else if (ctx.pos == ctx.end) {
-                        set_valid(ctx.status, valid);
+                        set_valid(ctx.status, valid_path);
                     }
                 }
                 break;

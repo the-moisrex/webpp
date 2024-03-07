@@ -219,6 +219,8 @@ namespace webpp::uri {
         webpp_static_constexpr auto interesting_characters =
           details::ascii_bitmap('\0', '%', '#', '?', '\r', '\t', '\n');
 
+        set_opaque(ctx, true);
+
         details::component_encoder<components::path, ctx_type> encoder(ctx);
         encoder.start_segment();
         for (;;) {
@@ -284,17 +286,17 @@ namespace webpp::uri {
         webpp_static_constexpr auto interesting_chars =
           ascii_bitmap(encode_set, ascii_bitmap{'\\', '\0', '/', '?', '#', '%', '\r', '\n', '\t'});
 
-
-        if (ctx.pos == ctx.end) {
-            clear<components::path>(ctx);
-            set_valid(ctx.status, uri_status::valid);
-            return;
-        }
+        // attention:
+        // we should not check to see if we're at the end of the string because if the path is empty and we're
+        // in a special scheme, we have to add "/" to it
 
         if (!is_special_scheme(ctx.scheme)) {
             parse_opaque_path<Options>(ctx);
             return;
         }
+
+        set_opaque(ctx, false);
+
 
 
         // store the slashes that we find in each byte of this variable if it fits
@@ -387,19 +389,29 @@ namespace webpp::uri {
         if (ctx.pos != ctx.end && (Options.eof_is_valid && *ctx.pos != '\0')) {
             ++ctx.pos;
         } else {
+            // handling empty paths
+            if constexpr (ctx_type::is_modifiable) {
+                if (is_special_scheme(ctx.scheme) && !has_value<components::path>(ctx)) {
+                    encoder.next_segment_of('/', 0);
+                }
+            }
+
             set_valid(ctx.status, uri_status::valid);
         }
     }
 
     /// Serialize path
-    /// todo: do we need to handle opaque paths?
     template <typename StorageType, istl::String StrT>
-    static constexpr void render_path(StorageType const& storage, StrT& out) {
+    static constexpr void render_path(StorageType const& storage, StrT& out, bool const is_opaque = false) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#url-path-serializer
-        for (auto const& seg : storage) {
-            out += '/';
-            out += seg;
+        if (is_opaque) {
+            out += storage.front();
+        } else {
+            for (auto const& seg : storage) {
+                out += '/';
+                out += seg;
+            }
         }
     }
 
@@ -448,6 +460,7 @@ namespace webpp::uri {
 
       private:
         container_type storage;
+        bool           m_is_opaque = false;
 
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
@@ -585,6 +598,10 @@ namespace webpp::uri {
             }
         }
 
+        constexpr void set_opaque(bool const value = false) noexcept {
+            m_is_opaque = value;
+        }
+
         constexpr void clear() {
             return storage.clear();
         }
@@ -645,9 +662,13 @@ namespace webpp::uri {
             }
         }
 
+        [[nodiscard]] constexpr bool is_opaque() const noexcept {
+            return m_is_opaque;
+        }
+
         template <istl::String NStrT = string_type>
         constexpr void to_string(NStrT& out) const {
-            render_path(storage_ref(), out);
+            render_path(storage_ref(), out, is_opaque());
         }
 
         template <istl::String NStrT = string_type, typename... Args>

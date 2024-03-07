@@ -1221,6 +1221,22 @@ namespace webpp::uri {
         }
     }
 
+    template <ParsingURIContext CtxT>
+    constexpr void set_opaque(CtxT& ctx, bool const is_opaque_path) {
+        using ctx_type = CtxT;
+
+        if constexpr (requires {
+                          ctx_type::component;
+                          ctx.out->set_opaque(true);
+                      })
+        {
+            // works for strings only
+            ctx.out->set_opaque(is_opaque_path);
+        } else if constexpr (requires { details::get_output_ref(ctx).path().set_opaque(true); }) {
+            details::get_output_ref(ctx).path().set_opaque(is_opaque_path);
+        }
+    }
+
 } // namespace webpp::uri
 
 #endif // WEBPP_URL_COMPONENTS_HPP

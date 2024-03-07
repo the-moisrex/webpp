@@ -215,6 +215,10 @@ namespace webpp::uri {
         return m_##field;                                                                           \
     }                                                                                               \
                                                                                                     \
+    [[nodiscard]] constexpr auto& field() noexcept {                                                \
+        return m_##field;                                                                           \
+    }                                                                                               \
+                                                                                                    \
     [[nodiscard]] constexpr auto& field##_ref() noexcept {                                          \
         return m_##field.storage_ref();                                                             \
     }                                                                                               \
