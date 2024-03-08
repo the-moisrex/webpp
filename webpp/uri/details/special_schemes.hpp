@@ -61,7 +61,7 @@ namespace webpp::uri {
                     default: break;
                 }
             }
-            scheme_code  |= ascii::to_lower_copy(ith_char);
+            scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(ith_char));
             scheme_code <<= details::one_byte;
         }
         switch (scheme_code) {

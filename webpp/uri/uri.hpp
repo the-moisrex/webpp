@@ -17,28 +17,36 @@
 namespace webpp::uri {
 
     template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+    static constexpr bool parse_uri_step(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+        switch (get_value(ctx.status)) {
+            using enum uri_status;
+            case valid:                       // we're done parsing
+            case valid_punycode: return true; // todo?
+            case valid_authority: parse_authority<Options>(ctx); break;
+            case valid_file_host:
+                if constexpr (Options.allow_file_hosts) {
+                    parse_file_host<Options>(ctx);
+                } else {
+                    stl::unreachable(); // should be impossible.
+                }
+                break;
+            case valid_port: parse_port<Options>(ctx); break;
+            case valid_authority_end: parse_authority_end<Options>(ctx); break;
+            case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
+            case valid_path: parse_path<Options>(ctx); break;
+            case valid_queries: parse_queries<Options>(ctx); break;
+            case valid_fragment: parse_fragment<Options>(ctx); break;
+            case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
+            default: stl::unreachable(); break;               // should be impossible
+        }
+        return false;
+    }
+
+    template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
     static constexpr void continue_parsing_uri(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         while (!has_error(ctx.status)) {
-            switch (get_value(ctx.status)) {
-                using enum uri_status;
-                case valid:                  // we're done parsing
-                case valid_punycode: return; // todo?
-                case valid_authority: parse_authority<Options>(ctx); break;
-                case valid_file_host:
-                    if constexpr (Options.allow_file_hosts) {
-                        parse_file_host<Options>(ctx);
-                    } else {
-                        stl::unreachable(); // should be impossible.
-                    }
-                    break;
-                case valid_port: parse_port<Options>(ctx); break;
-                case valid_authority_end: parse_authority_end<Options>(ctx); break;
-                case valid_opaque_path: parse_opaque_path<Options>(ctx); break;
-                case valid_path: parse_path<Options>(ctx); break;
-                case valid_queries: parse_queries<Options>(ctx); break;
-                case valid_fragment: parse_fragment<Options>(ctx); break;
-                case unparsed: parse_scheme<Options>(ctx); break; // start from the beginning
-                default: stl::unreachable(); break;               // should be impossible
+            if (parse_uri_step<Options>(ctx)) {
+                break;
             }
         }
     }
@@ -92,6 +100,43 @@ namespace webpp::uri {
 
         return parse_uri<Options>(the_url, origin_context.out);
     }
+
+    /**
+     * A class used during parsing a URI
+     */
+    template <typename OutComponentType, typename Iter, typename BaseSegType = void, typename BaseIter = void>
+    struct parsing_structured_uri_context {
+        using out_seg_type   = OutComponentType;
+        using base_seg_type  = BaseSegType;
+        using out_type       = OutComponentType;
+        using clean_out_type = stl::remove_pointer_t<out_type>;
+        using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
+                                             BaseSegType,
+                                             uri_components<base_seg_type, BaseIter>>;
+        using seg_type       = typename clean_out_type::seg_type; // this might be different from OutSegType
+        using iterator       = Iter;
+        using iterator_traits = stl::iterator_traits<iterator>;
+        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
+        using state_type      = stl::underlying_type_t<uri_status>;
+
+        using map_iterator   = typename clean_out_type::map_iterator;
+        using vec_iterator   = typename clean_out_type::vec_iterator;
+        using map_value_type = typename clean_out_type::map_value_type;
+
+
+        static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
+        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
+        static constexpr bool is_modifiable = clean_out_type::is_modifiable;
+        static constexpr bool is_segregated = clean_out_type::is_segregated;
+
+        iterator beg{}; // the beginning of the string, not going to change during parsing
+        iterator pos{}; // current position
+        iterator end{}; // the end of the string
+        out_type out{}; // the output uri components
+        [[no_unique_address]] base_type base{};
+        state_type                      status = stl::to_underlying(uri_status::unparsed);
+        scheme_type                     scheme = scheme_type::not_special;
+    };
 
     /**
      * @brief Customization of uri components that holds all of the URI components with all the bells and the
@@ -170,12 +215,6 @@ namespace webpp::uri {
         return m_##field.template as_string<NStrT>(stl::forward<Args>(args)...);                    \
     }                                                                                               \
                                                                                                     \
-    template <uri_parsing_options     Options = uri_parsing_options{},                              \
-              istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>                  \
-    constexpr uri_status_type field(NStrT&& inp_str) noexcept(!istl::ModifiableString<NStrT>) {     \
-        auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));                        \
-        return m_##field.template parse<Options>(str.begin(), str.end());                           \
-    }                                                                                               \
                                                                                                     \
     constexpr void clear_##field() noexcept {                                                       \
         m_##field.clear();                                                                          \
@@ -244,43 +283,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username() || has_password();
         }
-    };
-
-    /**
-     * A class used during parsing a URI
-     */
-    template <typename OutComponentType, typename Iter, typename BaseSegType = void, typename BaseIter = void>
-    struct parsing_structured_uri_context {
-        using out_seg_type   = OutComponentType;
-        using base_seg_type  = BaseSegType;
-        using out_type       = OutComponentType;
-        using clean_out_type = stl::remove_pointer_t<out_type>;
-        using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
-                                             BaseSegType,
-                                             uri_components<base_seg_type, BaseIter>>;
-        using seg_type        = typename clean_out_type::seg_type; // this might be different from OutSegType
-        using iterator       = Iter;
-        using iterator_traits = stl::iterator_traits<iterator>;
-        using char_type       = istl::char_type_of_t<typename iterator_traits::pointer>;
-        using state_type      = stl::underlying_type_t<uri_status>;
-
-        using map_iterator   = typename clean_out_type::map_iterator;
-        using vec_iterator   = typename clean_out_type::vec_iterator;
-        using map_value_type = typename clean_out_type::map_value_type;
-
-
-        static constexpr bool is_nothrow    = clean_out_type::is_nothrow;
-        static constexpr bool has_base_uri  = !stl::is_void_v<BaseSegType>;
-        static constexpr bool is_modifiable = clean_out_type::is_modifiable;
-        static constexpr bool is_segregated = clean_out_type::is_segregated;
-
-        iterator beg{}; // the beginning of the string, not going to change during parsing
-        iterator pos{}; // current position
-        iterator end{}; // the end of the string
-        out_type out{}; // the output uri components
-        [[no_unique_address]] base_type base{};
-        state_type                      status = stl::to_underlying(uri_status::unparsed);
-        scheme_type                     scheme = scheme_type::not_special;
     };
 
     /**
@@ -374,6 +376,78 @@ namespace webpp::uri {
             return *this;
         }
 
+        constexpr auto& as_components() noexcept {
+            return static_cast<components_type&>(*this);
+        }
+
+        constexpr auto const& as_components() const noexcept {
+            return static_cast<components_type const&>(*this);
+        }
+
+        [[nodiscard]] constexpr auto& scheme() noexcept {
+            return as_components().scheme();
+        }
+
+        [[nodiscard]] constexpr auto const& scheme() const noexcept {
+            return as_components().scheme();
+        }
+
+        [[nodiscard]] constexpr auto& hostname() noexcept {
+            return as_components().hostname();
+        }
+
+        [[nodiscard]] constexpr auto const& hostname() const noexcept {
+            return as_components().hostname();
+        }
+
+        [[nodiscard]] constexpr auto& username() noexcept {
+            return as_components().username();
+        }
+
+        [[nodiscard]] constexpr auto const& username() const noexcept {
+            return as_components().username();
+        }
+
+        [[nodiscard]] constexpr auto& password() noexcept {
+            return as_components().password();
+        }
+
+        [[nodiscard]] constexpr auto const& password() const noexcept {
+            return as_components().password();
+        }
+
+        [[nodiscard]] constexpr auto& port() noexcept {
+            return as_components().port();
+        }
+
+        [[nodiscard]] constexpr auto const& port() const noexcept {
+            return as_components().port();
+        }
+
+        [[nodiscard]] constexpr auto& path() noexcept {
+            return as_components().path();
+        }
+
+        [[nodiscard]] constexpr auto const& path() const noexcept {
+            return as_components().path();
+        }
+
+        [[nodiscard]] constexpr auto& queries() noexcept {
+            return as_components().queries();
+        }
+
+        [[nodiscard]] constexpr auto const& queries() const noexcept {
+            return as_components().queries();
+        }
+
+        [[nodiscard]] constexpr auto& fragment() noexcept {
+            return as_components().fragment();
+        }
+
+        [[nodiscard]] constexpr auto const& fragment() const noexcept {
+            return as_components().fragment();
+        }
+
         /**
          * @brief check if we have value
          * @return false if we don't have anything
@@ -443,76 +517,153 @@ namespace webpp::uri {
             return this->has_hostname() || this->has_port() || this->has_username() || this->has_password();
         }
 
-        /**
-         * This method resolves the given relative reference, based on the given
-         * base URI, returning the resolved target URI.
-         *
-         * @param[in] relative_uri
-         *     This describes how to get to the target starting at the base.
-         *
-         * @return
-         *     The resolved target URI is returned.
-         *
-         * @note
-         *     It only makes sense to call this method on an absolute URI
-         *     (in which I mean, the base URI should be absolute,
-         *     as in IsRelativeReference() should return false).
-         */
-        [[nodiscard]] constexpr basic_uri resolve(basic_uri const& relative_uri) const noexcept {
-            // Resolve the reference by following the algorithm
-            // from section 5.2.2 in
-            // RFC 3986 (https://tools.ietf.org/html/rfc3986).
-            auto target = create(relative_uri.get_allocator());
-            if (relative_uri.has_scheme()) {
-                target = relative_uri;
-                target.path.normalize();
-            } else {
-                target.scheme   = this->scheme;
-                target.fragment = relative_uri.fragment;
-                if (!relative_uri.host.empty()) {
-                    target.host     = relative_uri.host;
-                    target.port     = relative_uri.port;
-                    target.username = relative_uri.username;
-                    target.password = relative_uri.password;
-                    target.path     = relative_uri.path;
-                    target.queries  = relative_uri.queries;
-                    target.path.normalize();
-                } else {
-                    target.host     = this->host;
-                    target.username = this->username;
-                    target.password = this->password;
-                    target.port     = this->port;
-                    if (relative_uri.path.empty()) {
-                        target.path = this->path;
-                        if (!relative_uri.queries.empty()) {
-                            target.queries = relative_uri.queries;
-                        } else {
-                            target.queries = this->queries;
-                        }
-                    } else {
-                        target.queries = relative_uri.queries;
-                        // RFC describes this as:
-                        // "if (R.path starts-with "/") then"
-                        if (relative_uri.path.is_path_absolute()) {
-                            target.path = relative_uri.path;
-                            target.path.normalize();
-                        } else {
-                            // RFC describes this as:
-                            // "T.path = merge(Base.path, R.path);"
-                            target.path = this->path;
-                            if (target.path.size() > 1) {
-                                target.path.pop_back();
-                            }
-                            stl::copy(relative_uri.path.cbegin(),
-                                      relative_uri.path.cend(),
-                                      stl::back_inserter(target.path));
-                            target.path.normalize();
-                        }
-                    }
-                }
-            }
+        // /**
+        //  * This method resolves the given relative reference, based on the given
+        //  * base URI, returning the resolved target URI.
+        //  *
+        //  * @param[in] relative_uri
+        //  *     This describes how to get to the target starting at the base.
+        //  *
+        //  * @return
+        //  *     The resolved target URI is returned.
+        //  *
+        //  * @note
+        //  *     It only makes sense to call this method on an absolute URI
+        //  *     (in which I mean, the base URI should be absolute,
+        //  *     as in IsRelativeReference() should return false).
+        //  */
+        // [[nodiscard]] constexpr basic_uri resolve(basic_uri const& relative_uri) const noexcept {
+        //     // Resolve the reference by following the algorithm
+        //     // from section 5.2.2 in
+        //     // RFC 3986 (https://tools.ietf.org/html/rfc3986).
+        //     auto target = create(relative_uri.get_allocator());
+        //     if (relative_uri.has_scheme()) {
+        //         target = relative_uri;
+        //         target.path.normalize();
+        //     } else {
+        //         target.scheme   = this->scheme;
+        //         target.fragment = relative_uri.fragment;
+        //         if (!relative_uri.host.empty()) {
+        //             target.host     = relative_uri.host;
+        //             target.port     = relative_uri.port;
+        //             target.username = relative_uri.username;
+        //             target.password = relative_uri.password;
+        //             target.path     = relative_uri.path;
+        //             target.queries  = relative_uri.queries;
+        //             target.path.normalize();
+        //         } else {
+        //             target.host     = this->host;
+        //             target.username = this->username;
+        //             target.password = this->password;
+        //             target.port     = this->port;
+        //             if (relative_uri.path.empty()) {
+        //                 target.path = this->path;
+        //                 if (!relative_uri.queries.empty()) {
+        //                     target.queries = relative_uri.queries;
+        //                 } else {
+        //                     target.queries = this->queries;
+        //                 }
+        //             } else {
+        //                 target.queries = relative_uri.queries;
+        //                 // RFC describes this as:
+        //                 // "if (R.path starts-with "/") then"
+        //                 if (relative_uri.path.is_path_absolute()) {
+        //                     target.path = relative_uri.path;
+        //                     target.path.normalize();
+        //                 } else {
+        //                     // RFC describes this as:
+        //                     // "T.path = merge(Base.path, R.path);"
+        //                     target.path = this->path;
+        //                     if (target.path.size() > 1) {
+        //                         target.path.pop_back();
+        //                     }
+        //                     stl::copy(relative_uri.path.cbegin(),
+        //                               relative_uri.path.cend(),
+        //                               stl::back_inserter(target.path));
+        //                     target.path.normalize();
+        //                 }
+        //             }
+        //         }
+        //     }
+        //
+        //     return target;
+        // }
 
-            return target;
+      private:
+        template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
+        constexpr uri_status_type parse(Iter beg, Iter end, uri_status const status) noexcept(is_modifiable) {
+            parsing_structured_uri_context<components_type*, Iter> ctx{};
+            ctx.beg    = beg;
+            ctx.pos    = beg;
+            ctx.end    = end;
+            ctx.out    = static_cast<components_type*>(this);
+            ctx.status = stl::to_underlying(status);
+            parse_uri_step<Options>(ctx);
+            return ctx.status;
+        }
+
+      public:
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type scheme(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::unparsed);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type authority(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_authority);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type username(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_authority);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type password(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_authority);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type hostname(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_authority);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type port(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_port);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type path(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_path);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type queries(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_queries);
+        }
+
+        template <uri_parsing_options     Options = uri_parsing_options{},
+                  istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
+        constexpr uri_status_type fragment(NStrT&& inp_str) noexcept(is_modifiable) {
+            auto const str = istl::string_viewify(stl::forward<NStrT>(inp_str));
+            return parse<Options>(str.begin(), str.end(), uri_status::valid_fragment);
         }
     };
 

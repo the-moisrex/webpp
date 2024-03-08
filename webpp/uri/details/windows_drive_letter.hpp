@@ -33,8 +33,10 @@ namespace webpp::uri::details {
             case 2: return has_windows_driver_letter(pos);
             default: {
                 stl::array<char_type, 3> letters{};
+                using size_type = typename stl::array<char_type, 3>::size_type;
+
                 // ignoring first (back-)slash character
-                for (int index = 0; index != 3 && pos != end; ++pos) {
+                for (size_type index = 0; index != 3 && pos != end; ++pos) {
                     switch (*pos) {
                         [[unlikely]] case '\r':
                         [[unlikely]] case '\n':
@@ -85,7 +87,9 @@ namespace webpp::uri::details {
 
             // https://url.spec.whatwg.org/#start-with-a-windows-drive-letter
             stl::array<char_type, 3> letters{};
-            auto                     pos = ctx.pos;
+            using size_type = typename stl::array<char_type, 3>::size_type;
+
+            auto pos = ctx.pos;
             switch (ctx.end - pos) {
                 case 0:
                 case 1: return;
@@ -99,7 +103,7 @@ namespace webpp::uri::details {
                     break;
                 default: {
                     // ignoring first (back-)slash character
-                    for (int index = 0; index != 3 && pos != ctx.end; ++pos) {
+                    for (size_type index = 0; index != 3 && pos != ctx.end; ++pos) {
                         switch (*pos) {
                             [[unlikely]] case '\r':
                             [[unlikely]] case '\n':

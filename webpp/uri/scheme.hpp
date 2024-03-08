@@ -350,7 +350,7 @@ namespace webpp::uri {
             break;
         }
 
-        scheme_code  |= ascii::to_lower_copy(*ctx.pos);
+        scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
         scheme_code <<= details::one_byte;
         ++ctx.pos;
 
@@ -384,7 +384,7 @@ namespace webpp::uri {
                             set_error(ctx.status, invalid_scheme_character);
                             return;
                         }
-                        scheme_code  |= ascii::to_lower_copy(*ctx.pos);
+                        scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
                         scheme_code <<= details::one_byte;
                         continue;
                     }

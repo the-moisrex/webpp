@@ -126,7 +126,7 @@ TYPED_TEST(StructuredURITests, StructuredSchemeLowered) {
     EXPECT_TRUE(scheme.has_value());
     if constexpr (uri::basic_scheme<TypeParam>::is_modifiable) {
         TypeParam out_str;
-        ascii::lower_to(out_str, data.begin(), data.begin() + (data.size() - 1));
+        ascii::lower_to(out_str, data.begin(), data.begin() + static_cast<long>(data.size() - 1));
         EXPECT_EQ(out_str, ascii::to_lower_copy(data.substr(0, data.size() - 1)));
 
         EXPECT_EQ(get_one<TypeParam>("https", L"https"), scheme.view());

@@ -130,7 +130,7 @@ namespace webpp::uri {
                     case '.':
                         ++state;
                         continue;
-                    [[unlikely]] case '\0' : {
+                    [[unlikely]] case '\0': {
                         if constexpr (Options.eof_is_valid) {
                             break;
                         } else {
@@ -187,7 +187,7 @@ namespace webpp::uri {
                 if (slash_loc == 0) {
                     // find the last slash
                     auto const beg = encoder.get_output().begin();
-                    auto       cur = beg + encoder.get_output().size();
+                    auto       cur = beg + static_cast<difference_type>(encoder.get_output().size());
                     if (cur != beg) {
                         ++slash_loc;
                         --cur;
@@ -390,7 +390,7 @@ namespace webpp::uri {
             ++ctx.pos;
         } else {
             // handling empty paths
-            if constexpr (ctx_type::is_modifiable) {
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 if (is_special_scheme(ctx.scheme) && !has_value<components::path>(ctx)) {
                     encoder.next_segment_of('/', 0);
                 }
@@ -539,8 +539,13 @@ namespace webpp::uri {
         }
 
         template <typename Arg>
+            requires(!stl::integral<Arg>)
         [[nodiscard]] constexpr auto operator[](Arg&& arg) noexcept {
             return storage.operator[](stl::forward<Arg>(arg));
+        }
+
+        [[nodiscard]] constexpr auto operator[](size_type index) noexcept {
+            return storage.operator[](index);
         }
 
         [[nodiscard]] constexpr stl::partial_ordering operator<=>(basic_path const& rhs) const noexcept {
