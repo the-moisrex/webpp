@@ -311,10 +311,6 @@ namespace webpp::uri {
                   details::PATH_ENCODE_SET,
                   interesting_chars))
             {
-                if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
-                    continue;
-                }
-
                 switch (*ctx.pos) {
                     case '\\':
                         if (is_special_scheme(ctx.scheme)) {
@@ -325,6 +321,9 @@ namespace webpp::uri {
                         }
                         [[fallthrough]];
                     [[likely]] case '/':
+                        if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
+                            continue;
+                        }
                         if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                             auto const loc_diff =
                               static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
