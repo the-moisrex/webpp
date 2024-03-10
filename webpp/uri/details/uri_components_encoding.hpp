@@ -243,13 +243,13 @@ namespace webpp::uri::details {
             return beg;
         }
 
-        constexpr void skip_separator(difference_type index) noexcept {
+        constexpr void skip_separator(difference_type count) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_seg) {
-                for (; index != 0; --index) {
+                for (; count != 0; --count) {
                     append_to(get_output(), *ctx->pos++);
                 }
             } else {
-                ctx->pos += index;
+                ctx->pos += count;
             }
         }
 
@@ -276,13 +276,13 @@ namespace webpp::uri::details {
             ctx->pos += count;
         }
 
-        constexpr void append_n(difference_type index) noexcept {
+        constexpr void append_n(difference_type count) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
-                for (; index != 0; --index) {
+                for (; count != 0; --count) {
                     append_to(get_out_seg(), *ctx->pos++);
                 }
             } else {
-                ctx->pos += index;
+                ctx->pos += count;
             }
         }
 
@@ -376,27 +376,22 @@ namespace webpp::uri::details {
         }
 
         constexpr void start_segment() noexcept(ctx_type::is_nothrow || !is_vec) {
-            if constexpr (is_vec) {
+            if constexpr (is_vec && ctx_type::is_modifiable) {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
-                if constexpr (ctx_type::is_modifiable) {
-                    istl::emplace_one(get_output(), get_output().get_allocator());
-                    // using difference_type = typename seg_type::difference_type;
-                    output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
-                }
+                istl::emplace_one(get_output(), get_output().get_allocator());
+                output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
             }
         }
 
         /// Call this when you're done with the current segment (e.g.: reaching a dot for host, or a slash
         /// for path)
         constexpr void end_segment(iterator inp_beg, iterator end) noexcept(ctx_type::is_nothrow || !is_vec) {
-            if constexpr (is_vec) {
+            if constexpr (is_vec && !ctx_type::is_modifiable) {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
-                if constexpr (!ctx_type::is_modifiable) {
-                    istl::emplace_one(get_output(), inp_beg, end);
-                    reset_begin();
-                }
+                istl::emplace_one(get_output(), inp_beg, end);
+                reset_begin();
             }
         }
 
@@ -411,7 +406,7 @@ namespace webpp::uri::details {
                 if constexpr (ctx_type::is_modifiable) {
                     skip_separator(sep_count);
                     reset_segment_start();
-                    end_segment();
+                    start_segment();
                 } else {
                     end_segment();
                     skip_separator(sep_count);
@@ -422,7 +417,6 @@ namespace webpp::uri::details {
                 end_segment();
                 reset_segment_start();
             }
-            start_segment();
         }
 
         constexpr void next_segment_of(char_type separator, difference_type sep_count = 1) noexcept(

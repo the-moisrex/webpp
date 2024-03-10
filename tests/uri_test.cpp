@@ -18,12 +18,12 @@ TEST(URIHelperTests, IIEquals) {
 }
 
 using Types =
-  testing::Types<uri::parsing_uri_context_string<stl::string>,
+  testing::Types<uri::parsing_uri_context_segregated_view<>,
+                 uri::parsing_uri_context_string<stl::string>,
                  uri::parsing_uri_context_string<stl::string_view>,
                  // uri::parsing_uri_context_string<stl::basic_string_view<char8_t>>,
                  uri::parsing_uri_context_u32,
                  uri::parsing_uri_context_segregated<>,
-                 uri::parsing_uri_context_segregated_view<>,
                  uri::parsing_uri_context<stl::string_view, char const*>>;
 
 template <class T>
@@ -503,6 +503,22 @@ TYPED_TEST(URITests, PathDotNormalized) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     EXPECT_EQ(context.out.get_path(), "/one");
+}
+
+TYPED_TEST(URITests, SkipDotButNotSlash) {
+    constexpr stl::string_view str = "https://127.0.0.1/page/.";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    ASSERT_FALSE(uri::has_warnings(context.status)) << to_string(uri::get_warning(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/page/");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/page/.");
+    }
 }
 
 TYPED_TEST(URITests, PathDotNormalizedABunch) {
@@ -1015,7 +1031,7 @@ TYPED_TEST(URITests, LocalhostFileScheme) {
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
     EXPECT_TRUE(uri::is_valid(context.status)) << str << "\n" << to_string(uri::get_value(context.status));
-    EXPECT_FALSE(context.out.has_hostname()) << "localhost for file: scheme gets removed.";
+    EXPECT_FALSE(context.out.has_hostname()) << "'localhost' hostname for 'file:' scheme gets removed.";
     EXPECT_EQ(context.out.get_path(), "/page/one");
 }
 

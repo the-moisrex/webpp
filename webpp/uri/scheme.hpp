@@ -59,7 +59,7 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
                     [[fallthrough]];
-                    default: break;
+                    default : break;
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
@@ -106,7 +106,7 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
                     [[fallthrough]];
-                    default: break;
+                    default : break;
             }
             clear<components::queries>(ctx);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
@@ -135,7 +135,7 @@ namespace webpp::uri {
                             set_warning(ctx.status, uri_status::invalid_character);
                         }
                         [[fallthrough]];
-                        default: break;
+                        default : break;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -193,7 +193,7 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default: break;
+                        default : break;
                 }
                 if constexpr (Options.allow_file_hosts) {
                     set_valid(ctx.status, uri_status::valid_file_host);
@@ -243,7 +243,7 @@ namespace webpp::uri {
                                     continue;
                                 }
                                 [[fallthrough]];
-                                default: break;
+                                default : break;
                         }
                         break;
                     }
@@ -411,8 +411,8 @@ namespace webpp::uri {
                 details::file_state<Options>(ctx);
                 return;
             }
-            [[likely]] case encoded_scheme("http") :
-            [[likely]] case encoded_scheme("https") :
+            [[likely]] case encoded_scheme("http"):
+            [[likely]] case encoded_scheme("https"):
             case encoded_scheme("ws"):
             case encoded_scheme("ftp"):
             case encoded_scheme("wss"): {
