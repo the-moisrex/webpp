@@ -425,7 +425,7 @@ namespace webpp::uri::details {
                 if constexpr (ctx_type::is_modifiable) {
                     skip_separator(sep_count);
                     reset_segment_start();
-                    end_segment();
+                    start_segment();
                 } else {
                     end_segment();
                     skip_separator(sep_count);
@@ -440,7 +440,6 @@ namespace webpp::uri::details {
                 end_segment();
                 reset_segment_start();
             }
-            start_segment();
         }
 
         constexpr void set_query_name() noexcept(ctx_type::is_nothrow)

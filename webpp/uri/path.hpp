@@ -313,12 +313,7 @@ namespace webpp::uri {
             {
                 switch (*ctx.pos) {
                     case '\\':
-                        if (is_special_scheme(ctx.scheme)) {
-                            set_warning(ctx.status, uri_status::reverse_solidus_used);
-                        } else {
-                            encoder.skip_separator();
-                            continue;
-                        }
+                        set_warning(ctx.status, uri_status::reverse_solidus_used);
                         [[fallthrough]];
                     [[likely]] case '/':
                         if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
