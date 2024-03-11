@@ -129,10 +129,6 @@ namespace webpp::uri {
             set_min_uri_end(scheme_end);
         }
 
-        constexpr void set_lowered_scheme(iterator beg, iterator end) noexcept {
-            set_scheme(beg, end);
-        }
-
         constexpr void set_path(seg_type beg, seg_type end) noexcept {
             authority_end = beg;
             set_min_uri_end(end);
@@ -446,23 +442,8 @@ namespace webpp::uri {
         return !m_##field.empty();                                                               \
     }                                                                                            \
                                                                                                  \
-    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow) {        \
-        if constexpr (is_modifiable) {                                                           \
-            ascii::lower_to(m_##field, beg, end);                                                \
-        } else {                                                                                 \
-            set_##field(beg, end);                                                               \
-        }                                                                                        \
-    }                                                                                            \
-                                                                                                 \
-    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {                   \
-        if constexpr (is_modifiable) {                                                           \
-            ascii::lower_to(m_##field, str.begin(), str.end());                                  \
-        } else {                                                                                 \
-            set_##field(stl::move(str));                                                         \
-        }                                                                                        \
-    }                                                                                            \
-                                                                                                 \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow) {                \
+    template <typename InpIter = iterator>                                                       \
+    constexpr void set_##field(InpIter beg, InpIter end) noexcept(is_nothrow) {                  \
         istl::assign(m_##field, beg, end);                                                       \
     }                                                                                            \
                                                                                                  \
@@ -495,60 +476,6 @@ namespace webpp::uri {
         [[nodiscard]] constexpr bool has_credentials() const noexcept {
             return has_username() || has_password();
         }
-
-        /// Create a URI Component using an allocator
-        // template <istl::String StringType = StrT>
-        // [[nodiscard]] friend constexpr uri_components<StringType>
-        // uri_components_from(typename StringType::allocator_type const& alloc) noexcept(
-        //   stl::is_nothrow_constructible_v<StringType, typename StringType::allocator_type>) {
-        //     return {.scheme   = StringType{alloc},
-        //             .username = StringType{alloc},
-        //             .password = StringType{alloc},
-        //             .hostname     = StringType{alloc},
-        //             .port     = StringType{alloc},
-        //             .path     = StringType{alloc},
-        //             .queries  = StringType{alloc},
-        //             .fragment = StringType{alloc}};
-        // }
-
-        // template <istl::String StringType, stl::integral SegType, istl::StringLike SourceStr>
-        //     requires(stl::same_as<istl::char_type_of_t<StringType>, istl::char_type_of_t<SourceStr>>)
-        // [[nodiscard]] friend constexpr uri_components<StringType> uri_components_from(
-        //   uri_components<SegType> const&             comps,
-        //   SourceStr const&                           source,
-        //   typename StringType::allocator_type const& alloc =
-        //     {}) noexcept(stl::is_nothrow_constructible_v<StringType, typename StringType::allocator_type>)
-        //     { auto const beg = source.data(); return {
-        //       .scheme = StringType{beg, comps.scheme_end, alloc},
-        //       .username =
-        //         StringType{beg + comps.authority_start, comps.host_start - comps.authority_start, alloc},
-        //       .password =
-        //         StringType{beg + comps.password_start, comps.host_start - comps.password_start, alloc},
-        //       .host = StringType{beg + comps.host_start, comps.port_start - comps.host_start, alloc},
-        //       .port = StringType{beg + comps.port_start, comps.authority_end - comps.port_start, alloc},
-        //       .path = StringType{beg + comps.authority_end, comps.queries_start - comps.authority_end,
-        //       alloc}, .queries =
-        //         StringType{beg + comps.queries_start, comps.fragment_start - comps.queries_start, alloc},
-        //       .fragment =
-        //         StringType{beg + comps.fragment_start, source.size() - comps.fragment_start, alloc}};
-        // }
-
-        // template <istl::StringView StringType, stl::integral SegType, istl::StringLike SourceStr>
-        //     requires(stl::same_as<istl::char_type_of_t<StringType>, istl::char_type_of_t<SourceStr>>)
-        // [[nodiscard]] friend constexpr uri_components<StringType>
-        // uri_components_from(uri_components<SegType> const& comps, SourceStr const& source) noexcept {
-        //     auto const beg = source.data();
-        //     return {
-        //       .scheme   = StringType{beg, comps.scheme_end},
-        //       .username = StringType{beg + comps.authority_start, comps.host_start -
-        //       comps.authority_start}, .password = StringType{beg + comps.password_start, comps.host_start -
-        //       comps.password_start}, .host     = StringType{beg + comps.host_start, comps.port_start -
-        //       comps.host_start}, .port     = StringType{beg + comps.port_start, comps.authority_end -
-        //       comps.port_start}, .path     = StringType{beg + comps.authority_end, comps.queries_start -
-        //       comps.authority_end}, .queries  = StringType{beg + comps.queries_start, comps.fragment_start
-        //       - comps.queries_start}, .fragment = StringType{beg + comps.fragment_start, source.size() -
-        //       comps.fragment_start}};
-        // }
     };
 
     /**
@@ -625,7 +552,8 @@ namespace webpp::uri {
         }                                                                                           \
     }                                                                                               \
                                                                                                     \
-    constexpr void set_##field(iterator beg, iterator end) noexcept(is_nothrow)                     \
+    template <typename Iter = iterator>                                                             \
+    constexpr void set_##field(Iter beg, Iter end) noexcept(is_nothrow)                             \
         requires(is_##field##_modifiable)                                                           \
     {                                                                                               \
         istl::assign(m_##field, beg, end);                                                          \
@@ -635,26 +563,6 @@ namespace webpp::uri {
         requires(is_##field##_modifiable)                                                           \
     {                                                                                               \
         m_##field = stl::move(str);                                                                 \
-    }                                                                                               \
-                                                                                                    \
-    constexpr void set_lowered_##field(iterator beg, iterator end) noexcept(is_nothrow)             \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
-        if constexpr (is_modifiable) {                                                              \
-            ascii::lower_to(m_##field, beg, end);                                                   \
-        } else {                                                                                    \
-            set_##field(beg, end);                                                                  \
-        }                                                                                           \
-    }                                                                                               \
-                                                                                                    \
-    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow)                        \
-        requires(is_##field##_modifiable)                                                           \
-    {                                                                                               \
-        if constexpr (is_modifiable) {                                                              \
-            ascii::lower_to(m_##field, str.begin(), str.end());                                     \
-        } else {                                                                                    \
-            set_##field(stl::move(str));                                                            \
-        }                                                                                           \
     }                                                                                               \
                                                                                                     \
     constexpr auto& field##_ref() noexcept {                                                        \
@@ -1051,8 +959,7 @@ namespace webpp::uri {
         template <components Comp, typename... Args>
         constexpr void set_value_to(auto& out, Args&&... args) {
             if constexpr (components::scheme == Comp) {
-                // scheme should always be lowered if it's possible
-                out.set_lowered_scheme(stl::forward<Args>(args)...);
+                out.set_scheme(stl::forward<Args>(args)...);
             } else if constexpr (components::username == Comp) {
                 out.set_username(stl::forward<Args>(args)...);
             } else if constexpr (components::password == Comp) {
@@ -1171,9 +1078,7 @@ namespace webpp::uri {
         if constexpr (requires { ctx_type::component; }) {
             // works for strings only
             if constexpr (Comp == ctx_type::component) {
-                if constexpr (components::scheme == Comp && ctx_type::is_modifiable) {
-                    ascii::lower_to(*ctx.out, stl::forward<Args>(args)...);
-                } else if constexpr (requires { ctx.out->assign(stl::forward<Args>(args)...); }) {
+                if constexpr (requires { ctx.out->assign(stl::forward<Args>(args)...); }) {
                     ctx.out->assign(stl::forward<Args>(args)...);
                 } else {
                     istl::assign(*ctx.out, stl::forward<Args>(args)...);

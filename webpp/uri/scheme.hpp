@@ -301,6 +301,92 @@ namespace webpp::uri {
             relative_state<Options>(ctx);
         }
 
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 4> file_scheme{'f', 'i', 'l', 'e'};
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 4> http_scheme{'h', 't', 't', 'p'};
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 5> https_scheme{'h', 't', 't', 'p', 's'};
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 3> ftp_scheme{'f', 't', 'p'};
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 3> wss_scheme{'w', 's', 's'};
+        template <typename CharT = char>
+        static constexpr stl::array<CharT, 2> ws_scheme{'w', 's'};
+
+        template <ParsingURIContext CtxT, stl::size_t N>
+        constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme) noexcept(
+          CtxT::is_nothrow) {
+            using ctx_type = CtxT;
+
+            if constexpr (ctx_type::is_modifiable) {
+                set_value<components::scheme>(ctx, scheme.begin(), scheme.end());
+            } else {
+                set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
+            }
+        }
+
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        constexpr void set_scheme(CtxT& ctx) noexcept(CtxT::is_nothrow) {
+            using ctx_type  = CtxT;
+            using char_type = typename ctx_type::char_type;
+            using iterator  = typename ctx_type::iterator;
+
+            if constexpr (!ctx_type::is_modifiable) {
+                set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
+            } else if constexpr (!Options.ignore_tabs_or_newlines) {
+                auto& out_str = get_output_from<components::scheme>(get_output_ref(ctx));
+                ascii::lower_to(out_str, ctx.beg, ctx.pos);
+            } else {
+                // this algorithm is the same as "lower_to" except it ignores newlines and tabs
+
+                auto& out_str         = get_output_from<components::scheme>(get_output_ref(ctx));
+                using string_type     = stl::remove_cvref_t<decltype(out_str)>;
+                using iter_traits     = stl::iterator_traits<typename string_type::iterator>;
+                using difference_type = typename iter_traits::difference_type;
+                using size_type       = typename string_type::size_type;
+
+                iterator   beg   = ctx.beg;
+                auto const end   = ctx.pos;
+                auto const count = static_cast<size_type>(end - beg);
+
+#if __cpp_lib_string_resize_and_overwrite
+                out_str.resize_and_overwrite(
+                  count,
+                  [beg,
+                   count](auto* out, [[maybe_unused]] stl::size_t const length) mutable constexpr noexcept {
+                      auto const endp = beg + static_cast<difference_type>(length);
+                      for (; beg != endp; ++beg) {
+                          switch (*beg) {
+                              case '\r':
+                              case '\t':
+                              case '\n':
+                                  continue;
+                              [[likely]] default:
+                                  *out++ = ascii::to_lower_copy<char_type>(*beg);
+                                  break;
+                          }
+                      }
+                      return count;
+                  });
+#else
+                out_str.resize(count);
+                auto const endp = beg + static_cast<difference_type>(count);
+                for (; beg != endp; ++beg) {
+                    switch (*beg) {
+                        case '\r':
+                        case '\t':
+                        case '\n':
+                            continue;
+                        [[likely]] default:
+                            *out++ = ascii::to_lower_copy<char_type>(*beg);
+                            break;
+                    }
+                }
+#endif
+            }
+        }
+
     } // namespace details
 
     /**
@@ -397,11 +483,20 @@ namespace webpp::uri {
         }
 
 
-        set_value<components::scheme>(ctx, ctx.beg, ctx.pos);
-        ++ctx.pos;
 
         switch (scheme_code) {
+            [[likely]] case encoded_scheme("http"):
+                details::set_scheme(ctx, details::http_scheme<char_type>);
+                break;
+            [[likely]] case encoded_scheme("https"):
+                details::set_scheme(ctx, details::https_scheme<char_type>);
+                break;
+            case encoded_scheme("ws"): details::set_scheme(ctx, details::ws_scheme<char_type>); break;
+            case encoded_scheme("wss"): details::set_scheme(ctx, details::wss_scheme<char_type>); break;
+            case encoded_scheme("ftp"): details::set_scheme(ctx, details::ftp_scheme<char_type>); break;
             case encoded_scheme("file"): {
+                details::set_scheme(ctx, details::file_scheme<char_type>);
+                ++ctx.pos;
                 ctx.scheme = scheme_type::file;
                 // If remaining does not start with "//", special-scheme-missing-following-solidus
                 // validation error.
@@ -411,47 +506,43 @@ namespace webpp::uri {
                 details::file_state<Options>(ctx);
                 return;
             }
-            [[likely]] case encoded_scheme("http"):
-            [[likely]] case encoded_scheme("https"):
-            case encoded_scheme("ws"):
-            case encoded_scheme("ftp"):
-            case encoded_scheme("wss"): {
-                ctx.scheme = scheme_type::special_scheme;
-
-                if constexpr (ctx_type::has_base_uri) {
-                    if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {
-                        // todo: Assert: base is special (and therefore does not have an opaque path).
-                        details::special_relative_or_authority_state<Options>(ctx);
+                [[unlikely]] default : {
+                    details::set_scheme<Options>(ctx);
+                    ++ctx.pos;
+                    ctx.scheme = scheme_type::not_special;
+                    if (safely_inc_if<Options>(ctx, '/')) {
+                        // https://url.spec.whatwg.org/#path-or-authority-state
+                        if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
+                            set_valid(ctx.status, valid_authority);
+                            return;
+                        }
+                        set_valid(ctx.status, valid_path);
                         return;
                     }
-                }
 
-                /// https://url.spec.whatwg.org/#special-authority-slashes-state
-                if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
-                    set_warning(ctx.status, missing_following_solidus);
-                }
-                details::special_authority_ignore_slashes_state<Options>(ctx);
-                return;
-            }
-                [[unlikely]] default : {
-                    ctx.scheme = scheme_type::not_special;
-                    break;
+                    clear<components::path>(ctx);
+                    set_valid(ctx.status, valid_opaque_path);
+                    return;
                 }
         }
 
 
-        if (safely_inc_if<Options>(ctx, '/')) {
-            // https://url.spec.whatwg.org/#path-or-authority-state
-            if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
-                set_valid(ctx.status, valid_authority);
+        ++ctx.pos;
+        ctx.scheme = scheme_type::special_scheme;
+
+        if constexpr (ctx_type::has_base_uri) {
+            if (get_output_view<components::scheme>(ctx) == ctx.base.get_scheme()) {
+                // todo: Assert: base is special (and therefore does not have an opaque path).
+                details::special_relative_or_authority_state<Options>(ctx);
                 return;
             }
-            set_valid(ctx.status, valid_path);
-            return;
         }
 
-        clear<components::path>(ctx);
-        set_valid(ctx.status, valid_opaque_path);
+        /// https://url.spec.whatwg.org/#special-authority-slashes-state
+        if (!safely_inc_if<Options>(ctx, '/', '/')) [[unlikely]] {
+            set_warning(ctx.status, missing_following_solidus);
+        }
+        details::special_authority_ignore_slashes_state<Options>(ctx);
     }
 
     /// Serialize scheme
@@ -495,11 +586,11 @@ namespace webpp::uri {
       public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter = iterator>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
-            parsing_uri_component_context<components::scheme, string_type*, stl::remove_cvref_t<Iter>> ctx{};
+            parsing_uri_component_context<components::scheme, basic_scheme*, stl::remove_cvref_t<Iter>> ctx{};
             ctx.beg = beg;
             ctx.pos = beg;
             ctx.end = end;
-            ctx.out = stl::addressof(storage);
+            ctx.out = this;
             parse_scheme<Options>(ctx);
             return ctx.status;
         }
@@ -543,7 +634,8 @@ namespace webpp::uri {
          * @param beg start of the value
          * @param end the end of the value
          */
-        constexpr void assign(iterator beg, iterator end) noexcept(!is_modifiable) {
+        template <typename Iter = iterator>
+        constexpr void assign(Iter beg, Iter end) noexcept(!is_modifiable) {
             istl::assign(storage, beg, end);
         }
 

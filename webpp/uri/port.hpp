@@ -18,8 +18,6 @@ namespace webpp::uri {
     static constexpr void parse_port(CtxT& ctx) noexcept(CtxT::is_nothrow) {
         // https://url.spec.whatwg.org/#port-state
 
-        using ctx_type  = CtxT;
-        using seg_type  = typename ctx_type::out_seg_type;
         using port_type = stl::uint32_t; // we use a bigger size to detect overflows from 65535-99999
 
         if (ctx.pos == ctx.end) {
@@ -92,15 +90,9 @@ namespace webpp::uri {
             } else if constexpr (requires { ctx.out.set_port(static_cast<stl::uint16_t>(port_value)); }) {
                 // store the integer port value
                 ctx.out.set_port(static_cast<stl::uint16_t>(port_value));
-            } else if constexpr (requires {
-                                     ctx.out.set_port(static_cast<seg_type>(beg - ctx.beg),
-                                                      static_cast<seg_type>(ctx.pos - ctx.beg));
-                                 })
-            {
-                // store the position of it relative to the beginning of the URI
-                set_value<components::port>(ctx,
-                                            static_cast<seg_type>(beg - ctx.beg),
-                                            static_cast<seg_type>(ctx.pos - ctx.beg));
+            } else if constexpr (requires { ctx.out->set_port(static_cast<stl::uint16_t>(port_value)); }) {
+                // store the integer port value
+                ctx.out->set_port(static_cast<stl::uint16_t>(port_value));
             } else {
                 // store it as a string
                 set_value<components::port>(ctx, beg, ctx.pos);

@@ -233,23 +233,6 @@ namespace webpp::uri {
         m_##field = stl::move(str);                                                                 \
     }                                                                                               \
                                                                                                     \
-    template <typename Iter = iterator>                                                             \
-    constexpr void set_lowered_##field(Iter beg, Iter end) noexcept(is_nothrow) {                   \
-        if constexpr (is_modifiable) {                                                              \
-            ascii::lower_to(field##_ref(), beg, end);                                               \
-        } else {                                                                                    \
-            set_##field(beg, end);                                                                  \
-        }                                                                                           \
-    }                                                                                               \
-                                                                                                    \
-    constexpr void set_lowered_##field(string_type str) noexcept(is_nothrow) {                      \
-        if constexpr (is_modifiable) {                                                              \
-            ascii::lower_to(m_##field, str.begin(), str.end());                                     \
-        } else {                                                                                    \
-            set_##field(stl::move(str));                                                            \
-        }                                                                                           \
-    }                                                                                               \
-                                                                                                    \
     [[nodiscard]] constexpr auto const& field() const noexcept {                                    \
         return m_##field;                                                                           \
     }                                                                                               \
