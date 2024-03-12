@@ -577,6 +577,21 @@ TYPED_TEST(URITests, BackingUpOnEmptySegments) {
     }
 }
 
+TYPED_TEST(URITests, LastEmptySegment) {
+    constexpr stl::string_view str = "http://example.com/a/a/a/../../";
+
+    auto context = this->template get_context<TypeParam>(str);
+    uri::parse_uri(context);
+    EXPECT_TRUE(uri::is_valid(context.status));
+    EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
+      << to_string(uri::get_value(context.status));
+    if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
+        EXPECT_EQ(context.out.get_path(), "/a/");
+    } else {
+        EXPECT_EQ(context.out.get_path(), "/a/a/a/../../");
+    }
+}
+
 TYPED_TEST(URITests, PathDotNormalizedABunchWithNewLines) {
     constexpr stl::string_view str =
       "https://127.0.0.1/.\r.//./one/%2\nE./%\n2e/two/./.\n/\n././%2e\n/%2e/.././three/f\nour/\r%2e%\r2e/"
