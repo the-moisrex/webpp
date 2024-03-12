@@ -353,36 +353,40 @@ namespace webpp::uri {
 #if __cpp_lib_string_resize_and_overwrite
                 out_str.resize_and_overwrite(
                   count,
-                  [beg,
-                   count](auto* out, [[maybe_unused]] stl::size_t const length) mutable constexpr noexcept {
+                  [beg](auto* out, [[maybe_unused]] stl::size_t length) mutable constexpr noexcept {
                       auto const endp = beg + static_cast<difference_type>(length);
                       for (; beg != endp; ++beg) {
                           switch (*beg) {
                               case '\r':
                               case '\t':
                               case '\n':
+                                  --length;
                                   continue;
                               [[likely]] default:
                                   *out++ = ascii::to_lower_copy<char_type>(*beg);
                                   break;
                           }
                       }
-                      return count;
+                      return length;
                   });
 #else
                 out_str.resize(count);
-                auto const endp = beg + static_cast<difference_type>(count);
+                auto        out        = out_str.begin();
+                auto const  endp       = beg + static_cast<difference_type>(count);
+                stl::size_t new_length = count;
                 for (; beg != endp; ++beg) {
                     switch (*beg) {
                         case '\r':
                         case '\t':
                         case '\n':
+                            --new_length;
                             continue;
                         [[likely]] default:
                             *out++ = ascii::to_lower_copy<char_type>(*beg);
                             break;
                     }
                 }
+                out_str.resize(new_length);
 #endif
             }
         }
