@@ -45,7 +45,7 @@ namespace webpp::uri::details {
                              stl::conditional_t<is_vec, typename ctx_type::vec_iterator, istl::nothing_type>>;
 
 
-        [[no_unique_address]] output_type output{};
+        [[no_unique_address]] output_type buffer{};
         ctx_type*                         ctx;
         iterator                          beg = ctx->pos;
 
@@ -62,9 +62,9 @@ namespace webpp::uri::details {
             return uri::get_output<Comp>(*ctx);
         }
 
-        [[nodiscard]] constexpr decltype(auto) get_out_seg() const noexcept {
+        [[nodiscard]] constexpr decltype(auto) get_buffer() const noexcept {
             if constexpr (is_seg) {
-                return *output;
+                return *buffer;
             } else {
                 return uri::get_output<Comp>(*ctx);
             }
@@ -94,7 +94,7 @@ namespace webpp::uri::details {
           iterator                             end,
           [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars);
+                encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
             } else {
                 set_value(pos, end);
             }
@@ -107,7 +107,7 @@ namespace webpp::uri::details {
           CharSet auto const& policy_chars,
           CharSet auto const& invalid_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                return encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars, invalid_chars);
+                return encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars, invalid_chars);
             } else {
                 if constexpr (Policy == uri_encoding_policy::skip_chars) {
                     pos = invalid_chars.find_first_not_in(pos, end);
@@ -124,7 +124,7 @@ namespace webpp::uri::details {
           iterator            end,
           CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                encode_uri_component<Policy>(pos, end, get_out_seg(), policy_chars);
+                encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
                 return pos == end;
             } else {
                 if constexpr (Policy == uri_encoding_policy::skip_chars) {
@@ -165,7 +165,7 @@ namespace webpp::uri::details {
                 return encode_uri_component<Policy>(
                   ctx->pos,
                   ctx->end,
-                  !in_value ? output.first : output.second,
+                  !in_value ? buffer.first : buffer.second,
                   policy_chars,
                   invalid_chars);
             } else {
@@ -183,7 +183,7 @@ namespace webpp::uri::details {
         [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars) noexcept(
           ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
-                return decode_uri_component<Policy>(ctx->pos, ctx->end, get_out_seg(), policy_chars);
+                return decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars);
             } else {
                 if constexpr (Policy == uri_encoding_policy::skip_chars) {
                     ctx->pos = policy_chars.find_first_not_in(ctx->pos, ctx->end);
@@ -200,12 +200,12 @@ namespace webpp::uri::details {
           ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 while (ctx->pos != ctx->end) {
-                    if (decode_uri_component<Policy>(ctx->pos, ctx->end, get_out_seg(), policy_chars)) {
+                    if (decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars)) {
                         return true;
                     }
                     webpp_static_constexpr char_type diff = 'a' - 'A';
                     if (*ctx->pos >= 'A' && *ctx->pos <= 'Z') {
-                        get_out_seg() += *ctx->pos + diff;
+                        get_buffer() += *ctx->pos + diff;
                         ++ctx->pos;
                         continue;
                     }
@@ -234,7 +234,7 @@ namespace webpp::uri::details {
 
         constexpr void clear_segment() noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
-                output->clear();
+                buffer->clear();
             }
             reset_segment_start();
         }
@@ -279,7 +279,7 @@ namespace webpp::uri::details {
         constexpr void append_n(difference_type count) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
                 for (; count != 0; --count) {
-                    append_to(get_out_seg(), *ctx->pos++);
+                    append_to(get_buffer(), *ctx->pos++);
                 }
             } else {
                 ctx->pos += count;
@@ -288,13 +288,13 @@ namespace webpp::uri::details {
 
         constexpr void append(char_type inp_char) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
-                append_to(get_out_seg(), inp_char);
+                append_to(get_buffer(), inp_char);
             }
         }
 
         constexpr void append_inplace_of(char_type inp_char, difference_type count = 1) noexcept {
             if constexpr (ctx_type::is_modifiable && !is_map) {
-                append_to(get_out_seg(), inp_char);
+                append_to(get_buffer(), inp_char);
             }
             ctx->pos += count;
         }
@@ -354,9 +354,9 @@ namespace webpp::uri::details {
             if constexpr (is_vec && ctx_type::is_modifiable) {
                 if (get_output().size() > 1) {
                     get_output().pop_back();
-                    output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+                    buffer = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
                 } else if (get_output().size() == 1) {
-                    output->clear();
+                    buffer->clear();
                 }
             } else if constexpr (is_vec) {
                 if (is_segment_empty()) {
@@ -380,7 +380,7 @@ namespace webpp::uri::details {
                 // the non-modifiable version is the one that needs to be set, the modified versions already
                 // contain the right value at this point in time
                 istl::emplace_one(get_output(), get_output().get_allocator());
-                output = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
+                buffer = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
             }
         }
 
@@ -446,7 +446,7 @@ namespace webpp::uri::details {
             requires(is_map)
         {
             if constexpr (!ctx_type::is_modifiable) {
-                istl::assign(output.first, beg, ctx->pos);
+                istl::assign(buffer.first, beg, ctx->pos);
             }
         }
 
@@ -454,7 +454,7 @@ namespace webpp::uri::details {
             requires(is_map)
         {
             if constexpr (!ctx_type::is_modifiable) {
-                istl::assign(output.second, beg, ctx->pos);
+                istl::assign(buffer.second, beg, ctx->pos);
                 beg = ctx->pos + 1;
             }
         }
@@ -463,9 +463,9 @@ namespace webpp::uri::details {
             if constexpr (is_map) {
                 if constexpr (!ctx_type::is_modifiable) {
                     ctx->pos += count;
-                    istl::assign(output.second, beg, ctx->pos);
+                    istl::assign(buffer.second, beg, ctx->pos);
                 } else {
-                    output.second += *ctx->pos;
+                    buffer.second += *ctx->pos;
                     ctx->pos      += count;
                 }
             }
@@ -473,11 +473,11 @@ namespace webpp::uri::details {
 
         constexpr void next_query() noexcept(ctx_type::is_nothrow) {
             if constexpr (is_map) {
-                if (!output.first.empty() || !output.second.empty()) {
-                    get_output().emplace(output);
+                if (!buffer.first.empty() || !buffer.second.empty()) {
+                    get_output().emplace(buffer);
                 }
-                istl::clear(output.first);
-                istl::clear(output.second);
+                istl::clear(buffer.first);
+                istl::clear(buffer.second);
             }
             reset_begin();
         }
