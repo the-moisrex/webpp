@@ -104,6 +104,7 @@ namespace webpp::uri {
 
             for (;; ++pos) {
                 if (pos == ctx.end) {
+                    non_slashes = true;
                     break;
                 }
 
@@ -176,7 +177,7 @@ namespace webpp::uri {
                     // string to url’s path. This means that for input /usr/.. the result is / and not a lack
                     // of a path.
                     if (non_slashes) {
-                        encoder.next_segment_of('/');
+                        encoder.next_segment_of('/', 0);
                     }
                     return true;
 
@@ -215,7 +216,7 @@ namespace webpp::uri {
             ctx.pos    = pos;
             encoder.reset_segment_start();
             if (non_slashes) {
-                encoder.next_segment_of('/');
+                encoder.next_segment_of('/', 0);
             }
             return true;
         }
@@ -334,7 +335,7 @@ namespace webpp::uri {
                         }
                         if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                             auto const loc_diff =
-                              static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
+                              static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) + 1;
                             slash_loc_cache <<= details::a_byte;
                             if (loc_diff < details::slash_mask) {
                                 slash_loc_cache |= loc_diff;
