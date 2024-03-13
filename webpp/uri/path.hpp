@@ -98,8 +98,9 @@ namespace webpp::uri {
             auto  pos    = ctx.pos + 1;
             auto  status = ctx.status;
 
-            stl::uint8_t state = 0;
-            char_type    prev  = 0;
+            stl::uint8_t state       = 0;
+            char_type    prev        = 0;
+            bool         non_slashes = false;
 
             for (;; ++pos) {
                 if (pos == ctx.end) {
@@ -132,6 +133,7 @@ namespace webpp::uri {
                         continue;
                     [[unlikely]] case '\0': {
                         if constexpr (Options.eof_is_valid) {
+                            non_slashes = true;
                             break;
                         } else {
                             return false;
@@ -143,9 +145,10 @@ namespace webpp::uri {
                         }
                         set_warning(status, uri_status::reverse_solidus_used);
                         [[fallthrough]];
+                    case '/': break;
                     case '#':
                     case '?':
-                    case '/':
+                        non_slashes = true;
                         break;
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\r':
@@ -164,14 +167,21 @@ namespace webpp::uri {
 
             switch (state) {
                 // single dot found:
-                case 0b0000'0001U: // .
+                case 1: // .
                     ctx.pos    = pos;
                     ctx.status = status;
                     encoder.reset_segment_start();
+
+                    // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty
+                    // string to url’s path. This means that for input /usr/.. the result is / and not a lack
+                    // of a path.
+                    if (non_slashes) {
+                        encoder.next_segment_of('/');
+                    }
                     return true;
 
                 // two dots found:
-                case 0b0000'0010U: // ..
+                case 2: // ..
                     break;
                 default: return false;
             }
@@ -204,6 +214,9 @@ namespace webpp::uri {
             ctx.status = status;
             ctx.pos    = pos;
             encoder.reset_segment_start();
+            if (non_slashes) {
+                encoder.next_segment_of('/');
+            }
             return true;
         }
 
