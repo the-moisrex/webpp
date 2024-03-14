@@ -169,6 +169,9 @@ namespace webpp::uri {
             switch (state) {
                 // single dot found:
                 case 1: // .
+                    if (!encoder.is_segment_empty()) {
+                        encoder.end_segment();
+                    }
                     ctx.pos    = pos;
                     ctx.status = status;
                     encoder.reset_segment_start();
@@ -319,78 +322,59 @@ namespace webpp::uri {
         details::component_encoder<components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
         details::handle_windows_driver_letter<Options>(ctx, encoder);
-        for (;;) {
-            bool is_done = false;
-            if (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
-                  details::PATH_ENCODE_SET,
-                  interesting_chars))
-            {
-                switch (*ctx.pos) {
-                    case '\\':
-                        set_warning(ctx.status, uri_status::reverse_solidus_used);
-                        [[fallthrough]];
-                    [[likely]] case '/':
-                        if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
-                            continue;
-                        }
-                        if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                            auto const loc_diff =
-                              static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin()) + 1;
-                            slash_loc_cache <<= details::a_byte;
-                            if (loc_diff < details::slash_mask) {
-                                slash_loc_cache |= loc_diff;
-                            }
-                        }
-                        break;
-                    case '?':
-                        set_valid(ctx.status, uri_status::valid_queries);
-                        is_done = true;
-                        break;
-                    case '#':
-                        set_valid(ctx.status, uri_status::valid_fragment);
-                        is_done = true;
-                        break;
-                    [[likely]] case '%':
-                        if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
-                            continue;
-                        }
-                        set_warning(ctx.status, uri_status::invalid_character);
+
+        while (!encoder.template encode_or_validate<uri_encoding_policy::encode_chars>(
+          details::PATH_ENCODE_SET,
+          interesting_chars))
+        {
+            switch (*ctx.pos) {
+                case '\\':
+                    set_warning(ctx.status, uri_status::reverse_solidus_used);
+                    [[fallthrough]];
+                [[likely]] case '/':
+                    if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
                         continue;
-                    [[unlikely]] case '\r':
-                    [[unlikely]] case '\n':
-                    [[unlikely]] case '\t':
-                        if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                            encoder.ignore_character();
-                            continue;
-                        } else {
-                            set_warning(ctx.status, uri_status::invalid_character);
-                            break;
+                    }
+                    if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                        auto const loc_diff   = static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
+                        slash_loc_cache     <<= details::a_byte;
+                        if (loc_diff < details::slash_mask) {
+                            slash_loc_cache |= loc_diff;
                         }
-                    [[unlikely]] case '\0':
-                        if constexpr (Options.eof_is_valid) {
-                            is_done = true;
-                            break;
-                        }
-                        [[fallthrough]];
-                    default: set_warning(ctx.status, uri_status::invalid_character); break;
-                }
-            } else {
-                is_done = true;
-            }
-
-
-            if (!is_done) {
-                if (ctx.pos == ctx.end || (Options.eof_is_valid && *ctx.pos == '\0')) {
+                    }
+                    encoder.next_segment_of('/');
+                    continue;
+                case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                case '#':
+                    set_valid(ctx.status, uri_status::valid_fragment);
                     break;
-                }
-                encoder.next_segment_of('/');
-                continue;
+                [[likely]] case '%':
+                    if (encoder.template validate_percent_encode<Options.ignore_tabs_or_newlines>()) {
+                        continue;
+                    }
+                    set_warning(ctx.status, uri_status::invalid_character);
+                    continue;
+                [[unlikely]] case '\r':
+                [[unlikely]] case '\n':
+                [[unlikely]] case '\t':
+                    if constexpr (Options.ignore_tabs_or_newlines) {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        encoder.ignore_character();
+                        continue;
+                    } else {
+                        set_warning(ctx.status, uri_status::invalid_character);
+                        break;
+                    }
+                [[unlikely]] case '\0':
+                    if constexpr (Options.eof_is_valid) {
+                        break;
+                    }
+                    [[fallthrough]];
+                    default : set_warning(ctx.status, uri_status::invalid_character); break;
             }
-
-            encoder.end_segment();
             break;
         }
+        encoder.end_segment();
         encoder.set_value();
 
         // ignore the last "?" or "#" character
