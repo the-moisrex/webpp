@@ -123,8 +123,8 @@ namespace webpp::uri {
         [[nodiscard]] static constexpr bool handle_dots_in_paths(
           component_encoder<components::path, CtxT>& encoder,
           stl::uint64_t&                             slash_loc_cache) noexcept(CtxT::is_nothrow) {
-            using ctx_type        = CtxT;
-            using char_type       = typename ctx_type::char_type;
+            using ctx_type  = CtxT;
+            using char_type = typename ctx_type::char_type;
 
             // NOLINTBEGIN(*-magic-numbers)
             auto& ctx    = encoder.context();
@@ -192,6 +192,8 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
+
+                        // a normal path:
                         [[likely]] default : {
                             return false;
                         }
@@ -365,12 +367,12 @@ namespace webpp::uri {
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':
                 [[unlikely]] case '\t':
+                    set_warning(ctx.status, uri_status::invalid_character);
                     if constexpr (Options.ignore_tabs_or_newlines) {
-                        set_warning(ctx.status, uri_status::invalid_character);
                         encoder.ignore_character();
                         continue;
-                    } else {
-                        set_warning(ctx.status, uri_status::invalid_character);
+                    }
+                    else {
                         break;
                     }
                 [[unlikely]] case '\0':
@@ -378,7 +380,7 @@ namespace webpp::uri {
                         break;
                     }
                     [[fallthrough]];
-                    default : set_warning(ctx.status, uri_status::invalid_character); break;
+                default: set_warning(ctx.status, uri_status::invalid_character); break;
             }
             break;
         }

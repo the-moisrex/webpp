@@ -18,10 +18,13 @@ namespace webpp::uri {
               ascii::char_case_side   Side             = ascii::char_case_side::both_unknown,
               istl::StringViewifiable LT,
               istl::StringViewifiable RT>
-    [[nodiscard]] static constexpr bool iiequals(LT&& lhs, RT&& rhs) noexcept {
+    [[nodiscard]] static constexpr bool iiequals(LT&& inp_lhs, RT&& inp_rhs) noexcept {
         if constexpr (IgnoreCharacters.empty()) {
-            return ascii::iequals<Side>(stl::forward<LT>(lhs), stl::forward<RT>(rhs));
+            return ascii::iequals<Side>(stl::forward<LT>(inp_lhs), stl::forward<RT>(inp_rhs));
         } else {
+            auto const lhs = istl::string_viewify(stl::forward<LT>(inp_lhs));
+            auto const rhs = istl::string_viewify(stl::forward<RT>(inp_rhs));
+
             auto lhs_it = stl::begin(lhs);
             auto rhs_it = stl::begin(rhs);
 
