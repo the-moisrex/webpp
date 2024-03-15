@@ -30,7 +30,27 @@ namespace webpp::uri {
 
             using char_type = typename stl::iterator_traits<decltype(lhs_it)>::value_type;
 
-            while (lhs_it != stl::end(lhs) && rhs_it != stl::end(rhs)) {
+            for (;;) {
+                if (lhs_it == stl::end(lhs)) {
+                    // rhs, now has to be all ignored, otherwise it's not equal
+                    for (; rhs_it != stl::end(rhs); ++rhs_it) {
+                        if (!IgnoreCharacters.contains(*rhs_it)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                if (rhs_it == stl::end(rhs)) {
+                    // rhs, now has to be all ignored, otherwise it's not equal
+                    for (; lhs_it != stl::end(lhs); ++lhs_it) {
+                        if (!IgnoreCharacters.contains(*lhs_it)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
                 if (ascii::iequals<Side>(*lhs_it, static_cast<char_type>(*rhs_it))) {
                     ++lhs_it;
                     ++rhs_it;
@@ -48,11 +68,6 @@ namespace webpp::uri {
                 }
                 return false;
             }
-
-            // If both strings have been traversed completely, they are equal.
-            // Otherwise, if there are remaining characters in either string,
-            // they are not equal.
-            return lhs_it == stl::end(lhs) && rhs_it == stl::end(rhs);
         }
     }
 
