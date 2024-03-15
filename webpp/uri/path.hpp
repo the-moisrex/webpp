@@ -72,6 +72,41 @@ namespace webpp::uri {
         static constexpr auto slash_mask =
           static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
 
+        /// Remove the last segment of a path
+        template <ParsingURIContext CtxT>
+        static constexpr void pop_back_segment(component_encoder<components::path, CtxT>& encoder,
+                                               stl::uint64_t& slash_loc_cache) noexcept(CtxT::is_nothrow) {
+            using ctx_type        = CtxT;
+            using iterator        = typename ctx_type::iterator;
+            using difference_type = typename stl::iterator_traits<iterator>::difference_type;
+
+            auto& ctx = encoder.context();
+
+            // remove the last segment as well
+            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                auto slash_loc = static_cast<difference_type>(slash_loc_cache & slash_mask);
+
+                // the cache is empty, too many /../../../.. in the URL that can't be stored in one single
+                // uint64, or the difference is larger than 255 characters.
+                if (slash_loc == 0) {
+                    // find the last slash
+                    auto const beg = encoder.get_output().begin();
+                    auto       cur = beg + static_cast<difference_type>(encoder.get_output().size());
+                    if (cur != beg) {
+                        ++slash_loc;
+                        --cur;
+                    }
+                    for (; cur != beg && *cur != '/'; --cur) {
+                        ++slash_loc;
+                    }
+                }
+                encoder.pop_back(slash_loc);
+                slash_loc_cache >>= a_byte;
+            } else {
+                encoder.pop_back();
+            }
+        }
+
         /// Handle special cases:
         ///   /.
         ///   /..
@@ -90,8 +125,6 @@ namespace webpp::uri {
           stl::uint64_t&                             slash_loc_cache) noexcept(CtxT::is_nothrow) {
             using ctx_type        = CtxT;
             using char_type       = typename ctx_type::char_type;
-            using iterator        = typename ctx_type::iterator;
-            using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
             // NOLINTBEGIN(*-magic-numbers)
             auto& ctx    = encoder.context();
@@ -172,52 +205,27 @@ namespace webpp::uri {
                     if (!encoder.is_segment_empty()) {
                         encoder.end_segment();
                     }
-                    ctx.pos    = pos;
-                    ctx.status = status;
-                    encoder.reset_segment_start();
-
-                    // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty
-                    // string to url’s path. This means that for input /usr/.. the result is / and not a lack
-                    // of a path.
-                    if (non_slashes) {
-                        encoder.next_segment_of('/', 0);
-                    }
-                    return true;
+                    break;
 
                 // two dots found:
                 case 2: // ..
+                    pop_back_segment(encoder, slash_loc_cache);
                     break;
+
+                // a normal segment found:
                 default: return false;
             }
             // NOLINTEND(*-magic-numbers)
 
 
-            // remove the last segment as well
-            if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                auto slash_loc = static_cast<difference_type>(slash_loc_cache & slash_mask);
 
-                // the cache is empty, too many /../../../.. in the URL that can't be stored in one single
-                // uint64, or the difference is larger than 255 characters.
-                if (slash_loc == 0) {
-                    // find the last slash
-                    auto const beg = encoder.get_output().begin();
-                    auto       cur = beg + static_cast<difference_type>(encoder.get_output().size());
-                    if (cur != beg) {
-                        ++slash_loc;
-                        --cur;
-                    }
-                    for (; cur != beg && *cur != '/'; --cur) {
-                        ++slash_loc;
-                    }
-                }
-                encoder.pop_back(slash_loc);
-                slash_loc_cache >>= a_byte;
-            } else {
-                encoder.pop_back();
-            }
-            ctx.status = status;
             ctx.pos    = pos;
+            ctx.status = status;
             encoder.reset_segment_start();
+
+            // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty
+            // string to url’s path. This means that for input /usr/.. the result is / and not a lack
+            // of a path.
             if (non_slashes) {
                 encoder.next_segment_of('/', 0);
             }
