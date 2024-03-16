@@ -78,6 +78,12 @@ namespace webpp::uri {
         /// it starts the parsing process; I don't think everybody needs such a feature and it may even cause
         /// problems for some people, so here's an option to not ignore the newliens and tabs.
         bool ignore_tabs_or_newlines = true;
+
+
+        /// Dots in paths are: `.`, `..`, `%2e`, '.%2e`, '%2e.', and '%2e%2e'
+        /// By disabling this, these will be segments of their own and single dot won't mean
+        /// current directory and double dot won't mean anything either.
+        bool handle_dots_in_paths = true;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -96,6 +102,7 @@ namespace webpp::uri {
       .allow_file_hosts                          = false,
       .handle_windows_drive_letters              = false,
       .ignore_tabs_or_newlines                   = false,
+      .handle_dots_in_paths                      = true, // for security reasons, it's enabled
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -114,6 +121,7 @@ namespace webpp::uri {
       .allow_file_hosts                          = true,
       .handle_windows_drive_letters              = true,
       .ignore_tabs_or_newlines                   = true,
+      .handle_dots_in_paths                      = true,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
