@@ -22,7 +22,7 @@ struct iovec {
 namespace webpp::io {
 
     using buffer_span = stl::span<stl::byte>;
-    using buffer_view = stl::span<const stl::byte>;
+    using buffer_view = stl::span<stl::byte const>;
 
     /**
      * @class buffer

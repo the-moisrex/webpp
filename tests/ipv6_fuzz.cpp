@@ -11,7 +11,7 @@ void ipv6_fuzz(string_view data) {
     ip.clear_prefix();
     [[maybe_unused]] bool volatile res = ip.has_prefix();
     res                                = ip.is_loopback();
-    const string str                   = ip.string();
+    string const str                   = ip.string();
     ASSERT_NE(str.size(), 0);
 }
 

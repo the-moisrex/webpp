@@ -18,7 +18,7 @@ TEST(HdrHostAuthorityTest, HdrHostAuthorityTest) {
 }
 
 TEST(HdrHostAuthorityTest, AddressTest) {
-    static constinit const ipv4 localhost{"127.0.0.1"};
+    static constinit ipv4 const localhost{"127.0.0.1"};
     host_authority const        host{"127.0.0.1:80"};
     EXPECT_TRUE(host.address().is_valid());
     EXPECT_EQ(host.address(), "127.0.0.1");

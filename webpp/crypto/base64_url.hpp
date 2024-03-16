@@ -49,7 +49,7 @@ namespace webpp::base64 {
             // The padding included in |*output| will not be amended.
         } else if constexpr (url_encode_policy::omit_padding == Policy) {
             // The padding included in |*output| will be removed.
-            const size_t last_non_padding_pos = output.find_last_not_of(padding_char);
+            size_t const last_non_padding_pos = output.find_last_not_of(padding_char);
             if (last_non_padding_pos != output.npos) {
                 output.resize(last_non_padding_pos + 1);
             }
@@ -76,7 +76,7 @@ namespace webpp::base64 {
         }
 
 
-        const size_t required_padding_characters = input.size() % 4;
+        size_t const required_padding_characters = input.size() % 4;
 
         if constexpr (url_decode_policy::require_padding == Policy) {
             // Fail if the required padding is not included in |input|.

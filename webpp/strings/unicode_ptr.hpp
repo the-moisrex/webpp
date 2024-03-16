@@ -74,7 +74,7 @@ namespace webpp::unicode {
         // using const_pointer   = unicode_ptr<const_storage_unit_type>;
 
         using element_ptr =
-          stl::add_pointer_t<stl::conditional_t<is_storage_const, const element_type, element_type>>;
+          stl::add_pointer_t<stl::conditional_t<is_storage_const, element_type const, element_type>>;
         using const_element_ptr = stl::add_const_t<element_ptr>;
 
 

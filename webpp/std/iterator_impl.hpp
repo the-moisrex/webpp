@@ -278,7 +278,7 @@ namespace webpp::stl {
 #    endif
 
         template <typename T>
-        concept cv_bool = same_as<const volatile T, bool const volatile>;
+        concept cv_bool = same_as<T const volatile, bool const volatile>;
 
         template <typename T>
         concept integral_nonbool = integral<T> && !cv_bool<T>;
@@ -296,7 +296,7 @@ namespace webpp::stl {
 
         template <class In>
         concept __IndirectlyReadableImpl =
-          requires(const In in) {
+          requires(In const in) {
               typename iter_value_t<In>;
               typename iter_reference_t<In>;
               typename iter_rvalue_reference_t<In>;
@@ -386,7 +386,7 @@ namespace webpp::stl {
     // [concept.totallyordered]
 
     template <class _Tp>
-    using __make_const_lvalue_ref = const typename remove_reference<_Tp>::type&;
+    using __make_const_lvalue_ref = typename remove_reference<_Tp>::type const&;
 
 
     template <class _Tp, class _Up>
@@ -450,7 +450,7 @@ namespace webpp::stl {
     concept random_access_iterator =
       bidirectional_iterator<Iter> && derived_from<details::iter_concept<Iter>, random_access_iterator_tag> &&
       totally_ordered<Iter> && sized_sentinel_for<Iter, Iter> &&
-      requires(Iter i, const Iter j, iter_difference_t<Iter> const n) {
+      requires(Iter i, Iter const j, iter_difference_t<Iter> const n) {
           {
               i += n
           } -> same_as<Iter&>;

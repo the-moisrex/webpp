@@ -365,7 +365,7 @@ namespace webpp::async {
         task.finally(lambda);
         task >> lambda; // same as then
         task | lambda;  // on error
-        task& lambda;   // finally
+        task & lambda;  // finally
     };
 
     /**

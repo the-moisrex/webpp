@@ -25,7 +25,7 @@ namespace webpp {
     struct brotli {
 #ifdef WEBPP_BROTLI
 
-        static std::string compress(char const* data, const size_t ndata) {
+        static std::string compress(char const* data, size_t const ndata) {
             std::string ret;
             if (ndata == 0) {
                 return ret;
@@ -48,7 +48,7 @@ namespace webpp {
             return ret;
         }
 
-        static std::string decompress(char const* data, const size_t ndata) {
+        static std::string decompress(char const* data, size_t const ndata) {
             if (ndata == 0) {
                 return std::string(data, ndata);
             }
@@ -81,13 +81,13 @@ namespace webpp {
             return decompressed;
         }
 #else
-        static std::string compress(char const* /*data*/, const std::size_t /*ndata*/) {
+        static std::string compress(char const* /*data*/, std::size_t const /*ndata*/) {
             throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliCompress()");
             abort();
         }
 
-        static std::string decompress(char const* /*data*/, const std::size_t /*ndata*/) {
+        static std::string decompress(char const* /*data*/, std::size_t const /*ndata*/) {
             throw std::runtime_error(
               "If you do not have the brotli package installed, you cannot use brotliDecompress()");
             abort();

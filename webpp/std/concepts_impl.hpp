@@ -15,17 +15,17 @@ namespace webpp::stl {
         };
 
         template <class From, class To>
-        struct copy_cv<const From, To> {
+        struct copy_cv<From const, To> {
             using type = add_const_t<To>;
         };
 
         template <class From, class To>
-        struct copy_cv<volatile From, To> {
+        struct copy_cv<From volatile, To> {
             using type = add_volatile_t<To>;
         };
 
         template <class From, class To>
-        struct copy_cv<const volatile From, To> {
+        struct copy_cv<From const volatile, To> {
             using type = add_cv_t<To>;
         };
 
@@ -236,7 +236,7 @@ namespace webpp::stl {
     /* derived_from */
     template <class Derived, class Base>
     concept derived_from =
-      is_base_of_v<Base, Derived> && is_convertible_v<const volatile Derived*, const volatile Base*>;
+      is_base_of_v<Base, Derived> && is_convertible_v<Derived const volatile*, Base const volatile*>;
 
     /* convertible_to */
     template <class From, class To>
@@ -256,7 +256,7 @@ namespace webpp::stl {
     concept copy_constructible =
       move_constructible<T> && constructible_from<T, T&> && convertible_to<T&, T> &&
       constructible_from<T, T const&> && convertible_to<T const&, T> && constructible_from<T, T const> &&
-      convertible_to<const T, T>;
+      convertible_to<T const, T>;
 
     template <class T>
     concept default_initializable =
@@ -380,7 +380,7 @@ namespace webpp::stl {
             // 2.3   Otherwise, if `E1` and `E2` are lvalues of the same type `T` that models...
             template <__exchangeable Tp>
             constexpr void operator()(Tp& __x, Tp& __y) const
-              noexcept(is_nothrow_move_constructible_v<Tp>&& is_nothrow_move_assignable_v<Tp>) {
+              noexcept(is_nothrow_move_constructible_v<Tp> && is_nothrow_move_assignable_v<Tp>) {
                 __y = _VSTD::exchange(__x, _VSTD::move(__y));
             }
         };

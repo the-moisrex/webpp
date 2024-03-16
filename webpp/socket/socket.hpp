@@ -67,7 +67,7 @@ namespace webpp {
             ::WSACleanup();
         }
 #else
-        ~socket_initializer() noexcept                           = default;
+        ~socket_initializer() noexcept = default;
 #endif
     };
 
@@ -150,7 +150,7 @@ namespace webpp {
 #ifdef MSVC_COMPILER
             last_errno = ret == SOCKET_ERROR ? errno : 0;
 #else
-            last_errno     = ret == -1 ? errno : 0;
+            last_errno = ret == -1 ? errno : 0;
 #endif
             return ret >= 0;
         }
@@ -259,7 +259,7 @@ namespace webpp {
                 h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
             }
 #else
-            cur_handle     = ::dup(fd);
+            cur_handle = ::dup(fd);
 #endif
             return basic_socket{cur_handle};
         }

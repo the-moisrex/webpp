@@ -111,7 +111,7 @@ namespace webpp {
         using value_type        = typename basic_string_type::value_type;
         using allocator_type    = typename basic_string_type::allocator_type;
         using char_traits_type  = typename basic_string_type::traits_type;
-        return stl::operator==<value_type, char_traits_type, allocator_type>(
+        return stl::operator== <value_type, char_traits_type, allocator_type>(
           lhs.basic_string(),
           reinterpret_cast<value_type const*>(val));
     }

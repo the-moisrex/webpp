@@ -141,7 +141,7 @@ TEST(SocketTest, AddressOfNonBoundSocket) {
 TEST(SocketTest, AddressOfBoundSocket) {
     // Bound socket should have same family as address to which it's bound
     auto       sock = basic_socket(AF_INET, SOCK_STREAM);
-    const ipv4 addr;
+    ipv4 const addr;
 
     int const reuse = 1;
     EXPECT_TRUE(sock.set_option(SOL_SOCKET, SO_REUSEADDR, reuse));

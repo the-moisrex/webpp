@@ -31,7 +31,7 @@ namespace webpp::ascii {
     };
 
     template <typename T, stl::size_t N>
-    struct constexpr_array_type<const T (&)[N]> {
+    struct constexpr_array_type<T const (&)[N]> {
         using array_type                      = T;
         static constexpr bool        is_array = true;
         static constexpr stl::size_t array_length =

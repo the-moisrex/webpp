@@ -501,8 +501,8 @@ namespace webpp::istl {
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
         constexpr function& operator=(function<Signature2, Alloc>&& other) noexcept(
-          alloc_traits::propagate_on_container_move_assignment::value&&
-            stl::is_nothrow_move_assignable_v<allocator_type>) {
+          alloc_traits::propagate_on_container_move_assignment::value &&
+          stl::is_nothrow_move_assignable_v<allocator_type>) {
             if (addressof(other) == this) {
                 return *this;
             }

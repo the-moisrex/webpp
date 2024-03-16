@@ -32,7 +32,7 @@ namespace webpp {
         using std::chrono::microseconds;
         using std::chrono::seconds;
 
-        const seconds sec = duration_cast<seconds>(dur);
+        seconds const sec = duration_cast<seconds>(dur);
 
         return timeval{
 #ifdef MSVC_COMPILER

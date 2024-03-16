@@ -16,7 +16,7 @@ namespace webpp {
          * Original source from: drogon project
          **/
         template <istl::String StrT = stl::string>
-        static StrT compress(typename StrT::const_pointer data, const stl::size_t ndata) {
+        static StrT compress(typename StrT::const_pointer data, stl::size_t const ndata) {
             using string_type = StrT;
 
             z_stream strm =
@@ -34,22 +34,24 @@ namespace webpp {
                 }
                 string_type outstr;
                 outstr.resize(compressBound(static_cast<uLong>(ndata)));
-                strm.next_in  = (Bytef*) data;
+                strm.next_in  = reinterpret_cast<Bytef*>(data);
                 strm.avail_in = static_cast<uInt>(ndata);
-                int ret;
-                do {
+                for (;;) {
                     if (strm.total_out >= outstr.size()) {
                         outstr.resize(strm.total_out * 2);
                     }
                     assert(outstr.size() >= strm.total_out);
                     strm.avail_out = static_cast<uInt>(outstr.size() - strm.total_out);
-                    strm.next_out  = (Bytef*) outstr.data() + strm.total_out;
-                    ret            = deflate(&strm, Z_FINISH); // no bad return value
+                    strm.next_out  = reinterpret_cast<Bytef*>(outstr.data()) + strm.total_out;
+                    int const ret  = deflate(&strm, Z_FINISH); // no bad return value
                     if (ret == Z_STREAM_ERROR) {
                         static_cast<void>(deflateEnd(&strm));
                         return string_type{};
                     }
-                } while (strm.avail_out == 0);
+                    if (strm.avail_out != 0) {
+                        break;
+                    }
+                }
                 assert(strm.avail_in == 0);
                 assert(ret == Z_STREAM_END);          // stream will be complete
                 outstr.resize(strm.total_out);
@@ -65,7 +67,7 @@ namespace webpp {
          * Original source from: drogon project
          */
         template <istl::String StrT = stl::string>
-        static StrT decompress(typename StrT::const_pointer data, const stl::size_t ndata) {
+        static StrT decompress(typename StrT::const_pointer data, stl::size_t const ndata) {
             using string_type = StrT;
 
             if (ndata == 0) {
@@ -79,11 +81,11 @@ namespace webpp {
 
             z_stream strm =
               {nullptr, 0, 0, nullptr, 0, 0, nullptr, nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
-            strm.next_in   = (Bytef*) data;
+            strm.next_in   = reinterpret_cast<Bytef*>(data);
             strm.avail_in  = static_cast<uInt>(ndata);
             strm.total_out = 0;
-            strm.zalloc    = Z_NULL;
-            strm.zfree     = Z_NULL;
+            strm.zalloc    = nullptr;
+            strm.zfree     = nullptr;
             if (inflateInit2(&strm, (15 + 32)) != Z_OK) {
                 // todo: add an error handling way here
                 return string_type{};
@@ -93,11 +95,10 @@ namespace webpp {
                 if (strm.total_out >= decompressed.length()) {
                     decompressed.resize(decompressed.length() * 2);
                 }
-                strm.next_out    = (Bytef*) decompressed.data() + strm.total_out;
-                strm.avail_out   = static_cast<uInt>(decompressed.length() - strm.total_out);
+                strm.next_out  = reinterpret_cast<Bytef*>(decompressed.data()) + strm.total_out;
+                strm.avail_out = static_cast<uInt>(decompressed.length() - strm.total_out);
                 // Inflate another chunk
-                int const status = inflate(&strm, Z_SYNC_FLUSH);
-                if (status == Z_STREAM_END) {
+                if (int const status = inflate(&strm, Z_SYNC_FLUSH); status == Z_STREAM_END) {
                     done = true;
                 } else if (status != Z_OK) {
                     break;
@@ -110,9 +111,8 @@ namespace webpp {
             if (done) {
                 decompressed.resize(strm.total_out);
                 return decompressed;
-            } else {
-                return string_type{};
             }
+            return string_type{};
         }
     };
 

@@ -40,7 +40,7 @@ namespace webpp::http {
         template <EnabledTraits ET>
             requires(!stl::same_as<stl::remove_cvref_t<ET>, common_http_response>) // It's not a copy/move
         explicit constexpr common_http_response(ET&& etraits) noexcept(
-          stl::is_nothrow_constructible_v<headers_type, ET>&& stl::is_nothrow_constructible_v<body_type, ET>)
+          stl::is_nothrow_constructible_v<headers_type, ET> && stl::is_nothrow_constructible_v<body_type, ET>)
           : headers{etraits},
             body{etraits} {}
 

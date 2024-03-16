@@ -18,7 +18,7 @@ namespace webpp::base64 {
         output.resize(modp_b64::encode_len(input_view.size())); // makes room for null byte
 
         // modp_b64::encode_len() returns at least 1, so output[0] is safe to use.
-        const size_t output_size = modp_b64::encode(&output[0], input_view.data(), input_view.size());
+        size_t const output_size = modp_b64::encode(&output[0], input_view.data(), input_view.size());
         output.resize(output_size);
     }
 
@@ -54,8 +54,8 @@ namespace webpp::base64 {
      * You many need to add one to it if you want space for '\0' as well.
      * @returns The expected length of an encoded buffer
      */
-    static inline constexpr stl::size_t expected_length(stl::size_t const len) noexcept {
-        return ((len + 2ull) / 3ull) * 4ull;
+    static constexpr stl::size_t expected_length(stl::size_t const len) noexcept {
+        return (len + 2ULL) / 3ULL * 4ULL;
     }
 
 

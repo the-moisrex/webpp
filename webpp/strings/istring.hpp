@@ -353,7 +353,7 @@ namespace webpp {
 
     // NOLINTBEGIN(*-avoid-c-arrays)
     template <istl::CharType CharT, stl::size_t size>
-    istring(const CharT (&)[size]) -> istring<stl::basic_string_view<CharT>>;
+    istring(CharT const (&)[size]) -> istring<stl::basic_string_view<CharT>>;
     // NOLINTEND(*-avoid-c-arrays)
 
     using std_istring      = istring<stl::string>;

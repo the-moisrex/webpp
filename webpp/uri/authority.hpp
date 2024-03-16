@@ -417,7 +417,7 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default: set_valid(ctx.status, uri_status::valid_path);
+                        default : set_valid(ctx.status, uri_status::valid_path);
                         clear<components::path>(ctx);
                         break;
                 }
@@ -510,7 +510,7 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                    default: break;
+                    default : break;
             }
             break;
         }

@@ -39,7 +39,7 @@ namespace webpp {
         struct debounce_ctors : public Callable {
           protected:
             using Interval           = stl::chrono::duration<Rep, Period>;
-            const Interval _interval = stl::chrono::duration<Rep, Period>{1000};
+            Interval const _interval = stl::chrono::duration<Rep, Period>{1000};
 
           public:
             template <typename... Args>
@@ -177,7 +177,6 @@ namespace webpp {
 
             /**
              * Cancel the operation
-             * @param value
              */
             void cancel() noexcept {
                 done.store(true, stl::memory_order_relaxed);

@@ -210,7 +210,6 @@ namespace webpp::io {
         /**
          * Get a sqe pointer that can never be null
          *
-         * @param ring pointer to initialized io_uring struct
          * @return pointer to `io_uring_sqe` struct (not nullptr)
          */
         [[nodiscard]] io_uring_sqe* safe_sqe() noexcept {
@@ -278,7 +277,7 @@ namespace webpp::io {
         }
 
         void call_callback(io_uring_cqe* response, io_result result) noexcept(
-          is_callback_optimizable&& is_callback_nothrow) {
+          is_callback_optimizable && is_callback_nothrow) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
             if constexpr (is_callback_optimizable) {
                 auto callback_data = io_uring_cqe_get_data64(response);

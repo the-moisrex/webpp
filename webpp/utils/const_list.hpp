@@ -337,7 +337,7 @@ namespace webpp {
 
         template <typename NType, typename NNextType>
         constexpr bool operator!=(const_list<NType, NNextType> const& l) const noexcept {
-            return !operator==<NType, NNextType>(l);
+            return !operator== <NType, NNextType>(l);
         }
     };
 

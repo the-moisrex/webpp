@@ -31,8 +31,8 @@ TEST(String, Concepts) {
 
     EXPECT_TRUE(istl::StringViewifiable<wchar_t const *>);
     EXPECT_TRUE(istl::StringViewifiable<wchar_t *>);
-    EXPECT_TRUE(istl::StringViewifiable<const wchar_t[8]>);
-    EXPECT_TRUE(istl::StringViewifiable<const wchar_t(&)[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<wchar_t const[8]>);
+    EXPECT_TRUE(istl::StringViewifiable<wchar_t const(&)[8]>);
 
     EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<char *>, char>) );
     EXPECT_TRUE((stl::same_as<char_type_of_t_string_literals<wchar_t[]>, wchar_t>) );
