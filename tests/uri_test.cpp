@@ -578,7 +578,7 @@ TYPED_TEST(URITests, BackingUpOnEmptySegments) {
 }
 
 TYPED_TEST(URITests, LastEmptySegment) {
-    constexpr stl::string_view str = "http://example.com/a/a/a/../../";
+    constexpr stl::string_view str = "http://example.com/.//a/a/a/../../";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -586,9 +586,9 @@ TYPED_TEST(URITests, LastEmptySegment) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
-        EXPECT_EQ(context.out.get_path(), "/a/");
+        EXPECT_EQ(context.out.get_path(), "//a/");
     } else {
-        EXPECT_EQ(context.out.get_path(), "/a/a/a/../../");
+        EXPECT_EQ(context.out.get_path(), "/.//a/a/a/../../");
     }
 }
 
