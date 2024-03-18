@@ -607,8 +607,36 @@ namespace webpp::uri {
             requires(!needs_allocator)
         explicit constexpr basic_scheme([[maybe_unused]] AllocT const& alloc = {}) noexcept {}
 
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires needs_allocator
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, AllocT const& alloc) noexcept
+          : storage{alloc} {}
+
+        template <Allocator AllocT = allocator_type_from_t<string_type>>
+            requires(!needs_allocator)
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, AllocT const& alloc) noexcept {}
+
         template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
         explicit constexpr basic_scheme(InpStr const& inp_str) noexcept(is_nothrow) {
+            parse(inp_str.begin(), inp_str.end());
+        }
+
+        template <Allocator        AllocT = allocator_type_from_t<string_type>,
+                  istl::StringLike InpStr = stl::basic_string_view<char_type>>
+            requires needs_allocator
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
+                               AllocT const&                         alloc,
+                               InpStr const&                         inp_str) noexcept(is_nothrow)
+          : storage{alloc} {
+            parse(inp_str.begin(), inp_str.end());
+        }
+
+        template <Allocator        AllocT = allocator_type_from_t<string_type>,
+                  istl::StringLike InpStr = stl::basic_string_view<char_type>>
+            requires(!needs_allocator)
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
+                               [[maybe_unused]] AllocT const&        alloc,
+                               InpStr const&                         inp_str) noexcept(is_nothrow) {
             parse(inp_str.begin(), inp_str.end());
         }
 

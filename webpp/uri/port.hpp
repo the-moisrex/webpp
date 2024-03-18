@@ -5,6 +5,7 @@
 
 #include "../convert/casts.hpp"
 #include "../std/string.hpp"
+#include "../strings/append.hpp"
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "host_authority.hpp"
@@ -236,6 +237,19 @@ namespace webpp::uri {
         template <typename Iter = iterator>
         constexpr void assign(Iter beg, Iter end) noexcept(!is_modifiable) {
             istl::assign(storage, beg, end);
+        }
+
+        template <stl::integral T = stl::uint16_t>
+            requires is_modifiable
+        constexpr bool assign(T port_num) {
+            if constexpr (!stl::same_as<T, stl::uint16_t> && !stl::same_as<T, stl::uint8_t>) {
+                if (port_num < 0 || port_num > max_port_number) {
+                    return false;
+                }
+            }
+            clear();
+            append_to(storage, port_num);
+            return true;
         }
 
         constexpr void clear() {

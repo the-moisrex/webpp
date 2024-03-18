@@ -186,16 +186,16 @@ namespace webpp {
             return *this;
         }
 
-        [[nodiscard]] auto bound_uri() {
+        [[nodiscard]] uri::basic_uri<string_type> bound_uri() const {
             uri::basic_uri<string_type> res_url{get_alloc_for<string_type>(*this)};
-            res_url.scheme = is_ssl_active() ? "https" : "http";
-            res_url.host   = bind_address.to_string();
-            res_url.port   = bind_port;
+            res_url.scheme(is_ssl_active() ? "https" : "http");
+            res_url.hostname(bind_address.to_string());
+            res_url.port(bind_port);
             return res_url;
         }
 
         [[nodiscard]] constexpr string_view_type server_name() const noexcept {
-            return "Beast";
+            return log_cat;
         }
 
         // run the server
@@ -220,7 +220,7 @@ namespace webpp {
             acceptor.open(endp.protocol(), err);
             if (err) {
                 this->logger.error(log_cat,
-                                   fmt::format("Cannot open protocol for {}", bound_uri().to_string()),
+                                   fmt::format("Cannot open protocol for {}", bound_uri().as_string()),
                                    err);
                 return -1;
             }
@@ -229,7 +229,7 @@ namespace webpp {
             acceptor.set_option(asio::socket_base::reuse_address(true), err);
             if (err) {
                 this->logger.error(log_cat,
-                                   fmt::format("Cannot set reuse option on {}", bound_uri().to_string()),
+                                   fmt::format("Cannot set reuse option on {}", bound_uri().as_string()),
                                    err);
                 return -1;
             }
@@ -237,14 +237,14 @@ namespace webpp {
             // bind
             acceptor.bind(endp, err);
             if (err) {
-                this->logger.error(log_cat, fmt::format("Cannot bind to {}", bound_uri().to_string()), err);
+                this->logger.error(log_cat, fmt::format("Cannot bind to {}", bound_uri().as_string()), err);
                 return -1;
             }
 
             // listen
             acceptor.listen(asio::socket_base::max_listen_connections, err);
             if (err) {
-                this->logger.error(log_cat, fmt::format("Cannot listen to {}", bound_uri().to_string()), err);
+                this->logger.error(log_cat, fmt::format("Cannot listen to {}", bound_uri().as_string()), err);
                 return -1;
             }
 
@@ -255,7 +255,7 @@ namespace webpp {
 
             this->logger.info(log_cat,
                               fmt::format("Starting beast server on {} with {} thread workers.",
-                                          bound_uri().to_string(),
+                                          bound_uri().as_string(),
                                           thread_worker_count));
 
             auto get_thread = [this](stl::size_t index) noexcept {
