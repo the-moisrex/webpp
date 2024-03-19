@@ -161,8 +161,10 @@ TYPED_TEST(MemoryTest, DynamicTypeBasicTest) {
     EXPECT_EQ(*three, long_3s);
     EXPECT_EQ(three->size(), long_3s.size());
 
+#    ifdef __cpp_lib_string_contains
     // the dynamic itself uses the allocator that you pass to it, so long_3s is not gonna start fron zero
     EXPECT_TRUE((stl::string_view{data.data(), data.size()}.contains(long_3s)));
+#    endif
 }
 
 #endif
