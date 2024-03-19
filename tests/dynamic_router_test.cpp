@@ -205,7 +205,7 @@ TEST(DynamicRouter, NormalizationTest) {
           << res.headers.status_code_integer() << "\n"
           << router.to_string() << "\n"
           << path_str << "\n"
-          << parsed_uri.to_string();
+          << parsed_uri.as_string();
         EXPECT_EQ(as<std::string>(res.body), "about page") << path_str;
     }
 }
@@ -230,7 +230,7 @@ TEST(DynamicRouter, CommonBypassTests) {
           << res.headers.status_code_integer() << "\n"
           << router.to_string() << "\n"
           << path_str << "\n"
-          << parsed_uri.to_string();
+          << parsed_uri.as_string();
         EXPECT_NE(as<std::string>(res.body), "about page") << path_str;
     }
 }
@@ -329,7 +329,7 @@ TEST(DynamicRouter, SameOrderPreRoutingTest) {
           << "Segment: " << *ctx.path_traverser() << "\n"
           << "Should be called before checking the paths, it's a pre-routing.\nNum: " << num
           << "\nRouter: " << router.to_string() << "\n"
-          << ctx.path_traverser().get_path().to_string();
+          << ctx.path_traverser().get_path().as_string();
         ++num;
     };
 

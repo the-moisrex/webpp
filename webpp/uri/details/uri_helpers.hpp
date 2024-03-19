@@ -3,6 +3,10 @@
 #ifndef URI_HELPER_HPP
 #define URI_HELPER_HPP
 
+#include "../std/array.hpp"
+#include "./uri_components.hpp"
+#include "./uri_status.hpp"
+
 namespace webpp::uri::details {
 
     template <uri_parsing_options Options, ParsingURIContext CtxT, typename Iter, typename... ValT>
