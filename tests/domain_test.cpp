@@ -5,6 +5,7 @@
 
 #include <cstring>
 using namespace webpp;
+using namespace webpp::uri;
 
 static constexpr auto valid_domains = stl::array{
   "example.com",
