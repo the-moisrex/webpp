@@ -230,8 +230,8 @@ std::array<std::pair<std::string_view, std::string_view>, 60> puny_domains = {
 
 TEST(DomainsTest, Validity) {
     for (auto domain_str : valid_domains) {
-        auto ptr    = domain_str;
-        auto status = parse_domain_name(ptr, ptr + std::strlen(ptr));
+        auto const ptr    = domain_str;
+        auto const status = parse_domain_name(ptr, ptr + std::strlen(ptr));
         EXPECT_TRUE(status == domain_name_status::valid || status == domain_name_status::valid_punycode)
           << domain_str << "\n"
           << to_string(status);
@@ -239,17 +239,17 @@ TEST(DomainsTest, Validity) {
 }
 
 TEST(DomainsTest, ValidityPunycode) {
-    for (auto [domain_str, domain_unicode] : puny_domains) {
-        auto ptr    = domain_str.data();
-        auto status = parse_domain_name(ptr, ptr + domain_str.size());
+    for (auto const [domain_str, domain_unicode] : puny_domains) {
+        auto const ptr    = domain_str.data();
+        auto const status = parse_domain_name(ptr, ptr + domain_str.size());
         EXPECT_TRUE(status == domain_name_status::valid_punycode) << domain_str << "\n" << to_string(status);
     }
 }
 
 TEST(DomainsTest, InValidity) {
     for (auto domain_str : invalid_domains) {
-        auto ptr    = domain_str;
-        auto status = parse_domain_name(ptr, ptr + std::strlen(ptr));
+        auto const ptr    = domain_str;
+        auto const status = parse_domain_name(ptr, ptr + std::strlen(ptr));
         EXPECT_NE(status, domain_name_status::valid) << domain_str << "\n" << to_string(status);
     }
 }
@@ -260,9 +260,9 @@ TEST(DomainsTest, SubDomainTooLongError) {
         str += 'd';
     }
     str                += "example.com";
-    auto       str_beg  = static_cast<char const*>(str.data());
+    auto const str_beg   = static_cast<char const*>(str.data());
     auto const str_end  = str_beg + str.size();
-    auto       status   = parse_domain_name(str_beg, str_end);
+    auto const status    = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::subdomain_too_long) << str << "\n" << to_string(status);
 }
 
@@ -273,13 +273,13 @@ TEST(DomainsTest, DomainTooLongError) {
         str += '.';
     }
     str                += "com";
-    auto       str_beg  = static_cast<char const*>(str.data());
+    auto const str_beg   = static_cast<char const*>(str.data());
     auto const str_end  = str_beg + str.size();
-    auto       status   = parse_domain_name(str_beg, str_end);
+    auto const status    = parse_domain_name(str_beg, str_end);
     EXPECT_EQ(status, domain_name_status::too_long) << str << "\n" << to_string(status);
 }
 
 TEST(DomainsTest, TLDTest) {
-    basic_domain domain{"example.com"};
+    basic_domain const domain{"example.com"};
     EXPECT_EQ(domain.tld(), "com");
 }
