@@ -186,8 +186,9 @@ namespace webpp {
                   storage,
                   stl::forward<NStrT>(inp_str));
             } else {
-                return iiequals<uri::details::TABS_OR_NEWLINES<char_type>>(storage,
-                                                                           stl::forward<NStrT>(inp_str));
+                return uri::iiequals<uri::details::TABS_OR_NEWLINES<char_type>>(
+                  storage,
+                  stl::forward<NStrT>(inp_str));
             }
         }
 
