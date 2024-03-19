@@ -10,12 +10,11 @@
 #include "./details/uri_status.hpp"
 
 #include <compare>
-#include <cstdint>
 
-namespace webpp {
-    enum struct domain_name_status : stl::underlying_type_t<uri::uri_status> { // NOLINT(*-enum-size)
+namespace webpp::uri {
+    enum struct domain_name_status : stl::underlying_type_t<uri_status> { // NOLINT(*-enum-size)
     // NOLINTBEGIN(*-macro-usage)
-#define webpp_def(status) status = stl::to_underlying(uri::uri_status::status)
+#define webpp_def(status) status = stl::to_underlying(uri_status::status)
         webpp_def(unparsed),           // Not yet parsed
         webpp_def(valid),              // valid ascii domain name
         webpp_def(valid_punycode),     // valid domain name which is a punycode
@@ -182,13 +181,10 @@ namespace webpp {
         template <istl::StringViewifiable NStrT = stl::basic_string_view<char_type>>
         [[nodiscard]] constexpr bool operator==(NStrT&& inp_str) const noexcept {
             if constexpr (is_modifiable) {
-                return iiequals_fl<uri::details::TABS_OR_NEWLINES<char_type>>(
-                  storage,
-                  stl::forward<NStrT>(inp_str));
+                return iiequals_fl<details::TABS_OR_NEWLINES<char_type>>(storage,
+                                                                         stl::forward<NStrT>(inp_str));
             } else {
-                return uri::iiequals<uri::details::TABS_OR_NEWLINES<char_type>>(
-                  storage,
-                  stl::forward<NStrT>(inp_str));
+                return iiequals<details::TABS_OR_NEWLINES<char_type>>(storage, stl::forward<NStrT>(inp_str));
             }
         }
 
@@ -209,6 +205,6 @@ namespace webpp {
         }
     };
 
-} // namespace webpp
+} // namespace webpp::uri
 
 #endif // WEBPP_URI_DOMAIN_HPP
