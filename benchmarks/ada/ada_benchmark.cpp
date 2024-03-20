@@ -230,6 +230,30 @@ static void WebppSchemePort(benchmark::State& state) {
 
 BENCHMARK(WebppSchemePort);
 
+static void WebppSchemePort2(benchmark::State& state) {
+    std::size_t i = 0;
+    for (auto _ : state) {
+        auto scheme = schemes[i++ % schemes.size()];
+        benchmark::DoNotOptimize(scheme);
+        auto port = webpp::v2::known_port<decltype(scheme), false>(scheme);
+        benchmark::DoNotOptimize(port);
+    }
+}
+
+BENCHMARK(WebppSchemePort2);
+
+static void WebppSchemePort2IgnoreNewlinesAndTabs(benchmark::State& state) {
+    std::size_t i = 0;
+    for (auto _ : state) {
+        auto scheme = schemes[i++ % schemes.size()];
+        benchmark::DoNotOptimize(scheme);
+        auto port = webpp::v2::known_port<decltype(scheme), true>(scheme);
+        benchmark::DoNotOptimize(port);
+    }
+}
+
+BENCHMARK(WebppSchemePort2IgnoreNewlinesAndTabs);
+
 static void AdaSchemePort(benchmark::State& state) {
     std::size_t i = 0;
     for (auto _ : state) {
