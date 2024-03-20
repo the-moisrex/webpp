@@ -8,68 +8,75 @@
 #include "../std/string.hpp"
 #include "../std/string_view.hpp"
 
+#include <algorithm>
+
 namespace webpp::ascii::is {
 
 
     /**
      * @brief check if the specified character is a whitespace
-     * @param c the character to check
+     * @param inp_char the character to check
      * @return true if c is a whitespace
      */
-    [[nodiscard]] constexpr bool whitespace(istl::CharType auto c) noexcept {
+    [[nodiscard]] constexpr bool whitespace(istl::CharType auto inp_char) noexcept {
         // todo: do we need '\v'?
-        return c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '\f' || c == '\v';
+        return inp_char == ' ' || inp_char == '\n' || inp_char == '\r' || inp_char == '\t' ||
+               inp_char == '\f' || inp_char == '\v';
     }
 
     /**
      * @brief check if str is right trimmed
-     * @param str
+     * @param inp_str
      * @return true if there's no whitespaces in the right side of input
      */
-    [[nodiscard]] constexpr bool rtrimmed(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool rtrimmed(StrT&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return !whitespace(*str.rbegin());
     }
 
     /**
      * @brief check if str is left trimmed
-     * @param str
+     * @param inp_str
      * @return true if there's no whitespaces in the left side of input
      */
-    [[nodiscard]] constexpr bool ltrimmed(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool ltrimmed(StrT&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return !whitespace(str[0]);
     }
 
     /**
      * @brief check if str is right and left trimmed
-     * @param str
-     * @return true if there's no whitespaces in the right and left side of
-     * input
+     * @param inp_str
+     * @return true if there's no whitespaces in the right and left side of input
      */
-    [[nodiscard]] constexpr bool trimmed(istl::StringViewifiable auto&& _str) noexcept {
-        return ltrimmed(_str) && rtrimmed(_str);
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool trimmed(StrT&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        return ltrimmed(str) && rtrimmed(str);
     }
 
     /**
      * @brief check if the specified character is a valid number or not
-     * @param character
+     * @param inp_char
      * @return true if the specified input is an integer
      */
-    [[nodiscard]] constexpr bool digit(istl::CharType auto c) noexcept {
-        return c >= '0' && c <= '9';
+    [[nodiscard]] constexpr bool digit(istl::CharType auto inp_char) noexcept {
+        return inp_char >= '0' && inp_char <= '9';
     }
 
     /**
      * @brief is all the characters in the specified string digits
-     * @param str
-     * @return true/false
+     * @param inp_str
+     * @return true if it's all digit (characters like - or + are false)
      */
-    [[nodiscard]] constexpr bool digit(istl::StringViewifiable auto&& _str) noexcept {
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool digit(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto str = istl::string_viewify(_str);
-        for (auto c : str) {
-            if (!digit(c)) {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
+        for (auto cur_char : str) {
+            if (!digit(cur_char)) {
                 return false;
             }
         }
@@ -78,23 +85,23 @@ namespace webpp::ascii::is {
 
     /**
      * @brief is a number or a dot
-     * @param c
-     * @return
+     * @param inp_char
+     * @returnt true if it's a digit or a dot (`.`)
      */
-    [[nodiscard]] constexpr bool number(istl::CharType auto c) noexcept {
-        return digit(c) || c == '.';
+    [[nodiscard]] constexpr bool number(istl::CharType auto inp_char) noexcept {
+        return digit(inp_char) || inp_char == '.';
     }
 
     /**
-     * @brief check if the specified string is a number (including floating
-     * points)
-     * @param str
+     * @brief check if the specified string is a number (including floating points)
+     * @param inp_str
      * @return true if the specified string is a number
      */
-    [[nodiscard]] constexpr bool number(istl::StringViewifiable auto&& _str) noexcept {
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool number(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto str      = istl::string_viewify(_str);
-        bool is_first = true;
+        auto const str      = istl::string_viewify(stl::forward<StrT>(inp_str));
+        bool       is_first = true;
         for (auto const& c : str) {
             if (!digit(c)) {
                 if (is_first && c == '.') {
@@ -109,24 +116,23 @@ namespace webpp::ascii::is {
 
     /**
      * @brief check if a character is lowercase
-     * @param c
+     * @param inp_char
      * @return
      */
-    [[nodiscard]] constexpr bool lowercase(istl::CharType auto c) noexcept {
-        return c >= 'a' && c <= 'z';
+    [[nodiscard]] constexpr bool lowercase(istl::CharType auto inp_char) noexcept {
+        return inp_char >= 'a' && inp_char <= 'z';
     }
 
     /**
      * @brief checks if a string is completely lowercase or not
-     * @param str
+     * @param inp_str
      * @return
      */
-
-    [[nodiscard]] constexpr bool lowercase(istl::StringViewifiable auto&& _str) noexcept {
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool lowercase(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto str = istl::string_viewify(_str);
-        for (auto const& c : str) {
-            if (!lowercase(c)) {
+        for (auto const str = istl::string_viewify(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
+            if (!lowercase(cur_char)) {
                 return false;
             }
         }
@@ -135,23 +141,23 @@ namespace webpp::ascii::is {
 
     /**
      * @brief checks if a character is uppercase or not
-     * @param c
+     * @param inp_char
      * @return
      */
-    [[nodiscard]] constexpr bool uppercase(istl::CharType auto c) noexcept {
-        return c >= 'A' && c <= 'Z';
+    [[nodiscard]] constexpr bool uppercase(istl::CharType auto inp_char) noexcept {
+        return inp_char >= 'A' && inp_char <= 'Z';
     }
 
     /**
      * @brief checks if a string is uppercase or not
-     * @param str
+     * @param inp_str
      * @return
      */
-    [[nodiscard]] constexpr bool uppercase(istl::StringViewifiable auto&& _str) noexcept {
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool uppercase(StrT&& inp_str) noexcept {
         // todo: add SIMD
-        auto str = istl::string_viewify(_str);
-        for (auto const& c : str) {
-            if (!uppercase(c)) {
+        for (auto const str = istl::string_viewify(stl::forward<StrT>(inp_str)); auto const& cur_char : str) {
+            if (!uppercase(cur_char)) {
                 return false;
             }
         }
@@ -163,46 +169,48 @@ namespace webpp::ascii::is {
      * @param str
      * @return true if the specified string is an integer
      */
-    [[nodiscard]] constexpr bool integer(istl::StringViewifiable auto&& str) noexcept {
-        return digit(str);
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool integer(StrT&& str) noexcept {
+        return digit(stl::forward<StrT>(str));
     }
 
     /**
      * Check if the specified string is an integer and can be hold inside
      * uint8_t; which means it's between 0 and 255
-     * @param str
+     * @param inp_str
      * @return bool
      */
-
-    [[nodiscard]] constexpr bool uint8(istl::StringViewifiable auto&& _str) noexcept {
-        auto str = istl::string_viewify(_str);
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool uint8(StrT&& inp_str) noexcept {
+        auto const str = istl::string_viewify(stl::forward<StrT>(inp_str));
         return !str.empty() && str.size() <= 3 && digit(str) && to_uint(str) <= 255;
     }
 
     /**
      * Check if the char is a hexadecimal character
-     * @param char
+     * @param inp_char
      * @return bool
      */
-    [[nodiscard]] constexpr bool hex(istl::CharType auto t) noexcept {
-        return (t >= '0' && t <= '9') || (t >= 'a' && t <= 'f') || (t >= 'A' && t <= 'F');
+    [[nodiscard]] constexpr bool hex(istl::CharType auto const inp_char) noexcept {
+        return (inp_char >= '0' && inp_char <= '9') || (inp_char >= 'a' && inp_char <= 'f') ||
+               (inp_char >= 'A' && inp_char <= 'F');
     }
 
     /**
-     * check if all of the characters in the string is a hexadecimal
-     * character
-     * @param str
+     * check if all of the characters in the string is a hexadecimal character
+     * @param inp_str
      * @return bool
      */
-    [[nodiscard]] constexpr bool hex(istl::StringViewifiable auto&& _str) noexcept {
-        auto str        = istl::string_viewify(_str);
-        using char_type = istl::char_type_of_t<decltype(str)>;
+    template <istl::StringViewifiable StrT>
+    [[nodiscard]] constexpr bool hex(StrT&& inp_str) noexcept {
+        using char_type = istl::char_type_of_t<StrT>;
 
-        auto first = stl::cbegin(str);
+        auto const str   = istl::string_viewify(stl::forward<StrT>(inp_str));
+        auto       first = stl::cbegin(str);
         if (str.starts_with('-') || str.starts_with('+')) {
             ++first;
         }
-        if (!stl::all_of(first, std::cend(str), [](char_type ch) {
+        if (!stl::all_of(first, std::cend(str), [](char_type ch) constexpr noexcept {
                 return hex(ch);
             }))
         {
