@@ -3,8 +3,9 @@
 #ifndef WEBPP_ZLIB_HPP
 #define WEBPP_ZLIB_HPP
 
-#if __has_include(<zlib.h>)
+#if __has_include(<zlib.h> )
 #    define WEBPP_ZLIB
+#    define ZLIB_CONST
 #    include <zlib.h>
 #endif
 

@@ -31,3 +31,19 @@ TEST(Crypto, Base64URL) {
     EXPECT_TRUE(base64::url_decode(enc, dec));
     EXPECT_EQ(orig, dec);
 }
+
+TEST(Crypto, Base64URLConst) {
+    // well, actually this is not the best test!
+    std::string const orig = "https://tools.ietf.org/html/rfc4648#section-5";
+    std::string       enc, dec;
+    base64::url_encode(orig, enc);
+    EXPECT_TRUE(base64::url_decode(enc, dec));
+    EXPECT_EQ(orig, dec);
+}
+
+TEST(Crypto, GZipConst) {
+    std::string const original{"zip me"};
+    auto const        compressed   = gzip::compress(original.data(), original.size());
+    auto const        decompressed = gzip::decompress(compressed.data(), compressed.size());
+    EXPECT_EQ(original, decompressed);
+}
