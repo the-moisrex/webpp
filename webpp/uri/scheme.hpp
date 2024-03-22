@@ -614,7 +614,8 @@ namespace webpp::uri {
 
         template <Allocator AllocT = allocator_type_from_t<string_type>>
             requires(!needs_allocator)
-        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag, AllocT const& alloc) noexcept {}
+        constexpr basic_scheme([[maybe_unused]] stl::allocator_arg_t tag,
+                               [[maybe_unused]] AllocT const&        alloc) noexcept {}
 
         template <istl::StringLike InpStr = stl::basic_string_view<char_type>>
         explicit constexpr basic_scheme(InpStr const& inp_str) noexcept(is_nothrow) {

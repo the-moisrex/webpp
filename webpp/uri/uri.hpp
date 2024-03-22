@@ -628,6 +628,12 @@ namespace webpp::uri {
             return parse<Options>(str.begin(), str.end(), uri_status::valid_port);
         }
 
+        template <stl::integral T = stl::uint16_t>
+            requires is_modifiable
+        constexpr bool port(T port_num) {
+            return this->port().assign(port_num);
+        }
+
         template <uri_parsing_options     Options = uri_parsing_options{},
                   istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         constexpr uri_status_type path(NStrT&& inp_str) noexcept(is_modifiable) {

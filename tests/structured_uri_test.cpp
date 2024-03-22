@@ -56,7 +56,7 @@ TYPED_TEST_SUITE(StructuredURITests, Types);
 
 TYPED_TEST(StructuredURITests, StructuredDomain) {
     static TypeParam const        inp_domain = get_one<TypeParam>("domain.tld", L"domain.tld");
-    basic_domain<TypeParam> const domain{inp_domain};
+    uri::basic_domain<TypeParam> const domain{inp_domain};
     EXPECT_TRUE(domain.is_valid());
     EXPECT_EQ(domain.tld(), get_one<TypeParam>("tld", L"tld"));
 }

@@ -95,7 +95,7 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default: {
+                        default : {
                             if constexpr (Options.allow_invalid_characters) {
                                 set_warning(ctx.status, uri_status::invalid_character);
                             } else {

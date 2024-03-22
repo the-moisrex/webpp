@@ -9,14 +9,12 @@
 #include "../std/string_view.hpp"
 #include "../std/vector.hpp"
 #include "../strings/peek.hpp"
-#include "./details/uri_helpers.hpp"
 #include "details/constants.hpp"
 #include "details/special_schemes.hpp"
 #include "details/uri_components_encoding.hpp"
 #include "details/windows_drive_letter.hpp"
 #include "encoding.hpp"
 
-#include <bit>
 #include <compare>
 #include <numeric>
 
@@ -68,43 +66,58 @@ namespace webpp::uri {
         //           charset_range<CharT, 0x00A0, 0x10FFFD>().except(surrogate<CharT>));
 
 
-        static constexpr auto a_byte = static_cast<stl::uint8_t>(stl::numeric_limits<stl::uint8_t>::digits);
-        static constexpr auto slash_mask =
-          static_cast<stl::uint64_t>(stl::numeric_limits<stl::uint8_t>::max());
-
         /// Remove the last segment of a path
         template <ParsingURIContext CtxT>
-        static constexpr void pop_back_segment(component_encoder<components::path, CtxT>& encoder,
-                                               stl::uint64_t& slash_loc_cache) noexcept(CtxT::is_nothrow) {
+        static constexpr void pop_back_segment(component_encoder<components::path, CtxT>& encoder) noexcept(
+          CtxT::is_nothrow) {
             using ctx_type        = CtxT;
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;
 
-            auto& ctx = encoder.context();
-
             // remove the last segment as well
             if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                auto slash_loc = static_cast<difference_type>(slash_loc_cache & slash_mask);
+                difference_type slash_loc = 0;
 
-                // the cache is empty, too many /../../../.. in the URL that can't be stored in one single
-                // uint64, or the difference is larger than 255 characters.
-                if (slash_loc == 0) {
-                    // find the last slash
-                    auto const beg = encoder.get_output().begin();
-                    auto       cur = beg + static_cast<difference_type>(encoder.get_output().size());
-                    if (cur != beg) {
-                        ++slash_loc;
-                        --cur;
-                    }
-                    for (; cur != beg && *cur != '/'; --cur) {
-                        ++slash_loc;
-                    }
+                // find the last slash
+                auto const beg = encoder.get_output().begin();
+                auto       cur = beg + static_cast<difference_type>(encoder.get_output().size() - 1);
+                if (cur != beg) {
+                    ++slash_loc;
+                    --cur;
+                }
+                for (; cur != beg && *cur != '/'; --cur) {
+                    ++slash_loc;
                 }
                 encoder.pop_back(slash_loc);
-                slash_loc_cache >>= a_byte;
             } else {
                 encoder.pop_back();
             }
+        }
+
+        /// Remove the current segment in a path
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
+        static constexpr void clear_segment(component_encoder<components::path, CtxT>& encoder) noexcept {
+            using ctx_type = CtxT;
+            if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
+                encoder.get_buffer().clear();
+            } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
+                auto& out = encoder.get_buffer();
+                if constexpr (!ctx_type::is_modifiable || !Options.ignore_tabs_or_newlines) {
+                    auto const length = encoder.context().pos - encoder.segment_begin();
+                    out.erase(out.size() - length);
+                } else {
+                    pop_back_segment(encoder);
+                }
+            }
+            encoder.reset_segment_start();
+        }
+
+        /// We don't need to handle dots in a path if the user is asking us not to
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
+            requires(!Options.handle_dots_in_paths)
+        [[nodiscard]] static constexpr bool handle_dots_in_paths(
+          [[maybe_unused]] component_encoder<components::path, CtxT>& encoder) noexcept {
+            return false;
         }
 
         /// Handle special cases:
@@ -119,25 +132,22 @@ namespace webpp::uri {
         ///
         /// It's possible to have newlines and tabs in between these things
         /// @returns true if we found one or two dots
-        template <uri_parsing_options Options = uri_parsing_options{}, ParsingURIContext CtxT>
+        template <uri_parsing_options Options, ParsingURIContext CtxT>
+            requires(Options.handle_dots_in_paths)
         [[nodiscard]] static constexpr bool handle_dots_in_paths(
-          component_encoder<components::path, CtxT>& encoder,
-          stl::uint64_t&                             slash_loc_cache) noexcept(CtxT::is_nothrow) {
+          component_encoder<components::path, CtxT>& encoder) noexcept(CtxT::is_nothrow) {
             using ctx_type  = CtxT;
             using char_type = typename ctx_type::char_type;
 
-            // NOLINTBEGIN(*-magic-numbers)
-            auto& ctx    = encoder.context();
-            auto  pos    = ctx.pos + 1;
-            auto  status = ctx.status;
+            auto       ctx = encoder.context();
+            auto       pos = encoder.segment_begin();
+            auto const end = ctx.pos;
 
-            stl::uint8_t state       = 0;
-            char_type    prev        = 0;
-            bool         non_slashes = false;
+            stl::uint8_t dots = 0;
+            char_type    prev = 0;
 
             for (;; ++pos) {
-                if (pos == ctx.end) {
-                    non_slashes = true;
+                if (pos == end) {
                     break;
                 }
 
@@ -160,77 +170,48 @@ namespace webpp::uri {
                             return false;
                         }
                         prev = 0;
-                        ++state;
+                        ++dots;
                         continue;
                     case '.':
-                        ++state;
+                        ++dots;
                         continue;
-                    [[unlikely]] case '\0': {
-                        if constexpr (Options.eof_is_valid) {
-                            non_slashes = true;
-                            break;
-                        } else {
-                            return false;
-                        }
-                    }
-                    [[unlikely]] case '\\':
-                        if (!is_special_scheme(ctx.scheme)) {
-                            return false;
-                        }
-                        set_warning(status, uri_status::reverse_solidus_used);
-                        [[fallthrough]];
-                    case '/': break;
-                    case '#':
-                    case '?':
-                        non_slashes = true;
-                        break;
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\r':
                     [[unlikely]] case '\t':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(status, uri_status::invalid_character);
                             continue;
                         }
                         [[fallthrough]];
 
                         // a normal path:
-                        [[likely]] default : {
-                            return false;
-                        }
+                        [[likely]] default : return false;
                 }
                 break;
             }
 
-            switch (state) {
+            switch (dots) {
                 // single dot found:
                 case 1: // .
-                    if (!encoder.is_segment_empty()) {
-                        encoder.end_segment();
-                    }
+                    clear_segment<Options>(encoder);
                     break;
 
                 // two dots found:
                 case 2: // ..
-                    pop_back_segment(encoder, slash_loc_cache);
+                    clear_segment<Options>(encoder);
+                    pop_back_segment(encoder);
                     break;
 
                 // a normal segment found:
                 default: return false;
             }
-            // NOLINTEND(*-magic-numbers)
 
-
-
-            ctx.pos    = pos;
-            ctx.status = status;
-            encoder.reset_segment_start();
 
             // If neither c is U+002F (/), nor url is special and c is U+005C (\), append the empty
             // string to url’s path. This means that for input /usr/.. the result is / and not a lack
             // of a path.
-            if (non_slashes) {
-                encoder.next_segment_of('/', 0);
-            }
+            // if (end == ctx.end || (*end != '/' && *end != '\\')) {
+            //     encoder.next_segment_of('/', 0);
+            // }
             return true;
         }
 
@@ -306,7 +287,6 @@ namespace webpp::uri {
 
         using ctx_type = CtxT;
 
-
         webpp_static_constexpr auto encode_set =
           ctx_type::is_modifiable || ctx_type::is_segregated ? details::PATH_ENCODE_SET : ascii_bitmap();
 
@@ -325,10 +305,6 @@ namespace webpp::uri {
         set_opaque(ctx, false);
 
 
-
-        // store the slashes that we find in each byte of this variable if it fits
-        stl::uint64_t slash_loc_cache = 0;
-
         details::component_encoder<components::path, ctx_type> encoder{ctx};
         encoder.start_segment();
         details::handle_windows_driver_letter<Options>(ctx, encoder);
@@ -342,19 +318,16 @@ namespace webpp::uri {
                     set_warning(ctx.status, uri_status::reverse_solidus_used);
                     [[fallthrough]];
                 [[likely]] case '/':
-                    if (details::handle_dots_in_paths<Options>(encoder, slash_loc_cache)) {
+                    if (details::handle_dots_in_paths<Options>(encoder)) {
+                        encoder.ignore_character();
+                        encoder.reset_segment_start();
                         continue;
-                    }
-                    if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                        auto const loc_diff   = static_cast<stl::uint64_t>(ctx.pos - encoder.segment_begin());
-                        slash_loc_cache     <<= details::a_byte;
-                        if (loc_diff < details::slash_mask) {
-                            slash_loc_cache |= loc_diff;
-                        }
                     }
                     encoder.next_segment_of('/');
                     continue;
-                case '?': set_valid(ctx.status, uri_status::valid_queries); break;
+                [[likely]] case '?':
+                    set_valid(ctx.status, uri_status::valid_queries);
+                    break;
                 case '#':
                     set_valid(ctx.status, uri_status::valid_fragment);
                     break;
@@ -384,6 +357,7 @@ namespace webpp::uri {
             }
             break;
         }
+        stl::ignore = details::handle_dots_in_paths<Options>(encoder);
         encoder.end_segment();
         encoder.set_value();
 
