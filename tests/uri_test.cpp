@@ -80,10 +80,11 @@ TYPED_TEST(URITests, Generation) {
 
 TYPED_TEST(URITests, PathFromString) {
     uri::basic_path path{"/a/b/c/../d"};
-    ASSERT_EQ(path.size(), 5);
+    ASSERT_EQ(path.size(), 4);
     EXPECT_EQ(path[0], "");
     EXPECT_EQ(path[1], "a");
     path /= "nice";
+    ASSERT_EQ(path.size(), 5);
     EXPECT_TRUE(stl::is_eq(path <=> stl::string{"/a/b/c/../d/nice"}));
     // EXPECT_EQ(path, "/a/b/c/../d/nice");
 }
