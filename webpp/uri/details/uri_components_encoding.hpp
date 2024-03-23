@@ -352,13 +352,10 @@ namespace webpp::uri::details {
                     buffer->clear();
                 }
             } else if constexpr (is_vec) {
-                if (is_segment_empty()) {
-                    if (!get_output().empty()) {
-                        get_output().pop_back();
-                    }
-                } else {
-                    reset_segment_start();
+                if (!get_output().empty()) {
+                    get_output().pop_back();
                 }
+                reset_segment_start();
             } else if constexpr (ctx_type::is_modifiable) {
                 using output_t  = stl::remove_cvref_t<decltype(get_output())>;
                 using size_type = typename output_t::size_type;

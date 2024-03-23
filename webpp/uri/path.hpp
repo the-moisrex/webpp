@@ -101,7 +101,7 @@ namespace webpp::uri {
             if constexpr (ctx_type::is_segregated && ctx_type::is_modifiable) {
                 encoder.get_buffer().clear();
             } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
-                if constexpr (!ctx_type::is_modifiable || !Options.ignore_tabs_or_newlines) {
+                if constexpr (!Options.ignore_tabs_or_newlines) {
                     auto&      out    = encoder.get_buffer();
                     auto const length = encoder.context().pos - encoder.segment_begin();
                     out.erase(out.size() - length);
@@ -200,8 +200,8 @@ namespace webpp::uri {
 
                 // two dots found:
                 case 2: // ..
-                    clear_segment<Options>(encoder);
                     pop_back_segment(encoder);
+                    clear_segment<Options>(encoder);
                     break;
 
                 // a normal segment found:
