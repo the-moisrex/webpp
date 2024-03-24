@@ -342,15 +342,15 @@ namespace webpp::uri {
                     continue;
                 [[unlikely]] case '\r':
                 [[unlikely]] case '\n':
-                [[unlikely]] case '\t':
+                [[unlikely]] case '\t': {
                     set_warning(ctx.status, uri_status::invalid_character);
                     if constexpr (Options.ignore_tabs_or_newlines) {
                         encoder.ignore_character();
                         continue;
-                    }
-                    else {
+                    } else {
                         break;
                     }
+                }
                 [[unlikely]] case '\0':
                     if constexpr (Options.eof_is_valid) {
                         break;

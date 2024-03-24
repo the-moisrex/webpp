@@ -524,7 +524,7 @@ TYPED_TEST(URITests, SkipDotButNotSlash) {
 
 TYPED_TEST(URITests, PathDotNormalizedABunch) {
     constexpr stl::string_view str =
-      "https://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e";
+      "https://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E//%2e";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -533,17 +533,17 @@ TYPED_TEST(URITests, PathDotNormalizedABunch) {
     EXPECT_EQ(uri::get_value(context.status), uri::uri_status::valid)
       << to_string(uri::get_value(context.status));
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
-        EXPECT_EQ(context.out.get_path(), "//three/");
+        EXPECT_EQ(context.out.get_path(), "//three//");
     } else {
         EXPECT_EQ(context.out.get_path(),
-                  "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e");
+                  "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E//%2e");
     }
 }
 
 TYPED_TEST(URITests, Percent2ECheck) {
     constexpr stl::string_view str =
-      "https://127.0.0.1/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/"
-      "%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%";
+      "https://127.0.0.1/..//./zero/one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/"
+      "%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%";
 
     auto context = this->template get_context<TypeParam>(str);
     uri::parse_uri(context);
@@ -555,11 +555,12 @@ TYPED_TEST(URITests, Percent2ECheck) {
     if constexpr (TypeParam::is_modifiable || TypeParam::is_segregated) {
         EXPECT_EQ(
           context.out.get_path(),
-          "//three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+          "//zero/three/%%2e/%22e/%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
     } else {
-        EXPECT_EQ(context.out.get_path(),
-                  "/..//./one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
-                  "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
+        EXPECT_EQ(
+          context.out.get_path(),
+          "/..//./zero/one/%2E./%2e/two/././././%2e/%2e/.././three/four/%2e%2e/five/.%2E/%2e/%%2e/%22e/"
+          "%2ee/%ee/%e2/%e22/2%e/e2%/e22/%%%/222/eee/e2%/%2e2e2e/%e2e2e2e2/ee%/22%");
     }
 }
 

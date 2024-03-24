@@ -345,7 +345,7 @@ namespace webpp::uri::details {
 
         constexpr void pop_back([[maybe_unused]] difference_type hint = 0) noexcept {
             if constexpr (is_vec && ctx_type::is_modifiable) {
-                if (get_output().size() > 1) {
+                if (get_output().size() > 2) {
                     get_output().pop_back();
                     buffer = get_output().begin() + static_cast<difference_type>(get_output().size() - 1);
                 } else if (get_output().size() == 1) {
