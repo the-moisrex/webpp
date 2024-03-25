@@ -352,8 +352,10 @@ namespace webpp::uri::details {
                     buffer->clear();
                 }
             } else if constexpr (is_vec) {
-                if (!get_output().empty()) {
+                if (get_output().size() > 1) {
                     get_output().pop_back();
+                } else {
+                    istl::clear(get_output().back());
                 }
                 reset_segment_start();
             } else if constexpr (ctx_type::is_modifiable) {
