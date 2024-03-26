@@ -19,6 +19,7 @@
 namespace webpp::uri {
 
     namespace details {
+        static constexpr auto forbidden_domains = ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
         template <uri_parsing_options Options   = uri_parsing_options{},
                   bool                IsSpecial = true,
@@ -38,13 +39,17 @@ namespace webpp::uri {
               '%'
             };
 
-            webpp_static_constexpr auto forbidden_domains = ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
             webpp_static_constexpr ascii_bitmap interesting_characters =
-              IsSpecial
-                ? (ctx_type::is_modifiable ? ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}}
-                                           : forbidden_domains)
-                : forbidden_hosts;
+              []() consteval noexcept -> ascii_bitmap {
+                if (!IsSpecial) {
+                    return forbidden_hosts;
+                }
+                if (ctx_type::is_modifiable) {
+                    return ascii_bitmap{forbidden_domains, ascii_bitmap{UPPER_ALPHA<char>}};
+                }
+                return forbidden_domains;
+            }();
 
             auto const authority_begin = ctx.pos;
             auto       host_begin      = authority_begin;
@@ -186,7 +191,7 @@ namespace webpp::uri {
                     [[unlikely]] case '\n':
                     [[unlikely]] case '\r':
                         if constexpr (Options.ignore_tabs_or_newlines) {
-                            set_warning(ctx.status, uri_status::invalid_character);
+                            set_warning(ctx.status, invalid_character);
                             coder.ignore_character();
                             continue;
                         } else {
