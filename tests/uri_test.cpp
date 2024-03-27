@@ -1637,6 +1637,16 @@ TYPED_TEST(URITests, SpacesInURIs) {
       << to_string(uri::get_value(ctx.status));
 }
 
+TYPED_TEST(URITests, SpecialDots) {
+    auto const ctx = this->template parse_from_string<TypeParam>("http://example｡org");
+    EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));
+    if constexpr (TypeParam::is_modifiable) {
+        EXPECT_EQ(ctx.out.get_hostname(), "example.org");
+    } else {
+        EXPECT_EQ(ctx.out.get_hostname(), "example｡org");
+    }
+}
+
 TYPED_TEST(URITests, EmptyHostNotAllowed) {
     auto const ctx = this->template parse_from_string<TypeParam>("http://username:password@:/");
     EXPECT_FALSE(uri::is_valid(ctx.status)) << to_string(uri::get_value(ctx.status));

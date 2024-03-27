@@ -12,43 +12,43 @@
 namespace webpp::istl {
 
     template <typename T>
-    struct is_pair : public stl::false_type {};
+    struct is_pair : stl::false_type {};
 
     template <typename T>
-    struct is_pair<T const> : public is_pair<T> {};
+    struct is_pair<T const> : is_pair<T> {};
 
     template <typename T>
-    struct is_pair<T volatile> : public is_pair<T> {};
+    struct is_pair<T volatile> : is_pair<T> {};
 
     template <typename T>
-    struct is_pair<T const volatile> : public is_pair<T> {};
+    struct is_pair<T const volatile> : is_pair<T> {};
 
     template <typename... Types>
-    struct is_pair<stl::pair<Types...>> : public stl::true_type {};
+    struct is_pair<stl::pair<Types...>> : stl::true_type {};
 
     template <typename T>
     concept Pair = is_pair<T>::value;
 
     template <typename T>
-    struct is_tuple : public stl::false_type {};
+    struct is_tuple : stl::false_type {};
 
     template <typename T>
-    struct is_tuple<T const> : public is_tuple<T> {};
+    struct is_tuple<T const> : is_tuple<T> {};
 
     template <typename T>
-    struct is_tuple<T&> : public is_tuple<T> {};
+    struct is_tuple<T&> : is_tuple<T> {};
 
     template <typename T>
-    struct is_tuple<T&&> : public is_tuple<T> {};
+    struct is_tuple<T&&> : is_tuple<T> {};
 
     template <typename T>
-    struct is_tuple<T volatile> : public is_tuple<T> {};
+    struct is_tuple<T volatile> : is_tuple<T> {};
 
     template <typename T>
-    struct is_tuple<T const volatile> : public is_tuple<T> {};
+    struct is_tuple<T const volatile> : is_tuple<T> {};
 
     template <typename... Types>
-    struct is_tuple<stl::tuple<Types...>> : public stl::true_type {};
+    struct is_tuple<stl::tuple<Types...>> : stl::true_type {};
 
     template <typename T>
     concept Tuple = is_tuple<T>::value;
