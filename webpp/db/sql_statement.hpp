@@ -95,7 +95,7 @@ namespace webpp::sql {
             return *this;
         }
 
-        inline bool step() noexcept {
+        bool step() noexcept {
             auto       errmsg          = object::make_object<string_type>(*this);
             bool const continue_or_not = driver().step(errmsg);
             if (!errmsg.empty()) {
@@ -105,48 +105,48 @@ namespace webpp::sql {
             return continue_or_not;
         }
 
-        inline sql_statement& execute() noexcept {
-            (void) step();
+        sql_statement& execute() noexcept {
+            stl::ignore = step();
             return *this;
         }
 
-        inline sql_statement& reset() noexcept {
+        sql_statement& reset() noexcept {
             auto errmsg = object::make_object<string_type>(*this);
             driver().reset(errmsg);
             log(errmsg);
             return *this;
         }
 
-        inline cell_type column(size_type index) noexcept {
+        cell_type column(size_type index) noexcept {
             return cell_type{*this, index};
         }
 
-        [[nodiscard]] inline cell_type operator[](size_type index) noexcept {
+        [[nodiscard]] cell_type operator[](size_type index) noexcept {
             return cell_type{*this, index};
         }
 
         template <typename T>
-        [[nodiscard]] inline cell_type operator<<(T&& val) noexcept {
+        [[nodiscard]] cell_type operator<<(T&& val) noexcept {
             bind(0, stl::forward<T>(val));
             return cell_type{*this, 1};
         }
 
-        [[nodiscard]] inline driver_type& driver() noexcept {
+        [[nodiscard]] driver_type& driver() noexcept {
             return *static_cast<driver_type*>(this);
         }
 
         template <stl::size_t N>
-        [[nodiscard]] inline auto structured() noexcept {
+        [[nodiscard]] auto structured() noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
         template <stl::size_t N>
-        [[nodiscard]] inline auto structured() const noexcept {
+        [[nodiscard]] auto structured() const noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{*this};
         }
 
         template <stl::size_t N>
-        [[nodiscard]] inline auto&& structured() && noexcept {
+        [[nodiscard]] auto&& structured() && noexcept {
             return istl::ituple_iterable<sql_statement, iterator_options<N>>{stl::move(*this)};
         }
 
@@ -171,7 +171,7 @@ namespace webpp::sql {
             return row_type{*this};
         }
 
-        inline void log(istl::String auto const& errmsg) noexcept {
+        void log(istl::String auto const& errmsg) noexcept {
             if (!errmsg.empty()) {
                 this->logger.error(LOG_CAT, errmsg);
             }

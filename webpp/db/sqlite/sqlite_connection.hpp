@@ -63,14 +63,15 @@ namespace webpp::sql {
         }
 
         void open(sqlite_config const conf, istl::String auto& errmsg) noexcept {
-            int const rc = sqlite3_open_v2(
-              conf.filename.data(),
-              &handle,
-              conf.flags,
-              conf.vfs.empty() ? nullptr : conf.vfs.data());
-            if (rc != SQLITE_OK) {
-                errmsg += sqlite3_errmsg(handle);
-                (void) sqlite3_close_v2(handle);
+            if (int const res_rc = sqlite3_open_v2(
+                  conf.filename.data(),
+                  &handle,
+                  conf.flags,
+                  conf.vfs.empty() ? nullptr : conf.vfs.data());
+                res_rc != SQLITE_OK)
+            {
+                errmsg      += sqlite3_errmsg(handle);
+                stl::ignore  = sqlite3_close_v2(handle);
                 return;
             }
             assert(handle != nullptr);
@@ -83,21 +84,21 @@ namespace webpp::sql {
         }
 
         bool close() noexcept {
-            if (handle) {
+            if (handle != nullptr) {
                 if (int const res = sqlite3_close_v2(handle); res == SQLITE_OK) {
                     handle = nullptr;
                     return true;
                 }
                 return false;
-            } else {
-                return true;
             }
+            return true;
         }
 
         void execute(std::string_view const sql, istl::String auto& errmsg) noexcept {
-            char*     err;
-            int const rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
-            if (rc != SQLITE_OK) {
+            char* err; // NOLINT(*-init-variables)
+            if (int const res_rc = sqlite3_exec(handle, sql.data(), nullptr, nullptr, &err);
+                res_rc != SQLITE_OK)
+            {
                 errmsg += err;
                 sqlite3_free(err); // we have copied it
             }

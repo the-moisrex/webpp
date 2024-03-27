@@ -19,7 +19,7 @@
 namespace webpp::uri {
 
     namespace details {
-        static constexpr auto forbidden_domains = ascii_bitmap{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
+        static constexpr ascii_bitmap forbidden_domains{FORBIDDEN_DOMAIN_CODE_POINTS, '.'};
 
         template <uri_parsing_options Options   = uri_parsing_options{},
                   bool                IsSpecial = true,
@@ -33,7 +33,7 @@ namespace webpp::uri {
             using ctx_type = CtxT;
             using iterator = typename ctx_type::iterator;
 
-            webpp_static_constexpr auto forbidden_hosts = ascii_bitmap{
+            webpp_static_constexpr ascii_bitmap forbidden_hosts{
               ctx_type::is_segregated ? ascii_bitmap{FORBIDDEN_HOST_CODE_POINTS, '.'}
                                       : FORBIDDEN_HOST_CODE_POINTS,
               '%'

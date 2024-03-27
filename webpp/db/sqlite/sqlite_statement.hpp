@@ -84,13 +84,13 @@ namespace webpp::sql {
             destroy();
         }
 
-        inline void destroy() noexcept {
+        void destroy() noexcept {
             if (stmt != nullptr) {
-                (void) sqlite3_finalize(stmt);
+                stl::ignore = sqlite3_finalize(stmt);
             }
         }
 
-        inline void reset(istl::String auto& errmsg) noexcept {
+        void reset(istl::String auto& errmsg) noexcept {
             int const rc = sqlite3_reset(stmt);
             if (rc != SQLITE_OK) {
                 errmsg += "Sqlite reset error with code: ";
@@ -99,7 +99,7 @@ namespace webpp::sql {
             }
         }
 
-        inline ::sqlite3_stmt*& sqlite3_stmt() noexcept {
+        ::sqlite3_stmt*& sqlite3_stmt() noexcept {
             return stmt;
         }
 

@@ -82,7 +82,7 @@ TEST(JSONTest, Create) {
     stl::apply(
       [](JSONDocument auto&&... docs) {
           (..., ([](auto&& doc) {
-               ASSERT_NO_FATAL_FAILURE((void) doc["dummy"]);
+               ASSERT_NO_FATAL_FAILURE(stl::ignore = doc["dummy"]);
                doc["page"]     = "/about";
                doc["username"] = "admin";
                doc["id"]       = 313;

@@ -166,7 +166,7 @@ namespace webpp::istl {
                          T2&                                              inp_tup2,
                          Func                                             inp_func,
                          [[maybe_unused]] stl::index_sequence<indices...> indeces) {
-        (void) stl::initializer_list<int>{
+        stl::ignore = stl::initializer_list<int>{
           (stl::get<indices + From>(inp_tup2) = inp_func(stl::forward_like<T1>(get<indices>(inp_tup1))),
            0)...};
     }
@@ -627,7 +627,7 @@ namespace webpp::istl {
         static constexpr void
         for_each_impl(F&& inp_func, TupleT&& tup, [[maybe_unused]] stl::index_sequence<Indices...> indeces) {
             using swallow = int[]; // NOLINT(*-avoid-c-arrays)
-            (void) swallow{
+            stl::ignore   = swallow{
               1,
               (stl::forward<F>(inp_func)(stl::forward_like<TupleT>(get<Indices>(tup))), void(), int{})...};
         }
