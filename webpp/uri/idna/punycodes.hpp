@@ -7,7 +7,7 @@
  * written by Daniel Lemire Modified by Mohammad Bahoosh
  */
 
-#include "../std/string.hpp"
+#include "../../std/string.hpp"
 
 #include <cstdint>
 #include <cstring>
