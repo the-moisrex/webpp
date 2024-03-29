@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs').promises;
+const path = require('path');
 const fileUrl =
     'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
 
@@ -47,19 +48,71 @@ const start = async () => {
 
 const cleanComments = line => line.split('#')[0].trimEnd()
 const splitLine = line => line.split(';').map(seg => seg.trim());
+const findVersion = fileContent =>
+    fileContent.match(/Version: (\d+\.\d+\.\d+)/)[1];
+const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
 
 function processCachedFile(fileContent) {
   const lines = fileContent.split('\n');
 
-  lines.forEach(line => {
+  const version = findVersion(fileContent);
+  const creationDate = findDate(fileContent);
+  if (version === undefined) {
+    console.error("Could not find the version from the file content.");
+    return;
+  }
+  if (creationDate === undefined) {
+    console.error("No date was found.");
+    return;
+  }
+  console.log(`Version: ${version}`);
+  console.log(`Creation Date: ${creationDate}`);
+
+  const table = lines.map(line => {
     line = cleanComments(line)
+
+    // ignore empty lines
+    if (line.length === 0) {
+      return "";
+    }
+
     const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
 
     // Process each line here
     console.log(codePoints, status, mapping, IDNA2008Status);
+    return `${codePoints}`;
   });
 
+  createTableFile(version, creationDate, table);
+
   console.log('File processing complete.');
+}
+
+function createTableFile(version, creationDate, table) {
+  const fileContent = `
+/**
+ * Attention: Auto-generated file, don't modify.
+ * 
+ *   Auto generated from:          ${path.basename(__filename)}
+ *   IDNA Creation Date:           ${creationDate}
+ *   This file's generation date:  ${new Date().toUTCString()}
+ *   IDNA Mapping Table Version:   ${version}
+ *
+ * Details about the contents of this file can be found here:
+ *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
+ */
+ 
+#ifndef WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+#define WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+
+namespace webpp::uri::idna::details {
+    
+} // webpp::uri::idna::details
+
+#endif // WEBPP_URI_IDNA_MAPPING_TABLE_HPP
+    `;
+
+  console.log(fileContent);
 }
 
 start();
