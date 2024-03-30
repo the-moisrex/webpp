@@ -78,6 +78,21 @@ function processCachedFile(fileContent) {
 
     const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
 
+    switch (status) {
+    case 'valid':
+    case 'mapped':
+    case 'disallowed_STD3_valid':
+    case 'disallowed_STD3_mapped':
+    case 'ignored':
+    case 'disallowed':
+    case 'deviation':
+      break;
+    default:
+      console.error(`Invalid 'status' found: ${status}; line: ${line}`);
+      process.exit(1);
+      return;
+    }
+
     // Process each line here
     console.log(codePoints, status, mapping, IDNA2008Status);
     return `${codePoints}`;
@@ -101,6 +116,7 @@ const createTableFile =
  *
  * Details about the contents of this file can be found here:
  *   UTS #46: https://www.unicode.org/reports/tr46/#IDNA_Mapping_Table
+ *   IDN FAQ: https://www.unicode.org/faq/idn.html
  */
  
 #ifndef WEBPP_URI_IDNA_MAPPING_TABLE_HPP
