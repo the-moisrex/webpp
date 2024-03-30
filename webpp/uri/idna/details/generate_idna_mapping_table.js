@@ -9,10 +9,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const fileUrl =
     'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
+const cacheFilePath = 'IdnaMappingTable.txt';
+const outFilePath = `idna_mapping_table.hpp`;
 
 const start = async () => {
-  const cacheFilePath = 'IdnaMappingTable.txt';
-
   try {
     // Check if the file already exists in the cache
     if (!await fs.access(cacheFilePath)) {
@@ -88,7 +88,8 @@ function processCachedFile(fileContent) {
   console.log('File processing complete.');
 }
 
-function createTableFile(version, creationDate, table) {
+const createTableFile =
+    async (version, creationDate, table) => {
   const fileContent = `
 /**
  * Attention: Auto-generated file, don't modify.
@@ -112,7 +113,7 @@ namespace webpp::uri::idna::details {
 #endif // WEBPP_URI_IDNA_MAPPING_TABLE_HPP
     `;
 
-  console.log(fileContent);
+  await fs.writeFile(outFilePath, fileContent);
 }
 
 start();
