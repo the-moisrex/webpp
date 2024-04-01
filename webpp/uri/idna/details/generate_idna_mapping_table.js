@@ -68,7 +68,7 @@ function processCachedFile(fileContent) {
   console.log(`Version: ${version}`);
   console.log(`Creation Date: ${creationDate}`);
 
-  const table = lines.map(line => {
+  const table = lines.map((line, index) => {
     line = cleanComments(line)
 
     // ignore empty lines
@@ -94,7 +94,7 @@ function processCachedFile(fileContent) {
     }
 
     // Process each line here
-    console.log(codePoints, status, mapping, IDNA2008Status);
+    console.log(index, codePoints, status, mapping, IDNA2008Status);
     return `${codePoints}`;
   });
 

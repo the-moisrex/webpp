@@ -37,16 +37,11 @@ namespace webpp::uri {
             details::component_encoder<components::queries, ctx_type> encoder{ctx};
 
             // find the end of the queries
-            for (;;) {
-                // find the next non-query character:
-                if (encoder.template encode_or_validate_map<uri_encoding_policy::encode_chars>(
-                      query_percent_encode_set,
-                      interesting_characters,
-                      in_value))
-                {
-                    break;
-                }
-
+            while (!encoder.template encode_or_validate_map<uri_encoding_policy::encode_chars>(
+              query_percent_encode_set,
+              interesting_characters,
+              in_value))
+            {
                 switch (*ctx.pos) {
                     case '#':
                         clear<components::fragment>(ctx);
