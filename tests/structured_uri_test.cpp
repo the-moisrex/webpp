@@ -55,7 +55,7 @@ constexpr decltype(auto) get_one(Arg1&& arg1, Args&&... args) {
 TYPED_TEST_SUITE(StructuredURITests, Types);
 
 TYPED_TEST(StructuredURITests, StructuredDomain) {
-    static TypeParam const        inp_domain = get_one<TypeParam>("domain.tld", L"domain.tld");
+    static TypeParam const             inp_domain = get_one<TypeParam>("domain.tld", L"domain.tld");
     uri::basic_domain<TypeParam> const domain{inp_domain};
     EXPECT_TRUE(domain.is_valid());
     EXPECT_EQ(domain.tld(), get_one<TypeParam>("tld", L"tld"));
@@ -242,4 +242,21 @@ TYPED_TEST(StructuredURITests, OpaquePath) {
     EXPECT_FALSE(url.has_authority());
     EXPECT_EQ(url.as_string(), get_one<TypeParam>("opaque:this:is/the:path", L"opaque:this:is/the:path"));
     EXPECT_EQ(url.path().as_string(), get_one<TypeParam>("this:is/the:path", L"this:is/the:path"));
+}
+
+TYPED_TEST(StructuredURITests, SpacesTest) {
+    static TypeParam const data{
+      get_one<TypeParam>("http://www.example.com/%37/ /", L"http://www.example.com/%37/ /")};
+    uri::basic_uri<TypeParam> url{data};
+    EXPECT_TRUE(url.valid());
+    EXPECT_EQ(url.href(),
+              get_one<TypeParam>("http://www.example.com/%37/%20/", L"http://www.example.com/%37/%20/"));
+    url.href(get_one<TypeParam>("http://www.example.com/  /  /+/", L"http://www.example.com/  /  /+/"));
+    EXPECT_TRUE(url.valid());
+    EXPECT_EQ(url.href(),
+              get_one<TypeParam>("http://www.example.com/%20%20/%20%20/+/",
+                                 L"http://www.example.com/%20%20/%20%20/+/"));
+    url =
+      uri::basic_uri<TypeParam>(get_one<TypeParam>("http://www.example.com/", L"http://www.example.com/"));
+    EXPECT_FALSE(url.valid());
 }

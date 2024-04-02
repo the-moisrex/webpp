@@ -296,7 +296,12 @@ namespace webpp::uri {
         using path_type     = basic_path<string_type, allocator_type>;
         using queries_type  = basic_queries<string_type, allocator_type>;
         using fragment_type = basic_fragment<string_type>;
+        using status_type   = uri_status_type;
 
+      private:
+        status_type m_status = stl::to_underlying(uri_status::unparsed);
+
+      public:
         template <uri_parsing_options Options = uri_parsing_options{}, typename Iter>
         constexpr uri_status_type parse(Iter beg, Iter end) noexcept(is_nothrow) {
             parsing_structured_uri_context<components_type*, Iter> ctx{};
@@ -305,7 +310,8 @@ namespace webpp::uri {
             ctx.end = end;
             ctx.out = static_cast<components_type*>(this);
             parse_uri<Options>(ctx);
-            return ctx.status;
+            m_status = ctx.status;
+            return m_status;
         }
 
         template <uri_parsing_options Options = uri_parsing_options{}, istl::StringViewifiable StrT>
@@ -335,6 +341,14 @@ namespace webpp::uri {
 
         [[nodiscard]] constexpr auto get_allocator() const noexcept {
             return this->get_hostname().get_allocator();
+        }
+
+        [[nodiscard]] constexpr bool valid() const noexcept {
+            return is_valid(m_status);
+        }
+
+        [[nodiscard]] explicit constexpr operator bool() const noexcept {
+            return valid();
         }
 
         constexpr void clear_authority() noexcept(is_nothrow) {
@@ -485,6 +499,11 @@ namespace webpp::uri {
             return out;
         }
 
+        template <istl::String NStrT = modifiable_string_type>
+        [[nodiscard]] constexpr NStrT href() const {
+            return this->template as_string<NStrT>();
+        }
+
         template <uri_parsing_options     Options = uri_parsing_options{},
                   istl::StringViewifiable NStrT   = stl::basic_string_view<char_type>>
         constexpr uri_status_type href(NStrT&& inp_str) {
@@ -582,7 +601,8 @@ namespace webpp::uri {
             ctx.out    = static_cast<components_type*>(this);
             ctx.status = stl::to_underlying(status);
             parse_uri_step<Options>(ctx);
-            return ctx.status;
+            m_status = ctx.status;
+            return m_status;
         }
 
       public:
