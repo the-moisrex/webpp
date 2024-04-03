@@ -83,7 +83,6 @@ TEST(IPv4Tests, Validation) {
         EXPECT_TRUE(ipv4(_ip).is_valid()) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         EXPECT_TRUE(is::ipv4(_ip)) << "ip: " << _ip << "; compiled ip: " << ipv4(_ip).string();
         ipv4 const ip_addr{_ip};
-        stl::ignore = ip_addr.integer(); // just to make sure it's parsed
         EXPECT_TRUE(ip_addr.is_valid());
     }
 

@@ -118,7 +118,7 @@ namespace webpp::uri {
         /// We don't need to handle dots in a path if the user is asking us not to
         template <uri_parsing_options Options, ParsingURIContext CtxT>
             requires(!Options.handle_dots_in_paths)
-        [[nodiscard]] static constexpr bool handle_dots_in_paths(
+        static constexpr bool handle_dots_in_paths(
           [[maybe_unused]] component_encoder<components::path, CtxT>& encoder) noexcept {
             return false;
         }
