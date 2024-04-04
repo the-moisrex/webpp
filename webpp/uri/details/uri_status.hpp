@@ -84,6 +84,19 @@ namespace webpp::uri {
         /// By disabling this, these will be segments of their own and single dot won't mean
         /// current directory and double dot won't mean anything either.
         bool handle_dots_in_paths = true;
+
+        /// UseSTD3ASCIIRules from:
+        ///   - RFC 3490: https://www.rfc-editor.org/info/rfc3490
+        ///   - UTS #46:  https://www.unicode.org/reports/tr46/#STD3_Rules
+        ///
+        /// If enabled (UseSTD3ASCIIRules=True):
+        ///   - Domain name labels are required to follow the STD3 ASCII rules, which means they must consist
+        ///     only of ASCII letters, digits, and hyphens ("-").
+        ///   - Labels cannot start or end with a hyphen ("-").
+        ///   - Labels cannot be entirely numeric.
+        ///   - Labels cannot contain any characters other than ASCII letters, digits, and hyphens ("-").
+        ///   - Domain names that violate these rules will fail validation and may be rejected.
+        bool use_std3_ascii_rules = false;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -103,6 +116,7 @@ namespace webpp::uri {
       .handle_windows_drive_letters              = false,
       .ignore_tabs_or_newlines                   = false,
       .handle_dots_in_paths                      = true, // for security reasons, it's enabled
+      .use_std3_ascii_rules                      = false,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -122,6 +136,7 @@ namespace webpp::uri {
       .handle_windows_drive_letters              = true,
       .ignore_tabs_or_newlines                   = true,
       .handle_dots_in_paths                      = true,
+      .use_std3_ascii_rules                      = false,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
