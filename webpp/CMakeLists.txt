@@ -156,11 +156,11 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/uri/details/iiequals.hpp
         ${LIB_INCLUDE_DIR}/uri/details/uri_helpers.hpp
         ${LIB_INCLUDE_DIR}/uri/details/windows_drive_letter.hpp
-        ${LIB_INCLUDE_DIR}/uri/details/uri_status.hpp
         ${LIB_INCLUDE_DIR}/uri/details/uri_components.hpp
         ${LIB_INCLUDE_DIR}/uri/details/uri_components_encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/details/special_schemes.hpp
         ${LIB_INCLUDE_DIR}/uri/details/host_ip.hpp
+        ${LIB_INCLUDE_DIR}/uri/uri_status.hpp
         ${LIB_INCLUDE_DIR}/uri/encoding.hpp
         ${LIB_INCLUDE_DIR}/uri/credentials.hpp
         ${LIB_INCLUDE_DIR}/uri/fragment.hpp
