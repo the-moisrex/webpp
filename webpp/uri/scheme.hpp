@@ -12,7 +12,7 @@
 #include "./details/special_schemes.hpp"
 #include "./details/uri_components.hpp"
 #include "./details/uri_helpers.hpp"
-#include "./details/uri_status.hpp"
+#include "uri_status.hpp"
 
 #include <cassert>
 

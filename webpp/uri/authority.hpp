@@ -7,10 +7,10 @@
 #include "./credentials.hpp"
 #include "./details/host_ip.hpp"
 #include "./details/uri_components_encoding.hpp"
-#include "./details/uri_status.hpp"
 #include "./details/windows_drive_letter.hpp"
 #include "./encoding.hpp"
 #include "./port.hpp"
+#include "uri_status.hpp"
 
 /**
  * Attention: User infos in URIs are DEPRECATED, but we SHOULD parse it anyway

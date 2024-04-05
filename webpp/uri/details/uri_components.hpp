@@ -8,8 +8,8 @@
 #include "../../std/string_like.hpp"
 #include "../../std/vector.hpp"
 #include "../../strings/to_case.hpp"
+#include "../uri_status.hpp"
 #include "./special_schemes.hpp"
-#include "./uri_status.hpp"
 
 #include <cstdint>
 #include <limits>

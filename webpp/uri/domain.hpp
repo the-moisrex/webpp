@@ -7,7 +7,7 @@
 #include "../strings/charset.hpp"
 #include "./details/constants.hpp"
 #include "./details/iiequals.hpp"
-#include "./details/uri_status.hpp"
+#include "uri_status.hpp"
 
 #include <compare>
 

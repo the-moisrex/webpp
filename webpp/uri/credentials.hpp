@@ -6,7 +6,7 @@
 #include "../std/string.hpp"
 #include "./details/constants.hpp"
 #include "./details/uri_components_encoding.hpp"
-#include "./details/uri_status.hpp"
+#include "uri_status.hpp"
 
 namespace webpp::uri {
 

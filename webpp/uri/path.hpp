@@ -356,7 +356,7 @@ namespace webpp::uri {
                         break;
                     }
                     [[fallthrough]];
-                default: set_warning(ctx.status, uri_status::invalid_character); break;
+                    default : set_warning(ctx.status, uri_status::invalid_character); break;
             }
             break;
         }

@@ -3,9 +3,9 @@
 #ifndef WEBPP_URI_STATUS_HPP
 #define WEBPP_URI_STATUS_HPP
 
-#include "../../ip/ip.hpp"
-#include "../../std/string_view.hpp"
-#include "../../std/utility.hpp"
+#include "../ip/ip.hpp"
+#include "../std/string_view.hpp"
+#include "../std/utility.hpp"
 
 #include <bit>
 #include <cstdint>
@@ -18,7 +18,7 @@ namespace webpp::uri {
     /// URI Parsing Options,
     /// These options are designed to
     /// Default values are WHATWG-Compliant values (if relavant)
-    static constexpr struct alignas(16) uri_parsing_options {
+    static constexpr struct alignas(32) uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
         bool eof_is_valid = true;
