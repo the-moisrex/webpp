@@ -51,6 +51,13 @@ const splitLine = line => line.split(';').map(seg => seg.trim());
 const findVersion = fileContent =>
     fileContent.match(/Version: (\d+\.\d+\.\d+)/)[1];
 const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
+const parseCodePoints =
+    codePoints => {
+      let [rangeStart, rangeEnd] =
+          codePoints.split('..').map(codePoint => parseInt(codePoint, 16));
+      rangeEnd = rangeEnd || rangeStart;
+      return [ rangeStart, rangeEnd ];
+    }
 
 function processCachedFile(fileContent) {
   const lines = fileContent.split('\n');
@@ -77,15 +84,22 @@ function processCachedFile(fileContent) {
     }
 
     const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
+    const [rangeStart, rangeEnd] = parseCodePoints(codePoints);
 
     switch (status) {
-    case 'valid':
-    case 'mapped':
     case 'disallowed_STD3_valid':
+      break;
+    case 'deviation': // https://www.unicode.org/reports/tr46/#Deviations
+    // Deviations are considered valid in IDNA2008 and UTS #46.
+    case 'valid':
+      break;
     case 'disallowed_STD3_mapped':
+      break;
+    case 'mapped':
+      break;
     case 'ignored':
+      break;
     case 'disallowed':
-    case 'deviation':
       break;
     default:
       console.error(`Invalid 'status' found: ${status}; line: ${line}`);
@@ -94,7 +108,7 @@ function processCachedFile(fileContent) {
     }
 
     // Process each line here
-    console.log(index, codePoints, status, mapping, IDNA2008Status);
+    console.log(index, rangeStart, rangeEnd, status, mapping, IDNA2008Status);
     return `${codePoints}`;
   });
 

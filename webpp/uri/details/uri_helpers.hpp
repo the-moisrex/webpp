@@ -4,6 +4,7 @@
 #define URI_HELPER_HPP
 
 #include "../../std/array.hpp"
+#include "../../strings/peek.hpp"
 #include "../uri_status.hpp"
 #include "./uri_components.hpp"
 
