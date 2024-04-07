@@ -59,6 +59,9 @@ const parseCodePoints =
       return [ rangeStart, rangeEnd ];
     }
 
+const parseMappedCodePoints = codePoints =>
+    codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
+
 function processCachedFile(fileContent) {
   const lines = fileContent.split('\n');
 
@@ -85,6 +88,7 @@ function processCachedFile(fileContent) {
 
     const [codePoints, status, mapping, IDNA2008Status] = splitLine(line);
     const [rangeStart, rangeEnd] = parseCodePoints(codePoints);
+    const mappedValues = mapping ? parseMappedCodePoints(mapping) : undefined;
 
     switch (status) {
     case 'disallowed_STD3_valid':
@@ -108,7 +112,8 @@ function processCachedFile(fileContent) {
     }
 
     // Process each line here
-    console.log(index, rangeStart, rangeEnd, status, mapping, IDNA2008Status);
+    console.log(index, rangeStart, rangeEnd, status, mappedValues,
+                IDNA2008Status);
     return `${codePoints}`;
   });
 
