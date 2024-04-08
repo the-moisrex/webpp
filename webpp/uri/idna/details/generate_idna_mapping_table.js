@@ -61,42 +61,71 @@ const parseMappedCodePoints = codePoints =>
     codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
 
 class codePointMapper {
-  constructor(max) {
-    this.bytes = new Uint8Array(max);
+  constructor(max, type = 'uint8') {
+    switch (type) {
+    case 'uint8':
+      this.bytes = new Uint8Array(max);
+      break;
+    case 'uint32':
+      this.bytes = new Uint32Array(max);
+      break;
+    default:
+      throw new Error('Invalid type provided to CodePointMapper.');
+    }
+    this.type = type;
     this.index = 0;
   }
 
   append(start, end, isMapped = true) {
     for (; start !== end; ++start) {
-      const arrayIndex = Math.floor(this.index / 8);
-      const byteIndex = this.index % 8;
+      const arrayIndex = Math.floor(this.index / this.sizeof);
+      const byteIndex = this.index % this.sizeof;
       const mask = (isMapped ? 0x1 : 0x0) << byteIndex;
 
       // activating the bit:
       this.bytes[arrayIndex] = this.bytes[arrayIndex] | mask;
-      // console.log(arrayIndex, byteIndex, mask, isMapped,
-      // this.bytes[arrayIndex] | mask)
 
       ++this.index;
     }
   }
 
   /// Get the length of the table
-  get length() { return Math.ceil(this.index / 8); }
+  get length() { return Math.ceil(this.index / this.sizeof); }
+
+  get sizeof() {
+    switch (this.type) {
+    case 'uint8':
+      return 8;
+    case 'uint32':
+      return 32;
+    default:
+      return 0;
+    }
+  }
 
   /// Get how many bits are in the whole table
   get bitLength() { return this.index; }
 
-  serializeTable(appendFunc, cols = 16) {
+  serializeTable(appendFunc, cols = 20 - this.sizeof) {
     let pos = 0;
+    const postfix = this.type === "uint8" ? "U" : "ULL";
     for (; pos !== this.length;) {
-      appendFunc(`${this.bytes[pos]}, `);
+      appendFunc(`${this.bytes[pos]}${postfix}, `);
       ++pos;
       if (pos % cols === 0) {
         appendFunc('\n');
       }
     }
   }
+}
+
+class STD3Mapper {
+  constructor(max) {
+    this.bytes = new Uint8Array(max);
+    this.index = 0;
+  }
+
+  append(start, end, isMapped = false) {}
 }
 
 function processCachedFile(fileContent) {
@@ -116,6 +145,7 @@ function processCachedFile(fileContent) {
   console.log(`Creation Date: ${creationDate}`);
 
   const table = new codePointMapper(200000);
+  const STD3Table = new STD3Mapper(1000);
   lines.forEach((line, index) => {
     line = cleanComments(line)
 
@@ -130,12 +160,16 @@ function processCachedFile(fileContent) {
 
     switch (status) {
     case 'disallowed_STD3_valid':
+      STD3Table.append(rangeStart, rangeEnd, false);
+      table.append(rangeStart, rangeEnd, true);
+      break;
     case 'deviation': // https://www.unicode.org/reports/tr46/#Deviations
     // Deviations are considered valid in IDNA2008 and UTS #46.
     case 'valid':
       table.append(rangeStart, rangeEnd, false);
       break;
     case 'disallowed_STD3_mapped':
+      STD3Table.append(rangeStart, rangeEnd, true);
       table.append(rangeStart, rangeEnd, true);
       break;
     case 'mapped':
@@ -190,8 +224,12 @@ const createTableFile =
 #include <cstdint>
 
 namespace webpp::uri::idna::details {
-    static constexpr std::array<std::uint8_t, ${
-      table.length}> idna_mapping_table{
+
+    /**
+     * IDNA Mapping Table
+     */
+    static constexpr std::array<std::${table.type}_t, ${
+      table.length}ULL> idna_mapping_table{
 `;
 
   const endContent = `
