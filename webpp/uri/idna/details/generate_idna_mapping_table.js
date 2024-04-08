@@ -12,6 +12,9 @@ const fileUrl =
 const cacheFilePath = 'IdnaMappingTable.txt';
 const outFilePath = `idna_mapping_table.hpp`;
 
+const uint8 = Symbol('uint8');
+const uint32 = Symbol('uint32');
+
 const start = async () => {
   try {
     // Check if the file already exists in the cache
@@ -34,13 +37,10 @@ const start = async () => {
     const text = await response.text();
 
     // Save the downloaded file as a cache
-    const res = fs.writeFile(cacheFilePath, text);
+    await fs.writeFile(cacheFilePath, text);
 
     // process the file
-    processCachedFile(text);
-
-    // wait for the file to be written:
-    await res;
+    await processCachedFile(text);
   } catch (error) {
     console.error('Error:', error.message);
   }
@@ -59,14 +59,28 @@ const parseCodePoints = codePoints => {
 };
 const parseMappedCodePoints = codePoints =>
     codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
+const mappingSanityCheck = (rangeStart, rangeEnd) => {
+  const length = rangeEnd - rangeStart;
+  if (length > 127) { // We only have 7 bits to store a length
+    throw new Error(
+        `We only have 7bits to store a length, we found a range with the length of ${
+            length}; starts with ${rangeStart} and ends with ${rangeEnd}.`);
+  }
+};
 
-class codePointMapper {
-  constructor(max, type = 'uint8') {
+/**
+ * This class will let us handle the types of the tables including:
+ *   - unsigned integer 32 bit (uint32)
+ *   - unsigned integer 8 bit  (uint8)
+ */
+class TableTraits {
+
+  constructor(max, type = uint8) {
     switch (type) {
-    case 'uint8':
+    case uint8:
       this.bytes = new Uint8Array(max);
       break;
-    case 'uint32':
+    case uint32:
       this.bytes = new Uint32Array(max);
       break;
     default:
@@ -74,6 +88,34 @@ class codePointMapper {
     }
     this.type = type;
     this.index = 0;
+  }
+
+  get sizeof() {
+    switch (this.type) {
+    case uint8:
+      return 8;
+    case uint32:
+      return 32;
+    default:
+      return 0;
+    }
+  }
+
+  get typeString() { return this.type.description; }
+  get postfix() { return this.type === uint8 ? "U" : "ULL"; }
+}
+
+/**
+ * Mapping Reference Table
+ *
+ * This table will let us see if each character is mapped/disallowed/ignored/...
+ * or not.
+ */
+class MappingReferenceTable extends TableTraits {
+  constructor(max, type = uint8) {
+    super(max, type);
+    this.name = "idna_reference_table";
+    this.description = "IDNA Mapping Reference Table"
   }
 
   append(start, end, isMapped = true) {
@@ -92,23 +134,12 @@ class codePointMapper {
   /// Get the length of the table
   get length() { return Math.ceil(this.index / this.sizeof); }
 
-  get sizeof() {
-    switch (this.type) {
-    case 'uint8':
-      return 8;
-    case 'uint32':
-      return 32;
-    default:
-      return 0;
-    }
-  }
-
   /// Get how many bits are in the whole table
   get bitLength() { return this.index; }
 
   serializeTable(appendFunc, cols = 20 - this.sizeof) {
     let pos = 0;
-    const postfix = this.type === "uint8" ? "U" : "ULL";
+    const postfix = this.postfix;
     for (; pos !== this.length;) {
       appendFunc(`${this.bytes[pos]}${postfix}, `);
       ++pos;
@@ -119,16 +150,147 @@ class codePointMapper {
   }
 }
 
-class STD3Mapper {
+/**
+ * A table for list of mapped characters
+ *
+ * First Byte Rules:
+ *   - [1bit = 1] + [7bit = length] + [24bit = start]
+ *   - start  = is the start of the range
+ *   - length = the length of the range
+ *   - (byte & 0x80000000 == 0b1) meaning far left bit is 0b1
+ *
+ * Bytes after the First Byte:
+ *   - Their far left bit will never be 0b1,
+ *     that means (byte & 0x80000000 == * 0b0)
+ *   - You have to continue reading everything after each byte, until
+ *     you reach an element that it's far left bit is one.
+ */
+class MapTable extends TableTraits {
+
+  e_disallowed = Symbol("Disallowed");
+  e_ignored = Symbol("Ignored");
+  e_mapped = Symbol("Mapped");
+  e_none = Symbol("None");
+
   constructor(max) {
-    this.bytes = new Uint8Array(max);
-    this.index = 0;
+    super(max, uint32);
+    this.name = "idna_mapping_table";
+    this.description = "IDNA Mapping Table";
+    this.prevAction = this.e_none;
+    this.prevLength = 0;
+    this.simplifiedCount = 0;
   }
+
+  simplify(start, end, action = this.e_disallowed) {
+    const isSimplified = (() => {
+      if (this.prevAction !== action ||
+          this.bytes[this.index - 1] !== start - 1) {
+        return false;
+      }
+      switch (action) {
+      case this.e_disallowed:
+        this.bytes[this.index - 1] = end;
+        return true;
+      case this.e_ignored:
+        const length = end - start;
+        if ((length + this.prevLength) > 127) {
+          return false;
+        }
+        this.bytes[this.index - 1] += length << 24;
+        return true;
+      }
+      return false;
+    })();
+    this.prevAction = action;
+    this.prevLength = (end - start) + this.prevLength;
+    if (isSimplified) {
+      ++this.simplifiedCount;
+      console.log(`Simplified (${action.description}): ${start}-${
+          end} (count: ${end - start})`)
+    }
+    return isSimplified;
+  }
+
+  /// Map this range of characters
+  map(start, end, mappedTo = []) {
+    if (this.simplify(start, end)) {
+      return;
+    }
+
+    const length = end - start;
+    let byte = start;
+
+    // Adding length to the byte
+    byte |= length << 24;
+
+    // Enabling far left bit to show that this is a "First Byte"
+    byte |= 0x80000000;
+
+    this.bytes[this.index] = byte;
+    ++this.index;
+
+    /// Appending the mappedTo bytes
+    for (const char of mappedTo) {
+      this.bytes[this.index] = char;
+      ++this.index;
+    }
+  }
+
+  /// Ignore this range of characters (remove them)
+  ignore(start, end) {
+    this.map(start, end); // map to empty range
+  }
+
+  /// Disallow this range of characters
+  disallow(start, end) {
+    if (this.simplify(start, end)) {
+      return;
+    }
+
+    const length = end - start;
+    let byte = start;
+
+    // Enabling two far left bits to show that this is a "First Byte" and this
+    // range is disallowed.
+    byte |= 0xC0000000;
+
+    this.bytes[this.index] = byte;
+    ++this.index;
+    this.bytes[this.index] = end;
+    ++this.index;
+  }
+
+  get length() { return this.index; }
+
+  serializeTable(appendFunc, cols = 20 - this.sizeof) {
+    let pos = 0;
+    const postfix = this.postfix;
+    for (; pos !== this.length;) {
+      const byte = this.bytes[pos];
+      const is_first_byte = (byte & 0x80000000) === 0x80000000;
+      const is_disallowed = (byte & 0xC0000000) === 0xC0000000;
+      appendFunc(`${byte}${postfix}, `);
+      if (is_disallowed) {
+        appendFunc('// Disallowed\n');
+      } else if (is_first_byte) {
+        appendFunc('// First byte\n');
+      }
+      ++pos;
+      if (pos % cols === 0) {
+        appendFunc('\n');
+      }
+    }
+  }
+}
+
+class STD3Mapper extends TableTraits {
+  constructor(max, type = uint8) { super(max, type) }
 
   append(start, end, isMapped = false) {}
 }
 
-function processCachedFile(fileContent) {
+const processCachedFile =
+    async fileContent => {
   const lines = fileContent.split('\n');
 
   const version = findVersion(fileContent);
@@ -144,8 +306,9 @@ function processCachedFile(fileContent) {
   console.log(`Version: ${version}`);
   console.log(`Creation Date: ${creationDate}`);
 
-  const table = new codePointMapper(200000);
+  const refTable = new MappingReferenceTable(200000);
   const STD3Table = new STD3Mapper(1000);
+  const mapTable = new MapTable(100000);
   lines.forEach((line, index) => {
     line = cleanComments(line)
 
@@ -161,25 +324,34 @@ function processCachedFile(fileContent) {
     switch (status) {
     case 'disallowed_STD3_valid':
       STD3Table.append(rangeStart, rangeEnd, false);
-      table.append(rangeStart, rangeEnd, true);
+      refTable.append(rangeStart, rangeEnd, true);
       break;
     case 'deviation': // https://www.unicode.org/reports/tr46/#Deviations
     // Deviations are considered valid in IDNA2008 and UTS #46.
     case 'valid':
-      table.append(rangeStart, rangeEnd, false);
+      refTable.append(rangeStart, rangeEnd, false);
       break;
     case 'disallowed_STD3_mapped':
       STD3Table.append(rangeStart, rangeEnd, true);
-      table.append(rangeStart, rangeEnd, true);
+      refTable.append(rangeStart, rangeEnd, true);
+      mapTable.map(rangeStart, rangeEnd, mappedValues);
+      mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'mapped':
-      table.append(rangeStart, rangeEnd, true);
+      refTable.append(rangeStart, rangeEnd, true);
+      mapTable.map(rangeStart, rangeEnd, mappedValues);
+      mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'ignored':
-      table.append(rangeStart, rangeEnd, true);
+      refTable.append(rangeStart, rangeEnd, true);
+      mapTable.ignore(rangeStart, rangeEnd);
+
+      // todo: fix this
+      // mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'disallowed':
-      table.append(rangeStart, rangeEnd, true);
+      refTable.append(rangeStart, rangeEnd, true);
+      mapTable.disallow(rangeStart, rangeEnd);
       break;
     default:
       console.error(`Invalid 'status' found: ${status}; line: ${line}`);
@@ -193,16 +365,39 @@ function processCachedFile(fileContent) {
     return `${codePoints}`;
   });
 
-  console.log(`Table Length: ${table.length}`);
-  console.log(`Table Bit Length: ${table.bitLength}`);
+  await createTableFile(version, creationDate, [ refTable, mapTable ]);
 
-  createTableFile(version, creationDate, table);
-
-  console.log('File processing complete.');
+  console.log('File processing completed.');
 }
 
-const createTableFile =
-    async (version, creationDate, table) => {
+const decorateTable = async table => {
+  console.log("Decorating table", table.name, " Length:", table.length);
+
+  const header = `
+
+    /**
+     * ${table.description}
+     */
+    static constexpr std::array<std::${table.typeString}_t, ${
+      table.length}ULL> ${table.name}{
+  `;
+  const footer = `
+    };
+  `;
+
+  // header
+  await fs.appendFile(outFilePath, header);
+
+  // content
+  let content = "";
+  table.serializeTable(line => content += line);
+  await fs.appendFile(outFilePath, content);
+
+  // footer
+  await fs.appendFile(outFilePath, footer);
+};
+
+const createTableFile = async (version, creationDate, tables) => {
   const begContent = `
 /**
  * Attention: Auto-generated file, don't modify.
@@ -225,32 +420,44 @@ const createTableFile =
 
 namespace webpp::uri::idna::details {
 
-    /**
-     * IDNA Mapping Table
-     */
-    static constexpr std::array<std::${table.type}_t, ${
-      table.length}ULL> idna_mapping_table{
 `;
 
   const endContent = `
-    };
 } // webpp::uri::idna::details
 
 #endif // WEBPP_URI_IDNA_MAPPING_TABLE_HPP
     `;
 
   await fs.writeFile(outFilePath, begContent);
-  let content = "";
-  table.serializeTable(line => content += line);
-  await fs.appendFile(outFilePath, content);
+  let bitLength = 0;
+  let simplifiedCount = 0;
+  let bitsSaved = 0;
+  for (const table of tables) {
+    bitLength += table.length * table.sizeof;
+    if (table.simplifiedCount !== undefined) {
+      simplifiedCount += table.simplifiedCount;
+      bitsSaved += table.simplifiedCount * table.sizeof;
+    }
+    await decorateTable(table);
+  }
+  console.log(`Total tables size,`);
+  console.log(`  in bits: ${bitLength},`);
+  console.log(`  in bytes: ${bitLength / 8},`);
+  console.log(`  in KibiBytes: ${Math.ceil(bitLength / 8 / 1024)} KiB\n`);
+  console.log(`  Simplified counts: ${simplifiedCount}`);
+  console.log(`  Bits Saved: ${bitsSaved}`);
+  console.log(`  Bytes Saved: ${bitsSaved / 8}`);
+  console.log(`  KibiBytes Saved: ${Math.ceil(bitsSaved / 8 / 1024)} KiB`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file
   require('child_process').exec(`clang-format -i "${outFilePath}"`, err => {
     if (err) {
       console.error("Could not re-format the file.", err);
+    } else {
+      console.log("Clang-format completed.");
     }
   });
-}
+};
 
 start();
