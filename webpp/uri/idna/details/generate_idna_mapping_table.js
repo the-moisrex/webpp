@@ -172,6 +172,10 @@ class MapTable extends TableTraits {
   e_mapped = Symbol("Mapped");
   e_none = Symbol("None");
 
+  disallowedMask = 0xFF000000;
+  mappedMask = 0x80000000;
+  lengthLimit = 126; // We have 7 bits, but 0xFF would equal to disallowedMask
+
   constructor(max) {
     super(max, uint32);
     this.name = "idna_mapping_table";
@@ -180,35 +184,27 @@ class MapTable extends TableTraits {
     this.prevLength = 0;
     this.simplifiedCount = 0;
     this.simplifiedBits = 0;
+    this.prevRangeEnd = 0;
+    this.mappedCount = 0;
+    this.disallowedCount = 0;
+    this.ignoredCount = 0;
   }
 
-  simplify(start, end, action = this.e_disallowed) {
+  simplify(start, end, action) {
     const isSimplified = (() => {
-      if (this.prevAction !== action) {
+      if (this.prevAction !== action || this.prevRangeEnd !== (start - 1)) {
         return false;
       }
       switch (action) {
       case this.e_disallowed:
-        if ((this.bytes[this.index - 1] & ~0xC0000000) !== (start - 1)) {
-          return false;
-        }
         this.bytes[this.index - 1] = end;
-        return true;
-      case this.e_ignored:
-        if ((this.bytes[this.index - 1] & ~0xC0000000) !== (start - 1)) {
-          return false;
-        }
-        const length = end - start;
-        if ((length + this.prevLength) > 127) {
-          return false;
-        }
-        this.bytes[this.index - 1] += length << 24;
         return true;
       }
       return false;
     })();
     this.prevAction = action;
     this.prevLength = (end - start) + this.prevLength;
+    this.prevRangeEnd = end;
     if (isSimplified) {
       ++this.simplifiedCount;
       this.simplifiedBits += this.savesIfSimplified(action);
@@ -238,15 +234,15 @@ class MapTable extends TableTraits {
   /// This only happens once for the `ignored` as of unicode 15.1.0
   splitIfNeeded(start, end, mappedTo) {
     const length = end - start;
-    if (length > 127) {
+    if (length > this.lengthLimit) {
       console.log(`Splitting block: ${start}-${end}`);
       let page = start
-      for (; page < end; page += 128) {
-        console.log(`Splitting: ${page}-${page + 127}`);
-        this.map(page, page + 127, mappedTo);
+      for (; page < end; page += this.lengthLimit + 1) {
+        console.log(`Splitting: ${page}-${page + this.lengthLimit}`);
+        this.map(page, page + this.lengthLimit, mappedTo);
       }
-      this.map(page - 127, end, mappedTo);
-      console.log(`Splitting: ${page - 127}-${end}`);
+      this.map(page - this.lengthLimit, end, mappedTo);
+      console.log(`Splitting: ${page - this.lengthLimit}-${end}`);
       return true;
     }
     return false;
@@ -258,8 +254,14 @@ class MapTable extends TableTraits {
       return;
     }
     mappingSanityCheck(start, end);
-    if (this.simplify(start, end)) {
+    if (this.simplify(start, end, this.e_mapped)) {
       return;
+    }
+
+    if (mappedTo.length === 0) {
+      ++this.ignoredCount;
+    } else {
+      ++this.mappedCount;
     }
 
     const length = end - start;
@@ -269,7 +271,7 @@ class MapTable extends TableTraits {
     byte |= length << 24;
 
     // Enabling far left bit to show that this is a "First Byte"
-    byte |= 0x80000000;
+    byte |= this.mappedMask;
 
     this.bytes[this.index] = byte;
     ++this.index;
@@ -288,17 +290,16 @@ class MapTable extends TableTraits {
 
   /// Disallow this range of characters
   disallow(start, end) {
-    // mappingSanityCheck(start, end);
-    if (this.simplify(start, end)) {
+    if (this.simplify(start, end, this.e_disallowed)) {
       return;
     }
 
-    const length = end - start;
+    ++this.disallowedCount;
+
     let byte = start;
 
-    // Enabling two far left bits to show that this is a "First Byte" and this
-    // range is disallowed.
-    byte |= 0xC0000000;
+    // Making it a "First Byte" and make sure it's marked as "disallowed"
+    byte |= this.disallowedMask;
 
     this.bytes[this.index] = byte;
     ++this.index;
@@ -314,17 +315,18 @@ class MapTable extends TableTraits {
     for (; pos !== this.length;) {
       const byte = this.bytes[pos];
       const is_first_byte = (byte >>> 31) === 0b1;
-      const is_disallowed = (byte >>> 30) === 0b11;
-      appendFunc(`${byte}${postfix}, `);
+      const is_disallowed = (byte >>> 24) === (this.disallowedMask >>> 24);
+      appendFunc(`${byte}${postfix} `);
       if (is_disallowed) {
-        appendFunc('// Disallowed\n');
+        appendFunc('/* Disallowed */');
       } else if (is_first_byte) {
         if ((pos + 1 !== this.length) && (this.bytes[pos + 1] >>> 31) === 0b1) {
-          appendFunc('// Ignored\n');
+          appendFunc('/* Ignored */');
         } else {
-          appendFunc('// Mapped\n');
+          appendFunc('/* Mapped */');
         }
       }
+      appendFunc(`, `);
       ++pos;
       if (pos % cols === 0) {
         appendFunc('\n');
@@ -477,9 +479,11 @@ namespace webpp::uri::idna::details {
   let bitLength = 0;
   let simplifiedCount = 0;
   let bitsSaved = 0;
+  let mappedTable = undefined;
   for (const table of tables) {
     bitLength += table.length * table.sizeof;
     if (table.simplifiedCount !== undefined) {
+      mappedTable = table;
       simplifiedCount += table.simplifiedCount;
       bitsSaved += table.simplifiedBits;
     }
@@ -492,7 +496,10 @@ namespace webpp::uri::idna::details {
   console.log(`  Simplified counts: ${simplifiedCount}`);
   console.log(`  Bits Saved: ${bitsSaved}`);
   console.log(`  Bytes Saved: ${bitsSaved / 8}`);
-  console.log(`  KibiBytes Saved: ${Math.ceil(bitsSaved / 8 / 1024)} KiB`);
+  console.log(`  KibiBytes Saved: ${Math.ceil(bitsSaved / 8 / 1024)} KiB\n`);
+  console.log(`  Mapped count: ${mappedTable.mappedCount}`);
+  console.log(`  Ignored count: ${mappedTable.ignoredCount}`);
+  console.log(`  Disallowed count: ${mappedTable.disallowedCount}`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file
