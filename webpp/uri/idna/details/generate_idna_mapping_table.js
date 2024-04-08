@@ -418,12 +418,22 @@ const processCachedFile =
 }
 
 const decorateTable = async table => {
+  const bitLength = table.length * table.sizeof;
   console.log("Decorating table", table.name, " Length:", table.length);
+  console.log(`Tables size,`);
+  console.log(`  in bits: ${bitLength},`);
+  console.log(`  in bytes: ${bitLength / 8},`);
+  console.log(`  in KibiBytes: ${Math.ceil(bitLength / 8 / 1024)} KiB\n`);
 
   const header = `
 
     /**
      * ${table.description}
+     * 
+     * Table size:
+     *   - in bits:       ${bitLength}
+     *   - in bytes:      ${bitLength / 8} B
+     *   - in KibiBytes:  ${Math.ceil(bitLength / 8 / 1024)} KiB
      */
     static constexpr std::array<std::${table.typeString}_t, ${
       table.length}ULL> ${table.name}{
