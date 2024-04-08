@@ -179,19 +179,25 @@ class MapTable extends TableTraits {
     this.prevAction = this.e_none;
     this.prevLength = 0;
     this.simplifiedCount = 0;
+    this.simplifiedBits = 0;
   }
 
   simplify(start, end, action = this.e_disallowed) {
     const isSimplified = (() => {
-      if (this.prevAction !== action ||
-          this.bytes[this.index - 1] !== start - 1) {
+      if (this.prevAction !== action) {
         return false;
       }
       switch (action) {
       case this.e_disallowed:
+        if ((this.bytes[this.index - 1] & ~0xC0000000) !== (start - 1)) {
+          return false;
+        }
         this.bytes[this.index - 1] = end;
         return true;
       case this.e_ignored:
+        if ((this.bytes[this.index - 1] & ~0xC0000000) !== (start - 1)) {
+          return false;
+        }
         const length = end - start;
         if ((length + this.prevLength) > 127) {
           return false;
@@ -205,14 +211,53 @@ class MapTable extends TableTraits {
     this.prevLength = (end - start) + this.prevLength;
     if (isSimplified) {
       ++this.simplifiedCount;
+      this.simplifiedBits += this.savesIfSimplified(action);
       console.log(`Simplified (${action.description}): ${start}-${
           end} (count: ${end - start})`)
     }
     return isSimplified;
   }
 
+  savesIfSimplified(action) {
+    switch (action) {
+    case this.e_none:
+      return 0;
+    case this.e_mapped:
+      return 0;
+    case this.e_ignored:
+      return this.sizeof;
+    case this.e_disallowed:
+      return 2 * this.sizeof;
+    }
+    return 0;
+  }
+
+  /// Split lengths that are bigger than 127 because
+  /// we only have 7bits of storage for the "length"
+  ///
+  /// This only happens once for the `ignored` as of unicode 15.1.0
+  splitIfNeeded(start, end, mappedTo) {
+    const length = end - start;
+    if (length > 127) {
+      console.log(`Splitting block: ${start}-${end}`);
+      let page = start
+      for (; page < end; page += 128) {
+        console.log(`Splitting: ${page}-${page + 127}`);
+        this.map(page, page + 127, mappedTo);
+      }
+      this.map(page - 127, end, mappedTo);
+      console.log(`Splitting: ${page - 127}-${end}`);
+      return true;
+    }
+    return false;
+  }
+
   /// Map this range of characters
   map(start, end, mappedTo = []) {
+    if (this.splitIfNeeded(start, end, mappedTo)) {
+      return;
+    }
+    mappingSanityCheck(start, end);
     if (this.simplify(start, end)) {
       return;
     }
@@ -243,6 +288,7 @@ class MapTable extends TableTraits {
 
   /// Disallow this range of characters
   disallow(start, end) {
+    // mappingSanityCheck(start, end);
     if (this.simplify(start, end)) {
       return;
     }
@@ -267,13 +313,17 @@ class MapTable extends TableTraits {
     const postfix = this.postfix;
     for (; pos !== this.length;) {
       const byte = this.bytes[pos];
-      const is_first_byte = (byte & 0x80000000) === 0x80000000;
-      const is_disallowed = (byte & 0xC0000000) === 0xC0000000;
+      const is_first_byte = (byte >>> 31) === 0b1;
+      const is_disallowed = (byte >>> 30) === 0b11;
       appendFunc(`${byte}${postfix}, `);
       if (is_disallowed) {
         appendFunc('// Disallowed\n');
       } else if (is_first_byte) {
-        appendFunc('// First byte\n');
+        if ((pos + 1 !== this.length) && (this.bytes[pos + 1] >>> 31) === 0b1) {
+          appendFunc('// Ignored\n');
+        } else {
+          appendFunc('// Mapped\n');
+        }
       }
       ++pos;
       if (pos % cols === 0) {
@@ -335,19 +385,14 @@ const processCachedFile =
       STD3Table.append(rangeStart, rangeEnd, true);
       refTable.append(rangeStart, rangeEnd, true);
       mapTable.map(rangeStart, rangeEnd, mappedValues);
-      mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'mapped':
       refTable.append(rangeStart, rangeEnd, true);
       mapTable.map(rangeStart, rangeEnd, mappedValues);
-      mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'ignored':
       refTable.append(rangeStart, rangeEnd, true);
       mapTable.ignore(rangeStart, rangeEnd);
-
-      // todo: fix this
-      // mappingSanityCheck(rangeStart, rangeEnd);
       break;
     case 'disallowed':
       refTable.append(rangeStart, rangeEnd, true);
@@ -436,7 +481,7 @@ namespace webpp::uri::idna::details {
     bitLength += table.length * table.sizeof;
     if (table.simplifiedCount !== undefined) {
       simplifiedCount += table.simplifiedCount;
-      bitsSaved += table.simplifiedCount * table.sizeof;
+      bitsSaved += table.simplifiedBits;
     }
     await decorateTable(table);
   }
