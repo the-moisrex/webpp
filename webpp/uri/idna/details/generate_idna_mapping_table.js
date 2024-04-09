@@ -199,6 +199,8 @@ class MapTable extends TableTraits {
       case this.e_disallowed:
         this.bytes[this.index - 1] = end;
         return true;
+      case this.e_mapped:
+        // todo: next character, maps to the next mapped character, optimization
       }
       return false;
     })();
