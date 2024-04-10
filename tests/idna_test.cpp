@@ -78,7 +78,9 @@ TYPED_TEST(IDNATests, LabelSeparators) {
 }
 
 TYPED_TEST(IDNATests, MappingFindAlgorithmTest) {
+    // 'A' should be mapped to 'a'
     auto const pos = uri::idna::find_mapping_byte('A');
     EXPECT_EQ(*pos, 2'147'483'713ULL)
       << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos);
+    EXPECT_EQ(*stl::next(pos), 'a');
 }

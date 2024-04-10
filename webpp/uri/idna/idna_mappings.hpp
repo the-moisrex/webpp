@@ -56,6 +56,7 @@ namespace webpp::uri::idna {
     template <typename CharT>
     [[nodiscard]] static constexpr details::idna_mapping_table_iterator find_mapping_byte(
       CharT const inp_ch) {
+        using details::disallowed_mask;
         using details::idna_mapping_table;
         using details::map_table_byte_type;
         using details::mapped_mask;
@@ -66,12 +67,10 @@ namespace webpp::uri::idna {
           idna_mapping_table.end(),
           byte,
           [](map_table_byte_type const lhs, map_table_byte_type const rhs) constexpr noexcept {
-              return lhs < (rhs | mapped_mask);
+              return (lhs | disallowed_mask) < (rhs | disallowed_mask);
           });
 
         return pos;
-        // const range_start;
-        // const range_end;
     }
 
     template <istl::String OutStrT, typename Iter>
