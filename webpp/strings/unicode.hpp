@@ -17,6 +17,9 @@ namespace webpp::unicode {
     template <typename T>
     concept WChar = (sizeof(T) >= sizeof(char32_t));
 
+    template <typename T>
+    concept UTF32 = WChar<T>;
+
 
     // Leading (high) surrogates: 0xd800 - 0xdbff
     // Trailing (low) surrogates: 0xdc00 - 0xdfff
@@ -33,7 +36,7 @@ namespace webpp::unicode {
     static constexpr u16 trail_surrogate_max = 0xdfff;
 
     template <typename u16 = char16_t>
-    static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x1'0000 >> 10);
+    static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x1'0000U >> 10U);
 
     template <typename u32 = char32_t>
     static constexpr u32 surrogate_offset =
@@ -41,36 +44,36 @@ namespace webpp::unicode {
 
     // Max valid value for a unicode code point
     template <typename u32 = char32_t>
-    static constexpr u32 code_point_max = 0x0010'ffffu;
+    static constexpr u32 code_point_max = 0x0010'FFFFU;
 
     template <typename u8 = char8_t, typename octet_type>
-    static constexpr u8 mask8(octet_type oc) noexcept {
-        return static_cast<u8>(0xff & oc);
+    static constexpr u8 mask8(octet_type oct) noexcept {
+        return static_cast<u8>(0xff & oct);
     }
 
     template <typename u16 = char16_t, typename u16_type>
-    static constexpr u16 mask16(u16_type oc) noexcept {
-        return static_cast<u16>(0xffff & oc);
+    static constexpr u16 mask16(u16_type oct) noexcept {
+        return static_cast<u16>(0xffff & oct);
     }
 
     template <typename octet_type>
-    static constexpr bool is_trail(octet_type oc) noexcept {
-        return ((mask8(oc) >> 6) == 0x2);
+    static constexpr bool is_trail(octet_type oct) noexcept {
+        return ((mask8(oct) >> 6) == 0x2);
     }
 
     template <typename u16>
-    static constexpr bool is_lead_surrogate(u16 cp) noexcept {
-        return (cp >= lead_surrogate_min<u16> && cp <= lead_surrogate_max<u16>);
+    static constexpr bool is_lead_surrogate(u16 code_point) noexcept {
+        return (code_point >= lead_surrogate_min<u16> && code_point <= lead_surrogate_max<u16>);
     }
 
     template <typename u16>
-    static constexpr bool is_trail_surrogate(u16 cp) noexcept {
-        return (cp >= trail_surrogate_min<u16> && cp <= trail_surrogate_max<u16>);
+    static constexpr bool is_trail_surrogate(u16 code_point) noexcept {
+        return (code_point >= trail_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>);
     }
 
     template <typename u16>
-    static constexpr bool is_surrogate(u16 cp) noexcept {
-        return (cp >= lead_surrogate_min<u16> && cp <= trail_surrogate_max<u16>);
+    static constexpr bool is_surrogate(u16 code_point) noexcept {
+        return (code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>);
     }
 
     /*
@@ -82,54 +85,57 @@ namespace webpp::unicode {
      * The second check covers surrogate pairs (category Cs).
      */
     template <typename u32>
-    static constexpr bool is_code_point_valid(u32 cp) noexcept {
-        return (cp) < 0x11'0000 && ((cp & 0xFFFF'F800) != 0xD800);
+    static constexpr bool is_code_point_valid(u32 code_point) noexcept {
+        return (code_point) < 0x11'0000 && ((code_point & 0xFFFF'F800) != 0xD800);
         // alternative implementation:
         // return (cp <= code_point_max<u32> && !is_surrogate(cp));
     }
 
     // todo: check out the glib/gutf8.c implementation
     template <typename CharT = char8_t, typename CodePointType = char32_t>
-    static constexpr CodePointType code_point(CharT const* const p) noexcept {
+    static constexpr CodePointType code_point(CharT const* const pos) noexcept {
         using code_point_type   = CodePointType;
         using char_type         = CharT;
         constexpr auto is_utf8  = UTF8<char_type>;
         constexpr auto is_utf16 = UTF16<char_type>;
 
-        auto val = *p;
+        auto val = *pos;
         if constexpr (is_utf16) {
-            if ((val & 0xFC00u) == 0xD800u) {
+            if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
-                val                 <<= sizeof(char16_t) * 8u;
-                auto const next_val   = p + 1u;
+                val                  <<= sizeof(char16_t) * 8U;
+                auto const next_val    = pos + 1U;
                 val                  |= *next_val;
                 return val;
             }
             return static_cast<code_point_type>(val); // this is the only char
         } else if constexpr (is_utf8) {
-            constexpr char_type shift_bit_count = sizeof(char8_t) * 8u;
-            if ((val & 0x80u) == 0) {
+            constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
+            if ((val & 0x80U) == 0) {
                 // we have one char
                 return static_cast<code_point_type>(val);
-            } else if ((val & 0xE0u) == 0xC0u) {
+            }
+            if ((val & 0xE0U) == 0xC0U) {
                 // we have 2 chars
                 val                 <<= shift_bit_count;
-                auto const next_val   = p + 1u;
+                auto const next_val    = pos + 1U;
                 val                  |= *next_val;
                 return val;
-            } else if ((val & 0xF0u) == 0xE0u) {
+            }
+            if ((val & 0xF0U) == 0xE0U) {
                 // we have 3 chars
                 val           <<= shift_bit_count;
-                auto next_val   = p + 1u;
+                auto next_val    = pos + 1U;
                 val            |= *next_val;
                 val           <<= shift_bit_count;
                 ++next_val;
                 val |= *next_val;
                 return val;
-            } else if ((val & 0xF8u) == 0xF0u) {
+            }
+            if ((val & 0xF8U) == 0xF0U) {
                 // we have 4 chars
                 val           <<= shift_bit_count;
-                auto next_val   = p + 1u;
+                auto next_val    = pos + 1U;
                 val            |= *next_val;
                 val           <<= shift_bit_count;
                 ++next_val;
@@ -149,27 +155,31 @@ namespace webpp::unicode {
         requires(stl::is_integral_v<value_type>)
     static constexpr auto count_bytes(value_type value) noexcept {
         if constexpr (UTF16<value_type>) {
-            if ((value & 0xFC00u) == 0xD800u) {
+            if ((value & 0xFC00U) == 0xD800U) {
                 return 2;
             }
             return 1;
         } else if constexpr (UTF8<value_type>) {
-            return value < 0x80
-                     ? 1
-                     : (value < 0x800
-                          ? 2
-                          : (value < 0x1'0000 ? 3 : (value < 0x20'0000 ? 4 : (value < 0x400'0000 ? 5 : 6))));
             // alternative implementation:
-            // if ((value & 0x80u) == 0) {
-            //     return 1;
-            // } else if ((value & 0xE0u) == 0xC0u) {
-            //     return 2;
-            // } else if ((value & 0xF0u) == 0xE0u) {
-            //     return 3;
-            // } else if ((value & 0xF8u) == 0xF0u) {
-            //     return 4;
-            // }
-            // return 1;
+            // return value < 0x80
+            //          ? 1
+            //          : (value < 0x800
+            //               ? 2
+            //               : (value < 0x1'0000 ? 3 : (value < 0x20'0000 ? 4 : (value < 0x400'0000 ? 5 :
+            //               6))));
+            if ((value & 0x80U) == 0) {
+                return 1;
+            }
+            if ((value & 0xE0U) == 0xC0U) {
+                return 2;
+            }
+            if ((value & 0xF0U) == 0xE0U) {
+                return 3;
+            }
+            if ((value & 0xF8U) == 0xF0U) {
+                return 4;
+            }
+            return 1;
         } else {
             return 1;
         }
@@ -195,25 +205,25 @@ namespace webpp::unicode {
         } // namespace details
 
         template <typename CharT = char8_t>
-        static constexpr void next_char(CharT*& p) noexcept {
+        static constexpr void next_char(CharT*& pos) noexcept {
             if constexpr (UTF8<CharT>) {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
-                p += details::utf8_skip<CharT>[*p];
+                pos += details::utf8_skip<CharT>[*pos];
             } else if constexpr (UTF16<CharT>) {
-                ++p;
-                if (!(*p < 0xDC00 || *p > 0xDFFF)) {
-                    ++p;
+                ++pos;
+                if (!(*pos < 0xDC00 || *pos > 0xDFFF)) {
+                    ++pos;
                 }
             } else {
-                ++p;
+                ++pos;
             }
         }
 
         template <typename CharT = char8_t>
-        static constexpr CharT* next_char_copy(CharT* p) noexcept {
-            next_char<CharT>(p);
-            return p;
+        static constexpr CharT* next_char_copy(CharT* pos) noexcept {
+            next_char<CharT>(pos);
+            return pos;
         }
 
         /**
@@ -221,68 +231,68 @@ namespace webpp::unicode {
          * This function does not check if previous character exists or not or even if its a valid character.
          */
         template <typename CharT = char8_t>
-        static constexpr void prev_char(CharT*& p) noexcept {
+        static constexpr void prev_char(CharT*& pos) noexcept {
             if constexpr (UTF8<CharT>) {
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
-                --p;
-                if ((*p & 0xc0) != 0x80) {
+                --pos;
+                if ((*pos & 0xc0) != 0x80) {
                     return;
                 }
             } else if constexpr (UTF16<CharT>) {
-                --p;
-                if (!(*p < 0xDC00 || *p > 0xDFFF)) {
-                    --p;
+                --pos;
+                if (!(*pos < 0xDC00 || *pos > 0xDFFF)) {
+                    --pos;
                 }
             } else {
-                --p;
+                --pos;
             }
         }
 
         template <typename CharT = char8_t>
-        static constexpr CharT* prev_char_copy(CharT* p) noexcept {
-            prev_char<CharT>(p);
-            return p;
+        static constexpr CharT* prev_char_copy(CharT* pos) noexcept {
+            prev_char<CharT>(pos);
+            return pos;
         }
 
         template <typename CharT = char8_t>
-        static constexpr stl::size_t count(CharT const* p, stl::size_t max) noexcept {
+        static constexpr stl::size_t count(CharT const* pos, stl::size_t max) noexcept {
             if constexpr (UTF8<CharT> || UTF16<CharT>) {
                 stl::size_t  len   = 0;
-                CharT const* start = p;
-                if (max == 0 || !*p) {
+                CharT const* start = pos;
+                if (max == 0 || !*pos) {
                     return 0;
                 }
 
-                next_char(p);
+                next_char(pos);
 
-                while (p - start < max && *p) {
+                while (pos - start < max && *pos) {
                     ++len;
-                    next_char(p);
+                    next_char(pos);
                 }
 
                 /* only do the last len increment if we got a complete
                  * char (don't count partial chars)
                  */
-                if (p - start <= max) {
+                if (pos - start <= max) {
                     ++len;
                 }
                 return len;
@@ -302,9 +312,9 @@ namespace webpp::unicode {
 
         // There's a better way to count 32bit unicode if you know the start and the end.
         template <typename CharT = char8_t>
-        static constexpr stl::size_t count(CharT const* p) noexcept {
+        static constexpr stl::size_t count(CharT const* pos) noexcept {
             stl::size_t len = 0;
-            for (; *p; next_char(p)) {
+            for (; *pos; next_char(pos)) {
                 ++len;
             }
             return len;
@@ -312,28 +322,28 @@ namespace webpp::unicode {
 
         template <typename Ptr, typename CharT = char32_t>
             requires(!stl::is_const_v<Ptr>)
-        static constexpr void append(Ptr& result, CharT cp) noexcept {
+        static constexpr void append(Ptr& result, CharT code_point) noexcept {
             using char_type = stl::remove_cvref_t<decltype(*result)>;
             if constexpr (UTF8<char_type>) {
-                if (cp < 0x80) {            // one octet
-                    *(result++) = static_cast<char_type>(cp);
-                } else if (cp < 0x800) {    // two octets
-                    *(result++) = static_cast<char_type>((cp >> 6) | 0xc0);
-                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
-                } else if (cp < 0x1'0000) { // three octets
-                    *(result++) = static_cast<char_type>((cp >> 12) | 0xe0);
-                    *(result++) = static_cast<char_type>(((cp >> 6) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
+                if (code_point < 0x80) {            // one octet
+                    *(result++) = static_cast<char_type>(code_point);
+                } else if (code_point < 0x800) {    // two octets
+                    *(result++) = static_cast<char_type>((code_point >> 6) | 0xc0);
+                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
+                } else if (code_point < 0x1'0000) { // three octets
+                    *(result++) = static_cast<char_type>((code_point >> 12) | 0xe0);
+                    *(result++) = static_cast<char_type>(((code_point >> 6) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
                 } else { // four octets
-                    *(result++) = static_cast<char_type>((cp >> 18) | 0xf0);
-                    *(result++) = static_cast<char_type>(((cp >> 12) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>(((cp >> 6) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>((cp & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>((code_point >> 18) | 0xf0);
+                    *(result++) = static_cast<char_type>(((code_point >> 12) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>(((code_point >> 6) & 0x3f) | 0x80);
+                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
                 }
             } else if constexpr (UTF16<char_type>) {
                 // todo
             } else { // for char32_t or others
-                *(result++) = static_cast<char_type>(cp);
+                *(result++) = static_cast<char_type>(code_point);
             }
         }
 
@@ -343,11 +353,11 @@ namespace webpp::unicode {
 
         template <typename Ptr, typename CharT = char32_t>
             requires(!stl::is_const_v<Ptr>)
-        static constexpr bool append(Ptr& result, CharT cp) noexcept {
-            if (!is_code_point_valid(cp)) {
+        static constexpr bool append(Ptr& result, CharT code_point) noexcept {
+            if (!is_code_point_valid(code_point)) {
                 return false;
             }
-            unchecked::append<Ptr, CharT>(result, cp);
+            unchecked::append<Ptr, CharT>(result, code_point);
             return true;
         }
 
