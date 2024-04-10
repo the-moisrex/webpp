@@ -1,5 +1,6 @@
 // Created by moisrex on Fri 2024/02/09
 
+#include "../webpp/uri/idna/idna_mappings.hpp"
 #include "../webpp/uri/uri.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -74,4 +75,10 @@ TYPED_TEST(IDNATests, LabelSeparators) {
         EXPECT_EQ(ctx3.out.get_hostname(), "example.org");
         EXPECT_EQ(ctx4.out.get_hostname(), "example.org");
     }
+}
+
+TYPED_TEST(IDNATests, MappingFindAlgorithmTest) {
+    auto const pos = uri::idna::find_mapping_byte('A');
+    EXPECT_EQ(*pos, 2'147'483'713ULL)
+      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos);
 }

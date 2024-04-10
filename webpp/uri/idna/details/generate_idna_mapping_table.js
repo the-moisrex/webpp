@@ -157,13 +157,28 @@ class MappingReferenceTable extends TableTraits {
  *   - [1bit = 1] + [7bit = length] + [24bit = start]
  *   - start  = is the start of the range
  *   - length = the length of the range
- *   - (byte & 0x80000000 == 0b1) meaning far left bit is 0b1
+ *   - (byte & 0x80000000 == 0x80000000) meaning far left bit is 0b1
+ *   - if it starts with 0xFF000000, then it's a disabled range
  *
  * Bytes after the First Byte:
  *   - Their far left bit will never be 0b1,
- *     that means (byte & 0x80000000 == * 0b0)
+ *     that means (byte & 0x80000000 == 0b0)
  *   - You have to continue reading everything after each byte, until
  *     you reach an element that it's far left bit is one.
+ *
+ * Actions:
+ *   - Mapped: [[1bit = 1] [7bits = length] [24bits = range-start]]
+ *             + ... N number of characters you should map to ...;
+ *
+ *             it's first element starts with a 0x80000000, and
+ *             anything after that is considered as what you need to
+ *             map the range to.
+ *
+ *   - Ignored: It's equivalent of mapping to empty string
+ *
+ *   - Disallowed: [[8bits = 1] [24bits = range-start]]
+ *                +[ [32bits = range-end] ]
+ *             Disallowed is really contains range start and range end.
  */
 class MapTable extends TableTraits {
 
