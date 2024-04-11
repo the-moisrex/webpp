@@ -4,6 +4,7 @@
 #include "../webpp/uri/uri.hpp"
 #include "common/tests_common_pch.hpp"
 
+// NOLINTBEGIN(*-magic-numbers)
 using namespace webpp;
 
 using Types =
@@ -77,10 +78,33 @@ TYPED_TEST(IDNATests, LabelSeparators) {
     }
 }
 
-TYPED_TEST(IDNATests, MappingFindAlgorithmTest) {
+TEST(BasicIDNATests, MappingFindAlgorithmTest) {
     // 'A' should be mapped to 'a'
     auto const pos = uri::idna::find_mapping_byte('A');
     EXPECT_EQ(*pos, 2'147'483'713ULL)
-      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos);
+      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos)
+      << "\nRange Start Character: " << (*pos & ~uri::idna::details::disallowed_mask);
     EXPECT_EQ(*stl::next(pos), 'a');
+
+
+    // FD97..FD98    ; mapped                 ; 0646 062C 0645
+    // FD9E          ; mapped                 ; 0628 062E 064A
+    // 'FD98' should be mapped to '0646 062C 0645'
+    auto mapped_pos = uri::idna::find_mapping_byte(0xFD98UL);
+    EXPECT_EQ(*mapped_pos, (0xFD97UL | uri::idna::details::mapped_mask | ((0xFD98UL - 0xFD97UL) << 24U)))
+      << "Position of the iterator: "
+      << stl::distance(uri::idna::details::idna_mapping_table.begin(), mapped_pos)
+      << "\nRange Start Character: " << (*mapped_pos & ~uri::idna::details::disallowed_mask);
+    EXPECT_EQ(*(++mapped_pos), 0x0646);
+    EXPECT_EQ(*(++mapped_pos), 0x062C);
+    EXPECT_EQ(*(++mapped_pos), 0x0645);
 }
+
+TEST(BasicIDNATests, PerformMappingTest) {
+    // 'A' should be mapped to 'a'
+    std::string out;
+    EXPECT_TRUE(uri::idna::perform_mapping('A', out));
+    EXPECT_EQ(out, "a");
+}
+
+// NOLINTEND(*-magic-numbers)

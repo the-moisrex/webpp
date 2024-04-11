@@ -6,6 +6,7 @@
 #include "../../std/algorithm.hpp"
 #include "../../std/string.hpp"
 #include "../../std/type_traits.hpp"
+#include "../../strings/unicode.hpp"
 #include "./details/idna_mapping_table.hpp"
 
 namespace webpp::uri::idna {
@@ -17,6 +18,7 @@ namespace webpp::uri::idna {
 
         static constexpr map_table_byte_type disallowed_mask = 0xFF00'0000;
         static constexpr map_table_byte_type mapped_mask     = 0x8000'0000;
+        static constexpr map_table_byte_type not_mapped_mask = disallowed_mask & mapped_mask;
 
         // We have 7 bits, but 0xFF would equal to disallowedMask
         static constexpr map_table_byte_type length_limit = 126;
@@ -60,21 +62,89 @@ namespace webpp::uri::idna {
         using details::idna_mapping_table;
         using details::map_table_byte_type;
         using details::mapped_mask;
+        using details::not_mapped_mask;
 
-        map_table_byte_type const byte = inp_ch | mapped_mask;
-        auto const                pos  = stl::lower_bound(
-          idna_mapping_table.begin(),
-          idna_mapping_table.end(),
-          byte,
-          [](map_table_byte_type const lhs, map_table_byte_type const rhs) constexpr noexcept {
-              return (lhs | disallowed_mask) < (rhs | disallowed_mask);
-          });
+        map_table_byte_type const byte = static_cast<map_table_byte_type>(inp_ch) | disallowed_mask;
 
-        return pos;
+        // this is almost the same thing as std::partition_point and std::lower_bound, but with modifications.
+        auto length = idna_mapping_table.size();
+        auto first  = idna_mapping_table.begin(); // NOLINT(*-qualified-auto)
+
+        while (length > 0) {
+            auto const half   = length >> 1U;
+            auto       middle = first; // NOLINT(*-qualified-auto)
+            std::advance(middle, half);
+
+            // non-first-characters are ignored here
+            while ((*middle & mapped_mask) == 0U) {
+                --middle;
+            }
+
+            if ((*middle | disallowed_mask) < byte) {
+                length = length - half - 1;
+                first  = middle;
+            } else {
+                length = half;
+            }
+        }
+        return first;
     }
 
-    template <istl::String OutStrT, typename Iter>
-    [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT &out) {
+    /**
+     * Perform the mapping for a single character
+     * @returns false if the character is not allowed
+     */
+    template <bool UseSTD3ASCIIRules = false, typename CharT, istl::String OutStrT>
+    [[nodiscard]] static constexpr bool perform_mapping(CharT const inp_ch, OutStrT& out) {
+        using details::disallowed_mask;
+        using details::map_table_byte_type;
+        using details::mapped_mask;
+
+        // todo: uncomment this
+        // static_assert(sizeof(CharT) >= 16U, // NOLINT(*-magic-numbers)
+        //               "UTF-8 characters should not be used here, "
+        //               "should first be converted to a 32bit character.");
+
+        auto const cur_char   = static_cast<map_table_byte_type>(inp_ch);
+        auto const pos        = find_mapping_byte(inp_ch);
+        auto const first_byte = *pos;
+        auto const length     = first_byte & ~mapped_mask >> 24U;
+
+        if ([[maybe_unused]] bool const is_disallowed = length == disallowed_mask) {
+            auto const range_start = first_byte & ~disallowed_mask;
+            auto const range_end   = *stl::next(pos);
+
+            // we don't realy need to check this because the all the senarios that this would not be true, the
+            // user has passed an invalid character anyway.
+            assert(cur_char >= range_start && cur_char <= range_end);
+            return false;
+        }
+
+        // mapping, or ignoring a character:
+        {
+            auto const range_start = first_byte & ~disallowed_mask;
+            auto const range_end   = range_start + length;
+
+            // we don't really need to check the range because all the senarios that this would either be
+            // caught by the "reference table", or it's already detected that it's an invalid character.
+            assert(cur_char >= range_start && cur_char <= range_end);
+
+            // loop until we find the next "first-byte"
+            // we don't need to check the length of the array, there's a valid `first-byte` character at the
+            // end of the table intentionally inserted for this purpose.
+            for (auto cur_pos = stl::next(pos); (*cur_pos & mapped_mask) == 0; ++cur_pos) {
+                // todo: conver to utf-8
+                // out.append(*cur_pos);
+            }
+        }
+
+        // todo: handle STD3
+
+        return true;
+    }
+
+    template <bool UseSTD3ASCIIRules = false, istl::String OutStrT, typename Iter>
+    [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out) {
         using details::idna_reference_table;
         using ref_table_byte_type = typename decltype(idna_reference_table)::value_type;
 
@@ -84,16 +154,17 @@ namespace webpp::uri::idna {
             stl::size_t const byte_index   = static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type);
             unsigned const    rem_index    = static_cast<stl::size_t>(*pos) % sizeof(ref_table_byte_type);
             ref_table_byte_type const byte = idna_reference_table[byte_index];
-            bool const                is_active = (byte & rem_index) != 0;
 
-            if (is_active) {
+            if ([[maybe_unused]] bool const should_map = (byte & rem_index) != 0) {
                 // now we should look at the mapping table
-
+                if (!perform_mapping<UseSTD3ASCIIRules>(*pos)) {
+                    return false;
+                }
                 continue;
             }
 
             // it's a valid character
-            out += *pos;
+            out.append(*pos);
         }
         return true;
     }

@@ -190,6 +190,7 @@ class MapTable extends TableTraits {
   disallowedMask = 0xFF000000;
   mappedMask = 0x80000000;
   lengthLimit = 126; // We have 7 bits, but 0xFF would equal to disallowedMask
+  endingCodePoint = 0xFFFFFFFF; // this.disallowedMask | 0x00FFFFFF;
 
   constructor(max) {
     super(max, uint32);
@@ -324,6 +325,13 @@ class MapTable extends TableTraits {
     ++this.index;
   }
 
+  /// Call this method when you're done with adding things to the table.
+  finish() {
+    // add a valid first-byte at the end for simplifying the algorithm, so we
+    // won't have to check the length of the array while performing mapping.
+    this.bytes[this.index++] = this.endingCodePoint;
+  }
+
   get length() { return this.index; }
 
   serializeTable(appendFunc, cols = 20 - this.sizeof) {
@@ -334,7 +342,9 @@ class MapTable extends TableTraits {
       const is_first_byte = (byte >>> 31) === 0b1;
       const is_disallowed = (byte >>> 24) === (this.disallowedMask >>> 24);
       appendFunc(`${byte}${postfix} `);
-      if (is_disallowed) {
+      if (byte === this.endingCodePoint) {
+        appendFunc('/* Ending Code Point */');
+      } else if (is_disallowed) {
         appendFunc('/* Disallowed */');
       } else if (is_first_byte) {
         if ((pos + 1 !== this.length) && (this.bytes[pos + 1] >>> 31) === 0b1) {
@@ -428,6 +438,9 @@ const processCachedFile =
                 IDNA2008Status);
     return `${codePoints}`;
   });
+
+  refTable.finish?.();
+  mapTable.finish?.();
 
   await createTableFile(version, creationDate, [ refTable, mapTable ]);
 

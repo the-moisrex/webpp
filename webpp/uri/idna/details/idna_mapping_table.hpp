@@ -4,7 +4,7 @@
  *
  *   Auto generated from:          generate_idna_mapping_table.js
  *   IDNA Creation Date:           2023-08-10, 22:32:27 GMT
- *   This file's generation date:  Mon, 08 Apr 2024 22:07:17 GMT
+ *   This file's generation date:  Wed, 10 Apr 2024 22:05:09 GMT
  *   IDNA Mapping Table Version:   15.1.0
  *
  * Details about the contents of this file can be found here:
@@ -8164,11 +8164,11 @@ namespace webpp::uri::idna::details {
      * IDNA Mapping Table
      *
      * Table size:
-     *   - in bits:       488704
-     *   - in bytes:      61088 B
+     *   - in bits:       488736
+     *   - in bytes:      61092 B
      *   - in KibiBytes:  60 KiB
      */
-    static constexpr std::array<std::uint32_t, 15'272ULL> idna_mapping_table{
+    static constexpr std::array<std::uint32_t, 15'273ULL> idna_mapping_table{
       2'147'483'713ULL /* Mapped */,
       97ULL,
       2'147'483'714ULL /* Mapped */,
@@ -23441,6 +23441,7 @@ namespace webpp::uri::idna::details {
       4'010'672'512ULL /* Ignored */,
       4'279'108'080ULL /* Disallowed */,
       1'114'111ULL,
+      4'294'967'295ULL /* Ending Code Point */,
     };
 
 } // namespace webpp::uri::idna::details
