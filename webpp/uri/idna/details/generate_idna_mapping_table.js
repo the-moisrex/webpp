@@ -253,14 +253,18 @@ class MapTable extends TableTraits {
   splitIfNeeded(start, end, mappedTo) {
     const length = end - start;
     if (length > this.lengthLimit) {
-      console.log(`Splitting block: ${start}-${end}`);
-      let page = start
-      for (; page < end; page += this.lengthLimit + 1) {
-        console.log(`Splitting: ${page}-${page + this.lengthLimit}`);
-        this.map(page, page + this.lengthLimit, mappedTo);
+      console.log(`Splitting block: ${start}-${end}; length: ${length}`);
+      let page = start;
+      let remaining = length;
+      for (; remaining !== 0; page += this.lengthLimit + 1) {
+        const page_end = Math.min(page + this.lengthLimit, end);
+        this.map(page, page_end, mappedTo);
+        remaining = end - page_end;
+        console.log(`Splitting: ${page}-${page_end}; block length: ${
+            page_end - page}; remaining: ${remaining}`);
       }
-      this.map(page - this.lengthLimit, end, mappedTo);
-      console.log(`Splitting: ${page - this.lengthLimit}-${end}`);
+      // this.map(page - this.lengthLimit, end, mappedTo);
+      // console.log(`Splitting: ${page - this.lengthLimit}-${end}`);
       return true;
     }
     return false;
@@ -388,6 +392,7 @@ const processCachedFile =
   const refTable = new MappingReferenceTable(200000);
   const STD3Table = new STD3Mapper(1000);
   const mapTable = new MapTable(100000);
+  let maxMappedCount = 0;
   lines.forEach((line, index) => {
     line = cleanComments(line)
 
@@ -433,6 +438,10 @@ const processCachedFile =
       return;
     }
 
+    if (mappedValues?.length > maxMappedCount) {
+      maxMappedCount = mappedValues.length;
+    }
+
     // Process each line here
     console.log(index, rangeStart, rangeEnd, status, mappedValues,
                 IDNA2008Status);
@@ -442,6 +451,7 @@ const processCachedFile =
   refTable.finish?.();
   mapTable.finish?.();
 
+  console.log("Max Mapped Count: ", maxMappedCount);
   await createTableFile(version, creationDate, [ refTable, mapTable ]);
 
   console.log('File processing completed.');

@@ -117,6 +117,13 @@ TEST(BasicIDNATests, MappingFindAlgorithmTest) {
       << "Position of the iterator: "
       << stl::distance(uri::idna::details::idna_mapping_table.begin(), first_pos)
       << "\nRange Start Character: " << (*first_pos & ~uri::idna::details::disallowed_mask);
+
+
+    auto const pos_4 = uri::idna::find_mapping_byte(0x2'fa39);
+    EXPECT_EQ((*pos_4 & ~uri::idna::details::disallowed_mask), 0x2'FA1E)
+      << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos_4)
+      << "\nRange Start Character: " << stl::hex << (*pos_4 & ~uri::idna::details::disallowed_mask)
+      << stl::dec;
 }
 
 TEST(BasicIDNATests, TestingAllTheTable) {
@@ -124,13 +131,14 @@ TEST(BasicIDNATests, TestingAllTheTable) {
     stl::size_t picking_last_one = 0;
     stl::size_t picking_next_one = 0;
 
-    stl::uint32_t last_one = 0;
+    stl::uint32_t           last_one = 0;
+    std::set<stl::uint32_t> faileds;
     for (stl::uint32_t index = 0; index != uri::idna::details::idna_mapping_table.size(); ++index) {
         auto const cur = uri::idna::details::idna_mapping_table[index];
         if ((cur & uri::idna::details::mapped_mask) == 0) {
             continue;
         }
-        auto const length = cur & ~uri::idna::details::mapped_mask >> 24U;
+        auto length = (cur & ~uri::idna::details::mapped_mask) >> 24U;
 
         auto             range_start = cur & ~uri::idna::details::disallowed_mask;
         auto             range_end   = uri::idna::details::idna_mapping_table[index + 1];
@@ -142,11 +150,15 @@ TEST(BasicIDNATests, TestingAllTheTable) {
             action    = "mapped/ignored";
         }
 
+        length = range_end - range_start;
+
         for (stl::uint32_t sub_index = range_start; sub_index <= range_end;) {
-            auto const       sub_pos = uri::idna::find_mapping_byte(sub_index);
+            auto             sub_pos = uri::idna::find_mapping_byte(sub_index);
             std::string_view state   = "";
             if (*sub_pos != cur) {
                 ++errors;
+                sub_pos = uri::idna::find_mapping_byte(sub_index);
+                faileds.insert(cur & ~uri::idna::details::disallowed_mask);
                 if (*sub_pos == last_one) {
                     state = " (last one) ";
                     ++picking_last_one;
@@ -166,8 +178,11 @@ TEST(BasicIDNATests, TestingAllTheTable) {
                   << "Index: " << index << "\n"
                   << "Sub Index: " << sub_index << " HexChar: " << std::hex << sub_index << std::dec
                   << " diff: " << (sub_index - range_start) << "\n"
+                  << "Current: " << stl::hex << cur << " " << (cur & ~uri::idna::details::disallowed_mask)
+                  << stl::dec << "\n"
                   << "Range start: " << range_start << "\n"
                   << "Range end: " << range_end << "\n"
+                  << "length: " << length << "\n"
                   << "Position of the iterator: "
                   << stl::distance(uri::idna::details::idna_mapping_table.begin(), sub_pos)
                   << "\nCurrent: " << std::hex << (*sub_pos & ~uri::idna::details::disallowed_mask)
@@ -175,7 +190,7 @@ TEST(BasicIDNATests, TestingAllTheTable) {
                   << (cur & ~uri::idna::details::disallowed_mask) << std::dec << "\naction: " << action;
             }
 
-            auto const half  = (range_end - range_start) / 2;
+            auto const half  = length / 2;
             sub_index       += half;
             if (half == 0) {
                 ++sub_index;
@@ -184,7 +199,10 @@ TEST(BasicIDNATests, TestingAllTheTable) {
 
         last_one = cur;
     }
-    EXPECT_EQ(errors, 0);
+    EXPECT_EQ(errors, 0)
+      << stl::accumulate(faileds.begin(), faileds.end(), std::string(), [](auto const& res, auto b) {
+             return res + ", " + stl::to_string(b);
+         }).substr(2);
     EXPECT_EQ(picking_last_one, 0);
     EXPECT_EQ(picking_next_one, 0);
 }

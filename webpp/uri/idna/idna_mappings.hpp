@@ -64,7 +64,15 @@ namespace webpp::uri::idna {
         using details::mapped_mask;
         using details::not_mapped_mask;
 
-        map_table_byte_type const element = static_cast<map_table_byte_type>(inp_ch) | disallowed_mask;
+        auto const asked_char = static_cast<map_table_byte_type>(inp_ch);
+
+        // anything bigger than the last element is disallowed
+        if ((asked_char & disallowed_mask) != 0U) {
+            auto const last_element = idna_mapping_table.begin() + (idna_mapping_table.size() - 1);
+            return last_element;
+        }
+
+        map_table_byte_type const element = asked_char | disallowed_mask;
 
         // this is almost the same thing as std::partition_point and std::lower_bound, but with modifications.
         auto length = idna_mapping_table.size();
@@ -77,29 +85,52 @@ namespace webpp::uri::idna {
         //     |     Should be ignored during binary search
         //     |
         //   first-byte: this is the byte we should find and compare against
-        for (;;) {
-            length      >>= 1U;    // devided by 2
-            auto middle   = first; // NOLINT(*-qualified-auto)
-            std::advance(middle, length);
+        // Binary Search:
+        // for (;;) {
+        //     length      >>= 1U;    // devided by 2
+        //     auto middle   = first; // NOLINT(*-qualified-auto)
+        //     std::advance(middle, length);
+        //
+        //     // non-first-characters are ignored here
+        //     decltype(length) remaining = 0;
+        //     while ((*middle & mapped_mask) == 0U) {
+        //         --middle;
+        //         ++remaining;
+        //     }
+        //
+        //     if (first == middle) {
+        //         stl::advance(middle, remaining);
+        //         ++middle;
+        //         while ((*middle & mapped_mask) == 0U) {
+        //             ++middle;
+        //         }
+        //
+        //         if (element >= (*middle | disallowed_mask)) {
+        //             first = middle;
+        //             break;
+        //         }
+        //
+        //         break;
+        //     }
+        //     if (element < (*middle | disallowed_mask)) {
+        //         length -= remaining;
+        //     } else {
+        //         // let's look into the hight half now
+        //         first   = middle;
+        //         length += remaining;
+        //     }
+        // }
 
-            // non-first-characters are ignored here
-            decltype(length) remaining = 0;
-            while ((*middle & mapped_mask) == 0U) {
-                --middle;
-                ++remaining;
+
+        // Alternative Linear Search:
+        for (auto cur = first; cur != idna_mapping_table.end(); ++cur) {
+            if ((*cur & mapped_mask) == 0U) {
+                continue;
             }
-
-            if (middle == first) {
+            if ((*cur | disallowed_mask) > element) {
                 break;
             }
-            if (element < (*middle | disallowed_mask)) {
-                length -= remaining;
-            } else {
-                // let's look into the hight half now
-                first   = middle;
-                length += remaining;
-                ++length;
-            }
+            first = cur;
         }
         return first;
     }
@@ -122,7 +153,7 @@ namespace webpp::uri::idna {
         auto const cur_char   = static_cast<map_table_byte_type>(inp_ch);
         auto const pos        = find_mapping_byte(inp_ch);
         auto const first_byte = *pos;
-        auto const length     = first_byte & ~mapped_mask >> 24U;
+        auto const length     = (first_byte & ~mapped_mask) >> 24U;
 
         if ([[maybe_unused]] bool const is_disallowed = length == disallowed_mask) {
             auto const range_start = first_byte & ~disallowed_mask;
