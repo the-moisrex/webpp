@@ -73,22 +73,21 @@ namespace webpp::uri::idna {
         }
 
         map_table_byte_type const element = asked_char | disallowed_mask;
+        auto                      length  = idna_mapping_table.size();
+        auto                      chosen  = idna_mapping_table.begin(); // NOLINT(*-qualified-auto)
 
-        // this is almost the same thing as std::partition_point and std::lower_bound, but with modifications.
-        auto length = idna_mapping_table.size();
-        auto first  = idna_mapping_table.begin(); // NOLINT(*-qualified-auto)
-
+        // This is almost the same thing as std::partition_point and std::lower_bound, but with modifications.
         // ([element] [mapped] [mapped] [mapped], ...)
         //     ^      --------------------------
         //     |                 ^
         //     |                 |
         //     |     Should be ignored during binary search
         //     |
-        //   first-byte: this is the byte we should find and compare against
+        //   first-code-point: this is the element we should find and compare against
         // Binary Search:
         for (;;) {
-            length      >>= 1U;    // devided by 2
-            auto middle   = first; // NOLINT(*-qualified-auto)
+            length      >>= 1U;     // devided by 2
+            auto middle   = chosen; // NOLINT(*-qualified-auto)
             std::advance(middle, length);
 
             // non-first-characters are ignored here
@@ -110,11 +109,12 @@ namespace webpp::uri::idna {
             // ^ length += remaining
             //  ^ length >>= 1
             //  Then it's a loop.
-            if (first == middle) {
+            if (chosen == middle) {
                 stl::advance(middle, remaining);
                 ++middle;
 
-                // liniear search:
+                // Linear Search (we could use this little algorithm instead of the whole thing,
+                //                but it wouldn't be performant):
                 for (; middle != idna_mapping_table.end(); ++middle) {
                     if ((*middle & mapped_mask) == 0U) {
                         continue;
@@ -122,32 +122,18 @@ namespace webpp::uri::idna {
                     if ((*middle | disallowed_mask) > element) {
                         break;
                     }
-                    first = middle;
+                    chosen = middle;
                 }
                 break;
             }
-            if (auto const cur_element = (*middle | disallowed_mask); cur_element <= element) {
+            if (auto const cur_element = *middle | disallowed_mask; cur_element <= element) {
                 // let's look into the hight half now
-                first   = middle;
+                chosen  = middle;
                 length += remaining;
-            } else {
-                // length -= remaining;
-                // --length;
             }
         }
 
-
-        // Alternative Linear Search:
-        // for (auto cur = first; cur != idna_mapping_table.end(); ++cur) {
-        //     if ((*cur & mapped_mask) == 0U) {
-        //         continue;
-        //     }
-        //     if ((*cur | disallowed_mask) > element) {
-        //         break;
-        //     }
-        //     first = cur;
-        // }
-        return first;
+        return chosen;
     }
 
     /**
