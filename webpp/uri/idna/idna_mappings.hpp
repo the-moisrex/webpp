@@ -64,27 +64,41 @@ namespace webpp::uri::idna {
         using details::mapped_mask;
         using details::not_mapped_mask;
 
-        map_table_byte_type const byte = static_cast<map_table_byte_type>(inp_ch) | disallowed_mask;
+        map_table_byte_type const element = static_cast<map_table_byte_type>(inp_ch) | disallowed_mask;
 
         // this is almost the same thing as std::partition_point and std::lower_bound, but with modifications.
         auto length = idna_mapping_table.size();
         auto first  = idna_mapping_table.begin(); // NOLINT(*-qualified-auto)
 
-        while (length > 0) {
-            auto const half   = length >> 1U;
-            auto       middle = first; // NOLINT(*-qualified-auto)
-            std::advance(middle, half);
+        // ([element] [mapped] [mapped] [mapped], ...)
+        //     ^      --------------------------
+        //     |                 ^
+        //     |                 |
+        //     |     Should be ignored during binary search
+        //     |
+        //   first-byte: this is the byte we should find and compare against
+        for (;;) {
+            length      >>= 1U;    // devided by 2
+            auto middle   = first; // NOLINT(*-qualified-auto)
+            std::advance(middle, length);
 
             // non-first-characters are ignored here
+            decltype(length) remaining = 0;
             while ((*middle & mapped_mask) == 0U) {
                 --middle;
+                ++remaining;
             }
 
-            if ((*middle | disallowed_mask) < byte) {
-                length = length - half - 1;
-                first  = middle;
+            if (middle == first) {
+                break;
+            }
+            if (element < (*middle | disallowed_mask)) {
+                length -= remaining;
             } else {
-                length = half;
+                // let's look into the hight half now
+                first   = middle;
+                length += remaining;
+                ++length;
             }
         }
         return first;
@@ -143,6 +157,10 @@ namespace webpp::uri::idna {
         return true;
     }
 
+    /**
+     * Mapping Step of the IDNA Proccessing
+     * UTS #46: https://www.unicode.org/reports/tr46/#ProcessingStepMap
+     */
     template <bool UseSTD3ASCIIRules = false, istl::String OutStrT, typename Iter>
     [[nodiscard]] static constexpr bool map(Iter beg, Iter end, OutStrT& out) {
         using details::idna_reference_table;
