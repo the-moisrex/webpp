@@ -263,8 +263,6 @@ class MapTable extends TableTraits {
         console.log(`Splitting: ${page}-${page_end}; block length: ${
             page_end - page}; remaining: ${remaining}`);
       }
-      // this.map(page - this.lengthLimit, end, mappedTo);
-      // console.log(`Splitting: ${page - this.lengthLimit}-${end}`);
       return true;
     }
     return false;

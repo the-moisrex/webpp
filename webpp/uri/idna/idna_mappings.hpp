@@ -68,8 +68,8 @@ namespace webpp::uri::idna {
 
         // anything bigger than the last element is disallowed
         if ((asked_char & disallowed_mask) != 0U) {
-            auto const last_element = idna_mapping_table.begin() + (idna_mapping_table.size() - 1);
-            return last_element;
+            // last element:
+            return idna_mapping_table.begin() + (idna_mapping_table.size() - 1);
         }
 
         map_table_byte_type const element = asked_char | disallowed_mask;
@@ -86,52 +86,67 @@ namespace webpp::uri::idna {
         //     |
         //   first-byte: this is the byte we should find and compare against
         // Binary Search:
-        // for (;;) {
-        //     length      >>= 1U;    // devided by 2
-        //     auto middle   = first; // NOLINT(*-qualified-auto)
-        //     std::advance(middle, length);
-        //
-        //     // non-first-characters are ignored here
-        //     decltype(length) remaining = 0;
-        //     while ((*middle & mapped_mask) == 0U) {
-        //         --middle;
-        //         ++remaining;
-        //     }
-        //
-        //     if (first == middle) {
-        //         stl::advance(middle, remaining);
-        //         ++middle;
-        //         while ((*middle & mapped_mask) == 0U) {
-        //             ++middle;
-        //         }
-        //
-        //         if (element >= (*middle | disallowed_mask)) {
-        //             first = middle;
-        //             break;
-        //         }
-        //
-        //         break;
-        //     }
-        //     if (element < (*middle | disallowed_mask)) {
-        //         length -= remaining;
-        //     } else {
-        //         // let's look into the hight half now
-        //         first   = middle;
-        //         length += remaining;
-        //     }
-        // }
+        for (;;) {
+            length      >>= 1U;    // devided by 2
+            auto middle   = first; // NOLINT(*-qualified-auto)
+            std::advance(middle, length);
+
+            // non-first-characters are ignored here
+            decltype(length) remaining = 0;
+            while ((*middle & mapped_mask) == 0U) {
+                --middle;
+                ++remaining;
+            }
+
+            // Why we need linear search in the middle of a binary search:
+            //    if this last one is the result,
+            //    dots are ignored characters, and
+            //    '1' is the code-point we have to check.
+            //     /
+            // 1..X
+            //  ^ length >>= 1
+            // ^ length += remaining
+            //  ^ length >>= 1
+            // ^ length += remaining
+            //  ^ length >>= 1
+            //  Then it's a loop.
+            if (first == middle) {
+                stl::advance(middle, remaining);
+                ++middle;
+
+                // liniear search:
+                for (; middle != idna_mapping_table.end(); ++middle) {
+                    if ((*middle & mapped_mask) == 0U) {
+                        continue;
+                    }
+                    if ((*middle | disallowed_mask) > element) {
+                        break;
+                    }
+                    first = middle;
+                }
+                break;
+            }
+            if (auto const cur_element = (*middle | disallowed_mask); cur_element <= element) {
+                // let's look into the hight half now
+                first   = middle;
+                length += remaining;
+            } else {
+                // length -= remaining;
+                // --length;
+            }
+        }
 
 
         // Alternative Linear Search:
-        for (auto cur = first; cur != idna_mapping_table.end(); ++cur) {
-            if ((*cur & mapped_mask) == 0U) {
-                continue;
-            }
-            if ((*cur | disallowed_mask) > element) {
-                break;
-            }
-            first = cur;
-        }
+        // for (auto cur = first; cur != idna_mapping_table.end(); ++cur) {
+        //     if ((*cur & mapped_mask) == 0U) {
+        //         continue;
+        //     }
+        //     if ((*cur | disallowed_mask) > element) {
+        //         break;
+        //     }
+        //     first = cur;
+        // }
         return first;
     }
 
