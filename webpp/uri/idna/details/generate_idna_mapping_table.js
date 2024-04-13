@@ -153,14 +153,14 @@ class MappingReferenceTable extends TableTraits {
 /**
  * A table for list of mapped characters
  *
- * First Byte Rules:
+ * First Code Point Rules:
  *   - [1bit = 1] + [7bit = length] + [24bit = start]
  *   - start  = is the start of the range
  *   - length = the length of the range
  *   - (byte & 0x80000000 == 0x80000000) meaning far left bit is 0b1
  *   - if it starts with 0xFF000000, then it's a disabled range
  *
- * Bytes after the First Byte:
+ * Bytes after the First Code Point:
  *   - Their far left bit will never be 0b1,
  *     that means (byte & 0x80000000 == 0b0)
  *   - You have to continue reading everything after each byte, until
@@ -173,6 +173,10 @@ class MappingReferenceTable extends TableTraits {
  *             it's first element starts with a 0x80000000, and
  *             anything after that is considered as what you need to
  *             map the range to.
+ *
+ *   - Sequenced Mapped:
+ *             [[1bit = 1] [7bits = length] [24bits = range-start]]
+ *           + [[1bit = 0] [7bits = 1]      [24bits = mapped-value]];
  *
  *   - Ignored: It's equivalent of mapping to empty string
  *
@@ -191,6 +195,7 @@ class MapTable extends TableTraits {
   mappedMask = 0x80000000;
   lengthLimit = 126; // We have 7 bits, but 0xFF would equal to disallowedMask
   endingCodePoint = 0xFFFFFFFF; // this.disallowedMask | 0x00FFFFFF;
+  sequencedMask = 0x7F000000;   // 0b0111'1111'0000'0...
 
   constructor(max) {
     super(max, uint32);
@@ -204,30 +209,113 @@ class MapTable extends TableTraits {
     this.mappedCount = 0;
     this.disallowedCount = 0;
     this.ignoredCount = 0;
+    this.sequencedMappingCount = 0;
   }
 
-  simplify(start, end, action) {
+  /// Optimization technique:
+  ///   Some mapped characters are like this:
+  ///   0041          ; mapped                 ; 0061
+  ///   0042          ; mapped                 ; 0062
+  ///   0043          ; mapped                 ; 0063
+  ///   0044          ; mapped                 ; 0064
+  ///   0045          ; mapped                 ; 0065
+  ///   0046          ; mapped                 ; 0066
+  ///   0047          ; mapped                 ; 0067
+  ///   0048          ; mapped                 ; 0068
+  ///   0049          ; mapped                 ; 0069
+  ///   004A          ; mapped                 ; 006A
+  ///   004B          ; mapped                 ; 006B
+  ///   004C          ; mapped                 ; 006C
+  ///   004D          ; mapped                 ; 006D
+  ///   004E          ; mapped                 ; 006E
+  ///   004F          ; mapped                 ; 006F
+  ///   0050          ; mapped                 ; 0070
+  ///   0051          ; mapped                 ; 0071
+  ///   0052          ; mapped                 ; 0072
+  ///   0053          ; mapped                 ; 0073
+  ///   0054          ; mapped                 ; 0074
+  ///   0055          ; mapped                 ; 0075
+  ///   0056          ; mapped                 ; 0076
+  ///   0057          ; mapped                 ; 0077
+  ///   0058          ; mapped                 ; 0078
+  ///   0059          ; mapped                 ; 0079
+  ///   005A          ; mapped                 ; 007A
+  sequenceFinder(start, end, mappedTo) {
+    const is_sequenced =
+        this.prevAction === this.e_mapped &&
+        // table is empty of mappings:
+        this.length >= 2 &&
+        // ranges are excluded:
+        start === end &&
+        // current character is the next character of the last mapped character:
+        this.lastStart === (start - 1) &&
+        // only one mapped character makes sense:
+        this.lastMapped.length === 1 && mappedTo.length === 1 &&
+        // what the last character is mapped to, is what is current character is
+        // mapped to plus 1:
+        this.lastMapped[0] === (mappedTo[0] - 1);
+
+    if (is_sequenced) {
+      ++this.sequencedMappingCount;
+      const lastLength =
+          (this.bytes[this.index - 2] & this.sequencedMask) >> 24;
+      console.log(`Sequenced Mapping: ${this.lastStart}-${start} ` +
+                  `== maps to ==> ${this.lastMapped[0]}-${
+                      mappedTo[0]}, length = ${lastLength + 1}`);
+    }
+    this.lastStart = start;
+    this.lastMapped = mappedTo;
+    return is_sequenced;
+  }
+
+  get lastCodePoint() { return this.bytes[this.index - 1]; }
+
+  set lastCodePoint(codePoint) { this.bytes[this.index - 1] = codePoint; }
+
+  /// Un-Sequence the current index
+  unSequence() {
+    const is_already_sequenced =
+        (this.lastCodePoint & this.sequencedMask) === this.sequencedMask;
+    console
+        .log(`Modifying (${is_already_sequenced ? "Already" : "Newly"}) ${
+            this.bytes[this.index - 2]} and ${this.bytes[this.index - 1]}`)
+
+        // add 1, to the length
+        this.bytes[this.index - 2] += 0x1000000; // 0b1 <<< 24
+
+    // converting it to sequence
+    this.bytes[this.index - 1] |= this.sequencedMask;
+  }
+
+  simplify(start, end, action, mappedTo = []) {
     const isSimplified = (() => {
+      const isSequenced = this.sequenceFinder(start, end, mappedTo);
       if (this.prevAction !== action || this.prevRangeEnd !== (start - 1)) {
         return false;
       }
       switch (action) {
       case this.e_disallowed:
-        this.bytes[this.index - 1] = end;
+        this.lastCodePoint = end;
         return true;
       case this.e_mapped:
-        // todo: next character, maps to the next mapped character, optimization
+        // next character, maps to the next mapped character, optimization
+        if (isSequenced) {
+          this.unSequence();
+          return true;
+        }
+        break;
       }
       return false;
     })();
+    const currentLength = end - start + 1;
     this.prevAction = action;
-    this.prevLength = (end - start) + this.prevLength;
+    this.prevLength = currentLength + this.prevLength;
     this.prevRangeEnd = end;
     if (isSimplified) {
       ++this.simplifiedCount;
       this.simplifiedBits += this.savesIfSimplified(action);
       console.log(`Simplified (${action.description}): ${start}-${
-          end} (count: ${end - start})`)
+          end} (count: ${currentLength})`)
     }
     return isSimplified;
   }
@@ -274,7 +362,7 @@ class MapTable extends TableTraits {
       return;
     }
     mappingSanityCheck(start, end);
-    if (this.simplify(start, end, this.e_mapped)) {
+    if (this.simplify(start, end, this.e_mapped, mappedTo)) {
       return;
     }
 
@@ -285,15 +373,15 @@ class MapTable extends TableTraits {
     }
 
     const length = end - start;
-    let byte = start;
+    let codePoint = start;
 
-    // Adding length to the byte
-    byte |= length << 24;
+    // Adding length to the CodePoint
+    codePoint |= length << 24;
 
-    // Enabling far left bit to show that this is a "First Byte"
-    byte |= this.mappedMask;
+    // Enabling far left bit to show that this is a "First CodePoint"
+    codePoint |= this.mappedMask;
 
-    this.bytes[this.index] = byte;
+    this.bytes[this.index] = codePoint;
     ++this.index;
 
     /// Appending the mappedTo bytes
@@ -318,7 +406,7 @@ class MapTable extends TableTraits {
 
     let byte = start;
 
-    // Making it a "First Byte" and make sure it's marked as "disallowed"
+    // Making it a "First Code Point" and make sure it's marked as "disallowed"
     byte |= this.disallowedMask;
 
     this.bytes[this.index] = byte;
@@ -331,7 +419,8 @@ class MapTable extends TableTraits {
   finish() {
     // add a valid first-byte at the end for simplifying the algorithm, so we
     // won't have to check the length of the array while performing mapping.
-    this.bytes[this.index++] = this.endingCodePoint;
+    this.bytes[this.index] = this.endingCodePoint;
+    ++this.index;
   }
 
   get length() { return this.index; }
@@ -340,17 +429,21 @@ class MapTable extends TableTraits {
     let pos = 0;
     const postfix = this.postfix;
     for (; pos !== this.length;) {
-      const byte = this.bytes[pos];
-      const is_first_byte = (byte >>> 31) === 0b1;
-      const is_disallowed = (byte >>> 24) === (this.disallowedMask >>> 24);
-      appendFunc(`${byte}${postfix} `);
-      if (byte === this.endingCodePoint) {
+      const codePoint = this.bytes[pos];
+      const is_first_byte = (codePoint >>> 31) === 0b1;
+      const is_disallowed = (codePoint >>> 24) === (this.disallowedMask >>> 24);
+      appendFunc(`${codePoint}${postfix} `);
+      if (codePoint === this.endingCodePoint) {
         appendFunc('/* Ending Code Point */');
       } else if (is_disallowed) {
         appendFunc('/* Disallowed */');
       } else if (is_first_byte) {
         if ((pos + 1 !== this.length) && (this.bytes[pos + 1] >>> 31) === 0b1) {
           appendFunc('/* Ignored */');
+        } else if ((this.bytes[pos + 1] &
+                    (this.mappedMask | this.sequencedMask)) ===
+                   this.sequencedMask) {
+          appendFunc('/* Sequenced Mapped */');
         } else {
           appendFunc('/* Mapped */');
         }
@@ -534,6 +627,7 @@ namespace webpp::uri::idna::details {
       mappedTable = table;
       simplifiedCount += table.simplifiedCount;
       bitsSaved += table.simplifiedBits;
+      bitsSaved += table?.sequencedMappingCount * table?.sizeof * 2;
     }
     await decorateTable(table);
   }
@@ -548,6 +642,8 @@ namespace webpp::uri::idna::details {
   console.log(`  Mapped count: ${mappedTable.mappedCount}`);
   console.log(`  Ignored count: ${mappedTable.ignoredCount}`);
   console.log(`  Disallowed count: ${mappedTable.disallowedCount}`);
+  console.log(
+      `  Sequenced Mapping count: ${mappedTable.sequencedMappingCount}`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file

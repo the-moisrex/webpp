@@ -3,7 +3,6 @@
 #ifndef WEBPP_URI_IDNA_MAPPINGS_HPP
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
-#include "../../std/algorithm.hpp"
 #include "../../std/string.hpp"
 #include "../../std/type_traits.hpp"
 #include "../../strings/unicode.hpp"
@@ -18,7 +17,10 @@ namespace webpp::uri::idna {
 
         static constexpr map_table_byte_type disallowed_mask = 0xFF00'0000;
         static constexpr map_table_byte_type mapped_mask     = 0x8000'0000;
-        static constexpr map_table_byte_type not_mapped_mask = disallowed_mask & mapped_mask;
+        static constexpr map_table_byte_type sequenced_mask  = 0x7F00'0000; // 0b0111'1111'0000'0...
+
+        // this is in order to check if the code point is a "sequenced code point" or not
+        static constexpr map_table_byte_type sequenced_check_mask = sequenced_mask | mapped_mask;
 
         // We have 7 bits, but 0xFF would equal to disallowedMask
         static constexpr map_table_byte_type length_limit = 126;
@@ -28,14 +30,14 @@ namespace webpp::uri::idna {
       /**
        * A table for list of mapped characters
        *
-       * First Byte Rules:
+       * First Code Point Rules:
        *   - [1bit = 1] + [7bit = length] + [24bit = start]
        *   - start  = is the start of the range
        *   - length = the length of the range
        *   - (byte & 0x80000000 == 0x80000000) meaning far left bit is 0b1
        *   - if it starts with 0xFF000000, then it's a disabled range
        *
-       * Bytes after the First Byte:
+       * Bytes after the First Code Point:
        *   - Their far left bit will never be 0b1,
        *     that means (byte & 0x80000000 == 0b0)
        *   - You have to continue reading everything after each byte, until
@@ -48,6 +50,10 @@ namespace webpp::uri::idna {
        *             it's first element starts with a 0x80000000, and
        *             anything after that is considered as what you need to
        *             map the range to.
+       *
+       *   - Sequenced Mapped:
+       *             [[1bit = 1] [7bits = length] [24bits = range-start]]
+       *           + [[1bit = 0] [7bits = 1]      [24bits = mapped-value]];
        *
        *   - Ignored: It's equivalent of mapping to empty string
        *
@@ -62,7 +68,6 @@ namespace webpp::uri::idna {
         using details::idna_mapping_table;
         using details::map_table_byte_type;
         using details::mapped_mask;
-        using details::not_mapped_mask;
 
         auto const asked_char = static_cast<map_table_byte_type>(inp_ch);
 
@@ -127,7 +132,7 @@ namespace webpp::uri::idna {
                 break;
             }
             if (auto const cur_element = *middle | disallowed_mask; cur_element <= element) {
-                // let's look into the hight half now
+                // let's look into the upper half now
                 chosen  = middle;
                 length += remaining;
             }
@@ -153,11 +158,11 @@ namespace webpp::uri::idna {
 
         auto const cur_char   = static_cast<map_table_byte_type>(inp_ch);
         auto const pos        = find_mapping_byte(inp_ch);
-        auto const first_byte = *pos;
-        auto const length     = (first_byte & ~mapped_mask) >> 24U;
+        auto const first_code_point = *pos;
+        auto const length           = (first_code_point & ~mapped_mask) >> 24U;
 
         if ([[maybe_unused]] bool const is_disallowed = length == disallowed_mask) {
-            auto const range_start = first_byte & ~disallowed_mask;
+            auto const range_start = first_code_point & ~disallowed_mask;
             auto const range_end   = *stl::next(pos);
 
             // we don't realy need to check this because the all the senarios that this would not be true, the
@@ -168,19 +173,29 @@ namespace webpp::uri::idna {
 
         // mapping, or ignoring a character:
         {
-            auto const range_start = first_byte & ~disallowed_mask;
-            auto const range_end   = range_start + length;
+            auto const range_start          = first_code_point & ~disallowed_mask;
+            auto const range_end            = range_start + length;
+            auto const next_pos             = stl::next(pos);
+            bool const is_sequenced_mapping = *next_pos & details::sequenced_check_mask;
 
             // we don't really need to check the range because all the senarios that this would either be
             // caught by the "reference table", or it's already detected that it's an invalid character.
             assert(cur_char >= range_start && cur_char <= range_end);
 
-            // loop until we find the next "first-byte"
-            // we don't need to check the length of the array, there's a valid `first-byte` character at the
-            // end of the table intentionally inserted for this purpose.
-            for (auto cur_pos = stl::next(pos); (*cur_pos & mapped_mask) == 0; ++cur_pos) {
+            if (is_sequenced_mapping) {
+                // It's a sequenced mapping
+                auto const diff       = cur_char - range_start;
+                auto const code_point = *next_pos + diff;
                 // todo: conver to utf-8
                 // out.append(*cur_pos);
+            } else {
+                // loop until we find the next "first-code-point"
+                // we don't need to check the length of the array, there's a valid `first-code-point`
+                // character at the end of the table intentionally inserted for this purpose.
+                for (auto cur_pos = next_pos; (*cur_pos & mapped_mask) == 0; ++cur_pos) {
+                    // todo: conver to utf-8
+                    // out.append(*cur_pos);
+                }
             }
         }
 
