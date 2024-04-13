@@ -58,22 +58,22 @@ namespace webpp::unicode {
 
     template <typename octet_type>
     static constexpr bool is_trail(octet_type oct) noexcept {
-        return ((mask8(oct) >> 6) == 0x2);
+        return (mask8(oct) >> 6) == 0x2;
     }
 
     template <typename u16>
     static constexpr bool is_lead_surrogate(u16 code_point) noexcept {
-        return (code_point >= lead_surrogate_min<u16> && code_point <= lead_surrogate_max<u16>);
+        return code_point >= lead_surrogate_min<u16> && code_point <= lead_surrogate_max<u16>;
     }
 
     template <typename u16>
     static constexpr bool is_trail_surrogate(u16 code_point) noexcept {
-        return (code_point >= trail_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>);
+        return code_point >= trail_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
     template <typename u16>
     static constexpr bool is_surrogate(u16 code_point) noexcept {
-        return (code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>);
+        return code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
     /*
@@ -86,7 +86,7 @@ namespace webpp::unicode {
      */
     template <typename u32>
     static constexpr bool is_code_point_valid(u32 code_point) noexcept {
-        return (code_point) < 0x11'0000 && ((code_point & 0xFFFF'F800) != 0xD800);
+        return code_point < 0x11'0000 && ((code_point & 0xFFFF'F800) != 0xD800);
         // alternative implementation:
         // return (cp <= code_point_max<u32> && !is_surrogate(cp));
     }

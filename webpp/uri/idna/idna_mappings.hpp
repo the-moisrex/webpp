@@ -22,7 +22,7 @@ namespace webpp::uri::idna {
         // this is in order to check if the code point is a "sequenced code point" or not
         static constexpr map_table_byte_type sequenced_check_mask = sequenced_mask | mapped_mask;
 
-        // We have 7 bits, but 0xFF would equal to disallowedMask
+        // We have 7 bits, but 0xFF would equal to disallowed_mask
         static constexpr map_table_byte_type length_limit = 126;
 
     } // namespace details
@@ -185,16 +185,18 @@ namespace webpp::uri::idna {
             if (is_sequenced_mapping) {
                 // It's a sequenced mapping
                 auto const diff       = cur_char - range_start;
-                auto const code_point = *next_pos + diff;
+                auto const code_point  = (*next_pos & ~disallowed_mask) + diff;
                 // todo: conver to utf-8
-                // out.append(*cur_pos);
+                out                   += static_cast<CharT>(code_point);
             } else {
                 // loop until we find the next "first-code-point"
                 // we don't need to check the length of the array, there's a valid `first-code-point`
                 // character at the end of the table intentionally inserted for this purpose.
                 for (auto cur_pos = next_pos; (*cur_pos & mapped_mask) == 0; ++cur_pos) {
+                    auto const code_point  = *cur_pos & ~disallowed_mask;
                     // todo: conver to utf-8
                     // out.append(*cur_pos);
+                    out                   += static_cast<CharT>(code_point);
                 }
             }
         }
