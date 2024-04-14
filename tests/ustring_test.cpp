@@ -1,6 +1,6 @@
 // Created by moisrex on 12/21/20.
 
-#include "../webpp/strings/ustring.hpp"
+#include "../webpp/unicode/ustring.hpp"
 
 #include "common/tests_common_pch.hpp"
 

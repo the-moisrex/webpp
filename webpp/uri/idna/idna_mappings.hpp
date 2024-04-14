@@ -5,7 +5,7 @@
 
 #include "../../std/string.hpp"
 #include "../../std/type_traits.hpp"
-#include "../../strings/unicode.hpp"
+#include "../../unicode/unicode.hpp"
 #include "./details/idna_mapping_table.hpp"
 
 namespace webpp::uri::idna {

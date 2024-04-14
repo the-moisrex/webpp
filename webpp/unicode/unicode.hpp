@@ -4,21 +4,10 @@
 #define WEBPP_UNICODE_HPP
 
 #include "../std/type_traits.hpp"
+#include "./unicode_concepts.hpp"
 
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp::unicode {
-
-    template <typename T>
-    concept UTF8 = (sizeof(T) == sizeof(char8_t));
-
-    template <typename T>
-    concept UTF16 = (sizeof(T) == sizeof(char16_t));
-
-    template <typename T>
-    concept WChar = (sizeof(T) >= sizeof(char32_t));
-
-    template <typename T>
-    concept UTF32 = WChar<T>;
 
 
     // Leading (high) surrogates: 0xd800 - 0xdbff
@@ -103,8 +92,8 @@ namespace webpp::unicode {
         if constexpr (is_utf16) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
-                val                  <<= sizeof(char16_t) * 8U;
-                auto const next_val    = pos + 1U;
+                val                 <<= sizeof(char16_t) * 8U;
+                auto const next_val   = pos + 1U;
                 val                  |= *next_val;
                 return val;
             }
@@ -118,14 +107,14 @@ namespace webpp::unicode {
             if ((val & 0xE0U) == 0xC0U) {
                 // we have 2 chars
                 val                 <<= shift_bit_count;
-                auto const next_val    = pos + 1U;
+                auto const next_val   = pos + 1U;
                 val                  |= *next_val;
                 return val;
             }
             if ((val & 0xF0U) == 0xE0U) {
                 // we have 3 chars
                 val           <<= shift_bit_count;
-                auto next_val    = pos + 1U;
+                auto next_val   = pos + 1U;
                 val            |= *next_val;
                 val           <<= shift_bit_count;
                 ++next_val;
@@ -135,7 +124,7 @@ namespace webpp::unicode {
             if ((val & 0xF8U) == 0xF0U) {
                 // we have 4 chars
                 val           <<= shift_bit_count;
-                auto next_val    = pos + 1U;
+                auto next_val   = pos + 1U;
                 val            |= *next_val;
                 val           <<= shift_bit_count;
                 ++next_val;

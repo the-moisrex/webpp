@@ -28,11 +28,6 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/extensions/extension.hpp
 
         ${LIB_INCLUDE_DIR}/strings/istring.hpp
-        ${LIB_INCLUDE_DIR}/strings/unicode.hpp
-        ${LIB_INCLUDE_DIR}/strings/ustring.hpp
-        ${LIB_INCLUDE_DIR}/strings/ustring_iterator.hpp
-        ${LIB_INCLUDE_DIR}/strings/unicode_ptr.hpp
-        ${LIB_INCLUDE_DIR}/strings/unicode_char_traits.hpp
         ${LIB_INCLUDE_DIR}/strings/fixed_string.hpp
         ${LIB_INCLUDE_DIR}/strings/to_case.hpp
         ${LIB_INCLUDE_DIR}/strings/iequals.hpp
@@ -48,6 +43,13 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/strings/join.hpp
         ${LIB_INCLUDE_DIR}/strings/hex.hpp
         ${LIB_INCLUDE_DIR}/strings/peek.hpp
+
+        ${LIB_INCLUDE_DIR}/unicode/unicode_concepts.hpp
+        ${LIB_INCLUDE_DIR}/unicode/unicode.hpp
+        ${LIB_INCLUDE_DIR}/unicode/unicode_ptr.hpp
+        ${LIB_INCLUDE_DIR}/unicode/unicode_char_traits.hpp
+        ${LIB_INCLUDE_DIR}/unicode/ustring.hpp
+        ${LIB_INCLUDE_DIR}/unicode/ustring_iterator.hpp
 
         ${LIB_INCLUDE_DIR}/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/traits/enable_traits.hpp
