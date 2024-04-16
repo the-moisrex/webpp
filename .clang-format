@@ -238,3 +238,5 @@ BasedOnStyle: llvm
 ---
 Language: JavaScript
 BasedOnStyle: LLVM
+ColumnLimit: 110
+TabWidth: 4

@@ -1,0 +1,9 @@
+BasedOnStyle: InheritParentConfig
+IntegerLiteralSeparator:
+  Binary: 4
+  BinaryMinDigits: 4
+  Decimal: 3
+  DecimalMinDigits: 12
+  Hex: 4
+  HexMinDigits: 12
+BreakArrays: false

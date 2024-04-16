@@ -7,8 +7,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const fileUrl =
-    'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
+const fileUrl = 'https://www.unicode.org/Public/idna/latest/IdnaMappingTable.txt';
 const cacheFilePath = 'IdnaMappingTable.txt';
 const outFilePath = `idna_mapping_table.hpp`;
 
@@ -48,23 +47,19 @@ const start = async () => {
 
 const cleanComments = line => line.split('#')[0].trimEnd()
 const splitLine = line => line.split(';').map(seg => seg.trim());
-const findVersion = fileContent =>
-    fileContent.match(/Version: (\d+\.\d+\.\d+)/)[1];
+const findVersion = fileContent => fileContent.match(/Version: (\d+\.\d+\.\d+)/)[1];
 const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
 const parseCodePoints = codePoints => {
-  let [rangeStart, rangeEnd] =
-      codePoints.split('..').map(codePoint => parseInt(codePoint, 16));
+  let [rangeStart, rangeEnd] = codePoints.split('..').map(codePoint => parseInt(codePoint, 16));
   rangeEnd = rangeEnd || rangeStart;
   return [ rangeStart, rangeEnd ];
 };
-const parseMappedCodePoints = codePoints =>
-    codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
+const parseMappedCodePoints = codePoints => codePoints.split(" ").map(codePoint => parseInt(codePoint, 16));
 const mappingSanityCheck = (rangeStart, rangeEnd) => {
   const length = rangeEnd - rangeStart;
   if (length > 127) { // We only have 7 bits to store a length
-    throw new Error(
-        `We only have 7bits to store a length, we found a range with the length of ${
-            length}; starts with ${rangeStart} and ends with ${rangeEnd}.`);
+    throw new Error(`We only have 7bits to store a length, we found a range with the length of ${
+        length}; starts with ${rangeStart} and ends with ${rangeEnd}.`);
   }
 };
 
@@ -102,6 +97,7 @@ class TableTraits {
   }
 
   get typeString() { return this.type.description; }
+
   get postfix() { return this.type === uint8 ? "U" : "ULL"; }
 }
 
@@ -193,7 +189,7 @@ class MapTable extends TableTraits {
 
   disallowedMask = 0xFF000000;
   mappedMask = 0x80000000;
-  lengthLimit = 126; // We have 7 bits, but 0xFF would equal to disallowedMask
+  lengthLimit = 126;            // We have 7 bits, but 0xFF would equal to disallowedMask
   endingCodePoint = 0xFFFFFFFF; // this.disallowedMask | 0x00FFFFFF;
   sequencedMask = 0x7F000000;   // 0b0111'1111'0000'0...
 
@@ -241,27 +237,24 @@ class MapTable extends TableTraits {
   ///   0059          ; mapped                 ; 0079
   ///   005A          ; mapped                 ; 007A
   sequenceFinder(start, end, mappedTo) {
-    const is_sequenced =
-        this.prevAction === this.e_mapped &&
-        // table is empty of mappings:
-        this.length >= 2 &&
-        // ranges are excluded:
-        start === end &&
-        // current character is the next character of the last mapped character:
-        this.lastStart === (start - 1) &&
-        // only one mapped character makes sense:
-        this.lastMapped.length === 1 && mappedTo.length === 1 &&
-        // what the last character is mapped to, is what is current character is
-        // mapped to plus 1:
-        this.lastMapped[0] === (mappedTo[0] - 1);
+    const is_sequenced = this.prevAction === this.e_mapped &&
+                         // table is empty of mappings:
+                         this.length >= 2 &&
+                         // ranges are excluded:
+                         start === end &&
+                         // current character is the next character of the last mapped character:
+                         this.lastStart === (start - 1) &&
+                         // only one mapped character makes sense:
+                         this.lastMapped.length === 1 && mappedTo.length === 1 &&
+                         // what the last character is mapped to, is what is current character is
+                         // mapped to plus 1:
+                         this.lastMapped[0] === (mappedTo[0] - 1);
 
     if (is_sequenced) {
       ++this.sequencedMappingCount;
-      const lastLength =
-          (this.bytes[this.index - 2] & this.sequencedMask) >> 24;
+      const lastLength = (this.bytes[this.index - 2] & this.sequencedMask) >> 24;
       console.log(`Sequenced Mapping: ${this.lastStart}-${start} ` +
-                  `== maps to ==> ${this.lastMapped[0]}-${
-                      mappedTo[0]}, length = ${lastLength + 1}`);
+                  `== maps to ==> ${this.lastMapped[0]}-${mappedTo[0]}, length = ${lastLength + 1}`);
     }
     this.lastStart = start;
     this.lastMapped = mappedTo;
@@ -274,11 +267,10 @@ class MapTable extends TableTraits {
 
   /// Un-Sequence the current index
   unSequence() {
-    const is_already_sequenced =
-        (this.lastCodePoint & this.sequencedMask) === this.sequencedMask;
+    const is_already_sequenced = (this.lastCodePoint & this.sequencedMask) === this.sequencedMask;
     console
-        .log(`Modifying (${is_already_sequenced ? "Already" : "Newly"}) ${
-            this.bytes[this.index - 2]} and ${this.bytes[this.index - 1]}`)
+        .log(`Modifying (${is_already_sequenced ? "Already" : "Newly"}) ${this.bytes[this.index - 2]} and ${
+            this.bytes[this.index - 1]}`)
 
         // add 1, to the length
         this.bytes[this.index - 2] += 0x1000000; // 0b1 <<< 24
@@ -314,8 +306,7 @@ class MapTable extends TableTraits {
     if (isSimplified) {
       ++this.simplifiedCount;
       this.simplifiedBits += this.savesIfSimplified(action);
-      console.log(`Simplified (${action.description}): ${start}-${
-          end} (count: ${currentLength})`)
+      console.log(`Simplified (${action.description}): ${start}-${end} (count: ${currentLength})`)
     }
     return isSimplified;
   }
@@ -348,8 +339,8 @@ class MapTable extends TableTraits {
         const page_end = Math.min(page + this.lengthLimit, end);
         this.map(page, page_end, mappedTo);
         remaining = end - page_end;
-        console.log(`Splitting: ${page}-${page_end}; block length: ${
-            page_end - page}; remaining: ${remaining}`);
+        console.log(
+            `Splitting: ${page}-${page_end}; block length: ${page_end - page}; remaining: ${remaining}`);
       }
       return true;
     }
@@ -425,35 +416,39 @@ class MapTable extends TableTraits {
 
   get length() { return this.index; }
 
-  serializeTable(appendFunc, cols = 20 - this.sizeof) {
+  serializeTable(appendFunc) {
     let pos = 0;
     const postfix = this.postfix;
+
+    let spaces = Array(7).map(c => ' ');
+    spaces[0] = '\n';
+    spaces = spaces.join(' ');
+
+    appendFunc(`${spaces}// clang-format off`);
     for (; pos !== this.length;) {
       const codePoint = this.bytes[pos];
       const is_first_byte = (codePoint >>> 31) === 0b1;
       const is_disallowed = (codePoint >>> 24) === (this.disallowedMask >>> 24);
-      appendFunc(`${codePoint}${postfix} `);
+      let noBreak = false;
       if (codePoint === this.endingCodePoint) {
-        appendFunc('/* Ending Code Point */');
+        appendFunc(`${spaces}/* Ending Code Point: */`);
       } else if (is_disallowed) {
-        appendFunc('/* Disallowed */');
+        appendFunc(`${spaces}/* Disallowed:        */`);
       } else if (is_first_byte) {
         if ((pos + 1 !== this.length) && (this.bytes[pos + 1] >>> 31) === 0b1) {
-          appendFunc('/* Ignored */');
-        } else if ((this.bytes[pos + 1] &
-                    (this.mappedMask | this.sequencedMask)) ===
-                   this.sequencedMask) {
-          appendFunc('/* Sequenced Mapped */');
+          appendFunc(`${spaces}/* Ignored:           */`);
+        } else if ((this.bytes[pos + 1] & (this.mappedMask | this.sequencedMask)) === this.sequencedMask) {
+          appendFunc(`${spaces}/* Sequenced Mapped:  */`);
         } else {
-          appendFunc('/* Mapped */');
+          appendFunc(`${spaces}/* Mapped:            */`);
         }
+      } else {
+        noBreak = true;
       }
-      appendFunc(`, `);
+      appendFunc(` ${codePoint}${postfix}, `);
       ++pos;
-      if (pos % cols === 0) {
-        appendFunc('\n');
-      }
     }
+    appendFunc(`${spaces}// clang-format on`);
   }
 }
 
@@ -534,8 +529,7 @@ const processCachedFile =
     }
 
     // Process each line here
-    console.log(index, rangeStart, rangeEnd, status, mappedValues,
-                IDNA2008Status);
+    console.log(index, rangeStart, rangeEnd, status, mappedValues, IDNA2008Status);
     return `${codePoints}`;
   });
 
@@ -566,8 +560,7 @@ const decorateTable = async table => {
      *   - in bytes:      ${bitLength / 8} B
      *   - in KibiBytes:  ${Math.ceil(bitLength / 8 / 1024)} KiB
      */
-    static constexpr std::array<std::${table.typeString}_t, ${
-      table.length}ULL> ${table.name}{
+    static constexpr std::array<std::${table.typeString}_t, ${table.length}ULL> ${table.name}{
   `;
   const footer = `
     };
@@ -642,8 +635,7 @@ namespace webpp::uri::idna::details {
   console.log(`  Mapped count: ${mappedTable.mappedCount}`);
   console.log(`  Ignored count: ${mappedTable.ignoredCount}`);
   console.log(`  Disallowed count: ${mappedTable.disallowedCount}`);
-  console.log(
-      `  Sequenced Mapping count: ${mappedTable.sequencedMappingCount}`);
+  console.log(`  Sequenced Mapping count: ${mappedTable.sequencedMappingCount}`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file
