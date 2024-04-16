@@ -7,6 +7,14 @@ of the protocol and is sometimes referred to as **IDNA 2008**.
 This library also provides support for Unicode Technical
 Standard 46, [Unicode IDNA Compatibility Processing](https://unicode.org/reports/tr46/).
 
+### Standards that are implemented:
+
+| Name                                  | Standard                                                     | Usage                        | Version | Last Updated |
+|---------------------------------------|--------------------------------------------------------------|------------------------------|---------|--------------|
+| Unicode IDNA Compatibility Processing | [UTS #46](https://www.unicode.org/reports/tr46/tr46-31.html) | [URL Standard](../README.md) | 15.1.0  | 2023-09-05   |
+
+**Please**: if there's a new version of these documents, notify us or help us update the codes to the latest versions.
+
 ### Labels
 
 [According to UTS #46](https://www.unicode.org/reports/tr46/#Notation), **A label is a substring of a domain name**.

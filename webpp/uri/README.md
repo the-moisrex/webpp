@@ -1,5 +1,16 @@
 # URL / URI
+
 In this directory you can find URI related algorithms and structures.
+
+### Standards
+
+| Name                        | Standard                                                                                               | Usage                     | Version | Last Updated  |
+|-----------------------------|--------------------------------------------------------------------------------------------------------|---------------------------|---------|---------------|
+| WHATWG's URL Standard       | [URL Standard](https://url.spec.whatwg.org/commit-snapshots/1c3e6ed5995938fb082e50dcc4fccef1b7413bd4/) | Router, HTML Headers, ... |         | 25 March 2024 |
+| Unicode Normalization Forms | Read [unicode / README](../unicode/README.md)                                                          |                           |         |               |
+| IDNA                        | Read [idna / README](./idna/README.md)                                                                 |                           |         |               |
+
+**Please**: if there's a new version of these documents, notify us or help us update the codes to the latest versions.
 
 ### Usage
 
@@ -9,15 +20,15 @@ In this directory you can find URI related algorithms and structures.
 int test() {
     using webpp::uri::uri;
     
-    uri local = "http://localhost/page/one";
+    uri const local = "http://localhost/page/one";
     
-    cout << local.get_scheme() << endl;    // http
-    cout << local.get_hostname() << endl;  // localhost
-    cout << local.get_path() << endl;      // /page/one
+    cout << local.scheme() << endl;    // http
+    cout << local.hostname() << endl;  // localhost
+    cout << local.path() << endl;      // /page/one
     
-    local.set_hostname("127.1"); // yes, it's valid, because WHATWG says so
+    local.hostname("127.1");           // yes, it's valid, because WHATWG says so
     
-    cout << local.get_href() << endl;      // http://127.0.0.1/page/one
+    cout << local.href() << endl;      // http://127.0.0.1/page/one
 }
 ```
 

@@ -62,7 +62,7 @@ namespace webpp::uri::idna {
        *             Disallowed is really contains range start and range end.
        */
     template <typename CharT>
-    [[nodiscard]] static constexpr details::idna_mapping_table_iterator find_mapping_byte(
+    [[nodiscard]] static constexpr details::idna_mapping_table_iterator find_mapping_code_point(
       CharT const inp_ch) {
         using details::disallowed_mask;
         using details::idna_mapping_table;
@@ -157,7 +157,7 @@ namespace webpp::uri::idna {
         //               "should first be converted to a 32bit character.");
 
         auto const cur_char   = static_cast<map_table_byte_type>(inp_ch);
-        auto const pos        = find_mapping_byte(inp_ch);
+        auto const pos              = find_mapping_code_point(inp_ch);
         auto const first_code_point = *pos;
         auto const length           = (first_code_point & ~mapped_mask) >> 24U;
 

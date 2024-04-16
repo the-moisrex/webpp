@@ -80,7 +80,7 @@ TYPED_TEST(IDNATests, LabelSeparators) {
 
 TEST(BasicIDNATests, MappingFindAlgorithmTest) {
     // 'A' should be mapped to 'a'
-    auto const pos = uri::idna::find_mapping_byte('A');
+    auto const pos = uri::idna::find_mapping_code_point('A');
     EXPECT_EQ(*pos, 2'566'914'113ULL)
       << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos)
       << "\nRange Start Character: " << (*pos & ~uri::idna::details::disallowed_mask);
@@ -90,7 +90,7 @@ TEST(BasicIDNATests, MappingFindAlgorithmTest) {
     // FD97..FD98    ; mapped                 ; 0646 062C 0645
     // FD9E          ; mapped                 ; 0628 062E 064A
     // 'FD98' should be mapped to '0646 062C 0645'
-    auto mapped_pos = uri::idna::find_mapping_byte(0xFD98UL);
+    auto mapped_pos = uri::idna::find_mapping_code_point(0xFD98UL);
     EXPECT_EQ(*mapped_pos, (0xFD97UL | uri::idna::details::mapped_mask | ((0xFD98UL - 0xFD97UL) << 24U)))
       << "Position of the iterator: "
       << stl::distance(uri::idna::details::idna_mapping_table.begin(), mapped_pos)
@@ -101,7 +101,7 @@ TEST(BasicIDNATests, MappingFindAlgorithmTest) {
 
 
     // Last character should not blow us up!
-    auto const last_pos = uri::idna::find_mapping_byte(0x10'FFFF);
+    auto const last_pos = uri::idna::find_mapping_code_point(0x10'FFFF);
     EXPECT_EQ(*last_pos,
               uri::idna::details::idna_mapping_table[uri::idna::details::idna_mapping_table.size() - 3])
       << "Position of the iterator: "
@@ -112,14 +112,14 @@ TEST(BasicIDNATests, MappingFindAlgorithmTest) {
 
     // First character should not blow us up! (First character is a valid character, so it's actual value
     // should not be in the mapping table)
-    auto const first_pos = uri::idna::find_mapping_byte(0x0);
+    auto const first_pos = uri::idna::find_mapping_code_point(0x0);
     EXPECT_EQ(stl::distance(uri::idna::details::idna_mapping_table.begin(), first_pos), 0)
       << "Position of the iterator: "
       << stl::distance(uri::idna::details::idna_mapping_table.begin(), first_pos)
       << "\nRange Start Character: " << (*first_pos & ~uri::idna::details::disallowed_mask);
 
 
-    auto const pos_4 = uri::idna::find_mapping_byte(0x2'fa39);
+    auto const pos_4 = uri::idna::find_mapping_code_point(0x2'fa39);
     EXPECT_EQ((*pos_4 & ~uri::idna::details::disallowed_mask), 0x2'FA1E)
       << "Position of the iterator: " << stl::distance(uri::idna::details::idna_mapping_table.begin(), pos_4)
       << "\nRange Start Character: " << stl::hex << (*pos_4 & ~uri::idna::details::disallowed_mask)
@@ -153,11 +153,11 @@ TEST(BasicIDNATests, TestingAllTheTable) {
         length = range_end - range_start;
 
         for (stl::uint32_t sub_index = range_start; sub_index <= range_end;) {
-            auto             sub_pos = uri::idna::find_mapping_byte(sub_index);
+            auto             sub_pos = uri::idna::find_mapping_code_point(sub_index);
             std::string_view state   = "";
             if (*sub_pos != cur) {
                 ++errors;
-                sub_pos = uri::idna::find_mapping_byte(sub_index);
+                sub_pos = uri::idna::find_mapping_code_point(sub_index);
                 faileds.insert(cur & ~uri::idna::details::disallowed_mask);
                 if (*sub_pos == last_one) {
                     state = " (last one) ";

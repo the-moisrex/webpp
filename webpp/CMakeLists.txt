@@ -49,7 +49,9 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/unicode/unicode_ptr.hpp
         ${LIB_INCLUDE_DIR}/unicode/unicode_char_traits.hpp
         ${LIB_INCLUDE_DIR}/unicode/ustring.hpp
+        ${LIB_INCLUDE_DIR}/unicode/ustring_view.hpp
         ${LIB_INCLUDE_DIR}/unicode/ustring_iterator.hpp
+        ${LIB_INCLUDE_DIR}/unicode/normalization.hpp
 
         ${LIB_INCLUDE_DIR}/traits/traits.hpp
         ${LIB_INCLUDE_DIR}/traits/enable_traits.hpp
