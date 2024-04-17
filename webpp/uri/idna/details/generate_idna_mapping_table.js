@@ -133,6 +133,38 @@ class MappingReferenceTable extends TableTraits {
   /// Get how many bits are in the whole table
   get bitLength() { return this.index; }
 
+  simplifyTrailing() {
+    const popcount = n => {
+      let c = 0;
+      for (; n !== 0; n >>= 1) {
+        if ((n & 1) !== 0) {
+          c++;
+        }
+      }
+      return c;
+    };
+
+    // last character has to be all "ones" until the "index" is hit
+    if (popcount(this.bytes[this.length - 1]) !== (this.index % this.sizeof)) {
+      console.error("We're unable to clean-up the trailing bytes from the reference table.");
+      process.exit(1);
+    }
+
+    const originalLength = this.length;
+    let ith = this.length - 2;
+    for (;; --ith) {
+      if (this.bytes[ith] !== 255) {
+        break;
+      }
+    }
+    ++ith; // arrays start from 0
+    ++ith; // we need the last 255
+    this.bytes = this.bytes.slice(0, ith);
+    this.index = ith * this.sizeof;
+
+    this.trailingsRemoved = originalLength - this.length;
+  }
+
   serializeTable(appendFunc, cols = 20 - this.sizeof) {
     let pos = 0;
     const postfix = this.postfix;
@@ -535,6 +567,8 @@ const processCachedFile =
 
   refTable.finish?.();
   mapTable.finish?.();
+  refTable.simplifyTrailing?.();
+  mapTable.simplifyTrailing?.();
 
   console.log("Max Mapped Count: ", maxMappedCount);
   await createTableFile(version, creationDate, [ refTable, mapTable ]);
@@ -614,8 +648,10 @@ namespace webpp::uri::idna::details {
   let simplifiedCount = 0;
   let bitsSaved = 0;
   let mappedTable = undefined;
+  let trailingsRemoved = 0;
   for (const table of tables) {
     bitLength += table.length * table.sizeof;
+    trailingsRemoved += table?.trailingsRemoved || 0;
     if (table.simplifiedCount !== undefined) {
       mappedTable = table;
       simplifiedCount += table.simplifiedCount;
@@ -636,6 +672,8 @@ namespace webpp::uri::idna::details {
   console.log(`  Ignored count: ${mappedTable.ignoredCount}`);
   console.log(`  Disallowed count: ${mappedTable.disallowedCount}`);
   console.log(`  Sequenced Mapping count: ${mappedTable.sequencedMappingCount}`);
+  console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
+  console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file

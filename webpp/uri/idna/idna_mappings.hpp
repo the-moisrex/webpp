@@ -218,7 +218,13 @@ namespace webpp::uri::idna {
         auto pos = beg;
         for (; pos != end; ++pos) {
             // todo: handle utf-8 characters:
-            stl::size_t const byte_index   = static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type);
+
+            // the last byte of the reference table is specially designed so we here can help reduce the size
+            // of the table; everything after the size of the table is be the same as the last element of the
+            // table.
+            stl::size_t const byte_index =
+              stl::min(static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type),
+                       idna_reference_table.size() - 1);
             unsigned const    rem_index    = static_cast<stl::size_t>(*pos) % sizeof(ref_table_byte_type);
             ref_table_byte_type const byte = idna_reference_table[byte_index];
 
