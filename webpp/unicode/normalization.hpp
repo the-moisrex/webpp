@@ -61,6 +61,41 @@
  *       "ﬁ" (U+FB01) -> "f" (U+0066) + "i" (U+0069) -> "f" (U+0066) + "i" (U+0069)
  *
  * "NFC" is preffered: https://www.win.tue.nl/~aeb/linux/uc/nfc_vs_nfd.html
+ *
+ *
+ * Terms:
+ *       CCC: Canonical Combining Class
+ *            A numeric value in the range 0..254 given to each Unicode code point.
+ *            The combining class for each encoded character in the standard is specified in the
+ *            file UnicodeData.txt in the Unicode Character Database.
+ *            Default Value: 0
+ *            DerivedCombiningClass.txt contains these values as well.
+ *
+ *   Starter: Any code point (assigned or not) with combining class of zero (ccc = 0).
+ *
+ *            Description    gc    ccc    Starter
+ *            -----------------------------------
+ *            Nonspacing     Mn    0      Yes
+ *                                 > 0    No
+ *            Spacing        Mc    0      Yes
+ *                                 > 0    No
+ *            Enclosing      Me    0      Yes
+ *
+ *        gc: General Category (such as letter, digit, punctuation, symbol, or mark)
+ *
+ *            "Mc" stands for "spacing combining mark," which refers to a character that can be combined with
+ *            a base character to create a new character with a different visual appearance. These marks are
+ *            called "spacing" because they take up space and are displayed as a separate glyph, unlike
+ *            "non-spacing combining marks" (Mn) that are visually attached to the base character without
+ *            taking up additional space.
+ *
+ *   Reorderable pair:
+ *             Two adjacent characters A and B in a coded character sequence <A, B> are a Reorderable Pair if
+ *             and only if ccc(A) > ccc(B) > 0.
+ *
+ *  Canonical Ordering Algorithm:
+ *             In a decomposed character sequence D, exchange the positions of the characters in each
+ *             Reorderable Pair until the sequence contains no more Reorderable Pairs.
  */
 
 #ifndef WEBPP_UNICODE_NORMALIZATION_HPP

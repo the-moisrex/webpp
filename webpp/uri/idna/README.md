@@ -13,7 +13,8 @@ Standard 46, [Unicode IDNA Compatibility Processing](https://unicode.org/reports
 |---------------------------------------|--------------------------------------------------------------|------------------------------|---------|--------------|
 | Unicode IDNA Compatibility Processing | [UTS #46](https://www.unicode.org/reports/tr46/tr46-31.html) | [URL Standard](../README.md) | 15.1.0  | 2023-09-05   |
 
-**Please**: if there's a new version of these documents, notify us or help us update the codes to the latest versions.
+**Please**: if there's a [new version](https://www.unicode.org/versions/latest/) of these documents, notify us or help
+us update the codes to the latest versions.
 
 ### Labels
 
