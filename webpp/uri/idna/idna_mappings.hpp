@@ -156,7 +156,7 @@ namespace webpp::uri::idna {
         //               "UTF-8 characters should not be used here, "
         //               "should first be converted to a 32bit character.");
 
-        auto const cur_char   = static_cast<map_table_byte_type>(inp_ch);
+        auto const cur_char         = static_cast<map_table_byte_type>(inp_ch);
         auto const pos              = find_mapping_code_point(inp_ch);
         auto const first_code_point = *pos;
         auto const length           = (first_code_point & ~mapped_mask) >> 24U;
@@ -185,18 +185,15 @@ namespace webpp::uri::idna {
             if (is_sequenced_mapping) {
                 // It's a sequenced mapping
                 auto const diff       = cur_char - range_start;
-                auto const code_point  = (*next_pos & ~disallowed_mask) + diff;
-                // todo: conver to utf-8
-                out                   += static_cast<CharT>(code_point);
+                auto const code_point = (*next_pos & ~disallowed_mask) + diff;
+                unicode::unchecked::append(out, code_point);
             } else {
                 // loop until we find the next "first-code-point"
                 // we don't need to check the length of the array, there's a valid `first-code-point`
                 // character at the end of the table intentionally inserted for this purpose.
                 for (auto cur_pos = next_pos; (*cur_pos & mapped_mask) == 0; ++cur_pos) {
-                    auto const code_point  = *cur_pos & ~disallowed_mask;
-                    // todo: conver to utf-8
-                    // out.append(*cur_pos);
-                    out                   += static_cast<CharT>(code_point);
+                    auto const code_point = *cur_pos & ~disallowed_mask;
+                    unicode::unchecked::append(out, code_point);
                 }
             }
         }
@@ -225,7 +222,7 @@ namespace webpp::uri::idna {
             stl::size_t const byte_index =
               stl::min(static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type),
                        idna_reference_table.size() - 1);
-            unsigned const    rem_index    = static_cast<stl::size_t>(*pos) % sizeof(ref_table_byte_type);
+            unsigned const rem_index       = static_cast<stl::size_t>(*pos) % sizeof(ref_table_byte_type);
             ref_table_byte_type const byte = idna_reference_table[byte_index];
 
             if ([[maybe_unused]] bool const should_map = (byte & rem_index) != 0) {

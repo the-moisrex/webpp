@@ -36,32 +36,32 @@ namespace webpp::unicode {
     static constexpr u32 code_point_max = 0x0010'FFFFU;
 
     template <typename u8 = char8_t, typename octet_type>
-    static constexpr u8 mask8(octet_type oct) noexcept {
+    [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
         return static_cast<u8>(0xff & oct);
     }
 
     template <typename u16 = char16_t, typename u16_type>
-    static constexpr u16 mask16(u16_type oct) noexcept {
+    [[nodiscard]] static constexpr u16 mask16(u16_type oct) noexcept {
         return static_cast<u16>(0xffff & oct);
     }
 
     template <typename octet_type>
-    static constexpr bool is_trail(octet_type oct) noexcept {
+    [[nodiscard]] static constexpr bool is_trail(octet_type oct) noexcept {
         return (mask8(oct) >> 6) == 0x2;
     }
 
     template <typename u16>
-    static constexpr bool is_lead_surrogate(u16 code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_lead_surrogate(u16 code_point) noexcept {
         return code_point >= lead_surrogate_min<u16> && code_point <= lead_surrogate_max<u16>;
     }
 
     template <typename u16>
-    static constexpr bool is_trail_surrogate(u16 code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_trail_surrogate(u16 code_point) noexcept {
         return code_point >= trail_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
     template <typename u16>
-    static constexpr bool is_surrogate(u16 code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_surrogate(u16 code_point) noexcept {
         return code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
@@ -74,7 +74,7 @@ namespace webpp::unicode {
      * The second check covers surrogate pairs (category Cs).
      */
     template <typename u32>
-    static constexpr bool is_code_point_valid(u32 code_point) noexcept {
+    [[nodiscard]] static constexpr bool is_code_point_valid(u32 code_point) noexcept {
         return code_point < 0x11'0000 && ((code_point & 0xFFFF'F800) != 0xD800);
         // alternative implementation:
         // return (cp <= code_point_max<u32> && !is_surrogate(cp));
@@ -82,7 +82,7 @@ namespace webpp::unicode {
 
     // todo: check out the glib/gutf8.c implementation
     template <typename CharT = char8_t, typename CodePointType = char32_t>
-    static constexpr CodePointType code_point(CharT const* const pos) noexcept {
+    [[nodiscard]] static constexpr CodePointType code_point(CharT const* const pos) noexcept {
         using code_point_type   = CodePointType;
         using char_type         = CharT;
         constexpr auto is_utf8  = UTF8<char_type>;
@@ -142,7 +142,7 @@ namespace webpp::unicode {
 
     template <typename value_type>
         requires(stl::is_integral_v<value_type>)
-    static constexpr auto count_bytes(value_type value) noexcept {
+    [[nodiscard]] static constexpr auto count_bytes(value_type value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00U) == 0xD800U) {
                 return 2;
@@ -257,13 +257,13 @@ namespace webpp::unicode {
         }
 
         template <typename CharT = char8_t>
-        static constexpr CharT* prev_char_copy(CharT* pos) noexcept {
+        [[nodiscard]] static constexpr CharT* prev_char_copy(CharT* pos) noexcept {
             prev_char<CharT>(pos);
             return pos;
         }
 
         template <typename CharT = char8_t>
-        static constexpr stl::size_t count(CharT const* pos, stl::size_t max) noexcept {
+        [[nodiscard]] static constexpr stl::size_t count(CharT const* pos, stl::size_t max) noexcept {
             if constexpr (UTF8<CharT> || UTF16<CharT>) {
                 stl::size_t  len   = 0;
                 CharT const* start = pos;
@@ -291,7 +291,7 @@ namespace webpp::unicode {
         }
 
         template <typename CharT = char8_t>
-        static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
+        [[nodiscard]] static constexpr stl::size_t count(CharT const* start, CharT const* end) noexcept {
             if constexpr (UTF8<CharT> || UTF16<CharT>) {
                 // todo
             } else {
@@ -301,7 +301,7 @@ namespace webpp::unicode {
 
         // There's a better way to count 32bit unicode if you know the start and the end.
         template <typename CharT = char8_t>
-        static constexpr stl::size_t count(CharT const* pos) noexcept {
+        [[nodiscard]] static constexpr stl::size_t count(CharT const* pos) noexcept {
             stl::size_t len = 0;
             for (; *pos; next_char(pos)) {
                 ++len;
@@ -309,30 +309,57 @@ namespace webpp::unicode {
             return len;
         }
 
-        template <typename Ptr, typename CharT = char32_t>
-            requires(!stl::is_const_v<Ptr>)
-        static constexpr void append(Ptr& result, CharT code_point) noexcept {
-            using char_type = stl::remove_cvref_t<decltype(*result)>;
+        namespace details {
+            template <typename T>
+            struct char_type_of {
+                using type = typename stl::iterator_traits<T>::value_type;
+            };
+
+            template <typename T>
+                requires istl::String<T>
+            struct char_type_of<T> {
+                using type = istl::char_type_of_t<T>;
+            };
+
+            template <typename T, typename CharT>
+            static constexpr void append_impl(T& out, CharT value) {
+                using char_type = typename char_type_of<T>::type;
+                if constexpr (istl::String<T>) {
+                    out += static_cast<char_type>(value);
+                } else {
+                    // pointer or an iterator
+                    *(out++) = static_cast<char_type>(value);
+                }
+            }
+        } // namespace details
+
+        /**
+         * Append a code point to a string
+         */
+        template <typename StrT, typename CharT = char32_t>
+        static constexpr void append(StrT& out, CharT code_point) {
+            using details::append_impl;
+            using char_type = typename details::char_type_of<StrT>::type;
             if constexpr (UTF8<char_type>) {
                 if (code_point < 0x80) {            // one octet
-                    *(result++) = static_cast<char_type>(code_point);
+                    append_impl(out, code_point);
                 } else if (code_point < 0x800) {    // two octets
-                    *(result++) = static_cast<char_type>((code_point >> 6) | 0xc0);
-                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
+                    append_impl(out, (code_point >> 6) | 0xc0);
+                    append_impl(out, (code_point & 0x3f) | 0x80);
                 } else if (code_point < 0x1'0000) { // three octets
-                    *(result++) = static_cast<char_type>((code_point >> 12) | 0xe0);
-                    *(result++) = static_cast<char_type>(((code_point >> 6) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
+                    append_impl(out, (code_point >> 12) | 0xe0);
+                    append_impl(out, ((code_point >> 6) & 0x3f) | 0x80);
+                    append_impl(out, (code_point & 0x3f) | 0x80);
                 } else { // four octets
-                    *(result++) = static_cast<char_type>((code_point >> 18) | 0xf0);
-                    *(result++) = static_cast<char_type>(((code_point >> 12) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>(((code_point >> 6) & 0x3f) | 0x80);
-                    *(result++) = static_cast<char_type>((code_point & 0x3f) | 0x80);
+                    append_impl(out, (code_point >> 18) | 0xf0);
+                    append_impl(out, ((code_point >> 12) & 0x3f) | 0x80);
+                    append_impl(out, ((code_point >> 6) & 0x3f) | 0x80);
+                    append_impl(out, (code_point & 0x3f) | 0x80);
                 }
             } else if constexpr (UTF16<char_type>) {
                 // todo
             } else { // for char32_t or others
-                *(result++) = static_cast<char_type>(code_point);
+                append_impl(out, code_point);
             }
         }
 
