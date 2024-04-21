@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_HPP
 #define WEBPP_UNICODE_HPP
 
+#include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
 #include "./unicode_concepts.hpp"
 
@@ -13,16 +14,16 @@ namespace webpp::unicode {
     // Leading (high) surrogates: 0xd800 - 0xdbff
     // Trailing (low) surrogates: 0xdc00 - 0xdfff
     template <typename u16 = char16_t>
-    static constexpr u16 lead_surrogate_min = 0xd800;
+    static constexpr u16 lead_surrogate_min = 0xD800;
 
     template <typename u16 = char16_t>
-    static constexpr u16 lead_surrogate_max = 0xdbff;
+    static constexpr u16 lead_surrogate_max = 0xDBFF;
 
     template <typename u16 = char16_t>
-    static constexpr u16 trail_surrogate_min = 0xdc00;
+    static constexpr u16 trail_surrogate_min = 0xDC00;
 
     template <typename u16 = char16_t>
-    static constexpr u16 trail_surrogate_max = 0xdfff;
+    static constexpr u16 trail_surrogate_max = 0xDFFF;
 
     template <typename u16 = char16_t>
     static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x1'0000U >> 10U);
@@ -31,9 +32,26 @@ namespace webpp::unicode {
     static constexpr u32 surrogate_offset =
       0x1'0000 - (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
 
-    // Max valid value for a unicode code point
     template <typename u32 = char32_t>
-    static constexpr u32 code_point_max = 0x0010'FFFFU;
+    static constexpr u32 replacement_char = 0x0000'FFFD;
+
+    /// Basic Multilingual Plane (BMP)
+    template <typename u32 = char32_t>
+    static constexpr u32 max_bmp = 0x0000'FFFF;
+
+    template <typename u32 = char32_t>
+    static constexpr u32 max_utf16 = 0x0010'FFFF;
+
+    template <typename u32 = char32_t>
+    static constexpr u32 max_utf32 = 0x7FFF'FFFF;
+
+    /// Max valid value for a unicode code point
+    template <typename u32 = char32_t>
+    static constexpr u32 max_legal_utf32 = 0x0010'FFFF;
+
+    static constexpr int  half_shift = 10; // used for shifting by 10 bits
+    static constexpr auto half_base  = 0x001'0000UL;
+    static constexpr auto half_mask  = 0x3FFUL;
 
     template <typename u8 = char8_t, typename octet_type>
     [[nodiscard]] static constexpr u8 mask8(octet_type oct) noexcept {
@@ -75,9 +93,9 @@ namespace webpp::unicode {
      */
     template <typename u32>
     [[nodiscard]] static constexpr bool is_code_point_valid(u32 code_point) noexcept {
-        return code_point < 0x11'0000 && ((code_point & 0xFFFF'F800) != 0xD800);
+        return code_point < 0x11'0000 && ((code_point & 0xFFFF'F800) != lead_surrogate_min<u32>);
         // alternative implementation:
-        // return (cp <= code_point_max<u32> && !is_surrogate(cp));
+        // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));
     }
 
     // todo: check out the glib/gutf8.c implementation
@@ -201,7 +219,7 @@ namespace webpp::unicode {
                 pos += details::utf8_skip<CharT>[*pos];
             } else if constexpr (UTF16<CharT>) {
                 ++pos;
-                if (!(*pos < 0xDC00 || *pos > 0xDFFF)) {
+                if (!(*pos < trail_surrogate_min<CharT> || *pos > trail_surrogate_max<CharT>) ) {
                     ++pos;
                 }
             } else {
@@ -248,7 +266,7 @@ namespace webpp::unicode {
                 }
             } else if constexpr (UTF16<CharT>) {
                 --pos;
-                if (!(*pos < 0xDC00 || *pos > 0xDFFF)) {
+                if (!(*pos < trail_surrogate_min<CharT> || *pos > trail_surrogate_max<CharT>) ) {
                     --pos;
                 }
             } else {
@@ -310,21 +328,10 @@ namespace webpp::unicode {
         }
 
         namespace details {
-            template <typename T>
-            struct char_type_of {
-                using type = typename stl::iterator_traits<T>::value_type;
-            };
-
-            template <typename T>
-                requires istl::String<T>
-            struct char_type_of<T> {
-                using type = istl::char_type_of_t<T>;
-            };
-
             template <typename T, typename CharT>
             static constexpr void append_impl(T& out, CharT value) {
-                using char_type = typename char_type_of<T>::type;
-                if constexpr (istl::String<T>) {
+                using char_type = istl::char_type_of_t<T>;
+                if constexpr (requires(char_type val) { out.operator+=(val); }) {
                     out += static_cast<char_type>(value);
                 } else {
                     // pointer or an iterator
@@ -335,11 +342,12 @@ namespace webpp::unicode {
 
         /**
          * Append a code point to a string
+         * "out" can be an iterator/pointer or a string
          */
         template <typename StrT, typename CharT = char32_t>
         static constexpr void append(StrT& out, CharT code_point) {
             using details::append_impl;
-            using char_type = typename details::char_type_of<StrT>::type;
+            using char_type = istl::char_type_of_t<StrT>;
             if constexpr (UTF8<char_type>) {
                 if (code_point < 0x80) {            // one octet
                     append_impl(out, code_point);
@@ -357,7 +365,12 @@ namespace webpp::unicode {
                     append_impl(out, (code_point & 0x3f) | 0x80);
                 }
             } else if constexpr (UTF16<char_type>) {
-                // todo
+                if (code_point <= max_bmp<char_type>) {
+                    append_impl(out, code_point); // normal case
+                } else {
+                    append_impl(out, 0xD7C0U + (code_point >> 10U));
+                    append_impl(out, 0xDC00U + (code_point & 0x3FFU));
+                }
             } else { // for char32_t or others
                 append_impl(out, code_point);
             }
@@ -368,12 +381,13 @@ namespace webpp::unicode {
     namespace checked {
 
         template <typename Ptr, typename CharT = char32_t>
-            requires(!stl::is_const_v<Ptr>)
-        static constexpr bool append(Ptr& result, CharT code_point) noexcept {
+        [[nodiscard(
+          "Use unicode::unchecked::append if the input codepoint is always valid.")]] static constexpr bool
+        append(Ptr& out, CharT code_point) noexcept {
             if (!is_code_point_valid(code_point)) {
                 return false;
             }
-            unchecked::append<Ptr, CharT>(result, code_point);
+            unchecked::append<Ptr, CharT>(out, code_point);
             return true;
         }
 
