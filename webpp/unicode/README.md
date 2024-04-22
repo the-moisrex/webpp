@@ -10,6 +10,8 @@
 **Please**: if there's a [new version](https://www.unicode.org/versions/latest/) of these documents, notify us or help
 us update the codes to the latest versions.
 
+More info about unicode: W3C's [Character Model for the World Wide Web: String Matching](https://www.w3.org/TR/charmod-norm/)
+
 ## Unicode General Category
 
 Each unicode code point belongs to a category (look at Section [*4.5 General

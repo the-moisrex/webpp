@@ -124,6 +124,30 @@ namespace webpp::unicode {
     };
 
     /**
+     * Reorderable pair:
+     *       Two adjacent characters A and B in a coded character sequence <A, B> are
+     *       a Reorderable Pair if and only if ccc(A) > ccc(B) > 0
+     *
+     * Canonical Ordering Algorithm:
+     *       In a decomposed character sequence D, exchange the positions of the characters in each
+     *       Reorderable Pair until the sequence contains no more Reorderable Pairs.
+     *
+     * More information about Canonical Ordering Algorithm:
+     *       (section 3.11 of https://www.unicode.org/versions/latest)
+     *
+     * Reorderable Pairs:
+     *       Classes Reorderable?  Reason
+     *       -------------------- ---------------
+     *       No                    ccc(A) = 0
+     *       No                    ccc(B) = 0
+     *       No                    ccc(A) = ccc(B)
+     *       No                    ccc(A) < ccc(B)
+     *       Yes                   ccc(A) > ccc(B)
+     */
+    template <typename Iter, typename EIter = Iter>
+    static constexpr void canonical_reorder(Iter start, EIter end) noexcept {}
+
+    /**
      * Is a normalized unicode string
      * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
      *
