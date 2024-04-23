@@ -84,10 +84,10 @@ namespace webpp {
      * and we don't want you to keep casting around.
      */
     struct ipproto {
-        enum : ipproto_type {
-            ip       = 0,  // Dummy protocol for TCP.
-            icmp     = 1,  // Internet Control Message Protocol.
-            igmp     = 2,  // Internet Group Management Protocol.
+        enum : ipproto_type { // NOLINT(*-enum-size)
+            ip       = 0,     // Dummy protocol for TCP.
+            icmp     = 1,     // Internet Control Message Protocol.
+            igmp     = 2,     // Internet Group Management Protocol.
             rfcomm   = 3,  // WIN32 - The Bluetooth Radio Frequency Communications (Bluetooth RFCOMM) protocol
             ipip     = 4,  // IPIP tunnels (older KA9Q tunnels use 94).
             tcp      = 6,  // Transmission Control Protocol.
@@ -259,7 +259,7 @@ namespace webpp {
                 h = check_socket(::WSASocketW(AF_INET, SOCK_STREAM, 0, &protInfo, 0, WSA_FLAG_OVERLAPPED));
             }
 #else
-            cur_handle = ::dup(fd);
+            cur_handle = ::dup(fd); // Prefer fcntl() to dup() because fcntl() allows F_DUPFD_CLOEXEC
 #endif
             return basic_socket{cur_handle};
         }
@@ -296,21 +296,21 @@ namespace webpp {
         }
 
         // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
-        bool bind(ipv4 ip, stl::uint16_t const port) noexcept {
-            auto addr     = make_sock_addr<sockaddr_in>(ip);
+        bool bind(ipv4 ip_addr, stl::uint16_t const port) noexcept {
+            auto addr     = make_sock_addr<sockaddr_in>(ip_addr);
             addr.sin_port = static_cast<in_port_t>(hton(port));
             return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in)));
         }
 
-        bool bind(ipv6 const& ip, stl::uint16_t const port) noexcept {
-            auto addr      = make_sock_addr<sockaddr_in6>(ip);
+        bool bind(ipv6 const& ip_addr, stl::uint16_t const port) noexcept {
+            auto addr      = make_sock_addr<sockaddr_in6>(ip_addr);
             addr.sin6_port = static_cast<in_port_t>(hton(port));
             return check_ret_bool(::bind(fd, reinterpret_cast<sockaddr const*>(&addr), sizeof(sockaddr_in6)));
         }
 
-        bool bind(struct ip_address const& ip, stl::uint16_t port) noexcept {
-            if (ip.is_valid()) {
-                return ip.pick([this, port](auto inp_ip) noexcept {
+        bool bind(struct ip_address const& ip_addr, stl::uint16_t port) noexcept {
+            if (ip_addr.is_valid()) {
+                return ip_addr.pick([this, port](auto inp_ip) noexcept {
                     return this->bind(inp_ip, port);
                 });
             }
@@ -329,41 +329,41 @@ namespace webpp {
 
         /**
          * Bind and Listen
-         * @param ip
+         * @param ip_addr
          * @param port
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv4 const          ip,
+        bool listen(ipv4 const          ip_addr,
                     stl::uint16_t const port,
                     int const           queue_size = default_queue_size) noexcept {
-            return bind(ip, port) && listen(queue_size);
+            return bind(ip_addr, port) && listen(queue_size);
         }
 
         /**
          * Bind and Listen
-         * @param ip
+         * @param ip_addr
          * @param port
          * @param queue_size
          * @return true if successful
          */
-        bool listen(ipv6 const&         ip,
+        bool listen(ipv6 const&         ip_addr,
                     stl::uint16_t const port,
                     int const           queue_size = default_queue_size) noexcept {
-            return bind(ip, port) && listen(queue_size);
+            return bind(ip_addr, port) && listen(queue_size);
         }
 
         /**
          * Bind and Listen
-         * @param ip
+         * @param ip_addr
          * @param port
          * @param queue_size
          * @return true if successful
          */
-        bool listen(struct ip_address const& ip,
+        bool listen(struct ip_address const& ip_addr,
                     stl::uint16_t const      port,
                     int const                queue_size = default_queue_size) noexcept {
-            return bind(ip, port) && listen(queue_size);
+            return bind(ip_addr, port) && listen(queue_size);
         }
 
         /**
@@ -404,7 +404,7 @@ namespace webpp {
         template <typename T>
         bool get_option(int const level, int const optname, T* val) const noexcept {
             socklen_t len = sizeof(T);
-            return get_option(level, optname, (void*) val, &len);
+            return get_option(level, optname, static_cast<void*>(val), &len);
         }
 
         /**
@@ -438,7 +438,7 @@ namespace webpp {
          */
         template <typename T>
         bool set_option(int const level, int const optname, T const& val) noexcept {
-            return set_option(level, optname, (void*) &val, sizeof(T));
+            return set_option(level, optname, static_cast<void*>(&val), sizeof(T));
         }
 
         bool set_non_blocking(bool on = true) noexcept {
@@ -497,12 +497,12 @@ namespace webpp {
 
         /**
          * Replaces the underlying managed socket object.
-         * @param h The new socket handle to manage.
+         * @param handle The new socket handle to manage.
          */
-        void reset(native_handle_type d = invalid_handle_value) {
-            if (d != fd) {
+        void reset(native_handle_type handle = invalid_handle_value) {
+            if (handle != fd) {
                 close();
-                fd = d;
+                fd = handle;
             }
             clear_error();
         }
@@ -568,8 +568,8 @@ namespace webpp {
 
 template <>
 struct std::hash<webpp::basic_socket> {
-    size_t operator()(webpp::basic_socket const& s) const noexcept {
-        return hash<webpp::basic_socket::native_handle_type>()(s.native_handle());
+    size_t operator()(webpp::basic_socket const& sock) const noexcept {
+        return hash<webpp::basic_socket::native_handle_type>()(sock.native_handle());
     }
 };
 
