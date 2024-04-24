@@ -102,12 +102,12 @@ namespace webpp::unicode {
         }
 
         // this is used by std::pointer_traits<T>::to_address
-        static element_type* to_address(pointer p) noexcept {
-            return reinterpret_cast<element_type*>(p);
+        static element_type* to_address(pointer ptr) noexcept {
+            return reinterpret_cast<element_type*>(ptr);
         }
 
-        static constexpr element_type* to_address(element_type* p) noexcept {
-            return p;
+        static constexpr element_type* to_address(element_type* ptr) noexcept {
+            return ptr;
         }
 
         [[nodiscard]] constexpr explicit operator pointer() noexcept {
@@ -226,7 +226,8 @@ namespace webpp::unicode {
         template <typename C>
             requires(
               details::is_value<stl::remove_cvref_t<C>> && !stl::is_same_v<stl::remove_cvref_t<C>, char_type>)
-        constexpr explicit(false) storage_unit(C c) noexcept : value(static_cast<char_type>(c)) {}
+        constexpr explicit(false) storage_unit(C inp_char) noexcept
+          : value(static_cast<char_type>(inp_char)) {}
 
         constexpr explicit(false) storage_unit(char_type val) noexcept : value(val) {}
 
@@ -257,7 +258,7 @@ namespace webpp::unicode {
 
         template <typename IntT>
             requires(details::is_value<stl::remove_cvref_t<IntT>>)
-        constexpr stl::strong_ordering operator<=>(IntT&& val) const noexcept {
+        constexpr stl::strong_ordering operator<=>(IntT val) const noexcept {
             return value <=> val;
         }
 
@@ -275,7 +276,7 @@ namespace webpp::unicode {
 
     template <typename ChT, typename CharT, typename CodePointT>
         requires requires(ChT str, CharT val) { static_cast<CharT>(str) <=> val; }
-    constexpr auto operator<=>(ChT&& str, storage_unit<CharT, CodePointT> const& unit) noexcept {
+    constexpr auto operator<=>(ChT str, storage_unit<CharT, CodePointT> const& unit) noexcept {
         return static_cast<CharT>(str) == unit.value;
     }
 
