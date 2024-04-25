@@ -39,7 +39,7 @@ namespace webpp::unicode {
 
         template <typename T>
             requires(stl::same_as<T, char_type> || stl::same_as<T, code_point_type>)
-        constexpr stl::strong_ordering operator<=>(T val) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(T val) const noexcept {
             if constexpr (stl::same_as<T, char_type>) {
                 return *start <=> val;
             } else {
@@ -97,12 +97,12 @@ namespace webpp::unicode {
         explicit constexpr unicode_ptr(reference inp_ref) noexcept : start{&inp_ref.value} {}
 
         // this is used by std::pointer_traits<T>::pointer_to
-        static constexpr unicode_ptr pointer_to(reference inp_ref) noexcept {
+        [[nodiscard]] static constexpr unicode_ptr pointer_to(reference inp_ref) noexcept {
             return inp_ref;
         }
 
         // this is used by std::pointer_traits<T>::to_address
-        static element_type* to_address(pointer ptr) noexcept {
+        [[nodiscard]] static element_type* to_address(pointer ptr) noexcept {
             return reinterpret_cast<element_type*>(ptr);
         }
 
@@ -126,16 +126,16 @@ namespace webpp::unicode {
             return reinterpret_cast<element_type*>(start);
         }
 
-        constexpr const_element_ptr operator->() const noexcept {
+        [[nodiscard]] constexpr const_element_ptr operator->() const noexcept {
             return reinterpret_cast<const_element_ptr>(start);
         }
 
         // Random access iterator requirements
-        constexpr const_reference operator[](difference_type n) const noexcept {
+        [[nodiscard]] constexpr const_reference operator[](difference_type n) const noexcept {
             return reinterpret_cast<const_reference>(start[n]);
         }
 
-        constexpr reference operator[](difference_type n) noexcept {
+        [[nodiscard]] constexpr reference operator[](difference_type n) noexcept {
             return reinterpret_cast<reference>(start[n]);
         }
 
@@ -144,11 +144,11 @@ namespace webpp::unicode {
         // }
 
         // constexpr stl::strong_ordering operator<=>(unicode_ptr const&) const noexcept = default;
-        constexpr stl::strong_ordering operator<=>(pointer const& p) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(pointer const& p) const noexcept {
             return start <=> p;
         }
 
-        constexpr code_point_type operator*() const noexcept {
+        [[nodiscard]] constexpr code_point_type operator*() const noexcept {
             return unicode::code_point<char_type, code_point_type>(start);
         }
 
@@ -184,7 +184,7 @@ namespace webpp::unicode {
             return *this;
         }
 
-        constexpr unicode_ptr operator+(difference_type n) const noexcept {
+        [[nodiscard]] constexpr unicode_ptr operator+(difference_type n) const noexcept {
             unicode_ptr ret{*this};
             for (; n != 0; --n) {
                 ret.operator++();
@@ -192,7 +192,7 @@ namespace webpp::unicode {
             return ret;
         }
 
-        constexpr unicode_ptr operator-(difference_type n) const noexcept {
+        [[nodiscard]] constexpr unicode_ptr operator-(difference_type n) const noexcept {
             unicode_ptr ret{*this};
             for (; n != 0; --n) {
                 ret.operator--();
@@ -240,8 +240,8 @@ namespace webpp::unicode {
 
         template <typename C>
             requires(stl::is_integral_v<stl::remove_cvref_t<C>> && sizeof(C) == sizeof(char_type))
-        storage_unit& operator=(C c) {
-            value = static_cast<char_type>(c);
+        storage_unit& operator=(C inp_char) {
+            value = static_cast<char_type>(inp_char);
             return *this;
         }
 
@@ -254,29 +254,29 @@ namespace webpp::unicode {
             return static_cast<IntType>(value);
         }
 
-        constexpr bool operator==(storage_unit const& val) const noexcept = default;
+        [[nodiscard]] constexpr bool operator==(storage_unit const& val) const noexcept = default;
 
         template <typename IntT>
             requires(details::is_value<stl::remove_cvref_t<IntT>>)
-        constexpr stl::strong_ordering operator<=>(IntT val) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(IntT val) const noexcept {
             return value <=> val;
         }
 
         template <typename IntT>
             requires(details::is_value<stl::remove_cvref_t<IntT>>)
-        constexpr stl::strong_ordering operator<=>(storage_unit<IntT> val) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(storage_unit<IntT> val) const noexcept {
             return value <=> static_cast<char_type>(val.value);
         }
     };
 
     template <typename CharT, typename CodePointT>
-    constexpr bool operator==(CharT lhs, storage_unit<CharT, CodePointT> const& rhs) noexcept {
+    [[nodiscard]] constexpr bool operator==(CharT lhs, storage_unit<CharT, CodePointT> const& rhs) noexcept {
         return rhs == lhs;
     }
 
     template <typename ChT, typename CharT, typename CodePointT>
         requires requires(ChT str, CharT val) { static_cast<CharT>(str) <=> val; }
-    constexpr auto operator<=>(ChT str, storage_unit<CharT, CodePointT> const& unit) noexcept {
+    [[nodiscard]] constexpr auto operator<=>(ChT str, storage_unit<CharT, CodePointT> const& unit) noexcept {
         return static_cast<CharT>(str) == unit.value;
     }
 
