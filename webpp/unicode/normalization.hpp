@@ -96,6 +96,8 @@
  *  Canonical Ordering Algorithm:
  *             In a decomposed character sequence D, exchange the positions of the characters in each
  *             Reorderable Pair until the sequence contains no more Reorderable Pairs.
+ *
+ * More information: https://www.w3.org/TR/charmod-norm/
  */
 
 #ifndef WEBPP_UNICODE_NORMALIZATION_HPP

@@ -560,9 +560,7 @@ const processCachedFile =
       maxMappedCount = mappedValues.length;
     }
 
-    // Process each line here
     console.log(index, rangeStart, rangeEnd, status, mappedValues, IDNA2008Status);
-    return `${codePoints}`;
   });
 
   refTable.finish?.();
