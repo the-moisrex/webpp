@@ -14,19 +14,26 @@ const outFilePath = `idna_mapping_table.hpp`;
 const uint8 = Symbol('uint8');
 const uint32 = Symbol('uint32');
 
-const start = async () => {
+const downloadFile =
+    async (url, file, process) => {
   try {
     // Check if the file already exists in the cache
-    if (!await fs.access(cacheFilePath)) {
-      console.log('Using cached file...');
-      const fileContent = await fs.readFile(cacheFilePath);
-      processCachedFile(fileContent.toString());
+    await fs.access(file);
+    try {
+      console.log(`Using cached file ${file}...`);
+      const fileContent = await fs.readFile(file);
+      process(fileContent.toString());
       return;
-    } else {
-      console.log("No cached file exists, let's download it.")
+    } catch (error) {
+      console.error(error);
+      return;
     }
+  } catch (error) {
+    console.log("No cached file exists, let's download it.");
+  }
 
-    const response = await fetch(fileUrl);
+  try {
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.error(`Failed to download file. Status Code: ${response.status}`);
@@ -36,14 +43,17 @@ const start = async () => {
     const text = await response.text();
 
     // Save the downloaded file as a cache
-    await fs.writeFile(cacheFilePath, text);
+    await fs.writeFile(file, text);
+    console.log(`Downloaded ${file} from ${url}.`);
 
     // process the file
-    await processCachedFile(text);
+    await process(text);
   } catch (error) {
     console.error('Error:', error.message);
   }
-};
+}
+
+const start = async () => { await downloadFile(fileUrl, cacheFilePath, processCachedFile); };
 
 const cleanComments = line => line.split('#')[0].trimEnd()
 const splitLine = line => line.split(';').map(seg => seg.trim());
