@@ -14,6 +14,16 @@ const outFilePath = `idna_mapping_table.hpp`;
 const uint8 = Symbol('uint8');
 const uint32 = Symbol('uint32');
 
+const popcount = n => {
+  let c = 0;
+  for (; n !== 0; n >>= 1) {
+    if ((n & 1) !== 0) {
+      c++;
+    }
+  }
+  return c;
+};
+
 const downloadFile =
     async (url, file, process) => {
   try {
@@ -144,16 +154,6 @@ class MappingReferenceTable extends TableTraits {
   get bitLength() { return this.index; }
 
   simplifyTrailing() {
-    const popcount = n => {
-      let c = 0;
-      for (; n !== 0; n >>= 1) {
-        if ((n & 1) !== 0) {
-          c++;
-        }
-      }
-      return c;
-    };
-
     // last character has to be all "ones" until the "index" is hit
     if (popcount(this.bytes[this.length - 1]) !== (this.index % this.sizeof)) {
       console.error("We're unable to clean-up the trailing bytes from the reference table.");
