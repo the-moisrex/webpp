@@ -20,7 +20,7 @@ const uint32 = Symbol('uint32');
 const readmeData = {
   version : "",
   date : ""
-}
+};
 
 const popcount = n => {
   let c = 0;
@@ -87,11 +87,10 @@ const start = async () => {
   await downloadFile(fileUrl, cacheFilePath, processCachedFile);
 };
 
-const processReadmeFile =
-    content => {
-      readmeData.version = findVersion(content);
-      readmeData.date = findDate(content);
-    }
+const processReadmeFile = content => {
+  readmeData.version = findVersion(content);
+  readmeData.date = findDate(content);
+};
 
 const cleanComments = line => line.split('#')[0].trimEnd()
 const splitLine = line => line.split(';').map(seg => seg.trim());
@@ -169,8 +168,11 @@ class TableTraits {
 class CCCTables {
   constructor() {
     this.lastZero = 0;
-    this.indeces = new TableTraits(14353, uint32);
-    this.cccs = new TableTraits(100 * 256, uint8);
+
+    // these numbers are educated guesses from other projects, they're not that important!
+    this.indeces = new TableTraits(4353 * 10, uint32);
+    this.cccs = new TableTraits((100 + 67) * 256, uint8);
+
     this.data = [];
   }
 
@@ -241,12 +243,13 @@ class CCCTables {
             // found a length
             const start = pos + dit;
             const end = start + length - dit; // we know it can be optimized, but it's for docs
-            return {pos, inserts : this.data.slice(start, end).map(item => item.ccc)};
+            return {pos, inserts : range.slice(start, end).map(item => item.ccc)};
           }
         }
       }
 
-      return {pos : null, inserts : []};
+      // didn't find anything, so let's insert everything:
+      return {pos : null, inserts : range};
     };
 
     const findSimilarMaskedRange = (index = 0, length = 256) => {
@@ -256,7 +259,7 @@ class CCCTables {
         const {inserts, pos} = findSimilarRange(index, length, mask);
         masks.push({pos, mask, inserts});
       }
-      return masks.toSorted((a, b) => a.inserts.length - b.inserts.length)?.[0];
+      return masks.toSorted((a, b) => b.inserts.length - a.inserts.length)?.[0];
     };
 
     let batchNo = 0;
@@ -353,15 +356,14 @@ class CCCTables {
   }
 }
 
-const processCachedFile =
-    async fileContent => {
+const processCachedFile = async fileContent => {
   const lines = fileContent.split('\n');
 
   const cccsTables = new CCCTables();
   let lastCodePoint = 0;
   let count = 0;
   lines.forEach((line, index) => {
-    line = cleanComments(line)
+    line = cleanComments(line);
 
     // ignore empty lines
     if (line.length === 0) {
@@ -400,7 +402,7 @@ const processCachedFile =
   await createTableFile([ cccsTables ]);
 
   console.log('File processing completed.');
-}
+};
 
 const decorateTable = async table => { await fs.appendFile(outFilePath, table.render()); };
 

@@ -1,6 +1,7 @@
 // Created by moisrex on 12/28/20.
 #include "../webpp/unicode/unicode.hpp"
 
+#include "../webpp/unicode/normalization.hpp"
 #include "common/tests_common_pch.hpp"
 
 using namespace webpp;
@@ -28,7 +29,7 @@ TEST(Unicode, U16UnChecked) {
     EXPECT_EQ(static_cast<int>(u"ن"[0]), static_cast<int>(*prev_char_copy(str + 3)));
 }
 
-TEST(AppendTest, AppendBMPCodePoint) {
+TEST(Unicode, AppendBMPCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -36,7 +37,7 @@ TEST(AppendTest, AppendBMPCodePoint) {
     ASSERT_EQ(utf16String, u"\u0041");
 }
 
-TEST(AppendTest, AppendSupplementaryCodePoint) {
+TEST(Unicode, AppendSupplementaryCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -44,7 +45,7 @@ TEST(AppendTest, AppendSupplementaryCodePoint) {
     ASSERT_EQ(utf16String, u"\U0001F600");
 }
 
-TEST(AppendTest, AppendMultipleCodePoints) {
+TEST(Unicode, AppendMultipleCodePoints) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -54,7 +55,7 @@ TEST(AppendTest, AppendMultipleCodePoints) {
     ASSERT_EQ(utf16String, u"\u0041\U0001F600\u0042");
 }
 
-TEST(AppendTest, AppendMinBMPCodePoint) {
+TEST(Unicode, AppendMinBMPCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -63,7 +64,7 @@ TEST(AppendTest, AppendMinBMPCodePoint) {
     ASSERT_EQ(utf16String[0], 0);
 }
 
-TEST(AppendTest, AppendMaxBMPCodePoint) {
+TEST(Unicode, AppendMaxBMPCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -71,7 +72,7 @@ TEST(AppendTest, AppendMaxBMPCodePoint) {
     ASSERT_EQ(utf16String, u"\uFFFF");
 }
 
-TEST(AppendTest, AppendMinSupplementaryCodePoint) {
+TEST(Unicode, AppendMinSupplementaryCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -79,7 +80,7 @@ TEST(AppendTest, AppendMinSupplementaryCodePoint) {
     ASSERT_EQ(utf16String, u"\U00010000");
 }
 
-TEST(AppendTest, AppendMaxSupplementaryCodePoint) {
+TEST(Unicode, AppendMaxSupplementaryCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -87,7 +88,7 @@ TEST(AppendTest, AppendMaxSupplementaryCodePoint) {
     ASSERT_EQ(utf16String, u"\U0010FFFF");
 }
 
-TEST(AppendTest, AppendInvalidCodePoint) {
+TEST(Unicode, AppendInvalidCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -95,7 +96,7 @@ TEST(AppendTest, AppendInvalidCodePoint) {
     ASSERT_EQ(utf16String, u"");
 }
 
-TEST(AppendTest, AppendAllowedBMPCodePoints) {
+TEST(Unicode, AppendAllowedBMPCodePoints) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -113,7 +114,7 @@ TEST(AppendTest, AppendAllowedBMPCodePoints) {
     }
 }
 
-TEST(AppendTest, AppendAllowedSupplementaryCodePoints) {
+TEST(Unicode, AppendAllowedSupplementaryCodePoints) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -124,7 +125,7 @@ TEST(AppendTest, AppendAllowedSupplementaryCodePoints) {
     }
 }
 
-TEST(AppendTest, AppendAllowedAndInvalidCodePoints) {
+TEST(Unicode, AppendAllowedAndInvalidCodePoints) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -136,7 +137,7 @@ TEST(AppendTest, AppendAllowedAndInvalidCodePoints) {
     ASSERT_EQ(utf16String, u"\u0041\U0001F600\u0042");
 }
 
-TEST(AppendTest, AppendMixOfCodePointTypes) {
+TEST(Unicode, AppendMixOfCodePointTypes) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -150,7 +151,7 @@ TEST(AppendTest, AppendMixOfCodePointTypes) {
     ASSERT_EQ(utf16String, u"\u0041\U0001F600\u0042\U00010000\u0043\U0010FFFF\u0044");
 }
 
-TEST(AppendTest, AppendLargeNumberOfCodePoints) {
+TEST(Unicode, AppendLargeNumberOfCodePoints) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -170,7 +171,7 @@ TEST(AppendTest, AppendLargeNumberOfCodePoints) {
     }
 }
 
-TEST(AppendTest, AppendCodePointsWithExtraData) {
+TEST(Unicode, AppendCodePointsWithExtraData) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -189,7 +190,7 @@ TEST(AppendTest, AppendCodePointsWithExtraData) {
     ASSERT_EQ(utf16String, u"\u0041\U0001F600\u0042\U00010000\u0043\U0010FFFF\u0044\u0001\u0002\u0003\u0004");
 }
 
-TEST(AppendTest, AppendCodePointsWithInvalidSurrogates) {
+TEST(Unicode, AppendCodePointsWithInvalidSurrogates) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -200,7 +201,7 @@ TEST(AppendTest, AppendCodePointsWithInvalidSurrogates) {
     ASSERT_EQ(utf16String, u"");
 }
 
-TEST(AppendTest, AppendCodePointsWithInvalidCodePoint) {
+TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
     using unicode::checked::append;
 
     std::u16string utf16String;
@@ -208,4 +209,17 @@ TEST(AppendTest, AppendCodePointsWithInvalidCodePoint) {
     ASSERT_FALSE(append(utf16String, 0x11'0001)); // Invalid code point
     ASSERT_FALSE(append(utf16String, 0x1F'FFFF)); // Invalid code point
     ASSERT_EQ(utf16String, u"");
+}
+
+///////////////////////////////// Normalization /////////////////////////////////////
+
+TEST(Unicode, getCcc) {
+    EXPECT_EQ(unicode::ccc_of(0xFC58), 0);
+    EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0);
+    EXPECT_EQ(unicode::ccc_of(0x11'FFFD), 0);
+    EXPECT_EQ(unicode::ccc_of(0x0), 0);
+    EXPECT_EQ(unicode::ccc_of(0x031D), 220);
+    EXPECT_EQ(unicode::ccc_of(0x0322), 202);
+    EXPECT_EQ(unicode::ccc_of(0x0300), 230);
+    EXPECT_EQ(unicode::ccc_of(0x0336), 1);
 }
