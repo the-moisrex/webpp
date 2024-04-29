@@ -14,6 +14,7 @@ const cacheReadmePath = 'ReadMe.txt';
 const outFilePath = `normalization_tables.hpp`;
 
 const uint8 = Symbol('uint8');
+const uint8x2 = Symbol('uint8');
 const uint32 = Symbol('uint32');
 
 const readmeData = {
@@ -66,7 +67,9 @@ const downloadFile = async (url, file, process) => {
   } catch (error) {
     console.error('Error:', error.message);
   }
-} const start = async () => {
+};
+
+const start = async () => {
   // readme file for getting the version and what not
   await downloadFile(readmeUrl, cacheReadmePath, processReadmeFile);
   if (readmeData.version === undefined) {
@@ -111,6 +114,9 @@ class TableTraits {
     case uint32:
       this.bytes = new Uint32Array(max);
       break;
+    case uint8x2:
+      this.bytes = [];
+      break;
     default:
       throw new Error('Invalid type provided to CodePointMapper.');
     }
@@ -120,6 +126,8 @@ class TableTraits {
 
   get sizeof() {
     switch (this.type) {
+    case uint8x2:
+      return 16;
     case uint8:
       return 8;
     case uint32:
@@ -131,9 +139,23 @@ class TableTraits {
 
   get typeString() { return this.type.description; }
 
-  get postfix() { return this.type === uint8 ? "U" : "ULL"; }
+  get postfix() {
+    switch (this.type) {
+    case uint8x2:
+    case uint8:
+      return "U";
+    case uint32:
+      return "ULL";
+    default:
+      return "";
+    }
+  }
 
   get length() { return this.index; }
+
+  get result() { return this.bytes.slice(0, this.index); }
+
+  get(index) { return this.bytes[index]; }
 
   append(value) { this.bytes[this.index++] = value; }
 
@@ -144,107 +166,11 @@ class TableTraits {
   }
 }
 
-/*
-class MagicNumberStat {
-    constructor(magicNumber = 0, category = 0) {
-        this.category = category;
-        this.magicNumber = magicNumber;
-
-        this.xor2zero = 0;
-        this.xor2cat = 0;
-        this.and2zero = 0;
-        this.and2cat = 0;
-        this.total = 0;
-        this.falsePositives = 0;
-    }
-
-    add(codePoint, ccc) {
-        ++this.total;
-        if (this.category !== ccc) {
-            ++this.falsePositives;
-        }
-
-        if ((codePoint ^ this.magicNumber) === 0) {
-            ++this.xor2zero;
-        }
-
-        if ((codePoint & this.magicNumber) === 0) {
-            ++this.and2zero;
-        }
-
-        if ((codePoint ^ this.magicNumber) === this.category) {
-            ++this.xor2cat;
-        }
-
-        if ((codePoint & this.magicNumber) === this.category) {
-            ++this.and2cat;
-        }
-    }
-
-    percentOf(value) {
-        return Math.floor(value / this.total * 100);
-    }
-
-    printItem(valueStr) {
-        const value = this[valueStr];
-        const percent = this.percentOf(value);
-        const falsePercent = this.percentOf(this.falsePositives);
-        if (percent <= 50) {
-            return;
-        }
-        console.log(valueStr, `   ${value} / ${this.total}  `, `${percent}%`, `false(${falsePercent}%)`,
-            `   cat(${this.category})`, `   magic(${this.magicNumber})`);
-    }
-
-    print() {
-        this.printItem(`xor2zero`);
-        this.printItem(`and2zero`);
-        this.printItem(`xor2cat`);
-        this.printItem(`and2cat`);
-    }
-}
-
-class MagicBucket {
-    constructor(start = 1, end = 1000) {
-        this.rangeStart = start;
-        this.rangeEnd = end;
-        this.bucket = [];
-
-        console.log("Preparing Magic Number Buckets...");
-        for (let index = this.rangeStart; index !== this.rangeEnd; ++index) {
-            for (let cat = 0; cat !== 256; ++cat) {
-                this.bucket.push(new MagicNumberStat(index, cat));
-            }
-        }
-        console.log("Preparing Magic Number Buckets: done.");
-    }
-
-    add(codePoint, ccc) {
-        for (const mag of this.bucket) {
-            mag.add(codePoint, ccc);
-        }
-    }
-
-    print() {
-        for (const mag of this.bucket) {
-            mag.print();
-        }
-    }
-}
-
-class range {
-    constructor(start = 0, end = start) {
-        this.start = start;
-        this.end = end;
-    }
-}
-*/
-
 class CCCTables {
   constructor() {
     this.lastZero = 0;
-    this.indeces = new TableTraits(4353, uint32);
-    this.cccs = new TableTraits(68 * 256, uint8);
+    this.indeces = new TableTraits(14353, uint32);
+    this.cccs = new TableTraits(100 * 256, uint8);
     this.data = [];
   }
 
@@ -280,114 +206,148 @@ class CCCTables {
 
     /// This function finds a place in the "this.cccs" table where the specified range
     /// will be there.
-    const findSimilarRange = (index = 0, length = 256) => {
+    const findSimilarRange = (index = 0, length = 256, mask = resetMask) => {
       const end = index + length;
       const range = this.data.slice(index, end);
+      const batchEnd = (this.cccs.length / length) * length;
 
-      let failedMasks = [];
-      top: for (let pos = 0; pos < (this.data.length - length); ++pos) {
+      top: for (let pos = 0; pos < batchEnd; ++pos) { // iterate over this.cccs table
 
-        // try finding a range:
-        let mask = resetMask;
-        for (let subPos = pos; subPos < (pos + length); ++subPos) {
-          const diff = subPos - pos;
-          const {codePoint : subCodePoint, ccc : subCCC} = this.data[subPos];
-          const {codePoint : rangeCodePoint, ccc : rangeCCC} = range[diff];
+        // see if we from this "this.cccs"'s position, the "range" is also the same or not:
+        for (let dit = 0; dit !== range.length; ++dit) { // iterate over "range" table
+          const {codePoint : rangeCodePoint, ccc : rangeCCC} = range[dit];
+          const ccc = this.cccs.get(pos + (dit & mask));
 
-          if (rangeCCC !== subCCC) {
-
-            // try omitting this with a mask if possible
-            if (rangeCCC === 0) {
-
-              // ignoring this code point by masking it
-              mask &= ~diff;
-
-              // check the mask for bytes checked so far
-              if (isZeroingOutRange(mask, pos, diff)) {
-                failedMasks.push(mask);
-                mask = resetMask;
-                continue top;
-              }
-
-              continue;
-            }
-
+          // if it's not a match
+          if (rangeCCC !== ccc) {
             // couldn't find it here, let's go to the next position
             continue top;
           }
-
-          // the mask doesn't hold:
-          if (isZeroingOut(mask, subCodePoint)) {
-            failedMasks.push(mask);
-            mask = resetMask;
-            continue top;
-          }
-        }
-        if (failedMasks.length > 0) {
-          // console.log("  Failed Masks(found):", failedMasks.length);
         }
 
         // found a range
-        return {pos, mask};
+        return {pos, inserts : []};
       }
-      if (failedMasks.length > 0) {
-        console.log("  Failed Masks(not found):", failedMasks.length);
+
+      // tail optimization:
+      //    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
+      //    then we can omit inserting the first part of the "range" table.
+      for (let pos = range.length; pos !== 0; --pos) {         // iterate over "this.cccs" table
+        for (let dit = 0; dit !== range.length - pos; ++dit) { // iterate over "range" table
+          const {codePoint : rangeCodePoint, ccc : rangeCCC} = range[dit];
+          const ccc = this.cccs.get(pos + dit);
+
+          if (rangeCCC !== ccc) {
+            // found a length
+            const start = pos + dit;
+            const end = start + length - dit; // we know it can be optimized, but it's for docs
+            return {pos, inserts : this.data.slice(start, end).map(item => item.ccc)};
+          }
+        }
       }
-      return {pos : null, mask : null};
+
+      return {pos : null, inserts : []};
+    };
+
+    const findSimilarMaskedRange = (index = 0, length = 256) => {
+      let mask = resetMask;
+      let masks = [];
+      for (; mask >= 0; --mask) {
+        const {inserts, pos} = findSimilarRange(index, length, mask);
+        masks.push({pos, mask, inserts});
+      }
+      return masks.toSorted((a, b) => a.inserts.length - b.inserts.length)?.[0];
     };
 
     let batchNo = 0;
     let insertedCount = 0;
     let reusedCount = 0;
+    let reusedMaskedCount = 0;
     for (let range = 0; range <= this.data.length; range += 256) {
 
       const codeRange = range >>> 8;
       const length = Math.min(this.data.length - range, 256);
 
-      console.log(`Batch #${batchNo++}: `, codeRange, length,
+      console.log(`Batch #${batchNo++}: `, codeRange.toString(16), length,
                   `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-      // for (let index = range; index !== (range + length); ++index) {
-      const {codePoint, ccc} = this.data[range];
-      const remPoint = codePoint % 256;
-      const {pos : startPos, mask} = findSimilarRange(range, length);
-      if (startPos === null) {
-        // add the date to the cccs list as well:
-        const helperCode = (codeRange << 8) | mask;
-        this.indeces.append(helperCode);
-        this.cccs.appendList(this.data.slice(range, range + length).map(item => item.codePoint));
-        console.log("  Code Range (inserted):", codeRange)++ insertedCount;
+      const {pos, mask, inserts} = findSimilarMaskedRange(range, length);
+      const helperCode = (pos << 8) | mask;
+      this.indeces.append(helperCode);
+      if (inserts.length > 0) {
+        this.cccs.appendList(inserts);
+        ++insertedCount;
       } else {
-        // no need to add the data to the cccs list, we already have similar thing there:
-        const helperCode = (startPos << 8) | mask;
-        this.indeces.append(helperCode);
-        console.log("  Code Range (reused):", codeRange, "Mask: ", mask);
         ++reusedCount;
       }
-      // }
+      console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`, codeRange,
+                  "mask:", mask, "pos:", pos);
+
+      if (mask !== resetMask) {
+        ++reusedMaskedCount;
+      }
     }
 
     console.log("Inserted: ", insertedCount, "reused:", reusedCount);
+    console.log("Successful masks:", reusedMaskedCount);
     console.log("CCCs Table Length:", this.cccs.length);
     console.log("Finalizing: done.");
   }
 
   render() {
+
+    const indeces = this.indeces.result.slice(0, this.lastZero >>> 8);
+    const indecesBits = indeces.length * this.indeces.sizeof;
+    const cccBits = this.cccs.length * this.cccs.sizeof;
+
     return `
-    
+    /**
+     * In "ccc_index" table, any code point bigger than this number will have "zero" as it's CCC value;
+     * so it's designed this way to reduce the table size.
+     */
     static constexpr auto trailing_zero_cccs = 0x${this.lastZero.toString(16).toUpperCase()}UL;
     
     /**
      * CCC Index Table
      *
      * CCC: Canonical Combining Class
+     * These are the indeces that are used to find which values from "ccc_values" table correspond to a
+     * unicode code point.
+     *
+     * Usage:
+     * @code
+     *    uint32_t code_point = ...;
+     *    auto helper_code = ccc_index[code_point >> 8];
+     *    auto pos         = helper_code >> 8;           // starting position
+     *    auto mask        = helper_code &  0xFF;        // which positions should be converted to zero
+     *    auto index       = pos         &  mask;        // now use ccc_values[index]
+     * @endcode
      * 
      * Table size:
-     *   - in bits:       ${bitLength}
-     *   - in bytes:      ${bitLength / 8} B
-     *   - in KibiBytes:  ${Math.ceil(bitLength / 8 / 1024)} KiB
+     *   - in bits:       ${indecesBits}
+     *   - in bytes:      ${indecesBits / 8} B
+     *   - in KibiBytes:  ${Math.ceil(indecesBits / 8 / 1024)} KiB
      */
-    static constexpr std::array<std::${this.typeString}_t, ${this.length}ULL> ${this.name}{
+    static constexpr std::array<std::${this.indeces.typeString}_t, ${indeces.length}ULL> ccc_index{
+        ${indeces.join(", ")}
+    };
+    
+    
+    /**
+     * CCC Table
+     *
+     * CCC: Canonical Combining Class
+     * These values are calculated and individually represend actual CCC values, but they have no
+     * valid order by themselves, and they only make sense if they're being used in conjuction with
+     * the "ccc_index" table.
+     * 
+     * Table size:
+     *   - in bits:       ${cccBits}
+     *   - in bytes:      ${cccBits / 8} B
+     *   - in KibiBytes:  ${Math.ceil(cccBits / 8 / 1024)} KiB
+     */
+    static constexpr std::array<std::${this.cccs.typeString}_t, ${this.cccs.length}ULL> ccc_values{
+        ${this.cccs.result.join(", ")}
     };
         `;
   }
@@ -400,7 +360,6 @@ const processCachedFile =
   const cccsTables = new CCCTables();
   let lastCodePoint = 0;
   let count = 0;
-  // const magicBucket = new MagicBucket();
   lines.forEach((line, index) => {
     line = cleanComments(line)
 
@@ -422,94 +381,48 @@ const processCachedFile =
     /// stats
     ++count;
     if (count % 1000 === 0) {
-      console.log(`Processing: `, `codePoint(${codePoint})`, `count(${count})`);
+      console.log(`Parsing: `, `codePoint(${codePoint})`, `count(${count})`);
     }
 
     for (let curCodePoint = lastCodePoint + 1; curCodePoint !== codePoint + 1; ++curCodePoint) {
       const curCCC = curCodePoint === codePoint ? ccc : 0;
 
       cccsTables.add(curCodePoint, curCCC);
-
-      // if (cccs[curCCC] === undefined) {
-      //     cccs[curCCC] = [];
-      // }
-      // const accum = cccs[curCCC][cccs[curCCC].length - 1];
-      // if ((accum?.end || accum) === curCodePoint - 1) {
-      //     if (accum instanceof range) {
-      //         accum.end = curCodePoint;
-      //     } else {
-      //         cccs[curCCC][cccs[curCCC].length - 1] = new range(accum, curCodePoint);
-      //     }
-      // } else {
-      //     cccs[curCCC].push(curCodePoint);
-      // }
     }
     lastCodePoint = codePoint;
-
-    // console.log(index, codePoint, `ccc(${CanonicalCombiningClass})`);
   });
   console.log("Code Point Count:", count);
 
   // magicBucket.print();
 
   cccsTables.finalize?.();
-  cccsTables.simplifyTrailing?.();
 
-  // await createTableFile([refTable, mapTable]);
+  await createTableFile([ cccsTables ]);
 
   console.log('File processing completed.');
 }
 
-const decorateTable = async table => {
-  const bitLength = table.length * table.sizeof;
-  console.log("Decorating table", table.name, " Length:", table.length);
-  console.log(`Tables size,`);
-  console.log(`  in bits: ${bitLength},`);
-  console.log(`  in bytes: ${bitLength / 8},`);
-  console.log(`  in KibiBytes: ${Math.ceil(bitLength / 8 / 1024)} KiB\n`);
-
-  const header = `
-
-    /**
-     * ${table.description}
-     * 
-     * Table size:
-     *   - in bits:       ${bitLength}
-     *   - in bytes:      ${bitLength / 8} B
-     *   - in KibiBytes:  ${Math.ceil(bitLength / 8 / 1024)} KiB
-     */
-    static constexpr std::array<std::${table.typeString}_t, ${table.length}ULL> ${table.name}{
-  `;
-  const footer = `
-    };
-  `;
-
-  // header
-  await fs.appendFile(outFilePath, header);
-
-  // content
-  let content = "";
-  table.serializeTable(line => content += line);
-  await fs.appendFile(outFilePath, content);
-
-  // footer
-  await fs.appendFile(outFilePath, footer);
-};
+const decorateTable = async table => { await fs.appendFile(outFilePath, table.render()); };
 
 const createTableFile = async (tables) => {
   const begContent = `
 /**
  * Attention: Auto-generated file, don't modify.
  * 
- *   Auto generated from:          ${path.basename(__filename)}
- *   IDNA Creation Date:           ${readmeData.date}
- *   This file's generation date:  ${new Date().toUTCString()}
- *   IDNA Mapping Table Version:   ${readmeData.version}
+ *   Auto generated from:                ${path.basename(__filename)}
+ *   Unicode UCD Database Creation Date: ${readmeData.date}
+ *   This file's generation date:        ${new Date().toUTCString()}
+ *   Unicode Version:                    ${readmeData.version}
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
  *   UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
+ *
+ *   UCD Database Code Points (used the get the CCC values and what not):
+ *       ${fileUrl}
+ *   UCD README file (used to check the version and creation date):
+ *       ${readmeUrl}
  */
  
 #ifndef WEBPP_UNICODE_NORMALIZATION_TABLES_HPP
@@ -529,36 +442,11 @@ namespace webpp::unicode::details {
     `;
 
   await fs.writeFile(outFilePath, begContent);
-  let bitLength = 0;
-  let simplifiedCount = 0;
-  let bitsSaved = 0;
-  let mappedTable = undefined;
-  let trailingsRemoved = 0;
   for (const table of tables) {
-    bitLength += table.length * table.sizeof;
-    trailingsRemoved += table?.trailingsRemoved || 0;
-    if (table.simplifiedCount !== undefined) {
-      mappedTable = table;
-      simplifiedCount += table.simplifiedCount;
-      bitsSaved += table.simplifiedBits;
-      bitsSaved += table?.sequencedMappingCount * table?.sizeof * 2;
-    }
     await decorateTable(table);
   }
-  console.log(`Total tables size,`);
-  console.log(`  in bits: ${bitLength},`);
-  console.log(`  in bytes: ${bitLength / 8},`);
-  console.log(`  in KibiBytes: ${Math.ceil(bitLength / 8 / 1024)} KiB\n`);
-  console.log(`  Simplified counts: ${simplifiedCount}`);
-  console.log(`  Bits Saved: ${bitsSaved}`);
-  console.log(`  Bytes Saved: ${bitsSaved / 8}`);
-  console.log(`  KibiBytes Saved: ${Math.ceil(bitsSaved / 8 / 1024)} KiB\n`);
-  console.log(`  Mapped count: ${mappedTable.mappedCount}`);
-  console.log(`  Ignored count: ${mappedTable.ignoredCount}`);
-  console.log(`  Disallowed count: ${mappedTable.disallowedCount}`);
-  console.log(`  Sequenced Mapping count: ${mappedTable.sequencedMappingCount}`);
-  console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
-  console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
+  // console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
+  // console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
   await fs.appendFile(outFilePath, endContent);
 
   // Reformat the file
