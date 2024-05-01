@@ -213,13 +213,43 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 ///////////////////////////////// Normalization /////////////////////////////////////
 
+template <typename CharT = char32_t>
+[[nodiscard]] static constexpr stl::string desc_ccc_of(CharT const code_point) noexcept {
+    if (code_point >= static_cast<CharT>(unicode::details::trailing_zero_cccs)) [[unlikely]] {
+        return "Definite Zero";
+    }
+    auto const code_point_range = code_point >> 8U;
+    auto const code_point_index = static_cast<stl::uint8_t>(code_point & 0xFFU);
+    auto const helper           = unicode::details::ccc_index[code_point_range];
+    auto const mask             = static_cast<stl::uint8_t>(helper & 0xFFU);
+    auto const index            = helper >> 8U;
+    auto const res              = unicode::details::ccc_values[index + (mask & code_point_index)];
+
+    stl::string around = "[";
+    for (int pos = index + (mask & code_point_index) - 3; pos != index + (mask & code_point_index) + 3; ++pos)
+    {
+        around += stl::to_string(pos);
+        around += "=";
+        around += stl::to_string(unicode::details::ccc_values[pos]);
+        around += ", ";
+    }
+    around += "]";
+    return stl::string("code: ") + stl::to_string(helper) + "\nmask: " + stl::to_string(mask) + "\nindex: " +
+           stl::to_string(index) + "\nsub-code-point-index: " + stl::to_string(code_point_index) +
+           "\nsub-index: " + stl::to_string(mask & code_point_index) +
+           "\nactual-index: " + stl::to_string(index + (mask & code_point_index)) + "\n" + around;
+}
+
 TEST(Unicode, getCcc) {
-    EXPECT_EQ(unicode::ccc_of(0xFC58), 0);
-    EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0);
-    EXPECT_EQ(unicode::ccc_of(0x11'FFFD), 0);
-    EXPECT_EQ(unicode::ccc_of(0x0), 0);
-    EXPECT_EQ(unicode::ccc_of(0x031D), 220);
-    EXPECT_EQ(unicode::ccc_of(0x0322), 202);
-    EXPECT_EQ(unicode::ccc_of(0x0300), 230);
-    EXPECT_EQ(unicode::ccc_of(0x0336), 1);
+    EXPECT_EQ(unicode::ccc_of(0xFC58), 0) << desc_ccc_of(0xFC58);
+    EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0) << desc_ccc_of(0x10'FFFD);
+    EXPECT_EQ(unicode::ccc_of(0x11'FFFD), 0) << desc_ccc_of(0x11'FFFD);
+    EXPECT_EQ(unicode::ccc_of(0x0), 0) << desc_ccc_of(0x0);
+    EXPECT_EQ(unicode::ccc_of(0x031D), 220) << desc_ccc_of(0x031D);
+    EXPECT_EQ(unicode::ccc_of(0x0322), 202) << desc_ccc_of(0x0322);
+    EXPECT_EQ(unicode::ccc_of(0x0300), 230) << desc_ccc_of(0x0300);
+    EXPECT_EQ(unicode::ccc_of(0x0336), 1) << desc_ccc_of(0x0336);
+    EXPECT_EQ(unicode::ccc_of(0x0360), 234) << desc_ccc_of(0x0360);
+    EXPECT_EQ(unicode::ccc_of(0x05C2), 25) << desc_ccc_of(0x05C2);
+    EXPECT_EQ(unicode::ccc_of(0x1CE8), 1) << desc_ccc_of(0x1CE8);
 }

@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs').promises;
+const process = require('node:process');
 const path = require('path');
 const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
 const readmeUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt';
@@ -20,6 +21,27 @@ const uint32 = Symbol('uint32');
 const readmeData = {
     version : "",
     date : ""
+};
+
+const progressBarLength = 30; // Define the length of the progress bar
+const totalItems = 100;       // Total number of items to process
+const updateProgressBar = (percent, done = undefined) => {
+    if (!process.stdout.isTTY) {
+        return;
+    }
+    process.stdout.clearLine();
+    process.stdout.cursorTo(0); // Move the cursor to the beginning of the line
+    if (percent >= totalItems) {
+        if (done) {
+            console.log(done instanceof Function ? done() : done);
+        }
+        return;
+    }
+    const progress = Math.round((percent / totalItems) * progressBarLength);
+    const progressBar = '='.repeat(progress) + '>' +
+                        '-'.repeat(progressBarLength - progress);
+    process.stdout.write(
+        `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`); // Update the progress bar
 };
 
 const popcount = n => {
@@ -189,6 +211,7 @@ class CCCTables {
 
     /// Post-Processing
     finalize() {
+        console.time("Finalize");
         console.log("Finalizing...");
 
         const resetMask = 0xFF;
@@ -211,8 +234,13 @@ class CCCTables {
                               start = 0, length = left.length) => {
             const end = (right.length / length) * length;
             top: for (let rpos = 0; rpos < end; ++rpos) {       // iterate over "right" array
-                for (let lpos = start; lpos < length; ++lpos) { // iterate over "left" array
-                    if (!callable({lvalue : left?.[lpos], rvalue : right?.[rpos + lpos], rpos, lpos})) {
+                for (let lpos = start; lpos < (start + length); ++lpos) { // iterate over "left" array
+                    if (!callable({
+                            lvalue : left?.[lpos],         // left table current value
+                            rvalue : right?.[rpos + lpos], // right table current value
+                            rpos,                          // right index
+                            lpos                           // left index
+                        })) {
                         continue top;
                     }
                 }
@@ -248,29 +276,25 @@ class CCCTables {
         /// This function finds a place in the "this.cccs" table where the specified range
         /// will be there.
         const findSimilarRange = (index = 0, length = 256, mask = resetMask) => {
-            const end = index + length;
-            const range = this.data.slice(index, end);
-
-            const equalCondition = ({lvalue, rvalue, rpos, lpos}) => {
-                const {ccc : rangeCCC} = lvalue;
+            const equalCondition = ({rpos, lpos}) => {
                 const ccc = this.cccs.get(rpos + (lpos & mask));
-                return rangeCCC === ccc;
+                return this.data[lpos].ccc === ccc;
             };
 
-            const pos = findSubRange(range, this.cccs, equalCondition);
+            const pos = findSubRange(this.data, this.cccs, equalCondition, index, length);
 
             // found a sub-range, no need for inserts
             if (pos !== null) {
-                return {pos, inserts : []};
+                return {valid : true, pos, inserts : []};
             }
 
             // tail optimization:
             //    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
             //    then we can omit inserting the first part of the "range" table.
-            const tail = findTailRange(range, this.cccs, equalCondition);
-            if (tail.pos !== null) {
-                return {pos : tail.pos, inserts : tail.subRange.map(item => item.ccc)};
-            }
+            // const tail = findTailRange(range, this.cccs, equalCondition);
+            // if (tail.pos !== null) {
+            //     return {pos : tail.pos, inserts : tail.subRange.map(item => item.ccc)};
+            // }
 
             // for (let pos = range.length; pos !== 0; --pos) {           // iterate over "this.cccs" table
             //     for (let dit = 0; dit !== range.length - pos; ++dit) { // iterate over "range" table
@@ -287,34 +311,72 @@ class CCCTables {
             // }
 
             // didn't find anything, so let's insert everything:
-            return {pos : null, inserts : range};
+            const inserts = this.data.slice(index, index + length);
+            let isValidMask = true;
+            for (let pos = 0; pos !== inserts.length; ++pos) {
+                const newPos = pos & mask;
+                if (inserts[pos].ccc !== inserts[newPos].ccc) {
+                    isValidMask = false;
+                    break;
+                }
+            }
+            return {valid : isValidMask, pos : null, inserts};
+        };
+
+        /// This function compresses the specified range based on the input mask.
+        /// For example, an array of zeros, with mask of zero, only needs the first element
+        const compressInserts = (inserts, mask) => {
+            if (inserts.length <= 1) {
+                return inserts;
+            }
+            let trimPos = 1;
+            for (let pos = inserts.length - 1; pos !== 0; --pos) {
+                if ((pos & mask) !== 0) {
+                    trimPos = pos;
+                    break;
+                }
+            }
+            return inserts.slice(0, trimPos);
         };
 
         const findSimilarMaskedRange = (index = 0, length = 256) => {
             let mask = resetMask;
             let masks = [];
             for (; mask >= 0; --mask) {
-                const {inserts, pos} = findSimilarRange(index, length, mask);
-                masks.push({pos, mask, inserts});
+                updateProgressBar((resetMask - mask) / resetMask * 100);
+                let {valid, inserts, pos} = findSimilarRange(index, length, mask);
+                if (!valid) {
+                    continue;
+                }
+                inserts = compressInserts(inserts, mask);
+                masks[inserts.length] = {pos, mask, inserts};
             }
-            return masks.toSorted((a, b) => b.inserts.length - a.inserts.length)?.[0];
+            console.log(`  0x${this.data[index].codePoint.toString(16)}-0x${
+                            this.data[index + length]?.codePoint?.toString(16)}`,
+                        "Valid Masks:",
+                        masks.filter(item => item !== undefined)
+                            .slice(0, 5)
+                            .map(item => ({...item, inserts : item.inserts.length})));
+            return masks.find(item => item !== undefined);
         };
 
         let batchNo = 0;
         let insertedCount = 0;
         let reusedCount = 0;
         let reusedMaskedCount = 0;
-        for (let range = 0; range <= this.data.length; range += 256) {
+        for (let range = 0; range < this.data.length; range += 256) {
 
             const codeRange = range >>> 8;
             const length = Math.min(this.data.length - range, 256);
 
-            console.log(`Batch #${batchNo++}: `, codeRange.toString(16), length,
+            console.log(`Batch #${batchNo++}: `, codeRange.toString(16), "CCC-Length:", this.cccs.length,
                         `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-            const {pos, mask, inserts} = findSimilarMaskedRange(range, length);
+            let {pos, mask, inserts} = findSimilarMaskedRange(range, length);
+            pos = pos === null ? this.cccs.index : pos;
             const helperCode = (pos << 8) | mask;
             this.indeces.append(helperCode);
+            inserts = inserts.map(item => item?.ccc);
             if (inserts.length > 0) {
                 this.cccs.appendList(inserts);
                 ++insertedCount;
@@ -322,7 +384,8 @@ class CCCTables {
                 ++reusedCount;
             }
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                        codeRange, "mask:", mask, "pos:", pos);
+                        codeRange, "mask:", mask, "pos:", pos, 'code:', helperCode,
+                        "inserts:", inserts.filter(item => item).slice(0, 5));
 
             if (mask !== resetMask) {
                 ++reusedMaskedCount;
@@ -333,6 +396,7 @@ class CCCTables {
         console.log("Successful masks:", reusedMaskedCount);
         console.log("CCCs Table Length:", this.cccs.length);
         console.log("Finalizing: done.");
+        console.timeEnd("Finalize");
     }
 
     render() {
@@ -397,10 +461,10 @@ class CCCTables {
 
 const processCachedFile = async fileContent => {
     const lines = fileContent.split('\n');
-
     const cccsTables = new CCCTables();
     let lastCodePoint = 0;
     let count = 0;
+
     lines.forEach((line, index) => {
         line = cleanComments(line);
 
@@ -422,7 +486,7 @@ const processCachedFile = async fileContent => {
         /// stats
         ++count;
         if (count % 1000 === 0) {
-            console.log(`Parsing: `, `codePoint(${codePoint})`, `count(${count})`);
+            console.log(`Parsing Line ${index}: `, `codePoint(${codePoint})`, `count(${count})`);
         }
 
         for (let curCodePoint = lastCodePoint + 1; curCodePoint !== codePoint + 1; ++curCodePoint) {
@@ -433,13 +497,8 @@ const processCachedFile = async fileContent => {
         lastCodePoint = codePoint;
     });
     console.log("Code Point Count:", count);
-
-    // magicBucket.print();
-
     cccsTables.finalize?.();
-
     await createTableFile([ cccsTables ]);
-
     console.log('File processing completed.');
 };
 
