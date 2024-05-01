@@ -240,3 +240,4 @@ Language: JavaScript
 BasedOnStyle: LLVM
 ColumnLimit: 110
 TabWidth: 4
+IndentWidth: 4

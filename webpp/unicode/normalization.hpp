@@ -129,7 +129,7 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
-        if (code_point >= details::trailing_zero_cccs) [[unlikely]] {
+        if (code_point >= static_cast<CharT>(details::trailing_zero_cccs)) [[unlikely]] {
             return 0;
         }
         auto const code_point_range = code_point >> 8U;
