@@ -174,7 +174,7 @@ class TableTraits {
 
     get length() { return this.index; }
 
-    get result() { return this.bytes.slice(0, this.index); }
+    get result() { return this.bytes.slice(0, this.length); }
 
     get(index) { return this.bytes[index]; }
 
@@ -249,66 +249,35 @@ class CCCTables {
             return null;
         };
 
-        const findTailRange = (left, right, callable) => {
-            for (let index = 0; index !== left.length - 1; ++index) {
-                const start = index;
-                const length = left.length - index;
-                const end = start + length;
-                const pos = findSubRange(left, right, callable, start, length);
-                if (pos !== null) {
-                    return {pos, subRange : left.slice(start, end)};
-                }
+        // Overlap Inserts Optimization:
+        ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
+        ///    then we can omit inserting the first part of the "range" table.
+        const overlapInserts = (left, right, equalCondition) => {
+            if (right.length === 0 || left.length === 0) {
+                return 0;
             }
-            return {pos : null, subRange : left};
-        };
-
-        const findHeadRange = (left, right, callable) => {
-            for (let pos = 0; pos !== left.length - 1; ++pos) {
-                const subLeft = left.slice(0, left.length - pos - 1);
-                const pos = findSubRange(subLeft, right, callable);
-                if (pos !== null) {
-                    return {pos, subRange : subLeft};
+            let rpos = Math.min(0, (right.length - 1) - left.length);
+            top: for (; rpos !== right.length; ++rpos) {
+                const length = right.length - rpos;
+                for (let lpos = 0; lpos !== length; ++lpos) {
+                    if (!equalCondition({lpos, rpos : rpos})) {
+                        continue top;
+                    }
                 }
+                return length;
             }
-            return {pos : null, subRange : left};
+            return 0;
         };
 
         /// This function finds a place in the "this.cccs" table where the specified range
         /// will be there.
-        const findSimilarRange = (index = 0, length = 256, mask = resetMask) => {
-            const equalCondition = ({rpos, lpos}) => {
-                const ccc = this.cccs.get(rpos + (lpos & mask));
-                return this.data[lpos].ccc === ccc;
-            };
-
+        const findSimilarRange = (equalCondition, index = 0, length = 256, mask = resetMask) => {
             const pos = findSubRange(this.data, this.cccs, equalCondition, index, length);
 
             // found a sub-range, no need for inserts
             if (pos !== null) {
                 return {valid : true, pos, inserts : []};
             }
-
-            // tail optimization:
-            //    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
-            //    then we can omit inserting the first part of the "range" table.
-            // const tail = findTailRange(range, this.cccs, equalCondition);
-            // if (tail.pos !== null) {
-            //     return {pos : tail.pos, inserts : tail.subRange.map(item => item.ccc)};
-            // }
-
-            // for (let pos = range.length; pos !== 0; --pos) {           // iterate over "this.cccs" table
-            //     for (let dit = 0; dit !== range.length - pos; ++dit) { // iterate over "range" table
-            //         const {codePoint : rangeCodePoint, ccc : rangeCCC} = range[dit];
-            //         const ccc = this.cccs.get(pos + dit);
-            //
-            //         if (rangeCCC !== ccc) {
-            //             // found a length
-            //             const start = pos + dit;
-            //             const end = start + length - dit; // we know it can be optimized, but it's for docs
-            //             return {pos, inserts : range.slice(start, end).map(item => item.ccc)};
-            //         }
-            //     }
-            // }
 
             // didn't find anything, so let's insert everything:
             const inserts = this.data.slice(index, index + length);
@@ -326,17 +295,28 @@ class CCCTables {
         /// This function compresses the specified range based on the input mask.
         /// For example, an array of zeros, with mask of zero, only needs the first element
         const compressInserts = (inserts, mask) => {
-            if (inserts.length <= 1) {
+            if (inserts.length <= 1 || inserts[0].ccc !== 0) {
                 return inserts;
             }
-            let trimPos = 1;
+            let rtrimPos = 0;
             for (let pos = inserts.length - 1; pos !== 0; --pos) {
                 if ((pos & mask) !== 0) {
-                    trimPos = pos;
+                    rtrimPos = pos;
                     break;
                 }
             }
-            return inserts.slice(0, trimPos);
+            // let ltrimPos = 0;
+            // for (let pos = 0; pos !== rtrimPos; ++pos) {
+            //     if ((pos & mask) !== 0) {
+            //         ltrimPos = pos;
+            //         break;
+            //     }
+            // }
+            // const trimLength = ltrimPos + (inserts.length - rtrimPos);
+            // if (trimLength !== 0) {
+            //     console.log(`  Trim Inserts:`, trimLength, ltrimPos, rtrimPos);
+            // }
+            return inserts.slice(0, rtrimPos + 1);
         };
 
         const findSimilarMaskedRange = (index = 0, length = 256) => {
@@ -344,11 +324,26 @@ class CCCTables {
             let masks = [];
             for (; mask >= 0; --mask) {
                 updateProgressBar((resetMask - mask) / resetMask * 100);
-                let {valid, inserts, pos} = findSimilarRange(index, length, mask);
+
+                const equalCondition = ({rpos, lpos}) => {
+                    const ccc = this.cccs.get(rpos + (lpos & mask));
+                    return this.data[lpos].ccc === ccc;
+                };
+
+                let {valid, inserts, pos} = findSimilarRange(equalCondition, index, length, mask);
                 if (!valid) {
                     continue;
                 }
                 inserts = compressInserts(inserts, mask);
+                let overlapped = overlapInserts(
+                    inserts, this.cccs,
+                    ({rpos,
+                      lpos}) => { return inserts[lpos & mask].ccc === this.cccs.get(rpos + (lpos & mask)); });
+                if (overlapped > 0) {
+                    // console.log(`  Trim:`, overlapped);
+                    pos = this.cccs.length - overlapped;
+                    inserts = inserts.slice(overlapped, inserts.length);
+                }
                 masks[inserts.length] = {pos, mask, inserts};
             }
             console.log(`  0x${this.data[index].codePoint.toString(16)}-0x${
