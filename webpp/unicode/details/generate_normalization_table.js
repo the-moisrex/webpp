@@ -15,8 +15,99 @@ const cacheReadmePath = 'ReadMe.txt';
 const outFilePath = `normalization_tables.hpp`;
 
 const uint8 = Symbol('uint8');
+const uint16 = Symbol('uint16');
 const uint8x2 = Symbol('uint8');
 const uint32 = Symbol('uint32');
+
+class ModifierComputer {
+    constructor(data, dataIndex = 0, dataLength = 256) {
+        const codePoints = data.slice(dataIndex, dataIndex + dataLength).map(item => item.codePoint);
+        this.index = 0;
+        const masks = new Set(codePoints);
+        masks.add(0);
+        masks.add(0xFF);
+
+        // add some masks
+        for (let i = 0;; ++i) {
+            const length = masks.size;
+            if (i === length) {
+                break;
+            }
+            for (let pos = i; pos !== length; ++pos) {
+                masks.add(masks[i] | masks[i + pos]);
+            }
+        }
+
+        const shifts = new Set(codePoints);
+        shifts.add(0);
+        shifts.add(0xFF);
+
+        // add some shifts
+        for (const item of shifts) {
+            shifts.add(-1 * item);
+            shifts.add(-1 * Math.floor(item / 2));
+            shifts.add(Math.floor(item / 2));
+        }
+        this.shifts = Array.from(shifts);
+        this.masks = Array.from(masks);
+    }
+
+    get mask() { return this.masks[Math.floor(this.index / this.shifts.length)]; }
+
+    get shift() { return this.shifts[this.index % this.shifts.length]; }
+
+    get length() { return this.masks.length * this.shifts.length; }
+
+    get percent() { return this.index / this.length * 100; }
+
+    next() { ++this.index; }
+}
+
+/// This shows how the actual algorithm will work.
+const modifiers = {
+    sizeof : uint16,
+    resetMask : 0xFF,
+    resetShift : 0x00,
+    reset : 0x00FF, // both of them together
+    maxShift : 0xFF,
+    minShift : this.resetShift,
+    maxMask : this.resetMask,
+    minMask : 0x00,
+    end : 0xFF00, // end of the mask and shift
+    max : this.maxShift | this.maxMask,
+
+    /// only apply the mask
+    applyMask : (pos, modifier) => pos & modifier,
+
+    /// Apply the mask and the shift and finding the actual value in the second table
+    /// This is the heart of the algorithm that in C++ we have to implement as well
+    apply : (pos, modifier, table, range = 0) => (table[range + pos] + (modifier >>> 8)) & modifier,
+
+    /// get the helper code
+    helperCode : (pos, modifier) => (pos << 16) | modifier,
+
+    maskOf : modifier => modifier & modifiers.resetMask,
+    shiftOf : modifier => modifier >>> 8,
+    info : (modifier) => ({mask : modifiers.maskOf(modifier), shift : modifiers.shiftOf(modifier)}),
+    compact : (mask, shift) => mask | (shift << 8),
+
+    // nextModifier : modifier => {
+    //     let {mask, shift} = modifiers.info(modifier);
+    //     ++shift;
+    //     if (shift >= modifiers.maxShift) {
+    //         shift = modifiers.resetShift;
+    //         --mask;
+    //     }
+    //     if (mask >= modifiers.maxMask) {
+    //         mask = modifiers.resetMask;
+    //     }
+    //     return modifiers.compact(mask, shift);
+    // },
+
+    // percent : modifier =>
+    //     ((modifiers.maxMask - modifiers.maskOf(modifier)) | (modifiers.shiftOf(modifier) << 8)) /
+    //     modifiers.max * 100,
+};
 
 const readmeData = {
     version : "",
@@ -42,16 +133,6 @@ const updateProgressBar = (percent, done = undefined) => {
                         '-'.repeat(progressBarLength - progress);
     process.stdout.write(
         `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`); // Update the progress bar
-};
-
-const popcount = n => {
-    let c = 0;
-    for (; n !== 0; n >>= 1) {
-        if ((n & 1) !== 0) {
-            c++;
-        }
-    }
-    return c;
 };
 const downloadFile = async (url, file, process) => {
     try {
@@ -124,6 +205,7 @@ const parseCodePoints = codePoint => parseInt(codePoint, 16);
  * This class will let us handle the types of the tables including:
  *   - unsigned integer 32 bit (uint32)
  *   - unsigned integer 8 bit  (uint8)
+ *   - unsigned integer 16 bit (uint16)
  */
 class TableTraits {
 
@@ -178,6 +260,8 @@ class TableTraits {
 
     get(index) { return this.bytes[index]; }
 
+    set(index, value) { return this.bytes[index] = value; }
+
     append(value) { this.bytes[this.index++] = value; }
 
     appendList(list) {
@@ -193,7 +277,7 @@ class CCCTables {
 
         // these numbers are educated guesses from other projects, they're not that important!
         this.indeces = new TableTraits(4353 * 10, uint32);
-        this.cccs = new TableTraits((100 + 67) * 256, uint8);
+        this.cccs = new TableTraits(65535, uint8);
 
         this.data = [];
     }
@@ -214,26 +298,11 @@ class CCCTables {
         console.time("Finalize");
         console.log("Finalizing...");
 
-        const resetMask = 0xFF;
-        const isZeroingOut = (mask, codePoint) =>
-            (mask & (codePoint & resetMask)) === 0 && (codePoint & resetMask) !== 0;
-
-        const isZeroingOutRange = (mask, index, length) => {
-            const end = index + length;
-            for (; index !== end; ++index) {
-                const {codePoint} = this.data[index];
-                if (isZeroingOut(mask, codePoint)) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
         /// Find the start position of "range" in "all"
         const findSubRange = (left, right, callable = (range_value, all_value) => range_value === all_value,
                               start = 0, length = left.length) => {
             const end = (right.length / length) * length;
-            top: for (let rpos = 0; rpos < end; ++rpos) {       // iterate over "right" array
+            top: for (let rpos = 0; rpos < end; ++rpos) {                 // iterate over "right" array
                 for (let lpos = start; lpos < (start + length); ++lpos) { // iterate over "left" array
                     if (!callable({
                             lvalue : left?.[lpos],         // left table current value
@@ -253,14 +322,14 @@ class CCCTables {
         ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
         ///    then we can omit inserting the first part of the "range" table.
         const overlapInserts = (left, right, equalCondition) => {
-            if (right.length === 0 || left.length === 0) {
+            if (left.length === 0) {
                 return 0;
             }
-            let rpos = Math.min(0, (right.length - 1) - left.length);
+            let rpos = (right.length - 1) - left.length;
             top: for (; rpos !== right.length; ++rpos) {
                 const length = right.length - rpos;
                 for (let lpos = 0; lpos !== length; ++lpos) {
-                    if (!equalCondition({lpos, rpos : rpos})) {
+                    if (!equalCondition({lpos, rpos})) {
                         continue top;
                     }
                 }
@@ -271,7 +340,7 @@ class CCCTables {
 
         /// This function finds a place in the "this.cccs" table where the specified range
         /// will be there.
-        const findSimilarRange = (equalCondition, index = 0, length = 256, mask = resetMask) => {
+        const findSimilarRange = (equalCondition, index = 0, length = 256, modifier = modifiers.reset) => {
             const pos = findSubRange(this.data, this.cccs, equalCondition, index, length);
 
             // found a sub-range, no need for inserts
@@ -281,33 +350,34 @@ class CCCTables {
 
             // didn't find anything, so let's insert everything:
             const inserts = this.data.slice(index, index + length);
-            let isValidMask = true;
+            let isValidModifier = true;
             for (let pos = 0; pos !== inserts.length; ++pos) {
-                const newPos = pos & mask;
-                if (inserts[pos].ccc !== inserts[newPos].ccc) {
-                    isValidMask = false;
+                const oldccc = inserts[pos]?.ccc;
+                const newccc = modifiers.apply(pos, modifier, inserts)?.ccc;
+                if (oldccc !== newccc || oldccc === undefined) {
+                    isValidModifier = false;
                     break;
                 }
             }
-            return {valid : isValidMask, pos : null, inserts};
+            return {valid : isValidModifier, pos : null, inserts};
         };
 
-        /// This function compresses the specified range based on the input mask.
+        /// This function compresses the specified range based on the input modifier.
         /// For example, an array of zeros, with mask of zero, only needs the first element
-        const compressInserts = (inserts, mask) => {
+        const compressInserts = (inserts, modifier = modifiers.reset) => {
             if (inserts.length <= 1 || inserts[0].ccc !== 0) {
                 return inserts;
             }
             let rtrimPos = 0;
             for (let pos = inserts.length - 1; pos !== 0; --pos) {
-                if ((pos & mask) !== 0) {
+                if (modifiers.applyMask(pos, modifier) !== 0) {
                     rtrimPos = pos;
                     break;
                 }
             }
             // let ltrimPos = 0;
             // for (let pos = 0; pos !== rtrimPos; ++pos) {
-            //     if ((pos & mask) !== 0) {
+            //     if (applyMask(pos, mask) !== 0) {
             //         ltrimPos = pos;
             //         break;
             //     }
@@ -320,39 +390,53 @@ class CCCTables {
         };
 
         const findSimilarMaskedRange = (index = 0, length = 256) => {
-            let mask = resetMask;
-            let masks = [];
-            for (; mask >= 0; --mask) {
-                updateProgressBar((resetMask - mask) / resetMask * 100);
+            updateProgressBar(0);
+            const computer = new ModifierComputer(this.data, index, length);
+            let possibilities = [];
+            for (; computer.index !== computer.length; computer.next()) {
+                updateProgressBar(computer.percent);
+                const modifier = modifiers.compact(computer.mask, computer.shift);
+                // console.log(modifier, computer.mask, computer.shift);
 
                 const equalCondition = ({rpos, lpos}) => {
-                    const ccc = this.cccs.get(rpos + (lpos & mask));
+                    const ccc = modifiers.apply(lpos, modifier, this.cccs, rpos);
                     return this.data[lpos].ccc === ccc;
                 };
 
-                let {valid, inserts, pos} = findSimilarRange(equalCondition, index, length, mask);
+                let {valid, inserts, pos} = findSimilarRange(equalCondition, index, length, modifier);
                 if (!valid) {
                     continue;
                 }
-                inserts = compressInserts(inserts, mask);
-                let overlapped = overlapInserts(
-                    inserts, this.cccs,
-                    ({rpos,
-                      lpos}) => { return inserts[lpos & mask].ccc === this.cccs.get(rpos + (lpos & mask)); });
-                if (overlapped > 0) {
-                    // console.log(`  Trim:`, overlapped);
-                    pos = this.cccs.length - overlapped;
-                    inserts = inserts.slice(overlapped, inserts.length);
-                }
-                masks[inserts.length] = {pos, mask, inserts};
+                inserts = compressInserts(inserts, modifier);
+                let overlapped = overlapInserts(inserts, this.cccs, ({rpos, lpos}) => {
+                    const ccc = modifiers.apply(rpos, modifier, inserts)?.ccc;
+                    if (ccc === undefined) {
+                        return false;
+                    }
+                    return ccc === this.cccs[rpos + lpos];
+                    // const lx = applyMask(lpos, mask);
+                    // const rx = rpos + lx;
+                    // const lxccc = inserts[lx]?.ccc;
+                    // if (rx < 0 || lxccc === undefined) {
+                    //     return false;
+                    // }
+                    // return lxccc === this.cccs.get(rx);
+                });
+                pos = this.cccs.length - overlapped;
+                inserts = inserts.slice(overlapped, inserts.length);
+                possibilities[inserts.length] = {pos, modifier, inserts, overlap : overlapped};
             }
-            console.log(`  0x${this.data[index].codePoint.toString(16)}-0x${
-                            this.data[index + length]?.codePoint?.toString(16)}`,
-                        "Valid Masks:",
-                        masks.filter(item => item !== undefined)
+            updateProgressBar(100);
+
+            const codePointStart = this.data[index].codePoint.toString(16);
+            const codePointEnd = this.data[index + length]?.codePoint?.toString(16) || "infinite";
+            console.log(`  0x${codePointStart}-0x${codePointEnd}`, "modifiers-count:", computer.length,
+                        "Possibilities:",
+                        possibilities.filter(item => item !== undefined)
                             .slice(0, 5)
                             .map(item => ({...item, inserts : item.inserts.length})));
-            return masks.find(item => item !== undefined);
+            return possibilities.find(item => item !== undefined) ||
+                   {pos : null, modifier : modifiers.reset, inserts : this.data.slice(index, index + length)};
         };
 
         let batchNo = 0;
@@ -367,22 +451,24 @@ class CCCTables {
             console.log(`Batch #${batchNo++}: `, codeRange.toString(16), "CCC-Length:", this.cccs.length,
                         `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-            let {pos, mask, inserts} = findSimilarMaskedRange(range, length);
+            let {pos, modifier, inserts} = findSimilarMaskedRange(range, length);
             pos = pos === null ? this.cccs.index : pos;
-            const helperCode = (pos << 8) | mask;
+            const helperCode = modifiers.helperCode(pos, modifier);
             this.indeces.append(helperCode);
-            inserts = inserts.map(item => item?.ccc);
             if (inserts.length > 0) {
+                inserts = inserts.map(item => item?.ccc);
                 this.cccs.appendList(inserts);
                 ++insertedCount;
             } else {
                 ++reusedCount;
             }
+            const mask = modifiers.maskOf(modifier);
+            const shift = modifiers.shiftOf(modifier);
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                        codeRange, "mask:", mask, "pos:", pos, 'code:', helperCode,
-                        "inserts:", inserts.filter(item => item).slice(0, 5));
+                        codeRange, "mask:", mask, "shift:", shift, "pos:", pos, 'code:', helperCode,
+                        "samples:", inserts.filter(item => item).slice(0, 5));
 
-            if (mask !== resetMask) {
+            if (mask !== modifiers.resetMask && mask !== 0) {
                 ++reusedMaskedCount;
             }
         }
@@ -458,7 +544,6 @@ const processCachedFile = async fileContent => {
     const lines = fileContent.split('\n');
     const cccsTables = new CCCTables();
     let lastCodePoint = 0;
-    let count = 0;
 
     lines.forEach((line, index) => {
         line = cleanComments(line);
@@ -479,10 +564,10 @@ const processCachedFile = async fileContent => {
         const ccc = parseInt(CanonicalCombiningClass);
 
         /// stats
-        ++count;
-        if (count % 1000 === 0) {
-            console.log(`Parsing Line ${index}: `, `codePoint(${codePoint})`, `count(${count})`);
-        }
+        // if (count % 1000 === 0) {
+        //     console.log(`Parsing Line ${index}: `, `codePoint(${codePoint})`, `count(${count})`);
+        // }
+        updateProgressBar(index / lines.length * 100);
 
         for (let curCodePoint = lastCodePoint + 1; curCodePoint !== codePoint + 1; ++curCodePoint) {
             const curCCC = curCodePoint === codePoint ? ccc : 0;
@@ -491,13 +576,11 @@ const processCachedFile = async fileContent => {
         }
         lastCodePoint = codePoint;
     });
-    console.log("Code Point Count:", count);
+    updateProgressBar(100, `Lines parsed: ${lines.length}`);
     cccsTables.finalize?.();
     await createTableFile([ cccsTables ]);
     console.log('File processing completed.');
 };
-
-const decorateTable = async table => { await fs.appendFile(outFilePath, table.render()); };
 
 const createTableFile = async (tables) => {
     const begContent = `
@@ -538,7 +621,7 @@ namespace webpp::unicode::details {
 
     await fs.writeFile(outFilePath, begContent);
     for (const table of tables) {
-        await decorateTable(table);
+        await fs.appendFile(outFilePath, table.render());
     }
     // console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
     // console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
