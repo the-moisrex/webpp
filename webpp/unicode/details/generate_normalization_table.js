@@ -21,9 +21,16 @@ const uint32 = Symbol('uint32');
 
 class ModifierComputer {
     constructor(data, dataIndex = 0, dataLength = 256) {
-        const codePoints = data.slice(dataIndex, dataIndex + dataLength).map(item => item.codePoint);
         this.index = 0;
-        const masks = new Set(codePoints);
+        const masks = new Set();
+        const shifts = new Set();
+
+        for (let pos = dataIndex; pos < dataLength; ++pos) {
+            const {codePoint} = data[pos];
+            masks.add(codePoint);
+            shifts.add(codePoint);
+        }
+
         masks.add(0);
         masks.add(0xFF);
 
@@ -38,7 +45,6 @@ class ModifierComputer {
             }
         }
 
-        const shifts = new Set(codePoints);
         shifts.add(0);
         shifts.add(0xFF);
 
@@ -81,7 +87,7 @@ const modifiers = {
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply : (pos, modifier, table, range = 0) => (table[range + pos] + (modifier >>> 8)) & modifier,
+    apply : (pos, modifier, table, range = 0) => (table[range + (pos & modifier)] + (modifier >>> 8)),
 
     /// get the helper code
     helperCode : (pos, modifier) => (pos << 16) | modifier,
@@ -118,17 +124,22 @@ const progressBarLength = 30; // Define the length of the progress bar
 const totalItems = 100;       // Total number of items to process
 let lastPercent = 0;
 const updateProgressBar = (percent, done = undefined) => {
-    if (!process.stdout.isTTY || percent === lastPercent) {
+    if (!process.stdout.isTTY) {
         return;
     }
     // process.stdout.clearLine();
     process.stdout.cursorTo(0); // Move the cursor to the beginning of the line
     if (percent >= totalItems) {
+        process.stdout.clearLine();
         if (done) {
             console.log(done instanceof Function ? done() : done);
         }
         return;
     }
+    if (Math.round(percent) === lastPercent) {
+        return;
+    }
+    lastPercent = Math.round(percent);
     const progress = Math.round((percent / totalItems) * progressBarLength);
     const progressBar = '='.repeat(progress) + '>' +
                         '-'.repeat(progressBarLength - progress);
@@ -350,15 +361,18 @@ class CCCTables {
             }
 
             // didn't find anything, so let's insert everything:
-            const inserts = this.data.slice(index, index + length);
             let isValidModifier = true;
-            for (let pos = 0; pos !== inserts.length; ++pos) {
-                const oldccc = inserts[pos]?.ccc;
-                const newccc = modifiers.apply(pos, modifier, inserts)?.ccc;
+            for (let pos = index; pos < (index + length); ++pos) {
+                const oldccc = this.data[pos]?.ccc;
+                const newccc = modifiers.apply(pos - index, modifier, this.data, index)?.ccc;
                 if (oldccc !== newccc || oldccc === undefined) {
                     isValidModifier = false;
                     break;
                 }
+            }
+            let inserts = [];
+            if (isValidModifier) {
+                inserts = this.data.slice(index, index + length);
             }
             return {valid : isValidModifier, pos : null, inserts};
         };
@@ -397,7 +411,6 @@ class CCCTables {
             for (; computer.index !== computer.length; computer.next()) {
                 updateProgressBar(computer.percent);
                 const modifier = modifiers.compact(computer.mask, computer.shift);
-                // console.log(modifier, computer.mask, computer.shift);
 
                 const equalCondition = ({rpos, lpos}) => {
                     const ccc = modifiers.apply(lpos, modifier, this.cccs, rpos);
