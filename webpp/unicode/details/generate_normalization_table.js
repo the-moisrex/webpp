@@ -116,11 +116,12 @@ const readmeData = {
 
 const progressBarLength = 30; // Define the length of the progress bar
 const totalItems = 100;       // Total number of items to process
+let lastPercent = 0;
 const updateProgressBar = (percent, done = undefined) => {
-    if (!process.stdout.isTTY) {
+    if (!process.stdout.isTTY || percent === lastPercent) {
         return;
     }
-    process.stdout.clearLine();
+    // process.stdout.clearLine();
     process.stdout.cursorTo(0); // Move the cursor to the beginning of the line
     if (percent >= totalItems) {
         if (done) {
