@@ -222,8 +222,9 @@ template <typename CharT = char32_t>
     auto const code_point_index = static_cast<stl::uint8_t>(code_point & 0xFFU);
     auto const helper           = unicode::details::ccc_index[code_point_range];
     auto const mask             = static_cast<stl::uint8_t>(helper & 0xFFU);
-    auto const index            = helper >> 8U;
-    auto const res              = unicode::details::ccc_values[index + (mask & code_point_index)];
+    auto const shift            = static_cast<stl::uint8_t>((helper >> 8U) & 0xFFU);
+    auto const index            = helper >> 16U;
+    auto const res              = unicode::details::ccc_values[index + (mask & code_point_index)] + shift;
 
     stl::string around = "[";
     for (int pos = index + (mask & code_point_index) - 3; pos != index + (mask & code_point_index) + 3; ++pos)
@@ -234,8 +235,9 @@ template <typename CharT = char32_t>
         around += ", ";
     }
     around += "]";
-    return stl::string("code: ") + stl::to_string(helper) + "\nmask: " + stl::to_string(mask) + "\nindex: " +
-           stl::to_string(index) + "\nsub-code-point-index: " + stl::to_string(code_point_index) +
+    return stl::string("code: ") + stl::to_string(helper) + "\nmask: " + stl::to_string(mask) +
+           "\nshift: " + stl::to_string(shift) + "\nindex: " + stl::to_string(index) +
+           "\nsub-code-point-index: " + stl::to_string(code_point_index) +
            "\nsub-index: " + stl::to_string(mask & code_point_index) +
            "\nactual-index: " + stl::to_string(index + (mask & code_point_index)) + "\n" + around;
 }

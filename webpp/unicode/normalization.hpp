@@ -136,8 +136,9 @@ namespace webpp::unicode {
         auto const code_point_index = static_cast<stl::uint8_t>(code_point & 0xFFU);
         auto const helper           = details::ccc_index[code_point_range];
         auto const mask             = static_cast<stl::uint8_t>(helper & 0xFFU);
-        auto const index            = helper >> 8U;
-        return details::ccc_values[index + (mask & code_point_index)];
+        auto const shift            = static_cast<stl::uint8_t>((helper >> 8) & 0xFFU);
+        auto const index            = helper >> 16U;
+        return details::ccc_values[index + (mask & code_point_index)] + shift;
     }
 
     /**
