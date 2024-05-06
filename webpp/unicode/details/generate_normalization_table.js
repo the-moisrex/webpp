@@ -23,9 +23,13 @@ class ModifierComputer {
     constructor(data, codePointStart = 0, dataLength = 256) {
         this.index = 0;
         const masks = new Set();
+        let zerosIndex = 0;
 
         for (let codePoint = codePointStart; codePoint < (codePointStart + dataLength); ++codePoint) {
-            masks.add(data[codePoint]);
+            masks.add(data.at(codePoint));
+            if (data.at(codePoint) === 0 && zerosIndex === 0) {
+                zerosIndex = codePoint;
+            }
         }
         const shifts = masks;
 
@@ -43,6 +47,15 @@ class ModifierComputer {
         //     masks.add(i);
         // }
 
+        let value = 0;
+        while (value < zerosIndex) {
+            value <<= 1;
+            value |= 0x1;
+        }
+        masks.add(value);
+        value >>= 1;
+        masks.add(value);
+
         // add some shifts
         for (const item of shifts) {
             shifts.add(-1 * item);
@@ -54,6 +67,7 @@ class ModifierComputer {
         masks.add(0xFF);
         masks.add(256 - dataLength);
         masks.add(dataLength);
+        masks.add(zerosIndex);
 
         shifts.add(0);
         shifts.add(0xFF);
@@ -91,13 +105,13 @@ const modifiers = {
     /// only apply the mask
     applyMask : (pos, modifier) => pos & modifier,
 
-    applyPosition : (pos, modifier, table, range = 0) => table[range + (pos & modifier)],
+    applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
 
     applyShift : (value, modifier) => value + (modifier >>> 8),
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply : (pos, modifier, table, range = 0) => table[range + (pos & modifier)] + (modifier >>> 8),
+    apply : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)) + (modifier >>> 8),
 
     /// get the helper code
     helperCode : (pos, modifier) => (pos << 16) | modifier,
@@ -280,7 +294,7 @@ class TableTraits {
 
     get result() { return this.bytes.slice(0, this.length); }
 
-    get(index) { return this.bytes[index]; }
+    at(index) { return this.bytes.at(index); }
 
     set(index, value) { return this.bytes[index] = value; }
 
@@ -317,31 +331,39 @@ class CCCTables {
         }
     }
 
+    tests() {
+
+        /// Sanity check: see if we have skipped adding some code points to the table
+        const undefinedIndex = this.data.findIndex(codePoint => codePoint === undefined);
+        if (undefinedIndex !== -1) {
+            console.error("Error: Undefined Code Point.", undefinedIndex, this.data.at(undefinedIndex),
+                          this.data);
+            process.exit(1);
+        }
+
+        if (this.data[0x1CE8] !== 1) {
+            console.error("Invalid parsing.");
+            process.exit(1);
+        }
+    }
+
     /// Post-Processing
     finalize() {
         console.time("Finalize");
         console.log("Finalizing...");
 
-        /// Sanity check: see if we have skipped adding some code points to the table
-        const undefinedIndex = this.data.findIndex(codePoint => codePoint === undefined);
-        if (undefinedIndex !== -1) {
-            console.error("Error: Undefined Code Point.", undefinedIndex, this.data[undefinedIndex],
-                          this.data);
-            process.exit(1);
-            return;
-        }
+        this.tests();
 
         /// Find the start position of "range" in "all"
-        const findSubRange = (left, right, conditionFunc, start, length = left.length) => {
+        const findSubRange = (left, right, start, length, modifier) => {
             const end = (right.length / length) * length;
-            top: for (let rpos = 0; rpos < end; ++rpos) {                 // iterate over "right" array
-                for (let lpos = start; lpos < (start + length); ++lpos) { // iterate over "left" array
-                    if (!conditionFunc({
-                            lvalue : left?.[lpos],         // left table current value
-                            rvalue : right?.[rpos + lpos], // right table current value
-                            rpos,                          // right index
-                            lpos                           // left index
-                        })) {
+            top: for (let rpos = 0; rpos < end; ++rpos) {                   // iterate over "right" array
+                for (let lpos = start; lpos !== (start + length); ++lpos) { // iterate over "left" array
+                    const rawPos = lpos - start;
+                    // const maskedPos = modifiers.applyMask(rawPos, modifier);
+                    const lvalue = left.at(lpos);
+                    const rvalue = modifiers.apply(rawPos, modifier, right, rpos);
+                    if (lvalue !== rvalue) {
                         continue top;
                     }
                 }
@@ -357,7 +379,7 @@ class CCCTables {
             if (left.length === 0) {
                 return 0;
             }
-            let rpos = (right.length - 1) - left.length;
+            let rpos = Math.max(0, (right.length - 1) - left.length);
             top: for (; rpos !== right.length; ++rpos) {
                 const length = right.length - rpos;
                 for (let lpos = 0; lpos !== length; ++lpos) {
@@ -370,23 +392,22 @@ class CCCTables {
             return 0;
         };
 
-        const isValidModifier =
-            (codePointStart, length, modifier) => {
-                for (let lpos = 0; lpos !== length; ++lpos) {
-                    const codePoint = codePointStart + lpos;
-                    const oldccc = this.data[codePoint];
-                    const newccc = modifiers.apply(lpos, modifier, this.data, codePointStart);
-                    if (oldccc !== newccc || newccc === undefined) {
-                        return false;
-                    }
+        const isValidModifier = (codePointStart, length, modifier) => {
+            for (let lpos = 0; lpos !== length; ++lpos) {
+                const codePoint = codePointStart + lpos;
+                const oldccc = this.data.at(codePoint);
+                const newccc = modifiers.apply(lpos, modifier, this.data, codePointStart);
+                if (oldccc !== newccc || newccc === undefined) {
+                    return false;
                 }
-                return true;
             }
+            return true;
+        };
 
         /// This function finds a place in the "this.cccs" table where the specified range
         /// will be there.
-        const findSimilarRange = (equalCondition, codePointStart, length, modifier) => {
-            const pos = findSubRange(this.data, this.cccs, equalCondition, codePointStart, length);
+        const findSimilarRange = (codePointStart, length, modifier) => {
+            const pos = findSubRange(this.data, this.cccs, codePointStart, length, modifier);
 
             // found a sub-range, no need for inserts
             if (pos !== null) {
@@ -438,16 +459,7 @@ class CCCTables {
                 updateProgressBar(computer.percent);
                 const modifier = modifiers.compact(computer.mask, computer.shift);
 
-                const equalCondition = ({rpos, lpos}) => {
-                    const ccc = modifiers.apply(lpos, modifier, this.cccs, rpos);
-                    if (ccc === undefined || isNaN(ccc)) {
-                        return false;
-                    }
-                    return this.data[rpos + lpos] === ccc;
-                };
-
-                let {valid, inserts, pos} =
-                    findSimilarRange(equalCondition, codePointStart, length, modifier);
+                let {valid, inserts, pos} = findSimilarRange(codePointStart, length, modifier);
                 if (!valid) {
                     invalidModifiers.push({
                         modifier,
@@ -466,10 +478,12 @@ class CCCTables {
                     if (ccc === undefined || isNaN(ccc)) {
                         return false;
                     }
-                    return ccc === this.cccs[rpos + lpos];
+                    // console.log('  overlapped:', lpos, rpos, ccc, rpos + lpos, this.cccs[rpos + lpos],
+                    // this.cccs.get(0), this.cccs.length);
+                    return this.cccs.at(rpos + lpos) === ccc;
                 });
                 if (overlapped !== 0) {
-                    console.log('  overlapped:', overlapped);
+                    // console.log('  overlapped:', overlapped);
                     pos = this.cccs.length - overlapped;
                 }
                 inserts = inserts.slice(overlapped, inserts.length);
@@ -489,7 +503,7 @@ class CCCTables {
                 process.exit(1);
                 return;
             }
-            return possibilities[0];
+            return possibilities.at(0);
         };
 
         let batchNo = 0;
@@ -528,6 +542,13 @@ class CCCTables {
             if (mask !== modifiers.resetMask && mask !== 0) {
                 ++reusedMaskedCount;
             }
+        }
+
+        if (this.cccs.length > 65535) {
+            console.error(
+                "Table size limit reached; the limit is because the pointer to the table is going to be bigger than uint16_t (16 bits) size.");
+            process.exit(1);
+            return;
         }
 
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
