@@ -108,10 +108,21 @@ const modifiers = {
     applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
 
     applyShift : (value, modifier) => value + (modifier >>> 8),
+    unapplyShift : (value, modifier) => value - (modifier >>> 8),
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
     apply : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)) + (modifier >>> 8),
+
+    matches : (left, right, lstart, rstart, pos, modifier) => {
+        const lccc = modifiers.apply(pos, modifier, left, lstart);
+        if (lccc === undefined || isNaN(lccc)) {
+            return false;
+        }
+        return right.at(rstart + pos) === lccc;
+    },
+
+    unshiftAll : (list, modifier) => list.map(value => modifiers.unapplyShift(value, modifier)),
 
     /// get the helper code
     helperCode : (pos, modifier) => (pos << 16) | modifier,
@@ -120,23 +131,6 @@ const modifiers = {
     shiftOf : modifier => modifier >>> 8,
     info : (modifier) => ({mask : modifiers.maskOf(modifier), shift : modifiers.shiftOf(modifier)}),
     compact : (mask, shift) => mask | (shift << 8),
-
-    // nextModifier : modifier => {
-    //     let {mask, shift} = modifiers.info(modifier);
-    //     ++shift;
-    //     if (shift >= modifiers.maxShift) {
-    //         shift = modifiers.resetShift;
-    //         --mask;
-    //     }
-    //     if (mask >= modifiers.maxMask) {
-    //         mask = modifiers.resetMask;
-    //     }
-    //     return modifiers.compact(mask, shift);
-    // },
-
-    // percent : modifier =>
-    //     ((modifiers.maxMask - modifiers.maskOf(modifier)) | (modifiers.shiftOf(modifier) << 8)) /
-    //     modifiers.max * 100,
 };
 
 const readmeData = {
@@ -375,7 +369,7 @@ class CCCTables {
         // Overlap Inserts Optimization:
         ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
         ///    then we can omit inserting the first part of the "range" table.
-        const overlapInserts = (left, right, equalCondition) => {
+        const overlapInserts = (left, right, modifier) => {
             if (left.length === 0) {
                 return 0;
             }
@@ -383,7 +377,7 @@ class CCCTables {
             top: for (; rpos !== right.length; ++rpos) {
                 const length = right.length - rpos;
                 for (let lpos = 0; lpos !== length; ++lpos) {
-                    if (!equalCondition({lpos, rpos})) {
+                    if (!modifiers.matches(left, right, 0, rpos, lpos, modifier)) {
                         continue top;
                     }
                 }
@@ -394,10 +388,8 @@ class CCCTables {
 
         const isValidModifier = (codePointStart, length, modifier) => {
             for (let lpos = 0; lpos !== length; ++lpos) {
-                const codePoint = codePointStart + lpos;
-                const oldccc = this.data.at(codePoint);
-                const newccc = modifiers.apply(lpos, modifier, this.data, codePointStart);
-                if (oldccc !== newccc || newccc === undefined) {
+                if (!modifiers.matches(this.data, this.data, codePointStart, codePointStart, lpos,
+                                       modifier)) {
                     return false;
                 }
             }
@@ -436,17 +428,6 @@ class CCCTables {
                     break;
                 }
             }
-            // let ltrimPos = 0;
-            // for (let pos = 0; pos !== rtrimPos; ++pos) {
-            //     if (applyMask(pos, mask) !== 0) {
-            //         ltrimPos = pos;
-            //         break;
-            //     }
-            // }
-            // const trimLength = ltrimPos + (inserts.length - rtrimPos);
-            // if (trimLength !== 0) {
-            //     console.log(`  Trim Inserts:`, trimLength, ltrimPos, rtrimPos);
-            // }
             return inserts.slice(0, rtrimPos);
         };
 
@@ -472,22 +453,19 @@ class CCCTables {
                     });
                     continue;
                 }
+                inserts = modifiers.unshiftAll(inserts);
                 inserts = compressInserts(inserts, modifier);
-                let overlapped = overlapInserts(inserts, this.cccs, ({rpos, lpos}) => {
-                    const ccc = modifiers.apply(lpos, modifier, inserts);
-                    if (ccc === undefined || isNaN(ccc)) {
-                        return false;
-                    }
-                    // console.log('  overlapped:', lpos, rpos, ccc, rpos + lpos, this.cccs[rpos + lpos],
-                    // this.cccs.get(0), this.cccs.length);
-                    return this.cccs.at(rpos + lpos) === ccc;
-                });
+                let overlapped = overlapInserts(inserts, this.cccs, modifier);
                 if (overlapped !== 0) {
-                    // console.log('  overlapped:', overlapped);
                     pos = this.cccs.length - overlapped;
                 }
                 inserts = inserts.slice(overlapped, inserts.length);
                 possibilities[inserts.length] = {pos, modifier, inserts, overlap : overlapped};
+
+                // performance trick
+                if (inserts.length === 0) {
+                    break;
+                }
             }
             updateProgressBar(100);
 
