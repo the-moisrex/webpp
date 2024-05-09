@@ -1,6 +1,7 @@
 // Created by moisrex on 12/28/20.
 #include "../webpp/unicode/unicode.hpp"
 
+#include "../webpp/std/format.hpp"
 #include "../webpp/unicode/normalization.hpp"
 #include "common/tests_common_pch.hpp"
 
@@ -215,31 +216,53 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 template <typename CharT = char32_t>
 [[nodiscard]] static constexpr stl::string desc_ccc_of(CharT const code_point) noexcept {
-    if (code_point >= static_cast<CharT>(unicode::details::trailing_zero_cccs)) [[unlikely]] {
+    using webpp::unicode::details::ccc_index;
+    using webpp::unicode::details::ccc_values;
+    using webpp::unicode::details::trailing_zero_cccs;
+    if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
         return "Definite Zero";
     }
-    auto const code_point_range = code_point >> 8U;
-    auto const code_point_index = static_cast<stl::uint8_t>(code_point & 0xFFU);
-    auto const helper           = unicode::details::ccc_index[code_point_range];
-    auto const mask             = static_cast<stl::uint8_t>(helper & 0xFFU);
-    auto const shift            = static_cast<stl::uint8_t>((helper >> 8U) & 0xFFU);
-    auto const index            = helper >> 16U;
-    auto const res              = unicode::details::ccc_values[index + (mask & code_point_index)] + shift;
+    auto const        code_point_range = static_cast<stl::size_t>(code_point) >> 8U;
+    auto const        code_point_index = static_cast<stl::uint8_t>(code_point);
+    auto const        helper           = ccc_index[code_point_range];
+    auto const        mask             = static_cast<stl::uint8_t>(helper);
+    auto const        shift            = static_cast<stl::uint8_t>(helper >> 8);
+    auto const        index            = helper >> 16U;
+    auto const        masked_pos       = mask & code_point_index;
+    stl::size_t const index_pos        = index + static_cast<stl::size_t>(masked_pos);
+    auto              res              = ccc_values[index_pos] + shift;
 
-    stl::string around = "[";
-    for (int pos = index + (mask & code_point_index) - 3; pos != index + (mask & code_point_index) + 3; ++pos)
+    stl::string around = "[..., ";
+    for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 3l, 0l));
+         pos != stl::min(static_cast<stl::size_t>(index_pos + 3), ccc_values.size());
+         ++pos)
     {
         around += stl::to_string(pos);
         around += "=";
-        around += stl::to_string(unicode::details::ccc_values[pos]);
+        around += stl::to_string(ccc_values[pos]);
         around += ", ";
     }
-    around += "]";
-    return stl::string("code: ") + stl::to_string(helper) + "\nmask: " + stl::to_string(mask) +
-           "\nshift: " + stl::to_string(shift) + "\nindex: " + stl::to_string(index) +
-           "\nsub-code-point-index: " + stl::to_string(code_point_index) +
-           "\nsub-index: " + stl::to_string(mask & code_point_index) +
-           "\nactual-index: " + stl::to_string(index + (mask & code_point_index)) + "\n" + around;
+    around += "...]";
+    return fmt::format(
+      R"data(code: {}
+mask: {}
+shift: {}
+index: {}
+sub code point index: {}
+masked position: {}
+actual index: {}
+result: {}
+{}
+)data",
+      helper,
+      mask,
+      shift,
+      index,
+      code_point_index,
+      masked_pos,
+      (index & code_point_index),
+      res,
+      around);
 }
 
 TEST(Unicode, getCcc) {

@@ -129,16 +129,37 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
-        if (code_point >= static_cast<CharT>(details::trailing_zero_cccs)) [[unlikely]] {
+        using unicode::details::ccc_index;
+        using unicode::details::ccc_values;
+        using unicode::details::trailing_zero_cccs;
+
+        // The CCC of anything bigger than this number is zero because zero is the default by unicode standard
+        if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
             return 0;
         }
-        auto const code_point_range = code_point >> 8U;
-        auto const code_point_index = static_cast<stl::uint8_t>(code_point & 0xFFU);
-        auto const helper           = details::ccc_index[code_point_range];
-        auto const mask             = static_cast<stl::uint8_t>(helper & 0xFFU);
-        auto const shift            = static_cast<stl::uint8_t>((helper >> 8) & 0xFFU);
-        auto const index            = helper >> 16U;
-        return details::ccc_values[index + (mask & code_point_index)] + shift;
+
+        // First we look up the ccc_index table,
+        // ccc_index table references ccc_values table.
+        // ccc_index values are like this:
+        //   helper code: [16bit = start-pos] + [8bit = shift] + [8bit = mask]
+        //
+        //   start-pos: the staring position of this 256-length bucket of CCC inside ccc_values table
+        //   mask:      the mask will be applied to position of that 256 range, not the values, and not to the
+        //              whole index position
+        //   shift:     the value you find will be shifted by this amount
+        auto const code_point_range = static_cast<stl::size_t>(code_point) >> 8U;
+        auto const code_point_index = static_cast<stl::uint8_t>(code_point);
+        auto const helper           = ccc_index[code_point_range];
+
+        // extract information from the helper code:
+        auto const mask       = static_cast<stl::uint8_t>(helper);
+        auto const shift      = static_cast<stl::uint8_t>(helper >> 8);
+        auto const start_pos  = static_cast<stl::size_t>(helper >> 16U);
+        auto const masked_pos = static_cast<stl::size_t>(mask & code_point_index);
+
+        // calculating the position of te value in the ccc_values table:
+        stl::size_t const index_pos = start_pos + masked_pos;
+        return ccc_values[index_pos] + shift;
     }
 
     /**
@@ -178,13 +199,13 @@ namespace webpp::unicode {
      * @param end if you don't pass it, it'll look for one character
      * @return true if it's normalized unicode
      */
-    template <normalization_form NF = normalization_form::compose,
-              typename Iter,
-              typename EIter = istl::nothing_type>
-    [[nodiscard]] static constexpr bool is_normalized(Iter start, EIter end = {}) noexcept {
-        using char_type = typename stl::iterator_traits<Iter>::value_type;
-        return false;
-    }
+    // template <normalization_form NF = normalization_form::compose,
+    //           typename Iter,
+    //           typename EIter = istl::nothing_type>
+    // [[nodiscard]] static constexpr bool is_normalized(Iter start, EIter end = {}) noexcept {
+    //     using char_type = typename stl::iterator_traits<Iter>::value_type;
+    //     return false;
+    // }
 
 } // namespace webpp::unicode
 

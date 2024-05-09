@@ -93,7 +93,9 @@ namespace webpp::unicode {
      */
     template <typename u32>
     [[nodiscard]] static constexpr bool is_code_point_valid(u32 code_point) noexcept {
-        return code_point < 0x11'0000 && ((code_point & 0xFFFF'F800) != lead_surrogate_min<u32>);
+        using uu32 = stl::make_unsigned_t<u32>;
+        return code_point < static_cast<u32>(0x11'0000U) &&
+               ((static_cast<uu32>(code_point) & 0xFFFF'F800U) != lead_surrogate_min<uu32>);
         // alternative implementation:
         // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));
     }
@@ -348,6 +350,7 @@ namespace webpp::unicode {
         static constexpr void append(StrT& out, CharT code_point) {
             using details::append_impl;
             using char_type = istl::char_type_of_t<StrT>;
+            using uchar_t   = stl::make_unsigned_t<CharT>;
             if constexpr (UTF8<char_type>) {
                 if (code_point < 0x80) {            // one octet
                     append_impl(out, code_point);
@@ -368,8 +371,8 @@ namespace webpp::unicode {
                 if (code_point <= max_bmp<char_type>) {
                     append_impl(out, code_point); // normal case
                 } else {
-                    append_impl(out, 0xD7C0U + (code_point >> 10U));
-                    append_impl(out, 0xDC00U + (code_point & 0x3FFU));
+                    append_impl(out, 0xD7C0U + (static_cast<uchar_t>(code_point) >> 10U));
+                    append_impl(out, 0xDC00U + (static_cast<uchar_t>(code_point) & 0x3FFU));
                 }
             } else { // for char32_t or others
                 append_impl(out, code_point);
