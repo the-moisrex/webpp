@@ -331,7 +331,7 @@ class TableTraits {
 }
 
 class Span {
-    constructor(arr, start = 0, length = arr.length - start) {
+    constructor(arr = [], start = 0, length = arr.length - start) {
         this.arr = arr;
         this.start = start;
         this.end = start + length;
@@ -341,7 +341,17 @@ class Span {
 
     slice(start = 0, end = this.length - start) {
         const newStart = this.start + start;
-        return new Span(this.arr, newStart, end - newStart);
+        end = Math.min(this.end, end);
+        const newLength = this.start + end - newStart;
+        return new Span(this.arr, newStart, newLength);
+    }
+
+    expand(newStart = 0, newLength = this.length + newStart) {
+        if (newStart < 0 && newStart >= this.length) {
+            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+        }
+        newLength = Math.min(this.arr.length, newLength);
+        return new Span(this.arr, newStart, newLength);
     }
 
     filter(func) {
@@ -380,6 +390,10 @@ class Modified {
     }
 
     at(index) {
+        if (index < 0 && index >= this.length) {
+            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+        }
+
         const res = modifiers.apply(index, this.modifier, this.data, this.start);
         if (res === undefined) {
             throw new InvalidModifier(this.modifier);
@@ -471,7 +485,7 @@ class CCCTables {
         // Overlap Inserts Optimization:
         ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
         ///    then we can omit inserting the first part of the "range" table.
-        const overlapInserts = (left, right, modifier) => {
+        const overlapInserts = (left, right) => {
             if (left.length === 0) {
                 return 0;
             }
@@ -479,7 +493,9 @@ class CCCTables {
             top: for (; rpos !== right.length; ++rpos) {
                 const length = right.length - rpos;
                 for (let lpos = 0; lpos !== length; ++lpos) {
-                    if (!modifiers.matches(left, right, 0, rpos, lpos, modifier)) {
+                    const lvalue = left.at(lpos);
+                    const rvalue = right.at(rpos + lpos);
+                    if (lvalue !== rvalue) {
                         continue top;
                     }
                 }
@@ -490,16 +506,16 @@ class CCCTables {
 
         /// This function finds a place in the "this.cccs" table where the specified range
         /// will be there.
-        const findSimilarRange = (modifiedData, modifiedCCC) => {
-            const pos = findSubRange(modifiedData, modifiedCCC);
+        const findSimilarRange = (dataView, modifiedCCC) => {
+            const pos = findSubRange(dataView, modifiedCCC);
 
             // found a sub-range, no need for inserts
             if (pos !== null) {
-                return {valid : true, pos, inserts : []};
+                return { valid: true, pos, inserts: new Span() }
             }
 
             // didn't find anything, so let's insert everything:
-            return {valid : true, pos : null, inserts : modifiedData};
+            return {valid : true, pos : null, inserts : dataView};
         };
 
         /// This function compresses the specified range based on the input modifier.
@@ -545,31 +561,28 @@ class CCCTables {
                         });
                         continue;
                     }
-                    // if (modifier === 65535) {
-                    //     console.log(modifier, modifiedCCC.slice(), modifiedData.slice())
-                    //     let {inserts, pos, valid} = findSimilarRange(modifiedData, modifiedCCC);
-                    // }
                     // inserts = compressInserts(inserts, modifier);
-                    // inserts = modifiers.unshiftAll(inserts);
-                    // let overlapped = overlapInserts(inserts, this.cccs, modifier);
-                    // if (overlapped !== 0) {
-                    //     pos = this.cccs.length - overlapped;
-                    //     inserts = inserts.slice(overlapped, inserts.length);
-                    // }
+
+                    const modifiedInserts = new Modified(inserts, 0, modifier);
 
                     // validating inserts:
-                    const modifiedInserts = new Modified(inserts, pos, modifier);
                     for (let index = 0; index !== inserts.length; ++index) {
                         const realCCC = dataView.at(index);
                         const insertCCC = modifiedInserts.at(index);
                         if (realCCC !== insertCCC) {
                             // console.log("  invalid insert modifier", modifier, modifiers.info(modifier));
-                            invalidModifiers.push(modifiers.info(modifier));
+                            invalidModifiers.push({...modifiers.info(modifier), index, realCCC, insertCCC});
                             continue computer_loop;
                         }
                     }
 
-                    possibilities.push({pos, modifier, inserts /*, overlap : overlapped*/});
+                    let overlapped = overlapInserts(modifiedInserts, this.cccs);
+                    if (overlapped !== 0) {
+                        pos = this.cccs.length - overlapped;
+                        inserts = inserts.slice(overlapped, inserts.length);
+                    }
+
+                    possibilities.push({pos, modifier, inserts, overlap : overlapped});
 
                     // performance trick
                     if (inserts.length === 0) {
