@@ -331,27 +331,31 @@ class TableTraits {
 }
 
 class Span {
+    #arr;
+    #start;
+    #end;
+
     constructor(arr = [], start = 0, length = arr.length - start) {
-        this.arr = arr;
-        this.start = start;
-        this.end = start + length;
+        this.#arr = arr;
+        this.#start = start;
+        this.#end = start + length;
     }
 
-    get length() { return this.end - this.start; }
+    get length() { return this.#end - this.#start; }
 
     slice(start = 0, end = this.length - start) {
-        const newStart = this.start + start;
-        end = Math.min(this.end, end);
-        const newLength = this.start + end - newStart;
-        return new Span(this.arr, newStart, newLength);
+        const newStart = this.#start + start;
+        end = Math.min(this.#end, end);
+        const newLength = this.#start + end - newStart;
+        return new Span(this.#arr, newStart, newLength);
     }
 
     expand(newStart = 0, newLength = this.length + newStart) {
         if (newStart < 0 && newStart >= this.length) {
             throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
-        newLength = Math.min(this.arr.length, newLength);
-        return new Span(this.arr, newStart, newLength);
+        newLength = Math.min(this.#arr.length, newLength);
+        return new Span(this.#arr, newStart, newLength);
     }
 
     filter(func) {
@@ -364,29 +368,34 @@ class Span {
 
     at(index) {
         if (index >= 0 && index < this.length) {
-            return this.arr[this.start + index];
+            return this.#arr[this.#start + index];
         } else {
             throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
     }
 
     * [ Symbol.iterator ]() {
-        for (let i = this.start; i < this.end; i++) {
-            yield this.arr[i];
+        for (let i = this.#start; i < this.#end; i++) {
+            yield this.#arr[i];
         }
     }
 }
 
 class InvalidModifier {
-    constructor(modifier) { this.modifier = modifier; }
-    toString() { return {modifier : this.modifier, ...modifiers.info(this.modifier)}; }
+    #data;
+    constructor(data) { this.#data = data; }
+    toString() { return JSON.stringify(this.#data); }
 };
 
 class Modified {
+    #data;
+    #modifier;
+    #start;
+
     constructor(data, codePointStart, modifier) {
-        this.data = data;
-        this.modifier = modifier;
-        this.start = codePointStart;
+        this.#data = data;
+        this.#modifier = modifier;
+        this.#start = codePointStart;
     }
 
     at(index) {
@@ -394,14 +403,14 @@ class Modified {
             throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
 
-        const res = modifiers.apply(index, this.modifier, this.data, this.start);
+        const res = modifiers.apply(index, this.#modifier, this.#data, this.#start);
         if (res === undefined) {
-            throw new InvalidModifier(this.modifier);
+            throw new InvalidModifier(this.#modifier);
         }
         return res;
     }
 
-    get length() { return rangeLength(this.start, this.data.length); }
+    get length() { return rangeLength(this.#start, this.#data.length); }
 
     slice(index = 0, endIndex = this.length - index) {
         let values = [];
@@ -444,7 +453,7 @@ class CCCTables {
         }
     }
 
-    tests() {
+    #tests() {
 
         /// Sanity check: see if we have skipped adding some code points to the table
         const undefinedIndex = this.data.findIndex(codePoint => codePoint === undefined);
@@ -460,160 +469,145 @@ class CCCTables {
         }
     }
 
+    /// Find the start position of "range" in "all"
+    /// This function finds a place in the "this.cccs" table where the specified range
+    /// will be there.
+    #findSimilarRange(left, right) {
+        top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+            for (let lpos = 0; lpos !== left.length; ++lpos) {
+                const rvalue = right.at(rpos + lpos);
+                const lvalue = left.at(lpos);
+                if (rvalue !== lvalue) {
+                    continue top;
+                }
+            }
+            return rpos;
+        }
+        return null;
+    }
+
+    // Overlap Inserts Optimization:
+    ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
+    ///    then we can omit inserting the first part of the "range" table.
+    #overlapInserts(left, right) {
+        if (left.length === 0) {
+            return 0;
+        }
+        let rpos = Math.max(0, (right.length - 1) - left.length);
+        top: for (; rpos !== right.length; ++rpos) {
+            const length = right.length - rpos;
+            for (let lpos = 0; lpos !== length; ++lpos) {
+                const lvalue = left.at(lpos);
+                const rvalue = right.at(rpos + lpos);
+                if (lvalue !== rvalue) {
+                    continue top;
+                }
+            }
+            return length;
+        }
+        return 0;
+    }
+
+    #optimizeInserts(inserts, modifier) {
+        let pos = null;
+
+        // inserts = this.#compressInserts(inserts, modifier);
+        const modifiedInserts = new Modified(inserts, 0, modifier);
+
+        // validating inserts:
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realCCC = inserts.at(index);
+            const insertCCC = modifiedInserts.at(index);
+            if (realCCC !== insertCCC) {
+                throw new InvalidModifier({index, realCCC, insertCCC});
+            }
+        }
+
+        const overlapped = this.#overlapInserts(modifiedInserts, this.cccs);
+        if (overlapped !== 0) {
+            pos = this.cccs.length - overlapped;
+            inserts = inserts.slice(overlapped, inserts.length);
+        }
+
+        return {pos, inserts, overlapped};
+    }
+
+    #findSimilarMaskedRange(codePointStart) {
+        updateProgressBar(0);
+        const computer = new ModifierComputer(this.data, codePointStart);
+        const length = rangeLength(codePointStart, this.data.length);
+        let possibilities = [];
+        let invalidModifiers = [];
+        for (; computer.index !== computer.length; computer.next()) {
+            try {
+                updateProgressBar(computer.percent);
+                const modifier = modifiers.compact(computer.mask, computer.shift);
+                const dataView =
+                    new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length));
+                const modifiedCCC = new Modified(this.cccs, 0, modifier);
+
+                const startPos = this.#findSimilarRange(dataView, modifiedCCC);
+                let info = {};
+                if (startPos === null) {
+                    info = this.#optimizeInserts(dataView, modifier);
+                } else {
+                    info = {pos: startPos, inserts: new Span()};
+                }
+
+                possibilities.push({...info, modifier});
+
+                // performance trick
+                if (info.inserts.length === 0) {
+                    break;
+                }
+            } catch (err) {
+                if (err instanceof InvalidModifier) {
+                    invalidModifiers.push(err);
+                } else {
+                    throw err;
+                }
+            }
+        }
+        updateProgressBar(100);
+
+        possibilities = possibilities.filter(item => item !== undefined);
+        const codePointStartHex = codePointStart.toString(16);
+        const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
+        console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "modifiers-count:", computer.length,
+                    "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length,
+                    possibilities.slice(0, 5).map(item => ({...item, inserts : item.inserts.length})));
+        if (possibilities.length === 0) {
+            console.error(`  Empty possibilities:`, possibilities, this.cccs.length, this.data.length);
+            console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers.map(item => item?.toString() || item));
+            process.exit(1);
+            // return {pos: null, inserts: this.data.slice(codePointStart, length), modifier:
+            // modifiers.reset};
+        }
+        return possibilities.at(0);
+    }
+
+    /// This function compresses the specified range based on the input modifier.
+    /// For example, an array of zeros, with mask of zero, only needs the first element
+    #compressInserts(inserts, modifier = modifiers.reset) {
+        if (inserts.length <= 1) {
+            return inserts;
+        }
+        let rtrimPos = 0;
+        for (let pos = inserts.length - 1; pos !== 0; --pos) {
+            if (modifiers.applyMask(pos, modifier) !== 0) {
+                rtrimPos = pos;
+                break;
+            }
+        }
+        return inserts.slice(0, rtrimPos);
+    }
+
     /// Post-Processing
     finalize() {
         console.time("Finalize");
         console.log("Finalizing...");
 
-        this.tests();
-
-        /// Find the start position of "range" in "all"
-        const findSubRange = (left, right) => {
-            top: for (let rpos = 0; rpos !== right.length; ++rpos) {
-                for (let lpos = 0; lpos !== left.length; ++lpos) {
-                    const rvalue = right.at(rpos + lpos);
-                    const lvalue = left.at(lpos);
-                    if (rvalue !== lvalue) {
-                        continue top;
-                    }
-                }
-                return rpos;
-            }
-            return null;
-        };
-
-        // Overlap Inserts Optimization:
-        ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
-        ///    then we can omit inserting the first part of the "range" table.
-        const overlapInserts = (left, right) => {
-            if (left.length === 0) {
-                return 0;
-            }
-            let rpos = Math.max(0, (right.length - 1) - left.length);
-            top: for (; rpos !== right.length; ++rpos) {
-                const length = right.length - rpos;
-                for (let lpos = 0; lpos !== length; ++lpos) {
-                    const lvalue = left.at(lpos);
-                    const rvalue = right.at(rpos + lpos);
-                    if (lvalue !== rvalue) {
-                        continue top;
-                    }
-                }
-                return length;
-            }
-            return 0;
-        };
-
-        /// This function finds a place in the "this.cccs" table where the specified range
-        /// will be there.
-        const findSimilarRange = (dataView, modifiedCCC) => {
-            const pos = findSubRange(dataView, modifiedCCC);
-
-            // found a sub-range, no need for inserts
-            if (pos !== null) {
-                return { valid: true, pos, inserts: new Span() }
-            }
-
-            // didn't find anything, so let's insert everything:
-            return {valid : true, pos : null, inserts : dataView};
-        };
-
-        /// This function compresses the specified range based on the input modifier.
-        /// For example, an array of zeros, with mask of zero, only needs the first element
-        // const compressInserts = (inserts, modifier = modifiers.reset) => {
-        //     if (inserts.length <= 1) {
-        //         return inserts;
-        //     }
-        //     let rtrimPos = 0;
-        //     for (let pos = inserts.length - 1; pos !== 0; --pos) {
-        //         if (modifiers.applyMask(pos, modifier) !== 0) {
-        //             rtrimPos = pos;
-        //             break;
-        //         }
-        //     }
-        //     return inserts.slice(0, rtrimPos);
-        // };
-
-        const findSimilarMaskedRange = (codePointStart) => {
-            updateProgressBar(0);
-            const computer = new ModifierComputer(this.data, codePointStart);
-            const length = rangeLength(codePointStart, this.data.length);
-            let possibilities = [];
-            let invalidModifiers = [];
-            computer_loop: for (; computer.index !== computer.length; computer.next()) {
-                try {
-                    updateProgressBar(computer.percent);
-                    const modifier = modifiers.compact(computer.mask, computer.shift);
-                    const dataView =
-                        new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length));
-                    const modifiedCCC = new Modified(this.cccs, 0, modifier);
-
-                    let {inserts, pos, valid} = findSimilarRange(dataView, modifiedCCC);
-                    if (!valid) {
-                        invalidModifiers.push({
-                            modifier,
-                            mask : computer.mask,
-                            shift : computer.shift,
-                            pos,
-                            inserts : inserts.length,
-                            applied2index : modifiers.apply(codePointStart, modifier, this.cccs),
-                            codePointCCC : this.data[codePointStart]
-                        });
-                        continue;
-                    }
-                    // inserts = compressInserts(inserts, modifier);
-
-                    const modifiedInserts = new Modified(inserts, 0, modifier);
-
-                    // validating inserts:
-                    for (let index = 0; index !== inserts.length; ++index) {
-                        const realCCC = dataView.at(index);
-                        const insertCCC = modifiedInserts.at(index);
-                        if (realCCC !== insertCCC) {
-                            // console.log("  invalid insert modifier", modifier, modifiers.info(modifier));
-                            invalidModifiers.push({...modifiers.info(modifier), index, realCCC, insertCCC});
-                            continue computer_loop;
-                        }
-                    }
-
-                    let overlapped = overlapInserts(modifiedInserts, this.cccs);
-                    if (overlapped !== 0) {
-                        pos = this.cccs.length - overlapped;
-                        inserts = inserts.slice(overlapped, inserts.length);
-                    }
-
-                    possibilities.push({pos, modifier, inserts, overlap : overlapped});
-
-                    // performance trick
-                    if (inserts.length === 0) {
-                        break;
-                    }
-                } catch (err) {
-                    if (err instanceof InvalidModifier) {
-                        invalidModifiers.push(err);
-                    } else {
-                        throw err;
-                    }
-                }
-            }
-            updateProgressBar(100);
-
-            possibilities = possibilities.filter(item => item !== undefined);
-            const codePointStartHex = codePointStart.toString(16);
-            const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
-            console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "modifiers-count:", computer.length,
-                        "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length,
-                        possibilities.slice(0, 5).map(item => ({...item, inserts : item.inserts.length})));
-            if (possibilities.length === 0) {
-                console.error(`  Empty possibilities:`, possibilities, this.cccs.length, this.data.length);
-                console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers);
-                process.exit(1);
-                return;
-                // return {pos: null, inserts: this.data.slice(codePointStart, length), modifier:
-                // modifiers.reset};
-            }
-            return possibilities.at(0);
-        };
+        this.#tests();
 
         let batchNo = 0;
         let insertedCount = 0;
@@ -630,7 +624,7 @@ class CCCTables {
                         "CCC-Table-Length:", this.cccs.length, "range:", range, "length:", length,
                         `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-            let {pos, modifier, inserts} = findSimilarMaskedRange(range);
+            let {pos, modifier, inserts} = this.#findSimilarMaskedRange(range);
             const {mask, shift} = modifiers.info(modifier);
             pos = pos === null ? (mask === 0 ? 0 : this.cccs.index) : pos;
             const helperCode = modifiers.helperCode(pos, modifier);
