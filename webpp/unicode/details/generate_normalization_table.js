@@ -334,11 +334,13 @@ class Span {
     #arr;
     #start;
     #end;
+    #func;
 
-    constructor(arr = [], start = 0, length = arr.length - start) {
+    constructor(arr = [], start = 0, length = arr.length - start, func = item => item) {
         this.#arr = arr;
         this.#start = start;
         this.#end = start + length;
+        this.#func = func;
     }
 
     get length() { return this.#end - this.#start; }
@@ -347,7 +349,7 @@ class Span {
         const newStart = this.#start + start;
         end = Math.min(this.#end, end);
         const newLength = this.#start + end - newStart;
-        return new Span(this.#arr, newStart, newLength);
+        return new Span(this.#arr, newStart, newLength, this.#func);
     }
 
     expand(newStart = 0, newLength = this.length + newStart) {
@@ -355,7 +357,7 @@ class Span {
             throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
         newLength = Math.min(this.#arr.length, newLength);
-        return new Span(this.#arr, newStart, newLength);
+        return new Span(this.#arr, newStart, newLength, this.#func);
     }
 
     filter(func) {
@@ -366,9 +368,11 @@ class Span {
         return values;
     }
 
+    map(func) { return new Span(this.#arr, this.#start, this.length, func); }
+
     at(index) {
         if (index >= 0 && index < this.length) {
-            return this.#arr[this.#start + index];
+            return this.#func(this.#arr[this.#start + index]);
         } else {
             throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
@@ -376,7 +380,7 @@ class Span {
 
     * [ Symbol.iterator ]() {
         for (let i = this.#start; i < this.#end; i++) {
-            yield this.#arr[i];
+            yield this.#func(this.#arr[i]);
         }
     }
 }
@@ -508,7 +512,7 @@ class CCCTables {
         return 0;
     }
 
-    #optimizeInserts(inserts, modifier) {
+    #optimizeInserts(inserts, dataView, modifier) {
         let pos = null;
 
         // inserts = this.#compressInserts(inserts, modifier);
@@ -516,7 +520,7 @@ class CCCTables {
 
         // validating inserts:
         for (let index = 0; index !== inserts.length; ++index) {
-            const realCCC = inserts.at(index);
+            const realCCC = dataView.at(index);
             const insertCCC = modifiedInserts.at(index);
             if (realCCC !== insertCCC) {
                 throw new InvalidModifier({index, realCCC, insertCCC});
@@ -549,16 +553,27 @@ class CCCTables {
                 const startPos = this.#findSimilarRange(dataView, modifiedCCC);
                 let info = {};
                 if (startPos === null) {
-                    info = this.#optimizeInserts(dataView, modifier);
+                    info = this.#optimizeInserts(dataView, dataView, modifier);
                 } else {
-                    info = {pos: startPos, inserts: new Span()};
+                    info = {pos : startPos, inserts : new Span()};
                 }
 
                 possibilities.push({...info, modifier});
 
                 // performance trick
-                if (info.inserts.length === 0) {
+                const lastInfoLength = info.inserts.length;
+                if (lastInfoLength === 0) {
                     break;
+                }
+
+                // now, try the shifted inserts as well see if they're any good:
+                info = this.#optimizeInserts(modifiers.unshiftAll(dataView), dataView, modifier);
+                if (info.inserts.length < lastInfoLength) {
+                    possibilities.push({...info, modifier, shifted : modifiers.shiftOf(modifier)});
+
+                    if (info.inserts.length === 0) {
+                        break;
+                    }
                 }
             } catch (err) {
                 if (err instanceof InvalidModifier) {
@@ -578,7 +593,8 @@ class CCCTables {
                     possibilities.slice(0, 5).map(item => ({...item, inserts : item.inserts.length})));
         if (possibilities.length === 0) {
             console.error(`  Empty possibilities:`, possibilities, this.cccs.length, this.data.length);
-            console.error(`  Invalid Modifiers:`, invalidModifiers.length, invalidModifiers.map(item => item?.toString() || item));
+            console.error(`  Invalid Modifiers:`, invalidModifiers.length,
+                          invalidModifiers.map(item => item?.toString() || item));
             process.exit(1);
             // return {pos: null, inserts: this.data.slice(codePointStart, length), modifier:
             // modifiers.reset};
