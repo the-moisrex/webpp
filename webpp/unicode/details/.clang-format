@@ -7,3 +7,5 @@ IntegerLiteralSeparator:
   Hex: 4
   HexMinDigits: 12
 BreakArrays: false
+BinPackArguments: true
+BinPackParameters: true

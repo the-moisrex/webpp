@@ -14,6 +14,8 @@ const cacheFilePath = 'UnicodeData.txt';
 const cacheReadmePath = 'ReadMe.txt';
 const outFilePath = `normalization_tables.hpp`;
 
+const ignoreErrors = true;
+
 const uint8 = Symbol('uint8');
 const uint16 = Symbol('uint16');
 const uint8x2 = Symbol('uint8');
@@ -78,6 +80,9 @@ class ModifierComputer {
         masks.add(256 - dataLength);
         masks.add(dataLength);
         masks.add(zerosIndex);
+        masks.add(127);
+        masks.add(252);
+        masks.add(254);
 
         shifts.add(0);
         shifts.add(0xFF);
@@ -115,43 +120,59 @@ const modifiers = {
     /// only apply the mask
     applyMask : (pos, modifier) => pos & modifier,
 
-    applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
+    // applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
 
-    applyShift : (value, modifier) => modifiers.fix(value + (modifier >>> 8)),
-    unapplyShift : (value, modifier) => modifiers.fix(value - (modifier >>> 8)),
-    modify : (value, pos, modifier) => (pos & modifier) === 0 ? 0 : modifiers.fix(value - (modifier >>> 8)),
+    // applyShift : (value, modifier) => modifiers.fix(value + (modifier >>> 8)),
+    unapplyShift : (value, pos, modifier) => {
+        let shift = (modifier >>> 8);
+        // const maskedPos = modifiers.applyMask(pos, modifier);
+        // if (maskedPos === 0) {
+        //     shift = 0;
+        // }
+        return modifiers.fix(value - shift);
+    },
+    // modify : (value, pos, modifier) => (pos & modifier) === 0 ? 0 : modifiers.fix(value - (modifier >>>
+    // 8)),
 
     fix : value => value < 256 ? value : undefined,
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply : (pos, modifier, table, range = 0) =>
-        modifiers.fix((table.at(range + (pos & modifier)) + (modifier >>> 8))),
-    unapply : (pos, modifier, table, range = 0) =>
-        modifier.fix((table.at(range + (pos & modifier)) - (modifier >>> 8))),
-
-    matches : (left, right, lstart, rstart, pos, modifier) => {
-        const lccc = modifiers.unapply(pos, modifier, left, lstart);
-        if (lccc === undefined || isNaN(lccc)) {
-            return false;
-        }
-        return right.at(rstart + pos) === lccc;
+    apply : (pos, modifier, table, range = 0) => {
+        let shift = (modifier >>> 8) & 0xFF;
+        const maskedPos = modifiers.applyMask(pos, modifier);
+        // if (maskedPos === 0) {
+        //     shift = 0;
+        // }
+        return modifiers.fix((table.at(range + maskedPos)) + shift);
     },
+    // unapply : (pos, modifier, table, range = 0) =>
+    //     modifier.fix((table.at(range + (pos & modifier)) - (modifier >>> 8))),
 
-    matchesMask : (left, right, lstart, rstart, pos, modifier) => {
-        const lccc = modifiers.applyPosition(pos, modifier, left, lstart);
-        if (lccc === undefined || isNaN(lccc)) {
-            return false;
-        }
-        return right.at(rstart + pos) === lccc;
-    },
+    // matches : (left, right, lstart, rstart, pos, modifier) => {
+    //     const lccc = modifiers.unapply(pos, modifier, left, lstart);
+    //     if (lccc === undefined || isNaN(lccc)) {
+    //         return false;
+    //     }
+    //     return right.at(rstart + pos) === lccc;
+    // },
 
-    unshiftAll : (list, modifier) => list.map(value => modifiers.unapplyShift(value, modifier)),
+    // matchesMask : (left, right, lstart, rstart, pos, modifier) => {
+    //     const lccc = modifiers.applyPosition(pos, modifier, left, lstart);
+    //     if (lccc === undefined || isNaN(lccc)) {
+    //         return false;
+    //     }
+    //     return right.at(rstart + pos) === lccc;
+    // },
+
+    unshiftAll : (list, modifier) =>
+        list.map((value, index) => modifiers.unapplyShift(value, index, modifier)),
 
     /// get the helper code
     helperCode : (pos, modifier) => (pos << 16) | modifier,
 
     maskOf : modifier => modifier & modifiers.resetMask,
+    cccIndexOf : code => code >>> 16,
     shiftOf : modifier => modifier >>> 8,
     info : (modifier) => ({mask : modifiers.maskOf(modifier), shift : modifiers.shiftOf(modifier)}),
     compact : (mask, shift) => mask | (shift << 8),
@@ -512,6 +533,22 @@ class CCCTables {
         return 0;
     }
 
+    /// This function compresses the specified range based on the input modifier.
+    /// For example, an array of zeros, with mask of zero, only needs the first element
+    #rightTrimInserts(inserts, modifier) {
+        if (inserts.length <= 1) {
+            return inserts.length;
+        }
+        let rtrimPos = 0;
+        for (let pos = inserts.length - 1; pos >= 0; --pos) {
+            if (modifiers.applyMask(pos, modifier) !== 0) {
+                rtrimPos = pos;
+                break;
+            }
+        }
+        return Math.max(1, rtrimPos);
+    }
+
     #optimizeInserts(inserts, dataView, modifier) {
         let pos = null;
 
@@ -533,7 +570,13 @@ class CCCTables {
             inserts = inserts.slice(overlapped, inserts.length);
         }
 
-        return {pos, inserts, overlapped};
+        const rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
+        const rtrimmed = inserts.length - rtrimmedPos;
+        if (rtrimmed !== 0) {
+            inserts = inserts.slice(0, rtrimmedPos);
+        }
+
+        return {pos, inserts, overlapped, rtrimmed};
     }
 
     #findSimilarMaskedRange(codePointStart) {
@@ -543,15 +586,16 @@ class CCCTables {
         let possibilities = [];
         let invalidModifiers = [];
         for (; computer.index !== computer.length; computer.next()) {
-            try {
-                updateProgressBar(computer.percent);
-                const modifier = modifiers.compact(computer.mask, computer.shift);
-                const dataView =
-                    new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length));
-                const modifiedCCC = new Modified(this.cccs, 0, modifier);
+            updateProgressBar(computer.percent);
+            const modifier = modifiers.compact(computer.mask, computer.shift);
+            const dataView =
+                new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length));
+            const modifiedCCC = new Modified(this.cccs, 0, modifier);
+            let lastInfoLength = 0;
+            let info = {};
 
+            try {
                 const startPos = this.#findSimilarRange(dataView, modifiedCCC);
-                let info = {};
                 if (startPos === null) {
                     info = this.#optimizeInserts(dataView, dataView, modifier);
                 } else {
@@ -561,11 +605,21 @@ class CCCTables {
                 possibilities.push({...info, modifier});
 
                 // performance trick
-                const lastInfoLength = info.inserts.length;
+                lastInfoLength = info.inserts.length;
                 if (lastInfoLength === 0) {
                     break;
                 }
+            } catch (err) {
+                if (err instanceof InvalidModifier) {
+                    invalidModifiers.push(err);
+                } else {
+                    if (!ignoreErrors) {
+                        throw err;
+                    }
+                }
+            }
 
+            try {
                 // now, try the shifted inserts as well see if they're any good:
                 info = this.#optimizeInserts(modifiers.unshiftAll(dataView), dataView, modifier);
                 if (info.inserts.length < lastInfoLength) {
@@ -579,7 +633,9 @@ class CCCTables {
                 if (err instanceof InvalidModifier) {
                     invalidModifiers.push(err);
                 } else {
-                    throw err;
+                    if (!ignoreErrors) {
+                        throw err;
+                    }
                 }
             }
         }
@@ -600,22 +656,6 @@ class CCCTables {
             // modifiers.reset};
         }
         return possibilities.at(0);
-    }
-
-    /// This function compresses the specified range based on the input modifier.
-    /// For example, an array of zeros, with mask of zero, only needs the first element
-    #compressInserts(inserts, modifier = modifiers.reset) {
-        if (inserts.length <= 1) {
-            return inserts;
-        }
-        let rtrimPos = 0;
-        for (let pos = inserts.length - 1; pos !== 0; --pos) {
-            if (modifiers.applyMask(pos, modifier) !== 0) {
-                rtrimPos = pos;
-                break;
-            }
-        }
-        return inserts.slice(0, rtrimPos);
     }
 
     /// Post-Processing
@@ -695,6 +735,25 @@ class CCCTables {
         const indecesBits = indeces.length * this.indeces.sizeof;
         const cccBits = this.cccs.length * this.cccs.sizeof;
 
+        const printableCCCs = [];
+        this.cccs.result.forEach((ccc, pos) => {
+            const poses = [];
+
+            indeces.forEach((code, index) => {
+                const cccIndex = modifiers.cccIndexOf(code);
+                if (cccIndex === pos) {
+                    poses.push(`0x${index.toString(16)}`);
+                }
+            });
+            if (poses.length === 0) {
+                printableCCCs.push(ccc);
+                return;
+            }
+            printableCCCs.push(`
+        // Start of ${poses.join(", ")}:
+        ${ccc}`);
+        });
+
         return `
     /**
      * In "ccc_index" table, any code point bigger than this number will have "zero" as it's CCC value;
@@ -743,7 +802,7 @@ class CCCTables {
      *   - in KibiBytes:  ${Math.ceil(cccBits / 8 / 1024)} KiB
      */
     static constexpr std::array<std::${this.cccs.typeString}_t, ${this.cccs.length}ULL> ccc_values{
-        ${this.cccs.result.join(", ")}
+        ${printableCCCs}
     };
         `;
     }
@@ -819,7 +878,7 @@ namespace webpp::unicode::details {
 `;
 
     const endContent = `
-} // webpp::unicode::details
+} // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_NORMALIZATION_TABLES_HPP
     `;
