@@ -72,3 +72,9 @@ The Unicode standard defines the following General Categories:
 * **Other (C)**: Characters that do not fit into any of the above categories, such as control characters, format
   characters, and private use characters.
 
+### Decomposition
+
+**Decomposition mapping**: A mapping from a character to a sequence of one or more
+characters that is a canonical or compatibility equivalent.
+
+- The default value for the `Decomposition_Mapping` property for a code point is the code point itself.

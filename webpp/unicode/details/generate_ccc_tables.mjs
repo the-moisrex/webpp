@@ -5,21 +5,32 @@
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
 
-const fs = require('fs').promises;
-const process = require('node:process');
-const path = require('path');
 const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
 const readmeUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt';
 const cacheFilePath = 'UnicodeData.txt';
 const cacheReadmePath = 'ReadMe.txt';
-const outFilePath = `normalization_tables.hpp`;
+const cccOutFile = `ccc_tables.hpp`;
+import {
+    uint8,
+    uint16,
+    uint8x2,
+    uint32,
+    updateProgressBar,
+    downloadFile,
+    Span,
+    splitLine,
+    findDate,
+    InvalidModifier,
+    findVersion,
+    TableTraits,
+    cleanComments,
+    parseCodePoints
+} from "./utils.mjs";
+import * as path from "node:path";
+import {promises as fs} from 'fs';
+import * as child_process from "node:child_process";
 
-const ignoreErrors = true;
-
-const uint8 = Symbol('uint8');
-const uint16 = Symbol('uint16');
-const uint8x2 = Symbol('uint8');
-const uint32 = Symbol('uint32');
+const ignoreErrors = false;
 
 const rangeLength = (codePointStart, dataLength) =>
     Math.min(dataLength, codePointStart + 0b1_0000_0000 /* aka 256 */) - codePointStart;
@@ -42,7 +53,7 @@ class ModifierComputer {
         }
 
         // add some masks
-        for (let i = 0;; ++i) {
+        for (let i = 0; ; ++i) {
             const length = masks.size;
             if (i === length) {
                 break;
@@ -93,37 +104,47 @@ class ModifierComputer {
         this.masks = Array.from(masks).filter(val => (val & 0xFF) === val);
     }
 
-    get mask() { return this.masks[Math.floor(this.index / this.shifts.length)]; }
+    get mask() {
+        return this.masks[Math.floor(this.index / this.shifts.length)];
+    }
 
-    get shift() { return this.shifts[this.index % this.shifts.length]; }
+    get shift() {
+        return this.shifts[this.index % this.shifts.length];
+    }
 
-    get length() { return this.masks.length * this.shifts.length; }
+    get length() {
+        return this.masks.length * this.shifts.length;
+    }
 
-    get percent() { return this.index / this.length * 100; }
+    get percent() {
+        return this.index / this.length * 100;
+    }
 
-    next() { ++this.index; }
+    next() {
+        ++this.index;
+    }
 }
 
 /// This shows how the actual algorithm will work.
 const modifiers = {
-    sizeof : uint16,
-    resetMask : 0xFF,
-    resetShift : 0x00,
-    reset : 0x00FF, // both of them together
-    maxShift : 0xFF,
-    minShift : this.resetShift,
-    maxMask : this.resetMask,
-    minMask : 0x00,
-    end : 0xFF00, // end of the mask and shift
-    max : this.maxShift | this.maxMask,
+    sizeof: uint16,
+    resetMask: 0xFF,
+    resetShift: 0x00,
+    reset: 0x00FF, // both of them together
+    maxShift: 0xFF,
+    minShift: 0x00, // resetShift
+    maxMask: 0xFF, // resetMask
+    minMask: 0x00,
+    end: 0xFF00, // end of the mask and shift
+    max: 0xFFFF, // maxShift | maxMask
 
     /// only apply the mask
-    applyMask : (pos, modifier) => pos & modifier,
+    applyMask: (pos, modifier) => pos & modifier,
 
     // applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
 
     // applyShift : (value, modifier) => modifiers.fix(value + (modifier >>> 8)),
-    unapplyShift : (value, pos, modifier) => {
+    unapplyShift: (value, pos, modifier) => {
         let shift = (modifier >>> 8);
         // const maskedPos = modifiers.applyMask(pos, modifier);
         // if (maskedPos === 0) {
@@ -134,11 +155,11 @@ const modifiers = {
     // modify : (value, pos, modifier) => (pos & modifier) === 0 ? 0 : modifiers.fix(value - (modifier >>>
     // 8)),
 
-    fix : value => value < 256 ? value : undefined,
+    fix: value => value < 256 ? value : undefined,
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply : (pos, modifier, table, range = 0) => {
+    apply: (pos, modifier, table, range = 0) => {
         let shift = (modifier >>> 8) & 0xFF;
         const maskedPos = modifiers.applyMask(pos, modifier);
         // if (maskedPos === 0) {
@@ -165,87 +186,24 @@ const modifiers = {
     //     return right.at(rstart + pos) === lccc;
     // },
 
-    unshiftAll : (list, modifier) =>
+    unshiftAll: (list, modifier) =>
         list.map((value, index) => modifiers.unapplyShift(value, index, modifier)),
 
     /// get the helper code
-    helperCode : (pos, modifier) => (pos << 16) | modifier,
+    helperCode: (pos, modifier) => (pos << 16) | modifier,
 
-    maskOf : modifier => modifier & modifiers.resetMask,
-    cccIndexOf : code => code >>> 16,
-    shiftOf : modifier => modifier >>> 8,
-    info : (modifier) => ({mask : modifiers.maskOf(modifier), shift : modifiers.shiftOf(modifier)}),
-    compact : (mask, shift) => mask | (shift << 8),
+    maskOf: modifier => modifier & modifiers.resetMask,
+    cccIndexOf: code => code >>> 16,
+    shiftOf: modifier => modifier >>> 8,
+    info: (modifier) => ({mask: modifiers.maskOf(modifier), shift: modifiers.shiftOf(modifier)}),
+    compact: (mask, shift) => mask | (shift << 8),
 };
 
 const readmeData = {
-    version : "",
-    date : ""
+    version: "",
+    date: ""
 };
 
-const progressBarLength = 30; // Define the length of the progress bar
-const totalItems = 100;       // Total number of items to process
-let lastPercent = 0;
-const updateProgressBar = (percent, done = undefined) => {
-    if (!process.stdout.isTTY) {
-        return;
-    }
-    // process.stdout.clearLine();
-    process.stdout.cursorTo(0); // Move the cursor to the beginning of the line
-    if (percent >= totalItems) {
-        process.stdout.clearLine();
-        if (done) {
-            console.log(done instanceof Function ? done() : done);
-        }
-        return;
-    }
-    if (Math.round(percent) === lastPercent) {
-        return;
-    }
-    lastPercent = Math.round(percent);
-    const progress = Math.round((percent / totalItems) * progressBarLength);
-    const progressBar = '='.repeat(progress) + '>' +
-                        '-'.repeat(progressBarLength - progress);
-    process.stdout.write(
-        `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`); // Update the progress bar
-};
-const downloadFile = async (url, file, process) => {
-    try {
-        // Check if the file already exists in the cache
-        await fs.access(file);
-        try {
-            console.log(`Using cached file ${file}...`);
-            const fileContent = await fs.readFile(file);
-            process(fileContent.toString());
-            return;
-        } catch (error) {
-            console.error(error);
-            return;
-        }
-    } catch (error) {
-        console.log("No cached file exists, let's download it.");
-    }
-
-    try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            console.error(`Failed to download file. Status Code: ${response.status}`);
-            return;
-        }
-
-        const text = await response.text();
-
-        // Save the downloaded file as a cache
-        await fs.writeFile(file, text);
-        console.log(`Downloaded ${file} from ${url}.`);
-
-        // process the file
-        await process(text);
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
-};
 
 const start = async () => {
     // readme file for getting the version and what not
@@ -268,148 +226,6 @@ const start = async () => {
 const processReadmeFile = content => {
     readmeData.version = findVersion(content);
     readmeData.date = findDate(content);
-};
-
-const cleanComments = line => line.split('#')[0].trimEnd();
-const splitLine = line => line.split(';').map(seg => seg.trim());
-const findVersion = fileContent => fileContent.match(/Version:? (\d+\.\d+\.\d+)/)[1];
-const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
-const parseCodePoints = codePoint => parseInt(codePoint, 16);
-
-/**
- * This class will let us handle the types of the tables including:
- *   - unsigned integer 32 bit (uint32)
- *   - unsigned integer 8 bit  (uint8)
- *   - unsigned integer 16 bit (uint16)
- */
-class TableTraits {
-
-    constructor(max, type = uint8) {
-        switch (type) {
-        case uint8:
-            this.bytes = new Uint8Array(max);
-            break;
-        case uint32:
-            this.bytes = new Uint32Array(max);
-            break;
-        case uint8x2:
-            this.bytes = [];
-            break;
-        default:
-            throw new Error('Invalid type provided to CodePointMapper.');
-        }
-        this.type = type;
-        this.index = 0;
-    }
-
-    get sizeof() {
-        switch (this.type) {
-        case uint8x2:
-            return 16;
-        case uint8:
-            return 8;
-        case uint32:
-            return 32;
-        default:
-            return 0;
-        }
-    }
-
-    get typeString() { return this.type.description; }
-
-    get postfix() {
-        switch (this.type) {
-        case uint8x2:
-        case uint8:
-            return "U";
-        case uint32:
-            return "ULL";
-        default:
-            return "";
-        }
-    }
-
-    get length() { return this.index; }
-
-    get result() { return this.bytes.slice(0, this.length); }
-
-    at(index) { return this.bytes.at(index); }
-
-    * [ Symbol.iterator ]() {
-        for (let pos = 0; pos !== this.length; pos++) {
-            yield this.at(pos);
-        }
-    }
-    set(index, value) { return this.bytes[index] = value; }
-
-    append(value) { this.bytes[this.index++] = value; }
-
-    appendList(list) {
-        for (const value of list) {
-            this.append(value);
-        }
-    }
-}
-
-class Span {
-    #arr;
-    #start;
-    #end;
-    #func;
-
-    constructor(arr = [], start = 0, length = arr.length - start, func = item => item) {
-        this.#arr = arr;
-        this.#start = start;
-        this.#end = start + length;
-        this.#func = func;
-    }
-
-    get length() { return this.#end - this.#start; }
-
-    slice(start = 0, end = this.length - start) {
-        const newStart = this.#start + start;
-        end = Math.min(this.#end, end);
-        const newLength = this.#start + end - newStart;
-        return new Span(this.#arr, newStart, newLength, this.#func);
-    }
-
-    expand(newStart = 0, newLength = this.length + newStart) {
-        if (newStart < 0 && newStart >= this.length) {
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
-        newLength = Math.min(this.#arr.length, newLength);
-        return new Span(this.#arr, newStart, newLength, this.#func);
-    }
-
-    filter(func) {
-        let values = [];
-        for (const val of this) {
-            values.push(func(val));
-        }
-        return values;
-    }
-
-    map(func) { return new Span(this.#arr, this.#start, this.length, func); }
-
-    at(index) {
-        if (index >= 0 && index < this.length) {
-            return this.#func(this.#arr[this.#start + index]);
-        } else {
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
-    }
-
-    * [ Symbol.iterator ]() {
-        for (let i = this.#start; i < this.#end; i++) {
-            yield this.#func(this.#arr[i]);
-        }
-    }
-}
-
-class InvalidModifier {
-    #data;
-    constructor(data) { this.#data = data; }
-    toString() { return JSON.stringify(this.#data); }
 };
 
 class Modified {
@@ -484,7 +300,7 @@ class CCCTables {
         const undefinedIndex = this.data.findIndex(codePoint => codePoint === undefined);
         if (undefinedIndex !== -1) {
             console.error("Error: Undefined Code Point.", undefinedIndex, this.data.at(undefinedIndex),
-                          this.data);
+                this.data);
             process.exit(1);
         }
 
@@ -599,7 +415,7 @@ class CCCTables {
                 if (startPos === null) {
                     info = this.#optimizeInserts(dataView, dataView, modifier);
                 } else {
-                    info = {pos : startPos, inserts : new Span()};
+                    info = {pos: startPos, inserts: new Span()};
                 }
 
                 possibilities.push({...info, modifier});
@@ -623,7 +439,7 @@ class CCCTables {
                 // now, try the shifted inserts as well see if they're any good:
                 info = this.#optimizeInserts(modifiers.unshiftAll(dataView), dataView, modifier);
                 if (info.inserts.length < lastInfoLength) {
-                    possibilities.push({...info, modifier, shifted : modifiers.shiftOf(modifier)});
+                    possibilities.push({...info, modifier, shifted: modifiers.shiftOf(modifier)});
 
                     if (info.inserts.length === 0) {
                         break;
@@ -645,12 +461,12 @@ class CCCTables {
         const codePointStartHex = codePointStart.toString(16);
         const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
         console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`, "modifiers-count:", computer.length,
-                    "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length,
-                    possibilities.slice(0, 5).map(item => ({...item, inserts : item.inserts.length})));
+            "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length,
+            possibilities.slice(0, 5).map(item => ({...item, inserts: item.inserts.length})));
         if (possibilities.length === 0) {
             console.error(`  Empty possibilities:`, possibilities, this.cccs.length, this.data.length);
             console.error(`  Invalid Modifiers:`, invalidModifiers.length,
-                          invalidModifiers.map(item => item?.toString() || item));
+                invalidModifiers.map(item => item?.toString() || item));
             process.exit(1);
             // return {pos: null, inserts: this.data.slice(codePointStart, length), modifier:
             // modifiers.reset};
@@ -677,8 +493,8 @@ class CCCTables {
             const length = Math.min(this.data.length - range, 256);
 
             console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16),
-                        "CCC-Table-Length:", this.cccs.length, "range:", range, "length:", length,
-                        `Progress: ${Math.floor(range / this.data.length * 100)}%`);
+                "CCC-Table-Length:", this.cccs.length, "range:", range, "length:", length,
+                `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
             let {pos, modifier, inserts} = this.#findSimilarMaskedRange(range);
             const {mask, shift} = modifiers.info(modifier);
@@ -694,8 +510,8 @@ class CCCTables {
                 saves += length;
             }
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                        codeRange, "mask:", mask, "shift:", shift, "pos:", pos, 'code:', helperCode,
-                        "samples:", inserts.filter(item => item).slice(0, 5));
+                codeRange, "mask:", mask, "shift:", shift, "pos:", pos, 'code:', helperCode,
+                "samples:", inserts.filter(item => item).slice(0, 5));
             uniqueModifiers.add(modifier);
 
             if (mask !== modifiers.resetMask && mask !== 0) {
@@ -724,7 +540,7 @@ class CCCTables {
         console.log("CCCs Table Length:", this.cccs.length);
         console.log("Insert saves:", saves);
         console.log("Modifiers Used:", uniqueModifiers.size,
-                    [...uniqueModifiers ].map(mod => ({modifier : mod, ...modifiers.info(mod)})));
+            [...uniqueModifiers].map(mod => ({modifier: mod, ...modifiers.info(mod)})));
         console.log("Finalizing: done.");
         console.timeEnd("Finalize");
     }
@@ -822,12 +638,12 @@ const processCachedFile = async fileContent => {
         }
 
         const [codePointStr, codePointName, GeneralCategory, CanonicalCombiningClass, BidiClass,
-               DecompositionType,
-               // DecompositionMapping,
-               NumericType,
-               // NumericValue,
-               BidiMirrored, Unicode1Name, ISOComment, SimpleUppercaseMapping, SimpleLowercaseMapping,
-               SimpleTitlecaseMapping] = splitLine(line);
+            DecompositionType,
+            // DecompositionMapping,
+            NumericType,
+            // NumericValue,
+            BidiMirrored, Unicode1Name, ISOComment, SimpleUppercaseMapping, SimpleLowercaseMapping,
+            SimpleTitlecaseMapping] = splitLine(line);
         const codePoint = parseCodePoints(codePointStr);
         const ccc = parseInt(CanonicalCombiningClass);
 
@@ -842,7 +658,7 @@ const processCachedFile = async fileContent => {
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
     cccsTables.finalize?.();
-    await createTableFile([ cccsTables ]);
+    await createTableFile([cccsTables]);
     console.log('File processing completed.');
 };
 
@@ -851,7 +667,7 @@ const createTableFile = async (tables) => {
 /**
  * Attention: Auto-generated file, don't modify.
  * 
- *   Auto generated from:                ${path.basename(__filename)}
+ *   Auto generated from:                ${path.basename(new URL(import.meta.url).pathname)}
  *   Unicode UCD Database Creation Date: ${readmeData.date}
  *   This file's generation date:        ${new Date().toUTCString()}
  *   Unicode Version:                    ${readmeData.version}
@@ -867,8 +683,8 @@ const createTableFile = async (tables) => {
  *       ${readmeUrl}
  */
  
-#ifndef WEBPP_UNICODE_NORMALIZATION_TABLES_HPP
-#define WEBPP_UNICODE_NORMALIZATION_TABLES_HPP
+#ifndef WEBPP_UNICODE_CCC_TABLES_HPP
+#define WEBPP_UNICODE_CCC_TABLES_HPP
 
 #include <array>
 #include <cstdint>
@@ -880,19 +696,19 @@ namespace webpp::unicode::details {
     const endContent = `
 } // namespace webpp::unicode::details
 
-#endif // WEBPP_UNICODE_NORMALIZATION_TABLES_HPP
+#endif // WEBPP_UNICODE_CCC_TABLES_HPP
     `;
 
-    await fs.writeFile(outFilePath, begContent);
+    await fs.writeFile(cccOutFile, begContent);
     for (const table of tables) {
-        await fs.appendFile(outFilePath, table.render());
+        await fs.appendFile(cccOutFile, table.render());
     }
     // console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
     // console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
-    await fs.appendFile(outFilePath, endContent);
+    await fs.appendFile(cccOutFile, endContent);
 
     // Reformat the file
-    require('child_process').exec(`clang-format -i "${outFilePath}"`, err => {
+    child_process.exec(`clang-format -i "${cccOutFile}"`, err => {
         if (err) {
             console.error("Could not re-format the file.", err);
         } else {

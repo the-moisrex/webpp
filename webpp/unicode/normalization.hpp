@@ -105,7 +105,7 @@
 
 #include "../std/iterator.hpp"
 #include "../std/type_traits.hpp"
-#include "./details/normalization_tables.hpp"
+#include "./details/ccc_tables.hpp"
 
 namespace webpp::unicode {
 
