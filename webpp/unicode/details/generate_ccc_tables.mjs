@@ -4,33 +4,25 @@
  * Details on parsing this file can be found here:
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
-
-const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
-const readmeUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt';
-const cacheFilePath = 'UnicodeData.txt';
-const cacheReadmePath = 'ReadMe.txt';
-const cccOutFile = `ccc_tables.hpp`;
+import * as readme from "./readme.mjs";
+import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint16,
     uint8x2,
     uint32,
     updateProgressBar,
-    downloadFile,
     Span,
-    splitLine,
-    findDate,
     InvalidModifier,
-    findVersion,
     TableTraits,
-    cleanComments,
-    parseCodePoints
 } from "./utils.mjs";
 import * as path from "node:path";
 import {promises as fs} from 'fs';
 import * as child_process from "node:child_process";
+import {getReadme} from "./readme.mjs";
 
 const ignoreErrors = false;
+const cccOutFile = `ccc_tables.hpp`;
 
 const rangeLength = (codePointStart, dataLength) =>
     Math.min(dataLength, codePointStart + 0b1_0000_0000 /* aka 256 */) - codePointStart;
@@ -199,34 +191,18 @@ const modifiers = {
     compact: (mask, shift) => mask | (shift << 8),
 };
 
-const readmeData = {
-    version: "",
-    date: ""
-};
-
 
 const start = async () => {
-    // readme file for getting the version and what not
-    await downloadFile(readmeUrl, cacheReadmePath, processReadmeFile);
-    if (readmeData.version === undefined) {
-        console.error("Could not find the version from the file content.");
-        return;
-    }
-    if (readmeData.date === undefined) {
-        console.error("No date was found.");
-        return;
-    }
-    console.log(`Version:       ${readmeData.version}`);
-    console.log(`Creation Date: ${readmeData.date}`);
+    await readme.download();
 
     // database file
-    await downloadFile(fileUrl, cacheFilePath, processCachedFile);
+    const cccsTables = new CCCTables();
+    await UnicodeData.parse(cccsTables, UnicodeData.properties.ccc);
+    cccsTables?.finalize?.();
+    await createTableFile([cccsTables]);
+    console.log('File processing completed.');
 };
 
-const processReadmeFile = content => {
-    readmeData.version = findVersion(content);
-    readmeData.date = findDate(content);
-};
 
 class Modified {
     #data;
@@ -552,13 +528,15 @@ class CCCTables {
         const cccBits = this.cccs.length * this.cccs.sizeof;
 
         const printableCCCs = [];
+
+        // add comments in the middle of the data
         this.cccs.result.forEach((ccc, pos) => {
             const poses = [];
 
             indeces.forEach((code, index) => {
                 const cccIndex = modifiers.cccIndexOf(code);
                 if (cccIndex === pos) {
-                    poses.push(`0x${index.toString(16)}`);
+                    poses.push(`0x${(index << 8).toString(16)}`);
                 }
             });
             if (poses.length === 0) {
@@ -583,17 +561,26 @@ class CCCTables {
      * CCC: Canonical Combining Class
      * These are the indeces that are used to find which values from "ccc_values" table correspond to a
      * unicode code point.
-     *
-     * Usage:
-     * @code
-     *    uint32_t code_point = ...;
-     *    auto helper_code = ccc_index[code_point >> 8];
-     *    auto rem_code    = code_point  &  0xFF;              // remaining part of the code point
-     *    auto pos         = helper_code >> 8;                 // starting position
-     *    auto mask        = helper_code &  0xFF;              // which positions should be converted to zero
-     *    auto index       = pos         +  (mask & rem_code); // now use ccc_values[index]
-     * @endcode
      * 
+     * Each value contains 3 numbers:
+     *     [16bits: pos] + [8bits: shift] + [8bits: mask]
+     * 
+     *   - pos:   it's the index that points to the \`ccc_values\` table.
+     *            it's the starting point of a (at most) 256 length CCC values.
+     * 
+     *   - shift: add this value to the CCC value, after you applied the mask and found
+     *            the actual position of the CCC value.
+     *
+     *   - mask:  apply this mask (with an & operator), to this: pos + (code_point % 256)
+     *            which means, in order to get the CCC value of a \`code_point\`, you need to do this:
+     *            @code
+     *                auto code  = ccc_index[code_point >> 8]
+     *                auto shift = (code >> 8) & 0xFF;
+     *                auto mask  = code & 0xFF;
+     *                auto pos   = (code >> 16) & 0xFF;
+     *                auto ccc   = ccc_values[pos + ((code_point % 256) & mask)] + shift;
+     *            @endcode
+     *
      * Table size:
      *   - in bits:       ${indecesBits}
      *   - in bytes:      ${indecesBits / 8} B
@@ -624,45 +611,8 @@ class CCCTables {
     }
 }
 
-const processCachedFile = async fileContent => {
-    const lines = fileContent.split('\n');
-    const cccsTables = new CCCTables();
-    let lastCodePoint = 0;
-
-    lines.forEach((line, index) => {
-        line = cleanComments(line);
-
-        // ignore empty lines
-        if (line.length === 0) {
-            return "";
-        }
-
-        const [codePointStr, codePointName, GeneralCategory, CanonicalCombiningClass, BidiClass,
-            DecompositionType,
-            // DecompositionMapping,
-            NumericType,
-            // NumericValue,
-            BidiMirrored, Unicode1Name, ISOComment, SimpleUppercaseMapping, SimpleLowercaseMapping,
-            SimpleTitlecaseMapping] = splitLine(line);
-        const codePoint = parseCodePoints(codePointStr);
-        const ccc = parseInt(CanonicalCombiningClass);
-
-        updateProgressBar(index / lines.length * 100);
-
-        for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
-            const curCCC = curCodePoint === codePoint ? ccc : 0;
-
-            cccsTables.add(curCodePoint, curCCC);
-        }
-        lastCodePoint = codePoint + 1;
-    });
-    updateProgressBar(100, `Lines parsed: ${lines.length}`);
-    cccsTables.finalize?.();
-    await createTableFile([cccsTables]);
-    console.log('File processing completed.');
-};
-
 const createTableFile = async (tables) => {
+    const readmeData = await getReadme();
     const begContent = `
 /**
  * Attention: Auto-generated file, don't modify.
@@ -678,9 +628,9 @@ const createTableFile = async (tables) => {
  *   IDN FAQ: https://www.unicode.org/faq/idn.html
  *
  *   UCD Database Code Points (used the get the CCC values and what not):
- *       ${fileUrl}
+ *       ${UnicodeData.fileUrl}
  *   UCD README file (used to check the version and creation date):
- *       ${readmeUrl}
+ *       ${readme.fileUrl}
  */
  
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP
@@ -703,8 +653,6 @@ namespace webpp::unicode::details {
     for (const table of tables) {
         await fs.appendFile(cccOutFile, table.render());
     }
-    // console.log(`  Trailings Removed: ${trailingsRemoved} Bytes`);
-    // console.log(`  Trailings Removed: ${Math.ceil(trailingsRemoved / 1024)} KiB`);
     await fs.appendFile(cccOutFile, endContent);
 
     // Reformat the file

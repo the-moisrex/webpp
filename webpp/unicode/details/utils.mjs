@@ -7,6 +7,7 @@ export const uint16 = Symbol('uint16');
 export const uint8x2 = Symbol('uint8');
 export const uint32 = Symbol('uint32');
 
+export const noop = _ => {};
 
 const progressBarLength = 30; // Define the length of the progress bar
 const totalItems = 100;       // Total number of items to process
@@ -40,9 +41,10 @@ export const downloadFile = async (url, file, process) => {
         await fs.access(file);
         try {
             console.log(`Using cached file ${file}...`);
-            const fileContent = await fs.readFile(file);
-            process(fileContent.toString());
-            return;
+            const fileSource = await fs.readFile(file);
+            const fileContent = fileSource.toString();
+            await process(fileContent);
+            return fileContent;
         } catch (error) {
             console.error(error);
             return;
@@ -67,6 +69,7 @@ export const downloadFile = async (url, file, process) => {
 
         // process the file
         await process(text);
+        return text;
     } catch (error) {
         console.error('Error:', error.message);
     }
