@@ -3,6 +3,7 @@
 #ifndef WEBPP_STRING_LIKE_HPP
 #define WEBPP_STRING_LIKE_HPP
 
+#include "./iterator.hpp"
 #include "./string.hpp"
 #include "./string_view.hpp"
 
@@ -23,15 +24,25 @@ namespace webpp::istl {
         }
     }
 
-    template <StringLike StrT, typename StrTInput>
-        requires(StringLike<StrTInput> || CharType<StrTInput>)
-    constexpr void append(StrT& out, StrTInput const& inp) noexcept(StringView<StrT>) {
-        if constexpr (StringView<StrT>) {
-            out = inp;
-        } else if constexpr (String<StrT> && CharType<StrTInput>) {
-            out += inp;
+    /**
+     * The out can be:
+     *   - an iterator,
+     *   - a  string,
+     *   - a  string view
+     *   - a  vector of compatible values
+     *
+     * @tparam StrOrIter Can be a stirng/string-view/iterator/vector<CharT>/...
+     */
+    template <typename StrOrIter, typename StrTInput>
+    constexpr void append(StrOrIter& out, StrTInput&& inp) noexcept(StringView<StrOrIter>) {
+        if constexpr (StringView<StrOrIter>) {
+            out = stl::forward<StrTInput>(inp);
+        } else if constexpr (stl::output_iterator<StrOrIter, StrTInput>) {
+            *out++ = stl::forward<StrTInput>(inp);
+        } else if constexpr (String<StrOrIter> && CharType<StrTInput>) {
+            out += stl::forward<StrTInput>(inp);
         } else {
-            out.append(inp);
+            out.append(stl::forward<StrTInput>(inp));
         }
     }
 

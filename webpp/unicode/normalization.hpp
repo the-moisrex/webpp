@@ -163,6 +163,29 @@ namespace webpp::unicode {
     }
 
     /**
+     * A starter code point in Unicode is a base character that can be combined with combining characters to
+     * form a grapheme cluster. Specifically:
+     *
+     * A starter is a code point that is not a combining character. It is a base character, spacing mark,
+     * enclosing mark, or format control character that can start a grapheme cluster[1].
+     *
+     * Combining characters are code points that are typically rendered by applying them to the preceding
+     * character. They include nonspacing marks, spacing marks, and enclosing marks[1].
+     *
+     * A grapheme cluster is a sequence of one or more Unicode code points that represent a single
+     * grapheme-like unit. It consists of a base character (starter) followed by zero or more combining
+     * characters[1].
+     *
+     * So in summary, a starter code point is a base character that can start a grapheme cluster and be
+     * combined with combining characters to represent a single written unit. It is the first code point in a
+     * grapheme cluster.
+     */
+    template <typename CharT = char32_t>
+    [[nodiscard]] static constexpr bool is_starter(CharT const code_point) noexcept {
+        return ccc_of(code_point) == 0;
+    }
+
+    /**
      * Reorderable pair:
      *       Two adjacent characters A and B in a coded character sequence <A, B> are
      *       a Reorderable Pair if and only if ccc(A) > ccc(B) > 0
