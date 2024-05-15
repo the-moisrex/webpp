@@ -35,6 +35,8 @@ export const updateProgressBar = (percent, done = undefined) => {
     process.stdout.write(
         `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`); // Update the progress bar
 };
+
+
 export const downloadFile = async (url, file, process) => {
     try {
         // Check if the file already exists in the cache
@@ -216,4 +218,43 @@ export class InvalidModifier {
     constructor(data) { this.#data = data; }
     toString() { return JSON.stringify(this.#data); }
 }
+
+/// Find the start position of "left" in "right"
+/// This function finds a place in the "right" table where the specified range
+/// will be there.
+export const findSimilarRange = (left, right) => {
+    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+        for (let lpos = 0; lpos !== left.length; ++lpos) {
+            const rvalue = right.at(rpos + lpos);
+            const lvalue = left.at(lpos);
+            if (rvalue !== lvalue) {
+                continue top;
+            }
+        }
+        return rpos;
+    }
+    return null;
+};
+
+// Overlap Inserts Optimization:
+///    if the "right" table's tail has a match for the beginning of the "left" table,
+///    then we can omit inserting the first part of the "left" table.
+export const overlapInserts = (left, right) => {
+    if (left.length === 0) {
+        return 0;
+    }
+    let rpos = Math.max(0, (right.length - 1) - left.length);
+    top: for (; rpos !== right.length; ++rpos) {
+        const length = right.length - rpos;
+        for (let lpos = 0; lpos !== length; ++lpos) {
+            const lvalue = left.at(lpos);
+            const rvalue = right.at(rpos + lpos);
+            if (lvalue !== rvalue) {
+                continue top;
+            }
+        }
+        return length;
+    }
+    return 0;
+};
 

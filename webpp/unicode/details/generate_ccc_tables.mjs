@@ -14,7 +14,7 @@ import {
     updateProgressBar,
     Span,
     InvalidModifier,
-    TableTraits,
+    TableTraits, findSimilarRange, overlapInserts,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {promises as fs} from 'fs';
@@ -286,45 +286,6 @@ class CCCTables {
         }
     }
 
-    /// Find the start position of "range" in "all"
-    /// This function finds a place in the "this.cccs" table where the specified range
-    /// will be there.
-    #findSimilarRange(left, right) {
-        top: for (let rpos = 0; rpos !== right.length; ++rpos) {
-            for (let lpos = 0; lpos !== left.length; ++lpos) {
-                const rvalue = right.at(rpos + lpos);
-                const lvalue = left.at(lpos);
-                if (rvalue !== lvalue) {
-                    continue top;
-                }
-            }
-            return rpos;
-        }
-        return null;
-    }
-
-    // Overlap Inserts Optimization:
-    ///    if the "this.cccs" table's tail has a match for the beginning of the "range" table,
-    ///    then we can omit inserting the first part of the "range" table.
-    #overlapInserts(left, right) {
-        if (left.length === 0) {
-            return 0;
-        }
-        let rpos = Math.max(0, (right.length - 1) - left.length);
-        top: for (; rpos !== right.length; ++rpos) {
-            const length = right.length - rpos;
-            for (let lpos = 0; lpos !== length; ++lpos) {
-                const lvalue = left.at(lpos);
-                const rvalue = right.at(rpos + lpos);
-                if (lvalue !== rvalue) {
-                    continue top;
-                }
-            }
-            return length;
-        }
-        return 0;
-    }
-
     /// This function compresses the specified range based on the input modifier.
     /// For example, an array of zeros, with mask of zero, only needs the first element
     #rightTrimInserts(inserts, modifier) {
@@ -356,7 +317,7 @@ class CCCTables {
             }
         }
 
-        const overlapped = this.#overlapInserts(modifiedInserts, this.cccs);
+        const overlapped = overlapInserts(modifiedInserts, this.cccs);
         if (overlapped !== 0) {
             pos = this.cccs.length - overlapped;
             inserts = inserts.slice(overlapped, inserts.length);
@@ -387,7 +348,7 @@ class CCCTables {
             let info = {};
 
             try {
-                const startPos = this.#findSimilarRange(dataView, modifiedCCC);
+                const startPos = findSimilarRange(dataView, modifiedCCC);
                 if (startPos === null) {
                     info = this.#optimizeInserts(dataView, dataView, modifier);
                 } else {
