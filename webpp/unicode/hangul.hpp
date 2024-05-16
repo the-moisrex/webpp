@@ -141,6 +141,7 @@ namespace webpp::unicode {
 
     /**
      * Decompose the Hangul code point and return it's parts.
+     * This function does not check if the inputted code point is Hangul or not.
      * https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
      *
      * @returns decomposed_hangul which contains all the parts of a hangul decomposed code point
@@ -173,6 +174,7 @@ namespace webpp::unicode {
 
     /**
      * Append the decomposed Handul code point to the output
+     * This function does not check if the inputted code point is Hangul or not.
      *
      * @tparam CharT     char type
      * @tparam StrOrIter Can be a stirng/string-view/iterator/vector<CharT>/...
@@ -189,6 +191,9 @@ namespace webpp::unicode {
 
     /**
      * L, V and LV, T Hangul Syllable Composition
+     * L = Leading
+     * V = Vowel
+     * T = Trailing
      *
      * The following algorithm specifies how to take a canonically decomposed sequence of Hangul jamo
      * characters and arithmetically derive its mapping to an equivalent precomposed Hangul syllable. This

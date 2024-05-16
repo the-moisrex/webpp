@@ -129,9 +129,9 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
-        using unicode::details::ccc_index;
-        using unicode::details::ccc_values;
-        using unicode::details::trailing_zero_cccs;
+        using details::ccc_index;
+        using details::ccc_values;
+        using details::trailing_zero_cccs;
 
         // The CCC of anything bigger than this number is zero because zero is the default by unicode standard
         if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
@@ -153,7 +153,7 @@ namespace webpp::unicode {
 
         // extract information from the helper code:
         auto const mask       = static_cast<stl::uint8_t>(helper);
-        auto const shift      = static_cast<stl::uint8_t>(helper >> 8);
+        auto const shift      = static_cast<stl::uint8_t>(helper >> 8U);
         auto const start_pos  = static_cast<stl::size_t>(helper >> 16U);
         auto const masked_pos = static_cast<stl::size_t>(mask & code_point_index);
 
@@ -183,6 +183,27 @@ namespace webpp::unicode {
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr bool is_starter(CharT const code_point) noexcept {
         return ccc_of(code_point) == 0;
+    }
+
+    /**
+     * Function to check if a combining character sequence is blocked based on combining classes
+     * See Section 3.11, D115 of Version 15.1.0 of the Unicode Standard.
+     *
+     * In Unicode, a "blocked" combining character sequence is one where a base character is followed by
+     * one or more combining characters, but the sequence is not a valid representation of a single
+     * abstract character. This can happen when the combining characters have a combining class that
+     * prevents them from being applied to the base character.
+     *
+     * For example, the sequence <a, combining_grave, combining_acute> is blocked because the combining
+     * acute accent cannot be applied to the base character after the combining grave accent has already
+     * been applied. The combining classes of the combining characters determine the order in which they
+     * can be applied to the base character.
+     *
+     * Attention: this function does not check validity of the iterator itself.
+     */
+    template <stl::input_iterator Iter>
+    [[nodiscard]] static constexpr bool is_blocked(Iter const inp) noexcept {
+        return ccc_of(*inp) >= ccc_of(*stl::next(inp));
     }
 
     /**
