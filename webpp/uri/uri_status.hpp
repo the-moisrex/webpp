@@ -97,6 +97,10 @@ namespace webpp::uri {
         ///   - Labels cannot contain any characters other than ASCII letters, digits, and hyphens ("-").
         ///   - Domain names that violate these rules will fail validation and may be rejected.
         bool use_std3_ascii_rules = false;
+
+        /// The length of the domain name, excluding the root label and its dot, is from 1 to 253, but
+        /// we don't verify that in WHATWG because it's a DNS limitation, not a URI limitation.
+        bool verify_dns_length = false;
     } standard_uri_parsing_options{};
 
     static constexpr uri_parsing_options strict_uri_parsing_options{
@@ -115,8 +119,9 @@ namespace webpp::uri {
       .allow_file_hosts                          = false,
       .handle_windows_drive_letters              = false,
       .ignore_tabs_or_newlines                   = false,
-      .handle_dots_in_paths                      = true, // for security reasons, it's enabled
+      .handle_dots_in_paths                      = true,
       .use_std3_ascii_rules                      = false,
+      .verify_dns_length                         = true,
     };
 
     static constexpr uri_parsing_options loose_uri_parsing_options{
@@ -135,8 +140,9 @@ namespace webpp::uri {
       .allow_file_hosts                          = true,
       .handle_windows_drive_letters              = true,
       .ignore_tabs_or_newlines                   = true,
-      .handle_dots_in_paths                      = true,
+      .handle_dots_in_paths                      = true, // for security reasons, it's enabled in loose too
       .use_std3_ascii_rules                      = false,
+      .verify_dns_length                         = false,
     };
 
     /// Uri status can have multiple warnings (WHATWG calls it "validation error"), but
