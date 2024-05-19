@@ -6,8 +6,69 @@ export const uint8 = Symbol('uint8');
 export const uint16 = Symbol('uint16');
 export const uint8x2 = Symbol('uint8');
 export const uint32 = Symbol('uint32');
+export const uint64 = Symbol('uint64');
 
-export const noop = _ => {};
+export const sizeOf = symbol => {
+    switch (symbol) {
+        case uint8:
+            return 8;
+        case uint8x2:
+        case uint16:
+            return 16;
+        case uint32:
+            return 32;
+        case uint64:
+            return 64;
+    }
+    throw new Error(`Invalid symbol: ${symbol.description}`);
+};
+
+export const symbolOf = size => {
+    switch (size) {
+        case 8:
+            return uint8;
+        case 16:
+            return uint16;
+        case 32:
+            return uint32;
+        case 64:
+            return uint64;
+    }
+    throw new Error(`Invalid size: ${size}`);
+};
+
+/// check if the symbol is 8, 16, 32, or 64
+export const alignedSymbol = symbol => {
+    switch (symbol) {
+        case uint8:
+        case uint16:
+        case uint32:
+        case uint64:
+            return true;
+        default: return false;
+    }
+};
+
+export const maxOf = value => {
+    let max = 0;
+    while (max <= value) {
+        max <<= 1;
+        max |= 0b1;
+    }
+    return max;
+};
+
+export const bitOnesOf = value => {
+    let max = 0;
+    for (;value !== 0; --value) {
+        max <<= 1;
+        max |= 0b1;
+    }
+    return max;
+};
+
+export const noop = _ => {
+};
 
 const progressBarLength = 30; // Define the length of the progress bar
 const totalItems = 100;       // Total number of items to process
@@ -122,7 +183,9 @@ export class TableTraits {
         }
     }
 
-    get typeString() { return this.type.description; }
+    get typeString() {
+        return this.type.description;
+    }
 
     get postfix() {
         switch (this.type) {
@@ -136,20 +199,31 @@ export class TableTraits {
         }
     }
 
-    get length() { return this.index; }
+    get length() {
+        return this.index;
+    }
 
-    get result() { return this.bytes.slice(0, this.length); }
+    get result() {
+        return this.bytes.slice(0, this.length);
+    }
 
-    at(index) { return this.bytes.at(index); }
+    at(index) {
+        return this.bytes.at(index);
+    }
 
-    * [ Symbol.iterator ]() {
+    * [Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
         }
     }
-    set(index, value) { return this.bytes[index] = value; }
 
-    append(value) { this.bytes[this.index++] = value; }
+    set(index, value) {
+        return this.bytes[index] = value;
+    }
+
+    append(value) {
+        this.bytes[this.index++] = value;
+    }
 
     appendList(list) {
         for (const value of list) {
@@ -171,7 +245,9 @@ export class Span {
         this.#func = func;
     }
 
-    get length() { return this.#end - this.#start; }
+    get length() {
+        return this.#end - this.#start;
+    }
 
     slice(start = 0, end = this.length - start) {
         const newStart = this.#start + start;
@@ -196,7 +272,9 @@ export class Span {
         return values;
     }
 
-    map(func) { return new Span(this.#arr, this.#start, this.length, func); }
+    map(func) {
+        return new Span(this.#arr, this.#start, this.length, func);
+    }
 
     at(index) {
         if (index >= 0 && index < this.length) {
@@ -206,7 +284,7 @@ export class Span {
         }
     }
 
-    * [ Symbol.iterator ]() {
+    * [Symbol.iterator]() {
         for (let i = this.#start; i < this.#end; i++) {
             yield this.#func(this.#arr[i]);
         }
@@ -215,8 +293,14 @@ export class Span {
 
 export class InvalidModifier {
     #data;
-    constructor(data) { this.#data = data; }
-    toString() { return JSON.stringify(this.#data); }
+
+    constructor(data) {
+        this.#data = data;
+    }
+
+    toString() {
+        return JSON.stringify(this.#data);
+    }
 }
 
 /// Find the start position of "left" in "right"
@@ -258,3 +342,12 @@ export const overlapInserts = (left, right) => {
     return 0;
 };
 
+export const popcount = n => {
+    let c = 0;
+    for (; n !== 0; n >>= 1) {
+        if ((n & 1) !== 0) {
+            c++;
+        }
+    }
+    return c;
+};
