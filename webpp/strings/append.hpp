@@ -5,11 +5,13 @@
 #include "../std/string_view.hpp"
 #include "../strings/size.hpp"
 
-#include <charconv>
-#include <stdexcept>
+#include <version>
 
 #ifndef __cpp_lib_to_chars
 #    include "../std/format.hpp"
+#else
+#    include <charconv>
+#    include <stdexcept>
 #endif
 
 namespace webpp {

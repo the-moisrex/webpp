@@ -24,6 +24,15 @@ export const sizeOf = symbol => {
 };
 
 export const symbolOf = size => {
+    if (size < 8) {
+        size = 8;
+    } else if (size < 16) {
+        size = 16;
+    } else if (size < 32) {
+        size = 32;
+    } else if (size < 64) {
+        size = 64;
+    }
     switch (size) {
         case 8:
             return uint8;
@@ -34,7 +43,9 @@ export const symbolOf = size => {
         case 64:
             return uint64;
     }
-    throw new Error(`Invalid size: ${size}`);
+    if (size > 64) {
+        throw new Error(`Invalid size: ${size}`);
+    }
 };
 
 /// check if the symbol is 8, 16, 32, or 64
