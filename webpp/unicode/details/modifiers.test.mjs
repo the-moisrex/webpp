@@ -14,3 +14,9 @@ test.addenda.forEach(addendum => {
 });
 
 console.log("----------------------");
+
+for (const value of test.generate()) {
+    console.log(value);
+}
+
+console.log("----------------------");

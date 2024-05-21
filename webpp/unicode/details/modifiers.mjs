@@ -1,108 +1,28 @@
-import {alignedSymbol, bitOnesOf, InvalidModifier, maxOf, popcount, sizeOf, symbolOf, uint16, uint8} from "./utils.mjs";
+import {
+    alignedSymbol,
+    bitOnesOf,
+    InvalidModifier,
+    maxOf,
+    popcount,
+    sizeOf,
+    Span,
+    symbolOf,
+    uint16,
+    uint8
+} from "./utils.mjs";
+import * as assert from "node:assert";
 
 
 /// Check if the specified "chunk" size is "shift-operator-friendly"
 export const verifyChunk = chunk => {
-    if (chunk % 2 !== 0) {
-        throw new Error("Invalid chunk");
-    }
+    assert.ok(chunk % 2 === 0, "Invalid chunk");
 };
 export const defaultChunk = 256;
 export const chunkMask = chunk => chunk - 1;
 export const rangeLength = (codePointStart, dataLength, chunk) => Math.min(dataLength, codePointStart + chunk) - codePointStart;
 
 export class ModifierComputer {
-    #chunk = defaultChunk;
 
-    constructor(data, codePointStart = 0, chunk = defaultChunk) {
-        this.index = 0;
-        this.#chunk = chunk;
-        const dataLength = rangeLength(codePointStart, data.length, this.#chunk);
-        const masks = new Set();
-        const shifts = new Set();
-        let zerosIndex = 0;
-
-        for (let codePoint = codePointStart; codePoint < (codePointStart + dataLength); ++codePoint) {
-            const ccc = data.at(codePoint);
-            masks.add(ccc);
-            shifts.add(ccc);
-            if (ccc === 0 && zerosIndex === 0) {
-                zerosIndex = codePoint;
-            }
-        }
-
-        // add some masks
-        for (let i = 0; ; ++i) {
-            const length = masks.size;
-            if (i === length) {
-                break;
-            }
-            for (let pos = i; pos !== length; ++pos) {
-                masks.add(masks[i] | masks[i + pos]);
-            }
-        }
-        // for (let i = 0; i !== 0xFF; ++i) {
-        //     masks.add(i);
-        // }
-
-        let value = 0;
-        while (value < zerosIndex) {
-            value <<= 1;
-            value |= 0x1;
-        }
-        masks.add(value);
-        value >>= 1;
-        masks.add(value);
-
-        // add some shifts
-        for (const item of shifts) {
-            shifts.add(-1 * item);
-            // shifts.add(-1 * Math.floor(item / 2));
-            // shifts.add(Math.floor(item / 2));
-        }
-
-        for (let i = 0; i !== 0xFF; ++i) {
-            shifts.add(i);
-        }
-
-        masks.add(0);
-        masks.add(chunkMask(this.#chunk));
-        masks.add(this.#chunk - dataLength);
-        masks.add(dataLength);
-        masks.add(zerosIndex);
-        masks.add(Math.floor(this.#chunk / 2));
-        masks.add(Math.floor(this.#chunk / 2) - 1);
-        masks.add(252);
-        masks.add(254);
-
-        shifts.add(0);
-        shifts.add(chunkMask(this.#chunk));
-        shifts.add(this.#chunk - dataLength);
-        shifts.add(dataLength);
-
-        this.shifts = Array.from(shifts).filter(val => (val & chunkMask(this.#chunk)) === val);
-        this.masks = Array.from(masks).filter(val => (val & chunkMask(this.#chunk)) === val);
-    }
-
-    get mask() {
-        return this.masks[Math.floor(this.index / this.shifts.length)];
-    }
-
-    get shift() {
-        return this.shifts[this.index % this.shifts.length];
-    }
-
-    get length() {
-        return this.masks.length * this.shifts.length;
-    }
-
-    get percent() {
-        return this.index / this.length * 100;
-    }
-
-    next() {
-        ++this.index;
-    }
 }
 
 /**
@@ -132,10 +52,14 @@ export class Addendum {
 
     constructor(data) {
         for (const name in data) {
-            const value = data[name];
-            if (this[name] === undefined) {
-                throw new Error(`Invalid argument specified; arg[${name}] = ${value}`);
+            let value = data[name];
+            assert.ok(this[name] !== undefined, `Invalid argument specified; arg[${name}] = ${JSON.stringify(value)}`);
+
+            // this, is that :)
+            if (value instanceof Function) {
+                value = value.bind(this);
             }
+
             this[name] = value;
         }
         if (data["min"] === undefined) {
@@ -194,6 +118,7 @@ export const shiftAddendum = new Addendum({
     description: "This value gets added to the retrieved value at the end of the operation.",
     sizeof: uint8,
     * generate() {
+        assert.ok(this !== undefined, "undefined this?");
         for (let index = this.min; index !== this.max; ++index) {
             yield index;
         }
@@ -207,9 +132,11 @@ export const maskAddendum = new Addendum({
         "The mask does not apply to the whole index, but only to the remaining index.",
     sizeof: uint8,
     * generate() {
-        yield this.mask;
         yield this.min;
         yield this.max;
+        yield this.mask;
+        yield 252;
+        yield 254;
     }
 });
 
@@ -282,9 +209,7 @@ export class Addenda {
             for (const name of values) {
                 const value = values[name];
                 const addendum = this.addenda.find(addendum => addendum.name === name);
-                if (!addendum) {
-                    throw new Error(`Invalid values provided to get the modifier out of the addenda; values: ${values}`);
-                }
+                assert.ok(addendum, `Invalid values provided to get the modifier out of the addenda; values: ${values}`);
                 newValues[addendum.placement] = value;
             }
             values = newValues;
@@ -311,6 +236,22 @@ export class Addenda {
 
     get size() {
         return sizeOf(this.sizeof);
+    }
+
+    /// Generate all possible combinations of the addenda
+    * generate(addenda = this.addenda) {
+        const generables = addenda.filter(addendum => addendum.generable);
+        if (generables.length === 0) {
+            yield {};
+            return;
+        }
+
+        const [head, ...tail] = generables;
+        for (const headVal of head.generate()) {
+            for (const tailVals of this.generate(tail)) {
+                yield {[head.name]: headVal, ...tailVals};
+            }
+        }
     }
 
     renderPlacements() {
@@ -466,9 +407,7 @@ export class ModifiedSpan {
     }
 
     at(index) {
-        if (index < 0 && index >= this.length) {
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
+        assert.ok(index >= 0 && index < this.length, `Index out of bounds ${index} out of ${this.length} elements.`);
 
         const res = this.#modifier.apply(index, this.#data, this.#start);
         if (res === undefined) {
