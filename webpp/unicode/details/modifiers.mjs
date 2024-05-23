@@ -116,7 +116,7 @@ export const shiftAddendum = new Addendum({
         }
     },
     modify(modifier, meta) {
-        return {...meta, value: modifier.addenda.shift + meta.value};
+        return {...meta, value: modifier.shift + meta.value};
     }
 });
 
@@ -134,7 +134,7 @@ export const maskAddendum = new Addendum({
         yield 254;
     },
     modify(modifier, meta) {
-        return {...meta, pos: modifier.addenda.mask & meta.pos};
+        return {...meta, pos: modifier.mask & meta.pos};
     }
 });
 
@@ -292,9 +292,9 @@ export class Addenda {
 }
 
 export const indexAddenda = new Addenda("index", defaultAddendaPack);
-indexAddenda.modify = function (table, range, pos) {
-    const {pos: maskedPos} = this.addenda.pos.modify({pos});
-    return this.addenda.shift.modify({value: table[range + maskedPos]}).value;
+indexAddenda.modify = function (modifier, table, range, pos) {
+    const {pos: maskedPos} = this.mask.modify(this, {pos});
+    return this.shift.modify(modifier, {pos: maskedPos, value: table[range + maskedPos]}).value;
 };
 
 export class InvalidModifier {
@@ -348,8 +348,7 @@ export class Modifier {
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
     apply(table, range, pos) {
-        console.log(this.#addenda)
-        return this.#addenda.modify(table, range, pos);
+        return this.#addenda.modify(this, table, range, pos);
         // const maskedPos = this.applyMask(pos);
         // // if (maskedPos === 0) {
         // //     shift = 0;

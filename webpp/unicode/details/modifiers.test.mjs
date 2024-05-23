@@ -25,6 +25,6 @@ const table = [
     1, 2, 3, 4, 5, 6, 7, 9, 10
 ];
 for (const mod of indexAddenda.generate()) {
-    console.log(mod.apply(table, 0, 0));
+    console.log(mod, mod.apply(table, 0, 10));
 }
 
