@@ -1,5 +1,6 @@
 import {promises as fs} from 'fs';
 import * as process from "node:process";
+import * as assert from "node:assert";
 
 
 export const uint8 = Symbol('uint8');
@@ -24,13 +25,13 @@ export const sizeOf = symbol => {
 };
 
 export const symbolOf = size => {
-    if (size < 8) {
+    if (size <= 8) {
         size = 8;
-    } else if (size < 16) {
+    } else if (size <= 16) {
         size = 16;
-    } else if (size < 32) {
+    } else if (size <= 32) {
         size = 32;
-    } else if (size < 64) {
+    } else if (size <= 64) {
         size = 64;
     }
     switch (size) {
@@ -43,9 +44,7 @@ export const symbolOf = size => {
         case 64:
             return uint64;
     }
-    if (size > 64) {
-        throw new Error(`Invalid size: ${size}`);
-    }
+    assert.ok(size <= 64, `Invalid size: ${size}`);
 };
 
 /// check if the symbol is 8, 16, 32, or 64
@@ -61,6 +60,9 @@ export const alignedSymbol = symbol => {
 };
 
 export const maxOf = value => {
+    if (typeof value === "symbol") {
+        value = sizeOf(value);
+    }
     let max = 0;
     while (max <= value) {
         max <<= 1;
@@ -267,13 +269,13 @@ export class Span {
         return new Span(this.#arr, newStart, newLength, this.#func);
     }
 
-    expand(newStart = 0, newLength = this.length + newStart) {
-        if (newStart < 0 && newStart >= this.length) {
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
-        newLength = Math.min(this.#arr.length, newLength);
-        return new Span(this.#arr, newStart, newLength, this.#func);
-    }
+    // expand(newStart = 0, newLength = this.length + newStart) {
+    //     if (newStart < 0 && newStart >= this.length) {
+    //         throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+    //     }
+    //     newLength = Math.min(this.#arr.length, newLength);
+    //     return new Span(this.#arr, newStart, newLength, this.#func);
+    // }
 
     filter(func) {
         let values = [];
@@ -288,29 +290,14 @@ export class Span {
     }
 
     at(index) {
-        if (index >= 0 && index < this.length) {
-            return this.#func(this.#arr[this.#start + index]);
-        } else {
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
+        assert.ok(index >= 0 && index < this.length, `Index out of bounds ${index} out of ${this.length} elements.`);
+        return this.#func(this.#arr[this.#start + index]);
     }
 
     * [Symbol.iterator]() {
         for (let i = this.#start; i < this.#end; i++) {
             yield this.#func(this.#arr[i]);
         }
-    }
-}
-
-export class InvalidModifier {
-    #data;
-
-    constructor(data) {
-        this.#data = data;
-    }
-
-    toString() {
-        return JSON.stringify(this.#data);
     }
 }
 

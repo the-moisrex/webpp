@@ -1,11 +1,8 @@
 import {
     alignedSymbol,
     bitOnesOf,
-    InvalidModifier,
     maxOf,
-    popcount,
     sizeOf,
-    Span,
     symbolOf,
     uint16,
     uint8
@@ -20,10 +17,6 @@ export const verifyChunk = chunk => {
 export const defaultChunk = 256;
 export const chunkMask = chunk => chunk - 1;
 export const rangeLength = (codePointStart, dataLength, chunk) => Math.min(dataLength, codePointStart + chunk) - codePointStart;
-
-export class ModifierComputer {
-
-}
 
 /**
  * Each part of a modifier
@@ -199,43 +192,33 @@ export class Addenda {
         }
     }
 
-    /// Get the combined modifier based on the specified values:
-    modifier(values = this.addenda.map(_ => 0)) {
-        let mod = 0;
-
-        // re-ordering the values based on their names:
-        if (values instanceof Object) {
-            let newValues = [];
-            for (const name of values) {
-                const value = values[name];
-                const addendum = this.addenda.find(addendum => addendum.name === name);
-                assert.ok(addendum, `Invalid values provided to get the modifier out of the addenda; values: ${values}`);
-                newValues[addendum.placement] = value;
-            }
-            values = newValues;
-        }
-
-        // generating the modifier:
-        if (values instanceof Array) {
-            if (values.length !== this.addenda.length) {
-                throw new Error(`Not the right amount of values provided: ${values.length}; values: ${values}`);
-            }
-            let lastSize = 0;
-            for (const index of values) {
-                const value = values[index];
-                const addendum = this.addenda[index];
-
-                mod <<= lastSize;
-                mod |= value;
-
-                lastSize = addendum.size;
-            }
-        }
-        return mod & this.size;
-    }
-
     get size() {
         return sizeOf(this.sizeof);
+    }
+
+    addendum(name) {
+        return this.addenda.find(addendum => addendum.name === name);
+    }
+
+    /// return the required size for shifting the specified addendum
+    shiftOf(addendum) {
+        if (typeof addendum === "string") {
+            const name = addendum;
+            addendum = this.addendum(name);
+            assert.ok(addendum, `The specified input should be a valid addendum or a valid addendum name, not ${name}`);
+        }
+        const {placement: position} = addendum;
+        return this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.size : 0), 0);
+    }
+
+    /// Get the combined modifier based on the specified values:
+    modifier(values) {
+        let mod = 0;
+        for (const name in values) {
+            const value = values[name];
+            mod |= (value << this.shiftOf(name));
+        }
+        return mod;
     }
 
     /// Generate all possible combinations of the addenda
@@ -249,7 +232,9 @@ export class Addenda {
         const [head, ...tail] = generables;
         for (const headVal of head.generate()) {
             for (const tailVals of this.generate(tail)) {
-                yield {[head.name]: headVal, ...tailVals};
+                let values = {[head.name]: headVal, ...tailVals};
+                delete values.modifier;
+                yield {...values, modifier: this.modifier(values)};
             }
         }
     }
@@ -276,6 +261,18 @@ export class Addenda {
     }
 }
 
+export class InvalidModifier {
+    #data;
+
+    constructor(data) {
+        this.#data = data;
+    }
+
+    toString() {
+        return JSON.stringify(this.#data);
+    }
+}
+
 /// This shows how the actual algorithm will work.
 export class Modifier {
     chunk = defaultChunk;
@@ -290,13 +287,9 @@ export class Modifier {
         // this.bitCount = popcount(chunkMask(this.chunk));
     }
 
-    static compact(mask, shift) {
-        return mask | (shift << 8);
-    }
-
-    static createFrom(computer, chunk = defaultChunk) {
-        return new Modifier(Modifier.compact(computer.mask, computer.shift), chunk);
-    }
+    // static createFrom(computer, chunk = defaultChunk) {
+    //     return new Modifier(Modifier.compact(computer.mask, computer.shift), chunk);
+    // }
 
     /// only apply the mask
     applyMask(pos) {
@@ -334,34 +327,6 @@ export class Modifier {
     /// get the helper code
     helperCode(pos) {
         return (pos << 16) | this.#modifier;
-    }
-
-    get mask() {
-        return this.#modifier & this.resetMask;
-    }
-
-    cccIndexOf(code) {
-        return code >>> 16;
-    }
-
-    get shift() {
-        return this.#modifier >>> 8;
-    }
-
-    get chunkMask() {
-        return chunkMask(this.chunk);
-    }
-
-    get addendumCount() {
-
-    }
-
-    get addendumSize() {
-        return this.bitCount * this.addendumCount;
-    }
-
-    info() {
-        return ({mask: this.mask, shift: this.shift});
     }
 
     // applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
