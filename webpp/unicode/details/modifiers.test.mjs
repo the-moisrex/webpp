@@ -1,10 +1,10 @@
-import {Addenda, maskAddendum, positionAddendum, shiftAddendum} from "./modifiers.mjs";
+import {indexAddenda} from "./modifiers.mjs";
 
-const test = new Addenda("test", [positionAddendum, shiftAddendum, maskAddendum]);
+indexAddenda.name = "test";
 
-console.log(test.render());
+console.log(indexAddenda.render());
 
-test.addenda.forEach(addendum => {
+indexAddenda.addenda.forEach(addendum => {
     if (!addendum.generable) {
         console.log(`------------ ${addendum.name}: Not generable ------------`);
         return;
@@ -15,8 +15,16 @@ test.addenda.forEach(addendum => {
 
 console.log("----------------------");
 
-for (const value of test.generate()) {
+for (const value of indexAddenda.generate()) {
     console.log(value);
 }
 
 console.log("----------------------");
+
+const table = [
+    1, 2, 3, 4, 5, 6, 7, 9, 10
+];
+for (const mod of indexAddenda.generate()) {
+    console.log(mod.apply(table, 0, 0));
+}
+

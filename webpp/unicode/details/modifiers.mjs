@@ -1,12 +1,4 @@
-import {
-    alignedSymbol,
-    bitOnesOf,
-    maxOf,
-    sizeOf,
-    symbolOf,
-    uint16,
-    uint8
-} from "./utils.mjs";
+import {alignedSymbol, bitOnesOf, maxOf, sizeOf, symbolOf, uint16, uint8} from "./utils.mjs";
 import * as assert from "node:assert";
 
 
@@ -41,6 +33,13 @@ export class Addendum {
     generable = false;
     generate = () => {
         throw new Error("Cannot generate new values.");
+    };
+
+    /// Modify the values and essentially apply the addendum to the values
+    /// @param modifier: Modifier
+    /// @param meta: {value: ..., pos: ...}
+    modify = (modifier, meta) => {
+        return meta; /// no changes to meta
     };
 
     constructor(data) {
@@ -115,6 +114,9 @@ export const shiftAddendum = new Addendum({
         for (let index = this.min; index !== this.max; ++index) {
             yield index;
         }
+    },
+    modify(modifier, meta) {
+        return {...meta, value: modifier.addenda.shift + meta.value};
     }
 });
 
@@ -130,6 +132,9 @@ export const maskAddendum = new Addendum({
         yield this.mask;
         yield 252;
         yield 254;
+    },
+    modify(modifier, meta) {
+        return {...meta, pos: modifier.addenda.mask & meta.pos};
     }
 });
 
@@ -147,6 +152,13 @@ export const defaultAddendaPack = [positionAddendum, maskAddendum, shiftAddendum
 export class Addenda {
     name;
     description = null;
+
+    /// @param table = the data
+    /// @param range = start of the bucket
+    /// @param pos   = the remaining position
+    #modify = (table, range, pos) => {
+        throw new Error("The addenda's algorithm is not implemented.");
+    };
 
     constructor(name = "unknown", addenda = defaultAddendaPack) {
         this.name = name;
@@ -175,6 +187,11 @@ export class Addenda {
             addendum.leftShit += leftShift;
         }
 
+        /// Enabling addenda.mask, addenda["pos"], and what not syntax
+        for (const addendum of this.addenda) {
+            this[addendum.name] = addendum;
+        }
+
         this.#tests();
     }
 
@@ -194,6 +211,14 @@ export class Addenda {
 
     get size() {
         return sizeOf(this.sizeof);
+    }
+
+    get modify() {
+        return this.#modify;
+    }
+
+    set modify(value) {
+        this.#modify = value.bind(this);
     }
 
     addendum(name) {
@@ -224,8 +249,9 @@ export class Addenda {
     /// Generate all possible combinations of the addenda
     * generate(addenda = this.addenda) {
         const generables = addenda.filter(addendum => addendum.generable);
+        let mod = new Modifier(this);
         if (generables.length === 0) {
-            yield {};
+            yield mod;
             return;
         }
 
@@ -234,7 +260,8 @@ export class Addenda {
             for (const tailVals of this.generate(tail)) {
                 let values = {[head.name]: headVal, ...tailVals};
                 delete values.modifier;
-                yield {...values, modifier: this.modifier(values)};
+                mod.set({...values, modifier: this.modifier(values)});
+                yield mod;
             }
         }
     }
@@ -254,12 +281,21 @@ export class Addenda {
         /**
          * ${this.renderPlacements()}
          */ 
-        consteval ${this.name}(std::${this.sizeof.description}_t const value) noexcept 
+        explicit(false) consteval ${this.name}(std::${this.sizeof.description}_t const value) noexcept 
             : ${this.addenda.map(addendum => addendum.renderValueSet('value')).join(",\n            ")} {}
+        
+        consteval ${this.name}(${this.addenda.map(addendum => `std::${addendum.sizeof.description}_t const inp_${addendum.name}`).join(", ")}) noexcept 
+            : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n            ")}{}
     };
         `;
     }
 }
+
+export const indexAddenda = new Addenda("index", defaultAddendaPack);
+indexAddenda.modify = function (table, range, pos) {
+    const {pos: maskedPos} = this.addenda.pos.modify({pos});
+    return this.addenda.shift.modify({value: table[range + maskedPos]}).value;
+};
 
 export class InvalidModifier {
     #data;
@@ -275,29 +311,29 @@ export class InvalidModifier {
 
 /// This shows how the actual algorithm will work.
 export class Modifier {
-    chunk = defaultChunk;
-    #addenda = new Addenda();
-    #modifier;
+    #addenda;
+    modifier = 0;
 
-    constructor(modifier, addenda, chunk = defaultChunk) {
-        verifyChunk(chunk);
+    constructor(addenda) {
+        if (!(addenda instanceof Addenda)) {
+            throw new Error("'addenda' should be Addenda");
+        }
         this.#addenda = addenda;
-        this.#modifier = modifier;
-        this.chunk = defaultChunk;
-        // this.bitCount = popcount(chunkMask(this.chunk));
     }
 
-    // static createFrom(computer, chunk = defaultChunk) {
-    //     return new Modifier(Modifier.compact(computer.mask, computer.shift), chunk);
-    // }
+    set(values) {
+        for (const name in values) {
+            this[name] = values[name];
+        }
+    }
 
     /// only apply the mask
     applyMask(pos) {
-        return pos & this.#modifier;
+        return pos & this.modifier;
     }
 
     unapplyShift(value, pos) {
-        let shift = (this.#modifier >>> this.bitCount);
+        let shift = (this.modifier >>> this.bitCount);
         // const maskedPos = modifiers.applyMask(pos, modifier);
         // if (maskedPos === 0) {
         //     shift = 0;
@@ -311,13 +347,14 @@ export class Modifier {
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply(pos, table, range = 0) {
-        let shift = (this.#modifier >>> this.bitCount) & this.chunkMask;
-        const maskedPos = this.applyMask(pos);
-        // if (maskedPos === 0) {
-        //     shift = 0;
-        // }
-        return this.#fix((table.at(range + maskedPos)) + shift);
+    apply(table, range, pos) {
+        console.log(this.#addenda)
+        return this.#addenda.modify(table, range, pos);
+        // const maskedPos = this.applyMask(pos);
+        // // if (maskedPos === 0) {
+        // //     shift = 0;
+        // // }
+        // return this.#fix((table.at(range + maskedPos)) + shift);
     }
 
     unshiftAll(list) {
@@ -326,7 +363,7 @@ export class Modifier {
 
     /// get the helper code
     helperCode(pos) {
-        return (pos << 16) | this.#modifier;
+        return (pos << 16) | this.modifier;
     }
 
     // applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
