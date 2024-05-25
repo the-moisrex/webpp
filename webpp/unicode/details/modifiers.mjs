@@ -1,4 +1,4 @@
-import {alignedSymbol, bitOnesOf, maxOf, sizeOf, symbolOf, uint16, uint8} from "./utils.mjs";
+import {alignedSymbol, bitOnesOf, maxOf, sizeOf, Span, symbolOf, uint16, uint8} from "./utils.mjs";
 import * as assert from "node:assert";
 
 
@@ -152,6 +152,7 @@ export const defaultAddendaPack = [positionAddendum, maskAddendum, shiftAddendum
 export class Addenda {
     name;
     description = null;
+    #table = undefined;
 
     /// @param table = the data
     /// @param range = start of the bucket
@@ -219,6 +220,18 @@ export class Addenda {
 
     set modify(value) {
         this.#modify = value.bind(this);
+    }
+
+    set table(value) {
+        if (value instanceof Span) {
+            this.#table = value;
+            return;
+        }
+        this.#table = new Span(value);
+    }
+
+    get table() {
+        return this.#table;
     }
 
     addendum(name) {
@@ -292,9 +305,10 @@ export class Addenda {
 }
 
 export const indexAddenda = new Addenda("index", defaultAddendaPack);
-indexAddenda.modify = function (modifier, table, range, pos) {
+indexAddenda.modify = function (modifier, range, pos) {
     const {pos: maskedPos} = this.mask.modify(this, {pos});
-    return this.shift.modify(modifier, {pos: maskedPos, value: table[range + maskedPos]}).value;
+    const value = modifier.table.at(range + maskedPos);
+    return this.shift.modify(modifier, {pos: maskedPos, value}).value;
 };
 
 export class InvalidModifier {
@@ -319,6 +333,10 @@ export class Modifier {
             throw new Error("'addenda' should be Addenda");
         }
         this.#addenda = addenda;
+    }
+
+    get table() {
+        return this.#addenda.table;
     }
 
     set(values) {
@@ -347,8 +365,9 @@ export class Modifier {
 
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply(table, range, pos) {
-        return this.#addenda.modify(this, table, range, pos);
+    apply(range, pos) {
+        assert.ok(this.table, "What is the use of generating modifiers if you haven't set the data table yet?");
+        return this.#addenda.modify(this, range, pos);
         // const maskedPos = this.applyMask(pos);
         // // if (maskedPos === 0) {
         // //     shift = 0;
