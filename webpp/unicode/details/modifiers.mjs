@@ -105,47 +105,6 @@ export class Addendum {
     }
 }
 
-export const shiftAddendum = new Addendum({
-    name: "shift",
-    description: "This value gets added to the retrieved value at the end of the operation.",
-    sizeof: uint8,
-    * generate() {
-        assert.ok(this !== undefined, "undefined this?");
-        for (let index = this.min; index !== this.max; ++index) {
-            yield index;
-        }
-    },
-    modify(modifier, meta) {
-        return {...meta, value: modifier.shift + meta.value};
-    }
-});
-
-export const maskAddendum = new Addendum({
-    name: "mask",
-    description: "This is used to mask the 'remaining position' of the values table;\n" +
-        "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
-        "The mask does not apply to the whole index, but only to the remaining index.",
-    sizeof: uint8,
-    * generate() {
-        yield this.min;
-        yield this.max;
-        yield this.mask;
-        yield 252;
-        yield 254;
-    },
-    modify(modifier, meta) {
-        return {...meta, pos: modifier.mask & meta.pos};
-    }
-});
-
-export const positionAddendum = new Addendum({
-    name: "pos",
-    description: "This is the position that should be looked for in the values table.",
-    sizeof: uint16,
-});
-
-export const defaultAddendaPack = [positionAddendum, maskAddendum, shiftAddendum];
-
 /**
  * A combination of specified addenda
  */
@@ -304,13 +263,6 @@ export class Addenda {
     }
 }
 
-export const indexAddenda = new Addenda("index", defaultAddendaPack);
-indexAddenda.modify = function (modifier, range, pos) {
-    const {pos: maskedPos} = this.mask.modify(this, {pos});
-    const value = modifier.table.at(range + maskedPos);
-    return this.shift.modify(modifier, {pos: maskedPos, value}).value;
-};
-
 export class InvalidModifier {
     #data;
 
@@ -345,71 +297,16 @@ export class Modifier {
         }
     }
 
-    /// only apply the mask
-    applyMask(pos) {
-        return pos & this.modifier;
-    }
-
-    unapplyShift(value, pos) {
-        let shift = (this.modifier >>> this.bitCount);
-        // const maskedPos = modifiers.applyMask(pos, modifier);
-        // if (maskedPos === 0) {
-        //     shift = 0;
-        // }
-        return this.#fix(value - shift);
-    }
-
-    #fix(value) {
-        return value < this.chunk ? value : undefined;
-    }
-
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
     apply(range, pos) {
-        assert.ok(this.table, "What is the use of generating modifiers if you haven't set the data table yet?");
+        // assert.ok(this.table, "What is the use of generating modifiers if you haven't set the data table yet?");
         return this.#addenda.modify(this, range, pos);
-        // const maskedPos = this.applyMask(pos);
-        // // if (maskedPos === 0) {
-        // //     shift = 0;
-        // // }
-        // return this.#fix((table.at(range + maskedPos)) + shift);
     }
 
     unshiftAll(list) {
         return list.map((value, index) => this.unapplyShift(value, index));
     }
-
-    /// get the helper code
-    helperCode(pos) {
-        return (pos << 16) | this.modifier;
-    }
-
-    // applyPosition : (pos, modifier, table, range = 0) => table.at(range + (pos & modifier)),
-
-    // applyShift : (value, modifier) => modifiers.fix(value + (modifier >>> 8)),
-
-    // modify: (value, pos, modifier) =>
-    //         (pos & modifier) === 0 ? 0 : modifiers.fix(value - (modifier >>> 8)),
-
-    // unapply : (pos, modifier, table, range = 0) =>
-    //     modifier.fix((table.at(range + (pos & modifier)) - (modifier >>> 8))),
-
-    // matches : (left, right, lstart, rstart, pos, modifier) => {
-    //     const lccc = modifiers.unapply(pos, modifier, left, lstart);
-    //     if (lccc === undefined || isNaN(lccc)) {
-    //         return false;
-    //     }
-    //     return right.at(rstart + pos) === lccc;
-    // },
-
-    // matchesMask : (left, right, lstart, rstart, pos, modifier) => {
-    //     const lccc = modifiers.applyPosition(pos, modifier, left, lstart);
-    //     if (lccc === undefined || isNaN(lccc)) {
-    //         return false;
-    //     }
-    //     return right.at(rstart + pos) === lccc;
-    // },
-
 }
 
 /**
@@ -458,4 +355,56 @@ export class ModifiedSpan {
         return this.slice().filter(func);
     }
 }
+
+
+
+////////////////////////////// Implementation of Defaults //////////////////////////////
+
+export const shiftAddendum = new Addendum({
+    name: "shift",
+    description: "This value gets added to the retrieved value at the end of the operation.",
+    sizeof: uint8,
+    * generate() {
+        assert.ok(this !== undefined, "undefined this?");
+        for (let index = this.min; index !== this.max; ++index) {
+            yield index;
+        }
+    },
+    modify(modifier, meta) {
+        return {...meta, value: modifier.shift + meta.value};
+    }
+});
+
+export const maskAddendum = new Addendum({
+    name: "mask",
+    description: "This is used to mask the 'remaining position' of the values table;\n" +
+        "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
+        "The mask does not apply to the whole index, but only to the remaining index.",
+    sizeof: uint8,
+    * generate() {
+        yield this.min;
+        yield this.max;
+        yield this.mask;
+        yield 252;
+        yield 254;
+    },
+    modify(modifier, meta) {
+        return {...meta, pos: modifier.mask & meta.pos};
+    }
+});
+
+export const positionAddendum = new Addendum({
+    name: "pos",
+    description: "This is the position that should be looked for in the values table.",
+    sizeof: uint16,
+});
+
+export const defaultAddendaPack = [positionAddendum, maskAddendum, shiftAddendum];
+
+export const indexAddenda = new Addenda("index", defaultAddendaPack);
+indexAddenda.modify = function (modifier, range, pos) {
+    const {pos: maskedPos} = this.mask.modify(this, {pos});
+    const value = modifier.table.at(range + maskedPos);
+    return this.shift.modify(modifier, {pos: maskedPos, value}).value;
+};
 
