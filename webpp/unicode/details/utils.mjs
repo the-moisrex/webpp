@@ -1,6 +1,7 @@
 import {promises as fs} from 'fs';
 import * as process from "node:process";
 import * as assert from "node:assert";
+import {chunkMask} from "./modifiers.mjs";
 
 
 export const uint8 = Symbol('uint8');
@@ -55,7 +56,8 @@ export const alignedSymbol = symbol => {
         case uint32:
         case uint64:
             return true;
-        default: return false;
+        default:
+            return false;
     }
 };
 
@@ -73,7 +75,7 @@ export const maxOf = value => {
 
 export const bitOnesOf = value => {
     let max = 0;
-    for (;value !== 0; --value) {
+    for (; value !== 0; --value) {
         max <<= 1;
         max |= 0b1;
     }
@@ -157,94 +159,6 @@ export const findVersion = fileContent => fileContent.match(/Version:? (\d+\.\d+
 export const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
 export const parseCodePoints = codePoint => parseInt(codePoint, 16);
 
-/**
- * This class will let us handle the types of the tables including:
- *   - unsigned integer 32 bit (uint32)
- *   - unsigned integer 8 bit  (uint8)
- *   - unsigned integer 16 bit (uint16)
- */
-export class TableTraits {
-
-    constructor(max, type = uint8) {
-        switch (type) {
-            case uint8:
-                this.bytes = new Uint8Array(max);
-                break;
-            case uint32:
-                this.bytes = new Uint32Array(max);
-                break;
-            case uint8x2:
-                this.bytes = [];
-                break;
-            default:
-                throw new Error('Invalid type provided to CodePointMapper.');
-        }
-        this.type = type;
-        this.index = 0;
-    }
-
-    get sizeof() {
-        switch (this.type) {
-            case uint8x2:
-                return 16;
-            case uint8:
-                return 8;
-            case uint32:
-                return 32;
-            default:
-                return 0;
-        }
-    }
-
-    get typeString() {
-        return this.type.description;
-    }
-
-    get postfix() {
-        switch (this.type) {
-            case uint8x2:
-            case uint8:
-                return "U";
-            case uint32:
-                return "ULL";
-            default:
-                return "";
-        }
-    }
-
-    get length() {
-        return this.index;
-    }
-
-    get result() {
-        return this.bytes.slice(0, this.length);
-    }
-
-    at(index) {
-        return this.bytes.at(index);
-    }
-
-    * [Symbol.iterator]() {
-        for (let pos = 0; pos !== this.length; pos++) {
-            yield this.at(pos);
-        }
-    }
-
-    set(index, value) {
-        return this.bytes[index] = value;
-    }
-
-    append(value) {
-        this.bytes[this.index++] = value;
-    }
-
-    appendList(list) {
-        for (const value of list) {
-            this.append(value);
-        }
-    }
-}
-
 export class Span {
     #arr;
     #start;
@@ -301,10 +215,104 @@ export class Span {
     }
 }
 
+/**
+ * This class will let us handle the types of the tables including:
+ *   - unsigned integer 32 bit (uint32)
+ *   - unsigned integer 8 bit  (uint8)
+ *   - unsigned integer 16 bit (uint16)
+ */
+export class TableTraits {
+
+    constructor(max, type = uint8) {
+        switch (type) {
+            case uint8:
+                this.bytes = new Uint8Array(max);
+                break;
+            case uint32:
+                this.bytes = new Uint32Array(max);
+                break;
+            case uint8x2:
+                this.bytes = [];
+                break;
+            default:
+                throw new Error('Invalid type provided to CodePointMapper.');
+        }
+        this.type = type;
+        this.index = 0;
+    }
+
+    get sizeof() {
+        switch (this.type) {
+            case uint8x2:
+                return 16;
+            case uint8:
+                return 8;
+            case uint32:
+                return 32;
+            default:
+                return 0;
+        }
+    }
+
+    get typeString() {
+        return this.type.description;
+    }
+
+    get STLTypeString() {
+        return `std::${this.typeString}_t`;
+    }
+
+    get postfix() {
+        switch (this.type) {
+            case uint8x2:
+            case uint8:
+                return "U";
+            case uint32:
+                return "ULL";
+            default:
+                return "";
+        }
+    }
+
+    get length() {
+        return this.index;
+    }
+
+    get result() {
+        return this.bytes.slice(0, this.length);
+    }
+
+    at(index) {
+        return this.bytes.at(index);
+    }
+
+    * [Symbol.iterator]() {
+        for (let pos = 0; pos !== this.length; pos++) {
+            yield this.at(pos);
+        }
+    }
+
+    set(index, value) {
+        return this.bytes[index] = value;
+    }
+
+    append(value) {
+        this.bytes[this.index++] = value;
+    }
+
+    appendList(list) {
+        for (const value of list) {
+            this.append(value);
+        }
+    }
+}
+
 /// Find the start position of "left" in "right"
 /// This function finds a place in the "right" table where the specified range
 /// will be there.
 export const findSimilarRange = (left, right) => {
+    assert.ok(isFinite(left.length), "Table should have a valid length");
+    assert.ok(isFinite(right.length), "Table should have a valid length");
     top: for (let rpos = 0; rpos !== right.length; ++rpos) {
         for (let lpos = 0; lpos !== left.length; ++lpos) {
             const rvalue = right.at(rpos + lpos);
@@ -349,3 +357,14 @@ export const popcount = n => {
     }
     return c;
 };
+
+/// Here's a JavaScript function that takes an integer and returns an integer with all the bits from
+/// the right filled with 1 up to the input integer:
+export const fillBitsFromRight = (num) => {
+    // Shift 1 left by the number of bits in the input integer
+    let mask = 1 << num;
+
+    // Subtract 1 from the mask to fill the bits
+    return mask - 1;
+}
+

@@ -1,4 +1,4 @@
-import {alignedSymbol, bitOnesOf, maxOf, sizeOf, Span, symbolOf, uint16, uint8} from "./utils.mjs";
+import {alignedSymbol, bitOnesOf, fillBitsFromRight, maxOf, sizeOf, Span, symbolOf, uint16, uint8} from "./utils.mjs";
 import * as assert from "node:assert";
 
 
@@ -6,7 +6,6 @@ import * as assert from "node:assert";
 export const verifyChunk = chunk => {
     assert.ok(chunk % 2 === 0, "Invalid chunk");
 };
-export const defaultChunk = 256;
 export const chunkMask = chunk => chunk - 1;
 export const rangeLength = (codePointStart, dataLength, chunk) => Math.min(dataLength, codePointStart + chunk) - codePointStart;
 
@@ -29,6 +28,9 @@ export class Addendum {
 
     /// the value is left-shifted by this amount (it's calculated later on in the Addenda):
     leftShit = 0;
+
+    /// if the size of this addendum affects the chunk size
+    affectsChunkSize = false;
 
     generable = false;
     generate = () => {
@@ -61,6 +63,7 @@ export class Addendum {
             this.max = maxOf(this.sizeof);
         }
         this.generable = data["generate"] !== undefined;
+        this.affectsChunkSize = !!data["affectsChunkSize"] || false;
     }
 
     get size() {
@@ -84,15 +87,23 @@ export class Addendum {
         this.#desc = value;
     }
 
+    get typeString() {
+        return this.sizeof.description;
+    }
+
+    get STLTypeString() {
+        return `std::${this.typeString}_t`;
+    }
+
     render() {
         if (alignedSymbol(this.sizeof)) {
             return `
         ${this.commentedDescription}
-        std::${this.sizeof.description} ${this.name};`;
+        ${this.STLTypeString} ${this.name};`;
         } else {
             return `
         ${this.commentedDescription}
-        std::${this.sizeof.description} ${this.name} : ${this.size};`;
+        ${this.STLTypeString} ${this.name} : ${this.size};`;
         }
     }
 
@@ -111,16 +122,17 @@ export class Addendum {
 export class Addenda {
     name;
     description = null;
-    #table = undefined;
+    #chunkSize = NaN;
 
     /// @param table = the data
     /// @param range = start of the bucket
     /// @param pos   = the remaining position
-    #modify = (table, range, pos) => {
+    #modify = (table, modifier, range, pos) => {
+        debugger;
         throw new Error("The addenda's algorithm is not implemented.");
     };
 
-    constructor(name = "unknown", addenda = defaultAddendaPack) {
+    constructor(name, addenda, modifyFunc) {
         this.name = name;
         this.addenda = addenda;
         this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0));
@@ -152,6 +164,9 @@ export class Addenda {
             this[addendum.name] = addendum;
         }
 
+        this.#chunkSize = fillBitsFromRight(this.minSize) + 1;
+        this.modify = modifyFunc;
+
         this.#tests();
     }
 
@@ -181,18 +196,6 @@ export class Addenda {
         this.#modify = value.bind(this);
     }
 
-    set table(value) {
-        if (value instanceof Span) {
-            this.#table = value;
-            return;
-        }
-        this.#table = new Span(value);
-    }
-
-    get table() {
-        return this.#table;
-    }
-
     addendum(name) {
         return this.addenda.find(addendum => addendum.name === name);
     }
@@ -216,6 +219,14 @@ export class Addenda {
             mod |= (value << this.shiftOf(name));
         }
         return mod;
+    }
+
+    get minSize() {
+        return this.addenda.reduce((min, addendum) => !addendum.affectsChunkSize || addendum.size > min ? min : addendum.size, NaN);
+    }
+
+    get chunkSize() {
+        return this.#chunkSize;
     }
 
     /// Generate all possible combinations of the addenda
@@ -242,22 +253,30 @@ export class Addenda {
         return this.addenda.map(addendum => `[${addendum.size}bits = ${addendum.name}]`).join(" + ");
     }
 
+    get typeString() {
+        return this.sizeof.description;
+    }
+
+    get STLTypeString() {
+        return `std::${this.typeString}_t`;
+    }
+
     render() {
         return `
     /**
      * ${this?.description || this.name}
      */
-    struct alignas(std::${this.sizeof.description}_t) ${this.name} {
+    struct alignas(${this.STLTypeString}) ${this.name} {
         ${this.addenda.map(addendum => addendum.render()).join("\n        ")}
        
         /**
          * ${this.renderPlacements()}
          */ 
-        explicit(false) consteval ${this.name}(std::${this.sizeof.description}_t const value) noexcept 
-            : ${this.addenda.map(addendum => addendum.renderValueSet('value')).join(",\n            ")} {}
+        explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
+            : ${this.addenda.map(addendum => addendum.renderValueSet('value')).join(",\n              ")} {}
         
-        consteval ${this.name}(${this.addenda.map(addendum => `std::${addendum.sizeof.description}_t const inp_${addendum.name}`).join(", ")}) noexcept 
-            : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n            ")}{}
+        consteval ${this.name}(${this.addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
+            : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
     };
         `;
     }
@@ -287,21 +306,20 @@ export class Modifier {
         this.#addenda = addenda;
     }
 
-    get table() {
-        return this.#addenda.table;
-    }
-
     set(values) {
         for (const name in values) {
             this[name] = values[name];
         }
     }
 
+    get chunkSize() {
+        return this.#addenda.chunkSize;
+    }
+
     /// Apply the mask and the shift and finding the actual value in the second table
     /// This is the heart of the algorithm that in C++ we have to implement as well
-    apply(range, pos) {
-        // assert.ok(this.table, "What is the use of generating modifiers if you haven't set the data table yet?");
-        return this.#addenda.modify(this, range, pos);
+    apply(table, range, pos) {
+        return this.#addenda.modify(table, this, range, pos);
     }
 
     unshiftAll(list) {
@@ -324,9 +342,12 @@ export class ModifiedSpan {
     }
 
     at(index) {
-        assert.ok(index >= 0 && index < this.length, `Index out of bounds ${index} out of ${this.length} elements.`);
+        if (!(index >= 0 && index < this.length)) {
+            debugger
+            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+        }
 
-        const res = this.#modifier.apply(index, this.#data, this.#start);
+        const res = this.#modifier.apply(this.#data, this.#start, index);
         if (res === undefined) {
             throw new InvalidModifier(this.#modifier);
         }
@@ -334,7 +355,7 @@ export class ModifiedSpan {
     }
 
     get length() {
-        return rangeLength(this.#start, this.#data.length);
+        return rangeLength(this.#start, this.#data.length, this.#modifier.chunkSize);
     }
 
     slice(index = 0, endIndex = this.length - index) {
@@ -357,13 +378,13 @@ export class ModifiedSpan {
 }
 
 
-
 ////////////////////////////// Implementation of Defaults //////////////////////////////
 
-export const shiftAddendum = new Addendum({
+export const genShiftAddendum = () => new Addendum({
     name: "shift",
     description: "This value gets added to the retrieved value at the end of the operation.",
     sizeof: uint8,
+    affectsChunkSize: false,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
         for (let index = this.min; index !== this.max; ++index) {
@@ -372,14 +393,15 @@ export const shiftAddendum = new Addendum({
     },
     modify(modifier, meta) {
         return {...meta, value: modifier.shift + meta.value};
-    }
+    },
 });
 
-export const maskAddendum = new Addendum({
+export const genMaskAddendum = () => new Addendum({
     name: "mask",
     description: "This is used to mask the 'remaining position' of the values table;\n" +
         "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
         "The mask does not apply to the whole index, but only to the remaining index.",
+    affectsChunkSize: true,
     sizeof: uint8,
     * generate() {
         yield this.min;
@@ -390,21 +412,23 @@ export const maskAddendum = new Addendum({
     },
     modify(modifier, meta) {
         return {...meta, pos: modifier.mask & meta.pos};
-    }
+    },
 });
 
-export const positionAddendum = new Addendum({
+export const genPositionAddendum = () => new Addendum({
     name: "pos",
     description: "This is the position that should be looked for in the values table.",
     sizeof: uint16,
+    affectsChunkSize: false,
 });
 
-export const defaultAddendaPack = [positionAddendum, maskAddendum, shiftAddendum];
+export const genDefaultAddendaPack = () => [genPositionAddendum(), genMaskAddendum(), genShiftAddendum()];
 
-export const indexAddenda = new Addenda("index", defaultAddendaPack);
-indexAddenda.modify = function (modifier, range, pos) {
-    const {pos: maskedPos} = this.mask.modify(this, {pos});
-    const value = modifier.table.at(range + maskedPos);
-    return this.shift.modify(modifier, {pos: maskedPos, value}).value;
-};
+export const genIndexAddenda = () => {
+    return new Addenda("index", genDefaultAddendaPack(), function (table, modifier, range, pos) {
+        const {pos: maskedPos} = this.mask.modify(this, {pos});
+        const value = table.at(range + maskedPos);
+        return this.shift.modify(modifier, {pos: maskedPos, value}).value;
+    });
+}
 

@@ -1,5 +1,6 @@
-import {indexAddenda} from "./modifiers.mjs";
+import {genIndexAddenda} from "./modifiers.mjs";
 
+const indexAddenda = genIndexAddenda();
 indexAddenda.name = "test";
 
 console.log(indexAddenda.render());
@@ -24,9 +25,7 @@ console.log("----------------------");
 const table = [
     1, 2, 3, 4, 5, 6, 7, 9, 10
 ];
-indexAddenda.table = table;
-console.log(...indexAddenda.table);
 for (const mod of indexAddenda.generate()) {
-    console.log(mod, mod.apply(0, 10));
+    console.log(mod, mod.apply(table, 0, 10));
 }
 
