@@ -30,6 +30,11 @@ Checks: >
     -fuchsia-default-arguments-calls,
     -fuchsia-default-arguments-declarations,
   linuxkernel-*,
+CheckOptions:
+  - key:   readability-function-cognitive-complexity.Threshold
+    value: 50 # default is 25
+  - key:   readability-function-cognitive-complexity.IgnoreMacros
+    value: true # default is false
 InheritParentConfig: false
 HeaderFileExtensions:
   - hpp

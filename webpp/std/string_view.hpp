@@ -14,7 +14,7 @@ namespace webpp::istl {
     concept StringView = requires(stl::remove_cvref_t<T> str) {
         typename stl::remove_cvref_t<T>::value_type;
         requires requires(typename stl::remove_cvref_t<T>::value_type a_char) {
-            //        { T{"str"} };
+            // { T{"str"} };
             str.empty();
             str.at(0);
             str.data();
@@ -35,6 +35,8 @@ namespace webpp::istl {
         str.clear();
         str.shrink_to_fit();
         str.capacity();
+
+        // NOLINTNEXTLINE(*-avoid-c-arrays)
         requires requires(typename stl::remove_cvref_t<T>::value_type const char_str[3]) {
             {
                 str = char_str
@@ -45,7 +47,7 @@ namespace webpp::istl {
     namespace details::string_view {
         /**
          * Due to a GCC bug in 10.2.0, we're doing this to deduce the template type, because GCC doesn't
-         * seem to be able to deduce a template type in a concept but it can do it from here.
+         * seem to be able to deduce a template type in a concept, but it can do it from here.
          */
         template <template <typename...> typename TT, typename... T>
         using deduced_type = decltype(TT{stl::declval<T>()...});
@@ -133,7 +135,10 @@ namespace webpp::istl {
 
     /**
      * Convert to string view of the specified template type
-     * @example string_viewify_of<std::basic_string_view>("convert to string view")
+     * @example
+     * @code
+     *      string_viewify_of<std::basic_string_view>("convert to string view")
+     * @endcode
      */
     template <template <typename...> typename StrViewT, typename StrT>
         requires(StringViewifiableOfTemplate<StrViewT, StrT>)

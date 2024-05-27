@@ -46,7 +46,7 @@ namespace webpp::unicode {
      * smallest unit of writing that represents a single syllable in the Korean language.
      *
      * In Hangul, each syllable is composed of one or more characters, which can include a leading consonant,
-     * a vowel, and a trailing consonant. These characters are combined together to form a visually connected
+     * a vowel, and a trailing consonant. These characters are combined to form a visually connected
      * block that represents the sound of the syllable.
      *
      * For example, the Hangul syllable "가" (pronounced as "ga" in English) consists of the leading consonant
@@ -140,7 +140,7 @@ namespace webpp::unicode {
     };
 
     /**
-     * Decompose the Hangul code point and return it's parts.
+     * Decompose the Hangul code point and return its parts.
      * This function does not check if the inputted code point is Hangul or not.
      * https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
      *
@@ -158,7 +158,7 @@ namespace webpp::unicode {
 
         auto const pos = code_point - hangul_syllable_base;
 
-        // Calculating the indeces:
+        // Calculating the indices:
         auto const leading_pos  = pos / hangul_block_count;
         auto const vowel_pos    = (pos % hangul_block_count) / hangul_trailing_count;
         auto const trailing_pos = pos % hangul_trailing_count;
@@ -173,11 +173,11 @@ namespace webpp::unicode {
     }
 
     /**
-     * Append the decomposed Handul code point to the output
+     * Append the decomposed Hangul code point to the output
      * This function does not check if the inputted code point is Hangul or not.
      *
      * @tparam CharT     char type
-     * @tparam StrOrIter Can be a stirng/string-view/iterator/vector<CharT>/...
+     * @tparam StrOrIter Can be a string/string-view/iterator/vector<CharT>/...
      */
     template <typename CharT = char32_t, typename StrOrIter>
     static void decompose_hangul_code_point(CharT const code_point, StrOrIter& out) {
@@ -223,7 +223,7 @@ namespace webpp::unicode {
             auto const leading_pos = lhs - hangul_leading_base;
             auto const vowel_pos   = rhs - hangul_vowel_base;
             auto const leading_vowel_pos =
-              leading_pos * hangul_block_count + vowel_pos * hangul_trailing_count;
+              (leading_pos * hangul_block_count) + (vowel_pos * hangul_trailing_count);
             return hangul_syllable_base + leading_vowel_pos;
         }
 

@@ -207,19 +207,19 @@ namespace webpp::unicode {
     }
 
     /**
-     * Reorderable pair:
+     * Reorder-able pair:
      *       Two adjacent characters A and B in a coded character sequence <A, B> are
-     *       a Reorderable Pair if and only if ccc(A) > ccc(B) > 0
+     *       a Reorder-able Pair if and only if ccc(A) > ccc(B) > 0
      *
      * Canonical Ordering Algorithm:
      *       In a decomposed character sequence D, exchange the positions of the characters in each
-     *       Reorderable Pair until the sequence contains no more Reorderable Pairs.
+     *       Reorder-able Pair until the sequence contains no more Reorder-able Pairs.
      *
      * More information about Canonical Ordering Algorithm:
      *       (section 3.11 of https://www.unicode.org/versions/latest)
      *
-     * Reorderable Pairs:
-     *       Classes Reorderable?  Reason
+     * Reorder-able Pairs:
+     *       Classes Reorder-able?  Reason
      *       -------------------- ---------------
      *       No                    ccc(A) = 0
      *       No                    ccc(B) = 0

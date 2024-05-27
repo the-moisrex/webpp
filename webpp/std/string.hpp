@@ -17,9 +17,10 @@ namespace webpp::istl {
         typename stl::remove_cvref_t<T>::value_type;
         typename stl::remove_cvref_t<T>::allocator_type;
 
-        requires requires(typename stl::remove_cvref_t<T>::value_type       a_char,
+        requires requires(typename stl::remove_cvref_t<T>::value_type a_char,
+                          // NOLINTNEXTLINE(*-avoid-c-arrays)
                           typename stl::remove_cvref_t<T>::value_type const char_str[3]) {
-            //        { T{"str"} };
+            // { T{"str"} };
             str.empty();
             str.at(0);
             str.data();
