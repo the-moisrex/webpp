@@ -313,6 +313,9 @@ export class TableTraits {
 export const findSimilarRange = (left, right) => {
     assert.ok(isFinite(left.length), "Table should have a valid length");
     assert.ok(isFinite(right.length), "Table should have a valid length");
+    if (left.length > right.length) {
+        return null;
+    }
     top: for (let rpos = 0; rpos !== right.length; ++rpos) {
         for (let lpos = 0; lpos !== left.length; ++lpos) {
             const rvalue = right.at(rpos + lpos);

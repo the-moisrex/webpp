@@ -47,7 +47,7 @@ export class Addendum {
     constructor(data) {
         for (const name in data) {
             let value = data[name];
-            assert.ok(this[name] !== undefined, `Invalid argument specified; arg[${name}] = ${JSON.stringify(value)}`);
+            // assert.ok(this[name] !== undefined, `Invalid argument specified; arg[${name}] = ${JSON.stringify(value)}`);
 
             // this, is that :)
             if (value instanceof Function) {
@@ -132,6 +132,8 @@ export class Addenda {
         throw new Error("The addenda's algorithm is not implemented.");
     };
 
+    #modifierFunctions = {};
+
     constructor(name, addenda, modifyFunc) {
         this.name = name;
         this.addenda = addenda;
@@ -196,6 +198,22 @@ export class Addenda {
         this.#modify = value.bind(this);
     }
 
+    get modifierFunctions() {
+        return this.#modifierFunctions;
+    }
+
+    set modifierFunctions(value) {
+        if (typeof value !== 'object') {
+            throw new Error(`Invalid modifier function: ${value}`);
+        }
+        for (const funcName in value) {
+            if (typeof value[funcName] !== 'function') {
+                throw new Error(`Invalid modifier function: ${value}; it's supposed to be a function.`);
+            }
+        }
+        this.#modifierFunctions = value;
+    }
+
     addendum(name) {
         return this.addenda.find(addendum => addendum.name === name);
     }
@@ -240,9 +258,8 @@ export class Addenda {
 
         const [head, ...tail] = generables;
         for (const headVal of head.generate()) {
-            for (const tailVals of this.generate(tail)) {
-                let values = {[head.name]: headVal, ...tailVals};
-                delete values.modifier;
+            for (const tailMod of this.generate(tail)) {
+                let values = {[head.name]: headVal, ...tailMod.values()};
                 mod.set({...values, modifier: this.modifier(values)});
                 yield mod;
             }
@@ -304,12 +321,37 @@ export class Modifier {
             throw new Error("'addenda' should be Addenda");
         }
         this.#addenda = addenda;
+
+        // Making the functions public
+        for (const funcName in this.#addenda.modifierFunctions) {
+            this[funcName] = this.#addenda.modifierFunctions[funcName].bind(this);
+        }
+    }
+
+    get addenda() {
+        return this.#addenda;
+    }
+
+    get name() {
+        return this.#addenda.name;
     }
 
     set(values) {
         for (const name in values) {
             this[name] = values[name];
         }
+    }
+
+    values() {
+        let values = {};
+        for (const addendum of this.#addenda.addenda) {
+            const value = this[addendum.name];
+            if (value === undefined) {
+                continue;
+            }
+            values[addendum.name] = value;
+        }
+        return values;
     }
 
     get chunkSize() {
@@ -322,9 +364,14 @@ export class Modifier {
         return this.#addenda.modify(table, this, range, pos);
     }
 
-    unshiftAll(list) {
-        return list.map((value, index) => this.unapplyShift(value, index));
+    /// Get only important stuff, used for printing mostly
+    necessaries() {
+        return {
+            modifier: this.modifier,
+            ...Object.fromEntries(this.#addenda.addenda.filter(addendum => addendum.generable).map(addendum => [addendum.name, this[addendum.name]]))
+        };
     }
+
 }
 
 /**
@@ -348,7 +395,8 @@ export class ModifiedSpan {
         }
 
         const res = this.#modifier.apply(this.#data, this.#start, index);
-        if (res === undefined) {
+        if (!isFinite(res)) {
+            debugger;
             throw new InvalidModifier(this.#modifier);
         }
         return res;
@@ -394,6 +442,9 @@ export const genShiftAddendum = () => new Addendum({
     modify(modifier, meta) {
         return {...meta, value: modifier.shift + meta.value};
     },
+    unshift(modifier, meta) {
+        return {...meta, value: meta.value - modifier.shift};
+    }
 });
 
 export const genMaskAddendum = () => new Addendum({
@@ -425,10 +476,27 @@ export const genPositionAddendum = () => new Addendum({
 export const genDefaultAddendaPack = () => [genPositionAddendum(), genMaskAddendum(), genShiftAddendum()];
 
 export const genIndexAddenda = () => {
-    return new Addenda("index", genDefaultAddendaPack(), function (table, modifier, range, pos) {
+    const addenda = new Addenda("index", genDefaultAddendaPack(), function (table, modifier, range, pos) {
         const {pos: maskedPos} = this.mask.modify(this, {pos});
         const value = table.at(range + maskedPos);
+        if (!isFinite(value)) {
+            debugger;
+            throw new Error("Something went really wrong.");
+        }
         return this.shift.modify(modifier, {pos: maskedPos, value}).value;
     });
+    addenda.modifierFunctions = {
+        applyMask: function (pos) {
+            return this.addenda.mask.modify(this, pos);
+        },
+        unshiftAll: function (list) {
+            const modifier = this;
+            return list.map((value, index) => this.addenda.shift.unshift(modifier, {
+                value,
+                pos: index
+            }).value);
+        }
+    };
+    return addenda;
 }
 
