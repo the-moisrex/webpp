@@ -108,7 +108,7 @@ class CCCTables {
             const realCCC = dataView.at(index);
             const insertCCC = modifiedInserts.at(index);
             if (realCCC !== insertCCC) {
-                throw new InvalidModifier({index, realCCC, insertCCC});
+                throw new InvalidModifier({index, realCCC, insertCCC, ...modifier});
             }
         }
 

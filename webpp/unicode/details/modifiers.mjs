@@ -462,6 +462,7 @@ export const genMaskAddendum = () => new Addendum({
         yield 254;
     },
     modify(modifier, meta) {
+        assert.ok(isFinite(modifier.mask), "Bad mask?");
         return {...meta, pos: modifier.mask & meta.pos};
     },
 });
@@ -477,7 +478,7 @@ export const genDefaultAddendaPack = () => [genPositionAddendum(), genMaskAddend
 
 export const genIndexAddenda = () => {
     const addenda = new Addenda("index", genDefaultAddendaPack(), function (table, modifier, range, pos) {
-        const {pos: maskedPos} = this.mask.modify(this, {pos});
+        const {pos: maskedPos} = this.mask.modify(modifier, {pos});
         const value = table.at(range + maskedPos);
         if (!isFinite(value)) {
             debugger;
