@@ -129,11 +129,12 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
+        using details::ccc_indecis;
         using details::ccc_index;
         using details::ccc_values;
         using details::trailing_zero_cccs;
 
-        // The CCC of anything bigger than this number is zero because zero is the default by unicode standard
+        // The CCC of anything bigger than this number is zero because zero is the default by Unicode standard
         if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
             return 0;
         }
@@ -147,19 +148,19 @@ namespace webpp::unicode {
         //   mask:      the mask will be applied to position of that 256 range, not the values, and not to the
         //              whole index position
         //   shift:     the value you find will be shifted by this amount
-        auto const code_point_range = static_cast<stl::size_t>(code_point) >> 8U;
-        auto const code_point_index = static_cast<stl::uint8_t>(code_point);
-        auto const helper           = ccc_index[code_point_range];
+        auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
+        // auto const code_point_index = static_cast<stl::uint8_t>(code_point & ccc_index::chunk_mask);
+        auto const code             = ccc_indecis[code_point_range];
 
         // extract information from the helper code:
-        auto const mask       = static_cast<stl::uint8_t>(helper);
-        auto const shift      = static_cast<stl::uint8_t>(helper >> 8U);
-        auto const start_pos  = static_cast<stl::size_t>(helper >> 16U);
-        auto const masked_pos = static_cast<stl::size_t>(mask & code_point_index);
+        // auto const mask       = static_cast<stl::uint8_t>(helper);
+        // auto const shift      = static_cast<stl::uint8_t>(helper >> 8U);
+        // auto const start_pos  = static_cast<stl::size_t>(helper >> 16U);
+        // auto const masked_pos = static_cast<stl::size_t>(mask & code_point_index);
 
         // calculating the position of te value in the ccc_values table:
-        stl::size_t const index_pos = start_pos + masked_pos;
-        return ccc_values[index_pos] + shift;
+        stl::size_t const index_pos = code.get_position(code_point);
+        return ccc_values[index_pos] + code.shift;
     }
 
     /**

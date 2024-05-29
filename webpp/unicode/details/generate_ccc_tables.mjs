@@ -49,8 +49,8 @@ class CCCTables {
         this.cccs = new TableTraits(65535, uint8);
 
         this.#indexAddenda = genIndexAddenda();
-        this.#indexAddenda.name = "ccc_indices";
-        this.#indexAddenda.description = `CCC Indexes`;
+        this.#indexAddenda.name = "ccc_index";
+        this.#indexAddenda.description = `CCC Index`;
 
         this.data = [];
     }
@@ -241,7 +241,7 @@ class CCCTables {
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
                 codeRange, "mask:", mask, "shift:", shift, "pos:", pos, 'code:', helperCode,
                 "samples:", inserts.filter(item => item).slice(0, 5));
-            uniqueModifiers.add(modifier);
+            uniqueModifiers.add(modifier.necessaries());
 
             if (mask !== modifier.resetMask && mask !== modifier.minMask) {
                 ++reusedMaskedCount;
@@ -268,8 +268,7 @@ class CCCTables {
         console.log("Successful masks:", reusedMaskedCount);
         console.log("CCCs Table Length:", this.cccs.length);
         console.log("Insert saves:", saves);
-        console.log("Modifiers Used:", uniqueModifiers.size,
-            [...uniqueModifiers].map(mod => ({modifier: mod, ...modifiers.info(mod)})));
+        console.log("Modifiers Used:", uniqueModifiers.size, [...uniqueModifiers]);
         console.log("Finalizing: done.");
         console.timeEnd("Finalize");
     }
@@ -287,7 +286,7 @@ class CCCTables {
             const poses = [];
 
             indeces.forEach((code, index) => {
-                const cccIndex = modifiers.cccIndexOf(code);
+                const cccIndex = this.#indexAddenda.modifierOf(code).pos;
                 if (cccIndex === pos) {
                     poses.push(`0x${(index << 8).toString(16)}`);
                 }
@@ -302,6 +301,9 @@ class CCCTables {
         });
 
         return `
+
+${this.#indexAddenda.render()}
+
     /**
      * In "ccc_index" table, any code point bigger than this number will have "zero" as it's CCC value;
      * so it's designed this way to reduce the table size.
@@ -339,7 +341,7 @@ class CCCTables {
      *   - in bytes:      ${indecesBits / 8} B
      *   - in KibiBytes:  ${Math.ceil(indecesBits / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.indeces.STLTypeString}, ${indeces.length}ULL> ccc_index{
+    static constexpr std::array<${this.#indexAddenda.name}, ${indeces.length}ULL> ccc_indecis{
         ${indeces.join(", ")}
     };
     

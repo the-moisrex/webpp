@@ -216,21 +216,27 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 template <typename CharT = char32_t>
 [[nodiscard]] static constexpr stl::string desc_ccc_of(CharT const code_point) noexcept {
+    using webpp::unicode::details::ccc_indecis;
     using webpp::unicode::details::ccc_index;
     using webpp::unicode::details::ccc_values;
     using webpp::unicode::details::trailing_zero_cccs;
     if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
         return "Definite Zero";
     }
-    auto const        code_point_range = static_cast<stl::size_t>(code_point) >> 8U;
-    auto const        code_point_index = static_cast<stl::uint8_t>(code_point);
-    auto const        helper           = ccc_index[code_point_range];
-    auto const        mask             = static_cast<stl::uint8_t>(helper);
-    auto const        shift            = static_cast<stl::uint8_t>(helper >> 8);
-    auto const        index            = helper >> 16U;
-    auto const        masked_pos       = mask & code_point_index;
-    stl::size_t const index_pos        = index + static_cast<stl::size_t>(masked_pos);
-    auto              res              = ccc_values[index_pos] + shift;
+    auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
+    auto const code_point_index = static_cast<stl::uint8_t>(code_point & ccc_index::chunk_mask);
+    // auto const        helper           = ccc_index[code_point_range];
+    // auto const        mask             = static_cast<stl::uint8_t>(helper);
+    // auto const        shift            = static_cast<stl::uint8_t>(helper >> 8);
+    // auto const        index            = helper >> 16U;
+    // auto const        masked_pos       = mask & code_point_index;
+    // stl::size_t const index_pos        = index + static_cast<stl::size_t>(masked_pos);
+
+    // auto const code_point_index = static_cast<stl::uint8_t>(code_point);
+    auto const code             = ccc_indecis[code_point_range];
+    // calculating the position of te value in the ccc_values table:
+    stl::size_t const index_pos = code.get_position(code_point);
+    auto              res       = ccc_values[index_pos] + code.shift;
 
     stl::string around = "[..., ";
     for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 3l, 0l));
@@ -254,13 +260,13 @@ actual index: {}
 result: {}
 {}
 )data",
-      helper,
-      mask,
-      shift,
-      index,
+      code.value(),
+      code.mask,
+      code.shift,
+      code.pos,
       code_point_index,
-      masked_pos,
-      (index & code_point_index),
+      code.masked(code_point_index),
+      (code.pos & code_point_index),
       res,
       around);
 }

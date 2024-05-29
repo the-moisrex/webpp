@@ -316,15 +316,22 @@ export const findSimilarRange = (left, right) => {
     if (left.length > right.length) {
         return null;
     }
-    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
-        for (let lpos = 0; lpos !== left.length; ++lpos) {
-            const rvalue = right.at(rpos + lpos);
-            const lvalue = left.at(lpos);
-            if (rvalue !== lvalue) {
-                continue top;
+    try {
+        top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+            for (let lpos = 0; lpos !== left.length; ++lpos) {
+                const rvalue = right.at(rpos + lpos);
+                const lvalue = left.at(lpos);
+                if (rvalue !== lvalue) {
+                    continue top;
+                }
             }
+            return rpos;
         }
-        return rpos;
+    } catch (err) {
+        if (!(err instanceof RangeError)) {
+            throw err;
+        }
+        // else, just say we found nothing
     }
     return null;
 };
