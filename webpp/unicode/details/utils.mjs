@@ -1,7 +1,6 @@
 import {promises as fs} from 'fs';
 import * as process from "node:process";
 import * as assert from "node:assert";
-import {chunkMask} from "./modifiers.mjs";
 
 
 export const uint8 = Symbol('uint8');
@@ -313,10 +312,10 @@ export class TableTraits {
 export const findSimilarRange = (left, right) => {
     assert.ok(isFinite(left.length), "Table should have a valid length");
     assert.ok(isFinite(right.length), "Table should have a valid length");
-    if (left.length > right.length) {
-        return null;
-    }
-    try {
+    // if (left.length > right.length) {
+    //     return null;
+    // }
+    // try {
         top: for (let rpos = 0; rpos !== right.length; ++rpos) {
             for (let lpos = 0; lpos !== left.length; ++lpos) {
                 const rvalue = right.at(rpos + lpos);
@@ -327,12 +326,12 @@ export const findSimilarRange = (left, right) => {
             }
             return rpos;
         }
-    } catch (err) {
-        if (!(err instanceof RangeError)) {
-            throw err;
-        }
-        // else, just say we found nothing
-    }
+    // } catch (err) {
+    //     if (!(err instanceof RangeError)) {
+    //         throw err;
+    //     }
+    //     // else, just say we found nothing
+    // }
     return null;
 };
 

@@ -216,8 +216,8 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 template <typename CharT = char32_t>
 [[nodiscard]] static constexpr stl::string desc_ccc_of(CharT const code_point) noexcept {
-    using webpp::unicode::details::ccc_indecis;
     using webpp::unicode::details::ccc_index;
+    using webpp::unicode::details::ccc_indices;
     using webpp::unicode::details::ccc_values;
     using webpp::unicode::details::trailing_zero_cccs;
     if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
@@ -233,7 +233,7 @@ template <typename CharT = char32_t>
     // stl::size_t const index_pos        = index + static_cast<stl::size_t>(masked_pos);
 
     // auto const code_point_index = static_cast<stl::uint8_t>(code_point);
-    auto const code             = ccc_indecis[code_point_range];
+    auto const code             = ccc_indices[code_point_range];
     // calculating the position of te value in the ccc_values table:
     stl::size_t const index_pos = code.get_position(code_point);
     auto              res       = ccc_values[index_pos] + code.shift;

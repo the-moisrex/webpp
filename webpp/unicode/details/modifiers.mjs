@@ -122,7 +122,7 @@ export class Addendum {
         if (this.leftShit === 0) {
             return `${this.name}{static_cast<${this.STLTypeString}>(${valueName})}`;
         } else {
-            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName} >> ${this.leftShit})}`;
+            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName} >> ${this.leftShit}U)}`;
         }
     }
 
@@ -175,7 +175,7 @@ export class Addenda {
         this.addenda.sort((a, b) => a.placement - b.placement);
 
         // Resetting the shifts:
-        let leftShift = this.size;
+        let leftShift = this.packedSize;
         for (let addendum of this.addenda) {
             leftShift -= addendum.size;
             addendum.leftShit += leftShift;
@@ -208,6 +208,10 @@ export class Addenda {
 
     get size() {
         return sizeOf(this.sizeof);
+    }
+
+    get packedSize() {
+        return this.addenda.reduce((sum, addendum) => sum + addendum.size, 0);
     }
 
     get modify() {
@@ -306,8 +310,7 @@ export class Addenda {
         const [head, ...tail] = generables;
         for (const headVal of head.generate()) {
             for (const tailMod of this.generate(tail)) {
-                let values = {[head.name]: headVal, ...tailMod.values()};
-                mod.set({...values, modifier: this.modifierCode(values)});
+                mod.set({[head.name]: headVal, ...tailMod.values()});
                 yield mod;
             }
         }
@@ -344,7 +347,7 @@ ${""/*
 */}
         
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${this.addenda.map(addendum => addendum.renderShift(this.STLTypeString)).join(" & ")};
+            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString)).join(" | ")};
         }
 
 ${this.#renderFunctions.map(func => func()).join("\n\n")}
@@ -393,14 +396,13 @@ export class Modifier {
     }
 
     set(values) {
-        this.modifier = values.modifier || this.modifier;
-        delete values.modifier;
         for (const name in values) {
             if (!this.addenda.addendum(name)) {
                 throw new Error(`Invalid addendum name ${name}`);
             }
             this[name] = values[name];
         }
+        this.modifier = this.addenda.modifierCode(this.values());
     }
 
     values() {
@@ -458,9 +460,9 @@ export class ModifiedSpan {
     }
 
     at(index) {
-        if (!(index >= 0 && index < this.length)) {
-            throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
-        }
+        // if (!(index >= 0 && index < this.length)) {
+        //     throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
+        // }
 
         const res = this.#modifier.apply(this.#data, this.#start, index);
         if (!isFinite(res)) {
@@ -543,10 +545,10 @@ export const genShiftAddendum = () => new Addendum({
         }
     },
     modify(modifier, meta) {
-        return {...meta, value: modifier.shift + meta.value};
+        return {...meta, value: (modifier.shift + meta.value) & this.mask};
     },
     unshift(modifier, meta) {
-        return {...meta, value: meta.value - modifier.shift};
+        return {...meta, value: (meta.value - modifier.shift) & this.mask};
     }
 });
 

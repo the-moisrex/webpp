@@ -1,9 +1,12 @@
-import {genIndexAddenda, ModifiedSpan, Modifier} from "./modifiers.mjs";
+import {genIndexAddenda, genMaskedIndexAddenda, ModifiedSpan, Modifier} from "./modifiers.mjs";
 
 const indexAddenda = genIndexAddenda();
+const maskedIndexAddenda = genMaskedIndexAddenda();
 indexAddenda.name = "test";
+maskedIndexAddenda.name = "masked_test";
 
 console.log(indexAddenda.render());
+console.log(maskedIndexAddenda.render());
 
 indexAddenda.addenda.forEach(addendum => {
     if (!addendum.generable) {

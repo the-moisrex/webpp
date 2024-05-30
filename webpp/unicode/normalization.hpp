@@ -129,8 +129,8 @@ namespace webpp::unicode {
     /// Canonical Combining Class
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
-        using details::ccc_indecis;
         using details::ccc_index;
+        using details::ccc_indices;
         using details::ccc_values;
         using details::trailing_zero_cccs;
 
@@ -150,7 +150,7 @@ namespace webpp::unicode {
         //   shift:     the value you find will be shifted by this amount
         auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
         // auto const code_point_index = static_cast<stl::uint8_t>(code_point & ccc_index::chunk_mask);
-        auto const code             = ccc_indecis[code_point_range];
+        auto const code             = ccc_indices[code_point_range];
 
         // extract information from the helper code:
         // auto const mask       = static_cast<stl::uint8_t>(helper);
