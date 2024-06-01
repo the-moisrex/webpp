@@ -328,10 +328,14 @@ export class Addenda {
         return `std::${this.typeString}_t`;
     }
 
+    get desc() {
+        return `${this?.description || this.name}`.replace(/\n/g, '\n         * ');
+    }
+
     render() {
         return `
     /**
-     * ${this?.description || this.name}
+     * ${this.desc}
      */
     struct alignas(${this.STLTypeString}) ${this.name} {
         ${this.addenda.map(addendum => addendum.render()).join("\n        ")}
@@ -505,6 +509,7 @@ export function staticFields() {
         static constexpr std::uint8_t chunk_shift = ${this.chunkShift}U;
             `;
 }
+
 export function maskedFunction() {
     return `
         /**
@@ -517,6 +522,7 @@ export function maskedFunction() {
         }
             `;
 }
+
 export function getPositionFunction() {
     return `
         /**

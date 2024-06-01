@@ -1,6 +1,7 @@
 import {promises as fs} from 'fs';
 import * as process from "node:process";
 import * as assert from "node:assert";
+import child_process from "node:child_process";
 
 
 export const uint8 = Symbol('uint8');
@@ -21,7 +22,8 @@ export const sizeOf = symbol => {
         case uint64:
             return 64;
     }
-    throw new Error(`Invalid symbol: ${symbol.description}`);
+    debugger;
+    throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
 };
 
 export const symbolOf = size => {
@@ -221,6 +223,8 @@ export class Span {
  *   - unsigned integer 16 bit (uint16)
  */
 export class TableTraits {
+    #type = uint8;
+    index = 0;
 
     constructor(max, type = uint8) {
         switch (type) {
@@ -236,21 +240,15 @@ export class TableTraits {
             default:
                 throw new Error('Invalid type provided to CodePointMapper.');
         }
-        this.type = type;
-        this.index = 0;
+        this.#type = type;
+    }
+
+    get type() {
+        return this.#type;
     }
 
     get sizeof() {
-        switch (this.type) {
-            case uint8x2:
-                return 16;
-            case uint8:
-                return 8;
-            case uint32:
-                return 32;
-            default:
-                return 0;
-        }
+        return sizeOf(this.type);
     }
 
     get typeString() {
@@ -279,6 +277,10 @@ export class TableTraits {
 
     get result() {
         return this.bytes.slice(0, this.length);
+    }
+
+    trimAt(index) {
+        this.index = index;
     }
 
     at(index) {
@@ -316,16 +318,16 @@ export const findSimilarRange = (left, right) => {
     //     return null;
     // }
     // try {
-        top: for (let rpos = 0; rpos !== right.length; ++rpos) {
-            for (let lpos = 0; lpos !== left.length; ++lpos) {
-                const rvalue = right.at(rpos + lpos);
-                const lvalue = left.at(lpos);
-                if (rvalue !== lvalue) {
-                    continue top;
-                }
+    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+        for (let lpos = 0; lpos !== left.length; ++lpos) {
+            const rvalue = right.at(rpos + lpos);
+            const lvalue = left.at(lpos);
+            if (rvalue !== lvalue) {
+                continue top;
             }
-            return rpos;
         }
+        return rpos;
+    }
     // } catch (err) {
     //     if (!(err instanceof RangeError)) {
     //         throw err;
@@ -377,3 +379,23 @@ export const fillBitsFromRight = (num) => {
     return mask - 1;
 }
 
+export const writePieces = async (outFile, pieces) => {
+
+    await fs.writeFile(outFile, "");
+    for (const piece of pieces) {
+        if (typeof piece !== "string") {
+            throw new Error(`Invalid input, piece: ${piece}`);
+        }
+        await fs.appendFile(outFile, piece);
+    }
+};
+
+export const runClangFormat = async filePath => {
+    // Reformat the file
+    try {
+        await child_process.exec(`clang-format -i "${filePath}"`);
+        console.log("Clang-format completed.");
+    } catch (err) {
+        console.error("Could not re-format the file.", err);
+    }
+};

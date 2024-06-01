@@ -1,4 +1,14 @@
-import {findSimilarRange, overlapInserts, Span, TableTraits, uint32, uint8} from "./utils.mjs";
+import {
+    findSimilarRange,
+    overlapInserts,
+    popcount,
+    sizeOf,
+    Span,
+    TableTraits,
+    uint32,
+    uint8,
+    writePieces
+} from "./utils.mjs";
 import {genIndexAddenda, InvalidModifier, ModifiedSpan, rangeLength} from "./modifiers.mjs";
 
 export class TablePairs {
@@ -9,20 +19,19 @@ export class TablePairs {
     #props = {};
 
     init(meta) {
-        this.#name = meta?.name || "Table";
-        this.#description = meta?.description || "";
+        this.#props = meta;
+        this.#name = this.#props?.name || "table";
+        this.#description = this.#props?.description || "";
 
-        const {indices, values} = meta;
 
         // the tables
-        this.indices = new TableTraits(indices.max || 43530, indices.sizeof || uint32);
-        this.values = new TableTraits(values.max || 65535, this.values || uint8);
+        this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32);
+        this.values = new TableTraits(this.#props?.values?.max || 65535, this.values || uint8);
 
         // index table's information
-        this.#indexAddenda = genIndexAddenda();
-        this.#indexAddenda.name = `${name}_index`;
-        this.#indexAddenda.description = `${name} Index Table\n${this.#description}`;
-        this.#props = meta;
+        this.#indexAddenda = (meta?.genIndexAddenda || genIndexAddenda)();
+        this.#indexAddenda.name = `${this.#name}_index`;
+        this.#indexAddenda.description = `${this.#name[0].toUpperCase()}${this.#name.substring(1)} (Index Table)\n${this.#description}`;
     }
 
     add(codePoint, value) {
@@ -30,7 +39,7 @@ export class TablePairs {
         // fill the data
         this.data[codePoint] = value;
 
-        this.#props?.add();
+        this.#props?.processAdds?.();
     }
 
     /// This function compresses the specified range based on the input modifier.
@@ -82,6 +91,14 @@ export class TablePairs {
         return this.#indexAddenda.chunkSize;
     }
 
+    get chunkMask() {
+        return this.#indexAddenda.chunkMask;
+    }
+
+    get chunkShift() {
+        return this.#indexAddenda.chunkShift;
+    }
+
     #findSimilarMaskedRange(codePointStart) {
         const length = rangeLength(codePointStart, this.data.length, this.chunkSize);
         let possibilities = [];
@@ -117,29 +134,32 @@ export class TablePairs {
                 if (err instanceof InvalidModifier) {
                     invalidModifiers.push(err);
                 } else {
-                    if (!ignoreErrors) {
+                    if (!this.#props?.ignoreErrors) {
                         throw err;
                     }
                 }
             }
 
-            try {
-                // now, try the shifted inserts as well see if they're any good:
-                info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
-                indexModifier.set({pos: info.pos});
-                if (info.inserts.length < lastInfoLength) {
-                    possibilities.push({...info, modifier: indexModifier, shifted: indexModifier.shift});
+            /// check if we can have "shift"s.
+            if (indexModifier.unshiftAll) {
+                try {
+                    // now, try the shifted inserts as well see if they're any good:
+                    info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
+                    indexModifier.set({pos: info.pos});
+                    if (info.inserts.length < lastInfoLength) {
+                        possibilities.push({...info, modifier: indexModifier, shifted: indexModifier.shift});
 
-                    if (info.inserts.length === 0) {
-                        break;
+                        if (info.inserts.length === 0) {
+                            break;
+                        }
                     }
-                }
-            } catch (err) {
-                if (err instanceof InvalidModifier) {
-                    invalidModifiers.push(err);
-                } else {
-                    if (!ignoreErrors) {
-                        throw err;
+                } catch (err) {
+                    if (err instanceof InvalidModifier) {
+                        invalidModifiers.push(err);
+                    } else {
+                        if (!this.#props?.ignoreErrors) {
+                            throw err;
+                        }
                     }
                 }
             }
@@ -164,11 +184,11 @@ export class TablePairs {
     }
 
     /// Post-Processing
-    finalize() {
-        console.time("Finalize");
-        console.log("Finalizing...");
+    process() {
+        console.time("Process");
+        console.log("Processing...");
 
-        this.#props.tests();
+        this.#props?.tests?.();
 
         let batchNo = 0;
         let insertedCount = 0;
@@ -217,25 +237,24 @@ export class TablePairs {
             // }
         }
 
-        if (this.values.length > 65535) {
-            console.error(
-                "Table size limit reached; the limit is because the pointer to the table is going to be bigger than uint16_t (16 bits) size.");
-            process.exit(1);
-            return;
+        if (this.indices.length > ((0b1 << this.#indexAddenda.pos.size) - 1)) {
+            throw new Error("Table size limit reached; the limit is because " +
+                `the pointer to the table is going to be bigger than ${this.#indexAddenda.typeString} size.`);
         }
 
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
         // console.log("Successful masks:", reusedMaskedCount);
-        console.log("CCCs Table Length:", this.values.length);
+        console.log("Indices Table Length:", this.indices.length);
+        console.log("Values Table Length:", this.values.length);
         console.log("Insert saves:", saves);
         console.log("Modifiers Used:", uniqueModifiers.size, [...uniqueModifiers]);
-        console.log("Finalizing: done.");
-        console.timeEnd("Finalize");
+        console.log("Processing: done.");
+        console.timeEnd("Process");
     }
 
     render() {
 
-        const indices = this.indices.result.slice(0, this.#lastZero >>> 8);
+        const indices = this.indices.result
         const indicesBits = indices.length * this.indices.sizeof;
         const cccBits = this.values.length * this.values.sizeof;
 
@@ -260,15 +279,11 @@ export class TablePairs {
         ${ccc}`);
         });
 
-        return `
+        const renderFunc = this.#props?.processRendered || (content => content);
+        return renderFunc(`
 
 ${this.#indexAddenda.render()}
 
-    /**
-     * In "ccc_index" table, any code point bigger than this number will have "zero" as it's CCC value;
-     * so it's designed this way to reduce the table size.
-     */
-    static constexpr auto trailing_zero_cccs = 0x${this.#lastZero.toString(16).toUpperCase()}UL;
     
     /**
      * CCC Index Table
@@ -322,7 +337,7 @@ ${this.#indexAddenda.render()}
     static constexpr std::array<${this.values.STLTypeString}, ${this.values.length}ULL> ccc_values{
         ${printableCCCs}
     };
-        `;
+        `);
     }
 }
 
