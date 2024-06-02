@@ -49,6 +49,7 @@ class CCCTables {
 
     constructor() {
         this.tables.init({
+            disableComments: false,
             name: this.name,
             description: this.description,
             ignoreErrors: this.ignoreErrors,

@@ -205,11 +205,9 @@ export class TablePairs {
                 "CCC-Table-Length:", this.values.length, "range:", range, "length:", length,
                 `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-            let {pos, modifier, inserts} = this.#findSimilarMaskedRange(range);
-            const {mask, shift} = modifier.values();
-            pos = pos === null ? (mask === 0 ? 0 : this.values.index) : pos;
-            const helperCode = modifier.modifier;
-            this.indices.append(helperCode);
+            let {modifier, inserts} = this.#findSimilarMaskedRange(range);
+            const code = modifier.modifier;
+            this.indices.append(code);
             if (inserts.length > 0) {
                 this.values.appendList(inserts);
                 ++insertedCount;
@@ -262,26 +260,30 @@ export class TablePairs {
         const indicesBits = indices.length * this.indices.sizeof;
         const cccBits = this.values.length * this.values.sizeof;
 
-        const printableCCCs = [];
+        let printableValues = [];
 
-        // add comments in the middle of the data
-        this.values.result.forEach((ccc, pos) => {
-            const poses = [];
+        if (this.#props?.disableComments) {
+            printableValues = [...this.values.result];
+        } else {
+            // add comments in the middle of the data
+            this.values.result.forEach((value, pos) => {
+                const poses = [];
 
-            indices.forEach((code, index) => {
-                const cccIndex = this.#indexAddenda.modifierOf(code).pos;
-                if (cccIndex === pos) {
-                    poses.push(`0x${(index << 8).toString(16)}`);
+                indices.forEach((code, index) => {
+                    const curPos = this.#indexAddenda.addendumValueOf("pos", code);
+                    if (curPos === pos) {
+                        poses.push(`0x${(index << this.#indexAddenda.chunkShift).toString(16)}`);
+                    }
+                });
+                if (poses.length === 0) {
+                    printableValues.push(value);
+                    return;
                 }
-            });
-            if (poses.length === 0) {
-                printableCCCs.push(ccc);
-                return;
-            }
-            printableCCCs.push(`
+                printableValues.push(`
         // Start of ${poses.join(", ")}:
-        ${ccc}`);
-        });
+        ${value}`);
+            });
+        }
 
         const renderFunc = this.#props?.processRendered || (content => content);
         return renderFunc(`
@@ -339,7 +341,7 @@ ${this.#indexAddenda.render()}
      *   - in KibiBytes:  ${Math.ceil(cccBits / 8 / 1024)} KiB
      */
     static constexpr std::array<${this.values.STLTypeString}, ${this.values.length}ULL> ccc_values{
-        ${printableCCCs}
+        ${printableValues}
     };
         `);
     }

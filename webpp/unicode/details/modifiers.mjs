@@ -267,7 +267,7 @@ export class Addenda {
         return mod;
     }
 
-    valueOf(addendum, code) {
+    addendumValueOf(addendum, code) {
         if (typeof addendum === "string") {
             addendum = this.addendum(addendum);
         }
@@ -275,7 +275,7 @@ export class Addenda {
     }
 
     valuesOf(code) {
-        return Object.fromEntries(this.addenda.map(addendum => [addendum.name, this.valueOf(addendum, code)]));
+        return Object.fromEntries(this.addenda.map(addendum => [addendum.name, this.addendumValueOf(addendum, code)]));
     }
 
     modifierOf(code) {
