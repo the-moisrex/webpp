@@ -421,6 +421,22 @@ export class Modifier {
         return values;
     }
 
+    get generableAddenda() {
+        let values = {};
+        for (const addendum of this.#addenda.addenda) {
+            const value = this[addendum.name];
+            if (value === undefined || !addendum.generable) {
+                continue;
+            }
+            values[addendum.name] = value;
+        }
+        return values;
+    }
+
+    get generableModifier() {
+        return this.addenda.modifierCode(this.generableAddenda);
+    }
+
     get chunkSize() {
         return this.#addenda.chunkSize;
     }

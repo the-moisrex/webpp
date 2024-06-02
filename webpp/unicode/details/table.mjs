@@ -221,7 +221,7 @@ export class TablePairs {
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
                 codeRange, modifier.necessaries(),
                 "samples:", inserts.filter(item => item).slice(0, 5));
-            uniqueModifiers.add(modifier.necessaries());
+            uniqueModifiers.add(modifier.generableModifier);
 
             // if (mask !== modifier.resetMask && mask !== modifier.minMask) {
             //     ++reusedMaskedCount;
@@ -247,7 +247,11 @@ export class TablePairs {
         console.log("Indices Table Length:", this.indices.length);
         console.log("Values Table Length:", this.values.length);
         console.log("Insert saves:", saves);
-        console.log("Modifiers Used:", uniqueModifiers.size, [...uniqueModifiers]);
+        console.log("Modifiers Used:", uniqueModifiers.size, [...uniqueModifiers].map(mod => {
+            let res = this.#indexAddenda.valuesOf(mod);
+            delete res.pos;
+            return res;
+        }));
         console.log("Processing: done.");
         console.timeEnd("Process");
     }

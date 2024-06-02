@@ -14,7 +14,7 @@ import {
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {genIndexAddenda, genMaskedIndexAddenda} from "./modifiers.mjs";
+import {genMaskedIndexAddenda} from "./modifiers.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 
