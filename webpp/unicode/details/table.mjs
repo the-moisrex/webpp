@@ -50,7 +50,8 @@ export class TablePairs {
         }
         let rtrimPos = 0;
         for (let pos = inserts.length - 1; pos >= 0; --pos) {
-            if (modifier.applyMask(pos).pos !== 0) {
+            const applied = modifier.applyMask(pos);
+            if (applied.pos !== 0) {
                 rtrimPos = pos;
                 break;
             }
@@ -65,10 +66,10 @@ export class TablePairs {
 
         // validating inserts:
         for (let index = 0; index !== inserts.length; ++index) {
-            const realCCC = dataView.at(index);
-            const insertCCC = modifiedInserts.at(index);
-            if (realCCC !== insertCCC) {
-                throw new InvalidModifier({index, realCCC, insertCCC, ...modifier});
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                throw new InvalidModifier({index, realValue, insertValue, ...modifier});
             }
         }
 
@@ -296,7 +297,7 @@ ${this.#indexAddenda.render()}
      *
      * CCC: Canonical Combining Class
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
-     * unicode code point.
+     * Unicode Code Point.
      * 
      * Each value contains 3 numbers:
      *     [16bits: pos] + [8bits: shift] + [8bits: mask]

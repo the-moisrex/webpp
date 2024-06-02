@@ -83,7 +83,7 @@ export class Addendum {
 
     /// If all bits are 1, what would the value be?
     get mask() {
-        return bitOnesOf(this.size);
+        return bitOnesOf(this.size) << this.leftShit;
     }
 
     get description() {
@@ -118,19 +118,21 @@ export class Addendum {
         }
     }
 
-    renderValueSet(valueName = "value") {
+    renderValueSet(valueName = "value", shiftName = "") {
         if (this.leftShit === 0) {
             return `${this.name}{static_cast<${this.STLTypeString}>(${valueName})}`;
         } else {
-            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName} >> ${this.leftShit}U)}`;
+            const shift = shiftName === "" ? `${this.leftShit}U` : `${this.name}${shiftName}`;
+            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName} >> ${shift})}`;
         }
     }
 
-    renderShift(type) {
+    renderShift(type, shiftName = "") {
         if (this.leftShit === 0) {
             return `static_cast<${type}>(${this.name})`;
         } else {
-            return `(static_cast<${type}>(${this.name}) << ${this.leftShit}U)`;
+            const shift = shiftName === "" ? `${this.leftShit}U` : `${this.name}${shiftName}`;
+            return `(static_cast<${type}>(${this.name}) << ${shift})`;
         }
     }
 }
@@ -338,20 +340,27 @@ export class Addenda {
      * ${this.desc}
      */
     struct alignas(${this.STLTypeString}) ${this.name} {
+    
+        /// The shifts required to extract the values out of a ${this.STLTypeString}; you can use masks as well:
+        ${this.addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShit}U;`).join("\n        ")}
+        
+        /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
+        ${this.addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
+    
         ${this.addenda.map(addendum => addendum.render()).join("\n        ")}
        
         /**
          * ${this.renderPlacements()}
          */ 
         explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
-            : ${this.addenda.map(addendum => addendum.renderValueSet('value')).join(",\n              ")} {}
+            : ${this.addenda.map(addendum => addendum.renderValueSet('value', '_shift')).join(",\n              ")} {}
 ${""/*       
         constexpr ${this.name}(${this.addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
             : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
 */}
         
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString)).join(" | ")};
+            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift')).join(" | ")};
         }
 
 ${this.#renderFunctions.map(func => func()).join("\n\n")}
@@ -546,9 +555,9 @@ export function getPositionFunction() {
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
-            auto const range = static_cast<${this.pos.STLTypeString}>(request_position) >> chunk_shift;
-            auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
-            auto const masked_remaining_pos = masked(remaining_pos);
+            ${this.pos.STLTypeString} const range = static_cast<${this.pos.STLTypeString}>(request_position) >> chunk_shift;
+            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
+            ${this.pos.STLTypeString} const masked_remaining_pos = masked(remaining_pos);
             return range + masked_remaining_pos;
         }
             `;
@@ -590,6 +599,7 @@ export const genMaskAddendum = () => new Addendum({
     },
     modify(modifier, meta) {
         assert.ok(isFinite(modifier.mask), "Bad mask?");
+        assert.ok(isFinite(meta.pos), "Bad mask?");
         return {...meta, pos: modifier.mask & meta.pos};
     },
 });
@@ -643,7 +653,7 @@ export const genMaskedIndexAddenda = (name = "index") => {
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {
-            return this.addenda.mask.modify(this, pos);
+            return this.addenda.mask.modify(this, {pos});
         }
     };
     addenda.renderFunctions = [staticFields, maskedFunction, getPositionFunction];

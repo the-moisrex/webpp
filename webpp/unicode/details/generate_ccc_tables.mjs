@@ -31,7 +31,7 @@ const start = async () => {
 
 class CCCTables {
     tables = new TablePairs();
-    name = "CCC";
+    name = "ccc"; // Canonical Combining Class
     description = "Canonical Combining Class";
     ignoreErrors = false;
 
@@ -76,7 +76,7 @@ class CCCTables {
     }
 
     render() {
-        return this.tables.render();
+        return this.processRendered(this.tables.render());
     }
 
     tests() {

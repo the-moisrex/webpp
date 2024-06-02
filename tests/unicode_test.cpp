@@ -8,6 +8,8 @@
 using namespace webpp;
 using namespace std;
 
+// NOLINTBEGIN(*-magic-numbers)
+
 TEST(Unicode, U8UnChecked) {
     using namespace unicode::unchecked;
 
@@ -236,7 +238,7 @@ template <typename CharT = char32_t>
     auto const code             = ccc_indices[code_point_range];
     // calculating the position of te value in the ccc_values table:
     stl::size_t const index_pos = code.get_position(code_point);
-    auto              res       = ccc_values[index_pos] + code.shift;
+    auto              res       = ccc_values[index_pos];
 
     stl::string around = "[..., ";
     for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 3l, 0l));
@@ -252,7 +254,6 @@ template <typename CharT = char32_t>
     return fmt::format(
       R"data(code: {}
 mask: {}
-shift: {}
 index: {}
 sub code point index: {}
 masked position: {}
@@ -262,7 +263,7 @@ result: {}
 )data",
       code.value(),
       code.mask,
-      code.shift,
+      // code.shift,
       code.pos,
       code_point_index,
       code.masked(code_point_index),
@@ -284,3 +285,5 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0x05C2), 25) << desc_ccc_of(0x05C2);
     EXPECT_EQ(unicode::ccc_of(0x1CE8), 1) << desc_ccc_of(0x1CE8);
 }
+
+// NOLINTEND(*-magic-numbers)

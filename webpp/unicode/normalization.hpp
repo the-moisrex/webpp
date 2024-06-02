@@ -111,8 +111,7 @@ namespace webpp::unicode {
 
 
     /**
-     * Normalization form constants to describe which normalization algorithm
-     * should be performed.
+     * Normalization form constants to describe which normalization algorithm should be performed.
      *
      * Also see:
      * - Unicode Standard, §2.12 Equivalent Sequences
@@ -120,7 +119,7 @@ namespace webpp::unicode {
      * - https://unicode.org/reports/tr15/
      */
     enum struct normalization_form : stl::uint8_t {
-        compose,  // NFC: Normalization Form C (Prefered by W3C, Linux, and others)
+        compose,  // NFC: Normalization Form C (Preferred by W3C, Linux, and others)
         decmpose, // NFD: Normalization Form D
         NFKC,     // Normalization Form KC
         NFKD,     // Normalization Form KD
@@ -139,28 +138,13 @@ namespace webpp::unicode {
             return 0;
         }
 
-        // First we look up the ccc_index table,
-        // ccc_index table references ccc_values table.
-        // ccc_index values are like this:
-        //   helper code: [16bit = start-pos] + [8bit = shift] + [8bit = mask]
-        //
-        //   start-pos: the staring position of this 256-length bucket of CCC inside ccc_values table
-        //   mask:      the mask will be applied to position of that 256 range, not the values, and not to the
-        //              whole index position
-        //   shift:     the value you find will be shifted by this amount
+        // Look at the ccc_index table, for how this works:
         auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
-        // auto const code_point_index = static_cast<stl::uint8_t>(code_point & ccc_index::chunk_mask);
         auto const code             = ccc_indices[code_point_range];
-
-        // extract information from the helper code:
-        // auto const mask       = static_cast<stl::uint8_t>(helper);
-        // auto const shift      = static_cast<stl::uint8_t>(helper >> 8U);
-        // auto const start_pos  = static_cast<stl::size_t>(helper >> 16U);
-        // auto const masked_pos = static_cast<stl::size_t>(mask & code_point_index);
 
         // calculating the position of te value in the ccc_values table:
         stl::size_t const index_pos = code.get_position(code_point);
-        return ccc_values[index_pos] + code.shift;
+        return ccc_values[index_pos];
     }
 
     /**
@@ -232,7 +216,7 @@ namespace webpp::unicode {
     static constexpr void canonical_reorder(Iter start, EIter end) noexcept {}
 
     /**
-     * Is a normalized unicode string
+     * Is a normalized Unicode string
      * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
      *
      * When implementations keep strings in a normalized form, they can be assured that equivalent strings
