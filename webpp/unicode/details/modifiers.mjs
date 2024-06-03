@@ -408,6 +408,10 @@ export class Modifier {
         return this.#addenda.name;
     }
 
+    clone() {
+        return new Modifier(this.#addenda, this.values());
+    }
+
     set(values) {
         for (const name in values) {
             if (!this.addenda.addendum(name)) {

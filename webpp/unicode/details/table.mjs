@@ -56,7 +56,7 @@ export class TablePairs {
                 break;
             }
         }
-        return Math.max(1, rtrimPos);
+        return this.values.length === 0 ? Math.max(1, rtrimPos) : rtrimPos;
     }
 
     #optimizeInserts(inserts, dataView, modifier) {
@@ -124,7 +124,7 @@ export class TablePairs {
                 }
                 indexModifier.set({pos: info.pos});
 
-                possibilities.push({...info, modifier: indexModifier});
+                possibilities.push({...info, modifier: indexModifier.clone()});
 
                 // performance trick
                 lastInfoLength = info.inserts.length;
@@ -166,7 +166,11 @@ export class TablePairs {
             }
         }
 
-        possibilities = possibilities.filter(item => item !== undefined);
+        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= curr.inserts.length ? acc : curr.inserts.length, this.#indexAddenda.chunkSize);
+        possibilities = possibilities.filter(item => {
+            return item !== undefined && item.inserts.length <= leastInsertLength;
+        });
+        possibilities = possibilities.toSorted((a, b) => a.modifier.mask - b.modifier.mask);
         const codePointStartHex = codePointStart.toString(16);
         const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
         console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`,
@@ -197,10 +201,10 @@ export class TablePairs {
         // let reusedMaskedCount = 0;
         let saves = 0;
         let uniqueModifiers = new Set();
-        for (let range = 0; range < this.data.length; range += 256) {
+        for (let range = 0; range < this.data.length; range += this.#indexAddenda.chunkSize) {
 
-            const codeRange = range >>> 8;
-            const length = Math.min(this.data.length - range, 256);
+            const codeRange = range >>> this.#indexAddenda.chunkShift;
+            const length = Math.min(this.data.length - range, this.#indexAddenda.chunkSize);
 
             console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16),
                 "CCC-Table-Length:", this.values.length, "range:", range, "length:", length,
