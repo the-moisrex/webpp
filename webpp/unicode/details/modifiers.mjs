@@ -118,16 +118,19 @@ export class Addendum {
         }
     }
 
-    renderValueSet(valueName = "value", shiftName = "") {
+    renderValueSet(valueName = "value", shiftName = "", maskName = "") {
+        maskName = maskName === "" ? this.mask : `${this.name}${maskName}`;
+        const maskIt = alignedSymbol(this.sizeof) ? `` : maskName;
+        const value = maskIt === "" ? valueName : `(${valueName} & ${maskIt})`;
         if (this.leftShit === 0) {
-            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName})}`;
+            return `${this.name}{static_cast<${this.STLTypeString}>(${value})}`;
         } else {
             const shift = shiftName === "" ? `${this.leftShit}U` : `${this.name}${shiftName}`;
-            return `${this.name}{static_cast<${this.STLTypeString}>(${valueName} >> ${shift})}`;
+            return `${this.name}{static_cast<${this.STLTypeString}>(${value} >> ${shift})}`;
         }
     }
 
-    renderShift(type, shiftName = "") {
+    renderShift(type, shiftName = "", maskName = "") {
         if (this.leftShit === 0) {
             return `static_cast<${type}>(${this.name})`;
         } else {
@@ -353,14 +356,14 @@ export class Addenda {
          * ${this.renderPlacements()}
          */ 
         explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
-            : ${this.addenda.map(addendum => addendum.renderValueSet('value', '_shift')).join(",\n              ")} {}
+            : ${this.addenda.map(addendum => addendum.renderValueSet('value', '_shift', '_mask')).join(",\n              ")} {}
 ${""/*       
         constexpr ${this.name}(${this.addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
             : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
 */}
         
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift')).join(" | ")};
+            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift', '_mask')).join(" | ")};
         }
 
 ${this.#renderFunctions.map(func => func()).join("\n\n")}
@@ -536,7 +539,7 @@ export function staticFields() {
         static constexpr ${this.pos.STLTypeString} chunk_mask = 0x${this.chunkMask.toString(16).toUpperCase()}U;
         static constexpr std::size_t chunk_size = ${this.chunkSize}U;
         static constexpr std::uint8_t chunk_shift = ${this.chunkShift}U;
-            `;
+    `;
 }
 
 export function maskedFunction() {
@@ -568,10 +571,10 @@ export function getPositionFunction() {
 }
 
 
-export const genShiftAddendum = () => new Addendum({
+export const genShiftAddendum = (type = uint8) => new Addendum({
     name: "shift",
     description: "This value gets added to the retrieved value at the end of the operation.",
-    sizeof: uint8,
+    sizeof: type,
     affectsChunkSize: false,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
@@ -587,19 +590,21 @@ export const genShiftAddendum = () => new Addendum({
     }
 });
 
-export const genMaskAddendum = () => new Addendum({
+export const genMaskAddendum = (type = uint8) => new Addendum({
     name: "mask",
     description: "This is used to mask the 'remaining position' of the values table;\n" +
         "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
         "The mask does not apply to the whole index, but only to the remaining index.",
     affectsChunkSize: true,
-    sizeof: uint8,
+    sizeof: type,
     * generate() {
         yield this.min;
         yield this.max;
         yield this.mask;
-        yield 252;
-        yield 254;
+        if (this.max >= 255) {
+            yield 252;
+            yield 254;
+        }
     },
     modify(modifier, meta) {
         assert.ok(isFinite(modifier.mask), "Bad mask?");
@@ -615,8 +620,8 @@ export const genPositionAddendum = () => new Addendum({
     affectsChunkSize: false,
 });
 
-export const genDefaultAddendaPack = () => [genPositionAddendum(), genMaskAddendum(), genShiftAddendum()];
-export const genMaskedAddendaPack = () => [genPositionAddendum(), genMaskAddendum()];
+export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type), genShiftAddendum(type)];
+export const genMaskedAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type)];
 
 export const genIndexAddenda = (name = "index") => {
     const addenda = new Addenda(name, genDefaultAddendaPack(), function (table, modifier, range, pos) {
@@ -645,8 +650,8 @@ export const genIndexAddenda = (name = "index") => {
 };
 
 
-export const genMaskedIndexAddenda = (name = "index") => {
-    const addenda = new Addenda(name, genMaskedAddendaPack(), function (table, modifier, range, pos) {
+export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
+    const addenda = new Addenda(name, genMaskedAddendaPack(type), function (table, modifier, range, pos) {
         const {pos: maskedPos} = this.mask.modify(modifier, {pos});
         const value = table.at(range + maskedPos);
         if (!isFinite(value)) {

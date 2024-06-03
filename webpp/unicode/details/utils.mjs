@@ -4,6 +4,8 @@ import * as assert from "node:assert";
 import child_process from "node:child_process";
 
 
+export const uint6 = Symbol('uint8');
+export const uint7 = Symbol('uint8');
 export const uint8 = Symbol('uint8');
 export const uint16 = Symbol('uint16');
 export const uint8x2 = Symbol('uint8');
@@ -12,6 +14,10 @@ export const uint64 = Symbol('uint64');
 
 export const sizeOf = symbol => {
     switch (symbol) {
+        case uint6:
+            return 6;
+        case uint7:
+            return 7;
         case uint8:
             return 8;
         case uint8x2:
@@ -27,7 +33,11 @@ export const sizeOf = symbol => {
 };
 
 export const symbolOf = size => {
-    if (size <= 8) {
+    if (size <= 6) {
+        size = 6;
+    } else if (size <= 7) {
+        size = 7;
+    } else if (size <= 8) {
         size = 8;
     } else if (size <= 16) {
         size = 16;
@@ -37,6 +47,10 @@ export const symbolOf = size => {
         size = 64;
     }
     switch (size) {
+        case 6:
+            return uint6;
+        case 7:
+            return uint7;
         case 8:
             return uint8;
         case 16:
@@ -228,6 +242,8 @@ export class TableTraits {
 
     constructor(max, type = uint8) {
         switch (type) {
+            case uint6:
+            case uint7:
             case uint8:
                 this.bytes = new Uint8Array(max);
                 break;
@@ -261,7 +277,10 @@ export class TableTraits {
 
     get postfix() {
         switch (this.type) {
+            case uint6:
+            case uint7:
             case uint8x2:
+            case uint16:
             case uint8:
                 return "U";
             case uint32:

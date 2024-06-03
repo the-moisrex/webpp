@@ -274,10 +274,23 @@ export class TablePairs {
             this.values.result.forEach((value, pos) => {
                 const poses = [];
 
+                let lastRangeStart = NaN;
                 indices.forEach((code, index) => {
                     const curPos = this.#indexAddenda.addendumValueOf("pos", code);
                     if (curPos === pos) {
-                        poses.push(`0x${(index << this.#indexAddenda.chunkShift).toString(16)}`);
+                        const rangeStart = index << this.#indexAddenda.chunkShift;
+                        const code = `0x${rangeStart.toString(16)}`;
+                        if (rangeStart === (lastRangeStart + this.#indexAddenda.chunkSize)) {
+                            const lastPos = poses.at(-1);
+                            let dashPlace = lastPos.indexOf("-");
+                            if (dashPlace < 0) {
+                                dashPlace = lastPos.length;
+                            }
+                            poses[poses.length - 1] = `${lastPos.substring(0, dashPlace)}-${code}`;
+                        } else {
+                            poses.push(code);
+                        }
+                        lastRangeStart = rangeStart;
                     }
                 });
                 if (poses.length === 0) {

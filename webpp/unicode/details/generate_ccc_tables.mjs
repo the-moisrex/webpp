@@ -9,7 +9,7 @@ import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint32,
-    writePieces, runClangFormat,
+    writePieces, runClangFormat, uint6, uint7,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -55,7 +55,7 @@ class CCCTables {
             ignoreErrors: this.ignoreErrors,
             indices: this.indices,
             values: this.values,
-            genIndexAddenda: () => genMaskedIndexAddenda(),
+            genIndexAddenda: () => genMaskedIndexAddenda("index", uint7),
         });
     }
 
