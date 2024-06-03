@@ -322,7 +322,7 @@ export class Addenda {
     }
 
     renderPlacements() {
-        return this.addenda.map(addendum => `[${addendum.size}bits = ${addendum.name}]`).join(" + ");
+        return this.addenda.toSorted((a, b) => a.placement - b.placement).map(addendum => `[${addendum.size}bits = ${addendum.name}]`).join(" + ");
     }
 
     get typeString() {

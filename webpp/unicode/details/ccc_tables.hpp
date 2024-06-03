@@ -4,8 +4,12 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Mon, 03 Jun 2024 03:09:41 GMT
+ *   This file's generation date:        Mon, 03 Jun 2024 03:37:26 GMT
  *   Unicode Version:                    15.1.0
+ *   Total Table sizes in this file:
+ *       - in bits:       101040
+ *       - in bytes:      12630 B
+ *       - in KibiBytes:  13 KiB
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -99,24 +103,8 @@ namespace webpp::unicode::details {
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
      * Unicode Code Point.
      *
-     * Each value contains 3 numbers:
-     *     [16bits: pos] + [8bits: shift] + [8bits: mask]
-     *
-     *   - pos:   it's the index that points to the `ccc_values` table.
-     *            it's the starting point of a (at most) 256 length CCC values.
-     *
-     *   - shift: add this value to the CCC value, after you applied the mask and found
-     *            the actual position of the CCC value.
-     *
-     *   - mask:  apply this mask (with an & operator), to this: pos + (code_point % 256)
-     *            which means, in order to get the CCC value of a `code_point`, you need to do this:
-     *            @code
-     *                auto code  = ccc_index[code_point >> 8]
-     *                auto shift = (code >> 8) & 0xFF;
-     *                auto mask  = code & 0xFF;
-     *                auto pos   = (code >> 16) & 0xFF;
-     *                auto ccc   = ccc_values[pos + ((code_point % 256) & mask)] + shift;
-     *            @endcode
+     * Each value contains 2 numbers hidden inside:
+     *     [16bits = pos] + [7bits = mask]
      *
      * Table size:
      *   - in bits:       31296
@@ -209,12 +197,11 @@ namespace webpp::unicode::details {
 
 
     /**
-     * CCC Table
+     * CCC Values Table
      *
      * CCC: Canonical Combining Class
-     * These values are calculated and individually represent actual CCC values, but they have no
-     * valid order by themselves, and they only make sense if they're being used in conjunction with
-     * the "ccc_indices" table.
+     * These are the indices that are used to find which values from "ccc_values" table correspond to a
+     * Unicode Code Point.
      *
      * Table size:
      *   - in bits:       69744

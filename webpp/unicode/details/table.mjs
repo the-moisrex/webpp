@@ -259,11 +259,23 @@ export class TablePairs {
         console.timeEnd("Process");
     }
 
+    indicesTableSizeInBits() {
+        return this.indices.length * this.indices.sizeof;
+    }
+
+    valuesTableSizeInBits() {
+        return this.values.length * this.values.sizeof;
+    }
+
+    totalTablesSizeInBits() {
+        return this.indicesTableSizeInBits() + this.valuesTableSizeInBits();
+    }
+
     render() {
 
         const indices = this.indices.result
-        const indicesBits = indices.length * this.indices.sizeof;
-        const cccBits = this.values.length * this.values.sizeof;
+        const indicesBits = this.indicesTableSizeInBits();
+        const cccBits = this.valuesTableSizeInBits();
 
         let printableValues = [];
 
@@ -310,30 +322,12 @@ ${this.#indexAddenda.render()}
 
     
     /**
-     * CCC Index Table
+     * ${this.#name.toUpperCase()} Index Table
      *
-     * CCC: Canonical Combining Class
-     * These are the indices that are used to find which values from "ccc_values" table correspond to a
-     * Unicode Code Point.
+     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
      * 
-     * Each value contains 3 numbers:
-     *     [16bits: pos] + [8bits: shift] + [8bits: mask]
-     * 
-     *   - pos:   it's the index that points to the \`ccc_values\` table.
-     *            it's the starting point of a (at most) 256 length CCC values.
-     * 
-     *   - shift: add this value to the CCC value, after you applied the mask and found
-     *            the actual position of the CCC value.
-     *
-     *   - mask:  apply this mask (with an & operator), to this: pos + (code_point % 256)
-     *            which means, in order to get the CCC value of a \`code_point\`, you need to do this:
-     *            @code
-     *                auto code  = ccc_index[code_point >> 8]
-     *                auto shift = (code >> 8) & 0xFF;
-     *                auto mask  = code & 0xFF;
-     *                auto pos   = (code >> 16) & 0xFF;
-     *                auto ccc   = ccc_values[pos + ((code_point % 256) & mask)] + shift;
-     *            @endcode
+     * Each value contains ${this.#indexAddenda.addenda.length} numbers hidden inside:
+     *     ${this.#indexAddenda.renderPlacements()}
      *
      * Table size:
      *   - in bits:       ${indicesBits}
@@ -346,12 +340,9 @@ ${this.#indexAddenda.render()}
     
     
     /**
-     * CCC Table
+     * ${this.#name.toUpperCase()} Values Table
      *
-     * CCC: Canonical Combining Class
-     * These values are calculated and individually represent actual CCC values, but they have no
-     * valid order by themselves, and they only make sense if they're being used in conjunction with
-     * the "ccc_indices" table.
+     * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
      * 
      * Table size:
      *   - in bits:       ${cccBits}

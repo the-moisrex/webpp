@@ -38,11 +38,18 @@ class CCCTables {
     // these numbers are educated guesses from other projects, they're not that important!
     indices = {
         max: 4353 * 10,
-        sizeof: uint32
+        sizeof: uint32,
+        description: `CCC: Canonical Combining Class
+These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`
     };
     values = {
         max: 65535,
-        sizeof: uint8
+        sizeof: uint8,
+        description: `CCC: Canonical Combining Class
+These values are calculated and individually represent actual CCC values, but they have no
+valid order by themselves, and they only make sense if they're being used in conjunction with
+the "ccc_indices" table.
+        `
     };
     lastZero = 0;
 
@@ -79,6 +86,10 @@ class CCCTables {
         return this.processRendered(this.tables.render());
     }
 
+    totalTablesSizeInBits() {
+        return this.tables.totalTablesSizeInBits();
+    }
+
     tests() {
         /// Sanity check: see if we have skipped adding some code points to the table
         const undefinedIndex = this.tables.data.findIndex(codePoint => codePoint === undefined);
@@ -105,6 +116,7 @@ ${renderedTables}
 }
 
 const createTableFile = async (tables) => {
+    const totalBits = tables.reduce((acc, cur) => acc + cur.totalTablesSizeInBits(), 0);
     const readmeData = await getReadme();
     const begContent = `
 /**
@@ -114,6 +126,10 @@ const createTableFile = async (tables) => {
  *   Unicode UCD Database Creation Date: ${readmeData.date}
  *   This file's generation date:        ${new Date().toUTCString()}
  *   Unicode Version:                    ${readmeData.version}
+ *   Total Table sizes in this file:     
+ *       - in bits:       ${totalBits}
+ *       - in bytes:      ${totalBits / 8} B
+ *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
