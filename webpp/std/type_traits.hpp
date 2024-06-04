@@ -799,7 +799,12 @@ namespace webpp::istl {
         };
 
         // last type
+#ifdef __cpp_pack_indexing
+        using type = T...[sizeof...(T) - 1];
+#else
         using type = typename decltype((tag<T>{}, ...))::last;
+#endif
+
 
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
