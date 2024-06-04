@@ -806,9 +806,14 @@ namespace webpp::istl {
 #endif
 
 
+        // replace last type
+        template <template <typename...> typename Tt, typename... Replacements>
+        using replace =
+          typename decltype((... | tag<T>{}))::rest::template replace_template<Tt, Replacements...>;
+
         // all except last type (remove the last type)
         template <template <typename...> typename Tt>
-        using remove = typename decltype((... | tag<T>{}))::rest::template replace_template<Tt>;
+        using remove = replace<Tt>;
 
         // put the last type first, and the rest is the rest
         template <template <typename...> typename Tt>
@@ -821,15 +826,7 @@ namespace webpp::istl {
 
         // remove the last type if
         template <template <typename...> typename Tt, template <typename> typename Condition>
-        using remove_if =
-          stl::conditional_t<Condition<type>::value,
-                             typename decltype((... | tag<T>{}))::rest::template replace_template<Tt>,
-                             Tt<T...>>;
-
-        // replace last type
-        template <template <typename...> typename Tt, typename... Replacements>
-        using replace =
-          typename decltype((... | tag<T>{}))::rest::template replace_template<Tt, Replacements...>;
+        using remove_if = stl::conditional_t<Condition<type>::value, remove<Tt>, Tt<T...>>;
 
         // replace last type if
         template <template <typename...> typename Tt,
