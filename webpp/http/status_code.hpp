@@ -75,9 +75,9 @@
 
 namespace webpp::http {
 
-    using status_code_type = stl::uint_fast16_t;
+    using status_code_type = stl::uint16_t;
 
-    enum struct status_code_category : stl::uint_fast16_t {
+    enum struct status_code_category : stl::uint16_t {
         unknown       = 0,
         informational = 100,
         successful    = 200,
@@ -174,7 +174,7 @@ namespace webpp::http {
         network_connect_timeout_error   = 599
     };
 
-    constexpr auto status_code_reason_phrase(status_code_type const code) noexcept {
+    [[nodiscard]] static constexpr auto status_code_reason_phrase(status_code_type const code) noexcept {
         switch (code) {
             case 100: return "Continue";
             case 101: return "Switching Protocols";
@@ -297,18 +297,21 @@ namespace webpp::http {
         }
     }
 
-    static constexpr auto status_code_reason_phrase(status_code code) noexcept {
+    [[nodiscard]] static constexpr auto status_code_reason_phrase(status_code code) noexcept {
         return status_code_reason_phrase(static_cast<status_code_type>(code));
     }
 
     static constexpr status_code_category get_status_code_category(status_code_type const code) noexcept {
         if (code >= 100 && code < 200) {
             return status_code_category::informational;
-        } else if (code >= 200 && code < 300) {
+        }
+        if (code >= 200 && code < 300) {
             return status_code_category::successful;
-        } else if (code >= 300 && code < 400) {
+        }
+        if (code >= 300 && code < 400) {
             return status_code_category::client_error;
-        } else if (code >= 400 && code < 500) {
+        }
+        if (code >= 400 && code < 500) {
             return status_code_category::server_error;
         }
         return status_code_category::unknown;
@@ -320,7 +323,29 @@ namespace webpp::http {
 
 
 
+
 } // namespace webpp::http
+
+#ifdef __cpp_lib_format
+#    include "../std/format.hpp"
+#    include "../std/utility.hpp"
+
+template <>
+struct std::formatter<webpp::http::status_code, char> {
+    static constexpr auto parse(format_parse_context const& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    constexpr auto format(webpp::http::status_code const status, FormatContext& ctx) const {
+        return std::format_to(
+          ctx.out(),
+          "{} {}",
+          webpp::stl::to_underlying(status),
+          status_code_reason_phrase(status));
+    }
+};
+#endif
 
 // NOLINTEND(*-magic-numbers)
 
