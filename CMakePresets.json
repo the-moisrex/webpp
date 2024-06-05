@@ -163,7 +163,9 @@
         "test-find-str",
         "test-functional",
         "test-header-accept-encoding",
+        "test-headers",
         "test-http-parser",
+        "test-idna",
         "test-io",
         "test-ip-address",
         "test-ipv4",
@@ -290,8 +292,18 @@
       "inherits": "default-build"
     },
     {
+      "name": "test-headers",
+      "targets": "test-headers",
+      "inherits": "default-build"
+    },
+    {
       "name": "test-http-parser",
       "targets": "test-http-parser",
+      "inherits": "default-build"
+    },
+    {
+      "name": "test-idna",
+      "targets": "test-idna",
       "inherits": "default-build"
     },
     {
@@ -422,11 +434,6 @@
     {
       "name": "test-unicode",
       "targets": "test-unicode",
-      "inherits": "default-build"
-    },
-    {
-      "name": "test-uri2",
-      "targets": "test-uri2",
       "inherits": "default-build"
     },
     {
@@ -608,7 +615,15 @@
       "inherits": "test-default"
     },
     {
+      "name": "test-headers",
+      "inherits": "test-default"
+    },
+    {
       "name": "test-http-parser",
+      "inherits": "test-default"
+    },
+    {
+      "name": "test-idna",
       "inherits": "test-default"
     },
     {
@@ -713,10 +728,6 @@
     },
     {
       "name": "test-unicode",
-      "inherits": "test-default"
-    },
-    {
-      "name": "test-uri2",
       "inherits": "test-default"
     },
     {
