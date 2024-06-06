@@ -77,8 +77,14 @@ namespace webpp::http {
 
     using status_code_type = stl::uint16_t;
 
+    /// Min possible value for a status code
+    static constexpr status_code_type min_status_code_value = 100;
+
+    /// Max possible value for a status code
+    static constexpr status_code_type max_status_code_value = 599;
+
     enum struct status_code_category : stl::uint16_t {
-        unknown       = 0,
+        unknown       = 0, // invalid status code
         informational = 100,
         successful    = 200,
         redirection   = 300,
@@ -320,9 +326,6 @@ namespace webpp::http {
     static constexpr bool is_fatal_error(status_code_type const code) noexcept {
         return (code == 400) || (code >= 500) || (code == 408) || ((code >= 411) && (code <= 415));
     }
-
-
-
 
 } // namespace webpp::http
 

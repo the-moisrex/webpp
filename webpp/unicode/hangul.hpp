@@ -196,7 +196,7 @@ namespace webpp::unicode {
      * T = Trailing
      *
      * The following algorithm specifies how to take a canonically decomposed sequence of Hangul jamo
-     * characters and arithmetically derive its mapping to an equivalent precomposed Hangul syllable. This
+     * characters and arithmetically derive its mapping to an equivalent pre-composed Hangul syllable. This
      * normative mapping can be used to calculate the Primary Composite for a sequence of Hangul jamo
      * characters, as specified in D117, Canonical Composition Algorithm, in Section 3.11, Normalization
      * Forms.

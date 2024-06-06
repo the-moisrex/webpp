@@ -3,6 +3,7 @@
 #include "../webpp/http/codec/request_parser.hpp"
 #include "common/tests_common_pch.hpp"
 
+#include <ranges>
 
 using namespace webpp;
 using namespace webpp::http;
@@ -48,7 +49,7 @@ TEST(HTTPRequestParser, RequestLine) {
     EXPECT_EQ(parser1.http_version_view, "1.1");
     EXPECT_EQ(parser1.request_target_view, "/home");
     EXPECT_EQ(parser1.method_view, "GET");
-    http::version ver = parser1.get_http_version();
+    http::version const ver = parser1.get_http_version();
     EXPECT_EQ(ver.major_value(), 1);
     EXPECT_EQ(ver.minor_value(), 1);
 }
@@ -57,24 +58,23 @@ TEST(HTTPRequestParser, HeaderLexer) {
     using str = std::string_view;
     using arr = std::array<str, 2>;
     using vec = std::vector<std::tuple<str, arr>>;
-    vec headers({
+    vec const headers({
       {             "one: string\r\n",        arr{"one", "string"}},
       {"Second-One:    String   \r\n", arr{"Second-One", "String"}}
     });
 
-    str sample_request =
+    str const sample_request =
       "one: 1\r\n"
       "two: 2\r\n"
       "The-One:Yes,NoSpaceIsNeeded\r\n";
     http_lexer<str, traits::string_allocator<std_traits>> lexer{.raw_view = sample_request};
 
     ASSERT_NO_THROW(lexer.consume_all());
-    EXPECT_EQ(std::count_if(std::begin(sample_request),
-                            std::end(sample_request),
-                            [](auto c) {
-                                return c == '\r' || c == '\n';
-                            }) /
-                2,
+    EXPECT_EQ((std::ranges::count_if(sample_request,
+                                     [](auto c) {
+                                         return c == '\r' || c == '\n';
+                                     }) /
+               2),
               lexer.header_views.size())
       << "The lexer size is not a match";
 

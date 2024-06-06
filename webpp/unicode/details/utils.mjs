@@ -303,6 +303,9 @@ export class TableTraits {
     }
 
     at(index) {
+        if (index >= this.length) {
+            throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
+        }
         return this.bytes.at(index);
     }
 
@@ -331,28 +334,28 @@ export class TableTraits {
 /// This function finds a place in the "right" table where the specified range
 /// will be there.
 export const findSimilarRange = (left, right) => {
-    assert.ok(isFinite(left.length), "Table should have a valid length");
-    assert.ok(isFinite(right.length), "Table should have a valid length");
+    assert.ok(Number.isSafeInteger(left.length), "Table should have a valid length");
+    assert.ok(Number.isSafeInteger(right.length), "Table should have a valid length");
     // if (left.length > right.length) {
     //     return null;
     // }
-    // try {
-    top: for (let rpos = 0; rpos !== right.length; ++rpos) {
-        for (let lpos = 0; lpos !== left.length; ++lpos) {
-            const rvalue = right.at(rpos + lpos);
-            const lvalue = left.at(lpos);
-            if (rvalue !== lvalue) {
-                continue top;
+    try {
+        top: for (let rpos = 0; rpos !== right.length; ++rpos) {
+            for (let lpos = 0; lpos !== left.length; ++lpos) {
+                const rvalue = right.at(rpos);
+                const lvalue = left.at(lpos);
+                if (rvalue !== lvalue) {
+                    continue top;
+                }
             }
+            return rpos;
         }
-        return rpos;
+    } catch (err) {
+        if (!(err instanceof RangeError)) {
+            throw err;
+        }
+        // else, just say we found nothing
     }
-    // } catch (err) {
-    //     if (!(err instanceof RangeError)) {
-    //         throw err;
-    //     }
-    //     // else, just say we found nothing
-    // }
     return null;
 };
 
@@ -363,7 +366,7 @@ export const overlapInserts = (left, right) => {
     if (left.length === 0) {
         return 0;
     }
-    let rpos = Math.max(0, (right.length - 1) - left.length);
+    let rpos = Math.max(0, right.length - left.length);
     top: for (; rpos !== right.length; ++rpos) {
         const length = right.length - rpos;
         for (let lpos = 0; lpos !== length; ++lpos) {
@@ -396,7 +399,32 @@ export const fillBitsFromRight = (num) => {
 
     // Subtract 1 from the mask to fill the bits
     return mask - 1;
-}
+};
+
+export const bitFloor = (num) => {
+    if (num === 0) {
+        return -1; // No set bits
+    }
+
+    let res = 0b1;
+    while ((res & num) === 0) {
+        res <<= 1;
+    }
+    return res;
+};
+
+/// Not the same as std::bit_ceil in C++20
+export const bitCeil = (x) => {
+    if (x === 0) {
+        return 0;
+    }
+    let p = 0b1;
+    while (p <= x) {
+        p <<= 1;
+    }
+    return p;
+};
+
 
 export const writePieces = async (outFile, pieces) => {
 

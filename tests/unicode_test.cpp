@@ -242,7 +242,7 @@ template <typename CharT = char32_t>
 
     stl::string around = "[..., ";
     for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 3l, 0l));
-         pos != stl::min(static_cast<stl::size_t>(index_pos + 3), ccc_values.size());
+         pos != stl::min<stl::size_t>(index_pos + 3ULL, ccc_values.size());
          ++pos)
     {
         around += stl::to_string(pos);
@@ -267,7 +267,7 @@ result: {}
       code.pos,
       code_point_index,
       code.masked(code_point_index),
-      (code.pos & code_point_index),
+      code.get_position(code_point),
       res,
       around);
 }
