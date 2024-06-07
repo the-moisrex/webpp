@@ -226,7 +226,7 @@ template <typename CharT = char32_t>
         return "Definite Zero";
     }
     auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
-    auto const code_point_index = static_cast<stl::uint8_t>(code_point & ccc_index::chunk_mask);
+    auto const remaining_pos    = static_cast<stl::size_t>(code_point) & ccc_index::chunk_mask;
     // auto const        helper           = ccc_index[code_point_range];
     // auto const        mask             = static_cast<stl::uint8_t>(helper);
     // auto const        shift            = static_cast<stl::uint8_t>(helper >> 8);
@@ -261,19 +261,20 @@ template <typename CharT = char32_t>
       R"data(code: {}
 mask: {}
 index: {}
-sub code point index: {}
-masked position: {}
-actual index: {}
+remaining pos: {}
+masked pos: {}
+actual pos: {} = {} + {}
 result: {}
 {}
 )data",
       code.value(),
       code.mask,
-      // code.shift,
       code.pos,
-      code_point_index,
-      code.masked(code_point_index),
+      remaining_pos,
+      code.masked(remaining_pos),
       code.get_position(code_point),
+      code.pos,
+      remaining_pos,
       res,
       around);
 }

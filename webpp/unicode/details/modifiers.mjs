@@ -571,10 +571,9 @@ export function getPositionFunction() {
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
-            ${this.pos.STLTypeString} const range = static_cast<${this.pos.STLTypeString}>(request_position) >> chunk_shift;
             ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
             ${this.pos.STLTypeString} const masked_remaining_pos = masked(remaining_pos);
-            return range + masked_remaining_pos;
+            return pos + masked_remaining_pos;
         }
         `;
 }
