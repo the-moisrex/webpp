@@ -80,12 +80,7 @@ export const maxOf = value => {
     if (typeof value === "symbol") {
         value = sizeOf(value);
     }
-    let max = 0;
-    while (max <= value) {
-        max <<= 1;
-        max |= 0b1;
-    }
-    return max;
+    return (0b1 << value) - 1;
 };
 
 export const bitOnesOf = value => {
@@ -193,7 +188,7 @@ export class Span {
 
     slice(start = 0, end = this.length - start) {
         const newStart = this.#start + start;
-        end = Math.min(this.#end, end);
+        end = Math.min(this.length, end);
         const newLength = this.#start + end - newStart;
         return new Span(this.#arr, newStart, newLength, this.#func);
     }
@@ -342,7 +337,7 @@ export const findSimilarRange = (left, right) => {
     try {
         top: for (let rpos = 0; rpos !== right.length; ++rpos) {
             for (let lpos = 0; lpos !== left.length; ++lpos) {
-                const rvalue = right.at(rpos);
+                const rvalue = right.at(rpos + lpos);
                 const lvalue = left.at(lpos);
                 if (rvalue !== lvalue) {
                     continue top;

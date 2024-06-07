@@ -241,13 +241,19 @@ template <typename CharT = char32_t>
     auto              res       = ccc_values[index_pos];
 
     stl::string around = "[..., ";
-    for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 3l, 0l));
-         pos != stl::min<stl::size_t>(index_pos + 3ULL, ccc_values.size());
+    for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 4l, 0l));
+         pos != stl::min<stl::size_t>(index_pos + 4ULL, ccc_values.size());
          ++pos)
     {
+        if (pos == index_pos) {
+            around += "[";
+        }
         around += stl::to_string(pos);
         around += "=";
         around += stl::to_string(ccc_values[pos]);
+        if (pos == index_pos) {
+            around += "]";
+        }
         around += ", ";
     }
     around += "...]";

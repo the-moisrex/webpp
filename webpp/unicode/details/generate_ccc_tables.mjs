@@ -14,7 +14,7 @@ import {
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {genMaskedIndexAddenda} from "./modifiers.mjs";
+import {genIndexAddenda, genMaskedIndexAddenda} from "./modifiers.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -62,6 +62,7 @@ the "ccc_indices" table.
             ignoreErrors: this.ignoreErrors,
             indices: this.indices,
             values: this.values,
+            validateResults: true,
             genIndexAddenda: () => genMaskedIndexAddenda("index", uint7),
         });
     }
@@ -120,7 +121,9 @@ const createTableFile = async (tables) => {
     const readmeData = await getReadme();
     const begContent = `
 /**
- * Attention: Auto-generated file, don't modify.
+ * Attention: 
+ *   Auto-generated file, don't modify this file; use the mentioned file below
+ *   to re-generate this file with different options.
  * 
  *   Auto generated from:                ${path.basename(new URL(import.meta.url).pathname)}
  *   Unicode UCD Database Creation Date: ${readmeData.date}

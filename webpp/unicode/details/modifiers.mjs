@@ -5,7 +5,6 @@ import {
     maxOf,
     popcount,
     sizeOf,
-    Span,
     symbolOf,
     uint16,
     uint8
@@ -276,7 +275,7 @@ export class Addenda {
         if (typeof addendum === "string") {
             addendum = this.addendum(addendum);
         }
-        return code >> this.shiftOf(addendum);
+        return (code & addendum.mask) >> this.shiftOf(addendum);
     }
 
     valuesOf(code) {
@@ -487,29 +486,39 @@ export class Modifier {
 export class ModifiedSpan {
     #data;
     #modifier;
-    #start;
 
-    constructor(data, codePointStart, modifier) {
+    constructor(data,  modifier) {
         this.#data = data;
         this.#modifier = modifier;
-        this.#start = codePointStart;
     }
 
     at(index) {
-        // if (!(index >= 0 && index < this.length)) {
-        //     throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
-        // }
-
-        const res = this.#modifier.apply(this.#data, this.#start, index);
-        if (!isFinite(res)) {
+        // index -= this.start;
+        if (!(index >= 0 && index < this.#modifier.chunkSize)) {
+            debugger;
+            throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`);
+        }
+        const res = this.#modifier.apply(this.#data, this.start, index);
+        if (!Number.isSafeInteger(res)) {
             debugger;
             throw new InvalidModifier(this.#modifier);
         }
         return res;
     }
 
+    get start() {
+        assert.ok(Number.isSafeInteger(this.#modifier.pos), "Invalid position");
+        return this.#modifier.pos;
+    }
+
+    get data() {
+        return this.#data;
+    }
+
     get length() {
-        return rangeLength(this.#start, this.#data.length, this.#modifier.chunkSize);
+        // return rangeLength(this.#start, this.#data.length, this.#modifier.chunkSize);
+        // return this.#modifier.chunkSize;
+        return Math.min(this.#modifier.chunkSize, this.#data.length);
     }
 
     slice(index = 0, endIndex = this.length - index) {
@@ -552,7 +561,7 @@ export function maskedFunction() {
         [[nodiscard]] constexpr ${this.pos.STLTypeString} masked(auto const remaining_pos) const noexcept {
             return static_cast<${this.pos.STLTypeString}>(${this.mask.name}) & static_cast<${this.pos.STLTypeString}>(remaining_pos);
         }
-            `;
+       `;
 }
 
 export function getPositionFunction() {
@@ -567,7 +576,7 @@ export function getPositionFunction() {
             ${this.pos.STLTypeString} const masked_remaining_pos = masked(remaining_pos);
             return range + masked_remaining_pos;
         }
-            `;
+        `;
 }
 
 
@@ -578,15 +587,18 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     affectsChunkSize: false,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
-        for (let index = this.min; index !== this.max; ++index) {
+        yield this.min;
+        yield this.max;
+        yield this.mask;
+        for (let index = this.min + 1; index <= this.max; ++index) {
             yield index;
         }
     },
     modify(modifier, meta) {
-        return {...meta, value: (modifier.shift + meta.value) & this.mask};
+        return {...meta, value: modifier.shift + meta.value};
     },
     unshift(modifier, meta) {
-        return {...meta, value: (meta.value - modifier.shift) & this.mask};
+        return {...meta, value: meta.value - modifier.shift};
     }
 });
 
@@ -601,14 +613,21 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
         yield this.min;
         yield this.max;
         yield this.mask;
+        // for (let index = this.min + 1; index <= this.max; ) {
+        //     yield index;
+        //     index <<= 1;
+        //     // yield index;
+        //     index |= 0b1;
+        //     // yield (index & ~0b10);
+        // }
         if (this.max >= 255) {
             yield 252;
             yield 254;
         }
     },
     modify(modifier, meta) {
-        assert.ok(isFinite(modifier.mask), "Bad mask?");
-        assert.ok(isFinite(meta.pos), "Bad mask?");
+        assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
+        assert.ok(Number.isSafeInteger(meta.pos), "Bad mask?");
         return {...meta, pos: modifier.mask & meta.pos};
     },
 });
@@ -623,15 +642,20 @@ export const genPositionAddendum = () => new Addendum({
 export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type), genShiftAddendum(type)];
 export const genMaskedAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type)];
 
-export const genIndexAddenda = (name = "index") => {
-    const addenda = new Addenda(name, genDefaultAddendaPack(), function (table, modifier, range, pos) {
+export const genIndexAddenda = (name = "index", type = uint8) => {
+    const addenda = new Addenda(name, genDefaultAddendaPack(type), function (table, modifier, range, pos) {
         const {pos: maskedPos} = this.mask.modify(modifier, {pos});
-        const value = table.at(range + maskedPos);
-        if (!isFinite(value)) {
-            debugger;
-            throw new Error("Something went really wrong.");
+        const newPos = range + maskedPos;
+        if (newPos >= table.length) {
+            throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
         }
-        return this.shift.modify(modifier, {pos: maskedPos, value}).value;
+        const value = table.at(newPos);
+        const newValue = this.shift.modify(modifier, {pos: maskedPos, value}).value;
+        if (!Number.isSafeInteger(newValue)) {
+            debugger;
+            throw new Error(`Something went really wrong; range: ${range}, value: ${newValue}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
+        }
+        return newValue;
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {
@@ -653,10 +677,14 @@ export const genIndexAddenda = (name = "index") => {
 export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
     const addenda = new Addenda(name, genMaskedAddendaPack(type), function (table, modifier, range, pos) {
         const {pos: maskedPos} = this.mask.modify(modifier, {pos});
-        const value = table.at(range + maskedPos);
-        if (!isFinite(value)) {
+        const newPos = range + maskedPos;
+        if (newPos >= table.length) {
+            throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+        }
+        const value = table.at(newPos);
+        if (!Number.isSafeInteger(value)) {
             debugger;
-            throw new Error("Something went really wrong.");
+            throw new Error(`Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
         }
         return value;
     });

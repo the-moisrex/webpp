@@ -1,15 +1,14 @@
 import {
+    bitCeil,
     findSimilarRange,
     overlapInserts,
-    popcount,
-    sizeOf,
     Span,
     TableTraits,
     uint32,
     uint8,
-    writePieces
 } from "./utils.mjs";
 import {genIndexAddenda, InvalidModifier, ModifiedSpan, rangeLength} from "./modifiers.mjs";
+import * as assert from "node:assert";
 
 export class TablePairs {
     #indexAddenda;
@@ -45,24 +44,27 @@ export class TablePairs {
     /// This function compresses the specified range based on the input modifier.
     /// For example, an array of zeros, with mask of zero, only needs the first element
     #rightTrimInserts(inserts, modifier) {
-        if (inserts.length <= 1) {
-            return inserts.length;
-        }
-        let rtrimPos = 0;
-        for (let pos = inserts.length - 1; pos >= 0; --pos) {
-            const applied = modifier.applyMask(pos);
-            if (applied.pos !== 0) {
-                rtrimPos = pos;
-                break;
-            }
-        }
-        return this.values.length === 0 ? Math.max(1, rtrimPos) : rtrimPos;
+        return Math.min(inserts.length, bitCeil(modifier.mask));
+        // if (inserts.length <= 1) {
+        //     return inserts.length;
+        // }
+        // let rtrimPos = 0;
+        // for (let pos = inserts.length - 1; pos >= 0; --pos) {
+        //     const applied = modifier.applyMask(pos);
+        //     if (applied.pos !== 0) {
+        //         rtrimPos = pos;
+        //         break;
+        //     }
+        // }
+        // return rtrimPos;
     }
 
     #optimizeInserts(inserts, dataView, modifier) {
-        let pos = null;
+        let pos = modifier.pos;
 
-        const modifiedInserts = new ModifiedSpan(inserts, 0, modifier);
+        const insertsModifier = modifier.clone();
+        insertsModifier.set({pos: 0});
+        const modifiedInserts = new ModifiedSpan(inserts, insertsModifier);
 
         // validating inserts:
         for (let index = 0; index !== inserts.length; ++index) {
@@ -79,11 +81,16 @@ export class TablePairs {
             inserts = inserts.slice(overlapped, inserts.length);
         }
 
-        const rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
+        let rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
+        if (this.values.length === 0 && rtrimmedPos === 0) {
+            rtrimmedPos = 1;
+        }
         const rtrimmed = inserts.length - rtrimmedPos;
         if (rtrimmed !== 0) {
             inserts = inserts.slice(0, rtrimmedPos);
         }
+
+        assert.ok(Number.isSafeInteger(rtrimmed) && rtrimmed >= 0, `Negative rtrimmed is not ok; rtrimmed: ${rtrimmed}; rtrimmedPos: ${rtrimmedPos}, insertsLength: ${inserts.length}`);
 
         return {pos, inserts, overlapped, rtrimmed};
     }
@@ -100,6 +107,44 @@ export class TablePairs {
         return this.#indexAddenda.chunkShift;
     }
 
+    #findSubsetRange(dataView, modifier) {
+        modifier = modifier.clone();
+        const left = dataView;
+        const right = new ModifiedSpan(this.values, modifier);
+        try {
+            top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
+                modifier.set({pos: rpos});
+                for (let lpos = 0; lpos !== left.length; ++lpos) {
+                    const rvalue = right.at(lpos);
+                    const lvalue = left.at(lpos);
+                    if (rvalue !== lvalue) {
+                        continue top;
+                    }
+                }
+                return rpos;
+            }
+        } catch (err) {
+            if (!(err instanceof RangeError)) {
+                throw err;
+            }
+            // else, just say we found nothing
+        }
+        return null;
+
+        // modifier.set({pos: 0});
+        // const modifiedValues = new ModifiedSpan(this.values, modifier);
+        // return findSimilarRange(dataView, modifiedValues);
+
+        // for (let index = 0; index < this.values.length; index += this.chunkSize) {
+        //     modifier.set({pos: index});
+        //     const pos = findSimilarRange(modifiedValues, this.values);
+        //     if (pos !== null) {
+        //         return pos;
+        //     }
+        // }
+        // return null;
+    }
+
     #findSimilarMaskedRange(codePointStart) {
         const length = rangeLength(codePointStart, this.data.length, this.chunkSize);
         let possibilities = [];
@@ -111,12 +156,11 @@ export class TablePairs {
 
             const dataView =
                 new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length, this.chunkSize));
-            const modifiedCCC = new ModifiedSpan(this.values, 0, indexModifier);
             let lastInfoLength = 0;
             let info = {};
 
             try {
-                const startPos = findSimilarRange(dataView, modifiedCCC);
+                const startPos = this.#findSubsetRange(dataView, indexModifier);
                 if (startPos === null) {
                     info = this.#optimizeInserts(dataView, dataView, indexModifier);
                 } else {
@@ -124,6 +168,13 @@ export class TablePairs {
                 }
                 indexModifier.set({pos: info.pos});
 
+                assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
+                if (indexModifier.pos !== 0 && indexModifier.mask === 0) {
+                    debugger;
+                    indexModifier.set({pos: this.values.index});
+                    const res = this.#findSubsetRange(dataView, indexModifier);
+                    throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.");
+                }
                 possibilities.push({...info, modifier: indexModifier.clone()});
 
                 // performance trick
@@ -148,7 +199,12 @@ export class TablePairs {
                     info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
                     indexModifier.set({pos: info.pos});
                     if (info.inserts.length < lastInfoLength) {
-                        possibilities.push({...info, modifier: indexModifier, shifted: indexModifier.shift});
+                        assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
+                        if (indexModifier.pos !== 0 && indexModifier.mask === 0) {
+                            debugger;
+                            throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.");
+                        }
+                        possibilities.push({...info, modifier: indexModifier.clone(), shifted: indexModifier.shift});
 
                         if (info.inserts.length === 0) {
                             break;
@@ -205,12 +261,14 @@ export class TablePairs {
 
             const codeRange = range >>> this.#indexAddenda.chunkShift;
             const length = Math.min(this.data.length - range, this.#indexAddenda.chunkSize);
+            const valueStart = this.values.index;
 
             console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16),
                 "CCC-Table-Length:", this.values.length, "range:", range, "length:", length,
                 `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
-            let {modifier, inserts} = this.#findSimilarMaskedRange(range);
+            let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
+            assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
             const code = modifier.modifier;
             this.indices.append(code);
             if (inserts.length > 0) {
@@ -222,7 +280,7 @@ export class TablePairs {
                 saves += length;
             }
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
-                codeRange, modifier.necessaries(),
+                codeRange, "rtrimmed:", rtrimmed, "overlapped:", overlapped, "last-pos", valueStart, "modifier.pos:", modifier.pos, modifier.necessaries(),
                 "samples:", inserts.filter(item => item).slice(0, 5));
             uniqueModifiers.add(modifier.generableModifier);
 
@@ -231,13 +289,36 @@ export class TablePairs {
             // }
 
             /// verify range
-            // for (let ith = 0; ith !== length; ++ith) {
-            //     if (!modifiers.matches(this.values, this.data, pos, codeRange, ith, modifier)) {
-            //         console.error("  Validation error:", codeRange, ith, pos, inserts);
-            //         process.exit(1);
-            //         return;
-            //     }
-            // }
+            if (this.#props?.validateResults) {
+                const dataView = new Span(this.data, range, length);
+                const modifiedValues = new ModifiedSpan(this.values, modifier);
+                if (null === this.#findSubsetRange(dataView, modifier)) {
+                    debugger;
+                    this.#findSubsetRange(dataView, modifier);
+                    throw new Error("Bad insert");
+                }
+                // for (let ith = 0; ith !== length; ++ith) {
+                //     const expected = dataView.at(ith);
+                //     let found = modifiedValues.at(ith);
+                //     if (expected !== found) {
+                //         debugger;
+                //         throw new Error(`Validation error:\n` +
+                //             `value start: ${valueStart},\n` +
+                //             `batch:       ${codeRange},\n` +
+                //             `range:       ${range},\n` +
+                //             `pos:         ${ith},\n` +
+                //             `expected:    ${expected},\n` +
+                //             `found:       ${found},\n` +
+                //             `modifier:    ${code} ${JSON.stringify(modifier)},\n` +
+                //             `inserts:     #${inserts.length} ${JSON.stringify([...inserts])},\n` +
+                //             `data:        ${range}-${range + length} #${dataView.length} ${JSON.stringify([...dataView])},\n` +
+                //             `values:      #${modifiedValues.length} ${JSON.stringify([...modifiedValues])},\n` +
+                //             `values data: #${modifiedValues.data.length} ${JSON.stringify([...modifiedValues.data])}\n` +
+                //             `all values:  #${this.values.length} ${JSON.stringify([...this.values.result])}`
+                //         );
+                //     }
+                // }
+            }
         }
 
         if (this.indices.length > ((0b1 << this.#indexAddenda.pos.size) - 1)) {
