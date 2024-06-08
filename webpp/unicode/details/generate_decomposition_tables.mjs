@@ -1,9 +1,10 @@
 /***
  * This file downloads UnicodeData.txt, and generates a C++ header file.
  *
- * Details on parsing this file can be found here:
- * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
+ * More information about the syntax:
+ *   https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
  */
+
 import * as readme from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
@@ -16,40 +17,35 @@ import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {genIndexAddenda, genMaskedIndexAddenda} from "./modifiers.mjs";
 
-const cccOutFile = `ccc_tables.hpp`;
+const cccOutFile = `decomposition_tables.hpp`;
 
 const start = async () => {
     await readme.download();
 
     // database file
-    const cccsTables = new CCCTables();
-    await UnicodeData.parse(cccsTables, UnicodeData.properties.ccc);
-    cccsTables?.process?.();
-    await createTableFile([cccsTables]);
+    const decompTables = new CCCTables();
+    await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType);
+    decompTables?.process?.();
+    await createTableFile([decompTables]);
     console.log('File processing completed.');
 };
 
 class CCCTables {
     tables = new TablePairs();
-    name = "ccc"; // Canonical Combining Class
-    description = "Canonical Combining Class";
+    name = "decomposition";
+    description = "Decomposition Code Points";
     ignoreErrors = false;
 
     // these numbers are educated guesses from other projects, they're not that important!
     indices = {
         max: 4353 * 10,
         sizeof: uint32,
-        description: `CCC: Canonical Combining Class
-These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`
+        description: `Decomposition`
     };
     values = {
         max: 65535,
         sizeof: uint8,
-        description: `CCC: Canonical Combining Class
-These values are calculated and individually represent actual CCC values, but they have no
-valid order by themselves, and they only make sense if they're being used in conjunction with
-the "ccc_indices" table.
-        `
+        description: `Decomposition`
     };
     lastZero = 0;
 
@@ -106,10 +102,10 @@ the "ccc_indices" table.
     processRendered(renderedTables) {
         return `
     /**
-     * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
+     * In "decomposition_index" table, any code point bigger than this number will have "zero" as its value;
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_zero_cccs = 0x${this.lastZero.toString(16).toUpperCase()}UL;
+    static constexpr auto trailing_zero_deomps = 0x${this.lastZero.toString(16).toUpperCase()}UL;
     
 ${renderedTables}
         `;
@@ -143,10 +139,12 @@ const createTableFile = async (tables) => {
  *       ${UnicodeData.fileUrl}
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
+ *   Decomposition Mapping syntax used in the UCD Database:
+ *       https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
  */
  
-#ifndef WEBPP_UNICODE_CCC_TABLES_HPP
-#define WEBPP_UNICODE_CCC_TABLES_HPP
+#ifndef WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
+#define WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
 
 #include <array>
 #include <cstdint>
@@ -158,7 +156,7 @@ namespace webpp::unicode::details {
     const endContent = `
 } // namespace webpp::unicode::details
 
-#endif // WEBPP_UNICODE_CCC_TABLES_HPP
+#endif // WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
     `;
 
     let pieces = [begContent];
