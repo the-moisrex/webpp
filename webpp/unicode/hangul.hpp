@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_HANGUL_HPP
 #define WEBPP_UNICODE_HANGUL_HPP
 
+#include "../common/meta.hpp"
 #include "../std/string_like.hpp"
 
 namespace webpp::unicode {
@@ -128,6 +129,20 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr bool is_hangul_vowel(CharT const code_point) noexcept {
         return code_point >= details::hangul_vowel_base &&
                code_point < details::hangul_vowel_base + details::hangul_vowel_count;
+    }
+
+    /**
+     * Get the required length of code points needed if we were to decompose the specified code point.
+     *
+     * Attention: the code point MUST be a valid Hangul code point.
+     */
+    template <typename CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
+    [[nodiscard]] static constexpr RetT hangul_decompose_length(CharT const code_point) noexcept {
+        webpp_assume(is_hangul_code_point(code_point));
+        if ((code_point - details::hangul_syllable_base) % details::hangul_trailing_count) {
+            return 3U;
+        }
+        return 2U;
     }
 
     template <typename CharT = char32_t>
