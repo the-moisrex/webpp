@@ -63,7 +63,7 @@ export const parse = async (table, property, fileContent = undefined) => {
                     // The Standard says:
                     // The default value of the Decomposition_Mapping property is the code point itself.
                     // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
-                    return {mappedTo: codePoint, mapped: false, formattingTag: null};
+                    return {mappedTo: [codePoint], mapped: false, formattingTag: null};
                 }
                 let parts = str.split(" ").map(item => item.trim());
 
