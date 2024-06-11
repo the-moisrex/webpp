@@ -106,6 +106,7 @@
 #include "../std/iterator.hpp"
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
+#include "./unicode.hpp"
 
 namespace webpp::unicode {
 
@@ -126,7 +127,7 @@ namespace webpp::unicode {
     };
 
     /// Canonical Combining Class
-    template <typename CharT = char32_t>
+    template <stl::integral CharT = char32_t>
     [[nodiscard]] static constexpr stl::uint8_t ccc_of(CharT const code_point) noexcept {
         using details::ccc_index;
         using details::ccc_indices;
@@ -147,6 +148,12 @@ namespace webpp::unicode {
         return ccc_values[index_pos];
     }
 
+    /// Canonical Combining Class
+    template <stl::input_iterator Iter = char8_t const*>
+    [[nodiscard]] static constexpr stl::uint8_t ccc_of(Iter const pos) noexcept {
+        return ccc_of(unicode::next_code_point_copy(pos));
+    }
+
     /**
      * A starter code point in Unicode is a base character that can be combined with combining characters to
      * form a grapheme cluster. Specifically:
@@ -165,9 +172,14 @@ namespace webpp::unicode {
      * combined with combining characters to represent a single written unit. It is the first code point in a
      * grapheme cluster.
      */
-    template <typename CharT = char32_t>
+    template <stl::integral CharT = char32_t>
     [[nodiscard]] static constexpr bool is_starter(CharT const code_point) noexcept {
         return ccc_of(code_point) == 0;
+    }
+
+    template <stl::input_iterator Iter = char8_t const*>
+    [[nodiscard]] static constexpr bool is_starter(Iter const pos) noexcept {
+        return ccc_of(unicode::next_code_point_copy(pos)) == 0;
     }
 
     /**
@@ -235,6 +247,49 @@ namespace webpp::unicode {
     //     using char_type = typename stl::iterator_traits<Iter>::value_type;
     //     return false;
     // }
+
+
+    /**
+     * Get the required length for the specified range of code points
+     * @tparam Iter
+     * @tparam EIter = Iter
+     * @tparam SizeT = std::size_t
+     * @param pos    = start position
+     * @param end    = end of the string
+     * @return
+     */
+    // template <typename Iter, typename EIter = Iter, stl::unsigned_integral SizeT = stl::size_t>
+    // [[nodiscard]] static constexpr SizeT decomposition_size(Iter pos, EIter end) noexcept {
+    //     using details::trailing_mapped_deomps;
+    //     using details::decomp_indices;
+    //     using details::decomp_index;
+    //     using details::decomp_values;
+    //
+    //     using char_type = typename stl::iterator_traits<Iter>::value_type;
+    //
+    //     SizeT len = 0;
+    //     for (;;) {
+    //         const auto code_point = unicode::next_code_point(pos, end);
+    //         if (code_point == static_cast<char_type>(0)) {
+    //             break;
+    //         }
+    //
+    //
+    //         // Zero length
+    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[likely]] {
+    //             continue;
+    //         }
+    //
+    //         // Look at the ccc_index table, for how this works:
+    //         auto const code_point_range = static_cast<stl::size_t>(code_point) >>
+    //         decomp_index::chunk_shift; auto const code             = decomp_indices[code_point_range];
+    //
+    //         // calculating the length of te value in the decomp_values table:
+    //         len += code.length;
+    //     }
+    //     return len;
+    // }
+
 
 } // namespace webpp::unicode
 

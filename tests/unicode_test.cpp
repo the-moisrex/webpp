@@ -235,10 +235,10 @@ template <typename CharT = char32_t>
     // stl::size_t const index_pos        = index + static_cast<stl::size_t>(masked_pos);
 
     // auto const code_point_index = static_cast<stl::uint8_t>(code_point);
-    auto const code             = ccc_indices[code_point_range];
+    auto const code             = ccc_indices.at(code_point_range);
     // calculating the position of te value in the ccc_values table:
     stl::size_t const index_pos = code.get_position(code_point);
-    auto              res       = ccc_values[index_pos];
+    auto              res       = ccc_values.at(index_pos);
 
     stl::string around = "[..., ";
     for (stl::size_t pos = static_cast<stl::size_t>(stl::max(static_cast<long>(index_pos) - 4l, 0l));
@@ -250,7 +250,7 @@ template <typename CharT = char32_t>
         }
         around += stl::to_string(pos);
         around += "=";
-        around += stl::to_string(ccc_values[pos]);
+        around += stl::to_string(ccc_values.at(pos));
         if (pos == index_pos) {
             around += "]";
         }

@@ -101,24 +101,21 @@ namespace webpp::unicode {
     }
 
     // todo: check out the glib/gutf8.c implementation
-    template <typename CharT = char8_t, typename CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType code_point(CharT const* const pos) noexcept {
-        using code_point_type   = CodePointType;
-        using char_type         = CharT;
-        constexpr auto is_utf8  = UTF8<char_type>;
-        constexpr auto is_utf16 = UTF16<char_type>;
+    template <typename Iter = char8_t const*, typename CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
+        using code_point_type = CodePointType;
+        using char_type       = typename stl::iterator_traits<Iter>::value_type;
 
         auto val = *pos;
-        if constexpr (is_utf16) {
+        if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
-                val                 <<= sizeof(char16_t) * 8U;
-                auto const next_val   = pos + 1U;
-                val                  |= *next_val;
+                val <<= sizeof(char16_t) * 8U;
+                val  |= *++pos;
                 return val;
             }
             return static_cast<code_point_type>(val); // this is the only char
-        } else if constexpr (is_utf8) {
+        } else if constexpr (UTF8<char_type>) {
             constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
             if ((val & 0x80U) == 0) {
                 // we have one char
@@ -126,38 +123,104 @@ namespace webpp::unicode {
             }
             if ((val & 0xE0U) == 0xC0U) {
                 // we have 2 chars
-                val                 <<= shift_bit_count;
-                auto const next_val   = pos + 1U;
-                val                  |= *next_val;
+                val <<= shift_bit_count;
+                val  |= *++pos;
                 return val;
             }
             if ((val & 0xF0U) == 0xE0U) {
                 // we have 3 chars
-                val           <<= shift_bit_count;
-                auto next_val   = pos + 1U;
-                val            |= *next_val;
-                val           <<= shift_bit_count;
-                ++next_val;
-                val |= *next_val;
+                val <<= shift_bit_count;
+                val  |= *++pos;
+                val <<= shift_bit_count;
+                val  |= *++pos;
                 return val;
             }
             if ((val & 0xF8U) == 0xF0U) {
                 // we have 4 chars
-                val           <<= shift_bit_count;
-                auto next_val   = pos + 1U;
-                val            |= *next_val;
-                val           <<= shift_bit_count;
-                ++next_val;
-                val  |= *next_val;
                 val <<= shift_bit_count;
-                ++next_val;
-                val |= *next_val;
+                val  |= *++pos;
+                val <<= shift_bit_count;
+                val  |= *++pos;
+                val <<= shift_bit_count;
+                val  |= *++pos;
                 return val;
             }
             return val; // return this one anyway
         } else {
             return val;
         }
+    }
+
+    template <typename Iter = char8_t const*, typename EIter = Iter, typename CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
+        using code_point_type = CodePointType;
+        using char_type       = typename stl::iterator_traits<Iter>::value_type;
+
+        if (pos == end) {
+            return static_cast<code_point_type>(0);
+        }
+
+        auto val = *pos;
+        if constexpr (UTF16<char_type>) {
+            if ((val & 0xFC00U) == 0xD800U) {
+                // we have two chars
+                val <<= sizeof(char16_t) * 8U;
+                val  |= *++pos;
+                return val;
+            }
+            return static_cast<code_point_type>(val); // this is the only char
+        } else if constexpr (UTF8<char_type>) {
+            constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
+            if ((val & 0x80U) == 0) {
+                // we have one char
+                return static_cast<code_point_type>(val);
+            }
+            if ((val & 0xE0U) == 0xC0U) {
+                // we have 2 chars
+                ++pos;
+                if (pos != end) {
+                    val <<= shift_bit_count;
+                    val  |= *pos;
+                }
+                return val;
+            }
+            if ((val & 0xF0U) == 0xE0U) {
+                // we have 3 chars
+                if (++pos != end) {
+                    val <<= shift_bit_count;
+                    val  |= *pos;
+                    if (++pos != end) {
+                        val <<= shift_bit_count;
+                        val  |= *++pos;
+                    }
+                }
+                return val;
+            }
+            if ((val & 0xF8U) == 0xF0U) {
+                // we have 4 chars
+                if (++pos != end) {
+                    val <<= shift_bit_count;
+                    val  |= *pos;
+                    if (++pos != end) {
+                        val <<= shift_bit_count;
+                        val  |= *pos;
+                        if (++pos != end) {
+                            val <<= shift_bit_count;
+                            val  |= *pos;
+                        }
+                    }
+                }
+                return val;
+            }
+            return val; // return this one anyway
+        } else {
+            return val;
+        }
+    }
+
+    template <typename Iter = char8_t const*, typename CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter const& pos) noexcept {
+        return code_point(pos);
     }
 
     template <typename value_type>
@@ -213,15 +276,16 @@ namespace webpp::unicode {
             // NOLINTEND(*-avoid-c-arrays)
         } // namespace details
 
-        template <typename CharT = char8_t>
-        static constexpr void next_char(CharT*& pos) noexcept {
-            if constexpr (UTF8<CharT>) {
+        template <typename Iter = char8_t*>
+        static constexpr void next_char(Iter& pos) noexcept {
+            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (UTF8<char_type>) {
                 // alternative implementation:
                 // for (++p; (*p & 0xc0) == 0x80; ++p) ;
-                pos += details::utf8_skip<CharT>[*pos];
-            } else if constexpr (UTF16<CharT>) {
+                pos += details::utf8_skip<char_type>[*pos];
+            } else if constexpr (UTF16<char_type>) {
                 ++pos;
-                if (!(*pos < trail_surrogate_min<CharT> || *pos > trail_surrogate_max<CharT>) ) {
+                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
                     ++pos;
                 }
             } else {
@@ -229,9 +293,9 @@ namespace webpp::unicode {
             }
         }
 
-        template <typename CharT = char8_t>
-        static constexpr CharT* next_char_copy(CharT* pos) noexcept {
-            next_char<CharT>(pos);
+        template <typename Iter = char8_t*>
+        static constexpr Iter next_char_copy(Iter pos) noexcept {
+            next_char<Iter>(pos);
             return pos;
         }
 
@@ -239,9 +303,10 @@ namespace webpp::unicode {
          * Go to the beginning of the previous character.
          * This function does not check if previous character exists or not or even if its a valid character.
          */
-        template <typename CharT = char8_t>
-        static constexpr void prev_char(CharT*& pos) noexcept {
-            if constexpr (UTF8<CharT>) {
+        template <typename Iter = char8_t const*>
+        static constexpr void prev_char(Iter& pos) noexcept {
+            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (UTF8<char_type>) {
                 --pos;
                 if ((*pos & 0xc0) != 0x80) {
                     return;
@@ -263,12 +328,14 @@ namespace webpp::unicode {
                     return;
                 }
                 --pos;
-                if ((*pos & 0xc0) != 0x80) {
-                    return;
-                }
-            } else if constexpr (UTF16<CharT>) {
+
+                // todo: check this?
+                // if ((*pos & 0xc0) != 0x80) {
+                //     return;
+                // }
+            } else if constexpr (UTF16<char_type>) {
                 --pos;
-                if (!(*pos < trail_surrogate_min<CharT> || *pos > trail_surrogate_max<CharT>) ) {
+                if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
                     --pos;
                 }
             } else {
@@ -276,9 +343,9 @@ namespace webpp::unicode {
             }
         }
 
-        template <typename CharT = char8_t>
-        [[nodiscard]] static constexpr CharT* prev_char_copy(CharT* pos) noexcept {
-            prev_char<CharT>(pos);
+        template <typename Iter = char8_t*>
+        [[nodiscard]] static constexpr Iter prev_char_copy(Iter pos) noexcept {
+            prev_char<Iter>(pos);
             return pos;
         }
 
@@ -319,7 +386,7 @@ namespace webpp::unicode {
             }
         }
 
-        // There's a better way to count 32bit unicode if you know the start and the end.
+        // There's a better way to count 32bit Unicode if you know the start and the end.
         template <typename CharT = char8_t>
         [[nodiscard]] static constexpr stl::size_t count(CharT const* pos) noexcept {
             stl::size_t len = 0;
