@@ -441,3 +441,18 @@ export const runClangFormat = async filePath => {
         console.error("Could not re-format the file.", err);
     }
 };
+
+const encoder = new TextEncoder('utf-8');
+export const utf32To8 = (codePoint) => {
+    return encoder.encode(String.fromCharCode(codePoint));
+}
+
+export const utf32To8All = (u32Array) => {
+    let arr = [];
+    for (const codePoint of u32Array) {
+        for (const unit of utf32To8(codePoint)) {
+            arr.push(unit);
+        }
+    }
+    return arr;
+}
