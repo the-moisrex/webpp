@@ -10,73 +10,168 @@ import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint32,
-    writePieces, runClangFormat, uint6, uint7,
+    writePieces, runClangFormat, uint6, uint7, utf32To8All,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {genIndexAddenda, genMaskedIndexAddenda} from "./modifiers.mjs";
+import {
+    Addenda, Addendum, genMaskAddendum, genPositionAddendum
+} from "./modifiers.mjs";
 
-const cccOutFile = `decomposition_tables.hpp`;
+const outFile = `decomposition_tables.hpp`;
+
+
+// From https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
+
+/// SBase in the standard:
+const hangul_syllable_base = 0xAC00;
+/// LBase in the standard:
+const hangul_leading_base = 0x1100;
+/// VBase in the standard:
+const hangul_vowel_base = 0x1161;
+/// TBase in the standard:
+const hangul_trailing_base = 0x11A7;
+/// LCount in the standard:
+const hangul_leading_count = 19;
+/// VCount in the standard:
+const hangul_vowel_count = 21;
+/// TCount in the standard:
+const hangul_trailing_count = 28;
+/// Total count of Hangul blocks and syllables
+/// NCount in the standard:
+const hangul_block_count = hangul_vowel_count * hangul_trailing_count;
+/// SCount in the standard:
+const hangul_syllable_count = hangul_leading_count * hangul_block_count;
+
+const isHangul = (codePoint) => {
+    return codePoint >= hangul_syllable_base && codePoint < hangul_syllable_base + hangul_syllable_count;
+}
+
 
 const start = async () => {
     await readme.download();
 
     // database file
-    const decompTables = new CCCTables();
+    const decompTables = new DecompTable();
     await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType);
     decompTables?.process?.();
     await createTableFile([decompTables]);
     console.log('File processing completed.');
 };
 
-class CCCTables {
+class DecompTable {
     tables = new TablePairs();
-    name = "decomposition";
-    description = "Decomposition Code Points";
-    ignoreErrors = false;
 
     // these numbers are educated guesses from other projects, they're not that important!
-    indices = {
-        max: 4353 * 10,
-        sizeof: uint32,
-        description: `Decomposition`
-    };
-    values = {
-        max: 65535,
-        sizeof: uint8,
-        description: `Decomposition`
-    };
-    lastZero = 0;
-
+    lastMapped = 0;
+    maxMappedLength = 0;
+    hangulIgnored = 0;
 
     constructor() {
         this.tables.init({
             disableComments: false,
-            name: this.name,
-            description: this.description,
-            ignoreErrors: this.ignoreErrors,
-            indices: this.indices,
-            values: this.values,
+            name: "decomp",
+            description: "Decomposition Code Points",
+            ignoreErrors: false,
+
+            // first table
+            indices: {
+                max: 4353 * 10,
+                sizeof: uint32,
+                description: `Decomposition Index`,
+            },
+
+            // second table that holds the utf-8 encoded values
+            values: {
+                max: 65535,
+                sizeof: uint8,
+                description: `UTF-8 Encoded Decomposition Code Points`,
+            },
             validateResults: true,
-            genIndexAddenda: () => genMaskedIndexAddenda("index", uint7),
+            genIndexAddenda: () => this.genAddenda(),
+
+            // this gets run just before we add the modifier to the indices table
+            modify: ({modifier, inserts}) => {
+
+                // flattening the inserts to include only the utf-8 bytes:
+                inserts = inserts.reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
+
+                // add length to the modifier:
+                modifier.set({length: inserts.length});
+
+                return {modifier, inserts};
+            },
         });
     }
+
+    genAddenda = () => {
+        const name = "index";
+        const addendaPack = [
+            genPositionAddendum(),
+            genMaskAddendum(uint8),
+            new Addendum({
+                name: "length",
+                description: `Length of the UTF-8 Encoded Decomposition Code Points`,
+                affectsChunkSize: true,
+                sizeof: uint8,
+            }),
+        ];
+        const addenda = new Addenda(name, addendaPack, function (table, modifier, range, pos) {
+            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const newPos = range + maskedPos;
+            if (newPos >= table.length) {
+                throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+            }
+            const {mapped, mappedTo} = table.at(newPos);
+            return {mapped, mappedTo, length: mappedTo.length};
+        });
+        addenda.modifierFunctions = {
+            applyMask: function (pos) {
+                return this.addenda.mask.modify(this, {pos});
+            }
+        };
+        addenda.renderFunctions = [
+            // todo
+        ];
+        return addenda;
+    };
 
     /// proxy the function
     process() {
         this.tables.process();
-        const lastZeroBucket = this.lastZero >>> this.tables.chunkShift;
-        console.log("Trim indices table at: ", lastZeroBucket);
-        this.tables.indices.trimAt(lastZeroBucket);
+        const lastMappedBucket = this.lastMapped >>> this.tables.chunkShift;
+
+        console.log("Trim indices table at: ", lastMappedBucket);
+        this.tables.indices.trimAt(lastMappedBucket);
+
+        console.log("Hangul code points ignored: ", this.hangulIgnored);
+        console.log("Max Mapped Length: ", this.maxMappedLength);
+
+        // let flattened = [];
+        // for (const index of this.tables.indices) {
+        //     flattened.push(index)
+        // }
     }
 
     add(codePoint, value) {
-        // calculating the last item that it's value is zero
-        if (value !== 0) {
-            this.lastZero = codePoint + 1;
+
+        // ignore Hangul code points, they're handled algorithmically
+        if (isHangul(codePoint)) {
+            ++this.hangulIgnored;
+            return;
         }
-        return this.tables.add(codePoint, value);
+
+        // calculating the last item that it's value is zero
+        const {mapped, mappedTo} = value;
+        value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
+        if (mapped) {
+            this.lastMapped = codePoint + 1;
+        }
+        if (mappedTo.length > this.maxMappedLength) {
+            this.maxMappedLength = mappedTo.length;
+        }
+        this.tables.add(codePoint, value);
     }
 
     render() {
@@ -93,19 +188,15 @@ class CCCTables {
         if (undefinedIndex !== -1) {
             throw new Error(`Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`);
         }
-
-        if (this.tables.data[0x1CE8] !== 1) {
-            throw new Error(`Invalid parsing; data[0x1CE8]: ${this.tables.data[0x1CE8]}; length: ${this.tables.data?.length}`);
-        }
     }
 
     processRendered(renderedTables) {
         return `
     /**
-     * In "decomposition_index" table, any code point bigger than this number will have "zero" as its value;
+     * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's mapped to the input code point by standard);
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_zero_deomps = 0x${this.lastZero.toString(16).toUpperCase()}UL;
+    static constexpr auto trailing_mapped_deomps = 0x${this.lastMapped.toString(16).toUpperCase()}UL;
     
 ${renderedTables}
         `;
@@ -164,8 +255,8 @@ namespace webpp::unicode::details {
         pieces.push(table.render());
     }
     pieces.push(endContent);
-    await writePieces(cccOutFile, pieces);
-    await runClangFormat(cccOutFile);
+    await writePieces(outFile, pieces);
+    await runClangFormat(outFile);
 };
 
 start();

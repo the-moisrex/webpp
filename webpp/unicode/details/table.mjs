@@ -7,7 +7,7 @@ import {
     uint32,
     uint8,
 } from "./utils.mjs";
-import {genIndexAddenda, InvalidModifier, ModifiedSpan, rangeLength} from "./modifiers.mjs";
+import {genIndexAddenda, InvalidModifier, ModifiedSpan, Modifier, rangeLength} from "./modifiers.mjs";
 import * as assert from "node:assert";
 
 export class TablePairs {
@@ -154,8 +154,7 @@ export class TablePairs {
             // set the position
             indexModifier.set({pos: this.values.index});
 
-            const dataView =
-                new Span(this.data, codePointStart, rangeLength(codePointStart, this.data.length, this.chunkSize));
+            const dataView = new Span(this.data, codePointStart, length);
             let lastInfoLength = 0;
             let info = {};
 
@@ -171,9 +170,7 @@ export class TablePairs {
                 assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
                 if (indexModifier.pos !== 0 && indexModifier.mask === 0) {
                     debugger;
-                    indexModifier.set({pos: this.values.index});
-                    const res = this.#findSubsetRange(dataView, indexModifier);
-                    throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.");
+                    throw new Error(`Invalid calculations. If mask is zero, the position must come out zero too; pos: ${indexModifier.pos}, mask: ${indexModifier.mask}`);
                 }
                 possibilities.push({...info, modifier: indexModifier.clone()});
 
@@ -269,7 +266,18 @@ export class TablePairs {
 
             let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
             assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
+
+            const modifiedValues = this.#props?.modify?.({modifier, inserts, rtrimmed, overlapped});
+            modifier = modifiedValues?.modifier || modifier;
+            inserts = modifiedValues?.inserts || inserts;
+            rtrimmed = modifiedValues?.rtrimmed || rtrimmed;
+            overlapped = modifiedValues?.overlapped || overlapped;
+
+            assert.ok(modifier instanceof Modifier, "The modifier should be an instance of Modifier.");
+            // assert.ok(Array.isArray(inserts), "Inserts should be an array.");
+
             const code = modifier.modifier;
+
             this.indices.append(code);
             if (inserts.length > 0) {
                 this.values.appendList(inserts);
