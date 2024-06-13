@@ -10,13 +10,13 @@ import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint32,
-    writePieces, runClangFormat, uint6, uint7, utf32To8All,
+    writePieces, runClangFormat, uint6, uint7, utf32To8All, multiMap,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
 import {
-    Addenda, Addendum, genMaskAddendum, genPositionAddendum
+    Addenda, genMaxLengthAddendum, genPositionAddendum
 } from "./modifiers.mjs";
 
 const outFile = `decomposition_tables.hpp`;
@@ -75,6 +75,20 @@ class DecompTable {
             description: "Decomposition Code Points",
             ignoreErrors: false,
 
+            mappingMode: multiMap, // one code point might be mapped to multiple code points in decomposition
+            expand(codePoint, value) {
+                // expand the "data" into its "values" table equivalent
+
+                const {mapped, mappedTo} = value;
+                if (!mapped) {
+                    return; // these don't get to be in the "values" table, so they should not be in this table either
+                }
+                for (const curCodePoint of mappedTo) {
+                    // curCodePoint is already UTF-8 encoded, no need for re-encoding
+                    this.flattedDataView.push(curCodePoint);
+                }
+            },
+
             // first table
             indices: {
                 max: 4353 * 10,
@@ -91,14 +105,30 @@ class DecompTable {
             validateResults: true,
             genIndexAddenda: () => this.genAddenda(),
 
+
+            getModifierAddenda: function findMaxLengths({codePointStart, length}) {
+                let maxLen = 0;
+                for (let index = codePointStart; index < length; index++) {
+                    const datum = this.data[index];
+                    const {mappedTo} = datum;
+                    if (mappedTo.length > maxLen) {
+                        maxLen = mappedTo.length;
+                    }
+                }
+
+                // set the max_length addendum value
+                return {max_length: maxLen};
+            },
+
+
             // this gets run just before we add the modifier to the indices table
             modify: ({modifier, inserts}) => {
 
                 // flattening the inserts to include only the utf-8 bytes:
-                inserts = inserts.reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
+                // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
 
                 // add length to the modifier:
-                modifier.set({length: inserts.length});
+                // modifier.set({length: inserts.length});
 
                 return {modifier, inserts};
             },
@@ -109,30 +139,35 @@ class DecompTable {
         const name = "index";
         const addendaPack = [
             genPositionAddendum(),
-            genMaskAddendum(uint8),
-            new Addendum({
-                name: "length",
-                description: `Length of the UTF-8 Encoded Decomposition Code Points`,
-                affectsChunkSize: true,
-                sizeof: uint8,
-            }),
+            // genMaskAddendum(uint8),
+            genMaxLengthAddendum(uint8),
         ];
         const addenda = new Addenda(name, addendaPack, function (table, modifier, range, pos) {
-            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const {pos: maskedPos} = this.max_length.modify(modifier, {pos});
             const newPos = range + maskedPos;
             if (newPos >= table.length) {
                 throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
             }
-            const {mapped, mappedTo} = table.at(newPos);
-            return {mapped, mappedTo, length: mappedTo.length};
+            // return table.at(newPos);
+            // return {mapped, mappedTo, length: mappedTo.length};
+            return table.at(newPos);
         });
         addenda.modifierFunctions = {
-            applyMask: function (pos) {
-                return this.addenda.mask.modify(this, {pos});
-            }
+            // applyMask: function (pos) {
+            //     return this.addenda.mask.modify(this, {pos});
+            // }
         };
+        const self = this;
         addenda.renderFunctions = [
             // todo
+            function isMapped() {
+                return `
+        /// See if this code point 
+        [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
+            return this.length == 0;
+        }
+                `;
+            }
         ];
         return addenda;
     };
@@ -155,21 +190,24 @@ class DecompTable {
     }
 
     add(codePoint, value) {
+        const {mapped, mappedTo} = value;
 
         // ignore Hangul code points, they're handled algorithmically
         if (isHangul(codePoint)) {
             ++this.hangulIgnored;
-            return;
+            if (mapped) {
+                throw new Error("Hangul is mapped manually.");
+            }
+            // return;
         }
 
         // calculating the last item that it's value is zero
-        const {mapped, mappedTo} = value;
         value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
             this.lastMapped = codePoint + 1;
         }
-        if (mappedTo.length > this.maxMappedLength) {
-            this.maxMappedLength = mappedTo.length;
+        if (value.mappedTo.length > this.maxMappedLength) {
+            this.maxMappedLength = value.mappedTo.length;
         }
         this.tables.add(codePoint, value);
     }

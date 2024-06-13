@@ -601,6 +601,21 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     }
 });
 
+export const genMaxLengthAddendum = (type = uint8) => new Addendum({
+    name: "max_length",
+    description: "Length of the UTF-8 Encoded Decomposition Code Points.\n" +
+        "This value is the max length of each mappings; there should be additional empty values added\n" +
+        "in between the values of the values table in order to make sure we can easily find the needed \n" +
+        "mappings for all the code points without searching for them.",
+    affectsChunkSize: false,
+    sizeof: type,
+    modify(modifier, meta) {
+        assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
+        assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+        return {...meta, pos: meta.pos * modifier.max_length};
+    },
+});
+
 export const genMaskAddendum = (type = uint8) => new Addendum({
     name: "mask",
     description: "This is used to mask the 'remaining position' of the values table;\n" +
@@ -626,7 +641,7 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
     },
     modify(modifier, meta) {
         assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
-        assert.ok(Number.isSafeInteger(meta.pos), "Bad mask?");
+        assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
         return {...meta, pos: modifier.mask & meta.pos};
     },
 });

@@ -276,13 +276,14 @@ namespace webpp::unicode {
     //
     //
     //         // Zero length
-    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[likely]] {
+    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
     //             continue;
     //         }
     //
     //         // Look at the ccc_index table, for how this works:
     //         auto const code_point_range = static_cast<stl::size_t>(code_point) >>
-    //         decomp_index::chunk_shift; auto const code             = decomp_indices[code_point_range];
+    //         decomp_index::chunk_shift;
+    //         auto const code             = decomp_indices[code_point_range];
     //
     //         // calculating the length of te value in the decomp_values table:
     //         len += code.length;

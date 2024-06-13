@@ -1,6 +1,6 @@
 import {
-    bitCeil,
-    findSimilarRange,
+    bitCeil, directMap,
+    findSimilarRange, multiMap,
     overlapInserts,
     Span,
     TableTraits,
@@ -15,6 +15,7 @@ export class TablePairs {
     #name = "";
     #description = "";
     data = []; // raw, unprocessed data
+    flattedDataView = [];
     #props = {};
 
     init(meta) {
@@ -38,7 +39,10 @@ export class TablePairs {
         // fill the data
         this.data[codePoint] = value;
 
-        this.#props?.processAdds?.();
+        // expand the "data" into its "values" table equivalent
+        if (this.isMultiMode) {
+            this.#props?.expand?.call(this, codePoint, value);
+        }
     }
 
     /// This function compresses the specified range based on the input modifier.
@@ -107,6 +111,21 @@ export class TablePairs {
         return this.#indexAddenda.chunkShift;
     }
 
+    get mappingMode() {
+        return this.#props?.mappingMode || directMap;
+    }
+
+    get isMultiMode() {
+        return this.mappingMode === multiMap;
+    }
+
+    dataView(codePointStart, length = rangeLength(codePointStart, this.data.length, this.chunkSize)) {
+        if (this.isMultiMode) {
+            return new Span(this.flattedDataView, codePointStart, length);
+        }
+        return new Span(this.data, codePointStart, length);
+    }
+
     #findSubsetRange(dataView, modifier) {
         modifier = modifier.clone();
         const left = dataView;
@@ -149,12 +168,13 @@ export class TablePairs {
         const length = rangeLength(codePointStart, this.data.length, this.chunkSize);
         let possibilities = [];
         let invalidModifiers = [];
+        const dataView = this.dataView(codePointStart);
+        const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {codePointStart, length, dataView}) || {};
         for (const indexModifier of this.#indexAddenda.generate()) {
 
             // set the position
-            indexModifier.set({pos: this.values.index});
+            indexModifier.set({pos: this.values.index, ...additionalAddendumValues});
 
-            const dataView = new Span(this.data, codePointStart, length);
             let lastInfoLength = 0;
             let info = {};
 
@@ -236,6 +256,7 @@ export class TablePairs {
             console.error(`  Empty possibilities:`, possibilities, this.values.length, this.data.length);
             console.error(`  Invalid Modifiers:`, invalidModifiers.length,
                 invalidModifiers.map(item => item?.toString() || item));
+            debugger;
             process.exit(1);
         }
         return possibilities.at(0);
@@ -261,7 +282,7 @@ export class TablePairs {
             const valueStart = this.values.index;
 
             console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16),
-                "CCC-Table-Length:", this.values.length, "range:", range, "length:", length,
+                "Values-Table-Length:", this.values.length, "range:", range, "length:", length,
                 `Progress: ${Math.floor(range / this.data.length * 100)}%`);
 
             let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
@@ -298,7 +319,7 @@ export class TablePairs {
 
             /// verify range
             if (this.#props?.validateResults) {
-                const dataView = new Span(this.data, range, length);
+                const dataView = this.dataView(range, length);
                 const modifiedValues = new ModifiedSpan(this.values, modifier);
                 if (null === this.#findSubsetRange(dataView, modifier)) {
                     debugger;

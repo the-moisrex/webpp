@@ -120,8 +120,8 @@ namespace webpp {
 #endif
 
 /// Use `webpp_assume(expr);` to inform the compiler that the `expr` is true.
-/// Do not rely on side-effects of the `expr` being run.
-/// Attention: DO NOT call (specially `extern`) functions with side-effects inside this, it's "potentially
+/// Do not rely on side effects of the `expr` being run.
+/// Attention: DO NOT call (specially `extern`) functions with side effects inside this
 #if WEBPP_HAS_CPP_ATTRIBUTE(assume) || defined(__cpp_assume)
 #    define webpp_assume(...) [[assume(__VA_ARGS__)]]
 #elif defined(__clang__) || defined(__INTEL_COMPILER) || WEBPP_HAS_BUILTIN(__builtin_assume) || \

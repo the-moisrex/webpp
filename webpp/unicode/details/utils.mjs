@@ -12,6 +12,12 @@ export const uint8x2 = Symbol('uint8');
 export const uint32 = Symbol('uint32');
 export const uint64 = Symbol('uint64');
 
+// A symbol to identify the choice when a code point is mapped to multiple other values (for example Decomposition)
+export const multiMap = Symbol('multiMap');
+
+// Opposite of multiMap; single code point is mapped to one single value (for example CCC)
+export const directMap = Symbol('directMap');
+
 export const sizeOf = symbol => {
     switch (symbol) {
         case uint6:
