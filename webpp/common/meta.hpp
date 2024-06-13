@@ -73,9 +73,10 @@ namespace webpp::details {
 
 // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2593r0.html
 // GCC 13.1 started supporting static_assert(false, ...)
-// Clang 16 doesn't support this, but the current trunk version does
-// todo: add Clang version to this mix as well
-#if __GNUC__ >= 13 || (__GNUC__ == 13 && (__GNUC_MINOR__ >= 1))
+// Clang 16 doesn't support this, but 17.0.1 does
+// MSVC 19.38 does not yet support this
+// todo: add MSVC version as well.
+#if __GNUC__ >= 13 || (__GNUC__ == 13 && (__GNUC_MINOR__ >= 1)) || __clang_major__ >= 17
 #    define static_assert_false(BasedOn, StrLiteral) static_assert(false, StrLiteral)
 #else
 #    define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
