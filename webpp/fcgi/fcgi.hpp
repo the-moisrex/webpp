@@ -13,7 +13,7 @@
 namespace webpp::fastcgi {
 
 
-    template <typename App, Traits TraitsType = default_traits_type>
+    template <typename App, Traits TraitsType = default_traits>
     struct fcgi : public enable_traits<typename ReqT::traits_type> {
         using traits_type      = TraitsType;
         using endpoint_type    = stl::net::ip::tcp::endpoint;
