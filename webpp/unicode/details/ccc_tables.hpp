@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 07 Jun 2024 03:34:20 GMT
+ *   This file's generation date:        Sat, 15 Jun 2024 12:37:39 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       95688
@@ -34,7 +34,7 @@ namespace webpp::unicode::details {
 
 
     /**
-     * In "ccc_index" table, any code point bigger than this number will have "zero" as it's CCC value;
+     * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_zero_cccs = 0x1E94BUL;
