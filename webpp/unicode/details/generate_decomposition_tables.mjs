@@ -76,18 +76,6 @@ class DecompTable {
             ignoreErrors: false,
 
             mappingMode: multiMap, // one code point might be mapped to multiple code points in decomposition
-            expand(codePoint, value) {
-                // expand the "data" into its "values" table equivalent
-
-                const {mapped, mappedTo} = value;
-                if (!mapped) {
-                    return; // these don't get to be in the "values" table, so they should not be in this table either
-                }
-                for (const curCodePoint of mappedTo) {
-                    // curCodePoint is already UTF-8 encoded, no need for re-encoding
-                    this.flattedDataView.push(curCodePoint);
-                }
-            },
 
             // first table
             indices: {
@@ -190,7 +178,7 @@ class DecompTable {
     }
 
     add(codePoint, value) {
-        const {mapped, mappedTo} = value;
+        let {mapped, mappedTo} = value;
 
         // ignore Hangul code points, they're handled algorithmically
         if (isHangul(codePoint)) {
@@ -202,13 +190,24 @@ class DecompTable {
         }
 
         // calculating the last item that it's value is zero
-        value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
+        mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
             this.lastMapped = codePoint + 1;
         }
-        if (value.mappedTo.length > this.maxMappedLength) {
-            this.maxMappedLength = value.mappedTo.length;
+        if (mappedTo.length > this.maxMappedLength) {
+            this.maxMappedLength = mappedTo.length;
         }
+
+
+        // expand the "data" into its "values" table equivalent
+        if (this.tables.isMultiMode && mapped) {
+            // these don't get to be in the "values" table, so they should not be in this table either
+            for (const curCodePoint of mappedTo) {
+                // curCodePoint is already UTF-8 encoded, no need for re-encoding
+                this.tables.flattedDataView.push(curCodePoint);
+            }
+        }
+
         this.tables.add(codePoint, value);
     }
 

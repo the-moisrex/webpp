@@ -38,11 +38,6 @@ export class TablePairs {
 
         // fill the data
         this.data[codePoint] = value;
-
-        // expand the "data" into its "values" table equivalent
-        if (this.isMultiMode) {
-            this.#props?.expand?.call(this, codePoint, value);
-        }
     }
 
     /// This function compresses the specified range based on the input modifier.
