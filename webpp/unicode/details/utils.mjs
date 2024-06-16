@@ -186,6 +186,10 @@ export class Span {
         this.#start = start;
         this.#end = start + length;
         this.#func = func;
+        if (this.#end === undefined || isNaN(this.#end)) {
+            debugger;
+            throw new Error(`Unexpected end: ${this.#end}`);
+        }
     }
 
     get length() {
