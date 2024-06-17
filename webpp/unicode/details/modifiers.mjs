@@ -502,12 +502,12 @@ export class ModifiedSpan {
             debugger;
             throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`);
         }
-        const res = this.#modifier.apply(this.#data, this.start, index);
-        if (!Number.isSafeInteger(res)) {
-            debugger;
-            throw new InvalidModifier(this.#modifier);
-        }
-        return res;
+        return this.#modifier.apply(this.#data, this.start, index);
+        // if (!Number.isSafeInteger(res)) {
+        //     debugger;
+        //     throw new InvalidModifier(this.#modifier);
+        // }
+        // return res;
     }
 
     get start() {
@@ -697,7 +697,8 @@ export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
         const {pos: maskedPos} = this.mask.modify(modifier, {pos});
         const newPos = range + maskedPos;
         if (newPos >= table.length) {
-            throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+            // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+            return null;
         }
         const value = table.at(newPos);
         if (!Number.isSafeInteger(value)) {

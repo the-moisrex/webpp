@@ -150,7 +150,8 @@ class DecompTable {
             const {pos: maskedPos} = this.max_length.modify(modifier, {pos});
             const newPos = range + maskedPos;
             if (newPos >= table.length) {
-                throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+                return null;
+                // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
             }
             // return table.at(newPos);
             // return {mapped, mappedTo, length: mappedTo.length};

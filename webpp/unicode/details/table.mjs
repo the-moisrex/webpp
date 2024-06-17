@@ -73,7 +73,8 @@ export class TablePairs {
             const realValue = dataView.at(index);
             const insertValue = modifiedInserts.at(index);
             if (realValue !== insertValue) {
-                throw new InvalidModifier({index, realValue, insertValue, ...modifier});
+                // throw new InvalidModifier({index, realValue, insertValue, ...modifier});
+                return {valid: false, index, realValue, insertValue, ...modifier};
             }
         }
 
@@ -100,7 +101,7 @@ export class TablePairs {
             }
         }
 
-        return {pos, inserts, overlapped, rtrimmed};
+        return {valid: true, pos, inserts, overlapped, rtrimmed};
     }
 
     get chunkSize() {
@@ -130,27 +131,27 @@ export class TablePairs {
         modifier = modifier.clone();
         const left = dataView;
         const right = new ModifiedSpan(this.values, modifier);
-        if (right.length === 0) {
-            return 0;
-        }
-        try {
-            top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
-                modifier.set({pos: rpos});
-                for (let lpos = 0; lpos !== left.length; ++lpos) {
-                    const rvalue = right.at(lpos);
-                    const lvalue = left.at(lpos);
-                    if (rvalue !== lvalue) {
-                        continue top;
-                    }
+        // try {
+        top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
+            modifier.set({pos: rpos});
+            for (let lpos = 0; lpos !== left.length; ++lpos) {
+                const rvalue = right.at(lpos);
+                const lvalue = left.at(lpos);
+                if (!Number.isSafeInteger(rvalue) && Number.isSafeInteger(lvalue)) {
+                    return null;
                 }
-                return rpos;
+                if (rvalue !== lvalue) {
+                    continue top;
+                }
             }
-        } catch (err) {
-            if (!(err instanceof RangeError)) {
-                throw err;
-            }
-            // else, just say we found nothing
+            return rpos;
         }
+        // } catch (err) {
+        //     if (!(err instanceof RangeError)) {
+        //         throw err;
+        //     }
+        //     else, just say we found nothing
+        // }
         return null;
 
         // modifier.set({pos: 0});
@@ -190,13 +191,16 @@ export class TablePairs {
             let lastInfoLength = 0;
             let info = {};
 
-            try {
-                const startPos = this.#findSubsetRange(dataView, indexModifier);
-                if (startPos === null) {
-                    info = this.#optimizeInserts(dataView, dataView, indexModifier);
-                } else {
-                    info = {pos: startPos, inserts: new Span()};
-                }
+            // try {
+            const startPos = this.#findSubsetRange(dataView, indexModifier);
+            if (startPos === null) {
+                info = this.#optimizeInserts(dataView, dataView, indexModifier);
+            } else {
+                info = {valid: true, pos: startPos, inserts: new Span()};
+            }
+            if (!info.valid) {
+                invalidModifiers.push({...info});
+            } else {
                 indexModifier.set({pos: info.pos});
 
                 assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
@@ -211,21 +215,25 @@ export class TablePairs {
                 if (lastInfoLength === 0) {
                     break;
                 }
-            } catch (err) {
-                if (err instanceof InvalidModifier) {
-                    invalidModifiers.push(err);
-                } else {
-                    if (!this.#props?.ignoreErrors) {
-                        throw err;
-                    }
-                }
             }
+            // } catch (err) {
+            //     if (err instanceof InvalidModifier) {
+            //         invalidModifiers.push(err);
+            //     } else {
+            //         if (!this.#props?.ignoreErrors) {
+            //             throw err;
+            //         }
+            //     }
+            // }
 
             /// check if we can have "shift"s.
             if (indexModifier.unshiftAll) {
-                try {
-                    // now, try the shifted inserts as well see if they're any good:
-                    info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
+                // try {
+                // now, try the shifted inserts as well see if they're any good:
+                info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
+                if (!info.valid) {
+                    invalidModifiers.push({...info});
+                } else {
                     indexModifier.set({pos: info.pos});
                     if (info.inserts.length < lastInfoLength) {
                         assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
@@ -239,15 +247,16 @@ export class TablePairs {
                             break;
                         }
                     }
-                } catch (err) {
-                    if (err instanceof InvalidModifier) {
-                        invalidModifiers.push(err);
-                    } else {
-                        if (!this.#props?.ignoreErrors) {
-                            throw err;
-                        }
-                    }
                 }
+                // } catch (err) {
+                //     if (err instanceof InvalidModifier) {
+                //         invalidModifiers.push(err);
+                //     } else {
+                //         if (!this.#props?.ignoreErrors) {
+                //             throw err;
+                //         }
+                //     }
+                // }
             }
         }
 
