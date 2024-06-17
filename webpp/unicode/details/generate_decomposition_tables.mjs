@@ -10,7 +10,7 @@ import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint32,
-    writePieces, runClangFormat, uint6, uint7, utf32To8All, multiMap,
+    writePieces, runClangFormat, uint6, uint7, utf32To8All, Span,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -67,15 +67,15 @@ class DecompTable {
     lastMapped = 0;
     maxMappedLength = 0;
     hangulIgnored = 0;
+    flattedDataView = [];
 
     constructor() {
+        const self = this;
         this.tables.init({
             disableComments: false,
             name: "decomp",
             description: "Decomposition Code Points",
             ignoreErrors: false,
-
-            mappingMode: multiMap, // one code point might be mapped to multiple code points in decomposition
 
             // first table
             indices: {
@@ -108,6 +108,22 @@ class DecompTable {
                 return {max_length: maxLen};
             },
 
+            dataView(codePointStart, length) {
+                const endPos = codePointStart + length;
+                // if (this.data.length < endPos) {
+                //     return new Span(this.data, codePointStart, 0);
+                // } else if (this.data.length === endPos) {
+                //     return new Span(this.data, codePointStart, this.data[this.data.length - 1].mappedTo.length);
+                // }
+                const {flatStart} = this.data[codePointStart];
+                const {flatStart: flatEnd} = this.data[endPos] || {flatStart: self.flattedDataView.length};
+                const flatLength = flatEnd - flatStart;
+                if (!Number.isSafeInteger(flatLength)) {
+                    debugger;
+                    throw new Error(`Unexpected length: ${flatLength}`);
+                }
+                return new Span(self.flattedDataView, flatStart, flatLength);
+            },
 
             // this gets run just before we add the modifier to the indices table
             modify: ({modifier, inserts}) => {
@@ -200,12 +216,16 @@ class DecompTable {
 
 
         // expand the "data" into its "values" table equivalent
-        if (this.tables.isMultiMode && mapped) {
+        value.flatStart = this.flattedDataView.length;
+        // value.flatLength = mappedTo.length;
+        if (mapped) {
+
             // these don't get to be in the "values" table, so they should not be in this table either
             for (const curCodePoint of mappedTo) {
                 // curCodePoint is already UTF-8 encoded, no need for re-encoding
-                this.tables.flattedDataView.push(curCodePoint);
+                this.flattedDataView.push(curCodePoint);
             }
+
         }
 
         this.tables.add(codePoint, value);

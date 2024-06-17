@@ -250,6 +250,10 @@ export class Addenda {
         return this.addenda.find(addendum => addendum.name === name);
     }
 
+    has(name) {
+        return this.addendum(name) instanceof Addendum;
+    }
+
     /// return the required size for shifting the specified addendum
     shiftOf(addendum) {
         if (typeof addendum === "string") {

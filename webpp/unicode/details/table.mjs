@@ -1,6 +1,6 @@
 import {
-    bitCeil, directMap,
-    findSimilarRange, multiMap,
+    bitCeil,
+    findSimilarRange,
     overlapInserts,
     Span,
     TableTraits,
@@ -15,7 +15,6 @@ export class TablePairs {
     #name = "";
     #description = "";
     data = []; // raw, unprocessed data
-    flattedDataView = [];
     #props = {};
 
     init(meta) {
@@ -43,7 +42,11 @@ export class TablePairs {
     /// This function compresses the specified range based on the input modifier.
     /// For example, an array of zeros, with mask of zero, only needs the first element
     #rightTrimInserts(inserts, modifier) {
-        return Math.min(inserts.length, bitCeil(modifier.mask));
+        if (this.#indexAddenda.has("mask")) {
+            return Math.min(inserts.length, bitCeil(modifier.mask));
+        } else {
+            return inserts.length;
+        }
         // if (inserts.length <= 1) {
         //     return inserts.length;
         // }
@@ -80,16 +83,22 @@ export class TablePairs {
             inserts = inserts.slice(overlapped, inserts.length);
         }
 
-        let rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
-        if (this.values.length === 0 && rtrimmedPos === 0) {
-            rtrimmedPos = 1;
-        }
-        const rtrimmed = inserts.length - rtrimmedPos;
-        if (rtrimmed !== 0) {
-            inserts = inserts.slice(0, rtrimmedPos);
-        }
+        let rtrimmed = 0;
+        if (inserts.length !== 0) {
+            let rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
+            if (this.values.length === 0 && rtrimmedPos === 0) {
+                rtrimmedPos = 1;
+            }
+            rtrimmed = inserts.length - rtrimmedPos;
+            if (rtrimmed !== 0) {
+                inserts = inserts.slice(0, rtrimmedPos);
+            }
 
-        assert.ok(Number.isSafeInteger(rtrimmed) && rtrimmed >= 0, `Negative rtrimmed is not ok; rtrimmed: ${rtrimmed}; rtrimmedPos: ${rtrimmedPos}, insertsLength: ${inserts.length}`);
+            if (!Number.isSafeInteger(rtrimmed) || rtrimmed < 0) {
+                debugger;
+                throw new Error(`Negative rtrimmed is not ok; rtrimmed: ${rtrimmed}; rtrimmedPos: ${rtrimmedPos}, insertsLength: ${inserts.length}`);
+            }
+        }
 
         return {pos, inserts, overlapped, rtrimmed};
     }
@@ -106,17 +115,13 @@ export class TablePairs {
         return this.#indexAddenda.chunkShift;
     }
 
-    get mappingMode() {
-        return this.#props?.mappingMode || directMap;
+    rangeLengthStarting(codePointStart) {
+        return rangeLength(codePointStart, this.data.length, this.chunkSize);
     }
 
-    get isMultiMode() {
-        return this.mappingMode === multiMap;
-    }
-
-    dataView(codePointStart, length = rangeLength(codePointStart, this.data.length, this.chunkSize)) {
-        if (this.isMultiMode) {
-            return new Span(this.flattedDataView, codePointStart, length);
+    dataView(codePointStart, length = this.rangeLengthStarting(codePointStart)) {
+        if (this.#props?.dataView) {
+            return this.#props.dataView.call(this, codePointStart, length);
         }
         return new Span(this.data, codePointStart, length);
     }
@@ -125,6 +130,9 @@ export class TablePairs {
         modifier = modifier.clone();
         const left = dataView;
         const right = new ModifiedSpan(this.values, modifier);
+        if (right.length === 0) {
+            return 0;
+        }
         try {
             top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
                 modifier.set({pos: rpos});
@@ -160,11 +168,20 @@ export class TablePairs {
     }
 
     #findSimilarMaskedRange(codePointStart) {
-        const length = rangeLength(codePointStart, this.data.length, this.chunkSize);
+        const length = this.rangeLengthStarting(codePointStart);
         let possibilities = [];
         let invalidModifiers = [];
         const dataView = this.dataView(codePointStart);
-        const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {codePointStart, length, dataView}) || {};
+        const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {
+            codePointStart,
+            length,
+            dataView
+        }) || {};
+
+        if (codePointStart === 0x2f6e) {
+            debugger
+        }
+
         for (const indexModifier of this.#indexAddenda.generate()) {
 
             // set the position
@@ -238,7 +255,14 @@ export class TablePairs {
         possibilities = possibilities.filter(item => {
             return item !== undefined && item.inserts.length <= leastInsertLength;
         });
-        possibilities = possibilities.toSorted((a, b) => a.modifier.mask - b.modifier.mask);
+
+        // sort them
+        if (this.#props?.toSortedPossibilities) {
+            possibilities = this.#props.toSortedPossibilities(possibilities);
+        } else if (this.#indexAddenda.has("mask")) {
+            possibilities = possibilities.toSorted((a, b) => a.modifier.mask - b.modifier.mask);
+        }
+
         const codePointStartHex = codePointStart.toString(16);
         const codePointEndHex = (codePointStart + length).toString(16) || "infinite";
         console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`,
@@ -345,9 +369,14 @@ export class TablePairs {
             }
         }
 
-        if (this.indices.length > ((0b1 << this.#indexAddenda.pos.size) - 1)) {
+        const maxPossibleLength = ((0b1 << this.#indexAddenda.pos.size) - 1);
+        if (this.indices.length > maxPossibleLength) {
+            debugger;
             throw new Error("Table size limit reached; the limit is because " +
-                `the pointer to the table is going to be bigger than ${this.#indexAddenda.typeString} size.`);
+                `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` +
+                `indices length: ${this.indices.length}, max possible length: ${maxPossibleLength}, ` +
+                `values length: ${this.values.length}`
+            );
         }
 
         console.log("Inserted: ", insertedCount, "reused:", reusedCount);
