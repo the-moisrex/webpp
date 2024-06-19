@@ -17,7 +17,7 @@ namespace webpp::uri {
 
     /// URI Parsing Options,
     /// These options are designed to
-    /// Default values are WHATWG-Compliant values (if relavant)
+    /// Default values are WHATWG-Compliant values (if relevant)
     static constexpr struct alignas(32) uri_parsing_options {
         /// Consider `\0` (EOF) as a valid end of string character; you may want to disable it if you already
         /// know the end of your string and you may enable if you're working with a stream
@@ -164,7 +164,7 @@ namespace webpp::uri {
     ///            |
     ///         error bit == 1
     ///         valid bit == 0
-    using uri_status_type                        = stl::uint_fast32_t;
+    using uri_status_type                        = stl::uint32_t;
     static constexpr uri_status_type valid_bit   = 0U;
     static constexpr uri_status_type error_bit   = 1U << 20U;
     static constexpr uri_status_type warning_bit = error_bit >> 1U;
@@ -520,7 +520,8 @@ namespace webpp::uri {
      * You can use this to print the warnings and errors of a URI.
      */
     struct uri_status_iterator {
-        using value_type = stl::underlying_type_t<uri_status>;
+        using value_type   = uri_status;
+        using storage_type = stl::underlying_type_t<value_type>;
 
         using difference_type   = stl::ptrdiff_t;
         using reference         = value_type&;
@@ -534,9 +535,12 @@ namespace webpp::uri {
         constexpr uri_status_iterator() noexcept = default;
 
         constexpr explicit uri_status_iterator(uri_status const inp_status) noexcept
-          : status{stl::to_underlying(inp_status)} {}
+          : status{stl::to_underlying(inp_status)},
+            current{get_warning(status)} {}
 
-        constexpr explicit uri_status_iterator(value_type const inp_status) noexcept : status{inp_status} {}
+        constexpr explicit uri_status_iterator(storage_type const inp_status) noexcept
+          : status{inp_status},
+            current{get_warning(status)} {}
 
         constexpr uri_status_iterator(uri_status_iterator const&) noexcept            = default;
         constexpr uri_status_iterator(uri_status_iterator&&) noexcept                 = default;
@@ -547,17 +551,13 @@ namespace webpp::uri {
         constexpr uri_status_iterator& operator++() noexcept {
             if (has_warnings(status)) {
                 // remove the first warning
-                auto const new_warnings = (warnings_mask & status) << 1U & warnings_mask;
+                auto const left_most_warning_bit  = stl::bit_floor(warnings_mask & status);
+                status                           &= ~left_most_warning_bit;
 
-                // remove the warnings
-                status &= ~warnings_mask;
-
-                // add the new warning bits again
-                status |= new_warnings;
+                current = has_warnings(status) ? get_warning(status) : static_cast<uri_status>(status);
             } else {
-                // the error or valid value will be the last element, and there only can be one of them, so
-                // after that we zero it out
-                status = 0U;
+                status  = 0U;
+                current = static_cast<uri_status>(status);
             }
             return *this;
         }
@@ -568,21 +568,17 @@ namespace webpp::uri {
             return iter;
         }
 
-        constexpr uri_status operator*() const noexcept {
-            if (has_warnings(status)) {
-                // return the first warning
-                return get_warning(status);
-            }
-            // return valid, error, or 0; it doesn't matter because there's only one of them now.
-            return static_cast<uri_status>(status);
+        constexpr const_reference operator*() const noexcept {
+            // return valid, error, or 0; it doesn't matter because there's only one of them
+            return current;
         }
 
         constexpr const_pointer operator->() const noexcept {
-            return &status;
+            return &current;
         }
 
         constexpr pointer operator->() noexcept {
-            return &status;
+            return &current;
         }
 
         [[nodiscard]] constexpr bool operator==(uri_status_iterator const rhs) const noexcept {
@@ -598,7 +594,8 @@ namespace webpp::uri {
         }
 
       private:
-        value_type status = 0U;
+        storage_type status  = 0U;
+        value_type   current = uri_status::unparsed;
     };
 
     [[nodiscard]] static constexpr uri_status_iterator begin(uri_status_iterator status) noexcept {

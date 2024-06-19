@@ -7,10 +7,16 @@
 #include "../webpp/uri/path_traverser.hpp"
 #include "common/tests_common_pch.hpp"
 
+#include <ranges>
+
 // also checkout:
 //  - domain-test
 
 using namespace webpp;
+
+static_assert(std::input_iterator<uri::uri_status_iterator>, "Input iterator");
+static_assert(std::forward_iterator<uri::uri_status_iterator>, "Input iterator");
+static_assert(std::ranges::input_range<uri::uri_status_iterator>, "Input range");
 
 TEST(URIHelperTests, IIEquals) {
     EXPECT_TRUE(uri::iiequals<uri::details::TABS_OR_NEWLINES<char>>("\t\th\tel\rlo world\t.\n",
@@ -175,6 +181,24 @@ TYPED_TEST(URITests, URIStatusIterator) {
     EXPECT_EQ(index, 2);
 }
 
+#if __cpp_lib_ranges && __cpp_lib_ranges_join_with
+TYPED_TEST(URITests, URIStatusRange) {
+    uri::uri_status_type status  = 0;
+    status                      |= stl::to_underlying(uri::uri_status::missing_following_solidus);
+    status                      |= stl::to_underlying(uri::uri_status::invalid_character);
+
+    stl::string const errors =
+      uri::uri_status_iterator{status} | std::views::transform([](uri::uri_status const cur_status) {
+          return to_string(cur_status);
+      }) |
+      std::views::join_with('\n') | std::ranges::to<std::string>();
+#    if __cpp_lib_string_contains
+    EXPECT_TRUE(errors.contains(to_string(uri::uri_status::missing_following_solidus))) << errors;
+    EXPECT_TRUE(errors.contains(to_string(uri::uri_status::invalid_character))) << errors;
+#    endif
+}
+#endif
+
 TYPED_TEST(URITests, URIStatusIteratorWithValue) {
     uri::uri_status_type status  = 0;
     status                      |= stl::to_underlying(uri::uri_status::missing_following_solidus);
@@ -184,7 +208,7 @@ TYPED_TEST(URITests, URIStatusIteratorWithValue) {
     uri::uri_status_type const original = status;
 
     int index = 0;
-    for (auto item : uri::uri_status_iterator{status}) {
+    for (auto const item : uri::uri_status_iterator{status}) {
         EXPECT_TRUE(item == uri::uri_status::missing_following_solidus ||
                     item == uri::uri_status::invalid_character || item == uri::uri_status::valid_queries)
           << "Index: " << index << "\n"

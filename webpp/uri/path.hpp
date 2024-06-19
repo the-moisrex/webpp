@@ -102,8 +102,9 @@ namespace webpp::uri {
                 encoder.get_buffer().clear();
             } else if constexpr (ctx_type::is_modifiable && !ctx_type::is_segregated) {
                 if constexpr (!Options.ignore_tabs_or_newlines) {
-                    auto&      out    = encoder.get_buffer();
-                    auto const length = encoder.context().pos - encoder.segment_begin();
+                    auto&      out = encoder.get_buffer();
+                    auto const length =
+                      static_cast<stl::size_t>(encoder.context().pos - encoder.segment_begin());
                     out.erase(out.size() - length);
                 } else {
                     // we have to manually find the last slash and remove until there, we can't rely on
