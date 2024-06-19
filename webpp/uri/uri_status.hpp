@@ -518,6 +518,23 @@ namespace webpp::uri {
     /**
      * This is a forward iterator that gives you all the warnings inside a uri status.
      * You can use this to print the warnings and errors of a URI.
+     *
+     * uri_status_iterator is designed to work with ranges.
+     *
+     * Example Usage with ranges:
+     * @code
+     *     // Create a string containing all the error messages:
+     *     uint32_t status = ...;
+     *     std::string errors_string =
+     *        uri_status_iterator{status} | transform([](uri_status cur_status) {
+     *            return to_string(cur_status);
+     *        }) | join_with('\n') | to<std::string>();
+     *
+     *     // If status is already in type of uri_status, you can just use status directly,
+     *     // because std::begin(status) returns a uri_status_iterator:
+     *     string error_string2 =
+     *        status | transform(...) | join_with('\n') | to<string>();
+     * @endcode
      */
     struct uri_status_iterator {
         using value_type   = uri_status;

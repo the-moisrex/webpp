@@ -14,9 +14,13 @@
 
 using namespace webpp;
 
+
+// uri_status_iterator is designed to work with ranges
 static_assert(std::input_iterator<uri::uri_status_iterator>, "Input iterator");
 static_assert(std::forward_iterator<uri::uri_status_iterator>, "Input iterator");
+#if __cpp_lib_ranges
 static_assert(std::ranges::input_range<uri::uri_status_iterator>, "Input range");
+#endif
 
 TEST(URIHelperTests, IIEquals) {
     EXPECT_TRUE(uri::iiequals<uri::details::TABS_OR_NEWLINES<char>>("\t\th\tel\rlo world\t.\n",
