@@ -69,6 +69,9 @@ export class TablePairs {
         const modifiedInserts = new ModifiedSpan(inserts, insertsModifier);
 
         // validating inserts:
+        // if (inserts.length > this.chunkSize) {
+        //     return {valid: false};
+        // }
         for (let index = 0; index !== inserts.length; ++index) {
             const realValue = dataView.at(index);
             const insertValue = modifiedInserts.at(index);
@@ -131,13 +134,16 @@ export class TablePairs {
         modifier = modifier.clone();
         const left = dataView;
         const right = new ModifiedSpan(this.values, modifier);
+        // if (left.length > this.chunkSize) {
+        //     return null;
+        // }
         // try {
         top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
             modifier.set({pos: rpos});
             for (let lpos = 0; lpos !== left.length; ++lpos) {
                 const rvalue = right.at(lpos);
                 const lvalue = left.at(lpos);
-                if (!Number.isSafeInteger(rvalue) && Number.isSafeInteger(lvalue)) {
+                if (!Number.isSafeInteger(rvalue) || !Number.isSafeInteger(lvalue)) {
                     return null;
                 }
                 if (rvalue !== lvalue) {
@@ -283,7 +289,7 @@ export class TablePairs {
         if (possibilities.length === 0) {
             console.error(`  Empty possibilities:`, possibilities, this.values.length, this.data.length);
             console.error(`  Invalid Modifiers:`, invalidModifiers.length,
-                invalidModifiers.map(item => item?.toString() || item));
+                invalidModifiers);
             debugger;
             process.exit(1);
         }

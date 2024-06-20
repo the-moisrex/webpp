@@ -190,6 +190,10 @@ export class Addenda {
             this[addendum.name] = addendum;
         }
 
+        if (!Number.isSafeInteger(this.minSize)) {
+            debugger;
+            throw new Error("Invalid minSize");
+        }
         this.#chunkSize = fillBitsFromRight(this.minSize) + 1;
         this.modify = modifyFunc;
 
@@ -611,7 +615,7 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "This value is the max length of each mappings; there should be additional empty values added\n" +
         "in between the values of the values table in order to make sure we can easily find the needed \n" +
         "mappings for all the code points without searching for them.",
-    affectsChunkSize: false,
+    affectsChunkSize: true,
     sizeof: type,
     modify(modifier, meta) {
         assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");

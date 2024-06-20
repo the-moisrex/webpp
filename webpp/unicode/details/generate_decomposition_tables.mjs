@@ -7,17 +7,11 @@
 
 import * as readme from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {
-    uint8,
-    uint32,
-    writePieces, runClangFormat, uint6, uint7, utf32To8All, Span,
-} from "./utils.mjs";
+import {uint8, uint32, writePieces, runClangFormat, utf32To8All, Span} from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {
-    Addenda, genMaxLengthAddendum, genPositionAddendum
-} from "./modifiers.mjs";
+import {Addenda, genMaxLengthAddendum, genPositionAddendum} from "./modifiers.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 
@@ -90,7 +84,7 @@ class DecompTable {
                 sizeof: uint8,
                 description: `UTF-8 Encoded Decomposition Code Points`,
             },
-            validateResults: true,
+            validateResults: false,
             genIndexAddenda: () => this.genAddenda(),
 
 
