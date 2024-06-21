@@ -8,37 +8,35 @@
 
 namespace webpp::unicode {
 
-    namespace details {
-        // From https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
+    // From https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G56669
 
-        /// SBase in the standard:
-        static constexpr auto hangul_syllable_base = 0xAC00UL;
+    /// SBase in the standard:
+    static constexpr auto hangul_syllable_base = 0xAC00UL;
 
-        /// LBase in the standard:
-        static constexpr auto hangul_leading_base = 0x1100UL;
+    /// LBase in the standard:
+    static constexpr auto hangul_leading_base = 0x1100UL;
 
-        /// VBase in the standard:
-        static constexpr auto hangul_vowel_base = 0x1161UL;
+    /// VBase in the standard:
+    static constexpr auto hangul_vowel_base = 0x1161UL;
 
-        /// TBase in the standard:
-        static constexpr auto hangul_trailing_base = 0x11A7UL;
+    /// TBase in the standard:
+    static constexpr auto hangul_trailing_base = 0x11A7UL;
 
-        /// LCount in the standard:
-        static constexpr auto hangul_leading_count = 19UL;
+    /// LCount in the standard:
+    static constexpr auto hangul_leading_count = 19UL;
 
-        /// VCount in the standard:
-        static constexpr auto hangul_vowel_count = 21UL;
+    /// VCount in the standard:
+    static constexpr auto hangul_vowel_count = 21UL;
 
-        /// TCount in the standard:
-        static constexpr auto hangul_trailing_count = 28UL;
+    /// TCount in the standard:
+    static constexpr auto hangul_trailing_count = 28UL;
 
-        /// Total count of Hangul blocks and syllables
-        /// NCount in the standard:
-        static constexpr auto hangul_block_count = hangul_vowel_count * hangul_trailing_count;
+    /// Total count of Hangul blocks and syllables
+    /// NCount in the standard:
+    static constexpr auto hangul_block_count = hangul_vowel_count * hangul_trailing_count;
 
-        /// SCount in the standard:
-        static constexpr auto hangul_syllable_count = hangul_leading_count * hangul_block_count;
-    } // namespace details
+    /// SCount in the standard:
+    static constexpr auto hangul_syllable_count = hangul_leading_count * hangul_block_count;
 
     /**
      * Checks if a given code point is a Hangul syllable.
@@ -61,8 +59,8 @@ namespace webpp::unicode {
      */
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr bool is_hangul_code_point(CharT const code_point) noexcept {
-        return code_point >= details::hangul_syllable_base &&
-               code_point < details::hangul_syllable_base + details::hangul_syllable_count;
+        return code_point >= hangul_syllable_base &&
+               code_point < hangul_syllable_base + hangul_syllable_count;
     }
 
     /**
@@ -82,8 +80,7 @@ namespace webpp::unicode {
      */
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr bool is_hangul_leading(CharT const code_point) noexcept {
-        return code_point >= details::hangul_leading_base &&
-               code_point < details::hangul_leading_base + details::hangul_leading_count;
+        return code_point >= hangul_leading_base && code_point < hangul_leading_base + hangul_leading_count;
     }
 
     /**
@@ -103,8 +100,8 @@ namespace webpp::unicode {
      */
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr bool is_hangul_trailing(CharT const code_point) noexcept {
-        return code_point >= details::hangul_trailing_base &&
-               code_point < details::hangul_trailing_base + details::hangul_trailing_count;
+        return code_point >= hangul_trailing_base &&
+               code_point < hangul_trailing_base + hangul_trailing_count;
     }
 
     /**
@@ -127,8 +124,7 @@ namespace webpp::unicode {
      */
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr bool is_hangul_vowel(CharT const code_point) noexcept {
-        return code_point >= details::hangul_vowel_base &&
-               code_point < details::hangul_vowel_base + details::hangul_vowel_count;
+        return code_point >= hangul_vowel_base && code_point < hangul_vowel_base + hangul_vowel_count;
     }
 
     /**
@@ -139,7 +135,7 @@ namespace webpp::unicode {
     template <typename CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
     [[nodiscard]] static constexpr RetT hangul_decompose_length(CharT const code_point) noexcept {
         webpp_assume(is_hangul_code_point(code_point));
-        if ((code_point - details::hangul_syllable_base) % details::hangul_trailing_count) {
+        if ((code_point - hangul_syllable_base) % hangul_trailing_count) {
             return 3U;
         }
         return 2U;
@@ -147,7 +143,7 @@ namespace webpp::unicode {
 
     template <typename CharT = char32_t>
     struct decomposed_hangul {
-        static constexpr CharT invalid_trailing = details::hangul_trailing_base;
+        static constexpr CharT invalid_trailing = hangul_trailing_base;
 
         CharT leading;
         CharT vowel;
@@ -164,13 +160,6 @@ namespace webpp::unicode {
     template <typename CharT = char32_t>
     [[nodiscard]] static constexpr decomposed_hangul<CharT> decomposed_hangul_code_point(
       CharT const code_point) noexcept {
-        using details::hangul_block_count;
-        using details::hangul_leading_base;
-        using details::hangul_syllable_base;
-        using details::hangul_trailing_base;
-        using details::hangul_trailing_count;
-        using details::hangul_vowel_base;
-
         auto const pos = code_point - hangul_syllable_base;
 
         // Calculating the indices:
@@ -227,13 +216,6 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr CharT combine_hangul_code_points(
       CharT const lhs,
       CharT const rhs) noexcept {
-        using details::hangul_block_count;
-        using details::hangul_leading_base;
-        using details::hangul_syllable_base;
-        using details::hangul_trailing_base;
-        using details::hangul_trailing_count;
-        using details::hangul_vowel_base;
-
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
             auto const leading_pos = lhs - hangul_leading_base;
             auto const vowel_pos   = rhs - hangul_vowel_base;
