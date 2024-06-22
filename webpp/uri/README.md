@@ -42,3 +42,13 @@ We're using the term URI instead of URL in this project even though we're well a
 Consider URL and URI the same term even though URI has a broader use cases than URL, that's why we chose URI instead of
 using URL like WHATWG.
 
+<svg width="765.749" height="547.993" viewBox="0 0 202.605 144.99" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(-3.889 -2.378)">
+        <ellipse style="fill:#000;stroke-width:.264583" cx="105.191" cy="74.873" rx="101.302" ry="72.495"/>
+        <ellipse style="fill:#666;stroke-width:.264583" cx="90.643" cy="76.142" rx="74.97" ry="55.585"/>
+        <ellipse style="fill:#666;stroke-width:.264583" cx="183.543" cy="75.967" rx="15.729" ry="15.276"/>
+        <text xml:space="preserve" style="font-size:6.35px;fill:#f9f9f9;stroke-width:.264583" x="99.428" y="12.534"><tspan style="stroke-width:.264583" x="99.428" y="12.534">URI</tspan></text>
+        <text xml:space="preserve" style="font-size:6.35px;fill:#f9f9f9;stroke-width:.264583" x="80.068" y="77.718"><tspan style="stroke-width:.264583" x="80.068" y="77.718">URL</tspan></text>
+        <text xml:space="preserve" style="font-size:6.35px;fill:#f9f9f9;stroke-width:.264583" x="178.059" y="78.49"><tspan style="stroke-width:.264583" x="178.059" y="78.49">URN</tspan></text>
+    </g>
+</svg>
