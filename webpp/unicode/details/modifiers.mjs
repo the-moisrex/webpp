@@ -158,7 +158,7 @@ export class Addenda {
 
     #modifierFunctions = {};
 
-    constructor(name, addenda, modifyFunc) {
+    constructor(name, addenda, funcs) {
         this.name = name;
         this.addenda = addenda;
         this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0));
@@ -195,7 +195,9 @@ export class Addenda {
             throw new Error("Invalid minSize");
         }
         this.#chunkSize = fillBitsFromRight(this.minSize) + 1;
-        this.modify = modifyFunc;
+        if (funcs.modify) {
+            this.modify = funcs.modify;
+        }
 
         this.#tests();
     }
@@ -232,6 +234,16 @@ export class Addenda {
 
     get modifierFunctions() {
         return this.#modifierFunctions;
+    }
+
+    get defaultValues() {
+        const values = {};
+        for (const addendum of this.addenda) {
+            if (addendum?.defaultValue !== undefined) {
+                values[addendum.name] = addendum.defaultValue;
+            }
+        }
+        return values;
     }
 
     set modifierFunctions(value) {
@@ -432,6 +444,22 @@ export class Modifier {
         this.modifier = this.addenda.modifierCode(this.values());
     }
 
+    /// reset the addenda that can be reset
+    reset() {
+        this.set(this.#addenda.defaultValues);
+    }
+
+    resetOnly(values) {
+        const newValues = {};
+        for (const name of values) {
+            const defaultValue = this.#addenda.addendum(name)?.defaultValue;
+            if (defaultValue !== undefined) {
+                newValues[name] = defaultValue;
+            }
+        }
+        this.set(newValues);
+    }
+
     values() {
         let values = {};
         for (const addendum of this.#addenda.addenda) {
@@ -495,13 +523,12 @@ export class ModifiedSpan {
     #data;
     #modifier;
 
-    constructor(data,  modifier) {
+    constructor(data, modifier) {
         this.#data = data;
         this.#modifier = modifier;
     }
 
     at(index) {
-        // index -= this.start;
         if (!(index >= 0 && index < this.#modifier.chunkSize)) {
             debugger;
             throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`);
@@ -592,6 +619,7 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     description: "This value gets added to the retrieved value at the end of the operation.",
     sizeof: type,
     affectsChunkSize: false,
+    defaultValue: 0,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
         yield this.min;
@@ -617,11 +645,23 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "mappings for all the code points without searching for them.",
     affectsChunkSize: true,
     sizeof: type,
+    defaultValue: 1,
     modify(modifier, meta) {
         assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
         assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
-        return {...meta, pos: meta.pos * modifier.max_length};
-    },
+        // if (modifier.max_length === 0) {
+        //     throw new Error("max_length should be greater than 0");
+        // }
+        return {
+            ...meta,
+
+            // calculate the new position
+            pos: meta.pos * modifier.max_length,
+
+            // calculate the new table length
+            // length: Math.ceil(meta.length / modifier.max_length)
+        };
+    }
 });
 
 export const genMaskAddendum = (type = uint8) => new Addendum({
@@ -631,6 +671,7 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
         "The mask does not apply to the whole index, but only to the remaining index.",
     affectsChunkSize: true,
     sizeof: type,
+    defaultValue: maxOf(type), // 255 for uint8
     * generate() {
         yield this.min;
         yield this.max;
@@ -658,6 +699,7 @@ export const genPositionAddendum = () => new Addendum({
     name: "pos",
     description: "This is the position that should be looked for in the values table.",
     sizeof: uint16,
+    defaultValue: 0,
     affectsChunkSize: false,
 });
 
@@ -665,19 +707,21 @@ export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), g
 export const genMaskedAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type)];
 
 export const genIndexAddenda = (name = "index", type = uint8) => {
-    const addenda = new Addenda(name, genDefaultAddendaPack(type), function (table, modifier, range, pos) {
-        const {pos: maskedPos} = this.mask.modify(modifier, {pos});
-        const newPos = range + maskedPos;
-        if (newPos >= table.length) {
-            throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+    const addenda = new Addenda(name, genDefaultAddendaPack(type), {
+        modify: function (table, modifier, range, pos) {
+            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const newPos = range + maskedPos;
+            if (newPos >= table.length) {
+                throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+            }
+            const value = table.at(newPos);
+            const newValue = this.shift.modify(modifier, {pos: maskedPos, value}).value;
+            if (!Number.isSafeInteger(newValue)) {
+                debugger;
+                throw new Error(`Something went really wrong; range: ${range}, value: ${newValue}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
+            }
+            return newValue;
         }
-        const value = table.at(newPos);
-        const newValue = this.shift.modify(modifier, {pos: maskedPos, value}).value;
-        if (!Number.isSafeInteger(newValue)) {
-            debugger;
-            throw new Error(`Something went really wrong; range: ${range}, value: ${newValue}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
-        }
-        return newValue;
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {
@@ -697,19 +741,21 @@ export const genIndexAddenda = (name = "index", type = uint8) => {
 
 
 export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
-    const addenda = new Addenda(name, genMaskedAddendaPack(type), function (table, modifier, range, pos) {
-        const {pos: maskedPos} = this.mask.modify(modifier, {pos});
-        const newPos = range + maskedPos;
-        if (newPos >= table.length) {
-            // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
-            return null;
+    const addenda = new Addenda(name, genMaskedAddendaPack(type), {
+        modify: function (table, modifier, range, pos) {
+            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const newPos = range + maskedPos;
+            if (newPos >= table.length) {
+                // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+                return null;
+            }
+            const value = table.at(newPos);
+            if (!Number.isSafeInteger(value)) {
+                debugger;
+                throw new Error(`Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
+            }
+            return value;
         }
-        const value = table.at(newPos);
-        if (!Number.isSafeInteger(value)) {
-            debugger;
-            throw new Error(`Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
-        }
-        return value;
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {

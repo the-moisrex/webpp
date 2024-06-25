@@ -7,7 +7,7 @@ import {
     uint32,
     uint8,
 } from "./utils.mjs";
-import {genIndexAddenda, InvalidModifier, ModifiedSpan, Modifier, rangeLength} from "./modifiers.mjs";
+import {genIndexAddenda, ModifiedSpan, Modifier, rangeLength} from "./modifiers.mjs";
 import * as assert from "node:assert";
 
 export class TablePairs {
@@ -22,15 +22,14 @@ export class TablePairs {
         this.#name = this.#props?.name || "table";
         this.#description = this.#props?.description || "";
 
-
-        // the tables
-        this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32);
-        this.values = new TableTraits(this.#props?.values?.max || 65535, this.values || uint8);
-
         // index table's information
         this.#indexAddenda = (meta?.genIndexAddenda || genIndexAddenda)();
         this.#indexAddenda.name = `${this.#name}_index`;
         this.#indexAddenda.description = `${this.#name[0].toUpperCase()}${this.#name.substring(1)} (Index Table)\n${this.#description}`;
+
+        // the tables
+        this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32);
+        this.values = new TableTraits(this.#props?.values?.max || 65535, this.values || uint8);
     }
 
     add(codePoint, value) {
@@ -65,7 +64,7 @@ export class TablePairs {
         let pos = modifier.pos;
 
         const insertsModifier = modifier.clone();
-        insertsModifier.set({pos: 0});
+        insertsModifier.resetOnly(['pos', 'max_length']);
         const modifiedInserts = new ModifiedSpan(inserts, insertsModifier);
 
         // validating inserts:
@@ -182,12 +181,9 @@ export class TablePairs {
         const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {
             codePointStart,
             length,
+            data: this.data,
             dataView
         }) || {};
-
-        if (codePointStart === 0x2f6e) {
-            debugger
-        }
 
         for (const indexModifier of this.#indexAddenda.generate()) {
 
