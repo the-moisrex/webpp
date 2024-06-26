@@ -420,7 +420,7 @@ export class TablePairs {
 
         const indices = this.indices.result
         const indicesBits = this.indicesTableSizeInBits();
-        const cccBits = this.valuesTableSizeInBits();
+        const valuesBits = this.valuesTableSizeInBits();
 
         let printableValues = [];
 
@@ -479,7 +479,7 @@ ${this.#indexAddenda.render()}
      *   - in bytes:      ${indicesBits / 8} B
      *   - in KibiBytes:  ${Math.ceil(indicesBits / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.#indexAddenda.name}, ${indices.length}ULL> ccc_indices{
+    static constexpr std::array<${this.#indexAddenda.name}, ${indices.length}ULL> ${this.#name.toLowerCase()}_indices{
         ${indices.join(", ")}
     };
     
@@ -490,11 +490,11 @@ ${this.#indexAddenda.render()}
      * ${this.#props?.indices?.description?.replace("\n", "\n     * ") || ""}
      * 
      * Table size:
-     *   - in bits:       ${cccBits}
-     *   - in bytes:      ${cccBits / 8} B
-     *   - in KibiBytes:  ${Math.ceil(cccBits / 8 / 1024)} KiB
+     *   - in bits:       ${valuesBits}
+     *   - in bytes:      ${valuesBits / 8} B
+     *   - in KibiBytes:  ${Math.ceil(valuesBits / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.values.STLTypeString}, ${this.values.length}ULL> ccc_values{
+    static constexpr std::array<${this.values.STLTypeString}, ${this.values.length}ULL> ${this.#name.toLowerCase()}_values{
         ${printableValues}
     };
         `);

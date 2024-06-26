@@ -63,6 +63,20 @@ class DecompTable {
     hangulIgnored = 0;
     flattedDataView = [];
 
+    findMaxLengths({codePointStart, length, data}) {
+        let maxLen = 0;
+        for (let index = codePointStart; index < length; index++) {
+            const datum = data.at(index);
+            const {mappedTo} = datum;
+            if (mappedTo.length > maxLen) {
+                maxLen = mappedTo.length;
+            }
+        }
+
+        // set the max_length addendum value
+        return {max_length: maxLen};
+    }
+
     constructor() {
         const self = this;
         this.tables.init({
@@ -88,19 +102,7 @@ class DecompTable {
             genIndexAddenda: () => this.genAddenda(),
 
 
-            getModifierAddenda: function findMaxLengths({codePointStart, length}) {
-                let maxLen = 0;
-                for (let index = codePointStart; index < length; index++) {
-                    const datum = this.data[index];
-                    const {mappedTo} = datum;
-                    if (mappedTo.length > maxLen) {
-                        maxLen = mappedTo.length;
-                    }
-                }
-
-                // set the max_length addendum value
-                return {max_length: maxLen};
-            },
+            getModifierAddenda: this.findMaxLengths,
 
             dataView(codePointStart, length) {
                 const endPos = codePointStart + length;
@@ -109,7 +111,7 @@ class DecompTable {
                 // } else if (this.data.length === endPos) {
                 //     return new Span(this.data, codePointStart, this.data[this.data.length - 1].mappedTo.length);
                 // }
-                const {flatStart} = this.data[codePointStart];
+                const {flatStart} = this.data.at(codePointStart);
                 const {flatStart: flatEnd} = this.data[endPos] || {flatStart: self.flattedDataView.length};
                 const flatLength = flatEnd - flatStart;
                 if (!Number.isSafeInteger(flatLength)) {
@@ -128,6 +130,15 @@ class DecompTable {
                 // add length to the modifier:
                 // modifier.set({length: inserts.length});
 
+                // Add empty fields to the values table:
+                // let newInserts = [];
+                // for (const item of inserts) {
+                //     newInserts.push(item);
+                //     for (let index = 1; index < modifier.max_length; index++) {
+                //         newInserts.push(0);
+                //     }
+                // }
+
                 return {modifier, inserts};
             },
         });
@@ -140,16 +151,18 @@ class DecompTable {
             // genMaskAddendum(uint8),
             genMaxLengthAddendum(uint8),
         ];
-        const addenda = new Addenda(name, addendaPack, function (table, modifier, range, pos) {
-            const {pos: maskedPos} = this.max_length.modify(modifier, {pos});
-            const newPos = range + maskedPos;
-            if (newPos >= table.length) {
-                return null;
-                // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+        const addenda = new Addenda(name, addendaPack, {
+            modify: function (table, modifier, range, pos) {
+                const {pos: maskedPos} = this.max_length.modify(modifier, {pos});
+                const newPos = range + maskedPos;
+                if (newPos >= table.length) {
+                    return null;
+                    // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+                }
+                // return table.at(newPos);
+                // return {mapped, mappedTo, length: mappedTo.length};
+                return table.at(newPos);
             }
-            // return table.at(newPos);
-            // return {mapped, mappedTo, length: mappedTo.length};
-            return table.at(newPos);
         });
         addenda.modifierFunctions = {
             // applyMask: function (pos) {
@@ -188,6 +201,19 @@ class DecompTable {
         // }
     }
 
+    getMaxLength(codePoint) {
+        const codePointStart = codePoint % this.tables.chunkSize;
+        if (codePointStart >= this.tables.data.length) {
+            return 1; // default value for the max_length
+        }
+        return this.findMaxLengths({
+            codePointStart,
+            length: this.tables.rangeLengthStarting(codePointStart),
+            data: this.tables.data,
+            dataView: this.tables.dataView(codePointStart)
+        }).max_length;
+    }
+
     add(codePoint, value) {
         let {mapped, mappedTo} = value;
 
@@ -215,10 +241,16 @@ class DecompTable {
         // value.flatLength = mappedTo.length;
         if (mapped) {
 
+            let maxLength = this.getMaxLength(codePoint);
+
             // these don't get to be in the "values" table, so they should not be in this table either
             for (const curCodePoint of mappedTo) {
                 // curCodePoint is already UTF-8 encoded, no need for re-encoding
                 this.flattedDataView.push(curCodePoint);
+                --maxLength;
+            }
+            for (; maxLength > 0; --maxLength) {
+                this.flattedDataView.push(0);
             }
 
         }

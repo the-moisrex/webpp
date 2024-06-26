@@ -73,7 +73,7 @@ export class Addendum {
             this.max = maxOf(this.sizeof);
         }
         this.generable = data["generate"] !== undefined;
-        this.affectsChunkSize = !!data["affectsChunkSize"] || false;
+        this.affectsChunkSize = data["affectsChunkSize"] || false;
     }
 
     get size() {
@@ -489,7 +489,10 @@ export class Modifier {
     }
 
     get chunkSize() {
-        return this.#addenda.chunkSize;
+        // return this.#addenda.chunkSize;
+
+        // call the affectsChunkSize functions
+        return this.#addenda.addenda.reduce((size, addendum) => typeof addendum.affectsChunkSize == "function" ? addendum.affectsChunkSize(this, size) : size, this.#addenda.chunkSize);
     }
 
     get chunkShift() {
@@ -643,7 +646,9 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "This value is the max length of each mappings; there should be additional empty values added\n" +
         "in between the values of the values table in order to make sure we can easily find the needed \n" +
         "mappings for all the code points without searching for them.",
-    affectsChunkSize: true,
+    affectsChunkSize: (modifier, curChunkSize) => {
+        return Infinity;
+    },
     sizeof: type,
     defaultValue: 1,
     modify(modifier, meta) {
