@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 26 Jun 2024 23:58:06 GMT
+ *   This file's generation date:        Thu, 27 Jun 2024 22:42:09 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       202088
@@ -75,9 +75,23 @@ namespace webpp::unicode::details {
             return static_cast<std::uint32_t>(max_length) | (static_cast<std::uint32_t>(pos) << pos_shift);
         }
 
+        static constexpr std::uint16_t chunk_mask  = 0xFFU;
+        static constexpr std::size_t   chunk_size  = 256U;
+        static constexpr std::uint8_t  chunk_shift = 8U;
+
+        /**
+         * Get the final position of the second table.
+         * This does not apply the shift or get the value of the second table for you; this only applies tha
+         * mask.
+         */
+        [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
+            std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position) & chunk_mask;
+            return pos + (remaining_pos * max_length);
+        }
+
         /// See if this code point
         [[nodiscard]] constexpr bool is_mapped(std::uint8_t const value) const noexcept {
-            return this.length == 0;
+            return max_length == 0;
         }
     };
 

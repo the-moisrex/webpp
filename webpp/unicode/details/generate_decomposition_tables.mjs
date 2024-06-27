@@ -11,7 +11,7 @@ import {uint8, uint32, writePieces, runClangFormat, utf32To8All, Span} from "./u
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {Addenda, genMaxLengthAddendum, genPositionAddendum} from "./modifiers.mjs";
+import {Addenda, genMaxLengthAddendum, genPositionAddendum, staticFields} from "./modifiers.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 
@@ -171,12 +171,24 @@ class DecompTable {
         };
         const self = this;
         addenda.renderFunctions = [
-            // todo
+            staticFields,
+            function getPositionFunction() {
+                return `
+        /**
+         * Get the final position of the second table.
+         * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
+         */
+        [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
+            return pos + (remaining_pos * max_length);
+        }
+        `;
+            },
             function isMapped() {
                 return `
         /// See if this code point 
         [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
-            return this.length == 0;
+            return max_length == 0;
         }
                 `;
             }

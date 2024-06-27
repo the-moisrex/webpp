@@ -106,6 +106,7 @@
 #include "../std/iterator.hpp"
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
+#include "./details/decomposition_tables.hpp"
 #include "./unicode.hpp"
 
 namespace webpp::unicode {
@@ -250,46 +251,64 @@ namespace webpp::unicode {
 
 
     /**
-     * Get the required length for the specified range of code points
+     * Get the max required length for the specified range of code points
+     * Attention: this does not return the exact size.
      * @tparam Iter
-     * @tparam EIter = Iter
-     * @tparam SizeT = std::size_t
-     * @param pos    = start position
-     * @param end    = end of the string
-     * @return
+     * @tparam EIter Iter
+     * @tparam SizeT std::size_t
+     * @param pos start position
+     * @param end end of the string
      */
-    // template <typename Iter, typename EIter = Iter, stl::unsigned_integral SizeT = stl::size_t>
-    // [[nodiscard]] static constexpr SizeT decomposition_size(Iter pos, EIter end) noexcept {
-    //     using details::trailing_mapped_deomps;
-    //     using details::decomp_indices;
-    //     using details::decomp_index;
-    //     using details::decomp_values;
-    //
-    //     using char_type = typename stl::iterator_traits<Iter>::value_type;
-    //
-    //     SizeT len = 0;
-    //     for (;;) {
-    //         const auto code_point = unicode::next_code_point(pos, end);
-    //         if (code_point == static_cast<char_type>(0)) {
-    //             break;
-    //         }
-    //
-    //
-    //         // Zero length
-    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-    //             continue;
-    //         }
-    //
-    //         // Look at the ccc_index table, for how this works:
-    //         auto const code_point_range = static_cast<stl::size_t>(code_point) >>
-    //         decomp_index::chunk_shift;
-    //         auto const code             = decomp_indices[code_point_range];
-    //
-    //         // calculating the length of te value in the decomp_values table:
-    //         len += code.length;
-    //     }
-    //     return len;
-    // }
+    template <typename Iter, typename EIter = Iter, stl::unsigned_integral SizeT = stl::size_t>
+    [[nodiscard]] static constexpr SizeT decomposition_max_size(Iter pos, EIter end) noexcept {
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using details::trailing_mapped_deomps;
+
+        using char_type = typename stl::iterator_traits<Iter>::value_type;
+
+        SizeT len = 0;
+        for (;;) {
+            auto const code_point = unicode::next_code_point(pos, end);
+            if (code_point == static_cast<char_type>(0)) {
+                break;
+            }
+
+
+            // Zero length
+            if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+                continue;
+            }
+
+            // Look at the ccc_index table, for how this works:
+            auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
+            auto const code             = decomp_indices[code_point_range];
+
+            // calculating the length of te value in the decomp_values table:
+            len += code.max_length;
+        }
+        return len;
+    }
+
+    template <typename CharT, stl::unsigned_integral SizeT = stl::size_t>
+    [[nodiscard]] static constexpr SizeT decomposition_index(CharT const code_point) noexcept {
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using details::trailing_mapped_deomps;
+
+        // Zero length
+        if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+            return 0U;
+        }
+
+        // Look at the ccc_index table, for how this works:
+        auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
+        auto const code             = decomp_indices[code_point_range];
+
+        return code.get_position(code_point);
+    }
 
 
 } // namespace webpp::unicode
