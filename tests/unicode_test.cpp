@@ -294,4 +294,8 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0x1CE8), 1) << desc_ccc_of(0x1CE8);
 }
 
+TEST(Unicode, Decompose) {
+    EXPECT_EQ(unicode::decompose('\0'), "");
+}
+
 // NOLINTEND(*-magic-numbers)

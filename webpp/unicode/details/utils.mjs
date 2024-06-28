@@ -4,20 +4,112 @@ import * as assert from "node:assert";
 import child_process from "node:child_process";
 
 
-export const uint6 = Symbol('uint8');
-export const uint7 = Symbol('uint8');
-export const uint8 = Symbol('uint8');
-export const uint16 = Symbol('uint16');
-export const uint8x2 = Symbol('uint8');
-export const uint32 = Symbol('uint32');
-export const uint64 = Symbol('uint64');
+export const char1 = Symbol('char8_t');
+export const char2 = Symbol('char8_t');
+export const char3 = Symbol('char8_t');
+export const char4 = Symbol('char8_t');
+export const char5 = Symbol('char8_t');
+export const char6 = Symbol('char8_t');
+export const char7 = Symbol('char8_t');
+export const char8 = Symbol('char8_t');
+export const uint6 = Symbol('std::uint8_t');
+export const uint7 = Symbol('std::uint8_t');
+export const uint8 = Symbol('std::uint8_t');
+export const uint16 = Symbol('std::uint16_t');
+export const uint8x2 = Symbol('std::uint8_t');
+export const uint32 = Symbol('std::uint32_t');
+export const uint64 = Symbol('std::uint64_t');
+
+export const realSizeOf = symbol => {
+    switch (symbol) {
+        case char1:
+        case char2:
+        case char3:
+        case char4:
+        case char5:
+        case char6:
+        case uint6:
+        case char7:
+        case char8:
+        case uint7:
+        case uint8:
+            return 8;
+        case uint8x2:
+        case uint16:
+            return 16;
+        case uint32:
+            return 32;
+        case uint64:
+            return 64;
+    }
+    debugger;
+    throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
+};
+
+export const isStringType = symbol => {
+    switch (symbol) {
+        case char1:
+        case char2:
+        case char3:
+        case char4:
+        case char5:
+        case char6:
+        case uint6:
+        case char7:
+        case char8:
+            return true;
+        default:
+            return false;
+    }
+};
+
+function toHexString(char) {
+    return '\\x' + char.toString(16).padStart(2, '0');
+}
+
+export const cppValueOf = (value, symbol) => {
+    switch (symbol) {
+        case char1:
+        case char2:
+        case char3:
+        case char4:
+        case char5:
+        case char6:
+        case uint6:
+        case char7:
+        case char8:
+            return toHexString(value);
+        case uint7:
+        case uint8:
+        case uint8x2:
+        case uint16:
+        case uint32:
+        case uint64:
+            return value;
+    }
+    debugger;
+    throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
+};
 
 export const sizeOf = symbol => {
     switch (symbol) {
+        case char1:
+            return 1;
+        case char2:
+            return 2;
+        case char3:
+            return 3;
+        case char4:
+            return 4;
+        case char5:
+            return 5;
+        case char6:
         case uint6:
             return 6;
+        case char7:
         case uint7:
             return 7;
+        case char8:
         case uint8:
             return 8;
         case uint8x2:
@@ -33,7 +125,17 @@ export const sizeOf = symbol => {
 };
 
 export const symbolOf = size => {
-    if (size <= 6) {
+    if (size <= 1) {
+        size = 1;
+    } else if (size <= 2) {
+        size = 2;
+    } else if (size <= 3) {
+        size = 3;
+    } else if (size <= 4) {
+        size = 4;
+    } else if (size <= 5) {
+        size = 5;
+    } else if (size <= 6) {
         size = 6;
     } else if (size <= 7) {
         size = 7;
@@ -47,6 +149,16 @@ export const symbolOf = size => {
         size = 64;
     }
     switch (size) {
+        case 1:
+            return char1;
+        case 2:
+            return char2;
+        case 3:
+            return char3;
+        case 4:
+            return char4;
+        case 5:
+            return char5;
         case 6:
             return uint6;
         case 7:
@@ -66,6 +178,7 @@ export const symbolOf = size => {
 /// check if the symbol is 8, 16, 32, or 64
 export const alignedSymbol = symbol => {
     switch (symbol) {
+        case char8:
         case uint8:
         case uint16:
         case uint32:
@@ -241,6 +354,14 @@ export class TableTraits {
 
     constructor(max, type = uint8) {
         switch (type) {
+            case char1:
+            case char2:
+            case char3:
+            case char4:
+            case char5:
+            case char6:
+            case char7:
+            case char8:
             case uint6:
             case uint7:
             case uint8:
@@ -271,11 +392,20 @@ export class TableTraits {
     }
 
     get STLTypeString() {
-        return `std::${this.typeString}_t`;
+        return this.typeString;
     }
 
     get postfix() {
         switch (this.type) {
+            case char1:
+            case char2:
+            case char3:
+            case char4:
+            case char5:
+            case char6:
+            case char7:
+            case char8:
+                return "";
             case uint6:
             case uint7:
             case uint8x2:
@@ -459,4 +589,44 @@ export const utf32To8All = (u32Array) => {
         }
     }
     return arr;
+}
+
+export const renderTableValues = ({name, printableValues, type, len}) => {
+
+    let valuesTable = "";
+    if (isStringType(type)) {
+        valuesTable = `
+    static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
+        ${printableValues.map(val => {
+            let res = "";
+            if (val.comment) {
+                res += `
+        // ${val.comment}
+        `
+            }
+            res += `u8"${val.join("")}"`;
+            return res;
+        }).join("\n")},
+        // done.
+        ${len}UL // String Length
+    };
+            `
+    } else {
+        valuesTable = `
+    static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
+        ${printableValues.map(val => {
+            let res = "";
+            if (val.comment) {
+                res += `
+        // ${val.comment}
+        `
+            }
+            res += val.join(", ");
+            return res;
+        }).join(", \n")}
+    };
+            `;
+    }
+
+    return valuesTable;
 }

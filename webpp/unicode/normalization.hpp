@@ -104,6 +104,7 @@
 #define WEBPP_UNICODE_NORMALIZATION_HPP
 
 #include "../std/iterator.hpp"
+#include "../std/string_like.hpp"
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/decomposition_tables.hpp"
@@ -291,7 +292,7 @@ namespace webpp::unicode {
         return len;
     }
 
-    template <typename CharT, stl::unsigned_integral SizeT = stl::size_t>
+    template <istl::CharType CharT, stl::unsigned_integral SizeT = stl::size_t>
     [[nodiscard]] static constexpr SizeT decomposition_index(CharT const code_point) noexcept {
         using details::decomp_index;
         using details::decomp_indices;
@@ -308,6 +309,28 @@ namespace webpp::unicode {
         auto const code             = decomp_indices[code_point_range];
 
         return code.get_position(code_point);
+    }
+
+    template <istl::CharType CharT, istl::StringLike StrT = stl::string_view>
+    [[nodiscard]] static constexpr StrT decompose(CharT const code_point) noexcept {
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using details::trailing_mapped_deomps;
+
+        using ptr_t = typename StrT::const_pointer;
+
+        // Zero length
+        if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+            return StrT{};
+        }
+
+        // Look at the ccc_index table, for how this works:
+        auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
+        auto const code             = decomp_indices[code_point_range];
+
+        return StrT{reinterpret_cast<ptr_t>(decomp_values.data()) + code.get_position(code_point),
+                    code.max_length};
     }
 
 

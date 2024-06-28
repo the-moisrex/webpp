@@ -1,7 +1,6 @@
 import {
-    bitCeil,
-    findSimilarRange,
-    overlapInserts,
+    bitCeil, char7, cppValueOf, isStringType,
+    overlapInserts, realSizeOf, renderTableValues,
     Span,
     TableTraits,
     uint32,
@@ -29,7 +28,7 @@ export class TablePairs {
 
         // the tables
         this.indices = new TableTraits(this.#props?.indices?.max || 43530, this.#props?.indices?.sizeof || uint32);
-        this.values = new TableTraits(this.#props?.values?.max || 65535, this.values || uint8);
+        this.values = new TableTraits(this.#props?.values?.max || 65535, this.#props?.values?.sizeof || uint8);
     }
 
     add(codePoint, value) {
@@ -405,11 +404,11 @@ export class TablePairs {
     }
 
     indicesTableSizeInBits() {
-        return this.indices.length * this.indices.sizeof;
+        return this.indices.length * realSizeOf(this.indices.type);
     }
 
     valuesTableSizeInBits() {
-        return this.values.length * this.values.sizeof;
+        return this.values.length * realSizeOf(this.values.type);
     }
 
     totalTablesSizeInBits() {
@@ -425,8 +424,9 @@ export class TablePairs {
         let printableValues = [];
 
         if (this.#props?.disableComments) {
-            printableValues = [...this.values.result];
+            printableValues = [[...this.values.result]];
         } else {
+            printableValues = [];
             // add comments in the middle of the data
             this.values.result.forEach((value, pos) => {
                 const poses = [];
@@ -450,13 +450,14 @@ export class TablePairs {
                         lastRangeStart = rangeStart;
                     }
                 });
+                value = cppValueOf(value, this.values.type);
                 if (poses.length === 0) {
-                    printableValues.push(value);
+                    printableValues.at(-1).push(value);
                     return;
                 }
-                printableValues.push(`
-        // Start of ${poses.join(", ")}:
-        ${value}`);
+                printableValues.push([]);
+                printableValues.at(-1).push(value);
+                printableValues.at(-1).comment = `Start of ${poses.join(", ")}:`
             });
         }
 
@@ -483,7 +484,6 @@ ${this.#indexAddenda.render()}
         ${indices.join(", ")}
     };
     
-    
     /**
      * ${this.#name.toUpperCase()} Values Table
      *
@@ -494,9 +494,13 @@ ${this.#indexAddenda.render()}
      *   - in bytes:      ${valuesBits / 8} B
      *   - in KibiBytes:  ${Math.ceil(valuesBits / 8 / 1024)} KiB
      */
-    static constexpr std::array<${this.values.STLTypeString}, ${this.values.length}ULL> ${this.#name.toLowerCase()}_values{
-        ${printableValues}
-    };
+    ${renderTableValues({
+            name: this.#name,
+            type: this.values.type,
+            printableValues,
+            len: this.values.length
+        })}
+    
         `);
     }
 }

@@ -7,7 +7,19 @@
 
 import * as readme from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {uint8, uint32, writePieces, runClangFormat, utf32To8All, Span} from "./utils.mjs";
+import {
+    uint8,
+    uint32,
+    writePieces,
+    runClangFormat,
+    utf32To8All,
+    Span,
+    char6,
+    char5,
+    char4,
+    char3,
+    char2, char8, char7
+} from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
@@ -62,6 +74,7 @@ class DecompTable {
     maxMappedLength = 0;
     hangulIgnored = 0;
     flattedDataView = [];
+    maxMaxLength = 0;
 
     findMaxLengths({codePointStart, length, data}) {
         let maxLen = 0;
@@ -95,7 +108,7 @@ class DecompTable {
             // second table that holds the utf-8 encoded values
             values: {
                 max: 65535,
-                sizeof: uint8,
+                sizeof: char8,
                 description: `UTF-8 Encoded Decomposition Code Points`,
             },
             validateResults: false,
@@ -149,7 +162,7 @@ class DecompTable {
         const addendaPack = [
             genPositionAddendum(),
             // genMaskAddendum(uint8),
-            genMaxLengthAddendum(uint8),
+            genMaxLengthAddendum(char7),
         ];
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {
@@ -172,6 +185,11 @@ class DecompTable {
         const self = this;
         addenda.renderFunctions = [
             staticFields,
+            function maxMaxLengthFunction() {
+                return `
+        static constexpr auto max_max_length = ${self.maxMaxLength}UL;
+                `;
+            },
             function getPositionFunction() {
                 return `
         /**
@@ -179,19 +197,22 @@ class DecompTable {
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
+#if __cplusplus >= 202302L // C++23
+            [[assume(max_length <= max_max_length)]];
+#endif
             ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
-            return pos + (remaining_pos * max_length);
+            return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);
         }
         `;
             },
-            function isMapped() {
-                return `
-        /// See if this code point 
-        [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
-            return max_length == 0;
-        }
-                `;
-            }
+            //     function isMapped() {
+            //         return `
+            // /// See if this code point
+            // [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
+            //     return max_length == 0;
+            // }
+            //         `;
+            //     }
         ];
         return addenda;
     };
@@ -254,6 +275,9 @@ class DecompTable {
         if (mapped) {
 
             let maxLength = this.getMaxLength(codePoint);
+            if (maxLength > this.maxMaxLength) {
+                this.maxMaxLength = maxLength;
+            }
 
             // these don't get to be in the "values" table, so they should not be in this table either
             for (const curCodePoint of mappedTo) {
@@ -316,6 +340,8 @@ const createTableFile = async (tables) => {
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
+ *   Some other implementations' total table size was 73.4 KiB;
+ *   So I saved ${Math.ceil(73.4 - totalBits / 8 / 1024)} KiB and a better a locality.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/

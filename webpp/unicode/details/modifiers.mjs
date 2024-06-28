@@ -102,7 +102,7 @@ export class Addendum {
     }
 
     get STLTypeString() {
-        return `std::${this.typeString}_t`;
+        return this.typeString;
     }
 
     render() {
@@ -145,6 +145,11 @@ export class Addendum {
 export class Addenda {
     name;
     description = null;
+    addenda;
+    min;
+    max;
+    mask;
+    sizeof;
     #chunkSize = NaN;
     #renderFunctions = [];
 
@@ -200,6 +205,11 @@ export class Addenda {
         }
 
         this.#tests();
+
+        if (typeof this.sizeof !== "symbol") {
+            debugger;
+            throw new Error("Invalid sizeof");
+        }
     }
 
     #tests() {
@@ -349,7 +359,7 @@ export class Addenda {
     }
 
     get STLTypeString() {
-        return `std::${this.typeString}_t`;
+        return this.typeString;
     }
 
     get desc() {
