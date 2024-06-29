@@ -280,6 +280,40 @@ result: {}
       around);
 }
 
+template <typename CharT = char32_t>
+[[nodiscard]] static constexpr stl::string desc_decomp_of(CharT const code_point) noexcept {
+    using webpp::unicode::details::decomp_index;
+    using webpp::unicode::details::decomp_indices;
+    using webpp::unicode::details::decomp_values;
+    using webpp::unicode::details::trailing_zero_cccs;
+    if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
+        return "Definite Zero";
+    }
+    auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
+    auto const remaining_pos    = static_cast<stl::size_t>(code_point) & decomp_index::chunk_mask;
+
+    auto const        code      = decomp_indices.at(code_point_range);
+    stl::size_t const index_pos = code.get_position(code_point);
+    auto              res       = decomp_values.at(index_pos);
+
+    return fmt::format(
+      R"data(code: {}
+pos: {}
+max length: {}
+remaining pos: {}
+actual pos: {} = {} + {}
+result: {}
+)data",
+      code.value(),
+      code.pos,
+      code.max_length,
+      remaining_pos,
+      code.get_position(code_point),
+      code.pos,
+      remaining_pos,
+      res);
+}
+
 TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0xFC58), 0) << desc_ccc_of(0xFC58);
     EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0) << desc_ccc_of(0x10'FFFD);
@@ -295,7 +329,7 @@ TEST(Unicode, getCcc) {
 }
 
 TEST(Unicode, Decompose) {
-    EXPECT_EQ(unicode::decompose('\0'), "");
+    EXPECT_EQ(unicode::decompose('\0'), "") << desc_decomp_of('\0');
 }
 
 // NOLINTEND(*-magic-numbers)

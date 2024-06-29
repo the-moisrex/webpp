@@ -595,8 +595,7 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
 
     let valuesTable = "";
     if (isStringType(type)) {
-        valuesTable = `
-    static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
+        valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
         ${printableValues.map(val => {
             let res = "";
             if (val.comment) {
@@ -612,8 +611,7 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
     };
             `
     } else {
-        valuesTable = `
-    static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
+        valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
         ${printableValues.map(val => {
             let res = "";
             if (val.comment) {

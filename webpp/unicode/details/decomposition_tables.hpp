@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 28 Jun 2024 21:24:46 GMT
+ *   This file's generation date:        Fri, 28 Jun 2024 21:29:37 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       141880
@@ -263,7 +263,6 @@ namespace webpp::unicode::details {
      *   - in bytes:      11639 B
      *   - in KibiBytes:  12 KiB
      */
-
     static constexpr std::basic_string_view<char8_t> decomp_values{
 
       // Start of 0x0-0x80, 0x500, 0x700-0x880, 0xa80, 0x1100-0x1a80, 0x1b80-0x1c80, 0x2380, 0x2500-0x2980,
