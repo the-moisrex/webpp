@@ -498,6 +498,22 @@ export class Modifier {
         return this.addenda.modifierCode(this.generableAddenda);
     }
 
+    get categorizableAddenda() {
+        let values = {};
+        for (const addendum of this.#addenda.addenda) {
+            const value = this[addendum.name];
+            if (value === undefined || !addendum.isCategorizable) {
+                continue;
+            }
+            values[addendum.name] = value;
+        }
+        return values;
+    }
+
+    get categorizableModifier() {
+        return this.addenda.modifierCode(this.categorizableAddenda);
+    }
+
     get chunkSize() {
         // return this.#addenda.chunkSize;
 
@@ -633,6 +649,7 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     sizeof: type,
     affectsChunkSize: false,
     defaultValue: 0,
+    isCategorizable: true,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
         yield this.min;
@@ -661,6 +678,7 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
     },
     sizeof: type,
     defaultValue: 1,
+    isCategorizable: true,
     modify(modifier, meta) {
         assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
         assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
@@ -687,6 +705,7 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
     affectsChunkSize: true,
     sizeof: type,
     defaultValue: maxOf(type), // 255 for uint8
+    isCategorizable: true,
     * generate() {
         yield this.min;
         yield this.max;
@@ -716,6 +735,7 @@ export const genPositionAddendum = () => new Addendum({
     sizeof: uint16,
     defaultValue: 0,
     affectsChunkSize: false,
+    isCategorizable: false,
 });
 
 export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type), genShiftAddendum(type)];

@@ -12,7 +12,7 @@ import {
     writePieces,
     runClangFormat,
     utf32To8All,
-    Span
+    Span, char8_6, char8_5
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -159,7 +159,9 @@ class DecompTable {
         const addendaPack = [
             genPositionAddendum(),
             // genMaskAddendum(uint8),
-            genMaxLengthAddendum(char8_7),
+
+            // this will affect the chunkSize:
+            genMaxLengthAddendum(char8_8),
         ];
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {

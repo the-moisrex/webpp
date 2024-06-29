@@ -340,7 +340,7 @@ export class TablePairs {
             console.log(`  Code Range (${inserts.length ? "Inserted-" + inserts.length : "Reused"}):`,
                 codeRange, "rtrimmed:", rtrimmed, "overlapped:", overlapped, "last-pos", valueStart, "modifier.pos:", modifier.pos, modifier.necessaries(),
                 "samples:", inserts.filter(item => item).slice(0, 5));
-            uniqueModifiers.add(modifier.generableModifier);
+            uniqueModifiers.add(modifier.categorizableModifier);
 
             // if (mask !== modifier.resetMask && mask !== modifier.minMask) {
             //     ++reusedMaskedCount;

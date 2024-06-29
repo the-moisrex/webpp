@@ -103,11 +103,13 @@ export const stringPrefixOf = symbol => {
 };
 
 function toHexString(char) {
-    switch (char) {
-        case 0:
-            return '\\0';
-        default:
-            return '\\x' + char.toString(16).padStart(2, '0');
+    // random decision, I know both are okay
+    if (char <= 0o77) {
+        return `\\${char.toString(8)}`;
+    } else if (char <= 0xFF) {
+        return '\\x' + char.toString(16);
+    } else {
+        return '\\u' + char.toString(16).padStart(4, '0');
     }
 }
 
