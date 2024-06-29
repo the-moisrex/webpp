@@ -103,7 +103,12 @@ export const stringPrefixOf = symbol => {
 };
 
 function toHexString(char) {
-    return '\\x' + char.toString(16).padStart(2, '0');
+    switch (char) {
+        case 0:
+            return '\\0';
+        default:
+            return '\\x' + char.toString(16).padStart(2, '0');
+    }
 }
 
 export const cppValueOf = (value, symbol) => {

@@ -72,9 +72,12 @@ class DecompTable {
 
     findMaxLengths({codePointStart, length, data}) {
         let maxLen = 0;
-        for (let index = codePointStart; index < length; index++) {
+        for (let index = codePointStart; index < (codePointStart + length); index++) {
             const datum = data.at(index);
-            const {mappedTo} = datum;
+            const {mappedTo, mapped} = datum;
+            if (!mapped) {
+                continue;
+            }
             if (mappedTo.length > maxLen) {
                 maxLen = mappedTo.length;
             }
@@ -181,6 +184,9 @@ class DecompTable {
             staticFields,
             function maxMaxLengthFunction() {
                 return `
+        /// Maximum value of "max_length" in the whole values table.
+        /// It's the amount of mapped UTF-8 "bytes" (not code points).
+        /// Hope this can enable some optimizations.
         static constexpr auto max_max_length = ${self.maxMaxLength}UL;
                 `;
             },
@@ -229,7 +235,7 @@ class DecompTable {
     }
 
     getMaxLength(codePoint) {
-        const codePointStart = codePoint % this.tables.chunkSize;
+        const codePointStart = codePoint - (codePoint % this.tables.chunkSize);
         if (codePointStart >= this.tables.data.length) {
             return 1; // default value for the max_length
         }

@@ -336,17 +336,24 @@ namespace webpp::unicode {
         auto const code             = decomp_indices[code_point_range];
 
         // finding the length:
-        auto ptr = decomp_ptr<str_char_type>(code, code_point);
         if constexpr (stl::is_pointer_v<StrT>) {
-            return ptr;
+            return decomp_ptr<str_char_type>(code, code_point);
         } else {
-            auto len = code.max_length;
-            while (*ptr != '\0' && len != 0) {
-                ++ptr;
-                --len;
-            }
+            using size_type = typename StrT::size_type;
 
-            return StrT{ptr, len};
+            auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
+            decltype(code.max_length) len       = 0;
+            auto                      ptr       = start_ptr;
+
+            webpp_assume(code.max_length <= decomp_index::max_max_length);
+            while (*ptr != '\0' && len != code.max_length) {
+                ++ptr;
+                ++len;
+            }
+            webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
+            webpp_assume(len <= decomp_index::max_max_length);
+
+            return StrT{start_ptr, static_cast<size_type>(len)};
         }
     }
 

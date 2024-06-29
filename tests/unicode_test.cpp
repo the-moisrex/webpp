@@ -240,8 +240,8 @@ template <typename CharT = char32_t>
     stl::size_t const index_pos = code.get_position(code_point);
     auto              res       = ccc_values.at(index_pos);
 
-    stl::string                  around       = "[..., ";
-    static constexpr stl::size_t details_span = 4ULL;
+    stl::string           around       = "[..., ";
+    constexpr stl::size_t details_span = 4ULL;
     for (stl::size_t pos = stl::max<stl::size_t>(index_pos - details_span, 0l);
          pos != stl::min<stl::size_t>(index_pos + details_span, ccc_values.size());
          ++pos)
