@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 28 Jun 2024 21:29:37 GMT
+ *   This file's generation date:        Sat, 29 Jun 2024 18:47:23 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       141880
@@ -33,6 +33,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace webpp::unicode::details {
 
@@ -944,8 +945,15 @@ namespace webpp::unicode::details {
       11639UL // String Length
     };
 
-
-
+    template <typename CharT = char8_t, typename CPType>
+    [[nodiscard]] static constexpr CharT const* decomp_ptr(
+      decomp_index const code, CPType const code_point) noexcept {
+        if constexpr (stl::same_as<CharT, char8_t>) {
+            return decomp_values.data() + code.get_position(code_point);
+        } else {
+            return reinterpret_cast<CharT const*>(decomp_values.data()) + code.get_position(code_point);
+        }
+    }
 
 } // namespace webpp::unicode::details
 

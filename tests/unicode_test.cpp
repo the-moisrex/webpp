@@ -285,8 +285,8 @@ template <typename CharT = char32_t>
     using webpp::unicode::details::decomp_index;
     using webpp::unicode::details::decomp_indices;
     using webpp::unicode::details::decomp_values;
-    using webpp::unicode::details::trailing_zero_cccs;
-    if (code_point >= static_cast<CharT>(trailing_zero_cccs)) [[unlikely]] {
+    using webpp::unicode::details::trailing_mapped_deomps;
+    if (code_point >= static_cast<CharT>(trailing_mapped_deomps)) [[unlikely]] {
         return "Definite Zero";
     }
     auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
@@ -328,8 +328,35 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0x1CE8), 1) << desc_ccc_of(0x1CE8);
 }
 
+// Use this command to get the decomposed and its mapped values:
+// awk 'BEGIN{FS=";"; OF=""} !/^\s*#/{gsub(/<[^>]*>/, "", $6); if($6 != "") print $1 ": " $6}' UnicodeData.txt
 TEST(Unicode, Decompose) {
-    EXPECT_EQ(unicode::decompose('\0'), "") << desc_decomp_of('\0');
+    EXPECT_EQ(unicode::decompose(U'\0'), u8"") << desc_decomp_of('\0');
+    EXPECT_EQ(unicode::decompose(U'\x1F237'), u8"\xe6\x9c\x88") << desc_decomp_of(0x1'F237);
+    EXPECT_EQ(unicode::decompose(U'\x1F238'), u8"\xe7\x94\xb3") << desc_decomp_of(0x1'F238);
+    EXPECT_EQ(unicode::decompose(U'\x1F239'), u8"\xe5\x89\xb2") << desc_decomp_of(0x1'F239);
+    EXPECT_EQ(unicode::decompose(U'\x1F23A'), u8"\xe5\x96\xb6") << desc_decomp_of(0x1'F23A);
+    EXPECT_EQ(unicode::decompose(U'\x1F23B'), u8"\xe9\x85\x8d") << desc_decomp_of(0x1'F23B);
+    EXPECT_EQ(unicode::decompose(U'\x1F240'), u8"\xe3\x80\x94\xe6\x9c\xac\xe3\x80\x95")
+      << desc_decomp_of(0x1'F240);
+    EXPECT_EQ(unicode::decompose(U'\x1F241'), u8"\xe3\x80\x94\xe4\xb8\x89\xe3\x80\x95")
+      << desc_decomp_of(0x1'F241);
+    EXPECT_EQ(unicode::decompose(U'\x1F242'), u8"\xe3\x80\x94\xe4\xba\x8c\xe3\x80\x95")
+      << desc_decomp_of(0x1'F242);
+    EXPECT_EQ(unicode::decompose(U'\x1F243'), u8"\xe3\x80\x94\xe5\xae\x89\xe3\x80\x95")
+      << desc_decomp_of(0x1'F243);
+    EXPECT_EQ(unicode::decompose(U'\x1F244'), u8"\xe3\x80\x94\xe7\x82\xb9\xe3\x80\x95")
+      << desc_decomp_of(0x1'F244);
+    EXPECT_EQ(unicode::decompose(U'\x1F245'), u8"\xe3\x80\x94\xe6\x89\x93\xe3\x80\x95")
+      << desc_decomp_of(0x1'F245);
+    EXPECT_EQ(unicode::decompose(U'\x1F246'), u8"\xe3\x80\x94\xe7\x9b\x97\xe3\x80\x95")
+      << desc_decomp_of(0x1'F246);
+    EXPECT_EQ(unicode::decompose(U'\x1F247'), u8"\xe3\x80\x94\xe5\x8b\x9d\xe3\x80\x95")
+      << desc_decomp_of(0x1'F247);
+    EXPECT_EQ(unicode::decompose(U'\x1F248'), u8"\xe3\x80\x94\xe6\x95\x97\xe3\x80\x95")
+      << desc_decomp_of(0x1'F248);
+    EXPECT_EQ(unicode::decompose(U'\x1F250'), u8"\xd7\xb9") << desc_decomp_of(0x1'F250);
+    EXPECT_EQ(unicode::decompose(U'\x1F251'), u8"\xd4\xbe") << desc_decomp_of(0x1'F251);
 }
 
 // NOLINTEND(*-magic-numbers)

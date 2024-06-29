@@ -311,14 +311,20 @@ namespace webpp::unicode {
         return code.get_position(code_point);
     }
 
-    template <istl::CharType CharT, istl::StringLike StrT = stl::string_view>
+    /**
+     * Get the decomposed UTF-8 of the specified code point
+     * @tparam StrT Can be "const char8_t*" as well.
+     * @tparam CharT Code Point type
+     */
+    template <typename StrT = stl::u8string_view, istl::CharType CharT = char32_t>
     [[nodiscard]] static constexpr StrT decompose(CharT const code_point) noexcept {
         using details::decomp_index;
         using details::decomp_indices;
+        using details::decomp_ptr;
         using details::decomp_values;
         using details::trailing_mapped_deomps;
 
-        using ptr_t = typename StrT::const_pointer;
+        using str_char_type = istl::char_type_of_t<StrT>;
 
         // Zero length
         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
@@ -329,8 +335,19 @@ namespace webpp::unicode {
         auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
         auto const code             = decomp_indices[code_point_range];
 
-        return StrT{reinterpret_cast<ptr_t>(decomp_values.data()) + code.get_position(code_point),
-                    code.max_length};
+        // finding the length:
+        auto ptr = decomp_ptr<str_char_type>(code, code_point);
+        if constexpr (stl::is_pointer_v<StrT>) {
+            return ptr;
+        } else {
+            auto len = code.max_length;
+            while (*ptr != '\0' && len != 0) {
+                ++ptr;
+                --len;
+            }
+
+            return StrT{ptr, len};
+        }
     }
 
 

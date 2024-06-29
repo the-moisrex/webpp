@@ -8,17 +8,11 @@
 import * as readme from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    uint8,
-    uint32,
+    uint32, char8_8, char8_7,
     writePieces,
     runClangFormat,
     utf32To8All,
-    Span,
-    char6,
-    char5,
-    char4,
-    char3,
-    char2, char8, char7
+    Span
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -108,7 +102,7 @@ class DecompTable {
             // second table that holds the utf-8 encoded values
             values: {
                 max: 65535,
-                sizeof: char8,
+                sizeof: char8_8,
                 description: `UTF-8 Encoded Decomposition Code Points`,
             },
             validateResults: false,
@@ -162,7 +156,7 @@ class DecompTable {
         const addendaPack = [
             genPositionAddendum(),
             // genMaskAddendum(uint8),
-            genMaxLengthAddendum(char7),
+            genMaxLengthAddendum(char8_7),
         ];
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {
@@ -361,12 +355,23 @@ const createTableFile = async (tables) => {
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace webpp::unicode::details {
 
 `;
 
     const endContent = `
+ 
+    template <typename CharT = char8_t, typename CPType>
+    [[nodiscard]] static constexpr CharT const* decomp_ptr(decomp_index const code, CPType const code_point) noexcept {
+        if constexpr (stl::same_as<CharT, char8_t>) {
+            return decomp_values.data() + code.get_position(code_point);
+        } else {
+            return reinterpret_cast<CharT const*>(decomp_values.data()) + code.get_position(code_point);
+        }
+    }
+    
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP

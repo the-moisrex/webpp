@@ -109,7 +109,21 @@ export const parse = async (table, property, fileContent = undefined) => {
         }
 
         // Values defined in: https://www.unicode.org/reports/tr44/#UnicodeData.txt
-        const [codePointStr, codePointName, GeneralCategory, CanonicalCombiningClass, BidiClass, DecompositionStr, Numeric, BidiMirrored, Unicode1Name, ISOComment, SimpleUppercaseMapping, SimpleLowercaseMapping, SimpleTitlecaseMapping] = splitLine(line);
+        const [
+            codePointStr,            // #0
+            codePointName,           // #1
+            GeneralCategory,         // #2
+            CanonicalCombiningClass, // #3 CCC
+            BidiClass,               // #4
+            DecompositionStr,        // #5 Decomp
+            Numeric,                 // #5
+            BidiMirrored,            // #6
+            Unicode1Name,            // #7
+            ISOComment,              // #8
+            SimpleUppercaseMapping,  // #9
+            SimpleLowercaseMapping,  // #10
+            SimpleTitlecaseMapping   // #11
+        ] = splitLine(line);
 
         updateProgressBar(index / lines.length * 100);
 

@@ -4,14 +4,22 @@ import * as assert from "node:assert";
 import child_process from "node:child_process";
 
 
-export const char1 = Symbol('char8_t');
-export const char2 = Symbol('char8_t');
-export const char3 = Symbol('char8_t');
-export const char4 = Symbol('char8_t');
-export const char5 = Symbol('char8_t');
-export const char6 = Symbol('char8_t');
-export const char7 = Symbol('char8_t');
-export const char8 = Symbol('char8_t');
+export const char1 = Symbol('char');
+export const char2 = Symbol('char');
+export const char3 = Symbol('char');
+export const char4 = Symbol('char');
+export const char5 = Symbol('char');
+export const char6 = Symbol('char');
+export const char7 = Symbol('char');
+export const char8 = Symbol('char');
+export const char8_1 = Symbol('char8_t');
+export const char8_2 = Symbol('char8_t');
+export const char8_3 = Symbol('char8_t');
+export const char8_4 = Symbol('char8_t');
+export const char8_5 = Symbol('char8_t');
+export const char8_6 = Symbol('char8_t');
+export const char8_7 = Symbol('char8_t');
+export const char8_8 = Symbol('char8_t');
 export const uint6 = Symbol('std::uint8_t');
 export const uint7 = Symbol('std::uint8_t');
 export const uint8 = Symbol('std::uint8_t');
@@ -22,6 +30,14 @@ export const uint64 = Symbol('std::uint64_t');
 
 export const realSizeOf = symbol => {
     switch (symbol) {
+        case char8_1:
+        case char8_2:
+        case char8_3:
+        case char8_4:
+        case char8_5:
+        case char8_6:
+        case char8_7:
+        case char8_8:
         case char1:
         case char2:
         case char3:
@@ -48,18 +64,41 @@ export const realSizeOf = symbol => {
 
 export const isStringType = symbol => {
     switch (symbol) {
+        case char8_1:
+        case char8_2:
+        case char8_3:
+        case char8_4:
+        case char8_5:
+        case char8_6:
+        case char8_7:
+        case char8_8:
         case char1:
         case char2:
         case char3:
         case char4:
         case char5:
         case char6:
-        case uint6:
         case char7:
         case char8:
             return true;
         default:
             return false;
+    }
+};
+
+export const stringPrefixOf = symbol => {
+    switch (symbol) {
+        case char8_1:
+        case char8_2:
+        case char8_3:
+        case char8_4:
+        case char8_5:
+        case char8_6:
+        case char8_7:
+        case char8_8:
+            return "u8";
+        default:
+            return "";
     }
 };
 
@@ -69,6 +108,14 @@ function toHexString(char) {
 
 export const cppValueOf = (value, symbol) => {
     switch (symbol) {
+        case char8_1:
+        case char8_2:
+        case char8_3:
+        case char8_4:
+        case char8_5:
+        case char8_6:
+        case char8_7:
+        case char8_8:
         case char1:
         case char2:
         case char3:
@@ -93,22 +140,30 @@ export const cppValueOf = (value, symbol) => {
 
 export const sizeOf = symbol => {
     switch (symbol) {
+        case char8_1:
         case char1:
             return 1;
+        case char8_2:
         case char2:
             return 2;
+        case char8_3:
         case char3:
             return 3;
+        case char8_4:
         case char4:
             return 4;
+        case char8_5:
         case char5:
             return 5;
+        case char8_6:
         case char6:
         case uint6:
             return 6;
+        case char8_7:
         case char7:
         case uint7:
             return 7;
+        case char8_8:
         case char8:
         case uint8:
             return 8;
@@ -178,6 +233,7 @@ export const symbolOf = size => {
 /// check if the symbol is 8, 16, 32, or 64
 export const alignedSymbol = symbol => {
     switch (symbol) {
+        case char8_8:
         case char8:
         case uint8:
         case uint16:
@@ -354,6 +410,14 @@ export class TableTraits {
 
     constructor(max, type = uint8) {
         switch (type) {
+            case char8_1:
+            case char8_2:
+            case char8_3:
+            case char8_4:
+            case char8_5:
+            case char8_6:
+            case char8_7:
+            case char8_8:
             case char1:
             case char2:
             case char3:
@@ -595,6 +659,7 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
 
     let valuesTable = "";
     if (isStringType(type)) {
+        const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
         ${printableValues.map(val => {
             let res = "";
@@ -603,7 +668,7 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
         // ${val.comment}
         `
             }
-            res += `u8"${val.join("")}"`;
+            res += `${prefix}"${val.join("")}"`;
             return res;
         }).join("\n")},
         // done.

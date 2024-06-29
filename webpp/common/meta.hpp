@@ -4,28 +4,28 @@
 #define WEBPP_META_HPP
 
 // NOLINTBEGIN(*-avoid-do-while, *-macro-usage, *-trailing-return)
-
-#if __cplusplus >= 199'711L
+// clang-format off
+#if __cplusplus >= 199711
 #    define CXX98
 #endif
 
-#if __cplusplus >= 201'103L
+#if __cplusplus >= 201103
 #    define CXX11
 #endif
 
-#if __cplusplus >= 201'402L
+#if __cplusplus >= 201402
 #    define CXX14
 #endif
 
-#if __cplusplus >= 201'703L
+#if __cplusplus >= 201703
 #    define CXX17
 #endif
 
-#if __cplusplus >= 202'002L
+#if __cplusplus >= 202002
 #    define CXX20
 #endif
 
-#if __cplusplus >= 202'302L
+#if __cplusplus >= 202302
 #    define CXX23
 #endif
 
@@ -38,11 +38,12 @@
 // For usage in a constexpr function, C++20 doesn't allow for usage of "static constexpr" stuff inside
 // "constexpr" functions, but C++23 does.
 // https://wg21.link/P2647#feature-test-macro
-#if defined(__cpp_constexpr) && __cpp_constexpr >= 202'300L
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 202300
 #    define webpp_static_constexpr static constexpr
 #else
 #    define webpp_static_constexpr constexpr
 #endif
+// clang-format on
 
 // the static_assert alternative based on this article:
 // https://devblogs.microsoft.com/oldnewthing/20200311-00/?p=103553
