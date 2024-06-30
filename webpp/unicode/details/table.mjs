@@ -1,5 +1,5 @@
 import {
-    bitCeil, char7, cppValueOf, isStringType,
+    bitCeil,  cppValueOf,
     overlapInserts, realSizeOf, renderTableValues,
     Span,
     TableTraits,
@@ -128,6 +128,13 @@ export class TablePairs {
         return new Span(this.data, codePointStart, length);
     }
 
+    insertsDataView(codePointStart, length = this.rangeLengthStarting(codePointStart)) {
+        if (this.#props?.insertsDataView) {
+            return this.#props.insertsDataView.call(this, codePointStart, length);
+        }
+        return this.dataView(codePointStart, length);
+    }
+
     #findSubsetRange(dataView, modifier) {
         modifier = modifier.clone();
         const left = dataView;
@@ -177,6 +184,7 @@ export class TablePairs {
         let possibilities = [];
         let invalidModifiers = [];
         const dataView = this.dataView(codePointStart);
+        const insertsDataView = this.insertsDataView(codePointStart);
         const additionalAddendumValues = this.#props?.getModifierAddenda?.call(this, {
             codePointStart,
             length,
@@ -195,7 +203,7 @@ export class TablePairs {
             // try {
             const startPos = this.#findSubsetRange(dataView, indexModifier);
             if (startPos === null) {
-                info = this.#optimizeInserts(dataView, dataView, indexModifier);
+                info = this.#optimizeInserts(insertsDataView, dataView, indexModifier);
             } else {
                 info = {valid: true, pos: startPos, inserts: new Span()};
             }
@@ -231,7 +239,7 @@ export class TablePairs {
             if (indexModifier.unshiftAll) {
                 // try {
                 // now, try the shifted inserts as well see if they're any good:
-                info = this.#optimizeInserts(indexModifier.unshiftAll(dataView), dataView, indexModifier);
+                info = this.#optimizeInserts(indexModifier.unshiftAll(insertsDataView), dataView, indexModifier);
                 if (!info.valid) {
                     invalidModifiers.push({...info});
                 } else {

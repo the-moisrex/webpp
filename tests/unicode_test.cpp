@@ -242,7 +242,7 @@ template <typename CharT = char32_t>
 
     stl::string           around       = "[..., ";
     constexpr stl::size_t details_span = 4ULL;
-    for (stl::size_t pos = stl::max<stl::size_t>(index_pos - details_span, 0l);
+    for (stl::size_t pos = static_cast<stl::size_t>(stl::max<int>(index_pos - details_span, 0l));
          pos != stl::min<stl::size_t>(index_pos + details_span, ccc_values.size());
          ++pos)
     {

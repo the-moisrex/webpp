@@ -67,7 +67,7 @@ class DecompTable {
     lastMapped = 0;
     maxMappedLength = 0;
     hangulIgnored = 0;
-    flattedDataView = [];
+    // flattedDataView = [];
     maxMaxLength = 0;
 
     findMaxLengths({codePointStart, length, data}) {
@@ -115,21 +115,52 @@ class DecompTable {
             getModifierAddenda: this.findMaxLengths,
 
             dataView(codePointStart, length) {
-                const endPos = codePointStart + length;
-                // if (this.data.length < endPos) {
-                //     return new Span(this.data, codePointStart, 0);
-                // } else if (this.data.length === endPos) {
-                //     return new Span(this.data, codePointStart, this.data[this.data.length - 1].mappedTo.length);
-                // }
-                const {flatStart} = this.data.at(codePointStart);
-                const {flatStart: flatEnd} = this.data[endPos] || {flatStart: self.flattedDataView.length};
-                const flatLength = flatEnd - flatStart;
-                if (!Number.isSafeInteger(flatLength)) {
-                    debugger;
-                    throw new Error(`Unexpected length: ${flatLength}`);
+
+                let values = [];
+                const maxLength = self.getMaxLength(codePointStart);
+                for (let index = codePointStart; index < (codePointStart + length); index++) {
+                    const {mapped, mappedTo} = this.data.at(index);
+                    for (let ith = 0; ith !== maxLength; ith++) {
+                        if (mapped && ith < mappedTo.length) {
+                            values.push(mappedTo[ith]);
+                        } else {
+                            values.push(0);
+                        }
+                    }
                 }
-                return new Span(self.flattedDataView, flatStart, flatLength);
+                return values;
+
+                // const endPos = codePointStart + length;
+                // // if (this.data.length < endPos) {
+                // //     return new Span(this.data, codePointStart, 0);
+                // // } else if (this.data.length === endPos) {
+                // //     return new Span(this.data, codePointStart, this.data[this.data.length - 1].mappedTo.length);
+                // // }
+                // const {flatStart} = this.data.at(codePointStart);
+                // const {flatStart: flatEnd} = this.data.at(endPos) || {flatStart: self.flattedDataView.length};
+                // const flatLength = flatEnd - flatStart;
+                // if (!Number.isSafeInteger(flatLength)) {
+                //     debugger;
+                //     throw new Error(`Unexpected length: ${flatLength}`);
+                // }
+                // return new Span(self.flattedDataView, flatStart, flatLength);
             },
+
+            // insertsDataView(codePointStart, length) {
+            //     let values = [];
+            //     const maxLength = self.getMaxLength(codePointStart);
+            //     for (let index = codePointStart; index < (codePointStart + length); index++) {
+            //         const {mapped, mappedTo} = this.data.at(index);
+            //         for (let ith = 0; ith !== maxLength; ith++) {
+            //             if (mapped && ith < mappedTo.length) {
+            //                 values.push(mappedTo[ith]);
+            //             } else {
+            //                 values.push(0);
+            //             }
+            //         }
+            //     }
+            //     return values;
+            // },
 
             // this gets run just before we add the modifier to the indices table
             modify: ({modifier, inserts}) => {
@@ -161,7 +192,7 @@ class DecompTable {
             // genMaskAddendum(uint8),
 
             // this will affect the chunkSize:
-            genMaxLengthAddendum(char8_8),
+            genMaxLengthAddendum(char8_6),
         ];
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {
@@ -245,7 +276,7 @@ class DecompTable {
             codePointStart,
             length: this.tables.rangeLengthStarting(codePointStart),
             data: this.tables.data,
-            dataView: this.tables.dataView(codePointStart)
+            // dataView: this.tables.dataView(codePointStart)
         }).max_length;
     }
 
@@ -271,27 +302,27 @@ class DecompTable {
         }
 
 
-        // expand the "data" into its "values" table equivalent
-        value.flatStart = this.flattedDataView.length;
-        // value.flatLength = mappedTo.length;
-        if (mapped) {
-
-            let maxLength = this.getMaxLength(codePoint);
-            if (maxLength > this.maxMaxLength) {
-                this.maxMaxLength = maxLength;
-            }
-
-            // these don't get to be in the "values" table, so they should not be in this table either
-            for (const curCodePoint of mappedTo) {
-                // curCodePoint is already UTF-8 encoded, no need for re-encoding
-                this.flattedDataView.push(curCodePoint);
-                --maxLength;
-            }
-            for (; maxLength > 0; --maxLength) {
-                this.flattedDataView.push(0);
-            }
-
+        // // expand the "data" into its "values" table equivalent
+        // value.flatStart = this.flattedDataView.length;
+        // // value.flatLength = mappedTo.length;
+        // if (mapped) {
+        //
+        let maxLength = this.getMaxLength(codePoint);
+        if (maxLength > this.maxMaxLength) {
+            this.maxMaxLength = maxLength;
         }
+        //
+        //     // these don't get to be in the "values" table, so they should not be in this table either
+        //     for (const curCodePoint of mappedTo) {
+        //         // curCodePoint is already UTF-8 encoded, no need for re-encoding
+        //         this.flattedDataView.push(curCodePoint);
+        //         --maxLength;
+        //     }
+        //     for (; maxLength > 0; --maxLength) {
+        //         this.flattedDataView.push(0);
+        //     }
+        //
+        // }
 
         this.tables.add(codePoint, value);
     }

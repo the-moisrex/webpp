@@ -3,7 +3,7 @@ import {
     bitOnesOf,
     fillBitsFromRight,
     maxOf,
-    popcount,
+    popcount, realSizeOf,
     sizeOf,
     symbolOf,
     uint16,
@@ -37,7 +37,10 @@ export class Addendum {
     placement = null;
 
     /// the value is left-shifted by this amount (it's calculated later on in the Addenda):
-    leftShit = 0;
+    leftShift = 0;
+
+    /// this is the actual size used in the C++ struct
+    actualSize = 0;
 
     /// if the size of this addendum affects the chunk size
     affectsChunkSize = false;
@@ -74,6 +77,7 @@ export class Addendum {
         }
         this.generable = data["generate"] !== undefined;
         this.affectsChunkSize = data["affectsChunkSize"] || false;
+        this.actualSize = this.size;
     }
 
     get size() {
@@ -82,7 +86,7 @@ export class Addendum {
 
     /// If all bits are 1, what would the value be?
     get mask() {
-        return bitOnesOf(this.size) << this.leftShit;
+        return bitOnesOf(this.actualSize) << this.leftShift;
     }
 
     get description() {
@@ -105,8 +109,8 @@ export class Addendum {
         return this.typeString;
     }
 
-    render() {
-        if (alignedSymbol(this.sizeof)) {
+    render(addenda) {
+        if (alignedSymbol(this.sizeof) || addenda.allAlignable) {
             return `
         ${this.commentedDescription}
         ${this.STLTypeString} ${this.name};`;
@@ -121,19 +125,19 @@ export class Addendum {
         maskName = maskName === "" ? this.mask : `${this.name}${maskName}`;
         const maskIt = alignedSymbol(this.sizeof) ? `` : maskName;
         const value = maskIt === "" ? valueName : `(${valueName} & ${maskIt})`;
-        if (this.leftShit === 0) {
+        if (this.leftShift === 0) {
             return `${this.name}{static_cast<${this.STLTypeString}>(${value})}`;
         } else {
-            const shift = shiftName === "" ? `${this.leftShit}U` : `${this.name}${shiftName}`;
+            const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
             return `${this.name}{static_cast<${this.STLTypeString}>(${value} >> ${shift})}`;
         }
     }
 
     renderShift(type, shiftName = "", maskName = "") {
-        if (this.leftShit === 0) {
+        if (this.leftShift === 0) {
             return `static_cast<${type}>(${this.name})`;
         } else {
-            const shift = shiftName === "" ? `${this.leftShit}U` : `${this.name}${shiftName}`;
+            const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
             return `(static_cast<${type}>(${this.name}) << ${shift})`;
         }
     }
@@ -167,9 +171,6 @@ export class Addenda {
         this.name = name;
         this.addenda = addenda;
         this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0));
-        this.min = addenda.reduce((min, addendum) => (min << addendum.size) | addendum.min, 0);
-        this.max = addenda.reduce((max, addendum) => (max << addendum.size) | addendum.max, 0);
-        this.mask = addenda.reduce((mask, addendum) => (mask << addendum.size) | addendum.mask, 0);
 
         /// re-order the placements
         if (addenda.some(addendum => !addendum.placement)) {
@@ -184,11 +185,16 @@ export class Addenda {
         this.addenda.sort((a, b) => a.placement - b.placement);
 
         // Resetting the shifts:
-        let leftShift = this.packedSize;
+        let leftShift = this.allAlignable ? this.alignedSize : this.packedSize;
         for (let addendum of this.addenda) {
-            leftShift -= addendum.size;
-            addendum.leftShit += leftShift;
+            addendum.actualSize = this.allAlignable ? realSizeOf(addendum.sizeof) : addendum.size;
+            leftShift -= addendum.actualSize;
+            addendum.leftShift += leftShift;
         }
+
+        this.min = addenda.reduce((min, addendum) => (min << addendum.actualSize) | addendum.min, 0);
+        this.max = addenda.reduce((max, addendum) => (max << addendum.actualSize) | addendum.max, 0);
+        this.mask = addenda.reduce((mask, addendum) => (mask << addendum.actualSize) | addendum.mask, 0);
 
         /// Enabling addenda.mask, addenda["pos"], and what not syntax
         for (const addendum of this.addenda) {
@@ -228,6 +234,18 @@ export class Addenda {
 
     get size() {
         return sizeOf(this.sizeof);
+    }
+
+    get alignedSize() {
+        return this.addenda.reduce((sum, addendum) => sum + realSizeOf(addendum.sizeof), 0);
+    }
+
+    get unusedSize() {
+        return this.alignedSize - this.size;
+    }
+
+    get allAlignable() {
+        return this.alignedSize <= this.size;
     }
 
     get packedSize() {
@@ -288,7 +306,7 @@ export class Addenda {
             assert.ok(addendum, `The specified input should be a valid addendum or a valid addendum name, not ${name}`);
         }
         const {placement: position} = addendum;
-        return this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.size : 0), 0);
+        return this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0), 0);
     }
 
     /// Get the combined modifier based on the specified values:
@@ -351,7 +369,7 @@ export class Addenda {
     }
 
     renderPlacements() {
-        return this.addenda.toSorted((a, b) => a.placement - b.placement).map(addendum => `[${addendum.size}bits = ${addendum.name}]`).join(" + ");
+        return this.addenda.toSorted((a, b) => a.placement - b.placement).map(addendum => `[${addendum.actualSize}bits = ${addendum.name}]`).join(" + ");
     }
 
     get typeString() {
@@ -374,12 +392,12 @@ export class Addenda {
     struct alignas(${this.STLTypeString}) ${this.name} {
     
         /// The shifts required to extract the values out of a ${this.STLTypeString}; you can use masks as well:
-        ${this.addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShit}U;`).join("\n        ")}
+        ${this.addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
         
         /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
         ${this.addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
     
-        ${this.addenda.map(addendum => addendum.render()).join("\n        ")}
+        ${this.addenda.map(addendum => addendum.render(this)).join("\n        ")}
        
         /**
          * ${this.renderPlacements()}
