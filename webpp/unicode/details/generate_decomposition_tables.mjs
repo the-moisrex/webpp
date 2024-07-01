@@ -215,6 +215,17 @@ class DecompTable {
         const self = this;
         addenda.renderFunctions = [
             staticFields,
+            function notMappedFunction() {
+                const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement);
+                return `
+        /// Get an invalid mapping (that shows the code point is not being mapped at all)
+        /// This means the code point is mapped to itself
+        [[nodiscard]] static consteval ${this.name} not_mapped() noexcept {
+            // it can be identified by ${this.max_length.name} == 0
+            return ${this.name}{${addenda.map(addendum => addendum.name === "max_length" ? "0" : `${addendum.defaultValue}`).join(", ")}};
+        }
+                `;
+            },
             function maxMaxLengthFunction() {
                 return `
         /// Maximum value of "max_length" in the whole values table.

@@ -1430,7 +1430,7 @@ namespace webpp::istl {
 
     /**
      * Exactly like std::make_signed except it's not ill-formed when non-integral types are given.
-     * Also, make_signed adds "signed" to it but we don't, we just remove the "unsigned"
+     * Also, make_signed adds "signed" to it, but we don't, we just remove the "unsigned"
      */
     template <typename T>
     struct remove_unsigned : preserve_cvref<details::remove_unsigned, T> {};
@@ -1450,6 +1450,22 @@ namespace webpp::istl {
 
     template <typename T>
     using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
+
+    template <typename T, typename DefaultType = stl::size_t>
+    struct size_type_of {
+        using type = DefaultType;
+    };
+
+    template <typename T, typename DefaultType>
+        requires requires { typename T::size_type; }
+    struct size_type_of<T, DefaultType> {
+        using type = typename T::size_type;
+    };
+
+    /// Get the default size of the specified type or the default type that you specify
+    template <typename T, typename DefaultType = stl::size_t>
+    using size_type_of_t = typename size_type_of<T, DefaultType>::type;
+
 
     // NOLINTEND(cppcoreguidelines-macro-usage)
 } // namespace webpp::istl

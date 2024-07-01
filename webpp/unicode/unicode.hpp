@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_HPP
 #define WEBPP_UNICODE_HPP
 
+#include "../std/iterator.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
 #include "./unicode_concepts.hpp"
@@ -45,7 +46,7 @@ namespace webpp::unicode {
     template <typename u32 = char32_t>
     static constexpr u32 max_utf32 = 0x7FFF'FFFF;
 
-    /// Max valid value for a unicode code point
+    /// Max valid value for a Unicode code point
     template <typename u32 = char32_t>
     static constexpr u32 max_legal_utf32 = 0x0010'FFFF;
 
@@ -396,54 +397,63 @@ namespace webpp::unicode {
             return len;
         }
 
-        namespace details {
-            template <typename T, typename CharT>
-            static constexpr void append_impl(T& out, CharT value) {
-                using char_type = istl::char_type_of_t<T>;
-                if constexpr (requires(char_type val) { out.operator+=(val); }) {
-                    out += static_cast<char_type>(value);
-                } else {
-                    // pointer or an iterator
-                    *(out++) = static_cast<char_type>(value);
-                }
-            }
-        } // namespace details
-
         /**
          * Append a code point to a string
          * "out" can be an iterator/pointer or a string
          */
-        template <typename StrT, typename CharT = char32_t>
-        static constexpr void append(StrT& out, CharT code_point) {
-            using details::append_impl;
-            using char_type = istl::char_type_of_t<StrT>;
+        template <istl::Appendable StrT,
+                  stl::integral    SizeT = istl::size_type_of_t<StrT>,
+                  typename CharT         = char32_t>
+        static constexpr SizeT append(StrT& out, CharT code_point) noexcept(istl::NothrowAppendable<StrT>) {
+            using istl::iter_append;
+
+            using char_type = istl::appendable_value_type_t<StrT>;
             using uchar_t   = stl::make_unsigned_t<CharT>;
             if constexpr (UTF8<char_type>) {
-                if (code_point < 0x80) {            // one octet
-                    append_impl(out, code_point);
-                } else if (code_point < 0x800) {    // two octets
-                    append_impl(out, (code_point >> 6) | 0xc0);
-                    append_impl(out, (code_point & 0x3f) | 0x80);
-                } else if (code_point < 0x1'0000) { // three octets
-                    append_impl(out, (code_point >> 12) | 0xe0);
-                    append_impl(out, ((code_point >> 6) & 0x3f) | 0x80);
-                    append_impl(out, (code_point & 0x3f) | 0x80);
-                } else { // four octets
-                    append_impl(out, (code_point >> 18) | 0xf0);
-                    append_impl(out, ((code_point >> 12) & 0x3f) | 0x80);
-                    append_impl(out, ((code_point >> 6) & 0x3f) | 0x80);
-                    append_impl(out, (code_point & 0x3f) | 0x80);
+                if (code_point < 0x80) { // one octet
+                    iter_append(out, code_point);
+                    return 1;
                 }
+                if (code_point < 0x800) { // two octets
+                    iter_append(out, (code_point >> 6) | 0xc0);
+                    iter_append(out, (code_point & 0x3f) | 0x80);
+                    return 2;
+                }
+                if (code_point < 0x1'0000) { // three octets
+                    iter_append(out, (code_point >> 12) | 0xe0);
+                    iter_append(out, ((code_point >> 6) & 0x3f) | 0x80);
+                    iter_append(out, (code_point & 0x3f) | 0x80);
+                    return 3;
+                }
+                // four octets
+                iter_append(out, (code_point >> 18) | 0xf0);
+                iter_append(out, ((code_point >> 12) & 0x3f) | 0x80);
+                iter_append(out, ((code_point >> 6) & 0x3f) | 0x80);
+                iter_append(out, (code_point & 0x3f) | 0x80);
+                return 4;
             } else if constexpr (UTF16<char_type>) {
                 if (code_point <= max_bmp<char_type>) {
-                    append_impl(out, code_point); // normal case
-                } else {
-                    append_impl(out, 0xD7C0U + (static_cast<uchar_t>(code_point) >> 10U));
-                    append_impl(out, 0xDC00U + (static_cast<uchar_t>(code_point) & 0x3FFU));
+                    iter_append(out, code_point); // normal case
+                    return 1;
                 }
+                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(code_point) >> 10U));
+                iter_append(out, 0xDC00U + (static_cast<uchar_t>(code_point) & 0x3FFU));
+                return 2;
             } else { // for char32_t or others
-                append_impl(out, code_point);
+                iter_append(out, code_point);
+                return 1;
             }
+        }
+
+        template <istl::AppendableStorage StrT = std::array<char8_t, 4UL>,
+                  typename CharT               = char32_t,
+                  typename... Args>
+        [[nodiscard]] static constexpr StrT to(CharT const code_point, Args&&... args) noexcept(
+          istl::NothrowAppendable<StrT>) {
+            StrT str{stl::forward<Args>(args)...};
+            auto iter = istl::appendable_iter_of(str);
+            append(iter, code_point);
+            return str;
         }
 
     } // namespace unchecked

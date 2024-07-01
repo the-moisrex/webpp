@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Sun, 30 Jun 2024 22:55:33 GMT
+ *   This file's generation date:        Mon, 01 Jul 2024 22:52:55 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       95688
@@ -54,12 +54,12 @@ namespace webpp::unicode::details {
 
 
         /// This is the position that should be looked for in the values table.
-        std::uint16_t pos;
+        std::uint16_t pos = 0;
 
         /// This is used to mask the 'remaining position' of the values table;
         /// meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].
         /// The mask does not apply to the whole index, but only to the remaining index.
-        std::uint8_t mask;
+        std::uint8_t mask = 127;
 
         /**
          * [16bits = pos] + [8bits = mask]
@@ -67,6 +67,10 @@ namespace webpp::unicode::details {
         explicit(false) consteval ccc_index(std::uint32_t const value) noexcept
           : pos{static_cast<std::uint16_t>(value >> pos_shift)},
             mask{static_cast<std::uint8_t>((value & mask_mask))} {}
+
+        explicit consteval ccc_index(std::uint16_t const inp_pos, std::uint8_t const inp_mask) noexcept
+          : pos{inp_pos},
+            mask{inp_mask} {}
 
         [[nodiscard]] constexpr std::uint32_t value() const noexcept {
             return static_cast<std::uint32_t>(mask) | (static_cast<std::uint32_t>(pos) << pos_shift);

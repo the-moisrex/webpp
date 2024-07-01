@@ -45,6 +45,9 @@ export class Addendum {
     /// if the size of this addendum affects the chunk size
     affectsChunkSize = false;
 
+    /// default value of the addendum
+    defaultValue = undefined;
+
     generable = false;
     generate = () => {
         throw new Error("Cannot generate new values.");
@@ -110,14 +113,15 @@ export class Addendum {
     }
 
     render(addenda) {
+        const defaultStr = this?.defaultValue !== undefined ? ` = ${this.defaultValue}` : "";
         if (alignedSymbol(this.sizeof) || addenda.allAlignable) {
             return `
         ${this.commentedDescription}
-        ${this.STLTypeString} ${this.name};`;
+        ${this.STLTypeString} ${this.name}${defaultStr};`;
         } else {
             return `
         ${this.commentedDescription}
-        ${this.STLTypeString} ${this.name} : ${this.size};`;
+        ${this.STLTypeString} ${this.name} : ${this.size}${defaultStr};`;
         }
     }
 
@@ -385,6 +389,7 @@ export class Addenda {
     }
 
     render() {
+        const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement);
         return `
     /**
      * ${this.desc}
@@ -392,25 +397,25 @@ export class Addenda {
     struct alignas(${this.STLTypeString}) ${this.name} {
     
         /// The shifts required to extract the values out of a ${this.STLTypeString}; you can use masks as well:
-        ${this.addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
+        ${addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
         
         /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
-        ${this.addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
+        ${addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
     
-        ${this.addenda.map(addendum => addendum.render(this)).join("\n        ")}
+        ${addenda.map(addendum => addendum.render(this)).join("\n        ")}
        
         /**
          * ${this.renderPlacements()}
          */ 
         explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
-            : ${this.addenda.map(addendum => addendum.renderValueSet('value', '_shift', '_mask')).join(",\n              ")} {}
-${""/*       
-        constexpr ${this.name}(${this.addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
-            : ${this.addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
-*/}
+            : ${addenda.map(addendum => addendum.renderValueSet('value', '_shift', '_mask')).join(",\n              ")} {}
+${addenda.length <= 1? "" : ` 
+        explicit consteval ${this.name}(${addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
+            : ${addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
+`}
         
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${this.addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift', '_mask')).join(" | ")};
+            return ${addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift', '_mask')).join(" | ")};
         }
 
 ${this.#renderFunctions.map(func => func()).join("\n\n")}

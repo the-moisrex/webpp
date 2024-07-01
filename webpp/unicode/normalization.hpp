@@ -292,71 +292,107 @@ namespace webpp::unicode {
         return len;
     }
 
-    template <istl::CharType CharT, stl::unsigned_integral SizeT = stl::size_t>
-    [[nodiscard]] static constexpr SizeT decomposition_index(CharT const code_point) noexcept {
+    template <istl::CharType CharT>
+    [[nodiscard]] static constexpr details::decomp_index decomposed_index(CharT const code_point) noexcept {
         using details::decomp_index;
         using details::decomp_indices;
         using details::decomp_values;
         using details::trailing_mapped_deomps;
 
-        // Zero length
+        // Not mapped
         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-            return 0U;
+            return decomp_index::not_mapped();
         }
 
         // Look at the ccc_index table, for how this works:
         auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
         auto const code             = decomp_indices[code_point_range];
 
-        return code.get_position(code_point);
+        return code;
     }
 
     /**
-     * Get the decomposed UTF-8 of the specified code point
-     * @tparam StrT Can be "const char8_t*" as well.
-     * @tparam CharT Code Point type
+     * Decompose based on the specified arguments
      */
-    template <typename StrT = stl::u8string_view, istl::CharType CharT = char32_t>
-    [[nodiscard]] static constexpr StrT decompose(CharT const code_point) noexcept {
+    template <istl::Appendable Iter  = std::u8string::iterator,
+              stl::integral    SizeT = istl::size_type_of_t<Iter>,
+              istl::CharType   CharT = char32_t>
+    static constexpr SizeT decompose_to(
+      Iter&                       out,
+      details::decomp_index const code,
+      CharT const                 code_point) noexcept(istl::NothrowAppendable<Iter>) {
         using details::decomp_index;
         using details::decomp_indices;
         using details::decomp_ptr;
         using details::decomp_values;
         using details::trailing_mapped_deomps;
 
-        using str_char_type = istl::char_type_of_t<StrT>;
+        using str_char_type = istl::appendable_value_type_t<Iter>;
 
-        // Zero length
-        if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-            return StrT{};
+        // Not mapped at all, that means the code point is mapped to itself.
+        if (code.max_length == 0) [[likely]] {
+            return unicode::unchecked::append<Iter, SizeT>(out, code_point);
         }
 
-        // Look at the ccc_index table, for how this works:
-        auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
-        auto const code             = decomp_indices[code_point_range];
+        auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
+        decltype(code.max_length) len       = 0;
+        auto                      ptr       = start_ptr;
 
-        // finding the length:
-        if constexpr (stl::is_pointer_v<StrT>) {
-            return decomp_ptr<str_char_type>(code, code_point);
-        } else {
-            using size_type = typename StrT::size_type;
-
-            auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
-            decltype(code.max_length) len       = 0;
-            auto                      ptr       = start_ptr;
-
-            webpp_assume(code.max_length <= decomp_index::max_max_length);
-            while (*ptr != '\0' && len != code.max_length) {
-                ++ptr;
-                ++len;
-            }
-            webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
-            webpp_assume(len <= decomp_index::max_max_length);
-
-            return StrT{start_ptr, static_cast<size_type>(len)};
+        webpp_assume(code.max_length <= decomp_index::max_max_length);
+        while (*ptr != u8'\0' && len != code.max_length) {
+            ++ptr;
+            ++len;
+            istl::iter_append(out, *ptr);
         }
+        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
+        webpp_assume(len <= decomp_index::max_max_length);
+        return static_cast<SizeT>(len);
     }
 
+    /**
+     * Decompose to an array/string
+     */
+    template <istl::AppendableStorage StrT  = std::array<char8_t, details::trailing_mapped_deomps>,
+              istl::CharType          CharT = char32_t,
+              typename... Args>
+    [[nodiscard]] static constexpr StrT decomposed(CharT const code_point, Args&&... args) noexcept(
+      istl::NothrowAppendable<StrT>) {
+        StrT       arr{stl::forward<Args>(args)...};
+        auto const code = decomposed_index(code_point);
+        auto       iter = istl::appendable_iter_of(arr);
+        decompose_to(iter, code, code_point);
+        return arr;
+    }
+
+    /**
+     * Decompose the `code_point` into `out`.
+     * @tparam Iter Iter can be an array, iterator, string, or similar types.
+     * @returns the number of mapped values
+     */
+    template <istl::Appendable Iter  = std::u8string::iterator,
+              stl::integral    SizeT = istl::size_type_of_t<Iter>,
+              istl::CharType   CharT = char32_t>
+    static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
+      istl::NothrowAppendable<Iter>) {
+        auto const code = decomposed_index(code_point);
+        return decompose_to<Iter, SizeT>(out, code, code_point);
+    }
+
+    /**
+     * Decompose the `code_point` into `out`.
+     * @tparam Iter Iter can be an array, iterator, string, or similar types.
+     * @returns the number of mapped values
+     */
+    template <istl::Appendable Iter  = std::u8string::iterator,
+              stl::integral    SizeT = istl::size_type_of_t<Iter>,
+              typename InpStr        = stl::u32string_view>
+    static constexpr SizeT decompose_to(Iter& out, InpStr const str) noexcept(istl::NothrowAppendable<Iter>) {
+        SizeT count = 0;
+        for (auto const code_point : str) {
+            count += decompose(out, code_point);
+        }
+        return count;
+    }
 
 } // namespace webpp::unicode
 

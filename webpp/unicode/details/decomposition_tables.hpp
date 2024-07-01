@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Sun, 30 Jun 2024 22:56:17 GMT
+ *   This file's generation date:        Mon, 01 Jul 2024 22:52:49 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       334968
@@ -59,13 +59,13 @@ namespace webpp::unicode::details {
 
 
         /// This is the position that should be looked for in the values table.
-        std::uint16_t pos;
+        std::uint16_t pos = 0;
 
         /// Length of the UTF-8 Encoded Decomposition Code Points.
         /// This value is the max length of each mappings; there should be additional empty values added
         /// in between the values of the values table in order to make sure we can easily find the needed
         /// mappings for all the code points without searching for them.
-        char8_t max_length;
+        char8_t max_length = 1;
 
         /**
          * [16bits = pos] + [8bits = max_length]
@@ -73,6 +73,10 @@ namespace webpp::unicode::details {
         explicit(false) consteval decomp_index(std::uint32_t const value) noexcept
           : pos{static_cast<std::uint16_t>(value >> pos_shift)},
             max_length{static_cast<char8_t>((value & max_length_mask))} {}
+
+        explicit consteval decomp_index(std::uint16_t const inp_pos, char8_t const inp_max_length) noexcept
+          : pos{inp_pos},
+            max_length{inp_max_length} {}
 
         [[nodiscard]] constexpr std::uint32_t value() const noexcept {
             return static_cast<std::uint32_t>(max_length) | (static_cast<std::uint32_t>(pos) << pos_shift);
@@ -82,7 +86,12 @@ namespace webpp::unicode::details {
         static constexpr std::size_t   chunk_size  = 64U;
         static constexpr std::uint8_t  chunk_shift = 6U;
 
-
+        /// Get an invalid mapping (that shows the code point is not being mapped at all)
+        /// This means the code point is mapped to itself
+        [[nodiscard]] static consteval decomp_index not_mapped() noexcept {
+            // it can be identified by max_length == 0
+            return decomp_index{0, 0};
+        }
 
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).

@@ -242,7 +242,7 @@ template <typename CharT = char32_t>
 
     stl::string           around       = "[..., ";
     constexpr stl::size_t details_span = 4ULL;
-    for (stl::size_t pos = static_cast<stl::size_t>(stl::max<int>(index_pos - details_span, 0l));
+    for (stl::size_t pos = static_cast<stl::size_t>(stl::max<stl::int64_t>(index_pos - details_span, 0LL));
          pos != stl::min<stl::size_t>(index_pos + details_span, ccc_values.size());
          ++pos)
     {
@@ -336,8 +336,8 @@ std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
     std::u8string utf8_str;
     utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
 
-    for (char32_t c : utf32_str) {
-        unicode::unchecked::append(utf8_str, c);
+    for (char32_t const code_point : utf32_str) {
+        unicode::unchecked::append(utf8_str, code_point);
     }
 
     return utf8_str;
@@ -348,42 +348,100 @@ std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
 TEST(Unicode, Decompose) {
     // clang-format off
     // Get more examples with this command:
-    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ {gsub(/<[^>]*>/, "", $6); $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " ") { gsub(/\s+/, "\\\x", $6); print "EXPECT_EQ(unicode::decompose(U\'\\\x" $1 "\'), utf32_to_utf8(U\"" $6 "\")) << desc_decomp_of(U\'" $1 "\');"; } }' UnicodeData.txt | sort -R | head
+    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ {gsub(/<[^>]*>/, "", $6); $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " ") { gsub(/\s+/, "\\\x", $6); print "EXPECT_EQ(unicode::decomposed<stl::u8string>(U\'\\\x" $1 "\'), utf32_to_utf8(U\"" $6 "\")) << desc_decomp_of(U\'\\\x" $1 "\');"; } }' UnicodeData.txt | sort -R | head
     // clang-format on
-    EXPECT_EQ(unicode::decompose(U'\x2FA16'), utf32_to_utf8(U"\x4D56")) << desc_decomp_of(U'\x2FA16');
-    EXPECT_EQ(unicode::decompose(U'\x3359'), utf32_to_utf8(U"\x0031\x70B9")) << desc_decomp_of(U'\x3359');
-    EXPECT_EQ(unicode::decompose(U'\xF9B1'), utf32_to_utf8(U"\x9234")) << desc_decomp_of(U'\xF9B1');
-    EXPECT_EQ(unicode::decompose(U'\x1EEAB'), utf32_to_utf8(U"\x0644")) << desc_decomp_of(U'\x1EEAB');
-    EXPECT_EQ(unicode::decompose(U'\x2F9FD'), utf32_to_utf8(U"\x29496")) << desc_decomp_of(U'\x2F9FD');
-    EXPECT_EQ(unicode::decompose(U'\xFCA7'), utf32_to_utf8(U"\x062C\x062D")) << desc_decomp_of(U'\xFCA7');
-    EXPECT_EQ(unicode::decompose(U'\x1EE09'), utf32_to_utf8(U"\x064A")) << desc_decomp_of(U'\x1EE09');
-    EXPECT_EQ(unicode::decompose(U'\xF9F2'), utf32_to_utf8(U"\x9C57")) << desc_decomp_of(U'\xF9F2');
-    EXPECT_EQ(unicode::decompose(U'\x1D41E'), utf32_to_utf8(U"\x0065")) << desc_decomp_of(U'\x1D41E');
-    EXPECT_EQ(unicode::decompose(U'\x1E06D'), utf32_to_utf8(U"\x04B1")) << desc_decomp_of(U'\x1E06D');
-    EXPECT_EQ(unicode::decompose(U'\x249E'), utf32_to_utf8(U"\x0028\x0063\x0029"))
+
+    static_assert(stl::same_as<char8_t, istl::appendable_value_type_t<stl::u8string*>>, "invalid value type");
+
+    // start
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\0'), utf32_to_utf8(U"\0")) << desc_decomp_of(U'\0');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\1'), utf32_to_utf8(U"\1")) << desc_decomp_of(U'\1');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00A0'), utf32_to_utf8(U"\x0020"))
+      << desc_decomp_of(U'\x00A0');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00A8'), utf32_to_utf8(U"\x0020\x0308"))
+      << desc_decomp_of(U'\x00A8');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00AA'), utf32_to_utf8(U"\x0061"))
+      << desc_decomp_of(U'\x00AA');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00AF'), utf32_to_utf8(U"\x0020\x0304"))
+      << desc_decomp_of(U'\x00AF');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B2'), utf32_to_utf8(U"\x0032"))
+      << desc_decomp_of(U'\x00B2');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B3'), utf32_to_utf8(U"\x0033"))
+      << desc_decomp_of(U'\x00B3');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B4'), utf32_to_utf8(U"\x0020\x0301"))
+      << desc_decomp_of(U'\x00B4');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B5'), utf32_to_utf8(U"\x03BC"))
+      << desc_decomp_of(U'\x00B5');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B8'), utf32_to_utf8(U"\x0020\x0327"))
+      << desc_decomp_of(U'\x00B8');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00B9'), utf32_to_utf8(U"\x0031"))
+      << desc_decomp_of(U'\x00B9');
+
+
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA16'), utf32_to_utf8(U"\x4D56"))
+      << desc_decomp_of(U'\x2FA16');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x3359'), utf32_to_utf8(U"\x0031\x70B9"))
+      << desc_decomp_of(U'\x3359');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xF9B1'), utf32_to_utf8(U"\x9234"))
+      << desc_decomp_of(U'\xF9B1');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1EEAB'), utf32_to_utf8(U"\x0644"))
+      << desc_decomp_of(U'\x1EEAB');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2F9FD'), utf32_to_utf8(U"\x29496"))
+      << desc_decomp_of(U'\x2F9FD');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFCA7'), utf32_to_utf8(U"\x062C\x062D"))
+      << desc_decomp_of(U'\xFCA7');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1EE09'), utf32_to_utf8(U"\x064A"))
+      << desc_decomp_of(U'\x1EE09');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xF9F2'), utf32_to_utf8(U"\x9C57"))
+      << desc_decomp_of(U'\xF9F2');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1D41E'), utf32_to_utf8(U"\x0065"))
+      << desc_decomp_of(U'\x1D41E');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1E06D'), utf32_to_utf8(U"\x04B1"))
+      << desc_decomp_of(U'\x1E06D');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x249E'), utf32_to_utf8(U"\x0028\x0063\x0029"))
       << desc_decomp_of(U'\x249E');
 
-    EXPECT_EQ(unicode::decompose(U'\x1EE3B'), utf32_to_utf8(U"\x063A")) << desc_decomp_of(U'\x1EE3B');
-    EXPECT_EQ(unicode::decompose(U'\x2F8FE'), utf32_to_utf8(U"\x6C67")) << desc_decomp_of(U'\x2F8FE');
-    EXPECT_EQ(unicode::decompose(U'\x0130'), utf32_to_utf8(U"\x0049\x0307")) << desc_decomp_of(U'\x0130');
-    EXPECT_EQ(unicode::decompose(U'\x01DC'), utf32_to_utf8(U"\x00FC\x0300")) << desc_decomp_of(U'\x01DC');
-    EXPECT_EQ(unicode::decompose(U'\xFF8B'), utf32_to_utf8(U"\x30D2")) << desc_decomp_of(U'\xFF8B');
-    EXPECT_EQ(unicode::decompose(U'\x32D1'), utf32_to_utf8(U"\x30A4")) << desc_decomp_of(U'\x32D1');
-    EXPECT_EQ(unicode::decompose(U'\x3193'), utf32_to_utf8(U"\x4E8C")) << desc_decomp_of(U'\x3193');
-    EXPECT_EQ(unicode::decompose(U'\x02B8'), utf32_to_utf8(U"\x0079")) << desc_decomp_of(U'\x02B8');
-    EXPECT_EQ(unicode::decompose(U'\x2076'), utf32_to_utf8(U"\x0036")) << desc_decomp_of(U'\x2076');
-    EXPECT_EQ(unicode::decompose(U'\x1D4D8'), utf32_to_utf8(U"\x0049")) << desc_decomp_of(U'\x1D4D8');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1EE3B'), utf32_to_utf8(U"\x063A"))
+      << desc_decomp_of(U'\x1EE3B');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2F8FE'), utf32_to_utf8(U"\x6C67"))
+      << desc_decomp_of(U'\x2F8FE');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0130'), utf32_to_utf8(U"\x0049\x0307"))
+      << desc_decomp_of(U'\x0130');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x01DC'), utf32_to_utf8(U"\x00FC\x0300"))
+      << desc_decomp_of(U'\x01DC');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFF8B'), utf32_to_utf8(U"\x30D2"))
+      << desc_decomp_of(U'\xFF8B');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x32D1'), utf32_to_utf8(U"\x30A4"))
+      << desc_decomp_of(U'\x32D1');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x3193'), utf32_to_utf8(U"\x4E8C"))
+      << desc_decomp_of(U'\x3193');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x02B8'), utf32_to_utf8(U"\x0079"))
+      << desc_decomp_of(U'\x02B8');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2076'), utf32_to_utf8(U"\x0036"))
+      << desc_decomp_of(U'\x2076');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1D4D8'), utf32_to_utf8(U"\x0049"))
+      << desc_decomp_of(U'\x1D4D8');
 
-    EXPECT_EQ(unicode::decompose(U'\x216C'), utf32_to_utf8(U"\x004C")) << desc_decomp_of(U'\x216C');
-    EXPECT_EQ(unicode::decompose(U'\xFE94'), utf32_to_utf8(U"\x0629")) << desc_decomp_of(U'\xFE94');
-    EXPECT_EQ(unicode::decompose(U'\xFCE9'), utf32_to_utf8(U"\x0634\x0645")) << desc_decomp_of(U'\xFCE9');
-    EXPECT_EQ(unicode::decompose(U'\x0F9D'), utf32_to_utf8(U"\x0F9C\x0FB7")) << desc_decomp_of(U'\x0F9D');
-    EXPECT_EQ(unicode::decompose(U'\x038C'), utf32_to_utf8(U"\x039F\x0301")) << desc_decomp_of(U'\x038C');
-    EXPECT_EQ(unicode::decompose(U'\x0F77'), utf32_to_utf8(U"\x0FB2\x0F81")) << desc_decomp_of(U'\x0F77');
-    EXPECT_EQ(unicode::decompose(U'\xFC0A'), utf32_to_utf8(U"\x0628\x064A")) << desc_decomp_of(U'\xFC0A');
-    EXPECT_EQ(unicode::decompose(U'\xFB4E'), utf32_to_utf8(U"\x05E4\x05BF")) << desc_decomp_of(U'\xFB4E');
-    EXPECT_EQ(unicode::decompose(U'\x2F996'), utf32_to_utf8(U"\x82E6")) << desc_decomp_of(U'\x2F996');
-    EXPECT_EQ(unicode::decompose(U'\x2F859'), utf32_to_utf8(U"\x214E4")) << desc_decomp_of(U'\x2F859');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x216C'), utf32_to_utf8(U"\x004C"))
+      << desc_decomp_of(U'\x216C');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFE94'), utf32_to_utf8(U"\x0629"))
+      << desc_decomp_of(U'\xFE94');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFCE9'), utf32_to_utf8(U"\x0634\x0645"))
+      << desc_decomp_of(U'\xFCE9');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0F9D'), utf32_to_utf8(U"\x0F9C\x0FB7"))
+      << desc_decomp_of(U'\x0F9D');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x038C'), utf32_to_utf8(U"\x039F\x0301"))
+      << desc_decomp_of(U'\x038C');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0F77'), utf32_to_utf8(U"\x0FB2\x0F81"))
+      << desc_decomp_of(U'\x0F77');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFC0A'), utf32_to_utf8(U"\x0628\x064A"))
+      << desc_decomp_of(U'\xFC0A');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFB4E'), utf32_to_utf8(U"\x05E4\x05BF"))
+      << desc_decomp_of(U'\xFB4E');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2F996'), utf32_to_utf8(U"\x82E6"))
+      << desc_decomp_of(U'\x2F996');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2F859'), utf32_to_utf8(U"\x214E4"))
+      << desc_decomp_of(U'\x2F859');
 }
 
 // NOLINTEND(*-magic-numbers)
