@@ -356,6 +356,8 @@ TEST(Unicode, Decompose) {
     // start
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\0'), utf32_to_utf8(U"\0")) << desc_decomp_of(U'\0');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\1'), utf32_to_utf8(U"\1")) << desc_decomp_of(U'\1');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x009F'), utf32_to_utf8(U"\x009F"))
+      << desc_decomp_of(U'\x009F');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00A0'), utf32_to_utf8(U"\x0020"))
       << desc_decomp_of(U'\x00A0');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x00A8'), utf32_to_utf8(U"\x0020\x0308"))

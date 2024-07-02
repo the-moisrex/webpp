@@ -346,6 +346,11 @@ namespace webpp::unicode {
         }
         webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
         webpp_assume(len <= decomp_index::max_max_length);
+
+        if (len == 0) [[likely]] {
+            return unicode::unchecked::append<Iter, SizeT>(out, code_point);
+        }
+
         return static_cast<SizeT>(len);
     }
 

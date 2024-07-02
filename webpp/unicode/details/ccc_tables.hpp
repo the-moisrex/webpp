@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Mon, 01 Jul 2024 22:52:55 GMT
+ *   This file's generation date:        Tue, 02 Jul 2024 23:01:03 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       95688

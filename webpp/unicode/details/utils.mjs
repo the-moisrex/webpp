@@ -114,6 +114,9 @@ function toHexString(char) {
 }
 
 export const cppValueOf = (value, symbol) => {
+    if (typeof value !== 'number') {
+        throw new Error("Invalid value type.");
+    }
     switch (symbol) {
         case char8_1:
         case char8_2:

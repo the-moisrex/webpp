@@ -80,6 +80,8 @@ export const parse = async (table, property, fileContent = undefined) => {
                     return true;
                 });
 
+                parts = parts.map(codePoint => parseCodePoints(codePoint));
+
                 return {mappedTo: parts, mapped: true, formattingTag};
             };
             action = ({codePointStr, DecompositionStr}) => {
