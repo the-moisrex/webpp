@@ -340,9 +340,9 @@ namespace webpp::unicode {
 
         webpp_assume(code.max_length <= decomp_index::max_max_length);
         while (*ptr != u8'\0' && len != code.max_length) {
+            istl::iter_append(out, *ptr);
             ++ptr;
             ++len;
-            istl::iter_append(out, *ptr);
         }
         webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
         webpp_assume(len <= decomp_index::max_max_length);
