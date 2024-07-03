@@ -78,7 +78,9 @@ the "ccc_indices" table.
     add(codePoint, value) {
         // calculating the last item that it's value is zero
         if (value !== 0) {
-            this.lastZero = codePoint + 1;
+            // this.lastZero = codePoint + 1;
+            // find the end of the batch, not just the last item
+            this.lastZero = (((codePoint + 1) >>> this.tables.chunkShift) + 1) << this.tables.chunkShift;
         }
         return this.tables.add(codePoint, value);
     }

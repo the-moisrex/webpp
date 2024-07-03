@@ -306,7 +306,8 @@ class DecompTable {
         // calculating the last item that it's value is zero
         mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
-            this.lastMapped = codePoint + 1;
+            // find the end of the batch, not just the last item
+            this.lastMapped = (((codePoint + 1) >>> this.tables.chunkShift) + 1) << this.tables.chunkShift;
         }
         if (mappedTo.length > this.maxMappedLength) {
             this.maxMappedLength = mappedTo.length;

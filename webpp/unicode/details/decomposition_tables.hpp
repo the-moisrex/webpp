@@ -6,11 +6,11 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Tue, 02 Jul 2024 23:07:13 GMT
+ *   This file's generation date:        Wed, 03 Jul 2024 15:56:54 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       455776
- *       - in bytes:      56972 B
+ *       - in bits:       455808
+ *       - in bytes:      56976 B
  *       - in KibiBytes:  56 KiB
  *   Some other implementations' total table size was 73.4 KiB;
  *   So I saved 18 KiB and a better a locality.
@@ -42,7 +42,7 @@ namespace webpp::unicode::details {
      * In "decomposition_index" table, any code point bigger than this number will be "non-mapped" (it's
      * mapped to the input code point by standard); so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_mapped_deomps = 0x2FA1EUL;
+    static constexpr auto trailing_mapped_deomps = 0x2FA40UL;
 
     /**
      * Decomp (Index Table)
@@ -121,11 +121,11 @@ namespace webpp::unicode::details {
      *     [16bits = pos] + [8bits = max_length]
      *
      * Table size:
-     *   - in bits:       97536
-     *   - in bytes:      12192 B
+     *   - in bits:       97568
+     *   - in bytes:      12196 B
      *   - in KibiBytes:  12 KiB
      */
-    static constexpr std::array<decomp_index, 3048ULL> decomp_indices{
+    static constexpr std::array<decomp_index, 3049ULL> decomp_indices{
       0,        0,        5,        81923,    131075,   180227,   228867,   273924,   339460,   0,
       392450,   421379,   0,        470532,   534276,   589572,   655108,   714500,   0,        779012,
       0,        0,        838404,   0,        869124,   909060,   0,        974596,   0,        0,
@@ -430,7 +430,7 @@ namespace webpp::unicode::details {
       0,        0,        0,        0,        0,        0,        0,        0,        0,        0,
       0,        0,        0,        0,        0,        0,        0,        0,        0,        0,
       0,        0,        0,        0,        0,        0,        0,        0,        0,        0,
-      11021315, 11070467, 11119619, 11168771, 11217923, 11267075, 11316227, 11365379};
+      11021315, 11070467, 11119619, 11168771, 11217923, 11267075, 11316227, 11365379, 11414531};
 
     /**
      * DECOMP Values Table
@@ -2088,13 +2088,15 @@ namespace webpp::unicode::details {
       u8"\x97\xad\xe9\x82\x94\xe9\x83\xb1\xe9\x84\x91\xe8\x9c\xae\xe9\x84\x9b\xe9\x88\xb8\xe9\x8b\x97\xe9\x8b"
       u8"\x98\xe9\x89\xbc\xe9\x8f\xb9\xe9\x90\x95\xe8\xaf\xba\xe9\x96\x8b\xe4\xa6\x95\xe9\x96\xb7\xe8\xb5\xb7"
       u8"\xe4\xa7\xa6\xe9\x9b\x83\xe5\xb6\xb2\xe9\x9c\xa3\xe9\x85\x85\xe9\x88\x9a\xe4\xa9\xae\xe4\xa9\xb6\xe9"
-      u8"\x9f\xa0\xe9\x90\x8a\xe4\xaa\xb2\xe9\x92\x96\xe9\xa0\x8b\xe9\xa0\x8b\xe9\xa0\xa9\xe9\x96\xb6\xe9\xa3"
-      u8"\xa2\xe4\xac\xb3\xe9\xa4\xa9\xe9\xa6\xa7\xe9\xa7\x82\xe9\xa7\xbe\xe4\xaf\x8e\xe9\xac\xb0\xe9\xac\x92"
-      u8"\xe9\xb1\x80\xe9\xb3\xbd\xe4\xb3\x8e\xe4\xb3\xad\xe9\xb5\xa7\xea\x83\x8e\xe4\xb3\xb8\xea\x84\x85\xea"
-      u8"\x88\x8e\xea\x8a\x91\xe9\xba\xbb\xe4\xb5\x96\xe9\xbb\xb9\xe9\xbb\xbe\xe9\xbc\x85\xe9\xbc\x8f\xe9\xbc"
-      u8"\x96\xe9\xbc\xbb\xea\x98\x80\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\x9f\xa0\xe9\x90\x8a\xe4\xaa\xb2\xe9\x92\x96\xe9\xa0\x8b\xe9\xa0\x8b"
+
+      // Start of 0x2fa00:
+      u8"\xe9\xa0\xa9\xe9\x96\xb6\xe9\xa3\xa2\xe4\xac\xb3\xe9\xa4\xa9\xe9\xa6\xa7\xe9\xa7\x82\xe9\xa7\xbe\xe4"
+      u8"\xaf\x8e\xe9\xac\xb0\xe9\xac\x92\xe9\xb1\x80\xe9\xb3\xbd\xe4\xb3\x8e\xe4\xb3\xad\xe9\xb5\xa7\xea\x83"
+      u8"\x8e\xe4\xb3\xb8\xea\x84\x85\xea\x88\x8e\xea\x8a\x91\xe9\xba\xbb\xe4\xb5\x96\xe9\xbb\xb9\xe9\xbb\xbe"
+      u8"\xe9\xbc\x85\xe9\xbc\x8f\xe9\xbc\x96\xe9\xbc\xbb\xea\x98\x80\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
       u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
       // done.
       44780UL // String Length
     };

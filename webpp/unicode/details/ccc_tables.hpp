@@ -6,11 +6,11 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Tue, 02 Jul 2024 23:01:03 GMT
+ *   This file's generation date:        Wed, 03 Jul 2024 15:57:07 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       95688
- *       - in bytes:      11961 B
+ *       - in bits:       95720
+ *       - in bytes:      11965 B
  *       - in KibiBytes:  12 KiB
  *
  * Details about the contents of this file can be found here:
@@ -37,7 +37,7 @@ namespace webpp::unicode::details {
      * In "ccc_index" table, any code point bigger than this number will have "zero" as its CCC value;
      * so it's designed this way to reduce the table size.
      */
-    static constexpr auto trailing_zero_cccs = 0x1E94BUL;
+    static constexpr auto trailing_zero_cccs = 0x1E980UL;
 
     /**
      * Ccc (Index Table)
@@ -112,11 +112,11 @@ namespace webpp::unicode::details {
      *     [16bits = pos] + [8bits = mask]
      *
      * Table size:
-     *   - in bits:       31296
-     *   - in bytes:      3912 B
+     *   - in bits:       31328
+     *   - in bytes:      3916 B
      *   - in KibiBytes:  4 KiB
      */
-    static constexpr std::array<ccc_index, 978ULL> ccc_indices{
+    static constexpr std::array<ccc_index, 979ULL> ccc_indices{
       0,       0,       0,       0,       0,       0,       383,     0,       0,       32383,   0,
       60799,   89471,   118399,  146815,  166015,  198271,  224895,  257663,  279423,  311935,  311935,
       311935,  331903,  351871,  311935,  374143,  332671,  394111,  413567,  440191,  472959,  491647,
@@ -205,7 +205,7 @@ namespace webpp::unicode::details {
       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
       0,       0,       0,       1898367, 1927295, 1766527, 0,       0,       1948287, 0,       0,
-      0,       1976959, 0,       0,       0,       0,       0,       0,       0,       2005631};
+      0,       1976959, 0,       0,       0,       0,       0,       0,       0,       2005631, 2027903};
 
     /**
      * CCC Values Table
@@ -692,11 +692,13 @@ namespace webpp::unicode::details {
       // Start of 0x1e880:
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 220, 220, 220, 220, 220, 220, 220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 220, 220, 220, 220, 220, 220, 220,
+
+      // Start of 0x1e900:
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 230, 230, 230, 230, 230, 230, 7, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 230,
+      230, 230, 230, 230, 230, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 
 
