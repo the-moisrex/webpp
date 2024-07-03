@@ -388,15 +388,28 @@ namespace webpp::unicode {
      * @tparam Iter Iter can be an array, iterator, string, or similar types.
      * @returns the number of mapped values
      */
-    template <istl::Appendable Iter  = std::u8string::iterator,
-              stl::integral    SizeT = istl::size_type_of_t<Iter>,
-              typename InpStr        = stl::u32string_view>
+    template <istl::Appendable Iter   = std::u8string::iterator,
+              stl::integral    SizeT  = istl::size_type_of_t<Iter>,
+              istl::Iterable   InpStr = stl::u32string_view>
     static constexpr SizeT decompose_to(Iter& out, InpStr const str) noexcept(istl::NothrowAppendable<Iter>) {
+        // todo: calculate the max_length first, then decompose, it's better for cache locality
         SizeT count = 0;
         for (auto const code_point : str) {
             count += decompose(out, code_point);
         }
         return count;
+    }
+
+    template <istl::AppendableStorage StrT   = std::array<char8_t, details::trailing_mapped_deomps>,
+              istl::Iterable          InpStr = stl::u32string_view,
+              typename... Args>
+        requires(stl::constructible_from<StrT, Args...>)
+    [[nodiscard]] static constexpr StrT decomposed(InpStr&& str, Args&&... args) noexcept(
+      istl::NothrowAppendable<StrT>) {
+        StrT arr{stl::forward<Args>(args)...};
+        auto iter = istl::appendable_iter_of(arr);
+        decompose_to(iter, stl::forward<InpStr>(str));
+        return arr;
     }
 
 } // namespace webpp::unicode
