@@ -108,6 +108,7 @@
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/decomposition_tables.hpp"
+#include "./hangul.hpp"
 #include "./unicode.hpp"
 
 namespace webpp::unicode {
@@ -276,6 +277,12 @@ namespace webpp::unicode {
                 break;
             }
 
+            // handling hangul code points
+            if (is_hangul_code_point(code_point)) [[unlikely]] {
+                len += hangul_decompose_length_utf8(code_point);
+                continue;
+            }
+
 
             // Zero length
             if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
@@ -292,67 +299,56 @@ namespace webpp::unicode {
         return len;
     }
 
-    template <istl::CharType CharT>
-    [[nodiscard]] static constexpr details::decomp_index decomposed_index(CharT const code_point) noexcept {
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_values;
-        using details::trailing_mapped_deomps;
+    namespace details {
+        /**
+         * Decompose based on the specified arguments
+         */
+        template <istl::Appendable       Iter  = std::u8string::iterator,
+                  stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
+                  istl::CharType         CharT = char32_t>
+        static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
+          istl::NothrowAppendable<Iter>) {
+            using str_char_type = istl::appendable_value_type_t<Iter>;
 
-        // Not mapped
-        if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-            return decomp_index::not_mapped();
+            // Not mapped
+            if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+                return unicode::unchecked::append<Iter, SizeT>(out, code_point);
+            }
+
+            // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
+            if (is_hangul_code_point(code_point)) [[unlikely]] {
+                return decompose_hangul_code_point<Iter, SizeT>(out, code_point);
+            }
+
+            // Look at the ccc_index table, for how this works:
+            auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
+            auto const code             = decomp_indices[code_point_range];
+
+            // Not mapped at all, that means the code point is mapped to itself.
+            if (code.max_length == 0) [[likely]] {
+                return unicode::unchecked::append<Iter, SizeT>(out, code_point);
+            }
+
+            auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
+            decltype(code.max_length) len       = 0;
+            auto                      ptr       = start_ptr;
+
+            webpp_assume(code.max_length <= decomp_index::max_max_length);
+            while (*ptr != u8'\0' && len != code.max_length) {
+                istl::iter_append(out, *ptr);
+                ++ptr;
+                ++len;
+            }
+            webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
+            webpp_assume(len <= decomp_index::max_max_length);
+
+            if (len == 0) [[likely]] {
+                return unicode::unchecked::append<Iter, SizeT>(out, code_point);
+            }
+
+            return static_cast<SizeT>(len);
         }
-
-        // Look at the ccc_index table, for how this works:
-        auto const code_point_range = static_cast<stl::size_t>(code_point) >> decomp_index::chunk_shift;
-        auto const code             = decomp_indices[code_point_range];
-
-        return code;
-    }
-
-    /**
-     * Decompose based on the specified arguments
-     */
-    template <istl::Appendable Iter  = std::u8string::iterator,
-              stl::integral    SizeT = istl::size_type_of_t<Iter>,
-              istl::CharType   CharT = char32_t>
-    static constexpr SizeT decompose_to(
-      Iter&                       out,
-      details::decomp_index const code,
-      CharT const                 code_point) noexcept(istl::NothrowAppendable<Iter>) {
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_ptr;
-        using details::decomp_values;
-        using details::trailing_mapped_deomps;
-
-        using str_char_type = istl::appendable_value_type_t<Iter>;
-
-        // Not mapped at all, that means the code point is mapped to itself.
-        if (code.max_length == 0) [[likely]] {
-            return unicode::unchecked::append<Iter, SizeT>(out, code_point);
-        }
-
-        auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
-        decltype(code.max_length) len       = 0;
-        auto                      ptr       = start_ptr;
-
-        webpp_assume(code.max_length <= decomp_index::max_max_length);
-        while (*ptr != u8'\0' && len != code.max_length) {
-            istl::iter_append(out, *ptr);
-            ++ptr;
-            ++len;
-        }
-        webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
-        webpp_assume(len <= decomp_index::max_max_length);
-
-        if (len == 0) [[likely]] {
-            return unicode::unchecked::append<Iter, SizeT>(out, code_point);
-        }
-
-        return static_cast<SizeT>(len);
-    }
+    } // namespace details
 
     /**
      * Decompose to an array/string
@@ -362,10 +358,9 @@ namespace webpp::unicode {
               typename... Args>
     [[nodiscard]] static constexpr StrT decomposed(CharT const code_point, Args&&... args) noexcept(
       istl::NothrowAppendable<StrT>) {
-        StrT       arr{stl::forward<Args>(args)...};
-        auto const code = decomposed_index(code_point);
-        auto       iter = istl::appendable_iter_of(arr);
-        decompose_to(iter, code, code_point);
+        StrT arr{stl::forward<Args>(args)...};
+        auto iter = istl::appendable_iter_of(arr);
+        details::decompose_to(iter, code_point);
         return arr;
     }
 
@@ -379,8 +374,7 @@ namespace webpp::unicode {
               istl::CharType   CharT = char32_t>
     static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
       istl::NothrowAppendable<Iter>) {
-        auto const code = decomposed_index(code_point);
-        return decompose_to<Iter, SizeT>(out, code, code_point);
+        return details::decompose_to<Iter, SizeT>(out, code_point);
     }
 
     /**

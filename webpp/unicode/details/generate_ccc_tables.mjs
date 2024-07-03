@@ -14,7 +14,7 @@ import {
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {genIndexAddenda, genMaskedIndexAddenda} from "./modifiers.mjs";
+import {genMaskedIndexAddenda} from "./modifiers.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -135,6 +135,8 @@ const createTableFile = async (tables) => {
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
+ *   Some other implementations' total table size was 21 KiB;
+ *   So I saved ${Math.ceil(21 - totalBits / 8 / 1024)} KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/

@@ -6,12 +6,14 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 03 Jul 2024 20:23:35 GMT
+ *   This file's generation date:        Wed, 03 Jul 2024 20:36:45 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       95720
  *       - in bytes:      11965 B
  *       - in KibiBytes:  12 KiB
+ *   Some other implementations' total table size was 21 KiB;
+ *   So I saved 10 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/

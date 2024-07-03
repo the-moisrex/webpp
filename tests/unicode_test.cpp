@@ -582,4 +582,20 @@ TEST(Unicode, Decompose) {
       << desc_decomp_of(U'\x0FA2');
 }
 
+TEST(Unicode, DecomposeHangul) {
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(static_cast<char32_t>(unicode::hangul_syllable_base)),
+              utf32_to_utf8(U"\x1100\x1161"))
+      << desc_decomp_of(static_cast<char32_t>(unicode::hangul_syllable_base));
+
+
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(static_cast<char32_t>(unicode::hangul_syllable_base + 1)),
+              utf32_to_utf8(U"\x1100\x1161\x11A8"))
+      << desc_decomp_of(static_cast<char32_t>(unicode::hangul_syllable_base + 1));
+
+
+    // not hangul
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2BA4'), utf32_to_utf8(U"\x2BA4"))
+      << desc_decomp_of(U'\x2BA4');
+}
+
 // NOLINTEND(*-magic-numbers)

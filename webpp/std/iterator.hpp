@@ -68,7 +68,7 @@ namespace webpp::istl {
       requires(stl::remove_pointer_t<stl::remove_cvref_t<T>>& out, ValueType val) { out.operator+=(val); };
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
-    concept nothrowAppendableArray =
+    concept NothrowAppendableArray =
       AppendableString<T, ValueType> && stl::is_nothrow_copy_assignable_v<ValueType>;
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
@@ -83,7 +83,7 @@ namespace webpp::istl {
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendable =
       Appendable<T, ValueType> &&
-      (NothrowAppendableIterator<T, ValueType> || nothrowAppendableArray<T, ValueType>);
+      (NothrowAppendableIterator<T, ValueType> || NothrowAppendableArray<T, ValueType>);
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendableStorage =
