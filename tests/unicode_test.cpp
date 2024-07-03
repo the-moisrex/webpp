@@ -319,6 +319,10 @@ result: {}
 }
 
 TEST(Unicode, getCcc) {
+    // clang-format off
+    // Command to get samples:
+    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ { if ($4 != 0) { print "EXPECT_EQ(unicode::ccc_of(0x" $1 "), " $4 ") << desc_ccc_of(0x" $1 ");"; } }' UnicodeData.txt | sort -R | head
+    // clang-format on
     EXPECT_EQ(unicode::ccc_of(0xFC58), 0) << desc_ccc_of(0xFC58);
     EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0) << desc_ccc_of(0x10'FFFD);
     EXPECT_EQ(unicode::ccc_of(0x11'FFFD), 0) << desc_ccc_of(0x11'FFFD);
@@ -330,6 +334,72 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0x0360), 234) << desc_ccc_of(0x0360);
     EXPECT_EQ(unicode::ccc_of(0x05C2), 25) << desc_ccc_of(0x05C2);
     EXPECT_EQ(unicode::ccc_of(0x1CE8), 1) << desc_ccc_of(0x1CE8);
+
+    EXPECT_EQ(unicode::ccc_of(0x08D8), 230) << desc_ccc_of(0x08D8);
+    EXPECT_EQ(unicode::ccc_of(0x1'11C0), 9) << desc_ccc_of(0x1'11C0);
+    EXPECT_EQ(unicode::ccc_of(0x1'0A3F), 9) << desc_ccc_of(0x1'0A3F);
+    EXPECT_EQ(unicode::ccc_of(0x081E), 230) << desc_ccc_of(0x081E);
+    EXPECT_EQ(unicode::ccc_of(0x193B), 220) << desc_ccc_of(0x193B);
+    EXPECT_EQ(unicode::ccc_of(0x034C), 230) << desc_ccc_of(0x034C);
+    EXPECT_EQ(unicode::ccc_of(0x06DB), 230) << desc_ccc_of(0x06DB);
+    EXPECT_EQ(unicode::ccc_of(0x0325), 220) << desc_ccc_of(0x0325);
+    EXPECT_EQ(unicode::ccc_of(0x09BC), 7) << desc_ccc_of(0x09BC);
+    EXPECT_EQ(unicode::ccc_of(0x2CF0), 230) << desc_ccc_of(0x2CF0);
+
+    EXPECT_EQ(unicode::ccc_of(0x1'E8D4), 220) << desc_ccc_of(0x1'E8D4);
+    EXPECT_EQ(unicode::ccc_of(0x1'E8D5), 220) << desc_ccc_of(0x1'E8D5);
+    EXPECT_EQ(unicode::ccc_of(0x1'E8D6), 220) << desc_ccc_of(0x1'E8D6);
+    EXPECT_EQ(unicode::ccc_of(0x1'E944), 230) << desc_ccc_of(0x1'E944);
+    EXPECT_EQ(unicode::ccc_of(0x1'E945), 230) << desc_ccc_of(0x1'E945);
+    EXPECT_EQ(unicode::ccc_of(0x1'E946), 230) << desc_ccc_of(0x1'E946);
+    EXPECT_EQ(unicode::ccc_of(0x1'E947), 230) << desc_ccc_of(0x1'E947);
+    EXPECT_EQ(unicode::ccc_of(0x1'E948), 230) << desc_ccc_of(0x1'E948);
+    EXPECT_EQ(unicode::ccc_of(0x1'E949), 230) << desc_ccc_of(0x1'E949);
+    EXPECT_EQ(unicode::ccc_of(0x1'E94A), 7) << desc_ccc_of(0x1'E94A);
+
+    EXPECT_EQ(unicode::ccc_of(0xE'01EA), 0) << desc_ccc_of(0xE'01EA);
+    EXPECT_EQ(unicode::ccc_of(0xE'01EB), 0) << desc_ccc_of(0xE'01EB);
+    EXPECT_EQ(unicode::ccc_of(0xE'01EC), 0) << desc_ccc_of(0xE'01EC);
+    EXPECT_EQ(unicode::ccc_of(0xE'01ED), 0) << desc_ccc_of(0xE'01ED);
+    EXPECT_EQ(unicode::ccc_of(0xE'01EE), 0) << desc_ccc_of(0xE'01EE);
+    EXPECT_EQ(unicode::ccc_of(0xE'01EF), 0) << desc_ccc_of(0xE'01EF);
+    EXPECT_EQ(unicode::ccc_of(0xF'0000), 0) << desc_ccc_of(0xF'0000);
+    EXPECT_EQ(unicode::ccc_of(0xF'FFFD), 0) << desc_ccc_of(0xF'FFFD);
+    EXPECT_EQ(unicode::ccc_of(0x10'0000), 0) << desc_ccc_of(0x10'0000);
+    EXPECT_EQ(unicode::ccc_of(0x10'FFFD), 0) << desc_ccc_of(0x10'FFFD);
+
+    EXPECT_EQ(unicode::ccc_of(0x0000), 0) << desc_ccc_of(0x0000);
+    EXPECT_EQ(unicode::ccc_of(0x0001), 0) << desc_ccc_of(0x0001);
+    EXPECT_EQ(unicode::ccc_of(0x0002), 0) << desc_ccc_of(0x0002);
+    EXPECT_EQ(unicode::ccc_of(0x0003), 0) << desc_ccc_of(0x0003);
+    EXPECT_EQ(unicode::ccc_of(0x0004), 0) << desc_ccc_of(0x0004);
+    EXPECT_EQ(unicode::ccc_of(0x0005), 0) << desc_ccc_of(0x0005);
+    EXPECT_EQ(unicode::ccc_of(0x0006), 0) << desc_ccc_of(0x0006);
+    EXPECT_EQ(unicode::ccc_of(0x0007), 0) << desc_ccc_of(0x0007);
+    EXPECT_EQ(unicode::ccc_of(0x0008), 0) << desc_ccc_of(0x0008);
+    EXPECT_EQ(unicode::ccc_of(0x0009), 0) << desc_ccc_of(0x0009);
+
+    EXPECT_EQ(unicode::ccc_of(0x2DFC), 230) << desc_ccc_of(0x2DFC);
+    EXPECT_EQ(unicode::ccc_of(0x05AA), 220) << desc_ccc_of(0x05AA);
+    EXPECT_EQ(unicode::ccc_of(0x1BF3), 9) << desc_ccc_of(0x1BF3);
+    EXPECT_EQ(unicode::ccc_of(0x0485), 230) << desc_ccc_of(0x0485);
+    EXPECT_EQ(unicode::ccc_of(0x1'D171), 216) << desc_ccc_of(0x1'D171);
+    EXPECT_EQ(unicode::ccc_of(0x1'14C2), 9) << desc_ccc_of(0x1'14C2);
+    EXPECT_EQ(unicode::ccc_of(0x1'E945), 230) << desc_ccc_of(0x1'E945);
+    EXPECT_EQ(unicode::ccc_of(0x065A), 230) << desc_ccc_of(0x065A);
+    EXPECT_EQ(unicode::ccc_of(0x0615), 230) << desc_ccc_of(0x0615);
+    EXPECT_EQ(unicode::ccc_of(0x1'E011), 230) << desc_ccc_of(0x1'E011);
+
+    EXPECT_EQ(unicode::ccc_of(0x1'E00A), 230) << desc_ccc_of(0x1'E00A);
+    EXPECT_EQ(unicode::ccc_of(0x081C), 230) << desc_ccc_of(0x081C);
+    EXPECT_EQ(unicode::ccc_of(0x1'133B), 7) << desc_ccc_of(0x1'133B);
+    EXPECT_EQ(unicode::ccc_of(0x1'D243), 230) << desc_ccc_of(0x1'D243);
+    EXPECT_EQ(unicode::ccc_of(0x1DF8), 228) << desc_ccc_of(0x1DF8);
+    EXPECT_EQ(unicode::ccc_of(0x08D2), 220) << desc_ccc_of(0x08D2);
+    EXPECT_EQ(unicode::ccc_of(0x073F), 230) << desc_ccc_of(0x073F);
+    EXPECT_EQ(unicode::ccc_of(0x2CF1), 230) << desc_ccc_of(0x2CF1);
+    EXPECT_EQ(unicode::ccc_of(0x08D6), 230) << desc_ccc_of(0x08D6);
+    EXPECT_EQ(unicode::ccc_of(0x0328), 202) << desc_ccc_of(0x0328);
 }
 
 std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
@@ -444,6 +514,69 @@ TEST(Unicode, Decompose) {
       << desc_decomp_of(U'\x2F996');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2F859'), utf32_to_utf8(U"\x214E4"))
       << desc_decomp_of(U'\x2F859');
+
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA14'), utf32_to_utf8(U"\x2A291"))
+      << desc_decomp_of(U'\x2FA14');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA15'), utf32_to_utf8(U"\x9EBB"))
+      << desc_decomp_of(U'\x2FA15');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA16'), utf32_to_utf8(U"\x4D56"))
+      << desc_decomp_of(U'\x2FA16');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA17'), utf32_to_utf8(U"\x9EF9"))
+      << desc_decomp_of(U'\x2FA17');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA18'), utf32_to_utf8(U"\x9EFE"))
+      << desc_decomp_of(U'\x2FA18');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA19'), utf32_to_utf8(U"\x9F05"))
+      << desc_decomp_of(U'\x2FA19');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA1A'), utf32_to_utf8(U"\x9F0F"))
+      << desc_decomp_of(U'\x2FA1A');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA1B'), utf32_to_utf8(U"\x9F16"))
+      << desc_decomp_of(U'\x2FA1B');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA1C'), utf32_to_utf8(U"\x9F3B"))
+      << desc_decomp_of(U'\x2FA1C');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FA1D'), utf32_to_utf8(U"\x2A600"))
+      << desc_decomp_of(U'\x2FA1D');
+
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFFC5'), utf32_to_utf8(U"\x3152"))
+      << desc_decomp_of(U'\xFFC5');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x03AD'), utf32_to_utf8(U"\x03B5\x0301"))
+      << desc_decomp_of(U'\x03AD');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1D731'), utf32_to_utf8(U"\x03A6"))
+      << desc_decomp_of(U'\x1D731');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFCF9'), utf32_to_utf8(U"\x063A\x0649"))
+      << desc_decomp_of(U'\xFCF9');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x32C3'), utf32_to_utf8(U"\x0034\x6708"))
+      << desc_decomp_of(U'\x32C3');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1FE1'), utf32_to_utf8(U"\x03C5\x0304"))
+      << desc_decomp_of(U'\x1FE1');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1D53'), utf32_to_utf8(U"\x0254"))
+      << desc_decomp_of(U'\x1D53');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFC49'), utf32_to_utf8(U"\x0645\x0649"))
+      << desc_decomp_of(U'\xFC49');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1E067'), utf32_to_utf8(U"\x0491"))
+      << desc_decomp_of(U'\x1E067');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFD3A'), utf32_to_utf8(U"\x0637\x0645"))
+      << desc_decomp_of(U'\xFD3A');
+
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x3160'), utf32_to_utf8(U"\x1172"))
+      << desc_decomp_of(U'\x3160');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x2FCB'), utf32_to_utf8(U"\x9EF9"))
+      << desc_decomp_of(U'\x2FCB');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x33E4'), utf32_to_utf8(U"\x0035\x65E5"))
+      << desc_decomp_of(U'\x33E4');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1F62'), utf32_to_utf8(U"\x1F60\x0300"))
+      << desc_decomp_of(U'\x1F62');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFFB5'), utf32_to_utf8(U"\x3145"))
+      << desc_decomp_of(U'\xFFB5');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0453'), utf32_to_utf8(U"\x0433\x0301"))
+      << desc_decomp_of(U'\x0453');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x305A'), utf32_to_utf8(U"\x3059\x3099"))
+      << desc_decomp_of(U'\x305A');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\xFFBA'), utf32_to_utf8(U"\x314A"))
+      << desc_decomp_of(U'\xFFBA');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x1D5CE'), utf32_to_utf8(U"\x0075"))
+      << desc_decomp_of(U'\x1D5CE');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0FA2'), utf32_to_utf8(U"\x0FA1\x0FB7"))
+      << desc_decomp_of(U'\x0FA2');
 }
 
 // NOLINTEND(*-magic-numbers)
