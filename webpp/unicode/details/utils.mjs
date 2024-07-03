@@ -650,10 +650,10 @@ export const runClangFormat = async filePath => {
     }
 };
 
-const encoder = new TextEncoder('utf-8');
+const encoder = new TextEncoder();
 export const utf32To8 = (codePoint) => {
-    return encoder.encode(String.fromCharCode(codePoint));
-}
+    return encoder.encode(String.fromCodePoint(codePoint));
+};
 
 export const utf32To8All = (u32Array) => {
     let arr = [];
@@ -663,7 +663,7 @@ export const utf32To8All = (u32Array) => {
         }
     }
     return arr;
-}
+};
 
 export const renderTableValues = ({name, printableValues, type, len}) => {
 

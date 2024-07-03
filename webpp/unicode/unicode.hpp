@@ -409,39 +409,40 @@ namespace webpp::unicode {
 
             using char_type = istl::appendable_value_type_t<StrT>;
             using uchar_t   = stl::make_unsigned_t<CharT>;
+            auto const ccp  = static_cast<stl::uint32_t>(code_point);
             if constexpr (UTF8<char_type>) {
-                if (code_point < 0x80) { // one octet
-                    iter_append(out, code_point);
-                    return 1;
+                if (ccp < 0x80U) { // one octet
+                    iter_append(out, ccp);
+                    return 1U;
                 }
-                if (code_point < 0x800) { // two octets
-                    iter_append(out, (code_point >> 6) | 0xc0);
-                    iter_append(out, (code_point & 0x3f) | 0x80);
-                    return 2;
+                if (ccp < 0x800) {                                   // two octets
+                    iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 2U;
                 }
-                if (code_point < 0x1'0000) { // three octets
-                    iter_append(out, (code_point >> 12) | 0xe0);
-                    iter_append(out, ((code_point >> 6) & 0x3f) | 0x80);
-                    iter_append(out, (code_point & 0x3f) | 0x80);
-                    return 3;
+                if (ccp < 0x1'0000U) {                               // three octets
+                    iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
+                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 3U;
                 }
                 // four octets
-                iter_append(out, (code_point >> 18) | 0xf0);
-                iter_append(out, ((code_point >> 12) & 0x3f) | 0x80);
-                iter_append(out, ((code_point >> 6) & 0x3f) | 0x80);
-                iter_append(out, (code_point & 0x3f) | 0x80);
-                return 4;
+                iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
+                iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
+                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
+                iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
+                return 4U;
             } else if constexpr (UTF16<char_type>) {
-                if (code_point <= max_bmp<char_type>) {
-                    iter_append(out, code_point); // normal case
-                    return 1;
+                if (ccp <= max_bmp<char_type>) {
+                    iter_append(out, ccp); // normal case
+                    return 1U;
                 }
-                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(code_point) >> 10U));
-                iter_append(out, 0xDC00U + (static_cast<uchar_t>(code_point) & 0x3FFU));
-                return 2;
+                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
+                iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
+                return 2U;
             } else { // for char32_t or others
-                iter_append(out, code_point);
-                return 1;
+                iter_append(out, ccp);
+                return 1U;
             }
         }
 

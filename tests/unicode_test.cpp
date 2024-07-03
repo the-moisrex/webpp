@@ -407,7 +407,9 @@ std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
     utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
 
     for (char32_t const code_point : utf32_str) {
-        unicode::unchecked::append(utf8_str, code_point);
+        if (!unicode::checked::append(utf8_str, code_point)) {
+            throw stl::invalid_argument("Invalid code point");
+        }
     }
 
     return utf8_str;
@@ -424,7 +426,8 @@ TEST(Unicode, Decompose) {
     static_assert(stl::same_as<char8_t, istl::appendable_value_type_t<stl::u8string*>>, "invalid value type");
 
     // start
-    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\0'), utf32_to_utf8(U"\0")) << desc_decomp_of(U'\0');
+    EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\0'), utf32_to_utf8(stl::u32string{U"\0", 1}))
+      << desc_decomp_of(U'\0');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\1'), utf32_to_utf8(U"\1")) << desc_decomp_of(U'\1');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x009F'), utf32_to_utf8(U"\x009F"))
       << desc_decomp_of(U'\x009F');
