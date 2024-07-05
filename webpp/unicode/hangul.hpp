@@ -131,11 +131,11 @@ namespace webpp::unicode {
     /**
      * Get the required length of code points needed if we were to decompose the specified code point.
      *
-     * Attention: the returned length is UTF-32 and is not in UTF-8.
+     * Attention: the returned length is UTF-32 (and also UTF-16) and is not in UTF-8.
      * Attention: the code point MUST be a valid Hangul code point.
      */
     template <typename CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
-    [[nodiscard]] static constexpr RetT hangul_decompose_length(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr RetT hangul_decompose_length_utf32(CharT const code_point) noexcept {
         webpp_assume(is_hangul_code_point(code_point));
         if ((code_point - hangul_syllable_base) % hangul_trailing_count) {
             return 3U;
@@ -153,7 +153,22 @@ namespace webpp::unicode {
      */
     template <typename CharT = char32_t, stl::unsigned_integral RetT = stl::size_t>
     [[nodiscard]] static constexpr RetT hangul_decompose_length_utf8(CharT const code_point) noexcept {
-        return hangul_decompose_length(code_point) * 3;
+        return hangul_decompose_length_utf32(code_point) * 3;
+    }
+
+    /**
+     * Hangul decompose length based on the character type
+     */
+    template <typename CharT              = char32_t,
+              typename CodePointT         = char32_t,
+              stl::unsigned_integral RetT = stl::size_t>
+        requires(sizeof(CodePointT) >= sizeof(char32_t))
+    [[nodiscard]] static constexpr RetT hangul_decompose_length(CodePointT const code_point) noexcept {
+        if constexpr (UTF8<CharT>) {
+            return hangul_decompose_length_utf8<CodePointT, RetT>(code_point);
+        } else {
+            return hangul_decompose_length_utf32<CodePointT, RetT>(code_point);
+        }
     }
 
     template <typename CharT = char32_t>

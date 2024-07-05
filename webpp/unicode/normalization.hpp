@@ -272,6 +272,7 @@ namespace webpp::unicode {
 
         SizeT len = 0;
         for (;;) {
+            [[maybe_unused]] auto cur_pos    = pos;
             auto const code_point = unicode::next_code_point(pos, end);
             if (code_point == static_cast<char_type>(0)) {
                 break;
@@ -279,13 +280,17 @@ namespace webpp::unicode {
 
             // handling hangul code points
             if (is_hangul_code_point(code_point)) [[unlikely]] {
-                len += hangul_decompose_length_utf8(code_point);
+                len += hangul_decompose_length<char_type, decltype(code_point), SizeT>(code_point);
                 continue;
             }
 
-
-            // Zero length
+            // length of 1 for UTF-32
             if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+                if constexpr (UTF32<char_type>) {
+                    ++len;
+                } else {
+                    len += pos - cur_pos;
+                }
                 continue;
             }
 
@@ -405,6 +410,51 @@ namespace webpp::unicode {
         decompose_to(iter, stl::forward<InpStr>(str));
         return arr;
     }
+
+    /**
+     * Decompose inplace
+     */
+    // template <istl::Iterable StrT = stl::u8string>
+    // static constexpr void decompose(StrT& out) {
+    //     using details::decomp_index;
+    //     using details::decomp_indices;
+    //     using details::decomp_values;
+    //     using details::trailing_mapped_deomps;
+    //
+    //     using iterator_type = typename StrT::iterator;
+    //     using char_type     = typename stl::iterator_traits<iterator_type>::value_type;
+    //
+    //     stl::size_t len = 0;
+    //     auto        pos = stl::begin(out);
+    //     auto const  end = stl::end(out);
+    //     for (;;) {
+    //         auto const code_point = unicode::next_code_point(pos, end);
+    //         if (code_point == static_cast<char_type>(0)) {
+    //             break;
+    //         }
+    //
+    //         // handling hangul code points
+    //         if (is_hangul_code_point(code_point)) [[unlikely]] {
+    //             len += hangul_decompose_length_utf8(code_point);
+    //             continue;
+    //         }
+    //
+    //
+    //         // Zero length
+    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
+    //             ++len;
+    //             continue;
+    //         }
+    //
+    //         // Look at the ccc_index table, for how this works:
+    //         auto const code_point_range = static_cast<stl::size_t>(code_point) >>
+    //         decomp_index::chunk_shift; auto const code             = decomp_indices[code_point_range];
+    //
+    //         // calculating the length of te value in the decomp_values table:
+    //         len += code.max_length;
+    //     }
+    // }
+
 
 } // namespace webpp::unicode
 
