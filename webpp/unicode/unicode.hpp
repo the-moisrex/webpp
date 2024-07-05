@@ -119,32 +119,32 @@ namespace webpp::unicode {
             return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
             constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
-            if ((val & 0x80U) == 0) {
+            if ((val & 0b1000'0000U) == 0) {
                 // we have one char
                 return val;
             }
-            if ((val & 0xE0U) == 0xC0U) {
+            if ((val & 0b1110'0000U) == 0b1100'0000U) {
                 // we have 2 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0b0001'1111U;
+                val <<= 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
-            if ((val & 0xF0U) == 0xE0U) {
+            if ((val & 0b1111'0000U) == 0b1110'0000U) {
                 // we have 3 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0b0000'1111U;
+                val <<= 12U;
+                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
-            if ((val & 0xF8U) == 0xF0U) {
+            if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0b0000'0111U;
+                val <<= 18;
+                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
+                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111) << 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111;
                 return val;
             }
             return val; // return this one anyway
@@ -176,36 +176,36 @@ namespace webpp::unicode {
             return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
             constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
-            if ((val & 0x80U) == 0) {
+            if ((val & 0b1000'0000U) == 0) {
                 // we have one char
                 return val;
             }
-            if ((val & 0xE0U) == 0xC0U) {
+            if ((val & 0b1110'0000U) == 0b1100'0000U) {
                 // we have 2 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos++);
+                val  &= 0b0001'1111U;
+                val <<= 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
-            if ((val & 0xF0U) == 0xE0U) {
+            if ((val & 0b1111'0000U) == 0b1110'0000U) {
                 // we have 3 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos);
+                val  &= 0b0000'1111U;
+                val <<= 12U;
+                val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
                 if (++pos != end) {
-                    val <<= shift_bit_count;
-                    val  |= static_cast<code_point_type>(*pos++);
+                    val |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 }
                 return val;
             }
-            if ((val & 0xF8U) == 0xF0U) {
+            if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
-                val <<= shift_bit_count;
-                val  |= static_cast<code_point_type>(*pos);
+                val  &= 0b0000'0111U;
+                val <<= 18;
+                val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
                 if (++pos != end) {
-                    val <<= shift_bit_count;
-                    val  |= static_cast<code_point_type>(*pos);
+                    val |= (static_cast<code_point_type>(*pos) & 0b0011'1111) << 6U;
                     if (++pos != end) {
-                        val <<= shift_bit_count;
-                        val  |= static_cast<code_point_type>(*pos++);
+                        val |= static_cast<code_point_type>(*pos++) & 0b0011'1111;
                     }
                 }
                 return val;
@@ -217,8 +217,13 @@ namespace webpp::unicode {
     }
 
     template <typename Iter = char8_t const*, typename CodePointType = char32_t>
-    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter const& pos) noexcept {
-        return code_point(pos);
+    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos) noexcept {
+        return next_code_point<Iter, CodePointType>(pos);
+    }
+
+    template <typename Iter = char8_t const*, typename EIter = Iter, typename CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
+        return next_code_point<Iter, EIter, CodePointType>(pos, end);
     }
 
     template <typename value_type>
@@ -480,7 +485,7 @@ namespace webpp::unicode {
                   stl::integral         SizeT = istl::size_type_of_t<StrT>,
                   stl::forward_iterator Iter  = char32_t const*>
         static constexpr SizeT append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
-            using out_char_type = istl::char_traits_type_of<StrT>;
+            using out_char_type = istl::appendable_value_type_t<StrT>;
             using src_char_type = typename stl::iterator_traits<Iter>::value_type;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
                 // no need to convert to UTF32 then convert to whatever

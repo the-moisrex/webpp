@@ -313,8 +313,6 @@ namespace webpp::unicode {
                   istl::CharType         CharT = char32_t>
         static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
           istl::NothrowAppendable<Iter>) {
-            using str_char_type = istl::appendable_value_type_t<Iter>;
-
             // Not mapped
             if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
                 return unicode::unchecked::append<Iter, SizeT>(out, code_point);
@@ -334,7 +332,7 @@ namespace webpp::unicode {
                 return unicode::unchecked::append<Iter, SizeT>(out, code_point);
             }
 
-            auto const start_ptr = decomp_ptr<str_char_type>(code, code_point);
+            auto const start_ptr = decomp_ptr(code, code_point);
             auto       ptr       = start_ptr;
             auto const end_ptr   = start_ptr + code.max_length;
 

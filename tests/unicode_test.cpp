@@ -471,6 +471,40 @@ std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
     return utf8_str;
 }
 
+constexpr char32_t utf8_to_utf32(std::u8string_view input) {
+    char32_t codepoint = 0;
+
+    if (!input.empty() && (input[0] & 0b1000'0000) == 0b0000'0000) {
+        codepoint = static_cast<unsigned char>(input[0]);
+    } else if (input.size() > 1 && (input[0] & 0b1110'0000) == 0b1100'0000) {
+        codepoint = ((input[0] & 0b0001'1111) << 6) | (input[1] & 0b0011'1111);
+    } else if (input.size() > 2 && (input[0] & 0b1111'0000) == 0b1110'0000) {
+        codepoint =
+          ((input[0] & 0b0000'1111) << 12) | ((input[1] & 0b0011'1111) << 6) | (input[2] & 0b0011'1111);
+    } else if (input.size() > 3 && (input[0] & 0b1111'1000) == 0b1111'0000) {
+        codepoint = ((input[0] & 0b0000'0111) << 18) | ((input[1] & 0b0011'1111) << 12) |
+                    ((input[2] & 0b0011'1111) << 6) | (input[3] & 0b0011'1111);
+    }
+
+    return codepoint;
+}
+
+std::u32string utf8_to_utf32(std::u8string const& utf8_str) {
+    std::u32string utf32_str;
+    utf32_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+    for (auto pos = utf8_str.begin(); pos != utf8_str.end();) {
+        auto const impl_copy = unicode::next_code_point_copy(pos, utf8_str.end());
+        auto const impl2     = utf8_to_utf32(stl::u8string_view{pos, utf8_str.end()});
+        unicode::unchecked::append(utf32_str, pos);
+
+        EXPECT_EQ(utf32_str.back(), impl2);
+        EXPECT_EQ(impl_copy, impl2);
+    }
+
+    return utf32_str;
+}
+
 // Use this command to get the decomposed and its mapped values:
 // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/{gsub(/<[^>]*>/, "", $6); if($6 != "") print $1 ": " $6}' UnicodeData.txt
 TEST(Unicode, Decompose) {
@@ -639,6 +673,9 @@ TEST(Unicode, Decompose) {
 }
 
 TEST(Unicode, DecomposeUTF32) {
+    EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x29496")), U"\x29496");
+    EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x308")), U"\x308");
+
     EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\0'), (stl::u32string{U"\0", 1}))
       << desc_decomp_of(U'\0');
     EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\1'), (U"\1")) << desc_decomp_of(U'\1');

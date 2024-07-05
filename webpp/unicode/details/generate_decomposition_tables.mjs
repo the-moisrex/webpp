@@ -8,11 +8,11 @@
 import * as readme from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    uint32, char8_8, char8_7,
+    uint32, char8_8,
     writePieces,
     runClangFormat,
     utf32To8All,
-    Span, char8_6, char8_5
+    char8_6
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -415,6 +415,7 @@ namespace webpp::unicode::details {
     const endContent = `
  
     template <typename CharT = char8_t, typename CPType>
+        requires (sizeof(CharT) == sizeof(char8_t))
     [[nodiscard]] static constexpr CharT const* decomp_ptr(decomp_index const code, CPType const code_point) noexcept {
         if constexpr (stl::same_as<CharT, char8_t>) {
             return decomp_values.data() + code.get_position(code_point);
