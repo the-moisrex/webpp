@@ -242,7 +242,8 @@ template <typename CharT = char32_t>
 
     stl::string           around       = "[..., ";
     constexpr stl::size_t details_span = 4ULL;
-    for (stl::size_t pos = static_cast<stl::size_t>(stl::max<stl::int64_t>(index_pos - details_span, 0LL));
+    for (stl::size_t pos = static_cast<stl::size_t>(
+           stl::max<stl::int64_t>(static_cast<int64_t>(index_pos - details_span), 0LL));
          pos != stl::min<stl::size_t>(index_pos + details_span, ccc_values.size());
          ++pos)
     {
@@ -402,14 +403,69 @@ TEST(Unicode, getCcc) {
     EXPECT_EQ(unicode::ccc_of(0x0328), 202) << desc_ccc_of(0x0328);
 }
 
+namespace old_impl {
+    /**
+     * Append a code point to a string
+     * "out" can be an iterator/pointer or a string
+     */
+    template <istl::Appendable StrT,
+              stl::integral    SizeT = istl::size_type_of_t<StrT>,
+              typename CharT         = char32_t>
+    static constexpr SizeT append(StrT& out, CharT code_point) noexcept(istl::NothrowAppendable<StrT>) {
+        using istl::iter_append;
+
+        using char_type = istl::appendable_value_type_t<StrT>;
+        using uchar_t   = stl::make_unsigned_t<CharT>;
+        auto const ccp  = static_cast<stl::uint32_t>(code_point);
+        if constexpr (unicode::UTF8<char_type>) {
+            if (ccp < 0x80U) { // one octet
+                iter_append(out, ccp);
+                return 1U;
+            }
+            if (ccp < 0x800) {                                   // two octets
+                iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
+                iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                return 2U;
+            }
+            if (ccp < 0x1'0000U) {                               // three octets
+                iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
+                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
+                iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                return 3U;
+            }
+            // four octets
+            iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
+            iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
+            iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
+            iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
+            return 4U;
+        } else if constexpr (unicode::UTF16<char_type>) {
+            if (ccp <= unicode::max_bmp<char_type>) {
+                iter_append(out, ccp); // normal case
+                return 1U;
+            }
+            iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
+            iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
+            return 2U;
+        } else { // for char32_t or others
+            iter_append(out, ccp);
+            return 1U;
+        }
+    }
+} // namespace old_impl
+
 std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
     std::u8string utf8_str;
     utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
 
+    std::u8string test_str;
     for (char32_t const code_point : utf32_str) {
+        old_impl::append(test_str, code_point);
         if (!unicode::checked::append(utf8_str, code_point)) {
             throw stl::invalid_argument("Invalid code point");
         }
+
+        EXPECT_EQ(utf8_str, test_str);
     }
 
     return utf8_str;
@@ -580,6 +636,92 @@ TEST(Unicode, Decompose) {
       << desc_decomp_of(U'\x1D5CE');
     EXPECT_EQ(unicode::decomposed<stl::u8string>(U'\x0FA2'), utf32_to_utf8(U"\x0FA1\x0FB7"))
       << desc_decomp_of(U'\x0FA2');
+}
+
+TEST(Unicode, DecomposeUTF32) {
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\0'), (stl::u32string{U"\0", 1}))
+      << desc_decomp_of(U'\0');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\1'), (U"\1")) << desc_decomp_of(U'\1');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x009F'), (U"\x009F")) << desc_decomp_of(U'\x009F');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00A0'), (U"\x0020")) << desc_decomp_of(U'\x00A0');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00A8'), (U"\x0020\x0308")) << desc_decomp_of(U'\x00A8');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00AA'), (U"\x0061")) << desc_decomp_of(U'\x00AA');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00AF'), (U"\x0020\x0304")) << desc_decomp_of(U'\x00AF');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B2'), (U"\x0032")) << desc_decomp_of(U'\x00B2');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B3'), (U"\x0033")) << desc_decomp_of(U'\x00B3');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B4'), (U"\x0020\x0301")) << desc_decomp_of(U'\x00B4');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B5'), (U"\x03BC")) << desc_decomp_of(U'\x00B5');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B8'), (U"\x0020\x0327")) << desc_decomp_of(U'\x00B8');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x00B9'), (U"\x0031")) << desc_decomp_of(U'\x00B9');
+
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA16'), (U"\x4D56")) << desc_decomp_of(U'\x2FA16');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x3359'), (U"\x0031\x70B9")) << desc_decomp_of(U'\x3359');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xF9B1'), (U"\x9234")) << desc_decomp_of(U'\xF9B1');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1EEAB'), (U"\x0644")) << desc_decomp_of(U'\x1EEAB');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2F9FD'), (U"\x29496")) << desc_decomp_of(U'\x2F9FD');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFCA7'), (U"\x062C\x062D")) << desc_decomp_of(U'\xFCA7');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1EE09'), (U"\x064A")) << desc_decomp_of(U'\x1EE09');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xF9F2'), (U"\x9C57")) << desc_decomp_of(U'\xF9F2');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1D41E'), (U"\x0065")) << desc_decomp_of(U'\x1D41E');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1E06D'), (U"\x04B1")) << desc_decomp_of(U'\x1E06D');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x249E'), (U"\x0028\x0063\x0029"))
+      << desc_decomp_of(U'\x249E');
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1EE3B'), (U"\x063A")) << desc_decomp_of(U'\x1EE3B');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2F8FE'), (U"\x6C67")) << desc_decomp_of(U'\x2F8FE');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x0130'), (U"\x0049\x0307")) << desc_decomp_of(U'\x0130');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x01DC'), (U"\x00FC\x0300")) << desc_decomp_of(U'\x01DC');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFF8B'), (U"\x30D2")) << desc_decomp_of(U'\xFF8B');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x32D1'), (U"\x30A4")) << desc_decomp_of(U'\x32D1');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x3193'), (U"\x4E8C")) << desc_decomp_of(U'\x3193');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x02B8'), (U"\x0079")) << desc_decomp_of(U'\x02B8');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2076'), (U"\x0036")) << desc_decomp_of(U'\x2076');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1D4D8'), (U"\x0049")) << desc_decomp_of(U'\x1D4D8');
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x216C'), (U"\x004C")) << desc_decomp_of(U'\x216C');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFE94'), (U"\x0629")) << desc_decomp_of(U'\xFE94');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFCE9'), (U"\x0634\x0645")) << desc_decomp_of(U'\xFCE9');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x0F9D'), (U"\x0F9C\x0FB7")) << desc_decomp_of(U'\x0F9D');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x038C'), (U"\x039F\x0301")) << desc_decomp_of(U'\x038C');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x0F77'), (U"\x0FB2\x0F81")) << desc_decomp_of(U'\x0F77');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFC0A'), (U"\x0628\x064A")) << desc_decomp_of(U'\xFC0A');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFB4E'), (U"\x05E4\x05BF")) << desc_decomp_of(U'\xFB4E');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2F996'), (U"\x82E6")) << desc_decomp_of(U'\x2F996');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2F859'), (U"\x214E4")) << desc_decomp_of(U'\x2F859');
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA14'), (U"\x2A291")) << desc_decomp_of(U'\x2FA14');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA15'), (U"\x9EBB")) << desc_decomp_of(U'\x2FA15');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA16'), (U"\x4D56")) << desc_decomp_of(U'\x2FA16');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA17'), (U"\x9EF9")) << desc_decomp_of(U'\x2FA17');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA18'), (U"\x9EFE")) << desc_decomp_of(U'\x2FA18');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA19'), (U"\x9F05")) << desc_decomp_of(U'\x2FA19');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA1A'), (U"\x9F0F")) << desc_decomp_of(U'\x2FA1A');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA1B'), (U"\x9F16")) << desc_decomp_of(U'\x2FA1B');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA1C'), (U"\x9F3B")) << desc_decomp_of(U'\x2FA1C');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FA1D'), (U"\x2A600")) << desc_decomp_of(U'\x2FA1D');
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFFC5'), (U"\x3152")) << desc_decomp_of(U'\xFFC5');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x03AD'), (U"\x03B5\x0301")) << desc_decomp_of(U'\x03AD');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1D731'), (U"\x03A6")) << desc_decomp_of(U'\x1D731');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFCF9'), (U"\x063A\x0649")) << desc_decomp_of(U'\xFCF9');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x32C3'), (U"\x0034\x6708")) << desc_decomp_of(U'\x32C3');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1FE1'), (U"\x03C5\x0304")) << desc_decomp_of(U'\x1FE1');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1D53'), (U"\x0254")) << desc_decomp_of(U'\x1D53');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFC49'), (U"\x0645\x0649")) << desc_decomp_of(U'\xFC49');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1E067'), (U"\x0491")) << desc_decomp_of(U'\x1E067');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFD3A'), (U"\x0637\x0645")) << desc_decomp_of(U'\xFD3A');
+
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x3160'), (U"\x1172")) << desc_decomp_of(U'\x3160');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x2FCB'), (U"\x9EF9")) << desc_decomp_of(U'\x2FCB');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x33E4'), (U"\x0035\x65E5")) << desc_decomp_of(U'\x33E4');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1F62'), (U"\x1F60\x0300")) << desc_decomp_of(U'\x1F62');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFFB5'), (U"\x3145")) << desc_decomp_of(U'\xFFB5');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x0453'), (U"\x0433\x0301")) << desc_decomp_of(U'\x0453');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x305A'), (U"\x3059\x3099")) << desc_decomp_of(U'\x305A');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\xFFBA'), (U"\x314A")) << desc_decomp_of(U'\xFFBA');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x1D5CE'), (U"\x0075")) << desc_decomp_of(U'\x1D5CE');
+    EXPECT_EQ(unicode::decomposed<stl::u32string>(U'\x0FA2'), (U"\x0FA1\x0FB7")) << desc_decomp_of(U'\x0FA2');
 }
 
 TEST(Unicode, DecomposeHangul) {

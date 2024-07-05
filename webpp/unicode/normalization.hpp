@@ -273,7 +273,7 @@ namespace webpp::unicode {
         SizeT len = 0;
         for (;;) {
             [[maybe_unused]] auto cur_pos    = pos;
-            auto const code_point = unicode::next_code_point(pos, end);
+            auto const            code_point = unicode::next_code_point(pos, end);
             if (code_point == static_cast<char_type>(0)) {
                 break;
             }
@@ -334,24 +334,23 @@ namespace webpp::unicode {
                 return unicode::unchecked::append<Iter, SizeT>(out, code_point);
             }
 
-            auto const                start_ptr = decomp_ptr<str_char_type>(code, code_point);
-            decltype(code.max_length) len       = 0;
-            auto                      ptr       = start_ptr;
+            auto const start_ptr = decomp_ptr<str_char_type>(code, code_point);
+            auto       ptr       = start_ptr;
+            auto const end_ptr   = start_ptr + code.max_length;
 
             webpp_assume(code.max_length <= decomp_index::max_max_length);
-            while (*ptr != u8'\0' && len != code.max_length) {
-                istl::iter_append(out, *ptr);
-                ++ptr;
-                ++len;
+            while (*ptr != u8'\0' && ptr != end_ptr) {
+                unicode::unchecked::append<Iter, SizeT>(out, ptr);
             }
             webpp_assume(static_cast<stl::size_t>(start_ptr - ptr) <= decomp_index::max_max_length);
-            webpp_assume(len <= decomp_index::max_max_length);
+
+            auto const len = static_cast<SizeT>(ptr - start_ptr);
 
             if (len == 0) [[likely]] {
                 return unicode::unchecked::append<Iter, SizeT>(out, code_point);
             }
 
-            return static_cast<SizeT>(len);
+            return len;
         }
     } // namespace details
 
@@ -424,34 +423,10 @@ namespace webpp::unicode {
     //     using iterator_type = typename StrT::iterator;
     //     using char_type     = typename stl::iterator_traits<iterator_type>::value_type;
     //
-    //     stl::size_t len = 0;
-    //     auto        pos = stl::begin(out);
-    //     auto const  end = stl::end(out);
-    //     for (;;) {
-    //         auto const code_point = unicode::next_code_point(pos, end);
-    //         if (code_point == static_cast<char_type>(0)) {
-    //             break;
+    //     if constexpr (UTF32<char_type>) {
+    //         for (auto& code_point : out) {
+    //             decompose(out, code_point);
     //         }
-    //
-    //         // handling hangul code points
-    //         if (is_hangul_code_point(code_point)) [[unlikely]] {
-    //             len += hangul_decompose_length_utf8(code_point);
-    //             continue;
-    //         }
-    //
-    //
-    //         // Zero length
-    //         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
-    //             ++len;
-    //             continue;
-    //         }
-    //
-    //         // Look at the ccc_index table, for how this works:
-    //         auto const code_point_range = static_cast<stl::size_t>(code_point) >>
-    //         decomp_index::chunk_shift; auto const code             = decomp_indices[code_point_range];
-    //
-    //         // calculating the length of te value in the decomp_values table:
-    //         len += code.max_length;
     //     }
     // }
 

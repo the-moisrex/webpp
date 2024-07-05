@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_HPP
 #define WEBPP_UNICODE_HPP
 
+#include "../common/meta.hpp"
 #include "../std/iterator.hpp"
 #include "../std/string_concepts.hpp"
 #include "../std/type_traits.hpp"
@@ -102,48 +103,48 @@ namespace webpp::unicode {
     }
 
     // todo: check out the glib/gutf8.c implementation
-    template <typename Iter = char8_t const*, typename CodePointType = char32_t>
+    template <typename Iter = char8_t const*, UTF32 CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
 
-        auto val = *pos;
+        auto val = static_cast<code_point_type>(*pos++);
         if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
                 val <<= sizeof(char16_t) * 8U;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
-            return static_cast<code_point_type>(val); // this is the only char
+            return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
             constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
             if ((val & 0x80U) == 0) {
                 // we have one char
-                return static_cast<code_point_type>(val);
+                return val;
             }
             if ((val & 0xE0U) == 0xC0U) {
                 // we have 2 chars
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
             if ((val & 0xF0U) == 0xE0U) {
                 // we have 3 chars
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
             if ((val & 0xF8U) == 0xF0U) {
                 // we have 4 chars
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 val <<= shift_bit_count;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
             return val; // return this one anyway
@@ -152,7 +153,7 @@ namespace webpp::unicode {
         }
     }
 
-    template <typename Iter = char8_t const*, typename EIter = Iter, typename CodePointType = char32_t>
+    template <typename Iter = char8_t const*, typename EIter = Iter, UTF32 CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
@@ -161,54 +162,50 @@ namespace webpp::unicode {
             return static_cast<code_point_type>(0);
         }
 
-        auto val = *pos;
+        auto val = static_cast<code_point_type>(*pos++);
+        if (pos == end) {
+            return val;
+        }
         if constexpr (UTF16<char_type>) {
             if ((val & 0xFC00U) == 0xD800U) {
                 // we have two chars
                 val <<= sizeof(char16_t) * 8U;
-                val  |= *++pos;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
-            return static_cast<code_point_type>(val); // this is the only char
+            return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
             constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
             if ((val & 0x80U) == 0) {
                 // we have one char
-                return static_cast<code_point_type>(val);
+                return val;
             }
             if ((val & 0xE0U) == 0xC0U) {
                 // we have 2 chars
-                ++pos;
-                if (pos != end) {
-                    val <<= shift_bit_count;
-                    val  |= *pos;
-                }
+                val <<= shift_bit_count;
+                val  |= static_cast<code_point_type>(*pos++);
                 return val;
             }
             if ((val & 0xF0U) == 0xE0U) {
                 // we have 3 chars
+                val <<= shift_bit_count;
+                val  |= static_cast<code_point_type>(*pos);
                 if (++pos != end) {
                     val <<= shift_bit_count;
-                    val  |= *pos;
-                    if (++pos != end) {
-                        val <<= shift_bit_count;
-                        val  |= *++pos;
-                    }
+                    val  |= static_cast<code_point_type>(*pos++);
                 }
                 return val;
             }
             if ((val & 0xF8U) == 0xF0U) {
                 // we have 4 chars
+                val <<= shift_bit_count;
+                val  |= static_cast<code_point_type>(*pos);
                 if (++pos != end) {
                     val <<= shift_bit_count;
-                    val  |= *pos;
+                    val  |= static_cast<code_point_type>(*pos);
                     if (++pos != end) {
                         val <<= shift_bit_count;
-                        val  |= *pos;
-                        if (++pos != end) {
-                            val <<= shift_bit_count;
-                            val  |= *pos;
-                        }
+                        val  |= static_cast<code_point_type>(*pos++);
                     }
                 }
                 return val;
@@ -403,51 +400,114 @@ namespace webpp::unicode {
          */
         template <istl::Appendable StrT,
                   stl::integral    SizeT = istl::size_type_of_t<StrT>,
-                  typename CharT         = char32_t>
+                  stl::integral    CharT = char32_t>
         static constexpr SizeT append(StrT& out, CharT code_point) noexcept(istl::NothrowAppendable<StrT>) {
             using istl::iter_append;
 
             using char_type = istl::appendable_value_type_t<StrT>;
             using uchar_t   = stl::make_unsigned_t<CharT>;
-            auto const ccp  = static_cast<stl::uint32_t>(code_point);
-            if constexpr (UTF8<char_type>) {
-                if (ccp < 0x80U) { // one octet
-                    iter_append(out, ccp);
-                    return 1U;
-                }
-                if (ccp < 0x800) {                                   // two octets
-                    iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
-                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+            if constexpr (UTF32<CharT>) {
+                auto const ccp = static_cast<stl::uint32_t>(code_point);
+                if constexpr (UTF8<char_type>) {
+                    if (ccp < 0x80U) { // one octet
+                        iter_append(out, code_point);
+                        return 1U;
+                    }
+                    if (ccp < 0x800) {                                   // two octets
+                        iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
+                        iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                        return 2U;
+                    }
+                    if (ccp < 0x1'0000U) {                               // three octets
+                        iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
+                        iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
+                        iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                        return 3U;
+                    }
+                    // four octets
+                    iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
+                    iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
+                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
+                    return 4U;
+                } else if constexpr (UTF16<char_type>) {
+                    if (ccp <= max_bmp<char_type>) {
+                        iter_append(out, code_point); // normal case
+                        return 1U;
+                    }
+                    iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
+                    iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
                     return 2U;
-                }
-                if (ccp < 0x1'0000U) {                               // three octets
-                    iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
-                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
-                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
-                    return 3U;
-                }
-                // four octets
-                iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
-                iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
-                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
-                iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
-                return 4U;
-            } else if constexpr (UTF16<char_type>) {
-                if (ccp <= max_bmp<char_type>) {
-                    iter_append(out, ccp); // normal case
+                } else { // for char32_t or others
+                    iter_append(out, code_point);
                     return 1U;
                 }
-                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
-                iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
-                return 2U;
-            } else { // for char32_t or others
-                iter_append(out, ccp);
+            } else if constexpr (UTF16<CharT>) {
+                if constexpr (UTF8<char_type>) {
+                    if (code_point & 0xff80) {
+                        if (code_point & 0xf800) {
+                            // UCS-2 = U+0800 - U+FFFF -> UTF-8 (3 bytes)
+                            iter_append(out, 0xE0U | (code_point >> 12U));
+                            iter_append(out, 0x80U | ((code_point >> 6U) & 0x3FU));
+                            iter_append(out, 0x80U | (code_point & 0x3FU));
+                            return 3U;
+                        }
+
+                        // UCS-2 = U+0080 - U+07FF -> UTF-8 (2 bytes)
+                        iter_append(out, 0xC0U | (code_point >> 6U));
+                        iter_append(out, 0x80U | (code_point & 0x3FU));
+                        return 2U;
+                    }
+
+                    // UCS-2 = U+0000 - U+007F -> UTF-8 (1 byte)
+                    iter_append(out, code_point);
+                    return 1U;
+                } else {
+                    // UTF-16 or UTF-32 are simple casts
+                    iter_append(out, code_point);
+                    return 1U;
+                }
+            } else if constexpr (UTF8<CharT>) {
+                // converting UTF-8 to upper is a simple cast
+                iter_append(out, code_point);
                 return 1U;
+            } else {
+                static_assert_false(CharT, "Invalid code point type");
             }
         }
 
-        template <istl::AppendableStorage StrT = std::array<char8_t, 4UL>,
-                  typename CharT               = char32_t,
+        template <istl::Appendable      StrT,
+                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
+                  stl::forward_iterator Iter  = char32_t const*>
+        static constexpr SizeT append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
+            using out_char_type = istl::char_traits_type_of<StrT>;
+            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
+                // no need to convert to UTF32 then convert to whatever
+                return append<StrT, SizeT>(out, *src++);
+            } else {
+                return append<StrT, SizeT>(out, next_code_point(src));
+            }
+        }
+
+        template <istl::Appendable      StrT,
+                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
+                  stl::forward_iterator Iter  = char32_t const*,
+                  stl::forward_iterator EIter = Iter>
+        static constexpr SizeT append(StrT& out, Iter& src, EIter end) noexcept(
+          istl::NothrowAppendable<StrT>) {
+            using out_char_type = istl::char_traits_type_of<StrT>;
+            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
+                // no need to convert to UTF32 then convert to whatever
+                return append<StrT, SizeT>(out, *src++);
+            } else {
+                return append<StrT, SizeT>(out, next_code_point(src, end));
+            }
+        }
+
+        template <istl::AppendableStorage StrT  = std::array<char8_t, 4UL>,
+                  stl::integral           CharT = char32_t,
                   typename... Args>
         [[nodiscard]] static constexpr StrT to(CharT const code_point, Args&&... args) noexcept(
           istl::NothrowAppendable<StrT>) {
@@ -461,7 +521,7 @@ namespace webpp::unicode {
 
     namespace checked {
 
-        template <typename Ptr, typename CharT = char32_t>
+        template <typename Ptr, stl::integral CharT = char32_t>
         [[nodiscard(
           "Use unicode::unchecked::append if the input codepoint is always valid.")]] static constexpr bool
         append(Ptr& out, CharT code_point) noexcept {
