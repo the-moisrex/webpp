@@ -118,7 +118,6 @@ namespace webpp::unicode {
             }
             return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
-            constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
             if ((val & 0b1000'0000U) == 0) {
                 // we have one char
                 return val;
@@ -175,7 +174,6 @@ namespace webpp::unicode {
             }
             return val; // this is the only char
         } else if constexpr (UTF8<char_type>) {
-            constexpr char_type shift_bit_count = sizeof(char8_t) * 8U;
             if ((val & 0b1000'0000U) == 0) {
                 // we have one char
                 return val;
