@@ -777,4 +777,181 @@ TEST(Unicode, DecomposeHangul) {
       << desc_decomp_of(U'\x2BA4');
 }
 
+// implementation from
+// https://github.com/ada-url/idna/blob/fff988508f659ef5c6494572ebea3d5db2466ed0/src/normalization.cpp#L97
+void sort_marks(std::u32string& input) {
+    for (size_t idx = 1; idx < input.size(); idx++) {
+        uint8_t ccc = unicode::ccc_of(input[idx]);
+        if (ccc == 0) {
+            continue;
+        } // Skip non-combining characters.
+        auto   current_character = input[idx];
+        size_t back_idx          = idx;
+        while (back_idx != 0 && unicode::ccc_of(input[back_idx - 1]) > ccc) {
+            input[back_idx] = input[back_idx - 1];
+            back_idx--;
+        }
+        input[back_idx] = current_character;
+    }
+}
+
+TEST(Unicode, UnicodeSwap) {
+    using namespace unicode::unchecked;
+
+    // single byte move
+    stl::u8string str = u8" \1\2\3\4\5\6\7";
+    auto          beg = str.begin();
+    swap_code_points(beg + 2, beg + 6);
+    EXPECT_EQ(str, u8" \1\6\3\4\5\2\7");
+
+
+    // Unicode code point move
+    str = u8" ✅✅✅ ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u8" ✅❎✅ ❎✅❎");
+
+
+    // lhs's length is smaller than the rhs's length
+    str = u8" 123 ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u8" 1❎3 ❎2❎");
+
+
+    // rhs's length is smaller than the lhs's length
+    str = u8" ❎❎❎ 123";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u8" ❎2❎ 1❎3");
+
+    str = u8" ❎❎❎ 12";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u8" ❎2❎ 1❎");
+}
+
+TEST(Unicode, UnicodeSwap16) {
+    using namespace unicode::unchecked;
+
+    // single byte move
+    stl::u16string str = u" \1\2\3\4\5\6\7";
+    auto           beg = str.begin();
+    swap_code_points(beg + 2, beg + 6);
+    EXPECT_EQ(str, u" \1\6\3\4\5\2\7");
+
+
+    // Unicode code point move
+    str = u" ✅✅✅ ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u" ✅❎✅ ❎✅❎");
+
+
+    // lhs's length is smaller than the rhs's length
+    str = u" 123 ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u" 1❎3 ❎2❎");
+
+
+    // rhs's length is smaller than the lhs's length
+    str = u" ❎❎❎ 123";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u" ❎2❎ 1❎3");
+
+    str = u" ❎❎❎ 12";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, u" ❎2❎ 1❎");
+}
+
+TEST(Unicode, UnicodeSwap32) {
+    using namespace unicode::unchecked;
+
+    // single byte move
+    stl::u32string str = U" \1\2\3\4\5\6\7";
+    auto           beg = str.begin();
+    swap_code_points(beg + 2, beg + 6);
+    EXPECT_EQ(str, U" \1\6\3\4\5\2\7");
+
+
+    // Unicode code point move
+    str = U" ✅✅✅ ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, U" ✅❎✅ ❎✅❎");
+
+
+    // lhs's length is smaller than the rhs's length
+    str = U" 123 ❎❎❎";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, U" 1❎3 ❎2❎");
+
+
+    // rhs's length is smaller than the lhs's length
+    str = U" ❎❎❎ 123";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, U" ❎2❎ 1❎3");
+
+    str = U" ❎❎❎ 12";
+    beg = str.begin();
+    swap_code_points(next_char_copy(beg, 2), next_char_copy(beg, 6));
+    EXPECT_EQ(str, U" ❎2❎ 1❎");
+}
+
+TEST(Unicode, SortMarkTest) {
+    // a + <U+0308> + <U+0328> ( diaeresis + ogonek) -> canonicalOrdering reorders the accents!
+    stl::u8string  str  = u8"a\xcc\x88\xcc\xa8";
+    stl::u32string str2 = utf8_to_utf32(str);
+    unicode::canonical_reorder(str.begin(), str.end());
+    sort_marks(str2);
+    EXPECT_EQ(utf8_to_utf32(str), str2);
+    EXPECT_EQ(str, utf32_to_utf8(str2));
+}
+
+TEST(Unicode, EquivalentOfTransformationChains) {
+    // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
+
+    auto const check_idempotent = [](auto x) {
+        // toNFC
+        EXPECT_EQ(toNFC(x), toNFC(toNFC(x)));
+        EXPECT_EQ(toNFC(x), toNFC(toNFD(x)));
+
+        // toNFD
+        EXPECT_EQ(toNFD(x), toNFD(toNFC(x)));
+        EXPECT_EQ(toNFD(x), toNFD(toNFD(x)));
+
+        // toNFKC
+        EXPECT_EQ(toNFKC(x), toNFC(toNFKC(x)));
+        EXPECT_EQ(toNFKC(x), toNFC(toNFKD(x)));
+        EXPECT_EQ(toNFKC(x), toNFKC(toNFC(x)));
+        EXPECT_EQ(toNFKC(x), toNFKC(toNFD(x)));
+        EXPECT_EQ(toNFKC(x), toNFKC(toNFKC(x)));
+        EXPECT_EQ(toNFKC(x), toNFKC(toNFKD(x)));
+
+        // toNFKD
+        EXPECT_EQ(toNFKD(x), toNFD(toNFKC(x)));
+        EXPECT_EQ(toNFKD(x), toNFD(toNFKD(x)));
+        EXPECT_EQ(toNFKD(x), toNFKD(toNFC(x)));
+        EXPECT_EQ(toNFKD(x), toNFKD(toNFD(x)));
+        EXPECT_EQ(toNFKD(x), toNFKD(toNFKC(x)));
+        EXPECT_EQ(toNFKD(x), toNFKD(toNFKD(x)));
+    };
+
+    auto const check_equality = [](auto x, auto y) {
+        EXPECT_EQ(toNFC(x), toNFC(y));
+        EXPECT_EQ(toNFD(x), toNFD(x));
+    };
+    auto const check_compatiblity = [](auto x, auto y) {
+        EXPECT_EQ(toNFKC(x), toNFKC(y));
+        EXPECT_EQ(toNFKD(x), toNFKD(x));
+    };
+
+    // todo: write the tests
+}
+
 // NOLINTEND(*-magic-numbers)

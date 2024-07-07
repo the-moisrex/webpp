@@ -162,7 +162,7 @@ namespace webpp::unicode {
         }
 
         constexpr unicode_ptr& operator--() noexcept {
-            unicode::unchecked::prev_char(start);
+            unicode::unchecked::prev_code_point(start);
             return *this;
         }
 

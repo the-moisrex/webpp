@@ -224,6 +224,23 @@ namespace webpp::unicode {
         return next_code_point<Iter, EIter, CodePointType>(pos, end);
     }
 
+    namespace details {
+
+        // from glib/gutf8.c
+        // NOLINTBEGIN(*-avoid-c-arrays)
+        template <typename CharT = char8_t>
+        static constexpr CharT utf8_skip[256] = {
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
+        // NOLINTEND(*-avoid-c-arrays)
+    } // namespace details
+
     template <typename value_type>
         requires(stl::is_integral_v<value_type>)
     [[nodiscard]] static constexpr auto count_bytes(value_type value) noexcept {
@@ -240,19 +257,24 @@ namespace webpp::unicode {
             //               ? 2
             //               : (value < 0x1'0000 ? 3 : (value < 0x20'0000 ? 4 : (value < 0x400'0000 ? 5 :
             //               6))));
-            if ((value & 0x80U) == 0) {
-                return 1;
-            }
-            if ((value & 0xE0U) == 0xC0U) {
-                return 2;
-            }
-            if ((value & 0xF0U) == 0xE0U) {
-                return 3;
-            }
-            if ((value & 0xF8U) == 0xF0U) {
-                return 4;
-            }
-            return 1;
+
+            // impl 2:
+            // if ((value & 0x80U) == 0) {
+            //     return 1;
+            // }
+            // if ((value & 0xE0U) == 0xC0U) {
+            //     return 2;
+            // }
+            // if ((value & 0xF0U) == 0xE0U) {
+            //     return 3;
+            // }
+            // if ((value & 0xF8U) == 0xF0U) {
+            //     return 4;
+            // }
+            // return 1;
+
+            // impl 3:
+            return details::utf8_skip<value_type>[value];
         } else {
             return 1;
         }
@@ -260,24 +282,7 @@ namespace webpp::unicode {
 
     namespace unchecked {
 
-        namespace details {
-
-            // from glib/gutf8.c
-            // NOLINTBEGIN(*-avoid-c-arrays)
-            template <typename CharT = char8_t>
-            static constexpr CharT utf8_skip[256] = {
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-              2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-              3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 1, 1};
-            // NOLINTEND(*-avoid-c-arrays)
-        } // namespace details
-
-        template <typename Iter = char8_t*>
+        template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos) noexcept {
             using char_type = typename stl::iterator_traits<Iter>::value_type;
             if constexpr (UTF8<char_type>) {
@@ -294,9 +299,28 @@ namespace webpp::unicode {
             }
         }
 
-        template <typename Iter = char8_t*>
+        template <stl::forward_iterator Iter = char8_t*>
+        static constexpr void next_char(Iter& pos, stl::size_t count) noexcept {
+            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (UTF8<char_type> || UTF16<char_type>) {
+                while (count != 0) {
+                    next_char(pos);
+                    --count;
+                }
+            } else {
+                pos += count;
+            }
+        }
+
+        template <stl::forward_iterator Iter = char8_t*>
         static constexpr Iter next_char_copy(Iter pos) noexcept {
             next_char<Iter>(pos);
+            return pos;
+        }
+
+        template <stl::forward_iterator Iter = char8_t*>
+        static constexpr Iter next_char_copy(Iter pos, stl::size_t const count) noexcept {
+            next_char<Iter>(pos, count);
             return pos;
         }
 
@@ -304,7 +328,7 @@ namespace webpp::unicode {
          * Go to the beginning of the previous character.
          * This function does not check if previous character exists or not or even if it's a valid character.
          */
-        template <typename Iter = char8_t const*>
+        template <stl::bidirectional_iterator Iter = char8_t const*>
         static constexpr void prev_char(Iter& pos) noexcept {
             using char_type = typename stl::iterator_traits<Iter>::value_type;
             if constexpr (UTF8<char_type>) {
@@ -329,11 +353,6 @@ namespace webpp::unicode {
                     return;
                 }
                 --pos;
-
-                // todo: check this?
-                // if ((*pos & 0xc0) != 0x80) {
-                //     return;
-                // }
             } else if constexpr (UTF16<char_type>) {
                 --pos;
                 if (!(*pos < trail_surrogate_min<char_type> || *pos > trail_surrogate_max<char_type>) ) {
@@ -344,10 +363,71 @@ namespace webpp::unicode {
             }
         }
 
-        template <typename Iter = char8_t*>
+        template <stl::bidirectional_iterator Iter = char8_t const*>
+        static constexpr void prev_char(Iter& pos, stl::size_t count) noexcept {
+            using char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (UTF8<char_type> || UTF16<char_type>) {
+                while (count != 0) {
+                    prev_char(pos);
+                    --count;
+                }
+            } else {
+                pos -= count;
+            }
+        }
+
+        template <stl::bidirectional_iterator Iter = char8_t const*>
         [[nodiscard]] static constexpr Iter prev_char_copy(Iter pos) noexcept {
             prev_char<Iter>(pos);
             return pos;
+        }
+
+        template <stl::bidirectional_iterator Iter = char8_t const*>
+        [[nodiscard]] static constexpr Iter prev_char_copy(Iter pos, stl::size_t const count) noexcept {
+            prev_char<Iter>(pos, count);
+            return pos;
+        }
+
+        /// Unicode-aware std::iter_swap
+        template <stl::indirectly_swappable Iter = char8_t*>
+            requires(stl::random_access_iterator<Iter>)
+        static constexpr void swap_code_points(Iter lhs, Iter rhs) noexcept(
+          stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+            using stl::swap;
+            using char_type = typename stl::iterator_traits<Iter>::value_type;
+
+            if constexpr (UTF8<char_type> || UTF16<char_type>) {
+                if (lhs > rhs) {
+                    swap(lhs, rhs);
+                }
+                auto const lhs_length = count_bytes(*lhs);
+                auto const rhs_length = count_bytes(*rhs);
+                if constexpr (UTF8<char_type>) {
+                    webpp_assume(lhs_length >= 0 && lhs_length <= 6U);
+                    webpp_assume(rhs_length >= 0 && rhs_length <= 6U);
+                } else {
+                    // utf-16
+                    webpp_assume(lhs_length >= 0 && lhs_length <= 2U);
+                    webpp_assume(rhs_length >= 0 && rhs_length <= 2U);
+                }
+
+                // [X|X|X|X| | |X|X| ]
+                //  -------     ---
+                //     |         |
+                //     `--> lhs  `---> rhs
+                //
+                //  1. swap code points
+                //  2. rotate
+                stl::swap_ranges(lhs, lhs + rhs_length, rhs);
+                if (lhs_length == rhs_length) {
+                    return;
+                }
+                auto middle = (lhs_length > rhs_length ? lhs : rhs) + lhs_length;
+                stl::rotate(lhs + rhs_length, middle, rhs + rhs_length);
+            } else {
+                // utf-32 swap is trivial
+                stl::iter_swap(lhs, rhs);
+            }
         }
 
         template <typename CharT = char8_t>
