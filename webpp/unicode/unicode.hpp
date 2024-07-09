@@ -103,7 +103,7 @@ namespace webpp::unicode {
     }
 
     // todo: check out the glib/gutf8.c implementation
-    template <typename Iter = char8_t const*, UTF32 CodePointType = char32_t>
+    template <stl::forward_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
@@ -152,7 +152,9 @@ namespace webpp::unicode {
         }
     }
 
-    template <typename Iter = char8_t const*, typename EIter = Iter, UTF32 CodePointType = char32_t>
+    template <stl::forward_iterator Iter          = char8_t const*,
+              stl::forward_iterator EIter         = Iter,
+              UTF32                 CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point(Iter& pos, EIter end) noexcept {
         using code_point_type = CodePointType;
         using char_type       = typename stl::iterator_traits<Iter>::value_type;
@@ -214,14 +216,86 @@ namespace webpp::unicode {
         }
     }
 
-    template <typename Iter = char8_t const*, typename CodePointType = char32_t>
+    template <stl::forward_iterator Iter = char8_t const*, typename CodePointType = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos) noexcept {
         return next_code_point<Iter, CodePointType>(pos);
     }
 
-    template <typename Iter = char8_t const*, typename EIter = Iter, typename CodePointType = char32_t>
+    template <stl::forward_iterator Iter  = char8_t const*,
+              stl::forward_iterator EIter = Iter,
+              typename CodePointType      = char32_t>
     [[nodiscard]] static constexpr CodePointType next_code_point_copy(Iter pos, EIter end) noexcept {
         return next_code_point<Iter, EIter, CodePointType>(pos, end);
+    }
+
+    template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType prev_code_point(Iter& pos) noexcept {
+        using code_point_type = CodePointType;
+        using char_type       = typename stl::iterator_traits<Iter>::value_type;
+
+        auto val = static_cast<code_point_type>(*--pos);
+        if constexpr (UTF16<char_type>) {
+            // UTF-16 Encoding
+            // byte1            | byte2            |
+            // 0xxxxxxxxxxxxxxx |                  |
+            // 110110xxxxxxxxxx | 110111xxxxxxxxxx |
+
+            if ((val & 0xFC00U) != 0b1101'1100'0000'0000U) {
+                return val; // 1 byte
+            }
+
+            // not it has to be 2 bytes, let's fix the Unicode residuals first:
+            val &= 0b0000'0011'1111'1111U;
+
+            // now let's add the second byte:
+            val |= (static_cast<code_point_type>(*pos) & 0b0000'0011'1111'1111U) << 10U;
+
+            return val;
+        } else if constexpr (UTF8<char_type>) {
+            // byte1    | byte2    |  byte3   | byte4    |
+            // 0xxxxxxx |          |          |          |
+            // 110xxxxx | 10xxxxxx |          |          |
+            // 1110xxxx | 10xxxxxx | 10xxxxxx |          |
+            // 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
+            if (val >> 6U != 0b10) [[likely]] {
+                return val; // 1 byte
+            }
+
+            // let's clean up the first byte's Unicode residuals
+            val &= 0b0011'1111U;
+
+            if (*--pos >> 6U != 0b10) {
+                val |= (static_cast<code_point_type>(*pos) & 0b0001'1111U) << 6U; // byte 2
+                return val;                                                       // 2 bytes
+            }
+
+            // now there have to be 3 or 4 bytes, let's add byte 2 first:
+            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U; // byte 2
+
+            // checking byte 3:
+            if (*--pos >> 6U != 0b10) {
+                val |= (static_cast<code_point_type>(*pos) & 0b0000'1111U) << 12U; // byte 3
+                return val;                                                        // 3 bytes
+            }
+
+            // now we have to have 4 bytes, let's add byte 3 first:
+            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U; // byte 3
+
+            // checking byte 4
+            if (*--pos >> 6U != 0b10) [[likely]] {
+                val |= (static_cast<code_point_type>(*pos) & 0b0000'0111U) << 18U; // byte 4
+                return val;                                                        // 3 bytes
+            }
+
+            // we had to have 4 bytes, seems like a broken code point, let's add the 4th byte first:
+            val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 18U;
+
+            // invalid code point found, let's just return whatever we have now:
+            return val;
+        } else {
+            // UTF-32 is trivial
+            return val;
+        }
     }
 
     namespace details {

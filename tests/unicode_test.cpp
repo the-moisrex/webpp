@@ -903,6 +903,36 @@ TEST(Unicode, UnicodeSwap32) {
     EXPECT_EQ(str, U" ❎2❎ 1❎");
 }
 
+TEST(Unicode, PrevCodePoint8) {
+    using namespace unicode::unchecked;
+
+    stl::u8string str = u8"✅❎";
+    auto          beg = str.begin();
+    next_char(beg);
+    auto const code_point = unicode::prev_code_point(beg);
+    EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
+}
+
+TEST(Unicode, PrevCodePoint16) {
+    using namespace unicode::unchecked;
+
+    stl::u16string str = u"✅❎";
+    auto           beg = str.begin();
+    next_char(beg);
+    auto const code_point = unicode::prev_code_point(beg);
+    EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
+}
+
+TEST(Unicode, PrevCodePoint32) {
+    using namespace unicode::unchecked;
+
+    stl::u32string str = U"✅❎";
+    auto           beg = str.begin();
+    next_char(beg);
+    auto const code_point = unicode::prev_code_point(beg);
+    EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
+}
+
 TEST(Unicode, SortMarkTest) {
     // a + <U+0308> + <U+0328> ( diaeresis + ogonek) -> canonicalOrdering reorders the accents!
     stl::u8string  str  = u8"a\xcc\x88\xcc\xa8";
