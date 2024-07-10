@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 05 Jul 2024 18:22:10 GMT
+ *   This file's generation date:        Wed, 10 Jul 2024 00:33:11 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       469184
@@ -2150,6 +2150,10 @@ namespace webpp::unicode::details {
         if constexpr (stl::same_as<CharT, char8_t>) {
             return decomp_values.data() + code.get_position(code_point);
         } else {
+            // Legally we can't cast a "char const*" to "char8_t const*",
+            // but we can cast a "char8_t const*" to "char const*"; this is a very weird C++ behavior, that's
+            // why we chose u8-based strings in the values table above instead of traditional values.
+            // NOLINTNEXTLINE(*-pro-type-reinterpret-cast)
             return reinterpret_cast<CharT const*>(decomp_values.data()) + code.get_position(code_point);
         }
     }

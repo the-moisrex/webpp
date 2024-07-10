@@ -420,6 +420,10 @@ namespace webpp::unicode::details {
         if constexpr (stl::same_as<CharT, char8_t>) {
             return decomp_values.data() + code.get_position(code_point);
         } else {
+            // Legally we can't cast a "char const*" to "char8_t const*", 
+            // but we can cast a "char8_t const*" to "char const*"; this is a very weird C++ behavior, that's why
+            // we chose u8-based strings in the values table above instead of traditional values.
+            // NOLINTNEXTLINE(*-pro-type-reinterpret-cast)
             return reinterpret_cast<CharT const*>(decomp_values.data()) + code.get_position(code_point);
         }
     }
