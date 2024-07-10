@@ -909,8 +909,18 @@ TEST(Unicode, PrevCodePoint8) {
     stl::u8string str = u8"✅❎";
     auto          beg = str.begin();
     next_char(beg);
-    auto const code_point = unicode::prev_code_point(beg);
+    auto code_point = unicode::prev_code_point(beg);
     EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
+
+    str = u8"1✅❎";
+    beg = str.begin();
+    next_char(beg, 2);
+    EXPECT_EQ(unicode::prev_code_point(beg), U'✅');
+
+    str = u8"1✅❎";
+    beg = str.begin();
+    next_char(beg);
+    EXPECT_EQ(unicode::prev_code_point(beg), U'1');
 }
 
 TEST(Unicode, PrevCodePoint16) {
@@ -921,6 +931,16 @@ TEST(Unicode, PrevCodePoint16) {
     next_char(beg);
     auto const code_point = unicode::prev_code_point(beg);
     EXPECT_EQ(code_point, U'✅') << static_cast<std::uint32_t>(U'❎');
+
+    str = u"1✅❎";
+    beg = str.begin();
+    next_char(beg, 2);
+    EXPECT_EQ(unicode::prev_code_point(beg), U'✅');
+
+    str = u"1✅❎";
+    beg = str.begin();
+    next_char(beg);
+    EXPECT_EQ(unicode::prev_code_point(beg), U'1');
 }
 
 TEST(Unicode, PrevCodePoint32) {
@@ -941,6 +961,24 @@ TEST(Unicode, SortMarkTest) {
     sort_marks(str2);
     EXPECT_EQ(utf8_to_utf32(str), str2);
     EXPECT_EQ(str, utf32_to_utf8(str2));
+
+    auto test_sorting = [](stl::u32string bad_u32, stl::u32string good_u32) {
+        stl::u8string bad  = utf32_to_utf8(bad_u32);
+        stl::u8string good = utf32_to_utf8(good_u32);
+        unicode::canonical_reorder(bad.begin(), bad.end());
+        sort_marks(bad_u32);
+        EXPECT_EQ(utf8_to_utf32(bad), bad_u32);
+        EXPECT_EQ(bad, utf32_to_utf8(bad_u32));
+        EXPECT_EQ(bad, good);
+        EXPECT_EQ(utf32_to_utf8(bad_u32), good);
+        EXPECT_EQ(bad_u32, good_u32);
+    };
+
+    test_sorting(U"\x1D16D\x1D16E", U"\x1D16E\x1D16D");
+    test_sorting(U"\x101FD\x10376", U"\x101FD\x10376");
+    test_sorting(U"\x10376\x101FD", U"\x101FD\x10376");
+    test_sorting(U"abc\x1D16D\x1D16E", U"abc\x1D16E\x1D16D");
+    test_sorting(U"abc\x1D16D\x1D16E\x1\x2\x3", U"abc\x1D16E\x1D16D\x1\x2\x3");
 }
 
 TEST(Unicode, EquivalentOfTransformationChains) {

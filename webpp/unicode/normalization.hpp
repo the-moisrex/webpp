@@ -207,6 +207,7 @@ namespace webpp::unicode {
     }
 
     /**
+     * Sort Marks
      * Reorder-able pair:
      *       Two adjacent characters A and B in a coded character sequence <A, B> are
      *       a Reorder-able Pair if and only if ccc(A) > ccc(B) > 0
@@ -227,8 +228,30 @@ namespace webpp::unicode {
      *       No                    ccc(A) < ccc(B)
      *       Yes                   ccc(A) > ccc(B)
      */
-    template <typename Iter, typename EIter = Iter>
-    static constexpr void canonical_reorder(Iter start, EIter end) noexcept {}
+    template <stl::indirectly_swappable Iter = char8_t*, stl::indirectly_swappable EIter = Iter>
+    static constexpr void canonical_reorder(Iter start, EIter end) noexcept(
+      stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+        using unchecked::next_char_copy;
+        using unchecked::swap_code_points;
+
+        for (auto pos = next_char_copy(start); pos != end;) {
+            auto const ccc = ccc_of(next_code_point(pos));
+            if (ccc == 0) {
+                continue; // Skip non-combining characters (starter code points)
+            }
+
+            auto back_pos = pos;
+            while (back_pos != start) {
+                auto prev = back_pos;
+                if (auto const prev_cp = prev_code_point(prev); ccc_of(prev_cp) <= ccc) {
+                    back_pos = prev;
+                    continue;
+                }
+                swap_code_points(back_pos, prev);
+                back_pos = prev;
+            }
+        }
+    }
 
     /**
      * Is a normalized Unicode string

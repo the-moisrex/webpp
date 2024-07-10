@@ -315,14 +315,14 @@ namespace webpp::unicode {
         // NOLINTEND(*-avoid-c-arrays)
     } // namespace details
 
-    template <typename value_type>
+    template <typename value_type, stl::unsigned_integral SizeT = stl::size_t>
         requires(stl::is_integral_v<value_type>)
-    [[nodiscard]] static constexpr auto count_bytes(value_type value) noexcept {
+    [[nodiscard]] static constexpr SizeT count_bytes(value_type value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00U) == 0xD800U) {
-                return 2;
+                return 2U;
             }
-            return 1;
+            return 1U;
         } else if constexpr (UTF8<value_type>) {
             // alternative implementation:
             // return value < 0x80
@@ -348,9 +348,9 @@ namespace webpp::unicode {
             // return 1;
 
             // impl 3:
-            return details::utf8_skip<value_type>[value];
+            return static_cast<SizeT>(details::utf8_skip<value_type>[value]);
         } else {
-            return 1;
+            return 1U;
         }
     }
 
