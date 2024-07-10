@@ -402,14 +402,17 @@ export class Addenda {
         /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
         ${addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
     
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
         ${addenda.map(addendum => addendum.render(this)).join("\n        ")}
+        // NOLINTEND(*-non-private-member-variables-in-classes)
        
         /**
          * ${this.renderPlacements()}
          */ 
         explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
             : ${addenda.map(addendum => addendum.renderValueSet('value', '_shift', '_mask')).join(",\n              ")} {}
-${addenda.length <= 1? "" : ` 
+${addenda.length <= 1? "" : `
+        // NOLINTNEXTLINE(*-easily-swappable-parameters)
         explicit consteval ${this.name}(${addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
             : ${addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
 `}
@@ -693,7 +696,7 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
 export const genMaxLengthAddendum = (type = uint8) => new Addendum({
     name: "max_length",
     description: "Length of the UTF-8 Encoded Decomposition Code Points.\n" +
-        "This value is the max length of each mappings; there should be additional empty values added\n" +
+        "This value is the max length of each mapping; there should be additional empty values added\n" +
         "in between the values of the values table in order to make sure we can easily find the needed \n" +
         "mappings for all the code points without searching for them.",
     affectsChunkSize: (modifier, curChunkSize) => {

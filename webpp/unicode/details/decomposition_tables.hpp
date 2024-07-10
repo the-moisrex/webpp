@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 10 Jul 2024 00:33:11 GMT
+ *   This file's generation date:        Wed, 10 Jul 2024 00:38:05 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       469184
@@ -57,15 +57,18 @@ namespace webpp::unicode::details {
         static constexpr std::uint32_t pos_mask        = 0xFFFF00U;
         static constexpr std::uint32_t max_length_mask = 0xFFU;
 
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
 
         /// This is the position that should be looked for in the values table.
         std::uint16_t pos = 0;
 
         /// Length of the UTF-8 Encoded Decomposition Code Points.
-        /// This value is the max length of each mappings; there should be additional empty values added
+        /// This value is the max length of each mapping; there should be additional empty values added
         /// in between the values of the values table in order to make sure we can easily find the needed
         /// mappings for all the code points without searching for them.
         char8_t max_length = 1;
+
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
         /**
          * [16bits = pos] + [8bits = max_length]
@@ -74,6 +77,7 @@ namespace webpp::unicode::details {
           : pos{static_cast<std::uint16_t>(value >> pos_shift)},
             max_length{static_cast<char8_t>((value & max_length_mask))} {}
 
+        // NOLINTNEXTLINE(*-easily-swappable-parameters)
         explicit consteval decomp_index(std::uint16_t const inp_pos, char8_t const inp_max_length) noexcept
           : pos{inp_pos},
             max_length{inp_max_length} {}
