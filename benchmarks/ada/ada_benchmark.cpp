@@ -1,8 +1,10 @@
 #include "../../webpp/ip/ipv4.hpp"
 #include "../../webpp/ip/ipv6.hpp"
 #include "../../webpp/std/std.hpp"
+#include "../../webpp/unicode/normalization.hpp"
 #include "../benchmark.hpp"
 #include "./ada_ip_serializers.hpp"
+#include "./ada_normalize.hpp"
 #include "./ada_scheme.hpp"
 #include "./webpp_ip_serializers.hpp"
 #include "./webpp_scheme.hpp"
@@ -392,3 +394,85 @@ static void WebppV1SerializeIPv6Optimized(benchmark::State& state) {
 }
 
 BENCHMARK(WebppV1SerializeIPv6Optimized);
+
+
+
+
+///////////////////////////////// Decompose ////////////////////////////////////
+
+
+std::u32string const decompsableStr =
+  U"\x009F \x00A0 \x00A8 \x00AA \x00AF \x00B2 \x00B3 \x00B4 \x00B5 \x00B8 \x00B9";
+
+static void AdaDecompose(benchmark::State& state) {
+    for (auto _ : state) {
+        auto inp = decompsableStr;
+        ada::normalize::decompose_only(inp);
+        benchmark::DoNotOptimize(inp);
+    }
+}
+
+BENCHMARK(AdaDecompose);
+
+static void WebppDecompose(benchmark::State& state) {
+    for (auto _ : state) {
+        auto inp = decompsableStr;
+        webpp::unicode::decompose(inp);
+        benchmark::DoNotOptimize(inp);
+    }
+}
+
+BENCHMARK(WebppDecompose);
+
+static void WebppDecomposeTo(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u32string str;
+        str.reserve(decompsableStr.size() * 2);
+        webpp::unicode::decompose_to(str, decompsableStr);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeTo);
+
+static void AdaDecomposeTo1CodePiont(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u32string str{decompsableStr[0]};
+        ada::normalize::decompose_only(str);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(AdaDecomposeTo1CodePiont);
+
+static void WebppDecomposeTo1CodePiont(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u32string str;
+        webpp::unicode::decompose_to(str, decompsableStr[0]);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeTo1CodePiont);
+
+static void AdaDecomposeLength(benchmark::State& state) {
+    for (auto _ : state) {
+        auto [decomposition_needed, additional_elements] =
+          ada::normalize::compute_decomposition_length(decompsableStr);
+        benchmark::DoNotOptimize(decomposition_needed);
+        benchmark::DoNotOptimize(additional_elements);
+    }
+}
+
+BENCHMARK(AdaDecomposeLength);
+
+static void WebppDecomposeLength(benchmark::State& state) {
+    for (auto _ : state) {
+        auto [max_len, decomposition_needed] =
+          webpp::unicode::details::decomp_details(decompsableStr.begin(), decompsableStr.end());
+        benchmark::DoNotOptimize(decomposition_needed);
+        benchmark::DoNotOptimize(max_len);
+    }
+}
+
+BENCHMARK(WebppDecomposeLength);

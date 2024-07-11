@@ -111,7 +111,8 @@
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
-#include "traits/traits.hpp"
+
+#include <cassert>
 
 namespace webpp::unicode {
 
