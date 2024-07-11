@@ -297,6 +297,7 @@ namespace webpp::unicode {
     template <istl::Appendable       Iter  = std::u8string::iterator,
               stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
               istl::CharType         CharT = char32_t>
+        requires UTF32<CharT>
     static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
       istl::NothrowAppendable<Iter>) {
         using details::decomp_index;
@@ -365,10 +366,9 @@ namespace webpp::unicode {
               stl::integral    SizeT  = istl::size_type_of_t<Iter>,
               istl::Iterable   InpStr = stl::u32string_view>
     static constexpr SizeT decompose_to(Iter& out, InpStr const str) noexcept(istl::NothrowAppendable<Iter>) {
-        // todo: calculate the max_length first, then decompose, it's better for cache locality, maybe?
         SizeT count = 0;
-        for (auto const code_point : str) {
-            count += decompose_to(out, code_point);
+        for (auto pos = stl::begin(str); pos != str.end();) {
+            count += decompose_to(out, next_code_point(pos));
         }
         return count;
     }

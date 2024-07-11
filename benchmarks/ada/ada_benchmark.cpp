@@ -400,9 +400,24 @@ BENCHMARK(WebppV1SerializeIPv6Optimized);
 
 ///////////////////////////////// Decompose ////////////////////////////////////
 
+std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
+    std::u8string utf8_str;
+    utf8_str.reserve(utf32_str.length() * 4); // Estimate maximum size of UTF-8 string
+
+    std::u8string test_str;
+    for (char32_t const code_point : utf32_str) {
+        if (!webpp::unicode::checked::append(utf8_str, code_point)) {
+            throw std::invalid_argument("Invalid code point");
+        }
+    }
+    return utf8_str;
+}
+
 
 std::u32string const decompsableStr =
   U"\x009F \x00A0 \x00A8 \x00AA \x00AF \x00B2 \x00B3 \x00B4 \x00B5 \x00B8 \x00B9";
+
+std::u8string const decompsableStr8 = utf32_to_utf8(decompsableStr);
 
 static void AdaDecompose(benchmark::State& state) {
     for (auto _ : state) {
@@ -411,10 +426,9 @@ static void AdaDecompose(benchmark::State& state) {
         benchmark::DoNotOptimize(inp);
     }
 }
-
 BENCHMARK(AdaDecompose);
 
-static void WebppDecompose(benchmark::State& state) {
+static void WebppDecomposeUTF32(benchmark::State& state) {
     for (auto _ : state) {
         auto inp = decompsableStr;
         webpp::unicode::decompose(inp);
@@ -422,9 +436,31 @@ static void WebppDecompose(benchmark::State& state) {
     }
 }
 
-BENCHMARK(WebppDecompose);
+BENCHMARK(WebppDecomposeUTF32);
 
-static void WebppDecomposeTo(benchmark::State& state) {
+static void WebppDecomposeUTF8(benchmark::State& state) {
+    for (auto _ : state) {
+        auto inp = decompsableStr8;
+        webpp::unicode::decompose(inp);
+        benchmark::DoNotOptimize(inp);
+    }
+}
+
+BENCHMARK(WebppDecomposeUTF8);
+
+static void WebppDecomposeToUTF32Iterator(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u32string str;
+        str.reserve(decompsableStr.size() * 2);
+        auto pos = str.begin();
+        webpp::unicode::decompose_to(pos, decompsableStr);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeToUTF32Iterator);
+
+static void WebppDecomposeToUTF32(benchmark::State& state) {
     for (auto _ : state) {
         std::u32string str;
         str.reserve(decompsableStr.size() * 2);
@@ -433,7 +469,41 @@ static void WebppDecomposeTo(benchmark::State& state) {
     }
 }
 
-BENCHMARK(WebppDecomposeTo);
+BENCHMARK(WebppDecomposeToUTF32);
+
+static void WebppDecomposeToUTF8(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u8string str;
+        str.reserve(decompsableStr8.size() * 2);
+        webpp::unicode::decompose_to(str, decompsableStr8);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeToUTF8);
+
+static void WebppDecomposeToUTF8Iterator(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u8string str;
+        str.reserve(decompsableStr8.size() * 2);
+        auto pos = str.begin();
+        webpp::unicode::decompose_to(pos, decompsableStr8);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeToUTF8Iterator);
+
+static void WebppDecomposeToUTF8FromUTF32(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u8string str;
+        str.reserve(decompsableStr8.size() * 2);
+        webpp::unicode::decompose_to(str, decompsableStr);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeToUTF8FromUTF32);
 
 static void AdaDecomposeTo1CodePiont(benchmark::State& state) {
     for (auto _ : state) {
@@ -442,7 +512,6 @@ static void AdaDecomposeTo1CodePiont(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
-
 BENCHMARK(AdaDecomposeTo1CodePiont);
 
 static void WebppDecomposeTo1CodePiont(benchmark::State& state) {

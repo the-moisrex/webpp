@@ -171,7 +171,7 @@ namespace webpp::unicode {
         }
     }
 
-    template <typename CharT = char32_t>
+    template <UTF32 CharT = char32_t>
     struct decomposed_hangul {
         static constexpr CharT invalid_trailing = hangul_trailing_base;
 
@@ -215,7 +215,7 @@ namespace webpp::unicode {
      */
     template <istl::Appendable       StrOrIter,
               stl::unsigned_integral SizeT = istl::size_type_of_t<StrOrIter>,
-              istl::CharType         CharT = char32_t>
+              UTF32                  CharT = char32_t>
     static constexpr SizeT decompose_hangul_code_point(StrOrIter& out, CharT const code_point) noexcept(
       istl::NothrowAppendable<StrOrIter>) {
         using unicode::unchecked::append;

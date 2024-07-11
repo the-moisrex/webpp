@@ -52,3 +52,39 @@ AdaSerializeIPv6                    46.2 ns         46.2 ns     15135847
 WebppSerializeIPv6                  57.4 ns         57.4 ns     12221701
 WebppV1SerializeIPv6Optimized       66.8 ns         66.7 ns     10504274
 ```
+
+
+
+### Decomposition
+
+```
+2024-07-10T21:45:54-10:00
+Running ./a.out
+Run on (32 X 5500 MHz CPU s)
+CPU Caches:
+  L1 Data 48 KiB (x16)
+  L1 Instruction 32 KiB (x16)
+  L2 Unified 2048 KiB (x16)
+  L3 Unified 36864 KiB (x1)
+Load Average: 2.21, 1.76, 1.59
+------------------------------------------------------------------------
+Benchmark                              Time             CPU   Iterations
+------------------------------------------------------------------------
+AdaDecompose                        26.5 ns         26.4 ns     26594341
+WebppDecomposeUTF32                 54.5 ns         54.4 ns     12777179
+WebppDecomposeUTF8                  57.4 ns         57.3 ns     12280487
+WebppDecomposeToUTF32Iterator       18.1 ns         18.1 ns     38721883
+WebppDecomposeToUTF32               52.7 ns         52.6 ns     13393932
+WebppDecomposeToUTF8                62.9 ns         62.8 ns     11118310
+WebppDecomposeToUTF8Iterator        19.7 ns         19.7 ns     35993419
+WebppDecomposeToUTF8FromUTF32       55.8 ns         55.7 ns     12699827
+AdaDecomposeTo1CodePiont            1.65 ns         1.64 ns    427402436
+WebppDecomposeTo1CodePiont          1.28 ns         1.28 ns    546899892
+AdaDecomposeLength                  19.3 ns         19.3 ns     36247665
+WebppDecomposeLength                9.83 ns         9.82 ns     71261537
+```
+
+I'm losing in non-iterator benchmarks because of the `iter_append` penalty; it's a double indirection situation; I should fix that.
+
+But the Decomposition algorithm itself is a total win for Web++.
+
