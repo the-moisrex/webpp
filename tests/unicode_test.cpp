@@ -672,6 +672,54 @@ TEST(Unicode, Decompose) {
       << desc_decomp_of(U'\x0FA2');
 }
 
+TEST(Unicode, DecomposeInplace) {
+    auto const test_decomp = [](stl::u32string str, stl::u32string res) {
+        unicode::decompose(str);
+        EXPECT_EQ(str, res);
+
+        auto str8 = utf32_to_utf8(str);
+        unicode::decompose(str8);
+        EXPECT_EQ(str8, utf32_to_utf8(res));
+    };
+
+    test_decomp(stl::u32string{U"\0", 1}, stl::u32string{U"\0", 1});
+    test_decomp(U"\1", U"\1");
+    test_decomp(U"\x009F", U"\x009F");
+    test_decomp(U"\x00A0", U"\x0020");
+    test_decomp(U"\x00A8", U"\x0020\x0308");
+    test_decomp(U"\x00AA", U"\x0061");
+    test_decomp(U"\x00AF", U"\x0020\x0304");
+    test_decomp(U"\x00B2", U"\x0032");
+    test_decomp(U"\x00B3", U"\x0033");
+    test_decomp(U"\x00B4", U"\x0020\x0301");
+    test_decomp(U"\x00B5", U"\x03BC");
+    test_decomp(U"\x00B8", U"\x0020\x0327");
+    test_decomp(U"\x00B9", U"\x0031");
+
+    test_decomp(U"\xFFC5", U"\x3152");
+    test_decomp(U"\x03AD", U"\x03B5\x0301");
+    test_decomp(U"\x1D731", U"\x03A6");
+    test_decomp(U"\xFCF9", U"\x063A\x0649");
+    test_decomp(U"\x32C3", U"\x0034\x6708");
+    test_decomp(U"\x1FE1", U"\x03C5\x0304");
+    test_decomp(U"\x1D53", U"\x0254");
+    test_decomp(U"\xFC49", U"\x0645\x0649");
+    test_decomp(U"\x1E067", U"\x0491");
+    test_decomp(U"\xFD3A", U"\x0637\x0645");
+
+    test_decomp(U"\x3160", U"\x1172");
+    test_decomp(U"\x2FCB", U"\x9EF9");
+    test_decomp(U"\x33E4", U"\x0035\x65E5");
+    test_decomp(U"\x1F62", U"\x1F60\x0300");
+    test_decomp(U"\xFFB5", U"\x3145");
+    test_decomp(U"\x0453", U"\x0433\x0301");
+    test_decomp(U"\x305A", U"\x3059\x3099");
+    test_decomp(U"\xFFBA", U"\x314A");
+    test_decomp(U"\x1D5CE", U"\x0075");
+    test_decomp(U"\x0FA2", U"\x0FA1\x0FB7");
+}
+
+
 TEST(Unicode, DecomposeUTF32) {
     EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x29496")), U"\x29496");
     EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x308")), U"\x308");

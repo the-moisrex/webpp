@@ -69,6 +69,8 @@ class DecompTable {
     hangulIgnored = 0;
     // flattedDataView = [];
     maxMaxLength = 0;
+    max32MaxLength = 0;
+    max16MaxLength = 0;
 
     findMaxLengths({codePointStart, length, data}) {
         let maxLen = 0;
@@ -231,7 +233,13 @@ class DecompTable {
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
-        static constexpr auto max_max_length = ${self.maxMaxLength}UL;
+        static constexpr auto max_utf8_mapped_length = ${self.maxMaxLength}UL;
+        
+        /// Maximum values of UTF-16 code points mapped
+        static constexpr auto max_utf16_mapped_length = ${self.max16MaxLength}UL;
+        
+        /// Maximum values of code points mapped (UTF-32)
+        static constexpr auto max_utf32_mapped_length = ${self.max32MaxLength}UL;
                 `;
             },
             function getPositionFunction() {
@@ -242,7 +250,7 @@ class DecompTable {
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
 #if __cplusplus >= 202302L // C++23
-            [[assume(max_length <= max_max_length)]];
+            [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
             ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
             return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);
@@ -303,6 +311,11 @@ class DecompTable {
             // return;
         }
 
+        if (value.mappedTo.length > this.max32MaxLength) {
+            this.max32MaxLength = value.mappedTo.length;
+            this.max16MaxLength = String.fromCodePoint(...value.mappedTo).length; // convert to UTF-16, then get the length
+        }
+
         // calculating the last item that it's value is zero
         mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
@@ -319,9 +332,8 @@ class DecompTable {
         // // value.flatLength = mappedTo.length;
         // if (mapped) {
         //
-        let maxLength = this.getMaxLength(codePoint);
-        if (maxLength > this.maxMaxLength) {
-            this.maxMaxLength = maxLength;
+        if (mappedTo.length > this.maxMaxLength) {
+            this.maxMaxLength = mappedTo.length;
         }
         //
         //     // these don't get to be in the "values" table, so they should not be in this table either

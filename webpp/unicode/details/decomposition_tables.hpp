@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 10 Jul 2024 00:38:05 GMT
+ *   This file's generation date:        Wed, 10 Jul 2024 06:27:51 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       469184
@@ -100,7 +100,13 @@ namespace webpp::unicode::details {
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
-        static constexpr auto max_max_length = 33UL;
+        static constexpr auto max_utf8_mapped_length = 33UL;
+
+        /// Maximum values of UTF-16 code points mapped
+        static constexpr auto max_utf16_mapped_length = 18UL;
+
+        /// Maximum values of code points mapped (UTF-32)
+        static constexpr auto max_utf32_mapped_length = 18UL;
 
         /**
          * Get the final position of the second table.
@@ -109,7 +115,7 @@ namespace webpp::unicode::details {
          */
         [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
 #if __cplusplus >= 202302L // C++23
-            [[assume(max_length <= max_max_length)]];
+            [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
             std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position) & chunk_mask;
             return pos + static_cast<std::uint16_t>(remaining_pos * max_length);
