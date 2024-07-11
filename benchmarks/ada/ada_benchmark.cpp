@@ -395,9 +395,6 @@ static void WebppV1SerializeIPv6Optimized(benchmark::State& state) {
 
 BENCHMARK(WebppV1SerializeIPv6Optimized);
 
-
-
-
 ///////////////////////////////// Decompose ////////////////////////////////////
 
 std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
@@ -413,11 +410,32 @@ std::u8string utf32_to_utf8(std::u32string const& utf32_str) {
     return utf8_str;
 }
 
-
 std::u32string const decompsableStr =
   U"\x009F \x00A0 \x00A8 \x00AA \x00AF \x00B2 \x00B3 \x00B4 \x00B5 \x00B8 \x00B9";
 
 std::u8string const decompsableStr8 = utf32_to_utf8(decompsableStr);
+
+static void AdaCCC(benchmark::State& state) {
+    for (auto _ : state) {
+        for (auto code_point : decompsableStr) {
+            auto ccc = ada::normalize::get_ccc(code_point);
+            benchmark::DoNotOptimize(ccc);
+        }
+    }
+}
+
+BENCHMARK(AdaCCC);
+
+static void WebppCCC(benchmark::State& state) {
+    for (auto _ : state) {
+        for (auto code_point : decompsableStr) {
+            auto ccc = webpp::unicode::ccc_of(code_point);
+            benchmark::DoNotOptimize(ccc);
+        }
+    }
+}
+
+BENCHMARK(WebppCCC);
 
 static void AdaDecompose(benchmark::State& state) {
     for (auto _ : state) {
@@ -426,6 +444,7 @@ static void AdaDecompose(benchmark::State& state) {
         benchmark::DoNotOptimize(inp);
     }
 }
+
 BENCHMARK(AdaDecompose);
 
 static void WebppDecomposeUTF32(benchmark::State& state) {
@@ -453,7 +472,7 @@ static void WebppDecomposeToUTF32Iterator(benchmark::State& state) {
         std::u32string str;
         str.resize(decompsableStr.size() * 2);
         auto const beg = str.begin();
-        auto pos = str.begin();
+        auto       pos = str.begin();
         webpp::unicode::decompose_to(pos, decompsableStr);
         str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
@@ -488,7 +507,7 @@ static void WebppDecomposeToUTF8Iterator(benchmark::State& state) {
     for (auto _ : state) {
         std::u8string str;
         str.resize(decompsableStr8.size() * 2);
-        auto pos = str.begin();
+        auto       pos = str.begin();
         auto const beg = str.begin();
         webpp::unicode::decompose_to(pos, decompsableStr8);
         str.resize(pos - beg);
@@ -530,6 +549,7 @@ static void AdaDecomposeTo1CodePiont(benchmark::State& state) {
         benchmark::DoNotOptimize(str);
     }
 }
+
 BENCHMARK(AdaDecomposeTo1CodePiont);
 
 static void WebppDecomposeTo1CodePiont(benchmark::State& state) {

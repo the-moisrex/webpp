@@ -261,19 +261,17 @@ template <typename CharT = char32_t>
     around += "...]";
     return fmt::format(
       R"data(code: {}
-mask: {}
 index: {}
 remaining pos: {}
-masked pos: {}
 actual pos: {} = {} + {}
 result: {}
 {}
 )data",
       code.value(),
-      code.mask,
+      // code.mask,
       code.pos,
       remaining_pos,
-      code.masked(remaining_pos),
+      // code.masked(remaining_pos),
       code.get_position(code_point),
       code.pos,
       remaining_pos,

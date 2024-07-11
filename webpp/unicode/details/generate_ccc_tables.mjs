@@ -14,7 +14,7 @@ import {
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
 import {TablePairs} from "./table.mjs";
-import {genMaskedIndexAddenda} from "./modifiers.mjs";
+import {genSimpleIndexAddenda} from "./modifiers.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -63,7 +63,7 @@ the "ccc_indices" table.
             indices: this.indices,
             values: this.values,
             validateResults: true,
-            genIndexAddenda: () => genMaskedIndexAddenda("index", uint7),
+            genIndexAddenda: () => genSimpleIndexAddenda("index", uint7),
         });
     }
 

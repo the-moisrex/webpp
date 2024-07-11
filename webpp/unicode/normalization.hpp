@@ -146,12 +146,10 @@ namespace webpp::unicode {
         }
 
         // Look at the ccc_index table, for how this works:
-        auto const code_point_range = static_cast<stl::size_t>(code_point) >> ccc_index::chunk_shift;
-        auto const code             = ccc_indices[code_point_range];
+        auto const code = ccc_indices[static_cast<stl::uint32_t>(code_point) >> ccc_index::chunk_shift];
 
         // calculating the position of te value in the ccc_values table:
-        stl::size_t const index_pos = code.get_position(code_point);
-        return ccc_values[index_pos];
+        return ccc_values[code.get_position(code_point)];
     }
 
     /// Canonical Combining Class
@@ -462,7 +460,6 @@ namespace webpp::unicode {
      */
     template <istl::String StrT = stl::u32string>
     static constexpr void decompose(StrT& out) noexcept {
-        using char_type = typename StrT::value_type;
         using size_type = typename StrT::size_type;
 
         auto const [max_length, requires_mapping] = details::decomp_details(out.begin(), out.end());
@@ -483,7 +480,6 @@ namespace webpp::unicode {
                   while (backup_start != backup_end) {
                       decompose_to(ptr, next_code_point(backup_start));
                   }
-                  // *ptr = static_cast<char_type>('\0');
                   return static_cast<size_type>(ptr - beg);
               }
               auto       backup_start = ptr + length - cur_len;
@@ -495,7 +491,6 @@ namespace webpp::unicode {
               while (backup_start != backup_end) {
                   decompose_to(ptr, next_code_point(backup_start));
               }
-              // *ptr = static_cast<char_type>('\0');
               return static_cast<size_type>(ptr - beg);
           };
         if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {

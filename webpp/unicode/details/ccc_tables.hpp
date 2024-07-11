@@ -6,11 +6,11 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 03 Jul 2024 20:36:45 GMT
+ *   This file's generation date:        Thu, 11 Jul 2024 23:25:48 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       95720
- *       - in bytes:      11965 B
+ *       - in bits:       96736
+ *       - in bytes:      12092 B
  *       - in KibiBytes:  12 KiB
  *   Some other implementations' total table size was 21 KiB;
  *   So I saved 10 KiB.
@@ -45,37 +45,28 @@ namespace webpp::unicode::details {
      * Ccc (Index Table)
      * Canonical Combining Class
      */
-    struct alignas(std::uint32_t) ccc_index {
-        /// The shifts required to extract the values out of a std::uint32_t; you can use masks as well:
-        static constexpr std::uint8_t pos_shift  = 8U;
-        static constexpr std::uint8_t mask_shift = 0U;
+    struct alignas(std::uint16_t) ccc_index {
+        /// The shifts required to extract the values out of a std::uint16_t; you can use masks as well:
+        static constexpr std::uint8_t pos_shift = 0U;
 
-        /// The masks required to extracting the values out of a std::uint32_t; you can use shifts as well:
-        static constexpr std::uint32_t pos_mask  = 0xFFFF00U;
-        static constexpr std::uint32_t mask_mask = 0xFFU;
+        /// The masks required to extracting the values out of a std::uint16_t; you can use shifts as well:
+        static constexpr std::uint16_t pos_mask = 0xFFFFU;
 
+        // NOLINTBEGIN(*-non-private-member-variables-in-classes)
 
         /// This is the position that should be looked for in the values table.
         std::uint16_t pos = 0;
 
-        /// This is used to mask the 'remaining position' of the values table;
-        /// meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].
-        /// The mask does not apply to the whole index, but only to the remaining index.
-        std::uint8_t mask = 127;
+        // NOLINTEND(*-non-private-member-variables-in-classes)
 
         /**
-         * [16bits = pos] + [8bits = mask]
+         * [16bits = pos]
          */
-        explicit(false) consteval ccc_index(std::uint32_t const value) noexcept
-          : pos{static_cast<std::uint16_t>(value >> pos_shift)},
-            mask{static_cast<std::uint8_t>((value & mask_mask))} {}
+        explicit(false) consteval ccc_index(std::uint16_t const value) noexcept
+          : pos{static_cast<std::uint16_t>(value)} {}
 
-        explicit consteval ccc_index(std::uint16_t const inp_pos, std::uint8_t const inp_mask) noexcept
-          : pos{inp_pos},
-            mask{inp_mask} {}
-
-        [[nodiscard]] constexpr std::uint32_t value() const noexcept {
-            return static_cast<std::uint32_t>(mask) | (static_cast<std::uint32_t>(pos) << pos_shift);
+        [[nodiscard]] constexpr std::uint16_t value() const noexcept {
+            return static_cast<std::uint16_t>(pos);
         }
 
         static constexpr std::uint16_t chunk_mask  = 0x7FU;
@@ -83,23 +74,13 @@ namespace webpp::unicode::details {
         static constexpr std::uint8_t  chunk_shift = 7U;
 
         /**
-         * Apply the mask to the position specified in the input.
-         * Attention: input is the remaining part of the position, meaning
-         *    remaining_pos = (code_point & 127); // 127 refers to chunk_mask
-         */
-        [[nodiscard]] constexpr std::uint16_t masked(auto const remaining_pos) const noexcept {
-            return static_cast<std::uint16_t>(mask) & static_cast<std::uint16_t>(remaining_pos);
-        }
-
-        /**
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies tha
          * mask.
          */
         [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
-            std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position) & chunk_mask;
-            std::uint16_t const masked_remaining_pos = masked(remaining_pos);
-            return pos + masked_remaining_pos;
+            std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position & chunk_mask);
+            return pos + remaining_pos;
         }
     };
 
@@ -110,8 +91,8 @@ namespace webpp::unicode::details {
      * These are the indices that are used to find which values from "ccc_values" table correspond to a
      * Unicode Code Point.
      *
-     * Each value contains 2 numbers hidden inside:
-     *     [16bits = pos] + [8bits = mask]
+     * Each value contains 1 numbers hidden inside:
+     *     [16bits = pos]
      *
      * Table size:
      *   - in bits:       31328
@@ -119,95 +100,64 @@ namespace webpp::unicode::details {
      *   - in KibiBytes:  4 KiB
      */
     static constexpr std::array<ccc_index, 979ULL> ccc_indices{
-      0,       0,       0,       0,       0,       0,       383,     0,       0,       32383,   0,
-      60799,   89471,   118399,  146815,  166015,  198271,  224895,  257663,  279423,  311935,  311935,
-      311935,  331903,  351871,  311935,  374143,  332671,  394111,  413567,  440191,  472959,  491647,
-      521087,  0,       0,       0,       0,       530047,  0,       0,       0,       0,       0,
-      0,       0,       557695,  571263,  0,       595327,  613503,  0,       640383,  673151,  693375,
-      723071,  752767,  767103,  0,       798335,  0,       0,       0,       0,       0,       831103,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       525439,  860031,  892799,  0,       0,       0,       0,       925567,  951935,  0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       958847,  991103,  0,       0,       1022335, 1037695, 1066879, 1088383, 0,
-      1108863, 0,       864639,  0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       1139327, 0,       0,       0,
-      0,       0,       1163903, 0,       0,       0,       0,       0,       0,       1176191, 0,
-      1183615, 1208447, 0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       1239935, 1256319, 0,       0,       0,       0,       1282687,
-      0,       0,       1304447, 1337215, 1369471, 1384319, 1417087, 1449855, 1479551, 1498751, 1512831,
-      1540223, 0,       1570175, 1594495, 0,       1595263, 876415,  1597567, 881535,  0,       1417087,
-      0,       1614719, 867967,  1634175, 1660543, 0,       0,       876415,  0,       1676415, 1703295,
-      0,       0,       1719423, 0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       1736575,
-      1766527, 0,       0,       0,       0,       0,       0,       0,       0,       1780607, 0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       1809791, 0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       1817727, 1849727, 1865599, 0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       0,       0,       0,       0,       0,       0,       0,       0,
-      0,       0,       0,       1898367, 1927295, 1766527, 0,       0,       1948287, 0,       0,
-      0,       1976959, 0,       0,       0,       0,       0,       0,       0,       2005631, 2027903};
+      0,    0,    0,    0,    0,    0,    128,  0,    0,    253,  0,    364,  476,  589,  700,  775,  901,
+      1005, 1133, 1218, 1345, 1345, 1345, 1423, 1501, 1345, 1588, 1426, 1666, 1742, 1846, 1974, 2047, 2162,
+      0,    0,    0,    0,    2197, 0,    0,    0,    0,    0,    0,    0,    2305, 2358, 0,    2452, 2523,
+      0,    2628, 2756, 2835, 2951, 3067, 3123, 0,    3245, 0,    0,    0,    0,    0,    3373, 0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    2179, 3486, 3614, 0,    0,    0,    0,    3742, 3845, 0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    3872, 3998, 0,    0,    4120, 4180, 4294, 4378,
+      0,    4458, 0,    3504, 0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    4577, 0,    0,    0,    0,    0,    4673, 0,
+      0,    0,    0,    0,    0,    4721, 0,    4750, 4847, 0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    4970, 5034, 0,    0,    0,    0,    5137, 0,    0,    5222, 5350, 5476,
+      5534, 5662, 5790, 5906, 5981, 6036, 6143, 0,    6260, 6355, 0,    6358, 3550, 6367, 3570, 0,    5662,
+      0,    6434, 3517, 6510, 6613, 0,    0,    3550, 0,    6675, 6780, 0,    0,    6843, 0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    6910, 7027, 0,    0,    0,    0,
+      0,    0,    0,    0,    7082, 0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    7196, 0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    7227, 7352, 7414, 0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+      0,    0,    0,    0,    0,    0,    0,    0,    7542, 7655, 7027, 0,    0,    7737, 0,    0,    0,
+      7849, 0,    0,    0,    0,    0,    0,    0,    7961, 8048};
 
     /**
      * CCC Values Table
@@ -217,11 +167,11 @@ namespace webpp::unicode::details {
      * Unicode Code Point.
      *
      * Table size:
-     *   - in bits:       64392
-     *   - in bytes:      8049 B
+     *   - in bits:       65408
+     *   - in bytes:      8176 B
      *   - in KibiBytes:  8 KiB
      */
-    static constexpr std::array<std::uint8_t, 8049ULL> ccc_values{
+    static constexpr std::array<std::uint8_t, 8176ULL> ccc_values{
 
       // Start of 0x0-0x280, 0x380-0x400, 0x500, 0x1100-0x1280, 0x1380-0x1680, 0x1800, 0x1980, 0x1d00,
       // 0x1e00-0x2000, 0x2100-0x2c00, 0x2e00-0x2f80, 0x3100-0xa580, 0xa700-0xa780, 0xaa00, 0xab00,
@@ -229,7 +179,10 @@ namespace webpp::unicode::details {
       // 0x10d80-0x10e00, 0x11380, 0x11500, 0x11780, 0x11880, 0x11b00-0x11b80, 0x11c80, 0x11e00-0x11e80,
       // 0x11f80-0x16a00, 0x16b80-0x16f00, 0x17000-0x1bc00, 0x1bd00-0x1d080, 0x1d280-0x1df80, 0x1e180-0x1e200,
       // 0x1e300-0x1e400, 0x1e500-0x1e800:
-      0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
       // Start of 0x300:
       230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230, 230,

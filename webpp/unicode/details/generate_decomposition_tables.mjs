@@ -46,7 +46,7 @@ const hangul_syllable_count = hangul_leading_count * hangul_block_count;
 
 const isHangul = (codePoint) => {
     return codePoint >= hangul_syllable_base && codePoint < hangul_syllable_base + hangul_syllable_count;
-}
+};
 
 
 const start = async () => {
