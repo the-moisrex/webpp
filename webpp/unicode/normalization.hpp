@@ -386,7 +386,7 @@ namespace webpp::unicode {
 
     namespace details {
 
-        template <stl::unsigned_integral SizeT = stl::size_t>
+        template <stl::integral SizeT = stl::size_t>
         struct decomposition_details {
             SizeT max_length       = 0; // max possible length required for decompositions
             bool  requires_mapping = false;
@@ -395,10 +395,9 @@ namespace webpp::unicode {
         /**
          * Finding out these things:
          *   1. the max length required (the sum of max_lengths essentially)
-         *   2. where to start decomposing if needed at all (an optimization trick)
-         *   3. where to end decomposing (an optimization trick)
+         *   2. and should we continue mapping or not
          */
-        template <stl::unsigned_integral      SizeT = stl::size_t,
+        template <stl::integral               SizeT = stl::size_t,
                   stl::random_access_iterator Iter  = stl::u8string::const_iterator,
                   stl::random_access_iterator EIter = Iter>
         static constexpr decomposition_details<SizeT> decomp_details(Iter pos, EIter end) noexcept {
@@ -412,11 +411,7 @@ namespace webpp::unicode {
             decomposition_details<SizeT> info;
             auto const                   actual_length = static_cast<SizeT>(end - pos);
             while (pos != end) {
-                [[maybe_unused]] auto cur_pos    = pos;
-                auto const            code_point = unicode::next_code_point(pos);
-                // if (code_point == static_cast<char_type>(0)) {
-                //     break;
-                // }
+                auto const code_point = unicode::next_code_point(pos);
 
                 // handling hangul code points
                 if (is_hangul_code_point(code_point)) [[unlikely]] {
@@ -425,12 +420,6 @@ namespace webpp::unicode {
                     continue;
                 }
 
-                // Add the length of the current code point as well
-                // if constexpr (UTF32<char_type>) {
-                //     ++info.max_length;
-                // } else {
-                //     info.max_length += pos - cur_pos;
-                // }
                 if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
                     continue;
                 }

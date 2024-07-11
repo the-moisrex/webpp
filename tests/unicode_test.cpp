@@ -674,13 +674,14 @@ TEST(Unicode, Decompose) {
 }
 
 TEST(Unicode, DecomposeInplace) {
-    auto const test_decomp = [](stl::u32string str, stl::u32string res) {
+    auto const test_decomp = [](stl::u32string inp_str, stl::u32string inp_res) {
+        auto str = inp_str;
         unicode::decompose(str);
-        EXPECT_EQ(str, res);
+        EXPECT_EQ(str, inp_res);
 
-        auto str8 = utf32_to_utf8(str);
+        auto str8 = utf32_to_utf8(inp_str);
         unicode::decompose(str8);
-        EXPECT_EQ(str8, utf32_to_utf8(res));
+        EXPECT_EQ(str8, utf32_to_utf8(inp_res));
     };
 
     test_decomp(stl::u32string{U"\0", 1}, stl::u32string{U"\0", 1});
