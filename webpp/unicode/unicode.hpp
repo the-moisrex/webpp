@@ -315,9 +315,9 @@ namespace webpp::unicode {
         // NOLINTEND(*-avoid-c-arrays)
     } // namespace details
 
-    template <typename value_type, stl::unsigned_integral SizeT = stl::size_t>
+    template <typename value_type, stl::integral SizeT = stl::size_t>
         requires(stl::is_integral_v<value_type>)
-    [[nodiscard]] static constexpr SizeT count_bytes(value_type value) noexcept {
+    [[nodiscard]] static constexpr SizeT count_bytes(value_type const value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00U) == 0xD800U) {
                 return 2U;
@@ -376,13 +376,14 @@ namespace webpp::unicode {
         template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos, stl::size_t count) noexcept {
             using char_type = typename stl::iterator_traits<Iter>::value_type;
+            using diff_type = typename stl::iterator_traits<Iter>::difference_type;
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 while (count != 0) {
                     next_char(pos);
                     --count;
                 }
             } else {
-                pos += count;
+                pos += static_cast<diff_type>(count);
             }
         }
 
@@ -469,13 +470,14 @@ namespace webpp::unicode {
           stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
             using stl::swap;
             using char_type = typename stl::iterator_traits<Iter>::value_type;
+            using diff_type = typename stl::iterator_traits<Iter>::difference_type;
 
             if constexpr (UTF8<char_type> || UTF16<char_type>) {
                 if (lhs > rhs) {
                     swap(lhs, rhs);
                 }
-                auto const lhs_length = count_bytes(*lhs);
-                auto const rhs_length = count_bytes(*rhs);
+                auto const lhs_length = count_bytes<char_type, diff_type>(*lhs);
+                auto const rhs_length = count_bytes<char_type, diff_type>(*rhs);
                 if constexpr (UTF8<char_type>) {
                     webpp_assume(lhs_length >= 0 && lhs_length <= 6U);
                     webpp_assume(rhs_length >= 0 && rhs_length <= 6U);

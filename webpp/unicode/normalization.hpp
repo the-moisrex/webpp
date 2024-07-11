@@ -410,7 +410,7 @@ namespace webpp::unicode {
             using char_type = typename std::iterator_traits<Iter>::value_type;
 
             decomposition_details<SizeT> info;
-            auto const                   actual_length = end - pos;
+            auto const                   actual_length = static_cast<SizeT>(end - pos);
             while (pos != end) {
                 [[maybe_unused]] auto cur_pos    = pos;
                 auto const            code_point = unicode::next_code_point(pos);
@@ -473,8 +473,10 @@ namespace webpp::unicode {
     template <istl::String StrT = stl::u32string>
     static constexpr void decompose(StrT& out) noexcept {
         using char_type = typename StrT::value_type;
+        using size_type = typename StrT::size_type;
 
         auto const [max_length, requires_mapping] = details::decomp_details(out.begin(), out.end());
+        auto const cur_len                        = out.size();
 
         if (!requires_mapping) [[likely]] {
             return;
@@ -482,7 +484,7 @@ namespace webpp::unicode {
 
         assert(out.size() <= max_length);
         auto const overwrite =
-          [cur_len = out.size()](auto* ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
+          [cur_len](auto* ptr, stl::size_t const length /* = max_length */) constexpr noexcept {
               auto const* const beg = ptr;
 
               if (cur_len == length) {
@@ -492,7 +494,7 @@ namespace webpp::unicode {
                       decompose_to(ptr, next_code_point(backup_start));
                   }
                   *ptr = static_cast<char_type>('\0');
-                  return ptr - beg;
+                  return static_cast<size_type>(ptr - beg);
               }
               auto       backup_start = ptr + length - cur_len;
               auto const backup_end   = ptr + length;
@@ -504,13 +506,13 @@ namespace webpp::unicode {
                   decompose_to(ptr, next_code_point(backup_start));
               }
               *ptr = static_cast<char_type>('\0');
-              return ptr - beg;
+              return static_cast<size_type>(ptr - beg);
           };
         if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {
             out.resize_and_overwrite(max_length, overwrite);
         } else {
             out.resize(max_length);
-            overwrite(out.data(), max_length);
+            out.resize(overwrite(out.data(), max_length));
         }
     }
 

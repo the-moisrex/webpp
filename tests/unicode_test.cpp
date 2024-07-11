@@ -477,13 +477,14 @@ constexpr char32_t utf8_to_utf32(std::u8string_view input) {
     if (!input.empty() && (input[0] & 0b1000'0000) == 0b0000'0000) {
         codepoint = static_cast<unsigned char>(input[0]);
     } else if (input.size() > 1 && (input[0] & 0b1110'0000) == 0b1100'0000) {
-        codepoint = ((input[0] & 0b0001'1111) << 6) | (input[1] & 0b0011'1111);
+        codepoint = static_cast<char32_t>(((input[0] & 0b0001'1111) << 6) | (input[1] & 0b0011'1111));
     } else if (input.size() > 2 && (input[0] & 0b1111'0000) == 0b1110'0000) {
-        codepoint =
-          ((input[0] & 0b0000'1111) << 12) | ((input[1] & 0b0011'1111) << 6) | (input[2] & 0b0011'1111);
+        codepoint = static_cast<char32_t>(
+          ((input[0] & 0b0000'1111) << 12) | ((input[1] & 0b0011'1111) << 6) | (input[2] & 0b0011'1111));
     } else if (input.size() > 3 && (input[0] & 0b1111'1000) == 0b1111'0000) {
-        codepoint = ((input[0] & 0b0000'0111) << 18) | ((input[1] & 0b0011'1111) << 12) |
-                    ((input[2] & 0b0011'1111) << 6) | (input[3] & 0b0011'1111);
+        codepoint = static_cast<char32_t>(
+          ((input[0] & 0b0000'0111) << 18) | ((input[1] & 0b0011'1111) << 12) |
+          ((input[2] & 0b0011'1111) << 6) | (input[3] & 0b0011'1111));
     }
 
     return codepoint;
@@ -718,7 +719,6 @@ TEST(Unicode, DecomposeInplace) {
     test_decomp(U"\x1D5CE", U"\x0075");
     test_decomp(U"\x0FA2", U"\x0FA1\x0FB7");
 }
-
 
 TEST(Unicode, DecomposeUTF32) {
     EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x29496")), U"\x29496");
@@ -1032,7 +1032,7 @@ TEST(Unicode, SortMarkTest) {
 TEST(Unicode, EquivalentOfTransformationChains) {
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
 
-    auto const check_idempotent = [](auto x) {
+    [[maybe_unused]] auto const check_idempotent = [](auto x) {
         // toNFC
         EXPECT_EQ(toNFC(x), toNFC(toNFC(x)));
         EXPECT_EQ(toNFC(x), toNFC(toNFD(x)));
@@ -1058,11 +1058,11 @@ TEST(Unicode, EquivalentOfTransformationChains) {
         EXPECT_EQ(toNFKD(x), toNFKD(toNFKD(x)));
     };
 
-    auto const check_equality = [](auto x, auto y) {
+    [[maybe_unused]] auto const check_equality = [](auto x, auto y) {
         EXPECT_EQ(toNFC(x), toNFC(y));
         EXPECT_EQ(toNFD(x), toNFD(x));
     };
-    auto const check_compatiblity = [](auto x, auto y) {
+    [[maybe_unused]] auto const check_compatiblity = [](auto x, auto y) {
         EXPECT_EQ(toNFKC(x), toNFKC(y));
         EXPECT_EQ(toNFKD(x), toNFKD(x));
     };
