@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_ccc_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Thu, 11 Jul 2024 23:25:48 GMT
+ *   This file's generation date:        Thu, 11 Jul 2024 23:51:48 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       96736
@@ -79,7 +79,7 @@ namespace webpp::unicode::details {
          * mask.
          */
         [[nodiscard]] constexpr std::uint16_t get_position(auto const request_position) const noexcept {
-            std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position & chunk_mask);
+            auto const remaining_pos = static_cast<std::uint16_t>(request_position & chunk_mask);
             return pos + remaining_pos;
         }
     };

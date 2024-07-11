@@ -190,7 +190,7 @@ class DecompTable {
     genAddenda = () => {
         const name = "index";
         const addendaPack = [
-            genPositionAddendum(),
+            genPositionAddendum(char8_6),
             // genMaskAddendum(uint8),
 
             // this will affect the chunkSize:

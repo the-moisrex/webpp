@@ -555,7 +555,7 @@ export class Modifier {
         // return this.#addenda.chunkSize;
 
         // call the affectsChunkSize functions
-        return fillBitsFromRight(this.#addenda.addenda.reduce((size, addendum) => {
+        const size = this.#addenda.addenda.reduce((size, addendum) => {
             if (addendum.affectsChunkSize === false) {
                 return size;
             }
@@ -566,7 +566,11 @@ export class Modifier {
                 return addendum.affectsChunkSize(this, size);
             }
             return addendum.size;
-        }, this.#addenda.chunkSize)) + 1;
+        }, this.#addenda.chunkSize);
+        if (size === Infinity) {
+            return size;
+        }
+        return fillBitsFromRight(size) + 1;
     }
 
     get chunkShift() {
@@ -683,8 +687,8 @@ export function getPositionFunction() {
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
-            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
-            ${this.pos.STLTypeString} const masked_remaining_pos = masked(remaining_pos);
+            auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
+            auto const masked_remaining_pos = masked(remaining_pos);
             return pos + masked_remaining_pos;
         }
         `;
@@ -697,7 +701,7 @@ export function getSimplePositionFunction() {
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} get_position(auto const request_position) const noexcept {
-            ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
+            auto const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position & chunk_mask);
             return pos + remaining_pos;
         }
         `;
@@ -735,6 +739,9 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "in between the values of the values table in order to make sure we can easily find the needed \n" +
         "mappings for all the code points without searching for them.",
     affectsChunkSize: (modifier, curChunkSize) => {
+        if (modifier === undefined) {
+            return sizeOf(type);
+        }
         return Infinity;
     },
     sizeof: type,
