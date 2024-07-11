@@ -483,7 +483,7 @@ namespace webpp::unicode {
                   while (backup_start != backup_end) {
                       decompose_to(ptr, next_code_point(backup_start));
                   }
-                  *ptr = static_cast<char_type>('\0');
+                  // *ptr = static_cast<char_type>('\0');
                   return static_cast<size_type>(ptr - beg);
               }
               auto       backup_start = ptr + length - cur_len;
@@ -495,7 +495,7 @@ namespace webpp::unicode {
               while (backup_start != backup_end) {
                   decompose_to(ptr, next_code_point(backup_start));
               }
-              *ptr = static_cast<char_type>('\0');
+              // *ptr = static_cast<char_type>('\0');
               return static_cast<size_type>(ptr - beg);
           };
         if constexpr (requires { out.resize_and_overwrite(max_length, overwrite); }) {

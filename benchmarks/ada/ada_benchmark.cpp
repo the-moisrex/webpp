@@ -451,9 +451,11 @@ BENCHMARK(WebppDecomposeUTF8);
 static void WebppDecomposeToUTF32Iterator(benchmark::State& state) {
     for (auto _ : state) {
         std::u32string str;
-        str.reserve(decompsableStr.size() * 2);
+        str.resize(decompsableStr.size() * 2);
+        auto const beg = str.begin();
         auto pos = str.begin();
         webpp::unicode::decompose_to(pos, decompsableStr);
+        str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -485,9 +487,11 @@ BENCHMARK(WebppDecomposeToUTF8);
 static void WebppDecomposeToUTF8Iterator(benchmark::State& state) {
     for (auto _ : state) {
         std::u8string str;
-        str.reserve(decompsableStr8.size() * 2);
+        str.resize(decompsableStr8.size() * 2);
         auto pos = str.begin();
+        auto const beg = str.begin();
         webpp::unicode::decompose_to(pos, decompsableStr8);
+        str.resize(pos - beg);
         benchmark::DoNotOptimize(str);
     }
 }
@@ -504,6 +508,20 @@ static void WebppDecomposeToUTF8FromUTF32(benchmark::State& state) {
 }
 
 BENCHMARK(WebppDecomposeToUTF8FromUTF32);
+
+static void WebppDecomposeToUTF8FromUTF32Iterator(benchmark::State& state) {
+    for (auto _ : state) {
+        std::u8string str;
+        str.resize(decompsableStr8.size() * 2);
+        auto       pos = str.begin();
+        auto const beg = str.begin();
+        webpp::unicode::decompose_to(pos, decompsableStr);
+        str.resize(pos - beg);
+        benchmark::DoNotOptimize(str);
+    }
+}
+
+BENCHMARK(WebppDecomposeToUTF8FromUTF32Iterator);
 
 static void AdaDecomposeTo1CodePiont(benchmark::State& state) {
     for (auto _ : state) {
