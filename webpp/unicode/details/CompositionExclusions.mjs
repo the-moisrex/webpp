@@ -1,7 +1,6 @@
 import {
     cleanComments,
     downloadFile,
-    parseCodePoints,
     splitLine,
     updateProgressBar,
     noop,
