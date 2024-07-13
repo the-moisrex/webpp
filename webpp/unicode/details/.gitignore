@@ -1,4 +1,6 @@
 UnicodeData.txt
 ReadMe.txt
+CompositionExclusions.txt
+DerivedNormalizationProps.txt
 .vscode
 .idea
