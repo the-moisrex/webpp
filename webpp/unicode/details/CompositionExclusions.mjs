@@ -18,7 +18,7 @@ export const download = async (callback = noop) => {
 };
 
 
-export const parse = async (table, property, fileContent = undefined) => {
+export const parse = async (table, fileContent = undefined) => {
     if (fileContent === undefined) {
         fileContent = await download();
         if (fileContent === undefined) {
@@ -58,3 +58,22 @@ export const parse = async (table, property, fileContent = undefined) => {
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
 };
 
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+    class printTable {
+        #data = [];
+        add(codePoint) {
+            this.#data.push(codePoint);
+        }
+        printAll() {
+            for (const codePoint of this.#data) {
+                console.log(codePoint.toString(16));
+            }
+            console.log("Table length:", this.#data.length);
+            console.log("Start Code Point:", this.#data[0]);
+            console.log("Last Code Point:", this.#data[this.#data.length - 1]);
+        }
+    }
+    const table = new printTable();
+    await parse(table);
+    table.printAll();
+}

@@ -347,12 +347,12 @@ export const splitLine = line => line.split(';').map(seg => seg.trim());
 export const findVersion = fileContent => fileContent.match(/Version:? (\d+\.\d+\.\d+)/)[1];
 export const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
 export const parseCodePoints = codePoint => parseInt(codePoint, 16);
-export const parseCodePointRange = (codePoints, lastCodePoint=0) => {
-    let rangeArr = codePoints.split("..");
+export const parseCodePointRange = (codePoints, lastCodePoint = 0) => {
+    let rangeArr = codePoints.split("..").map(codePoint => codePoint.trim());
     if (rangeArr.length === 1) {
-        rangeArr = [lastCodePoint, codePoints[0]];
+        rangeArr = [`${lastCodePoint.toString(16)}`, rangeArr[0]];
     }
-    return rangeArr.map(codePoint => parseInt(codePoint.trim(), 16));
+    return rangeArr.map(codePoint => parseInt(codePoint, 16));
 };
 
 export class Span {
