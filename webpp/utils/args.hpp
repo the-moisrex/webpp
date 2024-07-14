@@ -10,7 +10,7 @@ namespace webpp::args {
      * Get the last element of a parameter pack.
      */
     template <typename... Args>
-    decltype(auto) last(Args&&... args) {
+    [[nodiscard]] decltype(auto) last(Args&&... args) noexcept(noexcept((stl::forward<Args>(args), ...))) {
         return (stl::forward<Args>(args), ...);
     }
 
