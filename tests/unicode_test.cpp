@@ -312,7 +312,7 @@ result: {}
           code.get_position(code_point),
           code.pos,
           remaining_pos,
-          res);
+          static_cast<int>(res));
     } catch (std::out_of_range const&) {
         return format("Out of range");
     }
