@@ -307,7 +307,7 @@ result: {}
 )data",
           code.value(),
           code.pos,
-          code.max_length,
+          static_cast<int>(code.max_length),
           remaining_pos,
           code.get_position(code_point),
           code.pos,
