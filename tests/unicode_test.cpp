@@ -6,6 +6,7 @@
 #include "common/tests_common_pch.hpp"
 
 using namespace webpp;
+using webpp::fmt::format;
 using namespace std;
 
 // NOLINTBEGIN(*-magic-numbers)
@@ -217,7 +218,7 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 ///////////////////////////////// Normalization /////////////////////////////////////
 
 template <typename CharT = char32_t>
-[[nodiscard]] static constexpr stl::string desc_ccc_of(CharT const code_point) noexcept {
+stl::string desc_ccc_of(CharT const code_point) noexcept {
     using webpp::unicode::details::ccc_index;
     using webpp::unicode::details::ccc_indices;
     using webpp::unicode::details::ccc_values;
@@ -259,7 +260,7 @@ template <typename CharT = char32_t>
         around += ", ";
     }
     around += "...]";
-    return fmt::format(
+    return format(
       R"data(code: {}
 index: {}
 remaining pos: {}
@@ -280,7 +281,7 @@ result: {}
 }
 
 template <typename CharT = char32_t>
-[[nodiscard]] static constexpr stl::string desc_decomp_of(CharT const code_point) noexcept {
+stl::string desc_decomp_of(CharT const code_point) noexcept {
     using webpp::unicode::details::decomp_index;
     using webpp::unicode::details::decomp_indices;
     using webpp::unicode::details::decomp_values;
@@ -296,7 +297,7 @@ template <typename CharT = char32_t>
         stl::size_t const index_pos = code.get_position(code_point);
         auto              res       = decomp_values.at(index_pos);
 
-        return fmt::format(
+        return format(
           R"data(code: {}
 pos: {}
 max length: {}
@@ -313,7 +314,7 @@ result: {}
           remaining_pos,
           res);
     } catch (std::out_of_range const&) {
-        return fmt::format("Out of range");
+        return format("Out of range");
     }
 }
 
