@@ -26,7 +26,7 @@ using webpp::unicode::unchecked::next_char_copy;
 using webpp::unicode::unchecked::prev_char_copy;
 using webpp::unicode::unchecked::swap_code_points;
 
-// NOLINTBEGIN(*-magic-numbers)
+// NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
 
 TEST(Unicode, U8UnChecked) {
     char8_t const* str = u8"این یک تست است.";
@@ -399,50 +399,52 @@ namespace old_impl {
     using webpp::unicode::UTF32;
     using webpp::unicode::UTF8;
 
-    /**
-     * Append a code point to a string
-     * "out" can be an iterator/pointer or a string
-     */
-    template <Appendable StrT, integral SizeT = size_type_of_t<StrT>, typename CharT = char32_t>
-    static constexpr SizeT append(StrT& out, CharT code_point) noexcept(NothrowAppendable<StrT>) {
-        using char_type = appendable_value_type_t<StrT>;
-        using uchar_t   = make_unsigned_t<CharT>;
-        auto const ccp  = static_cast<uint32_t>(code_point);
-        if constexpr (UTF8<char_type>) {
-            if (ccp < 0x80U) { // one octet
+    namespace {
+        /**
+         * Append a code point to a string
+         * "out" can be an iterator/pointer or a string
+         */
+        template <Appendable StrT, integral SizeT = size_type_of_t<StrT>, typename CharT = char32_t>
+        SizeT append(StrT& out, CharT code_point) noexcept(NothrowAppendable<StrT>) {
+            using char_type = appendable_value_type_t<StrT>;
+            using uchar_t   = make_unsigned_t<CharT>;
+            auto const ccp  = static_cast<uint32_t>(code_point);
+            if constexpr (UTF8<char_type>) {
+                if (ccp < 0x80U) { // one octet
+                    iter_append(out, ccp);
+                    return 1U;
+                }
+                if (ccp < 0x800) {                                   // two octets
+                    iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 2U;
+                }
+                if (ccp < 0x1'0000U) {                               // three octets
+                    iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
+                    iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
+                    iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
+                    return 3U;
+                }
+                // four octets
+                iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
+                iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
+                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
+                iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
+                return 4U;
+            } else if constexpr (UTF16<char_type>) {
+                if (ccp <= max_bmp<char_type>) {
+                    iter_append(out, ccp); // normal case
+                    return 1U;
+                }
+                iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
+                iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
+                return 2U;
+            } else { // for char32_t or others
                 iter_append(out, ccp);
                 return 1U;
             }
-            if (ccp < 0x800) {                                   // two octets
-                iter_append(out, (ccp >> 6U) | 0xC0U);           // 0b110,'....
-                iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
-                return 2U;
-            }
-            if (ccp < 0x1'0000U) {                               // three octets
-                iter_append(out, (ccp >> 12U) | 0xE0U);          // 0b1110'....
-                iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U); // 0b10..'....
-                iter_append(out, (ccp & 0x3FU) | 0x80U);         // 0b10..'....
-                return 3U;
-            }
-            // four octets
-            iter_append(out, (ccp >> 18U) | 0xF0U);           // 0b1111'0...
-            iter_append(out, ((ccp >> 12U) & 0x3FU) | 0x80U); // 0b10..'....
-            iter_append(out, ((ccp >> 6U) & 0x3FU) | 0x80U);  // 0b10..'....
-            iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
-            return 4U;
-        } else if constexpr (UTF16<char_type>) {
-            if (ccp <= max_bmp<char_type>) {
-                iter_append(out, ccp); // normal case
-                return 1U;
-            }
-            iter_append(out, 0xD7C0U + (static_cast<uchar_t>(ccp) >> 10U));
-            iter_append(out, 0xDC00U + (static_cast<uchar_t>(ccp) & 0x3FFU));
-            return 2U;
-        } else { // for char32_t or others
-            iter_append(out, ccp);
-            return 1U;
         }
-    }
+    } // namespace
 } // namespace old_impl
 
 namespace {
@@ -469,14 +471,14 @@ namespace {
         if (!input.empty() && (0b1000'0000U & input[0]) == 0b0000'0000U) {
             codepoint = static_cast<unsigned char>(input[0]);
         } else if (input.size() > 1 && (0b1110'0000U & input[0]) == 0b1100'0000U) {
-            codepoint = static_cast<char32_t>(((0b0001'1111U & input[0]) << 6) | (input[1] & 0b0011'1111U));
+            codepoint = static_cast<char32_t>(((0b0001'1111U & input[0]) << 6U) | (input[1] & 0b0011'1111U));
         } else if (input.size() > 2 && (0b1111'0000U & input[0]) == 0b1110'0000U) {
-            codepoint = static_cast<char32_t>(((0b0000'1111U & input[0]) << 12) |
-                                              ((input[1] & 0b0011'1111U) << 6) | (input[2] & 0b0011'1111U));
+            codepoint = static_cast<char32_t>(((0b0000'1111U & input[0]) << 12U) |
+                                              ((input[1] & 0b0011'1111U) << 6U) | (input[2] & 0b0011'1111U));
         } else if (input.size() > 3 && (0b1111'1000U & input[0]) == 0b1111'0000U) {
             codepoint = static_cast<char32_t>(
-              ((input[0] & 0b0000'0111U) << 18) | ((0b0011'1111U & input[1]) << 12) |
-              ((input[2] & 0b0011'1111U) << 6) | (0b0011'1111U & input[3]));
+              ((input[0] & 0b0000'0111U) << 18U) | ((0b0011'1111U & input[1]) << 12U) |
+              ((input[2] & 0b0011'1111U) << 6U) | (0b0011'1111U & input[3]));
         }
 
         return codepoint;
@@ -596,7 +598,7 @@ TEST(Unicode, Decompose) {
 }
 
 TEST(Unicode, DecomposeInplace) {
-    auto const test_decomp = [](u32string inp_str, u32string inp_res) {
+    auto const test_decomp = [](u32string const& inp_str, u32string const& inp_res) {
         auto str = inp_str;
         webpp::unicode::decompose(str);
         EXPECT_EQ(str, inp_res);
@@ -745,23 +747,25 @@ TEST(Unicode, DecomposeHangul) {
     EXPECT_EQ(decomposed<u8string>(U'\x2BA4'), utf32_to_utf8(U"\x2BA4")) << desc_decomp_of(U'\x2BA4');
 }
 
-// implementation from
-// https://github.com/ada-url/idna/blob/fff988508f659ef5c6494572ebea3d5db2466ed0/src/normalization.cpp#L97
-void sort_marks(std::u32string& input) {
-    for (size_t idx = 1; idx < input.size(); idx++) {
-        uint8_t ccc = ccc_of(input[idx]);
-        if (ccc == 0) {
-            continue;
-        } // Skip non-combining characters.
-        auto   current_character = input[idx];
-        size_t back_idx          = idx;
-        while (back_idx != 0 && ccc_of(input[back_idx - 1]) > ccc) {
-            input[back_idx] = input[back_idx - 1];
-            back_idx--;
+namespace {
+    // implementation from
+    // https://github.com/ada-url/idna/blob/fff988508f659ef5c6494572ebea3d5db2466ed0/src/normalization.cpp#L97
+    void sort_marks(std::u32string& input) {
+        for (size_t idx = 1; idx < input.size(); idx++) {
+            uint8_t const ccc = ccc_of(input[idx]);
+            if (ccc == 0) {
+                continue;
+            } // Skip non-combining characters.
+            auto const current_character = input[idx];
+            size_t     back_idx          = idx;
+            while (back_idx != 0 && ccc_of(input[back_idx - 1]) > ccc) {
+                input[back_idx] = input[back_idx - 1];
+                back_idx--;
+            }
+            input[back_idx] = current_character;
         }
-        input[back_idx] = current_character;
     }
-}
+} // namespace
 
 TEST(Unicode, UnicodeSwap) {
     // single byte move
@@ -940,42 +944,42 @@ TEST(Unicode, SortMarkTest) {
 TEST(Unicode, EquivalentOfTransformationChains) {
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
 
-    [[maybe_unused]] auto const check_idempotent = [](auto x) {
+    [[maybe_unused]] auto const check_idempotent = [](auto str) {
         // toNFC
-        EXPECT_EQ(toNFC(x), toNFC(toNFC(x)));
-        EXPECT_EQ(toNFC(x), toNFC(toNFD(x)));
+        EXPECT_EQ(toNFC(str), toNFC(toNFC(str)));
+        EXPECT_EQ(toNFC(str), toNFC(toNFD(str)));
 
         // toNFD
-        EXPECT_EQ(toNFD(x), toNFD(toNFC(x)));
-        EXPECT_EQ(toNFD(x), toNFD(toNFD(x)));
+        EXPECT_EQ(toNFD(str), toNFD(toNFC(str)));
+        EXPECT_EQ(toNFD(str), toNFD(toNFD(str)));
 
         // toNFKC
-        EXPECT_EQ(toNFKC(x), toNFC(toNFKC(x)));
-        EXPECT_EQ(toNFKC(x), toNFC(toNFKD(x)));
-        EXPECT_EQ(toNFKC(x), toNFKC(toNFC(x)));
-        EXPECT_EQ(toNFKC(x), toNFKC(toNFD(x)));
-        EXPECT_EQ(toNFKC(x), toNFKC(toNFKC(x)));
-        EXPECT_EQ(toNFKC(x), toNFKC(toNFKD(x)));
+        EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
+        EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
+        EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
+        EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
+        EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
+        EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
 
         // toNFKD
-        EXPECT_EQ(toNFKD(x), toNFD(toNFKC(x)));
-        EXPECT_EQ(toNFKD(x), toNFD(toNFKD(x)));
-        EXPECT_EQ(toNFKD(x), toNFKD(toNFC(x)));
-        EXPECT_EQ(toNFKD(x), toNFKD(toNFD(x)));
-        EXPECT_EQ(toNFKD(x), toNFKD(toNFKC(x)));
-        EXPECT_EQ(toNFKD(x), toNFKD(toNFKD(x)));
+        EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
+        EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
+        EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
+        EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
+        EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
+        EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
     };
 
-    [[maybe_unused]] auto const check_equality = [](auto x, auto y) {
-        EXPECT_EQ(toNFC(x), toNFC(y));
-        EXPECT_EQ(toNFD(x), toNFD(x));
+    [[maybe_unused]] auto const check_equality = [](auto str_x, auto str_y) {
+        EXPECT_EQ(toNFC(str_x), toNFC(str_y));
+        EXPECT_EQ(toNFD(str_x), toNFD(str_x));
     };
-    [[maybe_unused]] auto const check_compatiblity = [](auto x, auto y) {
-        EXPECT_EQ(toNFKC(x), toNFKC(y));
-        EXPECT_EQ(toNFKD(x), toNFKD(x));
+    [[maybe_unused]] auto const check_compatiblity = [](auto str_x, auto str_y) {
+        EXPECT_EQ(toNFKC(str_x), toNFKC(str_y));
+        EXPECT_EQ(toNFKD(str_x), toNFKD(str_x));
     };
 
     // todo: write the tests
 }
 
-// NOLINTEND(*-magic-numbers)
+// NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
