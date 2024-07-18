@@ -31,6 +31,9 @@ namespace webpp {
         return static_cast<stl::uint8_t>(status);
     }
 
+    /**
+     * IP version 6
+     */
     struct ipv6 {
         // todo: add support for systems that support 128bit integer types
 
@@ -138,7 +141,7 @@ namespace webpp {
                 octets_t _data = {};
 
                 auto const each_octet_size = _data.size() / _octets.size();
-                auto       _data_it        = _data.begin();
+                auto*      _data_it        = _data.begin();
                 for (auto _octets_it = _octets.cbegin(); _octets_it != _octets.cend(); ++_octets_it) {
                     auto _octet = *_octets_it;
                     for (stl::size_t index = 0U; index < each_octet_size; index++) {
@@ -396,34 +399,24 @@ namespace webpp {
 
             auto const _octets = octets8();
             using t            = stl::uint16_t;
+
             return {
-
               // octet 1
-              static_cast<t>((static_cast<t>(_octets[0U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[1U]) << (16U - 8U * 2U))),
+              (static_cast<t>(_octets[0U]) << 8U) | _octets[1U],
               // octet 2
-              static_cast<t>((static_cast<t>(_octets[2U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[3U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[2U]) << 8U) | _octets[3U]),
               // octet 3
-              static_cast<t>((static_cast<t>(_octets[4U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[5U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[4U]) << 8U) | _octets[5U]),
               // octet 4
-              static_cast<t>((static_cast<t>(_octets[6U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[7U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[6U]) << 8U) | _octets[7U]),
               // octet 5
-              static_cast<t>((static_cast<t>(_octets[8U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[9U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[8U]) << 8U) | _octets[9U]),
               // octet 6
-              static_cast<t>((static_cast<t>(_octets[10U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[11U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[10U]) << 8U) | _octets[11U]),
               // octet 7
-              static_cast<t>((static_cast<t>(_octets[12U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[13U]) << (16U - 8U * 2U))),
+              static_cast<t>((static_cast<t>(_octets[12U]) << 8U) | _octets[13U]),
               // octet 8
-              static_cast<t>((static_cast<t>(_octets[14U]) << (16U - 8U * 1U)) |
-                             (static_cast<t>(_octets[15U]) << (16U - 8U * 2U)))
-
-            };
+              static_cast<t>((static_cast<t>(_octets[14U]) << 8U) | _octets[15U])};
         }
 
         /**
@@ -439,30 +432,21 @@ namespace webpp {
             auto const _octets = octets8();
             using t            = stl::uint32_t;
             return {
-
               // octet 1
-              (static_cast<t>(_octets[0U]) << (32U - 8U * 1U)) |
-                (static_cast<t>(_octets[1U]) << (32U - 8U * 2U)) |
-                (static_cast<t>(_octets[2U]) << (32U - 8U * 3U)) |
-                (static_cast<t>(_octets[3U]) << (32U - 8U * 4U)),
+              (static_cast<t>(_octets[0U]) << 24U) | (static_cast<t>(_octets[1U]) << 16U) |
+                (static_cast<t>(_octets[2U]) << 8U) | static_cast<t>(_octets[3U]),
 
               // octet 2
-              (static_cast<t>(_octets[4U]) << (32U - 8U * 1U)) |
-                (static_cast<t>(_octets[5U]) << (32U - 8U * 2U)) |
-                (static_cast<t>(_octets[6U]) << (32U - 8U * 3U)) |
-                (static_cast<t>(_octets[7U]) << (32U - 8U * 4U)),
+              (static_cast<t>(_octets[4U]) << 24U) | (static_cast<t>(_octets[5U]) << 16U) |
+                (static_cast<t>(_octets[6U]) << 8U) | static_cast<t>(_octets[7U]),
 
               // octet 3
-              (static_cast<t>(_octets[8U]) << (32U - 8U * 1U)) |
-                (static_cast<t>(_octets[9U]) << (32U - 8U * 2U)) |
-                (static_cast<t>(_octets[10U]) << (32U - 8U * 3U)) |
-                (static_cast<t>(_octets[11U]) << (32U - 8U * 4U)),
+              (static_cast<t>(_octets[8U]) << 24U) | (static_cast<t>(_octets[9U]) << 16U) |
+                (static_cast<t>(_octets[10U]) << 8U) | static_cast<t>(_octets[11U]),
 
               // octet 4
-              (static_cast<t>(_octets[12U]) << (32U - 8U * 1U)) |
-                (static_cast<t>(_octets[13U]) << (32U - 8U * 2U)) |
-                (static_cast<t>(_octets[14U]) << (32U - 8U * 3U)) |
-                (static_cast<t>(_octets[15U]) << (32U - 8U * 4U))};
+              (static_cast<t>(_octets[12U]) << 24U) | (static_cast<t>(_octets[13U]) << 16U) |
+                (static_cast<t>(_octets[14U]) << 8U) | static_cast<t>(_octets[15U])};
         }
 
         /**
@@ -479,24 +463,16 @@ namespace webpp {
             return {
 
               // octet 1
-              (static_cast<t>(_octets[0U]) << (64U - 8U * 1U)) |
-                (static_cast<t>(_octets[1U]) << (64U - 8U * 2U)) |
-                (static_cast<t>(_octets[2U]) << (64U - 8U * 3U)) |
-                (static_cast<t>(_octets[3U]) << (64U - 8U * 4U)) |
-                (static_cast<t>(_octets[4U]) << (64U - 8U * 5U)) |
-                (static_cast<t>(_octets[5U]) << (64U - 8U * 6U)) |
-                (static_cast<t>(_octets[6U]) << (64U - 8U * 7U)) |
-                (static_cast<t>(_octets[7U]) << (64U - 8U * 8U)),
+              (static_cast<t>(_octets[0U]) << 56U) | (static_cast<t>(_octets[1U]) << 48U) |
+                (static_cast<t>(_octets[2U]) << 40U) | (static_cast<t>(_octets[3U]) << 32U) |
+                (static_cast<t>(_octets[4U]) << 24U) | (static_cast<t>(_octets[5U]) << 16U) |
+                (static_cast<t>(_octets[6U]) << 8U) | static_cast<t>(_octets[7U]),
 
               // octet 2
-              (static_cast<t>(_octets[8U]) << (64U - 8U * 1U)) |
-                (static_cast<t>(_octets[9U]) << (64U - 8U * 2U)) |
-                (static_cast<t>(_octets[10U]) << (64U - 8U * 3U)) |
-                (static_cast<t>(_octets[11U]) << (64U - 8U * 4U)) |
-                (static_cast<t>(_octets[12U]) << (64U - 8U * 5U)) |
-                (static_cast<t>(_octets[13U]) << (64U - 8U * 6U)) |
-                (static_cast<t>(_octets[14U]) << (64U - 8U * 7U)) |
-                (static_cast<t>(_octets[15U]) << (64U - 8U * 8U))};
+              (static_cast<t>(_octets[8U]) << 56U) | (static_cast<t>(_octets[9U]) << 48U) |
+                (static_cast<t>(_octets[10U]) << 40U) | (static_cast<t>(_octets[11U]) << 32U) |
+                (static_cast<t>(_octets[12U]) << 24U) | (static_cast<t>(_octets[13U]) << 16U) |
+                (static_cast<t>(_octets[14U]) << 8U) | static_cast<t>(_octets[15U])};
         }
 
         /**
@@ -894,13 +870,13 @@ namespace webpp {
 
         /**
          * This method sets the Interface Identifier.
-         * @param A reference to the Interface Identifier.
+         * @param piid A reference to the Interface Identifier.
          */
         constexpr void iid(octets8_t::const_iterator const& piid) noexcept {
-            auto const _iid = iid();
-            auto const _end = _iid + interface_identifier_size;
-            auto       pit  = piid;
-            for (auto iter = _iid; iter != _end; ++iter) {
+            auto*             iter = iid();
+            auto const* const _end = iter + interface_identifier_size;
+            auto const*       pit  = piid;
+            for (; iter != _end; ++iter) {
                 *iter = *pit++;
             }
         }
@@ -1066,12 +1042,12 @@ namespace webpp {
                                                 if (_prefix < 10) {
                                                     *pos++ = static_cast<char>('0' + _prefix);
                                                 } else if (_prefix < 100) {
-                                                    *pos++ = static_cast<char>('0' + _prefix / 10);
-                                                    *pos++ = static_cast<char>('0' + _prefix % 10);
+                                                    *pos++ = static_cast<char>('0' + (_prefix / 10));
+                                                    *pos++ = static_cast<char>('0' + (_prefix % 10));
                                                 } else {
-                                                    *pos++ = static_cast<char>('0' + _prefix / 100);
-                                                    *pos++ = static_cast<char>('0' + _prefix % 100 / 10);
-                                                    *pos++ = static_cast<char>('0' + _prefix % 10);
+                                                    *pos++ = static_cast<char>('0' + (_prefix / 100));
+                                                    *pos++ = static_cast<char>('0' + (_prefix % 100 / 10));
+                                                    *pos++ = static_cast<char>('0' + (_prefix % 10));
                                                 }
                                                 *pos++ = '\0';
                                             }
@@ -1094,12 +1070,12 @@ namespace webpp {
                     if (_prefix < 10) {
                         *pos++ = static_cast<char>('0' + _prefix);
                     } else if (_prefix < 100) {
-                        *pos++ = static_cast<char>('0' + _prefix / 10);
-                        *pos++ = static_cast<char>('0' + _prefix % 10);
+                        *pos++ = static_cast<char>('0' + (_prefix / 10));
+                        *pos++ = static_cast<char>('0' + (_prefix % 10));
                     } else {
-                        *pos++ = static_cast<char>('0' + _prefix / 100);
-                        *pos++ = static_cast<char>('0' + _prefix % 100 / 10);
-                        *pos++ = static_cast<char>('0' + _prefix % 10);
+                        *pos++ = static_cast<char>('0' + (_prefix / 100));
+                        *pos++ = static_cast<char>('0' + (_prefix % 100 / 10));
+                        *pos++ = static_cast<char>('0' + (_prefix % 10));
                     }
                     *pos++ = '\0';
                 }
