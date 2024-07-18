@@ -54,14 +54,14 @@ namespace webpp::strings {
         stl::size_t const merged_size = ((istl::Stringifiable<T> ? ascii::max_size(strs) : 0) + ...);
         using best_str_t              = typename istl::ranked_types<details::string_type_ranker, T...>::best;
         using str_type                = stl::conditional_t<stl::is_void_v<StringType>,
-                                            stl::remove_cvref_t<typename best_str_t::type>,
-                                            StringType>;
+                                                           stl::remove_cvref_t<typename best_str_t::type>,
+                                                           StringType>;
         auto const alloc              = [&]() noexcept {
             if constexpr (!stl::is_void_v<StringType>) {
                 return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(strs...);
             } else if constexpr (requires { str_type::allocator_type; }) { // has allocator
                 // using best_alloc_type = typename str_type::allocator_type;
-                const auto best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
+                auto const best_alloc = best_str_t::get(stl::forward<T>(strs)...).get_allocator();
                 return best_alloc;
             } else { // use default allocator
                 return typename str_type::allocator_type{};
@@ -219,7 +219,7 @@ namespace webpp::strings {
                   auto const alloc = [&]() noexcept {
                       if constexpr (requires { typename str_type::allocator_type; }) { // has allocator
                           // using best_alloc_type = typename str_type::allocator_type;
-                          const auto best_alloc = best_str::get(item...).get_allocator();
+                          auto const best_alloc = best_str::get(item...).get_allocator();
                           return best_alloc;
                       } else {
                           return extract_allocator_of_or_default<istl::allocator_type_of<str_type>>(item...);

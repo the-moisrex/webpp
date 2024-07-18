@@ -111,8 +111,8 @@ namespace webpp::uri {
         using out_type       = OutComponentType;
         using clean_out_type = stl::remove_pointer_t<out_type>;
         using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
-                                             BaseSegType,
-                                             uri_components<base_seg_type, BaseIter>>;
+                                                  BaseSegType,
+                                                  uri_components<base_seg_type, BaseIter>>;
         using seg_type       = typename clean_out_type::seg_type; // this might be different from OutSegType
         using iterator       = Iter;
         using iterator_traits = stl::iterator_traits<iterator>;

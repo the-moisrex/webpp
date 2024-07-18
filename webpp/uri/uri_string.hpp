@@ -2061,8 +2061,8 @@ namespace webpp::uri {
       -> uri_string<stl::basic_string_view<CharT>, stl::basic_string_view<CharT>>;
 
     template <typename CharT = char>
-    uri_string(stl::basic_string<CharT>)
-      -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
+    uri_string(
+      stl::basic_string<CharT>) -> uri_string<stl::basic_string<CharT>, stl::basic_string_view<CharT>>;
 
     using mutable_uri = uri_string<stl::string, stl::string_view>;
     using uri_view    = uri_string<stl::string const, stl::string_view>;

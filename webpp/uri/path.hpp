@@ -187,8 +187,9 @@ namespace webpp::uri {
                         }
                         [[fallthrough]];
 
-                        // a normal path:
-                        [[likely]] default : return false;
+                    // a normal path:
+                    [[likely]] default:
+                        return false;
                 }
                 break;
             }
@@ -357,7 +358,7 @@ namespace webpp::uri {
                         break;
                     }
                     [[fallthrough]];
-                    default : set_warning(ctx.status, uri_status::invalid_character); break;
+                default: set_warning(ctx.status, uri_status::invalid_character); break;
             }
             break;
         }

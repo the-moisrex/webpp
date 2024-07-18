@@ -176,7 +176,8 @@ namespace webpp::istl {
             template <typename Callable>
             static constexpr bool is_convertible_v =
               (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable>&, Args...>
-                          : stl::is_invocable_v<stl::decay_t<Callable>&, Args...>) and requires {
+                          : stl::is_invocable_v<stl::decay_t<Callable>&, Args...>) and
+              requires {
                   requires is_safely_convertible_v<stl::invoke_result_t<stl::decay_t<Callable>&, Args...>, R>;
               };
         };
@@ -213,9 +214,10 @@ namespace webpp::istl {
             template <typename Callable>
             static constexpr bool is_convertible_v =
               (IsNoexcept ? stl::is_nothrow_invocable_v<stl::decay_t<Callable> const&, Args...>
-                          : stl::is_invocable_v<stl::decay_t<Callable> const&, Args...>) and requires {
+                          : stl::is_invocable_v<stl::decay_t<Callable> const&, Args...>) and
+              requires {
                   requires is_safely_convertible_v<
-                    stl::invoke_result_t<const stl::decay_t<Callable>&, Args...>,
+                    stl::invoke_result_t<stl::decay_t<Callable> const&, Args...>,
                     R>;
               };
         };

@@ -237,8 +237,8 @@ namespace webpp::istl {
 
         using last         = last_type<T...>;
         using options      = stl::conditional_t<is_ituple_options<typename last::type>::value,
-                                           typename last::type,
-                                           default_ituple_options<>>;
+                                                typename last::type,
+                                                default_ituple_options<>>;
         using this_tuple   = typename last_type<T...>::template remove_if<stl::tuple, is_ituple_options>;
         using default_type = typename options::default_type;
         static constexpr stl::size_t native_tuple_size = stl::tuple_size_v<this_tuple>;

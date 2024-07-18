@@ -851,8 +851,9 @@ namespace webpp::istl {
     dynamic(T&&, AllocT const&) -> dynamic<stl::remove_cvref_t<T>, AllocT>;
 
     template <typename T, typename AllocT>
-    dynamic(stl::type_identity<T>, stl::allocator_arg_t, AllocT const&)
-      -> dynamic<stl::remove_cvref_t<T>, AllocT>;
+    dynamic(stl::type_identity<T>,
+            stl::allocator_arg_t,
+            AllocT const&) -> dynamic<stl::remove_cvref_t<T>, AllocT>;
 
     namespace pmr {
 

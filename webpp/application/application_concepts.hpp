@@ -12,9 +12,8 @@ namespace webpp {
 
 
     template <typename T, typename LoggerType, typename AllocType>
-    concept ConstructibleWithLoggerAndAllocator = requires(AllocType const& alloc, LoggerType logger) {
-        T{logger, alloc};
-    };
+    concept ConstructibleWithLoggerAndAllocator =
+      requires(AllocType const& alloc, LoggerType logger) { T{logger, alloc}; };
 
     template <typename T, typename AllocType>
     concept ConstructibleWithAllocator = requires(AllocType const& alloc) { T{alloc}; };

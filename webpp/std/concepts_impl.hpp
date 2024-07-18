@@ -340,10 +340,8 @@ namespace webpp::stl {
         // [1]
         template <class Tp, class Up>
         concept __unqualified_swappable_with =
-          (__class_or_enum<remove_cvref_t<Tp>> ||
-           __class_or_enum<remove_cvref_t<Up>>) &&requires(Tp&& __t, Up&& __u) {
-              swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u));
-          };
+          (__class_or_enum<remove_cvref_t<Tp>> || __class_or_enum<remove_cvref_t<Up>>) &&
+          requires(Tp&& __t, Up&& __u) { swap(_VSTD::forward<Tp>(__t), _VSTD::forward<Up>(__u)); };
 
         struct __fn;
 

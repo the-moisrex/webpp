@@ -186,8 +186,8 @@ namespace webpp {
              * Call the callable now
              */
             template <typename... Args>
-            auto flush(Args&&... args) noexcept(stl::is_nothrow_invocable_v<Callable, Args...>)
-              -> stl::invoke_result_t<Callable, Args...> {
+            auto flush(Args&&... args) noexcept(
+              stl::is_nothrow_invocable_v<Callable, Args...>) -> stl::invoke_result_t<Callable, Args...> {
                 auto res = Callable::operator()(stl::forward<Args>(args)...);
                 done.store(true, stl::memory_order_relaxed);
                 return res;
@@ -297,8 +297,8 @@ namespace webpp {
               typename Rep        = stl::chrono::milliseconds::rep,
               typename Period     = stl::chrono::milliseconds::period,
               typename Clock      = stl::chrono::steady_clock>
-    debounce(stl::chrono::duration<Rep, Period> interval, Callable func)
-      -> debounce<decltype(func), DType, Rep, Period, Clock>;
+    debounce(stl::chrono::duration<Rep, Period> interval,
+             Callable                           func) -> debounce<decltype(func), DType, Rep, Period, Clock>;
 
     template <typename Callable,
               debounce_type DType = debounce_type::leading,
@@ -314,8 +314,8 @@ namespace webpp {
               typename Rep        = stl::chrono::milliseconds::rep,
               typename Period     = stl::chrono::milliseconds::period,
               typename Clock      = stl::chrono::steady_clock>
-    debounce_leading(stl::chrono::duration<Rep, Period> interval, Callable func)
-      -> debounce_leading<decltype(func), Rep, Period, Clock>;
+    debounce_leading(stl::chrono::duration<Rep, Period> interval,
+                     Callable func) -> debounce_leading<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable,
               debounce_type DType = debounce_type::leading,
@@ -331,8 +331,8 @@ namespace webpp {
               typename Rep        = stl::chrono::milliseconds::rep,
               typename Period     = stl::chrono::milliseconds::period,
               typename Clock      = stl::chrono::steady_clock>
-    debounce_trailing(stl::chrono::duration<Rep, Period> interval, Callable func)
-      -> debounce_trailing<decltype(func), Rep, Period, Clock>;
+    debounce_trailing(stl::chrono::duration<Rep, Period> interval,
+                      Callable func) -> debounce_trailing<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable,
               debounce_type DType = debounce_type::leading,
@@ -349,8 +349,8 @@ namespace webpp {
               typename Rep        = stl::chrono::milliseconds::rep,
               typename Period     = stl::chrono::milliseconds::period,
               typename Clock      = stl::chrono::steady_clock>
-    debounce_both(stl::chrono::duration<Rep, Period> interval, Callable func)
-      -> debounce_both<decltype(func), Rep, Period, Clock>;
+    debounce_both(stl::chrono::duration<Rep, Period> interval,
+                  Callable func) -> debounce_both<decltype(func), Rep, Period, Clock>;
 
     template <typename Callable,
               debounce_type DType = debounce_type::leading,

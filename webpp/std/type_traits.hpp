@@ -960,9 +960,9 @@ namespace webpp::istl {
         template <template <typename...> typename TupleT, typename First, typename... U>
         struct unique_types<TupleT<First, U...>> {
             using the_rest = typename unique_types<TupleT<U...>>::type;
-            using type     = stl::conditional_t<((!stl::is_same_v<First, U>) &&...),
-                                            typename prepend<the_rest, First>::type,
-                                            the_rest>;
+            using type     = stl::conditional_t<((!stl::is_same_v<First, U>) && ...),
+                                                typename prepend<the_rest, First>::type,
+                                                the_rest>;
         };
 
         // the end condition

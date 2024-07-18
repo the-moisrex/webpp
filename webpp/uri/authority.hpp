@@ -204,8 +204,7 @@ namespace webpp::uri {
                             coder.start_segment();
                             host_begin = ctx.pos;
                             continue;
-                        }
-                        else {
+                        } else {
                             // todo: set an error
                             set_warning(ctx.status, has_credentials);
                             set_warning(ctx.status, invalid_character);
@@ -417,7 +416,8 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default : set_valid(ctx.status, uri_status::valid_path);
+                    default:
+                        set_valid(ctx.status, uri_status::valid_path);
                         clear<components::path>(ctx);
                         break;
                 }
@@ -510,7 +510,7 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                    default : break;
+                default: break;
             }
             break;
         }

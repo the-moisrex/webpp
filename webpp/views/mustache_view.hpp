@@ -1142,14 +1142,14 @@ namespace webpp::views {
           bool                           parse_with_same_context) {
             auto render = [this, &ctx, parse_with_same_context, escape](string_view_type txt,
                                                                         bool escaped) -> string_type {
-                const auto process_template =
+                auto const process_template =
                   [this, &ctx, escape, escaped](mustache_view& tmpl) -> string_type {
                     if (!tmpl.is_valid()) {
                         error_msg = tmpl.error_message();
                         return {};
                     }
                     context_internal<traits_type> render_ctx{ctx}; // start a new line_buffer
-                    const auto                    str = tmpl.render(render_ctx);
+                    auto const                    str = tmpl.render(render_ctx);
                     if (!tmpl.is_valid()) {
                         error_msg = tmpl.error_message();
                         return {};

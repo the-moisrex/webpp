@@ -366,9 +366,9 @@ namespace webpp::stl {
     concept indirectly_writable = requires(_Out&& __o, _Tp&& __t) {
         *__o                       = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
         *_VSTD::forward<_Out>(__o) = _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*__o) = _VSTD::forward<_Tp>(__t); // not required to be
+        const_cast<iter_reference_t<_Out> const&&>(*__o) = _VSTD::forward<_Tp>(__t); // not required to be
                                                                                      // equality-preserving
-        const_cast<const iter_reference_t<_Out>&&>(*_VSTD::forward<_Out>(__o)) =
+        const_cast<iter_reference_t<_Out> const&&>(*_VSTD::forward<_Out>(__o)) =
           _VSTD::forward<_Tp>(__t); // not required to be equality-preserving
     };
 

@@ -35,13 +35,13 @@ namespace webpp::uri::details {
                         }
                         [[fallthrough]];
 
-                        [[likely]] default : {
-                            if (*pos != arr[index]) {
-                                return false;
-                            }
-                            ++index;
-                            continue;
+                    [[likely]] default: {
+                        if (*pos != arr[index]) {
+                            return false;
                         }
+                        ++index;
+                        continue;
+                    }
                 }
                 break;
             }

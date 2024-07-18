@@ -151,20 +151,21 @@ namespace webpp::http {
     static_router(RouteType&&...) -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
 
     template <typename... RouteType>
-    static_router(stl::tuple<RouteType...>&&)
-      -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
+    static_router(
+      stl::tuple<RouteType...>&&) -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
 
     template <typename... RouteType>
-    static_router(stl::tuple<RouteType...> const&)
-      -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
+    static_router(
+      stl::tuple<RouteType...> const&) -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
 
     template <typename... RouteType>
-    static_router(stl::tuple<RouteType...>&)
-      -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
+    static_router(
+      stl::tuple<RouteType...>&) -> static_router<istl::type_list<>, istl::type_list<RouteType...>>;
 
     template <typename... ObjectsType, typename... RouteType>
-    static_router(stl::tuple<ObjectsType...>, RouteType&&...)
-      -> static_router<istl::type_list<ObjectsType...>, istl::type_list<RouteType...>>;
+    static_router(
+      stl::tuple<ObjectsType...>,
+      RouteType&&...) -> static_router<istl::type_list<ObjectsType...>, istl::type_list<RouteType...>>;
 
     template <typename... ObjectsType, typename... RouteType>
     static_router(stl::tuple<ObjectsType...>, stl::tuple<RouteType...>&&)

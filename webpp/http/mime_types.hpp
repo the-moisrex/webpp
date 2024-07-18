@@ -17,15 +17,15 @@ namespace webpp::http {
 
         static constexpr stl::array<mapping, 20> mappings{
           {
-           {"css", "text/css"}, {"gif", "image/gif"},
-           {"htm", "text/html"}, {"html", "text/html"},
-           {"jpg", "image/jpeg"}, {"png", "image/png"},
-           {"js", "text/javascript"}, {"wasm", "application/wasm"},
-           {"oga", "audio/ogg"}, {"ogg", "audio/ogg"},
-           {"ogv", "video/ogg"}, {"swf", "application/x-shockwave-flash"},
-           {"mp4", "video/mp4"}, {"mv4", "video/mp4"},
-           {"mp3", "audio/mp3"}, {"svg", "image/svg+xml"},
-           {"webm", "video/webm"}, {"xml", "application/xml"},
+           {"css", "text/css"},        {"gif", "image/gif"},
+           {"htm", "text/html"},       {"html", "text/html"},
+           {"jpg", "image/jpeg"},      {"png", "image/png"},
+           {"js", "text/javascript"},  {"wasm", "application/wasm"},
+           {"oga", "audio/ogg"},       {"ogg", "audio/ogg"},
+           {"ogv", "video/ogg"},       {"swf", "application/x-shockwave-flash"},
+           {"mp4", "video/mp4"},       {"mv4", "video/mp4"},
+           {"mp3", "audio/mp3"},       {"svg", "image/svg+xml"},
+           {"webm", "video/webm"},     {"xml", "application/xml"},
            {"pdf", "application/pdf"}, {"txt", "text/plain"},
            }
         };

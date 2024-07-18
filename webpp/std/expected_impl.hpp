@@ -171,8 +171,8 @@ namespace webpp::stl {
 
         template <typename E>
         concept can_be_unexpected =
-          std::is_object_v<E> && (!std::is_array_v<E>) &&(!detail_expected::is_unexpected<E>) &&(
-                                   !std::is_const_v<E>) &&(!std::is_volatile_v<E>);
+          std::is_object_v<E> && (!std::is_array_v<E>) && (!detail_expected::is_unexpected<E>) &&
+          (!std::is_const_v<E>) && (!std::is_volatile_v<E>);
     } // namespace detail_expected
 
     /// @endcond

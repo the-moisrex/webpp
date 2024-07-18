@@ -90,17 +90,17 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default : {
-                            if constexpr (Options.allow_invalid_characters) {
-                                set_warning(ctx.status, uri_status::invalid_character);
-                            } else {
-                                set_error(ctx.status, uri_status::invalid_queries_character);
-                                return;
-                            }
-                            encoder.skip_separator();
-                            // invalid characters are not errors
-                            continue;
+                    default: {
+                        if constexpr (Options.allow_invalid_characters) {
+                            set_warning(ctx.status, uri_status::invalid_character);
+                        } else {
+                            set_error(ctx.status, uri_status::invalid_queries_character);
+                            return;
                         }
+                        encoder.skip_separator();
+                        // invalid characters are not errors
+                        continue;
+                    }
                 }
                 break;
             }

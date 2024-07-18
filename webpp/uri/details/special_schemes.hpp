@@ -25,7 +25,7 @@ namespace webpp::uri {
             return scheme_code;
         }
 
-    }                   // namespace details
+    } // namespace details
 
     enum struct scheme_type : stl::uint8_t {
         not_special,    // everything else

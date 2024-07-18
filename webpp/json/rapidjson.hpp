@@ -400,9 +400,9 @@ namespace webpp::json::rapidjson {
               !stl::same_as<ValueContainer, stl::remove_cvref_t<ValueContainer>>;
             using container_type = ValueContainer;
             using value_type     = istl::lazy_conditional_t<
-              (requires { typename stl::remove_cvref_t<ValueContainer>::ValueType; }),
-              istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueContainer>>,
-              istl::lazy_type<stl::remove_cvref_t<ValueContainer>>>;
+                  (requires { typename stl::remove_cvref_t<ValueContainer>::ValueType; }),
+                  istl::templated_lazy_type<value_type_finder, stl::remove_cvref_t<ValueContainer>>,
+                  istl::lazy_type<stl::remove_cvref_t<ValueContainer>>>;
 
             static_assert(
               requires { typename value_type::Object; },

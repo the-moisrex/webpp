@@ -365,24 +365,24 @@ namespace webpp::http {
       -> valves_group<prerouting_valve<T...>, postrouting_valve<>, mangler_valve<>, forward_valve<>>;
 
     template <typename... T, typename R>
-    valves_group(prerouting_valve<T...>, R&&)
-      -> valves_group<prerouting_valve<T...>, postrouting_valve<>, mangler_valve<>, R>;
+    valves_group(prerouting_valve<T...>,
+                 R&&) -> valves_group<prerouting_valve<T...>, postrouting_valve<>, mangler_valve<>, R>;
 
     template <typename... T>
     valves_group(postrouting_valve<T...>)
       -> valves_group<prerouting_valve<>, postrouting_valve<T...>, mangler_valve<>, forward_valve<>>;
 
     template <typename... T, typename R>
-    valves_group(postrouting_valve<T...>, R&&)
-      -> valves_group<prerouting_valve<>, postrouting_valve<T...>, mangler_valve<>, R>;
+    valves_group(postrouting_valve<T...>,
+                 R&&) -> valves_group<prerouting_valve<>, postrouting_valve<T...>, mangler_valve<>, R>;
 
     template <typename... T>
     valves_group(mangler_valve<T...>)
       -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, forward_valve<>>;
 
     template <typename... T, typename R>
-    valves_group(mangler_valve<T...>, R&&)
-      -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, R>;
+    valves_group(mangler_valve<T...>,
+                 R&&) -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<T...>, R>;
 
     template <typename T>
     valves_group(T&&) -> valves_group<prerouting_valve<>, postrouting_valve<>, mangler_valve<>, T>;

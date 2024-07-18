@@ -106,7 +106,7 @@ namespace webpp {
         void for_each(auto&& func, [[maybe_unused]] auto&& simd_func) noexcept(
           noexcept(func(this->data()))
 #ifdef WEBPP_EVE
-            && noexcept(simd_func(this->data()))
+          && noexcept(simd_func(this->data()))
 #endif
         ) {
             auto*       pos    = this->data();

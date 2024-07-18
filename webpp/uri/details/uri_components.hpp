@@ -289,9 +289,8 @@ namespace webpp::uri {
         template <istl::StringView StrT = stl::string_view>
         [[nodiscard]] constexpr StrT view(seg_type beg, seg_type size) const noexcept {
             using str_iterator = typename StrT::const_iterator;
-            if constexpr (!stl::same_as<str_iterator, iterator> && requires {
-                              StrT{uri_beg.base() + beg, size};
-                          })
+            if constexpr (
+              !stl::same_as<str_iterator, iterator> && requires { StrT{uri_beg.base() + beg, size}; })
             {
                 return StrT{uri_beg.base() + beg, size};
             } else {
@@ -702,12 +701,12 @@ namespace webpp::uri {
         using out_seg_type   = OutSegType;
         using base_seg_type  = BaseSegType;
         using out_type       = stl::conditional_t<is_uri_component<stl::remove_pointer_t<OutSegType>>::value,
-                                            OutSegType,
-                                            uri_components<out_seg_type, OutIter>>;
+                                                  OutSegType,
+                                                  uri_components<out_seg_type, OutIter>>;
         using clean_out_type = stl::remove_pointer_t<out_type>;
         using base_type      = stl::conditional_t<is_uri_component<stl::remove_pointer_t<BaseSegType>>::value,
-                                             BaseSegType,
-                                             uri_components<base_seg_type, BaseIter>>;
+                                                  BaseSegType,
+                                                  uri_components<base_seg_type, BaseIter>>;
         using seg_type       = typename clean_out_type::seg_type; // this might be different than
                                                                   // OutSegType
         using iterator       = typename clean_out_type::iterator;

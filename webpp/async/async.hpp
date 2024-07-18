@@ -304,7 +304,7 @@ namespace webpp::async {
                   connect(task1, task2)
               }; // todo: inspect the returned type
           };
-    }
+    } // namespace details
 
     /**
      * Task Yielder, yields values

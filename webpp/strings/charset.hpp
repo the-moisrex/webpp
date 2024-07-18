@@ -327,8 +327,9 @@ namespace webpp {
     charset(CharT const (&)[N]) -> charset<stl::remove_cvref_t<CharT>, N - 1>;
 
     template <istl::CharType CharT = char, stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charset(charset<CharT, N1> const&, charset<CharT, N2> const&, charset<CharT, N> const&...)
-      -> charset<CharT, N1 + N2 + (0 + ... + N)>;
+    charset(charset<CharT, N1> const&,
+            charset<CharT, N2> const&,
+            charset<CharT, N> const&...) -> charset<CharT, N1 + N2 + (0 + ... + N)>;
 
     // todo: add non-constexpr (or constexpr if you can) charset(first, last) as well
 
@@ -592,8 +593,9 @@ namespace webpp {
     charmap(CharT const (&... str)[N]) -> charmap<stl::max(N...) - 1>;
 
     template <stl::size_t N1, stl::size_t N2, stl::size_t... N>
-    charmap(charmap<N1> const&, charmap<N2> const&, charmap<N> const&...)
-      -> charmap<stl::max({N1, N2, N...})>;
+    charmap(charmap<N1> const&,
+            charmap<N2> const&,
+            charmap<N> const&...) -> charmap<stl::max({N1, N2, N...})>;
 
 
     using charmap_half = charmap<stl::numeric_limits<char>::max() + 1>; // Half Table (excluding negative

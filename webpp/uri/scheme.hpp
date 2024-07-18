@@ -59,7 +59,7 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
                     [[fallthrough]];
-                    default : break;
+                default: break;
             }
             ++ctx.pos;
             if (ctx.pos == ctx.end) {
@@ -106,7 +106,7 @@ namespace webpp::uri {
                         set_warning(ctx.status, uri_status::invalid_character);
                     }
                     [[fallthrough]];
-                    default : break;
+                default: break;
             }
             clear<components::queries>(ctx);
             // todo: https://url.spec.whatwg.org/#shorten-a-urls-path
@@ -135,7 +135,7 @@ namespace webpp::uri {
                             set_warning(ctx.status, uri_status::invalid_character);
                         }
                         [[fallthrough]];
-                        default : break;
+                    default: break;
                 }
             }
             if constexpr (ctx_type::has_base_uri) {
@@ -193,7 +193,7 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        default : break;
+                    default: break;
                 }
                 if constexpr (Options.allow_file_hosts) {
                     set_valid(ctx.status, uri_status::valid_file_host);
@@ -243,7 +243,7 @@ namespace webpp::uri {
                                     continue;
                                 }
                                 [[fallthrough]];
-                                default : break;
+                            default: break;
                         }
                         break;
                     }
@@ -282,7 +282,8 @@ namespace webpp::uri {
                             continue;
                         }
                         [[fallthrough]];
-                        [[likely]] default : break;
+                    [[likely]] default:
+                        break;
                 }
                 break;
             }
@@ -469,15 +470,15 @@ namespace webpp::uri {
                         continue;
                     }
                     [[fallthrough]];
-                    [[likely]] default : {
-                        if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
-                            set_error(ctx.status, invalid_scheme_character);
-                            return;
-                        }
-                        scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
-                        scheme_code <<= details::one_byte;
-                        continue;
+                [[likely]] default: {
+                    if (!alnum_plus.contains(*ctx.pos)) [[unlikely]] {
+                        set_error(ctx.status, invalid_scheme_character);
+                        return;
                     }
+                    scheme_code  |= static_cast<stl::uint64_t>(ascii::to_lower_copy(*ctx.pos));
+                    scheme_code <<= details::one_byte;
+                    continue;
+                }
             }
             if (ctx.pos == ctx.end) [[unlikely]] {
                 set_error(ctx.status, scheme_ended_unexpectedly);
@@ -510,24 +511,24 @@ namespace webpp::uri {
                 details::file_state<Options>(ctx);
                 return;
             }
-                [[unlikely]] default : {
-                    details::set_scheme<Options>(ctx);
-                    ++ctx.pos;
-                    ctx.scheme = scheme_type::not_special;
-                    if (safely_inc_if<Options>(ctx, '/')) {
-                        // https://url.spec.whatwg.org/#path-or-authority-state
-                        if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
-                            set_valid(ctx.status, valid_authority);
-                            return;
-                        }
-                        set_valid(ctx.status, valid_path);
+            [[unlikely]] default: {
+                details::set_scheme<Options>(ctx);
+                ++ctx.pos;
+                ctx.scheme = scheme_type::not_special;
+                if (safely_inc_if<Options>(ctx, '/')) {
+                    // https://url.spec.whatwg.org/#path-or-authority-state
+                    if (safely_inc_if<Options>(ctx, '/')) [[likely]] {
+                        set_valid(ctx.status, valid_authority);
                         return;
                     }
-
-                    clear<components::path>(ctx);
-                    set_valid(ctx.status, valid_opaque_path);
+                    set_valid(ctx.status, valid_path);
                     return;
                 }
+
+                clear<components::path>(ctx);
+                set_valid(ctx.status, valid_opaque_path);
+                return;
+            }
         }
 
 

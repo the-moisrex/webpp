@@ -158,9 +158,8 @@ namespace webpp::istl {
     concept UTF32 = sizeof(char_type_of_t<T>) == sizeof(char32_t);
 
     template <typename T>
-    concept StringLiteral =
-      (!stl::same_as<char_type_of_t_string_literals<T>,
-                     stl::remove_cvref_t<T>>) &&CharType<char_type_of_t_string_literals<T>>;
+    concept StringLiteral = (!stl::same_as<char_type_of_t_string_literals<T>, stl::remove_cvref_t<T>>) &&
+                            CharType<char_type_of_t_string_literals<T>>;
 
 } // namespace webpp::istl
 

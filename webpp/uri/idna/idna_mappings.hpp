@@ -4,7 +4,6 @@
 #define WEBPP_URI_IDNA_MAPPINGS_HPP
 
 #include "../../std/string.hpp"
-#include "../../std/type_traits.hpp"
 #include "../../unicode/unicode.hpp"
 #include "./details/idna_mapping_table.hpp"
 
@@ -27,40 +26,40 @@ namespace webpp::uri::idna {
 
     } // namespace details
 
-      /**
-       * A table for list of mapped characters
-       *
-       * First Code Point Rules:
-       *   - [1bit = 1] + [7bit = length] + [24bit = start]
-       *   - start  = is the start of the range
-       *   - length = the length of the range
-       *   - (byte & 0x80000000 == 0x80000000) meaning far left bit is 0b1
-       *   - if it starts with 0xFF000000, then it's a disabled range
-       *
-       * Bytes after the First Code Point:
-       *   - Their far left bit will never be 0b1,
-       *     that means (byte & 0x80000000 == 0b0)
-       *   - You have to continue reading everything after each byte, until
-       *     you reach an element that it's far left bit is one.
-       *
-       * Actions:
-       *   - Mapped: [[1bit = 1] [7bits = length] [24bits = range-start]]
-       *             + ... N number of characters you should map to ...;
-       *
-       *             it's first element starts with a 0x80000000, and
-       *             anything after that is considered as what you need to
-       *             map the range to.
-       *
-       *   - Sequenced Mapped:
-       *             [[1bit = 1] [7bits = length] [24bits = range-start]]
-       *           + [[1bit = 0] [7bits = 1]      [24bits = mapped-value]];
-       *
-       *   - Ignored: It's equivalent of mapping to empty string
-       *
-       *   - Disallowed: [[8bits = 1] [24bits = range-start]]
-       *                +[ [32bits = range-end] ]
-       *             Disallowed is really contains range start and range end.
-       */
+    /**
+     * A table for list of mapped characters
+     *
+     * First Code Point Rules:
+     *   - [1bit = 1] + [7bit = length] + [24bit = start]
+     *   - start  = is the start of the range
+     *   - length = the length of the range
+     *   - (byte & 0x80000000 == 0x80000000) meaning far left bit is 0b1
+     *   - if it starts with 0xFF000000, then it's a disabled range
+     *
+     * Bytes after the First Code Point:
+     *   - Their far left bit will never be 0b1,
+     *     that means (byte & 0x80000000 == 0b0)
+     *   - You have to continue reading everything after each byte, until
+     *     you reach an element that it's far left bit is one.
+     *
+     * Actions:
+     *   - Mapped: [[1bit = 1] [7bits = length] [24bits = range-start]]
+     *             + ... N number of characters you should map to ...;
+     *
+     *             it's first element starts with a 0x80000000, and
+     *             anything after that is considered as what you need to
+     *             map the range to.
+     *
+     *   - Sequenced Mapped:
+     *             [[1bit = 1] [7bits = length] [24bits = range-start]]
+     *           + [[1bit = 0] [7bits = 1]      [24bits = mapped-value]];
+     *
+     *   - Ignored: It's equivalent of mapping to empty string
+     *
+     *   - Disallowed: [[8bits = 1] [24bits = range-start]]
+     *                +[ [32bits = range-end] ]
+     *             Disallowed is really contains range start and range end.
+     */
     template <typename CharT>
     [[nodiscard]] static constexpr details::idna_mapping_table_iterator find_mapping_code_point(
       CharT const inp_ch) {
@@ -91,7 +90,7 @@ namespace webpp::uri::idna {
         //   first-code-point: this is the element we should find and compare against
         // Binary Search:
         for (;;) {
-            length      >>= 1U;     // devided by 2
+            length        >>= 1U;     // divided by 2
             auto middle   = chosen; // NOLINT(*-qualified-auto)
             std::advance(middle, length);
 
@@ -165,8 +164,8 @@ namespace webpp::uri::idna {
             auto const range_start = first_code_point & ~disallowed_mask;
             auto const range_end   = *stl::next(pos);
 
-            // we don't realy need to check this because the all the senarios that this would not be true, the
-            // user has passed an invalid character anyway.
+            // we don't really need to check this because the all the scenarios that this would not be true,
+            // the user has passed an invalid character anyway.
             assert(cur_char >= range_start && cur_char <= range_end);
             return false;
         }
@@ -178,7 +177,7 @@ namespace webpp::uri::idna {
             auto const next_pos             = stl::next(pos);
             bool const is_sequenced_mapping = *next_pos & details::sequenced_check_mask;
 
-            // we don't really need to check the range because all the senarios that this would either be
+            // we don't really need to check the range because all the scenarios that this would either be
             // caught by the "reference table", or it's already detected that it's an invalid character.
             assert(cur_char >= range_start && cur_char <= range_end);
 
@@ -204,7 +203,7 @@ namespace webpp::uri::idna {
     }
 
     /**
-     * Mapping Step of the IDNA Proccessing
+     * Mapping Step of the IDNA Processing
      * UTS #46: https://www.unicode.org/reports/tr46/#ProcessingStepMap
      */
     template <bool UseSTD3ASCIIRules = false, istl::String OutStrT, typename Iter>
@@ -217,8 +216,8 @@ namespace webpp::uri::idna {
             // todo: handle utf-8 characters:
 
             // the last byte of the reference table is specially designed so we here can help reduce the size
-            // of the table; everything after the size of the table is be the same as the last element of the
-            // table.
+            // of the table; everything after the size of the table is being the same as the last element of
+            // the table.
             stl::size_t const byte_index =
               stl::min(static_cast<stl::size_t>(*pos) / sizeof(ref_table_byte_type),
                        idna_reference_table.size() - 1);
