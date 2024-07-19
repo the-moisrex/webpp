@@ -254,19 +254,19 @@ namespace webpp::unicode {
         }
     }
 
-    /**
-     * Is a normalized Unicode string
-     * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
-     *
-     * When implementations keep strings in a normalized form, they can be assured that equivalent strings
-     * have a unique binary representation
-     *
-     * @tparam Iter iterator
-     * @tparam EIter end iterator
-     * @param start start position
-     * @param end if you don't pass it, it'll look for one character
-     * @return true if it's normalized unicode
-     */
+    // /**
+    //  * Is a normalized Unicode string
+    //  * UTX #15: https://www.unicode.org/reports/tr15/tr15-54.html
+    //  *
+    //  * When implementations keep strings in a normalized form, they can be assured that equivalent strings
+    //  * have a unique binary representation
+    //  *
+    //  * @tparam Iter iterator
+    //  * @tparam EIter end iterator
+    //  * @param start start position
+    //  * @param end if you don't pass it, it'll look for one character
+    //  * @return true if it's normalized unicode
+    //  */
     // template <normalization_form NF = normalization_form::compose,
     //           typename Iter,
     //           typename EIter = istl::nothing_type>

@@ -25,7 +25,7 @@ namespace webpp {
 
     /**
      * This utility will get you the uint8_t representation of status result of ipv6 parsing
-     * so you can store it in a uint8_t storage along with the prefix.
+     * so you can store it in an uint8_t storage along with the prefix.
      */
     static constexpr stl::uint8_t prefix_status(inet_pton6_status status) noexcept {
         return static_cast<stl::uint8_t>(status);
