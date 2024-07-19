@@ -75,7 +75,9 @@ namespace webpp::stl {
      * @{
      */
 
-#define __cpp_lib_expected 202'202L
+    // clang-format off
+#define __cpp_lib_expected 202202
+    // clang-format on
 
     /// Discriminated union that holds an expected value or an error value.
     /**
