@@ -141,13 +141,14 @@ namespace webpp {
                 octets_t _data = {};
 
                 auto const each_octet_size = _data.size() / _octets.size();
-                auto*      _data_it        = _data.begin();
+                auto       _data_it        = _data.begin(); // NOLINT(*-qualified-auto)
                 for (auto _octets_it = _octets.cbegin(); _octets_it != _octets.cend(); ++_octets_it) {
                     auto _octet = *_octets_it;
                     for (stl::size_t index = 0U; index < each_octet_size; index++) {
-                        _octet      >>= index * 8U;
-                        _octet       &= 0xFFU;
-                        *_data_it++   = static_cast<stl::uint8_t>(*_octets_it);
+                        _octet    >>= index * 8U;
+                        _octet     &= 0xFFU;
+                        *_data_it   = static_cast<stl::uint8_t>(*_octets_it);
+                        ++_data_it;
                     }
                 }
                 return _data;
@@ -402,21 +403,21 @@ namespace webpp {
 
             return {
               // octet 1
-              (static_cast<t>(_octets[0U]) << 8U) | _octets[1U],
+              static_cast<t>(static_cast<t>(_octets[0U] << 8U) | _octets[1U]),
               // octet 2
-              static_cast<t>((static_cast<t>(_octets[2U]) << 8U) | _octets[3U]),
+              static_cast<t>(static_cast<t>(_octets[2U] << 8U) | _octets[3U]),
               // octet 3
-              static_cast<t>((static_cast<t>(_octets[4U]) << 8U) | _octets[5U]),
+              static_cast<t>(static_cast<t>(_octets[4U] << 8U) | _octets[5U]),
               // octet 4
-              static_cast<t>((static_cast<t>(_octets[6U]) << 8U) | _octets[7U]),
+              static_cast<t>(static_cast<t>(_octets[6U] << 8U) | _octets[7U]),
               // octet 5
-              static_cast<t>((static_cast<t>(_octets[8U]) << 8U) | _octets[9U]),
+              static_cast<t>(static_cast<t>(_octets[8U] << 8U) | _octets[9U]),
               // octet 6
-              static_cast<t>((static_cast<t>(_octets[10U]) << 8U) | _octets[11U]),
+              static_cast<t>(static_cast<t>(_octets[10U] << 8U) | _octets[11U]),
               // octet 7
-              static_cast<t>((static_cast<t>(_octets[12U]) << 8U) | _octets[13U]),
+              static_cast<t>(static_cast<t>(_octets[12U] << 8U) | _octets[13U]),
               // octet 8
-              static_cast<t>((static_cast<t>(_octets[14U]) << 8U) | _octets[15U])};
+              static_cast<t>(static_cast<t>(_octets[14U] << 8U) | _octets[15U])};
         }
 
         /**
