@@ -23,10 +23,13 @@ namespace webpp {
             cache_ptr{&input_cache},
             the_key{stl::move(key)} {}
 
-#if __cpp_lib_optional >= 202'110L // C++23 Monadic operations in std::optional
+        // clang-format off
+#if __cpp_lib_optional >= 202110 // C++23 Monadic operations in std::optional
         using CacheType::optional_value_type::and_then;
         using CacheType::optional_value_type::or_else;
 #endif
+        // clang-format on
+
         using CacheType::optional_value_type::emplace;
         using CacheType::optional_value_type::reset;
         using CacheType::optional_value_type::value;
