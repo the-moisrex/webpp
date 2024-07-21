@@ -26,7 +26,9 @@ namespace webpp {
                 wprintf(L"WSAStartup() failed with error: %d\n", iResult);
                 exit(EXIT_FAILURE);
             }
-#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199'309L)
+            // clang-format off
+#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309)
+            // clang-format on
             // ignoring the signal the new way
             // https://pubs.opengroup.org/onlinepubs/9699919799/functions/sigaction.html
             // Set up the signal handler using sigaction()
