@@ -347,8 +347,8 @@ namespace webpp::istl {
         explicit(false) constexpr function_ref(signature_ptr inp_func) noexcept
           : obj{inp_func},
             erased_func{&function_ref::func_invoker<Return, Args...>} {
-            if (!inp_func) {
-                operator=(stl::nullptr_t{});
+            if (inp_func == nullptr) {
+                operator=(nullptr);
             }
         }
 
@@ -357,8 +357,8 @@ namespace webpp::istl {
         explicit(false) constexpr function_ref(NewRet (*const inp_func)(NewArgs...)) noexcept
           : obj{inp_func},
             erased_func{&function_ref::func_invoker<NewRet, NewArgs...>} {
-            if (!inp_func) {
-                operator=(stl::nullptr_t{});
+            if (inp_func == nullptr) {
+                operator=(nullptr);
             }
         }
 
@@ -403,8 +403,8 @@ namespace webpp::istl {
         }
 
         constexpr function_ref& operator=(signature_ptr inp_func) noexcept {
-            if (!inp_func) {
-                operator=(stl::nullptr_t{});
+            if (inp_func == nullptr) {
+                operator=(nullptr);
             } else {
                 obj         = inp_func;
                 erased_func = &function_ref::func_invoker<Return, Args...>;
@@ -416,7 +416,7 @@ namespace webpp::istl {
             requires(is_convertible_function<NewRet, NewArgs...>)
         constexpr function_ref& operator=(NewRet (*const inp_func)(NewArgs...)) noexcept {
             if (!inp_func) {
-                operator=(stl::nullptr_t{});
+                operator=(nullptr);
             } else {
                 obj         = inp_func;
                 erased_func = &function_ref::func_invoker<NewRet, NewArgs...>;

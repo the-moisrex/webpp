@@ -38,11 +38,11 @@ namespace rapidjson {
 
     // This part doesn't need to be sent to rapidjson, it's already there
     // (https://github.com/the-moisrex/rapidjson/blob/f14d5097e51fc19582884a517699adef09edbff7/include/rapidjson/document.h#L262)
-    template <bool Const, typename Encoding, typename Allocator>
-    bool operator==(GenericMemberIterator<Const, Encoding, Allocator> const& pos1,
-                    GenericMemberIterator<Const, Encoding, Allocator> const& pos2) {
-        return pos1.operator->() == pos2.operator->();
-    }
+    // template <bool Const, typename Encoding, typename Allocator>
+    // bool operator==(GenericMemberIterator<Const, Encoding, Allocator> const& pos1,
+    //                 GenericMemberIterator<Const, Encoding, Allocator> const& pos2) {
+    //     return pos1.operator->() == pos2.operator->();
+    // }
 } // namespace rapidjson
 #    endif
 
