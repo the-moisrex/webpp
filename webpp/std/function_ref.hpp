@@ -304,7 +304,7 @@ namespace webpp::istl {
         template <typename T>
             requires stl::is_invocable_v<T, Args...>
         static constexpr Return invoker(storage_type obj, Args... args) noexcept(
-          noexcept((*get<T>(obj))(stl::forward<Args>(args)...))) {
+          noexcept((*details::get<T>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>((*details::get<T>(obj))(stl::forward<Args>(args)...));
         }
 

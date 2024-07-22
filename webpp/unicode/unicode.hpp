@@ -30,25 +30,41 @@ namespace webpp::unicode {
     template <typename u16 = char16_t>
     static constexpr u16 lead_offset = lead_surrogate_min<u16> - (0x1'0000U >> 10U);
 
-    template <typename u32 = char32_t>
+    template <UTF32 u32 = char32_t>
     static constexpr u32 surrogate_offset =
       0x1'0000 - (lead_surrogate_min<u32> << 10) - trail_surrogate_min<u32>;
 
-    template <typename u32 = char32_t>
+    /**
+     * This character is used to replace an unknown, unrecognized, or unrepresentable character in a text.
+     * It serves as a placeholder when a character cannot be displayed or interpreted correctly, often
+     * due to encoding issues or when a character is not available in the current character set.
+     *
+     * Characteristics of U+FFFD
+     *   - Block: U+FFFD is located in the "Specials" block of Unicode.
+     *   - Purpose: It is commonly used to indicate that a character is missing or has been replaced due to an
+     *              error in text processing.
+     *   - Representation: In various encoding systems, U+FFFD is represented as:
+     *                     UTF-8: EF BF BD
+     *                     UTF-16: FF FD
+     *                     UTF-32: 00 00 FF FD
+     *   - Display: The glyph for U+FFFD is typically displayed as a replacement symbol,
+     *              such as a question mark or a square, depending on the rendering system and context.
+     */
+    template <UTF32 u32 = char32_t>
     static constexpr u32 replacement_char = 0x0000'FFFD;
 
     /// Basic Multilingual Plane (BMP)
-    template <typename u32 = char32_t>
+    template <UTF32 u32 = char32_t>
     static constexpr u32 max_bmp = 0x0000'FFFF;
 
-    template <typename u32 = char32_t>
+    template <UTF32 u32 = char32_t>
     static constexpr u32 max_utf16 = 0x0010'FFFF;
 
-    template <typename u32 = char32_t>
+    template <UTF32 u32 = char32_t>
     static constexpr u32 max_utf32 = 0x7FFF'FFFF;
 
     /// Max valid value for a Unicode code point
-    template <typename u32 = char32_t>
+    template <UTF32 u32 = char32_t>
     static constexpr u32 max_legal_utf32 = 0x0010'FFFF;
 
     static constexpr int  half_shift = 10; // used for shifting by 10 bits
@@ -85,18 +101,26 @@ namespace webpp::unicode {
         return code_point >= lead_surrogate_min<u16> && code_point <= trail_surrogate_max<u16>;
     }
 
-    /*
-     * Check whether a Unicode (5.2) char is in a valid range.
+    /**
+     * Check if the code point is in range
+     */
+    template <UTF32 u32>
+    [[nodiscard]] static constexpr bool is_in_range(u32 code_point) noexcept {
+        return code_point <= max_legal_utf32<u32>;
+    }
+
+    /**
+     * Check whether a Unicode code point is in a valid range.
      *
      * The first check comes from the Unicode guarantee to never encode
      * a point above 0x0010ffff, since UTF-16 couldn't represent it.
      *
      * The second check covers surrogate pairs (category Cs).
      */
-    template <typename u32>
+    template <UTF32 u32>
     [[nodiscard]] static constexpr bool is_code_point_valid(u32 code_point) noexcept {
         using uu32 = stl::make_unsigned_t<u32>;
-        return code_point < static_cast<u32>(0x11'0000U) &&
+        return code_point <= max_legal_utf32<u32> &&
                ((static_cast<uu32>(code_point) & 0xFFFF'F800U) != lead_surrogate_min<uu32>);
         // alternative implementation:
         // return (cp <= max_legal_utf32<u32> && !is_surrogate(cp));
@@ -590,7 +614,7 @@ namespace webpp::unicode {
                     iter_append(out, (ccp & 0x3FU) | 0x80U);          // 0b10..'....
                     return 4U;
                 } else if constexpr (UTF16<char_type>) {
-                    if (ccp <= max_bmp<char_type>) {
+                    if (ccp <= max_bmp<stl::uint32_t>) {
                         iter_append(out, code_point); // normal case
                         return 1U;
                     }

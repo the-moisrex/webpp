@@ -310,7 +310,7 @@ namespace webpp::unicode {
 
         // It's Hangul, so we can answer algorithmically instead of looking it up in the lookup tables
         if (is_hangul_code_point(code_point)) [[unlikely]] {
-            return decompose_hangul_code_point<Iter, SizeT>(out, code_point);
+            return decompose_hangul<Iter, SizeT>(out, code_point);
         }
 
         // Look at the ccc_index table, for how this works:
@@ -500,6 +500,26 @@ namespace webpp::unicode {
             out.resize(overwrite(out.data(), max_length));
         }
     }
+
+    // /**
+    //  * Compose 2 code points into one
+    //  * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
+    //  */
+    // template <UTF32 CharT = char32_t>
+    // [[nodiscard]] static constexpr CharT compose(CharT const lhs, CharT const rhs) noexcept {
+    //     if (is_in_range(lhs) && is_in_range(rhs)) {
+    //         auto const hangul = compose_hangul(lhs, rhs);
+    //         if (hangul != 0) {
+    //             return hangul;
+    //         }
+    //
+    //         auto const code_point = stages_comp(lhs, rhs);
+    //         if (code_point != 0) {
+    //             return code_point;
+    //         }
+    //     }
+    //     return replacement_char<CharT>;
+    // }
 
 } // namespace webpp::unicode
 

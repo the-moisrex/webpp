@@ -172,7 +172,7 @@ namespace webpp::unicode {
     }
 
     template <UTF32 CharT = char32_t>
-    struct decomposed_hangul {
+    struct decomposed_hangul_code_point {
         static constexpr CharT invalid_trailing = hangul_trailing_base;
 
         CharT leading;
@@ -188,7 +188,7 @@ namespace webpp::unicode {
      * @returns decomposed_hangul which contains all the parts of a hangul decomposed code point
      */
     template <istl::CharType CharT = char32_t>
-    [[nodiscard]] static constexpr decomposed_hangul<CharT> decomposed_hangul_code_point(
+    [[nodiscard]] static constexpr decomposed_hangul_code_point<CharT> decomposed_hangul(
       CharT const code_point) noexcept {
         auto const pos = code_point - hangul_syllable_base;
 
@@ -198,11 +198,12 @@ namespace webpp::unicode {
         auto const trailing_pos = pos % hangul_trailing_count;
 
         // Calculating the values:
-        return decomposed_hangul<CharT>{
-          .leading  = static_cast<CharT>(hangul_leading_base + leading_pos),
-          .vowel    = static_cast<CharT>(hangul_vowel_base + vowel_pos),
-          .trailing = static_cast<CharT>(trailing_pos != 0 ? hangul_trailing_base + trailing_pos
-                                                           : decomposed_hangul<CharT>::invalid_trailing),
+        return decomposed_hangul_code_point<CharT>{
+          .leading = static_cast<CharT>(hangul_leading_base + leading_pos),
+          .vowel   = static_cast<CharT>(hangul_vowel_base + vowel_pos),
+          .trailing =
+            static_cast<CharT>(trailing_pos != 0 ? hangul_trailing_base + trailing_pos
+                                                 : decomposed_hangul_code_point<CharT>::invalid_trailing),
         };
     }
 
@@ -216,15 +217,15 @@ namespace webpp::unicode {
     template <istl::Appendable       StrOrIter,
               stl::unsigned_integral SizeT = istl::size_type_of_t<StrOrIter>,
               UTF32                  CharT = char32_t>
-    static constexpr SizeT decompose_hangul_code_point(StrOrIter& out, CharT const code_point) noexcept(
+    static constexpr SizeT decompose_hangul(StrOrIter& out, CharT const code_point) noexcept(
       istl::NothrowAppendable<StrOrIter>) {
         using unicode::unchecked::append;
-        auto const [leading, vowel, trailing] = decomposed_hangul_code_point(code_point);
+        auto const [leading, vowel, trailing] = decomposed_hangul(code_point);
 
         SizeT count  = 0;
         count       += append(out, leading);
         count       += append(out, vowel);
-        if (trailing != decomposed_hangul<CharT>::invalid_trailing) {
+        if (trailing != decomposed_hangul_code_point<CharT>::invalid_trailing) {
             count += append(out, trailing);
         }
         return count;
@@ -249,10 +250,8 @@ namespace webpp::unicode {
      *
      * From: https://www.unicode.org/versions/Unicode15.1.0/ch03.pdf#G59688
      */
-    template <typename CharT = char32_t>
-    [[nodiscard]] static constexpr CharT combine_hangul_code_points(
-      CharT const lhs,
-      CharT const rhs) noexcept {
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr CharT compose_hangul(CharT const lhs, CharT const rhs) noexcept {
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
             auto const leading_pos = lhs - hangul_leading_base;
             auto const vowel_pos   = rhs - hangul_vowel_base;
