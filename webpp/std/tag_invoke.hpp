@@ -15,7 +15,7 @@
 namespace webpp::stl {
 
     namespace tag_invoke_fn_ns {
-        void tag_invoke() = delete;
+        void tag_invoke();
 
         struct tag_invoke_fn {
             template <typename Tag, typename... Args>
