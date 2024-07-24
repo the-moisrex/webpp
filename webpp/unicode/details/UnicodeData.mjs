@@ -1,4 +1,5 @@
 import {cleanComments, downloadFile, parseCodePoints, splitLine, updateProgressBar, noop} from "./utils.mjs";
+import {getCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 
 export const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
 export const cacheFilePath = 'UnicodeData.txt';
@@ -7,6 +8,7 @@ export const properties = {
     codePoints: Symbol("Explicitly Mentioned Code Points"),
     ccc: Symbol("Canonical Combining Class"),
     decompositionType: Symbol("Decomposition Tables"),
+    canonicalDecompositionType: Symbol("Canonical-only Decomposition Tables"),
 };
 
 export const download = async (callback = noop) => {
@@ -16,6 +18,33 @@ export const download = async (callback = noop) => {
     });
 };
 
+const parseDecompositions = (codePoint, str = "") => {
+    str = str.trim();
+    if (str === "") {
+        // The Standard says:
+        // The default value of the Decomposition_Mapping property is the code point itself.
+        // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
+        return {mappedTo: [codePoint], mapped: false, formattingTag: null};
+    }
+    let parts = str.split(" ").map(item => item.trim());
+
+    // Parsing Compatibility Formatting Tag
+    // https://www.unicode.org/reports/tr44/#Formatting_Tags_Table
+    let formattingTag = "";
+
+    // Checking for the unthinkable:
+    parts = parts.filter(part => {
+        if (part.startsWith("<") && part.endsWith(">")) {
+            formattingTag = part.substring(1, part.length - 1);
+            return false;
+        }
+        return true;
+    });
+
+    parts = parts.map(codePoint => parseCodePoints(codePoint));
+
+    return {mappedTo: parts, mapped: true, formattingTag};
+};
 
 export const parse = async (table, property, fileContent = undefined) => {
     if (fileContent === undefined) {
@@ -57,36 +86,32 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         case properties.decompositionType: {
             let lastCodePoint = 0;
-            const parseDecompositions = (codePoint, str = "") => {
-                str = str.trim();
-                if (str === "") {
-                    // The Standard says:
-                    // The default value of the Decomposition_Mapping property is the code point itself.
-                    // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
-                    return {mappedTo: [codePoint], mapped: false, formattingTag: null};
-                }
-                let parts = str.split(" ").map(item => item.trim());
-
-                // Parsing Compatibility Formatting Tag
-                // https://www.unicode.org/reports/tr44/#Formatting_Tags_Table
-                let formattingTag = "";
-
-                // Checking for the unthinkable:
-                parts = parts.filter(part => {
-                    if (part.startsWith("<") && part.endsWith(">")) {
-                        formattingTag = part.substring(1, part.length - 1);
-                        return false;
-                    }
-                    return true;
-                });
-
-                parts = parts.map(codePoint => parseCodePoints(codePoint));
-
-                return {mappedTo: parts, mapped: true, formattingTag};
-            };
             action = ({codePointStr, DecompositionStr}) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
+
+                for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
+                    const curDecompositionMapping = curCodePoint === codePoint ? decomposition : parseDecompositions(curCodePoint);
+                    table.add(curCodePoint, curDecompositionMapping);
+                }
+                lastCodePoint = codePoint + 1;
+            };
+            break;
+        }
+
+        case properties.canonicalDecompositionType: {
+            let lastCodePoint = 0;
+            action = ({codePointStr, DecompositionStr}) => {
+                const codePoint = parseCodePoints(codePointStr);
+                const decomposition = parseDecompositions(codePoint, DecompositionStr);
+                const isCanonicalDecomposition = decomposition.formattingTag === null;
+
+                // The prefixed tags supplied with a subset of the decomposition mappings generally indicate formatting information.
+                // Where no such tag is given, the mapping is canonical.
+                if (!isCanonicalDecomposition) {
+                    lastCodePoint = codePoint + 1;
+                    return;
+                }
 
                 for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
                     const curDecompositionMapping = curCodePoint === codePoint ? decomposition : parseDecompositions(curCodePoint);
@@ -117,7 +142,7 @@ export const parse = async (table, property, fileContent = undefined) => {
             GeneralCategory,         // #2
             CanonicalCombiningClass, // #3 CCC
             BidiClass,               // #4
-            DecompositionStr,        // #5 Decomp
+            DecompositionStr,        // #5 Decomp: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
             Numeric,                 // #5
             BidiMirrored,            // #6
             Unicode1Name,            // #7
@@ -142,9 +167,40 @@ export const parse = async (table, property, fileContent = undefined) => {
             ISOComment,
             SimpleUppercaseMapping,
             SimpleLowercaseMapping,
-            SimpleTitlecaseMapping
+            SimpleTitlecaseMapping,
         });
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
 };
 
+
+/// Field number 5 (Decomposition), excluding those that have a tag (contains <something>)
+/// Explained in https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
+export const getCanonicalDecompositions = async () => {
+    class GetTable {
+        #data = [];
+
+        add(codePoint, { mappedTo }) {
+            this.#data[codePoint] = mappedTo;
+        }
+
+        get data() {
+            return this.#data;
+        }
+    }
+
+    const table = new GetTable();
+    await parse(table, properties.canonicalDecompositionType);
+
+    return table.data;
+};
+
+if (process.argv[1] === new URL(import.meta.url).pathname) {
+    const maps = await getCanonicalDecompositions();
+    for (const codePoint in maps) {
+        console.log(codePoint.toString(16), maps[codePoint].map(item => item.toString(16)).join(", "));
+    }
+    console.log("Table length:", maps.length);
+    console.log("Start Code Point:", maps[0]);
+    console.log("Last Code Point:", maps[maps.length - 1]);
+}
