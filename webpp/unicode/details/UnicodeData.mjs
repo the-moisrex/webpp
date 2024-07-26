@@ -108,7 +108,7 @@ export const parse = async (table, property, fileContent = undefined) => {
 
                 // The prefixed tags supplied with a subset of the decomposition mappings generally indicate formatting information.
                 // Where no such tag is given, the mapping is canonical.
-                if (!isCanonicalDecomposition || !decomposition.mapped || decomposition.mappedTo.length > 2) {
+                if (!isCanonicalDecomposition || !decomposition.mapped || decomposition.mappedTo.length !== 2) {
                     return;
                 }
 
@@ -176,7 +176,7 @@ export const getCanonicalDecompositions = async () => {
         #data = {};
 
         add(codePoint, { mappedTo }) {
-            assert.ok(mappedTo.length <= 2);
+            assert.ok(mappedTo.length === 2);
             this.#data[codePoint] = mappedTo;
         }
 
@@ -255,9 +255,29 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             break;
         }
 
+        case "merged": {
+            const maps = await getCanonicalDecompositions();
+            let cps = [];
+            for (let codePoint in maps) {
+                codePoint = parseInt(codePoint);
+                let [cp1, cp2] = maps[codePoint];
+                cp2 = cp2 || 0;
+                const merged = (cp1 + (cp1 >> 2)) * cp2;
+                // console.log("Size: ", cp1.toString(2).length + cp2.toString(2).length);
+                if (cps.includes(merged)) {
+                    console.log("Conflict: ", codePoint.toString(16), merged, cp1.toString(16), cp2.toString(16));
+                    continue;
+                }
+                cps.push(merged);
+                console.log(codePoint.toString(16), cp1.toString(16), cp2.toString(16));
+            }
+            break;
+        }
+
         default: {
             const maps = await getCanonicalDecompositions();
-            for (const codePoint in maps) {
+            for (let codePoint in maps) {
+                codePoint = parseInt(codePoint);
                 console.log(codePoint.toString(16), maps[codePoint].map(item => item.toString(16)).join(", "));
             }
             const keys = Object.keys(maps).toSorted((a, b) => parseInt(a) - parseInt(b));
