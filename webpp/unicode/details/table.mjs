@@ -325,7 +325,7 @@ export class TablePairs {
             let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
             assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
-            const modifiedValues = this.#props?.modify?.({modifier, inserts, rtrimmed, overlapped});
+            const modifiedValues = this.#props?.modify?.({codeRange, modifier, inserts, rtrimmed, overlapped});
             modifier = modifiedValues?.modifier || modifier;
             inserts = modifiedValues?.inserts || inserts;
             rtrimmed = modifiedValues?.rtrimmed || rtrimmed;
