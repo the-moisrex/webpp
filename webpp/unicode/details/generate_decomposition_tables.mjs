@@ -6,19 +6,14 @@
  */
 
 import * as readme from "./readme.mjs";
-import * as UnicodeData from "./UnicodeData.mjs";
-import {
-    uint32, char8_8,
-    writePieces,
-    runClangFormat,
-    utf32To8All,
-    char8_6
-} from "./utils.mjs";
-import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
+import * as UnicodeData from "./UnicodeData.mjs";
+import {char8_6, char8_8, runClangFormat, uint32, utf32To8All, writePieces} from "./utils.mjs";
+import * as path from "node:path";
 import {TablePairs} from "./table.mjs";
 import {Addenda, genMaxLengthAddendum, genPositionAddendum, staticFields} from "./modifiers.mjs";
 import {isHangul} from "./hangul.mjs";
+import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 
@@ -28,6 +23,7 @@ const start = async () => {
 
     // database file
     const decompTables = new DecompTable();
+    await decompTables.load();
     await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType);
     decompTables?.process?.();
     await createTableFile([decompTables]);
@@ -45,18 +41,20 @@ class DecompTable {
     maxMaxLength = 0;
     max32MaxLength = 0;
     max16MaxLength = 0;
+    #canonicalCompositions = null;
 
     findMaxLengths({codePointStart, length, data}) {
         let maxLen = 0;
         for (let index = codePointStart; index < (codePointStart + length); index++) {
             const datum = data.at(index);
-            const {mappedTo, mapped} = datum;
-            if (!mapped) {
+            const {mapped, mappedTo} = datum;
+            if (!mapped && !this.#canonicalCompositions.needsModification(index)) {
                 continue;
             }
             if (mappedTo.length > maxLen) {
                 maxLen = mappedTo.length;
             }
+            maxLen = this.#canonicalCompositions.maxLengthOfRange(data, index, maxLen);
         }
 
         // set the max_length addendum value
@@ -65,6 +63,7 @@ class DecompTable {
 
     constructor() {
         const self = this;
+        this.#canonicalCompositions = new CanonicalComposition();
         this.tables.init({
             disableComments: false,
             name: "decomp",
@@ -88,19 +87,41 @@ class DecompTable {
             genIndexAddenda: () => this.genAddenda(),
 
 
-            getModifierAddenda: this.findMaxLengths,
+            getModifierAddenda: this.findMaxLengths.bind(this),
 
             dataView(codePointStart, length) {
 
                 let values = [];
                 const maxLength = self.getMaxLength(codePointStart);
+                // const {
+                //     inserts
+                // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
+                // assert.equal(inserts.length, length);
                 for (let index = codePointStart; index < (codePointStart + length); index++) {
+                    const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(index - codePointStart);
                     const {mapped, mappedTo} = this.data.at(index);
-                    for (let ith = 0; ith !== maxLength; ith++) {
+
+                    let ith = 0;
+                    for (; ith !== maxLength; ++ith) {
                         if (mapped && ith < mappedTo.length) {
                             values.push(mappedTo[ith]);
                         } else {
                             values.push(0);
+                        }
+                    }
+
+                    if (ith !== maxLength) {
+                        debugger;
+                        throw new Error("Max length is violated.");
+                    }
+
+                    // adding the composition code point (it's a single code point, but in UTF-8):
+                    --ith;
+                    for (let index = canonicalCompositionCodePoint.length - 1; index !== -1; --index, --ith) {
+                        values[ith] = canonicalCompositionCodePoint[index];
+                        if (ith < mappedTo.length) {
+                            debugger;
+                            throw new Error("Invalid max length was calculated.");
                         }
                     }
                 }
@@ -159,6 +180,10 @@ class DecompTable {
                 return {modifier, inserts};
             },
         });
+    }
+
+    async load() {
+        await this.#canonicalCompositions.load();
     }
 
     genAddenda = () => {
