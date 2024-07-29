@@ -941,6 +941,45 @@ TEST(Unicode, SortMarkTest) {
     test_sorting(U"abc\x1D16D\x1D16E\x1\x2\x3", U"abc\x1D16E\x1D16D\x1\x2\x3");
 }
 
+TEST(Unicode, Compose) {
+    // clang-format off
+    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ { $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " " && $6 ~ /\S\s\S/ && !($6 ~ /</)) { gsub(/\S\s+/, ", 0x", $6); gsub(/^\s/, "0x", $6); print "EXPECT_EQ(composed(" $6 "), 0x" $1 ");"; } }' UnicodeData.txt | sort -R | head
+    // clang-format on
+    using webpp::unicode::composed;
+    EXPECT_EQ(composed(0x1F0, 0x0345), 0x1F84);
+    EXPECT_EQ(composed(0x21D, 0x0338), 0x21CE);
+    EXPECT_EQ(composed(0x03B, 0x0345), 0x1FC3);
+    EXPECT_EQ(composed(0x22B, 0x0338), 0x22EB);
+    EXPECT_EQ(composed(0x005, 0x0326), 0x021A);
+    EXPECT_EQ(composed(0x039, 0x0345), 0x1FBC);
+    EXPECT_EQ(composed(0x007, 0x030C), 0x017E);
+    EXPECT_EQ(composed(0x22A, 0x0338), 0x22AF);
+    EXPECT_EQ(composed(0x005, 0x030A), 0x016E);
+    EXPECT_EQ(composed(0x005, 0x0303), 0x1EF8);
+
+    EXPECT_EQ(composed(0x039, 0x0300), 0x1FCA);
+    EXPECT_EQ(composed(0x005, 0x0307), 0x1E60);
+    EXPECT_EQ(composed(0x004, 0x0304), 0x0100);
+    EXPECT_EQ(composed(0x007, 0x0301), 0x017A);
+    EXPECT_EQ(composed(0x30B, 0x3099), 0x30BA);
+    EXPECT_EQ(composed(0x006, 0x0323), 0x1ECD);
+    EXPECT_EQ(composed(0x005, 0x0331), 0x1E6E);
+    EXPECT_EQ(composed(0x1FF, 0x0345), 0x1FF7);
+    EXPECT_EQ(composed(0x30D, 0x3099), 0x30D6);
+    EXPECT_EQ(composed(0x091, 0x093C), 0x095B);
+
+    EXPECT_EQ(composed(0x016, 0x0301), 0x1E79);
+    EXPECT_EQ(composed(0x006, 0x0301), 0x013A);
+    EXPECT_EQ(composed(0x044, 0x030B), 0x04F3);
+    EXPECT_EQ(composed(0x1F6, 0x0301), 0x1F64);
+    EXPECT_EQ(composed(0x004, 0x0311), 0x020E);
+    EXPECT_EQ(composed(0x03B, 0x0300), 0x1F72);
+    EXPECT_EQ(composed(0x007, 0x030A), 0x1E99);
+    EXPECT_EQ(composed(0x006, 0x0323), 0x1E25);
+    EXPECT_EQ(composed(0x304, 0x3099), 0x304C);
+    EXPECT_EQ(composed(0x011, 0x0301), 0x1E16);
+}
+
 TEST(Unicode, EquivalentOfTransformationChains) {
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
 

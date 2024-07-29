@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Sun, 28 Jul 2024 20:41:52 GMT
+ *   This file's generation date:        Mon, 29 Jul 2024 18:05:39 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       509224
@@ -119,6 +119,30 @@ namespace webpp::unicode::details {
 #endif
             std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position) & chunk_mask;
             return pos + static_cast<std::uint16_t>(remaining_pos * max_length);
+        }
+
+        /// Magical mask to be used on magic_code to get its values' position in the index table
+        static constexpr std::size_t magic_mask = 0x3FU;
+
+        /// This is a magical formula that absolutely does not make sense, but it works because math is
+        /// magical. This will merge the 2 code points into one single value that then can be used to get the
+        /// position of the values in the values table.
+        template <typename CharT = char32_t>
+        [[nodiscard]] static constexpr std::size_t magic_merge(CharT const cp1, CharT const cp2) noexcept {
+            return (cp1 + (cp1 >> 2)) * cp2;
+        }
+
+        /// This function will get you the Canonical Composition's values' position
+        [[nodiscard]] static constexpr std::size_t composition_position(
+          std::size_t const magic_code) noexcept {
+            return magic_code & magic_mask;
+        }
+
+        /// This function will get you the Canonical Composition's values' position
+        template <typename CharT = char32_t>
+        [[nodiscard]] static constexpr std::size_t composition_position(
+          CharT const cp1, CharT const cp2) noexcept {
+            return composition_position(magic_merge(cp1, cp2));
         }
     };
 

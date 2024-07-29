@@ -1,28 +1,49 @@
 import {getCanonicalDecompositions} from "./UnicodeData.mjs";
-import {utf32To8} from "./utils.mjs";
-import * as assert from "node:assert";
+import {bitFloor, utf32To8} from "./utils.mjs";
 
 export class CanonicalComposition {
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
-
+    #shiftedMagicalValues = [];
+    lastMapped = 0;
+    chunkShift = 0;
     #magicalTable = {};
 
-    #validateMagicMerge(merged) {
-        if (this.#mergedMagicalValues.includes(merged)) {
-            throw new Error("Magical Merging Formula does not produce unique values anymore: " + merged);
+    #validateMagicMerge(magicCode, cp1, cp2) {
+        if (this.#mergedMagicalValues.includes(magicCode)) {
+            throw new Error("Magical Merging Formula does not produce unique values anymore: " + magicCode);
         }
-        this.#mergedMagicalValues.push(merged);
+
+        const lastMappedBucket = this.lastMapped >>> this.chunkShift;
+        const mask = this.magicMask;
+        const shifted = magicCode & mask;
+        if (shifted > lastMappedBucket) {
+            debugger;
+            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+        }
+        // if (this.#shiftedMagicalValues.includes(shifted)) {
+        //     debugger;
+        //     throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+        // }
+
+        this.#mergedMagicalValues.push(magicCode);
+        // this.#shiftedMagicalValues.push(shifted);
+    }
+
+    get magicMask() {
+        return bitFloor(this.lastMapped) - 1;
     }
 
     /// Magical Formula
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
     /// Its purpose is only to generate a set of merged values that the merged values
     ///   are unique in the current Unicode composition database.
+    ///
+    /// If you change this, you need to change it inside "../normalization.hpp" file as well.
     magicMerge(codePoint1, codePoint2) {
-        const merged = (codePoint1 + (codePoint1 >> 2)) * codePoint2;
-        this.#validateMagicMerge(merged);
+        const merged = (codePoint1 + (codePoint1 >>> 2)) * codePoint2;
+        this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
     }
 
@@ -114,6 +135,32 @@ export class CanonicalComposition {
     //         inserts,
     //     };
     // }
+
+    render() {
+        return `
+        /// Magical mask to be used on magic_code to get its values' position in the index table
+        static constexpr std::size_t magic_mask = 0x${this.magicMask.toString(16).toUpperCase()}U;
+        
+        /// This is a magical formula that absolutely does not make sense, but it works because math is magical.
+        /// This will merge the 2 code points into one single value that then can be used to get the position of the
+        /// values in the values table.
+        template <typename CharT = char32_t>
+        [[nodiscard]] static constexpr std::size_t magic_merge(CharT const cp1, CharT const cp2) noexcept {
+            return (cp1 + (cp1 >> 2)) * cp2;
+        }
+        
+        /// This function will get you the Canonical Composition's values' position
+        [[nodiscard]] static constexpr std::size_t composition_position(std::size_t const magic_code) noexcept {
+            return magic_code & magic_mask;
+        }
+        
+        /// This function will get you the Canonical Composition's values' position
+        template <typename CharT = char32_t>
+        [[nodiscard]] static constexpr std::size_t composition_position(CharT const cp1, CharT const cp2) noexcept {
+            return composition_position(magic_merge(cp1, cp2));
+        }
+        `;
+    }
 
 }
 

@@ -23,8 +23,8 @@ const start = async () => {
 
     // database file
     const decompTables = new DecompTable();
-    await decompTables.load();
     await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType);
+    await decompTables.load();
     decompTables?.process?.();
     await createTableFile([decompTables]);
     console.log('File processing completed.');
@@ -183,6 +183,8 @@ class DecompTable {
     }
 
     async load() {
+        this.#canonicalCompositions.lastMapped = this.lastMapped;
+        this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
         await this.#canonicalCompositions.load();
     }
 
@@ -256,6 +258,9 @@ class DecompTable {
         }
         `;
             },
+            function magicalRender() {
+                return self.#canonicalCompositions.render();
+            }
             //     function isMapped() {
             //         return `
             // /// See if this code point

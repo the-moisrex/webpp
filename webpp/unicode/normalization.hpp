@@ -501,25 +501,32 @@ namespace webpp::unicode {
         }
     }
 
-    // /**
-    //  * Compose 2 code points into one
-    //  * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
-    //  */
-    // template <UTF32 CharT = char32_t>
-    // [[nodiscard]] static constexpr CharT compose(CharT const lhs, CharT const rhs) noexcept {
-    //     if (is_in_range(lhs) && is_in_range(rhs)) {
-    //         auto const hangul = compose_hangul(lhs, rhs);
-    //         if (hangul != 0) {
-    //             return hangul;
-    //         }
-    //
-    //         auto const code_point = stages_comp(lhs, rhs);
-    //         if (code_point != 0) {
-    //             return code_point;
-    //         }
-    //     }
-    //     return replacement_char<CharT>;
-    // }
+    /**
+     * Compose 2 code points into one
+     * Attention: it'll return 0xFFFD (replacement character) if they're not valid inputs
+     *
+     * Canonical Composition code points are embedded inside Decomposition tables to save space.
+     */
+    template <UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr CharT composed(CharT const lhs, CharT const rhs) noexcept {
+        using details::decomp_index;
+        using details::decomp_indices;
+        using details::decomp_values;
+        using details::trailing_mapped_deomps;
+
+        if (is_in_range(lhs) && is_in_range(rhs)) {
+            auto const hangul = compose_hangul(lhs, rhs);
+            if (hangul != 0) {
+                return hangul;
+            }
+
+            auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
+            auto const magic_code_range = decomp_index::composition_position(magic_code);
+            auto const code             = decomp_indices[magic_code_range];
+            return decomp_values[code.get_position(magic_code)];
+        }
+        return replacement_char<CharT>;
+    }
 
 } // namespace webpp::unicode
 
