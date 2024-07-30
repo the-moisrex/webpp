@@ -521,9 +521,13 @@ namespace webpp::unicode {
             }
 
             auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
-            auto const magic_code_range = decomp_index::composition_position(magic_code);
+            auto const magic_code_range = magic_code >> decomp_index::chunk_shift;
             auto const code             = decomp_indices[magic_code_range];
-            return decomp_values[code.get_position(magic_code)];
+            if (code.max_length == 0) {
+                return replacement_char<CharT>;
+            }
+            auto const pos = code.get_position(magic_code) + (code.max_length - 1);
+            return unicode::prev_code_point_copy(decomp_values.data() + pos);
         }
         return replacement_char<CharT>;
     }

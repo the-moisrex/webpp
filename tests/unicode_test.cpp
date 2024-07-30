@@ -946,6 +946,28 @@ TEST(Unicode, Compose) {
     // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ { $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " " && $6 ~ /\S\s\S/ && !($6 ~ /</)) { gsub(/\S\s+/, ", 0x", $6); gsub(/^\s/, "0x", $6); print "EXPECT_EQ(composed(" $6 "), 0x" $1 ");"; } }' UnicodeData.txt | sort -R | head
     // clang-format on
     using webpp::unicode::composed;
+    EXPECT_EQ(composed(0x004, 0x0300), 0x00C0);
+    EXPECT_EQ(composed(0x004, 0x0301), 0x00C1);
+    EXPECT_EQ(composed(0x004, 0x0302), 0x00C2);
+    EXPECT_EQ(composed(0x004, 0x0303), 0x00C3);
+    EXPECT_EQ(composed(0x004, 0x0308), 0x00C4);
+    EXPECT_EQ(composed(0x004, 0x030A), 0x00C5);
+    EXPECT_EQ(composed(0x004, 0x0327), 0x00C7);
+    EXPECT_EQ(composed(0x004, 0x0300), 0x00C8);
+    EXPECT_EQ(composed(0x004, 0x0301), 0x00C9);
+    EXPECT_EQ(composed(0x004, 0x0302), 0x00CA);
+
+    EXPECT_EQ(composed(0x1D15, 0x1'D16F), 0x1'D161);
+    EXPECT_EQ(composed(0x1D15, 0x1'D170), 0x1'D162);
+    EXPECT_EQ(composed(0x1D15, 0x1'D171), 0x1'D163);
+    EXPECT_EQ(composed(0x1D15, 0x1'D172), 0x1'D164);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D165), 0x1'D1BB);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D165), 0x1'D1BC);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D16E), 0x1'D1BD);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D16E), 0x1'D1BE);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D16F), 0x1'D1BF);
+    EXPECT_EQ(composed(0x1D1B, 0x1'D16F), 0x1'D1C0);
+
     EXPECT_EQ(composed(0x1F0, 0x0345), 0x1F84);
     EXPECT_EQ(composed(0x21D, 0x0338), 0x21CE);
     EXPECT_EQ(composed(0x03B, 0x0345), 0x1FC3);

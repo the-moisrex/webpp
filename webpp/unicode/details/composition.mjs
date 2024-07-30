@@ -1,26 +1,25 @@
 import {getCanonicalDecompositions} from "./UnicodeData.mjs";
-import {bitFloor, utf32To8} from "./utils.mjs";
+import {bitFloor, findTopLongestZeroRanges, utf32To8} from "./utils.mjs";
 
 export class CanonicalComposition {
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
-    #shiftedMagicalValues = [];
+    // #shiftedMagicalValues = [];
     lastMapped = 0;
     chunkShift = 0;
     #magicalTable = {};
+    #topEmptyRanges = [];
 
     #validateMagicMerge(magicCode, cp1, cp2) {
         if (this.#mergedMagicalValues.includes(magicCode)) {
-            throw new Error("Magical Merging Formula does not produce unique values anymore: " + magicCode);
+            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask})`);
         }
 
-        const lastMappedBucket = this.lastMapped >>> this.chunkShift;
-        const mask = this.magicMask;
-        const shifted = magicCode & mask;
-        if (shifted > lastMappedBucket) {
+        const shifted = magicCode >>> this.chunkShift;
+        if (shifted > this.lastMappedBucket) {
             debugger;
-            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
         }
         // if (this.#shiftedMagicalValues.includes(shifted)) {
         //     debugger;
@@ -32,17 +31,44 @@ export class CanonicalComposition {
     }
 
     get magicMask() {
-        return bitFloor(this.lastMapped) - 1;
+        return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
     }
+
+    get lastMappedBucket() {
+        return this.lastMapped >>> this.chunkShift;
+    }
+
+    get lastMagic() {
+         return ((this.lastMapped << this.chunkShift) * this.lastMapped);
+    }
+
 
     /// Magical Formula
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
     /// Its purpose is only to generate a set of merged values that the merged values
     ///   are unique in the current Unicode composition database.
-    ///
-    /// If you change this, you need to change it inside "../normalization.hpp" file as well.
     magicMerge(codePoint1, codePoint2) {
-        const merged = (codePoint1 + (codePoint1 >>> 2)) * codePoint2;
+        // const merged = ((codePoint1 - (codePoint2 >>> 3)) * codePoint2) & this.magicMask;
+        // const merged = Math.floor(((codePoint1 << this.chunkShift) * codePoint2) * this.magicMask / this.lastMagic);
+        // const merged = ((codePoint1 * codePoint1) - (codePoint2 * codePoint2)) & this.magicMask;
+
+        // Cantor Pairing Function: This function uniquely combines two non-negative integers into a single non-negative integer.
+        // const merged = (codePoint1 + codePoint2) * (codePoint1 + codePoint2 + 1) / 2 + codePoint2;
+
+        // Scaling formula:
+        // const x = (codePoint1 * (codePoint1 >>> 2)) * codePoint2;
+        // const maxMagic = (this.lastMapped * (this.lastMapped >>> 2)) * this.lastMapped;
+        // const merged = Math.floor(this.lastMappedBucket * x / maxMagic);
+
+        // Scaling function that scales more on specific point:
+        const x = (codePoint1 * (codePoint1 >>> 2)) * codePoint2; // The original number you want to scale.
+        const y = this.lastMappedBucket; // The target upper limit for scaling.
+        const maxMagic = (this.lastMapped * (this.lastMapped >>> 2)) * this.lastMapped;
+        const k = 1; //  scaling factor that determines how much emphasis to put around z (typically between 0 and 1).
+        const z = maxMagic / 2; // The central value around which you want to emphasize scaling.
+        const p = 2; // A power factor that controls the curvature of the scaling (higher values will create a sharper emphasis around z).
+        const merged = Math.floor(y * (1 - k * Math.pow((x - z) / y, p)));
+
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
     }
@@ -59,9 +85,14 @@ export class CanonicalComposition {
         }
     }
 
+    #calculateTopEmptyRanges() {
+        this.#topEmptyRanges = findTopLongestZeroRanges(this.#magicalTable);
+    }
+
     async load() {
         this.#canonicalCompositions = await getCanonicalDecompositions();
         this.#calculateMagicTable();
+        this.#calculateTopEmptyRanges();
     }
 
     needsModification(magicCode) {
@@ -146,18 +177,7 @@ export class CanonicalComposition {
         /// values in the values table.
         template <typename CharT = char32_t>
         [[nodiscard]] static constexpr std::size_t magic_merge(CharT const cp1, CharT const cp2) noexcept {
-            return (cp1 + (cp1 >> 2)) * cp2;
-        }
-        
-        /// This function will get you the Canonical Composition's values' position
-        [[nodiscard]] static constexpr std::size_t composition_position(std::size_t const magic_code) noexcept {
-            return magic_code & magic_mask;
-        }
-        
-        /// This function will get you the Canonical Composition's values' position
-        template <typename CharT = char32_t>
-        [[nodiscard]] static constexpr std::size_t composition_position(CharT const cp1, CharT const cp2) noexcept {
-            return composition_position(magic_merge(cp1, cp2));
+            return ((cp1 + (cp1 >> 2)) * cp2) & magic_mask;
         }
         `;
     }

@@ -709,4 +709,33 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
     }
 
     return valuesTable;
-}
+};
+
+export const findTopLongestZeroRanges = (arr, topN = 5) => {
+    let ranges = [];
+    let currentLength = 0;
+    let startIndex = -1;
+
+    for (let i = 0; i <= arr.length; i++) {
+        // Check if the current element is zero
+        if (arr[i] === 0) {
+            if (currentLength === 0) {
+                // Start a new range
+                startIndex = i;
+            }
+            currentLength++;
+        } else {
+            // If we hit a non-zero, check if we have a valid range
+            if (currentLength > 0) {
+                ranges.push({ start: startIndex, length: currentLength });
+                currentLength = 0; // Reset for the next range
+            }
+        }
+    }
+
+    // Sort ranges by length in descending order
+    ranges.sort((a, b) => b.length - a.length);
+
+    // Get the top 5 longest ranges
+    return ranges.slice(0, topN);
+};

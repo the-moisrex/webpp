@@ -322,6 +322,12 @@ namespace webpp::unicode {
         }
     }
 
+    template <stl::bidirectional_iterator Iter = char8_t const*, UTF32 CodePointType = char32_t>
+    [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos) noexcept {
+        return prev_code_point<Iter, CodePointType>(pos);
+    }
+
+
     namespace details {
 
         // from glib/gutf8.c
