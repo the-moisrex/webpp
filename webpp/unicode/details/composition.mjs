@@ -12,6 +12,12 @@ export class CanonicalComposition {
     #topEmptyRanges = [];
 
     #validateMagicMerge(magicCode, cp1, cp2) {
+        if (isNaN(magicCode) || magicCode === undefined || magicCode === null || !isFinite(magicCode) || !Number.isSafeInteger(magicCode)) {
+            throw new Error(`magic code is not a safe integer: ${magicCode} (${cp1}, ${cp2})`);
+        }
+        if (magicCode < 0) {
+            throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
+        }
         if (this.#mergedMagicalValues.includes(magicCode)) {
             throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask})`);
         }
@@ -67,7 +73,7 @@ export class CanonicalComposition {
         const k = 1; //  scaling factor that determines how much emphasis to put around z (typically between 0 and 1).
         const z = maxMagic / 2; // The central value around which you want to emphasize scaling.
         const p = 2; // A power factor that controls the curvature of the scaling (higher values will create a sharper emphasis around z).
-        const merged = Math.floor(y * (1 - k * Math.pow((x - z) / y, p)));
+        const merged = Math.floor(y * (1 - k * Math.pow(Math.floor((x - z) / y), p)));
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
