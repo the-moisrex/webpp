@@ -1,5 +1,7 @@
 #include "../benchmark.hpp"
 
+#include <array>
+
 using namespace std;
 
 // Implementations from: https://graphics.stanford.edu/~seander/bithacks.html#InterleaveTableObvious
@@ -14,7 +16,8 @@ unsigned int obv_interleave(unsigned short x, unsigned short y) noexcept {
     return z;
 }
 
-static unsigned short const MortonTable256[256] = {
+/// From https://graphics.stanford.edu/~seander/bithacks.html#InterleaveTableLookup
+static constexpr std::array<std::uint16_t, 256> morton_table_256{
   0x0000, 0x0001, 0x0004, 0x0005, 0x0010, 0x0011, 0x0014, 0x0015, 0x0040, 0x0041, 0x0044, 0x0045, 0x0050,
   0x0051, 0x0054, 0x0055, 0x0100, 0x0101, 0x0104, 0x0105, 0x0110, 0x0111, 0x0114, 0x0115, 0x0140, 0x0141,
   0x0144, 0x0145, 0x0150, 0x0151, 0x0154, 0x0155, 0x0400, 0x0401, 0x0404, 0x0405, 0x0410, 0x0411, 0x0414,
@@ -36,9 +39,10 @@ static unsigned short const MortonTable256[256] = {
   0x5444, 0x5445, 0x5450, 0x5451, 0x5454, 0x5455, 0x5500, 0x5501, 0x5504, 0x5505, 0x5510, 0x5511, 0x5514,
   0x5515, 0x5540, 0x5541, 0x5544, 0x5545, 0x5550, 0x5551, 0x5554, 0x5555};
 
-unsigned int table_lookup(unsigned short x, unsigned short y) noexcept {
-    return MortonTable256[y >> 8] << 17 | MortonTable256[x >> 8] << 16 | MortonTable256[y & 0xFF] << 1 |
-           MortonTable256[x & 0xFF];
+[[nodiscard]] static constexpr std::uint32_t table_lookup(std::uint16_t const lhs,
+                                                          std::uint16_t const rhs) noexcept {
+    return morton_table_256[rhs >> 8U] << 17U | morton_table_256[lhs >> 8U] << 16U |
+           morton_table_256[rhs & 0xFFU] << 1U | morton_table_256[lhs & 0xFFU];
 }
 
 unsigned int multiply(unsigned short x, unsigned short y) noexcept {

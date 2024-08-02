@@ -36,6 +36,7 @@ set(FILE_SOURCES
         ada/ada_benchmark.cpp
         uri/uri_benchmark.cpp
         charset/charset_benchmark.cpp
+        interleave_bits/interleave_benchmark.cpp
         )
 file(GLOB FILE_PCH *_pch.hpp)
 
