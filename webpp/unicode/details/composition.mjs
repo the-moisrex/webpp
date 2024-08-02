@@ -1,5 +1,5 @@
 import {getCanonicalDecompositions} from "./UnicodeData.mjs";
-import {bitFloor, findTopLongestZeroRanges, utf32To8} from "./utils.mjs";
+import {bitFloor, findTopLongestZeroRanges, interleaveBits, utf32To8} from "./utils.mjs";
 
 export class CanonicalComposition {
 
@@ -19,10 +19,10 @@ export class CanonicalComposition {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
-            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask})`);
+            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
-        const shifted = magicCode >>> this.chunkShift;
+        const shifted = magicCode >>> (this.chunkShift * 2);
         if (shifted > this.lastMappedBucket) {
             debugger;
             throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
@@ -45,7 +45,7 @@ export class CanonicalComposition {
     }
 
     get lastMagic() {
-         return ((this.lastMapped << this.chunkShift) * this.lastMapped);
+        return ((this.lastMapped << this.chunkShift) * this.lastMapped);
     }
 
 
@@ -67,13 +67,36 @@ export class CanonicalComposition {
         // const merged = Math.floor(this.lastMappedBucket * x / maxMagic);
 
         // Scaling function that scales more on specific point:
-        const x = (codePoint1 * (codePoint1 >>> 2)) * codePoint2; // The original number you want to scale.
-        const y = this.lastMappedBucket; // The target upper limit for scaling.
-        const maxMagic = (this.lastMapped * (this.lastMapped >>> 2)) * this.lastMapped;
-        const k = 1; //  scaling factor that determines how much emphasis to put around z (typically between 0 and 1).
-        const z = maxMagic / 2; // The central value around which you want to emphasize scaling.
-        const p = 2; // A power factor that controls the curvature of the scaling (higher values will create a sharper emphasis around z).
-        const merged = Math.floor(y * (1 - k * Math.pow(Math.floor((x - z) / y), p)));
+        // const x = (codePoint1 + (codePoint1 >>> 2)) * codePoint2; // The original number you want to scale.
+        // const y = this.lastMappedBucket; // The target upper limit for scaling.
+        // const maxMagic = (this.lastMapped * (this.lastMapped >>> 2)) * this.lastMapped;
+        // const k = 1; //  scaling factor that determines how much emphasis to put around z (typically between 0 and 1).
+        // const z = maxMagic / 2; // The central value around which you want to emphasize scaling.
+        // const p = 2; // A power factor that controls the curvature of the scaling (higher values will create a sharper emphasis around z).
+        // const merged = Math.floor(y * (1 - k * Math.pow(Math.abs((x - z) / y), p)));
+
+        // const x = (codePoint1 + (codePoint1 >>> 2)) * codePoint2; // The original number you want to scale.
+        // const maxMagic = (this.lastMapped * (this.lastMapped >>> 2)) * this.lastMapped;
+        // const y = this.lastMappedBucket; // The target upper limit for scaling.
+        // const z = 2/3 * maxMagic; // The central value around which you want to emphasize scaling.
+        // const k = x * y / maxMagic;
+        // const distance = Math.abs(x - z);
+        // console.log(k)
+        // const merged = Math.floor(k * distance);
+
+
+        // const x = (codePoint1 + (codePoint1 >>> 2))  * codePoint2; // The original number you want to scale.
+        // const merged = Math.floor(x * 0.09);
+
+        // const x = (codePoint1 + (codePoint1 >>> 2)) ^ (codePoint2 + (codePoint2 << 2)); // The original number you want to scale.
+        // const merged = x % this.lastMappedBucket;
+
+
+        const cp1 = codePoint1 & (65536 - 1 >> 1);
+        const cp2 = codePoint2 & (65536 - 1 >> 1);
+        const x = interleaveBits(cp1, cp2);
+        // console.log(cp1, cp2, x)
+        const merged = x % (this.lastMappedBucket * 2000);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;

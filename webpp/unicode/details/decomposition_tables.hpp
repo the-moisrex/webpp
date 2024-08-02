@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Tue, 30 Jul 2024 22:51:31 GMT
+ *   This file's generation date:        Fri, 02 Aug 2024 00:18:37 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       469184
- *       - in bytes:      58648 B
+ *       - in bits:       472192
+ *       - in bytes:      59024 B
  *       - in KibiBytes:  58 KiB
  *   Some other implementations' total table size was 73.4 KiB;
- *   So I saved 17 KiB and a better a locality.
+ *   So I saved 16 KiB and a better a locality.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -459,8 +459,8 @@ namespace webpp::unicode::details {
      * Decomposition Index
      *
      * Table size:
-     *   - in bits:       371616
-     *   - in bytes:      46452 B
+     *   - in bits:       374624
+     *   - in bytes:      46828 B
      *   - in KibiBytes:  46 KiB
      */
     static constexpr std::basic_string_view<char8_t> decomp_values{
@@ -2159,9 +2159,16 @@ namespace webpp::unicode::details {
       u8"\x96\0\xe9\xbc\xbb\0\xf0\xaa\x98\x80\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
       u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
       u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0",
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
       // done.
-      46452UL // String Length
+      46828UL // String Length
     };
 
     template <typename CharT = char8_t, typename CPType>
