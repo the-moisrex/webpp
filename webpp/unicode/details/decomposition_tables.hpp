@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 02 Aug 2024 00:18:37 GMT
+ *   This file's generation date:        Sat, 03 Aug 2024 19:56:59 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       472192
@@ -30,6 +30,8 @@
 
 #ifndef WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
 #define WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
+
+#include "../../utils/bits.hpp"
 
 #include <array>
 #include <cstdint>
@@ -122,14 +124,18 @@ namespace webpp::unicode::details {
         }
 
         /// Magical mask to be used on magic_code to get its values' position in the index table
-        static constexpr std::size_t magic_mask = 0xFFFU;
+        static constexpr std::size_t magic_mask = 0x7FFFU;
+
+        static constexpr std::size_t magic_bucket = 0x5D0C50U;
 
         /// This is a magical formula that absolutely does not make sense, but it works because math is
         /// magical. This will merge the 2 code points into one single value that then can be used to get the
         /// position of the values in the values table.
         template <typename CharT = char32_t>
-        [[nodiscard]] static constexpr std::size_t magic_merge(CharT const cp1, CharT const cp2) noexcept {
-            return ((cp1 + (cp1 >> 2)) * cp2) & magic_mask;
+        [[nodiscard]] static constexpr std::size_t magic_merge(CharT cp1, CharT cp2) noexcept {
+            cp1 &= magic_mask;
+            cp2 &= magic_mask;
+            return webpp::interleave_bits(cp1, cp2) % magic_bucket;
         }
     };
 

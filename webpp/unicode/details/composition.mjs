@@ -1,5 +1,11 @@
-import {getCanonicalDecompositions} from "./UnicodeData.mjs";
-import {bitFloor, findTopLongestZeroRanges, interleaveBits, utf32To8} from "./utils.mjs";
+import {extractedCanonicalDecompositions, getCanonicalDecompositions} from "./UnicodeData.mjs";
+import {
+    findSmallestComplement,
+    findSmallestMask,
+    findTopLongestZeroRanges,
+    interleaveBits,
+    utf32To8
+} from "./utils.mjs";
 
 export class CanonicalComposition {
 
@@ -10,6 +16,12 @@ export class CanonicalComposition {
     chunkShift = 0;
     #magicalTable = {};
     #topEmptyRanges = [];
+
+    #codePoint1Mask = 0;
+    #codePoint2Mask = 0;
+
+    #codePoint1Compl = 0;
+    #codePoint2Compl = 0;
 
     #validateMagicMerge(magicCode, cp1, cp2) {
         if (isNaN(magicCode) || magicCode === undefined || magicCode === null || !isFinite(magicCode) || !Number.isSafeInteger(magicCode)) {
@@ -22,8 +34,9 @@ export class CanonicalComposition {
             throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
-        const shifted = magicCode >>> (this.chunkShift * 2);
-        if (shifted > this.lastMappedBucket) {
+        const shifted = magicCode >>> this.chunkShift;
+        // console.log(shifted, magicCode, cp1, cp2);
+        if (shifted >= this.lastMappedBucket) {
             debugger;
             throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
         }
@@ -37,7 +50,10 @@ export class CanonicalComposition {
     }
 
     get magicMask() {
-        return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
+        // return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
+
+        // the 65536 is `unsigned short` length so the interleave_bits algorithm would work correctly.
+        return (65536 - 1) >>> 1;
     }
 
     get lastMappedBucket() {
@@ -45,9 +61,16 @@ export class CanonicalComposition {
     }
 
     get lastMagic() {
-        return ((this.lastMapped << this.chunkShift) * this.lastMapped);
+        // return ((this.lastMapped << this.chunkShift) * this.lastMapped);
+        return undefined;
     }
 
+    get magicBucket() {
+        return this.lastMappedBucket * 2000;
+        // const lastCP = (bitCeil(this.lastMapped) - 1) & this.magicMask;
+        // console.log(this.lastMappedBucket * 2000, this.lastMapped, lastCP, interleaveBits(lastCP, lastCP) >>> this.chunkShift);
+        // return interleaveBits(lastCP, lastCP) >>> this.chunkShift;
+    }
 
     /// Magical Formula
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
@@ -92,11 +115,31 @@ export class CanonicalComposition {
         // const merged = x % this.lastMappedBucket;
 
 
-        const cp1 = codePoint1 & (65536 - 1 >> 1);
-        const cp2 = codePoint2 & (65536 - 1 >> 1);
+        // const cp1 = codePoint1 & this.magicMask;
+        // const cp2 = (codePoint2 << 2) & this.magicMask;
+        // const lastMagic = this.lastMapped & this.magicMask;
+        // const maxInterleaves = interleaveBits(lastMagic, lastMagic);
+        // const magic = interleaveBits(cp1, cp2);
+        // const k = 0.00005; //  scaling factor that determines how much emphasis to put around z (typically between 0 and 1).
+        // const z = lastMagic / 2; // The central value around which you want to emphasize scaling.
+        // const p = 2; // A power factor that controls the curvature of the scaling (higher values will create a sharper emphasis around z).
+        // const x = Math.floor(k * Math.pow(magic - z, p));
+        // const scaled = Math.floor(x * lastMagic / maxInterleaves);
+        // // console.log(cp1, cp2, x)
+        // // console.log(this.magicBucket)
+        // const merged = scaled;
+        // console.log(merged, codePoint1, codePoint2, cp1, cp2, 'scaled:', scaled, x, lastMagic, maxInterleaves, this.magicBucket);
+
+
+        const cp1 = (codePoint1 & this.#codePoint1Mask) - this.#codePoint1Compl;
+        const cp2 = (codePoint2 & this.#codePoint2Mask) - this.#codePoint2Compl;
+        // const x = (cp1 + (cp1 >>> 2)) * cp2;
+        // const x = (cp1 * (cp1 >>> 2)) * cp2;
+        // const x = (cp1 + (cp2 >>> 2)) * cp2;
+        // const x = cp1 * cp2;
         const x = interleaveBits(cp1, cp2);
-        // console.log(cp1, cp2, x)
-        const merged = x % (this.lastMappedBucket * 2000);
+        const merged = x % this.lastMappedBucket;
+        console.log(codePoint1, codePoint2, cp1, cp2, x, merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
@@ -118,8 +161,17 @@ export class CanonicalComposition {
         this.#topEmptyRanges = findTopLongestZeroRanges(this.#magicalTable);
     }
 
+    #calculateCodePointMasks(firstArray, secondArray) {
+        this.#codePoint1Mask = findSmallestMask(firstArray);
+        this.#codePoint2Mask = findSmallestMask(secondArray);
+        this.#codePoint1Compl = findSmallestComplement(firstArray.map(item => item & this.#codePoint1Mask));
+        this.#codePoint2Compl = findSmallestComplement(secondArray.map(item => item & this.#codePoint2Mask));
+    }
+
     async load() {
         this.#canonicalCompositions = await getCanonicalDecompositions();
+        const maps = await extractedCanonicalDecompositions();
+        this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
         this.#calculateMagicTable();
         this.#calculateTopEmptyRanges();
     }
@@ -201,12 +253,16 @@ export class CanonicalComposition {
         /// Magical mask to be used on magic_code to get its values' position in the index table
         static constexpr std::size_t magic_mask = 0x${this.magicMask.toString(16).toUpperCase()}U;
         
+        static constexpr std::size_t magic_bucket = 0x${this.magicBucket.toString(16).toUpperCase()}U;
+        
         /// This is a magical formula that absolutely does not make sense, but it works because math is magical.
         /// This will merge the 2 code points into one single value that then can be used to get the position of the
         /// values in the values table.
         template <typename CharT = char32_t>
-        [[nodiscard]] static constexpr std::size_t magic_merge(CharT const cp1, CharT const cp2) noexcept {
-            return ((cp1 + (cp1 >> 2)) * cp2) & magic_mask;
+        [[nodiscard]] static constexpr std::size_t magic_merge(CharT cp1, CharT cp2) noexcept {
+            cp1 &= magic_mask;
+            cp2 &= magic_mask;
+            return webpp::interleave_bits(cp1, cp2) % magic_bucket;
         }
         `;
     }

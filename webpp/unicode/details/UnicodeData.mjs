@@ -1,4 +1,12 @@
-import {cleanComments, downloadFile, parseCodePoints, splitLine, updateProgressBar, noop} from "./utils.mjs";
+import {
+    cleanComments,
+    downloadFile,
+    parseCodePoints,
+    splitLine,
+    updateProgressBar,
+    noop,
+    findSmallestMask, findSmallestComplement, interleaveBits
+} from "./utils.mjs";
 import {getCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import * as assert from "node:assert";
 
@@ -252,6 +260,81 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             for (const codePoint of maps.mappedToSecond) {
                 console.log(codePoint);
             }
+            break;
+        }
+
+        case "map1-mask": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToFirst;
+            console.log(maps.join(", "));
+            const mask = findSmallestMask(maps);
+            console.log("Mask:", mask);
+            console.log(maps.map(cp => cp & mask).join(", "));
+            break;
+        }
+
+        case "map2-mask": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToSecond;
+            console.log(maps.join(", "));
+            const mask = findSmallestMask(maps);
+            console.log("Mask:", mask);
+            console.log(maps.map(cp => cp & mask).join(", "));
+            break;
+        }
+
+        case "map1-compl": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToFirst;
+            console.log(maps.join(", "));
+            const compl = findSmallestComplement(maps);
+            console.log("Compl:", compl);
+            console.log(maps.map(cp => cp - compl).join(", "));
+            break;
+        }
+
+        case "map2-compl": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToSecond;
+            console.log(maps.join(", "));
+            const compl = findSmallestComplement(maps);
+            console.log("Compl:", compl);
+            console.log(maps.map(cp => cp - compl).join(", "));
+            break;
+        }
+
+        case "map1-compl-masked": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToFirst;
+            console.log(maps.join(", "));
+            const mask = findSmallestMask(maps);
+            const compl = findSmallestComplement(maps.map(item => item & mask));
+            console.log("Compl:", compl);
+            console.log("Mask:", mask);
+            console.log(maps.map(cp => (cp & mask)- compl).join(", "));
+            break;
+        }
+
+        case "map2-compl-masked": {
+            const maps = (await extractedCanonicalDecompositions()).mappedToSecond;
+            console.log(maps.join(", "));
+            const mask = findSmallestMask(maps);
+            const compl = findSmallestComplement(maps.map(item => item & mask));
+            console.log("Compl:", compl);
+            console.log("Mask:", mask);
+            console.log(maps.map(cp => (cp & mask)- compl).join(", "));
+            break;
+        }
+
+        case "map-interleave": {
+            const data = await getCanonicalDecompositions();
+            const maps = [];
+            for (const codePoint in data) {
+                const [cp1, cp2] = data[codePoint];
+                // cp1 is too big for the interleave operation.
+                maps.push(interleaveBits(cp1, cp2));
+            }
+            console.log(maps.join(", "));
+            const mask = findSmallestMask(maps);
+            const compl = findSmallestComplement(maps.map(item => item & mask));
+            console.log("Compl:", compl);
+            console.log("Mask:", mask);
+            console.log(maps.map(cp => (cp & mask)- compl).join(", "));
             break;
         }
 

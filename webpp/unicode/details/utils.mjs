@@ -805,3 +805,26 @@ export const interleaveBits = (x, y) => {
         MortonTable256[y & 0xFF] << 1 |
         MortonTable256[x & 0xFF];
 };
+
+export const findSmallestMask = (arr) => {
+    let mask = 0;
+
+    top: for (;;++mask) {
+        const maskedValues = [];
+        for (const val of arr) {
+            const masked = val & mask;
+            if (maskedValues.includes(masked)) {
+                continue top;
+            }
+            maskedValues.push(masked);
+        }
+        break;
+    }
+    return mask;
+};
+
+
+
+export const findSmallestComplement = (arr) => {
+    return arr.toSorted((a, b) => a - b)[0];
+};

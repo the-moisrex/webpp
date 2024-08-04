@@ -423,6 +423,7 @@ const createTableFile = async (tables) => {
 #include <array>
 #include <cstdint>
 #include <string_view>
+#include "../../utils/bits.hpp"
 
 namespace webpp::unicode::details {
 
