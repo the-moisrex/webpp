@@ -117,11 +117,11 @@ class DecompTable {
 
                     // adding the composition code point (it's a single code point, but in UTF-8):
                     --ith;
-                    for (let index = canonicalCompositionCodePoint.length - 1; index !== -1; --index, --ith) {
+                    for (let index = canonicalCompositionCodePoint.length - 1; ith > -1 && index > -1; --index, --ith) {
                         values[ith] = canonicalCompositionCodePoint[index];
                         if (ith < mappedTo.length) {
                             debugger;
-                            throw new Error("Invalid max length was calculated.");
+                            throw new Error(`Invalid max length was calculated: ${ith} < ${mappedTo.length}`);
                         }
                     }
                 }

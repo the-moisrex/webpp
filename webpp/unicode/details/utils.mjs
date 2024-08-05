@@ -806,13 +806,14 @@ export const interleaveBits = (x, y) => {
         MortonTable256[x & 0xFF];
 };
 
-export const findSmallestMask = (arr) => {
+
+export const findSmallest = (arr, op) => {
     let mask = 0;
 
     top: for (;;++mask) {
         const maskedValues = [];
         for (const val of arr) {
-            const masked = val & mask;
+            const masked = op(val, mask);
             if (maskedValues.includes(masked)) {
                 continue top;
             }
@@ -823,8 +824,36 @@ export const findSmallestMask = (arr) => {
     return mask;
 };
 
+export const findSmallestMask = (arr) => {
+    return findSmallest(arr, (val, mask) => val & mask);
+};
 
+export const findSmallestDivision = (arr) => {
+    return findSmallest(arr, (val, div) => Math.floor(val / div));
+};
+
+export const findSmallestXor = (arr) => {
+    return findSmallest(arr, (val, mask) => val ^ mask);
+};
 
 export const findSmallestComplement = (arr) => {
     return arr.toSorted((a, b) => a - b)[0];
+};
+
+export const hasDuplicates = (arr) => {
+    // Get the length of the array
+    const length = arr.length;
+
+    // Use a nested loop to compare each element with every other element
+    for (let i = 0; i < length; i++) {
+        for (let j = i + 1; j < length; j++) {
+            // If a duplicate is found, return true
+            if (arr[i] === arr[j]) {
+                return true; // Duplicate found
+            }
+        }
+    }
+
+    // If no duplicates are found, return false
+    return false;
 };

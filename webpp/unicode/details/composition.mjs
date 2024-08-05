@@ -23,6 +23,9 @@ export class CanonicalComposition {
     #codePoint1Compl = 0;
     #codePoint2Compl = 0;
 
+    #magicFinalMask = 0;
+    #magicFinalCompl = 0;
+
     #validateMagicMerge(magicCode, cp1, cp2) {
         if (isNaN(magicCode) || magicCode === undefined || magicCode === null || !isFinite(magicCode) || !Number.isSafeInteger(magicCode)) {
             throw new Error(`magic code is not a safe integer: ${magicCode} (${cp1}, ${cp2})`);
@@ -62,7 +65,11 @@ export class CanonicalComposition {
 
     get lastMagic() {
         // return ((this.lastMapped << this.chunkShift) * this.lastMapped);
-        return undefined;
+        // return undefined;
+
+        const cp1 = (this.lastMapped & this.#codePoint1Mask);
+        const cp2 = (this.lastMapped & this.#codePoint2Mask);
+        return (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
     }
 
     get magicBucket() {
@@ -131,15 +138,15 @@ export class CanonicalComposition {
         // console.log(merged, codePoint1, codePoint2, cp1, cp2, 'scaled:', scaled, x, lastMagic, maxInterleaves, this.magicBucket);
 
 
-        const cp1 = (codePoint1 & this.#codePoint1Mask) - this.#codePoint1Compl;
-        const cp2 = (codePoint2 & this.#codePoint2Mask) - this.#codePoint2Compl;
+        const cp1 = (codePoint1 & this.#codePoint1Mask);
+        const cp2 = (codePoint2 & this.#codePoint2Mask);
         // const x = (cp1 + (cp1 >>> 2)) * cp2;
         // const x = (cp1 * (cp1 >>> 2)) * cp2;
         // const x = (cp1 + (cp2 >>> 2)) * cp2;
         // const x = cp1 * cp2;
-        const x = interleaveBits(cp1, cp2);
-        const merged = x % this.lastMappedBucket;
-        console.log(codePoint1, codePoint2, cp1, cp2, x, merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
+        const x = (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
+        const merged = x;
+        console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
@@ -166,12 +173,34 @@ export class CanonicalComposition {
         this.#codePoint2Mask = findSmallestMask(secondArray);
         this.#codePoint1Compl = findSmallestComplement(firstArray.map(item => item & this.#codePoint1Mask));
         this.#codePoint2Compl = findSmallestComplement(secondArray.map(item => item & this.#codePoint2Mask));
+
+        let maps = [];
+        for (const codePoint in this.#canonicalCompositions) {
+            let [cp1, cp2] = this.#canonicalCompositions[codePoint];
+            cp1 &= this.#codePoint1Mask;
+            // cp1 -= this.#codePoint1Compl;
+            cp2 &= this.#codePoint2Mask;
+            // cp2 -= this.#codePoint2Compl;
+            maps.push(interleaveBits(cp1, cp2));
+        }
+        this.#magicFinalMask = findSmallestMask(maps);
+        this.#magicFinalCompl = findSmallestComplement(maps.map(cp => cp & this.#magicFinalMask));
+
+        console.log("Code Point 1 Mask:", this.#codePoint1Mask);
+        console.log("Code Point 1 Complement:", this.#codePoint1Compl);
+        console.log("Code Point 2 Mask:", this.#codePoint2Mask);
+        console.log("Code Point 2 Complement:", this.#codePoint2Compl);
+        console.log("Magic Mask:", this.#magicFinalMask);
+        console.log("Magic Complement:", this.#magicFinalCompl);
     }
 
     async load() {
         this.#canonicalCompositions = await getCanonicalDecompositions();
         const maps = await extractedCanonicalDecompositions();
         this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
+        if ((this.lastMagic >>> this.chunkShift) >= this.lastMappedBucket) {
+            throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.lastMagic >>> this.chunkShift}) / ${this.lastMappedBucket}`);
+        }
         this.#calculateMagicTable();
         this.#calculateTopEmptyRanges();
     }

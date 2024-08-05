@@ -107,6 +107,7 @@
 #include "../std/iterator.hpp"
 #include "../std/string_like.hpp"
 #include "../std/type_traits.hpp"
+#include "../utils/bits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
