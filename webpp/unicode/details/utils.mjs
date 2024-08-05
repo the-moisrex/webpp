@@ -807,10 +807,10 @@ export const interleaveBits = (x, y) => {
 };
 
 
-export const findSmallest = (arr, op) => {
+export function* findSmallest(arr, op, maxMask = arr.toSorted((a, b) => b - a)[0]){
     let mask = 0;
 
-    top: for (;;++mask) {
+    top: for (; mask <= maxMask; ++mask) {
         const maskedValues = [];
         for (const val of arr) {
             const masked = op(val, mask);
@@ -819,21 +819,24 @@ export const findSmallest = (arr, op) => {
             }
             maskedValues.push(masked);
         }
-        break;
+        yield mask;
     }
-    return mask;
-};
+}
+
+export function maskFinder (arr) {
+    return findSmallest(arr, (val, mask) => val & mask);
+}
 
 export const findSmallestMask = (arr) => {
-    return findSmallest(arr, (val, mask) => val & mask);
+    return maskFinder(arr).next().value;
 };
 
 export const findSmallestDivision = (arr) => {
-    return findSmallest(arr, (val, div) => Math.floor(val / div));
+    return findSmallest(arr, (val, div) => Math.floor(val / div)).next().value;
 };
 
 export const findSmallestXor = (arr) => {
-    return findSmallest(arr, (val, mask) => val ^ mask);
+    return findSmallest(arr, (val, mask) => val ^ mask).next().value;
 };
 
 export const findSmallestComplement = (arr) => {

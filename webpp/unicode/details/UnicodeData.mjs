@@ -5,7 +5,13 @@ import {
     splitLine,
     updateProgressBar,
     noop,
-    findSmallestMask, findSmallestComplement, interleaveBits, findSmallestDivision, findSmallestXor, hasDuplicates
+    findSmallestMask,
+    findSmallestComplement,
+    interleaveBits,
+    findSmallestDivision,
+    findSmallestXor,
+    hasDuplicates,
+    maskFinder
 } from "./utils.mjs";
 import {getCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import * as assert from "node:assert";
@@ -380,6 +386,45 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             const mask = findSmallestMask(maps.map(item => item - compl));
             console.log("Mask:", mask);
             console.log(maps.map(cp => (cp - compl) & mask).join(", "));
+            break;
+        }
+
+        case "map-find-mask": {
+            const data = await getCanonicalDecompositions();
+            const {mappedToSecond, mappedToFirst} = (await extractedCanonicalDecompositions());
+            const maps = [];
+            const cp1Mask = findSmallestMask(mappedToFirst);
+            const cp2Mask = findSmallestMask(mappedToSecond);
+            const cp1Compl = findSmallestComplement(mappedToFirst.map(cp => cp & cp1Mask));
+            const cp2Compl = findSmallestComplement(mappedToSecond.map(cp => cp & cp2Mask));
+            console.log(`cp1 mask:`, cp1Mask);
+            console.log(`cp2 mask:`, cp2Mask);
+            console.log(`cp1 compl:`, cp1Compl);
+            console.log(`cp2 compl:`, cp2Compl);
+            for (const codePoint in data) {
+                let [cp1, cp2] = data[codePoint];
+                cp1 &= cp1Mask;
+                // cp1 -= cp1Compl;
+                cp2 &= cp2Mask;
+                // cp2 -= cp2Compl;
+                maps.push(interleaveBits(cp1, cp2));
+            }
+            console.log(maps.join(", "));
+            // const mask = findSmallestMask(maps);
+            for (const mask of maskFinder(maps)) {
+                console.log("--------------")
+                console.log("Mask:", mask);
+                // const compl = 0;
+                const compl = findSmallestComplement(maps.map(item => item & mask));
+                console.log("Compl:", compl);
+                const modified = maps.map(cp => ((cp & mask) - compl) % 3049);
+                // console.log(modified.join(", "));
+                const hasDups = hasDuplicates(modified);
+                console.log(hasDups ? "Failed: Has duplicates" : "Success: No duplicates");
+                if (!hasDups) {
+                    break;
+                }
+            }
             break;
         }
 
