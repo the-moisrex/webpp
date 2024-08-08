@@ -185,6 +185,8 @@ class DecompTable {
     async load() {
         this.#canonicalCompositions.lastMapped = this.lastMapped;
         this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
+        this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
+        this.#canonicalCompositions.chunkMask = this.tables.chunkMask;
         await this.#canonicalCompositions.load();
     }
 

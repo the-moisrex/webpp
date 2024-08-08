@@ -7,13 +7,18 @@ import {
     utf32To8
 } from "./utils.mjs";
 
+/**
+ * The important parts of this class is the merge algorithm and the shift algorithm which needs to be reimplemented in C++ as well.
+ */
 export class CanonicalComposition {
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
-    // #shiftedMagicalValues = [];
+    #shiftedMagicalValues = {};
     lastMapped = 0;
     chunkShift = 0;
+    chunkSize = 0;
+    chunkMask = 0;
     #magicalTable = {};
     #topEmptyRanges = [];
 
@@ -37,19 +42,35 @@ export class CanonicalComposition {
             throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
-        const shifted = magicCode >>> this.chunkShift;
+        const shifted = this.shiftCodePoint(magicCode);
         // console.log(shifted, magicCode, cp1, cp2);
         if (shifted >= this.lastMappedBucket) {
             debugger;
             throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
         }
-        // if (this.#shiftedMagicalValues.includes(shifted)) {
-        //     debugger;
-        //     throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
-        // }
+        if (!(shifted in this.#shiftedMagicalValues)) {
+            this.#shiftedMagicalValues[shifted] = [];
+        }
+        if (this.#shiftedMagicalValues[shifted].length >= this.chunkSize) {
+            debugger;
+            throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+        }
+        if (this.#shiftedMagicalValues[shifted].includes(this.remaining(magicCode))) {
+            debugger;
+            throw new Error(`Invalid shift algorithm: duplicate remaining magic code created after shifting.`);
+        }
 
         this.#mergedMagicalValues.push(magicCode);
-        // this.#shiftedMagicalValues.push(shifted);
+        this.#shiftedMagicalValues[shifted].push(this.remaining(magicCode));
+    }
+
+    /// The shifting algorithm:
+    shiftCodePoint(codePoint) {
+        return (codePoint >>> this.chunkShift) % this.lastMappedBucket;
+    }
+
+    remaining(codePoint) {
+        return codePoint & this.chunkMask;
     }
 
     get magicMask() {
@@ -198,8 +219,8 @@ export class CanonicalComposition {
         this.#canonicalCompositions = await getCanonicalDecompositions();
         const maps = await extractedCanonicalDecompositions();
         this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
-        if ((this.lastMagic >>> this.chunkShift) >= this.lastMappedBucket) {
-            throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.lastMagic >>> this.chunkShift}) / ${this.lastMappedBucket}`);
+        if (this.shiftCodePoint(this.lastMagic) >= this.lastMappedBucket) {
+            throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.shiftCodePoint(this.lastMagic)}) / ${this.lastMappedBucket}`);
         }
         this.#calculateMagicTable();
         this.#calculateTopEmptyRanges();
@@ -291,7 +312,7 @@ export class CanonicalComposition {
         [[nodiscard]] static constexpr std::size_t magic_merge(CharT cp1, CharT cp2) noexcept {
             cp1 &= magic_mask;
             cp2 &= magic_mask;
-            return webpp::interleave_bits(cp1, cp2) % magic_bucket;
+            return webpp::interleave_bits(static_cast<std::uint16_t>(cp1), static_cast<std::uint16_t>(cp2)) % magic_bucket;
         }
         `;
     }
