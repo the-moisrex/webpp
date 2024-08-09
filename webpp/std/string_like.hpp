@@ -31,7 +31,7 @@ namespace webpp::istl {
      *   - a  string view
      *   - a  vector of compatible values
      *
-     * @tparam StrOrIter Can be a stirng/string-view/iterator/vector<CharT>/...
+     * @tparam StrOrIter Can be a string/string-view/iterator/vector<CharT>/...
      */
     template <typename StrOrIter, typename StrTInput>
     constexpr void append(StrOrIter& out, StrTInput&& inp) noexcept(StringView<StrOrIter>) {

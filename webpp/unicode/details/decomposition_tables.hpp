@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Sat, 03 Aug 2024 19:56:59 GMT
+ *   This file's generation date:        Fri, 09 Aug 2024 02:22:03 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       472192
- *       - in bytes:      59024 B
+ *       - in bits:       469184
+ *       - in bytes:      58648 B
  *       - in KibiBytes:  58 KiB
  *   Some other implementations' total table size was 73.4 KiB;
- *   So I saved 16 KiB and a better a locality.
+ *   So I saved 17 KiB and a better a locality.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -121,21 +121,6 @@ namespace webpp::unicode::details {
 #endif
             std::uint16_t const remaining_pos = static_cast<std::uint16_t>(request_position) & chunk_mask;
             return pos + static_cast<std::uint16_t>(remaining_pos * max_length);
-        }
-
-        /// Magical mask to be used on magic_code to get its values' position in the index table
-        static constexpr std::size_t magic_mask = 0x7FFFU;
-
-        static constexpr std::size_t magic_bucket = 0x5D0C50U;
-
-        /// This is a magical formula that absolutely does not make sense, but it works because math is
-        /// magical. This will merge the 2 code points into one single value that then can be used to get the
-        /// position of the values in the values table.
-        template <typename CharT = char32_t>
-        [[nodiscard]] static constexpr std::size_t magic_merge(CharT cp1, CharT cp2) noexcept {
-            cp1 &= magic_mask;
-            cp2 &= magic_mask;
-            return webpp::interleave_bits(cp1, cp2) % magic_bucket;
         }
     };
 
@@ -465,8 +450,8 @@ namespace webpp::unicode::details {
      * Decomposition Index
      *
      * Table size:
-     *   - in bits:       374624
-     *   - in bytes:      46828 B
+     *   - in bits:       371616
+     *   - in bytes:      46452 B
      *   - in KibiBytes:  46 KiB
      */
     static constexpr std::basic_string_view<char8_t> decomp_values{
@@ -2165,16 +2150,9 @@ namespace webpp::unicode::details {
       u8"\x96\0\xe9\xbc\xbb\0\xf0\xaa\x98\x80\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
       u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
       u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-      u8"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+      u8"\0\0\0\0",
       // done.
-      46828UL // String Length
+      46452UL // String Length
     };
 
     template <typename CharT = char8_t, typename CPType>

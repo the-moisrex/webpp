@@ -521,7 +521,8 @@ namespace webpp::unicode {
                 return hangul;
             }
 
-            auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
+            // auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
+            auto const magic_code       = 0;
             auto const magic_code_range = magic_code >> decomp_index::chunk_shift;
             auto const code             = decomp_indices[magic_code_range];
             if (code.max_length == 0) {

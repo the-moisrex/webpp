@@ -506,7 +506,7 @@ namespace {
 TEST(Unicode, Decompose) {
     // clang-format off
     // Get more examples with this command:
-    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ {gsub(/<[^>]*>/, "", $6); $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " ") { gsub(/\s+/, "\\\x", $6); print "EXPECT_EQ(unicode::decomposed<stl::u8string>(U\'\\\x" $1 "\'), utf32_to_utf8(U\"" $6 "\")) << desc_decomp_of(U\'\\\x" $1 "\');"; } }' UnicodeData.txt | sort -R | head
+    // awk 'BEGIN{FS=";"; OF=""} !/^\s*#/ {gsub(/<[^>]*>/, "", $6); $6 = " " $6; gsub(/\s+/, " ", $6); if ($6 != " ") { gsub(/\s+/, "\\\x", $6); print "EXPECT_EQ(decomposed<u8string>(U\'\\\x" $1 "\'), utf32_to_utf8(U\"" $6 "\")) << desc_decomp_of(U\'\\\x" $1 "\');"; } }' UnicodeData.txt | sort -R | head
     // clang-format on
 
     static_assert(webpp::stl::same_as<char8_t, webpp::istl::appendable_value_type_t<u8string*>>,
@@ -527,6 +527,16 @@ TEST(Unicode, Decompose) {
     EXPECT_EQ(decomposed<u8string>(U'\x00B8'), utf32_to_utf8(U"\x0020\x0327")) << desc_decomp_of(U'\x00B8');
     EXPECT_EQ(decomposed<u8string>(U'\x00B9'), utf32_to_utf8(U"\x0031")) << desc_decomp_of(U'\x00B9');
 
+    EXPECT_EQ(decomposed<u8string>(U'\x1B40'), utf32_to_utf8(U"\x1B3E\x1B35")) << desc_decomp_of(U'\x1B40');
+    EXPECT_EQ(decomposed<u8string>(U'\x1B41'), utf32_to_utf8(U"\x1B3F\x1B35")) << desc_decomp_of(U'\x1B41');
+    EXPECT_EQ(decomposed<u8string>(U'\x1B43'), utf32_to_utf8(U"\x1B42\x1B35")) << desc_decomp_of(U'\x1B43');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D2C'), utf32_to_utf8(U"\x0041")) << desc_decomp_of(U'\x1D2C');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D2D'), utf32_to_utf8(U"\x00C6")) << desc_decomp_of(U'\x1D2D');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D2E'), utf32_to_utf8(U"\x0042")) << desc_decomp_of(U'\x1D2E');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D30'), utf32_to_utf8(U"\x0044")) << desc_decomp_of(U'\x1D30');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D31'), utf32_to_utf8(U"\x0045")) << desc_decomp_of(U'\x1D31');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D32'), utf32_to_utf8(U"\x018E")) << desc_decomp_of(U'\x1D32');
+    EXPECT_EQ(decomposed<u8string>(U'\x1D33'), utf32_to_utf8(U"\x0047")) << desc_decomp_of(U'\x1D33');
 
     EXPECT_EQ(decomposed<u8string>(U'\x2FA16'), utf32_to_utf8(U"\x4D56")) << desc_decomp_of(U'\x2FA16');
     EXPECT_EQ(decomposed<u8string>(U'\x3359'), utf32_to_utf8(U"\x0031\x70B9")) << desc_decomp_of(U'\x3359');

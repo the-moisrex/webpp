@@ -16,6 +16,7 @@ import {isHangul} from "./hangul.mjs";
 import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
+const embedCanonical = false;
 
 
 const start = async () => {
@@ -45,16 +46,21 @@ class DecompTable {
 
     findMaxLengths({codePointStart, length, data}) {
         let maxLen = 0;
-        for (let index = codePointStart; index < (codePointStart + length); index++) {
-            const datum = data.at(index);
-            const {mapped, mappedTo} = datum;
-            if (!mapped && !this.#canonicalCompositions.needsModification(index)) {
+        const end = (codePointStart + length);
+        for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
+            const {mapped, mappedTo} = data.at(codePoint);
+            if (!mapped && !embedCanonical) {
+                continue;
+            }
+            if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
                 continue;
             }
             if (mappedTo.length > maxLen) {
                 maxLen = mappedTo.length;
             }
-            maxLen = this.#canonicalCompositions.maxLengthOfRange(data, index, maxLen);
+            if (embedCanonical) {
+                maxLen = this.#canonicalCompositions.maxLengthOfRange(data, codePoint, maxLen);
+            }
         }
 
         // set the max_length addendum value
@@ -63,7 +69,9 @@ class DecompTable {
 
     constructor() {
         const self = this;
-        this.#canonicalCompositions = new CanonicalComposition();
+        if (embedCanonical) {
+            this.#canonicalCompositions = new CanonicalComposition();
+        }
         this.tables.init({
             disableComments: false,
             name: "decomp",
@@ -91,37 +99,45 @@ class DecompTable {
 
             dataView(codePointStart, length) {
 
-                let values = [];
                 const maxLength = self.getMaxLength(codePointStart);
+                let values = new Uint8Array(maxLength * length);
                 // const {
                 //     inserts
                 // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
                 // assert.equal(inserts.length, length);
-                for (let index = codePointStart; index < (codePointStart + length); index++) {
-                    const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(index - codePointStart);
-                    const {mapped, mappedTo} = this.data.at(index);
+                const end = (codePointStart + length);
+                for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
+                    const vidx = codePoint - codePointStart;
+                    const start = vidx * maxLength;
+                    const {mapped, mappedTo} = this.data.at(codePoint);
 
-                    let ith = 0;
-                    for (; ith !== maxLength; ++ith) {
-                        if (mapped && ith < mappedTo.length) {
-                            values.push(mappedTo[ith]);
-                        } else {
-                            values.push(0);
+
+                    if (mapped) {
+                        for (let ith = 0; ith !== maxLength; ++ith) {
+                            values[start + ith] = mappedTo[ith];
                         }
                     }
 
-                    if (ith !== maxLength) {
-                        debugger;
-                        throw new Error("Max length is violated.");
-                    }
 
                     // adding the composition code point (it's a single code point, but in UTF-8):
-                    --ith;
-                    for (let index = canonicalCompositionCodePoint.length - 1; ith > -1 && index > -1; --index, --ith) {
-                        values[ith] = canonicalCompositionCodePoint[index];
-                        if (ith < mappedTo.length) {
+                    if (embedCanonical) {
+                        const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(codePoint);
+                        for (let index = 0; index !== canonicalCompositionCodePoint.length; ++index) {
+                            const idx = start + maxLength - (index + 1);
+                            if (values[idx] !== 0) {
+                                debugger;
+                                throw new Error(`Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`);
+                            }
+                            values[idx] = canonicalCompositionCodePoint[index];
+                            if (idx < (start + mappedTo.length)) {
+                                debugger;
+                                throw new Error(`Invalid max length was calculated: ${idx} < ${mappedTo.length}`);
+                            }
+                        }
+                        const idx = start + maxLength - (canonicalCompositionCodePoint.length + 1);
+                        if (canonicalCompositionCodePoint.length > 0 && values[idx] !== 0) {
                             debugger;
-                            throw new Error(`Invalid max length was calculated: ${ith} < ${mappedTo.length}`);
+                            throw new Error(`Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`);
                         }
                     }
                 }
@@ -183,11 +199,13 @@ class DecompTable {
     }
 
     async load() {
-        this.#canonicalCompositions.lastMapped = this.lastMapped;
-        this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
-        this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
-        this.#canonicalCompositions.chunkMask = this.tables.chunkMask;
-        await this.#canonicalCompositions.load();
+        if (embedCanonical) {
+            this.#canonicalCompositions.lastMapped = this.lastMapped;
+            this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
+            this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
+            this.#canonicalCompositions.chunkMask = this.tables.chunkMask;
+            await this.#canonicalCompositions.load();
+        }
     }
 
     genAddenda = () => {
@@ -261,7 +279,10 @@ class DecompTable {
         `;
             },
             function magicalRender() {
-                return self.#canonicalCompositions.render();
+                if (embedCanonical) {
+                    return self.#canonicalCompositions.render();
+                }
+                return "";
             }
             //     function isMapped() {
             //         return `
@@ -295,7 +316,9 @@ class DecompTable {
     getMaxLength(codePoint) {
         const codePointStart = codePoint - (codePoint % this.tables.chunkSize);
         if (codePointStart >= this.tables.data.length) {
-            return 1; // default value for the max_length
+            debugger;
+            throw new Error("Requesting something from us that shouldn't be requested.");
+            // return 1; // default value for the max_length
         }
         return this.findMaxLengths({
             codePointStart,
