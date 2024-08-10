@@ -8,15 +8,16 @@
 import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {char8_6, char8_8, runClangFormat, uint32, utf32To8All, writePieces} from "./utils.mjs";
+import {char8_6, char8_8, runClangFormat, uint32, uint8, utf32To8All, writePieces} from "./utils.mjs";
 import * as path from "node:path";
 import {TablePairs} from "./table.mjs";
-import {Addenda, genMaxLengthAddendum, genPositionAddendum, staticFields} from "./modifiers.mjs";
+import {Addenda, genMaskAddendum, genMaxLengthAddendum, genPositionAddendum, staticFields} from "./modifiers.mjs";
 import {isHangul} from "./hangul.mjs";
 import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
-const embedCanonical = false;
+const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
+const enableMaksField = true;
 
 
 const start = async () => {
@@ -212,15 +213,21 @@ class DecompTable {
         const name = "index";
         const addendaPack = [
             genPositionAddendum(char8_6),
-            // genMaskAddendum(uint8),
+            enableMaksField ? genMaskAddendum(uint8) : undefined,
 
             // this will affect the chunkSize:
             genMaxLengthAddendum(char8_6),
-        ];
+        ].filter(item => item !== undefined);
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {
-                const {pos: maskedPos} = this.max_length.modify(modifier, {pos});
-                const newPos = range + maskedPos;
+                let maskedPos = 0;
+                if (enableMaksField) {
+                    maskedPos = this.mask.modify(modifier, {pos}).pos;
+                } else {
+                    maskedPos = pos;
+                }
+                const {pos: lenPos} = this.max_length.modify(modifier, {pos: maskedPos});
+                const newPos = range + lenPos;
                 if (newPos >= table.length) {
                     return null;
                     // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
