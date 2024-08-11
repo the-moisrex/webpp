@@ -45,7 +45,12 @@ class DecompTable {
     max16MaxLength = 0;
     #canonicalCompositions = null;
 
+    #cacheMaxLen = {}
     findMaxLengths({codePointStart, length, data}) {
+        const key = `${codePointStart}-${length}`;
+        if (key in this.#cacheMaxLen) {
+            return {max_length: this.#cacheMaxLen[key]};
+        }
         let maxLen = 0;
         const end = (codePointStart + length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
@@ -65,6 +70,7 @@ class DecompTable {
         }
 
         // set the max_length addendum value
+        this.#cacheMaxLen[key] = maxLen;
         return {max_length: maxLen};
     }
 

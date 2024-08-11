@@ -75,7 +75,7 @@ export class TablePairs {
             const insertValue = modifiedInserts.at(index);
             if (realValue !== insertValue) {
                 // throw new InvalidModifier({index, realValue, insertValue, ...modifier});
-                return {valid: false, index, realValue, insertValue, ...modifier};
+                return {valid: false, index, realValue, insertValue, ...modifier, data: [...modifiedInserts]};
             }
         }
 
@@ -303,6 +303,9 @@ export class TablePairs {
     process() {
         console.time("Process");
         console.log("Processing...");
+        console.log("Chunk Size:", this.chunkSize);
+        console.log("Chunk Mask:", this.chunkMask);
+        console.log("Chunk Shift:", this.chunkShift);
 
         this.#props?.tests?.();
 
@@ -407,6 +410,9 @@ export class TablePairs {
             delete res.pos;
             return res;
         }));
+        console.log("Chunk Size:", this.chunkSize);
+        console.log("Chunk Mask:", this.chunkMask);
+        console.log("Chunk Shift:", this.chunkShift);
         console.log("Processing: done.");
         console.timeEnd("Process");
     }

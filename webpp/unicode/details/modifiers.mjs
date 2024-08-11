@@ -777,7 +777,7 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
     * generate() {
         yield this.min;
         yield this.max;
-        yield this.mask;
+        // yield this.mask;
         // for (let index = this.min + 1; index <= this.max; ) {
         //     yield index;
         //     index <<= 1;
