@@ -34,7 +34,7 @@ export class TablePairs {
     add(codePoint, value) {
 
         // fill the data
-        this.data[Number(codePoint)] = Number(value);
+        this.data[Number(codePoint)] = value;
     }
 
     /// This function compresses the specified range based on the input modifier.

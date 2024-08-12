@@ -30,7 +30,7 @@ import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
-const enableMaksField = true;
+const enableMaksField = false;
 
 
 const start = async () => {
@@ -49,7 +49,7 @@ class DecompTable {
     tables = new TablePairs();
 
     // these numbers are educated guesses from other projects, they're not that important!
-    lastMapped = 0;
+    lastMapped = 0n;
     maxMappedLength = 0;
     hangulIgnored = 0;
     // flattedDataView = [];
@@ -350,7 +350,7 @@ class DecompTable {
 
     getMaxLength(codePoint) {
         const codePointStart = codePoint - (codePoint % this.tables.chunkSize);
-        if (codePointStart >= this.tables.data.length) {
+        if (codePointStart >= BigInt(this.tables.data.length)) {
             debugger;
             throw new Error("Requesting something from us that shouldn't be requested.");
             // return 1; // default value for the max_length
