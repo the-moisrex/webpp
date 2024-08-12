@@ -20,9 +20,15 @@ export const char8_5 = Symbol('char8_t');
 export const char8_6 = Symbol('char8_t');
 export const char8_7 = Symbol('char8_t');
 export const char8_8 = Symbol('char8_t');
+export const uint4 = Symbol('std::uint8_t');
+export const uint5 = Symbol('std::uint8_t');
 export const uint6 = Symbol('std::uint8_t');
 export const uint7 = Symbol('std::uint8_t');
 export const uint8 = Symbol('std::uint8_t');
+export const uint9 = Symbol('std::uint16_t');
+export const uint10 = Symbol('std::uint16_t');
+export const uint11 = Symbol('std::uint16_t');
+export const uint12 = Symbol('std::uint16_t');
 export const uint16 = Symbol('std::uint16_t');
 export const uint8x2 = Symbol('std::uint8_t');
 export const uint32 = Symbol('std::uint32_t');
@@ -44,19 +50,24 @@ export const realSizeOf = symbol => {
         case char4:
         case char5:
         case char6:
+        case uint4:
+        case uint5:
         case uint6:
         case char7:
         case char8:
         case uint7:
         case uint8:
-            return 8;
-        case uint8x2:
+            return 8n;
+        case uint9:
+        case uint10:
+        case uint11:
+        case uint12:
         case uint16:
-            return 16;
+            return 16n;
         case uint32:
-            return 32;
+            return 32n;
         case uint64:
-            return 64;
+            return 64n;
     }
     debugger;
     throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
@@ -132,12 +143,18 @@ export const cppValueOf = (value, symbol) => {
         case char4:
         case char5:
         case char6:
+        case uint4:
+        case uint5:
         case uint6:
         case char7:
         case char8:
             return toHexString(value);
         case uint7:
         case uint8:
+        case uint9:
+        case uint10:
+        case uint11:
+        case uint12:
         case uint8x2:
         case uint16:
         case uint32:
@@ -152,44 +169,55 @@ export const sizeOf = symbol => {
     switch (symbol) {
         case char8_1:
         case char1:
-            return 1;
+            return 1n;
         case char8_2:
         case char2:
-            return 2;
+            return 2n;
         case char8_3:
         case char3:
-            return 3;
+            return 3n;
         case char8_4:
         case char4:
-            return 4;
+        case uint4:
+            return 4n;
         case char8_5:
         case char5:
-            return 5;
+        case uint5:
+            return 5n;
         case char8_6:
         case char6:
         case uint6:
-            return 6;
+            return 6n;
         case char8_7:
         case char7:
         case uint7:
-            return 7;
+            return 7n;
         case char8_8:
         case char8:
         case uint8:
-            return 8;
+            return 8n;
+        case uint9:
+            return 9n;
+        case uint10:
+            return 10n;
+        case uint11:
+            return 11n;
+        case uint12:
+            return 12n;
         case uint8x2:
         case uint16:
-            return 16;
+            return 16n;
         case uint32:
-            return 32;
+            return 32n;
         case uint64:
-            return 64;
+            return 64n;
     }
     debugger;
     throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
 };
 
-export const symbolOf = size => {
+export const symbolOf = (size, symbolType = uint8.description) => {
+    size = Number(size);
     if (size <= 1) {
         size = 1;
     } else if (size <= 2) {
@@ -206,6 +234,14 @@ export const symbolOf = size => {
         size = 7;
     } else if (size <= 8) {
         size = 8;
+    } else if (size <= 9) {
+        size = 9;
+    } else if (size <= 10) {
+        size = 10;
+    } else if (size <= 11) {
+        size = 11;
+    } else if (size <= 12) {
+        size = 12;
     } else if (size <= 16) {
         size = 16;
     } else if (size <= 32) {
@@ -221,15 +257,23 @@ export const symbolOf = size => {
         case 3:
             return char3;
         case 4:
-            return char4;
+            return symbolType === uint4.description ? uint4 : char4;
         case 5:
-            return char5;
+            return symbolType === uint5.description ? uint5 : char5;
         case 6:
             return uint6;
         case 7:
             return uint7;
         case 8:
             return uint8;
+        case 9:
+            return uint9;
+        case 10:
+            return uint10;
+        case 11:
+            return uint11;
+        case 12:
+            return uint12;
         case 16:
             return uint16;
         case 32:
@@ -259,14 +303,14 @@ export const maxOf = value => {
     if (typeof value === "symbol") {
         value = sizeOf(value);
     }
-    return (0b1 << value) - 1;
+    return (0b1n << value) - 1n;
 };
 
 export const bitOnesOf = value => {
-    let max = 0;
-    for (; value !== 0; --value) {
-        max <<= 1;
-        max |= 0b1;
+    let max = 0n;
+    for (; value > 0n; --value) {
+        max <<= 1n;
+        max |= 0b1n;
     }
     return max;
 };
@@ -346,13 +390,13 @@ export const cleanComments = line => line.split('#')[0].trimEnd();
 export const splitLine = line => line.split(';').map(seg => seg.trim());
 export const findVersion = fileContent => fileContent.match(/Version:? (\d+\.\d+\.\d+)/)[1];
 export const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
-export const parseCodePoints = codePoint => parseInt(codePoint, 16);
+export const parseCodePoints = codePoint => BigInt(parseInt(codePoint, 16));
 export const parseCodePointRange = (codePoints, lastCodePoint = 0) => {
     let rangeArr = codePoints.split("..").map(codePoint => codePoint.trim());
     if (rangeArr.length === 1) {
         rangeArr = [`${lastCodePoint.toString(16)}`, rangeArr[0]];
     }
-    return rangeArr.map(codePoint => parseInt(codePoint, 16));
+    return rangeArr.map(codePoint => BigInt(parseInt(codePoint, 16)));
 };
 
 export class Span {
@@ -361,24 +405,24 @@ export class Span {
     #end;
     #func;
 
-    constructor(arr = [], start = 0, length = arr.length - start, func = item => item) {
+    constructor(arr = [], start = 0n, length = BigInt(arr.length) - BigInt(start), func = item => item) {
         this.#arr = arr;
-        this.#start = start;
-        this.#end = start + length;
+        this.#start = BigInt(start);
+        this.#end = this.#start + BigInt(length);
         this.#func = func;
-        if (this.#end === undefined || isNaN(this.#end)) {
+        if (this.#end === undefined || (typeof(this.#end) == 'number' && isNaN(this.#end))) {
             debugger;
             throw new Error(`Unexpected end: ${this.#end}`);
         }
     }
 
     get length() {
-        return this.#end - this.#start;
+        return Number(this.#end - this.#start);
     }
 
-    slice(start = 0, end = this.length - start) {
-        const newStart = this.#start + start;
-        end = Math.min(this.length, end);
+    slice(start = 0n, end = BigInt(this.length - start)) {
+        const newStart = this.#start + BigInt(start);
+        end = BigInt(Math.min(this.length, Number(end)));
         const newLength = this.#start + end - newStart;
         return new Span(this.#arr, newStart, newLength, this.#func);
     }
@@ -404,8 +448,12 @@ export class Span {
     }
 
     at(index) {
-        assert.ok(index >= 0 && index < this.length, `Index out of bounds ${index} out of ${this.length} elements.`);
-        return this.#func(this.#arr[this.#start + index]);
+        index = Number(index);
+        if (!(index >= 0 && index < this.length)) {
+            debugger;
+            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+        }
+        return this.#func(this.#arr[Number(this.#start) + index]);
     }
 
     * [Symbol.iterator]() {
@@ -443,6 +491,8 @@ export class TableTraits {
             case char6:
             case char7:
             case char8:
+            case uint4:
+            case uint5:
             case uint6:
             case uint7:
             case uint8:
@@ -487,6 +537,8 @@ export class TableTraits {
             case char7:
             case char8:
                 return "";
+            case uint4:
+            case uint5:
             case uint6:
             case uint7:
             case uint8x2:
@@ -501,18 +553,19 @@ export class TableTraits {
     }
 
     get length() {
-        return this.index;
+        return Number(this.index);
     }
 
     get result() {
-        return this.bytes.slice(0, this.length);
+        return this.bytes.slice(0, Number(this.length));
     }
 
     trimAt(index) {
-        this.index = index;
+        this.index = BigInt(index);
     }
 
     at(index) {
+        index = Number(index);
         if (index >= this.length) {
             throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
         }
@@ -530,7 +583,7 @@ export class TableTraits {
     }
 
     append(value) {
-        this.bytes[this.index++] = value;
+        this.bytes[this.index++] = Number(value);
     }
 
     appendList(list) {
@@ -592,10 +645,10 @@ export const overlapInserts = (left, right) => {
 };
 
 export const popcount = n => {
-    let c = 0;
-    for (; n !== 0; n >>= 1) {
-        if ((n & 1) !== 0) {
-            c++;
+    let c = 0n;
+    for (; n !== 0n; n >>= 1n) {
+        if ((n & 1n) !== 0n) {
+            ++c;
         }
     }
     return c;
@@ -605,10 +658,10 @@ export const popcount = n => {
 /// the right filled with 1 up to the input integer:
 export const fillBitsFromRight = (num) => {
     // Shift 1 left by the number of bits in the input integer
-    let mask = 1 << num;
+    let mask = 1n << num;
 
     // Subtract 1 from the mask to fill the bits
-    return mask - 1;
+    return mask - 1n;
 };
 
 export const bitFloor = (num) => {
@@ -625,12 +678,12 @@ export const bitFloor = (num) => {
 
 /// Not the same as std::bit_ceil in C++20
 export const bitCeil = (x) => {
-    if (x === 0) {
-        return 0;
+    if (x === 0n) {
+        return 0n;
     }
-    let p = 0b1;
+    let p = 0b1n;
     while (p <= x) {
-        p <<= 1;
+        p <<= 1n;
     }
     return p;
 };
@@ -659,7 +712,7 @@ export const runClangFormat = async filePath => {
 
 const encoder = new TextEncoder();
 export const utf32To8 = (codePoint) => {
-    return encoder.encode(String.fromCodePoint(codePoint));
+    return encoder.encode(String.fromCodePoint(Number(codePoint)));
 };
 
 export const utf32To8All = (u32Array) => {
@@ -674,7 +727,7 @@ export const utf32To8All = (u32Array) => {
 
 export const renderTableValues = ({name, printableValues, type, len}) => {
 
-    let valuesTable = "";
+    let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {

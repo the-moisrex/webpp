@@ -34,14 +34,14 @@ export class TablePairs {
     add(codePoint, value) {
 
         // fill the data
-        this.data[codePoint] = value;
+        this.data[Number(codePoint)] = Number(value);
     }
 
     /// This function compresses the specified range based on the input modifier.
     /// For example, an array of zeros, with mask of zero, only needs the first element
     #rightTrimInserts(inserts, modifier) {
         if (this.#indexAddenda.has("mask")) {
-            return Math.min(inserts.length, bitCeil(modifier.mask));
+            return Math.min(inserts.length, Number(bitCeil(modifier.mask)));
         } else {
             return inserts.length;
         }
@@ -102,7 +102,7 @@ export class TablePairs {
             }
         }
 
-        return {valid: true, pos, inserts, overlapped, rtrimmed};
+        return {valid: true, pos: BigInt(pos), inserts, overlapped, rtrimmed};
     }
 
     get chunkSize() {
@@ -144,18 +144,18 @@ export class TablePairs {
         // }
         // try {
         top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
-            modifier.set({pos: rpos});
+            modifier.set({pos: BigInt(rpos)});
             for (let lpos = 0; lpos !== left.length; ++lpos) {
                 const rvalue = right.at(lpos);
                 const lvalue = left.at(lpos);
-                if (!Number.isSafeInteger(rvalue) || !Number.isSafeInteger(lvalue)) {
-                    return null;
-                }
+                // if (!Number.isSafeInteger(rvalue) || !Number.isSafeInteger(lvalue)) {
+                //     return null;
+                // }
                 if (rvalue !== lvalue) {
                     continue top;
                 }
             }
-            return rpos;
+            return BigInt(rpos);
         }
         // } catch (err) {
         //     if (!(err instanceof RangeError)) {
@@ -195,7 +195,7 @@ export class TablePairs {
         for (const indexModifier of this.#indexAddenda.generate()) {
 
             // set the position
-            indexModifier.set({pos: this.values.index, ...additionalAddendumValues});
+            indexModifier.set({pos: BigInt(this.values.index), ...additionalAddendumValues});
 
             let lastInfoLength = 0;
             let info = {};
@@ -212,8 +212,8 @@ export class TablePairs {
             } else {
                 indexModifier.set({pos: info.pos});
 
-                assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
-                if (indexModifier.pos !== 0 && indexModifier.mask === 0) {
+                // assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
+                if ('mask' in indexModifier && BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                     debugger;
                     throw new Error(`Invalid calculations. If mask is zero, the position must come out zero too; pos: ${indexModifier.pos}, mask: ${indexModifier.mask}`);
                 }
@@ -269,7 +269,7 @@ export class TablePairs {
             }
         }
 
-        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= curr.inserts.length ? acc : curr.inserts.length, this.#indexAddenda.chunkSize);
+        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= curr.inserts.length ? acc : curr.inserts.length, Number(this.#indexAddenda.chunkSize));
         possibilities = possibilities.filter(item => {
             return item !== undefined && item.inserts.length <= leastInsertLength;
         });
@@ -278,7 +278,7 @@ export class TablePairs {
         if (this.#props?.toSortedPossibilities) {
             possibilities = this.#props.toSortedPossibilities(possibilities);
         } else if (this.#indexAddenda.has("mask")) {
-            possibilities = possibilities.toSorted((a, b) => a.modifier.mask - b.modifier.mask);
+            possibilities = possibilities.toSorted((a, b) => Number(a.modifier.mask) - Number(b.modifier.mask));
         }
 
         const codePointStartHex = codePointStart.toString(16);
@@ -309,24 +309,24 @@ export class TablePairs {
 
         this.#props?.tests?.();
 
-        let batchNo = 0;
-        let insertedCount = 0;
-        let reusedCount = 0;
+        let batchNo = 0n;
+        let insertedCount = 0n;
+        let reusedCount = 0n;
         // let reusedMaskedCount = 0;
         let saves = 0;
         let uniqueModifiers = new Set();
-        for (let range = 0; range < this.data.length; range += this.#indexAddenda.chunkSize) {
+        for (let range = 0n; range < this.data.length; range += this.#indexAddenda.chunkSize) {
 
-            const codeRange = range >>> this.#indexAddenda.chunkShift;
-            const length = Math.min(this.data.length - range, this.#indexAddenda.chunkSize);
+            const codeRange = range >> this.#indexAddenda.chunkShift;
+            const length = Math.min(this.data.length - Number(range), Number(this.#indexAddenda.chunkSize));
             const valueStart = this.values.index;
 
             console.log(`Batch: #${batchNo++}`, "CodePoint:", codeRange.toString(16),
                 "Values-Table-Length:", this.values.length, "range:", range, "length:", length,
-                `Progress: ${Math.floor(range / this.data.length * 100)}%`);
+                `Progress: ${Math.floor(Number(range) / this.data.length * 100)}%`);
 
             let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
-            assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
+            // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
             const modifiedValues = this.#props?.modify?.({codeRange, modifier, inserts, rtrimmed, overlapped});
             modifier = modifiedValues?.modifier || modifier;
@@ -360,7 +360,6 @@ export class TablePairs {
             /// verify range
             if (this.#props?.validateResults) {
                 const dataView = this.dataView(range, length);
-                const modifiedValues = new ModifiedSpan(this.values, modifier);
                 if (null === this.#findSubsetRange(dataView, modifier)) {
                     debugger;
                     this.#findSubsetRange(dataView, modifier);
@@ -390,8 +389,8 @@ export class TablePairs {
             }
         }
 
-        const maxPossibleLength = ((0b1 << this.#indexAddenda.pos.size) - 1);
-        if (this.indices.length > maxPossibleLength) {
+        const maxPossibleLength = ((0b1n << BigInt(this.#indexAddenda.pos.size)) - 1n);
+        if (BigInt(this.indices.length) > maxPossibleLength) {
             debugger;
             throw new Error("Table size limit reached; the limit is because " +
                 `the pointer to the table is going to be bigger than ${this.#indexAddenda.pos.typeString} size; ` +
@@ -418,11 +417,11 @@ export class TablePairs {
     }
 
     indicesTableSizeInBits() {
-        return this.indices.length * realSizeOf(this.indices.type);
+        return BigInt(this.indices.length) * realSizeOf(this.indices.type);
     }
 
     valuesTableSizeInBits() {
-        return this.values.length * realSizeOf(this.values.type);
+        return BigInt(this.values.length) * realSizeOf(this.values.type);
     }
 
     totalTablesSizeInBits() {
@@ -432,8 +431,8 @@ export class TablePairs {
     render() {
 
         const indices = this.indices.result
-        const indicesBits = this.indicesTableSizeInBits();
-        const valuesBits = this.valuesTableSizeInBits();
+        const indicesBits = Number(this.indicesTableSizeInBits());
+        const valuesBits = Number(this.valuesTableSizeInBits());
 
         let printableValues = [];
 
@@ -447,11 +446,11 @@ export class TablePairs {
 
                 let lastRangeStart = NaN;
                 indices.forEach((code, index) => {
-                    const curPos = this.#indexAddenda.addendumValueOf("pos", code);
+                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
                     if (curPos === pos) {
-                        const rangeStart = index << this.#indexAddenda.chunkShift;
+                        const rangeStart = index << Number(this.#indexAddenda.chunkShift);
                         const code = `0x${rangeStart.toString(16)}`;
-                        if (rangeStart === (lastRangeStart + this.#indexAddenda.chunkSize)) {
+                        if (rangeStart === (lastRangeStart + Number(this.#indexAddenda.chunkSize))) {
                             const lastPos = poses.at(-1);
                             let dashPlace = lastPos.indexOf("-");
                             if (dashPlace < 0) {

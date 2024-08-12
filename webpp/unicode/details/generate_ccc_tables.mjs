@@ -9,7 +9,7 @@ import * as UnicodeData from "./UnicodeData.mjs";
 import {
     uint8,
     uint32,
-    writePieces, runClangFormat, uint6, uint7,
+    writePieces, runClangFormat, uint7,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {getReadme} from "./readme.mjs";
@@ -51,7 +51,7 @@ valid order by themselves, and they only make sense if they're being used in con
 the "ccc_indices" table.
         `
     };
-    lastZero = 0;
+    lastZero = 0n;
 
 
     constructor() {
@@ -70,17 +70,20 @@ the "ccc_indices" table.
     /// proxy the function
     process() {
         this.tables.process();
-        const lastZeroBucket = this.lastZero >>> this.tables.chunkShift;
-        console.log("Trim indices table at: ", lastZeroBucket);
+        const lastZeroBucket = this.lastZero >> this.tables.chunkShift;
+        console.log("Trim indices table at: ", lastZeroBucket, `(${this.lastZero} >> ${this.tables.chunkShift})`);
         this.tables.indices.trimAt(lastZeroBucket);
     }
 
     add(codePoint, value) {
+        codePoint = BigInt(codePoint);
+        value = Number(value);
+
         // calculating the last item that it's value is zero
         if (value !== 0) {
             // this.lastZero = codePoint + 1;
             // find the end of the batch, not just the last item
-            this.lastZero = (((codePoint + 1) >>> this.tables.chunkShift) + 1) << this.tables.chunkShift;
+            this.lastZero = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
         }
         return this.tables.add(codePoint, value);
     }
@@ -119,7 +122,7 @@ ${renderedTables}
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce((acc, cur) => acc + cur.totalTablesSizeInBits(), 0);
+    const totalBits = tables.reduce((acc, cur) => acc + Number(cur.totalTablesSizeInBits()), 0);
     const readmeData = await getReadme();
     const begContent = `
 /**

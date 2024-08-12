@@ -258,7 +258,7 @@ export class CanonicalComposition {
 
         // calculate the perfect maxLength for the current codePoint:
         const {mappedTo} = table.at(codePoint);
-        const requiredLength = mappedTo.length + utf8.length + 1; // +1 for the additional '0' that used as a separator
+        const requiredLength = BigInt(mappedTo.length) + BigInt(utf8.length) + 1n; // +1 for the additional '0' that used as a separator
         if (requiredLength > curMaxLength) {
             return requiredLength;
         }

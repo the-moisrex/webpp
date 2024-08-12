@@ -8,10 +8,23 @@
 import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {char8_6, char8_8, runClangFormat, uint32, uint8, utf32To8All, writePieces} from "./utils.mjs";
+import {
+    char8_6,
+    char8_8,
+    runClangFormat,
+    uint32, uint4,
+    utf32To8All,
+    writePieces
+} from "./utils.mjs";
 import * as path from "node:path";
 import {TablePairs} from "./table.mjs";
-import {Addenda, genMaskAddendum, genMaxLengthAddendum, genPositionAddendum, staticFields} from "./modifiers.mjs";
+import {
+    Addenda,
+    genCompactMaskAddendum,
+    genMaxLengthAddendum,
+    genPositionAddendum,
+    staticFields
+} from "./modifiers.mjs";
 import {isHangul} from "./hangul.mjs";
 import {CanonicalComposition} from "./composition.mjs";
 
@@ -45,24 +58,26 @@ class DecompTable {
     max16MaxLength = 0;
     #canonicalCompositions = null;
 
-    #cacheMaxLen = {}
+    #cacheMaxLen = {};
+    #dataViewCache = {};
     findMaxLengths({codePointStart, length, data}) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
-            return {max_length: this.#cacheMaxLen[key]};
+            return {max_length: BigInt(this.#cacheMaxLen[key])};
         }
-        let maxLen = 0;
-        const end = (codePointStart + length);
+        let maxLen = 0n;
+        const end = codePointStart + BigInt(length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-            const {mapped, mappedTo} = data.at(codePoint);
+            const {mapped, mappedTo} = data.at(Number(codePoint));
             if (!mapped && !embedCanonical) {
                 continue;
             }
             if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
                 continue;
             }
-            if (mappedTo.length > maxLen) {
-                maxLen = mappedTo.length;
+            const len = BigInt(mappedTo.length);
+            if (len > maxLen) {
+                maxLen = len;
             }
             if (embedCanonical) {
                 maxLen = this.#canonicalCompositions.maxLengthOfRange(data, codePoint, maxLen);
@@ -87,14 +102,14 @@ class DecompTable {
 
             // first table
             indices: {
-                max: 4353 * 10,
+                max: 4353 * 100,
                 sizeof: uint32,
                 description: `Decomposition Index`,
             },
 
             // second table that holds the utf-8 encoded values
             values: {
-                max: 65535,
+                max: 65535 * 100, // 46452
                 sizeof: char8_8,
                 description: `UTF-8 Encoded Decomposition Code Points`,
             },
@@ -105,22 +120,26 @@ class DecompTable {
             getModifierAddenda: this.findMaxLengths.bind(this),
 
             dataView(codePointStart, length) {
+                const key = `${codePointStart}-${length}`;
+                if (key in self.#dataViewCache) {
+                    return self.#dataViewCache[key];
+                }
 
                 const maxLength = self.getMaxLength(codePointStart);
-                let values = new Uint8Array(maxLength * length);
+                let values = new Uint8Array(Number(maxLength * length));
                 // const {
                 //     inserts
                 // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
                 // assert.equal(inserts.length, length);
-                const end = (codePointStart + length);
+                const end = codePointStart + length;
                 for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
                     const vidx = codePoint - codePointStart;
                     const start = vidx * maxLength;
-                    const {mapped, mappedTo} = this.data.at(codePoint);
+                    const {mapped, mappedTo} = this.data.at(Number(codePoint));
 
 
                     if (mapped) {
-                        for (let ith = 0; ith !== maxLength; ++ith) {
+                        for (let ith = 0n; ith !== maxLength; ++ith) {
                             values[start + ith] = mappedTo[ith];
                         }
                     }
@@ -148,6 +167,8 @@ class DecompTable {
                         }
                     }
                 }
+
+                self.#dataViewCache[key] = values;
                 return values;
 
                 // const endPos = codePointStart + length;
@@ -219,7 +240,8 @@ class DecompTable {
         const name = "index";
         const addendaPack = [
             genPositionAddendum(char8_6),
-            enableMaksField ? genMaskAddendum(uint8) : undefined,
+            // enableMaksField ? genMaskAddendum(uint10) : undefined,
+            enableMaksField ? genCompactMaskAddendum(uint4) : undefined,
 
             // this will affect the chunkSize:
             genMaxLengthAddendum(char8_6),
@@ -228,7 +250,7 @@ class DecompTable {
             modify: function (table, modifier, range, pos) {
                 let maskedPos = 0;
                 if (enableMaksField) {
-                    maskedPos = this.mask.modify(modifier, {pos}).pos;
+                    maskedPos = this.compact_mask.modify(modifier, {pos}).pos;
                 } else {
                     maskedPos = pos;
                 }
@@ -240,7 +262,7 @@ class DecompTable {
                 }
                 // return table.at(newPos);
                 // return {mapped, mappedTo, length: mappedTo.length};
-                return table.at(newPos);
+                return table.at(Number(newPos));
             }
         });
         addenda.modifierFunctions = {
@@ -312,7 +334,7 @@ class DecompTable {
     /// proxy the function
     process() {
         this.tables.process();
-        const lastMappedBucket = this.lastMapped >>> this.tables.chunkShift;
+        const lastMappedBucket = this.lastMapped >> this.tables.chunkShift;
 
         console.log("Trim indices table at: ", lastMappedBucket);
         this.tables.indices.trimAt(lastMappedBucket);
@@ -355,14 +377,14 @@ class DecompTable {
 
         if (value.mappedTo.length > this.max32MaxLength) {
             this.max32MaxLength = value.mappedTo.length;
-            this.max16MaxLength = String.fromCodePoint(...value.mappedTo).length; // convert to UTF-16, then get the length
+            this.max16MaxLength = String.fromCodePoint(...value.mappedTo.map(val => Number(val))).length; // convert to UTF-16, then get the length
         }
 
         // calculating the last item that it's value is zero
         mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
             // find the end of the batch, not just the last item
-            this.lastMapped = (((codePoint + 1) >>> this.tables.chunkShift) + 1) << this.tables.chunkShift;
+            this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
         }
         if (mappedTo.length > this.maxMappedLength) {
             this.maxMappedLength = mappedTo.length;
@@ -423,7 +445,7 @@ ${renderedTables}
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce((acc, cur) => acc + cur.totalTablesSizeInBits(), 0);
+    const totalBits = tables.reduce((acc, cur) => acc + Number(cur.totalTablesSizeInBits()), 0);
     const readmeData = await getReadme();
     const begContent = `
 /**

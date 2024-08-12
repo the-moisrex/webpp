@@ -6,18 +6,21 @@ import {
     popcount, realSizeOf,
     sizeOf,
     symbolOf,
-    uint16,
+    uint16, uint4,
     uint8
 } from "./utils.mjs";
 import * as assert from "node:assert";
 
 
-/// Check if the specified "chunk" size is "shift-operator-friendly"
-export const verifyChunk = chunk => {
-    assert.ok(chunk % 2 === 0, "Invalid chunk");
+export const rangeLength = (codePointStart, dataLength, chunk) => {
+    dataLength = BigInt(dataLength);
+    const end = BigInt(codePointStart + chunk);
+    if (dataLength < end) {
+        return BigInt(dataLength - codePointStart);
+    }
+    return chunk;
+    // Math.min(dataLength, codePointStart + chunk) - codePointStart;
 };
-export const chunkMask = chunk => chunk - 1;
-export const rangeLength = (codePointStart, dataLength, chunk) => Math.min(dataLength, codePointStart + chunk) - codePointStart;
 
 /**
  * Each part of a modifier
@@ -25,10 +28,11 @@ export const rangeLength = (codePointStart, dataLength, chunk) => Math.min(dataL
 export class Addendum {
     name = "unknown";
     #desc = null;
-    sizeof = uint8;
+    #sizeof = uint8;
+    #size = 8n;
 
     /// minimum possible value
-    min = 0;
+    min = 0n;
 
     /// maximum possible value
     max = maxOf(this.sizeof);
@@ -37,10 +41,10 @@ export class Addendum {
     placement = null;
 
     /// the value is left-shifted by this amount (it's calculated later on in the Addenda):
-    leftShift = 0;
+    leftShift = 0n;
 
     /// this is the actual size used in the C++ struct
-    actualSize = 0;
+    actualSize = 0n;
 
     /// if the size of this addendum affects the chunk size
     affectsChunkSize = false;
@@ -73,18 +77,27 @@ export class Addendum {
             this[name] = value;
         }
         if (data["min"] === undefined) {
-            this.min = 0;
+            this.min = 0n;
         }
         if (data["max"] === undefined) {
-            this.max = maxOf(this.sizeof);
+            this.max = BigInt(maxOf(this.sizeof));
         }
         this.generable = data["generate"] !== undefined;
         this.affectsChunkSize = data["affectsChunkSize"] || false;
         this.actualSize = this.size;
     }
 
+    get sizeof() {
+        return this.#sizeof;
+    }
+
+    set sizeof(value) {
+        this.#sizeof = value;
+        this.#size = BigInt(sizeOf(this.sizeof));
+    }
+
     get size() {
-        return sizeOf(this.sizeof);
+        return this.#size;
     }
 
     /// If all bits are 1, what would the value be?
@@ -129,7 +142,7 @@ export class Addendum {
         maskName = maskName === "" ? this.mask : `${this.name}${maskName}`;
         const maskIt = alignedSymbol(this.sizeof) ? `` : maskName;
         const value = maskIt === "" ? valueName : `(${valueName} & ${maskIt})`;
-        if (this.leftShift === 0) {
+        if (this.leftShift === 0n) {
             return `${this.name}{static_cast<${this.STLTypeString}>(${value})}`;
         } else {
             const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
@@ -138,7 +151,7 @@ export class Addendum {
     }
 
     renderShift(type, shiftName = "", maskName = "") {
-        if (this.leftShift === 0) {
+        if (this.leftShift === 0n) {
             return `static_cast<${type}>(${this.name})`;
         } else {
             const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
@@ -174,7 +187,7 @@ export class Addenda {
     constructor(name, addenda, funcs) {
         this.name = name;
         this.addenda = addenda;
-        this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0));
+        this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0n));
 
         /// re-order the placements
         if (addenda.some(addendum => !addendum.placement)) {
@@ -196,20 +209,20 @@ export class Addenda {
             addendum.leftShift += leftShift;
         }
 
-        this.min = addenda.reduce((min, addendum) => (min << addendum.actualSize) | addendum.min, 0);
-        this.max = addenda.reduce((max, addendum) => (max << addendum.actualSize) | addendum.max, 0);
-        this.mask = addenda.reduce((mask, addendum) => (mask << addendum.actualSize) | addendum.mask, 0);
+        this.min = addenda.reduce((min, addendum) => (min << addendum.actualSize) | addendum.min, 0n);
+        this.max = addenda.reduce((max, addendum) => (max << addendum.actualSize) | addendum.max, 0n);
+        this.mask = addenda.reduce((mask, addendum) => (mask << addendum.actualSize) | addendum.mask, 0n);
 
         /// Enabling addenda.mask, addenda["pos"], and what not syntax
         for (const addendum of this.addenda) {
             this[addendum.name] = addendum;
         }
 
-        if (!Number.isSafeInteger(this.minSize)) {
-            debugger;
-            throw new Error("Invalid minSize");
-        }
-        this.#chunkSize = fillBitsFromRight(this.minSize) + 1;
+        // if (!Number.isSafeInteger(this.minSize)) {
+        //     debugger;
+        //     throw new Error("Invalid minSize");
+        // }
+        this.#chunkSize = fillBitsFromRight(this.minSize) + 1n;
         if (funcs.modify) {
             this.modify = funcs.modify;
         }
@@ -241,7 +254,7 @@ export class Addenda {
     }
 
     get alignedSize() {
-        return this.addenda.reduce((sum, addendum) => sum + realSizeOf(addendum.sizeof), 0);
+        return this.addenda.reduce((sum, addendum) => sum + realSizeOf(addendum.sizeof), 0n);
     }
 
     get unusedSize() {
@@ -253,7 +266,7 @@ export class Addenda {
     }
 
     get packedSize() {
-        return this.addenda.reduce((sum, addendum) => sum + addendum.size, 0);
+        return this.addenda.reduce((sum, addendum) => sum + addendum.size, 0n);
     }
 
     get modify() {
@@ -303,22 +316,23 @@ export class Addenda {
     }
 
     /// return the required size for shifting the specified addendum
+    #shiftCaches = {};
     shiftOf(addendum) {
-        if (typeof addendum === "string") {
-            const name = addendum;
-            addendum = this.addendum(name);
-            assert.ok(addendum, `The specified input should be a valid addendum or a valid addendum name, not ${name}`);
+        if (addendum.name in this.#shiftCaches) {
+            return this.#shiftCaches[addendum.name];
         }
         const {placement: position} = addendum;
-        return this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0), 0);
+        const shiftVal = this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0n), 0n);
+        this.#shiftCaches[addendum.name] = shiftVal;
+        return shiftVal;
     }
 
     /// Get the combined modifier based on the specified values:
     modifierCode(values) {
-        let mod = 0;
+        let mod = 0n;
         for (const name in values) {
             const value = values[name];
-            mod |= (value << this.shiftOf(name));
+            mod |= (BigInt(value) << this.shiftOf(name));
         }
         return mod;
     }
@@ -327,7 +341,7 @@ export class Addenda {
         if (typeof addendum === "string") {
             addendum = this.addendum(addendum);
         }
-        return (code & addendum.mask) >> this.shiftOf(addendum);
+        return (BigInt(code) & addendum.mask) >> this.shiftOf(addendum);
     }
 
     valuesOf(code) {
@@ -358,7 +372,7 @@ export class Addenda {
     }
 
     get chunkMask() {
-        return this.#chunkSize - 1;
+        return this.#chunkSize - 1n;
     }
 
     get chunkShift() {
@@ -401,6 +415,12 @@ export class Addenda {
 
     render() {
         const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement);
+        for (const addendum of addenda) {
+            console.log(`Addendum ${addendum.name}'s mask: ${addendum.mask.toString(16)}`);
+            if (addendum.mask < 0) {
+                console.error(`Invalid mask calculated: ${addendum.name} ${JSON.stringify(addendum)}`);
+            }
+        }
         return `
     /**
      * ${this.desc}
@@ -454,7 +474,8 @@ export class InvalidModifier {
 /// This shows how the actual algorithm will work.
 export class Modifier {
     #addenda;
-    modifier = 0;
+    modifier = 0n;
+    #chunkSize = -1n;
 
     constructor(addenda, values = {}) {
         if (!(addenda instanceof Addenda)) {
@@ -488,7 +509,8 @@ export class Modifier {
             }
             this[name] = values[name];
         }
-        this.modifier = this.addenda.modifierCode(this.values());
+        this.modifier = BigInt(this.addenda.modifierCode(this.values()));
+        this.#calculateChunkSize();
     }
 
     /// reset the addenda that can be reset
@@ -551,7 +573,7 @@ export class Modifier {
         return this.addenda.modifierCode(this.categorizableAddenda);
     }
 
-    get chunkSize() {
+    #calculateChunkSize() {
         // return this.#addenda.chunkSize;
 
         // call the affectsChunkSize functions
@@ -568,9 +590,18 @@ export class Modifier {
             return addendum.size;
         }, this.#addenda.chunkSize);
         if (size === Infinity) {
-            return size;
+            this.#chunkSize = size;
+            return this.#chunkSize;
         }
-        return fillBitsFromRight(size) + 1;
+        this.#chunkSize = fillBitsFromRight(size) + 1n;
+        return this.#chunkSize;
+    }
+
+    get chunkSize() {
+        if (this.#chunkSize === -1n) {
+            throw new Error("Chunk Size is not initialized properly.");
+        }
+        return this.#chunkSize;
     }
 
     get chunkShift() {
@@ -579,6 +610,10 @@ export class Modifier {
 
     get chunkMask() {
         return this.#addenda.chunkMask;
+    }
+
+    reload() {
+        this.#calculateChunkSize();
     }
 
     /// Apply the mask and the shift and finding the actual value in the second table
@@ -607,19 +642,15 @@ export class ModifiedSpan {
     constructor(data, modifier) {
         this.#data = data;
         this.#modifier = modifier;
+        this.#modifier.reload();
     }
 
     at(index) {
-        if (!(index >= 0 && index < this.#modifier.chunkSize)) {
+        if (!(index >= 0n && index < this.#modifier.chunkSize)) {
             debugger;
             throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`);
         }
-        return this.#modifier.apply(this.#data, this.start, index);
-        // if (!Number.isSafeInteger(res)) {
-        //     debugger;
-        //     throw new InvalidModifier(this.#modifier);
-        // }
-        // return res;
+        return this.#modifier.apply(this.#data, this.#modifier.pos, BigInt(index));
     }
 
     get start() {
@@ -634,7 +665,7 @@ export class ModifiedSpan {
     get length() {
         // return rangeLength(this.#start, this.#data.length, this.#modifier.chunkSize);
         // return this.#modifier.chunkSize;
-        return Math.min(this.#modifier.chunkSize, this.#data.length);
+        return Math.min(Number(this.#modifier.chunkSize), Number(this.#data.length));
     }
 
     slice(index = 0, endIndex = this.length - index) {
@@ -713,14 +744,14 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     description: "This value gets added to the retrieved value at the end of the operation.",
     sizeof: type,
     affectsChunkSize: false,
-    defaultValue: 0,
+    defaultValue: 0n,
     isCategorizable: true,
     * generate() {
         assert.ok(this !== undefined, "undefined this?");
         yield this.min;
         yield this.max;
         yield this.mask;
-        for (let index = this.min + 1; index <= this.max; ++index) {
+        for (let index = this.min + 1n; index <= this.max; ++index) {
             yield index;
         }
     },
@@ -740,16 +771,16 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "mappings for all the code points without searching for them.",
     affectsChunkSize: (modifier, curChunkSize) => {
         if (modifier === undefined) {
-            return sizeOf(type);
+            return BigInt(sizeOf(type));
         }
         return Infinity;
     },
     sizeof: type,
-    defaultValue: 1,
+    defaultValue: 1n,
     isCategorizable: true,
     modify(modifier, meta) {
-        assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
-        assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+        // assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
+        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
         // if (modifier.max_length === 0) {
         //     throw new Error("max_length should be greater than 0");
         // }
@@ -757,7 +788,7 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
             ...meta,
 
             // calculate the new position
-            pos: meta.pos * modifier.max_length,
+            pos: BigInt(meta.pos * modifier.max_length),
 
             // calculate the new table length
             // length: Math.ceil(meta.length / modifier.max_length)
@@ -777,23 +808,50 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
     * generate() {
         yield this.min;
         yield this.max;
-        // yield this.mask;
-        // for (let index = this.min + 1; index <= this.max; ) {
-        //     yield index;
-        //     index <<= 1;
-        //     // yield index;
-        //     index |= 0b1;
-        //     // yield (index & ~0b10);
-        // }
-        if (this.max >= 255) {
-            yield 252;
-            yield 254;
+        yield this.mask;
+        for (let index = this.min + 1n; index <= this.max; ) {
+            yield index;
+            index <<= 1n;
+            // yield index;
+            index |= 0b1n;
+            // yield (index & ~0b10);
+        }
+        if (this.max >= 255n) {
+            yield 252n;
+            yield 254n;
         }
     },
     modify(modifier, meta) {
-        assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
-        assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+        // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
+        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
         return {...meta, pos: modifier.mask & meta.pos};
+    },
+});
+
+export const genCompactMaskAddendum = (type = uint4) => new Addendum({
+    name: "compact_mask",
+    description: "This is used to mask the 'remaining position' of the values table;\n" +
+        "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
+        "The mask does not apply to the whole index, but only to the remaining index.",
+    affectsChunkSize: (modifier, curChunkSize) => {
+        return (0b1n << sizeOf(type)) - 1n;
+    },
+    sizeof: type,
+    defaultValue: maxOf(type), // 255 for uint8
+    isCategorizable: true,
+    * generate() {
+        if (this.max >= 32n) {
+            throw new Error("Too much.");
+        }
+        for (let index = this.min + 1n; index <= this.max; ++index) {
+            yield BigInt(index);
+        }
+    },
+    modify(modifier, meta) {
+        // assert.ok(Number.isSafeInteger(modifier.compact_mask), `Bad mask? ${modifier.compact_mask}`);
+        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+        const mask = BigInt((0b1n << modifier.compact_mask) - 1n);
+        return {...meta, pos: mask & BigInt(meta.pos)};
     },
 });
 
@@ -801,7 +859,7 @@ export const genPositionAddendum = (type = null) => new Addendum({
     name: "pos",
     description: "This is the position that should be looked for in the values table.",
     sizeof: uint16,
-    defaultValue: 0,
+    defaultValue: 0n,
     affectsChunkSize: type == null ? false : (modifier, curChunkSize) => {
         return sizeOf(type);
     },
@@ -880,12 +938,12 @@ export const genSimpleIndexAddenda = (name = "index", type = uint8) => {
                 // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
                 return null;
             }
-            const value = table.at(newPos);
-            if (!Number.isSafeInteger(value)) {
-                debugger;
-                throw new Error(`Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
-            }
-            return value;
+            return table.at(Number(newPos));
+            // if (!Number.isSafeInteger(value)) {
+            //     debugger;
+            //     throw new Error(`Something went really wrong; range: ${range}, value: ${value}, table: ${JSON.stringify([...table])}`);
+            // }
+            // return value;
         }
     });
     addenda.modifierFunctions = {};

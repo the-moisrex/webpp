@@ -85,22 +85,22 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         /// Canonical Combining Class:
         case properties.ccc: {
-            let lastCodePoint = 0;
+            let lastCodePoint = 0n;
             action = ({codePointStr, CanonicalCombiningClass}) => {
                 const ccc = parseInt(CanonicalCombiningClass);
                 const codePoint = parseCodePoints(codePointStr);
                 for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
-                    const curCCC = curCodePoint === codePoint ? ccc : 0;
+                    const curCCC = curCodePoint === codePoint ? ccc : 0n;
 
                     table.add(curCodePoint, curCCC);
                 }
-                lastCodePoint = codePoint + 1;
+                lastCodePoint = codePoint + 1n;
             };
             break;
         }
 
         case properties.decompositionType: {
-            let lastCodePoint = 0;
+            let lastCodePoint = 0n;
             action = ({codePointStr, DecompositionStr}) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
@@ -109,7 +109,7 @@ export const parse = async (table, property, fileContent = undefined) => {
                     const curDecompositionMapping = curCodePoint === codePoint ? decomposition : parseDecompositions(curCodePoint);
                     table.add(curCodePoint, curDecompositionMapping);
                 }
-                lastCodePoint = codePoint + 1;
+                lastCodePoint = codePoint + 1n;
             };
             break;
         }
