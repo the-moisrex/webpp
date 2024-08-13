@@ -239,13 +239,13 @@ export class Addenda {
         // testing for unthinkable:
         let lastAddendumPlacement = -1;
         for (const addendum of this.addenda) {
-            if (addendum.placement !== lastAddendumPlacement + 1) {
+            if (Number(addendum.placement) !== lastAddendumPlacement + 1) {
                 throw new Error(`Invalid placement requirements; ` +
                     `blank placement found in the addenda.` +
                     `Addendum: ${addendum.name} Placement: ${addendum.placement} ` +
                     `Last placement: ${lastAddendumPlacement}`);
             }
-            lastAddendumPlacement = addendum.placement;
+            lastAddendumPlacement = Number(addendum.placement);
         }
     }
 
