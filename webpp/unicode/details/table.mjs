@@ -1,5 +1,5 @@
 import {
-    bitCeil,  cppValueOf,
+    bitCeil, cppValueOf,
     overlapInserts, realSizeOf, renderTableValues,
     Span,
     TableTraits,
@@ -246,7 +246,7 @@ export class TablePairs {
                     indexModifier.set({pos: info.pos});
                     if (info.inserts.length < lastInfoLength) {
                         assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
-                        if (indexModifier.pos !== 0 && indexModifier.mask === 0) {
+                        if (BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                             debugger;
                             throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.");
                         }
