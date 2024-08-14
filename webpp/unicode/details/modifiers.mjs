@@ -173,6 +173,7 @@ export class Addenda {
     sizeof;
     #chunkSize = NaN;
     #renderFunctions = [];
+    #shifts = {};
 
     /// @param table = the data
     /// @param range = start of the bucket
@@ -216,6 +217,10 @@ export class Addenda {
         /// Enabling addenda.mask, addenda["pos"], and what not syntax
         for (const addendum of this.addenda) {
             this[addendum.name] = addendum;
+
+            // Setting the shifts
+            const {placement: position} = addendum;
+            this.#shifts[addendum.name] = this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0n), 0n);
         }
 
         // if (!Number.isSafeInteger(this.minSize)) {
@@ -233,6 +238,8 @@ export class Addenda {
             debugger;
             throw new Error("Invalid sizeof");
         }
+
+
     }
 
     #tests() {
@@ -316,15 +323,11 @@ export class Addenda {
     }
 
     /// return the required size for shifting the specified addendum
-    #shiftCaches = {};
     shiftOf(addendum) {
-        if (addendum.name in this.#shiftCaches) {
-            return this.#shiftCaches[addendum.name];
+        if (addendum instanceof Addendum) {
+            return this.#shifts[addendum.name];
         }
-        const {placement: position} = addendum;
-        const shiftVal = this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0n), 0n);
-        this.#shiftCaches[addendum.name] = shiftVal;
-        return shiftVal;
+        return this.#shifts[addendum];
     }
 
     /// Get the combined modifier based on the specified values:
@@ -332,7 +335,7 @@ export class Addenda {
         let mod = 0n;
         for (const name in values) {
             const value = values[name];
-            mod |= (BigInt(value) << this.shiftOf(name));
+            mod |= (value << this.shiftOf(name));
         }
         return mod;
     }
@@ -509,7 +512,7 @@ export class Modifier {
             }
             this[name] = values[name];
         }
-        this.modifier = BigInt(this.addenda.modifierCode(this.values()));
+        this.modifier = this.addenda.modifierCode(this.values());
         this.#calculateChunkSize();
     }
 

@@ -63,7 +63,7 @@ class DecompTable {
     findMaxLengths({codePointStart, length, data}) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
-            return {max_length: BigInt(this.#cacheMaxLen[key])};
+            return {max_length: this.#cacheMaxLen[key]};
         }
         let maxLen = 0n;
         const end = codePointStart + BigInt(length);
@@ -255,14 +255,14 @@ class DecompTable {
                     maskedPos = pos;
                 }
                 const {pos: lenPos} = this.max_length.modify(modifier, {pos: maskedPos});
-                const newPos = range + lenPos;
-                if (newPos >= table.length) {
+                const newPos = Number(range + lenPos);
+                if (newPos >= Number(table.length)) {
                     return null;
                     // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
                 }
                 // return table.at(newPos);
                 // return {mapped, mappedTo, length: mappedTo.length};
-                return table.at(Number(newPos));
+                return table.at(newPos);
             }
         });
         addenda.modifierFunctions = {

@@ -81,7 +81,7 @@ export class TablePairs {
 
         const overlapped = overlapInserts(modifiedInserts, this.values);
         if (overlapped !== 0) {
-            pos = this.values.length - overlapped;
+            pos = BigInt(this.values.length - overlapped);
             inserts = inserts.slice(overlapped, inserts.length);
         }
 
@@ -269,7 +269,7 @@ export class TablePairs {
             }
         }
 
-        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= curr.inserts.length ? acc : curr.inserts.length, Number(this.#indexAddenda.chunkSize));
+        const leastInsertLength = possibilities.reduce((acc, curr) => acc >= Number(curr.inserts.length) ? acc : Number(curr.inserts.length), Number(this.#indexAddenda.chunkSize));
         possibilities = possibilities.filter(item => {
             return item !== undefined && item.inserts.length <= leastInsertLength;
         });
