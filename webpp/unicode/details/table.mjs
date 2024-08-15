@@ -440,37 +440,36 @@ export class TablePairs {
             printableValues = [[...this.values.result]];
         } else {
             printableValues = [];
+
+            const poses = {};
+            const posesMeta = {};
+            indices.forEach((code, index) => {
+                const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
+                if (poses[curPos] === undefined) {
+                    poses[curPos] = [];
+                    posesMeta[curPos] = {lastRangeStart: NaN, rangeStart: 0};
+                }
+                const rangeStart = index << Number(this.#indexAddenda.chunkShift);
+                const codeStr = `0x${rangeStart.toString(16)}`;
+                if (rangeStart === (posesMeta[curPos].lastRangeStart + Number(this.#indexAddenda.chunkSize))) {
+                    poses[curPos][poses[curPos].length - 1] = `${posesMeta[curPos].rangeStart}-${codeStr}`;
+                } else {
+                    poses[curPos].push(codeStr);
+                    posesMeta[curPos].rangeStart = codeStr;
+                }
+                posesMeta[curPos].lastRangeStart = rangeStart;
+            });
+
             // add comments in the middle of the data
             this.values.result.forEach((value, pos) => {
-                const poses = [];
-
-                let lastRangeStart = NaN;
-                indices.forEach((code, index) => {
-                    const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
-                    if (curPos === pos) {
-                        const rangeStart = index << Number(this.#indexAddenda.chunkShift);
-                        const code = `0x${rangeStart.toString(16)}`;
-                        if (rangeStart === (lastRangeStart + Number(this.#indexAddenda.chunkSize))) {
-                            const lastPos = poses.at(-1);
-                            let dashPlace = lastPos.indexOf("-");
-                            if (dashPlace < 0) {
-                                dashPlace = lastPos.length;
-                            }
-                            poses[poses.length - 1] = `${lastPos.substring(0, dashPlace)}-${code}`;
-                        } else {
-                            poses.push(code);
-                        }
-                        lastRangeStart = rangeStart;
-                    }
-                });
                 value = cppValueOf(value, this.values.type);
-                if (poses.length === 0) {
+                if ((poses?.[pos]?.length || 0) === 0) {
                     printableValues.at(-1).push(value);
                     return;
                 }
                 printableValues.push([]);
                 printableValues.at(-1).push(value);
-                printableValues.at(-1).comment = `Start of ${poses.join(", ")}:`
+                printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`
             });
         }
 

@@ -840,21 +840,22 @@ export const genCompactMaskAddendum = (type = uint4) => new Addendum({
         return (0b1n << sizeOf(type)) - 1n;
     },
     sizeof: type,
+    min: 1n, // because ((0b1 << 0) - 1) will be 0xFFF'FFFF
     defaultValue: maxOf(type), // 255 for uint8
     isCategorizable: true,
     * generate() {
         if (this.max >= 32n) {
             throw new Error("Too much.");
         }
-        for (let index = this.min + 1n; index <= this.max; ++index) {
+        yield this.min;
+        yield this.max;
+        for (let index = this.min + 1n; index < this.max; ++index) {
             yield BigInt(index);
         }
     },
     modify(modifier, meta) {
-        // assert.ok(Number.isSafeInteger(modifier.compact_mask), `Bad mask? ${modifier.compact_mask}`);
-        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
-        const mask = BigInt((0b1n << modifier.compact_mask) - 1n);
-        return {...meta, pos: mask & BigInt(meta.pos)};
+        const mask = (0b1n << modifier.compact_mask) - 1n;
+        return {...meta, pos: mask & meta.pos};
     },
 });
 

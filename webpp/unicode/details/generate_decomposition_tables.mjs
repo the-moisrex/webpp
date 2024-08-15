@@ -30,7 +30,7 @@ import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
-const enableMaksField = false;
+const enableMaksField = true;
 
 
 const start = async () => {
@@ -60,6 +60,7 @@ class DecompTable {
 
     #cacheMaxLen = {};
     #dataViewCache = {};
+
     findMaxLengths({codePointStart, length, data}) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
@@ -126,44 +127,49 @@ class DecompTable {
                 }
 
                 const maxLength = self.getMaxLength(codePointStart);
-                let values = new Uint8Array(Number(maxLength * length));
-                // const {
-                //     inserts
-                // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
-                // assert.equal(inserts.length, length);
-                const end = codePointStart + length;
-                for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-                    const vidx = codePoint - codePointStart;
-                    const start = vidx * maxLength;
-                    const {mapped, mappedTo} = this.data.at(Number(codePoint));
+                const valLen = Number(maxLength * length) + (enableMaksField && maxLength === 0n ? 1 : 0);
+                const values = new Uint8Array(valLen);
+
+                if (maxLength !== 0n) { // optimization if statement
+
+                    // const {
+                    //     inserts
+                    // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
+                    // assert.equal(inserts.length, length);
+                    const end = codePointStart + length;
+                    for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
+                        const vidx = codePoint - codePointStart;
+                        const start = vidx * maxLength;
+                        const {mapped, mappedTo} = this.data.at(Number(codePoint));
 
 
-                    if (mapped) {
-                        for (let ith = 0n; ith !== maxLength; ++ith) {
-                            values[start + ith] = mappedTo[ith];
-                        }
-                    }
-
-
-                    // adding the composition code point (it's a single code point, but in UTF-8):
-                    if (embedCanonical) {
-                        const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(codePoint);
-                        for (let index = 0; index !== canonicalCompositionCodePoint.length; ++index) {
-                            const idx = start + maxLength - (index + 1);
-                            if (values[idx] !== 0) {
-                                debugger;
-                                throw new Error(`Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`);
-                            }
-                            values[idx] = canonicalCompositionCodePoint[index];
-                            if (idx < (start + mappedTo.length)) {
-                                debugger;
-                                throw new Error(`Invalid max length was calculated: ${idx} < ${mappedTo.length}`);
+                        if (mapped) {
+                            for (let ith = 0n; ith !== maxLength; ++ith) {
+                                values[start + ith] = mappedTo[ith];
                             }
                         }
-                        const idx = start + maxLength - (canonicalCompositionCodePoint.length + 1);
-                        if (canonicalCompositionCodePoint.length > 0 && values[idx] !== 0) {
-                            debugger;
-                            throw new Error(`Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`);
+
+
+                        // adding the composition code point (it's a single code point, but in UTF-8):
+                        if (embedCanonical) {
+                            const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(codePoint);
+                            for (let index = 0; index !== canonicalCompositionCodePoint.length; ++index) {
+                                const idx = start + maxLength - (index + 1);
+                                if (values[idx] !== 0) {
+                                    debugger;
+                                    throw new Error(`Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`);
+                                }
+                                values[idx] = canonicalCompositionCodePoint[index];
+                                if (idx < (start + mappedTo.length)) {
+                                    debugger;
+                                    throw new Error(`Invalid max length was calculated: ${idx} < ${mappedTo.length}`);
+                                }
+                            }
+                            const idx = start + maxLength - (canonicalCompositionCodePoint.length + 1);
+                            if (canonicalCompositionCodePoint.length > 0 && values[idx] !== 0) {
+                                debugger;
+                                throw new Error(`Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`);
+                            }
                         }
                     }
                 }
@@ -309,7 +315,9 @@ class DecompTable {
             [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
             ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
-            return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);
+            ${enableMaksField ? `auto const mask = static_cast<${this.pos.STLTypeString}>((0b1U << compact_mask) - 1U);
+            return pos + static_cast<${this.pos.STLTypeString}>((remaining_pos & mask) * max_length);` :
+                    `return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);`}
         }
         `;
             },
