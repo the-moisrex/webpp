@@ -1,7 +1,7 @@
 import {
     alignedSymbol,
     bitOnesOf,
-    fillBitsFromRight,
+    fillBitsFromRight, largestPositionMask,
     maxOf,
     popcount, realSizeOf,
     sizeOf,
@@ -53,7 +53,7 @@ export class Addendum {
     defaultValue = undefined;
 
     generable = false;
-    generate = () => {
+    generate = (meta) => {
         throw new Error("Cannot generate new values.");
     };
 
@@ -383,7 +383,7 @@ export class Addenda {
     }
 
     /// Generate all possible combinations of the addenda
-    * generate(addenda = this.addenda) {
+    * generate(meta, addenda = this.addenda) {
         const generables = addenda.filter(addendum => addendum.generable);
         let mod = new Modifier(this);
         if (generables.length === 0) {
@@ -392,8 +392,8 @@ export class Addenda {
         }
 
         const [head, ...tail] = generables;
-        for (const headVal of head.generate()) {
-            for (const tailMod of this.generate(tail)) {
+        for (const headVal of head.generate(meta)) {
+            for (const tailMod of this.generate(meta, tail)) {
                 mod.set({[head.name]: headVal, ...tailMod.values()});
                 yield mod;
             }
@@ -749,7 +749,7 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
     affectsChunkSize: false,
     defaultValue: 0n,
     isCategorizable: true,
-    * generate() {
+    * generate({length}) {
         assert.ok(this !== undefined, "undefined this?");
         yield this.min;
         yield this.max;
@@ -773,7 +773,7 @@ export const genMaxLengthAddendum = (type = uint8) => new Addendum({
         "in between the values of the values table in order to make sure we can easily find the needed \n" +
         "mappings for all the code points without searching for them.",
     affectsChunkSize: (modifier, curChunkSize) => {
-        if (modifier === undefined) {
+        if (modifier === undefined) { // for minSize
             return BigInt(sizeOf(type));
         }
         return Infinity;
@@ -808,20 +808,22 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
     sizeof: type,
     defaultValue: maxOf(type), // 255 for uint8
     isCategorizable: true,
-    * generate() {
+    * generate({dataView}) {
         yield this.min;
         yield this.max;
         yield this.mask;
+        const maskAll = largestPositionMask(dataView);
+        yield maskAll;
         for (let index = this.min + 1n; index <= this.max; ) {
-            yield index;
+            // optimization:
+            if ((index & maskAll) === index) {
+                yield index;
+            } else {
+                console.log("  Ignoring mask:", index)
+            }
+
             index <<= 1n;
-            // yield index;
             index |= 0b1n;
-            // yield (index & ~0b10);
-        }
-        if (this.max >= 255n) {
-            yield 252n;
-            yield 254n;
         }
     },
     modify(modifier, meta) {
@@ -843,13 +845,21 @@ export const genCompactMaskAddendum = (type = uint4) => new Addendum({
     min: 1n, // because ((0b1 << 0) - 1) will be 0xFFF'FFFF
     defaultValue: maxOf(type), // 255 for uint8
     isCategorizable: true,
-    * generate() {
+    * generate({dataView}) {
         if (this.max >= 32n) {
             throw new Error("Too much.");
         }
         yield this.min;
         yield this.max;
+        const maskAll = largestPositionMask(dataView);
         for (let index = this.min + 1n; index < this.max; ++index) {
+
+            // optimization:
+            if ((((0b1n << index) - 1n) & maskAll) !== index) {
+                console.log("  Ignoring compact mask:", index)
+                continue;
+            }
+
             yield BigInt(index);
         }
     },

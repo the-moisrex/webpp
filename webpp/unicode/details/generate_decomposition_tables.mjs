@@ -38,8 +38,8 @@ import {
 } from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
-const embedCanonical = true; // a chance to disable hiding Canonical Compositions in between Decompositions
-const enableMaksField = false;
+const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
+const enableMaksField = true;
 
 
 const start = async () => {
@@ -540,7 +540,7 @@ namespace webpp::unicode::details {
     template <typename CharT = char8_t, typename CPType>
         requires (sizeof(CharT) == sizeof(char8_t))
     [[nodiscard]] static constexpr CharT const* decomp_ptr(decomp_index const code, CPType const code_point) noexcept {
-        if constexpr (stl::same_as<CharT, char8_t>) {
+        if constexpr (std::same_as<CharT, char8_t>) {
             return decomp_values.data() + code.get_position(code_point);
         } else {
             // Legally we can't cast a "char const*" to "char8_t const*", 

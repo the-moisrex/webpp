@@ -913,3 +913,24 @@ export const hasDuplicates = (arr) => {
     // If no duplicates are found, return false
     return false;
 };
+
+export const allBitsTill = length => {
+    let mask = 0n;
+    for (let index = 0n; index !== BigInt(length); ++index) {
+        mask |= index;
+    }
+    return mask;
+};
+
+/// Find the biggest mask that if applied to all the positions, then `value` would never come out.
+export const largestPositionMask = (table, value = 0) => {
+    let mask = bitCeil(BigInt(table.length));
+    mask |= mask - 1n;
+    for (let index = 0n; index !== BigInt(table.length); ++index) {
+        if (table.at(Number(index)) === value) {
+            continue;
+        }
+        mask &= index; // remove the position from the mask
+    }
+    return mask;
+};

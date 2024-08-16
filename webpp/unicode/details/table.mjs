@@ -215,7 +215,7 @@ export class TablePairs {
             dataView
         }) || {};
 
-        for (const indexModifier of this.#indexAddenda.generate()) {
+        for (const indexModifier of this.#indexAddenda.generate({dataView, length})) {
 
             // set the position
             indexModifier.set({
