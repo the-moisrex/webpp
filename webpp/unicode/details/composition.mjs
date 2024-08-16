@@ -39,7 +39,7 @@ export class CanonicalComposition {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
-            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic mask: ${this.magicMask}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
+            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
         const shifted = this.shiftCodePoint(magicCode);
@@ -74,12 +74,12 @@ export class CanonicalComposition {
         return codePoint & this.chunkMask;
     }
 
-    get magicMask() {
-        // return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
-
-        // the 65536 is `unsigned short` length so the interleave_bits algorithm would work correctly.
-        return (65536n - 1n) >> 1n;
-    }
+    // get magicMask() {
+    //     // return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
+    //
+    //     // the 65536 is `unsigned short` length so the interleave_bits algorithm would work correctly.
+    //     return (65536n - 1n) >> 1n;
+    // }
 
     get lastMappedBucket() {
         return this.lastMapped >> this.chunkShift;
@@ -170,7 +170,7 @@ export class CanonicalComposition {
         const x = (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
         // const merged = x;
         const merged = (((x >> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
-        console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
+        // console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
@@ -303,20 +303,22 @@ export class CanonicalComposition {
 
     render() {
         return `
-        /// Magical mask to be used on magic_code to get its values' position in the index table
-        static constexpr std::size_t magic_mask = 0x${this.magicMask.toString(16).toUpperCase()}U;
+        static constexpr std::size_t cp1_mask = 0x${this.#codePoint1Mask.toString(16).toUpperCase()}U;
+        static constexpr std::size_t cp2_mask = 0x${this.#codePoint2Mask.toString(16).toUpperCase()}U;
         static constexpr std::size_t interleaved_magic_mask = 0x${this.#magicFinalMask.toString(16).toUpperCase()}U;
         static constexpr std::size_t interleaved_magic_compl = 0x${this.#magicFinalCompl.toString(16).toUpperCase()}U;
+        static constexpr std::size_t last_mapped_bucket = 0x${this.lastMappedBucket.toString(16).toUpperCase()}U;
         
         /// This is a magical formula that absolutely does not make sense, but it works because math is magical.
         /// This will merge the 2 code points into one single value that then can be used to get the position of the
         /// values in the values table.
         template <typename CharT = char32_t>
         [[nodiscard]] static constexpr std::size_t magic_merge(CharT cp1, CharT cp2) noexcept {
-            cp1 &= magic_mask;
-            cp2 &= magic_mask;
+            cp1 &= cp1_mask;
+            cp2 &= cp2_mask;
             const auto intlvd = webpp::interleave_bits(static_cast<std::uint16_t>(cp1), static_cast<std::uint16_t>(cp2));
-            return (intlvd & interleaved_magic_mask) - interleaved_magic_compl;
+            const auto merged = (intlvd & interleaved_magic_mask) - interleaved_magic_compl;
+            return (((merged >> chunk_shift) % last_mapped_bucket) << chunk_shift) | (merged & chunk_mask);
         }
         `;
     }
