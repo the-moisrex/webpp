@@ -8,12 +8,9 @@ import {
     findSmallestMask,
     findSmallestComplement,
     interleaveBits,
-    findSmallestDivision,
-    findSmallestXor,
     hasDuplicates,
     maskFinder
 } from "./utils.mjs";
-import {getCompositionExclusions} from "./DerivedNormalizationProps.mjs";
 import * as assert from "node:assert";
 
 export const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/UnicodeData.txt';
@@ -224,7 +221,7 @@ export const extractedCanonicalDecompositions = async (data = null) => {
                 }
                 return accum;
             }, []) // remove duplicates
-            .toSorted((a, b) => a - b),
+            .toSorted((a, b) => Number(a - b)),
 
         mappedToSecond: Object.values(data)
             .map(datum => datum?.[1]) // second one
@@ -235,7 +232,7 @@ export const extractedCanonicalDecompositions = async (data = null) => {
                 }
                 return accum;
             }, []) // remove duplicates
-            .toSorted((a, b) => a - b),
+            .toSorted((a, b) => Number(a - b)),
     };
 };
 

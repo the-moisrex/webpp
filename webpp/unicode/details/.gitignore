@@ -4,3 +4,5 @@ CompositionExclusions.txt
 DerivedNormalizationProps.txt
 .vscode
 .idea
+isolate-*.log
+processed*

@@ -469,7 +469,7 @@ export class TablePairs {
                 }
                 printableValues.push([]);
                 printableValues.at(-1).push(value);
-                printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`
+                printableValues.at(-1).comment = `Start of ${poses[pos].join(", ")}:`;
             });
         }
 

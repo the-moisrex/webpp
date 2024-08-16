@@ -29,8 +29,8 @@ import {isHangul} from "./hangul.mjs";
 import {CanonicalComposition} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
-const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
-const enableMaksField = true;
+const embedCanonical = true; // a chance to disable hiding Canonical Compositions in between Decompositions
+const enableMaksField = false;
 
 
 const start = async () => {
@@ -138,13 +138,13 @@ class DecompTable {
                     // assert.equal(inserts.length, length);
                     const end = codePointStart + length;
                     for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-                        const vidx = codePoint - codePointStart;
-                        const start = vidx * maxLength;
+                        const vidx = Number(codePoint - codePointStart);
+                        const start = vidx * Number(maxLength);
                         const {mapped, mappedTo} = this.data.at(Number(codePoint));
 
 
                         if (mapped) {
-                            for (let ith = 0n; ith !== maxLength; ++ith) {
+                            for (let ith = 0; ith !== Number(maxLength); ++ith) {
                                 values[start + ith] = mappedTo[ith];
                             }
                         }
@@ -154,7 +154,7 @@ class DecompTable {
                         if (embedCanonical) {
                             const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(codePoint);
                             for (let index = 0; index !== canonicalCompositionCodePoint.length; ++index) {
-                                const idx = start + maxLength - (index + 1);
+                                const idx = start + Number(maxLength) - (index + 1);
                                 if (values[idx] !== 0) {
                                     debugger;
                                     throw new Error(`Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`);
@@ -165,7 +165,7 @@ class DecompTable {
                                     throw new Error(`Invalid max length was calculated: ${idx} < ${mappedTo.length}`);
                                 }
                             }
-                            const idx = start + maxLength - (canonicalCompositionCodePoint.length + 1);
+                            const idx = start + Number(maxLength) - (canonicalCompositionCodePoint.length + 1);
                             if (canonicalCompositionCodePoint.length > 0 && values[idx] !== 0) {
                                 debugger;
                                 throw new Error(`Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`);

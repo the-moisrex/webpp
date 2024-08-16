@@ -15,27 +15,27 @@ export class CanonicalComposition {
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
     #shiftedMagicalValues = {};
-    lastMapped = 0;
-    chunkShift = 0;
-    chunkSize = 0;
-    chunkMask = 0;
+    lastMapped = 0n;
+    chunkShift = 0n;
+    chunkSize = 0n;
+    chunkMask = 0n;
     #magicalTable = {};
     #topEmptyRanges = [];
 
-    #codePoint1Mask = 0;
-    #codePoint2Mask = 0;
+    #codePoint1Mask = 0n;
+    #codePoint2Mask = 0n;
 
-    #codePoint1Compl = 0;
-    #codePoint2Compl = 0;
+    #codePoint1Compl = 0n;
+    #codePoint2Compl = 0n;
 
-    #magicFinalMask = 0;
-    #magicFinalCompl = 0;
+    #magicFinalMask = 0n;
+    #magicFinalCompl = 0n;
 
     #validateMagicMerge(magicCode, cp1, cp2) {
-        if (isNaN(magicCode) || magicCode === undefined || magicCode === null || !isFinite(magicCode) || !Number.isSafeInteger(magicCode)) {
+        if (isNaN(Number(magicCode)) || magicCode === undefined || magicCode === null || !isFinite(Number(magicCode)) || !Number.isSafeInteger(Number(magicCode))) {
             throw new Error(`magic code is not a safe integer: ${magicCode} (${cp1}, ${cp2})`);
         }
-        if (magicCode < 0) {
+        if (magicCode < 0n) {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
@@ -67,7 +67,7 @@ export class CanonicalComposition {
     /// The shifting algorithm:
     shiftCodePoint(codePoint) {
         // return (codePoint >>> this.chunkShift) % this.lastMappedBucket;
-        return codePoint >>> this.chunkShift;
+        return codePoint >> this.chunkShift;
     }
 
     remaining(codePoint) {
@@ -78,11 +78,11 @@ export class CanonicalComposition {
         // return (bitFloor(this.lastMapped) << this.chunkShift) - 1;
 
         // the 65536 is `unsigned short` length so the interleave_bits algorithm would work correctly.
-        return (65536 - 1) >>> 1;
+        return (65536n - 1n) >> 1n;
     }
 
     get lastMappedBucket() {
-        return this.lastMapped >>> this.chunkShift;
+        return this.lastMapped >> this.chunkShift;
     }
 
     get lastMagic() {
@@ -95,12 +95,12 @@ export class CanonicalComposition {
         return this.magicMerge(this.lastMapped, this.lastMapped);
     }
 
-    get magicBucket() {
-        return this.lastMappedBucket * 2000;
-        // const lastCP = (bitCeil(this.lastMapped) - 1) & this.magicMask;
-        // console.log(this.lastMappedBucket * 2000, this.lastMapped, lastCP, interleaveBits(lastCP, lastCP) >>> this.chunkShift);
-        // return interleaveBits(lastCP, lastCP) >>> this.chunkShift;
-    }
+    // get magicBucket() {
+    //     return this.lastMappedBucket * 2000;
+    //     // const lastCP = (bitCeil(this.lastMapped) - 1) & this.magicMask;
+    //     // console.log(this.lastMappedBucket * 2000, this.lastMapped, lastCP, interleaveBits(lastCP, lastCP) >>> this.chunkShift);
+    //     // return interleaveBits(lastCP, lastCP) >>> this.chunkShift;
+    // }
 
     /// Magical Formula
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
@@ -169,16 +169,16 @@ export class CanonicalComposition {
         // const x = cp1 * cp2;
         const x = (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
         // const merged = x;
-        const merged = (((x >>> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
+        const merged = (((x >> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
         console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
     }
 
-    codePoint(magicCode) {
-        return this.#magicalTable[magicCode];
-    }
+    // codePoint(magicCode) {
+    //     return this.#magicalTable[magicCode];
+    // }
 
     #calculateMagicTable() {
         for (let codePoint in this.#canonicalCompositions) {
@@ -257,7 +257,7 @@ export class CanonicalComposition {
         const utf8 = this.utf8Composed(codePoint);
 
         // calculate the perfect maxLength for the current codePoint:
-        const {mappedTo} = table.at(codePoint);
+        const {mappedTo} = table.at(Number(codePoint));
         const requiredLength = BigInt(mappedTo.length) + BigInt(utf8.length) + 1n; // +1 for the additional '0' that used as a separator
         if (requiredLength > curMaxLength) {
             return requiredLength;

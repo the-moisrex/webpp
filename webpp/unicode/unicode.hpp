@@ -9,6 +9,8 @@
 #include "../std/type_traits.hpp"
 #include "./unicode_concepts.hpp"
 
+#include <algorithm>
+
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp::unicode {
 
@@ -326,7 +328,6 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr CodePointType prev_code_point_copy(Iter pos) noexcept {
         return prev_code_point<Iter, CodePointType>(pos);
     }
-
 
     namespace details {
 
