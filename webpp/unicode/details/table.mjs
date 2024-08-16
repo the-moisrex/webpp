@@ -1,12 +1,20 @@
 import {
-    bitCeil, cppValueOf,
-    overlapInserts, realSizeOf, renderTableValues,
+    bitCeil,
+    cppValueOf,
+    overlapInserts,
+    realSizeOf,
+    renderTableValues,
     Span,
     TableTraits,
     uint32,
     uint8,
 } from "./utils.mjs";
-import {genIndexAddenda, ModifiedSpan, Modifier, rangeLength} from "./modifiers.mjs";
+import {
+    genIndexAddenda,
+    ModifiedSpan,
+    Modifier,
+    rangeLength
+} from "./modifiers.mjs";
 import * as assert from "node:assert";
 
 export class TablePairs {
@@ -75,7 +83,14 @@ export class TablePairs {
             const insertValue = modifiedInserts.at(index);
             if (realValue !== insertValue) {
                 // throw new InvalidModifier({index, realValue, insertValue, ...modifier});
-                return {valid: false, index, realValue, insertValue, ...modifier, data: [...modifiedInserts]};
+                return {
+                    valid: false,
+                    index,
+                    realValue,
+                    insertValue,
+                    ...modifier,
+                    data: [...modifiedInserts]
+                };
             }
         }
 
@@ -102,7 +117,13 @@ export class TablePairs {
             }
         }
 
-        return {valid: true, pos: BigInt(pos), inserts, overlapped, rtrimmed};
+        return {
+            valid: true,
+            pos: BigInt(pos),
+            inserts,
+            overlapped,
+            rtrimmed
+        };
     }
 
     get chunkSize() {
@@ -144,7 +165,9 @@ export class TablePairs {
         // }
         // try {
         top: for (let rpos = 0; rpos !== this.values.length; ++rpos) {
-            modifier.set({pos: BigInt(rpos)});
+            modifier.set({
+                pos: BigInt(rpos)
+            });
             for (let lpos = 0; lpos !== left.length; ++lpos) {
                 const rvalue = right.at(lpos);
                 const lvalue = left.at(lpos);
@@ -195,7 +218,10 @@ export class TablePairs {
         for (const indexModifier of this.#indexAddenda.generate()) {
 
             // set the position
-            indexModifier.set({pos: BigInt(this.values.index), ...additionalAddendumValues});
+            indexModifier.set({
+                pos: BigInt(this.values.index),
+                ...additionalAddendumValues
+            });
 
             let lastInfoLength = 0;
             let info = {};
@@ -205,19 +231,30 @@ export class TablePairs {
             if (startPos === null) {
                 info = this.#optimizeInserts(insertsDataView, dataView, indexModifier);
             } else {
-                info = {valid: true, pos: startPos, inserts: new Span()};
+                info = {
+                    valid: true,
+                    pos: startPos,
+                    inserts: new Span()
+                };
             }
             if (!info.valid) {
-                invalidModifiers.push({...info});
+                invalidModifiers.push({
+                    ...info
+                });
             } else {
-                indexModifier.set({pos: info.pos});
+                indexModifier.set({
+                    pos: info.pos
+                });
 
                 // assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
                 if ('mask' in indexModifier && BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                     debugger;
                     throw new Error(`Invalid calculations. If mask is zero, the position must come out zero too; pos: ${indexModifier.pos}, mask: ${indexModifier.mask}`);
                 }
-                possibilities.push({...info, modifier: indexModifier.clone()});
+                possibilities.push({
+                    ...info,
+                    modifier: indexModifier.clone()
+                });
 
                 // performance trick
                 lastInfoLength = info.inserts.length;
@@ -241,16 +278,24 @@ export class TablePairs {
                 // now, try the shifted inserts as well see if they're any good:
                 info = this.#optimizeInserts(indexModifier.unshiftAll(insertsDataView), dataView, indexModifier);
                 if (!info.valid) {
-                    invalidModifiers.push({...info});
+                    invalidModifiers.push({
+                        ...info
+                    });
                 } else {
-                    indexModifier.set({pos: info.pos});
+                    indexModifier.set({
+                        pos: info.pos
+                    });
                     if (info.inserts.length < lastInfoLength) {
                         assert.ok(Number.isSafeInteger(indexModifier.pos), "Position should not be null");
                         if (BigInt(indexModifier.pos) !== 0n && BigInt(indexModifier.mask) === 0n) {
                             debugger;
                             throw new Error("Invalid calculations. If mask is zero, the position must come out zero too.");
                         }
-                        possibilities.push({...info, modifier: indexModifier.clone(), shifted: indexModifier.shift});
+                        possibilities.push({
+                            ...info,
+                            modifier: indexModifier.clone(),
+                            shifted: indexModifier.shift
+                        });
 
                         if (info.inserts.length === 0) {
                             break;
@@ -286,7 +331,8 @@ export class TablePairs {
         console.log(`  0x${codePointStartHex}-0x${codePointEndHex}`,
             "invalid-modifiers:", invalidModifiers.length, "Possibilities:", possibilities.length,
             possibilities.slice(0, 5).map(item => ({
-                ...item, ...item.modifier.necessaries(),
+                ...item,
+                ...item.modifier.necessaries(),
                 inserts: item.inserts.length
             })));
         if (possibilities.length === 0) {
@@ -325,10 +371,21 @@ export class TablePairs {
                 "Values-Table-Length:", this.values.length, "range:", range, "length:", length,
                 `Progress: ${Math.floor(Number(range) / this.data.length * 100)}%`);
 
-            let {modifier, inserts, rtrimmed, overlapped} = this.#findSimilarMaskedRange(range);
+            let {
+                modifier,
+                inserts,
+                rtrimmed,
+                overlapped
+            } = this.#findSimilarMaskedRange(range);
             // assert.ok(Number.isSafeInteger(modifier.pos), "Position should not be null");
 
-            const modifiedValues = this.#props?.modify?.({codeRange, modifier, inserts, rtrimmed, overlapped});
+            const modifiedValues = this.#props?.modify?.({
+                codeRange,
+                modifier,
+                inserts,
+                rtrimmed,
+                overlapped
+            });
             modifier = modifiedValues?.modifier || modifier;
             inserts = modifiedValues?.inserts || inserts;
             rtrimmed = modifiedValues?.rtrimmed || rtrimmed;
@@ -437,7 +494,9 @@ export class TablePairs {
         let printableValues = [];
 
         if (this.#props?.disableComments) {
-            printableValues = [[...this.values.result]];
+            printableValues = [
+                [...this.values.result]
+            ];
         } else {
             printableValues = [];
 
@@ -447,7 +506,10 @@ export class TablePairs {
                 const curPos = Number(this.#indexAddenda.addendumValueOf("pos", code));
                 if (poses[curPos] === undefined) {
                     poses[curPos] = [];
-                    posesMeta[curPos] = {lastRangeStart: NaN, rangeStart: 0};
+                    posesMeta[curPos] = {
+                        lastRangeStart: NaN,
+                        rangeStart: 0
+                    };
                 }
                 const rangeStart = index << Number(this.#indexAddenda.chunkShift);
                 const codeStr = `0x${rangeStart.toString(16)}`;
@@ -516,4 +578,3 @@ ${this.#indexAddenda.render()}
         `);
     }
 }
-

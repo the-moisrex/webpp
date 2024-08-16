@@ -36,7 +36,11 @@ const parseDecompositions = (codePoint, str = "") => {
         // The Standard says:
         // The default value of the Decomposition_Mapping property is the code point itself.
         // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
-        return {mappedTo: [codePoint], mapped: false, formattingTag: null};
+        return {
+            mappedTo: [codePoint],
+            mapped: false,
+            formattingTag: null
+        };
     }
     let parts = str.split(" ").map(item => item.trim());
 
@@ -55,7 +59,11 @@ const parseDecompositions = (codePoint, str = "") => {
 
     parts = parts.map(codePoint => parseCodePoints(codePoint));
 
-    return {mappedTo: parts, mapped: true, formattingTag};
+    return {
+        mappedTo: parts,
+        mapped: true,
+        formattingTag
+    };
 };
 
 export const parse = async (table, property, fileContent = undefined) => {
@@ -74,16 +82,21 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         /// simple code points
         case properties.codePoints:
-            action = ({codePointStr}) => {
+            action = ({
+                codePointStr
+            }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 table.add(codePoint);
             };
             break;
 
-        /// Canonical Combining Class:
+            /// Canonical Combining Class:
         case properties.ccc: {
             let lastCodePoint = 0n;
-            action = ({codePointStr, CanonicalCombiningClass}) => {
+            action = ({
+                codePointStr,
+                CanonicalCombiningClass
+            }) => {
                 const ccc = parseInt(CanonicalCombiningClass);
                 const codePoint = parseCodePoints(codePointStr);
                 for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
@@ -98,7 +111,10 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         case properties.decompositionType: {
             let lastCodePoint = 0n;
-            action = ({codePointStr, DecompositionStr}) => {
+            action = ({
+                codePointStr,
+                DecompositionStr
+            }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
 
@@ -112,7 +128,10 @@ export const parse = async (table, property, fileContent = undefined) => {
         }
 
         case properties.canonicalDecompositionType: {
-            action = ({codePointStr, DecompositionStr}) => {
+            action = ({
+                codePointStr,
+                DecompositionStr
+            }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
                 const isCanonicalDecomposition = decomposition.formattingTag === null;
@@ -143,19 +162,19 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         // Values defined in: https://www.unicode.org/reports/tr44/#UnicodeData.txt
         const [
-            codePointStr,            // #0
-            codePointName,           // #1
-            GeneralCategory,         // #2
+            codePointStr, // #0
+            codePointName, // #1
+            GeneralCategory, // #2
             CanonicalCombiningClass, // #3 CCC
-            BidiClass,               // #4
-            DecompositionStr,        // #5 Decomp: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
-            Numeric,                 // #5
-            BidiMirrored,            // #6
-            Unicode1Name,            // #7
-            ISOComment,              // #8
-            SimpleUppercaseMapping,  // #9
-            SimpleLowercaseMapping,  // #10
-            SimpleTitlecaseMapping   // #11
+            BidiClass, // #4
+            DecompositionStr, // #5 Decomp: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
+            Numeric, // #5
+            BidiMirrored, // #6
+            Unicode1Name, // #7
+            ISOComment, // #8
+            SimpleUppercaseMapping, // #9
+            SimpleLowercaseMapping, // #10
+            SimpleTitlecaseMapping // #11
         ] = splitLine(line);
 
         updateProgressBar(index / lines.length * 100);
@@ -186,7 +205,9 @@ export const getCanonicalDecompositions = async () => {
     class GetTable {
         #data = {};
 
-        add(codePoint, {mappedTo}) {
+        add(codePoint, {
+            mappedTo
+        }) {
             assert.ok(mappedTo.length === 2);
             this.#data[codePoint] = mappedTo;
         }
@@ -326,7 +347,10 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-interleave": {
             const data = await getCanonicalDecompositions();
-            const {mappedToSecond, mappedToFirst} = (await extractedCanonicalDecompositions());
+            const {
+                mappedToSecond,
+                mappedToFirst
+            } = (await extractedCanonicalDecompositions());
             const maps = [];
             const cp1Mask = findSmallestMask(mappedToFirst);
             const cp2Mask = findSmallestMask(mappedToSecond);
@@ -358,7 +382,10 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-interleave-reversed": {
             const data = await getCanonicalDecompositions();
-            const {mappedToSecond, mappedToFirst} = (await extractedCanonicalDecompositions());
+            const {
+                mappedToSecond,
+                mappedToFirst
+            } = (await extractedCanonicalDecompositions());
             const maps = [];
             const cp1Compl = findSmallestComplement(mappedToFirst);
             const cp2Compl = findSmallestComplement(mappedToSecond);
@@ -388,7 +415,10 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-find-mask": {
             const data = await getCanonicalDecompositions();
-            const {mappedToSecond, mappedToFirst} = (await extractedCanonicalDecompositions());
+            const {
+                mappedToSecond,
+                mappedToFirst
+            } = (await extractedCanonicalDecompositions());
             const maps = [];
             const cp1Mask = findSmallestMask(mappedToFirst);
             const cp2Mask = findSmallestMask(mappedToSecond);

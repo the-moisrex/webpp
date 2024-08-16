@@ -6,18 +6,23 @@
  */
 
 import * as readme from "./readme.mjs";
-import {getReadme} from "./readme.mjs";
+import {
+    getReadme
+} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
     char8_6,
     char8_8,
     runClangFormat,
-    uint32, uint4,
+    uint32,
+    uint4,
     utf32To8All,
     writePieces
 } from "./utils.mjs";
 import * as path from "node:path";
-import {TablePairs} from "./table.mjs";
+import {
+    TablePairs
+} from "./table.mjs";
 import {
     Addenda,
     genCompactMaskAddendum,
@@ -25,8 +30,12 @@ import {
     genPositionAddendum,
     staticFields
 } from "./modifiers.mjs";
-import {isHangul} from "./hangul.mjs";
-import {CanonicalComposition} from "./composition.mjs";
+import {
+    isHangul
+} from "./hangul.mjs";
+import {
+    CanonicalComposition
+} from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 const embedCanonical = true; // a chance to disable hiding Canonical Compositions in between Decompositions
@@ -61,15 +70,24 @@ class DecompTable {
     #cacheMaxLen = {};
     #dataViewCache = {};
 
-    findMaxLengths({codePointStart, length, data}) {
+    findMaxLengths({
+        codePointStart,
+        length,
+        data
+    }) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
-            return {max_length: this.#cacheMaxLen[key]};
+            return {
+                max_length: this.#cacheMaxLen[key]
+            };
         }
         let maxLen = 0n;
         const end = codePointStart + BigInt(length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-            const {mapped, mappedTo} = data.at(Number(codePoint));
+            const {
+                mapped,
+                mappedTo
+            } = data.at(Number(codePoint));
             if (!mapped && !embedCanonical) {
                 continue;
             }
@@ -87,7 +105,9 @@ class DecompTable {
 
         // set the max_length addendum value
         this.#cacheMaxLen[key] = maxLen;
-        return {max_length: maxLen};
+        return {
+            max_length: maxLen
+        };
     }
 
     constructor() {
@@ -140,7 +160,10 @@ class DecompTable {
                     for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
                         const vidx = Number(codePoint - codePointStart);
                         const start = vidx * Number(maxLength);
-                        const {mapped, mappedTo} = this.data.at(Number(codePoint));
+                        const {
+                            mapped,
+                            mappedTo
+                        } = this.data.at(Number(codePoint));
 
 
                         if (mapped) {
@@ -210,7 +233,10 @@ class DecompTable {
             // },
 
             // this gets run just before we add the modifier to the indices table
-            modify: ({modifier, inserts}) => {
+            modify: ({
+                modifier,
+                inserts
+            }) => {
 
                 // flattening the inserts to include only the utf-8 bytes:
                 // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
@@ -227,7 +253,10 @@ class DecompTable {
                 //     }
                 // }
 
-                return {modifier, inserts};
+                return {
+                    modifier,
+                    inserts
+                };
             },
         });
     }
@@ -253,14 +282,20 @@ class DecompTable {
             genMaxLengthAddendum(char8_6),
         ].filter(item => item !== undefined);
         const addenda = new Addenda(name, addendaPack, {
-            modify: function (table, modifier, range, pos) {
+            modify: function(table, modifier, range, pos) {
                 let maskedPos = 0;
                 if (enableMaksField) {
-                    maskedPos = this.compact_mask.modify(modifier, {pos}).pos;
+                    maskedPos = this.compact_mask.modify(modifier, {
+                        pos
+                    }).pos;
                 } else {
                     maskedPos = pos;
                 }
-                const {pos: lenPos} = this.max_length.modify(modifier, {pos: maskedPos});
+                const {
+                    pos: lenPos
+                } = this.max_length.modify(modifier, {
+                    pos: maskedPos
+                });
                 const newPos = Number(range + lenPos);
                 if (newPos >= Number(table.length)) {
                     return null;
@@ -372,7 +407,10 @@ class DecompTable {
     }
 
     add(codePoint, value) {
-        let {mapped, mappedTo} = value;
+        let {
+            mapped,
+            mappedTo
+        } = value;
 
         // ignore Hangul code points, they're handled algorithmically
         if (isHangul(codePoint)) {
