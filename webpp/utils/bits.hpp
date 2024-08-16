@@ -43,10 +43,12 @@ namespace webpp {
       std::uint16_t const lhs,
       std::uint16_t const rhs) noexcept {
         using details::morton_table_256;
-        // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-constant-array-index, *-signed-bitwise)
-        return morton_table_256[rhs >> 8U] << 17U | morton_table_256[lhs >> 8U] << 16U |
-               morton_table_256[rhs & 0xFFU] << 1U | morton_table_256[lhs & 0xFFU];
-        // NOLINTEND(*-magic-numbers, *-pro-bounds-constant-array-index, *-signed-bitwise)
+        // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-constant-array-index)
+        return static_cast<std::uint32_t>(morton_table_256[rhs >> 8U]) << 17U |
+               static_cast<std::uint32_t>(morton_table_256[lhs >> 8U]) << 16U |
+               static_cast<std::uint32_t>(morton_table_256[rhs & 0xFFU]) << 1U |
+               static_cast<std::uint32_t>(morton_table_256[lhs & 0xFFU]);
+        // NOLINTEND(*-magic-numbers, *-pro-bounds-constant-array-index)
     }
 
 } // namespace webpp

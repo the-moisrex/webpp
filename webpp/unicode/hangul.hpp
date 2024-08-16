@@ -255,18 +255,20 @@ namespace webpp::unicode {
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr CharT compose_hangul(CharT const lhs, CharT const rhs) noexcept {
         if (is_hangul_leading(lhs) && is_hangul_vowel(rhs)) {
-            auto const leading_pos = lhs - hangul_leading_base;
-            auto const vowel_pos   = rhs - hangul_vowel_base;
-            auto const leading_vowel_pos =
-              (leading_pos * hangul_block_count) + (vowel_pos * hangul_trailing_count);
-            return static_cast<CharT>(hangul_syllable_base + leading_vowel_pos);
+            auto const leading_pos       = lhs - static_cast<CharT>(hangul_leading_base);
+            auto const vowel_pos         = rhs - static_cast<CharT>(hangul_vowel_base);
+            auto const leading_vowel_pos = (leading_pos * static_cast<CharT>(hangul_block_count)) +
+                                           (vowel_pos * static_cast<CharT>(hangul_trailing_count));
+            return static_cast<CharT>(hangul_syllable_base) + leading_vowel_pos;
         }
 
         // LV characters are the first in each "T block", so use this check to avoid combining LVT with T.
-        if (is_hangul_code_point(lhs) && (lhs - hangul_syllable_base) % hangul_trailing_count == 0 &&
-            is_hangul_trailing(rhs))
+        if (
+          is_hangul_code_point(lhs) &&
+          (lhs - static_cast<CharT>(hangul_syllable_base)) % static_cast<CharT>(hangul_trailing_count) == 0 &&
+          is_hangul_trailing(rhs))
         {
-            return static_cast<CharT>(lhs + rhs - hangul_trailing_base);
+            return static_cast<CharT>(lhs + rhs - static_cast<CharT>(hangul_trailing_base));
         }
         return 0;
     }
