@@ -39,7 +39,7 @@ import {
 
 const outFile = `decomposition_tables.hpp`;
 const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
-const enableMaksField = true;
+const enableMaksField = false;
 
 
 const start = async () => {
@@ -70,6 +70,7 @@ class DecompTable {
     #cacheMaxLen = {};
     #dataViewCache = {};
 
+    // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
     findMaxLengths({
         codePointStart,
         length,
