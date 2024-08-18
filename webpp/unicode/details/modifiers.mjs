@@ -826,6 +826,17 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
             index |= 0b1n;
         }
     },
+    verifyInserts({inserts, dataView, modifier}) {
+        const modifiedInserts = new ModifiedSpan(inserts, modifier);
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                return false;
+            }
+        }
+        return true;
+    },
     modify(modifier, meta) {
         // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
         // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
