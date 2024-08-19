@@ -71,27 +71,34 @@ export class TablePairs {
         let pos = modifier.pos;
 
         const insertsModifier = modifier.clone();
-        insertsModifier.resetOnly(['pos', 'max_length']);
+        insertsModifier.resetOnly(['pos', /* 'max_length' */]);
         const modifiedInserts = new ModifiedSpan(inserts, insertsModifier);
 
         // validating inserts:
         // if (inserts.length > this.chunkSize) {
         //     return {valid: false};
         // }
-        for (let index = 0; index !== inserts.length; ++index) {
-            const realValue = dataView.at(index);
-            const insertValue = modifiedInserts.at(index);
-            if (realValue !== insertValue) {
-                // throw new InvalidModifier({index, realValue, insertValue, ...modifier});
-                return {
-                    valid: false,
-                    index,
-                    realValue,
-                    insertValue,
-                    ...modifier,
-                    data: [...modifiedInserts]
-                };
-            }
+        // for (let index = 0; index !== inserts.length; ++index) {
+        //     const realValue = dataView.at(index);
+        //     const insertValue = modifiedInserts.at(index);
+        //     if (realValue !== insertValue) {
+        //         // throw new InvalidModifier({index, realValue, insertValue, ...modifier});
+        //         return {
+        //             valid: false,
+        //             index,
+        //             realValue,
+        //             insertValue,
+        //             ...modifier,
+        //             data: [...modifiedInserts]
+        //         };
+        //     }
+        // }
+        if (!this.#indexAddenda.verifyInserts({inserts, dataView, modifier})) {
+            return {
+                valid: false,
+                ...modifier,
+                data: [...modifiedInserts]
+            };
         }
 
         const overlapped = overlapInserts(modifiedInserts, this.values);

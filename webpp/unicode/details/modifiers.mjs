@@ -400,6 +400,17 @@ export class Addenda {
         }
     }
 
+    /// check if each addendum verifies the insert values or not
+    /// this is to prevent invalid modifiers to be generated.
+    verifyInserts(meta) {
+        for (const addendum of this.addenda) {
+            if (addendum?.verifyInserts?.(meta) === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     renderPlacements() {
         return this.addenda.toSorted((a, b) => a.placement - b.placement).map(addendum => `[${addendum.actualSize}bits = ${addendum.name}]`).join(" + ");
     }
@@ -459,18 +470,6 @@ ${this.#renderFunctions.map(func => func()).join("\n\n")}
 
     };
         `;
-    }
-}
-
-export class InvalidModifier {
-    #data;
-
-    constructor(data) {
-        this.#data = data;
-    }
-
-    toString() {
-        return JSON.stringify(this.#data);
     }
 }
 
@@ -758,6 +757,17 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
             yield index;
         }
     },
+    verifyInserts({inserts, dataView, modifier}) {
+        const modifiedInserts = new ModifiedSpan(inserts, modifier);
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                return false;
+            }
+        }
+        return true;
+    },
     modify(modifier, meta) {
         return {...meta, value: modifier.shift + meta.value};
     },
@@ -873,6 +883,17 @@ export const genCompactMaskAddendum = (type = uint4) => new Addendum({
 
             yield BigInt(index);
         }
+    },
+    verifyInserts({inserts, dataView, modifier}) {
+        const modifiedInserts = new ModifiedSpan(inserts, modifier);
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                return false;
+            }
+        }
+        return true;
     },
     modify(modifier, meta) {
         const mask = (0b1n << modifier.compact_mask) - 1n;
