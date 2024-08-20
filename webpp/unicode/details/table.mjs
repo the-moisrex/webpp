@@ -45,30 +45,16 @@ export class TablePairs {
         this.data[Number(codePoint)] = value;
     }
 
-    /// This function compresses the specified range based on the input modifier.
-    /// For example, an array of zeros, with mask of zero, only needs the first element
-    #rightTrimInserts(inserts, modifier) {
-        if (this.#indexAddenda.has("mask")) {
-            return Math.min(inserts.length, Number(bitCeil(modifier.mask)));
-        } else {
-            return inserts.length;
-        }
-        // if (inserts.length <= 1) {
-        //     return inserts.length;
-        // }
-        // let rtrimPos = 0;
-        // for (let pos = inserts.length - 1; pos >= 0; --pos) {
-        //     const applied = modifier.applyMask(pos);
-        //     if (applied.pos !== 0) {
-        //         rtrimPos = pos;
-        //         break;
-        //     }
-        // }
-        // return rtrimPos;
-    }
-
     #optimizeInserts(inserts, dataView, modifier) {
         let pos = modifier.pos;
+
+        if (inserts.length === 0) {
+            return {
+                valid: true,
+                pos: BigInt(pos),
+                inserts
+            };
+        }
 
         const insertsModifier = modifier.clone();
         insertsModifier.resetOnly(['pos', /* 'max_length' */]);
@@ -107,20 +93,17 @@ export class TablePairs {
             inserts = inserts.slice(overlapped, inserts.length);
         }
 
-        let rtrimmed = 0;
         if (inserts.length !== 0) {
-            let rtrimmedPos = this.#rightTrimInserts(inserts, modifier);
-            if (this.values.length === 0 && rtrimmedPos === 0) {
-                rtrimmedPos = 1;
-            }
-            rtrimmed = inserts.length - rtrimmedPos;
-            if (rtrimmed !== 0) {
-                inserts = inserts.slice(0, rtrimmedPos);
+            let {valid, start, end} = this.#indexAddenda.optimizeInserts({inserts, dataView, modifier});
+            if (valid === false) {
+                return {valid: false};
             }
 
-            if (!Number.isSafeInteger(rtrimmed) || rtrimmed < 0) {
-                debugger;
-                throw new Error(`Negative rtrimmed is not ok; rtrimmed: ${rtrimmed}; rtrimmedPos: ${rtrimmedPos}, insertsLength: ${inserts.length}`);
+            if (this.values.length === 0 && end === 0) {
+                end = 1;
+            }
+            if (start !== 0 && end !== inserts.length) {
+                inserts = inserts.slice(start, end);
             }
         }
 
@@ -129,7 +112,6 @@ export class TablePairs {
             pos: BigInt(pos),
             inserts,
             overlapped,
-            rtrimmed
         };
     }
 

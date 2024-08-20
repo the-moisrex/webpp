@@ -1,5 +1,5 @@
 import {
-    alignedSymbol,
+    alignedSymbol, bitCeil,
     bitOnesOf,
     fillBitsFromRight, largestPositionMask,
     maxOf,
@@ -409,6 +409,22 @@ export class Addenda {
             }
         }
         return true;
+    }
+
+    optimizeInserts(meta) {
+        let start = 0;
+        let end = meta.inserts.length;
+        for (const addendum of this.addenda) {
+            const res = addendum?.verifyInserts?.(meta);
+            if (res !== undefined) {
+                start = Math.max(start, res.start || start);
+                end = Math.min(end, res.end || end);
+                if (res.valid === false) {
+                    return {valid: false, start, end};
+                }
+            }
+        }
+        return {start, end, valid: true};
     }
 
     renderPlacements() {
@@ -847,6 +863,11 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
         }
         return true;
     },
+    optimizeInserts({inserts, modifier}) {
+        /// This function compresses the specified range based on the input modifier.
+        /// For example, an array of zeros, with mask of zero, only needs the first element
+        return {end: Math.min(inserts.length, Number(bitCeil(modifier.mask)))};
+    },
     modify(modifier, meta) {
         // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
         // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
@@ -894,6 +915,12 @@ export const genCompactMaskAddendum = (type = uint4) => new Addendum({
             }
         }
         return true;
+    },
+    optimizeInserts({inserts, modifier}) {
+        /// This function compresses the specified range based on the input modifier.
+        /// For example, an array of zeros, with mask of zero, only needs the first element
+        const mask = (0b1n << modifier.compact_mask) - 1n;
+        return {end: Math.min(inserts.length, Number(bitCeil(mask)))};
     },
     modify(modifier, meta) {
         const mask = (0b1n << modifier.compact_mask) - 1n;
