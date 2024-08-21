@@ -3,14 +3,31 @@ import {
     findSmallestComplement,
     findSmallestMask,
     findTopLongestZeroRanges,
-    interleaveBits,
+    interleaveBits, uint32, uint8,
     utf32To8
 } from "./utils.mjs";
+import assert from "node:assert";
+import {Addendum, ModifiedSpan} from "./modifiers.mjs";
+
+export const genCompositionModifier = () => new Addendum({
+    name: "composition_code_point",
+    description: "This is the canonical composition code point (merge 2 code points together with a magical algorithm," +
+        " look it up in the table, and this value is its canonical composition of them);" +
+        " this field has nothing to do with other fields; they are for decomposition," +
+        " while this value is for composition.",
+    sizeof: uint32,
+    affectsChunkSize: true,
+    defaultValue: 0n,
+    isCategorizable: true,
+});
 
 /**
  * The important parts of this class is the merge algorithm and the shift algorithm which needs to be reimplemented in C++ as well.
  */
 export class CanonicalComposition {
+
+
+    embedCodePointCanonical = false;
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
@@ -46,14 +63,14 @@ export class CanonicalComposition {
         // console.log(shifted, magicCode, cp1, cp2);
         if (shifted >= this.lastMappedBucket) {
             debugger;
-            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
+            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift})`);
         }
         if (!(shifted in this.#shiftedMagicalValues)) {
             this.#shiftedMagicalValues[shifted] = [];
         }
         if (this.#shiftedMagicalValues[shifted].length >= this.chunkSize) {
             debugger;
-            throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+            throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift})`);
         }
         if (this.#shiftedMagicalValues[shifted].includes(this.remaining(magicCode))) {
             debugger;
@@ -67,10 +84,16 @@ export class CanonicalComposition {
     /// The shifting algorithm:
     shiftCodePoint(codePoint) {
         // return (codePoint >>> this.chunkShift) % this.lastMappedBucket;
+        if (this.embedCodePointCanonical) {
+            return codePoint % this.lastMappedBucket;
+        }
         return codePoint >> this.chunkShift;
     }
 
     remaining(codePoint) {
+        if (this.embedCodePointCanonical) {
+            return codePoint;
+        }
         return codePoint & this.chunkMask;
     }
 
@@ -160,7 +183,6 @@ export class CanonicalComposition {
         // const merged = scaled;
         // console.log(merged, codePoint1, codePoint2, cp1, cp2, 'scaled:', scaled, x, lastMagic, maxInterleaves, this.magicBucket);
 
-
         const cp1 = (codePoint1 & this.#codePoint1Mask);
         const cp2 = (codePoint2 & this.#codePoint2Mask);
         // const x = (cp1 + (cp1 >>> 2)) * cp2;
@@ -239,6 +261,23 @@ export class CanonicalComposition {
         }
         return utf32To8(this.#magicalTable[magicCode]);
     }
+
+    codePoint(codePoint, invalidCodePoint = 0) {
+        if (this.#magicalTable?.[codePoint] === invalidCodePoint) {
+            throw new Error(`Invalid "invalid code point" specified: table[${codePoint}] == ${this.#magicalTable[codePoint]} == ${invalidCodePoint}`);
+        }
+        return this.#magicalTable?.[codePoint] || invalidCodePoint;
+    }
+
+    table(codePointSTart, length, invalidCodePoint = 0) {
+        const end = codePointSTart + length;
+        let tbl = [];
+        for (let codePoint = codePointSTart; codePoint !== end; ++codePoint) {
+            tbl.push(this.codePoint(codePoint, invalidCodePoint));
+        }
+        return tbl;
+    }
+
 
     needsModificationRange(codePointStart, codePointEnd) {
         for (let codePoint = codePointStart; codePoint !== codePointEnd; ++codePoint) {
