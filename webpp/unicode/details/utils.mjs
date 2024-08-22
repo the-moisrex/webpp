@@ -410,7 +410,7 @@ export class Span {
         this.#start = BigInt(start);
         this.#end = this.#start + BigInt(length);
         this.#func = func;
-        if (this.#end === undefined || (typeof(this.#end) == 'number' && isNaN(this.#end))) {
+        if (this.#end === undefined || (typeof (this.#end) == 'number' && isNaN(this.#end))) {
             debugger;
             throw new Error(`Unexpected end: ${this.#end}`);
         }
@@ -860,7 +860,7 @@ export const interleaveBits = (x, y) => {
 };
 
 
-export function* findSmallest(arr, op, maxMask = arr.toSorted((a, b) => Number(b - a))[0]){
+export function* findSmallest(arr, op, maxMask = arr.toSorted((a, b) => Number(b - a))[0]) {
     let mask = 0n;
 
     top: for (; mask <= maxMask; ++mask) {
@@ -876,7 +876,7 @@ export function* findSmallest(arr, op, maxMask = arr.toSorted((a, b) => Number(b
     }
 }
 
-export function maskFinder (arr) {
+export function maskFinder(arr) {
     return findSmallest(arr, (val, mask) => val & mask);
 }
 
@@ -933,4 +933,11 @@ export const largestPositionMask = (table, value = 0) => {
         mask &= index; // remove the position from the mask
     }
     return mask;
+};
+
+export const chunked = (size) => {
+    const chunkSize = fillBitsFromRight(BigInt(size)) + 1n;
+    const chunkMask = chunkSize - 1n;
+    const chunkShift = popcount(chunkMask);
+    return {chunkSize, chunkMask, chunkShift};
 };

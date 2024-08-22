@@ -23,9 +23,15 @@ export const properties = {
     canonicalDecompositionType: Symbol("Canonical-only Decomposition Tables"),
 };
 
+let content = "";
 export const download = async (callback = noop) => {
+    if (content !== "") {
+        callback(content);
+        return content;
+    }
     // database file
     return await downloadFile(fileUrl, cacheFilePath, async (fileContent) => {
+        content = fileContent;
         await callback(fileContent);
     });
 };
@@ -83,20 +89,20 @@ export const parse = async (table, property, fileContent = undefined) => {
         /// simple code points
         case properties.codePoints:
             action = ({
-                codePointStr
-            }) => {
+                          codePointStr
+                      }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 table.add(codePoint);
             };
             break;
 
-            /// Canonical Combining Class:
+        /// Canonical Combining Class:
         case properties.ccc: {
             let lastCodePoint = 0n;
             action = ({
-                codePointStr,
-                CanonicalCombiningClass
-            }) => {
+                          codePointStr,
+                          CanonicalCombiningClass
+                      }) => {
                 const ccc = parseInt(CanonicalCombiningClass);
                 const codePoint = parseCodePoints(codePointStr);
                 for (let curCodePoint = lastCodePoint; curCodePoint <= codePoint; ++curCodePoint) {
@@ -112,9 +118,9 @@ export const parse = async (table, property, fileContent = undefined) => {
         case properties.decompositionType: {
             let lastCodePoint = 0n;
             action = ({
-                codePointStr,
-                DecompositionStr
-            }) => {
+                          codePointStr,
+                          DecompositionStr
+                      }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
 
@@ -129,9 +135,9 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         case properties.canonicalDecompositionType: {
             action = ({
-                codePointStr,
-                DecompositionStr
-            }) => {
+                          codePointStr,
+                          DecompositionStr
+                      }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(codePoint, DecompositionStr);
                 const isCanonicalDecomposition = decomposition.formattingTag === null;
@@ -204,28 +210,39 @@ export const parse = async (table, property, fileContent = undefined) => {
 export const getCanonicalDecompositions = async () => {
     class GetTable {
         #data = {};
+        #lastMapped = 0n;
 
         add(codePoint, {
             mappedTo
         }) {
             assert.ok(mappedTo.length === 2);
             this.#data[codePoint] = mappedTo;
+            if (codePoint > this.#lastMapped) {
+                this.#lastMapped = BigInt(codePoint);
+            }
         }
 
         get data() {
             return this.#data;
+        }
+
+        get lastMapped() {
+            return this.#lastMapped;
         }
     }
 
     const table = new GetTable();
     await parse(table, properties.canonicalDecompositionType);
 
-    return table.data;
+    return {
+        data: table.data,
+        lastMapped: table.lastMapped
+    };
 };
 
 export const extractedCanonicalDecompositions = async (data = null) => {
     if (data === null || data === undefined) {
-        data = await getCanonicalDecompositions();
+        data = (await getCanonicalDecompositions()).data;
     }
 
     // console.log([...Object.values(data)/*.map(item => item?.[0] || undefined)*/]);
@@ -346,7 +363,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
 
         case "map-interleave": {
-            const data = await getCanonicalDecompositions();
+            const data = (await getCanonicalDecompositions()).data;
             const {
                 mappedToSecond,
                 mappedToFirst
@@ -381,7 +398,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
 
         case "map-interleave-reversed": {
-            const data = await getCanonicalDecompositions();
+            const data = (await getCanonicalDecompositions()).data;
             const {
                 mappedToSecond,
                 mappedToFirst
@@ -414,7 +431,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
 
         case "map-find-mask": {
-            const data = await getCanonicalDecompositions();
+            const data = (await getCanonicalDecompositions()).data;
             const {
                 mappedToSecond,
                 mappedToFirst
@@ -456,7 +473,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
 
         case "merged": {
-            const maps = await getCanonicalDecompositions();
+            const maps = (await getCanonicalDecompositions()).data;
             let cps = [];
             for (let codePoint in maps) {
                 codePoint = parseInt(codePoint);
@@ -475,7 +492,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
         }
 
         default: {
-            const maps = await getCanonicalDecompositions();
+            const maps = (await getCanonicalDecompositions()).data;
             for (let codePoint in maps) {
                 codePoint = parseInt(codePoint);
                 console.log(codePoint.toString(16), maps[codePoint].map(item => item.toString(16)).join(", "));

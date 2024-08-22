@@ -1,6 +1,6 @@
 import {
     alignedSymbol, bitCeil,
-    bitOnesOf,
+    bitOnesOf, chunked,
     fillBitsFromRight, largestPositionMask,
     maxOf,
     popcount, realSizeOf,
@@ -172,6 +172,8 @@ export class Addenda {
     mask;
     sizeof;
     #chunkSize = NaN;
+    #chunkMask = NaN;
+    #chunkShift = NaN;
     #renderFunctions = [];
     #shifts = {};
 
@@ -227,7 +229,10 @@ export class Addenda {
         //     debugger;
         //     throw new Error("Invalid minSize");
         // }
-        this.#chunkSize = fillBitsFromRight(this.minSize) + 1n;
+        const {chunkSize, chunkMask, chunkShift} = chunked(this.minSize);
+        this.#chunkSize = chunkSize;
+        this.#chunkMask = chunkMask;
+        this.#chunkShift = chunkShift;
         if (funcs.modify) {
             this.modify = funcs.modify;
         }
@@ -238,8 +243,6 @@ export class Addenda {
             debugger;
             throw new Error("Invalid sizeof");
         }
-
-
     }
 
     #tests() {
@@ -375,11 +378,11 @@ export class Addenda {
     }
 
     get chunkMask() {
-        return this.#chunkSize - 1n;
+        return this.#chunkMask;
     }
 
     get chunkShift() {
-        return popcount(this.chunkMask);
+        return this.#chunkShift;
     }
 
     /// Generate all possible combinations of the addenda

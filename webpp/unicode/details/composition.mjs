@@ -3,11 +3,10 @@ import {
     findSmallestComplement,
     findSmallestMask,
     findTopLongestZeroRanges,
-    interleaveBits, uint32, uint8,
+    interleaveBits, uint32,
     utf32To8
 } from "./utils.mjs";
-import assert from "node:assert";
-import {Addendum, ModifiedSpan} from "./modifiers.mjs";
+import {Addendum} from "./modifiers.mjs";
 
 export const genCompositionModifier = () => new Addendum({
     name: "composition_code_point",
@@ -48,6 +47,8 @@ export class CanonicalComposition {
     #magicFinalMask = 0n;
     #magicFinalCompl = 0n;
 
+    #lastShiftedMagicCodePoint = 0n;
+
     #validateMagicMerge(magicCode, cp1, cp2) {
         if (isNaN(Number(magicCode)) || magicCode === undefined || magicCode === null || !isFinite(Number(magicCode)) || !Number.isSafeInteger(Number(magicCode))) {
             throw new Error(`magic code is not a safe integer: ${magicCode} (${cp1}, ${cp2})`);
@@ -56,7 +57,7 @@ export class CanonicalComposition {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
-            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
+            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (chunk shift: ${this.chunkShift}) (chunk mask: ${this.chunkMask}) (chunk size: ${this.chunkSize}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
         const shifted = this.shiftCodePoint(magicCode);
@@ -84,9 +85,13 @@ export class CanonicalComposition {
     /// The shifting algorithm:
     shiftCodePoint(codePoint) {
         // return (codePoint >>> this.chunkShift) % this.lastMappedBucket;
+
+        // this should work, but somehow it creates a bigger magical table:
         if (this.embedCodePointCanonical) {
             return codePoint % this.lastMappedBucket;
         }
+
+        // this should not work, but it does; I don't know why, since this algorithm is magical, I don't even care!
         return codePoint >> this.chunkShift;
     }
 
@@ -95,6 +100,26 @@ export class CanonicalComposition {
             return codePoint;
         }
         return codePoint & this.chunkMask;
+    }
+
+    /// generate a table of mappedTo code points where the magic code points say they should be
+    getCodePointTable() {
+        const values = new Uint32Array(Number(this.lastShiftedMagicCode));
+        for (const magicCodePointStr in this.#magicalTable) {
+            const mappedTo = Number(this.#magicalTable[magicCodePointStr]);
+            const magicInt = parseInt(magicCodePointStr);
+            if (!Number.isSafeInteger(magicInt)) {
+                continue; // it could be ".length" or something else
+            }
+            const magicCodePoint = BigInt(magicInt);
+            const shiftedMagicCode = Number(this.shiftCodePoint(magicCodePoint));
+            if (shiftedMagicCode > values.length) {
+                debugger;
+                throw new Error(`Invalid table size calculated: ${shiftedMagicCode} > ${values.length}; (magicCodePointStr: ${magicCodePointStr})`);
+            }
+            values[shiftedMagicCode] = mappedTo;
+        }
+        return values;
     }
 
     // get magicMask() {
@@ -202,11 +227,28 @@ export class CanonicalComposition {
     //     return this.#magicalTable[magicCode];
     // }
 
+    #resetCache () {
+        this.#magicalTable = {
+            length: 0,
+            lastMagicCode: 0n
+        };
+        this.#mergedMagicalValues = [];
+        this.#shiftedMagicalValues = {};
+    }
+
     #calculateMagicTable() {
+        this.#resetCache();
         for (let codePoint in this.#canonicalCompositions) {
             const [cp1, cp2] = this.#canonicalCompositions[codePoint];
             const magicVal = this.magicMerge(cp1, cp2);
             this.#magicalTable[magicVal] = parseInt(codePoint);
+            ++this.#magicalTable.length;
+            if (magicVal > this.#magicalTable.lastMagicCode) {
+                this.#magicalTable.lastMagicCode = magicVal;
+            }
+            if (this.shiftCodePoint(magicVal) > this.#lastShiftedMagicCodePoint) {
+                this.#lastShiftedMagicCodePoint = this.shiftCodePoint(magicVal);
+            }
         }
     }
 
@@ -238,15 +280,21 @@ export class CanonicalComposition {
         console.log("Code Point 2 Complement:", this.#codePoint2Compl);
         console.log("Magic Mask:", this.#magicFinalMask);
         console.log("Magic Complement:", this.#magicFinalCompl);
+        console.log("Last Mapped:", this.lastMapped);
     }
 
     async load() {
-        this.#canonicalCompositions = await getCanonicalDecompositions();
-        const maps = await extractedCanonicalDecompositions();
+        const {data, lastMapped} = await getCanonicalDecompositions();
+        this.#canonicalCompositions = data;
+        this.lastMapped = lastMapped;
+        const maps = await extractedCanonicalDecompositions(this.#canonicalCompositions);
         this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
         if (this.shiftCodePoint(this.lastMagic) >= this.lastMappedBucket) {
             throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.shiftCodePoint(this.lastMagic)}) / ${this.lastMappedBucket}`);
         }
+    }
+
+    calculateMagicalTable () {
         this.#calculateMagicTable();
         this.#calculateTopEmptyRanges();
     }
@@ -278,6 +326,13 @@ export class CanonicalComposition {
         return tbl;
     }
 
+    get magicTable() {
+        return this.#magicalTable;
+    }
+
+    get lastShiftedMagicCode() {
+        return this.#lastShiftedMagicCodePoint;
+    }
 
     needsModificationRange(codePointStart, codePointEnd) {
         for (let codePoint = codePointStart; codePoint !== codePointEnd; ++codePoint) {
