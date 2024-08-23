@@ -48,49 +48,62 @@ class CompTable {
         await this.#canonicalCompositions.load();
     }
 
-    reset (size) {
+    reset (size, hardWrap = -1n) {
         const {chunkSize, chunkMask, chunkShift} = chunked(size);
         this.#canonicalCompositions.chunkShift = chunkShift;
         this.#canonicalCompositions.chunkSize = chunkSize;
         this.#canonicalCompositions.chunkMask = chunkMask;
+        this.#canonicalCompositions.hardWrap = hardWrap;
         this.#canonicalCompositions.calculateMagicalTable();
     }
 
     optimize () {
         let history = [];
+        let errors = [];
         for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
-            try {
-                this.reset(chunkSize);
-                const table = {...this.#canonicalCompositions.magicTable};
-                history.push({
-                    chunkSize,
-                    magicTable: table,
-                    tableLength: table.length,
-                    tableLastMagicCode: table.lastMagicCode,
-                    lastMapped: this.#canonicalCompositions.lastMapped,
-                    lastMappedBucket: this.#canonicalCompositions.lastMappedBucket,
-                    lastShiftedMagicCodePoint: this.#canonicalCompositions.lastShiftedMagicCode,
-                });
-                console.log(`Valid chunk size: ${chunkSize}`);
-            } catch (err) {
-                console.log(`Invalid chunk size: ${chunkSize}`);
-                history.push({
-                    chunkSize,
-                    error: err,
-                })
+            for (let hardWrap = -1n; hardWrap <= 1000n; hardWrap += 1n) {
+                try {
+                    this.reset(chunkSize, hardWrap);
+                    const table = {...this.#canonicalCompositions.magicTable};
+                    const values = this.#canonicalCompositions.getCodePointTable();
+                    history.push({
+                        chunkSize,
+                        hardWrap,
+                        magicTable: table,
+                        magicValues: values,
+                        tableLength: table.length,
+                        tableLastMagicCode: table.lastMagicCode,
+                        lastMapped: this.#canonicalCompositions.lastMapped,
+                        lastMappedBucket: this.#canonicalCompositions.lastMappedBucket,
+                        lastShiftedMagicCodePoint: this.#canonicalCompositions.lastShiftedMagicCode,
+                    });
+                    console.log(`Valid chunk size: ${chunkSize}-${hardWrap}`);
+                } catch (error) {
+                    console.log(`Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`);
+                    errors.push({
+                        chunkSize,
+                        hardWrap,
+                        error,
+                    });
+                }
             }
         }
-        const best = history.filter(a => !a.error).toSorted((a, b) => Number(a.lastShiftedMagicCodePoint) - Number(b.lastShiftedMagicCodePoint));
-        console.log(history.map(inp_info => {
+        const best = history.toSorted((a, b) => Number(a.lastShiftedMagicCodePoint) - Number(b.lastShiftedMagicCodePoint))[0];
+        const prettyPrinter = inp_info => {
             const info = {...inp_info};
             delete info.magicTable;
             return info;
-        }));
+        };
+        console.log(errors.map(prettyPrinter));
         console.log("--------------------- <Best> --------------------------");
-        console.log(best[0]);
+        console.log(prettyPrinter(best));
         console.log("--------------------- </Best> --------------------------");
-        this.reset(best[0].chunkSize);
-        this.#renderTable(best[0]);
+        if (best === undefined) {
+            console.log("Nothing found.");
+            return;
+        }
+        this.reset(best.chunkSize, best.hardWrap);
+        this.#renderTable(best);
     }
 
     get typeString() {
@@ -106,7 +119,8 @@ class CompTable {
         this.#size = realSizeOf(this.#type);
         this.values = this.#canonicalCompositions.getCodePointTable();
         if (this.values.length !== magicalTable.lastShiftedMagicCodePoint) {
-            throw new Error(`Something went wrong with the table size.`);
+            debugger;
+            throw new Error(`Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`);
         }
         this.#rendered = `
     static constexpr std::array<std::uint32_t, ${this.values.length}ULL> canonical_composition_magic_table {

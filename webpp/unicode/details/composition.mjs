@@ -47,6 +47,9 @@ export class CanonicalComposition {
     #magicFinalMask = 0n;
     #magicFinalCompl = 0n;
 
+    // if specified, this value will be used instead of lastMappedBucket
+    hardWrap = -1n;
+
     #lastShiftedMagicCodePoint = 0n;
 
     #validateMagicMerge(magicCode, cp1, cp2) {
@@ -57,6 +60,7 @@ export class CanonicalComposition {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
+            debugger;
             throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (chunk shift: ${this.chunkShift}) (chunk mask: ${this.chunkMask}) (chunk size: ${this.chunkSize}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
@@ -130,6 +134,9 @@ export class CanonicalComposition {
     // }
 
     get lastMappedBucket() {
+        if (this.hardWrap > 0n) {
+            return this.hardWrap;
+        }
         return this.lastMapped >> this.chunkShift;
     }
 
@@ -217,7 +224,7 @@ export class CanonicalComposition {
         const x = (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
         // const merged = x;
         const merged = (((x >> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
-        // console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
+        // console.log(codePoint1, codePoint2, cp1, cp2, x, 'merged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
         this.#validateMagicMerge(merged, codePoint1, codePoint2);
         return merged;
@@ -234,6 +241,7 @@ export class CanonicalComposition {
         };
         this.#mergedMagicalValues = [];
         this.#shiftedMagicalValues = {};
+        this.#lastShiftedMagicCodePoint = -1n;
     }
 
     #calculateMagicTable() {
@@ -241,13 +249,17 @@ export class CanonicalComposition {
         for (let codePoint in this.#canonicalCompositions) {
             const [cp1, cp2] = this.#canonicalCompositions[codePoint];
             const magicVal = this.magicMerge(cp1, cp2);
+            if (cp1 !== cp2 && magicVal === this.magicMerge(cp2, cp1)) {
+                throw new Error(`Magic merge algorithm error; cp1: ${cp1}, cp2: ${cp2}, merge1: ${magicVal}, merge2: ${this.magicMerge(cp2, cp1)}`);
+            }
             this.#magicalTable[magicVal] = parseInt(codePoint);
             ++this.#magicalTable.length;
             if (magicVal > this.#magicalTable.lastMagicCode) {
                 this.#magicalTable.lastMagicCode = magicVal;
             }
-            if (this.shiftCodePoint(magicVal) > this.#lastShiftedMagicCodePoint) {
-                this.#lastShiftedMagicCodePoint = this.shiftCodePoint(magicVal);
+            const shifted = this.shiftCodePoint(magicVal);
+            if (shifted > this.#lastShiftedMagicCodePoint) {
+                this.#lastShiftedMagicCodePoint = shifted;
             }
         }
     }
