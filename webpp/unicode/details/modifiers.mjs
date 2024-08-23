@@ -187,7 +187,7 @@ export class Addenda {
 
     #modifierFunctions = {};
 
-    constructor(name, addenda, funcs) {
+    constructor(name, addenda, funcs, inpChunkSize = undefined) {
         this.name = name;
         this.addenda = addenda;
         this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0n));
@@ -229,7 +229,7 @@ export class Addenda {
         //     debugger;
         //     throw new Error("Invalid minSize");
         // }
-        const {chunkSize, chunkMask, chunkShift} = chunked(this.minSize);
+        const {chunkSize, chunkMask, chunkShift} = chunked(inpChunkSize || this.minSize);
         this.#chunkSize = chunkSize;
         this.#chunkMask = chunkMask;
         this.#chunkShift = chunkShift;
@@ -370,7 +370,7 @@ export class Addenda {
                 return addendum.affectsChunkSize(undefined, min);
             }
             return addendum.size;
-        }, NaN);
+        }, NaN) || 16n;
     }
 
     get chunkSize() {

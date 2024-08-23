@@ -161,7 +161,7 @@ export class CanonicalComposition {
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
     /// Its purpose is only to generate a set of merged values that the merged values
     ///   are unique in the current Unicode composition database.
-    magicMerge(codePoint1, codePoint2) {
+    magicMerge(codePoint1, codePoint2, validate = true) {
         // const merged = ((codePoint1 - (codePoint2 >>> 3)) * codePoint2) & this.magicMask;
         // const merged = Math.floor(((codePoint1 << this.chunkShift) * codePoint2) * this.magicMask / this.lastMagic);
         // const merged = ((codePoint1 * codePoint1) - (codePoint2 * codePoint2)) & this.magicMask;
@@ -226,7 +226,9 @@ export class CanonicalComposition {
         const merged = (((x >> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
         // console.log(codePoint1, codePoint2, cp1, cp2, x, 'merged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
-        this.#validateMagicMerge(merged, codePoint1, codePoint2);
+        if (validate) {
+            this.#validateMagicMerge(merged, codePoint1, codePoint2);
+        }
         return merged;
     }
 
@@ -249,7 +251,7 @@ export class CanonicalComposition {
         for (let codePoint in this.#canonicalCompositions) {
             const [cp1, cp2] = this.#canonicalCompositions[codePoint];
             const magicVal = this.magicMerge(cp1, cp2);
-            if (cp1 !== cp2 && magicVal === this.magicMerge(cp2, cp1)) {
+            if (cp1 !== cp2 && magicVal === this.magicMerge(cp2, cp1, false)) {
                 throw new Error(`Magic merge algorithm error; cp1: ${cp1}, cp2: ${cp2}, merge1: ${magicVal}, merge2: ${this.magicMerge(cp2, cp1)}`);
             }
             this.#magicalTable[magicVal] = parseInt(codePoint);

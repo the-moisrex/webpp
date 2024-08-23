@@ -486,6 +486,10 @@ export class TablePairs {
 
     render() {
 
+        if (this.indices.length === 0 || this.values?.length === 0) {
+            throw new Error(`Index or values table is empty: (index: ${this.indices.length}) (values: ${this.values?.length})`);
+        }
+
         const indices = this.indices.result
         const indicesBits = Number(this.indicesTableSizeInBits());
         const valuesBits = Number(this.valuesTableSizeInBits());
