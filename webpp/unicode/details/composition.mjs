@@ -3,14 +3,30 @@ import {
     findSmallestComplement,
     findSmallestMask,
     findTopLongestZeroRanges,
-    interleaveBits,
+    interleaveBits, uint32,
     utf32To8
 } from "./utils.mjs";
+import {Addendum} from "./modifiers.mjs";
+
+export const genCompositionModifier = () => new Addendum({
+    name: "composition_code_point",
+    description: "This is the canonical composition code point (merge 2 code points together with a magical algorithm," +
+        " look it up in the table, and this value is its canonical composition of them);" +
+        " this field has nothing to do with other fields; they are for decomposition," +
+        " while this value is for composition.",
+    sizeof: uint32,
+    affectsChunkSize: true,
+    defaultValue: 0n,
+    isCategorizable: true,
+});
 
 /**
  * The important parts of this class is the merge algorithm and the shift algorithm which needs to be reimplemented in C++ as well.
  */
 export class CanonicalComposition {
+
+
+    embedCodePointCanonical = false;
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
@@ -31,6 +47,11 @@ export class CanonicalComposition {
     #magicFinalMask = 0n;
     #magicFinalCompl = 0n;
 
+    // if specified, this value will be used instead of lastMappedBucket
+    hardWrap = -1n;
+
+    #lastShiftedMagicCodePoint = 0n;
+
     #validateMagicMerge(magicCode, cp1, cp2) {
         if (isNaN(Number(magicCode)) || magicCode === undefined || magicCode === null || !isFinite(Number(magicCode)) || !Number.isSafeInteger(Number(magicCode))) {
             throw new Error(`magic code is not a safe integer: ${magicCode} (${cp1}, ${cp2})`);
@@ -39,21 +60,22 @@ export class CanonicalComposition {
             throw new Error(`magic code is negative: ${magicCode} (${cp1}, ${cp2})`);
         }
         if (this.#mergedMagicalValues.includes(magicCode)) {
-            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
+            debugger;
+            throw new Error(`Magical Merging Formula does not produce unique values anymore: (${cp1}, ${cp2}) (chunk shift: ${this.chunkShift}) (chunk mask: ${this.chunkMask}) (chunk size: ${this.chunkSize}) (magic code: ${magicCode}) (magic count: ${this.#mergedMagicalValues.length})\n${this.#mergedMagicalValues.join(', ')}`);
         }
 
         const shifted = this.shiftCodePoint(magicCode);
         // console.log(shifted, magicCode, cp1, cp2);
         if (shifted >= this.lastMappedBucket) {
             debugger;
-            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift}) (last magic: ${this.lastMagic})`);
+            throw new Error(`Out of range magic code generated: ${magicCode} > ${this.lastMapped} (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift})`);
         }
         if (!(shifted in this.#shiftedMagicalValues)) {
             this.#shiftedMagicalValues[shifted] = [];
         }
         if (this.#shiftedMagicalValues[shifted].length >= this.chunkSize) {
             debugger;
-            throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${lastMappedBucket}) (chunk shift: ${this.chunkShift}) (mask: ${mask})`);
+            throw new Error(`Invalid shift algorithm: (magic code: ${magicCode}) (last mapped: ${this.lastMapped}) (code points: ${cp1}, ${cp2}) (shifted: ${shifted}) (last bucket: ${this.lastMappedBucket}) (chunk shift: ${this.chunkShift})`);
         }
         if (this.#shiftedMagicalValues[shifted].includes(this.remaining(magicCode))) {
             debugger;
@@ -67,11 +89,41 @@ export class CanonicalComposition {
     /// The shifting algorithm:
     shiftCodePoint(codePoint) {
         // return (codePoint >>> this.chunkShift) % this.lastMappedBucket;
+
+        // this should work, but somehow it creates a bigger magical table:
+        if (this.embedCodePointCanonical) {
+            return codePoint % this.lastMappedBucket;
+        }
+
+        // this should not work, but it does; I don't know why, since this algorithm is magical, I don't even care!
         return codePoint >> this.chunkShift;
     }
 
     remaining(codePoint) {
+        if (this.embedCodePointCanonical) {
+            return codePoint;
+        }
         return codePoint & this.chunkMask;
+    }
+
+    /// generate a table of mappedTo code points where the magic code points say they should be
+    getCodePointTable() {
+        const values = new Uint32Array(Number(this.lastShiftedMagicCode));
+        for (const magicCodePointStr in this.#magicalTable) {
+            const mappedTo = Number(this.#magicalTable[magicCodePointStr]);
+            const magicInt = parseInt(magicCodePointStr);
+            if (!Number.isSafeInteger(magicInt)) {
+                continue; // it could be ".length" or something else
+            }
+            const magicCodePoint = BigInt(magicInt);
+            const shiftedMagicCode = Number(this.shiftCodePoint(magicCodePoint));
+            if (shiftedMagicCode > values.length) {
+                debugger;
+                throw new Error(`Invalid table size calculated: ${shiftedMagicCode} > ${values.length}; (magicCodePointStr: ${magicCodePointStr})`);
+            }
+            values[shiftedMagicCode] = mappedTo;
+        }
+        return values;
     }
 
     // get magicMask() {
@@ -82,6 +134,9 @@ export class CanonicalComposition {
     // }
 
     get lastMappedBucket() {
+        if (this.hardWrap > 0n) {
+            return this.hardWrap;
+        }
         return this.lastMapped >> this.chunkShift;
     }
 
@@ -106,7 +161,7 @@ export class CanonicalComposition {
     /// Do NOT try to make sense of this algorithm, it's random with no meaning.
     /// Its purpose is only to generate a set of merged values that the merged values
     ///   are unique in the current Unicode composition database.
-    magicMerge(codePoint1, codePoint2) {
+    magicMerge(codePoint1, codePoint2, validate = true) {
         // const merged = ((codePoint1 - (codePoint2 >>> 3)) * codePoint2) & this.magicMask;
         // const merged = Math.floor(((codePoint1 << this.chunkShift) * codePoint2) * this.magicMask / this.lastMagic);
         // const merged = ((codePoint1 * codePoint1) - (codePoint2 * codePoint2)) & this.magicMask;
@@ -160,7 +215,6 @@ export class CanonicalComposition {
         // const merged = scaled;
         // console.log(merged, codePoint1, codePoint2, cp1, cp2, 'scaled:', scaled, x, lastMagic, maxInterleaves, this.magicBucket);
 
-
         const cp1 = (codePoint1 & this.#codePoint1Mask);
         const cp2 = (codePoint2 & this.#codePoint2Mask);
         // const x = (cp1 + (cp1 >>> 2)) * cp2;
@@ -170,9 +224,11 @@ export class CanonicalComposition {
         const x = (interleaveBits(cp1, cp2) & this.#magicFinalMask) - this.#magicFinalCompl;
         // const merged = x;
         const merged = (((x >> this.chunkShift) % this.lastMappedBucket) << this.chunkShift) | (x & this.chunkMask);
-        // console.log(codePoint1, codePoint2, cp1, cp2, x, 'marged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
+        // console.log(codePoint1, codePoint2, cp1, cp2, x, 'merged:', merged, `(${this.#codePoint1Mask}, ${this.#codePoint2Mask})`);
 
-        this.#validateMagicMerge(merged, codePoint1, codePoint2);
+        if (validate) {
+            this.#validateMagicMerge(merged, codePoint1, codePoint2);
+        }
         return merged;
     }
 
@@ -180,11 +236,33 @@ export class CanonicalComposition {
     //     return this.#magicalTable[magicCode];
     // }
 
+    #resetCache () {
+        this.#magicalTable = {
+            length: 0,
+            lastMagicCode: 0n
+        };
+        this.#mergedMagicalValues = [];
+        this.#shiftedMagicalValues = {};
+        this.#lastShiftedMagicCodePoint = -1n;
+    }
+
     #calculateMagicTable() {
+        this.#resetCache();
         for (let codePoint in this.#canonicalCompositions) {
             const [cp1, cp2] = this.#canonicalCompositions[codePoint];
             const magicVal = this.magicMerge(cp1, cp2);
+            if (cp1 !== cp2 && magicVal === this.magicMerge(cp2, cp1, false)) {
+                throw new Error(`Magic merge algorithm error; cp1: ${cp1}, cp2: ${cp2}, merge1: ${magicVal}, merge2: ${this.magicMerge(cp2, cp1)}`);
+            }
             this.#magicalTable[magicVal] = parseInt(codePoint);
+            ++this.#magicalTable.length;
+            if (magicVal > this.#magicalTable.lastMagicCode) {
+                this.#magicalTable.lastMagicCode = magicVal;
+            }
+            const shifted = this.shiftCodePoint(magicVal);
+            if (shifted > this.#lastShiftedMagicCodePoint) {
+                this.#lastShiftedMagicCodePoint = shifted;
+            }
         }
     }
 
@@ -216,15 +294,21 @@ export class CanonicalComposition {
         console.log("Code Point 2 Complement:", this.#codePoint2Compl);
         console.log("Magic Mask:", this.#magicFinalMask);
         console.log("Magic Complement:", this.#magicFinalCompl);
+        console.log("Last Mapped:", this.lastMapped);
     }
 
     async load() {
-        this.#canonicalCompositions = await getCanonicalDecompositions();
-        const maps = await extractedCanonicalDecompositions();
+        const {data, lastMapped} = await getCanonicalDecompositions();
+        this.#canonicalCompositions = data;
+        this.lastMapped = lastMapped;
+        const maps = await extractedCanonicalDecompositions(this.#canonicalCompositions);
         this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
         if (this.shiftCodePoint(this.lastMagic) >= this.lastMappedBucket) {
             throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.shiftCodePoint(this.lastMagic)}) / ${this.lastMappedBucket}`);
         }
+    }
+
+    calculateMagicalTable () {
         this.#calculateMagicTable();
         this.#calculateTopEmptyRanges();
     }
@@ -238,6 +322,30 @@ export class CanonicalComposition {
             return new Uint8Array(0);
         }
         return utf32To8(this.#magicalTable[magicCode]);
+    }
+
+    codePoint(codePoint, invalidCodePoint = 0) {
+        if (this.#magicalTable?.[codePoint] === invalidCodePoint) {
+            throw new Error(`Invalid "invalid code point" specified: table[${codePoint}] == ${this.#magicalTable[codePoint]} == ${invalidCodePoint}`);
+        }
+        return this.#magicalTable?.[codePoint] || invalidCodePoint;
+    }
+
+    table(codePointSTart, length, invalidCodePoint = 0) {
+        const end = codePointSTart + length;
+        let tbl = [];
+        for (let codePoint = codePointSTart; codePoint !== end; ++codePoint) {
+            tbl.push(this.codePoint(codePoint, invalidCodePoint));
+        }
+        return tbl;
+    }
+
+    get magicTable() {
+        return this.#magicalTable;
+    }
+
+    get lastShiftedMagicCode() {
+        return this.#lastShiftedMagicCodePoint;
     }
 
     needsModificationRange(codePointStart, codePointEnd) {

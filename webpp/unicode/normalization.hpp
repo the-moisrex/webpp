@@ -109,6 +109,7 @@
 #include "../std/type_traits.hpp"
 #include "../utils/bits.hpp"
 #include "./details/ccc_tables.hpp"
+#include "./details/composition_tables.hpp"
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
@@ -510,11 +511,6 @@ namespace webpp::unicode {
      */
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr CharT composed(CharT const lhs, CharT const rhs) noexcept {
-        using details::decomp_index;
-        using details::decomp_indices;
-        using details::decomp_values;
-        using details::trailing_mapped_deomps;
-
         if (is_in_range(lhs) && is_in_range(rhs)) {
             auto const hangul = compose_hangul(lhs, rhs);
             if (hangul != 0) {
@@ -522,14 +518,21 @@ namespace webpp::unicode {
             }
 
             // auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
-            auto const magic_code       = 0;
-            auto const magic_code_range = magic_code >> decomp_index::chunk_shift;
-            auto const code             = decomp_indices[magic_code_range];
-            if (code.max_length == 0) {
+            // auto const magic_code_range = magic_code >> decomp_index::chunk_shift;
+            // auto const code             = decomp_indices[magic_code_range];
+            // if (code.max_length == 0) {
+            // return replacement_char<CharT>;
+            // }
+            // auto const pos = code.get_position(magic_code) + (code.max_length - 1);
+            // return unicode::prev_code_point_copy(decomp_values.data() + pos);
+
+            auto const magic_code       = details::composition::magic_merge(lhs, rhs);
+            auto const magic_code_range = magic_code % details::composition::last_mapped_bucket;
+            auto const code             = details::canonical_composition_magic_table[magic_code_range];
+            if (code == 0) {
                 return replacement_char<CharT>;
             }
-            auto const pos = code.get_position(magic_code) + (code.max_length - 1);
-            return unicode::prev_code_point_copy(decomp_values.data() + pos);
+            return static_cast<CharT>(code);
         }
         return replacement_char<CharT>;
     }

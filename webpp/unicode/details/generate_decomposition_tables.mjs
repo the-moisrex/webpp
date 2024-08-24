@@ -34,13 +34,17 @@ import {
     isHangul
 } from "./hangul.mjs";
 import {
-    CanonicalComposition
+    CanonicalComposition, genCompositionModifier
 } from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
 const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
+const embedCodePointCanonical = false;
 const enableMaksField = false;
 
+if (embedCanonical && embedCodePointCanonical) {
+    throw new Error("What are you up to? no, this is not a valid setting.");
+}
 
 const start = async () => {
     await readme.download();
@@ -72,10 +76,10 @@ class DecompTable {
 
     // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
     findMaxLengths({
-        codePointStart,
-        length,
-        data
-    }) {
+                       codePointStart,
+                       length,
+                       data
+                   }) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
             return {
@@ -111,9 +115,16 @@ class DecompTable {
         };
     }
 
+    getCompositionCodePoint({codePointStart}) {
+        if (!embedCodePointCanonical) {
+            return {};
+        }
+        return {composition_code_point: BigInt(this.#canonicalCompositions.codePoint(codePointStart))};
+    }
+
     constructor() {
         const self = this;
-        if (embedCanonical) {
+        if (embedCanonical || embedCodePointCanonical) {
             this.#canonicalCompositions = new CanonicalComposition();
         }
         this.tables.init({
@@ -137,9 +148,9 @@ class DecompTable {
             },
             validateResults: false,
             genIndexAddenda: () => this.genAddenda(),
-
-
-            getModifierAddenda: this.findMaxLengths.bind(this),
+            getModifierAddenda: (meta) => {
+                return {...self.findMaxLengths(meta), ...self.getCompositionCodePoint(meta)};
+            },
 
             dataView(codePointStart, length) {
                 const key = `${codePointStart}-${length}`;
@@ -166,13 +177,11 @@ class DecompTable {
                             mappedTo
                         } = this.data.at(Number(codePoint));
 
-
                         if (mapped) {
                             for (let ith = 0; ith !== Number(maxLength); ++ith) {
                                 values[start + ith] = mappedTo[ith];
                             }
                         }
-
 
                         // adding the composition code point (it's a single code point, but in UTF-8):
                         if (embedCanonical) {
@@ -235,9 +244,9 @@ class DecompTable {
 
             // this gets run just before we add the modifier to the indices table
             modify: ({
-                modifier,
-                inserts
-            }) => {
+                         modifier,
+                         inserts
+                     }) => {
 
                 // flattening the inserts to include only the utf-8 bytes:
                 // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
@@ -263,12 +272,14 @@ class DecompTable {
     }
 
     async load() {
-        if (embedCanonical) {
+        if (embedCanonical || embedCodePointCanonical) {
+            this.#canonicalCompositions.embedCodePointCanonical = embedCodePointCanonical;
             this.#canonicalCompositions.lastMapped = this.lastMapped;
             this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
             this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
             this.#canonicalCompositions.chunkMask = this.tables.chunkMask;
             await this.#canonicalCompositions.load();
+            this.#canonicalCompositions.calculateMagicalTable();
         }
     }
 
@@ -278,12 +289,13 @@ class DecompTable {
             genPositionAddendum(char8_6),
             // enableMaksField ? genMaskAddendum(uint10) : undefined,
             enableMaksField ? genCompactMaskAddendum(uint4) : undefined,
+            embedCodePointCanonical ? genCompositionModifier() : undefined,
 
             // this will affect the chunkSize:
             genMaxLengthAddendum(char8_6),
         ].filter(item => item !== undefined);
         const addenda = new Addenda(name, addendaPack, {
-            modify: function(table, modifier, range, pos) {
+            modify: function (table, modifier, range, pos) {
                 let maskedPos = 0;
                 if (enableMaksField) {
                     maskedPos = this.compact_mask.modify(modifier, {
@@ -358,7 +370,7 @@ class DecompTable {
         `;
             },
             function magicalRender() {
-                if (embedCanonical) {
+                if (embedCanonical || embedCodePointCanonical) {
                     return self.#canonicalCompositions.render();
                 }
                 return "";

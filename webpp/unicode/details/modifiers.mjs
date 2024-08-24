@@ -1,6 +1,6 @@
 import {
-    alignedSymbol,
-    bitOnesOf,
+    alignedSymbol, bitCeil,
+    bitOnesOf, chunked,
     fillBitsFromRight, largestPositionMask,
     maxOf,
     popcount, realSizeOf,
@@ -172,6 +172,8 @@ export class Addenda {
     mask;
     sizeof;
     #chunkSize = NaN;
+    #chunkMask = NaN;
+    #chunkShift = NaN;
     #renderFunctions = [];
     #shifts = {};
 
@@ -185,7 +187,7 @@ export class Addenda {
 
     #modifierFunctions = {};
 
-    constructor(name, addenda, funcs) {
+    constructor(name, addenda, funcs, inpChunkSize = undefined) {
         this.name = name;
         this.addenda = addenda;
         this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0n));
@@ -227,7 +229,10 @@ export class Addenda {
         //     debugger;
         //     throw new Error("Invalid minSize");
         // }
-        this.#chunkSize = fillBitsFromRight(this.minSize) + 1n;
+        const {chunkSize, chunkMask, chunkShift} = chunked(inpChunkSize || this.minSize);
+        this.#chunkSize = chunkSize;
+        this.#chunkMask = chunkMask;
+        this.#chunkShift = chunkShift;
         if (funcs.modify) {
             this.modify = funcs.modify;
         }
@@ -238,8 +243,6 @@ export class Addenda {
             debugger;
             throw new Error("Invalid sizeof");
         }
-
-
     }
 
     #tests() {
@@ -367,7 +370,7 @@ export class Addenda {
                 return addendum.affectsChunkSize(undefined, min);
             }
             return addendum.size;
-        }, NaN);
+        }, NaN) || 16n;
     }
 
     get chunkSize() {
@@ -375,11 +378,11 @@ export class Addenda {
     }
 
     get chunkMask() {
-        return this.#chunkSize - 1n;
+        return this.#chunkMask;
     }
 
     get chunkShift() {
-        return popcount(this.chunkMask);
+        return this.#chunkShift;
     }
 
     /// Generate all possible combinations of the addenda
@@ -398,6 +401,33 @@ export class Addenda {
                 yield mod;
             }
         }
+    }
+
+    /// check if each addendum verifies the insert values or not
+    /// this is to prevent invalid modifiers to be generated.
+    verifyInserts(meta) {
+        for (const addendum of this.addenda) {
+            if (addendum?.verifyInserts?.(meta) === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    optimizeInserts(meta) {
+        let start = 0;
+        let end = meta.inserts.length;
+        for (const addendum of this.addenda) {
+            const res = addendum?.verifyInserts?.(meta);
+            if (res !== undefined) {
+                start = Math.max(start, res.start || start);
+                end = Math.min(end, res.end || end);
+                if (res.valid === false) {
+                    return {valid: false, start, end};
+                }
+            }
+        }
+        return {start, end, valid: true};
     }
 
     renderPlacements() {
@@ -459,18 +489,6 @@ ${this.#renderFunctions.map(func => func()).join("\n\n")}
 
     };
         `;
-    }
-}
-
-export class InvalidModifier {
-    #data;
-
-    constructor(data) {
-        this.#data = data;
-    }
-
-    toString() {
-        return JSON.stringify(this.#data);
     }
 }
 
@@ -758,6 +776,17 @@ export const genShiftAddendum = (type = uint8) => new Addendum({
             yield index;
         }
     },
+    verifyInserts({inserts, dataView, modifier}) {
+        const modifiedInserts = new ModifiedSpan(inserts, modifier);
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                return false;
+            }
+        }
+        return true;
+    },
     modify(modifier, meta) {
         return {...meta, value: modifier.shift + meta.value};
     },
@@ -837,6 +866,11 @@ export const genMaskAddendum = (type = uint8) => new Addendum({
         }
         return true;
     },
+    optimizeInserts({inserts, modifier}) {
+        /// This function compresses the specified range based on the input modifier.
+        /// For example, an array of zeros, with mask of zero, only needs the first element
+        return {end: Math.min(inserts.length, Number(bitCeil(modifier.mask)))};
+    },
     modify(modifier, meta) {
         // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
         // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
@@ -873,6 +907,23 @@ export const genCompactMaskAddendum = (type = uint4) => new Addendum({
 
             yield BigInt(index);
         }
+    },
+    verifyInserts({inserts, dataView, modifier}) {
+        const modifiedInserts = new ModifiedSpan(inserts, modifier);
+        for (let index = 0; index !== inserts.length; ++index) {
+            const realValue = dataView.at(index);
+            const insertValue = modifiedInserts.at(index);
+            if (realValue !== insertValue) {
+                return false;
+            }
+        }
+        return true;
+    },
+    optimizeInserts({inserts, modifier}) {
+        /// This function compresses the specified range based on the input modifier.
+        /// For example, an array of zeros, with mask of zero, only needs the first element
+        const mask = (0b1n << modifier.compact_mask) - 1n;
+        return {end: Math.min(inserts.length, Number(bitCeil(mask)))};
     },
     modify(modifier, meta) {
         const mask = (0b1n << modifier.compact_mask) - 1n;
