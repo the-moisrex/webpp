@@ -49,7 +49,9 @@ namespace webpp::http {
       private:
         using super = common_http_protocol<TraitsType, App>;
 
-        void ctor() noexcept {
+      public:
+        template <typename... Args>
+        explicit cgi(Args&&... args) : super{stl::forward<Args>(args)...} {
             // I'm not using C here; so why should I pay for it!
             // And also the user should not use cin and cout. so ...
             stl::ios::sync_with_stdio(false);
@@ -58,12 +60,6 @@ namespace webpp::http {
             // generally enough to get the big speedup, but the next line removes the synchronization between
             // the C++ input and output buffers which gives a slight more speedup in most cases.
             stl::cin.tie(nullptr);
-        }
-
-      public:
-        template <typename... Args>
-        explicit cgi(Args&&... args) : super{stl::forward<Args>(args)...} {
-            ctor();
         }
 
         /**
