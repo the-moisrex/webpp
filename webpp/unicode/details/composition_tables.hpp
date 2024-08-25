@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_composition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Fri, 23 Aug 2024 08:15:18 GMT
+ *   This file's generation date:        Sun, 25 Aug 2024 07:52:46 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       undefined
- *       - in bytes:      NaN B
- *       - in KibiBytes:  NaN KiB
- *   Some other implementations' total table size was 73.4 KiB;
- *   So I saved NaN KiB and a better a locality.
+ *       - in bits:       14896
+ *       - in bytes:      1862 B
+ *       - in KibiBytes:  2 KiB
+ *   Some other implementations' total table size was 45.2 KiB;
+ *   So I saved 44 KiB and a better a locality.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/

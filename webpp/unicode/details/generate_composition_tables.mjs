@@ -17,7 +17,7 @@ import {
 } from "./utils.mjs";
 import * as path from "node:path";
 import {
-    CanonicalComposition, genCompositionModifier
+    CanonicalComposition
 } from "./composition.mjs";
 import {TablePairs} from "./table.mjs";
 import {
@@ -254,7 +254,11 @@ class CompTable {
     }
 
     get totalValuesSize () {
-        return this.values.length;
+        if (enable2TableMode) {
+            return this.#tables.totalTablesSizeInBits() / 8;
+        } else {
+            return this.values.length;
+        }
     }
 
 
@@ -289,8 +293,9 @@ class CompTable {
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce(table => table.totalValuesSize, 0);
+    const totalBits = tables.reduce((sum, table) => sum + table.totalValuesSize * 8, 0);
     const readmeData = await getReadme();
+    const competitor = (4352 + (67 * 257 * 2 /* 16bit */) + (1883 * 4 /* 32bit */)) / 1024;
     const begContent = `
 /**
  * Attention: 
@@ -305,8 +310,8 @@ const createTableFile = async (tables) => {
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
- *   Some other implementations' total table size was 73.4 KiB;
- *   So I saved ${Math.ceil(73.4 - totalBits / 8 / 1024)} KiB and a better a locality.
+ *   Some other implementations' total table size was ${competitor.toFixed(1)} KiB;
+ *   So I saved ${Math.ceil(competitor - totalBits / 8 / 1024)} KiB and a better a locality.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
