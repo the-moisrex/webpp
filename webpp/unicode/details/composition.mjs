@@ -30,6 +30,7 @@ export class CanonicalComposition {
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
+    #reverseMagicalTable = {};
     #shiftedMagicalValues = {};
     lastMapped = 0n;
     chunkShift = 0n;
@@ -255,6 +256,7 @@ export class CanonicalComposition {
                 throw new Error(`Magic merge algorithm error; cp1: ${cp1}, cp2: ${cp2}, merge1: ${magicVal}, merge2: ${this.magicMerge(cp2, cp1)}`);
             }
             this.#magicalTable[magicVal] = parseInt(codePoint);
+            this.#reverseMagicalTable[magicVal] = [cp1, cp2];
             ++this.#magicalTable.length;
             if (magicVal > this.#magicalTable.lastMagicCode) {
                 this.#magicalTable.lastMagicCode = magicVal;
@@ -346,6 +348,10 @@ export class CanonicalComposition {
 
     get lastShiftedMagicCode() {
         return this.#lastShiftedMagicCodePoint;
+    }
+
+    getCodePointsOf(magicCodePoint, invalidCodePoint = 0) {
+        return this.#reverseMagicalTable?.[magicCodePoint] || [invalidCodePoint, invalidCodePoint];
     }
 
     needsModificationRange(codePointStart, codePointEnd) {

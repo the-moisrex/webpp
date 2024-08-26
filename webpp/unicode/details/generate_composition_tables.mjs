@@ -32,6 +32,8 @@ const enable2TableMode = false;
 const defaultChunkSize = 6; // uintN_t
 const defaultHardWrap = -1n;
 const findTheBest = false;
+const enableMagicCodeComments = true;
+const invalidCodePoint = 0;
 
 const start = async () => {
     await readme.download();
@@ -228,9 +230,19 @@ class CompTable {
             debugger;
             throw new Error(`Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`);
         }
+        const valuesString = Array.from(this.values).map(magicCode => {
+            if (enableMagicCodeComments && magicCode !== invalidCodePoint) {
+                const [cp1, cp2] = this.#canonicalCompositions.getCodePointsOf(magicCode, invalidCodePoint);
+                if (cp1 === cp2 && cp1 === invalidCodePoint) {
+                    return magicCode;
+                }
+                return `/* ${cp1} + ${cp2} = */ ${magicCode}`;
+            }
+            return magicCode;
+        }).join(", ");
         this.#rendered = `
     static constexpr std::array<std::uint32_t, ${this.values.length}ULL> canonical_composition_magic_table {
-        ${this.values.join(", ")}
+        ${valuesString}
     };
         `;
     }
