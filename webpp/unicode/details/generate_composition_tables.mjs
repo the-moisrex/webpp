@@ -230,15 +230,15 @@ class CompTable {
             debugger;
             throw new Error(`Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`);
         }
-        const valuesString = Array.from(this.values).map(magicCode => {
-            if (enableMagicCodeComments && magicCode !== invalidCodePoint) {
-                const [cp1, cp2] = this.#canonicalCompositions.getCodePointsOf(magicCode, invalidCodePoint);
+        const valuesString = Array.from(this.values).map((codePoint, shiftedCode) => {
+            if (enableMagicCodeComments && shiftedCode !== invalidCodePoint) {
+                const [cp1, cp2] = this.#canonicalCompositions.getCodePointsOfShifted(shiftedCode, invalidCodePoint);
                 if (cp1 === cp2 && cp1 === invalidCodePoint) {
-                    return magicCode;
+                    return codePoint;
                 }
-                return `/* ${cp1} + ${cp2} = */ ${magicCode}`;
+                return `/* ${cp1} + ${cp2} = */ ${codePoint}`;
             }
-            return magicCode;
+            return codePoint;
         }).join(", ");
         this.#rendered = `
     static constexpr std::array<std::uint32_t, ${this.values.length}ULL> canonical_composition_magic_table {
