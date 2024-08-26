@@ -31,7 +31,7 @@ const outFile = `composition_tables.hpp`;
 const enable2TableMode = false;
 const defaultChunkSize = 6; // uintN_t
 const defaultHardWrap = -1n;
-const findTheBest = false;
+const findTheBest = true;
 const enableMagicCodeComments = true;
 const invalidCodePoint = 0;
 
@@ -131,6 +131,7 @@ class CompTable {
 
     async load() {
         this.#canonicalCompositions.embedCodePointCanonical = !enable2TableMode;
+        this.#canonicalCompositions.noShiftReplacement = !enable2TableMode;
         this.reset(defaultChunkSize);
         await this.#canonicalCompositions.load();
     }
@@ -141,7 +142,7 @@ class CompTable {
         this.#canonicalCompositions.chunkSize = chunkSize;
         this.#canonicalCompositions.chunkMask = chunkMask;
         this.#canonicalCompositions.hardWrap = hardWrap;
-        this.#canonicalCompositions.calculateMagicalTable();
+        this.#canonicalCompositions.calculateMagicalTable(invalidCodePoint);
     }
 
     fillTable () {
@@ -189,7 +190,7 @@ class CompTable {
         }
         if (findTheBest) {
             for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
-                for (let hardWrap = -1n; hardWrap <= 1000n; hardWrap += 1n) {
+                for (let hardWrap = -1n; hardWrap <= 10000n; hardWrap += 1n) {
                     tryIt(chunkSize, hardWrap);
                 }
             }

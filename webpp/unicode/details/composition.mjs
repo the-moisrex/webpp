@@ -27,6 +27,7 @@ export class CanonicalComposition {
 
 
     embedCodePointCanonical = false;
+    noShiftReplacement = false;
 
     #canonicalCompositions = {};
     #mergedMagicalValues = [];
@@ -86,6 +87,10 @@ export class CanonicalComposition {
 
         this.#mergedMagicalValues.push(magicCode);
         this.#shiftedMagicalValues[shifted].push(this.remaining(magicCode));
+
+        if (this.noShiftReplacement && this.#shiftedMagicalValues[shifted].length > 1) {
+            throw new Error(`Shift replacement: (${cp1} + ${cp2} = ${magicCode})`);
+        }
     }
 
     /// The shifting algorithm:
@@ -251,7 +256,7 @@ export class CanonicalComposition {
         this.#lastShiftedMagicCodePoint = -1n;
     }
 
-    #calculateMagicTable() {
+    #calculateMagicTable(invalidCodePoint = 0) {
         this.#resetCache();
         for (let codePoint in this.#canonicalCompositions) {
             const [cp1, cp2] = this.#canonicalCompositions[codePoint];
@@ -259,15 +264,19 @@ export class CanonicalComposition {
             if (cp1 !== cp2 && magicVal === this.magicMerge(cp2, cp1, false)) {
                 throw new Error(`Magic merge algorithm error; cp1: ${cp1}, cp2: ${cp2}, merge1: ${magicVal}, merge2: ${this.magicMerge(cp2, cp1)}`);
             }
+            const shifted = Number(this.shiftCodePoint(magicVal));
+            if (shifted in this.#reversedShiftedTable) {
+                throw new Error(`Shifted magic code point is being replaced: ${shifted} (${cp1} + ${cp2} = ${magicVal}) (replacing: ${this.#reversedShiftedTable[shifted]})`);
+            }
+
             this.#magicalTable[magicVal] = parseInt(codePoint);
             this.#reverseMagicalTable[magicVal] = [cp1, cp2];
-            const shiftedMagicCode = Number(this.shiftCodePoint(magicVal));
-            this.#reversedShiftedTable[shiftedMagicCode] = [cp1, cp2];
+            this.#reversedShiftedTable[shifted] = [cp1, cp2];
             ++this.#magicalTable.length;
+
             if (magicVal > this.#magicalTable.lastMagicCode) {
                 this.#magicalTable.lastMagicCode = magicVal;
             }
-            const shifted = this.shiftCodePoint(magicVal);
             if (shifted > this.#lastShiftedMagicCodePoint) {
                 this.#lastShiftedMagicCodePoint = shifted;
             }
@@ -316,8 +325,8 @@ export class CanonicalComposition {
         }
     }
 
-    calculateMagicalTable () {
-        this.#calculateMagicTable();
+    calculateMagicalTable (invalidCodePoint = 0) {
+        this.#calculateMagicTable(invalidCodePoint);
         this.#calculateTopEmptyRanges();
     }
 

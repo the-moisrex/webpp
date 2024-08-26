@@ -41,6 +41,7 @@ const outFile = `decomposition_tables.hpp`;
 const embedCanonical = false; // a chance to disable hiding Canonical Compositions in between Decompositions
 const embedCodePointCanonical = false;
 const enableMaksField = false;
+const invalidCodePoint = 0;
 
 if (embedCanonical && embedCodePointCanonical) {
     throw new Error("What are you up to? no, this is not a valid setting.");
@@ -279,7 +280,7 @@ class DecompTable {
             this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
             this.#canonicalCompositions.chunkMask = this.tables.chunkMask;
             await this.#canonicalCompositions.load();
-            this.#canonicalCompositions.calculateMagicalTable();
+            this.#canonicalCompositions.calculateMagicalTable(invalidCodePoint);
         }
     }
 
