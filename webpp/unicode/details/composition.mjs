@@ -108,8 +108,11 @@ export class CanonicalComposition {
     }
 
     /// generate a table of mappedTo code points where the magic code points say they should be
-    getCodePointTable() {
+    getCodePointTable(invalidCodePoint = 0) {
         const values = new Uint32Array(Number(this.lastShiftedMagicCode));
+        if (invalidCodePoint !== 0) {
+            values.fill(invalidCodePoint);
+        }
         for (const magicCodePointStr in this.#magicalTable) {
             const mappedTo = Number(this.#magicalTable[magicCodePointStr]);
             const magicInt = parseInt(magicCodePointStr);

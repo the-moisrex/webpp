@@ -165,7 +165,7 @@ class CompTable {
             try {
                 this.reset(chunkSize, hardWrap);
                 const table = {...this.#canonicalCompositions.magicTable};
-                const values = this.#canonicalCompositions.getCodePointTable();
+                const values = this.#canonicalCompositions.getCodePointTable(invalidCodePoint);
                 history.push({
                     chunkSize,
                     hardWrap,
@@ -225,7 +225,7 @@ class CompTable {
     #renderTable(magicalTable) {
         this.#type = symbolOf(magicalTable.chunkSize);
         this.#size = realSizeOf(this.#type);
-        this.values = this.#canonicalCompositions.getCodePointTable();
+        this.values = this.#canonicalCompositions.getCodePointTable(invalidCodePoint);
         if (this.values.length !== Number(magicalTable.lastShiftedMagicCodePoint)) {
             debugger;
             throw new Error(`Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`);
