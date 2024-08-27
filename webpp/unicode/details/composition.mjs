@@ -1,9 +1,11 @@
 import {extractedCanonicalDecompositions, getCanonicalDecompositions} from "./UnicodeData.mjs";
 import {
+    alignedSymbol,
+    findComplements,
     findSmallestComplement,
     findSmallestMask,
     findTopLongestZeroRanges,
-    interleaveBits, uint32,
+    interleaveBits, maskFinder, uint32,
     utf32To8
 } from "./utils.mjs";
 import {Addendum} from "./modifiers.mjs";
@@ -99,6 +101,7 @@ export class CanonicalComposition {
 
         // this should work, but somehow it creates a bigger magical table:
         if (this.embedCodePointCanonical) {
+            // return codePoint % this.lastMappedBucket + BigInt(Math.floor(Number(codePoint / this.lastMappedBucket)));
             return codePoint % this.lastMappedBucket;
         }
 
@@ -287,23 +290,76 @@ export class CanonicalComposition {
         this.#topEmptyRanges = findTopLongestZeroRanges(this.#magicalTable);
     }
 
-    #calculateCodePointMasks(firstArray, secondArray) {
-        this.#codePoint1Mask = findSmallestMask(firstArray);
-        this.#codePoint2Mask = findSmallestMask(secondArray);
-        this.#codePoint1Compl = findSmallestComplement(firstArray.map(item => item & this.#codePoint1Mask));
-        this.#codePoint2Compl = findSmallestComplement(secondArray.map(item => item & this.#codePoint2Mask));
+    #mapsTo = {mappedToFirst: [], mappedToSecond: []};
+    #cp1MaskGenerator = null;
+    #cp2MaskGenerator = null;
+    #finalMaskGenerator = null;
+    #cp1ComplGenerator = null;
+    #cp2ComplGenerator = null;
+    #finalComplGenerator = null;
 
-        let maps = [];
-        for (const codePoint in this.#canonicalCompositions) {
-            let [cp1, cp2] = this.#canonicalCompositions[codePoint];
-            cp1 &= this.#codePoint1Mask;
-            // cp1 -= this.#codePoint1Compl;
-            cp2 &= this.#codePoint2Mask;
-            // cp2 -= this.#codePoint2Compl;
-            maps.push(interleaveBits(cp1, cp2));
+    #changeIndex = 0;
+    #isDone = 0;
+
+    #nextIterationOf(generator, defaultValue, restart, index = 0, force = true) {
+        if (generator === null || generator === undefined) {
+            generator = restart();
         }
-        this.#magicFinalMask = findSmallestMask(maps);
-        this.#magicFinalCompl = findSmallestComplement(maps.map(cp => cp & this.#magicFinalMask));
+        if (force) {
+            return defaultValue;
+        }
+        if (this.#changeIndex % 6 === index) {
+            ++this.#changeIndex;
+            console.log(`Try number #${this.#changeIndex} for ${index} (0b${this.#isDone.toString(2)})`);
+            const value = generator?.next()?.value;
+            if (value === undefined || value === null) {
+                generator = restart();
+                this.#isDone |= 0b1 << index;
+                return generator.next().value;
+            }
+            return value;
+        }
+        return defaultValue;
+    }
+
+    #calculateCodePointMasks(force = true) {
+        invalidMasks: for (;;) {
+            this.#codePoint1Mask = this.#nextIterationOf(this.#cp1MaskGenerator, this.#codePoint1Mask, () => {
+                return this.#cp1MaskGenerator = maskFinder(this.#mapsTo.mappedToFirst);
+            }, 0, force);
+            this.#codePoint2Mask = this.#nextIterationOf(this.#cp2MaskGenerator, this.#codePoint2Mask, () => {
+                return this.#cp2MaskGenerator = maskFinder(this.#mapsTo.mappedToSecond);
+            }, 1, force);
+            this.#codePoint1Compl = this.#nextIterationOf(this.#cp1ComplGenerator, this.#codePoint1Compl, () => {
+                return this.#cp1ComplGenerator = findComplements(this.#mapsTo.mappedToFirst.map(item => item & this.#codePoint1Mask));
+            }, 2, force);
+            this.#codePoint2Compl = this.#nextIterationOf(this.#cp2ComplGenerator, this.#codePoint2Compl, () => {
+                return this.#cp2ComplGenerator = findComplements(this.#mapsTo.mappedToSecond.map(item => item & this.#codePoint2Mask));
+            }, 3, force);
+
+            let maps = [];
+            for (const codePoint in this.#canonicalCompositions) {
+                let [cp1, cp2] = this.#canonicalCompositions[codePoint];
+                cp1 &= this.#codePoint1Mask;
+                // cp1 -= this.#codePoint1Compl;
+                cp2 &= this.#codePoint2Mask;
+                // cp2 -= this.#codePoint2Compl;
+                if (cp1 >= 65536n || cp2 >= 65536n) {
+                    ++this.#changeIndex;
+                    console.log(`Invalid Mask found: ${cp1} ${cp2}`)
+                    continue invalidMasks;
+                }
+                maps.push(interleaveBits(cp1, cp2));
+            }
+            this.#magicFinalMask = this.#nextIterationOf(this.#finalMaskGenerator, this.#magicFinalMask, () => {
+                return this.#finalMaskGenerator = maskFinder(maps);
+            }, 4, force);
+            this.#magicFinalCompl = this.#nextIterationOf(this.#finalComplGenerator, this.#magicFinalCompl, () => {
+                return this.#finalComplGenerator = findComplements(maps.map(cp => cp & this.#magicFinalMask));
+            }, 5, force);
+
+            break;
+        }
 
         console.log("Code Point 1 Mask:", this.#codePoint1Mask);
         console.log("Code Point 1 Complement:", this.#codePoint1Compl);
@@ -314,12 +370,29 @@ export class CanonicalComposition {
         console.log("Last Mapped:", this.lastMapped);
     }
 
+    nextAlgorithm() {
+        this.#calculateCodePointMasks(false);
+        return this.#isDone !== 0b111111;
+    }
+
+    resetAlgorithm() {
+        this.#cp1MaskGenerator = null;
+        this.#cp2MaskGenerator = null;
+        this.#finalMaskGenerator = null;
+        this.#cp1ComplGenerator = null;
+        this.#cp2ComplGenerator = null;
+        this.#finalComplGenerator = null;
+
+        this.#changeIndex = 0;
+        this.#isDone = 0;
+    }
+
     async load() {
         const {data, lastMapped} = await getCanonicalDecompositions();
         this.#canonicalCompositions = data;
         this.lastMapped = lastMapped;
-        const maps = await extractedCanonicalDecompositions(this.#canonicalCompositions);
-        this.#calculateCodePointMasks(maps.mappedToFirst, maps.mappedToSecond);
+        this.#mapsTo = await extractedCanonicalDecompositions(this.#canonicalCompositions);
+        this.#calculateCodePointMasks();
         if (this.shiftCodePoint(this.lastMagic) >= this.lastMappedBucket) {
             throw new Error(`Out of range last magic code point: ${this.lastMagic} (shifted: ${this.shiftCodePoint(this.lastMagic)}) / ${this.lastMappedBucket}`);
         }

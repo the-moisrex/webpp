@@ -851,8 +851,9 @@ const MortonTable256 = [
 ];
 export const interleaveBits = (x, y) => {
     // x and y must initially be less than 65536.
-    assert.ok(x < 65536n, `x == ${x}`);
-    assert.ok(y < 65536n, `y == ${y}`);
+    if (x >= 65536n || y >= 65536n) {
+        throw new Error(`Too big: ${x} ${y}`);
+    }
     return MortonTable256[y >> 8n] << 17n |
         MortonTable256[x >> 8n] << 16n |
         MortonTable256[y & 0xFFn] << 1n |
@@ -892,8 +893,15 @@ export const findSmallestXor = (arr) => {
     return findSmallest(arr, (val, mask) => val ^ mask).next().value;
 };
 
+export function* findComplements (arr) {
+    const sorted = arr.toSorted((a, b) => Number(a - b));
+    for (const item in sorted) {
+        yield sorted[item];
+    }
+}
+
 export const findSmallestComplement = (arr) => {
-    return arr.toSorted((a, b) => Number(a - b))[0];
+    return findComplements(arr).next().value;
 };
 
 export const hasDuplicates = (arr) => {

@@ -34,6 +34,7 @@ const defaultHardWrap = -1n;
 const findTheBest = true;
 const enableMagicCodeComments = true;
 const invalidCodePoint = 0;
+const tryOtherMasksAndCompls = false;
 
 const start = async () => {
     await readme.download();
@@ -180,7 +181,7 @@ class CompTable {
                 });
                 console.log(`Valid chunk size: ${chunkSize}-${hardWrap}`);
             } catch (error) {
-                console.log(`Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`);
+                // console.log(`Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`);
                 errors.push({
                     chunkSize,
                     hardWrap,
@@ -189,9 +190,16 @@ class CompTable {
             }
         }
         if (findTheBest) {
-            for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
-                for (let hardWrap = -1n; hardWrap <= 10000n; hardWrap += 1n) {
-                    tryIt(chunkSize, hardWrap);
+            this.#canonicalCompositions.resetAlgorithm();
+            for (;;) {
+                for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
+                    for (let hardWrap = -1n; hardWrap <= 1000n; hardWrap += 1n) {
+                        tryIt(chunkSize, hardWrap);
+                    }
+                }
+                if (!tryOtherMasksAndCompls || !this.#canonicalCompositions.nextAlgorithm()) {
+                    console.log("We're almost done with optimizing.");
+                    break;
                 }
             }
         } else {
