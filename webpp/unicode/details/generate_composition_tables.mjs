@@ -5,27 +5,22 @@
  *   https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
  */
 
+import * as path from "node:path";
+import { CanonicalComposition } from "./composition.mjs";
+import { isHangul } from "./hangul.mjs";
+import { Addenda, genPositionAddendum, staticFields } from "./modifiers.mjs";
 import * as readme from "./readme.mjs";
-import {
-    getReadme
-} from "./readme.mjs";
+import { getReadme } from "./readme.mjs";
+import { TablePairs } from "./table.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    chunked, realSizeOf,
-    runClangFormat, symbolOf, uint32,
-    writePieces
+    chunked,
+    realSizeOf,
+    runClangFormat,
+    symbolOf,
+    uint32,
+    writePieces,
 } from "./utils.mjs";
-import * as path from "node:path";
-import {
-    CanonicalComposition
-} from "./composition.mjs";
-import {TablePairs} from "./table.mjs";
-import {
-    Addenda,
-    genPositionAddendum,
-    staticFields
-} from "./modifiers.mjs";
-import {isHangul} from "./hangul.mjs";
 
 const outFile = `composition_tables.hpp`;
 const enable2TableMode = false;
@@ -46,16 +41,18 @@ const start = async () => {
         compTables.fillTable();
         compTables.process();
     } else {
-        await UnicodeData.parse(compTables, UnicodeData.properties.decompositionType);
+        await UnicodeData.parse(
+            compTables,
+            UnicodeData.properties.decompositionType,
+        );
         await compTables.load();
         compTables.optimize();
     }
     await createTableFile([compTables]);
-    console.log('Done.');
+    console.log("Done.");
 };
 
 class CompTable {
-
     // these numbers are educated guesses from other projects, they're not that important!
     #canonicalCompositions = null;
     #tables = new TablePairs();
@@ -63,7 +60,7 @@ class CompTable {
 
     lastMapped = 0n;
 
-    get lastMappedBucket () {
+    get lastMappedBucket() {
         return this.lastMapped >> this.#tables.chunkShift;
     }
 
@@ -93,18 +90,23 @@ class CompTable {
     }
     genAddenda = () => {
         const name = "index";
-        const addendaPack = [
-            genPositionAddendum(uint32),
-        ].filter(item => item !== undefined);
-        const addenda = new Addenda(name, addendaPack,{
-            modify: function (table, modifier, range, pos) {
-                const newPos = Number(range + pos);
-                if (newPos >= Number(table.length)) {
-                    return null;
-                }
-                return table.at(newPos);
-            }
-        }, defaultChunkSize);
+        const addendaPack = [genPositionAddendum(uint32)].filter(
+            (item) => item !== undefined,
+        );
+        const addenda = new Addenda(
+            name,
+            addendaPack,
+            {
+                modify: function (table, modifier, range, pos) {
+                    const newPos = Number(range + pos);
+                    if (newPos >= Number(table.length)) {
+                        return null;
+                    }
+                    return table.at(newPos);
+                },
+            },
+            defaultChunkSize,
+        );
         const self = this;
         addenda.renderFunctions = [
             staticFields,
@@ -125,7 +127,7 @@ class CompTable {
             },
             function magicalRender() {
                 return self.#canonicalCompositions.render();
-            }
+            },
         ];
         return addenda;
     };
@@ -137,8 +139,8 @@ class CompTable {
         await this.#canonicalCompositions.load();
     }
 
-    reset (size, hardWrap = -1n) {
-        const {chunkSize, chunkMask, chunkShift} = chunked(size);
+    reset(size, hardWrap = -1n) {
+        const { chunkSize, chunkMask, chunkShift } = chunked(size);
         this.#canonicalCompositions.chunkShift = chunkShift;
         this.#canonicalCompositions.chunkSize = chunkSize;
         this.#canonicalCompositions.chunkMask = chunkMask;
@@ -146,7 +148,7 @@ class CompTable {
         this.#canonicalCompositions.calculateMagicalTable(invalidCodePoint);
     }
 
-    fillTable () {
+    fillTable() {
         this.reset(defaultChunkSize);
         if (enable2TableMode) {
             for (let magicCodeStr in this.#canonicalCompositions.magicTable) {
@@ -154,20 +156,24 @@ class CompTable {
                 if (isNaN(magicCode)) {
                     continue;
                 }
-                const mappedTo = this.#canonicalCompositions.magicTable[magicCode];
+                const mappedTo =
+                    this.#canonicalCompositions.magicTable[magicCode];
                 this.add(magicCode, mappedTo);
             }
         }
     }
 
-    optimize () {
+    optimize() {
         let history = [];
         let errors = [];
         const tryIt = (chunkSize, hardWrap = -1n) => {
             try {
                 this.reset(chunkSize, hardWrap);
-                const table = {...this.#canonicalCompositions.magicTable};
-                const values = this.#canonicalCompositions.getCodePointTable(invalidCodePoint);
+                const table = { ...this.#canonicalCompositions.magicTable };
+                const values =
+                    this.#canonicalCompositions.getCodePointTable(
+                        invalidCodePoint,
+                    );
                 history.push({
                     chunkSize,
                     hardWrap,
@@ -176,28 +182,41 @@ class CompTable {
                     tableLength: table.length,
                     tableLastMagicCode: table.lastMagicCode,
                     lastMapped: this.#canonicalCompositions.lastMapped,
-                    lastMappedBucket: this.#canonicalCompositions.lastMappedBucket,
-                    lastShiftedMagicCodePoint: this.#canonicalCompositions.lastShiftedMagicCode,
+                    lastMappedBucket:
+                        this.#canonicalCompositions.lastMappedBucket,
+                    lastShiftedMagicCodePoint:
+                        this.#canonicalCompositions.lastShiftedMagicCode,
                 });
                 console.log(`Valid chunk size: ${chunkSize}-${hardWrap}`);
             } catch (error) {
-                // console.log(`Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`);
-                errors.push({
-                    chunkSize,
-                    hardWrap,
-                    error,
-                });
+                if (tryOtherMasksAndCompls) {
+                    console.log(
+                        `Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`,
+                    );
+                    errors.push({
+                        chunkSize,
+                        hardWrap,
+                        error,
+                    });
+                }
             }
-        }
+        };
         if (findTheBest) {
             this.#canonicalCompositions.resetAlgorithm();
             for (;;) {
                 for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
-                    for (let hardWrap = -1n; hardWrap <= 1000n; hardWrap += 1n) {
+                    for (
+                        let hardWrap = -1n;
+                        hardWrap <= 10000n;
+                        hardWrap += 1n
+                    ) {
                         tryIt(chunkSize, hardWrap);
                     }
                 }
-                if (!tryOtherMasksAndCompls || !this.#canonicalCompositions.nextAlgorithm()) {
+                if (
+                    !tryOtherMasksAndCompls ||
+                    !this.#canonicalCompositions.nextAlgorithm()
+                ) {
                     console.log("We're almost done with optimizing.");
                     break;
                 }
@@ -205,9 +224,13 @@ class CompTable {
         } else {
             tryIt(defaultChunkSize, defaultHardWrap);
         }
-        const best = history.toSorted((a, b) => Number(a.lastShiftedMagicCodePoint) - Number(b.lastShiftedMagicCodePoint))[0];
-        const prettyPrinter = inp_info => {
-            const info = {...inp_info};
+        const best = history.toSorted(
+            (a, b) =>
+                Number(a.lastShiftedMagicCodePoint) -
+                Number(b.lastShiftedMagicCodePoint),
+        )[0];
+        const prettyPrinter = (inp_info) => {
+            const info = { ...inp_info };
             delete info.magicTable;
             return info;
         };
@@ -234,21 +257,36 @@ class CompTable {
     #renderTable(magicalTable) {
         this.#type = symbolOf(magicalTable.chunkSize);
         this.#size = realSizeOf(this.#type);
-        this.values = this.#canonicalCompositions.getCodePointTable(invalidCodePoint);
-        if (this.values.length !== Number(magicalTable.lastShiftedMagicCodePoint)) {
+        this.values =
+            this.#canonicalCompositions.getCodePointTable(invalidCodePoint);
+        if (
+            this.values.length !==
+            Number(magicalTable.lastShiftedMagicCodePoint)
+        ) {
             debugger;
-            throw new Error(`Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`);
+            throw new Error(
+                `Something went wrong with the table size; (values len: ${this.values.length}) (last shifted: ${magicalTable.lastShiftedMagicCodePoint}) table: ${this.values}`,
+            );
         }
-        const valuesString = Array.from(this.values).map((codePoint, shiftedCode) => {
-            if (enableMagicCodeComments && shiftedCode !== invalidCodePoint) {
-                const [cp1, cp2] = this.#canonicalCompositions.getCodePointsOfShifted(shiftedCode, invalidCodePoint);
-                if (cp1 === cp2 && cp1 === invalidCodePoint) {
-                    return codePoint;
+        const valuesString = Array.from(this.values)
+            .map((codePoint, shiftedMagicCode) => {
+                if (
+                    enableMagicCodeComments &&
+                    shiftedMagicCode !== invalidCodePoint
+                ) {
+                    const [cp1, cp2] =
+                        this.#canonicalCompositions.getCodePointsOfShifted(
+                            shiftedMagicCode,
+                            invalidCodePoint,
+                        );
+                    if (cp1 === cp2 && cp1 === invalidCodePoint) {
+                        return codePoint;
+                    }
+                    return `/* ${cp1} + ${cp2} = */ ${codePoint}`;
                 }
-                return `/* ${cp1} + ${cp2} = */ ${codePoint}`;
-            }
-            return codePoint;
-        }).join(", ");
+                return codePoint;
+            })
+            .join(", ");
         this.#rendered = `
     static constexpr std::array<std::uint32_t, ${this.values.length}ULL> canonical_composition_magic_table {
         ${valuesString}
@@ -256,7 +294,7 @@ class CompTable {
         `;
     }
 
-    render () {
+    render() {
         if (!enable2TableMode) {
             return this.processRendered(this.#rendered);
         } else {
@@ -274,14 +312,13 @@ class CompTable {
         `;
     }
 
-    get totalValuesSize () {
+    get totalValuesSize() {
         if (enable2TableMode) {
             return this.#tables.totalTablesSizeInBits() / 8;
         } else {
             return this.values.length;
         }
     }
-
 
     /// proxy the function
     process() {
@@ -291,9 +328,7 @@ class CompTable {
     }
 
     add(codePoint, value) {
-        let {
-            mapped,
-        } = value;
+        let { mapped } = value;
 
         // ignore Hangul code points, they're handled algorithmically
         if (isHangul(codePoint)) {
@@ -305,29 +340,34 @@ class CompTable {
         // calculating the last item that it's value is zero
         if (mapped) {
             // find the end of the batch, not just the last item
-            this.lastMapped = (((codePoint + 1n) >> this.#tables.chunkShift) + 1n) << this.#tables.chunkShift;
+            this.lastMapped =
+                (((codePoint + 1n) >> this.#tables.chunkShift) + 1n) <<
+                this.#tables.chunkShift;
         }
 
         this.#tables.add(codePoint, value);
     }
-
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce((sum, table) => sum + table.totalValuesSize * 8, 0);
+    const totalBits = tables.reduce(
+        (sum, table) => sum + table.totalValuesSize * 8,
+        0,
+    );
     const readmeData = await getReadme();
-    const competitor = (4352 + (67 * 257 * 2 /* 16bit */) + (1883 * 4 /* 32bit */)) / 1024;
+    const competitor =
+        (4352 + 67 * 257 * 2 /* 16bit */ + 1883 * 4) /* 32bit */ / 1024;
     const begContent = `
 /**
- * Attention: 
+ * Attention:
  *   Auto-generated file, don't modify this file; use the mentioned file below
  *   to re-generate this file with different options.
- * 
+ *
  *   Auto generated from:                ${path.basename(new URL(import.meta.url).pathname)}
  *   Unicode UCD Database Creation Date: ${readmeData.date}
  *   This file's generation date:        ${new Date().toUTCString()}
  *   Unicode Version:                    ${readmeData.version}
- *   Total Table sizes in this file:     
+ *   Total Table sizes in this file:
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
@@ -346,7 +386,7 @@ const createTableFile = async (tables) => {
  *   Decomposition Mapping syntax used in the UCD Database:
  *       https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
  */
- 
+
 #ifndef WEBPP_UNICODE_COMPOSITION_TABLES_HPP
 #define WEBPP_UNICODE_COMPOSITION_TABLES_HPP
 
@@ -360,7 +400,7 @@ namespace webpp::unicode::details {
 `;
 
     const endContent = `
-    
+
 } // namespace webpp::unicode::details
 
 #endif // WEBPP_UNICODE_COMPOSITION_TABLES_HPP

@@ -1,14 +1,15 @@
 import {
     cleanComments,
     downloadFile,
+    noop,
+    parseCodePointRange,
     splitLine,
     updateProgressBar,
-    noop,
-    parseCodePointRange
 } from "./utils.mjs";
 
-export const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/DerivedNormalizationProps.txt';
-export const cacheFilePath = 'DerivedNormalizationProps.txt';
+export const fileUrl =
+    "https://www.unicode.org/Public/UCD/latest/ucd/DerivedNormalizationProps.txt";
+export const cacheFilePath = "DerivedNormalizationProps.txt";
 
 export const download = async (callback = noop) => {
     // database file
@@ -16,7 +17,6 @@ export const download = async (callback = noop) => {
         await callback(fileContent);
     });
 };
-
 
 export const parse = async (table, fileContent = undefined) => {
     if (fileContent === undefined) {
@@ -26,13 +26,20 @@ export const parse = async (table, fileContent = undefined) => {
         }
     }
 
-    const lines = fileContent.split('\n');
+    const lines = fileContent.split("\n");
 
     let lastCodePoint = 0;
     const action = (meta) => {
         const codePointStr = meta.codePointStr;
-        const [codePointStart, codePointEnd] = parseCodePointRange(codePointStr, lastCodePoint);
-        for (let curCodePoint = codePointStart; curCodePoint <= codePointEnd; ++curCodePoint) {
+        const [codePointStart, codePointEnd] = parseCodePointRange(
+            codePointStr,
+            lastCodePoint,
+        );
+        for (
+            let curCodePoint = codePointStart;
+            curCodePoint <= codePointEnd;
+            ++curCodePoint
+        ) {
             table.add(curCodePoint, meta);
         }
         lastCodePoint = codePointEnd + 1;
@@ -48,17 +55,17 @@ export const parse = async (table, fileContent = undefined) => {
 
         // https://www.unicode.org/reports/tr44/#DerivedNormalizationProps.txt
         const [
-            codePointStr,            // #0
+            codePointStr, // #0
             normalizationForm,
-            mappedTo
+            mappedTo,
         ] = splitLine(line);
 
-        updateProgressBar(index / lines.length * 100);
+        updateProgressBar((index / lines.length) * 100);
 
         action({
             codePointStr,
             normalizationForm,
-            mappedTo
+            mappedTo,
         });
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
@@ -68,10 +75,7 @@ export const getCompositionExclusions = async () => {
     class GetTable {
         #data = [];
 
-        add(codePoint, {
-            normalizationForm,
-            mappedTo
-        }) {
+        add(codePoint, { normalizationForm, mappedTo }) {
             if (normalizationForm === "Full_Composition_Exclusion") {
                 this.#data.push(codePoint);
             }

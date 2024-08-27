@@ -1,40 +1,39 @@
-import {promises as fs} from 'fs';
-import * as process from "node:process";
+import { promises as fs } from "fs";
 import * as assert from "node:assert";
 import child_process from "node:child_process";
+import * as process from "node:process";
 
+export const char1 = Symbol("char");
+export const char2 = Symbol("char");
+export const char3 = Symbol("char");
+export const char4 = Symbol("char");
+export const char5 = Symbol("char");
+export const char6 = Symbol("char");
+export const char7 = Symbol("char");
+export const char8 = Symbol("char");
+export const char8_1 = Symbol("char8_t");
+export const char8_2 = Symbol("char8_t");
+export const char8_3 = Symbol("char8_t");
+export const char8_4 = Symbol("char8_t");
+export const char8_5 = Symbol("char8_t");
+export const char8_6 = Symbol("char8_t");
+export const char8_7 = Symbol("char8_t");
+export const char8_8 = Symbol("char8_t");
+export const uint4 = Symbol("std::uint8_t");
+export const uint5 = Symbol("std::uint8_t");
+export const uint6 = Symbol("std::uint8_t");
+export const uint7 = Symbol("std::uint8_t");
+export const uint8 = Symbol("std::uint8_t");
+export const uint9 = Symbol("std::uint16_t");
+export const uint10 = Symbol("std::uint16_t");
+export const uint11 = Symbol("std::uint16_t");
+export const uint12 = Symbol("std::uint16_t");
+export const uint16 = Symbol("std::uint16_t");
+export const uint8x2 = Symbol("std::uint8_t");
+export const uint32 = Symbol("std::uint32_t");
+export const uint64 = Symbol("std::uint64_t");
 
-export const char1 = Symbol('char');
-export const char2 = Symbol('char');
-export const char3 = Symbol('char');
-export const char4 = Symbol('char');
-export const char5 = Symbol('char');
-export const char6 = Symbol('char');
-export const char7 = Symbol('char');
-export const char8 = Symbol('char');
-export const char8_1 = Symbol('char8_t');
-export const char8_2 = Symbol('char8_t');
-export const char8_3 = Symbol('char8_t');
-export const char8_4 = Symbol('char8_t');
-export const char8_5 = Symbol('char8_t');
-export const char8_6 = Symbol('char8_t');
-export const char8_7 = Symbol('char8_t');
-export const char8_8 = Symbol('char8_t');
-export const uint4 = Symbol('std::uint8_t');
-export const uint5 = Symbol('std::uint8_t');
-export const uint6 = Symbol('std::uint8_t');
-export const uint7 = Symbol('std::uint8_t');
-export const uint8 = Symbol('std::uint8_t');
-export const uint9 = Symbol('std::uint16_t');
-export const uint10 = Symbol('std::uint16_t');
-export const uint11 = Symbol('std::uint16_t');
-export const uint12 = Symbol('std::uint16_t');
-export const uint16 = Symbol('std::uint16_t');
-export const uint8x2 = Symbol('std::uint8_t');
-export const uint32 = Symbol('std::uint32_t');
-export const uint64 = Symbol('std::uint64_t');
-
-export const realSizeOf = symbol => {
+export const realSizeOf = (symbol) => {
     switch (symbol) {
         case char8_1:
         case char8_2:
@@ -73,7 +72,7 @@ export const realSizeOf = symbol => {
     throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
 };
 
-export const isStringType = symbol => {
+export const isStringType = (symbol) => {
     switch (symbol) {
         case char8_1:
         case char8_2:
@@ -97,7 +96,7 @@ export const isStringType = symbol => {
     }
 };
 
-export const stringPrefixOf = symbol => {
+export const stringPrefixOf = (symbol) => {
     switch (symbol) {
         case char8_1:
         case char8_2:
@@ -117,15 +116,15 @@ function toHexString(char) {
     // random decision, I know both are okay
     if (char <= 0o77) {
         return `\\${char.toString(8)}`;
-    } else if (char <= 0xFF) {
-        return '\\x' + char.toString(16);
+    } else if (char <= 0xff) {
+        return "\\x" + char.toString(16);
     } else {
-        return '\\u' + char.toString(16).padStart(4, '0');
+        return "\\u" + char.toString(16).padStart(4, "0");
     }
 }
 
 export const cppValueOf = (value, symbol) => {
-    if (typeof value !== 'number') {
+    if (typeof value !== "number") {
         throw new Error("Invalid value type.");
     }
     switch (symbol) {
@@ -165,7 +164,7 @@ export const cppValueOf = (value, symbol) => {
     throw new Error(`Invalid symbol: ${symbol} / ${symbol.description}`);
 };
 
-export const sizeOf = symbol => {
+export const sizeOf = (symbol) => {
     switch (symbol) {
         case char8_1:
         case char1:
@@ -285,7 +284,7 @@ export const symbolOf = (size, symbolType = uint8.description) => {
 };
 
 /// check if the symbol is 8, 16, 32, or 64
-export const alignedSymbol = symbol => {
+export const alignedSymbol = (symbol) => {
     switch (symbol) {
         case char8_8:
         case char8:
@@ -299,14 +298,14 @@ export const alignedSymbol = symbol => {
     }
 };
 
-export const maxOf = value => {
+export const maxOf = (value) => {
     if (typeof value === "symbol") {
         value = sizeOf(value);
     }
     return (0b1n << value) - 1n;
 };
 
-export const bitOnesOf = value => {
+export const bitOnesOf = (value) => {
     let max = 0n;
     for (; value > 0n; --value) {
         max <<= 1n;
@@ -315,11 +314,10 @@ export const bitOnesOf = value => {
     return max;
 };
 
-export const noop = _ => {
-};
+export const noop = (_) => {};
 
 const progressBarLength = 30; // Define the length of the progress bar
-const totalItems = 100;       // Total number of items to process
+const totalItems = 100; // Total number of items to process
 let lastPercent = 0;
 export const updateProgressBar = (percent, done = undefined) => {
     if (!process.stdout.isTTY) {
@@ -339,12 +337,12 @@ export const updateProgressBar = (percent, done = undefined) => {
     }
     lastPercent = Math.round(percent);
     const progress = Math.round((percent / totalItems) * progressBarLength);
-    const progressBar = '='.repeat(progress) + '>' +
-        '-'.repeat(progressBarLength - progress);
+    const progressBar =
+        "=".repeat(progress) + ">" + "-".repeat(progressBarLength - progress);
     process.stdout.write(
-        `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`); // Update the progress bar
+        `[${progressBar}] ${Math.round((percent / totalItems) * 100)}%`,
+    ); // Update the progress bar
 };
-
 
 export const downloadFile = async (url, file, process) => {
     try {
@@ -368,7 +366,9 @@ export const downloadFile = async (url, file, process) => {
         const response = await fetch(url);
 
         if (!response.ok) {
-            console.error(`Failed to download file. Status Code: ${response.status}`);
+            console.error(
+                `Failed to download file. Status Code: ${response.status}`,
+            );
             return;
         }
 
@@ -382,21 +382,23 @@ export const downloadFile = async (url, file, process) => {
         await process(text);
         return text;
     } catch (error) {
-        console.error('Error:', error.message);
+        console.error("Error:", error.message);
     }
 };
 
-export const cleanComments = line => line.split('#')[0].trimEnd();
-export const splitLine = line => line.split(';').map(seg => seg.trim());
-export const findVersion = fileContent => fileContent.match(/Version:? (\d+\.\d+\.\d+)/)[1];
-export const findDate = fileContent => fileContent.match(/Date: ([^\n\r]+)/)[1];
-export const parseCodePoints = codePoint => BigInt(parseInt(codePoint, 16));
+export const cleanComments = (line) => line.split("#")[0].trimEnd();
+export const splitLine = (line) => line.split(";").map((seg) => seg.trim());
+export const findVersion = (fileContent) =>
+    fileContent.match(/Version:? (\d+\.\d+\.\d+)/)[1];
+export const findDate = (fileContent) =>
+    fileContent.match(/Date: ([^\n\r]+)/)[1];
+export const parseCodePoints = (codePoint) => BigInt(parseInt(codePoint, 16));
 export const parseCodePointRange = (codePoints, lastCodePoint = 0) => {
-    let rangeArr = codePoints.split("..").map(codePoint => codePoint.trim());
+    let rangeArr = codePoints.split("..").map((codePoint) => codePoint.trim());
     if (rangeArr.length === 1) {
         rangeArr = [`${lastCodePoint.toString(16)}`, rangeArr[0]];
     }
-    return rangeArr.map(codePoint => BigInt(parseInt(codePoint, 16)));
+    return rangeArr.map((codePoint) => BigInt(parseInt(codePoint, 16)));
 };
 
 export class Span {
@@ -405,12 +407,20 @@ export class Span {
     #end;
     #func;
 
-    constructor(arr = [], start = 0n, length = BigInt(arr.length) - BigInt(start), func = item => item) {
+    constructor(
+        arr = [],
+        start = 0n,
+        length = BigInt(arr.length) - BigInt(start),
+        func = (item) => item,
+    ) {
         this.#arr = arr;
         this.#start = BigInt(start);
         this.#end = this.#start + BigInt(length);
         this.#func = func;
-        if (this.#end === undefined || (typeof (this.#end) == 'number' && isNaN(this.#end))) {
+        if (
+            this.#end === undefined ||
+            (typeof this.#end == "number" && isNaN(this.#end))
+        ) {
             debugger;
             throw new Error(`Unexpected end: ${this.#end}`);
         }
@@ -451,12 +461,14 @@ export class Span {
         index = Number(index);
         if (!(index >= 0 && index < this.length)) {
             debugger;
-            throw new Error(`Index out of bounds ${index} out of ${this.length} elements.`);
+            throw new Error(
+                `Index out of bounds ${index} out of ${this.length} elements.`,
+            );
         }
         return this.#func(this.#arr[Number(this.#start) + index]);
     }
 
-    * [Symbol.iterator]() {
+    *[Symbol.iterator]() {
         for (let i = this.#start; i < this.#end; i++) {
             yield this.#func(this.#arr[i]);
         }
@@ -505,7 +517,7 @@ export class TableTraits {
                 this.bytes = [];
                 break;
             default:
-                throw new Error('Invalid type provided to CodePointMapper.');
+                throw new Error("Invalid type provided to CodePointMapper.");
         }
         this.#type = type;
     }
@@ -567,19 +579,21 @@ export class TableTraits {
     at(index) {
         index = Number(index);
         if (index >= this.length) {
-            throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements.`);
+            throw new RangeError(
+                `Index out of bounds ${index} out of ${this.length} elements.`,
+            );
         }
         return this.bytes.at(index);
     }
 
-    * [Symbol.iterator]() {
+    *[Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
         }
     }
 
     set(index, value) {
-        return this.bytes[index] = value;
+        return (this.bytes[index] = value);
     }
 
     append(value) {
@@ -597,8 +611,14 @@ export class TableTraits {
 /// This function finds a place in the "right" table where the specified range
 /// will be there.
 export const findSimilarRange = (left, right) => {
-    assert.ok(Number.isSafeInteger(left.length), "Table should have a valid length");
-    assert.ok(Number.isSafeInteger(right.length), "Table should have a valid length");
+    assert.ok(
+        Number.isSafeInteger(left.length),
+        "Table should have a valid length",
+    );
+    assert.ok(
+        Number.isSafeInteger(right.length),
+        "Table should have a valid length",
+    );
     // if (left.length > right.length) {
     //     return null;
     // }
@@ -644,7 +664,7 @@ export const overlapInserts = (left, right) => {
     return 0;
 };
 
-export const popcount = n => {
+export const popcount = (n) => {
     let c = 0n;
     for (; n !== 0n; n >>= 1n) {
         if ((n & 1n) !== 0n) {
@@ -688,9 +708,7 @@ export const bitCeil = (x) => {
     return p;
 };
 
-
 export const writePieces = async (outFile, pieces) => {
-
     await fs.writeFile(outFile, "");
     for (const piece of pieces) {
         if (typeof piece !== "string") {
@@ -700,7 +718,7 @@ export const writePieces = async (outFile, pieces) => {
     }
 };
 
-export const runClangFormat = async filePath => {
+export const runClangFormat = async (filePath) => {
     // Reformat the file
     try {
         await child_process.exec(`clang-format -i "${filePath}"`);
@@ -725,38 +743,41 @@ export const utf32To8All = (u32Array) => {
     return arr;
 };
 
-export const renderTableValues = ({name, printableValues, type, len}) => {
-
+export const renderTableValues = ({ name, printableValues, type, len }) => {
     let valuesTable;
     if (isStringType(type)) {
         const prefix = stringPrefixOf(type);
         valuesTable = `static constexpr std::basic_string_view<${type.description}> ${name.toLowerCase()}_values {
-        ${printableValues.map(val => {
-            let res = "";
-            if (val.comment) {
-                res += `
+        ${printableValues
+            .map((val) => {
+                let res = "";
+                if (val.comment) {
+                    res += `
         // ${val.comment}
-        `
-            }
-            res += `${prefix}"${val.join("")}"`;
-            return res;
-        }).join("\n")},
+        `;
+                }
+                res += `${prefix}"${val.join("")}"`;
+                return res;
+            })
+            .join("\n")},
         // done.
         ${len}UL // String Length
     };
-            `
+            `;
     } else {
         valuesTable = `static constexpr std::array<${type.description}, ${len}ULL> ${name.toLowerCase()}_values{
-        ${printableValues.map(val => {
-            let res = "";
-            if (val.comment) {
-                res += `
+        ${printableValues
+            .map((val) => {
+                let res = "";
+                if (val.comment) {
+                    res += `
         // ${val.comment}
-        `
-            }
-            res += val.join(", ");
-            return res;
-        }).join(", \n")}
+        `;
+                }
+                res += val.join(", ");
+                return res;
+            })
+            .join(", \n")}
     };
             `;
     }
@@ -764,14 +785,18 @@ export const renderTableValues = ({name, printableValues, type, len}) => {
     return valuesTable;
 };
 
-export const findTopLongestZeroRanges = (arr, topN = 5) => {
+export const findTopLongestZeroRanges = (
+    arr,
+    invalidCodePoint = 0,
+    topN = 5,
+) => {
     let ranges = [];
     let currentLength = 0;
     let startIndex = -1;
 
-    for (let i = 0; i <= arr.length; i++) {
+    const findRange = (value, i) => {
         // Check if the current element is zero
-        if (arr[i] === 0) {
+        if (value === invalidCodePoint) {
             if (currentLength === 0) {
                 // Start a new range
                 startIndex = i;
@@ -780,9 +805,24 @@ export const findTopLongestZeroRanges = (arr, topN = 5) => {
         } else {
             // If we hit a non-zero, check if we have a valid range
             if (currentLength > 0) {
-                ranges.push({start: startIndex, length: currentLength});
+                ranges.push({ start: startIndex, length: currentLength });
                 currentLength = 0; // Reset for the next range
             }
+        }
+    };
+
+    if (Array.isArray(arr)) {
+        for (let i = 0; i <= arr.length; i++) {
+            findRange(arr[i], i);
+        }
+    } else {
+        for (let codePoint in arr) {
+            const i = Number(codePoint);
+            const value = Number(arr[codePoint]);
+            if (isNaN(value) || isNaN(i)) {
+                continue;
+            }
+            findRange(value, i);
         }
     }
 
@@ -792,7 +832,6 @@ export const findTopLongestZeroRanges = (arr, topN = 5) => {
     // Get the top 5 longest ranges
     return ranges.slice(0, topN);
 };
-
 
 // export const interleaveBits = (x, y) => {
 //     const B = [0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF];
@@ -816,52 +855,281 @@ export const findTopLongestZeroRanges = (arr, topN = 5) => {
 // };
 
 const MortonTable256 = [
-    0x0000n, 0x0001n, 0x0004n, 0x0005n, 0x0010n, 0x0011n, 0x0014n, 0x0015n,
-    0x0040n, 0x0041n, 0x0044n, 0x0045n, 0x0050n, 0x0051n, 0x0054n, 0x0055n,
-    0x0100n, 0x0101n, 0x0104n, 0x0105n, 0x0110n, 0x0111n, 0x0114n, 0x0115n,
-    0x0140n, 0x0141n, 0x0144n, 0x0145n, 0x0150n, 0x0151n, 0x0154n, 0x0155n,
-    0x0400n, 0x0401n, 0x0404n, 0x0405n, 0x0410n, 0x0411n, 0x0414n, 0x0415n,
-    0x0440n, 0x0441n, 0x0444n, 0x0445n, 0x0450n, 0x0451n, 0x0454n, 0x0455n,
-    0x0500n, 0x0501n, 0x0504n, 0x0505n, 0x0510n, 0x0511n, 0x0514n, 0x0515n,
-    0x0540n, 0x0541n, 0x0544n, 0x0545n, 0x0550n, 0x0551n, 0x0554n, 0x0555n,
-    0x1000n, 0x1001n, 0x1004n, 0x1005n, 0x1010n, 0x1011n, 0x1014n, 0x1015n,
-    0x1040n, 0x1041n, 0x1044n, 0x1045n, 0x1050n, 0x1051n, 0x1054n, 0x1055n,
-    0x1100n, 0x1101n, 0x1104n, 0x1105n, 0x1110n, 0x1111n, 0x1114n, 0x1115n,
-    0x1140n, 0x1141n, 0x1144n, 0x1145n, 0x1150n, 0x1151n, 0x1154n, 0x1155n,
-    0x1400n, 0x1401n, 0x1404n, 0x1405n, 0x1410n, 0x1411n, 0x1414n, 0x1415n,
-    0x1440n, 0x1441n, 0x1444n, 0x1445n, 0x1450n, 0x1451n, 0x1454n, 0x1455n,
-    0x1500n, 0x1501n, 0x1504n, 0x1505n, 0x1510n, 0x1511n, 0x1514n, 0x1515n,
-    0x1540n, 0x1541n, 0x1544n, 0x1545n, 0x1550n, 0x1551n, 0x1554n, 0x1555n,
-    0x4000n, 0x4001n, 0x4004n, 0x4005n, 0x4010n, 0x4011n, 0x4014n, 0x4015n,
-    0x4040n, 0x4041n, 0x4044n, 0x4045n, 0x4050n, 0x4051n, 0x4054n, 0x4055n,
-    0x4100n, 0x4101n, 0x4104n, 0x4105n, 0x4110n, 0x4111n, 0x4114n, 0x4115n,
-    0x4140n, 0x4141n, 0x4144n, 0x4145n, 0x4150n, 0x4151n, 0x4154n, 0x4155n,
-    0x4400n, 0x4401n, 0x4404n, 0x4405n, 0x4410n, 0x4411n, 0x4414n, 0x4415n,
-    0x4440n, 0x4441n, 0x4444n, 0x4445n, 0x4450n, 0x4451n, 0x4454n, 0x4455n,
-    0x4500n, 0x4501n, 0x4504n, 0x4505n, 0x4510n, 0x4511n, 0x4514n, 0x4515n,
-    0x4540n, 0x4541n, 0x4544n, 0x4545n, 0x4550n, 0x4551n, 0x4554n, 0x4555n,
-    0x5000n, 0x5001n, 0x5004n, 0x5005n, 0x5010n, 0x5011n, 0x5014n, 0x5015n,
-    0x5040n, 0x5041n, 0x5044n, 0x5045n, 0x5050n, 0x5051n, 0x5054n, 0x5055n,
-    0x5100n, 0x5101n, 0x5104n, 0x5105n, 0x5110n, 0x5111n, 0x5114n, 0x5115n,
-    0x5140n, 0x5141n, 0x5144n, 0x5145n, 0x5150n, 0x5151n, 0x5154n, 0x5155n,
-    0x5400n, 0x5401n, 0x5404n, 0x5405n, 0x5410n, 0x5411n, 0x5414n, 0x5415n,
-    0x5440n, 0x5441n, 0x5444n, 0x5445n, 0x5450n, 0x5451n, 0x5454n, 0x5455n,
-    0x5500n, 0x5501n, 0x5504n, 0x5505n, 0x5510n, 0x5511n, 0x5514n, 0x5515n,
-    0x5540n, 0x5541n, 0x5544n, 0x5545n, 0x5550n, 0x5551n, 0x5554n, 0x5555n
+    0x0000n,
+    0x0001n,
+    0x0004n,
+    0x0005n,
+    0x0010n,
+    0x0011n,
+    0x0014n,
+    0x0015n,
+    0x0040n,
+    0x0041n,
+    0x0044n,
+    0x0045n,
+    0x0050n,
+    0x0051n,
+    0x0054n,
+    0x0055n,
+    0x0100n,
+    0x0101n,
+    0x0104n,
+    0x0105n,
+    0x0110n,
+    0x0111n,
+    0x0114n,
+    0x0115n,
+    0x0140n,
+    0x0141n,
+    0x0144n,
+    0x0145n,
+    0x0150n,
+    0x0151n,
+    0x0154n,
+    0x0155n,
+    0x0400n,
+    0x0401n,
+    0x0404n,
+    0x0405n,
+    0x0410n,
+    0x0411n,
+    0x0414n,
+    0x0415n,
+    0x0440n,
+    0x0441n,
+    0x0444n,
+    0x0445n,
+    0x0450n,
+    0x0451n,
+    0x0454n,
+    0x0455n,
+    0x0500n,
+    0x0501n,
+    0x0504n,
+    0x0505n,
+    0x0510n,
+    0x0511n,
+    0x0514n,
+    0x0515n,
+    0x0540n,
+    0x0541n,
+    0x0544n,
+    0x0545n,
+    0x0550n,
+    0x0551n,
+    0x0554n,
+    0x0555n,
+    0x1000n,
+    0x1001n,
+    0x1004n,
+    0x1005n,
+    0x1010n,
+    0x1011n,
+    0x1014n,
+    0x1015n,
+    0x1040n,
+    0x1041n,
+    0x1044n,
+    0x1045n,
+    0x1050n,
+    0x1051n,
+    0x1054n,
+    0x1055n,
+    0x1100n,
+    0x1101n,
+    0x1104n,
+    0x1105n,
+    0x1110n,
+    0x1111n,
+    0x1114n,
+    0x1115n,
+    0x1140n,
+    0x1141n,
+    0x1144n,
+    0x1145n,
+    0x1150n,
+    0x1151n,
+    0x1154n,
+    0x1155n,
+    0x1400n,
+    0x1401n,
+    0x1404n,
+    0x1405n,
+    0x1410n,
+    0x1411n,
+    0x1414n,
+    0x1415n,
+    0x1440n,
+    0x1441n,
+    0x1444n,
+    0x1445n,
+    0x1450n,
+    0x1451n,
+    0x1454n,
+    0x1455n,
+    0x1500n,
+    0x1501n,
+    0x1504n,
+    0x1505n,
+    0x1510n,
+    0x1511n,
+    0x1514n,
+    0x1515n,
+    0x1540n,
+    0x1541n,
+    0x1544n,
+    0x1545n,
+    0x1550n,
+    0x1551n,
+    0x1554n,
+    0x1555n,
+    0x4000n,
+    0x4001n,
+    0x4004n,
+    0x4005n,
+    0x4010n,
+    0x4011n,
+    0x4014n,
+    0x4015n,
+    0x4040n,
+    0x4041n,
+    0x4044n,
+    0x4045n,
+    0x4050n,
+    0x4051n,
+    0x4054n,
+    0x4055n,
+    0x4100n,
+    0x4101n,
+    0x4104n,
+    0x4105n,
+    0x4110n,
+    0x4111n,
+    0x4114n,
+    0x4115n,
+    0x4140n,
+    0x4141n,
+    0x4144n,
+    0x4145n,
+    0x4150n,
+    0x4151n,
+    0x4154n,
+    0x4155n,
+    0x4400n,
+    0x4401n,
+    0x4404n,
+    0x4405n,
+    0x4410n,
+    0x4411n,
+    0x4414n,
+    0x4415n,
+    0x4440n,
+    0x4441n,
+    0x4444n,
+    0x4445n,
+    0x4450n,
+    0x4451n,
+    0x4454n,
+    0x4455n,
+    0x4500n,
+    0x4501n,
+    0x4504n,
+    0x4505n,
+    0x4510n,
+    0x4511n,
+    0x4514n,
+    0x4515n,
+    0x4540n,
+    0x4541n,
+    0x4544n,
+    0x4545n,
+    0x4550n,
+    0x4551n,
+    0x4554n,
+    0x4555n,
+    0x5000n,
+    0x5001n,
+    0x5004n,
+    0x5005n,
+    0x5010n,
+    0x5011n,
+    0x5014n,
+    0x5015n,
+    0x5040n,
+    0x5041n,
+    0x5044n,
+    0x5045n,
+    0x5050n,
+    0x5051n,
+    0x5054n,
+    0x5055n,
+    0x5100n,
+    0x5101n,
+    0x5104n,
+    0x5105n,
+    0x5110n,
+    0x5111n,
+    0x5114n,
+    0x5115n,
+    0x5140n,
+    0x5141n,
+    0x5144n,
+    0x5145n,
+    0x5150n,
+    0x5151n,
+    0x5154n,
+    0x5155n,
+    0x5400n,
+    0x5401n,
+    0x5404n,
+    0x5405n,
+    0x5410n,
+    0x5411n,
+    0x5414n,
+    0x5415n,
+    0x5440n,
+    0x5441n,
+    0x5444n,
+    0x5445n,
+    0x5450n,
+    0x5451n,
+    0x5454n,
+    0x5455n,
+    0x5500n,
+    0x5501n,
+    0x5504n,
+    0x5505n,
+    0x5510n,
+    0x5511n,
+    0x5514n,
+    0x5515n,
+    0x5540n,
+    0x5541n,
+    0x5544n,
+    0x5545n,
+    0x5550n,
+    0x5551n,
+    0x5554n,
+    0x5555n,
 ];
 export const interleaveBits = (x, y) => {
     // x and y must initially be less than 65536.
     if (x >= 65536n || y >= 65536n) {
         throw new Error(`Too big: ${x} ${y}`);
     }
-    return MortonTable256[y >> 8n] << 17n |
-        MortonTable256[x >> 8n] << 16n |
-        MortonTable256[y & 0xFFn] << 1n |
-        MortonTable256[x & 0xFFn];
+    return (
+        (MortonTable256[y >> 8n] << 17n) |
+        (MortonTable256[x >> 8n] << 16n) |
+        (MortonTable256[y & 0xffn] << 1n) |
+        MortonTable256[x & 0xffn]
+    );
 };
 
-
-export function* findSmallest(arr, op, maxMask = arr.toSorted((a, b) => Number(b - a))[0]) {
+export function* findSmallest(
+    arr,
+    op,
+    maxMask = arr.toSorted((a, b) => Number(b - a))[0],
+) {
     let mask = 0n;
 
     top: for (; mask <= maxMask; ++mask) {
@@ -893,7 +1161,7 @@ export const findSmallestXor = (arr) => {
     return findSmallest(arr, (val, mask) => val ^ mask).next().value;
 };
 
-export function* findComplements (arr) {
+export function* findComplements(arr) {
     const sorted = arr.toSorted((a, b) => Number(a - b));
     for (const item in sorted) {
         yield sorted[item];
@@ -922,7 +1190,7 @@ export const hasDuplicates = (arr) => {
     return false;
 };
 
-export const allBitsTill = length => {
+export const allBitsTill = (length) => {
     let mask = 0n;
     for (let index = 0n; index !== BigInt(length); ++index) {
         mask |= index;
@@ -947,5 +1215,5 @@ export const chunked = (size) => {
     const chunkSize = fillBitsFromRight(BigInt(size)) + 1n;
     const chunkMask = chunkSize - 1n;
     const chunkShift = popcount(chunkMask);
-    return {chunkSize, chunkMask, chunkShift};
+    return { chunkSize, chunkMask, chunkShift };
 };

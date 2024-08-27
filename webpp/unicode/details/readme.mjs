@@ -1,18 +1,18 @@
-import {downloadFile, findDate, findVersion, noop} from "./utils.mjs";
+import { downloadFile, findDate, findVersion, noop } from "./utils.mjs";
 
-export const fileUrl = 'https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt';
-export const cachedFilePath = 'ReadMe.txt';
+export const fileUrl =
+    "https://www.unicode.org/Public/UCD/latest/ucd/ReadMe.txt";
+export const cachedFilePath = "ReadMe.txt";
 
 const readmeData = {
     version: undefined,
-    date: undefined
+    date: undefined,
 };
 
-const processReadmeFile = content => {
+const processReadmeFile = (content) => {
     readmeData.version = findVersion(content);
     readmeData.date = findDate(content);
 };
-
 
 export const download = async (callback = noop, print = true) => {
     // readme file for getting the version and what not
@@ -49,4 +49,4 @@ export const getReadme = async () => {
         await download(noop, false);
     }
     return readmeData;
-}
+};

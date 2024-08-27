@@ -4,17 +4,13 @@
  * Details on parsing this file can be found here:
  * UTS #44: https://www.unicode.org/reports/tr44/#UnicodeData.txt
  */
-import * as readme from "./readme.mjs";
-import * as UnicodeData from "./UnicodeData.mjs";
-import {
-    uint8,
-    uint32,
-    writePieces, runClangFormat, uint7,
-} from "./utils.mjs";
 import * as path from "node:path";
-import {getReadme} from "./readme.mjs";
-import {TablePairs} from "./table.mjs";
-import {genSimpleIndexAddenda} from "./modifiers.mjs";
+import { genSimpleIndexAddenda } from "./modifiers.mjs";
+import * as readme from "./readme.mjs";
+import { getReadme } from "./readme.mjs";
+import { TablePairs } from "./table.mjs";
+import * as UnicodeData from "./UnicodeData.mjs";
+import { runClangFormat, uint32, uint7, uint8, writePieces } from "./utils.mjs";
 
 const cccOutFile = `ccc_tables.hpp`;
 
@@ -26,7 +22,7 @@ const start = async () => {
     await UnicodeData.parse(cccsTables, UnicodeData.properties.ccc);
     cccsTables?.process?.();
     await createTableFile([cccsTables]);
-    console.log('File processing completed.');
+    console.log("File processing completed.");
 };
 
 class CCCTables {
@@ -40,7 +36,7 @@ class CCCTables {
         max: 4353 * 10,
         sizeof: uint32,
         description: `CCC: Canonical Combining Class
-These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`
+These are the indices that are used to find which values from "ccc_values" table correspond to a Unicode Code Point.`,
     };
     values = {
         max: 65535,
@@ -49,10 +45,9 @@ These are the indices that are used to find which values from "ccc_values" table
 These values are calculated and individually represent actual CCC values, but they have no
 valid order by themselves, and they only make sense if they're being used in conjunction with
 the "ccc_indices" table.
-        `
+        `,
     };
     lastZero = 0n;
-
 
     constructor() {
         this.tables.init({
@@ -71,7 +66,11 @@ the "ccc_indices" table.
     process() {
         this.tables.process();
         const lastZeroBucket = this.lastZero >> this.tables.chunkShift;
-        console.log("Trim indices table at: ", lastZeroBucket, `(${this.lastZero} >> ${this.tables.chunkShift})`);
+        console.log(
+            "Trim indices table at: ",
+            lastZeroBucket,
+            `(${this.lastZero} >> ${this.tables.chunkShift})`,
+        );
         this.tables.indices.trimAt(lastZeroBucket);
     }
 
@@ -83,7 +82,9 @@ the "ccc_indices" table.
         if (value !== 0) {
             // this.lastZero = codePoint + 1;
             // find the end of the batch, not just the last item
-            this.lastZero = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
+            this.lastZero =
+                (((codePoint + 1n) >> this.tables.chunkShift) + 1n) <<
+                this.tables.chunkShift;
         }
         return this.tables.add(codePoint, value);
     }
@@ -98,13 +99,19 @@ the "ccc_indices" table.
 
     tests() {
         /// Sanity check: see if we have skipped adding some code points to the table
-        const undefinedIndex = this.tables.data.findIndex(codePoint => codePoint === undefined);
+        const undefinedIndex = this.tables.data.findIndex(
+            (codePoint) => codePoint === undefined,
+        );
         if (undefinedIndex !== -1) {
-            throw new Error(`Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`);
+            throw new Error(
+                `Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`,
+            );
         }
 
-        if (this.tables.data[0x1CE8] !== 1) {
-            throw new Error(`Invalid parsing; data[0x1CE8]: ${this.tables.data[0x1CE8]}; length: ${this.tables.data?.length}`);
+        if (this.tables.data[0x1ce8] !== 1) {
+            throw new Error(
+                `Invalid parsing; data[0x1CE8]: ${this.tables.data[0x1ce8]}; length: ${this.tables.data?.length}`,
+            );
         }
     }
 
@@ -115,26 +122,29 @@ the "ccc_indices" table.
      * so it's designed this way to reduce the table size.
      */
     static constexpr auto trailing_zero_cccs = 0x${this.lastZero.toString(16).toUpperCase()}UL;
-    
+
 ${renderedTables}
         `;
     }
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce((acc, cur) => acc + Number(cur.totalTablesSizeInBits()), 0);
+    const totalBits = tables.reduce(
+        (acc, cur) => acc + Number(cur.totalTablesSizeInBits()),
+        0,
+    );
     const readmeData = await getReadme();
     const begContent = `
 /**
- * Attention: 
+ * Attention:
  *   Auto-generated file, don't modify this file; use the mentioned file below
  *   to re-generate this file with different options.
- * 
+ *
  *   Auto generated from:                ${path.basename(new URL(import.meta.url).pathname)}
  *   Unicode UCD Database Creation Date: ${readmeData.date}
  *   This file's generation date:        ${new Date().toUTCString()}
  *   Unicode Version:                    ${readmeData.version}
- *   Total Table sizes in this file:     
+ *   Total Table sizes in this file:
  *       - in bits:       ${totalBits}
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
@@ -151,7 +161,7 @@ const createTableFile = async (tables) => {
  *   UCD README file (used to check the version and creation date):
  *       ${readme.fileUrl}
  */
- 
+
 #ifndef WEBPP_UNICODE_CCC_TABLES_HPP
 #define WEBPP_UNICODE_CCC_TABLES_HPP
 

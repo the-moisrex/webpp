@@ -1,16 +1,19 @@
+import * as assert from "node:assert";
 import {
-    alignedSymbol, bitCeil,
-    bitOnesOf, chunked,
-    fillBitsFromRight, largestPositionMask,
+    alignedSymbol,
+    bitCeil,
+    bitOnesOf,
+    chunked,
+    fillBitsFromRight,
+    largestPositionMask,
     maxOf,
-    popcount, realSizeOf,
+    realSizeOf,
     sizeOf,
     symbolOf,
-    uint16, uint4,
-    uint8
+    uint16,
+    uint4,
+    uint8,
 } from "./utils.mjs";
-import * as assert from "node:assert";
-
 
 export const rangeLength = (codePointStart, dataLength, chunk) => {
     dataLength = BigInt(dataLength);
@@ -110,7 +113,10 @@ export class Addendum {
     }
 
     get commentedDescription() {
-        return "/// " + this.description.replaceAll(/(\r\n|\r|\n)/g, "\n        /// ");
+        return (
+            "/// " +
+            this.description.replaceAll(/(\r\n|\r|\n)/g, "\n        /// ")
+        );
     }
 
     set description(value) {
@@ -126,7 +132,8 @@ export class Addendum {
     }
 
     render(addenda) {
-        const defaultStr = this?.defaultValue !== undefined ? ` = ${this.defaultValue}` : "";
+        const defaultStr =
+            this?.defaultValue !== undefined ? ` = ${this.defaultValue}` : "";
         if (alignedSymbol(this.sizeof) || addenda.allAlignable) {
             return `
         ${this.commentedDescription}
@@ -145,7 +152,10 @@ export class Addendum {
         if (this.leftShift === 0n) {
             return `${this.name}{static_cast<${this.STLTypeString}>(${value})}`;
         } else {
-            const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
+            const shift =
+                shiftName === ""
+                    ? `${this.leftShift}U`
+                    : `${this.name}${shiftName}`;
             return `${this.name}{static_cast<${this.STLTypeString}>(${value} >> ${shift})}`;
         }
     }
@@ -154,7 +164,10 @@ export class Addendum {
         if (this.leftShift === 0n) {
             return `static_cast<${type}>(${this.name})`;
         } else {
-            const shift = shiftName === "" ? `${this.leftShift}U` : `${this.name}${shiftName}`;
+            const shift =
+                shiftName === ""
+                    ? `${this.leftShift}U`
+                    : `${this.name}${shiftName}`;
             return `(static_cast<${type}>(${this.name}) << ${shift})`;
         }
     }
@@ -190,10 +203,15 @@ export class Addenda {
     constructor(name, addenda, funcs, inpChunkSize = undefined) {
         this.name = name;
         this.addenda = addenda;
-        this.sizeof = symbolOf(addenda.reduce((sum, addendum) => sum + sizeOf(addendum.sizeof), 0n));
+        this.sizeof = symbolOf(
+            addenda.reduce(
+                (sum, addendum) => sum + sizeOf(addendum.sizeof),
+                0n,
+            ),
+        );
 
         /// re-order the placements
-        if (addenda.some(addendum => !addendum.placement)) {
+        if (addenda.some((addendum) => !addendum.placement)) {
             let index = 0;
             for (let addendum of this.addenda) {
                 addendum.placement = index;
@@ -207,29 +225,47 @@ export class Addenda {
         // Resetting the shifts:
         let leftShift = this.allAlignable ? this.alignedSize : this.packedSize;
         for (let addendum of this.addenda) {
-            addendum.actualSize = this.allAlignable ? realSizeOf(addendum.sizeof) : addendum.size;
+            addendum.actualSize = this.allAlignable
+                ? realSizeOf(addendum.sizeof)
+                : addendum.size;
             leftShift -= addendum.actualSize;
             addendum.leftShift += leftShift;
         }
 
-        this.min = addenda.reduce((min, addendum) => (min << addendum.actualSize) | addendum.min, 0n);
-        this.max = addenda.reduce((max, addendum) => (max << addendum.actualSize) | addendum.max, 0n);
-        this.mask = addenda.reduce((mask, addendum) => (mask << addendum.actualSize) | addendum.mask, 0n);
+        this.min = addenda.reduce(
+            (min, addendum) => (min << addendum.actualSize) | addendum.min,
+            0n,
+        );
+        this.max = addenda.reduce(
+            (max, addendum) => (max << addendum.actualSize) | addendum.max,
+            0n,
+        );
+        this.mask = addenda.reduce(
+            (mask, addendum) => (mask << addendum.actualSize) | addendum.mask,
+            0n,
+        );
 
         /// Enabling addenda.mask, addenda["pos"], and what not syntax
         for (const addendum of this.addenda) {
             this[addendum.name] = addendum;
 
             // Setting the shifts
-            const {placement: position} = addendum;
-            this.#shifts[addendum.name] = this.addenda.reduce((sum, addendum) => sum + (addendum.placement > position ? addendum.actualSize : 0n), 0n);
+            const { placement: position } = addendum;
+            this.#shifts[addendum.name] = this.addenda.reduce(
+                (sum, addendum) =>
+                    sum +
+                    (addendum.placement > position ? addendum.actualSize : 0n),
+                0n,
+            );
         }
 
         // if (!Number.isSafeInteger(this.minSize)) {
         //     debugger;
         //     throw new Error("Invalid minSize");
         // }
-        const {chunkSize, chunkMask, chunkShift} = chunked(inpChunkSize || this.minSize);
+        const { chunkSize, chunkMask, chunkShift } = chunked(
+            inpChunkSize || this.minSize,
+        );
         this.#chunkSize = chunkSize;
         this.#chunkMask = chunkMask;
         this.#chunkShift = chunkShift;
@@ -250,10 +286,12 @@ export class Addenda {
         let lastAddendumPlacement = -1;
         for (const addendum of this.addenda) {
             if (Number(addendum.placement) !== lastAddendumPlacement + 1) {
-                throw new Error(`Invalid placement requirements; ` +
-                    `blank placement found in the addenda.` +
-                    `Addendum: ${addendum.name} Placement: ${addendum.placement} ` +
-                    `Last placement: ${lastAddendumPlacement}`);
+                throw new Error(
+                    `Invalid placement requirements; ` +
+                        `blank placement found in the addenda.` +
+                        `Addendum: ${addendum.name} Placement: ${addendum.placement} ` +
+                        `Last placement: ${lastAddendumPlacement}`,
+                );
             }
             lastAddendumPlacement = Number(addendum.placement);
         }
@@ -264,7 +302,10 @@ export class Addenda {
     }
 
     get alignedSize() {
-        return this.addenda.reduce((sum, addendum) => sum + realSizeOf(addendum.sizeof), 0n);
+        return this.addenda.reduce(
+            (sum, addendum) => sum + realSizeOf(addendum.sizeof),
+            0n,
+        );
     }
 
     get unusedSize() {
@@ -302,23 +343,25 @@ export class Addenda {
     }
 
     set modifierFunctions(value) {
-        if (typeof value !== 'object') {
+        if (typeof value !== "object") {
             throw new Error(`Invalid modifier function: ${value}`);
         }
         for (const funcName in value) {
-            if (typeof value[funcName] !== 'function') {
-                throw new Error(`Invalid modifier function: ${value}; it's supposed to be a function.`);
+            if (typeof value[funcName] !== "function") {
+                throw new Error(
+                    `Invalid modifier function: ${value}; it's supposed to be a function.`,
+                );
             }
         }
         this.#modifierFunctions = value;
     }
 
     set renderFunctions(value) {
-        this.#renderFunctions = value.map(func => func.bind(this));
+        this.#renderFunctions = value.map((func) => func.bind(this));
     }
 
     addendum(name) {
-        return this.addenda.find(addendum => addendum.name === name);
+        return this.addenda.find((addendum) => addendum.name === name);
     }
 
     has(name) {
@@ -338,7 +381,7 @@ export class Addenda {
         let mod = 0n;
         for (const name in values) {
             const value = values[name];
-            mod |= (value << this.shiftOf(name));
+            mod |= value << this.shiftOf(name);
         }
         return mod;
     }
@@ -351,7 +394,12 @@ export class Addenda {
     }
 
     valuesOf(code) {
-        return Object.fromEntries(this.addenda.map(addendum => [addendum.name, this.addendumValueOf(addendum, code)]));
+        return Object.fromEntries(
+            this.addenda.map((addendum) => [
+                addendum.name,
+                this.addendumValueOf(addendum, code),
+            ]),
+        );
     }
 
     modifierOf(code) {
@@ -359,18 +407,20 @@ export class Addenda {
     }
 
     get minSize() {
-        return this.addenda.reduce((min, addendum) => {
-            if (addendum.affectsChunkSize === false) {
-                return min;
-            }
-            if (addendum.size > min) {
-                return min;
-            }
-            if (typeof addendum.affectsChunkSize === "function") {
-                return addendum.affectsChunkSize(undefined, min);
-            }
-            return addendum.size;
-        }, NaN) || 16n;
+        return (
+            this.addenda.reduce((min, addendum) => {
+                if (addendum.affectsChunkSize === false) {
+                    return min;
+                }
+                if (addendum.size > min) {
+                    return min;
+                }
+                if (typeof addendum.affectsChunkSize === "function") {
+                    return addendum.affectsChunkSize(undefined, min);
+                }
+                return addendum.size;
+            }, NaN) || 16n
+        );
     }
 
     get chunkSize() {
@@ -386,8 +436,8 @@ export class Addenda {
     }
 
     /// Generate all possible combinations of the addenda
-    * generate(meta, addenda = this.addenda) {
-        const generables = addenda.filter(addendum => addendum.generable);
+    *generate(meta, addenda = this.addenda) {
+        const generables = addenda.filter((addendum) => addendum.generable);
         let mod = new Modifier(this);
         if (generables.length === 0) {
             yield mod;
@@ -397,7 +447,7 @@ export class Addenda {
         const [head, ...tail] = generables;
         for (const headVal of head.generate(meta)) {
             for (const tailMod of this.generate(meta, tail)) {
-                mod.set({[head.name]: headVal, ...tailMod.values()});
+                mod.set({ [head.name]: headVal, ...tailMod.values() });
                 yield mod;
             }
         }
@@ -423,15 +473,20 @@ export class Addenda {
                 start = Math.max(start, res.start || start);
                 end = Math.min(end, res.end || end);
                 if (res.valid === false) {
-                    return {valid: false, start, end};
+                    return { valid: false, start, end };
                 }
             }
         }
-        return {start, end, valid: true};
+        return { start, end, valid: true };
     }
 
     renderPlacements() {
-        return this.addenda.toSorted((a, b) => a.placement - b.placement).map(addendum => `[${addendum.actualSize}bits = ${addendum.name}]`).join(" + ");
+        return this.addenda
+            .toSorted((a, b) => a.placement - b.placement)
+            .map(
+                (addendum) => `[${addendum.actualSize}bits = ${addendum.name}]`,
+            )
+            .join(" + ");
     }
 
     get typeString() {
@@ -443,15 +498,24 @@ export class Addenda {
     }
 
     get desc() {
-        return `${this?.description || this.name}`.replace(/\n/g, '\n         * ');
+        return `${this?.description || this.name}`.replace(
+            /\n/g,
+            "\n         * ",
+        );
     }
 
     render() {
-        const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement);
+        const addenda = this.addenda.toSorted(
+            (a, b) => a.placement - b.placement,
+        );
         for (const addendum of addenda) {
-            console.log(`Addendum ${addendum.name}'s mask: ${addendum.mask.toString(16)}`);
+            console.log(
+                `Addendum ${addendum.name}'s mask: ${addendum.mask.toString(16)}`,
+            );
             if (addendum.mask < 0) {
-                console.error(`Invalid mask calculated: ${addendum.name} ${JSON.stringify(addendum)}`);
+                console.error(
+                    `Invalid mask calculated: ${addendum.name} ${JSON.stringify(addendum)}`,
+                );
             }
         }
         return `
@@ -459,33 +523,42 @@ export class Addenda {
      * ${this.desc}
      */
     struct alignas(${this.STLTypeString}) ${this.name} {
-    
+
         /// The shifts required to extract the values out of a ${this.STLTypeString}; you can use masks as well:
-        ${addenda.map(addendum => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
-        
+        ${addenda.map((addendum) => `static constexpr std::uint8_t ${addendum.name}_shift = ${addendum.leftShift}U;`).join("\n        ")}
+
         /// The masks required to extracting the values out of a ${this.STLTypeString}; you can use shifts as well:
-        ${addenda.map(addendum => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
-    
+        ${addenda.map((addendum) => `static constexpr ${this.STLTypeString} ${addendum.name}_mask = 0x${addendum.mask.toString(16).toUpperCase()}U;`).join("\n        ")}
+
         // NOLINTBEGIN(*-non-private-member-variables-in-classes)
-        ${addenda.map(addendum => addendum.render(this)).join("\n        ")}
+        ${addenda.map((addendum) => addendum.render(this)).join("\n        ")}
         // NOLINTEND(*-non-private-member-variables-in-classes)
-       
+
         /**
          * ${this.renderPlacements()}
-         */ 
-        explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept 
-            : ${addenda.map(addendum => addendum.renderValueSet('value', '_shift', '_mask')).join(",\n              ")} {}
-${addenda.length <= 1 ? "" : `
+         */
+        explicit(false) consteval ${this.name}(${this.STLTypeString} const value) noexcept
+            : ${addenda.map((addendum) => addendum.renderValueSet("value", "_shift", "_mask")).join(",\n              ")} {}
+${
+    addenda.length <= 1
+        ? ""
+        : `
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
-        explicit consteval ${this.name}(${addenda.map(addendum => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept 
-            : ${addenda.map(addendum => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
-`}
-        
+        explicit consteval ${this.name}(${addenda.map((addendum) => `${addendum.STLTypeString} const inp_${addendum.name}`).join(",\n                       ")}) noexcept
+            : ${addenda.map((addendum) => `${addendum.name}{inp_${addendum.name}}`).join(",\n              ")} {}
+`
+}
+
         [[nodiscard]] constexpr ${this.STLTypeString} value() const noexcept {
-            return ${addenda.reverse().map(addendum => addendum.renderShift(this.STLTypeString, '_shift', '_mask')).join(" | ")};
+            return ${addenda
+                .reverse()
+                .map((addendum) =>
+                    addendum.renderShift(this.STLTypeString, "_shift", "_mask"),
+                )
+                .join(" | ")};
         }
 
-${this.#renderFunctions.map(func => func()).join("\n\n")}
+${this.#renderFunctions.map((func) => func()).join("\n\n")}
 
     };
         `;
@@ -506,7 +579,8 @@ export class Modifier {
 
         // Making the functions public
         for (const funcName in this.#addenda.modifierFunctions) {
-            this[funcName] = this.#addenda.modifierFunctions[funcName].bind(this);
+            this[funcName] =
+                this.#addenda.modifierFunctions[funcName].bind(this);
         }
         this.set(values);
     }
@@ -647,10 +721,13 @@ export class Modifier {
     necessaries() {
         return {
             modifier: this.modifier,
-            ...Object.fromEntries(this.#addenda.addenda.filter(addendum => addendum.generable).map(addendum => [addendum.name, this[addendum.name]]))
+            ...Object.fromEntries(
+                this.#addenda.addenda
+                    .filter((addendum) => addendum.generable)
+                    .map((addendum) => [addendum.name, this[addendum.name]]),
+            ),
         };
     }
-
 }
 
 /**
@@ -669,9 +746,15 @@ export class ModifiedSpan {
     at(index) {
         if (!(index >= 0n && index < this.#modifier.chunkSize)) {
             debugger;
-            throw new RangeError(`Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`);
+            throw new RangeError(
+                `Index out of bounds ${index} out of ${this.length} elements; chunk size: ${this.#modifier.chunkSize}, start: ${this.start}`,
+            );
         }
-        return this.#modifier.apply(this.#data, this.#modifier.pos, BigInt(index));
+        return this.#modifier.apply(
+            this.#data,
+            this.#modifier.pos,
+            BigInt(index),
+        );
     }
 
     get start() {
@@ -686,7 +769,10 @@ export class ModifiedSpan {
     get length() {
         // return rangeLength(this.#start, this.#data.length, this.#modifier.chunkSize);
         // return this.#modifier.chunkSize;
-        return Math.min(Number(this.#modifier.chunkSize), Number(this.#data.length));
+        return Math.min(
+            Number(this.#modifier.chunkSize),
+            Number(this.#data.length),
+        );
     }
 
     slice(index = 0, endIndex = this.length - index) {
@@ -697,7 +783,7 @@ export class ModifiedSpan {
         return values;
     }
 
-    * [Symbol.iterator]() {
+    *[Symbol.iterator]() {
         for (let pos = 0; pos !== this.length; pos++) {
             yield this.at(pos);
         }
@@ -707,7 +793,6 @@ export class ModifiedSpan {
         return this.slice().filter(func);
     }
 }
-
 
 ////////////////////////////// Implementation of Defaults //////////////////////////////
 
@@ -723,7 +808,7 @@ export function maskedFunction() {
     return `
         /**
          * Apply the mask to the position specified in the input.
-         * Attention: input is the remaining part of the position, meaning 
+         * Attention: input is the remaining part of the position, meaning
          *    remaining_pos = (code_point & ${this.chunkMask}); // ${this.chunkMask} refers to chunk_mask
          */
         [[nodiscard]] constexpr ${this.pos.STLTypeString} masked(auto const remaining_pos) const noexcept {
@@ -759,209 +844,239 @@ export function getSimplePositionFunction() {
         `;
 }
 
-
-export const genShiftAddendum = (type = uint8) => new Addendum({
-    name: "shift",
-    description: "This value gets added to the retrieved value at the end of the operation.",
-    sizeof: type,
-    affectsChunkSize: false,
-    defaultValue: 0n,
-    isCategorizable: true,
-    * generate({length}) {
-        assert.ok(this !== undefined, "undefined this?");
-        yield this.min;
-        yield this.max;
-        yield this.mask;
-        for (let index = this.min + 1n; index <= this.max; ++index) {
-            yield index;
-        }
-    },
-    verifyInserts({inserts, dataView, modifier}) {
-        const modifiedInserts = new ModifiedSpan(inserts, modifier);
-        for (let index = 0; index !== inserts.length; ++index) {
-            const realValue = dataView.at(index);
-            const insertValue = modifiedInserts.at(index);
-            if (realValue !== insertValue) {
-                return false;
-            }
-        }
-        return true;
-    },
-    modify(modifier, meta) {
-        return {...meta, value: modifier.shift + meta.value};
-    },
-    unshift(modifier, meta) {
-        return {...meta, value: meta.value - modifier.shift};
-    }
-});
-
-export const genMaxLengthAddendum = (type = uint8) => new Addendum({
-    name: "max_length",
-    description: "Length of the UTF-8 Encoded Decomposition Code Points.\n" +
-        "This value is the max length of each mapping; there should be additional empty values added\n" +
-        "in between the values of the values table in order to make sure we can easily find the needed \n" +
-        "mappings for all the code points without searching for them.",
-    affectsChunkSize: (modifier, curChunkSize) => {
-        if (modifier === undefined) { // for minSize
-            return BigInt(sizeOf(type));
-        }
-        return Infinity;
-    },
-    sizeof: type,
-    defaultValue: 1n,
-    isCategorizable: true,
-    modify(modifier, meta) {
-        // assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
-        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
-        // if (modifier.max_length === 0) {
-        //     throw new Error("max_length should be greater than 0");
-        // }
-        return {
-            ...meta,
-
-            // calculate the new position
-            pos: BigInt(meta.pos * modifier.max_length),
-
-            // calculate the new table length
-            // length: Math.ceil(meta.length / modifier.max_length)
-        };
-    }
-});
-
-export const genMaskAddendum = (type = uint8) => new Addendum({
-    name: "mask",
-    description: "This is used to mask the 'remaining position' of the values table;\n" +
-        "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
-        "The mask does not apply to the whole index, but only to the remaining index.",
-    affectsChunkSize: true,
-    sizeof: type,
-    defaultValue: maxOf(type), // 255 for uint8
-    isCategorizable: true,
-    * generate({dataView}) {
-        yield this.min;
-        yield this.max;
-        yield this.mask;
-        const maskAll = largestPositionMask(dataView);
-        yield maskAll;
-        for (let index = this.min + 1n; index <= this.max; ) {
-            // optimization:
-            if ((index & maskAll) === index) {
+export const genShiftAddendum = (type = uint8) =>
+    new Addendum({
+        name: "shift",
+        description:
+            "This value gets added to the retrieved value at the end of the operation.",
+        sizeof: type,
+        affectsChunkSize: false,
+        defaultValue: 0n,
+        isCategorizable: true,
+        *generate({ length }) {
+            assert.ok(this !== undefined, "undefined this?");
+            yield this.min;
+            yield this.max;
+            yield this.mask;
+            for (let index = this.min + 1n; index <= this.max; ++index) {
                 yield index;
-            } else {
-                console.log("  Ignoring mask:", index)
             }
-
-            index <<= 1n;
-            index |= 0b1n;
-        }
-    },
-    verifyInserts({inserts, dataView, modifier}) {
-        const modifiedInserts = new ModifiedSpan(inserts, modifier);
-        for (let index = 0; index !== inserts.length; ++index) {
-            const realValue = dataView.at(index);
-            const insertValue = modifiedInserts.at(index);
-            if (realValue !== insertValue) {
-                return false;
+        },
+        verifyInserts({ inserts, dataView, modifier }) {
+            const modifiedInserts = new ModifiedSpan(inserts, modifier);
+            for (let index = 0; index !== inserts.length; ++index) {
+                const realValue = dataView.at(index);
+                const insertValue = modifiedInserts.at(index);
+                if (realValue !== insertValue) {
+                    return false;
+                }
             }
-        }
-        return true;
-    },
-    optimizeInserts({inserts, modifier}) {
-        /// This function compresses the specified range based on the input modifier.
-        /// For example, an array of zeros, with mask of zero, only needs the first element
-        return {end: Math.min(inserts.length, Number(bitCeil(modifier.mask)))};
-    },
-    modify(modifier, meta) {
-        // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
-        // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
-        return {...meta, pos: modifier.mask & meta.pos};
-    },
-});
+            return true;
+        },
+        modify(modifier, meta) {
+            return { ...meta, value: modifier.shift + meta.value };
+        },
+        unshift(modifier, meta) {
+            return { ...meta, value: meta.value - modifier.shift };
+        },
+    });
 
-export const genCompactMaskAddendum = (type = uint4) => new Addendum({
-    name: "compact_mask",
-    description: "This is used to mask the 'remaining position' of the values table;\n" +
-        "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
-        "The mask does not apply to the whole index, but only to the remaining index.",
-    affectsChunkSize: (modifier, curChunkSize) => {
-        return (0b1n << sizeOf(type)) - 1n;
-    },
-    sizeof: type,
-    min: 1n, // because ((0b1 << 0) - 1) will be 0xFFF'FFFF
-    defaultValue: maxOf(type), // 255 for uint8
-    isCategorizable: true,
-    * generate({dataView}) {
-        if (this.max >= 32n) {
-            throw new Error("Too much.");
-        }
-        yield this.min;
-        yield this.max;
-        const maskAll = largestPositionMask(dataView);
-        for (let index = this.min + 1n; index < this.max; ++index) {
-
-            // optimization:
-            if ((((0b1n << index) - 1n) & maskAll) !== index) {
-                console.log("  Ignoring compact mask:", index)
-                continue;
+export const genMaxLengthAddendum = (type = uint8) =>
+    new Addendum({
+        name: "max_length",
+        description:
+            "Length of the UTF-8 Encoded Decomposition Code Points.\n" +
+            "This value is the max length of each mapping; there should be additional empty values added\n" +
+            "in between the values of the values table in order to make sure we can easily find the needed \n" +
+            "mappings for all the code points without searching for them.",
+        affectsChunkSize: (modifier, curChunkSize) => {
+            if (modifier === undefined) {
+                // for minSize
+                return BigInt(sizeOf(type));
             }
+            return Infinity;
+        },
+        sizeof: type,
+        defaultValue: 1n,
+        isCategorizable: true,
+        modify(modifier, meta) {
+            // assert.ok(Number.isSafeInteger(modifier.max_length), "Bad max_length?");
+            // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+            // if (modifier.max_length === 0) {
+            //     throw new Error("max_length should be greater than 0");
+            // }
+            return {
+                ...meta,
 
-            yield BigInt(index);
-        }
-    },
-    verifyInserts({inserts, dataView, modifier}) {
-        const modifiedInserts = new ModifiedSpan(inserts, modifier);
-        for (let index = 0; index !== inserts.length; ++index) {
-            const realValue = dataView.at(index);
-            const insertValue = modifiedInserts.at(index);
-            if (realValue !== insertValue) {
-                return false;
+                // calculate the new position
+                pos: BigInt(meta.pos * modifier.max_length),
+
+                // calculate the new table length
+                // length: Math.ceil(meta.length / modifier.max_length)
+            };
+        },
+    });
+
+export const genMaskAddendum = (type = uint8) =>
+    new Addendum({
+        name: "mask",
+        description:
+            "This is used to mask the 'remaining position' of the values table;\n" +
+            "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
+            "The mask does not apply to the whole index, but only to the remaining index.",
+        affectsChunkSize: true,
+        sizeof: type,
+        defaultValue: maxOf(type), // 255 for uint8
+        isCategorizable: true,
+        *generate({ dataView }) {
+            yield this.min;
+            yield this.max;
+            yield this.mask;
+            const maskAll = largestPositionMask(dataView);
+            yield maskAll;
+            for (let index = this.min + 1n; index <= this.max; ) {
+                // optimization:
+                if ((index & maskAll) === index) {
+                    yield index;
+                } else {
+                    console.log("  Ignoring mask:", index);
+                }
+
+                index <<= 1n;
+                index |= 0b1n;
             }
-        }
-        return true;
-    },
-    optimizeInserts({inserts, modifier}) {
-        /// This function compresses the specified range based on the input modifier.
-        /// For example, an array of zeros, with mask of zero, only needs the first element
-        const mask = (0b1n << modifier.compact_mask) - 1n;
-        return {end: Math.min(inserts.length, Number(bitCeil(mask)))};
-    },
-    modify(modifier, meta) {
-        const mask = (0b1n << modifier.compact_mask) - 1n;
-        return {...meta, pos: mask & meta.pos};
-    },
-});
+        },
+        verifyInserts({ inserts, dataView, modifier }) {
+            const modifiedInserts = new ModifiedSpan(inserts, modifier);
+            for (let index = 0; index !== inserts.length; ++index) {
+                const realValue = dataView.at(index);
+                const insertValue = modifiedInserts.at(index);
+                if (realValue !== insertValue) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        optimizeInserts({ inserts, modifier }) {
+            /// This function compresses the specified range based on the input modifier.
+            /// For example, an array of zeros, with mask of zero, only needs the first element
+            return {
+                end: Math.min(inserts.length, Number(bitCeil(modifier.mask))),
+            };
+        },
+        modify(modifier, meta) {
+            // assert.ok(Number.isSafeInteger(modifier.mask), "Bad mask?");
+            // assert.ok(Number.isSafeInteger(meta.pos), "Bad pos?");
+            return { ...meta, pos: modifier.mask & meta.pos };
+        },
+    });
 
-export const genPositionAddendum = (type = null) => new Addendum({
-    name: "pos",
-    description: "This is the position that should be looked for in the values table.",
-    sizeof: uint16,
-    defaultValue: 0n,
-    affectsChunkSize: type == null ? false : (modifier, curChunkSize) => {
-        return sizeOf(type);
-    },
-    isCategorizable: false,
-});
+export const genCompactMaskAddendum = (type = uint4) =>
+    new Addendum({
+        name: "compact_mask",
+        description:
+            "This is used to mask the 'remaining position' of the values table;\n" +
+            "meaning, instead of getting the values_table[0x12'34], we would get values_table[0x12'00].\n" +
+            "The mask does not apply to the whole index, but only to the remaining index.",
+        affectsChunkSize: (modifier, curChunkSize) => {
+            return (0b1n << sizeOf(type)) - 1n;
+        },
+        sizeof: type,
+        min: 1n, // because ((0b1 << 0) - 1) will be 0xFFF'FFFF
+        defaultValue: maxOf(type), // 255 for uint8
+        isCategorizable: true,
+        *generate({ dataView }) {
+            if (this.max >= 32n) {
+                throw new Error("Too much.");
+            }
+            yield this.min;
+            yield this.max;
+            const maskAll = largestPositionMask(dataView);
+            for (let index = this.min + 1n; index < this.max; ++index) {
+                // optimization:
+                if ((((0b1n << index) - 1n) & maskAll) !== index) {
+                    console.log("  Ignoring compact mask:", index);
+                    continue;
+                }
 
-export const genDefaultAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type), genShiftAddendum(type)];
-export const genMaskedAddendaPack = (type = uint8) => [genPositionAddendum(), genMaskAddendum(type)];
-export const genSimpleAddendaPack = (type = uint8) => [genPositionAddendum(type)];
+                yield BigInt(index);
+            }
+        },
+        verifyInserts({ inserts, dataView, modifier }) {
+            const modifiedInserts = new ModifiedSpan(inserts, modifier);
+            for (let index = 0; index !== inserts.length; ++index) {
+                const realValue = dataView.at(index);
+                const insertValue = modifiedInserts.at(index);
+                if (realValue !== insertValue) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        optimizeInserts({ inserts, modifier }) {
+            /// This function compresses the specified range based on the input modifier.
+            /// For example, an array of zeros, with mask of zero, only needs the first element
+            const mask = (0b1n << modifier.compact_mask) - 1n;
+            return { end: Math.min(inserts.length, Number(bitCeil(mask))) };
+        },
+        modify(modifier, meta) {
+            const mask = (0b1n << modifier.compact_mask) - 1n;
+            return { ...meta, pos: mask & meta.pos };
+        },
+    });
+
+export const genPositionAddendum = (type = null) =>
+    new Addendum({
+        name: "pos",
+        description:
+            "This is the position that should be looked for in the values table.",
+        sizeof: uint16,
+        defaultValue: 0n,
+        affectsChunkSize:
+            type == null
+                ? false
+                : (modifier, curChunkSize) => {
+                      return sizeOf(type);
+                  },
+        isCategorizable: false,
+    });
+
+export const genDefaultAddendaPack = (type = uint8) => [
+    genPositionAddendum(),
+    genMaskAddendum(type),
+    genShiftAddendum(type),
+];
+export const genMaskedAddendaPack = (type = uint8) => [
+    genPositionAddendum(),
+    genMaskAddendum(type),
+];
+export const genSimpleAddendaPack = (type = uint8) => [
+    genPositionAddendum(type),
+];
 
 export const genIndexAddenda = (name = "index", type = uint8) => {
     const addenda = new Addenda(name, genDefaultAddendaPack(type), {
         modify: function (table, modifier, range, pos) {
-            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const { pos: maskedPos } = this.mask.modify(modifier, { pos });
             const newPos = range + maskedPos;
             if (newPos >= table.length) {
-                throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
+                throw new RangeError(
+                    `Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`,
+                );
             }
             const value = table.at(newPos);
-            const newValue = this.shift.modify(modifier, {pos: maskedPos, value}).value;
+            const newValue = this.shift.modify(modifier, {
+                pos: maskedPos,
+                value,
+            }).value;
             if (!Number.isSafeInteger(newValue)) {
                 debugger;
-                throw new Error(`Something went really wrong; range: ${range}, value: ${newValue}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
+                throw new Error(
+                    `Something went really wrong; range: ${range}, value: ${newValue}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`,
+                );
             }
             return newValue;
-        }
+        },
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {
@@ -969,21 +1084,27 @@ export const genIndexAddenda = (name = "index", type = uint8) => {
         },
         unshiftAll: function (list) {
             const modifier = this;
-            return list.map((value, index) => this.addenda.shift.unshift(modifier, {
-                value,
-                pos: index
-            }).value);
-        }
+            return list.map(
+                (value, index) =>
+                    this.addenda.shift.unshift(modifier, {
+                        value,
+                        pos: index,
+                    }).value,
+            );
+        },
     };
-    addenda.renderFunctions = [staticFields, maskedFunction, getPositionFunction];
+    addenda.renderFunctions = [
+        staticFields,
+        maskedFunction,
+        getPositionFunction,
+    ];
     return addenda;
 };
-
 
 export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
     const addenda = new Addenda(name, genMaskedAddendaPack(type), {
         modify: function (table, modifier, range, pos) {
-            const {pos: maskedPos} = this.mask.modify(modifier, {pos});
+            const { pos: maskedPos } = this.mask.modify(modifier, { pos });
             const newPos = range + maskedPos;
             if (newPos >= table.length) {
                 // throw new RangeError(`Invalid position calculated; range: ${range}, pos: ${pos}, faulty pos: ${newPos}, table length: ${table.length}, modifier: ${JSON.stringify(modifier)}`);
@@ -992,17 +1113,23 @@ export const genMaskedIndexAddenda = (name = "index", type = uint8) => {
             const value = table.at(newPos);
             if (!Number.isSafeInteger(value)) {
                 debugger;
-                throw new Error(`Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`);
+                throw new Error(
+                    `Something went really wrong; range: ${range}, value: ${value}, pos: ${maskedPos}, table: ${JSON.stringify([...table])}`,
+                );
             }
             return value;
-        }
+        },
     });
     addenda.modifierFunctions = {
         applyMask: function (pos) {
-            return this.addenda.mask.modify(this, {pos});
-        }
+            return this.addenda.mask.modify(this, { pos });
+        },
     };
-    addenda.renderFunctions = [staticFields, maskedFunction, getPositionFunction];
+    addenda.renderFunctions = [
+        staticFields,
+        maskedFunction,
+        getPositionFunction,
+    ];
     return addenda;
 };
 
@@ -1020,7 +1147,7 @@ export const genSimpleIndexAddenda = (name = "index", type = uint8) => {
             //     throw new Error(`Something went really wrong; range: ${range}, value: ${value}, table: ${JSON.stringify([...table])}`);
             // }
             // return value;
-        }
+        },
     });
     addenda.modifierFunctions = {};
     addenda.renderFunctions = [staticFields, getSimplePositionFunction];
