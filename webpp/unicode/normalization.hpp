@@ -514,44 +514,27 @@ namespace webpp::unicode {
         using details::composition::cp1s;
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
-        if (is_in_range(lhs) && is_in_range(rhs)) {
+
+        // no need to check if lhs or rhs are in range, the cp2s_rem will take care of such situation.
+
+        // there are less second code points, so there will be more early bailouts
+        auto const [cp2, cp1_pos, cp1_rem] =
+          cp2s[static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem)];
+
+        // early bailout:
+        if (cp2 == 0 || static_cast<CharT>(cp2) != rhs) {
             auto const hangul = compose_hangul(lhs, rhs);
             if (hangul != 0) {
                 return hangul;
             }
-
-            // auto const magic_code       = decomp_index::magic_merge(lhs, rhs);
-            // auto const magic_code_range = magic_code >> decomp_index::chunk_shift;
-            // auto const code             = decomp_indices[magic_code_range];
-            // if (code.max_length == 0) {
-            // return replacement_char<CharT>;
-            // }
-            // auto const pos = code.get_position(magic_code) + (code.max_length - 1);
-            // return unicode::prev_code_point_copy(decomp_values.data() + pos);
-
-            // auto const magic_code       = details::composition::magic_merge(lhs, rhs);
-            // auto const magic_code_range = magic_code % details::composition::last_mapped_bucket;
-            // auto const code             = details::canonical_composition_magic_table[magic_code_range];
-            // if (code == 0) {
-            //     return replacement_char<CharT>;
-            // }
-            // return static_cast<CharT>(code);
-
-            // there are less second code points, so there will be more early bailouts
-            auto const cp2_code = cp2s[static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem)];
-
-            // early bailout:
-            if (cp2_code.cp2 == 0U || static_cast<CharT>(cp2_code.cp2) != rhs) {
-                return replacement_char<CharT>;
-            }
-
-            auto const cp1_code = cp1s[static_cast<stl::size_t>(cp2_code.cp1_pos + (lhs % cp2_code.cp1_rem))];
-            if ((static_cast<CharT>(cp1_code.cp1) | lhs) != lhs) {
-                return replacement_char<CharT>;
-            }
-            return static_cast<CharT>(cp1_code.value);
+            return replacement_char<CharT>;
         }
-        return replacement_char<CharT>;
+
+        auto [cp1, value] = cp1s[static_cast<stl::size_t>(cp1_pos + (lhs % cp1_rem))];
+        if ((static_cast<CharT>(cp1) | lhs) != lhs) {
+            return replacement_char<CharT>;
+        }
+        return static_cast<CharT>(value);
     }
 
 } // namespace webpp::unicode

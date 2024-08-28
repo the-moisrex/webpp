@@ -52,7 +52,7 @@ class CP1 {
 
     render() {
         if (this.#codePoint == 0) {
-            return `{}`;
+            return `{0x0U, 0x0U}`;
         }
         return `{0x${this.#codePoint.toString(16).toUpperCase()}U, 0x${this.#value.toString(16).toUpperCase()}U}`;
     }
@@ -61,7 +61,7 @@ class CP1 {
 class CP2 {
     #codePoint;
     #cp1Pos = 0;
-    #rem = 0;
+    #rem = 1;
     constructor(codePoint = 0) {
         // this.#codePoint = Number(codePoint) & 0xff;
         this.#codePoint = codePoint;
@@ -110,7 +110,7 @@ class CP2 {
 
     render() {
         if (this.#codePoint == 0) {
-            return `{}`;
+            return `{0, 0, 1}`;
         }
         return `{0x${this.#codePoint.toString(16).toUpperCase()}U, ${this.#cp1Pos}, ${this.#rem}}`;
     }

@@ -5,6 +5,8 @@
 #include "../webpp/unicode/normalization.hpp"
 #include "common/tests_common_pch.hpp"
 
+#include <limits>
+
 using webpp::fmt::format;
 using webpp::stl::int64_t;
 using webpp::stl::max;
@@ -1025,6 +1027,46 @@ TEST(Unicode, Compose) {
     EXPECT_EQ(composed(0x00A8, 0x0301), 0x0385);
     EXPECT_EQ(composed(0x0079, 0x0301), 0x00FD);
     EXPECT_EQ(composed(0x22B4, 0x0338), 0x22EC);
+}
+
+TEST(Unicode, HangulCompose) {
+    using webpp::unicode::compose_hangul;
+    using webpp::unicode::composed;
+
+    EXPECT_EQ(composed(0xAC00, 0x11A8), 0xAC01) << compose_hangul(0xAC00, 0x11A8); // 가 + ᆨ = 각
+    EXPECT_EQ(composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC1C, 0x11B2); // 개 + ᆲ = 갥
+    EXPECT_EQ(composed(0xAC1C, 0x11B2), 0xAC27) << compose_hangul(0xAC24, 0x11B2); // 개 + ᆲ = 갧
+}
+
+TEST(Unicode, NoCompose) {
+    using webpp::unicode::composed;
+
+    EXPECT_EQ(composed(0x925, 0x0020), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(composed(0, 0), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(composed(1, 0), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(composed(std::numeric_limits<std::uint32_t>::max(), 0U), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(composed(0U, std::numeric_limits<std::uint32_t>::max()), webpp::unicode::replacement_char<>);
+    EXPECT_EQ(composed(-1, 0), webpp::unicode::replacement_char<>);
+    EXPECT_NE(composed(0x594, 0x0020), 0x00A8);
+    EXPECT_NE(composed(0x307, 0x0061), 0x00AA);
+    EXPECT_NE(composed(0x579, 0x0020), 0x00AF);
+    EXPECT_NE(composed(0x741, 0x0032), 0x00B2);
+    EXPECT_NE(composed(0x787, 0x0033), 0x00B3);
+    EXPECT_NE(composed(0x437, 0x0020), 0x00B4);
+    EXPECT_NE(composed(0x333, 0x03BC), 0x00B5);
+    EXPECT_NE(composed(0x779, 0x0020), 0x00B8);
+    EXPECT_NE(composed(0x101, 0x0031), 0x00B9);
+
+    EXPECT_NE(composed(0x0073, 0x0326), 0x021B);
+    EXPECT_NE(composed(0x0063, 0x0331), 0x1E0F);
+    EXPECT_NE(composed(0x05D4, 0x05B9), 0xFB4B);
+    EXPECT_NE(composed(0x0054, 0x0308), 0x00DC);
+    EXPECT_NE(composed(0x05EB, 0x05BC), 0xFB4A);
+    EXPECT_NE(composed(0x0F70, 0x0F72), 0x0F73);
+    EXPECT_NE(composed(0x03C1, 0x0315), 0x1FE5);
+    EXPECT_NE(composed(0x00A8, 0x0300), 0x0385);
+    EXPECT_NE(composed(0x0079, 0x0302), 0x00FD);
+    EXPECT_NE(composed(0x22B4, 0x0339), 0x22EC);
 }
 
 TEST(Unicode, EquivalentOfTransformationChains) {
