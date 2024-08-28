@@ -26,7 +26,7 @@ const outFile = `composition_tables.hpp`;
 const enable2TableMode = false;
 const defaultChunkSize = 6; // uintN_t
 const defaultHardWrap = -1n;
-const findTheBest = true;
+const findTheBest = false;
 const enableMagicCodeComments = true;
 const invalidCodePoint = 0;
 const tryOtherMasksAndCompls = false;
@@ -189,7 +189,7 @@ class CompTable {
                 });
                 console.log(`Valid chunk size: ${chunkSize}-${hardWrap}`);
             } catch (error) {
-                if (tryOtherMasksAndCompls) {
+                if (!tryOtherMasksAndCompls) {
                     console.log(
                         `Invalid chunk size: ${chunkSize}-${hardWrap} ${error.message.substring(0, 100)}`,
                     );
@@ -205,11 +205,7 @@ class CompTable {
             this.#canonicalCompositions.resetAlgorithm();
             for (;;) {
                 for (let chunkSize = 1; chunkSize <= 15; chunkSize++) {
-                    for (
-                        let hardWrap = -1n;
-                        hardWrap <= 10000n;
-                        hardWrap += 1n
-                    ) {
+                    for (let hardWrap = -1n; hardWrap <= 10000n; ++hardWrap) {
                         tryIt(chunkSize, hardWrap);
                     }
                 }

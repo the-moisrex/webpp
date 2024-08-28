@@ -255,6 +255,9 @@ export const extractedCanonicalDecompositions = async (data = null) => {
 
     // console.log([...Object.values(data)/*.map(item => item?.[0] || undefined)*/]);
 
+    let i = 0;
+    let j = 0;
+
     return {
         codePoints: Object.keys(data),
 
@@ -264,6 +267,8 @@ export const extractedCanonicalDecompositions = async (data = null) => {
             .reduce((accum, value) => {
                 if (!accum.includes(value)) {
                     accum.push(value);
+                } else {
+                    console.log(`Dup1:`, ++j, value);
                 }
                 return accum;
             }, []) // remove duplicates
@@ -275,6 +280,8 @@ export const extractedCanonicalDecompositions = async (data = null) => {
             .reduce((accum, value) => {
                 if (!accum.includes(value)) {
                     accum.push(value);
+                } else {
+                    console.log(`Dup2:`, ++i, value);
                 }
                 return accum;
             }, []) // remove duplicates
@@ -536,22 +543,56 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             }
             break;
         }
-
+        case "map1-grouped": {
+            const map1s = (await extractedCanonicalDecompositions()).mappedToFirst;
+            const maps = (await getCanonicalDecompositions()).data;
+            for (const map1 of map1s) {
+                const map2s = [];
+                for (let codePoint in maps) {
+                    codePoint = parseInt(codePoint);
+                    const [cp1, cp2] = maps[codePoint];
+                    if (cp1 !== map1) {
+                        continue;
+                    }
+                    map2s.push(cp2);
+                }
+                console.log(map1, map2s);
+            }
+            break;
+        }
+        case "map2-grouped": {
+            const map2s = (await extractedCanonicalDecompositions()).mappedToSecond;
+            const maps = (await getCanonicalDecompositions()).data;
+            for (const map2 of map2s) {
+                const map1s = [];
+                for (let codePoint in maps) {
+                    codePoint = parseInt(codePoint);
+                    const [cp1, cp2] = maps[codePoint];
+                    if (cp2 !== map2) {
+                        continue;
+                    }
+                    map1s.push(cp1);
+                }
+                console.log(map2, map1s);
+            }
+            break;
+        }
         default: {
             const maps = (await getCanonicalDecompositions()).data;
             for (let codePoint in maps) {
                 codePoint = parseInt(codePoint);
                 console.log(
-                    codePoint.toString(16),
-                    maps[codePoint].map((item) => item.toString(16)).join(", "),
+                    codePoint.toString(10),
+                    '\t-->',
+                    maps[codePoint].map((item) => item.toString(10)).join(", "),
                 );
             }
             const keys = Object.keys(maps).toSorted(
                 (a, b) => parseInt(a) - parseInt(b),
             );
             console.log("Table length:", keys.length);
-            console.log("Start Code Point:", maps[keys[0]]);
-            console.log("Last Code Point:", maps[keys[keys.length - 1]]);
+            console.log("Start Code Points:", maps[keys[0]]);
+            console.log("Last Code Points:", maps[keys[keys.length - 1]]);
         }
     }
 }
