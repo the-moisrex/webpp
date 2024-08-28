@@ -10,6 +10,7 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
+    bitCeil,
     fillEmpty,
     findSmallestMask,
     runClangFormat,
@@ -32,12 +33,12 @@ class CP1 {
     #codePoint;
     #value;
     constructor(codePoint = 0, value = 0) {
-        this.#codePoint = codePoint;
+        this.#codePoint = Number(codePoint) & 0xff;
         this.#value = value;
     }
 
     static typeSize() {
-        return 64;
+        return 32;
     }
 
     static invalid() {
@@ -46,10 +47,12 @@ class CP1 {
 
     static renderStruct() {
         return `
-            struct CP1 {
-                char32_t cp1 = 0;
-                char32_t value = 0U;
+            struct alignas(std::uint${this.typeSize()}_t) CP1 {
+                std::uint8_t cp1 : 8 = 0;
+                char32_t value : 24 = 0U;
             };
+
+            static_assert(sizeof(CP1) == ${this.typeSize() / 8}U, "Type size is not valid.");
         `;
     }
 
@@ -66,6 +69,7 @@ class CP2 {
     #cp1Pos = 0;
     #rem = 0;
     constructor(codePoint = 0) {
+        // this.#codePoint = Number(codePoint) & 0xff;
         this.#codePoint = codePoint;
     }
 
@@ -96,11 +100,13 @@ class CP2 {
 
     static renderStruct() {
         return `
-            struct CP2 {
+            struct alignas(std::uint${this.typeSize()}_t) CP2 {
                 char32_t cp2 = 0;
                 std::uint16_t cp1_pos = 0U;
                 std::uint16_t cp1_rem = 0U;
             };
+
+            static_assert(sizeof(CP2) == ${this.typeSize() / 8}U, "Type size is not valid.");
         `;
     }
 
@@ -118,7 +124,8 @@ class CP2 {
 
 class CompTable {
     // these numbers are educated guesses from other projects, they're not that important!
-    lastMapped = 0n;
+    lastCP1 = 0n;
+    lastCP2 = 0n;
     cp1s = [];
     cp2s = [];
 
@@ -128,6 +135,12 @@ class CompTable {
     constructor() {}
 
     async load() {
+        // const info = await UnicodeData.maxCPs();
+        // this.lastCP1 = info.maxCP1;
+        // this.lastCP2 = info.maxCP2;
+        // const neededBitsCP1 = bitCeil(this.lastCP1);
+        // const neededBitsCP2 = bitCeil(this.lastCP2);
+        // console.log(neededBitsCP1, neededBitsCP2, this.lastCP1, this.lastCP2);
         const cp2sRaw = await UnicodeData.groupedByCP2();
         const cp2sArr = [];
         for (const cp2Str in cp2sRaw) {

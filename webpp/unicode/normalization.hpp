@@ -541,7 +541,7 @@ namespace webpp::unicode {
             auto const cp2_code = cp2s[static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem)];
 
             // early bailout:
-            if ((static_cast<CharT>(cp2_code.cp2) | rhs) != rhs) {
+            if (cp2_code.cp2 == 0U || static_cast<CharT>(cp2_code.cp2) != rhs) {
                 return replacement_char<CharT>;
             }
 

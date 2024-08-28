@@ -327,6 +327,27 @@ export const groupedByCP2 = async () => {
     return grouped;
 };
 
+export const maxCPs = async () => {
+    const maps = (await getCanonicalDecompositions()).data;
+    const info = {
+        maxCP1: 0,
+        maxCP2: 0,
+        maxCPs: 0,
+        maxValues: 0,
+    };
+    for (let codePoint in maps) {
+        codePoint = parseInt(codePoint);
+        let [cp1, cp2] = maps[codePoint];
+        cp1 = Number(cp1);
+        cp2 = Number(cp2);
+        info.maxCP1 = Math.max(info.maxCP1, cp1);
+        info.maxCP2 = Math.max(info.maxCP2, cp2);
+        info.maxCPs = Math.max(info.maxCP1, info.maxCP2);
+        info.maxValues = Math.max(info.maxValues, codePoint);
+    }
+    return info;
+};
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
     switch (process.argv[2]) {
         case "code-points": {
