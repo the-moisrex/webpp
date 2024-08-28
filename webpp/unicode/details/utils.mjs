@@ -1217,3 +1217,7 @@ export const chunked = (size) => {
     const chunkShift = popcount(chunkMask);
     return { chunkSize, chunkMask, chunkShift };
 };
+
+export function fillEmpty(arr, invalidValue = null) {
+    return Array.from(arr, (val, i) => (i in arr ? val : invalidValue));
+}

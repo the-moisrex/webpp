@@ -289,6 +289,44 @@ export const extractedCanonicalDecompositions = async (data = null) => {
     };
 };
 
+export const groupedByCP1 = async () => {
+    const map1s = (await extractedCanonicalDecompositions()).mappedToFirst;
+    const maps = (await getCanonicalDecompositions()).data;
+    const grouped = {};
+    for (const map1 of map1s) {
+        const map2s = [];
+        for (let codePoint in maps) {
+            codePoint = parseInt(codePoint);
+            const [cp1, cp2] = maps[codePoint];
+            if (cp1 !== map1) {
+                continue;
+            }
+            map2s.push(cp2);
+        }
+        grouped[map1] = map2s;
+    }
+    return grouped;
+};
+
+export const groupedByCP2 = async () => {
+    const map2s = (await extractedCanonicalDecompositions()).mappedToSecond;
+    const maps = (await getCanonicalDecompositions()).data;
+    const grouped = {};
+    for (const map2 of map2s) {
+        const map1s = [];
+        for (let codePoint in maps) {
+            codePoint = parseInt(codePoint);
+            const [cp1, cp2] = maps[codePoint];
+            if (cp2 !== map2) {
+                continue;
+            }
+            map1s.push({ cp1, codePoint });
+        }
+        grouped[map2] = map1s;
+    }
+    return grouped;
+};
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
     switch (process.argv[2]) {
         case "code-points": {
@@ -544,36 +582,19 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             break;
         }
         case "map1-grouped": {
-            const map1s = (await extractedCanonicalDecompositions()).mappedToFirst;
-            const maps = (await getCanonicalDecompositions()).data;
-            for (const map1 of map1s) {
-                const map2s = [];
-                for (let codePoint in maps) {
-                    codePoint = parseInt(codePoint);
-                    const [cp1, cp2] = maps[codePoint];
-                    if (cp1 !== map1) {
-                        continue;
-                    }
-                    map2s.push(cp2);
-                }
-                console.log(map1, map2s);
+            const grouped = await groupedByCP1();
+            for (const cp1 in grouped) {
+                console.log(cp1, grouped[cp1]);
             }
             break;
         }
         case "map2-grouped": {
-            const map2s = (await extractedCanonicalDecompositions()).mappedToSecond;
-            const maps = (await getCanonicalDecompositions()).data;
-            for (const map2 of map2s) {
-                const map1s = [];
-                for (let codePoint in maps) {
-                    codePoint = parseInt(codePoint);
-                    const [cp1, cp2] = maps[codePoint];
-                    if (cp2 !== map2) {
-                        continue;
-                    }
-                    map1s.push(cp1);
-                }
-                console.log(map2, map1s);
+            const grouped = await groupedByCP2();
+            for (const cp2 in grouped) {
+                console.log(
+                    cp2,
+                    grouped[cp2].map((item) => item.cp1),
+                );
             }
             break;
         }
@@ -583,7 +604,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
                 codePoint = parseInt(codePoint);
                 console.log(
                     codePoint.toString(10),
-                    '\t-->',
+                    "\t-->",
                     maps[codePoint].map((item) => item.toString(10)).join(", "),
                 );
             }

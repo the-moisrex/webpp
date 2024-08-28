@@ -511,6 +511,10 @@ namespace webpp::unicode {
      */
     template <UTF32 CharT = char32_t>
     [[nodiscard]] static constexpr CharT composed(CharT const lhs, CharT const rhs) noexcept {
+        using details::composition::cp1s;
+        using details::composition::cp2s;
+        using details::composition::cp2s_mask;
+        using details::composition::cp2s_rem;
         if (is_in_range(lhs) && is_in_range(rhs)) {
             auto const hangul = compose_hangul(lhs, rhs);
             if (hangul != 0) {
@@ -526,13 +530,28 @@ namespace webpp::unicode {
             // auto const pos = code.get_position(magic_code) + (code.max_length - 1);
             // return unicode::prev_code_point_copy(decomp_values.data() + pos);
 
-            auto const magic_code       = details::composition::magic_merge(lhs, rhs);
-            auto const magic_code_range = magic_code % details::composition::last_mapped_bucket;
-            auto const code             = details::canonical_composition_magic_table[magic_code_range];
-            if (code == 0) {
+            // auto const magic_code       = details::composition::magic_merge(lhs, rhs);
+            // auto const magic_code_range = magic_code % details::composition::last_mapped_bucket;
+            // auto const code             = details::canonical_composition_magic_table[magic_code_range];
+            // if (code == 0) {
+            //     return replacement_char<CharT>;
+            // }
+            // return static_cast<CharT>(code);
+
+            // there are less second code points, so there will be more early bailouts
+            auto const cp2_code = cp2s[(rhs & cp2s_mask) % cp2s_rem];
+
+            // early bailout:
+            if (cp2_code.cp2 != rhs) {
                 return replacement_char<CharT>;
             }
-            return static_cast<CharT>(code);
+
+            auto const cp1_code = cp1s[cp2_code.cp1_pos + (lhs & cp2_code.cp1_mask)];
+            if (cp1_code.cp1 != lhs) {
+                return cp1_code.value;
+                return replacement_char<CharT>;
+            }
+            return cp1_code.value;
         }
         return replacement_char<CharT>;
     }
