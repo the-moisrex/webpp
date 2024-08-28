@@ -546,9 +546,8 @@ namespace webpp::unicode {
                 return replacement_char<CharT>;
             }
 
-            auto const cp1_code = cp1s[cp2_code.cp1_pos + (lhs & cp2_code.cp1_mask)];
+            auto const cp1_code = cp1s[cp2_code.cp1_pos + (lhs % cp2_code.cp1_rem)];
             if (cp1_code.cp1 != lhs) {
-                return cp1_code.value;
                 return replacement_char<CharT>;
             }
             return cp1_code.value;

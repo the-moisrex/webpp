@@ -64,13 +64,18 @@ class CP1 {
 class CP2 {
     #codePoint;
     #cp1Pos = 0;
-    #mask = 0;
+    #rem = 0;
     constructor(codePoint = 0) {
         this.#codePoint = codePoint;
     }
 
-    setMask(cp1sRaw) {
-        this.#mask = findSmallestMask(cp1sRaw);
+    setRem(cp1sLength) {
+        // this.#rem = findSmallestMask(cp1sRaw);
+        this.#rem = cp1sLength;
+    }
+
+    nextRem() {
+        ++this.#rem;
     }
 
     setPosition(pos) {
@@ -81,8 +86,8 @@ class CP2 {
         return this.#cp1Pos;
     }
 
-    get mask() {
-        return this.#mask;
+    get rem() {
+        return this.#rem;
     }
 
     static typeSize() {
@@ -94,7 +99,7 @@ class CP2 {
             struct CP2 {
                 char32_t cp2 = 0;
                 std::uint16_t cp1_pos = 0U;
-                std::uint16_t cp1_mask = 0U;
+                std::uint16_t cp1_rem = 0U;
             };
         `;
     }
@@ -107,7 +112,7 @@ class CP2 {
         if (this.#codePoint == 0) {
             return `{}`;
         }
-        return `{0x${this.#codePoint.toString(16).toUpperCase()}U, ${this.#cp1Pos}, 0x${this.#mask.toString(16).toUpperCase()}}`;
+        return `{0x${this.#codePoint.toString(16).toUpperCase()}U, ${this.#cp1Pos}, ${this.#rem}}`;
     }
 }
 
@@ -139,16 +144,32 @@ class CompTable {
                 const cp2 = new CP2(cp2Raw);
                 const cp1Vals = cp2sRaw[cp2Str];
                 const cp1sRaw = cp1Vals.map((val) => val.cp1);
-                cp2.setMask(cp1sRaw);
                 cp2.setPosition(this.cp1s.length);
 
-                for (const { cp1: cp1Raw, codePoint: value } of cp1Vals) {
-                    const cp1 = new CP1(cp1Raw, value);
-                    const pos = cp2.position + Number(cp1Raw & cp2.mask);
-                    if (pos in this.cp1s) {
-                        throw new Error(`Replacing: ${pos}`);
+                cp2.setRem(cp1sRaw.length);
+                nextRem: for (; ; cp2.nextRem()) {
+                    const cp1sTemp = {};
+                    for (const { cp1: cp1Raw, codePoint: value } of cp1Vals) {
+                        const cp1 = new CP1(cp1Raw, value);
+                        const pos = cp2.position + (Number(cp1Raw) % cp2.rem);
+                        if (pos in cp1sTemp) {
+                            // throw new Error(`Replacing: ${pos}`);
+                            console.log(
+                                `Bad Rem:`,
+                                cp2.rem,
+                                cp2.position,
+                                cp1Raw,
+                            );
+                            continue nextRem;
+                        }
+                        cp1sTemp[pos] = cp1;
                     }
-                    this.cp1s[pos] = cp1;
+
+                    for (const posStr in cp1sTemp) {
+                        const pos = parseInt(posStr);
+                        this.cp1s[pos] = cp1sTemp[pos];
+                    }
+                    break;
                 }
 
                 // const pos = cp2Raw & Number(this.cp2sMask);
@@ -225,7 +246,7 @@ const createTableFile = async (tables) => {
  *       - in bytes:      ${totalBits / 8} B
  *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
  *   Some other implementations' total table size was ${competitor.toFixed(1)} KiB;
- *   So I saved ${Math.ceil(competitor - totalBits / 8 / 1024)} KiB and a better a locality.
+ *   So I saved ${Math.ceil(competitor - totalBits / 8 / 1024)} KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
