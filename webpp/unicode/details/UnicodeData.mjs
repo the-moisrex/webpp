@@ -619,6 +619,23 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             }
             break;
         }
+        case "map2-grouped-diff": {
+            const grouped = await groupedByCP2();
+            let maxDiff = 0;
+            let minDiff = 0;
+            for (let cp2 in grouped) {
+                cp2 = parseInt(cp2);
+                const diffs = grouped[cp2]
+                    .map((item) => Number(item.cp1) - cp2)
+                    .toSorted((a, b) => b - a);
+                maxDiff = Math.max(maxDiff, diffs[0]);
+                minDiff = Math.min(minDiff, diffs[diffs.length - 1]);
+                console.log(cp2, diffs);
+            }
+            console.log("Max Diff:", maxDiff);
+            console.log("Min Diff:", minDiff);
+            break;
+        }
         default: {
             const maps = (await getCanonicalDecompositions()).data;
             for (let codePoint in maps) {

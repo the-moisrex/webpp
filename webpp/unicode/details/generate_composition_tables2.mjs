@@ -9,13 +9,7 @@ import * as path from "node:path";
 import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
-import {
-    bitCeil,
-    fillEmpty,
-    findSmallestMask,
-    runClangFormat,
-    writePieces,
-} from "./utils.mjs";
+import { fillEmpty, runClangFormat, writePieces } from "./utils.mjs";
 
 const outFile = `composition_tables.hpp`;
 
@@ -212,14 +206,14 @@ class CompTable {
                 ${CP2.renderStruct()}
 
                 /**
-                 * Size: ${((this.cp2s.length * CP2.typeSize()) / 1024).toFixed(1)} KiB
+                 * Size: ${((this.cp2s.length * CP2.typeSize()) / 8 / 1024).toFixed(1)} KiB
                  */
                 static constexpr std::array<CP2, ${this.cp2s.length}ULL> cp2s {{
                     ${cp2sStr}
                 }};
 
                 /**
-                 * Size: ${((this.cp1s.length * CP2.typeSize()) / 1024).toFixed(1)} KiB
+                 * Size: ${((this.cp1s.length * CP2.typeSize()) / 8 / 1024).toFixed(1)} KiB
                  */
                 static constexpr std::array<CP1, ${this.cp1s.length}ULL> cp1s {{
                     ${cp1sStr}
@@ -229,8 +223,8 @@ class CompTable {
     }
 
     get totalValuesSize() {
-        let sum = this.cp1s.length * CP1.typeSize();
-        sum += this.cp2s.length * CP2.typeSize();
+        let sum = (this.cp1s.length * CP1.typeSize()) / 8;
+        sum += (this.cp2s.length * CP2.typeSize()) / 8;
         return sum;
     }
 }

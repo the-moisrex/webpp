@@ -6,14 +6,14 @@
  *
  *   Auto generated from:                generate_composition_tables2.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 28 Aug 2024 09:20:21 GMT
+ *   This file's generation date:        Wed, 28 Aug 2024 09:45:01 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
- *       - in bits:       1050624
- *       - in bytes:      131328 B
- *       - in KibiBytes:  129 KiB
+ *       - in bits:       131328
+ *       - in bytes:      16416 B
+ *       - in KibiBytes:  17 KiB
  *   Some other implementations' total table size was 45.2 KiB;
- *   So I saved -83 KiB.
+ *   So I saved 30 KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
@@ -59,7 +59,7 @@ namespace webpp::unicode::details {
 
 
         /**
-         * Size: 35.6 KiB
+         * Size: 4.5 KiB
          */
         static constexpr std::array<CP2, 570ULL> cp2s{
           {{},
@@ -635,7 +635,7 @@ namespace webpp::unicode::details {
         };
 
         /**
-         * Size: 185.3 KiB
+         * Size: 23.2 KiB
          */
         static constexpr std::array<CP1, 2964ULL> cp1s{
           {{},
