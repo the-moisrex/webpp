@@ -134,9 +134,9 @@ class CompTable {
             const cp2Raw = BigInt(parseInt(cp2Str));
             cp2sArr.push(cp2Raw);
         }
-        this.cp2sMask = Number(findSmallestMask(cp2sArr));
+        // this.cp2sMask = Number(findSmallestMask(cp2sArr));
         this.cp2sRem = cp2sArr.length;
-        retry: for (;;) {
+        retry: for (; ; ++this.cp2sRem) {
             this.cp1s = [];
             this.cp2s = [];
             for (const cp2Str in cp2sRaw) {
@@ -173,10 +173,9 @@ class CompTable {
                 }
 
                 // const pos = cp2Raw & Number(this.cp2sMask);
-                const pos = (Number(cp2Raw) & this.cp2sMask) % this.cp2sRem;
-                if (this.cp2s[pos] !== undefined) {
+                const pos = Number(cp2Raw) % this.cp2sRem;
+                if (pos in this.cp2s) {
                     console.log("Restarting: ", this.cp2sRem);
-                    ++this.cp2sRem;
                     continue retry;
                 }
                 this.cp2s[pos] = cp2;
@@ -193,7 +192,7 @@ class CompTable {
         return `
             namespace composition {
 
-                static constexpr auto cp2s_mask = 0x${this.cp2sMask.toString(16).toUpperCase()}U;
+                ${/*static constexpr auto cp2s_mask = 0x${this.cp2sMask.toString(16).toUpperCase()}U;*/ ""}
                 static constexpr auto cp2s_rem = ${this.cp2sRem}U;
 
                 ${CP1.renderStruct()}

@@ -513,7 +513,6 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr CharT composed(CharT const lhs, CharT const rhs) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
-        using details::composition::cp2s_mask;
         using details::composition::cp2s_rem;
         if (is_in_range(lhs) && is_in_range(rhs)) {
             auto const hangul = compose_hangul(lhs, rhs);
@@ -539,18 +538,18 @@ namespace webpp::unicode {
             // return static_cast<CharT>(code);
 
             // there are less second code points, so there will be more early bailouts
-            auto const cp2_code = cp2s[(rhs & cp2s_mask) % cp2s_rem];
+            auto const cp2_code = cp2s[static_cast<stl::size_t>(rhs) % static_cast<stl::size_t>(cp2s_rem)];
 
             // early bailout:
-            if (cp2_code.cp2 != rhs) {
+            if ((static_cast<CharT>(cp2_code.cp2) | rhs) != rhs) {
                 return replacement_char<CharT>;
             }
 
-            auto const cp1_code = cp1s[cp2_code.cp1_pos + (lhs % cp2_code.cp1_rem)];
-            if (cp1_code.cp1 != lhs) {
+            auto const cp1_code = cp1s[static_cast<stl::size_t>(cp2_code.cp1_pos + (lhs % cp2_code.cp1_rem))];
+            if ((static_cast<CharT>(cp1_code.cp1) | lhs) != lhs) {
                 return replacement_char<CharT>;
             }
-            return cp1_code.value;
+            return static_cast<CharT>(cp1_code.value);
         }
         return replacement_char<CharT>;
     }
