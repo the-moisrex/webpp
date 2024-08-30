@@ -1029,6 +1029,25 @@ TEST(Unicode, Compose) {
     EXPECT_EQ(composed(0x22B4, 0x0338), 0x22EC);
 }
 
+TEST(Unicode, ComposeStr) {
+    using webpp::unicode::compose;
+
+    std::u32string str;
+    std::u8string  str8;
+
+    str = U"\x22B4\x0338 \x22B4\x0338 \x22B4\x0338";
+    compose(str);
+    EXPECT_EQ(str, U"\x22EC \x22EC \x22EC");
+
+    str = U"\x22B4\x0338\x22B4\x0338\x22B4\x0338";
+    compose(str);
+    EXPECT_EQ(str, U"\x22EC\x22EC\x22EC");
+
+    str8 = utf32_to_utf8(U"\x22B4\x0338\x22B4\x0338\x22B4\x0338");
+    compose(str8);
+    EXPECT_EQ(str8, utf32_to_utf8(U"\x22EC\x22EC\x22EC"));
+}
+
 TEST(Unicode, HangulCompose) {
     using webpp::unicode::compose_hangul;
     using webpp::unicode::composed;

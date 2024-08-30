@@ -10,6 +10,7 @@
 #include "./unicode_concepts.hpp"
 
 #include <algorithm>
+#include <iterator>
 
 // NOLINTBEGIN(*-magic-numbers)
 namespace webpp::unicode {
@@ -387,6 +388,40 @@ namespace webpp::unicode {
 
     namespace unchecked {
 
+        template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
+        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from) noexcept(
+          istl::NothrowAppendable<Iter>) {
+            using char_type     = istl::appendable_value_type_t<Iter>;
+            using src_char_type = typename stl::iterator_traits<stl::remove_cvref_t<Iter2>>::value_type;
+            static_assert(sizeof(char_type) == sizeof(src_char_type),
+                          "Character types need to have the same size.");
+            if constexpr (UTF8<char_type>) {
+                auto const size = static_cast<stl::size_t>(details::utf8_skip<src_char_type>[*from]);
+                webpp_assume(size <= 6);
+                for (stl::size_t index = 0U; index != size; ++index) {
+                    istl::iter_append(ito, *from++);
+                }
+                return size;
+            } else if constexpr (UTF16<char_type>) {
+                istl::iter_append(ito, *from++);
+                if (!(*ito < trail_surrogate_min<char_type> || *ito > trail_surrogate_max<char_type>) ) {
+                    istl::iter_append(ito, *from++);
+                    return 2U;
+                }
+                return 1U;
+            } else {
+                istl::iter_append(ito, *from++);
+                return 1U;
+            }
+        }
+
+        template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
+        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2 const& from) noexcept(
+          istl::NothrowAppendable<Iter>) {
+            Iter2 from_cpy = from;
+            return copy_next_into(ito, from_cpy);
+        }
+
         template <stl::forward_iterator Iter = char8_t*>
         static constexpr void next_char(Iter& pos) noexcept {
             using char_type = typename stl::iterator_traits<Iter>::value_type;
@@ -673,9 +708,25 @@ namespace webpp::unicode {
         static constexpr SizeT append(StrT& out, Iter& src) noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::appendable_value_type_t<StrT>;
             using src_char_type = typename stl::iterator_traits<Iter>::value_type;
-            if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
-                // no need to convert to UTF32 then convert to whatever
+            if constexpr (UTF32<src_char_type>) {
                 return append<StrT, SizeT>(out, *src++);
+            } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
+                return unchecked::copy_next_into(out, src);
+            } else {
+                return append<StrT, SizeT>(out, next_code_point(src));
+            }
+        }
+
+        template <istl::Appendable      StrT,
+                  stl::integral         SizeT = istl::size_type_of_t<StrT>,
+                  stl::forward_iterator Iter  = char32_t const*>
+        static constexpr SizeT append(StrT& out, Iter const& src) noexcept(istl::NothrowAppendable<StrT>) {
+            using out_char_type = istl::appendable_value_type_t<StrT>;
+            using src_char_type = typename stl::iterator_traits<Iter>::value_type;
+            if constexpr (UTF32<src_char_type>) {
+                return append<StrT, SizeT>(out, *src);
+            } else if constexpr (sizeof(src_char_type) == sizeof(out_char_type)) {
+                return unchecked::copy_next_into(out, src);
             } else {
                 return append<StrT, SizeT>(out, next_code_point(src));
             }

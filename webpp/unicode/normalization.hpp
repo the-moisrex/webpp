@@ -103,11 +103,10 @@
 #ifndef WEBPP_UNICODE_NORMALIZATION_HPP
 #define WEBPP_UNICODE_NORMALIZATION_HPP
 
-#include "../std/algorithm.hpp"
 #include "../std/iterator.hpp"
+#include "../std/string.hpp"
 #include "../std/string_like.hpp"
 #include "../std/type_traits.hpp"
-#include "../utils/bits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/composition_tables.hpp"
 #include "./details/decomposition_tables.hpp"
@@ -461,8 +460,8 @@ namespace webpp::unicode {
      * Decompose inplace
      */
     template <istl::String StrT = stl::u32string>
-    static constexpr void decompose(StrT& out) noexcept {
-        using size_type = typename StrT::size_type;
+    static constexpr void decompose(StrT& out) {
+        using size_type = typename stl::remove_cvref_t<StrT>::size_type;
 
         auto const [max_length, requires_mapping] = details::decomp_details(out.begin(), out.end());
         auto const cur_len                        = out.size();
@@ -535,6 +534,43 @@ namespace webpp::unicode {
             return replacement_char<CharT>;
         }
         return static_cast<CharT>(value);
+    }
+
+    /**
+     * Compose a unicode string inplace
+     *
+     * Attention: this function does NOT decompose, meaning, this function can be used in
+     * NFC normalization, but itself is NOT NFC.
+     *
+     * This functio is indeed noexcept, and that's not a mistake; but in case you know your
+     * string type might throw, you can explicitly specify it as the template parameter.
+     *
+     * String types won't throw since composing (that doesn't do decompose first) will only
+     * reduce the size of the string and it cannot make the string bigger, thus no allocations
+     * would be required.
+     */
+    template <istl::String StrT = stl::u32string, bool isNothrow = true>
+    static constexpr void compose(StrT& out) noexcept(isNothrow) {
+        using size_type = typename stl::remove_cvref_t<StrT>::size_type;
+
+        auto const* const beg = out.data();
+        auto*             ptr = out.data();
+        auto*             rep = out.data();
+        auto const* const end = ptr + out.size();
+        char32_t          cp1 = next_code_point(ptr, end);
+
+        while (ptr != end) {
+            char32_t const cp2         = next_code_point(ptr, end);
+            auto const     replaced_cp = composed(cp1, cp2);
+            if (replaced_cp == replacement_char<char32_t>) {
+                unchecked::append(rep, cp1);
+                cp1 = cp2;
+            } else {
+                unchecked::append(rep, replaced_cp);
+                cp1 = next_code_point(ptr, end);
+            }
+        }
+        out.resize(static_cast<size_type>(rep - beg));
     }
 
 } // namespace webpp::unicode

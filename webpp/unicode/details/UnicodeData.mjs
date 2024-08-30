@@ -11,6 +11,7 @@ import {
     parseCodePoints,
     splitLine,
     updateProgressBar,
+    utf32To8,
 } from "./utils.mjs";
 
 export const fileUrl =
@@ -634,6 +635,25 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             }
             console.log("Max Diff:", maxDiff);
             console.log("Min Diff:", minDiff);
+            break;
+        }
+        case "replace-size": {
+            const maps = (await getCanonicalDecompositions()).data;
+            let isThereAny = false;
+            for (let codePoint in maps) {
+                codePoint = parseInt(codePoint);
+                let [cp1, cp2] = maps[codePoint];
+                cp1 = utf32To8(cp1);
+                cp2 = utf32To8(cp2);
+                codePoint = utf32To8(codePoint);
+                const cond = cp1.length + cp2.length < codePoint.length;
+                isThereAny = !isThereAny ? cond : isThereAny;
+                console.log(cond, cp1, cp2, codePoint);
+            }
+            console.log(
+                "Found any pair that makes the string longer?",
+                isThereAny,
+            );
             break;
         }
         default: {
