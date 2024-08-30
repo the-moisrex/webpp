@@ -141,7 +141,11 @@ export const parse = async (table, property, fileContent = undefined) => {
         }
 
         case properties.canonicalDecompositionType: {
-            action = ({ codePointStr, DecompositionStr }) => {
+            action = ({
+                codePointStr,
+                DecompositionStr,
+                CanonicalCombiningClass,
+            }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(
                     codePoint,
@@ -160,7 +164,10 @@ export const parse = async (table, property, fileContent = undefined) => {
                     return;
                 }
 
-                table.add(codePoint, decomposition);
+                table.add(codePoint, {
+                    ...decomposition,
+                    CanonicalCombiningClass,
+                });
             };
             break;
         }
@@ -214,6 +221,25 @@ export const parse = async (table, property, fileContent = undefined) => {
         });
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
+};
+
+export const getCCCs = async () => {
+    class GetTable {
+        #data = {};
+
+        add(codePoint, CanonicalCombiningClass) {
+            this.#data[codePoint] = CanonicalCombiningClass;
+        }
+
+        get data() {
+            return this.#data;
+        }
+    }
+
+    const table = new GetTable();
+    await parse(table, properties.ccc);
+
+    return table.data;
 };
 
 /// Field number 5 (Decomposition), excluding those that have a tag (contains <something>)
@@ -654,6 +680,20 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
                 "Found any pair that makes the string longer?",
                 isThereAny,
             );
+            break;
+        }
+        case "check-ccc": {
+            const maps = (await getCanonicalDecompositions()).data;
+            const cccs = await getCCCs();
+            for (const codePointStr in maps) {
+                const [cp1, cp2] = maps[codePointStr];
+                const cp1ccc = cccs?.[cp1];
+                const cp2ccc = cccs?.[cp2];
+                console.log(
+                    cp1ccc > cp2ccc,
+                    `${cp1.toString(16)} + ${cp2.toString(16)} => ${codePointStr} \t| ${cp1ccc} + ${cp2ccc}`,
+                );
+            }
             break;
         }
         default: {

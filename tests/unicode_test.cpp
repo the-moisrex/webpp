@@ -6,6 +6,7 @@
 #include "common/tests_common_pch.hpp"
 
 #include <limits>
+#include <string>
 
 using webpp::fmt::format;
 using webpp::stl::int64_t;
@@ -1030,10 +1031,13 @@ TEST(Unicode, Compose) {
 }
 
 TEST(Unicode, ComposeStr) {
+    using std::u32string;
+    using std::u8string;
     using webpp::unicode::compose;
+    using webpp::unicode::composed;
 
-    std::u32string str;
-    std::u8string  str8;
+    u32string str;
+    u8string  str8;
 
     str = U"\x22B4\x0338 \x22B4\x0338 \x22B4\x0338";
     compose(str);
@@ -1046,6 +1050,460 @@ TEST(Unicode, ComposeStr) {
     str8 = utf32_to_utf8(U"\x22B4\x0338\x22B4\x0338\x22B4\x0338");
     compose(str8);
     EXPECT_EQ(str8, utf32_to_utf8(U"\x22EC\x22EC\x22EC"));
+
+    EXPECT_EQ(composed<u32string>(U"fa\x00df.de"), U"fa\x00df.de");
+    EXPECT_EQ(composed<u32string>(U"fa\x00df.de"), U"fa\x00df.de");
+    EXPECT_EQ(composed<u32string>(U"fa\x00df"), U"fa\x00df");
+    EXPECT_EQ(composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
+    EXPECT_EQ(composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
+    EXPECT_EQ(composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
+    EXPECT_EQ(composed<u32string>(U"a\x0300.\x05d0\x0308"), U"\x00e0.\x05d0\x0308");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x0308"), U"\x05d0\x0308");
+    EXPECT_EQ(composed<u32string>(U"a\x0300\x0308.\x05d0"), U"\x00e0\x0308.\x05d0");
+    EXPECT_EQ(composed<u32string>(U"a\x0300\x0308.\x05d0"), U"\x00e0\x0308.\x05d0");
+    EXPECT_EQ(composed<u32string>(U"a\x0300\x0308.\x05d0"), U"\x00e0\x0308.\x05d0");
+    EXPECT_EQ(composed<u32string>(U"a\x0300\x0308.\x05d0"), U"\x00e0\x0308.\x05d0");
+    EXPECT_EQ(composed<u32string>(U"a\x0300\x0308"), U"\x00e0\x0308");
+    EXPECT_EQ(composed<u32string>(U"a\x200cb"), U"a\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x200cb"), U"a\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x200cb"), U"a\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x200cb"), U"a\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200cb"), U"a\x094d\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200cb"), U"a\x094d\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200cb"), U"a\x094d\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x094db"), U"a\x094db");
+    EXPECT_EQ(composed<u32string>(U"a\x094db"), U"a\x094db");
+    EXPECT_EQ(composed<u32string>(U"a\x094db"), U"a\x094db");
+    EXPECT_EQ(composed<u32string>(U"a\x094db"), U"a\x094db");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200cb"), U"a\x094d\x200cb");
+    EXPECT_EQ(composed<u32string>(U"a\x200db"), U"a\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x200db"), U"a\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x200db"), U"a\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x200db"), U"a\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200db"), U"a\x094d\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200db"), U"a\x094d\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200db"), U"a\x094d\x200db");
+    EXPECT_EQ(composed<u32string>(U"a\x094d\x200db"), U"a\x094d\x200db");
+    EXPECT_EQ(composed<u32string>(U"\x00a1"), U"\x00a1");
+    EXPECT_EQ(composed<u32string>(U"\x00a1"), U"\x00a1");
+    EXPECT_EQ(composed<u32string>(U"\x19da"), U"\x19da");
+    EXPECT_EQ(composed<u32string>(U"\x19da"), U"\x19da");
+    EXPECT_EQ(composed<u32string>(U"."), U".");
+    EXPECT_EQ(composed<u32string>(U"\xab60"), U"\xab60");
+    EXPECT_EQ(composed<u32string>(U"\xab60"), U"\xab60");
+    EXPECT_EQ(composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(composed<u32string>(U"1234567890a\u03081234567890123456789012345678901234567890123456"),
+              U"1234567890\u00e41234567890123456789012345678901234567890123456");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher.de"), U"b\x00fccher.de");
+    EXPECT_EQ(composed<u32string>(U"bu\x0308cher"), U"b\x00fccher");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"o\x0308bb"), U"\x00f6bb");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2.com"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2.com");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c3"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c3");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"\x03b2\x03bf\x0301\x03bb\x03bf\x03c2"),
+              U"\x03b2\x03cc\x03bb\x03bf\x03c2");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com"),
+              U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com"),
+              U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com"),
+              U"www.\x0dc1\x0dca\x200d\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"\x0dc1\x0dca\x0dbb\x0dd3"), U"\x0dc1\x0dca\x0dbb\x0dd3");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"www.\x0dc1\x0dca\x0dbb\x0dd3.com"), U"www.\x0dc1\x0dca\x0dbb\x0dd3.com");
+    EXPECT_EQ(composed<u32string>(U"\x0dc1\x0dca\x200d\x0dbb\x0dd3"), U"\x0dc1\x0dca\x200d\x0dbb\x0dd3");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc.com"),
+              U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc.com");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc.com"),
+              U"\x0646\x0627\x0645\x0647\x200c\x0627\x06cc.com");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc"),
+              U"\x0646\x0627\x0645\x0647\x0627\x06cc");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc.com"),
+              U"\x0646\x0627\x0645\x0647\x0627\x06cc.com");
+    EXPECT_EQ(composed<u32string>(U"\x0646\x0627\x0645\x0647\x0627\x06cc.com"),
+              U"\x0646\x0627\x0645\x0647\x0627\x06cc.com");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"a.b.c.d."), U"a.b.c.d.");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"u\x0308.xn--tda"), U"\x00fc.xn--tda");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"xn--a-a\x0308.pt"), U"xn--a-\x00e4.pt");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e"), U"\x65e5\x672c\x8a9e");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x65e5\x672c\x8a9e.jp"), U"\x65e5\x672c\x8a9e.jp");
+    EXPECT_EQ(composed<u32string>(U"\x2615"), U"\x2615");
+    EXPECT_EQ(composed<u32string>(U"\x2615"), U"\x2615");
+    EXPECT_EQ(
+      composed<u32string>(
+        U"1."
+        U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df"
+        U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df"
+        U"\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df"
+        U"\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302\x00dfz"),
+      U"1."
+      U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df\x00df\x00df\x00df\x00df"
+      U"\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df"
+      U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302"
+      U"\x00dfz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"1."
+                                  U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssssssss"
+                                  U"sssssssssssyssssssssssssssss\x0302ssz"),
+              U"1."
+              U"assbcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxssssssssssssssssssssyssssssss"
+              U"sssssss\x015dssz");
+    EXPECT_EQ(composed<u32string>(U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssss"
+                                  U"ssssssssssssssxssssssssssssssssssssyssssssssssssssss\x0302ssz"),
+              U"ass\x200c\x200db\x200c\x200dcssssssssd\x03c3\x03c3ssssssssssssssssessssssssssssssssssssxsssss"
+              U"sssssssssssssssysssssssssssssss\x015dssz");
+    EXPECT_EQ(
+      composed<u32string>(
+        U"1."
+        U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df"
+        U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df"
+        U"\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df"
+        U"\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302\x00dfz"),
+      U"1."
+      U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df\x00df\x00df\x00df\x00df"
+      U"\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df"
+      U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302"
+      U"\x00dfz");
+    EXPECT_EQ(
+      composed<u32string>(U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df"
+                          U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df"
+                          U"\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df"
+                          U"\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302\x00dfz"),
+      U"a\x00df\x200c\x200db\x200c\x200dc\x00df\x00df\x00df\x00dfd\x03c2\x03c3\x00df\x00df\x00df\x00df\x00df"
+      U"\x00df\x00df\x00dfe\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00dfx\x00df\x00df\x00df"
+      U"\x00df\x00df\x00df\x00df\x00df\x00df\x00dfy\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x00df\x0302"
+      U"\x00dfz");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
+              U"\x200cx\x200dn\x200c-\x200d-b\x00df");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(composed<u32string>(U"\x5919"), U"\x5919");
+    EXPECT_EQ(composed<u32string>(U"\x5919"), U"\x5919");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-bss"), U"\x200cx\x200dn\x200c-\x200d-bss");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
+              U"\x200cx\x200dn\x200c-\x200d-b\x00df");
+    EXPECT_EQ(composed<u32string>(U"\x200cx\x200dn\x200c-\x200d-b\x00df"),
+              U"\x200cx\x200dn\x200c-\x200d-b\x00df");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"\x5921\x591e\x591c\x5919"), U"\x5921\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"\x5921\x591e\x591c\x5919"), U"\x5921\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"xn--bssffl"), U"xn--bssffl");
+    EXPECT_EQ(composed<u32string>(U"\x591e\x591c\x5919"), U"\x591e\x591c\x5919");
+    EXPECT_EQ(composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(composed<u32string>(U"a\u03081234567890123456789012345678901234567890123456789012345"),
+              U"\u00e41234567890123456789012345678901234567890123456789012345");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"a.b..-q--a\x0308-.e"), U"a.b..-q--\x00e4-.e");
+    EXPECT_EQ(composed<u32string>(U"-q--a\x0308-"), U"-q--\x00e4-");
+    EXPECT_EQ(composed<u32string>(U"a\x0308..c"), U"\x00e4..c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308..c"), U"\x00e4..c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308..c"), U"\x00e4..c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308..c"), U"\x00e4..c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-b."), U"\x00e4.-b.");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-b."), U"\x00e4.-b.");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-b."), U"\x00e4.-b.");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-b."), U"\x00e4.-b.");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.b-.c"), U"\x00e4.b-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-.c"), U"\x00e4.-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-.c"), U"\x00e4.-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-.c"), U"\x00e4.-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.-.c"), U"\x00e4.-.c");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a\x0308.bc--de.f"), U"\x00e4.bc--de.f");
+    EXPECT_EQ(composed<u32string>(U"a.b.\x0308c.d"), U"a.b.\x0308c.d");
+    EXPECT_EQ(composed<u32string>(U"a.b.\x0308c.d"), U"a.b.\x0308c.d");
+    EXPECT_EQ(composed<u32string>(U"a.b.\x0308c.d"), U"a.b.\x0308c.d");
+    EXPECT_EQ(composed<u32string>(U"\x0308c"), U"\x0308c");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05c7"), U"\x05d0\x05c7");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05c7"), U"\x05d0\x05c7");
+    EXPECT_EQ(composed<u32string>(U"\x05d09\x05c7"), U"\x05d09\x05c7");
+    EXPECT_EQ(composed<u32string>(U"\x05d09\x05c7"), U"\x05d09\x05c7");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05ea"), U"\x05d0\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05ea"), U"\x05d0\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05f3\x05ea"), U"\x05d0\x05f3\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x05f3\x05ea"), U"\x05d0\x05f3\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d07\x05ea"), U"\x05d07\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d07\x05ea"), U"\x05d07\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x0667\x05ea"), U"\x05d0\x0667\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x05d0\x0667\x05ea"), U"\x05d0\x0667\x05ea");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd\x200d"), U"\x0bb9\x0bcd\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd"), U"\x0bb9\x0bcd");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd"), U"\x0bb9\x0bcd");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd\x200d"), U"\x0bb9\x0bcd\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x200d"), U"\x0bb9\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9"), U"\x0bb9");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9"), U"\x0bb9");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x200d"), U"\x0bb9\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x200d"), U"\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x200d"), U"\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd\x200c"), U"\x0bb9\x0bcd\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x0bcd\x200c"), U"\x0bb9\x0bcd\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x200c"), U"\x0bb9\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x0bb9\x200c"), U"\x0bb9\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x200c"), U"\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x200c"), U"\x200c");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"), U"\x0644\x0670\x200c\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ed\x06ef"), U"\x0644\x0670\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ed\x06ef"), U"\x0644\x0670\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x200c\x06ed\x06ef"), U"\x0644\x0670\x200c\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x200c\x06ef"), U"\x0644\x0670\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ef"), U"\x0644\x0670\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ef"), U"\x0644\x0670\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x200c\x06ef"), U"\x0644\x0670\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x200c\x06ed\x06ef"), U"\x0644\x200c\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x06ed\x06ef"), U"\x0644\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x06ed\x06ef"), U"\x0644\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x200c\x06ed\x06ef"), U"\x0644\x200c\x06ed\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x200c\x06ef"), U"\x0644\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x06ef"), U"\x0644\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x06ef"), U"\x0644\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x200c\x06ef"), U"\x0644\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ed"), U"\x0644\x0670\x06ed");
+    EXPECT_EQ(composed<u32string>(U"\x0644\x0670\x06ed"), U"\x0644\x0670\x06ed");
+    EXPECT_EQ(composed<u32string>(U"\x06ef\x200c\x06ef"), U"\x06ef\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x06ef\x06ef"), U"\x06ef\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x06ef\x06ef"), U"\x06ef\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x06ef\x200c\x06ef"), U"\x06ef\x200c\x06ef");
+    EXPECT_EQ(composed<u32string>(U"\x0644"), U"\x0644");
+    EXPECT_EQ(composed<u32string>(U"\x0644"), U"\x0644");
+    EXPECT_EQ(composed<u32string>(U"a..b"), U"a..b");
+    EXPECT_EQ(composed<u32string>(U"a..b"), U"a..b");
+    EXPECT_EQ(composed<u32string>(U"\x06b9"), U"\x06b9");
+    EXPECT_EQ(composed<u32string>(U"\xa863.\x07cf"), U"\xa863.\x07cf");
+    EXPECT_EQ(composed<u32string>(U"\xa863"), U"\xa863");
+    EXPECT_EQ(composed<u32string>(U"\x23cd4\x0303.\x114c2"), U"\x23cd4\x0303.\x114c2");
+    EXPECT_EQ(composed<u32string>(U"\x23cd4\x0303"), U"\x23cd4\x0303");
+    EXPECT_EQ(composed<u32string>(U"\x7e71\x115bf"), U"\x7e71\x115bf");
+    EXPECT_EQ(composed<u32string>(U"\x7e71\x115bf\x200d"), U"\x7e71\x115bf\x200d");
+    EXPECT_EQ(composed<u32string>(U".\x1e008"), U".\x1e008");
+    EXPECT_EQ(composed<u32string>(U".\x1e008"), U".\x1e008");
+    EXPECT_EQ(composed<u32string>(U"\x1e008"), U"\x1e008");
+    EXPECT_EQ(composed<u32string>(U"\x00df\x06eb.\x200d"), U"\x00df\x06eb.\x200d");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb.\x200d"), U"ss\x06eb.\x200d");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb.\x200d"), U"ss\x06eb.\x200d");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb.\x200d"), U"ss\x06eb.\x200d");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb"), U"ss\x06eb");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb."), U"ss\x06eb.");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb."), U"ss\x06eb.");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb."), U"ss\x06eb.");
+    EXPECT_EQ(composed<u32string>(U"ss\x06eb"), U"ss\x06eb");
+    EXPECT_EQ(composed<u32string>(U"\x00df\x06eb"), U"\x00df\x06eb");
+    EXPECT_EQ(composed<u32string>(U"\x0774\x1e93f"), U"\x0774\x1e93f");
+    EXPECT_EQ(composed<u32string>(U"\x0774\x200c\x1e93f"), U"\x0774\x200c\x1e93f");
+    EXPECT_EQ(composed<u32string>(U"\x2763\x200d.\x09cd\x11c3d\x0612\xa929"),
+              U"\x2763\x200d.\x09cd\x11c3d\x0612\xa929");
+    EXPECT_EQ(composed<u32string>(U"\x2763\x200d.\x09cd\x11c3d\x0612\xa929"),
+              U"\x2763\x200d.\x09cd\x11c3d\x0612\xa929");
+    EXPECT_EQ(composed<u32string>(U"\x2763"), U"\x2763");
+    EXPECT_EQ(composed<u32string>(U"\x2763\x200d"), U"\x2763\x200d");
+    EXPECT_EQ(composed<u32string>(U"\x0349.\x2786b"), U"\x0349.\x2786b");
+    EXPECT_EQ(composed<u32string>(U"\x0349"), U"\x0349");
+    EXPECT_EQ(composed<u32string>(U"\x11c3f"), U"\x11c3f");
+    EXPECT_EQ(composed<u32string>(U"\x850f.\x11c3a"), U"\x850f.\x11c3a");
+    EXPECT_EQ(composed<u32string>(U"\x850f.\x11c3a"), U"\x850f.\x11c3a");
+    EXPECT_EQ(composed<u32string>(U"\x850f"), U"\x850f");
 }
 
 TEST(Unicode, HangulCompose) {

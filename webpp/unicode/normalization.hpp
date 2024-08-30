@@ -537,16 +537,16 @@ namespace webpp::unicode {
     }
 
     /**
-     * Compose a unicode string inplace
+     * Compose a Unicode string inplace
      *
      * Attention: this function does NOT decompose, meaning, this function can be used in
      * NFC normalization, but itself is NOT NFC.
      *
-     * This functio is indeed noexcept, and that's not a mistake; but in case you know your
+     * This function is indeed noexcept, and that's not a mistake; but in case you know your
      * string type might throw, you can explicitly specify it as the template parameter.
      *
      * String types won't throw since composing (that doesn't do decompose first) will only
-     * reduce the size of the string and it cannot make the string bigger, thus no allocations
+     * reduce the size of the string, and it cannot make the string bigger, thus no allocations
      * would be required.
      */
     template <istl::String StrT = stl::u32string, bool isNothrow = true>
@@ -571,6 +571,14 @@ namespace webpp::unicode {
             }
         }
         out.resize(static_cast<size_type>(rep - beg));
+    }
+
+    template <istl::String StrT = stl::u32string, bool isNothrow = true>
+    [[nodiscard(
+      "Use unicode::compose instead of this if you wanted to compose inplace")]] static constexpr StrT
+    composed(StrT out) noexcept(isNothrow) {
+        compose<StrT, isNothrow>(out);
+        return out;
     }
 
 } // namespace webpp::unicode
