@@ -51,7 +51,7 @@ class CP1 {
     }
 
     render() {
-        if (this.#codePoint == 0) {
+        if (this.#codePoint === 0) {
             return `{0x0U, 0x0U}`;
         }
         return `{0x${this.#codePoint.toString(16).toUpperCase()}U, 0x${this.#value.toString(16).toUpperCase()}U}`;
@@ -109,7 +109,7 @@ class CP2 {
     }
 
     render() {
-        if (this.#codePoint == 0) {
+        if (this.#codePoint === 0) {
             return `{0, 0, 1}`;
         }
         return `{0x${this.#codePoint.toString(16).toUpperCase()}U, ${this.#cp1Pos}, ${this.#rem}}`;
@@ -142,6 +142,8 @@ class CompTable {
             cp2sArr.push(cp2Raw);
         }
         // this.cp2sMask = Number(findSmallestMask(cp2sArr));
+
+        let maxCP1sRequired = 0;
         this.cp2sRem = cp2sArr.length;
         retry: for (; ; ++this.cp2sRem) {
             this.cp1s = [];
@@ -161,15 +163,20 @@ class CompTable {
                         const pos = cp2.position + (Number(cp1Raw) % cp2.rem);
                         if (pos in cp1sTemp) {
                             // throw new Error(`Replacing: ${pos}`);
-                            console.log(
-                                `Bad Rem:`,
-                                cp2.rem,
-                                cp2.position,
-                                cp1Raw,
-                            );
+                            // console.log(
+                            //     `Bad Rem:`,
+                            //     cp2.rem,
+                            //     cp2.position,
+                            //     cp1Raw,
+                            // );
                             continue nextRem;
                         }
                         cp1sTemp[pos] = cp1;
+
+                        const maxPossible = cp2.position + cp2.rem;
+                        if (maxPossible > maxCP1sRequired) {
+                            maxCP1sRequired = maxPossible;
+                        }
                     }
 
                     for (const posStr in cp1sTemp) {
@@ -188,6 +195,13 @@ class CompTable {
                 this.cp2s[pos] = cp2;
             }
             break;
+        }
+        console.log("Max CP1 table position required:", maxCP1sRequired, this.cp1s.length);
+        if (this.cp1s.length !== maxCP1sRequired) {
+            this.cp1s[maxCP1sRequired] = CP1.invalid();
+            console.log("Max CP1 table set.");
+        } else {
+            console.log("No need to set Max CP1 table.");
         }
         this.cp2s = fillEmpty(this.cp2s, CP2.invalid());
         this.cp1s = fillEmpty(this.cp1s, CP1.invalid());

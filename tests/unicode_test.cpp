@@ -960,6 +960,9 @@ TEST(Unicode, Compose) {
     // clang-format on
     using webpp::unicode::composed;
 
+    // specials:
+    EXPECT_EQ(composed(70'375, 43'456), 0);
+
     // head:
     EXPECT_EQ(composed(0x0041, 0x0300), 0x00C0);
     EXPECT_EQ(composed(0x0041, 0x0301), 0x00C1);
