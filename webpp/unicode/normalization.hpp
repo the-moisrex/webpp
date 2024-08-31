@@ -105,7 +105,6 @@
 
 #include "../std/iterator.hpp"
 #include "../std/string.hpp"
-#include "../std/string_like.hpp"
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/composition_tables.hpp"
@@ -114,6 +113,7 @@
 #include "./unicode.hpp"
 
 #include <cassert>
+#include <cstdint>
 
 namespace webpp::unicode {
 
@@ -529,11 +529,66 @@ namespace webpp::unicode {
             return replacement_char<CharT>;
         }
 
-        auto [cp1, value] = cp1s[static_cast<stl::size_t>(cp1_pos + (lhs % cp1_rem))];
-        if ((static_cast<CharT>(cp1) | lhs) != lhs) {
+        stl::size_t const pos = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
+        auto [cp1, value]     = cp1s[pos];
+        if (cp1 == 0 || (static_cast<CharT>(cp1) | lhs) != lhs) {
             return replacement_char<CharT>;
         }
         return static_cast<CharT>(value);
+    }
+
+    /**
+     * Compose a Unicode string inplace
+     *
+     * Attention: this function does NOT decompose, meaning, this function can be used in
+     * NFC normalization, but itself is NOT NFC.
+     *
+     * @returns the new length of the string. Specified end is no longer valid.
+     */
+    template <typename SizeT = stl::size_t, istl::Appendable Iter = char32_t*, typename EIter = Iter>
+    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT compose(
+      Iter& ptr,
+      EIter end) noexcept(istl::NothrowAppendable<Iter>) {
+        if (ptr == end) {
+            return 0U;
+        }
+        auto const beg = ptr;
+        auto       rep = ptr;
+        char32_t   cp1 = next_code_point(ptr, end);
+        if (ptr == end) {
+            return 1U;
+        }
+        char32_t     cp2     = next_code_point(ptr, end);
+        stl::uint8_t cp1_ccc = ccc_of(cp1);
+        stl::uint8_t cp2_ccc = ccc_of(cp2);
+
+
+        for (;;) {
+            auto const replaced_cp = composed(cp1, cp2);
+            if (replaced_cp == replacement_char<char32_t> || cp1_ccc > cp2_ccc || cp2_ccc == 0) {
+                unchecked::append(rep, cp1);
+                cp1     = cp2;
+                cp1_ccc = cp2_ccc;
+                if (ptr == end) {
+                    unchecked::append(rep, cp2);
+                    break;
+                }
+            } else {
+                unchecked::append(rep, replaced_cp);
+                if (ptr == end) {
+                    break;
+                }
+                cp1     = next_code_point(ptr, end);
+                cp1_ccc = ccc_of(cp1);
+                if (ptr == end) {
+                    unchecked::append(rep, cp1);
+                    break;
+                }
+            }
+            cp2     = next_code_point(ptr, end);
+            cp2_ccc = ccc_of(cp2);
+        }
+        return static_cast<SizeT>(rep - beg);
     }
 
     /**
@@ -553,24 +608,10 @@ namespace webpp::unicode {
     static constexpr void compose(StrT& out) noexcept(isNothrow) {
         using size_type = typename stl::remove_cvref_t<StrT>::size_type;
 
-        auto const* const beg = out.data();
         auto*             ptr = out.data();
-        auto*             rep = out.data();
         auto const* const end = ptr + out.size();
-        char32_t          cp1 = next_code_point(ptr, end);
 
-        while (ptr != end) {
-            char32_t const cp2         = next_code_point(ptr, end);
-            auto const     replaced_cp = composed(cp1, cp2);
-            if (replaced_cp == replacement_char<char32_t>) {
-                unchecked::append(rep, cp1);
-                cp1 = cp2;
-            } else {
-                unchecked::append(rep, replaced_cp);
-                cp1 = next_code_point(ptr, end);
-            }
-        }
-        out.resize(static_cast<size_type>(rep - beg));
+        out.resize(compose<size_type>(ptr, end));
     }
 
     template <istl::String StrT = stl::u32string, bool isNothrow = true>
