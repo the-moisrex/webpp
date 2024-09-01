@@ -567,8 +567,7 @@ namespace webpp::unicode {
 
 
         for (;;) {
-            auto const replaced_cp = composed(cp1, cp2);
-            if (replaced_cp == replacement_char<char32_t>) {
+            if (auto const replaced_cp = composed(cp1, cp2); replaced_cp == replacement_char<char32_t>) {
                 unchecked::append(rep, cp1);
                 cp1 = cp2;
                 if (ptr == end) {
@@ -576,13 +575,9 @@ namespace webpp::unicode {
                     break;
                 }
             } else {
-                unchecked::append(rep, replaced_cp);
+                cp1 = replaced_cp;
                 if (ptr == end) {
-                    break;
-                }
-                cp1 = next_code_point(ptr, end);
-                if (ptr == end) {
-                    unchecked::append(rep, cp1);
+                    unchecked::append(rep, replaced_cp);
                     break;
                 }
             }

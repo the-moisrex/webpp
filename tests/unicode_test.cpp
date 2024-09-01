@@ -961,7 +961,7 @@ TEST(Unicode, Compose) {
     using webpp::unicode::composed;
 
     // specials:
-    EXPECT_EQ(composed(70'375, 43'456), 0);
+    EXPECT_EQ(composed(70'375, 43'456), webpp::unicode::replacement_char<char32_t>);
 
     // head:
     EXPECT_EQ(composed(0x0041, 0x0300), 0x00C0);
@@ -1500,6 +1500,80 @@ TEST(Unicode, ComposeStr) {
     EXPECT_EQ(composed<u32string>(U"\x850f.\x11c3a"), U"\x850f.\x11c3a");
     EXPECT_EQ(composed<u32string>(U"\x850f.\x11c3a"), U"\x850f.\x11c3a");
     EXPECT_EQ(composed<u32string>(U"\x850f"), U"\x850f");
+}
+
+TEST(Unicode, ComposedStr2) {
+    using webpp::unicode::compose_hangul;
+    using webpp::unicode::composed;
+
+    EXPECT_EQ(composed<char32_t>(composed<char32_t>(0x1100, 0x1173), 0x11B2), 0xAE03);
+
+    EXPECT_EQ(composed<u32string>(U"\u200c\u1100\u1173\u11b2.\u69b6-"), U"\u200c\uae03.\u69b6-");
+    EXPECT_EQ(composed<u32string>(U"\u200c\u1100\u1173\u11b2.\u69b6-"), U"\u200c\uae03.\u69b6-");
+    EXPECT_EQ(composed<u32string>(U"\u1100\u1173\u11b2"), U"\uae03");
+    EXPECT_EQ(composed<u32string>(U"\u200c\u1100\u1173\u11b2"), U"\u200c\uae03");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-"), U"\u00e5\ub444-");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-"), U"\u00e5\ub444-");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"a\u030a\u1103\u116d\u11b7-.\u200c"), U"\u00e5\ub444-.\u200c");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c.\u1da16."),
+              U"\ub8f1\u200d\u30368\u200c.\u1da16.");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c.\u1da16."),
+              U"\ub8f1\u200d\u30368\u200c.\u1da16.");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u30368"), U"\ub8f1\u30368");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"), U"\ub8f1\u200d\u30368\u200c");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u30368"), U"\ub8f1\u30368");
+    EXPECT_EQ(composed<u32string>(U"\u1105\u116e\u11b0\u200d\u30368\u200c"), U"\ub8f1\u200d\u30368\u200c");
+    EXPECT_EQ(composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"), U"1.\u4c39\u200d-.\uc6c8");
+    EXPECT_EQ(composed<u32string>(U"1.\u4c39\u200d-.\u110b\u116e\u11bf"), U"1.\u4c39\u200d-.\uc6c8");
+    EXPECT_EQ(composed<u32string>(U"\u110b\u116e\u11bf"), U"\uc6c8");
+    EXPECT_EQ(composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"), U"\ua846.\u2184\u0fb5\ub1ae-");
+    EXPECT_EQ(composed<u32string>(U"\ua846.\u2184\u0fb5\u1102\u116a\u11c1-"), U"\ua846.\u2184\u0fb5\ub1ae-");
+    EXPECT_EQ(composed<u32string>(U"\u2184\u0fb5\u1102\u116a\u11c1-"), U"\u2184\u0fb5\ub1ae-");
+    EXPECT_EQ(composed<u32string>(U"\ua9d0\u04cf\u1baa\u08f6.\u1102\u116f\u11bc"),
+              U"\ua9d0\u04cf\u1baa\u08f6.\ub235");
+    EXPECT_EQ(composed<u32string>(U"\ua9d0\u04cf\u1baa\u08f6.\u1102\u116f\u11bc"),
+              U"\ua9d0\u04cf\u1baa\u08f6.\ub235");
+    EXPECT_EQ(composed<u32string>(U"\u1102\u116f\u11bc"), U"\ub235");
+    EXPECT_EQ(composed<u32string>(U"\ua9d0\u04cf\u1baa\u08f6.\u1102\u116f\u11bc"),
+              U"\ua9d0\u04cf\u1baa\u08f6.\ub235");
+    EXPECT_EQ(composed<u32string>(U"\ua9d0\u04cf\u1baa\u08f6.\u1102\u116f\u11bc"),
+              U"\ua9d0\u04cf\u1baa\u08f6.\ub235");
+    EXPECT_EQ(composed<u32string>(U"\u08e6\u200d.\u1108\u1168\u11c0"), U"\u08e6\u200d.\ubf3d");
+    EXPECT_EQ(composed<u32string>(U"\u08e6\u200d.\u1108\u1168\u11c0"), U"\u08e6\u200d.\ubf3d");
+    EXPECT_EQ(composed<u32string>(U"\u08e6\u200d.\u1108\u1168\u11c0"), U"\u08e6\u200d.\ubf3d");
+    EXPECT_EQ(composed<u32string>(U"\u08e6\u200d.\u1108\u1168\u11c0"), U"\u08e6\u200d.\ubf3d");
+    EXPECT_EQ(composed<u32string>(U"\u1da9e\u2d10.\u110d\u1168\u11a8"), U"\u1da9e\u2d10.\ucaa1");
+    EXPECT_EQ(composed<u32string>(U"\u1da9e\u2d10.\u110d\u1168\u11a8"), U"\u1da9e\u2d10.\ucaa1");
+    EXPECT_EQ(composed<u32string>(U"\u1da9e\u2d10.\u110d\u1168\u11a8"), U"\u1da9e\u2d10.\ucaa1");
+    EXPECT_EQ(composed<u32string>(U"\u1da9e\u2d10.\u110d\u1168\u11a8"), U"\u1da9e\u2d10.\ucaa1");
+    EXPECT_EQ(composed<u32string>(U"\u200c\ua5a8.16.3\u1110\u116d\u11a9\u06f3"),
+              U"\u200c\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(composed<u32string>(U"\u200c\ua5a8.16.3\u1110\u116d\u11a9\u06f3"),
+              U"\u200c\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(composed<u32string>(U"3\u1110\u116d\u11a9\u06f3"), U"3\ud212\u06f3");
+    EXPECT_EQ(composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"), U"\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(composed<u32string>(U"\ua5a8.16.3\u1110\u116d\u11a9\u06f3"), U"\ua5a8.16.3\ud212\u06f3");
+    EXPECT_EQ(composed<u32string>(U"\u1111\u1175\u11bd11"), U"\ud55211");
+    EXPECT_EQ(composed<u32string>(U"\u1110\u1171\u11c2"), U"\ud29b");
+    EXPECT_EQ(composed<u32string>(U"\u1110\u1171\u11c2.\u0716"), U"\ud29b.\u0716");
+    EXPECT_EQ(composed<u32string>(U"\u1110\u1171\u11c2.\u0716"), U"\ud29b.\u0716");
+    EXPECT_EQ(composed<u32string>(U"-0.\u17cf\u1dfd\u1110\u1168\u11aa\u1109\u1175\u11b8"),
+              U"-0.\u17cf\u1dfd\ud187\uc2ed");
+    EXPECT_EQ(composed<u32string>(U"-0.\u17cf\u1dfd\u1110\u1168\u11aa\u1109\u1175\u11b8"),
+              U"-0.\u17cf\u1dfd\ud187\uc2ed");
+    EXPECT_EQ(composed<u32string>(U"-0.\u17cf\u1dfd\u1110\u1168\u11aa\u1109\u1175\u11b8"),
+              U"-0.\u17cf\u1dfd\ud187\uc2ed");
+    EXPECT_EQ(composed<u32string>(U"-0.\u17cf\u1dfd\u1110\u1168\u11aa\u1109\u1175\u11b8"),
+              U"-0.\u17cf\u1dfd\ud187\uc2ed");
+    EXPECT_EQ(composed<u32string>(U"\u17cf\u1dfd\u1110\u1168\u11aa\u1109\u1175\u11b8"),
+              U"\u17cf\u1dfd\ud187\uc2ed");
 }
 
 TEST(Unicode, HangulCompose) {
