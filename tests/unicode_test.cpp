@@ -4,7 +4,9 @@
 #include "../webpp/std/format.hpp"
 #include "../webpp/unicode/normalization.hpp"
 #include "common/tests_common_pch.hpp"
+#include "sdk/wsdk/console.hpp"
 
+#include <filesystem>
 #include <limits>
 #include <string>
 
@@ -659,6 +661,8 @@ TEST(Unicode, DecomposeInplace) {
 }
 
 TEST(Unicode, DecomposeUTF32) {
+    EXPECT_EQ(decomposed<u32string>(U'\x1E0A'), U"\x44\x307") << desc_decomp_of(U'\0');
+
     EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x29496")), U"\x29496");
     EXPECT_EQ(utf8_to_utf32(utf32_to_utf8(U"\x308")), U"\x308");
 
@@ -1616,10 +1620,30 @@ TEST(Unicode, NoCompose) {
     EXPECT_NE(composed(0x22B4, 0x0339), 0x22EC);
 }
 
-TEST(Unicode, EquivalentOfTransformationChains) {
-    // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
+namespace {
+    std::u32string convertToU32String(std::string const& hexString) {
+        std::u32string     result;
+        std::istringstream iss{hexString};
+        std::uint32_t      hexCodePoint;
+        while (iss >> std::hex >> hexCodePoint) {
+            result += static_cast<char32_t>(hexCodePoint);
+            // std::cout << "---> " << hexString << " --- " << std::hex << hexCodePoint << std::endl;
+        }
+        return result;
+    }
 
-    [[maybe_unused]] auto const check_idempotent = [](auto str) {
+    std::string u32ToString(std::u32string const& hexString) {
+        std::ostringstream oss;
+        for (auto const codePoint : hexString) {
+            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+        }
+        return oss.str();
+    }
+
+    void check_idempotent(auto const& str) {
+        using webpp::unicode::toNFC;
+        using webpp::unicode::toNFD;
+
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)));
         EXPECT_EQ(toNFC(str), toNFC(toNFD(str)));
@@ -1629,32 +1653,110 @@ TEST(Unicode, EquivalentOfTransformationChains) {
         EXPECT_EQ(toNFD(str), toNFD(toNFD(str)));
 
         // toNFKC
-        EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
-        EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
-        EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
-        EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
-        EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
-        EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFC(toNFKD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFD(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKC(str)));
+        // EXPECT_EQ(toNFKC(str), toNFKC(toNFKD(str)));
 
         // toNFKD
-        EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
-        EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
-        EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
-        EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
-        EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
-        EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
-    };
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFD(toNFKD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFD(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
+        // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
+    }
+} // namespace
 
-    [[maybe_unused]] auto const check_equality = [](auto str_x, auto str_y) {
-        EXPECT_EQ(toNFC(str_x), toNFC(str_y));
-        EXPECT_EQ(toNFD(str_x), toNFD(str_x));
-    };
-    [[maybe_unused]] auto const check_compatiblity = [](auto str_x, auto str_y) {
-        EXPECT_EQ(toNFKC(str_x), toNFKC(str_y));
-        EXPECT_EQ(toNFKD(str_x), toNFKD(str_x));
-    };
+TEST(Unicode, EquivalentOfTransformationChains) {
+    using std::u32string;
+    using std::u32string_view;
+    using std::u8string;
+    using std::u8string_view;
+    using webpp::unicode::toNFC;
+    using webpp::unicode::toNFD;
+    // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
 
-    // todo: write the tests
+
+    // NOLINTBEGIN(*-easily-swappable-parameters)
+    auto const check =
+      [](u32string const&                  source,
+         u32string const&                  nfc,
+         u32string const&                  nfd,
+         [[maybe_unused]] u32string const& nfkc,
+         [[maybe_unused]] u32string const& nfkd,
+         std::string const&                line) {
+          // NOLINTEND(*-easily-swappable-parameters)
+
+          u8string const source8 = utf32_to_utf8(source);
+          u8string const nfc8    = utf32_to_utf8(nfc);
+          u8string const nfd8    = utf32_to_utf8(nfd);
+
+          EXPECT_EQ(nfd, toNFD(source))
+            << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
+            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+          EXPECT_EQ(nfd8, toNFD(source8))
+            << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
+            << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+
+          EXPECT_EQ(nfc, toNFC(source))
+            << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
+            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+            << "\n Calculated NFD: " << u32ToString(toNFD(source));
+          EXPECT_EQ(nfc8, toNFC(source8))
+            << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
+            << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+
+          check_idempotent(source);
+          check_idempotent(source8);
+      };
+
+    // special cases:
+    EXPECT_EQ(decomposed<u32string>(U'\u1e0a'), U"D\x307") << "Ḋ";
+    EXPECT_EQ(decomposed<u32string>(u32string_view{U"\x1e0a"}), U"D\x307") << "Ḋ";
+    check_idempotent(u32string{U"\u00b5"});
+
+
+    std::filesystem::path const cur_file   = __FILE__;
+    std::filesystem::path       file_path  = cur_file.parent_path();
+    file_path                             /= "assets/NormalizationTest.txt";
+
+    std::ifstream file(file_path);
+    ASSERT_TRUE(file.is_open()) << "Error opening file: " << file_path;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Skip empty lines or comments
+        auto const lineCpy   = line;
+        auto const hashStart = line.find_first_of('#');
+        if (hashStart != std::string::npos) {
+            line.resize(hashStart);
+        }
+        if (line.empty() || line[0] == '@') {
+            continue;
+        }
+
+        std::istringstream          iss(line);
+        std::string                 column;
+        std::vector<std::u32string> columns(5);
+
+        // Read the columns separated by semicolons
+        int columnIndex = 0;
+        while (std::getline(iss, column, ';') && columnIndex != 5) {
+            if (column.starts_with(" #")) {
+                break;
+            }
+            // std::cout << "Column: " << columnIndex << " | " << line << std::endl;
+            columns[columnIndex++] = convertToU32String(column);
+        }
+
+        // Run the check function
+        check(columns[0], columns[1], columns[2], columns[3], columns[4], lineCpy);
+    }
+
+    file.close();
 }
 
 // NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

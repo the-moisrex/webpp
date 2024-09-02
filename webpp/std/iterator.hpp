@@ -16,7 +16,7 @@
 namespace webpp::istl {
 
     template <typename T>
-    concept Iterable = requires(stl::remove_cvref_t<T> iter) {
+    concept Iterable = requires(T iter) {
         {
             stl::begin(iter)
         } -> stl::input_iterator;
@@ -26,7 +26,7 @@ namespace webpp::istl {
     };
 
     template <typename T>
-    concept NothrowIterable = requires(stl::remove_cvref_t<T> iter) {
+    concept NothrowIterable = requires(T iter) {
         {
             stl::begin(iter)
         } noexcept -> stl::input_iterator;
