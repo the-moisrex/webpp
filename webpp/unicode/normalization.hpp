@@ -111,6 +111,7 @@
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
+#include "code_point_iterator.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -566,31 +567,28 @@ namespace webpp::unicode {
     [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT
     compose(Iter& ptr, EIter end) noexcept(
       stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
-        using char_type    = typename stl::iterator_traits<Iter>::value_type;
-        auto const beg     = ptr;
-        auto       cp1_ptr = ptr;
-        auto       rep_ptr = ptr;
-        if constexpr (UTF32<char_type>) {
-            for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
-                auto starter_ptr = rep_ptr;
-                *rep_ptr         = *cp1_ptr;
-                auto cp2_ptr     = stl::next(cp1_ptr);
-                auto cp1         = *cp1_ptr;
-                for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
-                    auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_ptr));
-                    auto       replaced_cp = composed(cp1, *cp2_ptr);
-                    if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
-                        // found a composition
-                        *starter_ptr = replaced_cp;
-                        cp1          = replaced_cp;
-                        continue;
-                    }
-                    if (ccc == 0) {
-                        break;
-                    }
-                    prev_ccc   = ccc;
-                    *++rep_ptr = *cp2_ptr;
+        auto const          beg = ptr;
+        code_point_iterator cp1_ptr{beg}; // const iterator
+        code_point_iterator rep_ptr{ptr}; // non-const iterator
+        for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
+            auto starter_ptr = rep_ptr;
+            rep_ptr.set_value(cp1_ptr);
+            auto cp2_ptr = stl::next(cp1_ptr); // const iterator as well
+            auto cp1     = *cp1_ptr;
+            for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
+                auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_ptr));
+                auto       replaced_cp = composed(cp1, *cp2_ptr);
+                if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
+                    // found a composition
+                    starter_ptr.set_value(replaced_cp);
+                    cp1 = replaced_cp;
+                    continue;
                 }
+                if (ccc == 0) {
+                    break;
+                }
+                prev_ccc = ccc;
+                (++rep_ptr).set_value(cp2_ptr);
             }
         }
         return static_cast<SizeT>(rep_ptr - beg);

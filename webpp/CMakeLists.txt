@@ -47,6 +47,7 @@ set(ALL_SOURCES
         ${LIB_INCLUDE_DIR}/unicode/unicode_concepts.hpp
         ${LIB_INCLUDE_DIR}/unicode/unicode.hpp
         ${LIB_INCLUDE_DIR}/unicode/unicode_ptr.hpp
+        ${LIB_INCLUDE_DIR}/unicode/code_point_iterator.hpp
         ${LIB_INCLUDE_DIR}/unicode/unicode_char_traits.hpp
         ${LIB_INCLUDE_DIR}/unicode/ustring.hpp
         ${LIB_INCLUDE_DIR}/unicode/ustring_view.hpp
