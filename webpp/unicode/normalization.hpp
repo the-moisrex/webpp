@@ -116,8 +116,6 @@
 #include <cstdint>
 
 namespace webpp::unicode {
-
-
     /**
      * Normalization form constants to describe which normalization algorithm should be performed.
      *
@@ -127,10 +125,11 @@ namespace webpp::unicode {
      * - https://unicode.org/reports/tr15/
      */
     enum struct normalization_form : stl::uint8_t {
-        compose,  // NFC: Normalization Form C (Preferred by W3C, Linux, and others)
-        decmpose, // NFD: Normalization Form D
-        NFKC,     // Normalization Form KC
-        NFKD,     // Normalization Form KD
+        gibberish, // no form at all
+        NFC,       // NFC: Normalization Form C (Preferred by W3C, Linux, and others)
+        NFD,       // NFD: Normalization Form D
+        NFKC,      // Normalization Form KC
+        NFKD,      // Normalization Form KD
     };
 
     /// Canonical Combining Class
@@ -236,6 +235,10 @@ namespace webpp::unicode {
         using unchecked::next_char_copy;
         using unchecked::swap_code_points;
 
+        if (start == end) {
+            return;
+        }
+
         for (auto pos = next_char_copy(start); pos != end;) {
             auto const ccc = ccc_of(next_code_point(pos));
             if (ccc == 0) {
@@ -253,6 +256,13 @@ namespace webpp::unicode {
                 back_pos = prev;
             }
         }
+    }
+
+    template <istl::String StrT = stl::u32string>
+    static constexpr void canonical_reorder(StrT& out) noexcept(
+      stl::is_nothrow_swappable_v<
+        typename stl::iterator_traits<typename stl::remove_cvref_t<StrT>::iterator>::value_type>) {
+        canonical_reorder(stl::begin(out), stl::end(out));
     }
 
     // /**
@@ -366,7 +376,7 @@ namespace webpp::unicode {
               istl::Iterable   InpStr = stl::u32string_view>
     static constexpr SizeT decompose_to(Iter& out, InpStr const str) noexcept(istl::NothrowAppendable<Iter>) {
         SizeT count = 0;
-        for (auto pos = stl::begin(str); pos != str.end();) {
+        for (auto pos = stl::begin(str); pos != stl::end(str);) {
             count += decompose_to(out, next_code_point(pos));
         }
         return count;
@@ -550,40 +560,40 @@ namespace webpp::unicode {
      *
      * @returns the new length of the string. Specified end is no longer valid.
      */
-    template <typename SizeT = stl::size_t, istl::Appendable Iter = char32_t*, typename EIter = Iter>
-    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT compose(
-      Iter& ptr,
-      EIter end) noexcept(istl::NothrowAppendable<Iter>) {
-        if (ptr == end) {
-            return 0U;
-        }
-        auto const beg = ptr;
-        auto       rep = ptr;
-        char32_t   cp1 = next_code_point(ptr, end);
-        if (ptr == end) {
-            return 1U;
-        }
-        char32_t cp2 = next_code_point(ptr, end);
-
-
-        for (;;) {
-            if (auto const replaced_cp = composed(cp1, cp2); replaced_cp == replacement_char<char32_t>) {
-                unchecked::append(rep, cp1);
-                cp1 = cp2;
-                if (ptr == end) {
-                    unchecked::append(rep, cp2);
-                    break;
-                }
-            } else {
-                cp1 = replaced_cp;
-                if (ptr == end) {
-                    unchecked::append(rep, replaced_cp);
-                    break;
+    template <stl::integral               SizeT = stl::size_t,
+              stl::random_access_iterator Iter  = char32_t*,
+              stl::random_access_iterator EIter = Iter>
+    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT
+    compose(Iter& ptr, EIter end) noexcept(
+      stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
+        using char_type    = typename stl::iterator_traits<Iter>::value_type;
+        auto const beg     = ptr;
+        auto       cp1_ptr = ptr;
+        auto       rep_ptr = ptr;
+        if constexpr (UTF32<char_type>) {
+            for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
+                auto starter_ptr = rep_ptr;
+                *rep_ptr         = *cp1_ptr;
+                auto cp2_ptr     = stl::next(cp1_ptr);
+                auto cp1         = *cp1_ptr;
+                for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
+                    auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_ptr));
+                    auto       replaced_cp = composed(cp1, *cp2_ptr);
+                    if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
+                        // found a composition
+                        *starter_ptr = replaced_cp;
+                        cp1          = replaced_cp;
+                        continue;
+                    }
+                    if (ccc == 0) {
+                        break;
+                    }
+                    prev_ccc   = ccc;
+                    *++rep_ptr = *cp2_ptr;
                 }
             }
-            cp2 = next_code_point(ptr, end);
         }
-        return static_cast<SizeT>(rep - beg);
+        return static_cast<SizeT>(rep_ptr - beg);
     }
 
     /**
@@ -614,6 +624,51 @@ namespace webpp::unicode {
       "Use unicode::compose instead of this if you wanted to compose inplace")]] static constexpr StrT
     composed(StrT out) noexcept(isNothrow) {
         compose<StrT, isNothrow>(out);
+        return out;
+    }
+
+    /**
+     * Normalize a string inplace.
+     *
+     * Normalization in Unicode is a process that standardizes different binary representations of characters
+     * to ensure that equivalent characters are represented in a consistent manner. This is essential for
+     * accurate string comparison and processing in software applications.
+     *
+     * @tparam Form Normalization Form
+     * @tparam StrT String type
+     * @param out the string you want to be normalized
+     */
+    template <normalization_form Form = normalization_form::NFC, istl::String StrT = stl::u32string>
+    static constexpr void normalize(StrT& out) noexcept(Form == normalization_form::gibberish) {
+        if constexpr (normalization_form::gibberish == Form) {
+            // nothing to do.
+        } else if constexpr (normalization_form::NFD == Form) {
+            decompose(out);
+            canonical_reorder(out);
+        } else if constexpr (normalization_form::NFC == Form) {
+            decompose(out);
+            canonical_reorder(out);
+            compose(out);
+        } else {
+            // todo: NFKC and NFKD
+            throw stl::invalid_argument("NFKC and NFKD are not implemented yet.");
+        }
+    }
+
+    /// to Normalization Form C (this is not inplace)
+    template <istl::String StrT = stl::u32string>
+    [[nodiscard]] static constexpr StrT toNFC(StrT out) {
+        decompose(out);
+        canonical_reorder(out);
+        compose(out);
+        return out;
+    }
+
+    /// to Normalization Form D (this is not inplace)
+    template <istl::String StrT = stl::u32string>
+    [[nodiscard]] static constexpr StrT toNFD(StrT out) {
+        decompose(out);
+        canonical_reorder(out);
         return out;
     }
 
