@@ -112,6 +112,33 @@ namespace webpp::unicode {
         return code_point <= max_legal_utf32<u32>;
     }
 
+    /// utf8_length_from_utf32
+    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT code_unit8_count(CharT const code_point) noexcept {
+        if (code_point < 0x80U) {
+            return 1U;
+        }
+        if (code_point < 0x800U) {
+            return 2U;
+        }
+        if (code_point >= 0xDC00U && code_point < 0xE000U) {
+            return 0U;
+        }
+        if (code_point >= 0xD800U && code_point < 0xDC00U) {
+            return 4U;
+        }
+        return 3U;
+    }
+
+    /// utf16_length_from_utf32
+    template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT code_unit16_count(CharT const code_point) noexcept {
+        if (code_point > 0xFFFFU) {
+            return 2U;
+        }
+        return 1U;
+    }
+
     /**
      * Check whether a Unicode code point is in a valid range.
      *
@@ -167,10 +194,10 @@ namespace webpp::unicode {
             if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
                 val  &= 0b0000'0111U;
-                val  <<= 18U;
+                val <<= 18U;
                 val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 12U;
-                val   |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
-                val   |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
+                val  |= (static_cast<code_point_type>(*pos++) & 0b0011'1111U) << 6U;
+                val  |= static_cast<code_point_type>(*pos++) & 0b0011'1111U;
                 return val;
             }
             return val; // return this one anyway
@@ -227,7 +254,7 @@ namespace webpp::unicode {
             if ((val & 0b1111'1000U) == 0b1111'0000U) {
                 // we have 4 chars
                 val  &= 0b0000'0111U;
-                val  <<= 18U;
+                val <<= 18U;
                 val  |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 12U;
                 if (++pos != end) {
                     val |= (static_cast<code_point_type>(*pos) & 0b0011'1111U) << 6U;
@@ -349,7 +376,7 @@ namespace webpp::unicode {
 
     template <typename value_type, stl::integral SizeT = stl::size_t>
         requires(stl::is_integral_v<value_type>)
-    [[nodiscard]] static constexpr SizeT count_bytes(value_type const value) noexcept {
+    [[nodiscard]] static constexpr SizeT code_point_length(value_type const value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00U) == 0xD800U) {
                 return 2U;
@@ -542,8 +569,8 @@ namespace webpp::unicode {
                 if (lhs > rhs) {
                     swap(lhs, rhs);
                 }
-                auto const lhs_length = count_bytes<char_type, diff_type>(*lhs);
-                auto const rhs_length = count_bytes<char_type, diff_type>(*rhs);
+                auto const lhs_length = code_point_length<char_type, diff_type>(*lhs);
+                auto const rhs_length = code_point_length<char_type, diff_type>(*rhs);
                 if constexpr (UTF8<char_type>) {
                     webpp_assume(lhs_length >= 0 && lhs_length <= 6U);
                     webpp_assume(rhs_length >= 0 && rhs_length <= 6U);
