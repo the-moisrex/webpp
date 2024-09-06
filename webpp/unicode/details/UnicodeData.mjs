@@ -45,7 +45,7 @@ const parseDecompositions = (codePoint, str = "") => {
         // The default value of the Decomposition_Mapping property is the code point itself.
         // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
         return {
-            mappedTo: [codePoint],
+            mappedTo: utf32To8(codePoint),
             mapped: false,
             formattingTag: null,
         };

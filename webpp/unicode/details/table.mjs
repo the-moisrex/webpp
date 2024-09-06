@@ -51,6 +51,13 @@ export class TablePairs {
     add(codePoint, value) {
         // fill the data
         this.data[Number(codePoint)] = value;
+
+        // if (codePoint === 0xFFC4n || codePoint === 0x1F133n) {
+        //     debugger;
+        //     console.log("-------------------------------------");
+        //     console.log(codePoint.toString(16), codePoint, value, utf8To32(value.mappedTo), utf8To32(value.mappedTo)?.codePointAt(0)?.toString(16));
+        //     process.exit(0);
+        // }
     }
 
     #optimizeInserts(inserts, dataView, modifier) {
