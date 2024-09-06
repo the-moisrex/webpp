@@ -6,30 +6,19 @@
  */
 
 import * as readme from "./readme.mjs";
-import { getReadme } from "./readme.mjs";
+import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    char8_6,
-    char8_8,
-    runClangFormat,
-    uint32,
-    uint4,
-    utf32To8All,
-    writePieces,
+    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8All, utf8To32, writePieces,
 } from "./utils.mjs";
 import * as path from "node:path";
-import { TablePairs } from "./table.mjs";
+import {TablePairs} from "./table.mjs";
 import {
-    Addenda,
-    genCompactMaskAddendum,
-    genMaxLengthAddendum,
-    genPositionAddendum,
-    staticFields,
+    Addenda, genCompactMaskAddendum, genMaxLengthAddendum, genPositionAddendum, staticFields,
 } from "./modifiers.mjs";
-import { isHangul } from "./hangul.mjs";
+import {isHangul} from "./hangul.mjs";
 import {
-    CanonicalComposition,
-    genCompositionModifier,
+    CanonicalComposition, genCompositionModifier,
 } from "./composition.mjs";
 
 const outFile = `decomposition_tables.hpp`;
@@ -47,10 +36,7 @@ const start = async () => {
 
     // database file
     const decompTables = new DecompTable();
-    await UnicodeData.parse(
-        decompTables,
-        UnicodeData.properties.decompositionType,
-    );
+    await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType,);
     await decompTables.load();
     decompTables?.process?.();
     await createTableFile([decompTables]);
@@ -74,7 +60,7 @@ class DecompTable {
     #dataViewCache = {};
 
     // todo: this can be moved into "modifiers.mjs::genMaxLengthAddendum::*generate
-    findMaxLengths({ codePointStart, length, data }) {
+    findMaxLengths({codePointStart, length, data}) {
         const key = `${codePointStart}-${length}`;
         if (key in this.#cacheMaxLen) {
             return {
@@ -84,15 +70,11 @@ class DecompTable {
         let maxLen = 0n;
         const end = codePointStart + BigInt(length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-            const { mapped, mappedTo } = data.at(Number(codePoint));
+            const {mapped, mappedTo} = data.at(Number(codePoint));
             if (!mapped && !embedCanonical) {
                 continue;
             }
-            if (
-                !mapped &&
-                embedCanonical &&
-                !this.#canonicalCompositions.needsModification(codePoint)
-            ) {
+            if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
                 continue;
             }
             const len = BigInt(mappedTo.length);
@@ -100,11 +82,7 @@ class DecompTable {
                 maxLen = len;
             }
             if (embedCanonical) {
-                maxLen = this.#canonicalCompositions.maxLengthOfRange(
-                    data,
-                    codePoint,
-                    maxLen,
-                );
+                maxLen = this.#canonicalCompositions.maxLengthOfRange(data, codePoint, maxLen);
             }
         }
 
@@ -115,14 +93,12 @@ class DecompTable {
         };
     }
 
-    getCompositionCodePoint({ codePointStart }) {
+    getCompositionCodePoint({codePointStart}) {
         if (!embedCodePointCanonical) {
             return {};
         }
         return {
-            composition_code_point: BigInt(
-                this.#canonicalCompositions.codePoint(codePointStart),
-            ),
+            composition_code_point: BigInt(this.#canonicalCompositions.codePoint(codePointStart))
         };
     }
 
@@ -132,30 +108,20 @@ class DecompTable {
             this.#canonicalCompositions = new CanonicalComposition();
         }
         this.tables.init({
-            disableComments: false,
-            name: "decomp",
-            description: "Decomposition Code Points",
-            ignoreErrors: false,
+            disableComments: false, name: "decomp", description: "Decomposition Code Points", ignoreErrors: false,
 
             // first table
             indices: {
-                max: 4353 * 100,
-                sizeof: uint32,
-                description: `Decomposition Index`,
+                max: 4353 * 100, sizeof: uint32, description: `Decomposition Index`,
             },
 
             // second table that holds the utf-8 encoded values
             values: {
                 max: 65535 * 100, // 46452
-                sizeof: char8_8,
-                description: `UTF-8 Encoded Decomposition Code Points`,
-            },
-            validateResults: false,
-            genIndexAddenda: () => this.genAddenda(),
-            getModifierAddenda: (meta) => {
+                sizeof: char8_8, description: `UTF-8 Encoded Decomposition Code Points`,
+            }, validateResults: false, genIndexAddenda: () => this.genAddenda(), getModifierAddenda: (meta) => {
                 return {
-                    ...self.findMaxLengths(meta),
-                    ...self.getCompositionCodePoint(meta),
+                    ...self.findMaxLengths(meta), ...self.getCompositionCodePoint(meta),
                 };
             },
 
@@ -166,10 +132,9 @@ class DecompTable {
                 }
 
                 const maxLength = self.getMaxLength(codePointStart);
-                const valLen =
-                    Number(maxLength * length) +
-                    (enableMaksField && maxLength === 0n ? 1 : 0);
+                const valLen = Number(maxLength * length) + (enableMaksField && maxLength === 0n ? 1 : 0);
                 const values = new Uint8Array(valLen);
+                values.fill(invalidCodePoint);
 
                 if (maxLength !== 0n) {
                     // optimization if statement
@@ -179,67 +144,36 @@ class DecompTable {
                     // } = self.#canonicalCompositions.modifyRange(this.data, codePointStart, length, maxLength);
                     // assert.equal(inserts.length, length);
                     const end = codePointStart + length;
-                    for (
-                        let codePoint = codePointStart;
-                        codePoint < end;
-                        ++codePoint
-                    ) {
+                    for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
                         const vidx = Number(codePoint - codePointStart);
                         const start = vidx * Number(maxLength);
-                        const { mapped, mappedTo } = this.data.at(
-                            Number(codePoint),
-                        );
+                        const {mapped, mappedTo} = this.data.at(Number(codePoint));
 
                         if (mapped) {
-                            for (
-                                let ith = 0;
-                                ith !== Number(maxLength);
-                                ++ith
-                            ) {
+                            for (let ith = 0; ith !== Number(maxLength); ++ith) {
                                 values[start + ith] = mappedTo[ith];
                             }
                         }
 
                         // adding the composition code point (it's a single code point, but in UTF-8):
                         if (embedCanonical) {
-                            const canonicalCompositionCodePoint =
-                                self.#canonicalCompositions.utf8Composed(
-                                    codePoint,
-                                );
-                            for (
-                                let index = 0;
-                                index !== canonicalCompositionCodePoint.length;
-                                ++index
-                            ) {
-                                const idx =
-                                    start + Number(maxLength) - (index + 1);
+                            const canonicalCompositionCodePoint = self.#canonicalCompositions.utf8Composed(codePoint);
+                            for (let index = 0; index !== canonicalCompositionCodePoint.length; ++index) {
+                                const idx = start + Number(maxLength) - (index + 1);
                                 if (values[idx] !== 0) {
                                     debugger;
-                                    throw new Error(
-                                        `Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`,
-                                    );
+                                    throw new Error(`Non-Zero value is being replaced; value: ${values[idx]}; ith: ${idx}; index: ${index}; values: ${values}`,);
                                 }
-                                values[idx] =
-                                    canonicalCompositionCodePoint[index];
+                                values[idx] = canonicalCompositionCodePoint[index];
                                 if (idx < start + mappedTo.length) {
                                     debugger;
-                                    throw new Error(
-                                        `Invalid max length was calculated: ${idx} < ${mappedTo.length}`,
-                                    );
+                                    throw new Error(`Invalid max length was calculated: ${idx} < ${mappedTo.length}`,);
                                 }
                             }
-                            const idx =
-                                start +
-                                Number(maxLength) -
-                                (canonicalCompositionCodePoint.length + 1);
-                            if (
-                                canonicalCompositionCodePoint.length > 0 &&
-                                values[idx] !== 0
-                            ) {
+                            const idx = start + Number(maxLength) - (canonicalCompositionCodePoint.length + 1);
+                            if (canonicalCompositionCodePoint.length > 0 && values[idx] !== 0) {
                                 debugger;
-                                throw new Error(
-                                    `Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`,
-                                );
+                                throw new Error(`Invalid max length: ${idx} < ${mappedTo.length}; value: ${values[idx]}; max length: ${maxLength}; CC: ${canonicalCompositionCodePoint}; values: ${values}`,);
                             }
                         }
                     }
@@ -281,7 +215,7 @@ class DecompTable {
             // },
 
             // this gets run just before we add the modifier to the indices table
-            modify: ({ modifier, inserts }) => {
+            modify: ({modifier, inserts}) => {
                 // flattening the inserts to include only the utf-8 bytes:
                 // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
 
@@ -298,8 +232,7 @@ class DecompTable {
                 // }
 
                 return {
-                    modifier,
-                    inserts,
+                    modifier, inserts,
                 };
             },
         });
@@ -307,8 +240,7 @@ class DecompTable {
 
     async load() {
         if (embedCanonical || embedCodePointCanonical) {
-            this.#canonicalCompositions.embedCodePointCanonical =
-                embedCodePointCanonical;
+            this.#canonicalCompositions.embedCodePointCanonical = embedCodePointCanonical;
             this.#canonicalCompositions.lastMapped = this.lastMapped;
             this.#canonicalCompositions.chunkShift = this.tables.chunkShift;
             this.#canonicalCompositions.chunkSize = this.tables.chunkSize;
@@ -320,15 +252,11 @@ class DecompTable {
 
     genAddenda = () => {
         const name = "index";
-        const addendaPack = [
-            genPositionAddendum(char8_6),
-            // enableMaksField ? genMaskAddendum(uint10) : undefined,
-            enableMaksField ? genCompactMaskAddendum(uint4) : undefined,
-            embedCodePointCanonical ? genCompositionModifier() : undefined,
+        const addendaPack = [genPositionAddendum(char8_6), // enableMaksField ? genMaskAddendum(uint10) : undefined,
+            enableMaksField ? genCompactMaskAddendum(uint4) : undefined, embedCodePointCanonical ? genCompositionModifier() : undefined,
 
             // this will affect the chunkSize:
-            genMaxLengthAddendum(char8_6),
-        ].filter((item) => item !== undefined);
+            genMaxLengthAddendum(char8_6),].filter((item) => item !== undefined);
         const addenda = new Addenda(name, addendaPack, {
             modify: function (table, modifier, range, pos) {
                 let maskedPos = 0;
@@ -339,7 +267,7 @@ class DecompTable {
                 } else {
                     maskedPos = pos;
                 }
-                const { pos: lenPos } = this.max_length.modify(modifier, {
+                const {pos: lenPos} = this.max_length.modify(modifier, {
                     pos: maskedPos,
                 });
                 const newPos = Number(range + lenPos);
@@ -358,13 +286,9 @@ class DecompTable {
             // }
         };
         const self = this;
-        addenda.renderFunctions = [
-            staticFields,
-            function notMappedFunction() {
-                const addenda = this.addenda.toSorted(
-                    (a, b) => a.placement - b.placement,
-                );
-                return `
+        addenda.renderFunctions = [staticFields, function notMappedFunction() {
+            const addenda = this.addenda.toSorted((a, b) => a.placement - b.placement,);
+            return `
         /// Get an invalid mapping (that shows the code point is not being mapped at all)
         /// This means the code point is mapped to itself
         [[nodiscard]] static consteval ${this.name} not_mapped() noexcept {
@@ -372,9 +296,8 @@ class DecompTable {
             return ${this.name}{${addenda.map((addendum) => (addendum.name === "max_length" ? "0" : `${addendum.defaultValue}`)).join(", ")}};
         }
                 `;
-            },
-            function maxMaxLengthFunction() {
-                return `
+        }, function maxMaxLengthFunction() {
+            return `
         /// Maximum value of "max_length" in the whole values table.
         /// It's the amount of mapped UTF-8 "bytes" (not code points).
         /// Hope this can enable some optimizations.
@@ -386,9 +309,8 @@ class DecompTable {
         /// Maximum values of code points mapped (UTF-32)
         static constexpr auto max_utf32_mapped_length = ${self.max32MaxLength}UL;
                 `;
-            },
-            function getPositionFunction() {
-                return `
+        }, function getPositionFunction() {
+            return `
         /**
          * Get the final position of the second table.
          * This does not apply the shift or get the value of the second table for you; this only applies tha mask.
@@ -398,22 +320,16 @@ class DecompTable {
             [[assume(max_length <= max_utf8_mapped_length)]];
 #endif
             ${this.pos.STLTypeString} const remaining_pos = static_cast<${this.pos.STLTypeString}>(request_position) & chunk_mask;
-            ${
-                enableMaksField
-                    ? `auto const mask = static_cast<${this.pos.STLTypeString}>((0b1U << compact_mask) - 1U);
-            return pos + static_cast<${this.pos.STLTypeString}>((remaining_pos & mask) * max_length);`
-                    : `return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);`
-            }
+            ${enableMaksField ? `auto const mask = static_cast<${this.pos.STLTypeString}>((0b1U << compact_mask) - 1U);
+            return pos + static_cast<${this.pos.STLTypeString}>((remaining_pos & mask) * max_length);` : `return pos + static_cast<${this.pos.STLTypeString}>(remaining_pos * max_length);`}
         }
         `;
-            },
-            function magicalRender() {
-                if (embedCanonical || embedCodePointCanonical) {
-                    return self.#canonicalCompositions.render();
-                }
-                return "";
-            },
-            //     function isMapped() {
+        }, function magicalRender() {
+            if (embedCanonical || embedCodePointCanonical) {
+                return self.#canonicalCompositions.render();
+            }
+            return "";
+        }, //     function isMapped() {
             //         return `
             // /// See if this code point
             // [[nodiscard]] constexpr bool is_mapped(${self.tables.values.STLTypeString} const value) const noexcept {
@@ -446,21 +362,16 @@ class DecompTable {
         const codePointStart = codePoint - (codePoint % this.tables.chunkSize);
         if (codePointStart >= BigInt(this.tables.data.length)) {
             debugger;
-            throw new Error(
-                "Requesting something from us that shouldn't be requested.",
-            );
+            throw new Error("Requesting something from us that shouldn't be requested.",);
             // return 1; // default value for the max_length
         }
         return this.findMaxLengths({
-            codePointStart,
-            length: this.tables.rangeLengthStarting(codePointStart),
-            data: this.tables.data,
-            // dataView: this.tables.dataView(codePointStart)
+            codePointStart, length: this.tables.rangeLengthStarting(codePointStart), data: this.tables.data, // dataView: this.tables.dataView(codePointStart)
         }).max_length;
     }
 
     add(codePoint, value) {
-        let { mapped, mappedTo } = value;
+        let {mapped, mappedTo} = value;
 
         // ignore Hangul code points, they're handled algorithmically
         if (isHangul(codePoint)) {
@@ -473,18 +384,14 @@ class DecompTable {
 
         if (value.mappedTo.length > this.max32MaxLength) {
             this.max32MaxLength = value.mappedTo.length;
-            this.max16MaxLength = String.fromCodePoint(
-                ...value.mappedTo.map((val) => Number(val)),
-            ).length; // convert to UTF-16, then get the length
+            this.max16MaxLength = String.fromCodePoint(...value.mappedTo.map((val) => Number(val)),).length; // convert to UTF-16, then get the length
         }
 
         // calculating the last item that it's value is zero
         mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
             // find the end of the batch, not just the last item
-            this.lastMapped =
-                (((codePoint + 1n) >> this.tables.chunkShift) + 1n) <<
-                this.tables.chunkShift;
+            this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
         }
         if (mappedTo.length > this.maxMappedLength) {
             this.maxMappedLength = mappedTo.length;
@@ -524,13 +431,9 @@ class DecompTable {
 
     tests() {
         /// Sanity check: see if we have skipped adding some code points to the table
-        const undefinedIndex = this.tables.data.findIndex(
-            (codePoint) => codePoint === undefined,
-        );
+        const undefinedIndex = this.tables.data.findIndex((codePoint) => codePoint === undefined,);
         if (undefinedIndex !== -1) {
-            throw new Error(
-                `Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`,
-            );
+            throw new Error(`Error: Undefined Code Point. Undefined Index: ${undefinedIndex}, ${this.tables.data.at(undefinedIndex)}, ${this.data}`,);
         }
     }
 
@@ -548,10 +451,7 @@ ${renderedTables}
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce(
-        (acc, cur) => acc + Number(cur.totalTablesSizeInBits()),
-        0,
-    );
+    const totalBits = tables.reduce((acc, cur) => acc + Number(cur.totalTablesSizeInBits()), 0,);
     const readmeData = await getReadme();
     const begContent = `
 /**
@@ -589,7 +489,6 @@ const createTableFile = async (tables) => {
 #include <array>
 #include <cstdint>
 #include <string_view>
-#include "../../utils/bits.hpp"
 
 namespace webpp::unicode::details {
 

@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Wed, 21 Aug 2024 09:10:13 GMT
+ *   This file's generation date:        Fri, 06 Sep 2024 05:59:31 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       494464
@@ -30,8 +30,6 @@
 
 #ifndef WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
 #define WEBPP_UNICODE_DECOMPOSITION_TABLES_HPP
-
-#include "../../utils/bits.hpp"
 
 #include <array>
 #include <cstdint>
