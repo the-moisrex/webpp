@@ -35,6 +35,10 @@ class CP1 {
         return 32;
     }
 
+    static typeSizeBytes() {
+        return this.typeSize() / 8;
+    }
+
     static invalid() {
         return new CP1();
     }
@@ -90,6 +94,10 @@ class CP2 {
 
     static typeSize() {
         return 64;
+    }
+
+    static typeSizeBytes() {
+        return this.typeSize() / 8;
     }
 
     static renderStruct() {
@@ -220,14 +228,14 @@ class CompTable {
                 ${CP2.renderStruct()}
 
                 /**
-                 * Size: ${((this.cp2s.length * CP2.typeSize()) / 8 / 1024).toFixed(1)} KiB
+                 * Size: ${((this.cp2s.length * CP2.typeSizeBytes()) / 1024).toFixed(1)} KiB
                  */
                 static constexpr std::array<CP2, ${this.cp2s.length}ULL> cp2s {{
                     ${cp2sStr}
                 }};
 
                 /**
-                 * Size: ${((this.cp1s.length * CP2.typeSize()) / 8 / 1024).toFixed(1)} KiB
+                 * Size: ${((this.cp1s.length * CP1.typeSizeBytes()) / 1024).toFixed(1)} KiB
                  */
                 static constexpr std::array<CP1, ${this.cp1s.length}ULL> cp1s {{
                     ${cp1sStr}
@@ -237,15 +245,15 @@ class CompTable {
     }
 
     get totalValuesSize() {
-        let sum = (this.cp1s.length * CP1.typeSize()) / 8;
-        sum += (this.cp2s.length * CP2.typeSize()) / 8;
+        let sum = (this.cp1s.length * CP1.typeSizeBytes());
+        sum += (this.cp2s.length * CP2.typeSizeBytes());
         return sum;
     }
 }
 
 const createTableFile = async (tables) => {
-    const totalBits = tables.reduce(
-        (sum, table) => sum + table.totalValuesSize * 8,
+    const totalBytes = tables.reduce(
+        (sum, table) => sum + table.totalValuesSize,
         0,
     );
     const readmeData = await getReadme();
@@ -262,11 +270,10 @@ const createTableFile = async (tables) => {
  *   This file's generation date:        ${new Date().toUTCString()}
  *   Unicode Version:                    ${readmeData.version}
  *   Total Table sizes in this file:
- *       - in bits:       ${totalBits}
- *       - in bytes:      ${totalBits / 8} B
- *       - in KibiBytes:  ${Math.ceil(totalBits / 8 / 1024)} KiB
+ *       - in bytes:      ${totalBytes} B
+ *       - in KibiBytes:  ${Math.ceil(totalBytes / 1024)} KiB
  *   Some other implementations' total table size was ${competitor.toFixed(1)} KiB;
- *   So I saved ${Math.ceil(competitor - totalBits / 8 / 1024)} KiB.
+ *   So I saved ${Math.ceil(competitor - totalBytes / 1024)} KiB.
  *
  * Details about the contents of this file can be found here:
  *   UTS #15: https://www.unicode.org/reports/tr15/
