@@ -1,14 +1,8 @@
 import {
-    cleanComments,
-    downloadFile,
-    noop,
-    parseCodePointRange,
-    splitLine,
-    updateProgressBar,
+    cleanComments, downloadFile, noop, parseCodePointRange, parseCodePointRangeExclusive, splitLine, updateProgressBar,
 } from "./utils.mjs";
 
-export const fileUrl =
-    "https://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt";
+export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt";
 export const cacheFilePath = "CompositionExclusions.txt";
 
 export const download = async (callback = noop) => {
@@ -28,20 +22,11 @@ export const parse = async (table, fileContent = undefined) => {
 
     const lines = fileContent.split("\n");
 
-    let lastCodePoint = 0;
-    const action = ({ codePointStr }) => {
-        const [codePointStart, codePointEnd] = parseCodePointRange(
-            codePointStr,
-            lastCodePoint,
-        );
-        for (
-            let curCodePoint = codePointStart;
-            curCodePoint <= codePointEnd;
-            ++curCodePoint
-        ) {
+    const action = ({codePointStr}) => {
+        const [codePointStart, codePointEnd] = parseCodePointRangeExclusive(codePointStr);
+        for (let curCodePoint = codePointStart; curCodePoint <= codePointEnd; ++curCodePoint) {
             table.add(curCodePoint, {});
         }
-        lastCodePoint = codePointEnd + 1;
     };
 
     lines.forEach((line, index) => {
@@ -52,14 +37,12 @@ export const parse = async (table, fileContent = undefined) => {
             return "";
         }
 
-        const [
-            codePointStr, // #0
-        ] = splitLine(line);
+        const [codePointStr] = splitLine(line);
 
         updateProgressBar((index / lines.length) * 100);
 
         action({
-            codePointStr,
+            codePointStr
         });
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
@@ -68,9 +51,11 @@ export const parse = async (table, fileContent = undefined) => {
 if (process.argv[1] === new URL(import.meta.url).pathname) {
     class printTable {
         #data = [];
+
         add(codePoint) {
             this.#data.push(codePoint);
         }
+
         printAll() {
             for (const codePoint of this.#data) {
                 console.log(codePoint.toString(16));
@@ -80,6 +65,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
             console.log("Last Code Point:", this.#data[this.#data.length - 1]);
         }
     }
+
     const table = new printTable();
     await parse(table);
     table.printAll();

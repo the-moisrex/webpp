@@ -1,5 +1,5 @@
 import {
-    cleanComments, downloadFile, noop, parseCodePointRange, splitLine, updateProgressBar,
+    cleanComments, downloadFile, noop, parseCodePointRange, parseCodePointRangeExclusive, splitLine, updateProgressBar,
 } from "./utils.mjs";
 
 export const fileUrl = "https://www.unicode.org/Public/UCD/latest/ucd/DerivedNormalizationProps.txt";
@@ -20,6 +20,7 @@ export const props = (() => {
         NFC_Quick_Check: Symbol("NFC_QC"), // NFC_Quick_Check=No/Maybe
         NFKD_Quick_Check: Symbol("NFKD_QC"), // NFKD_Quick_Check=No
         NFKC_Quick_Check: Symbol("NFKC_QC"), // NFKC_Quick_Check=No
+        Quick_Check: Symbol("NF_QC"), // NFKD_Quick_Check=No
         Expands_On_NFD: Symbol("Expands_On_NFD"), // Deprecated
         Expands_On_NFC: Symbol("Expands_On_NFC"), // Deprecated
         Expands_On_NFKD: Symbol("Expands_On_NFKD"), // Deprecated
@@ -35,6 +36,31 @@ export const props = (() => {
     return props;
 })();
 
+export const isDeprecated = (property) => {
+    switch (property) {
+        case props.FC_NFKC_Closure:
+        case props.Expands_On_NFC:
+        case props.Expands_On_NFD:
+        case props.Expands_On_NFKC:
+        case props.Expands_On_NFKD:
+            return true;
+    }
+    return false;
+}
+
+export const defaultValueOf = (property) => {
+    switch (property) {
+        case props.Quick_Check:
+        case props.NFC_Quick_Check:
+        case props.NFD_Quick_Check:
+        case props.NFKD_Quick_Check:
+        case props.NFKC_Quick_Check:
+            return "Y";
+        default:
+            throw new Error(`Haven't implemented yet: ${property?.description || property}`);
+    }
+};
+
 export const parse = async (table, fileContent = undefined) => {
     if (fileContent === undefined) {
         fileContent = await download();
@@ -44,10 +70,6 @@ export const parse = async (table, fileContent = undefined) => {
     }
 
     const lines = fileContent.split("\n");
-
-    let lastCodePoint = 0n;
-    const action = (meta) => {
-    };
 
     lines.forEach((line, index) => {
         line = cleanComments(line);
@@ -72,12 +94,10 @@ export const parse = async (table, fileContent = undefined) => {
 
         property = props[property];
 
-
-        const [codePointStart, codePointEnd] = parseCodePointRange(codePointStr, lastCodePoint);
+        const [codePointStart, codePointEnd] = parseCodePointRangeExclusive(codePointStr);
         for (let curCodePoint = codePointStart; curCodePoint <= codePointEnd; ++curCodePoint) {
             table.add(curCodePoint, {codePoint: curCodePoint, codePointStr, property, value});
         }
-        lastCodePoint = codePointEnd + 1n;
     });
     updateProgressBar(100, `Lines parsed: ${lines.length}`);
 };
@@ -113,6 +133,7 @@ class GetTable {
                     case props.NFD_Quick_Check:
                     case props.NFC_Quick_Check:
                     case props.FC_NFKC_Closure:
+                    case props.Quick_Check:
                         return GetTable.objectMode;
                 }
                 return GetTable.arrayMode;
@@ -123,7 +144,7 @@ class GetTable {
                 this.#data = [];
                 break;
             case GetTable.objectMode:
-                this.#data = {};
+                this.#data = {length: 0};
                 break;
             default:
                 throw new Error(`Invalid mode: ${this.#mode}`);
@@ -131,6 +152,21 @@ class GetTable {
     }
 
     add(codePoint, {property, value}) {
+        if (this.#prop === props.Quick_Check) {
+            switch (property) {
+                case props.NFKD_Quick_Check:
+                case props.NFC_Quick_Check:
+                case props.NFKC_Quick_Check:
+                case props.NFD_Quick_Check:
+                    this.#data[codePoint] = {
+                        [property.description]: value,
+                        ...(this.#data?.[codePoint] || {})
+                    };
+                    this.#data.length += 1;
+                    break;
+            }
+            return
+        }
         if (property === this.#prop) {
             switch (this.#mode) {
                 case GetTable.arrayMode:
@@ -138,6 +174,7 @@ class GetTable {
                     break;
                 case GetTable.objectMode:
                     this.#data[codePoint] = value;
+                    this.#data.length += 1;
                     break;
                 default:
                     throw new Error("Invalid mode.");
@@ -150,6 +187,7 @@ class GetTable {
     }
 }
 
+export const getProp = (data, codePoint, property) => data?.[codePoint] || defaultValueOf(property);
 
 export const getDerivedNormalizationProps = async (property = props.Full_Composition_Exclusion) => {
     const table = new GetTable(property);
@@ -157,12 +195,16 @@ export const getDerivedNormalizationProps = async (property = props.Full_Composi
     return table.data;
 };
 
+export const getQuickChecks = async () => {
+    return getDerivedNormalizationProps(props.Quick_Check);
+};
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
-    const exclusions = await getDerivedNormalizationProps(props.Full_Composition_Exclusion);
-    for (const codePoint of exclusions) {
-        console.log(codePoint.toString(16));
+    const qcs = await getQuickChecks();
+    for (const codePoint in qcs) {
+        console.log(parseInt(codePoint).toString(16), getProp(qcs, codePoint, props.Quick_Check));
     }
-    console.log("Table length:", exclusions.length);
-    console.log("Start Code Point:", exclusions[0]);
-    console.log("Last Code Point:", exclusions[exclusions.length - 1]);
+    console.log("Table length:", qcs.length);
+    console.log("Start Code Point:", qcs[0]);
+    console.log("Last Code Point:", qcs[qcs.length - 1]);
 }

@@ -9,7 +9,7 @@ import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8All, utf8To32, writePieces,
+    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8, utf32To8All, utf8To32, writePieces,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {TablePairs} from "./table.mjs";

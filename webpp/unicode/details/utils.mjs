@@ -395,13 +395,21 @@ export const parseCodePointRange = (codePoints, lastCodePoint = 0) => {
     return rangeArr.map((codePoint) => BigInt(parseInt(codePoint, 16)));
 };
 
+export const parseCodePointRangeExclusive = (codePoints) => {
+    let rangeArr = codePoints.split("..").map((codePoint) => codePoint.trim());
+    if (rangeArr.length === 1) {
+        rangeArr = [rangeArr[0], rangeArr[0]];
+    }
+    return rangeArr.map((codePoint) => BigInt(parseInt(codePoint, 16)));
+};
+
 export class Span {
     #arr;
     #start;
     #end;
     #func;
 
-    constructor(arr = [], start = 0n, length = BigInt(arr.length) - BigInt(start), func = (item) => item,) {
+    constructor(arr = [], start = 0n, length = BigInt(arr.length) - BigInt(start), func = (item) => item) {
         this.#arr = arr;
         this.#start = BigInt(start);
         this.#end = this.#start + BigInt(length);
