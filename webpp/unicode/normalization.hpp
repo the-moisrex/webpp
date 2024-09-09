@@ -105,6 +105,7 @@
 
 #include "../std/iterator.hpp"
 #include "../std/string.hpp"
+#include "../std/string_view.hpp"
 #include "../std/type_traits.hpp"
 #include "./details/ccc_tables.hpp"
 #include "./details/composition_tables.hpp"
@@ -313,7 +314,7 @@ namespace webpp::unicode {
         using details::decomp_index;
         using details::decomp_indices;
         using details::trailing_mapped_deomps;
-        using unicode::unchecked::append;
+        using unchecked::append;
 
         // Not mapped
         if (static_cast<stl::uint32_t>(code_point) >= trailing_mapped_deomps) [[unlikely]] {
@@ -411,7 +412,9 @@ namespace webpp::unicode {
         template <stl::integral               SizeT = stl::size_t,
                   stl::random_access_iterator Iter  = stl::u8string::const_iterator,
                   stl::random_access_iterator EIter = Iter>
-        static constexpr decomposition_details<SizeT> decomp_details(Iter pos, EIter end) noexcept {
+        [[nodiscard]] static constexpr decomposition_details<SizeT> decomp_details(
+          Iter  pos,
+          EIter end) noexcept {
             using details::decomp_index;
             using details::decomp_indices;
             using details::decomp_values;
@@ -428,6 +431,7 @@ namespace webpp::unicode {
                 if (is_hangul_code_point(code_point)) [[unlikely]] {
                     info.max_length +=
                       hangul_decompose_length<char_type, decltype(code_point), SizeT>(code_point);
+                    info.requires_mapping = true;
                     continue;
                 }
 
@@ -580,7 +584,7 @@ namespace webpp::unicode {
                 auto       replaced_cp = composed(cp1, *cp2_ptr);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
-                    starter_ptr.set_value(replaced_cp);
+                    // starter_ptr.set_value(replaced_cp, cp2_ptr);
                     cp1 = replaced_cp;
                     continue;
                 }
@@ -590,6 +594,7 @@ namespace webpp::unicode {
                 prev_ccc = ccc;
                 (++rep_ptr).set_value(cp2_ptr);
             }
+            starter_ptr.set_value(cp1, cp2_ptr);
         }
         return static_cast<SizeT>(rep_ptr - beg);
     }
@@ -637,9 +642,18 @@ namespace webpp::unicode {
      * @param out the string you want to be normalized
      */
     template <normalization_form Form = normalization_form::NFC, istl::String StrT = stl::u32string>
-    static constexpr void normalize(StrT& out) noexcept(Form == normalization_form::gibberish) {
+    static constexpr void normalize(StrT& out) {
+        // There is also a Unicode Consortium stability policy that canonical mappings are always limited in
+        // all versions of Unicode, so that no string when decomposed with NFC expands to more than 3× in
+        // length (measured in code units). This is true whether the text is in UTF-8, UTF-16, or UTF-32. This
+        // guarantee also allows for certain optimizations in processing, especially in determining buffer
+        // sizes.
+        out.reserve(out.size() * 3);
+
         if constexpr (normalization_form::gibberish == Form) {
-            // nothing to do.
+            throw std::invalid_argument(
+              "We don't know what your intentions are, but calling this function and ask to normalize it to "
+              "gibberish is not it.");
         } else if constexpr (normalization_form::NFD == Form) {
             decompose(out);
             canonical_reorder(out);
@@ -656,18 +670,67 @@ namespace webpp::unicode {
     /// to Normalization Form C (this is not inplace)
     template <istl::String StrT = stl::u32string>
     [[nodiscard]] static constexpr StrT toNFC(StrT out) {
-        decompose(out);
-        canonical_reorder(out);
-        compose(out);
+        normalize<normalization_form::NFC>(out);
         return out;
     }
 
     /// to Normalization Form D (this is not inplace)
     template <istl::String StrT = stl::u32string>
     [[nodiscard]] static constexpr StrT toNFD(StrT out) {
-        decompose(out);
-        canonical_reorder(out);
+        normalize<normalization_form::NFD>(out);
         return out;
+    }
+
+    /// Check the Normalization Form
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr normalization_form normalization_form_of(Iter start, EIter end) noexcept {
+        using enum normalization_form;
+        // todo
+        return gibberish;
+    }
+
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr bool isNFC(Iter start, EIter end) noexcept {
+        return normalization_form_of(start, end) == normalization_form::NFC;
+    }
+
+    template <istl::StringViewifiable StrT = stl::u32string_view>
+    [[nodiscard]] static constexpr bool isNFC(StrT&& str) noexcept {
+        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFC;
+    }
+
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr bool isNFD(Iter start, EIter end) noexcept {
+        return normalization_form_of(start, end) == normalization_form::NFD;
+    }
+
+    template <istl::StringViewifiable StrT = stl::u32string_view>
+    [[nodiscard]] static constexpr bool isNFD(StrT&& str) noexcept {
+        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFD;
+    }
+
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr bool isNFKC(Iter start, EIter end) noexcept {
+        return normalization_form_of(start, end) == normalization_form::NFKC;
+    }
+
+    template <istl::StringViewifiable StrT = stl::u32string_view>
+    [[nodiscard]] static constexpr bool isNFKC(StrT&& str) noexcept {
+        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFKC;
+    }
+
+    template <stl::forward_iterator Iter, stl::forward_iterator EIter = Iter>
+    [[nodiscard]] static constexpr bool isNFKD(Iter start, EIter end) noexcept {
+        return normalization_form_of(start, end) == normalization_form::NFKD;
+    }
+
+    template <istl::StringViewifiable StrT = stl::u32string_view>
+    [[nodiscard]] static constexpr bool isNFKD(StrT&& str) noexcept {
+        auto str_view = istl::string_viewify(stl::forward<StrT>(str));
+        return normalization_form_of(str_view.begin(), str_view.end()) == normalization_form::NFKD;
     }
 
 } // namespace webpp::unicode
