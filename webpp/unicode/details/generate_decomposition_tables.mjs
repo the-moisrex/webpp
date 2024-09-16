@@ -9,7 +9,7 @@ import * as readme from "./readme.mjs";
 import {getReadme} from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import {
-    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8, utf32To8All, utf8To32, writePieces,
+    char8_6, char8_8, runClangFormat, uint32, uint4, utf32To8All, writePieces,
 } from "./utils.mjs";
 import * as path from "node:path";
 import {TablePairs} from "./table.mjs";
@@ -36,7 +36,7 @@ const start = async () => {
 
     // database file
     const decompTables = new DecompTable();
-    await UnicodeData.parse(decompTables, UnicodeData.properties.decompositionType,);
+    await UnicodeData.parse(decompTables, UnicodeData.properties.canonicalDecompositionType);
     await decompTables.load();
     decompTables?.process?.();
     await createTableFile([decompTables]);
@@ -70,19 +70,23 @@ class DecompTable {
         let maxLen = 0n;
         const end = codePointStart + BigInt(length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
-            const {mapped, mappedTo} = data.at(Number(codePoint));
-            if (!mapped && !embedCanonical) {
-                continue;
-            }
-            if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
-                continue;
-            }
-            const len = BigInt(mappedTo.length);
-            if (len > maxLen) {
-                maxLen = len;
-            }
-            if (embedCanonical) {
-                maxLen = this.#canonicalCompositions.maxLengthOfRange(data, codePoint, maxLen);
+            try {
+                const {mapped, mappedTo} = data.at(Number(codePoint));
+                if (!mapped && !embedCanonical) {
+                    continue;
+                }
+                if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
+                    continue;
+                }
+                const len = BigInt(mappedTo.length);
+                if (len > maxLen) {
+                    maxLen = len;
+                }
+                if (embedCanonical) {
+                    maxLen = this.#canonicalCompositions.maxLengthOfRange(data, codePoint, maxLen);
+                }
+            } catch (e) {
+                console.error(e, codePoint);
             }
         }
 
@@ -215,7 +219,7 @@ class DecompTable {
             // },
 
             // this gets run just before we add the modifier to the indices table
-            modify: ({modifier, inserts}) => {
+            // modify: ({modifier, inserts}) => {
                 // flattening the inserts to include only the utf-8 bytes:
                 // inserts = Array.from(inserts).reduce((acc, cur) => [...acc, ...cur.mappedTo], []);
 
@@ -231,10 +235,10 @@ class DecompTable {
                 //     }
                 // }
 
-                return {
-                    modifier, inserts,
-                };
-            },
+            //     return {
+            //         modifier, inserts,
+            //     };
+            // },
         });
     }
 
@@ -384,7 +388,7 @@ class DecompTable {
 
         if (value.mappedTo.length > this.max32MaxLength) {
             this.max32MaxLength = value.mappedTo.length;
-            this.max16MaxLength = String.fromCodePoint(...value.mappedTo.map((val) => Number(val)),).length; // convert to UTF-16, then get the length
+            this.max16MaxLength = String.fromCodePoint(...value.mappedTo.map((val) => Number(val))).length; // convert to UTF-16, then get the length
         }
 
         // calculating the last item that it's value is zero

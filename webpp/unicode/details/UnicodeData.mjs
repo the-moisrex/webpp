@@ -45,7 +45,7 @@ const parseDecompositions = (codePoint, str = "") => {
         // The default value of the Decomposition_Mapping property is the code point itself.
         // From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
         return {
-            mappedTo: utf32To8(codePoint),
+            mappedTo: [codePoint],
             mapped: false,
             formattingTag: null,
         };
@@ -89,7 +89,7 @@ export const parse = async (table, property, fileContent = undefined) => {
     switch (property) {
         /// simple code points
         case properties.codePoints:
-            action = ({ codePointStr }) => {
+            action = ({codePointStr}) => {
                 const codePoint = parseCodePoints(codePointStr);
                 table.add(codePoint);
             };
@@ -98,7 +98,7 @@ export const parse = async (table, property, fileContent = undefined) => {
         /// Canonical Combining Class:
         case properties.ccc: {
             let lastCodePoint = 0n;
-            action = ({ codePointStr, CanonicalCombiningClass }) => {
+            action = ({codePointStr, CanonicalCombiningClass}) => {
                 const ccc = parseInt(CanonicalCombiningClass);
                 const codePoint = parseCodePoints(codePointStr);
                 for (
@@ -117,35 +117,46 @@ export const parse = async (table, property, fileContent = undefined) => {
 
         case properties.decompositionType: {
             let lastCodePoint = 0n;
-            action = ({ codePointStr, DecompositionStr }) => {
-                const codePoint = parseCodePoints(codePointStr);
+            action = ({codePointStr, DecompositionStr}) => {
+                const codePoint = BigInt(parseCodePoints(codePointStr));
                 const decomposition = parseDecompositions(
                     codePoint,
                     DecompositionStr,
                 );
 
-                for (
-                    let curCodePoint = lastCodePoint;
-                    curCodePoint <= codePoint;
-                    ++curCodePoint
-                ) {
-                    const curDecompositionMapping =
-                        curCodePoint === codePoint
-                            ? decomposition
-                            : parseDecompositions(curCodePoint);
-                    table.add(curCodePoint, curDecompositionMapping);
+                // for (
+                //     let curCodePoint = lastCodePoint;
+                //     curCodePoint <= codePoint;
+                //     ++curCodePoint
+                // ) {
+                //     const curDecompositionMapping =
+                //         curCodePoint === codePoint
+                //             ? decomposition
+                //             : parseDecompositions(curCodePoint);
+                //     table.add(curCodePoint, curDecompositionMapping);
+                // }
+                // lastCodePoint = codePoint + 1n;
+
+                for (; lastCodePoint < codePoint; ++lastCodePoint) {
+                    table.add(lastCodePoint, {
+                        mapped: false,
+                        mappedTo: [lastCodePoint],
+                        formattingTag: null,
+                    });
                 }
+                table.add(codePoint, decomposition);
                 lastCodePoint = codePoint + 1n;
             };
             break;
         }
 
         case properties.canonicalDecompositionType: {
+            let lastCodePoint = 0n;
             action = ({
-                codePointStr,
-                DecompositionStr,
-                CanonicalCombiningClass,
-            }) => {
+                          codePointStr,
+                          DecompositionStr,
+                          CanonicalCombiningClass,
+                      }) => {
                 const codePoint = parseCodePoints(codePointStr);
                 const decomposition = parseDecompositions(
                     codePoint,
@@ -164,10 +175,18 @@ export const parse = async (table, property, fileContent = undefined) => {
                     return;
                 }
 
+                for (; lastCodePoint < codePoint; ++lastCodePoint) {
+                    table.add(lastCodePoint, {
+                        mapped: false,
+                        mappedTo: [lastCodePoint],
+                        formattingTag: null,
+                    });
+                }
                 table.add(codePoint, {
                     ...decomposition,
                     CanonicalCombiningClass,
                 });
+                lastCodePoint = codePoint + 1n;
             };
             break;
         }
@@ -249,7 +268,7 @@ export const getCanonicalDecompositions = async () => {
         #data = {};
         #lastMapped = 0n;
 
-        add(codePoint, { mappedTo }) {
+        add(codePoint, {mappedTo}) {
             assert.ok(mappedTo.length === 2);
             this.#data[codePoint] = mappedTo;
             if (codePoint > this.#lastMapped) {
@@ -347,7 +366,7 @@ export const groupedByCP2 = async () => {
             if (cp2 !== map2) {
                 continue;
             }
-            map1s.push({ cp1, codePoint });
+            map1s.push({cp1, codePoint});
         }
         grouped[map2] = map1s;
     }
@@ -475,7 +494,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-interleave": {
             const data = (await getCanonicalDecompositions()).data;
-            const { mappedToSecond, mappedToFirst } =
+            const {mappedToSecond, mappedToFirst} =
                 await extractedCanonicalDecompositions();
             const maps = [];
             const cp1Mask = findSmallestMask(mappedToFirst);
@@ -518,7 +537,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-interleave-reversed": {
             const data = (await getCanonicalDecompositions()).data;
-            const { mappedToSecond, mappedToFirst } =
+            const {mappedToSecond, mappedToFirst} =
                 await extractedCanonicalDecompositions();
             const maps = [];
             const cp1Compl = findSmallestComplement(mappedToFirst);
@@ -553,7 +572,7 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
 
         case "map-find-mask": {
             const data = (await getCanonicalDecompositions()).data;
-            const { mappedToSecond, mappedToFirst } =
+            const {mappedToSecond, mappedToFirst} =
                 await extractedCanonicalDecompositions();
             const maps = [];
             const cp1Mask = findSmallestMask(mappedToFirst);

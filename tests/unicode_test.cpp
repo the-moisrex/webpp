@@ -1786,7 +1786,7 @@ TEST(Unicode, NormalizationTests) {
         std::vector<std::u32string> columns(5);
 
         // Read the columns separated by semicolons
-        int columnIndex = 0;
+        std::size_t columnIndex = 0;
         while (std::getline(iss, column, ';') && columnIndex != 5) {
             if (column.starts_with(" #")) {
                 break;
