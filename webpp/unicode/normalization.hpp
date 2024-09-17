@@ -309,7 +309,7 @@ namespace webpp::unicode {
               stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
               istl::CharType         CharT = char32_t>
         requires UTF32<CharT>
-    static constexpr SizeT decompose_to(Iter& out, CharT const code_point) noexcept(
+    static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point) noexcept(
       istl::NothrowAppendable<Iter>) {
         using details::decomp_index;
         using details::decomp_indices;
@@ -360,11 +360,11 @@ namespace webpp::unicode {
     template <istl::AppendableStorage StrT  = decomposed_array<>,
               istl::CharType          CharT = char32_t,
               typename... Args>
-    [[nodiscard]] static constexpr StrT decomposed(CharT const code_point, Args&&... args) noexcept(
+    [[nodiscard]] static constexpr StrT canonical_decomposed(CharT const code_point, Args&&... args) noexcept(
       istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
         auto iter = istl::appendable_iter_of(arr);
-        decompose_to(iter, code_point);
+        canonical_decompose_to(iter, code_point);
         return arr;
     }
 
@@ -376,10 +376,11 @@ namespace webpp::unicode {
     template <istl::Appendable Iter   = std::u8string::iterator,
               stl::integral    SizeT  = istl::size_type_of_t<Iter>,
               istl::Iterable   InpStr = stl::u32string_view>
-    static constexpr SizeT decompose_to(Iter& out, InpStr const str) noexcept(istl::NothrowAppendable<Iter>) {
+    static constexpr SizeT canonical_decompose_to(Iter& out, InpStr const str) noexcept(
+      istl::NothrowAppendable<Iter>) {
         SizeT count = 0;
         for (auto pos = stl::begin(str); pos != stl::end(str);) {
-            count += decompose_to(out, next_code_point(pos));
+            count += canonical_decompose_to(out, next_code_point(pos));
         }
         return count;
     }
@@ -388,11 +389,11 @@ namespace webpp::unicode {
               istl::Iterable          InpStr = stl::u32string_view,
               typename... Args>
         requires(stl::constructible_from<StrT, Args...>)
-    [[nodiscard]] static constexpr StrT decomposed(InpStr&& str, Args&&... args) noexcept(
+    [[nodiscard]] static constexpr StrT canonical_decomposed(InpStr&& str, Args&&... args) noexcept(
       istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
         auto iter = istl::appendable_iter_of(arr);
-        decompose_to(iter, stl::forward<InpStr>(str));
+        canonical_decompose_to(iter, stl::forward<InpStr>(str));
         return arr;
     }
 
@@ -412,7 +413,7 @@ namespace webpp::unicode {
         template <stl::integral               SizeT = stl::size_t,
                   stl::random_access_iterator Iter  = stl::u8string::const_iterator,
                   stl::random_access_iterator EIter = Iter>
-        [[nodiscard]] static constexpr decomposition_details<SizeT> decomp_details(
+        [[nodiscard]] static constexpr decomposition_details<SizeT> canon_decomp_details(
           Iter  pos,
           EIter end) noexcept {
             using details::decomp_index;
@@ -467,18 +468,18 @@ namespace webpp::unicode {
      * @param end end of the string
      */
     template <typename Iter, typename EIter = Iter, stl::unsigned_integral SizeT = stl::size_t>
-    [[nodiscard]] static constexpr SizeT decomposition_max_size(Iter pos, EIter end) noexcept {
-        return details::decomp_details<Iter, EIter, SizeT>(pos, end).max_length;
+    [[nodiscard]] static constexpr SizeT canonical_decomp_max_size(Iter pos, EIter end) noexcept {
+        return details::canon_decomp_details<Iter, EIter, SizeT>(pos, end).max_length;
     }
 
     /**
      * Decompose inplace
      */
     template <istl::String StrT = stl::u32string>
-    static constexpr void decompose(StrT& out) {
+    static constexpr void canonical_decompose(StrT& out) {
         using size_type = typename stl::remove_cvref_t<StrT>::size_type;
 
-        auto const [max_length, requires_mapping] = details::decomp_details(out.begin(), out.end());
+        auto const [max_length, requires_mapping] = details::canon_decomp_details(out.begin(), out.end());
         auto const cur_len                        = out.size();
 
         if (!requires_mapping) [[likely]] {
@@ -494,7 +495,7 @@ namespace webpp::unicode {
                   auto       backup_start = ptr;
                   auto const backup_end   = ptr + cur_len;
                   while (backup_start != backup_end) {
-                      decompose_to(ptr, next_code_point(backup_start));
+                      canonical_decompose_to(ptr, next_code_point(backup_start));
                   }
                   return static_cast<size_type>(ptr - beg);
               }
@@ -505,7 +506,7 @@ namespace webpp::unicode {
               stl::copy(ptr, ptr + cur_len, backup_start);
 
               while (backup_start != backup_end) {
-                  decompose_to(ptr, next_code_point(backup_start));
+                  canonical_decompose_to(ptr, next_code_point(backup_start));
               }
               return static_cast<size_type>(ptr - beg);
           };
@@ -524,7 +525,7 @@ namespace webpp::unicode {
      * Canonical Composition code points are embedded inside Decomposition tables to save space.
      */
     template <UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr CharT composed(CharT const lhs, CharT const rhs) noexcept {
+    [[nodiscard]] static constexpr CharT canonical_composed(CharT const lhs, CharT const rhs) noexcept {
         using details::composition::cp1s;
         using details::composition::cp2s;
         using details::composition::cp2s_rem;
@@ -569,7 +570,7 @@ namespace webpp::unicode {
               stl::random_access_iterator Iter  = char32_t*,
               stl::random_access_iterator EIter = Iter>
     [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT
-    compose(Iter& ptr, EIter end) noexcept(
+    canonical_compose(Iter& ptr, EIter end) noexcept(
       stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
         auto const          beg = ptr;
         code_point_iterator cp1_ptr{beg}; // const iterator
@@ -581,7 +582,7 @@ namespace webpp::unicode {
             auto cp1     = *cp1_ptr;
             for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
                 auto const ccc         = static_cast<stl::int_fast16_t>(ccc_of(*cp2_ptr));
-                auto       replaced_cp = composed(cp1, *cp2_ptr);
+                auto       replaced_cp = canonical_composed(cp1, *cp2_ptr);
                 if (prev_ccc < ccc && replaced_cp != replacement_char<char32_t>) {
                     // found a composition
                     // starter_ptr.set_value(replaced_cp, cp2_ptr);
@@ -613,20 +614,20 @@ namespace webpp::unicode {
      * would be required.
      */
     template <istl::String StrT = stl::u32string, bool isNothrow = true>
-    static constexpr void compose(StrT& out) noexcept(isNothrow) {
+    static constexpr void canonical_compose(StrT& out) noexcept(isNothrow) {
         using size_type = typename stl::remove_cvref_t<StrT>::size_type;
 
         auto*             ptr = out.data();
         auto const* const end = ptr + out.size();
 
-        out.resize(compose<size_type>(ptr, end));
+        out.resize(canonical_compose<size_type>(ptr, end));
     }
 
     template <istl::String StrT = stl::u32string, bool isNothrow = true>
     [[nodiscard(
       "Use unicode::compose instead of this if you wanted to compose inplace")]] static constexpr StrT
-    composed(StrT out) noexcept(isNothrow) {
-        compose<StrT, isNothrow>(out);
+    canonical_composed(StrT out) noexcept(isNothrow) {
+        canonical_compose<StrT, isNothrow>(out);
         return out;
     }
 
@@ -655,12 +656,12 @@ namespace webpp::unicode {
               "We don't know what your intentions are, but calling this function and ask to normalize it to "
               "gibberish is not it.");
         } else if constexpr (normalization_form::NFD == Form) {
-            decompose(out);
+            canonical_decompose(out);
             canonical_reorder(out);
         } else if constexpr (normalization_form::NFC == Form) {
-            decompose(out);
+            canonical_decompose(out);
             canonical_reorder(out);
-            compose(out);
+            canonical_compose(out);
         } else {
             // todo: NFKC and NFKD
             throw stl::invalid_argument("NFKC and NFKD are not implemented yet.");

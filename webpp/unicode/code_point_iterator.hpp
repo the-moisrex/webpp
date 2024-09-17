@@ -3,6 +3,7 @@
 #ifndef WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 #define WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 
+#include "../std/algorithm.hpp"
 #include "../std/type_traits.hpp"
 #include "./unicode.hpp"
 
@@ -72,44 +73,115 @@ namespace webpp::unicode {
         //     return code_point;
         // }
 
-        constexpr void set_value(value_type inp_code_point) noexcept(
+        constexpr stl::size_t set_value(value_type inp_code_point, difference_type length) noexcept(
           std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
                 *ptr = inp_code_point;
+                return 1U;
             } else {
-                auto ptr_cpy = ptr;
-                unchecked::append(ptr_cpy, inp_code_point);
-                code_point = inp_code_point;
+                return 0;
+                auto const orig_len = code_point_length(*ptr);
+                auto const rep_len  = code_unit8_count(inp_code_point);
+                if (rep_len < orig_len) {
+                    stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
+                }
+                set_value(inp_code_point);
+                return rep_len;
             }
         }
 
-        constexpr void set_value(const_pointer other_ptr) noexcept(
+        constexpr stl::size_t set_value(const_pointer other_ptr, difference_type length) noexcept(
           std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
                 *ptr = *other_ptr;
+                return 1U;
+            } else {
+                return 0;
+                auto const orig_len = code_point_length(*ptr);
+                auto const rep_len  = code_point_length(*other_ptr);
+                if (rep_len < orig_len) {
+                    stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
+                }
+                set_value(other_ptr);
+                return rep_len;
+            }
+        }
+
+        constexpr stl::size_t set_value(const_pointer other_ptr) noexcept(
+          std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            if constexpr (UTF32<CharT>) {
+                *ptr = *other_ptr;
+                return 1U;
+            } else {
+                auto       ptr_cpy     = ptr;
+                auto const changed_len = unchecked::append(ptr_cpy, other_ptr);
+                code_point             = next_code_point_copy(ptr);
+                return changed_len;
+            }
+        }
+
+        constexpr stl::size_t set_value(value_type inp_code_point) noexcept(
+          std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            if constexpr (UTF32<CharT>) {
+                *ptr = inp_code_point;
+                return 1U;
             } else {
                 auto ptr_cpy = ptr;
-                unchecked::append(ptr_cpy, other_ptr);
-                code_point = next_code_point_copy(ptr);
+                code_point   = inp_code_point;
+                return unchecked::append(ptr_cpy, inp_code_point);
             }
+        }
+
+        template <typename CharT2 = CharT>
+        constexpr stl::size_t set_value(code_point_iterator<CharT2, CodePointT> const& other_ptr,
+                                        pointer end) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_value(other_ptr.base(), end - ptr);
+        }
+
+        template <typename CharT2 = CharT>
+        constexpr stl::size_t set_value(code_point_iterator<CharT2, CodePointT> const& other_ptr) noexcept(
+          std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_value(other_ptr.base());
+        }
+
+        template <typename CharT2 = CharT>
+        constexpr stl::size_t
+        set_value(value_type other, code_point_iterator<CharT2, CodePointT> const& end) noexcept(
+          std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_value(other, end.base() - ptr);
         }
 
         template <typename CharT2 = stl::add_const_t<CharT>>
-        constexpr void set_value(code_point_iterator<CharT2, CodePointT> const& other_ptr) noexcept(
+        constexpr stl::size_t
+        set_value(const_pointer other_ptr, code_point_iterator<CharT2, CodePointT> const& end) noexcept(
           std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
-            if constexpr (UTF32<CharT>) {
-                *ptr = *other_ptr;
-            } else {
-                auto ptr_cpy = ptr;
-                unchecked::append(ptr_cpy, other_ptr.base());
-                code_point = *other_ptr;
-            }
+            return set_value(other_ptr.base(), end.base() - ptr);
+        }
+
+        template <typename CharT2 = stl::add_const_t<CharT>>
+        constexpr stl::size_t set_value(
+          code_point_iterator<CharT2, CodePointT> const& other_ptr,
+          code_point_iterator<CharT2, CodePointT> const&
+            end) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_value(other_ptr.base(), end.base() - ptr);
         }
 
         [[nodiscard]] constexpr const_pointer operator->() const noexcept {
@@ -178,12 +250,12 @@ namespace webpp::unicode {
     }
 
     template <typename PtrT>
-    code_point_iterator(PtrT&) -> code_point_iterator<stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>;
+    code_point_iterator(PtrT) -> code_point_iterator<stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>;
 
-    template <typename PtrT>
-    code_point_iterator(PtrT const&)
-      -> code_point_iterator<
-        stl::add_const_t<stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>>>;
+    // template <typename PtrT>
+    // code_point_iterator(PtrT const&)
+    //   -> code_point_iterator<
+    //     stl::add_const_t<stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>>>;
 
     /// wrap it if it's UTF-8 or UTF-16, but if it's UTF-32, don't wrap:
     template <typename CharT = char8_t const, UTF32 CodePointT = char32_t>
