@@ -80,7 +80,7 @@ namespace webpp::details {
 #if __GNUC__ >= 13 || (__GNUC__ == 13 && (__GNUC_MINOR__ >= 1)) || __clang_major__ >= 17
 #    define static_assert_false(BasedOn, StrLiteral) static_assert(false, StrLiteral)
 #else
-#    define static_assert_false(BasedOn, StrLiteral) static_assert(false && !sizeof(BasedOn*), StrLiteral)
+#    define static_assert_false(BasedOn, StrLiteral) static_assert(!sizeof(BasedOn), StrLiteral)
 #endif
 
 
