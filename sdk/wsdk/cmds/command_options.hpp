@@ -18,7 +18,7 @@ namespace webpp::sdk {
         } verbose = normal;
     };
 
-    using row_view = stl::span<const stl::pair<stl::string_view, stl::string_view>>;
+    using row_view = stl::span<stl::pair<stl::string_view, stl::string_view> const>;
 
     struct output_port {
         output_port()                                       = default;
@@ -40,7 +40,7 @@ namespace webpp::sdk {
     };
 
     struct stdout_output_port final : output_port {
-        void notify(stl::string_view) override;
+        void notify(stl::string_view name) override;
         void send_table(stl::string_view name, row_view rows) override;
     };
 
@@ -49,9 +49,10 @@ namespace webpp::sdk {
     struct command_options {
         using tokenizer_type = string_tokenizer<>;
 
-        command_options(stl::string_view             command,
-                        stl::shared_ptr<output_port> inp_out    = stl::make_shared<stdout_output_port>(),
-                        webpp::dynamic_logger        inp_logger = {})
+        explicit command_options(
+          stl::string_view const       command,
+          stl::shared_ptr<output_port> inp_out    = stl::make_shared<stdout_output_port>(),
+          dynamic_logger               inp_logger = {})
           : m_tokenizer{command},
             m_output{stl::move(inp_out)},
             m_logger{stl::move(inp_logger)} {}
@@ -70,7 +71,7 @@ namespace webpp::sdk {
             return m_tokenizer;
         }
 
-        output_port& output() noexcept {
+        output_port& output() const noexcept {
             return *m_output;
         }
 
