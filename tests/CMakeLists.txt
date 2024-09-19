@@ -33,7 +33,7 @@ function(setup_fuzz name)
     add_test(
             NAME ${name}
             COMMAND $<TARGET_FILE:${name}> -max_total_time=10) # run for 10 seconds
-    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
     setup_executable(${name})
     target_code_coverage("${name}")
     # gtest_discover_tests(${name})
@@ -50,7 +50,7 @@ function(setup_test name)
     add_test(
         NAME ${name}
         COMMAND $<TARGET_FILE:${name}>)
-    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL FALSE)
     setup_executable(${name})
     target_code_coverage("${name}")
     gtest_discover_tests(${name})
