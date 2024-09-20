@@ -239,7 +239,7 @@ TEST(DomainsTest, Validity) {
 }
 
 TEST(DomainsTest, ValidityPunycode) {
-    for (auto const [domain_str, domain_unicode] : puny_domains) {
+    for (auto const& [domain_str, domain_unicode] : puny_domains) {
         auto const ptr    = domain_str.data();
         auto const status = parse_domain_name(ptr, ptr + domain_str.size());
         EXPECT_TRUE(status == domain_name_status::valid_punycode) << domain_str << "\n" << to_string(status);
