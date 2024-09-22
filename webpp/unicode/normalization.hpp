@@ -623,11 +623,12 @@ namespace webpp::unicode {
         out.resize(canonical_compose<size_type>(ptr, end));
     }
 
-    template <istl::String StrT = stl::u32string, bool isNothrow = true>
+    template <istl::String StrT = stl::u32string>
     [[nodiscard(
-      "Use unicode::compose instead of this if you wanted to compose inplace")]] static constexpr StrT
-    canonical_composed(StrT out) noexcept(isNothrow) {
-        canonical_compose<StrT, isNothrow>(out);
+      "Use unicode::canonical_compose instead of this if you wanted to compose "
+      "inplace")]] static constexpr StrT
+    canonical_composed(StrT out) {
+        canonical_compose<StrT>(out);
         return out;
     }
 

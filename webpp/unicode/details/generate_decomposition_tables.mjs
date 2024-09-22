@@ -48,6 +48,7 @@ class DecompTable {
 
     // these numbers are educated guesses from other projects, they're not that important!
     lastMapped = 0n;
+    lastItem = 0n;
     maxMappedLength = 0;
     hangulIgnored = 0;
     // flattedDataView = [];
@@ -155,7 +156,7 @@ class DecompTable {
 
                         if (mapped) {
                             for (let ith = 0; ith !== Number(maxLength); ++ith) {
-                                values[start + ith] = mappedTo[ith];
+                                values[start + ith] = Number(mappedTo[ith]);
                             }
                         }
 
@@ -345,8 +346,78 @@ class DecompTable {
         return addenda;
     };
 
+
+    /// From: https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
+    /// A canonical mapping may also consist of a pair of characters, but is never longer than two characters.
+    /// When a canonical mapping consists of a pair of characters, the first character may itself
+    /// be a character with a decomposition mapping, but the second character never has a decomposition mapping.
+    recursive_decompose() {
+        for (let index = 0; index !== Number(this.lastItem); ++index) {
+            let {mapped, mappedTo} = this.tables.data.at(index);
+            if (!mapped) {
+                continue;
+            }
+            let changed = false;
+            for (;;) {
+                const codePoint1 = mappedTo[0];
+                const {mapped: isMappedToo, mappedTo: replaceWith} = this.tables.data.at(Number(codePoint1));
+                if (!isMappedToo) {
+                    break;
+                }
+                mappedTo = [...replaceWith, ...mappedTo.slice(1)];
+                changed = true;
+                console.log("  Recursive replace:", codePoint1, mappedTo);
+                if (mappedTo[0] === codePoint1) {
+                    break;
+                }
+            }
+            if (changed) {
+                console.log("  Recursive Map:", this.tables.data.at(index).mappedTo, mappedTo);
+                this.tables.data.at(index).mappedTo = mappedTo;
+            }
+        }
+    }
+
+
+    convert_to_utf8() {
+        for (let codePoint = 0; codePoint !== Number(this.lastItem); ++codePoint) {
+            let {mapped, mappedTo} = this.tables.data.at(codePoint);
+
+            if (mappedTo.length > this.max32MaxLength) {
+                this.max32MaxLength = mappedTo.length;
+                this.max16MaxLength = String.fromCodePoint(...mappedTo.map((val) => Number(val))).length; // convert to UTF-16, then get the length
+            }
+
+            // calculating the last item that it's value is zero
+            // mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
+            this.tables.data.at(codePoint).mappedTo = utf32To8All(mappedTo);
+            if (mappedTo.length > this.maxMappedLength) {
+                this.maxMappedLength = mappedTo.length;
+            }
+
+            // // expand the "data" into its "values" table equivalent
+            // value.flatStart = this.flattedDataView.length;
+            // // value.flatLength = mappedTo.length;
+            // if (mapped) {
+            //
+            //     // these don't get to be in the "values" table, so they should not be in this table either
+            //     for (const curCodePoint of mappedTo) {
+            //         // curCodePoint is already UTF-8 encoded, no need for re-encoding
+            //         this.flattedDataView.push(curCodePoint);
+            //         --maxLength;
+            //     }
+            //     for (; maxLength > 0; --maxLength) {
+            //         this.flattedDataView.push(0);
+            //     }
+            //
+            // }
+        }
+    }
+
     /// proxy the function
     process() {
+        this.recursive_decompose();
+        this.convert_to_utf8();
         this.tables.process();
         const lastMappedBucket = this.lastMapped >> this.tables.chunkShift;
 
@@ -386,41 +457,14 @@ class DecompTable {
             // return;
         }
 
-        if (value.mappedTo.length > this.max32MaxLength) {
-            this.max32MaxLength = value.mappedTo.length;
-            this.max16MaxLength = String.fromCodePoint(...value.mappedTo.map((val) => Number(val))).length; // convert to UTF-16, then get the length
-        }
-
-        // calculating the last item that it's value is zero
-        mappedTo = value.mappedTo = utf32To8All(mappedTo); // convert the code points to utf-8
         if (mapped) {
             // find the end of the batch, not just the last item
             this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
         }
-        if (mappedTo.length > this.maxMappedLength) {
-            this.maxMappedLength = mappedTo.length;
-        }
 
-        // // expand the "data" into its "values" table equivalent
-        // value.flatStart = this.flattedDataView.length;
-        // // value.flatLength = mappedTo.length;
-        // if (mapped) {
-        //
-        if (mappedTo.length > this.maxMaxLength) {
-            this.maxMaxLength = mappedTo.length;
+        if (codePoint > this.lastItem) {
+            this.lastItem = codePoint;
         }
-        //
-        //     // these don't get to be in the "values" table, so they should not be in this table either
-        //     for (const curCodePoint of mappedTo) {
-        //         // curCodePoint is already UTF-8 encoded, no need for re-encoding
-        //         this.flattedDataView.push(curCodePoint);
-        //         --maxLength;
-        //     }
-        //     for (; maxLength > 0; --maxLength) {
-        //         this.flattedDataView.push(0);
-        //     }
-        //
-        // }
 
         this.tables.add(codePoint, value);
     }

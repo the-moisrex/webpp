@@ -5679,6 +5679,14 @@ namespace {
         return oss.str();
     }
 
+    std::string u32ToString(std::string const& hexString) {
+        std::ostringstream oss;
+        for (auto const codePoint : hexString) {
+            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+        }
+        return oss.str();
+    }
+
     void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
         using webpp::unicode::toNFC;
         using webpp::unicode::toNFD;
@@ -5724,6 +5732,7 @@ TEST(Unicode, NormalizationTests) {
     using std::u32string_view;
     using std::u8string;
     using std::u8string_view;
+    using webpp::unicode::canonical_decomposed;
     using webpp::unicode::toNFC;
     using webpp::unicode::toNFD;
     // in the table from https://www.unicode.org/reports/tr15/#Design_Goals
@@ -5745,25 +5754,29 @@ TEST(Unicode, NormalizationTests) {
 
           EXPECT_EQ(nfd, toNFD(source))
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
-            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line << "\n  index: " << test_index;
+            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line << "\n  index: " << test_index
+            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfd8, toNFD(source8))
                 << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
                 << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index;
+                << "\n  index: " << test_index
+                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
           }
 
           EXPECT_EQ(nfc, toNFC(source))
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
             << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
-            << "\n Calculated NFD: " << u32ToString(toNFD(source)) << "\n  index: " << test_index;
+            << "\n  Calculated NFD: " << u32ToString(toNFD(source)) << "\n  index: " << test_index
+            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
                 << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
                 << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
-                << "\n  index: " << test_index;
+                << "\n  index: " << test_index
+                << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
           }
 
           check_idempotent(source, nfc, nfd);
