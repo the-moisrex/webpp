@@ -30,7 +30,7 @@ using webpp::unicode::unchecked::next_char_copy;
 using webpp::unicode::unchecked::prev_char_copy;
 using webpp::unicode::unchecked::swap_code_points;
 
-static constexpr bool enable_utf8_composition_tests = false;
+static constexpr bool enable_utf8_composition_tests = false; // todo
 
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
 
@@ -5649,6 +5649,9 @@ TEST(Unicode, NoCompose) {
 }
 
 namespace {
+
+    int test_index = 0;
+
     std::u32string convertToU32String(std::string const& hexString) {
         std::u32string     result;
         std::istringstream iss{hexString};
@@ -5668,6 +5671,14 @@ namespace {
         return oss.str();
     }
 
+    std::string u32ToString(std::u8string const& hexString) {
+        std::ostringstream oss;
+        for (auto const codePoint : hexString) {
+            oss << "\\x" << std::hex << static_cast<std::uint32_t>(codePoint);
+        }
+        return oss.str();
+    }
+
     void check_idempotent(auto const& str, auto const& nfc, auto const& nfd) {
         using webpp::unicode::toNFC;
         using webpp::unicode::toNFD;
@@ -5675,18 +5686,20 @@ namespace {
         // toNFC
         EXPECT_EQ(toNFC(str), toNFC(toNFC(str)))
           << "  Src: " << u32ToString(str) << "\n  NFC Layer 1: " << u32ToString(toNFC(str))
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd);
+          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd)
+          << "\n  index: " << test_index;
         EXPECT_EQ(toNFC(str), toNFC(toNFD(str)))
-          << "  NFD: " << u32ToString(toNFD(str)) << "\n  Source: " << u32ToString(str)
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd);
+          << "  NFD: " << u32ToString(toNFD(str)) << "\n  Source: " << u32ToString(str) << "\n  NFC Answer: "
+          << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd) << "\n  index: " << test_index;
 
         // toNFD
         EXPECT_EQ(toNFD(str), toNFD(toNFC(str)))
-          << "  NFC: " << u32ToString(toNFC(str)) << "\n  Source: " << u32ToString(str)
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd);
+          << "  NFC: " << u32ToString(toNFC(str)) << "\n  Source: " << u32ToString(str) << "\n  NFC Answer: "
+          << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd) << "\n  index: " << test_index;
         EXPECT_EQ(toNFD(str), toNFD(toNFD(str)))
           << "  Src: " << u32ToString(str) << "\n  NFD Layer 1: " << u32ToString(toNFD(str))
-          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd);
+          << "\n  NFC Answer: " << u32ToString(nfc) << "\n  NFD Answer: " << u32ToString(nfd)
+          << "\n  index: " << test_index;
 
         // toNFKC
         // EXPECT_EQ(toNFKC(str), toNFC(toNFKC(str)));
@@ -5718,12 +5731,12 @@ TEST(Unicode, NormalizationTests) {
 
     // NOLINTBEGIN(*-easily-swappable-parameters)
     auto const check =
-      [](u32string const&                  source,
-         u32string const&                  nfc,
-         u32string const&                  nfd,
-         [[maybe_unused]] u32string const& nfkc,
-         [[maybe_unused]] u32string const& nfkd,
-         std::string const&                line) {
+      [&](u32string const&                  source,
+          u32string const&                  nfc,
+          u32string const&                  nfd,
+          [[maybe_unused]] u32string const& nfkc,
+          [[maybe_unused]] u32string const& nfkd,
+          std::string const&                line) {
           // NOLINTEND(*-easily-swappable-parameters)
 
           u8string const source8 = utf32_to_utf8(source);
@@ -5732,23 +5745,25 @@ TEST(Unicode, NormalizationTests) {
 
           EXPECT_EQ(nfd, toNFD(source))
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
-            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+            << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line << "\n  index: " << test_index;
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfd8, toNFD(source8))
                 << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "\n  index: " << test_index;
           }
 
           EXPECT_EQ(nfc, toNFC(source))
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
             << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
-            << "\n Calculated NFD: " << u32ToString(toNFD(source));
+            << "\n Calculated NFD: " << u32ToString(toNFD(source)) << "\n  index: " << test_index;
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
                 << "  Source: " << u32ToString(source) << "  Source: " << u32ToString(source)
-                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line;
+                << "\n  NFD: " << u32ToString(nfd) << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
+                << "\n  index: " << test_index;
           }
 
           check_idempotent(source, nfc, nfd);
@@ -5756,6 +5771,8 @@ TEST(Unicode, NormalizationTests) {
           if constexpr (enable_utf8_composition_tests) {
               check_idempotent(source8, nfc, nfd);
           }
+
+          ++test_index;
       };
 
     // special cases:
