@@ -170,7 +170,7 @@ export const parse = async (table, property, fileContent = undefined) => {
                 if (
                     !isCanonicalDecomposition ||
                     !decomposition.mapped ||
-                    decomposition.mappedTo.length !== 2
+                    decomposition.mappedTo.length > 2
                 ) {
                     return;
                 }
