@@ -242,17 +242,24 @@ namespace webpp::unicode {
         }
 
         for (auto pos = next_char_copy(start); pos != end;) {
-            auto const ccc = ccc_of(next_code_point(pos));
+            auto       back_pos = pos;
+            auto       cur_cp   = next_code_point(pos);
+            auto const ccc      = ccc_of(cur_cp);
             if (ccc == 0) {
+                // skip next code point as well, the next one is never going to be swapped with this one
+                if (pos == end) {
+                    break;
+                }
+                unchecked::next_char(pos);
+
                 continue; // Skip non-combining characters (starter code points)
             }
 
-            auto back_pos = pos;
+            // todo: instead of swapping code points, use one single rotate or move_backward
             while (back_pos != start) {
                 auto prev = back_pos;
                 if (auto const prev_cp = prev_code_point(prev); ccc_of(prev_cp) <= ccc) {
-                    back_pos = prev;
-                    continue;
+                    break;
                 }
                 swap_code_points(back_pos, prev);
                 back_pos = prev;
