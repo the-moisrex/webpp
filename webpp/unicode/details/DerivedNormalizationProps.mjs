@@ -199,10 +199,18 @@ export const getQuickChecks = async () => {
     return getDerivedNormalizationProps(props.Quick_Check);
 };
 
+export const getNFCQuickChecks = async () => {
+    return getDerivedNormalizationProps(props.NFC_Quick_Check);
+};
+
+export const getFullCompositionExclusions = async () => {
+    return getDerivedNormalizationProps(props.Full_Composition_Exclusion);
+};
+
 if (process.argv[1] === new URL(import.meta.url).pathname) {
-    const qcs = await getQuickChecks();
+    const qcs = await getFullCompositionExclusions();
     for (const codePoint in qcs) {
-        console.log(parseInt(codePoint).toString(16), getProp(qcs, codePoint, props.Quick_Check));
+        console.log(parseInt(codePoint).toString(16), getProp(qcs, codePoint, props.Full_Composition_Exclusion));
     }
     console.log("Table length:", qcs.length);
     console.log("Start Code Point:", qcs[0]);
