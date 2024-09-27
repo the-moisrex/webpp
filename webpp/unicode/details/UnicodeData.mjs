@@ -269,7 +269,7 @@ export const getCanonicalDecompositions = async () => {
         #lastMapped = 0n;
 
         add(codePoint, {mappedTo}) {
-            assert.ok(mappedTo.length === 2);
+            assert.ok(mappedTo.length <= 2);
             this.#data[codePoint] = mappedTo;
             if (codePoint > this.#lastMapped) {
                 this.#lastMapped = BigInt(codePoint);
@@ -304,34 +304,32 @@ export const extractedCanonicalDecompositions = async (data = null) => {
     let i = 0;
     let j = 0;
 
+    let mappedToFirst = [];
+    let mappedToSecond = [];
+
+    for (const datum of Object.values(data)) {
+        const cp1 = datum?.[0];
+        const cp2 = datum?.[1];
+        if (cp1 !== undefined) {
+            if (!mappedToFirst.includes(cp1)) {
+                mappedToFirst.push(cp1);
+            } /* else {
+                console.log(`Duplicate cp1:`, ++i, cp1);
+            } */
+        }
+        if (cp2 !== undefined) {
+            if (!mappedToSecond.includes(cp2)) {
+                mappedToSecond.push(cp2);
+            } /* else {
+                console.log(`Duplicate cp2:`, ++j, cp2);
+            } */
+        }
+    }
+
     return {
         codePoints: Object.keys(data),
-
-        mappedToFirst: Object.values(data)
-            .map((datum) => datum?.[0]) // first one
-            .filter((codePoint) => codePoint !== undefined)
-            .reduce((accum, value) => {
-                if (!accum.includes(value)) {
-                    accum.push(value);
-                } else {
-                    console.log(`Dup1:`, ++j, value);
-                }
-                return accum;
-            }, []) // remove duplicates
-            .toSorted((a, b) => Number(a - b)),
-
-        mappedToSecond: Object.values(data)
-            .map((datum) => datum?.[1]) // second one
-            .filter((codePoint) => codePoint !== undefined)
-            .reduce((accum, value) => {
-                if (!accum.includes(value)) {
-                    accum.push(value);
-                } else {
-                    console.log(`Dup2:`, ++i, value);
-                }
-                return accum;
-            }, []) // remove duplicates
-            .toSorted((a, b) => Number(a - b)),
+        mappedToFirst: mappedToFirst.toSorted((a, b) => Number(a - b)),
+        mappedToSecond: mappedToSecond.toSorted((a, b) => Number(a - b)),
     };
 };
 
