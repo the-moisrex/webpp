@@ -7,19 +7,26 @@
 namespace webpp::istl {
 
     namespace details {
+        // NOLINTBEGIN(*-macro-usage)
+#define webpp_support_func(name, method)                                              \
+    template <typename T>                                                             \
+    concept supports_##name = !std::is_const_v<T> && requires {                       \
+        typename std::remove_cvref_t<T>::value_type;                                  \
+        requires requires(typename std::remove_cvref_t<T>::value_type&& val, T obj) { \
+            obj.method(std::move(val));                                               \
+            requires !requires { obj = std::move(val); };                             \
+        };                                                                            \
+    };
 
-// NOLINTBEGIN(*-macro-usage)
-#define webpp_support_func(method, val_type) \
-    template <typename T>                    \
-    concept supports_##method = requires(val_type val, T obj) { obj.method(val); };
+        webpp_support_func(emplace_back, emplace_back);
+        webpp_support_func(emplace, emplace);
+        webpp_support_func(push_back, push_back);
+        webpp_support_func(add, add);
+        webpp_support_func(push, push);
+        webpp_support_func(append, append);
+        webpp_support_func(insert, insert);
+        webpp_support_func(op_append, operator+=);
 
-        webpp_support_func(emplace_back, typename T::value_type);
-        webpp_support_func(emplace, typename T::value_type);
-        webpp_support_func(push_back, typename T::value_type);
-        webpp_support_func(add, typename T::value_type);
-        webpp_support_func(push, typename T::value_type);
-        webpp_support_func(append, typename T::value_type);
-        webpp_support_func(insert, typename T::value_type);
 
 #undef webpp_support_func
         // NOLINTEND(*-macro-usage)
@@ -42,7 +49,7 @@ namespace webpp::istl {
     };
 
     template <Collection T, typename... Args>
-    void emplace(T& vec, Args&&... args) {
+    static constexpr void emplace(T& vec, Args&&... args) {
         if constexpr (details::supports_emplace_back<T>) {
             (vec.emplace_back(stl::forward<Args>(args)), ...);
         } else if constexpr (details::supports_emplace<T>) {
@@ -57,27 +64,31 @@ namespace webpp::istl {
             (vec.append(stl::forward<Args>(args)), ...);
         } else if constexpr (details::supports_insert<T>) {
             (vec.insert(stl::forward<Args>(args)), ...);
+        } else if constexpr (details::supports_op_append<T> && sizeof...(Args) == 1) {
+            (vec.operator+=(stl::forward<Args>(args)), ...);
         } else {
             static_assert_false(T, "We don't know how to add things to this collection");
         }
     }
 
     template <Collection T, typename... Args>
-    void emplace_one(T& vec, Args&&... args) {
+    constexpr decltype(auto) emplace_one(T& vec, Args&&... args) {
         if constexpr (details::supports_emplace_back<T>) {
-            vec.emplace_back(stl::forward<Args>(args)...);
+            return vec.emplace_back(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_emplace<T>) {
-            vec.emplace(stl::forward<Args>(args)...);
+            return vec.emplace(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_push_back<T>) {
-            vec.push_back(stl::forward<Args>(args)...);
+            return vec.push_back(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_push<T>) {
-            vec.push(stl::forward<Args>(args)...);
+            return vec.push(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_add<T>) {
-            vec.add(stl::forward<Args>(args)...);
+            return vec.add(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_append<T>) {
-            vec.append(stl::forward<Args>(args)...);
+            return vec.append(stl::forward<Args>(args)...);
         } else if constexpr (details::supports_insert<T>) {
-            vec.insert(stl::forward<Args>(args)...);
+            return vec.insert(stl::forward<Args>(args)...);
+        } else if constexpr (details::supports_op_append<T> && sizeof...(Args) == 1) {
+            return vec.operator+=(std::forward<Args>(args)...);
         } else {
             static_assert_false(T, "We don't know how to add things to this collection");
         }
