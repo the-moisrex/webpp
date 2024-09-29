@@ -10,6 +10,8 @@ import * as readme from "./readme.mjs";
 import { getReadme } from "./readme.mjs";
 import * as UnicodeData from "./UnicodeData.mjs";
 import { fillEmpty, runClangFormat, writePieces } from "./utils.mjs";
+import {getFullCompositionExclusions} from "./DerivedNormalizationProps.mjs";
+import {getCanonicalDecompositions} from "./UnicodeData.mjs";
 
 const outFile = `composition_tables.hpp`;
 
@@ -25,10 +27,10 @@ const start = async () => {
 
 class CP1 {
     #codePoint;
-    #value;
-    constructor(codePoint = 0, value = 0) {
-        this.#codePoint = Number(codePoint) & 0xff;
-        this.#value = value;
+    #replacement;
+    constructor(codePoint = 0xFF, replacement = 0) {
+        this.#codePoint = Number(codePoint) & 0xFF;
+        this.#replacement = replacement;
     }
 
     static typeSize() {
@@ -45,9 +47,12 @@ class CP1 {
 
     static renderStruct() {
         return `
+            /**
+             * First Code Point of the compositions
+             */
             struct alignas(std::uint${this.typeSize()}_t) CP1 {
-                std::uint8_t cp1 : 8 = 0;
-                char32_t value : 24 = 0U;
+                std::uint8_t cp1_mask : 8 = 0; // a mask to identify if you have found the right code point
+                char32_t replacement : 24 = 0U; // the composition code point
             };
 
             static_assert(sizeof(CP1) == ${this.typeSize() / 8}U, "Type size is not valid.");
@@ -55,10 +60,7 @@ class CP1 {
     }
 
     render() {
-        if (this.#codePoint === 0) {
-            return `{0x0U, 0x0U}`;
-        }
-        return `{0x${this.#codePoint.toString(16).toUpperCase()}U, 0x${this.#value.toString(16).toUpperCase()}U}`;
+        return `{0x${this.#codePoint.toString(16).toUpperCase()}U, 0x${this.#replacement.toString(16).toUpperCase()}U}`;
     }
 }
 
@@ -102,10 +104,13 @@ class CP2 {
 
     static renderStruct() {
         return `
+            /**
+             * Second Code Point of the compositions
+             */
             struct alignas(std::uint${this.typeSize()}_t) CP2 {
-                char32_t cp2 = 0;
-                std::uint16_t cp1_pos = 0U;
-                std::uint16_t cp1_rem = 0U;
+                char32_t cp2 = 0; // second code point, in order for you to check if you have found the right CP
+                std::uint16_t cp1_pos = 0U; // start position
+                std::uint16_t cp1_rem = 0U; // modulus value required to find your code CP1 of the composition
             };
 
             static_assert(sizeof(CP2) == ${this.typeSize() / 8}U, "Type size is not valid.");
@@ -143,13 +148,28 @@ class CompTable {
         // const neededBitsCP1 = bitCeil(this.lastCP1);
         // const neededBitsCP2 = bitCeil(this.lastCP2);
         // console.log(neededBitsCP1, neededBitsCP2, this.lastCP1, this.lastCP2);
-        const cp2sRaw = await UnicodeData.groupedByCP2();
+        const exclusions = await getFullCompositionExclusions();
+        const maps = (await getCanonicalDecompositions(true, (codePoint, {mappedTo}) => {
+            // return !(Number(codePoint) in exclusions /* || mappedTo[0] in exclusions || mappedTo[1] in exclusions */);
+            if (exclusions[Number(codePoint)] !== undefined) {
+                return false;
+            }
+            // for (const cp of mappedTo) {
+            //     if (exclusions[Number(cp)] !== undefined) {
+            //         return false;
+            //     }
+            // }
+            return true;
+        })).data;
+        const cp2sRaw = await UnicodeData.groupedByCP2(maps);
         const cp2sArr = [];
         for (const cp2Str in cp2sRaw) {
             const cp2Raw = BigInt(parseInt(cp2Str));
             cp2sArr.push(cp2Raw);
         }
         // this.cp2sMask = Number(findSmallestMask(cp2sArr));
+
+        console.log("Exclusions:", Object.values(exclusions));
 
         let maxCP1sRequired = 0;
         this.cp2sRem = cp2sArr.length;
@@ -166,8 +186,8 @@ class CompTable {
                 cp2.setRem(cp1sRaw.length);
                 nextRem: for (; ; cp2.nextRem()) {
                     const cp1sTemp = {};
-                    for (const { cp1: cp1Raw, codePoint: value } of cp1Vals) {
-                        const cp1 = new CP1(cp1Raw, value);
+                    for (const { cp1: cp1Raw, codePoint: replacement } of cp1Vals) {
+                        const cp1 = new CP1(cp1Raw, replacement);
                         const pos = cp2.position + (Number(cp1Raw) % cp2.rem);
                         if (pos in cp1sTemp) {
                             // throw new Error(`Replacing: ${pos}`);

@@ -123,7 +123,6 @@ class GetTable {
                     case props.Expands_On_NFC:
                     case props.Expands_On_NFKD:
                     case props.Expands_On_NFKC:
-                    case props.Full_Composition_Exclusion:
                         return GetTable.arrayMode;
 
                     case props.NFKC_Simple_Casefold:
@@ -134,6 +133,7 @@ class GetTable {
                     case props.NFC_Quick_Check:
                     case props.FC_NFKC_Closure:
                     case props.Quick_Check:
+                    case props.Full_Composition_Exclusion:
                         return GetTable.objectMode;
                 }
                 return GetTable.arrayMode;
@@ -165,7 +165,7 @@ class GetTable {
                     this.#data.length += 1;
                     break;
             }
-            return
+            return;
         }
         if (property === this.#prop) {
             switch (this.#mode) {
@@ -173,7 +173,7 @@ class GetTable {
                     this.#data.push(codePoint);
                     break;
                 case GetTable.objectMode:
-                    this.#data[codePoint] = value;
+                    this.#data[codePoint] = value || codePoint;
                     this.#data.length += 1;
                     break;
                 default:

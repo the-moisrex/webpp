@@ -555,14 +555,16 @@ namespace webpp::unicode {
             return replacement_char<CharT>;
         }
 
-        stl::size_t const pos = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
+        stl::size_t const pos        = cp1_pos + static_cast<stl::size_t>(lhs % cp1_rem);
         // there's no need to check if the position here is valid or not, the `cp1s` table is guaranteed to
         // have the max number of elements.
-        auto [cp1, value]     = cp1s[pos];
-        if (cp1 == 0 || (static_cast<CharT>(cp1) | lhs) != lhs) {
+        auto [cp1_mask, replacement] = cp1s[pos];
+
+        // Invalid code points are visible with 0xFF; so we don't need to explicitly check for equality to 0
+        if ((static_cast<std::uint8_t>(lhs) & cp1_mask) != cp1_mask) {
             return replacement_char<CharT>;
         }
-        return static_cast<CharT>(value);
+        return static_cast<CharT>(replacement);
     }
 
     /**

@@ -74,7 +74,7 @@ const parseDecompositions = (codePoint, str = "") => {
     };
 };
 
-export const parse = async (table, property, fileContent = undefined) => {
+export const parse = async (table, property, onlyValid = false, fileContent = undefined) => {
     if (fileContent === undefined) {
         fileContent = await download();
         if (fileContent === undefined) {
@@ -137,12 +137,14 @@ export const parse = async (table, property, fileContent = undefined) => {
                 // }
                 // lastCodePoint = codePoint + 1n;
 
-                for (; lastCodePoint < codePoint; ++lastCodePoint) {
-                    table.add(lastCodePoint, {
-                        mapped: false,
-                        mappedTo: [lastCodePoint],
-                        formattingTag: null,
-                    });
+                if (!onlyValid) {
+                    for (; lastCodePoint < codePoint; ++lastCodePoint) {
+                        table.add(lastCodePoint, {
+                            mapped: false,
+                            mappedTo: [lastCodePoint],
+                            formattingTag: null,
+                        });
+                    }
                 }
                 table.add(codePoint, decomposition);
                 lastCodePoint = codePoint + 1n;
@@ -165,27 +167,28 @@ export const parse = async (table, property, fileContent = undefined) => {
                 const isCanonicalDecomposition =
                     decomposition.formattingTag === null;
 
+                if (!onlyValid) {
+                    for (; lastCodePoint < codePoint; ++lastCodePoint) {
+                        table.add(lastCodePoint, {
+                            mapped: false,
+                            mappedTo: [lastCodePoint],
+                            formattingTag: null,
+                        });
+                    }
+                }
+
                 // The prefixed tags supplied with a subset of the decomposition mappings generally indicate formatting information.
                 // Where no such tag is given, the mapping is canonical.
                 if (
-                    !isCanonicalDecomposition ||
-                    !decomposition.mapped ||
-                    decomposition.mappedTo.length > 2
+                    isCanonicalDecomposition &&
+                    decomposition.mapped &&
+                    decomposition.mappedTo.length <= 2
                 ) {
-                    return;
-                }
-
-                for (; lastCodePoint < codePoint; ++lastCodePoint) {
-                    table.add(lastCodePoint, {
-                        mapped: false,
-                        mappedTo: [lastCodePoint],
-                        formattingTag: null,
+                    table.add(codePoint, {
+                        ...decomposition,
+                        CanonicalCombiningClass,
                     });
                 }
-                table.add(codePoint, {
-                    ...decomposition,
-                    CanonicalCombiningClass,
-                });
                 lastCodePoint = codePoint + 1n;
             };
             break;
@@ -263,13 +266,16 @@ export const getCCCs = async () => {
 
 /// Field number 5 (Decomposition), excluding those that have a tag (contains <something>)
 /// Explained in https://www.unicode.org/reports/tr44/#Character_Decomposition_Mappings
-export const getCanonicalDecompositions = async () => {
+export const getCanonicalDecompositions = async (onlyValidMappings = false, action = () => true) => {
     class GetTable {
         #data = {};
         #lastMapped = 0n;
 
         add(codePoint, {mappedTo}) {
             assert.ok(mappedTo.length <= 2);
+            if (!action(codePoint, {mappedTo})) {
+                return;
+            }
             this.#data[codePoint] = mappedTo;
             if (codePoint > this.#lastMapped) {
                 this.#lastMapped = BigInt(codePoint);
@@ -286,7 +292,7 @@ export const getCanonicalDecompositions = async () => {
     }
 
     const table = new GetTable();
-    await parse(table, properties.canonicalDecompositionType);
+    await parse(table, properties.canonicalDecompositionType, onlyValidMappings);
 
     return {
         data: table.data,
@@ -354,9 +360,9 @@ export const groupedByCP1 = async () => {
     return grouped;
 };
 
-export const groupedByCP2 = async () => {
-    const map2s = (await extractedCanonicalDecompositions()).mappedToSecond;
-    const maps = (await getCanonicalDecompositions()).data;
+export const groupedByCP2 = async (data = null) => {
+    const map2s = (await extractedCanonicalDecompositions(data)).mappedToSecond;
+    const maps = data || (await getCanonicalDecompositions()).data;
     const grouped = {};
     for (const map2 of map2s) {
         const map1s = [];
