@@ -72,13 +72,17 @@ class DecompTable {
         const end = codePointStart + BigInt(length);
         for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
             try {
-                const {mapped, mappedTo} = data.at(Number(codePoint));
+                let mapped = Number(codePoint) in data;
+                if (mapped) {
+                    mapped = data.at(Number(codePoint)).mapped;
+                }
                 if (!mapped && !embedCanonical) {
                     continue;
                 }
                 if (!mapped && embedCanonical && !this.#canonicalCompositions.needsModification(codePoint)) {
                     continue;
                 }
+                let mappedTo = data.at(Number(codePoint)).mappedTo;
                 const len = BigInt(mappedTo.length);
                 if (len > maxLen) {
                     maxLen = len;
@@ -152,7 +156,13 @@ class DecompTable {
                     for (let codePoint = codePointStart; codePoint < end; ++codePoint) {
                         const vidx = Number(codePoint - codePointStart);
                         const start = vidx * Number(maxLength);
-                        const {mapped, mappedTo} = this.data.at(Number(codePoint));
+                        let mapped = codePoint in this.data;
+                        let mappedTo;
+                        if (mapped) {
+                            const vals = this.data.at(Number(codePoint));
+                            mapped = vals.mapped;
+                            mappedTo = vals.mappedTo;
+                        }
 
                         if (mapped) {
                             for (let ith = 0; ith !== Number(maxLength); ++ith) {
@@ -352,7 +362,9 @@ class DecompTable {
     /// When a canonical mapping consists of a pair of characters, the first character may itself
     /// be a character with a decomposition mapping, but the second character never has a decomposition mapping.
     recursive_decompose() {
-        for (let index = 0; index !== Number(this.lastItem); ++index) {
+        // for (let index = 0; index !== Number(this.lastItem); ++index) {
+        for (let index in this.tables.data) {
+            index = parseInt(index);
             let {mapped, mappedTo} = this.tables.data.at(index);
             if (!mapped) {
                 continue;
@@ -360,6 +372,9 @@ class DecompTable {
             let changed = false;
             for (;;) {
                 const codePoint1 = mappedTo[0];
+                if (!(codePoint1 in this.tables.data)) {
+                    break; // not mapped
+                }
                 const {mapped: isMappedToo, mappedTo: replaceWith} = this.tables.data.at(Number(codePoint1));
                 if (!isMappedToo) {
                     break;
@@ -380,7 +395,9 @@ class DecompTable {
 
 
     convert_to_utf8() {
-        for (let codePoint = 0; codePoint !== Number(this.lastItem); ++codePoint) {
+        // for (let codePoint = 0; codePoint !== Number(this.lastItem); ++codePoint) {
+        for (let codePoint in this.tables.data) {
+            codePoint = parseInt(codePoint);
             let {mapped, mappedTo} = this.tables.data.at(codePoint);
 
             if (mappedTo.length > this.max32MaxLength) {
@@ -460,6 +477,8 @@ class DecompTable {
         if (mapped) {
             // find the end of the batch, not just the last item
             this.lastMapped = (((codePoint + 1n) >> this.tables.chunkShift) + 1n) << this.tables.chunkShift;
+        } else {
+            return;
         }
 
         if (codePoint > this.lastItem) {

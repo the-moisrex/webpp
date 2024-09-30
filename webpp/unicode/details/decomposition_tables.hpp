@@ -6,7 +6,7 @@
  *
  *   Auto generated from:                generate_decomposition_tables.mjs
  *   Unicode UCD Database Creation Date: 2023-08-28
- *   This file's generation date:        Sun, 22 Sep 2024 21:34:48 GMT
+ *   This file's generation date:        Mon, 30 Sep 2024 19:52:19 GMT
  *   Unicode Version:                    15.1.0
  *   Total Table sizes in this file:
  *       - in bits:       308712
@@ -1312,7 +1312,7 @@ namespace webpp::unicode::details {
       u8"\xe9\xa7\xbe\0\xe4\xaf\x8e\0\xf0\xa9\xac\xb0\xe9\xac\x92\0\xe9\xb1\x80\0\xe9\xb3\xbd\0\xe4\xb3\x8e\0"
       u8"\xe4\xb3\xad\0\xe9\xb5\xa7\0\xf0\xaa\x83\x8e\xe4\xb3\xb8\0\xf0\xaa\x84\x85\xf0\xaa\x88\x8e\xf0\xaa"
       u8"\x8a\x91\xe9\xba\xbb\0\xe4\xb5\x96\0\xe9\xbb\xb9\0\xe9\xbb\xbe\0\xe9\xbc\x85\0\xe9\xbc\x8f\0\xe9\xbc"
-      u8"\x96\0\xe9\xbc\xbb\0\0\0\0\0",
+      u8"\x96\0\xe9\xbc\xbb\0\xf0\xaa\x98\x80",
       // done.
       26393UL // String Length
     };

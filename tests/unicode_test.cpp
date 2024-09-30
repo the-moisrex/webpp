@@ -542,6 +542,7 @@ TEST(Unicode, CanonicalDecompose) {
                   "invalid value type");
 
     // special
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x2FA1D'), U"\x2A600") << desc_decomp_of(U'\xD590');
     EXPECT_EQ(canonical_decomposed<u8string>(U'\xD590'), utf32_to_utf8(U"\x1112\x1163"))
       << desc_decomp_of(U'\xD590');
     EXPECT_EQ(toNFD(u32string{U'\xD590'}), u32string{U"\x1112\x1163"}) << desc_decomp_of(U'\xD590');
