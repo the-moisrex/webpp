@@ -28,7 +28,7 @@ const start = async () => {
 class CP1 {
     #codePoint;
     #replacement;
-    constructor(codePoint = 0xFF, replacement = 0) {
+    constructor(codePoint = 0, replacement = 0) {
         this.#codePoint = Number(codePoint) & 0xFF;
         this.#replacement = replacement;
     }

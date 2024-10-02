@@ -2164,7 +2164,7 @@ TEST(Unicode, CanonicalDecompose) {
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F858'), U"\x58AC") << desc_decomp_of(U'\x2F858') << "\n  Line: 2F858;CJK COMPATIBILITY IDEOGRAPH-2F858;Lo;0;L;58AC;;;;N;;;;;";
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F859'), U"\x214E4") << desc_decomp_of(U'\x2F859') << "\n  Line: 2F859;CJK COMPATIBILITY IDEOGRAPH-2F859;Lo;0;L;214E4;;;;N;;;;;";
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F85A'), U"\x58F2") << desc_decomp_of(U'\x2F85A') << "\n  Line: 2F85A;CJK COMPATIBILITY IDEOGRAPH-2F85A;Lo;0;L;58F2;;;;N;;;;;";
-    EXPECT_EQ(canonical_decomposed<u32string>(U'\u{2F85B}'), U"\x58F7") << desc_decomp_of(U'\x2F85B') << "\n  Line: 2F85B;CJK COMPATIBILITY IDEOGRAPH-2F85B;Lo;0;L;58F7;;;;N;;;;;";
+    EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F85B'), U"\x58F7") << desc_decomp_of(U'\x2F85B') << "\n  Line: 2F85B;CJK COMPATIBILITY IDEOGRAPH-2F85B;Lo;0;L;58F7;;;;N;;;;;";
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F85C'), U"\x5906") << desc_decomp_of(U'\x2F85C') << "\n  Line: 2F85C;CJK COMPATIBILITY IDEOGRAPH-2F85C;Lo;0;L;5906;;;;N;;;;;";
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F85D'), U"\x591A") << desc_decomp_of(U'\x2F85D') << "\n  Line: 2F85D;CJK COMPATIBILITY IDEOGRAPH-2F85D;Lo;0;L;591A;;;;N;;;;;";
     EXPECT_EQ(canonical_decomposed<u32string>(U'\x2F85E'), U"\x5922") << desc_decomp_of(U'\x2F85E') << "\n  Line: 2F85E;CJK COMPATIBILITY IDEOGRAPH-2F85E;Lo;0;L;5922;;;;N;;;;;";
@@ -6638,6 +6638,39 @@ namespace {
         // EXPECT_EQ(toNFKD(str), toNFKD(toNFKC(str)));
         // EXPECT_EQ(toNFKD(str), toNFKD(toNFKD(str)));
     }
+
+    std::string report_composition_list(std::u32string_view str) {
+        std::ostringstream    report;
+        std::vector<char32_t> comps;
+        for (auto const lhs : str) {
+            for (auto const rhs : str) {
+                auto const comp = webpp::unicode::canonical_composed(lhs, rhs);
+                if (comp == webpp::unicode::replacement_char<char32_t>) {
+                    continue;
+                }
+                report << "\n  Compositions: " << std::hex << std::uppercase << "0x"
+                       << static_cast<std::uint32_t>(lhs) << " + 0x" << static_cast<std::uint32_t>(rhs)
+                       << " = 0x" << static_cast<std::uint32_t>(comp) << " (CCC: " << std::dec
+                       << static_cast<int>(ccc_of(lhs)) << " + " << static_cast<int>(ccc_of(rhs)) << " = "
+                       << static_cast<int>(ccc_of(comp)) << ")";
+                comps.emplace_back(comp);
+            }
+        }
+        for (auto const lhs : comps) {
+            for (auto const rhs : str) {
+                auto const comp = webpp::unicode::canonical_composed(lhs, rhs);
+                if (comp == webpp::unicode::replacement_char<char32_t>) {
+                    continue;
+                }
+                report << "\n  Compositions: " << std::hex << std::uppercase << "0x"
+                       << static_cast<std::uint32_t>(lhs) << " + 0x" << static_cast<std::uint32_t>(rhs)
+                       << " = 0x" << static_cast<std::uint32_t>(comp) << " (CCC: " << std::dec
+                       << static_cast<int>(ccc_of(lhs)) << " + " << static_cast<int>(ccc_of(rhs)) << " = "
+                       << static_cast<int>(ccc_of(comp)) << ")";
+            }
+        }
+        return report.str();
+    }
 } // namespace
 
 TEST(Unicode, NormalizationTests) {
@@ -6645,6 +6678,7 @@ TEST(Unicode, NormalizationTests) {
     using std::u32string_view;
     using std::u8string;
     using std::u8string_view;
+    using webpp::unicode::canonical_composed;
     using webpp::unicode::canonical_decomposed;
     using webpp::unicode::toNFC;
     using webpp::unicode::toNFD;
@@ -6682,7 +6716,8 @@ TEST(Unicode, NormalizationTests) {
             << "  Source: " << u32ToString(source) << "\n  NFD: " << u32ToString(nfd)
             << "\n  NFC: " << u32ToString(nfc) << "\n  line: " << line
             << "\n  Calculated NFD: " << u32ToString(toNFD(source)) << "\n  index: " << test_index
-            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source));
+            << "\n  Decomposed: " << u32ToString(canonical_decomposed<std::u32string>(source))
+            << report_composition_list(source);
 
           if constexpr (enable_utf8_composition_tests) {
               EXPECT_EQ(nfc8, toNFC(source8))
@@ -6702,6 +6737,8 @@ TEST(Unicode, NormalizationTests) {
       };
 
     // special cases:
+    EXPECT_EQ(canonical_composed<char32_t>(0xE0, 0x302), webpp::unicode::replacement_char<char32_t>);
+    EXPECT_EQ(toNFC<std::u32string>(U"\x61\x5ae\x300\x302\x315\x62"), U"\xe0\x5ae\x302\x315\x62");
     EXPECT_EQ(canonical_decomposed<u32string>(U'\u1e0a'), U"D\x307") << "Ḋ";
     EXPECT_EQ(canonical_decomposed<u32string>(u32string_view{U"\x1e0a"}), U"D\x307") << "Ḋ";
     check_idempotent(u32string{U"\u00b5"}, u32string{}, u32string{});

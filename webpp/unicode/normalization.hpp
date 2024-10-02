@@ -561,7 +561,7 @@ namespace webpp::unicode {
         auto [cp1_mask, replacement] = cp1s[pos];
 
         // Invalid code points are visible with 0xFF; so we don't need to explicitly check for equality to 0
-        if ((static_cast<std::uint8_t>(lhs) & cp1_mask) != cp1_mask) {
+        if (static_cast<std::uint8_t>(lhs) != cp1_mask) {
             return replacement_char<CharT>;
         }
         return static_cast<CharT>(replacement);
