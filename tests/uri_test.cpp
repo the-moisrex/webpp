@@ -1145,7 +1145,7 @@ TYPED_TEST(URITests, ToLowered) {
     }
 }
 
-/// IPv4 host parsing is different than inet_pton4, so we need to test it separately
+/// IPv4 host parsing is different from inet_pton4, so we need to test it separately
 TYPED_TEST(URITests, NormalHostIPv4) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::string_view valid_ipv4s[]{
@@ -1215,7 +1215,7 @@ TYPED_TEST(URITests, NormalHostIPv4) {
     // NOLINTEND(*-avoid-c-arrays)
 }
 
-/// IPv4 host parsing is different than inet_pton4, so we need to test it separately
+/// IPv4 host parsing is different from inet_pton4, so we need to test it separately
 TYPED_TEST(URITests, AbormalHostIPv4Loose) {
     // NOLINTBEGIN(*-avoid-c-arrays)
     static constexpr stl::pair<stl::string_view, ipv4> valid_ipv4s[]{
