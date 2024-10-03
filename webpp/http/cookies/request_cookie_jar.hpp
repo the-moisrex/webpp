@@ -24,8 +24,8 @@ namespace webpp::http {
         using char_type        = typename string_view_type::value_type;
 
         template <typename... Args>
-        explicit constexpr request_cookie_jar(Args&&... args) noexcept(
-          noexcept(super(stl::forward<Args>(args)...)))
+        explicit constexpr request_cookie_jar(Args&&... args)
+          noexcept(noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
         /**

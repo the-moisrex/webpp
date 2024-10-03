@@ -155,13 +155,13 @@ namespace webpp::http {
                 // int_type[N] => string_view
                 using char_type     = stl::remove_all_extents_t<seg_type>;
                 using str_view_type = stl::basic_string_view<char_type>;
-                return operator/<str_view_type>(stl::forward<NewSegType>(next_segment));
+                return operator/ <str_view_type>(stl::forward<NewSegType>(next_segment));
             } else if constexpr (
               stl::is_pointer_v<seg_type> && stl::is_integral_v<stl::remove_pointer_t<seg_type>>)
             {
                 // char* => string_view
                 using char_type = stl::remove_pointer_t<seg_type>;
-                return operator/<stl::basic_string_view<char_type>>(stl::forward<NewSegType>(next_segment));
+                return operator/ <stl::basic_string_view<char_type>>(stl::forward<NewSegType>(next_segment));
             } else if constexpr (stl::is_integral_v<seg_type>) {
                 // integral types
                 return operator/([=](PathContext auto const& ctx) constexpr noexcept -> bool {

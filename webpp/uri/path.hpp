@@ -68,8 +68,8 @@ namespace webpp::uri {
 
         /// Remove the last segment of a path
         template <ParsingURIContext CtxT>
-        static constexpr void pop_back_segment(component_encoder<components::path, CtxT>& encoder) noexcept(
-          CtxT::is_nothrow) {
+        static constexpr void pop_back_segment(component_encoder<components::path, CtxT>& encoder)
+          noexcept(CtxT::is_nothrow) {
             using ctx_type        = CtxT;
             using iterator        = typename ctx_type::iterator;
             using difference_type = typename stl::iterator_traits<iterator>::difference_type;

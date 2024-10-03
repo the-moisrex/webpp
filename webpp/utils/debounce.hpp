@@ -146,8 +146,8 @@ namespace webpp {
             stl::atomic<bool>       done = false;
 
             template <typename RetType, typename... Args>
-            stl::future<RetType> async_run_later(Args&&... args) noexcept(
-              stl::is_nothrow_invocable_v<Callable, Args...>) {
+            stl::future<RetType> async_run_later(Args&&... args)
+              noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
                 stl::this_thread::sleep_for(ctors::interval());
                 return flush(stl::forward<Args>(args)...);
             }
@@ -156,8 +156,8 @@ namespace webpp {
             using ctors::debounce_ctors;
 
             template <typename RetType, typename... Args>
-            stl::future<RetType> operator()(Args&&... args) noexcept(
-              stl::is_nothrow_invocable_v<Callable, Args...>) {
+            stl::future<RetType> operator()(Args&&... args)
+              noexcept(stl::is_nothrow_invocable_v<Callable, Args...>) {
                 trs.emplace(&debounce_impl::async_run_later, *this, stl::forward<Args>(args)...);
             }
 

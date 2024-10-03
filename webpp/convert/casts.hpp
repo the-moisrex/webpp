@@ -35,8 +35,8 @@ namespace webpp {
               T                       base     = 10,
               error_handling_strategy strategy = error_handling_strategy::assume_safe,
               istl::StringViewifiable StrT     = stl::string_view>
-    constexpr expected_strategy_t<strategy, T, integer_casting_errors> to(StrT&& _str) noexcept(
-      is_noexcept(strategy)) {
+    constexpr expected_strategy_t<strategy, T, integer_casting_errors> to(StrT&& _str)
+      noexcept(is_noexcept(strategy)) {
         /**
          * glibc's implementation if you need help: https://fossies.org/linux/glib/glib/gstrfuncs.c
          */

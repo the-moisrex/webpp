@@ -219,8 +219,8 @@ namespace webpp::unicode {
     template <istl::Appendable       StrOrIter,
               stl::unsigned_integral SizeT = istl::size_type_of_t<StrOrIter>,
               UTF32                  CharT = char32_t>
-    static constexpr SizeT decompose_hangul(StrOrIter& out, CharT const code_point) noexcept(
-      istl::NothrowAppendable<StrOrIter>) {
+    static constexpr SizeT decompose_hangul(StrOrIter& out, CharT const code_point)
+      noexcept(istl::NothrowAppendable<StrOrIter>) {
         using unicode::unchecked::append;
         auto const [leading, vowel, trailing] = decomposed_hangul(code_point);
 

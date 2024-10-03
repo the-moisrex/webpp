@@ -68,9 +68,8 @@ namespace webpp::uri {
     }
 
     template <uri_parsing_options Options = uri_parsing_options{}, istl::StringLike StrT, typename SegType>
-    static constexpr auto parse_uri(
-      StrT const&                    the_url,
-      uri_components<SegType> const& origin_context) noexcept(istl::StringView<StrT>) {
+    static constexpr auto parse_uri(StrT const& the_url, uri_components<SegType> const& origin_context)
+      noexcept(istl::StringView<StrT>) {
         using iterator             = typename StrT::const_iterator;
         using base_components_type = uri_components<SegType>;
         using base_seg_type        = typename base_components_type::seg_type;

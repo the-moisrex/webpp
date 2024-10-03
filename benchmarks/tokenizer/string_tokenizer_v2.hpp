@@ -159,8 +159,8 @@ namespace webpp::benchmark::v2 {
         }
 
         template <CharSet AllowedCharsT, CharSet QuotesT, typename StrT>
-        constexpr bool expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out) noexcept(
-          noexcept(token(out))) {
+        constexpr bool expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out)
+          noexcept(noexcept(token(out))) {
             webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
             return next<Options>(stl::forward<AllowedCharsT>(allowed_chars),
                                  stl::forward<QuotesT>(quotes),
@@ -168,12 +168,9 @@ namespace webpp::benchmark::v2 {
         }
 
         template <CharSet AllowedCharsT, CharSet QuotesT, typename StrT, typename ErrorType>
-        constexpr bool expect(
-          AllowedCharsT&& allowed_chars,
-          QuotesT&&       quotes,
-          StrT&           out,
-          ErrorType&      err,
-          ErrorType       err_val) noexcept(noexcept(token(out))) {
+        constexpr bool
+        expect(AllowedCharsT&& allowed_chars, QuotesT&& quotes, StrT& out, ErrorType& err, ErrorType err_val)
+          noexcept(noexcept(token(out))) {
             webpp_static_constexpr stl::uint8_t Options = hidden_options::allow_chars;
             return next<Options>(
               stl::forward<AllowedCharsT>(allowed_chars),
@@ -184,9 +181,8 @@ namespace webpp::benchmark::v2 {
         }
 
         template <CharSet AllowedCharsT, typename StrT, typename ErrorType>
-        constexpr bool
-        expect(AllowedCharsT&& allowed_chars, StrT& out, ErrorType& err, ErrorType err_val) noexcept(
-          noexcept(token(out))) {
+        constexpr bool expect(AllowedCharsT&& allowed_chars, StrT& out, ErrorType& err, ErrorType err_val)
+          noexcept(noexcept(token(out))) {
             bool const res = expect(stl::forward<AllowedCharsT>(allowed_chars), out);
             if (!res) {
                 err = err_val;
@@ -265,8 +261,8 @@ namespace webpp::benchmark::v2 {
          * @param err_value
          */
         template <stl::uint8_t Options = 0, CharSet DelimsT, typename StrT, typename ErrorType>
-        constexpr bool next(DelimsT&& delims, StrT& out, ErrorType& err, ErrorType err_value) noexcept(
-          noexcept(token(out))) {
+        constexpr bool next(DelimsT&& delims, StrT& out, ErrorType& err, ErrorType err_value)
+          noexcept(noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims))) {
                 token(out);
                 return true;
@@ -282,12 +278,9 @@ namespace webpp::benchmark::v2 {
                   CharSet      QuotedCharsT,
                   typename StrT,
                   typename ErrorType>
-        constexpr bool next(
-          DelimsT&&      delims,
-          QuotedCharsT&& quotes,
-          StrT&          out,
-          ErrorType&     err,
-          ErrorType      err_value) noexcept(noexcept(token(out))) {
+        constexpr bool
+        next(DelimsT&& delims, QuotedCharsT&& quotes, StrT& out, ErrorType& err, ErrorType err_value)
+          noexcept(noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims), stl::forward<QuotedCharsT>(quotes))) {
                 token(out);
                 return true;
@@ -317,8 +310,8 @@ namespace webpp::benchmark::v2 {
 
         // same as other "next", except that it accepts a `quotes` as well
         template <stl::uint8_t Options = 0, CharSet DelimsT, CharSet QuotedCharsT, typename StrT>
-        constexpr bool next(DelimsT&& delims, QuotedCharsT&& quotes, StrT& out) noexcept(
-          noexcept(token(out))) {
+        constexpr bool next(DelimsT&& delims, QuotedCharsT&& quotes, StrT& out)
+          noexcept(noexcept(token(out))) {
             if (next<Options>(stl::forward<DelimsT>(delims), stl::forward<QuotedCharsT>(quotes))) {
                 token(out);
                 return true;

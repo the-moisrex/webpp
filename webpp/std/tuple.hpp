@@ -543,16 +543,18 @@ namespace webpp::istl {
     }
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
-    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
-    sub_tuple(TupTempl<T...>&& tup, [[maybe_unused]] stl::index_sequence<I...> indeces) noexcept(
-      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
+    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...> sub_tuple(
+      TupTempl<T...>&&                           tup,
+      [[maybe_unused]] stl::index_sequence<I...> indeces)
+      noexcept(stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(stl::move(tup))...};
     }
 
     template <template <typename...> typename TupTempl, typename... T, stl::size_t... I>
-    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...>
-    sub_tuple(TupTempl<T...> const& tup, [[maybe_unused]] stl::index_sequence<I...> indeces) noexcept(
-      stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
+    [[nodiscard]] constexpr TupTempl<nth_parameter_t<I, T...>...> sub_tuple(
+      TupTempl<T...> const&                      tup,
+      [[maybe_unused]] stl::index_sequence<I...> indeces)
+      noexcept(stl::is_nothrow_constructible_v<TupTempl<T...>, nth_parameter_t<I, T...>...>) {
         return {get<I>(tup)...};
     }
 
@@ -637,22 +639,22 @@ namespace webpp::istl {
     // The order of the elements are reversed to match std::apply
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...))
-    static constexpr void for_each_element(F&& inp_func, TupleT<Args...> const& tup) noexcept(
-      (stl::is_nothrow_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...)) {
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...> const& tup)
+      noexcept((stl::is_nothrow_invocable_v<F, stl::add_const_t<stl::add_lvalue_reference_t<Args>>> && ...)) {
         details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...))
-    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>& tup) noexcept(
-      (stl::is_nothrow_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...)) {
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>& tup)
+      noexcept((stl::is_nothrow_invocable_v<F, stl::add_lvalue_reference_t<Args>> && ...)) {
         details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 
     template <typename F, typename... Args, template <typename...> typename TupleT>
         requires((stl::is_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...))
-    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>&& tup) noexcept(
-      (stl::is_nothrow_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...)) {
+    static constexpr void for_each_element(F&& inp_func, TupleT<Args...>&& tup)
+      noexcept((stl::is_nothrow_invocable_v<F, stl::add_rvalue_reference_t<Args>> && ...)) {
         details::for_each_impl(stl::forward<F>(inp_func), tup, stl::index_sequence_for<Args...>{});
     }
 } // namespace webpp::istl

@@ -59,8 +59,8 @@ namespace webpp {
 
         explicit constexpr enable_owner_traits(logger_ref logger_obj) noexcept : logger{logger_obj} {}
 
-        constexpr enable_owner_traits() noexcept(
-          stl::is_nothrow_default_constructible_v<logger_type>)            = default;
+        constexpr enable_owner_traits()
+          noexcept(stl::is_nothrow_default_constructible_v<logger_type>)   = default;
         constexpr enable_owner_traits(enable_owner_traits const&) noexcept = default;
         constexpr enable_owner_traits(enable_owner_traits&&) noexcept      = default;
         constexpr ~enable_owner_traits()                                   = default;
@@ -299,8 +299,8 @@ namespace webpp {
         /// construct T and pass the etraits itself the first argument
         template <typename... Args>
             requires(stl::is_constructible_v<T, etraits, Args...>)
-        explicit constexpr enable_traits_for(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<T, etraits, Args...>)
+        explicit constexpr enable_traits_for(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<T, etraits, Args...>)
           : T{et, stl::forward<Args>(args)...} {}
 
         /// pass a general allocator as the first argument
@@ -316,8 +316,8 @@ namespace webpp {
                            typename etraits::template allocator_type<
                              typename stl::allocator_traits<typename T::allocator_type>::value_type>>;
                      })
-        explicit constexpr enable_traits_for(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
+        explicit constexpr enable_traits_for(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<T, typename T::allocator_type const&, Args...>)
           : T{get_alloc_for<T>(et), stl::forward<Args>(args)...} {}
 
         constexpr enable_traits_for(enable_traits_for const&) noexcept            = default;

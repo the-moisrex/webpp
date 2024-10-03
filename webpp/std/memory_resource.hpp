@@ -6,11 +6,11 @@
 #if __has_include(<memory_resource>)
 #    include <memory_resource>
 #    define webpp_has_memory_resource
-#ifdef __cpp_lib_polymorphic_allocator
+#    ifdef __cpp_lib_polymorphic_allocator
 namespace pmr {
     using namespace ::std::pmr;
 }
-#endif
+#    endif
 #elif __has_include(<boost/container/pmr/memory_resource.hpp>)
 #    include <boost/container/pmr/memory_resource.hpp>
 #    include <boost/container/pmr/monotonic_buffer_resource.hpp>

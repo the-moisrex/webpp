@@ -1195,8 +1195,8 @@ namespace webpp::istl {
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args..., Arg1> {
         using parent_type = invocable_inorder<Callable, Args..., Arg1>;
 
-        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Args... args) noexcept(
-          parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Args... args)
+          noexcept(parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable),
                                      stl::forward<Args>(args)...,
                                      stl::forward<Arg1>(arg1));
@@ -1210,8 +1210,8 @@ namespace webpp::istl {
       : invocable_inorder<Callable, Arg2, Arg1, Args...> {
         using parent_type = invocable_inorder<Callable, Arg2, Arg1, Args...>;
 
-        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args) noexcept(
-          parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1 arg1, Arg2 arg2, Args... args)
+          noexcept(parent_type::is_nothrow) {
             return parent_type::call(
               stl::forward<Callable>(callable),
               stl::forward<Arg2>(arg2),
@@ -1226,8 +1226,8 @@ namespace webpp::istl {
     struct invocable_inorder<Callable, Arg1, Args...> : invocable_inorder<Callable, Args...> {
         using parent_type = invocable_inorder<Callable, Args...>;
 
-        static constexpr decltype(auto) call(Callable callable, Arg1, Args... args) noexcept(
-          parent_type::is_nothrow) {
+        static constexpr decltype(auto) call(Callable callable, Arg1, Args... args)
+          noexcept(parent_type::is_nothrow) {
             return parent_type::call(stl::forward<Callable>(callable), stl::forward<Args>(args)...);
         }
     };
@@ -1236,8 +1236,8 @@ namespace webpp::istl {
     concept invocable_inorder_v = invocable_inorder<Callable, Args...>::value;
 
     template <typename Callable, typename... Args>
-    static constexpr decltype(auto) invoke_inorder(Callable&& callable, Args&&... args) noexcept(
-      invocable_inorder<Callable, Args...>::is_nothrow) {
+    static constexpr decltype(auto) invoke_inorder(Callable&& callable, Args&&... args)
+      noexcept(invocable_inorder<Callable, Args...>::is_nothrow) {
         return invocable_inorder<Callable, Args...>::call(stl::forward<Callable>(callable),
                                                           stl::forward<Args>(args)...);
     }

@@ -9,7 +9,7 @@ using namespace webpp;
 static void ISLower_Simple(benchmark::State& state) {
     auto is_lower = [](auto&& str) constexpr noexcept {
         auto       it   = str.data();
-        const auto _end = it + str.size();
+        auto const _end = it + str.size();
         for (; it != _end; ++it) {
             if (!std::islower(*it)) {
                 return false;

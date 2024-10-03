@@ -82,6 +82,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
 BreakStringLiterals: true
+AllowBreakBeforeNoexceptSpecifier: OnlyWithParen
 ColumnLimit: 110
 CommentPragmas: ((^\s*(todo|TODO|fixme|FIXME|NOLINT|NOLINTBEGIN|NOLINTEND|NOLINTNEXTLINE):.*)|^\s*\/\/)
 CompactNamespaces: false
@@ -157,6 +158,7 @@ PenaltyBreakOpenParenthesis: 1
 PenaltyBreakString: 1000
 PenaltyBreakTemplateDeclaration: 0
 PenaltyExcessCharacter: 1000000
+# PenaltyBreakScopeResolution: 10000
 PenaltyIndentedWhitespace: 1
 PenaltyReturnTypeOnItsOwnLine: 100
 PointerAlignment: Left

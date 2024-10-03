@@ -232,8 +232,8 @@ namespace webpp::unicode {
      *       Yes                   ccc(A) > ccc(B)
      */
     template <stl::indirectly_swappable Iter = char8_t*, stl::indirectly_swappable EIter = Iter>
-    static constexpr void canonical_reorder(Iter start, EIter end) noexcept(
-      stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+    static constexpr void canonical_reorder(Iter start, EIter end)
+      noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
         using unchecked::next_char_copy;
         using unchecked::swap_code_points;
 
@@ -268,9 +268,9 @@ namespace webpp::unicode {
     }
 
     template <istl::String StrT = stl::u32string>
-    static constexpr void canonical_reorder(StrT& out) noexcept(
-      stl::is_nothrow_swappable_v<
-        typename stl::iterator_traits<typename stl::remove_cvref_t<StrT>::iterator>::value_type>) {
+    static constexpr void canonical_reorder(StrT& out)
+      noexcept(stl::is_nothrow_swappable_v<
+               typename stl::iterator_traits<typename stl::remove_cvref_t<StrT>::iterator>::value_type>) {
         canonical_reorder(stl::begin(out), stl::end(out));
     }
 
@@ -316,8 +316,8 @@ namespace webpp::unicode {
               stl::unsigned_integral SizeT = istl::size_type_of_t<Iter>,
               istl::CharType         CharT = char32_t>
         requires UTF32<CharT>
-    static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point) noexcept(
-      istl::NothrowAppendable<Iter>) {
+    static constexpr SizeT canonical_decompose_to(Iter& out, CharT const code_point)
+      noexcept(istl::NothrowAppendable<Iter>) {
         using details::decomp_index;
         using details::decomp_indices;
         using details::trailing_mapped_deomps;
@@ -367,8 +367,8 @@ namespace webpp::unicode {
     template <istl::AppendableStorage StrT  = decomposed_array<>,
               istl::CharType          CharT = char32_t,
               typename... Args>
-    [[nodiscard]] static constexpr StrT canonical_decomposed(CharT const code_point, Args&&... args) noexcept(
-      istl::NothrowAppendable<StrT>) {
+    [[nodiscard]] static constexpr StrT canonical_decomposed(CharT const code_point, Args&&... args)
+      noexcept(istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
         auto iter = istl::appendable_iter_of(arr);
         canonical_decompose_to(iter, code_point);
@@ -383,8 +383,8 @@ namespace webpp::unicode {
     template <istl::Appendable Iter   = std::u8string::iterator,
               stl::integral    SizeT  = istl::size_type_of_t<Iter>,
               istl::Iterable   InpStr = stl::u32string_view>
-    static constexpr SizeT canonical_decompose_to(Iter& out, InpStr const str) noexcept(
-      istl::NothrowAppendable<Iter>) {
+    static constexpr SizeT canonical_decompose_to(Iter& out, InpStr const str)
+      noexcept(istl::NothrowAppendable<Iter>) {
         SizeT count = 0;
         for (auto pos = stl::begin(str); pos != stl::end(str);) {
             count += canonical_decompose_to(out, next_code_point(pos));
@@ -396,8 +396,8 @@ namespace webpp::unicode {
               istl::Iterable          InpStr = stl::u32string_view,
               typename... Args>
         requires(stl::constructible_from<StrT, Args...>)
-    [[nodiscard]] static constexpr StrT canonical_decomposed(InpStr&& str, Args&&... args) noexcept(
-      istl::NothrowAppendable<StrT>) {
+    [[nodiscard]] static constexpr StrT canonical_decomposed(InpStr&& str, Args&&... args)
+      noexcept(istl::NothrowAppendable<StrT>) {
         StrT arr{stl::forward<Args>(args)...};
         auto iter = istl::appendable_iter_of(arr);
         canonical_decompose_to(iter, stl::forward<InpStr>(str));
@@ -560,7 +560,7 @@ namespace webpp::unicode {
         // have the max number of elements.
         auto [cp1_mask, replacement] = cp1s[pos];
 
-        // Invalid code points are visible with 0xFF; so we don't need to explicitly check for equality to 0
+        // Invalid code points are visible with 0
         if (static_cast<std::uint8_t>(lhs) != cp1_mask) {
             return replacement_char<CharT>;
         }
@@ -578,15 +578,16 @@ namespace webpp::unicode {
     template <stl::integral               SizeT = stl::size_t,
               stl::random_access_iterator Iter  = char32_t*,
               stl::random_access_iterator EIter = Iter>
-    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT
-    canonical_compose(Iter& ptr, EIter end) noexcept(
-      stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
+    [[nodiscard("Use the new size to resize the container.")]] static constexpr SizeT canonical_compose(
+      Iter& ptr,
+      EIter end)
+      noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
         auto const          beg = ptr;
         code_point_iterator cp1_ptr{beg}; // const iterator
         code_point_iterator rep_ptr{ptr}; // non-const iterator
         for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
             auto starter_ptr = rep_ptr;
-            rep_ptr.set_value(cp1_ptr);
+            rep_ptr.set_code_point(cp1_ptr);
             auto cp2_ptr = stl::next(cp1_ptr); // const iterator as well
             auto cp1     = *cp1_ptr;
             for (stl::int_fast16_t prev_ccc = -1; cp2_ptr != end; ++cp1_ptr, ++cp2_ptr) {
@@ -602,9 +603,9 @@ namespace webpp::unicode {
                     break;
                 }
                 prev_ccc = ccc;
-                (++rep_ptr).set_value(cp2_ptr);
+                (++rep_ptr).set_code_point(cp2_ptr);
             }
-            starter_ptr.set_value(cp1, cp2_ptr);
+            starter_ptr.set_code_point(cp1, cp2_ptr);
         }
         return static_cast<SizeT>(rep_ptr - beg);
     }

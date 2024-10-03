@@ -30,7 +30,7 @@ using webpp::unicode::unchecked::next_char_copy;
 using webpp::unicode::unchecked::prev_char_copy;
 using webpp::unicode::unchecked::swap_code_points;
 
-static constexpr bool enable_utf8_composition_tests = false; // todo
+static constexpr bool enable_utf8_composition_tests = true;
 
 // NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
 
@@ -206,7 +206,7 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 TEST(Unicode, BasicCodePointIterator) {
     std::u8string                       str = u8"تست";
     webpp::unicode::code_point_iterator iter{str.data()};
-    iter.set_value(U'a');
+    iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
@@ -214,7 +214,7 @@ TEST(Unicode, BasicCodePointIterator2) {
     std::u8string                       str = u8"تست";
     webpp::unicode::code_point_iterator iter{str.data()};
     ++iter;
-    iter.set_value(U'a');
+    iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"تa\xB3ت");
 }
 

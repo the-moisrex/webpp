@@ -296,21 +296,21 @@ namespace webpp::istl {
 
         using self_signature = Return (*)(storage_type, Args...);
 
-        static constexpr Return error([[maybe_unused]] storage_type obj,
-                                      [[maybe_unused]] Args... args) noexcept(false) {
+        static constexpr Return error([[maybe_unused]] storage_type obj, [[maybe_unused]] Args... args)
+          noexcept(false) {
             throw stl::bad_function_call{};
         }
 
         template <typename T>
             requires stl::is_invocable_v<T, Args...>
-        static constexpr Return invoker(storage_type obj, Args... args) noexcept(
-          noexcept((*details::get<T>(obj))(stl::forward<Args>(args)...))) {
+        static constexpr Return invoker(storage_type obj, Args... args)
+          noexcept(noexcept((*details::get<T>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>((*details::get<T>(obj))(stl::forward<Args>(args)...));
         }
 
         template <typename NewRet, typename... NewArgs>
-        static constexpr Return func_invoker(storage_type obj, Args... args) noexcept(
-          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
+        static constexpr Return func_invoker(storage_type obj, Args... args)
+          noexcept(noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>(
               (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...));
         }
@@ -952,16 +952,15 @@ namespace webpp::istl {
 
         template <typename NewRet, typename... NewArgs>
         static constexpr Return
-        func_invoker([[maybe_unused]] void const* mem_ptr, storage_type obj, Args... args) noexcept(
-          noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
+        func_invoker([[maybe_unused]] void const* mem_ptr, storage_type obj, Args... args)
+          noexcept(noexcept((*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...))) {
             return static_cast<Return>(
               (*details::get<NewRet (*)(NewArgs...)>(obj))(stl::forward<Args>(args)...));
         }
 
         template <typename T, typename NRet, typename... NArgs>
-        static constexpr Return
-        invoker(void const* mem_ptr_storage, storage_type inp_obj, Args... args) noexcept(
-          stl::is_nothrow_invocable_v<member_function_holder<T, NRet, NArgs...>, NArgs...>) {
+        static constexpr Return invoker(void const* mem_ptr_storage, storage_type inp_obj, Args... args)
+          noexcept(stl::is_nothrow_invocable_v<member_function_holder<T, NRet, NArgs...>, NArgs...>) {
             using type = member_function_holder<T, NRet, NArgs...>;
             return static_cast<Return>(
               (*static_cast<type const*>(mem_ptr_storage))(inp_obj, stl::forward<NArgs>(args)...));

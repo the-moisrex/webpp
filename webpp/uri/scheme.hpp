@@ -316,8 +316,8 @@ namespace webpp::uri {
         static constexpr stl::array<CharT, 2> ws_scheme{'w', 's'};
 
         template <ParsingURIContext CtxT, stl::size_t N>
-        constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme) noexcept(
-          CtxT::is_nothrow) {
+        constexpr void set_scheme(CtxT& ctx, stl::array<typename CtxT::char_type, N> const scheme)
+          noexcept(CtxT::is_nothrow) {
             using ctx_type = CtxT;
 
             if constexpr (ctx_type::is_modifiable) {
@@ -552,10 +552,9 @@ namespace webpp::uri {
 
     /// Serialize scheme
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_scheme(
-      StorageStrT const& storage,
-      StrT&              out,
-      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+    static constexpr void
+    render_scheme(StorageStrT const& storage, StrT& out, bool const add_separators = false)
+      noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
 
         if (storage.empty()) {

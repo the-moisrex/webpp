@@ -157,8 +157,8 @@ static auto strs = str_array_generator<1000>();
     constexpr auto simd_size = simd_type::size();
     if (_size > simd_size) {
         auto const*      almost_end = it1_end - (_size % simd_size);
-        const simd_utype big_a{'A'};
-        const simd_utype diff{'a' - 'A'};
+        simd_utype const big_a{'A'};
+        simd_utype const diff{'a' - 'A'};
         for (; it1 != almost_end; it1 += simd_size, it2 += simd_size) {
             auto const values1  = webpp::eve::bit_cast(simd_type{it1}, webpp::eve::as_<simd_utype>());
             auto const values2  = webpp::eve::bit_cast(simd_type{it2}, webpp::eve::as_<simd_utype>());

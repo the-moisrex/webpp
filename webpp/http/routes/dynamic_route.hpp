@@ -24,8 +24,8 @@ namespace webpp::http {
       public:
         explicit(false) dynamic_route(Callable&& new_callable) noexcept : callable(stl::move(new_callable)) {}
 
-        explicit(false) dynamic_route(Callable const& new_callable) noexcept(
-          stl::is_nothrow_copy_constructible_v<callable_type>)
+        explicit(false) dynamic_route(Callable const& new_callable)
+          noexcept(stl::is_nothrow_copy_constructible_v<callable_type>)
           : callable(new_callable) {}
 
         dynamic_route(dynamic_route const&)                     = delete;

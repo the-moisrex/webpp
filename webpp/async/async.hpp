@@ -74,8 +74,8 @@ namespace webpp::async {
         /// calls task.advance()
         template <typename T>
             requires requires(T task) { task.advance(); }
-        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task) noexcept(
-          noexcept(stl::forward<T>(task).advance())) {
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task)
+          noexcept(noexcept(stl::forward<T>(task).advance())) {
             using return_type = stl::remove_cvref_t<decltype(stl::forward<T>(task).advance())>;
             if constexpr (stl::same_as<return_type, bool>) {
                 return stl::forward<T>(task).advance();
@@ -91,8 +91,8 @@ namespace webpp::async {
         /// calls task()
         template <typename T>
             requires(stl::is_invocable_v<T> && !requires(T task) { task.advance(); })
-        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task) noexcept(
-          stl::is_nothrow_invocable_v<T>) {
+        [[nodiscard]] friend constexpr bool tag_invoke(advance_tag, T&& task)
+          noexcept(stl::is_nothrow_invocable_v<T>) {
             using return_type = stl::remove_cvref_t<stl::invoke_result_t<T>>;
             if constexpr (stl::same_as<return_type, bool>) {
                 return stl::invoke(stl::forward<T>(task));
@@ -224,8 +224,8 @@ namespace webpp::async {
         // default impl
         template <typename T, typename... Args>
             requires requires(T next, Args... args) { next.get_value(args...); }
-        friend constexpr decltype(auto) tag_invoke(get_value_tag, T&& next, Args&&... args) noexcept(
-          noexcept(stl::forward<T>(next).get_value(stl::forward<Args>(args)...))) {
+        friend constexpr decltype(auto) tag_invoke(get_value_tag, T&& next, Args&&... args)
+          noexcept(noexcept(stl::forward<T>(next).get_value(stl::forward<Args>(args)...))) {
             return stl::forward<T>(next).get_value(stl::forward<Args>(args)...);
         }
     } get_value;
@@ -285,8 +285,8 @@ namespace webpp::async {
         // default impl
         template <typename T, typename... Args>
             requires requires(T chain, Args... args) { chain.set_error(args...); }
-        friend constexpr void tag_invoke(set_error_tag, T&& chain, Args&&... args) noexcept(
-          noexcept(stl::forward<T>(chain).set_error(stl::forward<Args>(args)...))) {
+        friend constexpr void tag_invoke(set_error_tag, T&& chain, Args&&... args)
+          noexcept(noexcept(stl::forward<T>(chain).set_error(stl::forward<Args>(args)...))) {
             stl::forward<T>(chain).set_error(stl::forward<Args>(args)...);
         }
     } set_error;

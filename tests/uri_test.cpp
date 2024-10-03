@@ -1231,10 +1231,10 @@ TYPED_TEST(URITests, AbormalHostIPv4Loose) {
       {                                                    "0x0000",        ipv4::any()},
       {                                                  "0x0000..",        ipv4::any()},
       {                                                 "0x0000...",        ipv4::any()},
- // {                                                          "",        ipv4::any()},
+      // {                                                          "",        ipv4::any()},
       {                                                         ".",        ipv4::any()},
 
- // 127.0.0.1 localhost IPs
+      // 127.0.0.1 localhost IPs
       {                                                 "127.0.0.1",   ipv4::loopback()},
       {                                                "127.0.0.1.",   ipv4::loopback()},
       {                                               "127.0.0.1..",   ipv4::loopback()},
@@ -1272,7 +1272,7 @@ TYPED_TEST(URITests, AbormalHostIPv4Loose) {
       {                                "127.0x000000000000000.0.1.",   ipv4::loopback()},
       {                              "127.0x000000000000000.0.1...",   ipv4::loopback()},
 
- // other
+      // other
       {                                                    "000123",  ipv4{0, 0, 0, 83}},
       {                                                      "0xff", ipv4{0, 0, 0, 255}},
       {                                                     "1.256",   ipv4{1, 0, 1, 0}},
@@ -1407,7 +1407,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                                   "0x0000.",        ipv4::any()},
       {                                                         ".",        ipv4::any()},
 
- // 127.0.0.1 localhost IPs
+      // 127.0.0.1 localhost IPs
       {                                                 "127.0.0.1",   ipv4::loopback()},
       {                                                "127.0.0.1.",   ipv4::loopback()},
       {                                                    "0x7f.1",   ipv4::loopback()},
@@ -1435,7 +1435,7 @@ TYPED_TEST(URITests, AbormalHostIPv4) {
       {                                 "127.0x000000000000000.0.1",   ipv4::loopback()},
       {                                "127.0x000000000000000.0.1.",   ipv4::loopback()},
 
- // other
+      // other
       {                                                    "000123",  ipv4{0, 0, 0, 83}},
       {                                                      "0xff", ipv4{0, 0, 0, 255}},
       {                                                     "1.256",   ipv4{1, 0, 1, 0}},

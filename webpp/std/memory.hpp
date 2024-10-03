@@ -497,21 +497,19 @@ namespace webpp::istl {
 
         /// construct nothing because the type is not constructible (pure virtual classes),
         /// you now have to use .emplace to actualy use the object
-        explicit constexpr dynamic([[maybe_unused]] no_initialize_tag tag) noexcept(
-          stl::is_nothrow_default_constructible_v<allocator_type>)
+        explicit constexpr dynamic([[maybe_unused]] no_initialize_tag tag)
+          noexcept(stl::is_nothrow_default_constructible_v<allocator_type>)
             requires(stl::is_default_constructible_v<allocator_type>)
         {}
 
         /// no init with allocator
-        explicit constexpr dynamic(
-          [[maybe_unused]] no_initialize_tag tag,
-          allocator_type const& input_alloc) noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
+        explicit constexpr dynamic([[maybe_unused]] no_initialize_tag tag, allocator_type const& input_alloc)
+          noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
           : alloc{input_alloc} {}
 
         /// no init with allocator in reverse
-        explicit constexpr dynamic(allocator_type const& input_alloc,
-                                   [[maybe_unused]] no_initialize_tag
-                                     tag) noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
+        explicit constexpr dynamic(allocator_type const& input_alloc, [[maybe_unused]] no_initialize_tag tag)
+          noexcept(stl::is_nothrow_copy_constructible_v<allocator_type>)
           : alloc{input_alloc} {
             // we're not adding this as a constraint to the constructor in order to let the user use
             // incomplete types

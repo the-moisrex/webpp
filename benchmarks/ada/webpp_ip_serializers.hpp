@@ -15,8 +15,8 @@ namespace webpp::v1 {
      * string to the end of the string instead of overwriting the whole thing
      */
     template <typename Op>
-    constexpr void resize_and_append(auto& out, std::size_t counts, Op&& op) noexcept(
-      noexcept(op(out.data()))) {
+    constexpr void resize_and_append(auto& out, std::size_t counts, Op&& op)
+      noexcept(noexcept(op(out.data()))) {
         auto const str_size = out.size();
         out.resize(out.size() + counts); // unfortunately resize writes zeros!!
         auto const ret    = std::forward<Op>(op)(out.data() + str_size);

@@ -137,10 +137,9 @@ namespace webpp::uri {
     /// Storage type can be structured (not string-like), and also
     /// Storage type can be string-like (not-structured)
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void render_queries(
-      StorageType const& storage,
-      StrT&              out,
-      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+    static constexpr void
+    render_queries(StorageType const& storage, StrT& out, bool const add_separators = false)
+      noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
             return;
@@ -212,8 +211,8 @@ namespace webpp::uri {
 
         template <typename... Args>
             requires requires(Args... args) { map_type{stl::forward<Args>(args)...}; }
-        explicit constexpr basic_queries(Args&&... args) noexcept(
-          noexcept(map_type(stl::forward<Args>(args)...)))
+        explicit constexpr basic_queries(Args&&... args)
+          noexcept(noexcept(map_type(stl::forward<Args>(args)...)))
           : map_type{stl::forward<Args>(args)...} {}
 
         /**

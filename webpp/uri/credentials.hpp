@@ -13,8 +13,8 @@ namespace webpp::uri {
     namespace details {
 
         template <ParsingURIContext CtxT, typename Iter = typename CtxT::iterator>
-        static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos) noexcept(
-          CtxT::is_nothrow) {
+        static constexpr void parse_credentials(CtxT& ctx, Iter beg, Iter password_token_pos)
+          noexcept(CtxT::is_nothrow) {
             // todo: add "needs_encoding"
             // todo: See if there's a way to find the last atsign position instead of running this function for every atsign
             // todo: use already parsed host
@@ -119,8 +119,8 @@ namespace webpp::uri {
 
     /// Serialize username
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_username(StorageStrT const& storage, StrT& out) noexcept(
-      !istl::ModifiableString<StrT>) {
+    static constexpr void render_username(StorageStrT const& storage, StrT& out)
+      noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
             return;
@@ -130,8 +130,8 @@ namespace webpp::uri {
 
     /// Serialize password
     template <istl::StringLike StorageStrT, istl::StringLike StrT>
-    static constexpr void render_password(StorageStrT const& storage, StrT& out) noexcept(
-      !istl::ModifiableString<StrT>) {
+    static constexpr void render_password(StorageStrT const& storage, StrT& out)
+      noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         if (storage.empty()) {
             return;

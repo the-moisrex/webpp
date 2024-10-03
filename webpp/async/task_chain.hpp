@@ -43,14 +43,14 @@ namespace webpp::async {
             requires(stl::is_nothrow_copy_constructible_v<task_type>)
           : task{inp_task} {}
 
-        constexpr dynamic_task& operator=(task_type&& inp_task) noexcept(
-          stl::is_nothrow_move_assignable_v<task_type>) {
+        constexpr dynamic_task& operator=(task_type&& inp_task)
+          noexcept(stl::is_nothrow_move_assignable_v<task_type>) {
             task = stl::move(inp_task);
             return *this;
         }
 
-        constexpr dynamic_task& operator=(task_type const& inp_task) noexcept(
-          stl::is_nothrow_copy_assignable_v<task_type>) {
+        constexpr dynamic_task& operator=(task_type const& inp_task)
+          noexcept(stl::is_nothrow_copy_assignable_v<task_type>) {
             if (this != stl::addressof(inp_task)) {
                 task = inp_task;
             }
@@ -181,8 +181,8 @@ namespace webpp::async {
         constexpr auto prev() noexcept {}
 
         template <typename... Args>
-        constexpr auto set_error(Args&&... args) noexcept(
-          noexcept(async::set_error(this->next(), stl::forward<Args>(args)...))) {
+        constexpr auto set_error(Args&&... args)
+          noexcept(noexcept(async::set_error(this->next(), stl::forward<Args>(args)...))) {
             async::set_error(this->next(), stl::forward<Args>(args)...);
         }
     };

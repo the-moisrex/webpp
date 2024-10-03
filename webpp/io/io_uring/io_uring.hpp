@@ -127,10 +127,8 @@ namespace webpp::io {
          * shares the only async worker thread pool.
          */
         // NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
-        basic_io_uring_service(
-          unsigned         entries,
-          io_uring_params  inp_params,
-          Allocator const& inp_alloc = {}) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
+        basic_io_uring_service(unsigned entries, io_uring_params inp_params, Allocator const& inp_alloc = {})
+          noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : alloc{inp_alloc},
             params{inp_params} {
             static_cast<void>(error_on_res(io_uring_queue_init_params(entries, &ring, &params),
@@ -138,13 +136,13 @@ namespace webpp::io {
         }
 
         // NOLINTEND(cppcoreguidelines-pro-type-member-init)
-        explicit basic_io_uring_service(
-          unsigned         entries   = default_entries_value,
-          Allocator const& inp_alloc = {}) noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
+        explicit basic_io_uring_service(unsigned         entries   = default_entries_value,
+                                        Allocator const& inp_alloc = {})
+          noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : basic_io_uring_service{entries, {}, inp_alloc} {}
 
-        explicit basic_io_uring_service(Allocator const& inp_alloc) noexcept(
-          stl::is_nothrow_copy_constructible_v<Allocator>)
+        explicit basic_io_uring_service(Allocator const& inp_alloc)
+          noexcept(stl::is_nothrow_copy_constructible_v<Allocator>)
           : basic_io_uring_service{default_entries_value, {}, inp_alloc} {}
 
         /**
@@ -276,8 +274,8 @@ namespace webpp::io {
             // NOLINTEND(*-pro-type-reinterpret-cast)
         }
 
-        void call_callback(io_uring_cqe* response, io_result result) noexcept(
-          is_callback_optimizable && is_callback_nothrow) {
+        void call_callback(io_uring_cqe* response, io_result result)
+          noexcept(is_callback_optimizable && is_callback_nothrow) {
             // NOLINTBEGIN(*-pro-type-reinterpret-cast)
             if constexpr (is_callback_optimizable) {
                 auto callback_data = io_uring_cqe_get_data64(response);

@@ -72,8 +72,8 @@ namespace webpp::uri::details {
 
         /// call this when encoding/decoding is done; I'm not putting this into the destructor because of
         /// explicitness
-        constexpr void set_value(iterator start, iterator end) noexcept(
-          ctx_type::is_nothrow || is_seg || ctx_type::is_modifiable) {
+        constexpr void set_value(iterator start, iterator end)
+          noexcept(ctx_type::is_nothrow || is_seg || ctx_type::is_modifiable) {
             if constexpr (!is_seg && !ctx_type::is_modifiable) {
                 uri::set_value<Comp>(*ctx, start, end);
             }
@@ -89,10 +89,9 @@ namespace webpp::uri::details {
             beg{ctx->pos} {}
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        constexpr void encode_or_set(
-          iterator                             pos,
-          iterator                             end,
-          [[maybe_unused]] CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+        constexpr void
+        encode_or_set(iterator pos, iterator end, [[maybe_unused]] CharSet auto const& policy_chars)
+          noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
             } else {
@@ -119,10 +118,9 @@ namespace webpp::uri::details {
         }
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate(
-          iterator&           pos,
-          iterator            end,
-          CharSet auto const& policy_chars) noexcept(ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool
+        encode_or_validate(iterator& pos, iterator end, CharSet auto const& policy_chars)
+          noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 encode_uri_component<Policy>(pos, end, get_buffer(), policy_chars);
                 return pos == end;
@@ -151,8 +149,8 @@ namespace webpp::uri::details {
         }
 
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool encode_or_validate(CharSet auto const& policy_chars) noexcept(
-          ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool encode_or_validate(CharSet auto const& policy_chars)
+          noexcept(ctx_type::is_nothrow) {
             return encode_or_validate<Policy>(ctx->pos, ctx->end, policy_chars);
         }
 
@@ -180,8 +178,8 @@ namespace webpp::uri::details {
          * @returns successful until the end (== didn't find any invalid chars)
          */
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars) noexcept(
-          ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool decode_or_validate(CharSet auto const& policy_chars)
+          noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 return decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars);
             } else {
@@ -196,8 +194,8 @@ namespace webpp::uri::details {
 
         /// Convert to lowercase and also decode
         template <uri_encoding_policy Policy = uri_encoding_policy::skip_chars>
-        [[nodiscard]] constexpr bool decode_or_tolower(CharSet auto const& policy_chars) noexcept(
-          ctx_type::is_nothrow) {
+        [[nodiscard]] constexpr bool decode_or_tolower(CharSet auto const& policy_chars)
+          noexcept(ctx_type::is_nothrow) {
             if constexpr (ctx_type::is_modifiable) {
                 while (ctx->pos != ctx->end) {
                     if (decode_uri_component<Policy>(ctx->pos, ctx->end, get_buffer(), policy_chars)) {
@@ -411,8 +409,8 @@ namespace webpp::uri::details {
             }
         }
 
-        constexpr void next_segment_of(char_type separator, difference_type sep_count = 1) noexcept(
-          ctx_type::is_nothrow) {
+        constexpr void next_segment_of(char_type separator, difference_type sep_count = 1)
+          noexcept(ctx_type::is_nothrow) {
             if constexpr (is_seg) {
                 if constexpr (ctx_type::is_modifiable) {
                     skip_separator(sep_count);

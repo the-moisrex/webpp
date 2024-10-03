@@ -100,8 +100,8 @@ namespace webpp::http {
         using Container::Container;
 
         template <HTTPHeadersHolder H>
-        explicit constexpr headers_container(H& holder) noexcept(
-          stl::is_nothrow_constructible_v<Container, H&>)
+        explicit constexpr headers_container(H& holder)
+          noexcept(stl::is_nothrow_constructible_v<Container, H&>)
           : Container{holder.headers} {}
 
         template <EnabledTraits ET>

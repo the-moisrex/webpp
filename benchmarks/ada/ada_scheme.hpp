@@ -27,7 +27,7 @@ namespace ada::scheme {
             return false;
         }
         int                    hash_value = (2 * scheme.size() + (unsigned) (scheme[0])) & 7;
-        const std::string_view target     = details::is_special_list[hash_value];
+        std::string_view const target     = details::is_special_list[hash_value];
         return (target[0] == scheme[0]) && (target.substr(1) == scheme.substr(1));
     }
 
@@ -36,7 +36,7 @@ namespace ada::scheme {
             return 0;
         }
         int                    hash_value = (2 * scheme.size() + (unsigned) (scheme[0])) & 7;
-        const std::string_view target     = details::is_special_list[hash_value];
+        std::string_view const target     = details::is_special_list[hash_value];
         if ((target[0] == scheme[0]) && (target.substr(1) == scheme.substr(1))) {
             return details::special_ports[hash_value];
         } else {

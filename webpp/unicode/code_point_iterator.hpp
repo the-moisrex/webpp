@@ -16,7 +16,7 @@ namespace webpp::unicode {
      * This class is not designed to be used everywhere, it's designed to simplify writing some algorithms.
      * There are many problems with this class that makes it less general as you'd like, including:
      *  - Multiple iterators of the same place will not be synced when one of them changes the value
-     *  - *iter = new_value; will not work intentionally to make sure it's not a mistake, use set_value.
+     *  - *iter = new_value; will not work intentionally to make sure it's not a mistake, use set_code_point.
      *  - It's bidirectional, not random-access.
      *
      * @tparam CharT Your Character Type (char, char8_t, ...)
@@ -73,8 +73,8 @@ namespace webpp::unicode {
         //     return code_point;
         // }
 
-        constexpr stl::size_t set_value(value_type inp_code_point, difference_type length) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
+        constexpr stl::size_t set_code_point(value_type inp_code_point, difference_type length)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
@@ -87,13 +87,13 @@ namespace webpp::unicode {
                 if (rep_len < orig_len) {
                     stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
                 }
-                set_value(inp_code_point);
+                set_code_point(inp_code_point);
                 return rep_len;
             }
         }
 
-        constexpr stl::size_t set_value(const_pointer other_ptr, difference_type length) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
+        constexpr stl::size_t set_code_point(const_pointer other_ptr, difference_type length)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
@@ -106,13 +106,13 @@ namespace webpp::unicode {
                 if (rep_len < orig_len) {
                     stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
                 }
-                set_value(other_ptr);
+                set_code_point(other_ptr);
                 return rep_len;
             }
         }
 
-        constexpr stl::size_t set_value(const_pointer other_ptr) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
+        constexpr stl::size_t set_code_point(const_pointer other_ptr)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
@@ -126,8 +126,8 @@ namespace webpp::unicode {
             }
         }
 
-        constexpr stl::size_t set_value(value_type inp_code_point) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
+        constexpr stl::size_t set_code_point(value_type inp_code_point)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
             if constexpr (UTF32<CharT>) {
@@ -141,47 +141,47 @@ namespace webpp::unicode {
         }
 
         template <typename CharT2 = CharT>
-        constexpr stl::size_t set_value(code_point_iterator<CharT2, CodePointT> const& other_ptr,
-                                        pointer end) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
-            requires(is_mutable)
-        {
-            return set_value(other_ptr.base(), end - ptr);
-        }
-
-        template <typename CharT2 = CharT>
-        constexpr stl::size_t set_value(code_point_iterator<CharT2, CodePointT> const& other_ptr) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
-            requires(is_mutable)
-        {
-            return set_value(other_ptr.base());
-        }
-
-        template <typename CharT2 = CharT>
-        constexpr stl::size_t
-        set_value(value_type other, code_point_iterator<CharT2, CodePointT> const& end) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
-            requires(is_mutable)
-        {
-            return set_value(other, end.base() - ptr);
-        }
-
-        template <typename CharT2 = stl::add_const_t<CharT>>
-        constexpr stl::size_t
-        set_value(const_pointer other_ptr, code_point_iterator<CharT2, CodePointT> const& end) noexcept(
-          std::is_nothrow_copy_assignable_v<value_type>)
-            requires(is_mutable)
-        {
-            return set_value(other_ptr.base(), end.base() - ptr);
-        }
-
-        template <typename CharT2 = stl::add_const_t<CharT>>
-        constexpr stl::size_t set_value(
+        constexpr stl::size_t set_code_point(
           code_point_iterator<CharT2, CodePointT> const& other_ptr,
-          code_point_iterator<CharT2, CodePointT> const&
-            end) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+          pointer end) noexcept(std::is_nothrow_copy_assignable_v<value_type>)
             requires(is_mutable)
         {
-            return set_value(other_ptr.base(), end.base() - ptr);
+            return set_code_point(other_ptr.base(), end - ptr);
+        }
+
+        template <typename CharT2 = CharT>
+        constexpr stl::size_t set_code_point(code_point_iterator<CharT2, CodePointT> const& other_ptr)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_code_point(other_ptr.base());
+        }
+
+        template <typename CharT2 = CharT>
+        constexpr stl::size_t set_code_point(value_type                                     other,
+                                             code_point_iterator<CharT2, CodePointT> const& end)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_code_point(other, end.base() - ptr);
+        }
+
+        template <typename CharT2 = stl::add_const_t<CharT>>
+        constexpr stl::size_t set_code_point(const_pointer                                  other_ptr,
+                                             code_point_iterator<CharT2, CodePointT> const& end)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_code_point(other_ptr.base(), end.base() - ptr);
+        }
+
+        template <typename CharT2 = stl::add_const_t<CharT>>
+        constexpr stl::size_t set_code_point(code_point_iterator<CharT2, CodePointT> const& other_ptr,
+                                             code_point_iterator<CharT2, CodePointT> const& end)
+          noexcept(std::is_nothrow_copy_assignable_v<value_type>)
+            requires(is_mutable)
+        {
+            return set_code_point(other_ptr.base(), end.base() - ptr);
         }
 
         [[nodiscard]] constexpr const_pointer operator->() const noexcept {

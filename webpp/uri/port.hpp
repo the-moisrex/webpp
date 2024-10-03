@@ -106,10 +106,9 @@ namespace webpp::uri {
 
     /// Serialize port
     template <typename StorageType, istl::StringLike StrT>
-    static constexpr void render_port(
-      StorageType const& storage,
-      StrT&              out,
-      bool const         add_separators = false) noexcept(!istl::ModifiableString<StrT>) {
+    static constexpr void
+    render_port(StorageType const& storage, StrT& out, bool const add_separators = false)
+      noexcept(!istl::ModifiableString<StrT>) {
         // https://url.spec.whatwg.org/#url-serializing
         // https://url.spec.whatwg.org/#serialize-an-integer
         if (storage.empty()) {

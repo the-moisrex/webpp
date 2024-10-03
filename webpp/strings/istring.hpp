@@ -70,8 +70,8 @@ namespace webpp {
         using alternate_std_string_view_type = stl::basic_string_view<char_type, char_traits_type>;
 
         template <typename... Args>
-        explicit(false) constexpr istring(Args&&... args) noexcept(
-          noexcept(string_type(stl::forward<Args>(args)...)))
+        explicit(false) constexpr istring(Args&&... args)
+          noexcept(noexcept(string_type(stl::forward<Args>(args)...)))
           : string_type{stl::forward<Args>(args)...} {}
 
         [[nodiscard]] istring_type copy() const {

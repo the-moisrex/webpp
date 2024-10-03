@@ -604,11 +604,11 @@ TEST(UriTests, ParseFromStringRelativeVsNonRelativePaths) {
       {                      "/", false},
       {                    "foo",  true},
 
- /*
-  * This is only a valid test vector if we understand
-  * correctly that an empty string IS a valid
-  * "relative reference" URI with an empty path.
-  */
+      /*
+       * This is only a valid test vector if we understand
+       * correctly that an empty string IS a valid
+       * "relative reference" URI with an empty path.
+       */
       {                       "",  true},
     };
     size_t index = 0;
@@ -636,12 +636,12 @@ TEST(UriTests, ParseFromStringQueryAndFragmentElements) {
       {"http://www.example.com?earth?day#bar", "www.example.com", "earth?day", "bar"},
       { "http://www.example.com/spam?foo#bar", "www.example.com",       "foo", "bar"},
 
- /*
-  * NOTE: curiously, but we think this is correct, that
-  * having a trailing question mark is equivalent to not having
-  * any question mark, because in both cases, the query element
-  * is empty string.  Perhaps research deeper to see if this is right.
-  */
+      /*
+       * NOTE: curiously, but we think this is correct, that
+       * having a trailing question mark is equivalent to not having
+       * any question mark, because in both cases, the query element
+       * is empty string.  Perhaps research deeper to see if this is right.
+       */
       {            "http://www.example.com/?", "www.example.com",          "",    ""},
     };
     size_t index = 0;
@@ -1121,8 +1121,8 @@ TEST(UriTests, ReferenceResolution) {
     };
 
     std::vector<TestVector> const testVectors{
-  // These are all taken from section 5.4.1
-  // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
+      // These are all taken from section 5.4.1
+      // of RFC 3986 (https://tools.ietf.org/html/rfc3986).
       { "http://a/b/c/d;p?q",     "g:h",                     "g:h"},
       { "http://a/b/c/d;p?q",       "g",          "http://a/b/c/g"},
       { "http://a/b/c/d;p?q",     "./g",          "http://a/b/c/g"},
@@ -1146,7 +1146,7 @@ TEST(UriTests, ReferenceResolution) {
       { "http://a/b/c/d;p?q",  "../../",                "http://a"},
       { "http://a/b/c/d;p?q", "../../g",              "http://a/g"},
 
- // Here are some examples of our own.
+      // Here are some examples of our own.
       { "http://example.com",     "foo",  "http://example.com/foo"},
       {"http://example.com/",     "foo",  "http://example.com/foo"},
       { "http://example.com",    "foo/", "http://example.com/foo/"},
@@ -1191,7 +1191,7 @@ TEST(UriTests, IPv6Address) {
     };
 
     std::vector<TestVector> const testVectors{
-  // valid
+      // valid
       {                                      "http://[::1]/",                                  "::1",  true},
       {                           "http://[::ffff:1.2.3.4]/",                       "::ffff:1.2.3.4",  true},
       {     "http://[2001:db8:85a3:8d3:1319:8a2e:370:7348]/", "2001:db8:85a3:8d3:1319:8a2e:370:7348",  true},
@@ -1203,7 +1203,7 @@ TEST(UriTests, IPv6Address) {
       {                    "http://[2001:db8:85a3::8a2e:0]/",                "2001:db8:85a3::8a2e:0",  true},
       {                     "http://[2001:db8:85a3:8a2e::]/",                 "2001:db8:85a3:8a2e::",  true},
 
- // invalid
+      // invalid
       {                                 "http://[::fFfF::1]",                                     "", false},
       {                           "http://[::ffff:1.2.x.4]/",                                     "", false},
       {                         "http://[::ffff:1.2.3.4.8]/",                                     "", false},
@@ -1247,12 +1247,12 @@ TEST(UriTests, IPvFutureAddress) {
     };
 
     std::vector<TestVector> const testVectors{
-  // valid
+      // valid
       {  "http://[v1.x]/",   "v1.x",  true},
       { "http://[vf.xy]/",  "vf.xy",  true},
       {"http://[vf.x:y]/", "vf.x:y",  true},
 
- // invalid
+      // invalid
       {    "http://[vx]/",       "", false},
       {   "http://[v12]/",       "", false},
       {  "http://[v1.?]/",       "", false},
@@ -1286,7 +1286,7 @@ TEST(UriTests, ToString) {
     };
 
     std::vector<TestVector> const testVectors{
-  // general test vectors
+      // general test vectors
       {"http",
        "bob", "www.example.com",
        true, 8080,
@@ -1331,7 +1331,7 @@ TEST(UriTests, ToString) {
       {    "", "bob",                "", false,    0,              {},  true, "foobar", false,    "",                           "//bob@?foobar"},
       {    "", "bob",                "", false,    0,              {}, false,       "", false,    "",                                  "//bob@"},
 
- // percent-encoded character test vectors
+      // percent-encoded character test vectors
       {"http",
        "b b", "www.example.com",
        true, 8080,
@@ -1375,7 +1375,7 @@ TEST(UriTests, ToString) {
        false,    "",
        "http://bob@%E1%88%B4.example.com:8080/abc/def?foobar"                                                                                  },
 
- // normalization of IPv6 address hex digits
+      // normalization of IPv6 address hex digits
       {"http",
        "bob",         "fFfF::1",
        true, 8080,

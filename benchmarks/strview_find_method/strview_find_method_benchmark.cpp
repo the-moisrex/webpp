@@ -36,7 +36,7 @@ static void FindChar(benchmark::State& state) {
 BENCHMARK(FindChar);
 
 static void FindStrView(benchmark::State& state) {
-    const string_view star{"*"};
+    string_view const star{"*"};
     for (auto _ : state) {
         auto const c = str.find(star);
         benchmark::DoNotOptimize(c);

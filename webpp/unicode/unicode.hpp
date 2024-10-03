@@ -416,8 +416,8 @@ namespace webpp::unicode {
     namespace unchecked {
 
         template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
-        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from) noexcept(
-          istl::NothrowAppendable<Iter>) {
+        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2& from)
+          noexcept(istl::NothrowAppendable<Iter>) {
             using char_type     = istl::appendable_value_type_t<Iter>;
             using src_char_type = typename stl::iterator_traits<stl::remove_cvref_t<Iter2>>::value_type;
             static_assert(sizeof(char_type) == sizeof(src_char_type),
@@ -443,8 +443,8 @@ namespace webpp::unicode {
         }
 
         template <istl::Appendable Iter = char8_t*, stl::forward_iterator Iter2 = Iter>
-        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2 const& from) noexcept(
-          istl::NothrowAppendable<Iter>) {
+        static constexpr stl::size_t copy_next_into(Iter& ito, Iter2 const& from)
+          noexcept(istl::NothrowAppendable<Iter>) {
             Iter2 from_cpy = from;
             return copy_next_into(ito, from_cpy);
         }
@@ -559,8 +559,8 @@ namespace webpp::unicode {
         /// Unicode-aware std::iter_swap
         template <stl::indirectly_swappable Iter = char8_t*>
             requires(stl::random_access_iterator<Iter>)
-        static constexpr void swap_code_points(Iter lhs, Iter rhs) noexcept(
-          stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
+        static constexpr void swap_code_points(Iter lhs, Iter rhs)
+          noexcept(stl::is_nothrow_swappable_v<typename stl::iterator_traits<Iter>::value_type>) {
             using stl::swap;
             using char_type = typename stl::iterator_traits<Iter>::value_type;
             using diff_type = typename stl::iterator_traits<Iter>::difference_type;
@@ -763,8 +763,8 @@ namespace webpp::unicode {
                   stl::integral         SizeT = istl::size_type_of_t<StrT>,
                   stl::forward_iterator Iter  = char32_t const*,
                   stl::forward_iterator EIter = Iter>
-        static constexpr SizeT append(StrT& out, Iter& src, EIter end) noexcept(
-          istl::NothrowAppendable<StrT>) {
+        static constexpr SizeT append(StrT& out, Iter& src, EIter end)
+          noexcept(istl::NothrowAppendable<StrT>) {
             using out_char_type = istl::char_traits_type_of<StrT>;
             using src_char_type = typename stl::iterator_traits<Iter>::value_type;
             if constexpr (sizeof(src_char_type) >= sizeof(out_char_type)) {
@@ -778,8 +778,8 @@ namespace webpp::unicode {
         template <istl::AppendableStorage StrT  = std::array<char8_t, 4UL>,
                   stl::integral           CharT = char32_t,
                   typename... Args>
-        [[nodiscard]] static constexpr StrT to(CharT const code_point, Args&&... args) noexcept(
-          istl::NothrowAppendable<StrT>) {
+        [[nodiscard]] static constexpr StrT to(CharT const code_point, Args&&... args)
+          noexcept(istl::NothrowAppendable<StrT>) {
             StrT str{stl::forward<Args>(args)...};
             auto iter = istl::appendable_iter_of(str);
             append(iter, code_point);

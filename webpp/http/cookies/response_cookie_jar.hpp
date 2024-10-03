@@ -70,8 +70,8 @@ namespace webpp::http {
 
       public:
         template <typename... Args>
-        explicit constexpr response_cookie_jar(Args&&... args) noexcept(
-          noexcept(super(stl::forward<Args>(args)...)))
+        explicit constexpr response_cookie_jar(Args&&... args)
+          noexcept(noexcept(super(stl::forward<Args>(args)...)))
           : super{stl::forward<Args>(args)...} {}
 
         template <typename Iter>

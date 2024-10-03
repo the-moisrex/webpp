@@ -160,8 +160,8 @@ namespace webpp::uri {
 
       public:
         template <typename... Args>
-        explicit constexpr basic_domain(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<storage_type, Args...>)
+        explicit constexpr basic_domain(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<storage_type, Args...>)
           : storage{stl::forward<Args>(args)...},
             status{parse_domain_name(storage.begin(), storage.end())} {}
 

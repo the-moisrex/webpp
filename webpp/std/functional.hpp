@@ -322,8 +322,8 @@ namespace webpp::istl {
                           "The specified allocator is not default constructible.");
         }
 
-        explicit constexpr function(stl::nullptr_t) noexcept(
-          stl::is_nothrow_default_constructible_v<allocator_type>) {
+        explicit constexpr function(stl::nullptr_t)
+          noexcept(stl::is_nothrow_default_constructible_v<allocator_type>) {
             static_assert(stl::is_default_constructible_v<allocator_type>,
                           "The specified allocator is not default constructible.");
         }
@@ -331,22 +331,22 @@ namespace webpp::istl {
         // nullptr state
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr explicit(!stl::same_as<Alloc2, allocator_type>) function(
-          Alloc2 const& input_alloc) noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
+        constexpr explicit(!stl::same_as<Alloc2, allocator_type>) function(Alloc2 const& input_alloc)
+          noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // nullptr state
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc) noexcept(
-          stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
+        constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc)
+          noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // nullptr state
         template <typename Alloc2 = allocator_type>
             requires(compatible_allocator_v<Alloc2>)
-        constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc, stl::nullptr_t) noexcept(
-          stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
+        constexpr function(stl::allocator_arg_t, Alloc2 const& input_alloc, stl::nullptr_t)
+          noexcept(stl::is_nothrow_constructible_v<allocator_type, Alloc2>)
           : alloc{input_alloc} {}
 
         // member function
@@ -421,8 +421,8 @@ namespace webpp::istl {
         // move it even though they're not exactly the same.
         template <typename Signature2>
             requires(!stl::same_as<Signature2, Signature> && is_movable_v<Signature2>)
-        constexpr explicit function(function<Signature2, Alloc>&& other) noexcept(
-          stl::is_nothrow_move_constructible_v<allocator_type>)
+        constexpr explicit function(function<Signature2, Alloc>&& other)
+          noexcept(stl::is_nothrow_move_constructible_v<allocator_type>)
           : alloc{stl::move(other.alloc)},
             ptr{other.ptr} {
             other.ptr = nullptr;
@@ -502,9 +502,9 @@ namespace webpp::istl {
         // move assignment operator
         template <typename Signature2 = Signature>
             requires(is_movable_v<Signature2>)
-        constexpr function& operator=(function<Signature2, Alloc>&& other) noexcept(
-          alloc_traits::propagate_on_container_move_assignment::value &&
-          stl::is_nothrow_move_assignable_v<allocator_type>) {
+        constexpr function& operator=(function<Signature2, Alloc>&& other)
+          noexcept(alloc_traits::propagate_on_container_move_assignment::value &&
+                   stl::is_nothrow_move_assignable_v<allocator_type>) {
             if (addressof(other) == this) {
                 return *this;
             }

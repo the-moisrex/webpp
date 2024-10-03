@@ -75,8 +75,8 @@ namespace webpp::http {
       public:
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        explicit constexpr mangler_valve(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr mangler_valve(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : manglers{stl::forward<Args>(args)...} {}
 
         constexpr mangler_valve(mangler_valve const&)                     = default;
@@ -141,8 +141,8 @@ namespace webpp::http {
       public:
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        explicit constexpr forward_valve(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr forward_valve(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : callables{stl::forward<Args>(args)...} {}
 
         constexpr forward_valve(forward_valve const&)                     = default;

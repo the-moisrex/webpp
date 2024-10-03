@@ -346,7 +346,7 @@ namespace webpp::v1 {
 
         constexpr void to_string(istl::String auto& out) const {
             resize_and_append(out, max_ipv4_str_len, [this](auto* buf) constexpr noexcept {
-                const auto _octets = octets();
+                auto const _octets = octets();
                 return inet_ntop4(_octets.data(), buf);
             });
         }

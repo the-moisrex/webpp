@@ -108,8 +108,8 @@ namespace webpp {
      * string to the end of the string instead of overwriting the whole thing
      */
     template <typename Op>
-    constexpr void resize_and_append(istl::String auto& out, stl::size_t counts, Op&& operation) noexcept(
-      noexcept(operation(out.data()))) {
+    constexpr void resize_and_append(istl::String auto& out, stl::size_t counts, Op&& operation)
+      noexcept(noexcept(operation(out.data()))) {
         auto const str_size = out.size();
         out.resize(out.size() + counts); // unfortunately resize writes zeros!!
         auto const ret    = stl::forward<Op>(operation)(out.data() + str_size);

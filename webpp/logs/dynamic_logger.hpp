@@ -65,8 +65,8 @@ namespace webpp {
 
         template <typename... Args>
             requires(stl::is_constructible_v<logger_type, Args...>)
-        explicit basic_dynamic_logger(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<logger_type, Args...>)
+        explicit basic_dynamic_logger(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<logger_type, Args...>)
           : actual_logger{stl::forward<Args>(args)...} {}
 
         // NOLINTNEXTLINE(*-macro-usage)

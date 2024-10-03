@@ -20,7 +20,7 @@ namespace ada::serializers {
                 while (next != 8 && address[next] == 0) {
                     ++next;
                 }
-                const size_t count = next - i;
+                size_t const count = next - i;
                 if (compress_length < count) {
                     compress_length = count;
                     compress        = i;
@@ -74,7 +74,7 @@ namespace ada::serializers {
         return output;
     }
 
-    std::string ipv4(const uint64_t address) noexcept {
+    std::string ipv4(uint64_t const address) noexcept {
         std::string output(15, '\0');
         char*       point     = output.data();
         char*       point_end = output.data() + output.size();

@@ -38,8 +38,8 @@ namespace webpp::http {
 
         template <typename... Args>
             requires stl::constructible_from<tuple_type, Args...>
-        explicit constexpr segment_valve(Args&&... args) noexcept(
-          stl::is_nothrow_constructible_v<tuple_type, Args...>)
+        explicit constexpr segment_valve(Args&&... args)
+          noexcept(stl::is_nothrow_constructible_v<tuple_type, Args...>)
           : tuple_type{stl::forward<Args>(args)...} {}
 
         constexpr segment_valve(segment_valve const&)                     = default;
