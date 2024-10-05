@@ -114,7 +114,7 @@ namespace webpp::unicode {
 
     /// utf8_length_from_utf32
     template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr SizeT code_unit8_count(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr SizeT utf8_length_from_utf32(CharT const code_point) noexcept {
         if (code_point < 0x80U) {
             return 1U;
         }
@@ -132,7 +132,7 @@ namespace webpp::unicode {
 
     /// utf16_length_from_utf32
     template <stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
-    [[nodiscard]] static constexpr SizeT code_unit16_count(CharT const code_point) noexcept {
+    [[nodiscard]] static constexpr SizeT utf16_length_from_utf32(CharT const code_point) noexcept {
         if (code_point > 0xFFFFU) {
             return 2U;
         }
@@ -376,7 +376,7 @@ namespace webpp::unicode {
 
     template <typename value_type, stl::integral SizeT = stl::size_t>
         requires(stl::is_integral_v<value_type>)
-    [[nodiscard]] static constexpr SizeT code_point_length(value_type const value) noexcept {
+    [[nodiscard]] static constexpr SizeT required_length_of(value_type const value) noexcept {
         if constexpr (UTF16<value_type>) {
             if ((value & 0xFC00U) == 0xD800U) {
                 return 2U;
@@ -569,8 +569,8 @@ namespace webpp::unicode {
                 if (lhs > rhs) {
                     swap(lhs, rhs);
                 }
-                auto const lhs_length = code_point_length<char_type, diff_type>(*lhs);
-                auto const rhs_length = code_point_length<char_type, diff_type>(*rhs);
+                auto const lhs_length = required_length_of<char_type, diff_type>(*lhs);
+                auto const rhs_length = required_length_of<char_type, diff_type>(*rhs);
                 if constexpr (UTF8<char_type>) {
                     webpp_assume(lhs_length >= 0 && lhs_length <= 6U);
                     webpp_assume(rhs_length >= 0 && rhs_length <= 6U);

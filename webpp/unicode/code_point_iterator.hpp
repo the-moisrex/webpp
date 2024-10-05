@@ -81,9 +81,10 @@ namespace webpp::unicode {
                 *ptr = inp_code_point;
                 return 1U;
             } else {
-                return 0;
-                auto const orig_len = code_point_length(*ptr);
-                auto const rep_len  = code_unit8_count(inp_code_point);
+                auto const orig_len = required_length_of(*ptr);
+                auto const rep_len  = utf8_length_from_utf32(inp_code_point);
+                assert(rep_len <= orig_len); // It'll replace content, most-likely not what you need.
+                assert(rep_len <= length);   // not enough room
                 if (rep_len < orig_len) {
                     stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
                 }
@@ -100,9 +101,10 @@ namespace webpp::unicode {
                 *ptr = *other_ptr;
                 return 1U;
             } else {
-                return 0;
-                auto const orig_len = code_point_length(*ptr);
-                auto const rep_len  = code_point_length(*other_ptr);
+                auto const orig_len = required_length_of(*ptr);
+                auto const rep_len  = required_length_of(*other_ptr);
+                assert(rep_len <= orig_len); // It'll replace content, most-likely not what you need.
+                assert(rep_len <= length);   // not enough room
                 if (rep_len < orig_len) {
                     stl::rotate(ptr + rep_len, ptr + orig_len, ptr + length);
                 }

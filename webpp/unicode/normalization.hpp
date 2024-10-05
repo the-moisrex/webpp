@@ -605,7 +605,7 @@ namespace webpp::unicode {
                 prev_ccc = ccc;
                 (++rep_ptr).set_code_point(cp2_ptr);
             }
-            starter_ptr.set_code_point(cp1, cp2_ptr);
+            starter_ptr.set_code_point(cp1, end - starter_ptr.base());
         }
         return static_cast<SizeT>(rep_ptr - beg);
     }
