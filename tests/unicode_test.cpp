@@ -205,14 +205,14 @@ TEST(Unicode, AppendCodePointsWithInvalidCodePoint) {
 
 TEST(Unicode, BasicCodePointIterator) {
     std::u8string                       str = u8"تست";
-    webpp::unicode::code_point_iterator iter{str.data()};
+    webpp::unicode::utf_reducer         iter{str.data()};
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
 TEST(Unicode, BasicCodePointIterator2) {
     std::u8string                       str = u8"تست";
-    webpp::unicode::code_point_iterator iter{str.data()};
+    webpp::unicode::utf_reducer         iter{str.data()};
     ++iter;
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"تa\xB3ت");

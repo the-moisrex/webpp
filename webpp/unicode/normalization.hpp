@@ -112,7 +112,7 @@
 #include "./details/decomposition_tables.hpp"
 #include "./hangul.hpp"
 #include "./unicode.hpp"
-#include "code_point_iterator.hpp"
+#include "utf_reducer.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -583,8 +583,8 @@ namespace webpp::unicode {
       EIter end)
       noexcept(stl::is_nothrow_copy_assignable_v<typename stl::iterator_traits<Iter>::value_type>) {
         auto const          beg = ptr;
-        code_point_iterator cp1_ptr{beg}; // const iterator
-        code_point_iterator rep_ptr{ptr}; // non-const iterator
+        utf_reducer         cp1_ptr{beg}; // const iterator
+        utf_reducer         rep_ptr{ptr}; // non-const iterator
         for (; cp1_ptr != end; ++cp1_ptr, ++rep_ptr) {
             auto starter_ptr = rep_ptr;
             rep_ptr.set_code_point(cp1_ptr);
