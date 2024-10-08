@@ -111,9 +111,9 @@ namespace webpp::unicode {
     [[nodiscard]] static constexpr bool is_code_unit_start(T unit) noexcept {
         if constexpr (UTF8<T>) {
             // byte 2, 3, and 4 all start with 0b10xx'xxxx
-            return (unit & 0b1100'0000U) != 0b1000'0000U;
+            return (static_cast<stl::uint8_t>(unit) & 0b1100'0000U) != 0b1000'0000U;
         } else if constexpr (UTF16<T>) {
-            return (unit & 0b1101'1100'0000'0000U) != 0b1101'1100'0000'0000U;
+            return (static_cast<std::uint16_t>(unit) & 0b1101'1100'0000'0000U) != 0b1101'1100'0000'0000U;
         } else {
             return true;
         }

@@ -1,14 +1,11 @@
-// Created by moisrex on 12/28/20.
-#include "../webpp/std/format.hpp"
-#include "../webpp/unicode/normalization.hpp"
 #include "../webpp/unicode/unicode.hpp"
+#include "../webpp/unicode/utf_reducer.hpp"
 #include "common/tests_common_pch.hpp"
 
 #include <string>
 
-using namespace webpp::unicode;
-
-// NOLINTBEGIN(*-magic-numbers, *-pro-bounds-pointer-arithmetic)
+using webpp::unicode::is_code_unit_start;
+using webpp::unicode::utf_reducer;
 
 TEST(UnicodeAlgos, UnitStart) {
     EXPECT_TRUE(is_code_unit_start(u'a'));
@@ -23,18 +20,16 @@ TEST(UnicodeAlgos, UnitStart) {
 }
 
 TEST(UnicodeAlgos, BasicCodePointIterator) {
-    std::u8string               str = u8"تست";
-    webpp::unicode::utf_reducer iter{str.data()};
+    std::u8string str = u8"تست";
+    utf_reducer   iter{str.data()};
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
 TEST(UnicodeAlgos, BasicCodePointIterator2) {
-    std::u8string               str = u8"تست";
-    webpp::unicode::utf_reducer iter{str.data()};
+    std::u8string str = u8"تست";
+    utf_reducer   iter{str.data()};
     ++iter;
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"تa\xB3ت");
 }
-
-// NOLINTEND(*-magic-numbers, *-pro-bounds-pointer-arithmetic)

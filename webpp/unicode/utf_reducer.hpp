@@ -3,11 +3,11 @@
 #ifndef WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 #define WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 
-#include "../std/algorithm.hpp"
 #include "../std/type_traits.hpp"
 #include "./unicode.hpp"
 
 #include <array>
+#include <cassert>
 
 namespace webpp::unicode {
 
@@ -355,8 +355,8 @@ namespace webpp::unicode {
         return lhs.base() - rhs_ptr;
     }
 
-    template <stl::size_t PinCount, typename PtrT>
-    utf_reducer(PtrT) -> utf_reducer<PinCount, stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>;
+    // template <stl::size_t PinCount, typename PtrT>
+    // utf_reducer(PtrT) -> utf_reducer<PinCount, stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>;
 
     // template <typename PtrT>
     // code_point_iterator(PtrT const&)
