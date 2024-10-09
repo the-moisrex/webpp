@@ -21,14 +21,14 @@ TEST(UnicodeAlgos, UnitStart) {
 
 TEST(UnicodeAlgos, BasicCodePointIterator) {
     std::u8string str = u8"تست";
-    utf_reducer   iter{str.data()};
+    utf_reducer   iter{str.data(), str.size()};
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
 TEST(UnicodeAlgos, BasicCodePointIterator2) {
     std::u8string str = u8"تست";
-    utf_reducer   iter{str.data()};
+    utf_reducer   iter{str.data(), str.size()};
     ++iter;
     iter.set_code_point(U'a');
     EXPECT_EQ(str, u8"تa\xB3ت");

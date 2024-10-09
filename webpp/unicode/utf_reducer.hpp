@@ -77,7 +77,7 @@ namespace webpp::unicode {
 
                 if (this != &other) {
                     // this is not a copy assignment operator, it's a pin act.
-                    assert(reducer != other.reducer);
+                    assert(reducer == other.reducer);
                     for (stl::size_t index = PinIndex; index != OPinIndex; ++index) {
                         operator++();
                     }
@@ -96,6 +96,12 @@ namespace webpp::unicode {
                 } else {
                     // state: partial or deleted
                     // copy next code units to current empty code units
+                    auto& cur    = ptr();
+                    auto  cp2ptr = cur + state;
+                    auto  endptr = reducer->template pin_ptr<PinIndex + 1>();
+                    for (; cp2ptr != endptr; ++cur, ++cp2ptr) {
+                        *cur = *cp2ptr;
+                    }
                 }
                 test(reducer);
                 return *this;
@@ -118,7 +124,7 @@ namespace webpp::unicode {
     struct utf_reducer {
         using value_type        = CodePointT;
         using pointer           = stl::add_pointer_t<CharT>;
-        using const_pointer     = stl::add_const_t<stl::add_pointer_t<stl::add_const_t<CharT>>>;
+        using const_pointer     = stl::add_pointer_t<stl::add_const_t<CharT>>;
         using reference         = stl::add_lvalue_reference_t<value_type>;
         using const_reference   = stl::add_lvalue_reference_t<stl::add_const_t<value_type>>;
         using difference_type   = stl::ptrdiff_t;
@@ -135,6 +141,7 @@ namespace webpp::unicode {
 
         using non32_value_type = stl::conditional_t<UTF32<CharT>, istl::nothing_type, value_type>;
         pointer                                ptr;
+        const_pointer                          endptr;
         [[no_unique_address]] non32_value_type code_point;
 
         stl::array<pointer, PinCount>          ptrs;
@@ -144,7 +151,10 @@ namespace webpp::unicode {
         using pin_type_of = details::pin_type<Index, PinCount, CharT, CodePointT>;
 
       public:
-        explicit constexpr utf_reducer(pointer inp_pos = nullptr) : ptr{inp_pos} {
+        explicit constexpr utf_reducer(pointer inp_pos, stl::size_t const inp_length)
+          : ptr{inp_pos},
+            endptr{inp_pos + inp_length} {
+            assert(inp_pos != nullptr);
             assert(is_code_unit_start(*inp_pos));
             if constexpr (!UTF32<CharT>) {
                 code_point = next_code_point_copy(ptr);
@@ -161,6 +171,17 @@ namespace webpp::unicode {
         [[nodiscard]] constexpr pin_type_of<Index> pin() noexcept {
             static_assert(Index < PinCount, "Index must be in range.");
             return {this};
+        }
+
+        template <stl::size_t Index = 0>
+        [[nodiscard]] constexpr pointer pin_ptr() noexcept {
+            // Create a compile time error and not allow bad code:
+            static_assert(Index <= PinCount, "Index must be in range, or the last element.");
+            if constexpr (Index == PinCount) {
+                return endptr;
+            } else {
+                return ptrs[Index];
+            }
         }
 
         /// Get all pins in a tuple construct
