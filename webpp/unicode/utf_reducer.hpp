@@ -170,7 +170,7 @@ namespace webpp::unicode {
         template <stl::size_t Index = 0>
         [[nodiscard]] constexpr pin_type_of<Index> pin() noexcept {
             static_assert(Index < PinCount, "Index must be in range.");
-            return {this};
+            return pin_type_of<Index>{this};
         }
 
         template <stl::size_t Index = 0>
@@ -188,9 +188,9 @@ namespace webpp::unicode {
         /// Usage:
         ///   auto [pin1, pin2, pin3] = reducer.pins();
         [[nodiscard]] constexpr auto pins() noexcept {
-            return ([this]<stl::size_t... I>() {
+            return ([&]<stl::size_t... I>(stl::index_sequence<I...>) {
                 return stl::make_tuple(pin<I>()...);
-            })(std::make_index_sequence<PinCount>{});
+            })(stl::make_index_sequence<PinCount>{});
         }
 
         [[nodiscard]] constexpr const_reference operator*() const noexcept {
