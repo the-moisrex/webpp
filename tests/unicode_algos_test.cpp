@@ -26,10 +26,29 @@ TEST(UnicodeAlgos, BasicCodePointIterator) {
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
-TEST(UnicodeAlgos, BasicCodePointIterator2) {
+TEST(UnicodeAlgos, BasicReducer) {
     std::u8string str = u8"تست";
-    utf_reducer   iter{str.data(), str.size()};
-    ++iter;
-    iter.set_code_point(U'a');
+    utf_reducer   reducer{str.data(), str.size()};
+    auto [pin] = reducer.pins();
+    ++pin;
+    pin = U'a';
+    EXPECT_EQ(str, u8"تa\xB3ت");
+}
+
+TEST(UnicodeAlgos, ReducerIterator) {
+    std::u8string str = u8"تست";
+    utf_reducer   reducer{str.begin(), str.size()};
+    auto [pin] = reducer.pins();
+    ++pin;
+    pin = U'a';
+    EXPECT_EQ(str, u8"تa\xB3ت");
+}
+
+TEST(UnicodeAlgos, ReducerPins) {
+    std::u8string  str = u8"تست";
+    utf_reducer<2> reducer{str.data(), str.size()};
+    auto [pin1, pin2] = reducer.pins();
+    ++pin2;
+    pin2 = U'a';
     EXPECT_EQ(str, u8"تa\xB3ت");
 }

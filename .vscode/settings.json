@@ -33,7 +33,8 @@
     "memory_resource": "cpp",
     "sstream": "cpp",
     "__node_handle": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "future": "cpp"
   },
   "cSpell.words": [
     "addr",
