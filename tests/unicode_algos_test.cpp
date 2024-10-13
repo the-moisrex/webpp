@@ -21,34 +21,47 @@ TEST(UnicodeAlgos, UnitStart) {
 
 TEST(UnicodeAlgos, BasicCodePointIterator) {
     std::u8string str = u8"تست";
-    utf_reducer   iter{str.data(), str.size()};
-    iter.set_code_point(U'a');
+    {
+        utf_reducer reducer{str.data(), str.size()};
+        auto [pin] = reducer.pins();
+        pin        = U'a';
+        reducer.reduce();
+    }
     EXPECT_EQ(str, u8"a\xAAست");
 }
 
 TEST(UnicodeAlgos, BasicReducer) {
     std::u8string str = u8"تست";
-    utf_reducer   reducer{str.data(), str.size()};
-    auto [pin] = reducer.pins();
-    ++pin;
-    pin = U'a';
+    {
+        utf_reducer reducer{str.data(), str.size()};
+        auto [pin] = reducer.pins();
+        ++pin;
+        pin = U'a';
+        reducer.reduce();
+    }
     EXPECT_EQ(str, u8"تa\xB3ت");
 }
 
 TEST(UnicodeAlgos, ReducerIterator) {
     std::u8string str = u8"تست";
-    utf_reducer   reducer{str.begin(), str.size()};
-    auto [pin] = reducer.pins();
-    ++pin;
-    pin = U'a';
+    {
+        utf_reducer reducer{str.begin(), str.size()};
+        auto [pin] = reducer.pins();
+        ++pin;
+        pin = U'a';
+        reducer.reduce();
+    }
     EXPECT_EQ(str, u8"تa\xB3ت");
 }
 
 TEST(UnicodeAlgos, ReducerPins) {
     std::u8string  str = u8"تست";
-    utf_reducer<2> reducer{str.data(), str.size()};
-    auto [pin1, pin2] = reducer.pins();
-    ++pin2;
-    pin2 = U'a';
+    {
+        utf_reducer<2> reducer{str.data(), str.size()};
+        auto [pin1, pin2] = reducer.pins();
+        ++pin2;
+        pin2 = U'a';
+        reducer.reduce();
+    }
     EXPECT_EQ(str, u8"تa\xB3ت");
 }

@@ -154,6 +154,21 @@ namespace webpp::unicode {
         return 1U;
     }
 
+    /// utf_length_from_utf32
+    template <typename T, stl::integral SizeT = stl::size_t, UTF32 CharT = char32_t>
+    [[nodiscard]] static constexpr SizeT utf_length_from_utf32(CharT const code_point) noexcept {
+        if constexpr (UTF32<T>) {
+            return 1;
+        } else if constexpr (UTF16<T>) {
+            return utf16_length_from_utf32(code_point);
+        } else if constexpr (UTF8<T>) {
+            return utf8_length_from_utf32(code_point);
+        } else {
+            static_assert_false(T, "Invalid return type specified.");
+            return 0;
+        }
+    }
+
     /**
      * Check whether a Unicode code point is in a valid range.
      *

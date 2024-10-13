@@ -14,13 +14,6 @@ namespace webpp::unicode {
     template <stl::size_t PinCount = 1, typename IterT = char8_t*, UTF32 CodePointT = char32_t>
     struct utf_reducer;
 
-    // enum struct pin_states {
-    //     filled,  // [X|'|']      All code units are filled
-    //     extra,   // [X|'|'] [']  There are extra code units left that can't be fit
-    //     partial, // [X|'| ]      We've only used parts of the previous code units' space available
-    //     // deleted  // [ | | ]      All code units are empty now
-    // };
-
     /**
      * Pin is a forward-iterator-like type that is designed to be used inside utf_reducer.
      *
@@ -29,6 +22,14 @@ namespace webpp::unicode {
      *   - Set (or Replace): replace a code point inplace if possible
      *   - Change Pin position to another pin location
      *   - Forward: go to the next code point
+     *
+     *
+     *   enum struct pin_states {
+     *       filled,  // [X|'|']      All code units are filled
+     *       extra,   // [X|'|'] [']  There are extra code units left that can't be fit
+     *       partial, // [X|'| ]      We've only used parts of the previous code units' space available
+     *       // deleted  // [ | | ]      All code units are empty now
+     *   };
      */
     template <std::size_t PinIndex = 0,
               std::size_t PinCount = 1,
@@ -39,23 +40,41 @@ namespace webpp::unicode {
 
         using reducer_type  = utf_reducer<PinCount, IterT, CodePointT>;
         using iterator_type = typename reducer_type::iterator_type;
+        using size_type     = typename reducer_type::size_type;
+        using value_type    = typename reducer_type::value_type;
+        using unit_type     = typename reducer_type::unit_type;
+
+        static constexpr bool is_nothrow = stl::is_nothrow_copy_assignable_v<unit_type>;
 
       private:
         reducer_type* reducer;
 
         /// guarantee the correctness of the state that we're in
-        void test() noexcept {
+        constexpr void test_state_correctness() noexcept {
             if constexpr (PinIndex != PinCount - 1) {
                 // guarantee that each pin's position will be less than or equal to the next one:
-                assert(reducer->ptrs[PinIndex + 1] >= ptr());
+                assert(reducer->begs[PinIndex + 1] >= beg());
             }
             if constexpr (PinIndex != 0) {
                 // guarantee that each pin's position will be more than or equal to the previous one:
-                assert(reducer->ptrs[PinIndex - 1] >= ptr());
+                assert(reducer->begs[PinIndex - 1] >= beg());
             }
 
             // early blow up in case we did not find the correct ptr position:
-            assert(is_code_unit_start(*ptr()));
+            assert(is_code_unit_start(*beg()));
+        }
+
+        /// Return type is like the return type of strcmp
+        ///   - 0 if both are the same length (Filled)
+        ///   - positive value if the new value requires more space (Extra)
+        ///   - negative value if the new value requires less space (Partial)
+        [[nodiscard]] constexpr stl::int_fast8_t state_cmp(value_type const inp_cp) noexcept {
+            if constexpr (UTF32<unit_type>) {
+                return 0; // state: filled
+            } else {
+                return utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_cp) -
+                       required_length_of<unit_type, stl::int_fast8_t>(*iter());
+            }
         }
 
       public:
@@ -88,61 +107,122 @@ namespace webpp::unicode {
 
         /// Pin Act: Forward
         constexpr pin_type& operator++() noexcept {
-            auto const state = reducer->states[PinIndex];
-            if (state == 0) [[likely]] {
-                // state: filled
-                /* code_point = */ next_code_point(beg());
-            } else if (state > 0) {
-                // state: extra
+            if constexpr (UTF32<unit_type>) {
+                ++iter();
+            } else if constexpr (PinIndex == PinCount - 1) {
+                /* code_point = */ next_code_point(iter());
             } else {
-                // state: partial or deleted
-                // copy next code units to current empty code units
-                auto& cur    = beg();
-                auto  cp2ptr = cur + state;
-                auto  endptr = reducer->template pin_iter<PinIndex + 1>();
-                for (; cp2ptr != endptr; ++cur, ++cp2ptr) {
-                    *cur = *cp2ptr;
+                auto const state = state();
+                if (state == 0) [[likely]] {
+                    // state: filled
+                    /* code_point = */ next_code_point(iter());
+                } else if (state > 0) {
+                    // state: extra
+                } else {
+                    // state: partial or deleted
+                    // copy next code units to current empty code units
+                    auto& cur    = iter();
+                    auto  cp2ptr = cur + state;
+                    auto  endptr = reducer->template pin_iter<PinIndex + 1>();
+                    for (; cp2ptr != endptr; ++cur, ++cp2ptr) {
+                        *cur = *cp2ptr;
+                    }
                 }
             }
-            test();
+            test_state_correctness();
             return *this;
         }
 
-        /// Pin Act: Set
-        constexpr pin_type& operator=(CodePointT const code_point) noexcept {
-            // todo
-            return *this;
+        constexpr pin_type operator++(int) noexcept {
+            return pin_type{reducer}.operator++();
         }
 
-        [[nodiscard]] constexpr iterator_type& beg() noexcept {
+        [[nodiscard]] constexpr iterator_type& iter() noexcept {
             return reducer->iters[PinIndex];
         }
 
+        [[nodiscard]] constexpr auto state() noexcept {
+            return reducer->states[PinIndex];
+        }
+
         [[nodiscard]] constexpr iterator_type operator->() const noexcept {
-            return beg();
+            return iter();
         }
 
         [[nodiscard]] constexpr bool operator==(iterator_type other) const noexcept {
-            return beg() == other;
+            return iter() == other;
         }
 
         [[nodiscard]] constexpr bool operator!=(iterator_type other) const noexcept {
-            return beg() != other;
+            return iter() != other;
         }
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(iterator_type other) const noexcept {
             // this might have unintentional consequences if other is in the middle of a UTF-8 code point
             // and the ptr is in the beginning of that code point. we're assuming pointers can't be
             // pointed to the middle of the Unicode code points.
-            return beg() <=> other;
+            return iter() <=> other;
         }
 
         [[nodiscard]] constexpr stl::strong_ordering operator<=>(pin_type const& other) const noexcept {
-            return beg() <=> other.beg();
+            return iter() <=> other.iter();
         }
 
-        constexpr pin_type operator++(int) noexcept {
-            return pin_type{*this}.operator++();
+        constexpr pin_type& operator=(iterator_type other) noexcept(is_nothrow) {
+            set(other);
+            return *this;
+        }
+
+        constexpr pin_type& operator=(value_type other) noexcept(is_nothrow) {
+            set(other);
+            return *this;
+        }
+
+        template <stl::size_t PinIndex2, typename Iter2>
+        constexpr pin_type& operator=(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other)
+          noexcept(is_nothrow) {
+            set(other);
+            return *this;
+        }
+
+        /// Pin Act: Set
+        constexpr stl::size_t set(iterator_type other) noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                *iter = *other;
+                return 1U;
+            } else {
+                auto       ptr_cpy     = iter;
+                auto const changed_len = unchecked::append(ptr_cpy, other);
+                /* code_point             = */ next_code_point_copy(iter);
+                return changed_len;
+            }
+        }
+
+        /// Pin Act: Set
+        constexpr stl::size_t set(value_type inp_code_point) noexcept(is_nothrow) {
+            if constexpr (UTF32<unit_type>) {
+                *iter = inp_code_point;
+                return 1U;
+            } else {
+                auto const state = state_cmp(inp_code_point);
+                if (state == 0) [[likely]] {
+                    // state: filled
+                    // todo
+                } else if (state > 0) {
+                    // state: extra
+                } else {
+                    // state: partial or deleted
+                }
+            }
+            test_state_correctness();
+            return 0;
+        }
+
+        /// Pin Act: Set
+        template <stl::size_t PinIndex2, typename Iter2>
+        constexpr stl::size_t set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
+          noexcept(is_nothrow) {
+            return set(other_ptr.iter());
         }
     };
 
@@ -158,6 +238,7 @@ namespace webpp::unicode {
         using value_type    = CodePointT;
         using iterator_type = IterT;
         using size_type     = stl::size_t;
+        using unit_type     = typename stl::iterator_traits<IterT>::value_type;
 
         static constexpr stl::size_t pin_count = PinCount;
 
@@ -167,10 +248,9 @@ namespace webpp::unicode {
         template <std::size_t, std::size_t, typename, UTF32>
         friend struct pin_type;
 
-        using non32_value_type = stl::conditional_t<UTF32<IterT>, istl::nothing_type, value_type>;
-        iterator_type                          beg;
-        iterator_type                          endptr;
-        [[no_unique_address]] non32_value_type code_point;
+        using non32_value_type = stl::conditional_t<UTF32<unit_type>, istl::nothing_type, value_type>;
+        iterator_type beg;
+        iterator_type endptr;
 
         stl::array<iterator_type, PinCount>    iters;
         stl::array<stl::int_fast8_t, PinCount> states;
@@ -186,9 +266,6 @@ namespace webpp::unicode {
             endptr{inp_pos + inp_length} {
             assert(inp_pos != nullptr);
             assert(is_code_unit_start(*inp_pos));
-            if constexpr (!UTF32<IterT>) {
-                code_point = next_code_point_copy(beg);
-            }
         }
 
         constexpr utf_reducer(utf_reducer const&)                = default;
@@ -227,106 +304,8 @@ namespace webpp::unicode {
             return beg;
         }
 
-        // we intentionally don't allow dereferencing because the user of this class may do something like
-        // *iter = new_value;
-        // [[nodiscard]] constexpr reference operator*() noexcept
-        // {
-        //     return code_point;
-        // }
-
-        constexpr stl::size_t set_code_point(value_type inp_code_point, size_type length)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            if constexpr (UTF32<IterT>) {
-                *beg = inp_code_point;
-                return 1U;
-            } else {
-                auto const orig_len = required_length_of(*beg);
-                auto const rep_len  = utf8_length_from_utf32(inp_code_point);
-                assert(rep_len <= orig_len); // It'll replace content, most-likely not what you need.
-                assert(rep_len <= length);   // not enough room
-                if (rep_len < orig_len) {
-                    stl::rotate(beg + rep_len, beg + orig_len, beg + length);
-                }
-                set_code_point(inp_code_point);
-                return rep_len;
-            }
-        }
-
-        constexpr stl::size_t set_code_point(iterator_type other_ptr, size_type length)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            if constexpr (UTF32<IterT>) {
-                *beg = *other_ptr;
-                return 1U;
-            } else {
-                auto const orig_len = required_length_of(*beg);
-                auto const rep_len  = required_length_of(*other_ptr);
-                assert(rep_len <= orig_len); // It'll replace content, most-likely not what you need.
-                assert(rep_len <= length);   // not enough room
-                if (rep_len < orig_len) {
-                    stl::rotate(beg + rep_len, beg + orig_len, beg + length);
-                }
-                set_code_point(other_ptr);
-                return rep_len;
-            }
-        }
-
-        constexpr stl::size_t set_code_point(iterator_type other_ptr)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            if constexpr (UTF32<IterT>) {
-                *beg = *other_ptr;
-                return 1U;
-            } else {
-                auto       ptr_cpy     = beg;
-                auto const changed_len = unchecked::append(ptr_cpy, other_ptr);
-                code_point             = next_code_point_copy(beg);
-                return changed_len;
-            }
-        }
-
-        constexpr stl::size_t set_code_point(value_type inp_code_point)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            if constexpr (UTF32<IterT>) {
-                *beg = inp_code_point;
-                return 1U;
-            } else {
-                auto ptr_cpy = beg;
-                code_point   = inp_code_point;
-                return unchecked::append(ptr_cpy, inp_code_point);
-            }
-        }
-
-        template <typename CharT2 = IterT>
-        constexpr stl::size_t set_code_point(
-          utf_reducer<PinCount, CharT2, CodePointT> const& other_ptr,
-          iterator_type end) noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            return set_code_point(other_ptr.base(), end - beg);
-        }
-
-        template <typename CharT2 = IterT>
-        constexpr stl::size_t set_code_point(utf_reducer<PinCount, CharT2, CodePointT> const& other_ptr)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            return set_code_point(other_ptr.base());
-        }
-
-        template <typename CharT2 = IterT>
-        constexpr stl::size_t set_code_point(value_type                                       other,
-                                             utf_reducer<PinCount, CharT2, CodePointT> const& end)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            return set_code_point(other, end.base() - beg);
-        }
-
-        template <typename CharT2 = stl::add_const_t<IterT>>
-        constexpr stl::size_t set_code_point(iterator_type                                    other_ptr,
-                                             utf_reducer<PinCount, CharT2, CodePointT> const& end)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            return set_code_point(other_ptr.base(), end.base() - beg);
-        }
-
-        template <typename CharT2 = stl::add_const_t<IterT>>
-        constexpr stl::size_t set_code_point(utf_reducer<PinCount, CharT2, CodePointT> const& other_ptr,
-                                             utf_reducer<PinCount, CharT2, CodePointT> const& end)
-          noexcept(std::is_nothrow_copy_assignable_v<value_type>) {
-            return set_code_point(other_ptr.base(), end.base() - beg);
+        constexpr void reduce() noexcept {
+            // todo
         }
     };
 
@@ -345,21 +324,10 @@ namespace webpp::unicode {
     template <stl::size_t PinCount, typename CharT1, typename CP1>
     [[nodiscard]] static constexpr auto operator-(
       utf_reducer<PinCount, CharT1, CP1> const&                  lhs,
-      typename utf_reducer<PinCount, CharT1, CP1>::const_pointer rhs_ptr) -> decltype(lhs.base() - rhs_ptr) {
-        return lhs.base() - rhs_ptr;
+      typename utf_reducer<PinCount, CharT1, CP1>::iterator_type rhs_iter)
+      -> decltype(lhs.base() - rhs_iter) {
+        return lhs.base() - rhs_iter;
     }
-
-    // template <stl::size_t PinCount, typename PtrT>
-    // utf_reducer(PtrT) -> utf_reducer<PinCount, stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>;
-
-    // template <typename PtrT>
-    // code_point_iterator(PtrT const&)
-    //   -> code_point_iterator<
-    //     stl::add_const_t<stl::remove_cvref_t<stl::remove_pointer_t<stl::remove_cvref_t<PtrT>>>>>;
-
-    /// wrap it if it's UTF-8 or UTF-16, but if it's UTF-32, don't wrap:
-    template <stl::size_t PinCount = 1, typename CharT = char8_t, UTF32 CodePointT = char32_t>
-    using utf_reducer_t = stl::conditional_t<UTF32<CharT>, CharT*, utf_reducer<PinCount, CharT, CodePointT>>;
 
 } // namespace webpp::unicode
 
