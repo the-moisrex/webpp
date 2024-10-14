@@ -44,7 +44,7 @@ namespace webpp::unicode {
         using value_type    = typename reducer_type::value_type;
         using unit_type     = typename reducer_type::unit_type;
 
-        static constexpr bool is_nothrow = stl::is_nothrow_copy_assignable_v<unit_type>;
+        static constexpr bool is_nothrow = reducer_type::is_nothrow;
 
       private:
         reducer_type* reducer;
@@ -227,8 +227,18 @@ namespace webpp::unicode {
     };
 
     /**
-     * An iterator-like class for Unicode Code Points
-     * We're assuming pointers can't be pointed to the middle of the Unicode code points.
+     * Reduce a UTF-8/16/32-encoded inplace.
+     *
+     * Usage cases:
+     *   - If you have a range and want to replace something in it, and you're sure you're not going to change
+     *     the length of the string.
+     *   - It gives you multiple pins (forward-only-iterators of some sort) to modify inplace
+     *
+     * Rules:
+     *   1. Pointers/Iterators should not be pointing to the middle of a Unicode code unit.
+     *   2. Pins are ordered, meaning pin-1 cannot point to location after the pin-2's location.
+     *   3. Pins can point to the same place though
+     *   4. This class is not thread-safe, though you probably don't need that anyway.
      *
      * @tparam IterT Iterator type
      * @tparam CodePointT The Code Point Type (Must be UTF-32)
@@ -241,6 +251,12 @@ namespace webpp::unicode {
         using unit_type     = typename stl::iterator_traits<IterT>::value_type;
 
         static constexpr stl::size_t pin_count = PinCount;
+        static constexpr bool        is_nothrow =
+          stl::is_nothrow_copy_assignable_v<unit_type> && requires(iterator_type iter, unit_type unit) {
+              {
+                  *iter = unit
+              } noexcept;
+          };
 
         static_assert(pin_count != 0, "This class is useless where you don't need the pins.");
 
@@ -304,7 +320,7 @@ namespace webpp::unicode {
             return beg;
         }
 
-        constexpr void reduce() noexcept {
+        constexpr void reduce() noexcept(is_nothrow) {
             // todo
         }
     };
