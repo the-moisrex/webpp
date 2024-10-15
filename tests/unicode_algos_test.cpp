@@ -48,7 +48,7 @@ TEST(UnicodeAlgos, ReducerIterator) {
         utf_reducer reducer{str.begin(), str.size()};
         auto [pin] = reducer.pins();
         ++pin;
-        pin = U'a';
+        pin.set(U'a');
         reducer.reduce();
     }
     EXPECT_EQ(str, u8"تa\xB3ت");

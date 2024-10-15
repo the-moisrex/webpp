@@ -139,7 +139,8 @@ namespace webpp::istl {
      *
      * Negative and Positive values are calculated.
      *
-     * @example The code below shows an example that the rules are:
+     * Example:
+     *  The code below shows an example that the rules are:
      *   - if it's a string (2 times more important that the other rules)
      *   - if it's allocator is not the std::allocator<char_type>
      * @code

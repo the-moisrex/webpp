@@ -4,6 +4,7 @@
 #define WEBPP_UNICODE_CODE_POINT_ITERATOR_HPP
 
 #include "../std/type_traits.hpp"
+#include "../std/utility.hpp"
 #include "./unicode.hpp"
 
 #include <array>
@@ -110,19 +111,20 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 ++iter();
             } else if constexpr (PinIndex == PinCount - 1) {
-                /* code_point = */ next_code_point(iter());
+                reducer->code_points[PinIndex] = next_code_point(iter());
             } else {
-                auto const state = state();
-                if (state == 0) [[likely]] {
+                auto const cur_state = state();
+                if (cur_state == 0) [[likely]] {
                     // state: filled
-                    /* code_point = */ next_code_point(iter());
-                } else if (state > 0) {
+                    reducer->code_points[PinIndex] = next_code_point(iter());
+                } else if (cur_state > 0) {
                     // state: extra
+                    // todo
                 } else {
                     // state: partial or deleted
                     // copy next code units to current empty code units
                     auto& cur    = iter();
-                    auto  cp2ptr = cur + state;
+                    auto  cp2ptr = cur + cur_state;
                     auto  endptr = reducer->template pin_iter<PinIndex + 1>();
                     for (; cp2ptr != endptr; ++cur, ++cp2ptr) {
                         *cur = *cp2ptr;
@@ -188,12 +190,12 @@ namespace webpp::unicode {
         /// Pin Act: Set
         constexpr stl::size_t set(iterator_type other) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
-                *iter = *other;
+                *iter() = *other;
                 return 1U;
             } else {
-                auto       ptr_cpy     = iter;
+                auto       ptr_cpy     = istl::deref(iter());
                 auto const changed_len = unchecked::append(ptr_cpy, other);
-                /* code_point             = */ next_code_point_copy(iter);
+                test_state_correctness();
                 return changed_len;
             }
         }
@@ -201,21 +203,34 @@ namespace webpp::unicode {
         /// Pin Act: Set
         constexpr stl::size_t set(value_type inp_code_point) noexcept(is_nothrow) {
             if constexpr (UTF32<unit_type>) {
-                *iter = inp_code_point;
+                *iter() = inp_code_point;
                 return 1U;
             } else {
                 auto const state = state_cmp(inp_code_point);
+
+                // state: filled
                 if (state == 0) [[likely]] {
-                    // state: filled
-                    // todo
-                } else if (state > 0) {
-                    // state: extra
-                } else {
-                    // state: partial or deleted
+                    auto       iter_cpy    = istl::deref(iter());
+                    auto const changed_len = unchecked::append(iter_cpy, inp_code_point);
+                    test_state_correctness();
+                    return changed_len;
+                }
+
+                // state: partial or deleted
+                if (state < 0) {
+                    auto       iter_cpy       = istl::deref(iter());
+                    auto const changed_len    = unchecked::append(iter_cpy, inp_code_point);
+                    reducer->states[PinIndex] = state;
+                    return changed_len;
+                }
+
+                // state: extra
+                {
+                    reducer->code_points[PinIndex] = inp_code_point;
+                    reducer->states[PinIndex]      = state;
+                    return 0;
                 }
             }
-            test_state_correctness();
-            return 0;
         }
 
         /// Pin Act: Set
@@ -245,10 +260,11 @@ namespace webpp::unicode {
      */
     template <stl::size_t PinCount, typename IterT, UTF32 CodePointT>
     struct utf_reducer {
-        using value_type    = CodePointT;
-        using iterator_type = IterT;
-        using size_type     = stl::size_t;
-        using unit_type     = typename stl::iterator_traits<IterT>::value_type;
+        using value_type      = CodePointT;
+        using iterator_type   = IterT;
+        using unit_type       = typename stl::iterator_traits<IterT>::value_type;
+        using difference_type = typename stl::iterator_traits<IterT>::difference_type;
+        using size_type       = stl::size_t;
 
         static constexpr stl::size_t pin_count = PinCount;
         static constexpr bool        is_nothrow =
@@ -270,6 +286,7 @@ namespace webpp::unicode {
 
         stl::array<iterator_type, PinCount>    iters;
         stl::array<stl::int_fast8_t, PinCount> states;
+        stl::array<value_type, PinCount>       code_points;
 
         template <stl::size_t Index>
         using pin_type_of = pin_type<Index, PinCount, IterT, CodePointT>;
@@ -279,9 +296,10 @@ namespace webpp::unicode {
         // we don't want the end to be a const internally.
         explicit constexpr utf_reducer(iterator_type inp_pos, size_type const inp_length)
           : beg{inp_pos},
-            endptr{inp_pos + inp_length} {
+            endptr{inp_pos + static_cast<difference_type>(inp_length)} {
             assert(inp_pos != nullptr);
             assert(is_code_unit_start(*inp_pos));
+            iters.fill(inp_pos);
         }
 
         constexpr utf_reducer(utf_reducer const&)                = default;

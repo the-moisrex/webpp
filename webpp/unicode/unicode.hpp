@@ -160,9 +160,9 @@ namespace webpp::unicode {
         if constexpr (UTF32<T>) {
             return 1;
         } else if constexpr (UTF16<T>) {
-            return utf16_length_from_utf32(code_point);
+            return utf16_length_from_utf32<SizeT>(code_point);
         } else if constexpr (UTF8<T>) {
-            return utf8_length_from_utf32(code_point);
+            return utf8_length_from_utf32<SizeT>(code_point);
         } else {
             static_assert_false(T, "Invalid return type specified.");
             return 0;
