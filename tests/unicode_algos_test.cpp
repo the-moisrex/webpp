@@ -26,8 +26,9 @@ TEST(UnicodeAlgos, BasicCodePointIterator) {
         auto [pin] = reducer.pins();
         pin        = U'a';
         reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
     }
-    EXPECT_EQ(str, u8"a\xAAست");
+    EXPECT_EQ(str, u8"aست");
 }
 
 TEST(UnicodeAlgos, BasicReducer) {
@@ -38,8 +39,9 @@ TEST(UnicodeAlgos, BasicReducer) {
         ++pin;
         pin = U'a';
         reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
     }
-    EXPECT_EQ(str, u8"تa\xB3ت");
+    EXPECT_EQ(str, u8"تaت");
 }
 
 TEST(UnicodeAlgos, ReducerIterator) {
@@ -50,8 +52,9 @@ TEST(UnicodeAlgos, ReducerIterator) {
         ++pin;
         pin.set(U'a');
         reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.begin()));
     }
-    EXPECT_EQ(str, u8"تa\xB3ت");
+    EXPECT_EQ(str, u8"تaت");
 }
 
 TEST(UnicodeAlgos, ReducerPins) {
@@ -61,7 +64,9 @@ TEST(UnicodeAlgos, ReducerPins) {
         auto [pin1, pin2] = reducer.pins();
         ++pin2;
         pin2 = U'a';
+        pin1 = U'م';
         reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
     }
-    EXPECT_EQ(str, u8"تa\xB3ت");
+    EXPECT_EQ(str, u8"مaت");
 }

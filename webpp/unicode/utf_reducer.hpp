@@ -39,11 +39,12 @@ namespace webpp::unicode {
     struct pin_type {
         static_assert(PinIndex < PinCount, "Either Pin count is invalid or Pin index.");
 
-        using reducer_type  = utf_reducer<PinCount, IterT, CodePointT>;
-        using iterator_type = typename reducer_type::iterator_type;
-        using size_type     = typename reducer_type::size_type;
-        using value_type    = typename reducer_type::value_type;
-        using unit_type     = typename reducer_type::unit_type;
+        using reducer_type    = utf_reducer<PinCount, IterT, CodePointT>;
+        using iterator_type   = typename reducer_type::iterator_type;
+        using size_type       = typename reducer_type::size_type;
+        using value_type      = typename reducer_type::value_type;
+        using unit_type       = typename reducer_type::unit_type;
+        using difference_type = typename reducer_type::difference_type;
 
         static constexpr bool is_nothrow = reducer_type::is_nothrow;
 
@@ -65,6 +66,14 @@ namespace webpp::unicode {
             assert(is_code_unit_start(*beg()));
         }
 
+        [[nodiscard]] constexpr stl::int_fast8_t state_cmp_size(stl::int_fast8_t const len) noexcept {
+            if constexpr (UTF32<unit_type>) {
+                return 0; // state: filled
+            } else {
+                return len - required_length_of<unit_type, stl::int_fast8_t>(*iter());
+            }
+        }
+
         /// Return type is like the return type of strcmp
         ///   - 0 if both are the same length (Filled)
         ///   - positive value if the new value requires more space (Extra)
@@ -73,8 +82,7 @@ namespace webpp::unicode {
             if constexpr (UTF32<unit_type>) {
                 return 0; // state: filled
             } else {
-                return utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_cp) -
-                       required_length_of<unit_type, stl::int_fast8_t>(*iter());
+                return state_cmp_size(utf_length_from_utf32<unit_type, stl::int_fast8_t>(inp_cp));
             }
         }
 
@@ -144,6 +152,11 @@ namespace webpp::unicode {
         }
 
         [[nodiscard]] constexpr auto state() noexcept {
+            if constexpr (UTF8<unit_type>) {
+                assert(reducer->states[PinIndex] <= 4);
+            } else if constexpr (UTF16<unit_type>) {
+                assert(reducer->states[PinIndex] <= 2);
+            }
             return reducer->states[PinIndex];
         }
 
@@ -188,56 +201,113 @@ namespace webpp::unicode {
         }
 
         /// Pin Act: Set
-        constexpr stl::size_t set(iterator_type other) noexcept(is_nothrow) {
+        constexpr void set(iterator_type other) noexcept(is_nothrow) {
+            assert(other != nullptr);
+            assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = *other;
-                return 1U;
             } else {
-                auto       ptr_cpy     = istl::deref(iter());
-                auto const changed_len = unchecked::append(ptr_cpy, other);
-                test_state_correctness();
-                return changed_len;
+                auto const state = state_cmp_size(required_length_of<unit_type, stl::int_fast8_t>(*other));
+
+                // state: filled
+                if (state == 0) [[likely]] {
+                    auto iter_cpy = istl::deref(iter());
+                    unchecked::append(iter_cpy, other);
+                    test_state_correctness();
+                    return;
+                }
+
+                // state: partial or deleted
+                if (state < 0) {
+                    auto iter_cpy = istl::deref(iter());
+                    unchecked::append(iter_cpy, other);
+                    reducer->states[PinIndex] = state;
+                    test_state_correctness();
+                    return;
+                }
+
+                // state: extra
+                {
+                    reducer->code_points[PinIndex] = next_code_point_copy(other);
+                    reducer->states[PinIndex]      = state;
+                    test_state_correctness();
+                }
             }
         }
 
         /// Pin Act: Set
-        constexpr stl::size_t set(value_type inp_code_point) noexcept(is_nothrow) {
+        constexpr void set(value_type inp_code_point) noexcept(is_nothrow) {
+            assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = inp_code_point;
-                return 1U;
             } else {
                 auto const state = state_cmp(inp_code_point);
 
                 // state: filled
                 if (state == 0) [[likely]] {
-                    auto       iter_cpy    = istl::deref(iter());
-                    auto const changed_len = unchecked::append(iter_cpy, inp_code_point);
+                    auto iter_cpy = istl::deref(iter());
+                    unchecked::append(iter_cpy, inp_code_point);
                     test_state_correctness();
-                    return changed_len;
+                    return;
                 }
 
                 // state: partial or deleted
                 if (state < 0) {
-                    auto       iter_cpy       = istl::deref(iter());
-                    auto const changed_len    = unchecked::append(iter_cpy, inp_code_point);
+                    auto iter_cpy = istl::deref(iter());
+                    unchecked::append(iter_cpy, inp_code_point);
                     reducer->states[PinIndex] = state;
-                    return changed_len;
+                    test_state_correctness();
+                    return;
                 }
 
                 // state: extra
                 {
                     reducer->code_points[PinIndex] = inp_code_point;
                     reducer->states[PinIndex]      = state;
-                    return 0;
+                    test_state_correctness();
                 }
             }
         }
 
         /// Pin Act: Set
         template <stl::size_t PinIndex2, typename Iter2>
-        constexpr stl::size_t set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
+        constexpr void set(pin_type<PinIndex2, PinCount, Iter2, CodePointT> const& other_ptr)
           noexcept(is_nothrow) {
-            return set(other_ptr.iter());
+            set(other_ptr.iter());
+        }
+
+        constexpr void reduce() noexcept(is_nothrow) {
+            assert(iter() != reducer->endptr);
+
+            auto const cur_state = state();
+            if (cur_state == 0) [[likely]] {
+                return;
+            }
+            if (cur_state < 0) {
+                // fill the gaps
+                auto& endptr = reducer->template pin_iter<PinIndex + 1>();
+                auto  ptr    = iter();
+                stl::advance(ptr, -static_cast<difference_type>(cur_state));
+                if constexpr (stl::random_access_iterator<iterator_type>) {
+                    assert(ptr <= reducer->endptr);
+                }
+                auto cur = ptr;
+                ++ptr;
+                for (; ptr != endptr; ++ptr, ++cur) {
+                    *cur = *ptr;
+                }
+                reducer->states[PinIndex] = 0;
+                // if constexpr (PinIndex == PinCount - 1) {
+                //     // change the end pointer
+                //     endptr = ptr;
+                // }
+                return;
+            }
+
+            // state: extra
+            {
+                // todo
+            }
         }
     };
 
@@ -275,6 +345,7 @@ namespace webpp::unicode {
           };
 
         static_assert(pin_count != 0, "This class is useless where you don't need the pins.");
+        static_assert(stl::forward_iterator<iterator_type>, "Iterator must at least be a forward iterator");
 
       private:
         template <std::size_t, std::size_t, typename, UTF32>
@@ -296,9 +367,24 @@ namespace webpp::unicode {
         // we don't want the end to be a const internally.
         explicit constexpr utf_reducer(iterator_type inp_pos, size_type const inp_length)
           : beg{inp_pos},
-            endptr{inp_pos + static_cast<difference_type>(inp_length)} {
+            endptr{stl::next(inp_pos, static_cast<difference_type>(inp_length))} {
             assert(inp_pos != nullptr);
             assert(is_code_unit_start(*inp_pos));
+            static_assert(stl::random_access_iterator<iterator_type>,
+                          "Has to be random access if you're using length-based constructor");
+            iters.fill(inp_pos);
+        }
+
+        // NOLINTNEXTLINE(*-easily-swappable-parameters)
+        explicit constexpr utf_reducer(iterator_type inp_pos, iterator_type inp_endp)
+          : beg{inp_pos},
+            endptr{inp_endp} {
+            assert(inp_pos != nullptr);
+            assert(endptr != nullptr);
+            assert(is_code_unit_start(*inp_pos));
+            if constexpr (stl::random_access_iterator<iterator_type>) {
+                assert(inp_pos <= nullptr);
+            }
             iters.fill(inp_pos);
         }
 
@@ -306,7 +392,16 @@ namespace webpp::unicode {
         constexpr utf_reducer(utf_reducer&&) noexcept            = default;
         constexpr utf_reducer& operator=(utf_reducer const&)     = default;
         constexpr utf_reducer& operator=(utf_reducer&&) noexcept = default;
-        constexpr ~utf_reducer() noexcept                        = default;
+#ifdef NDEBUG
+        constexpr ~utf_reducer() noexcept = default;
+#else
+        constexpr ~utf_reducer() noexcept {
+            // User must call ".reduce()" to apply changes; this checks if they have or not:
+            for (auto const state : states) {
+                assert(state == 0);
+            }
+        }
+#endif
 
         template <stl::size_t Index = 0>
         [[nodiscard]] constexpr pin_type_of<Index> pin() noexcept {
@@ -315,7 +410,7 @@ namespace webpp::unicode {
         }
 
         template <stl::size_t Index = 0>
-        [[nodiscard]] constexpr iterator_type pin_iter() noexcept {
+        [[nodiscard]] constexpr iterator_type& pin_iter() noexcept {
             // Create a compile time error and not allow bad code:
             static_assert(Index <= PinCount, "Index must be in range, or the last element.");
             if constexpr (Index == PinCount) {
@@ -334,12 +429,20 @@ namespace webpp::unicode {
             })(stl::make_index_sequence<PinCount>{});
         }
 
-        [[nodiscard]] constexpr iterator_type base() const noexcept {
+        [[nodiscard]] constexpr iterator_type begin() const noexcept {
             return beg;
         }
 
+        [[nodiscard]] constexpr iterator_type end() const noexcept {
+            return endptr;
+        }
+
+        template <stl::size_t Index = 0>
         constexpr void reduce() noexcept(is_nothrow) {
-            // todo
+            pin<Index>().reduce();
+            if constexpr (Index != PinCount - 1) {
+                reduce<Index + 1>();
+            }
         }
     };
 
@@ -351,16 +454,16 @@ namespace webpp::unicode {
               typename CP2>
     [[nodiscard]] static constexpr auto operator-(
       utf_reducer<PinCount1, CharT1, CP1> const& lhs,
-      utf_reducer<PinCount2, CharT2, CP2> const& rhs) -> decltype(lhs.base() - rhs.base()) {
-        return lhs.base() - rhs.base();
+      utf_reducer<PinCount2, CharT2, CP2> const& rhs) -> decltype(lhs.begin() - rhs.begin()) {
+        return lhs.begin() - rhs.begin();
     }
 
     template <stl::size_t PinCount, typename CharT1, typename CP1>
     [[nodiscard]] static constexpr auto operator-(
       utf_reducer<PinCount, CharT1, CP1> const&                  lhs,
       typename utf_reducer<PinCount, CharT1, CP1>::iterator_type rhs_iter)
-      -> decltype(lhs.base() - rhs_iter) {
-        return lhs.base() - rhs_iter;
+      -> decltype(lhs.begin() - rhs_iter) {
+        return lhs.begin() - rhs_iter;
     }
 
 } // namespace webpp::unicode

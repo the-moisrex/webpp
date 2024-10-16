@@ -77,7 +77,12 @@ namespace webpp::istl {
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept AppendableString =
       !stl::is_const_v<stl::remove_pointer_t<stl::remove_cvref_t<T>>> && !stl::is_const_v<ValueType> &&
-      requires(stl::remove_pointer_t<stl::remove_cvref_t<T>>& out, ValueType val) { out.operator+=(val); };
+      requires(stl::remove_pointer_t<stl::remove_cvref_t<T>>& out, ValueType val) {
+          out.operator+=(val);
+          requires !requires {
+              *out; // you can't dereference a string, but you can deref an iterator.
+          };
+      };
 
     template <typename T, typename ValueType = appendable_value_type_t<T>>
     concept NothrowAppendableArray =
