@@ -85,15 +85,11 @@ namespace webpp::details {
 
 
 
-#if defined(NDEBUG) || !defined(DEBUG) || !defined(_DEBUG)
-#    define NDEBUG
-
+#ifdef NDEBUG
 namespace webpp {
     static constexpr bool is_debug_build = false;
 } // namespace webpp
 #else
-#    define DEBUG
-
 namespace webpp {
     static constexpr bool is_debug_build = true;
 } // namespace webpp

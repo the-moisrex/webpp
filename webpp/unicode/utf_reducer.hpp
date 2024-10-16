@@ -40,7 +40,7 @@ namespace webpp::unicode {
         static_assert(PinIndex < PinCount, "Either Pin count is invalid or Pin index.");
 
         using reducer_type    = utf_reducer<PinCount, IterT, CodePointT>;
-        using iterator_type   = typename reducer_type::iterator_type;
+        using iterator        = typename reducer_type::iterator;
         using size_type       = typename reducer_type::size_type;
         using value_type      = typename reducer_type::value_type;
         using unit_type       = typename reducer_type::unit_type;
@@ -53,17 +53,14 @@ namespace webpp::unicode {
 
         /// guarantee the correctness of the state that we're in
         constexpr void test_state_correctness() noexcept {
-            if constexpr (PinIndex != PinCount - 1) {
-                // guarantee that each pin's position will be less than or equal to the next one:
-                assert(reducer->begs[PinIndex + 1] >= beg());
-            }
-            if constexpr (PinIndex != 0) {
-                // guarantee that each pin's position will be more than or equal to the previous one:
-                assert(reducer->begs[PinIndex - 1] >= beg());
-            }
+            // guarantee that each pin's position will be less than or equal to the next one:
+            assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) + 1>() >= iter());
+
+            // guarantee that each pin's position will be more than or equal to the previous one:
+            assert(reducer->template pin_iter<static_cast<difference_type>(PinIndex) - 1>() <= iter());
 
             // early blow up in case we did not find the correct ptr position:
-            assert(is_code_unit_start(*beg()));
+            assert(is_code_unit_start(*iter()));
         }
 
         [[nodiscard]] constexpr stl::int_fast8_t state_cmp_size(stl::int_fast8_t const len) noexcept {
@@ -147,7 +144,7 @@ namespace webpp::unicode {
             return pin_type{reducer}.operator++();
         }
 
-        [[nodiscard]] constexpr iterator_type& iter() noexcept {
+        [[nodiscard]] constexpr iterator& iter() noexcept {
             return reducer->iters[PinIndex];
         }
 
@@ -160,19 +157,19 @@ namespace webpp::unicode {
             return reducer->states[PinIndex];
         }
 
-        [[nodiscard]] constexpr iterator_type operator->() const noexcept {
+        [[nodiscard]] constexpr iterator operator->() const noexcept {
             return iter();
         }
 
-        [[nodiscard]] constexpr bool operator==(iterator_type other) const noexcept {
+        [[nodiscard]] constexpr bool operator==(iterator other) const noexcept {
             return iter() == other;
         }
 
-        [[nodiscard]] constexpr bool operator!=(iterator_type other) const noexcept {
+        [[nodiscard]] constexpr bool operator!=(iterator other) const noexcept {
             return iter() != other;
         }
 
-        [[nodiscard]] constexpr stl::strong_ordering operator<=>(iterator_type other) const noexcept {
+        [[nodiscard]] constexpr stl::strong_ordering operator<=>(iterator other) const noexcept {
             // this might have unintentional consequences if other is in the middle of a UTF-8 code point
             // and the ptr is in the beginning of that code point. we're assuming pointers can't be
             // pointed to the middle of the Unicode code points.
@@ -183,7 +180,7 @@ namespace webpp::unicode {
             return iter() <=> other.iter();
         }
 
-        constexpr pin_type& operator=(iterator_type other) noexcept(is_nothrow) {
+        constexpr pin_type& operator=(iterator other) noexcept(is_nothrow) {
             set(other);
             return *this;
         }
@@ -201,7 +198,7 @@ namespace webpp::unicode {
         }
 
         /// Pin Act: Set
-        constexpr void set(iterator_type other) noexcept(is_nothrow) {
+        constexpr void set(iterator other) noexcept(is_nothrow) {
             assert(other != nullptr);
             assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
@@ -288,9 +285,7 @@ namespace webpp::unicode {
                 auto& endptr = reducer->template pin_iter<PinIndex + 1>();
                 auto  ptr    = iter();
                 stl::advance(ptr, -static_cast<difference_type>(cur_state));
-                if constexpr (stl::random_access_iterator<iterator_type>) {
-                    assert(ptr <= reducer->endptr);
-                }
+                assert(ptr <= reducer->endptr);
                 auto cur = ptr;
                 ++ptr;
                 for (; ptr != endptr; ++ptr, ++cur) {
@@ -331,32 +326,34 @@ namespace webpp::unicode {
     template <stl::size_t PinCount, typename IterT, UTF32 CodePointT>
     struct utf_reducer {
         using value_type      = CodePointT;
-        using iterator_type   = IterT;
+        using iterator        = IterT;
         using unit_type       = typename stl::iterator_traits<IterT>::value_type;
         using difference_type = typename stl::iterator_traits<IterT>::difference_type;
         using size_type       = stl::size_t;
 
         static constexpr stl::size_t pin_count = PinCount;
         static constexpr bool        is_nothrow =
-          stl::is_nothrow_copy_assignable_v<unit_type> && requires(iterator_type iter, unit_type unit) {
+          stl::is_nothrow_copy_assignable_v<unit_type> && requires(iterator iter, unit_type unit) {
               {
                   *iter = unit
               } noexcept;
           };
 
         static_assert(pin_count != 0, "This class is useless where you don't need the pins.");
-        static_assert(stl::forward_iterator<iterator_type>, "Iterator must at least be a forward iterator");
+        static_assert(stl::random_access_iterator<iterator>,
+                      "Iterator must at least be a random access iterator");
 
       private:
         template <std::size_t, std::size_t, typename, UTF32>
         friend struct pin_type;
 
         using non32_value_type = stl::conditional_t<UTF32<unit_type>, istl::nothing_type, value_type>;
-        iterator_type beg;
-        iterator_type endptr;
+        iterator beg;
+        iterator endptr;
+        iterator newend;
 
-        stl::array<iterator_type, PinCount>    iters;
-        stl::array<stl::int_fast8_t, PinCount> states;
+        stl::array<iterator, PinCount>         iters;
+        stl::array<stl::int_fast8_t, PinCount> states{};
         stl::array<value_type, PinCount>       code_points;
 
         template <stl::size_t Index>
@@ -365,26 +362,32 @@ namespace webpp::unicode {
       public:
         // the reason why we take length instead of end position is because the end might be a const, but
         // we don't want the end to be a const internally.
-        explicit constexpr utf_reducer(iterator_type inp_pos, size_type const inp_length)
+        explicit constexpr utf_reducer(iterator inp_pos, size_type const inp_length)
           : beg{inp_pos},
-            endptr{stl::next(inp_pos, static_cast<difference_type>(inp_length))} {
-            assert(inp_pos != nullptr);
+            endptr{stl::next(inp_pos, static_cast<difference_type>(inp_length))},
+            newend{endptr} {
+            if constexpr (std::is_pointer_v<iterator>) {
+                assert(inp_pos != nullptr);
+                assert(endptr != nullptr);
+            }
+            assert(inp_pos != endptr);
             assert(is_code_unit_start(*inp_pos));
-            static_assert(stl::random_access_iterator<iterator_type>,
-                          "Has to be random access if you're using length-based constructor");
             iters.fill(inp_pos);
         }
 
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
-        explicit constexpr utf_reducer(iterator_type inp_pos, iterator_type inp_endp)
+        explicit constexpr utf_reducer(iterator inp_pos, iterator inp_endp)
           : beg{inp_pos},
-            endptr{inp_endp} {
+            endptr{inp_endp},
+            newend{endptr} {
+            if constexpr (std::is_pointer_v<iterator>) {
+                assert(inp_pos != nullptr);
+                assert(endptr != nullptr);
+            }
             assert(inp_pos != nullptr);
             assert(endptr != nullptr);
             assert(is_code_unit_start(*inp_pos));
-            if constexpr (stl::random_access_iterator<iterator_type>) {
-                assert(inp_pos <= nullptr);
-            }
+            assert(inp_pos <= nullptr);
             iters.fill(inp_pos);
         }
 
@@ -409,11 +412,14 @@ namespace webpp::unicode {
             return pin_type_of<Index>{this};
         }
 
-        template <stl::size_t Index = 0>
-        [[nodiscard]] constexpr iterator_type& pin_iter() noexcept {
+        template <difference_type Index = 0>
+        [[nodiscard]] constexpr iterator& pin_iter() noexcept {
             // Create a compile time error and not allow bad code:
-            static_assert(Index <= PinCount, "Index must be in range, or the last element.");
-            if constexpr (Index == PinCount) {
+            static_assert(Index <= static_cast<difference_type>(PinCount) && Index >= -1,
+                          "Index must be in range, or the last element.");
+            if constexpr (Index == -1) {
+                return beg;
+            } else if constexpr (Index == static_cast<difference_type>(PinCount)) {
                 return endptr;
             } else {
                 return iters[Index];
@@ -429,16 +435,31 @@ namespace webpp::unicode {
             })(stl::make_index_sequence<PinCount>{});
         }
 
-        [[nodiscard]] constexpr iterator_type begin() const noexcept {
+        [[nodiscard]] constexpr iterator begin() const noexcept {
             return beg;
         }
 
-        [[nodiscard]] constexpr iterator_type end() const noexcept {
-            return endptr;
+        [[nodiscard]] constexpr iterator end() const noexcept {
+            return newend;
+        }
+
+        [[nodiscard]] constexpr difference_type available_space() const noexcept {
+            difference_type len = 0;
+            for (auto const state : states) {
+                len -= static_cast<difference_type>(state);
+            }
+            assert(len >= 0);
+            return len;
         }
 
         template <stl::size_t Index = 0>
         constexpr void reduce() noexcept(is_nothrow) {
+            if constexpr (Index == 0) {
+                // setting the new end iterator:
+                if (auto const diff_len = available_space(); diff_len > 0) {
+                    newend = std::prev(endptr, diff_len);
+                }
+            }
             pin<Index>().reduce();
             if constexpr (Index != PinCount - 1) {
                 reduce<Index + 1>();
@@ -460,9 +481,8 @@ namespace webpp::unicode {
 
     template <stl::size_t PinCount, typename CharT1, typename CP1>
     [[nodiscard]] static constexpr auto operator-(
-      utf_reducer<PinCount, CharT1, CP1> const&                  lhs,
-      typename utf_reducer<PinCount, CharT1, CP1>::iterator_type rhs_iter)
-      -> decltype(lhs.begin() - rhs_iter) {
+      utf_reducer<PinCount, CharT1, CP1> const&             lhs,
+      typename utf_reducer<PinCount, CharT1, CP1>::iterator rhs_iter) -> decltype(lhs.begin() - rhs_iter) {
         return lhs.begin() - rhs_iter;
     }
 
