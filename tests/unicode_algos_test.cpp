@@ -70,3 +70,17 @@ TEST(UnicodeAlgos, ReducerPins) {
     }
     EXPECT_EQ(str, u8"مaت");
 }
+
+TEST(UnicodeAlgos, Extra) {
+    std::u8string str = u8"تست";
+    {
+        utf_reducer<2> reducer{str.data(), str.size()};
+        auto [pin1, pin2] = reducer.pins();
+        ++pin2;
+        pin2 = U'a';
+        pin1 = U'\u0800'; // E0-A0-A0
+        reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
+    }
+    EXPECT_EQ(str, u8"\xE0\xA0\u00A0aت");
+}
