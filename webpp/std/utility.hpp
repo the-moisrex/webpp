@@ -50,7 +50,7 @@ namespace webpp::istl {
             using type = stl::index_sequence<Start>;
         };
 
-        /////////////////// Non inclusive version:
+        /////////////////// Non-inclusive version:
 
 
         template <typename IntegerT, IntegerT Start, IntegerT End, IntegerT... I>
@@ -72,23 +72,31 @@ namespace webpp::istl {
 
     } // namespace details
 
-    // Make integer range inclusively [Start, End].
+    /// Make integer range inclusively [Start, End].
     template <typename IntegerT, IntegerT Start, IntegerT End>
     using make_integer_inclusive_range =
       typename details::integer_range_inclusive_maker<IntegerT, Start, End>::type;
 
-    // Make index range inclusively [Start, End].
+    /// Make index range inclusively [Start, End].
     template <stl::size_t Start, stl::size_t End>
     using make_index_inclusive_range =
       typename details::integer_range_inclusive_maker<stl::size_t, Start, End>::type;
 
-    // Make integer range non-inclusively [Start, End).
+    /// Make integer range non-inclusively [Start, End).
     template <typename IntegerT, IntegerT Start, IntegerT End>
     using make_integer_range = typename details::integer_range_maker<IntegerT, Start, End>::type;
 
-    // Make index range non-inclusively [Start, End).
+    /// Make index range non-inclusively [Start, End).
     template <stl::size_t Start, stl::size_t End>
     using make_index_range = typename details::integer_range_maker<stl::size_t, Start, End>::type;
+
+    /// Calls func<Start, ..., End>(std::index_sequence<Start, ..., End>);
+    template <stl::size_t Start, stl::size_t End, typename Func, typename... Args>
+    constexpr decltype(auto) for_range(Func&& func) noexcept(stl::is_nothrow_invocable_v<Func>) {
+        static_assert(std::is_invocable_v<Func, make_index_range<Start, End>>,
+                      "Function must have an specific signature.");
+        return func(make_index_range<Start, End>());
+    }
 
 
 } // namespace webpp::istl

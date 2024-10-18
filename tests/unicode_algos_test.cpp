@@ -82,5 +82,5 @@ TEST(UnicodeAlgos, Extra) {
         reducer.reduce();
         str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
     }
-    EXPECT_EQ(str, u8"\xE0\xA0\u00A0aت");
+    EXPECT_EQ(str, u8"\xE0\xA0\x{A0}aت");
 }

@@ -199,7 +199,11 @@ namespace webpp::unicode {
 
         /// Pin Act: Set
         constexpr void set(iterator other) noexcept(is_nothrow) {
-            assert(other != nullptr);
+            if constexpr (stl::is_pointer_v<iterator>) {
+                assert(other != nullptr);
+            } else {
+                assert(other != reducer->endptr);
+            }
             assert(iter() != reducer->endptr);
             if constexpr (UTF32<unit_type>) {
                 *iter() = *other;
@@ -273,6 +277,91 @@ namespace webpp::unicode {
             set(other_ptr.iter());
         }
 
+      private:
+        constexpr void left_pad() noexcept(is_nothrow) {
+            // fill the gaps
+            auto& endptr = reducer->template pin_iter<PinIndex + 1>();
+            auto  ptr    = iter();
+            stl::advance(ptr, -static_cast<difference_type>(state()));
+            assert(ptr <= reducer->endptr);
+            auto cur = ptr;
+            ++ptr;
+            for (; ptr != endptr; ++ptr, ++cur) {
+                *cur = *ptr;
+            }
+            reducer->states[PinIndex] = 0;
+            // if constexpr (PinIndex == PinCount - 1) {
+            //     // change the end pointer
+            //     endptr = ptr;
+            // }
+        }
+
+        /// find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
+        /// can use
+        /// We can't return a pin_type since the PinIndex is not known, so we return the index itself
+        [[nodiscard]] constexpr stl::size_t find_first_pin(difference_type stop_state) const noexcept {
+            assert(stop_state > 0);
+            difference_type sum = 0;
+            for (auto index = PinIndex + 1; index < PinCount; ++index) {
+                auto& cur_state  = reducer->states[index];
+                sum             -= static_cast<difference_type>(cur_state);
+                if (sum >= stop_state) {
+                    // return std::make_pair<stl::int_fast8_t&, iterator&>(cur_state, reducer->iters[index]);
+                    return index;
+                }
+            }
+
+            // if you reach here, utf_reducer cannot help you anymore, you need allocations for you algorithm,
+            // so free launch is over now.
+            assert(false);
+            stl::unreachable();
+        }
+
+        constexpr void fill_right() noexcept(is_nothrow) {
+            // 1. find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
+            //    can use
+            // 2. If there is none, blow up
+            // 3. fill the gaps, move the pointers, and set the new states
+            // 4. set the new state for the current element
+            // 5. place the new code point
+
+            auto cur_pin_index = find_first_pin(state());
+
+            webpp_assume(cur_pin_index < PinCount && cur_pin_index > PinIndex);
+            auto cur = reducer->iters[cur_pin_index];
+            for (; cur_pin_index != PinIndex; --cur_pin_index) {
+                auto& cur_state = reducer->states[cur_pin_index];
+                auto& cur_iter  = reducer->iters[cur_pin_index];
+                auto  ptr       = stl::prev(
+                  cur_iter,
+                  cur_state < 0 ? -cur_state : required_length_of<unit_type, difference_type>(*cur_iter));
+                --cur;
+                auto endptr = reducer->pin_iter(cur_pin_index - 1);
+                for (; ptr != endptr; --ptr, --cur) {
+                    *cur = *ptr;
+                }
+                if (cur_state < 0) {
+                    cur_state = 0;
+                    cur_iter  = ptr;
+                }
+            }
+
+            // auto       ptr        = istl::deref(iter());
+            // auto&      endptr     = iter();
+            // auto const cur_length = required_length_of<unit_type, difference_type>(*ptr);
+            // auto const cur_state  = static_cast<difference_type>(state());
+            // assert(cur_state < 0);
+            // stl::advance(ptr, cur_length - cur_state);
+            // assert(ptr <= reducer->endptr);
+            // auto cur = ptr;
+            // --ptr;
+            // for (; ptr != endptr; --ptr, --cur) {
+            //     *cur = *ptr;
+            // }
+            // reducer->states[PinIndex] = 0;
+        }
+
+      public:
         constexpr void reduce() noexcept(is_nothrow) {
             assert(iter() != reducer->endptr);
 
@@ -281,27 +370,15 @@ namespace webpp::unicode {
                 return;
             }
             if (cur_state < 0) {
-                // fill the gaps
-                auto& endptr = reducer->template pin_iter<PinIndex + 1>();
-                auto  ptr    = iter();
-                stl::advance(ptr, -static_cast<difference_type>(cur_state));
-                assert(ptr <= reducer->endptr);
-                auto cur = ptr;
-                ++ptr;
-                for (; ptr != endptr; ++ptr, ++cur) {
-                    *cur = *ptr;
-                }
-                reducer->states[PinIndex] = 0;
-                // if constexpr (PinIndex == PinCount - 1) {
-                //     // change the end pointer
-                //     endptr = ptr;
-                // }
+                left_pad();
                 return;
             }
 
             // state: extra
             {
-                // todo
+                fill_right();
+                unchecked::append(iter(), reducer->code_points[PinIndex]);
+                reducer->states[PinIndex] = 0;
             }
         }
     };
@@ -424,6 +501,17 @@ namespace webpp::unicode {
             } else {
                 return iters[Index];
             }
+        }
+
+        [[nodiscard]] constexpr iterator& pin_iter(difference_type index = 0) noexcept {
+            assert(index <= static_cast<difference_type>(PinCount) && index >= -1);
+            if (index == -1) {
+                return beg;
+            }
+            if (index == static_cast<difference_type>(PinCount)) {
+                return endptr;
+            }
+            return iters[index];
         }
 
         /// Get all pins in a tuple construct
