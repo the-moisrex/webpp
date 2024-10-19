@@ -221,8 +221,14 @@ namespace webpp::unicode {
                 // state: partial or deleted
                 if (state < 0) {
                     auto iter_cpy = istl::deref(iter());
+                    auto rem      = required_length_of<unit_type>(*iter_cpy);
                     unchecked::append(iter_cpy, other);
                     reducer->states[PinIndex] = state;
+
+                    // zero out the remaining for use in other algorithms of utf_reducer
+                    for (; rem > 0; --rem) {
+                        *iter_cpy = static_cast<unit_type>('\0');
+                    }
                     test_state_correctness();
                     return;
                 }
@@ -255,8 +261,14 @@ namespace webpp::unicode {
                 // state: partial or deleted
                 if (state < 0) {
                     auto iter_cpy = istl::deref(iter());
+                    auto rem      = required_length_of<unit_type>(*iter_cpy);
                     unchecked::append(iter_cpy, inp_code_point);
                     reducer->states[PinIndex] = state;
+
+                    // zero out the remaining for use in other algorithms of utf_reducer
+                    for (; rem > 0; --rem) {
+                        *iter_cpy = static_cast<unit_type>('\0');
+                    }
                     test_state_correctness();
                     return;
                 }
@@ -299,15 +311,13 @@ namespace webpp::unicode {
         /// find the first pin that from that pin to this pin, there's enough "Partial" spaces that we
         /// can use
         /// We can't return a pin_type since the PinIndex is not known, so we return the index itself
-        [[nodiscard]] constexpr stl::size_t find_first_pin(difference_type stop_state) const noexcept {
+        [[nodiscard]] constexpr auto find_first_pin(difference_type stop_state) const noexcept {
             assert(stop_state > 0);
-            difference_type sum = 0;
             for (auto index = PinIndex + 1; index < PinCount; ++index) {
                 auto& cur_state  = reducer->states[index];
-                sum             -= static_cast<difference_type>(cur_state);
-                if (sum >= stop_state) {
-                    // return std::make_pair<stl::int_fast8_t&, iterator&>(cur_state, reducer->iters[index]);
-                    return index;
+                stop_state       += static_cast<difference_type>(cur_state);
+                if (stop_state <= 0) {
+                    return stl::make_pair(index, stop_state);
                 }
             }
 
@@ -325,40 +335,32 @@ namespace webpp::unicode {
             // 4. set the new state for the current element
             // 5. place the new code point
 
-            auto cur_pin_index = find_first_pin(state());
+            auto [cur_pin_index, remaining_units] = find_first_pin(state());
 
             webpp_assume(cur_pin_index < PinCount && cur_pin_index > PinIndex);
-            auto cur = reducer->iters[cur_pin_index];
+            auto rep = reducer->iters[cur_pin_index] +
+                       (required_length_of<unit_type, difference_type>(*reducer->iters[cur_pin_index]) +
+                        remaining_units);
+            assert(reducer->states[cur_pin_index] < 0);
+            auto prev_cur = rep;
             for (; cur_pin_index != PinIndex; --cur_pin_index) {
                 auto& cur_state = reducer->states[cur_pin_index];
-                auto& cur_iter  = reducer->iters[cur_pin_index];
-                auto  ptr       = stl::prev(
-                  cur_iter,
-                  cur_state < 0 ? -cur_state : required_length_of<unit_type, difference_type>(*cur_iter));
+                auto  cur       = reducer->end_pin_iter(cur_pin_index);
+                auto  endptr    = reducer->pin_iter(cur_pin_index - 1);
                 --cur;
-                auto endptr = reducer->pin_iter(cur_pin_index - 1);
-                for (; ptr != endptr; --ptr, --cur) {
-                    *cur = *ptr;
+                assert(rep >= cur);
+                for (; rep != cur; --rep, --prev_cur) {
+                    *prev_cur = *rep;
                 }
+                for (; rep != endptr; --rep, --cur) {
+                    *cur = *rep;
+                }
+                prev_cur = cur;
                 if (cur_state < 0) {
-                    cur_state = 0;
-                    cur_iter  = ptr;
+                    cur_state                     = 0;
+                    reducer->iters[cur_pin_index] = rep;
                 }
             }
-
-            // auto       ptr        = istl::deref(iter());
-            // auto&      endptr     = iter();
-            // auto const cur_length = required_length_of<unit_type, difference_type>(*ptr);
-            // auto const cur_state  = static_cast<difference_type>(state());
-            // assert(cur_state < 0);
-            // stl::advance(ptr, cur_length - cur_state);
-            // assert(ptr <= reducer->endptr);
-            // auto cur = ptr;
-            // --ptr;
-            // for (; ptr != endptr; --ptr, --cur) {
-            //     *cur = *ptr;
-            // }
-            // reducer->states[PinIndex] = 0;
         }
 
       public:
@@ -512,6 +514,13 @@ namespace webpp::unicode {
                 return endptr;
             }
             return iters[index];
+        }
+
+        [[nodiscard]] constexpr iterator end_pin_iter(difference_type index = 0) noexcept {
+            assert(index < static_cast<difference_type>(PinCount) && index >= 0);
+            auto ptr = iters[index];
+            return ptr + (required_length_of<unit_type, difference_type>(*ptr) -
+                          (states[index] < 0 ? states[index] : 0));
         }
 
         /// Get all pins in a tuple construct
