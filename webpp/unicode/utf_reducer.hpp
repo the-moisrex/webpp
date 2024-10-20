@@ -115,33 +115,12 @@ namespace webpp::unicode {
         constexpr pin_type& operator++() noexcept {
             if constexpr (UTF32<unit_type>) {
                 ++iter();
-            } else if constexpr (PinIndex == PinCount - 1) {
-                reducer->code_points[PinIndex] = next_code_point(iter());
             } else {
-                auto const cur_state = state();
-                if (cur_state == 0) [[likely]] {
-                    // state: filled
-                    reducer->code_points[PinIndex] = next_code_point(iter());
-                } else if (cur_state > 0) {
-                    // state: extra
-                    // todo
-                } else {
-                    // state: partial or deleted
-                    // copy next code units to current empty code units
-                    auto& cur    = iter();
-                    auto  cp2ptr = cur + cur_state;
-                    auto  endptr = reducer->template pin_iter<PinIndex + 1>();
-                    for (; cp2ptr != endptr; ++cur, ++cp2ptr) {
-                        *cur = *cp2ptr;
-                    }
-                }
+                reduce();
+                reducer->code_points[PinIndex] = next_code_point(iter());
             }
             test_state_correctness();
             return *this;
-        }
-
-        constexpr pin_type operator++(int) noexcept {
-            return pin_type{reducer}.operator++();
         }
 
         [[nodiscard]] constexpr iterator& iter() noexcept {
@@ -155,6 +134,14 @@ namespace webpp::unicode {
                 assert(reducer->states[PinIndex] <= 2);
             }
             return reducer->states[PinIndex];
+        }
+
+        [[nodiscard]] constexpr value_type operator*() const noexcept {
+            if constexpr (UTF32<unit_type>) {
+                return *iter();
+            } else {
+                return reducer->code_points[PinIndex];
+            }
         }
 
         [[nodiscard]] constexpr iterator operator->() const noexcept {
@@ -290,7 +277,7 @@ namespace webpp::unicode {
         }
 
       private:
-        constexpr void left_pad() noexcept(is_nothrow) {
+        constexpr void fill_left() noexcept(is_nothrow) {
             // fill the gaps
             auto& endptr = reducer->template pin_iter<PinIndex + 1>();
             auto  ptr    = iter();
@@ -372,7 +359,7 @@ namespace webpp::unicode {
                 return;
             }
             if (cur_state < 0) {
-                left_pad();
+                fill_left();
                 return;
             }
 
@@ -452,6 +439,8 @@ namespace webpp::unicode {
             assert(inp_pos != endptr);
             assert(is_code_unit_start(*inp_pos));
             iters.fill(inp_pos);
+            auto const first_cp = next_code_point_copy(inp_pos);
+            code_points.fill(first_cp);
         }
 
         // NOLINTNEXTLINE(*-easily-swappable-parameters)
@@ -468,6 +457,8 @@ namespace webpp::unicode {
             assert(is_code_unit_start(*inp_pos));
             assert(inp_pos <= nullptr);
             iters.fill(inp_pos);
+            auto const first_cp = next_code_point_copy(inp_pos);
+            code_points.fill(first_cp);
         }
 
         constexpr utf_reducer(utf_reducer const&)                = default;

@@ -84,3 +84,32 @@ TEST(UnicodeAlgos, Extra) {
     }
     EXPECT_EQ(str, u8"\xE0\xA0\x{80}aت");
 }
+
+TEST(UnicodeAlgos, BasicRead) {
+    std::u8string str = u8"تست";
+    {
+        utf_reducer reducer{str.data(), str.size()};
+        auto [pin] = reducer.pins();
+        EXPECT_EQ(*pin, U'ت');
+        pin = U'a';
+        EXPECT_EQ(*pin, U'a');
+        reducer.reduce();
+        EXPECT_EQ(*pin, U'a');
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
+    }
+    EXPECT_EQ(str, u8"aست");
+}
+
+TEST(UnicodeAlgos, SimpleForward) {
+    std::u8string str = u8"تست";
+    {
+        utf_reducer<1> reducer{str.data(), str.size()};
+        auto [pin] = reducer.pins();
+        pin        = U'a';
+        ++pin;
+        pin = U'\u0800'; // E0-A0-80
+        reducer.reduce();
+        str.resize(static_cast<std::size_t>(reducer.end() - str.data()));
+    }
+    EXPECT_EQ(str, u8"a\xE0\xA0\x{80}ت");
+}
